@@ -19,6 +19,8 @@ local defaultSettings = {
     nameplateShowEnemyMinus = nil,
     fadeOutNPC = false,
     hideNPC = false,
+    colorNPC = false,
+    colorNPCName = false,
     raidmarkIndicator = false,
     raidmarkIndicatorScale = 1,
     raidmarkIndicatorAnchor = "TOP",
@@ -148,7 +150,13 @@ local defaultSettings = {
         {name = "Treant", id = 54983, comment = ""},
     },
     hideNPCsList = {
+        {name = "Mirror Images (Mage)", id = 31216, comment = ""},
+        {name = "Wild Imp (Warlock)", id = 55659, comment = ""},
     },
+
+    colorNpcList = {
+    },
+    
 
     --Extra Blizzard settings
     nameplateOverlapH = 0.8,
@@ -655,6 +663,55 @@ function BBP.HideNPCs(frame)
 end
 
 
+
+--################################################################################################
+-- Color NPCs
+function BBP.ColorNPCs(frame)
+    if not frame or not frame.displayedUnit then return end
+    if not BetterBlizzPlatesDB.colorNPC then return end
+    -- Skip if the unit is a player
+    if UnitIsPlayer(frame.displayedUnit) then return end
+
+    local unitGUID = UnitGUID(frame.displayedUnit)
+    if not unitGUID then return end
+
+    local npcID = select(6, strsplit("-", unitGUID))
+    local npcName = UnitName(frame.displayedUnit)
+
+    -- Convert npcName to lowercase for case insensitive comparison
+    local lowerCaseNpcName = strlower(npcName)
+
+    -- Check if the NPC is in the list by ID or name (case insensitive)
+    local inList = false
+    local npcColor = nil
+    for _, npc in ipairs(BetterBlizzPlatesDB.colorNpcList) do
+        if npc.id == tonumber(npcID) or (npc.name and strlower(npc.name) == lowerCaseNpcName) then
+            inList = true
+            if npc.entryColors then
+                npcColor = npc.entryColors.text
+            else
+                npc.entryColors = {} -- default for new entries that doesnt have a color yet
+            end
+            break
+        end
+    end
+    
+    
+    -- Set the vertex color based on the NPC color values
+    if inList and npcColor then
+        frame.healthBar:SetStatusBarColor(npcColor.r, npcColor.g, npcColor.b)
+        if BetterBlizzPlatesDB.colorNPCName then
+            frame.name:SetVertexColor(npcColor.r, npcColor.g, npcColor.b)
+        end
+    end
+end
+
+hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
+    if not BetterBlizzPlatesDB.colorNPC then return end
+    BBP.ColorNPCs(frame)
+end)
+
+
 --################################################################################################
 -- Apply raidmarker change
 function BBP.ApplyRaidmarkerChanges(nameplate)
@@ -816,6 +873,11 @@ local function HandleNamePlateAdded(unit)
         BBP.HideNPCs(frame)
     end
 
+    -- Color NPC
+    if BetterBlizzPlatesDB.colorNPC then
+        BBP.ColorNPCs(frame)
+    end
+
     -- Show hunter pet icon
     if BetterBlizzPlatesDB.petIndicator or BetterBlizzPlatesDB.petIndicatorTestMode then
         BBP.PetIndicator(frame)
@@ -956,6 +1018,10 @@ local function ConsolidatedUpdateName(frame)
     -- Show healer icon
     if BetterBlizzPlatesDB.healerIndicatorTestMode or BetterBlizzPlatesDB.healerIndicator then
         BBP.HealerIndicator(frame)
+    end
+
+    if BetterBlizzPlatesDB.colorNPCName then
+        BBP.ColorNPCs(frame)
     end
 
     -- Color nameplate and pick random name or hide name during totem tester

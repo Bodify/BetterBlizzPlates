@@ -507,7 +507,7 @@ function BBP.CreateCheckbox(option, label, parent, cvarName, extraFunc)
     return checkBox
 end
 
-local function createScrollFrame(subPanel, listName, listData, refreshFunc)
+local function createScrollFrame(subPanel, listName, listData, refreshFunc, enableColorPicker)
     -- Create the scroll frame
     local scrollFrame = CreateFrame("ScrollFrame", nil, subPanel, "UIPanelScrollFrameTemplate")
     scrollFrame:SetSize(322, 390)
@@ -532,7 +532,7 @@ local function createScrollFrame(subPanel, listName, listData, refreshFunc)
             end
         end
     end
-
+    
     local function deleteEntry(index)
         if not index then return end
 
@@ -561,7 +561,7 @@ local function createScrollFrame(subPanel, listName, listData, refreshFunc)
         refreshFunc()
     end
 
-    local function createTextLineButton(npc, index)
+    local function createTextLineButton(npc, index, enableColorPicker)
         local button = CreateFrame("Frame", nil, contentFrame)
         button:SetSize(310, 20)
         button:SetPoint("TOPLEFT", 10, -(index - 1) * 20)
@@ -582,6 +582,22 @@ local function createScrollFrame(subPanel, listName, listData, refreshFunc)
         text:SetPoint("LEFT", button, "LEFT", 5, 0)
         text:SetText(displayText)
     
+        -- Initialize the text color and background color for this entry from npc table or with default values
+        local entryColors = npc.entryColors or {
+            text = { r = 1, g = 1, b = 0 }, 
+        }
+        
+        
+        npc.entryColors = entryColors  -- Save the colors back to the npc data
+    
+        -- Function to set the text color
+        local function SetTextColor(r, g, b)
+            text:SetTextColor(r, g, b)
+        end
+    
+        -- Set initial text and background colors from entryColors
+        SetTextColor(entryColors.text.r, entryColors.text.g, entryColors.text.b)
+    
         local deleteButton = CreateFrame("Button", nil, button, "UIPanelButtonTemplate")
         deleteButton:SetSize(20, 20)
         deleteButton:SetPoint("RIGHT", button, "RIGHT", 4, 0)
@@ -596,14 +612,50 @@ local function createScrollFrame(subPanel, listName, listData, refreshFunc)
             end
         end)
     
+        if enableColorPicker then
+            local colorPickerButton = CreateFrame("Button", nil, button, "UIPanelButtonTemplate")
+            colorPickerButton:SetSize(50, 20)
+            colorPickerButton:SetPoint("RIGHT", deleteButton, "LEFT", -5, 0)
+            colorPickerButton:SetText("Color")
+    
+            -- Function to open the color picker
+            local function OpenColorPicker()
+                local r, g, b = entryColors.text.r, entryColors.text.g, entryColors.text.b
+    
+                --ColorPickerFrame:SetColorRGB(r, g, b)
+                ColorPickerFrame.previousValues = { r, g, b }
+    
+                ColorPickerFrame.func = function()
+                    r, g, b = ColorPickerFrame:GetColorRGB()
+                    entryColors.text.r, entryColors.text.g, entryColors.text.b = r, g, b
+                    SetTextColor(r, g, b)  -- Update text color when the color picker changes
+                
+                    -- Update the npc entry in listData with the new color
+                    npc.entryColors.text.r, npc.entryColors.text.g, npc.entryColors.text.b = r, g, b
+                    listData[index] = npc  -- Update the entry in the listData
+                    BBP.RefreshAllNameplates()
+                end
+    
+                ColorPickerFrame.cancelFunc = function()
+                    r, g, b = unpack(ColorPickerFrame.previousValues)
+                    entryColors.text.r, entryColors.text.g, entryColors.text.b = r, g, b
+                    SetTextColor(r, g, b)  -- Update text color if canceled
+                end
+    
+                ColorPickerFrame:Show()
+            end
+    
+            colorPickerButton:SetScript("OnClick", OpenColorPicker)
+        end
+    
         button.deleteButton = deleteButton
         table.insert(textLines, button)
         updateBackgroundColors()  -- Update background colors after adding a new entry
     end
-
-    -- Create and initialize textLine buttons
+    
+    -- Create and initialize textLine buttons with or without color pickers
     for i, npc in ipairs(listData) do
-        createTextLineButton(npc, i)
+        createTextLineButton(npc, i, enableColorPicker)
     end
 
     -- Create static popup dialogs for duplicate and delete confirmations
@@ -618,7 +670,7 @@ local function createScrollFrame(subPanel, listName, listData, refreshFunc)
         whileDead = true,
         hideOnEscape = true,
     }
-    
+
     StaticPopupDialogs["DELETE_NPC_CONFIRM_" .. listName] = {
         text = "Are you sure you want to delete this entry?\nHold shift to delete without this prompt",
         button1 = "Yes",
@@ -667,7 +719,7 @@ local function createScrollFrame(subPanel, listName, listData, refreshFunc)
                 StaticPopup_Show("DUPLICATE_NPC_CONFIRM_" .. listName)
             else
                 table.insert(listData, { name = name, id = id, comment = comment })
-                createTextLineButton({ name = name, id = id, comment = comment }, #textLines + 1)
+                createTextLineButton({ name = name, id = id, comment = comment }, #textLines + 1, enableColorPicker)
                 refreshFunc()
             end
         end
@@ -1638,7 +1690,7 @@ function BBP.InitializeOptions()
         ------------------------------------------------------------------------------------------------
         -- Fade out NPC
         local BetterBlizzPlatesSubPanel2 = CreateFrame("Frame")
-        BetterBlizzPlatesSubPanel2.name = "Fade out NPC"
+        BetterBlizzPlatesSubPanel2.name = "Fade NPC"
         BetterBlizzPlatesSubPanel2.parent = BetterBlizzPlates.name
         InterfaceOptions_AddCategory(BetterBlizzPlatesSubPanel2)
 
@@ -1656,7 +1708,7 @@ function BBP.InitializeOptions()
         mainGuiAnchor3:SetText(" ")
 
 
-        createScrollFrame(BetterBlizzPlatesSubPanel2, "fadeOutNPCsList", BetterBlizzPlatesDB.fadeOutNPCsList, BBP.RefreshAllNameplates)
+        createScrollFrame(BetterBlizzPlatesSubPanel2, "fadeOutNPCsList", BetterBlizzPlatesDB.fadeOutNPCsList, BBP.RefreshAllNameplates, false)
 
         local how2usefade = BetterBlizzPlatesSubPanel2:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         how2usefade:SetPoint("TOP", mainGuiAnchor3, "BOTTOM", 140, -450)
@@ -1667,7 +1719,8 @@ function BBP.InitializeOptions()
         fadeOutNPCsAlphaSlider:SetPoint("TOPRIGHT", BetterBlizzPlatesSubPanel2, "TOPRIGHT", -90, -90)
         fadeOutNPCsAlphaSlider:SetValue(BetterBlizzPlatesDB.fadeOutNPCsAlpha or 0.2)
 
-        
+        -- made an oopsie here after changing some stuff fix later
+--[[
         -- Restore default entries
         local restoreDefaultsButton = CreateFrame("Button", nil, BetterBlizzPlatesSubPanel2, "UIPanelButtonTemplate")
         restoreDefaultsButton:SetSize(150, 30)
@@ -1689,12 +1742,15 @@ function BBP.InitializeOptions()
             end
         end)
 
+]]
+
+
         local noteFade = BetterBlizzPlatesSubPanel2:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         noteFade:SetPoint("TOP", fadeOutNPCsAlphaSlider, "BOTTOM", 0, -20)
-        noteFade:SetText("This only makes nameplates transparent.\n \nYou will still be able to click them\neven though you can't see them.\n \nIf you wish to completely get rid of a\nnameplate use Hide NPC list instead")
+        noteFade:SetText("This makes nameplates transparent.\n \nYou will still be able to click them\neven though you can't see them.\n \nIf you wish to completely get rid of a\nnameplate use Hide NPC list instead")
 
         -- Fade out unimportant npcs in arena
-        checkBox_fadeOutNPCs2 = BBP.CreateCheckbox("fadeOutNPC", "Fade out NPC nameplates from list", BetterBlizzPlatesSubPanel2, nil, BBP.FadeOutNPCs)
+        checkBox_fadeOutNPCs2 = BBP.CreateCheckbox("fadeOutNPC", "Fade NPC nameplates from list", BetterBlizzPlatesSubPanel2, nil, BBP.FadeOutNPCs)
         checkBox_fadeOutNPCs2:SetPoint("TOPLEFT", noteFade, "BOTTOMLEFT", 20, -15)
 
 
@@ -1725,7 +1781,7 @@ function BBP.InitializeOptions()
 
 
 
-        createScrollFrame(BetterBlizzPlatesSubPanel3, "hideNPCsList", BetterBlizzPlatesDB.hideNPCsList, BBP.RefreshAllNameplates)
+        createScrollFrame(BetterBlizzPlatesSubPanel3, "hideNPCsList", BetterBlizzPlatesDB.hideNPCsList, BBP.RefreshAllNameplates, false)
 
 
         local how2useHide = BetterBlizzPlatesSubPanel3:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1734,7 +1790,7 @@ function BBP.InitializeOptions()
 
         local noteHide = BetterBlizzPlatesSubPanel3:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         noteHide:SetPoint("TOP", BetterBlizzPlatesSubPanel3, "TOP", 172, -127)
-        noteHide:SetText("This completely hides nameplates.\n \nYou will not be able to click them\n \nIf you wish to fade out and still be able\nto click them use Fade out NPC instead")
+        noteHide:SetText("This completely hides nameplates.\n \nYou will not be able to click them\n \nIf you wish to fade out and still be able\nto click them use Fade NPC instead")
 
 
         -- Hide NPC list
@@ -1759,11 +1815,11 @@ function BBP.InitializeOptions()
 
 
         ------------------------------------------------------------------------------------------------
-        -- More Blizz Settings
+        -- Color NPC
         ------------------------------------------------------------------------------------------------
-        -- More Blizz Settings
+        -- Color NPC
         local BetterBlizzPlatesSubPanel4 = CreateFrame("Frame")
-        BetterBlizzPlatesSubPanel4.name = "More Blizz Settings"
+        BetterBlizzPlatesSubPanel4.name = "Color NPC"
         BetterBlizzPlatesSubPanel4.parent = BetterBlizzPlates.name
         InterfaceOptions_AddCategory(BetterBlizzPlatesSubPanel4)
 
@@ -1777,35 +1833,102 @@ function BBP.InitializeOptions()
         
         -- Main GUI Anchor
         local mainGuiAnchor5 = BetterBlizzPlatesSubPanel4:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        mainGuiAnchor5:SetPoint("TOPLEFT", 15, -15)
+        mainGuiAnchor5:SetPoint("TOPLEFT", 15, 20)
         mainGuiAnchor5:SetText(" ")
 
-        local moreBlizzSettings = BetterBlizzPlatesSubPanel4:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-        moreBlizzSettings:SetPoint("TOPLEFT", mainGuiAnchor5, "TOPLEFT", -10, 10)
+
+
+
+        createScrollFrame(BetterBlizzPlatesSubPanel4, "colorNpcList", BetterBlizzPlatesDB.colorNpcList, BBP.RefreshAllNameplates, true)
+
+
+        local how2UseColor = BetterBlizzPlatesSubPanel4:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        how2UseColor:SetPoint("TOP", mainGuiAnchor5, "BOTTOM", 140, -450)
+        how2UseColor:SetText("Add name or npcID. Case-insensitive.\n \n \nAdd a comment to the entry with slash\nfor example 1337/comment or xuen/monk tiger\n \nType a name or npcID already in list to delete it")
+        
+        local noteColor = BetterBlizzPlatesSubPanel4:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        noteColor:SetPoint("TOP", BetterBlizzPlatesSubPanel4, "TOP", 172, -127)
+        noteColor:SetText("This colors specific nameplates.\n \nAdd a name/npc ID and select a color\n \nRequires a reload to turn off (for now)")
+        
+        
+        -- Color NPC list
+        checkBox_colorNPCs = BBP.CreateCheckbox("colorNPC", "Color NPC nameplates from list", BetterBlizzPlatesSubPanel4, nil, BBP.colorNPC)
+        checkBox_colorNPCs:SetPoint("TOPLEFT", noteColor, "BOTTOMLEFT", 25, -15)
+
+        -- Color NPC name
+        checkBox_colorNPCName = BBP.CreateCheckbox("colorNPCName", "Also color name text", BetterBlizzPlatesSubPanel4, nil, BBP.colorNPC)
+        checkBox_colorNPCName:SetPoint("TOPLEFT", checkBox_colorNPCs, "BOTTOMLEFT", 0, -pixelsBetweenBoxes)
+
+
+        local btn_reload_ui3 = CreateFrame("Button", nil, BetterBlizzPlatesSubPanel4, "UIPanelButtonTemplate")
+        btn_reload_ui3:SetText("Reload UI")
+        btn_reload_ui3:SetWidth(85)
+        btn_reload_ui3:SetPoint("TOP", BetterBlizzPlatesSubPanel4, "BOTTOMRIGHT", -140, -9)
+        btn_reload_ui3:SetScript("OnClick", function()
+            BetterBlizzPlatesDB.reopenOptions = true
+            ReloadUI()
+        end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+        ------------------------------------------------------------------------------------------------
+        -- More Blizz Settings
+        ------------------------------------------------------------------------------------------------
+        -- More Blizz Settings
+        local BetterBlizzPlatesSubPanel5 = CreateFrame("Frame")
+        BetterBlizzPlatesSubPanel5.name = "More Blizz Settings"
+        BetterBlizzPlatesSubPanel5.parent = BetterBlizzPlates.name
+        InterfaceOptions_AddCategory(BetterBlizzPlatesSubPanel5)
+
+        -- Create the background texture
+        local bgTexture6 = BetterBlizzPlatesSubPanel5:CreateTexture(nil, "BACKGROUND")
+        bgTexture6:SetAtlas("professions-recipe-background")
+        bgTexture6:SetPoint("CENTER", BetterBlizzPlatesSubPanel5, "CENTER", -8, 4)
+        bgTexture6:SetSize(680, 610)
+        bgTexture6:SetAlpha(0.4)
+        bgTexture6:SetVertexColor(0,0,0)
+        
+        -- Main GUI Anchor
+        local mainGuiAnchor6 = BetterBlizzPlatesSubPanel5:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        mainGuiAnchor6:SetPoint("TOPLEFT", 15, -15)
+        mainGuiAnchor6:SetText(" ")
+
+        local moreBlizzSettings = BetterBlizzPlatesSubPanel5:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+        moreBlizzSettings:SetPoint("TOPLEFT", mainGuiAnchor6, "TOPLEFT", -10, 10)
         moreBlizzSettings:SetText("Settings not available in Blizzard's standard UI")
 
-        local stackingNameplatesText = BetterBlizzPlatesSubPanel4:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        stackingNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor5, "BOTTOMLEFT", 0, -5)
+        local stackingNameplatesText = BetterBlizzPlatesSubPanel5:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        stackingNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor6, "BOTTOMLEFT", 0, -5)
         stackingNameplatesText:SetText("Stacking nameplate overlap amount")
 
         -- Nameplate Horizontal Overlap
-        local stackingNameplateOverlapHorizontal = BBP.CreateSlider("BetterBlizzPlates_nameplateOverlapH", BetterBlizzPlatesSubPanel4, "Space between nameplates horizontally", 0.05, 1, 0.05, "nameplateOverlapH")
+        local stackingNameplateOverlapHorizontal = BBP.CreateSlider("BetterBlizzPlates_nameplateOverlapH", BetterBlizzPlatesSubPanel5, "Space between nameplates horizontally", 0.05, 1, 0.05, "nameplateOverlapH")
         stackingNameplateOverlapHorizontal:SetPoint("TOP", stackingNameplatesText, "BOTTOM", 0, -20)
         stackingNameplateOverlapHorizontal:SetValue(BetterBlizzPlatesDB.nameplateOverlapH)
 
         -- Nameplate Vertical Overlap
-        local stackingNameplateOverlapVertical = BBP.CreateSlider("BetterBlizzPlates_nameplateOverlapV", BetterBlizzPlatesSubPanel4, "Space between nameplates vertically", 0.05, 1.1, 0.05, "nameplateOverlapV")
+        local stackingNameplateOverlapVertical = BBP.CreateSlider("BetterBlizzPlates_nameplateOverlapV", BetterBlizzPlatesSubPanel5, "Space between nameplates vertically", 0.05, 1.1, 0.05, "nameplateOverlapV")
         stackingNameplateOverlapVertical:SetPoint("TOPLEFT", stackingNameplateOverlapHorizontal, "BOTTOMLEFT", 0, -20)
         stackingNameplateOverlapVertical:SetValue(BetterBlizzPlatesDB.nameplateOverlapV)
 
         -- Nameplate Motion Speed
-        local nameplateMotionSpeed = BBP.CreateSlider("BetterBlizzPlates_nameplateMotionSpeed", BetterBlizzPlatesSubPanel4, "Nameplate motion speed", 0.01, 1, 0.01, "nameplateMotionSpeed")
+        local nameplateMotionSpeed = BBP.CreateSlider("BetterBlizzPlates_nameplateMotionSpeed", BetterBlizzPlatesSubPanel5, "Nameplate motion speed", 0.01, 1, 0.01, "nameplateMotionSpeed")
         nameplateMotionSpeed:SetPoint("TOPLEFT", stackingNameplateOverlapVertical, "BOTTOMLEFT", 0, -20)
         nameplateMotionSpeed:SetValue(BetterBlizzPlatesDB.nameplateMotionSpeed)
 
         -- WIP text
-        local moreBlizzSettings = BetterBlizzPlatesSubPanel4:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-        moreBlizzSettings:SetPoint("BOTTOM", BetterBlizzPlatesSubPanel4, "BOTTOM", 0, 10)
+        local moreBlizzSettings = BetterBlizzPlatesSubPanel5:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+        moreBlizzSettings:SetPoint("BOTTOM", BetterBlizzPlatesSubPanel5, "BOTTOM", 0, 10)
         moreBlizzSettings:SetText("Work in progress, more stuff inc soon™\nIf you have any suggestions feel free to\nleave a comment on CurseForge")
     end
 end
