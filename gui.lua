@@ -202,6 +202,20 @@ function BBP.CreateSlider(name, parent, label, minValue, maxValue, stepValue, el
                         else
                             frame.petIndicator:SetScale(value)
                         end
+                    -- Quest Indicator Pos and Scale
+                    elseif element == "questIndicator" then
+                        if not frame.questIndicator then
+                            BBP.QuestIndicator(frame)
+                        end
+                        if axis then
+                            if anchorPoint == "LEFT" then
+                                frame.questIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos +-8, yPos)
+                            else
+                                frame.questIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
+                            end
+                        else
+                            frame.questIndicator:SetScale(value)
+                        end
                     -- Execute Indicator Pos and Scale
                     elseif element == "executeIndicator" then
                         if not frame.executeIndicator then
@@ -1064,7 +1078,14 @@ function BBP.InitializeOptions()
         totemsIcon:SetSize(17, 17)
         totemsIcon:SetPoint("RIGHT", checkBox_totemIndicator, "LEFT", -1, 0)
 
-
+        -- Quest indicator
+        local checkBox_questIndicator = BBP.CreateCheckbox("questIndicator", "Quest indicator", BetterBlizzPlates)
+        checkBox_questIndicator:SetPoint("TOPLEFT", checkBox_totemIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+        BBP.CreateTooltip(checkBox_questIndicator, "Quest symbol on quest npcs")
+        local questsIcon = checkBox_questIndicator:CreateTexture(nil, "ARTWORK")
+        questsIcon:SetAtlas("smallquestbang")
+        questsIcon:SetSize(20, 20)
+        questsIcon:SetPoint("RIGHT", checkBox_questIndicator, "LEFT", 1, 0)
 
 
 
@@ -1076,7 +1097,7 @@ function BBP.InitializeOptions()
         ------------------------------------------------------------------------------------------------
         -- Font and texture
         local customFontandTextureText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        customFontandTextureText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, -430)
+        customFontandTextureText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, -450)
         customFontandTextureText:SetText("Font and texture")
         local customFontandTextureIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
         customFontandTextureIcon:SetAtlas("barbershop-32x32")
@@ -1674,6 +1695,53 @@ function BBP.InitializeOptions()
         end,
             { anchorFrame = raidmarkIndicatorYPosSlider, x = -15, y = -35, label = "Anchor" }
         )
+
+
+
+        ------------------------------------------------------------------------------------------------
+        -- quest
+        ------------------------------------------------------------------------------------------------
+        --quest Indicator
+        local anchorSubquest = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        anchorSubquest:SetPoint("TOPLEFT", mainGuiAnchor2, "CENTER", 510, -360)
+        anchorSubquest:SetText("quest Indicator")
+
+        local questIcon2 = BetterBlizzPlatesSubPanel:CreateTexture(nil, "ARTWORK")
+        questIcon2:SetAtlas("smallquestbang")
+        questIcon2:SetSize(44, 44)
+        questIcon2:SetPoint("BOTTOM", anchorSubquest, "TOP", 0, 0)
+
+        -- quest Important Icon Size Slider
+        local questIndicatorScaleSlider = BBP.CreateSlider("BetterBlizzPlates_questIndicatorScaleSlider", BetterBlizzPlatesSubPanel, "Size", 0.1, 1.9, 0.1, "questIndicator")
+        questIndicatorScaleSlider:SetPoint("TOP", anchorSubquest, "BOTTOM", 0, -15)
+        questIndicatorScaleSlider:SetValue(BetterBlizzPlatesDB.questIndicatorScale or 1)
+
+        -- quest x pos slider
+        local questIndicatorXPosSlider = BBP.CreateSlider("BetterBlizzPlates_questIndicatorXPosSlider", BetterBlizzPlatesSubPanel, "x offset", -50, 50, 1, "questIndicator", "X")
+        questIndicatorXPosSlider:SetPoint("TOP", questIndicatorScaleSlider, "BOTTOM", 0, -15)
+        questIndicatorXPosSlider:SetValue(BetterBlizzPlatesDB.questIndicatorXPos or 0)
+
+        -- quest y pos slider
+        local questIndicatorYPosSlider = BBP.CreateSlider("BetterBlizzPlates_questIndicatorYPosSlider", BetterBlizzPlatesSubPanel, "y offset", -50, 50, 1, "questIndicator", "Y")
+        questIndicatorYPosSlider:SetPoint("TOP", questIndicatorXPosSlider, "BOTTOM", 0, -15)
+        questIndicatorYPosSlider:SetValue(BetterBlizzPlatesDB.questIndicatorYPos or 0)
+
+        -- quest icon anchor dropdown
+        local questIndicatorDropdown = BBP.CreateAnchorDropdown(
+            "questIndicatorDropdown",
+            BetterBlizzPlatesSubPanel,
+            "Select Anchor Point",
+            "questIndicatorAnchor",
+            function(arg1) --print("Selected anchor:", arg1);
+            BBP.RefreshAllNameplates()
+        end,
+            { anchorFrame = questIndicatorYPosSlider, x = -15, y = -35, label = "Anchor" }
+        )
+
+        -- Toggle to test quest icons
+        local checkBox_questTestIcons2 = BBP.CreateCheckbox("questIndicatorTestMode", "Test", BetterBlizzPlatesSubPanel)
+        checkBox_questTestIcons2:SetPoint("TOPLEFT", questIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
+
 
         local btn_reload_ui2 = CreateFrame("Button", nil, BetterBlizzPlatesSubPanel, "UIPanelButtonTemplate")
         btn_reload_ui2:SetText("Reload UI")

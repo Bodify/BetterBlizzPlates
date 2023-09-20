@@ -112,6 +112,13 @@ local defaultSettings = {
     totemIndicatorScaleUpImportant = false,
     totemIndicatorHideNameAndShiftIconDown = false,
     totemIndicatorTestMode = false,
+    -- Quest Indicator
+    questIndicator = false,
+    questIndicatorScale = 1,
+    questIndicatorXPos = 0,
+    questIndicatorYPos = 0,
+    questIndicatorAnchor = "CENTER",
+    questIndicatorTestMode = false,
     -- Font and texture
     customFontSize = 12,
     useCustomFont = false,
@@ -887,6 +894,11 @@ local function HandleNamePlateAdded(unit)
 
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
+
+    -- Show Quest Indicator
+    if BetterBlizzPlatesDB.questIndicator then
+        BBP.QuestIndicator(frame)
+    end
 
     -- Show Target indicator
     if BetterBlizzPlatesDB.targetIndicator then
