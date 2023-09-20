@@ -4,13 +4,15 @@ BBP = BBP or {}
 
 -- My first addon, a lot could be done better but its a start for now
 
-local addonVersion = "1.00"
+local addonVersion = "1.00" --
+local addonUpdates = "yepp"
 local db = BetterBlizzPlatesDB
 local customFont = "Interface\\AddOns\\BetterBlizzPlates\\media\\YanoneKaffeesatz-Medium.ttf"
 local customTexture = "Interface\\AddOns\\BetterBlizzPlates\\media\\UI-TargetingFrame-BarFill.tga"
 
 local defaultSettings = {
     version = addonVersion,
+    updates = addonUpdates,
     wasOnLoadingScreen = false,
     -- General
     removeRealmNames = true,
@@ -197,6 +199,7 @@ local function InitializeSavedVariables()
     if not BetterBlizzPlatesDB then
         BetterBlizzPlatesDB = {}
     end
+
     -- Check the stored version against the current addon version
     if not BetterBlizzPlatesDB.version or BetterBlizzPlatesDB.version ~= addonVersion then
         -- Perform database update here (if needed)
@@ -264,6 +267,25 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
     hideOnEscape = true,
     preferredIndex = 3,  -- to avoid tainting, use a high value if other popups are used
 }
+
+
+
+
+local function SendUpdateMessage()
+    C_Timer.After(7, function()
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates updates: Added Quest Indicator, Color NPC and Hide NPC Whitelist mode. Access settings with /bbp")
+    end)
+end
+
+local function CheckForUpdate()
+    local db = BetterBlizzPlatesDB
+    if db.updates and db.updates ~= addonUpdates then
+        SendUpdateMessage()
+        -- Update the stored version to the current version
+        db.updates = addonUpdates
+    end
+end
+
 
 --##############################################################################################################################################
 --##############################################################################################################################################
@@ -1113,7 +1135,7 @@ local Frame = CreateFrame("Frame")
 Frame:RegisterEvent("PLAYER_LOGIN")
 --Frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 Frame:SetScript("OnEvent", function(...)
-
+    CheckForUpdate()
     BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, BetterBlizzPlatesDB.defaultLargeFontSize)
     BBP.SetFontBasedOnOption(SystemFont_NamePlate, BetterBlizzPlatesDB.defaultFontSize)    
     BBP.ApplyNameplateWidth()
