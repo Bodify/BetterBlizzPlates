@@ -19,6 +19,8 @@ local defaultSettings = {
     nameplateShowEnemyMinus = nil,
     fadeOutNPC = false,
     hideNPC = false,
+    hideNPCWhitelistOn = false,
+    hideNPCArenaOnly = false,
     colorNPC = false,
     colorNPCName = false,
     raidmarkIndicator = false,
@@ -152,6 +154,26 @@ local defaultSettings = {
     hideNPCsList = {
         {name = "Mirror Images (Mage)", id = 31216, comment = ""},
         {name = "Wild Imp (Warlock)", id = 55659, comment = ""},
+    },
+    hideNPCsWhitelist = {
+        {name = "Hunter pet (they all have same ID)", id = 165189, comment = ""},
+        {name = "Felguard (Demo Pet)", id = 17252, comment = ""},
+        {name = "Felhunter (Warlock)", id = 417, comment = ""},
+        {name = "Succubus (Warlock)", id = 1863, comment = ""},
+        {name = "Tyrant (Warlock)", id = 135002, comment = ""},
+        {name = "Observer (Warlock)", id = 107100, comment = ""},
+        {name = "War Banner", id = 119052, comment = ""},
+        {name = "Healing Tide Totem", id = 59764, comment = ""},
+        {name = "Grounding Totem", id = 5925, comment = ""},
+        {name = "Spirit Link Totem", id = 53006, comment = ""},
+        {name = "Capacitor Totem", id = 61245, comment = ""},
+        {name = "Counterstrike Totem", id = 105451, comment = ""},
+        {name = "Fel Obelisk (Warlock)", id = 179193, comment = ""},
+        {name = "Psyfiend (Spriest)", id = 101398, comment = ""},
+        {name = "Earthen Wall Totem", id = 100943, comment = ""},
+        {name = "Tremor Totem", id = 5913, comment = ""},
+        {name = "Guardian Queen (prot pala)", id = 114565, comment = ""},
+        {name = "Earthgrab Totem", id = 60561, comment = ""},
     },
 
     colorNpcList = {
@@ -629,6 +651,11 @@ end
 function BBP.HideNPCs(frame)
     if not frame or not frame.displayedUnit then return end
     frame:Show()
+
+    if BetterBlizzPlatesDB.hideNPCArenaOnly and not UnitInBattleground("player") then
+        return
+    end
+    
     -- Skip if the unit is a player
     if UnitIsPlayer(frame.displayedUnit) then return end
 
@@ -638,29 +665,53 @@ function BBP.HideNPCs(frame)
     local npcID = select(6, strsplit("-", unitGUID))
     local npcName = UnitName(frame.displayedUnit)
 
-    -- Convert npcName to lowercase for case insensitive comparison
+    -- Convert npcName to lowercase for case-insensitive comparison
     local lowerCaseNpcName = strlower(npcName)
 
-    -- Check if the NPC is in the list by ID or name (case insensitive)
-    local inList = false
-    for _, npc in ipairs(BetterBlizzPlatesDB.hideNPCsList) do
-        if npc.id == tonumber(npcID) or (npc.id and npc.id == tonumber(npcID)) then
-            inList = true
-            break
-        elseif npc.name == tostring(npcName) or strlower(npc.name) == lowerCaseNpcName then
-            inList = true
-            break
+    if BetterBlizzPlatesDB.hideNPCWhitelistOn then
+        -- Check if the NPC is in the whitelist by ID or name (case-insensitive)
+        local inWhitelist = false
+        for _, npc in ipairs(BetterBlizzPlatesDB.hideNPCsWhitelist) do
+            if npc.id == tonumber(npcID) or (npc.id and npc.id == tonumber(npcID)) then
+                inWhitelist = true
+                break
+            elseif npc.name == tostring(npcName) or strlower(npc.name) == lowerCaseNpcName then
+                inWhitelist = true
+                break
+            end
+        end
+
+        -- Show the frame only if the NPC is in the whitelist or is the current target
+        if UnitIsUnit(frame.displayedUnit, "target") or inWhitelist then
+            frame:Show()
+        else
+            frame:Hide()
+        end
+    else
+        -- Check if the NPC is in the blacklist by ID or name (case-insensitive)
+        local inList = false
+        for _, npc in ipairs(BetterBlizzPlatesDB.hideNPCsList) do
+            if npc.id == tonumber(npcID) or (npc.id and npc.id == tonumber(npcID)) then
+                inList = true
+                break
+            elseif npc.name == tostring(npcName) or strlower(npc.name) == lowerCaseNpcName then
+                inList = true
+                break
+            end
+        end
+
+        -- Check if the unit is the current target and show accordingly
+        if UnitIsUnit(frame.displayedUnit, "target") then
+            frame:Show()
+        elseif inList then
+            frame:Hide()
+        else
+            frame:Show()
         end
     end
-    -- Check if the unit is the current target
-    if UnitIsUnit(frame.displayedUnit, "target") then
-        frame:Show()
-    elseif inList then
-        frame:Hide()
-    else
-        frame:Show()
-    end
 end
+
+
 
 
 

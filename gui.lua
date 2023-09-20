@@ -1780,8 +1780,7 @@ function BBP.InitializeOptions()
 
 
 
-
-        createScrollFrame(BetterBlizzPlatesSubPanel3, "hideNPCsList", BetterBlizzPlatesDB.hideNPCsList, BBP.RefreshAllNameplates, false)
+        
 
 
         local how2useHide = BetterBlizzPlatesSubPanel3:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1794,12 +1793,54 @@ function BBP.InitializeOptions()
 
 
         -- Hide NPC list
-        checkBox_hideNPCs = BBP.CreateCheckbox("hideNPC", "Hide NPC nameplates from list", BetterBlizzPlatesSubPanel3, nil, BBP.HideNPCs)
+        checkBox_hideNPCs = BBP.CreateCheckbox("hideNPC", "Hide NPC nameplates", BetterBlizzPlatesSubPanel3, nil, BBP.HideNPCs)
         checkBox_hideNPCs:SetPoint("TOPLEFT", noteHide, "BOTTOMLEFT", 25, -15)
 
+        local hideNPCsListFrame = CreateFrame("Frame", nil, BetterBlizzPlatesSubPanel3)
+        hideNPCsListFrame:SetSize(322, 390)
+        hideNPCsListFrame:SetPoint("TOPLEFT", 10, -10)
 
+        local hideNPCsWhitelistFrame = CreateFrame("Frame", nil, BetterBlizzPlatesSubPanel3)
+        hideNPCsWhitelistFrame:SetSize(322, 390)
+        hideNPCsWhitelistFrame:SetPoint("TOPLEFT", 10, -10)
+        
+        local whitelistOnText = hideNPCsWhitelistFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        whitelistOnText:SetPoint("BOTTOM", hideNPCsWhitelistFrame, "TOP", 0, 0)
+        whitelistOnText:SetText("Whitelist ON")
 
+        -- Create the lists using the createScrollFrame function
+        createScrollFrame(hideNPCsListFrame, "hideNPCsList", BetterBlizzPlatesDB.hideNPCsList, BBP.RefreshAllNameplates, false)
+        createScrollFrame(hideNPCsWhitelistFrame, "hideNPCsWhitelist", BetterBlizzPlatesDB.hideNPCsWhitelist, BBP.RefreshAllNameplates, false)
 
+        -- Whitelist Hide NPC list
+        checkBox_hideNPCsWhitelist = BBP.CreateCheckbox("hideNPCWhitelistOn", "Whitelist mode", BetterBlizzPlatesSubPanel3, nil, BBP.HideNPCs)
+        checkBox_hideNPCsWhitelist:SetPoint("TOPLEFT", checkBox_hideNPCs, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+        BBP.CreateTooltip(checkBox_hideNPCsWhitelist, "Hides ALL NPC's except the ones in the whitelist", hideNPCWhitelistTooltip)
+
+        local function handleVisibility()
+            if isHideNPCsWhitelistChecked then
+                hideNPCsListFrame:Hide()
+                hideNPCsWhitelistFrame:Show()
+            else
+                hideNPCsListFrame:Show()
+                hideNPCsWhitelistFrame:Hide()
+            end
+        end
+        checkBox_hideNPCsWhitelist:HookScript("OnClick", function(_, btn, down)
+            isHideNPCsWhitelistChecked = checkBox_hideNPCsWhitelist:GetChecked()
+            handleVisibility()
+        end)
+        if BetterBlizzPlatesDB.hideNPCWhitelistOn then
+            hideNPCsListFrame:Hide()
+            hideNPCsWhitelistFrame:Show()
+        else
+            hideNPCsListFrame:Show()
+            hideNPCsWhitelistFrame:Hide()
+        end
+
+        -- Only hide npcs in arena
+        checkBox_hideNPCsArena = BBP.CreateCheckbox("hideNPCArenaOnly", "Only hide NPCs in arena", BetterBlizzPlatesSubPanel3, nil, BBP.HideNPCs)
+        checkBox_hideNPCsArena:SetPoint("TOPLEFT", checkBox_hideNPCsWhitelist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
 
 
