@@ -117,7 +117,7 @@ local defaultSettings = {
     questIndicatorScale = 1,
     questIndicatorXPos = 0,
     questIndicatorYPos = 0,
-    questIndicatorAnchor = "CENTER",
+    questIndicatorAnchor = "LEFT",
     questIndicatorTestMode = false,
     -- Font and texture
     customFontSize = 12,
