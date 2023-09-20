@@ -527,6 +527,7 @@ function BBP.EnableAllActiveFeatureTestModes(option, value)
         "petIndicator",
         "targetIndicator",
         "totemIndicator",
+        "questIndicator",
     }
     
     -- Iterate over all features and update their test modes
@@ -1149,11 +1150,13 @@ end)
 local First = CreateFrame("Frame")
 First:RegisterEvent("ADDON_LOADED")
 First:SetScript("OnEvent", function(...)
+    -- Move this, addon_loaded event runs on all kind of shit like opening blizz ui bs.
     BetterBlizzPlatesDB.absorbIndicatorTestMode = false
     BetterBlizzPlatesDB.petIndicatorTestMode = false
     BetterBlizzPlatesDB.healerIndicatorTestMode = false
     BetterBlizzPlatesDB.arenaIndicatorTestMode = false
     BetterBlizzPlatesDB.totemIndicatorTestMode = false
+    BetterBlizzPlatesDB.questIndicatorTestMode = false
     BetterBlizzPlatesDB.testAllEnabledExtraFeatures = false
     
     InitializeSavedVariables()
