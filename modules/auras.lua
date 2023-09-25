@@ -11,6 +11,28 @@ local function FetchSpellName(spellId)
     return spellName
 end
 
+function BBP.isInWhitelist(spellName, spellId)
+    for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
+        if entry.name and spellName and type(entry.name) == "string" and type(spellName) == "string" then
+            if string.lower(entry.name) == string.lower(spellName) or entry.id == spellId then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function BBP.isInBlacklist(spellName, spellId)
+    for _, entry in pairs(BetterBlizzPlatesDB["auraBlacklist"]) do
+        if entry.name and spellName and type(entry.name) == "string" and type(spellName) == "string" then
+            if string.lower(entry.name) == string.lower(spellName) or entry.id == spellId then
+                return true
+            end
+        end
+    end
+    return false
+end
+
 function BBP.BBPShouldShowBuff(unit, aura, BlizzardShouldShow)
     local spellName = FetchSpellName(aura.spellId)
     local spellId = aura.spellId
@@ -18,28 +40,6 @@ function BBP.BBPShouldShowBuff(unit, aura, BlizzardShouldShow)
     local expirationTime = aura.expirationTime
     local caster = aura.sourceUnit
     local isPurgeable = aura.isStealable
-
-    function BBP.isInWhitelist(spellName, spellId)
-        for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
-            if entry.name and spellName and type(entry.name) == "string" and type(spellName) == "string" then
-                if string.lower(entry.name) == string.lower(spellName) or entry.id == spellId then
-                    return true
-                end
-            end
-        end
-        return false
-    end
-    
-    function BBP.isInBlacklist(spellName, spellId)
-        for _, entry in pairs(BetterBlizzPlatesDB["auraBlacklist"]) do
-            if entry.name and spellName and type(entry.name) == "string" and type(spellName) == "string" then
-                if string.lower(entry.name) == string.lower(spellName) or entry.id == spellId then
-                    return true
-                end
-            end
-        end
-        return false
-    end
 
     -- PLAYER
     if UnitIsUnit(unit, "player") then
@@ -58,7 +58,7 @@ function BBP.BBPShouldShowBuff(unit, aura, BlizzardShouldShow)
         -- Debuffs
         if BetterBlizzPlatesDB["personalNpdeBuffEnable"] and aura.isHarmful then
             local filterAll = BetterBlizzPlatesDB["personalNpdeBuffFilterAll"]
-            local filterWatchlist = BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"] and BBP.isInWhitelist(spellName, spellId) --DctAura = whitelist
+            local filterWatchlist = BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"] and BBP.isInWhitelist(spellName, spellId)
             local filterLessMinite = BetterBlizzPlatesDB["personalNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0) 
             if filterAll or filterWatchlist then 
                 if filterLessMinite then return end
@@ -150,7 +150,6 @@ function BBP.OnUnitAuraUpdateRSV(self, unit, unitAuraUpdateInfo)
 		auraSettings.showPersonalCooldowns = self.showPersonalCooldowns;
 	else
 		if hostileUnit then
-			-- Reaction 4 is neutral and less than 4 becomes increasingly more hostile
 			auraSettings.harmful = true;
 			auraSettings.includeNameplateOnly = true;
 		else
@@ -324,7 +323,7 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
         -- Red glow on whitelisted buffs
         if BetterBlizzPlatesDB.otherNpBuffEmphasisedBorder then
             if not isPlayerUnit and isEnemyUnit then
-                if aura.isHelpful and BBP.isInWhitelist(spellName, spellId) then --change to emphasis later
+                if aura.isHelpful and BBP.isInWhitelist(spellName, spellId) then
                     -- If extra glow for purge
                     if not buff.buffBorderEmphasis then
                         buff.buffBorderEmphasis = buff:CreateTexture(nil, "OVERLAY");
@@ -336,7 +335,6 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
                         buff.buffBorderEmphasis:SetAtlas("newplayertutorial-drag-slotgreen");
                         buff.buffBorderEmphasis:SetDesaturated(true)
                         buff.buffBorderEmphasis:SetVertexColor(1, 0, 0)
-                        --buff.buffBorderPurge:SetBlendMode("ADD")
                     end
                     if buff.buffBorderPurge then
                         buff.buffBorderPurge:Hide()
