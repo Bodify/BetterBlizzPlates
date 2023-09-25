@@ -3,16 +3,17 @@ BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
 BBP = BBP or {}
 
 -- My first addon, a lot could be done better but its a start for now
+-- Things are getting more messy need a lot of cleaning lol
 
-local addonVersion = "1.00" --
-local addonUpdates = "yepp"
+local addonVersion = "1.00"
+local addonUpdates = "1.1 update"
 local db = BetterBlizzPlatesDB
 local customFont = "Interface\\AddOns\\BetterBlizzPlates\\media\\YanoneKaffeesatz-Medium.ttf"
 local customTexture = "Interface\\AddOns\\BetterBlizzPlates\\media\\UI-TargetingFrame-BarFill.tga"
 
 local defaultSettings = {
     version = addonVersion,
-    updates = addonUpdates,
+    updates = "empty",
     wasOnLoadingScreen = false,
     -- General
     removeRealmNames = true,
@@ -125,6 +126,83 @@ local defaultSettings = {
     customFontSize = 12,
     useCustomFont = false,
     useCustomTextureForBars = false,
+    -- Castbar
+    enableCastbarCustomization = false,
+    enableCastbarEmphasis = false,
+    castBarEmphasisOnlyInterruptable = false,
+    castBarEmphasisColor = false,
+    castBarEmphasisIcon = false,
+    castBarEmphasisText = false,
+    castBarEmphasisHeight = false,
+    castBarEmphasisIconScale = 2,
+    castBarEmphasisTextScale = 2,
+    castBarEmphasisHeightValue = 24,
+    castBarDragonflightShield = true,
+    castBarShieldAnchor = "LEFT",
+    castBarShieldXPos = 0,
+    castBarShieldYPos = 0,
+    castBarShieldScale = 1,
+    castBarIconScale = 1,
+    castBarIconAnchor = "LEFT",
+    castBarIconXPos = 0,
+    castBarIconYPos = 0,
+    castBarTextScale = 1,
+    castBarHeight = 18.8,
+
+
+
+    -- Nameplate aura settings
+    enableNameplateAuraCustomisation = false,
+    maxAurasOnNameplate = 12,
+    nameplateAurasYPos = 0,
+    nameplateAurasXPos = 0,
+    personalNpBuffEnable = true,
+    personalNpdeBuffEnable = false,
+
+    personalNpBuffFilterAll = false,
+    personalNpBuffFilterBlizzard = true,
+    personalNpBuffFilterWatchList = true,
+    personalNpBuffFilterLessMinite = false,
+
+    personalNpdeBuffFilterAll = false,
+    personalNpdeBuffFilterWatchList = true,
+    personalNpdeBuffFilterLessMinite = false,
+
+
+    otherNpBuffEnable = false,
+    otherNpdeBuffEnable = true,
+
+    otherNpBuffFilterAll = false,
+    otherNpBuffFilterWatchList = true,
+    otherNpBuffFilterLessMinite = false,
+
+    otherNpdeBuffFilterAll = false,
+    otherNpdeBuffFilterBlizzard = true,
+    otherNpdeBuffFilterWatchList = true,
+    otherNpdeBuffFilterLessMinite = false,
+    otherNpdeBuffFilterOnlyMe = false,
+
+    otherNpBuffPurgeGlow = false,
+    otherNpBuffBlueBorder = false,
+    otherNpBuffEmphasisedBorder = false,
+
+
+    friendlyNpBuffEnable = false,
+    friendlyNpdeBuffEnable = false,
+
+    friendlyNpBuffFilterAll = false,
+    friendlyNpBuffFilterWatchList = false,
+    friendlyNpBuffFilterLessMinite = false,
+
+    friendlyNpdeBuffFilterAll = false,
+    friendlyNpdeBuffFilterBlizzard = false,
+    friendlyNpdeBuffFilterWatchList = false,
+    friendlyNpdeBuffFilterLessMinite = false,
+    friendlyNpdeBuffFilterOnlyMe = false,
+
+    friendlyNpBuffPurgeGlow = false,
+    friendlyNpBuffBlueBorder = false,
+    friendlyNpBuffEmphasisedBorder = false,
 
 
     testAllEnabledExtraFeatures = false,
@@ -188,6 +266,24 @@ local defaultSettings = {
     colorNpcList = {
     },
     
+    auraWhitelist = {
+    },
+    auraBlacklist = {
+    },
+
+    castEmphasisList = {
+        {name = "Cyclone"},
+        {name = "Polymorph"},
+        {name = "Sleep Walk"},
+        {name = "Fear"},
+        {name = "Repentance"},
+        {name = "Hex"},
+        {name = "Ring of Frost"},
+        {name = "Mass Polymorph"},
+        {name = "Shadowfury"},
+        {name = "Haymaker"},
+        {name = "Lightning Lasso"},
+    },
 
     --Extra Blizzard settings
     nameplateOverlapH = 0.8,
@@ -249,18 +345,17 @@ local function FetchAndSaveValuesOnFirstLogin()
     BetterBlizzPlatesDB.nameplatePlayerLargerScale = GetCVar("nameplatePlayerLargerScale")
     BetterBlizzPlatesDB.nameplateShowEnemyMinus = GetCVar("nameplateShowEnemyMinus")
 
-    BetterBlizzPlatesDB.hasSaved = true
-
     C_Timer.After(5, function()
         BetterBlizzPlatesDB.nameplateEnemyWidth, BetterBlizzPlatesDB.nameplateEnemyHeight = C_NamePlate.GetNamePlateEnemySize()
         BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = C_NamePlate.GetNamePlateFriendlySize()
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates first run. Thank you for trying out my AddOn. Access settings with /bbp")
+        BetterBlizzPlatesDB.hasSaved = true
     end)
 end
 
 -- Define the popup window
 StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
-    text = "Leave combat to adjust settings.",
+    text = "Leave combat to adjust this setting.",
     button1 = "Okay",
     timeout = 0,
     whileDead = true,
@@ -273,13 +368,18 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 
 local function SendUpdateMessage()
     C_Timer.After(7, function()
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates updates: Added Quest Indicator, Color NPC and Hide NPC Whitelist mode. Access settings with /bbp")
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates updates:")
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAdded castbar settings, cast emphasis etc. Added nameplate aura settings, add filters and buffs etc. Bugfix for PvE content (i dont pve, no more errors sry lol). More stuff inc soonTM.")
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAccess settings with /bbp")
     end)
 end
 
 local function CheckForUpdate()
     local db = BetterBlizzPlatesDB
-    if db.updates and db.updates ~= addonUpdates then
+    if not db.hasSaved then
+        return
+    end
+    if not db.updates or db.updates ~= addonUpdates then
         SendUpdateMessage()
         -- Update the stored version to the current version
         db.updates = addonUpdates
@@ -360,7 +460,6 @@ function BBP.ApplyNameplateWidth()
     end
 end
 
-
 --#################################################################################################
 --  Remove realm names
 function BBP.RemoveRealmName(frame)
@@ -414,33 +513,16 @@ end
 
 --#################################################################################################
 function BBP.SetFontBasedOnOption(namePlateObj, specifiedSize, forcedOutline)
-    local currentSize = specifiedSize or select(2, namePlateObj:GetFont())
     local font, outline
 
     if BetterBlizzPlatesDB.useCustomFont then
         font = customFont
         outline = forcedOutline or "THINOUTLINE"
-        if namePlateObj == SystemFont_LargeNamePlate then
-            currentSize = BetterBlizzPlatesDB.defaultLargeFontSize
-        elseif namePlateObj == SystemFont_NamePlate then
-            currentSize = BetterBlizzPlatesDB.defaultFontSize
-        end
-        currentSize = currentSize + 3
+        currentSize = specifiedSize or (BetterBlizzPlatesDB.defaultFontSize + 3)
     else
-        if namePlateObj == SystemFont_LargeNamePlate then
-            font = BetterBlizzPlatesDB.defaultLargeNamePlateFont
-            currentSize = BetterBlizzPlatesDB.defaultLargeFontSize
-            outline = BetterBlizzPlatesDB.defaultLargeNamePlateFontFlags
-        elseif namePlateObj == SystemFont_NamePlate then
-            font = BetterBlizzPlatesDB.defaultNamePlateFont
-            currentSize = BetterBlizzPlatesDB.defaultFontSize
-            outline = BetterBlizzPlatesDB.defaultNamePlateFontFlags
-        else
-            -- Default case to handle other namePlateObj objects
-            font = BetterBlizzPlatesDB.defaultNamePlateFont
-            outline = forcedOutline or "OUTLINE"
-            currentSize = specifiedSize or 10
-        end
+        font = BetterBlizzPlatesDB.defaultNamePlateFont
+        outline = forcedOutline or BetterBlizzPlatesDB.defaultNamePlateFontFlags
+        currentSize = specifiedSize or BetterBlizzPlatesDB.defaultFontSize
     end
     
     namePlateObj:SetFont(font, currentSize, outline)
@@ -538,6 +620,7 @@ function BBP.ClassColorAndScaleNames(frame)
     frame.name:SetScale(scale)
 end
 
+
 --#################################################################################################
 -- test all active functions
 function BBP.EnableAllActiveFeatureTestModes(option, value)
@@ -627,6 +710,14 @@ function BBP.ResetToDefaultScales(slider, targetType)
     end
 end
 
+
+function BBP.ResetToDefaultHeight(slider)
+    if BBP.isLargeNameplatesEnabled() then
+        slider:SetValue(18.8)
+    else
+        slider:SetValue(8)
+    end
+end
 
 function BBP.ToggleAndPrintCVAR(cvarName)
     local currentValue = GetCVar(cvarName)
@@ -830,6 +921,129 @@ function BBP.ChangeRaidmarker()
     end
 end
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function BBP.RunAuraModule()
+
+    function BBP.On_Np_Add(unitToken)
+        local namePlateFrameBase = C_NamePlate.GetNamePlateForUnit(unitToken, false)
+        if namePlateFrameBase then
+            local unitFrame = namePlateFrameBase.UnitFrame
+            unitFrame.healthBar.AuraR, unitFrame.healthBar.AuraG, unitFrame.healthBar.AuraB = nil, nil, nil
+            BBP.On_NpRefreshOnce(unitFrame, namePlateFrameBase)
+            BBP.CreateUIObj(unitFrame, namePlateFrameBase)
+        end
+    end
+
+    function BBP.CreateUIObj(unitFrame, namePlate)
+
+        local unit = unitFrame.unit
+        if not unit then return end
+        if unitFrame.MouseoverFrame then
+            unitFrame.MouseoverFrame.unit = unit
+        end
+
+        if not unitFrame.rsed then
+
+            hooksecurefunc(unitFrame, "Show", function(self)
+                if self.IsForbidden and self:IsForbidden() then return end
+                if self.hasShownAsName and not UnitIsUnit(self.unit, "player") then 
+                    securecallfunction(self.Hide, self)
+                end
+                
+                if self.shouldHide then
+                    securecallfunction(self.Hide, self)
+                end
+            end)
+
+            unitFrame.BuffFrame.UpdateAnchor = BBP.UpdateAnchor
+            --unitFrame.BuffFrame.UpdateBuffs = BBP.UpdateBuffsRSV
+            unitFrame.BuffFrame.UpdateBuffs = function() return end
+            
+            --unitFrame.BuffFrame.UpdateBuffs = BBP.UpdateBuffsRSV --not enabled in rsplates
+
+            unitFrame.rsed = true
+        end
+    end
+
+    function BBP.On_NpRefreshOnce(unitFrame, namePlateFrameBase)
+        if unitFrame:IsForbidden() then return end
+        BBP.RefUnitAuraTotally(unitFrame)
+    end
+
+    function BBP.RefUnitAuraTotally(unitFrame)
+        local unit = unitFrame.unit
+        BBP.UpdateBuffsRSV(unitFrame.BuffFrame, unit, nil, {}, unitFrame)
+    end
+
+    local function UIObj_Event(self, event, ...)
+        if event == "NAME_PLATE_UNIT_ADDED" then
+            local unit = ...
+            BBP.On_Np_Add(unit)
+        elseif event == "UNIT_AURA" then
+            local unit, unitAuraUpdateInfo = ...
+            if string.match(unit, "nameplate") then 
+                local npbase = C_NamePlate.GetNamePlateForUnit(unit, false)
+                if npbase then
+                    BBP.OnUnitAuraUpdateRSV(npbase.UnitFrame.BuffFrame, unit, unitAuraUpdateInfo)
+                end
+            end
+        end
+    end
+
+
+    local UIObjectDriveFrame = CreateFrame("Frame", "RS_Plates", UIParent)
+    UIObjectDriveFrame:SetScript("OnEvent", UIObj_Event)
+    UIObjectDriveFrame:RegisterEvent("UNIT_AURA")
+    UIObjectDriveFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+
+    --function BBP.HookBlizzedFunc()
+        hooksecurefunc(NamePlateDriverFrame, "UpdateNamePlateOptions", function()
+            for k, namePlate in pairs(C_NamePlate.GetNamePlates(false)) do
+                BBP.On_NpRefreshOnce(namePlate.UnitFrame)
+            end
+        end)
+
+        -- Unit Faction
+        hooksecurefunc(NamePlateDriverFrame, "OnUnitFactionChanged", function(self,unit)
+            if not string.match(unit, "nameplate") then return end
+            local npbase = C_NamePlate.GetNamePlateForUnit(unit, false)
+            if npbase then
+                BBP.On_NpRefreshOnce(npbase.UnitFrame)
+            end
+        end)
+
+
+        
+    --end
+
+
+end
+
+
+
+
+
+
+
+
+
+
 --#################################################################################################
 --#################################################################################################
 --#################################################################################################
@@ -914,12 +1128,17 @@ local function HandleNamePlateAdded(unit)
     if not nameplate or not nameplate.UnitFrame then return end
     local frame = nameplate.UnitFrame
     if frame:IsForbidden() then return end
+    local unitFrame = nameplate.UnitFrame
 
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
 
+    -- Castbar customization
+    if BetterBlizzPlatesDB.enableCastbarCustomization then
+        BBP.CustomizeCastbar(unit)
+    end
     -- Show Quest Indicator
-    if BetterBlizzPlatesDB.questIndicator then
+    if BetterBlizzPlatesDB.questIndicator or BetterBlizzPlatesDB.questIndicatorTestMode then
         BBP.QuestIndicator(frame)
     end
 
@@ -927,7 +1146,7 @@ local function HandleNamePlateAdded(unit)
     if BetterBlizzPlatesDB.targetIndicator then
         BBP.TargetIndicator(frame)
     end
-    
+
     -- Show absorb amount
     if BetterBlizzPlatesDB.absorbIndicator or BetterBlizzPlatesDB.absorbIndicatorTestMode then
         BBP.AbsorbIndicator(frame)
@@ -1008,67 +1227,86 @@ end)
 --#################################################################################################
 --Update all nameplates
 function BBP.RefreshAllNameplates()
-    if not BBP.checkCombatAndWarn() then
-        for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
-            local frame = nameplate.UnitFrame
-            BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, BetterBlizzPlatesDB.defaultLargeFontSize)
-            BBP.SetFontBasedOnOption(SystemFont_NamePlate, BetterBlizzPlatesDB.defaultFontSize) 
-            if frame.TargetText then
-                BBP.SetFontBasedOnOption(nameplate.TargetText, 12)
-            end
-            if frame.absorbIndicator then
-                BBP.SetFontBasedOnOption(nameplate.UnitFrame.absorbIndicator, 10)
-            end
-            if frame.CastTimer then
-                BBP.SetFontBasedOnOption(nameplate.UnitFrame.CastTimer, 11)
-            end
-            if frame.executeIndicator then
-                BBP.SetFontBasedOnOption(frame.executeIndicator, 8, "THICKOUTLINE")
-            end
-            if frame.arenaNumberText then
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
-            end
-            if frame.specNameText then
-                BBP.SetFontBasedOnOption(frame.specNameText, BetterBlizzPlatesDB.defaultFontSize)
-            end
+    if BetterBlizzPlatesDB.wasOnLoadingScreen then return end
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        local unitFrame = nameplate.UnitFrame
+        if not frame or frame:IsForbidden() then return end
+        local unitToken = frame.unit
 
-            -- Reset nameplate scale after testing totems
-            if not BetterBlizzPlatesDB.totemIndicatorTestMode then
-                if frame then
-                    frame:SetScale(1)
-                end
+        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, BetterBlizzPlatesDB.defaultLargeFontSize)
+        BBP.SetFontBasedOnOption(SystemFont_NamePlate, BetterBlizzPlatesDB.defaultFontSize)
+        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, BetterBlizzPlatesDB.defaultLargeFontSize)
+        BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, BetterBlizzPlatesDB.defaultFontSize)
+
+        if BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
+            BBP.RefUnitAuraTotally(unitFrame)
+        end
+
+        if BetterBlizzPlatesDB.enableCastbarCustomization then
+            BBP.CustomizeCastbar(unitToken)
+        end
+
+        if frame.TargetText then
+            BBP.SetFontBasedOnOption(nameplate.TargetText, 12)
+        end
+        if frame.absorbIndicator then
+            BBP.SetFontBasedOnOption(nameplate.UnitFrame.absorbIndicator, 10)
+        end
+        if frame.CastTimer then
+            BBP.SetFontBasedOnOption(nameplate.UnitFrame.CastTimer, 11)
+        end
+        if frame.executeIndicator then
+            BBP.SetFontBasedOnOption(frame.executeIndicator, 8, "THICKOUTLINE")
+        end
+        if frame.arenaNumberText then
+            BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
+        end
+        if frame.specNameText then
+            BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
+        end
+
+        if namePlateFrameBase then
+            --BBP.On_NpRefreshOnce(unitFrame, namePlateFrameBase) --this line errors
+        end
+
+        -- Reset nameplate scale after testing totems
+        if not BetterBlizzPlatesDB.totemIndicatorTestMode then
+            if frame then
+                frame:SetScale(1)
             end
-            -- Always update the name
-            BBP.RestoreOriginalNameplateColors(frame)
-            CompactUnitFrame_UpdateName(frame)
-            HandleNamePlateAdded(frame.unit)
-            if not BetterBlizzPlatesDB.fadeOutNPC then
-                frame:SetAlpha(1)
-            end
-            if not BetterBlizzPlatesDB.hideNPC then
-                if frame then
-                    frame:Show()
-                end
+        end
+        -- Always update the name
+        BBP.RestoreOriginalNameplateColors(frame)
+        CompactUnitFrame_UpdateName(frame)
+        HandleNamePlateAdded(frame.unit)
+        if not BetterBlizzPlatesDB.fadeOutNPC then
+            frame:SetAlpha(1)
+        end
+        if not BetterBlizzPlatesDB.hideNPC then
+            if frame then
+                frame:Show()
             end
         end
     end
 end
 
 function BBP.RefreshAllNameplatesLightVer()
-    if not BBP.checkCombatAndWarn() then
+    --if not BBP.checkCombatAndWarn() then
         for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
             local frame = nameplate.UnitFrame
             --BBP.RestoreOriginalNameplateColors(frame)
             --CompactUnitFrame_UpdateName(frame)
-            HandleNamePlateAdded(frame.unit)
+            --HandleNamePlateAdded(frame.unit)
+            BBP.ArenaIndicatorCaller(frame, BetterBlizzPlatesDB)
         end
-    end
+    --end
 end
 
 --#################################################################################################
 -- Nameplate updater etc
 local function ConsolidatedUpdateName(frame)
-    -- Remove realm names if applicable
+    if not frame or frame:IsForbidden() then return end
     if BetterBlizzPlatesDB.removeRealmNames then
         BBP.RemoveRealmName(frame)
     end
@@ -1078,7 +1316,7 @@ local function ConsolidatedUpdateName(frame)
 
     -- Class color and scale names depending on their reaction
     BBP.ClassColorAndScaleNames(frame)
-    
+
     -- Use arena numbers
     if not BetterBlizzPlatesDB.arenaIndicatorModeOff or not BetterBlizzPlatesDB.partyIndicatorModeOff or BetterBlizzPlatesDB.arenaIndicatorTestMode then
         BBP.ArenaIndicatorCaller(frame, BetterBlizzPlatesDB)
@@ -1135,11 +1373,27 @@ local Frame = CreateFrame("Frame")
 Frame:RegisterEvent("PLAYER_LOGIN")
 --Frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 Frame:SetScript("OnEvent", function(...)
+
     CheckForUpdate()
+
+    if BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
+        BBP.RunAuraModule()
+    end
+
+    if BetterBlizzPlatesDB.enableCastbarCustomization then
+        BBP.CustomCastbarHook()
+    end
+
+
     BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, BetterBlizzPlatesDB.defaultLargeFontSize)
-    BBP.SetFontBasedOnOption(SystemFont_NamePlate, BetterBlizzPlatesDB.defaultFontSize)    
+    BBP.SetFontBasedOnOption(SystemFont_NamePlate, BetterBlizzPlatesDB.defaultFontSize) 
+    BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, BetterBlizzPlatesDB.defaultLargeFontSize)
+    BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, BetterBlizzPlatesDB.defaultFontSize)    
+
     BBP.ApplyNameplateWidth()
+
     SetCVarsOnLogin()
+
     -- This needs to be delayed to work
     C_Timer.After(3, function()  -- wait for 3 seconds
         BBP.SetCustomBarTextureToggle(BetterBlizzPlatesDB.useCustomTextureForBars)
@@ -1171,17 +1425,20 @@ end)
 -- Event registration for PLAYER_LOGIN
 local First = CreateFrame("Frame")
 First:RegisterEvent("ADDON_LOADED")
-First:SetScript("OnEvent", function(...)
-    -- Move this, addon_loaded event runs on all kind of shit like opening blizz ui bs.
-    BetterBlizzPlatesDB.absorbIndicatorTestMode = false
-    BetterBlizzPlatesDB.petIndicatorTestMode = false
-    BetterBlizzPlatesDB.healerIndicatorTestMode = false
-    BetterBlizzPlatesDB.arenaIndicatorTestMode = false
-    BetterBlizzPlatesDB.totemIndicatorTestMode = false
-    BetterBlizzPlatesDB.questIndicatorTestMode = false
-    BetterBlizzPlatesDB.testAllEnabledExtraFeatures = false
-    
-    InitializeSavedVariables()
-    FetchAndSaveValuesOnFirstLogin()
-    BBP.InitializeOptions()
+First:SetScript("OnEvent", function(_, event, addonName)
+    if event == "ADDON_LOADED" and addonName then
+        if addonName == "BetterBlizzPlates" then
+            BetterBlizzPlatesDB.absorbIndicatorTestMode = false
+            BetterBlizzPlatesDB.petIndicatorTestMode = false
+            BetterBlizzPlatesDB.healerIndicatorTestMode = false
+            BetterBlizzPlatesDB.arenaIndicatorTestMode = false
+            BetterBlizzPlatesDB.totemIndicatorTestMode = false
+            BetterBlizzPlatesDB.questIndicatorTestMode = false
+            BetterBlizzPlatesDB.testAllEnabledExtraFeatures = false
+            
+            InitializeSavedVariables()
+            FetchAndSaveValuesOnFirstLogin()
+            BBP.InitializeOptions()
+        end
+    end
 end)

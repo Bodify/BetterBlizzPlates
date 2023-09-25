@@ -14,5 +14,6 @@ modules\healer.lua
 modules\absorb.lua
 modules\pet.lua
 modules\quest.lua
+modules\auras.lua
 gui.lua
 BetterBlizzPlates.lua

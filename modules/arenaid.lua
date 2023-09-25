@@ -44,7 +44,7 @@ function BBP.ArenaIndicator1(frame)
 
                 if not frame.arenaNumberText then 
                     frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                    BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
+                    BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
 
                 frame.name:SetText("")
@@ -71,7 +71,7 @@ function BBP.ArenaIndicator2(frame)
 
                 if not frame.arenaNumberText then 
                     frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                    BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
+                    BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
 
                 frame.arenaNumberText:SetText(i)
@@ -104,7 +104,7 @@ function BBP.ArenaIndicator3(frame)
 
                 if not frame.specNameText then
                     frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                    BBP.SetFontBasedOnOption(frame.specNameText, BetterBlizzPlatesDB.defaultFontSize)
+                    BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
                 end
 
                 frame.name:SetText("")
@@ -134,12 +134,12 @@ function BBP.ArenaIndicator4(frame)
 
                 if not frame.specNameText then
                     frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                    BBP.SetFontBasedOnOption(frame.specNameText, BetterBlizzPlatesDB.defaultFontSize)
+                    BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
                 end
 
                 if not frame.arenaNumberText then 
                     frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                    BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
+                    BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
 
                 frame.name:SetText("")
@@ -177,7 +177,7 @@ function BBP.ArenaIndicator5(frame)
                 
                 if not frame.specNameText then
                     frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                    BBP.SetFontBasedOnOption(frame.specNameText, BetterBlizzPlatesDB.defaultFontSize)
+                    BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
                 end
 
                 frame.name:SetText("")
@@ -205,7 +205,7 @@ function BBP.PartyIndicator1(frame)
 
                 if not frame.arenaNumberText then 
                     frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                    BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
+                    BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
 
                 frame.name:SetText("")
@@ -228,7 +228,7 @@ function BBP.PartyIndicator2(frame)
 
                 if not frame.arenaNumberText then 
                     frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                    BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
+                    BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
 
                 frame.arenaNumberText:SetText(i)
@@ -262,7 +262,7 @@ function BBP.PartyIndicator3(frame)
 
                 if not frame.specNameText then
                     frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                    BBP.SetFontBasedOnOption(frame.specNameText, BetterBlizzPlatesDB.defaultFontSize)
+                    BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
                 end
 
                 frame.name:SetText("")
@@ -297,12 +297,12 @@ function BBP.PartyIndicator4(frame)
 
                 if not frame.specNameText then
                     frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                    BBP.SetFontBasedOnOption(frame.specNameText, BetterBlizzPlatesDB.defaultFontSize)
+                    BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
                 end
 
                 if not frame.arenaNumberText then 
                     frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                    BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
+                    BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
 
                 frame.name:SetText("")
@@ -341,7 +341,7 @@ function BBP.PartyIndicator5(frame)
                 
                 if not frame.specNameText then
                     frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                    BBP.SetFontBasedOnOption(frame.specNameText, BetterBlizzPlatesDB.defaultFontSize)
+                    BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
                 end
 
                 frame.name:SetText("")
@@ -368,7 +368,7 @@ function BBP.TestArenaIndicator0(frame)
 
             if not frame.arenaNumberText then 
                 frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
+                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
             frame.name:SetText("")
@@ -388,7 +388,7 @@ function BBP.TestArenaIndicator1(frame)
 
             if not frame.arenaNumberText then 
                 frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
+                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
             frame.name:SetText("")
@@ -413,7 +413,7 @@ function BBP.TestArenaIndicator2(frame)
 
             if not frame.arenaNumberText then 
                 frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
+                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
             frame.arenaNumberText:SetText("1")
@@ -437,7 +437,7 @@ function BBP.TestArenaIndicator3(frame)
 
             if not frame.specNameText then
                 frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                BBP.SetFontBasedOnOption(frame.specNameText, BetterBlizzPlatesDB.defaultFontSize)
+                BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
             end
 
             frame.name:SetText("")
@@ -458,12 +458,12 @@ function BBP.TestArenaIndicator4(frame)
 
             if not frame.specNameText then
                 frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                BBP.SetFontBasedOnOption(frame.specNameText, BetterBlizzPlatesDB.defaultFontSize)
+                BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
             end
 
             if not frame.arenaNumberText then 
                 frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
+                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
             frame.name:SetText("")
@@ -492,7 +492,7 @@ function BBP.TestArenaIndicator5(frame)
 
             if not frame.specNameText then
                 frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                BBP.SetFontBasedOnOption(frame.specNameText, BetterBlizzPlatesDB.defaultFontSize)
+                BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
             end
 
             frame.name:SetText("")
@@ -514,7 +514,7 @@ function BBP.TestPartyIndicator0(frame)
 
             if not frame.arenaNumberText then 
                 frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
+                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
             frame.name:SetText("")
@@ -535,7 +535,7 @@ function BBP.TestPartyIndicator1(frame)
 
             if not frame.arenaNumberText then 
                 frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
+                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
             frame.name:SetText("")
@@ -557,7 +557,7 @@ function BBP.TestPartyIndicator2(frame)
 
             if not frame.arenaNumberText then 
                 frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
+                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
             frame.arenaNumberText:SetText("2")
@@ -577,7 +577,7 @@ function BBP.TestPartyIndicator3(frame)
 
             if not frame.specNameText then
                 frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                BBP.SetFontBasedOnOption(frame.specNameText, BetterBlizzPlatesDB.defaultFontSize)
+                BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
             end
 
             frame.name:SetText("")
@@ -598,12 +598,12 @@ function BBP.TestPartyIndicator4(frame)
 
             if not frame.specNameText then
                 frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                BBP.SetFontBasedOnOption(frame.specNameText, BetterBlizzPlatesDB.defaultFontSize)
+                BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
             end
 
             if not frame.arenaNumberText then 
                 frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, BetterBlizzPlatesDB.defaultFontSize)
+                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
             frame.name:SetText("")
@@ -628,7 +628,7 @@ function BBP.TestPartyIndicator5(frame)
             
             if not frame.specNameText then
                 frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-                BBP.SetFontBasedOnOption(frame.specNameText, BetterBlizzPlatesDB.defaultFontSize)
+                BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
             end
 
             frame.name:SetText("")
