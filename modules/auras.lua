@@ -17,6 +17,7 @@ function BBP.BBPShouldShowBuff(unit, aura, BlizzardShouldShow)
     local duration = aura.duration
     local expirationTime = aura.expirationTime
     local caster = aura.sourceUnit
+    local isPurgeable = aura.isStealable
 
     function BBP.isInWhitelist(spellName, spellId)
         for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
@@ -100,7 +101,8 @@ function BBP.BBPShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterAll = BetterBlizzPlatesDB["otherNpBuffFilterAll"]
             local filterWatchlist = BetterBlizzPlatesDB["otherNpBuffFilterWatchList"] and BBP.isInWhitelist(spellName, spellId)
             local filterLessMinite = BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0) 
-            if filterAll or filterWatchlist then
+            local filterPurgeable = BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] and isPurgeable
+            if filterAll or filterWatchlist or filterPurgeable then
                 if filterLessMinite then return end
                 if BBP.isInBlacklist(spellName, spellId) then return end
                 return true
