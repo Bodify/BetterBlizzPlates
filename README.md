@@ -7,13 +7,12 @@
 
 ## Features
 - Every setting to customize your Blizzard nameplates is easily available with a GUI. No more scripts!
-- Change name size
 - Change nameplate width
-- Change nameplate scale
-- Change raidmark position
+- Change nameplate size
+- Raidmark on top of nameplate
 - Class color names
 - Hide realm names
-- Hide and/or color individual nameplates
+- Hide specific nameplates
 - And much more; check screenshots for info
 
 ## New Additions
