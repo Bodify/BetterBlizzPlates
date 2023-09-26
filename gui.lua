@@ -6,6 +6,7 @@ local anchorPoints = {"CENTER", "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "RIGHT", "
 local targetIndicatorAnchorPoints = {"TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT"}
 local pixelsBetweenBoxes = 5
 local pixelsOnFirstBox = -1
+local borderBoxSize = 295, 163
 
 local tooltips = {
     ["5: Replace name with ID + spec"] = "Shows as for example \"2 Frost\"",
@@ -51,6 +52,16 @@ local function EnableCheckboxes(frame)
             child:Enable()
         end
     end
+end
+
+local function CreateBorderBox(anchor)
+    local contentFrame = anchor:GetParent()
+    local texture = contentFrame:CreateTexture(nil, "BACKGROUND")
+    texture:SetAtlas("UI-Frame-Neutral-PortraitWiderDisable")
+    texture:SetRotation(math.rad(90))
+    texture:SetSize(295, 163)
+    texture:SetPoint("CENTER", anchor, "CENTER", 0, -95)
+    return texture
 end
 
 function BBP.CreateModeDropdown(name, parent, defaultText, settingKey, toggleFunc, point, modes, tooltips, textLabel, textColor)
@@ -1175,9 +1186,24 @@ local function guiGeneralTab()
     targetIndicatorIcon:SetSize(19, 14)
     targetIndicatorIcon:SetPoint("RIGHT", checkBox_targetIndicator, "LEFT", -1, 0)
 
+    -- Focus Target indicator
+    local checkBox_focusTargetIndicator = BBP.CreateCheckbox("focusTargetIndicator", "Focus-target indicator", BetterBlizzPlates, nil, BBP.ToggleFocusTargetIndicator)
+    checkBox_focusTargetIndicator:SetPoint("TOPLEFT", checkBox_targetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local targetTooltip = {
+        path = "Interface\\AddOns\\BetterBlizzPlates\\media\\targetIndicator",
+        width = 256,
+        height = 32
+    }
+    BBP.CreateTooltip(checkBox_focusTargetIndicator, "Show a marker on the focus nameplate", targetTooltip)
+    local focusTargetIndicatorIcon = checkBox_healerIndicator:CreateTexture(nil, "ARTWORK")
+    focusTargetIndicatorIcon:SetAtlas("Navigation-Tracked-Arrow")
+    focusTargetIndicatorIcon:SetRotation(math.rad(180))
+    focusTargetIndicatorIcon:SetSize(19, 14)
+    focusTargetIndicatorIcon:SetPoint("RIGHT", checkBox_focusTargetIndicator, "LEFT", -1, 0)
+
     -- Totem indicator
     local checkBox_totemIndicator = BBP.CreateCheckbox("totemIndicator", "Totem indicator", BetterBlizzPlates)
-    checkBox_totemIndicator:SetPoint("TOPLEFT", checkBox_targetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    checkBox_totemIndicator:SetPoint("TOPLEFT", checkBox_focusTargetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     BBP.CreateTooltip(checkBox_totemIndicator, "Color and put icons on key npc and totem nameplates.\nImportant npcs and totems will be slightly larger and\nhave a glow around the icon")
     local totemsIcon = checkBox_totemIndicator:CreateTexture(nil, "ARTWORK")
     totemsIcon:SetAtlas("teleportationnetwork-ardenweald-32x32")
@@ -1371,6 +1397,14 @@ local function guiPositionAndScale()
     ------------------------------------------------------------------------------------------------
     -- Advanced settings
     ------------------------------------------------------------------------------------------------
+    local firstLineX = 53
+    local firstLineY = -65
+    local secondLineX = 222
+    local secondLineY = -360
+    local thirdLineX = 391
+    local thirdLineY = -660
+    local fourthLineX = 560
+
     -- ADVANCED SETTINGS PANEL
     local BetterBlizzPlatesSubPanel = CreateFrame("Frame")
     BetterBlizzPlatesSubPanel.name = "Advanced Settings"
@@ -1385,44 +1419,57 @@ local function guiPositionAndScale()
     bgTexture2:SetAlpha(0.4)
     bgTexture2:SetVertexColor(0,0,0)
     
+
+
+    local scrollFrame = CreateFrame("ScrollFrame", nil, BetterBlizzPlatesSubPanel, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetSize(700, 612)
+    scrollFrame:SetPoint("CENTER", BetterBlizzPlatesSubPanel, "CENTER", -20, 3)
+
+    -- Create the content frame
+    local contentFrame = CreateFrame("Frame", nil, scrollFrame)
+    contentFrame:SetSize(680, 520)
+    scrollFrame:SetScrollChild(contentFrame)
+
     -- Main GUI Anchor
-    local mainGuiAnchor2 = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    mainGuiAnchor2:SetPoint("TOPLEFT", 15, 20)
+    local mainGuiAnchor2 = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    mainGuiAnchor2:SetPoint("TOPLEFT", 55, 20)
     mainGuiAnchor2:SetText(" ")
 
     ------------------------------------------------------------------------------------------------
     -- Healer indicator
     ------------------------------------------------------------------------------------------------
     --Healer Indicator
-    local anchorSubHeal = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubHeal:SetPoint("TOPLEFT", mainGuiAnchor2, "CENTER", 10, -60)
+    local anchorSubHeal = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubHeal:SetPoint("CENTER", mainGuiAnchor2, "CENTER", firstLineX, firstLineY)
     anchorSubHeal:SetText("Healer Indicator")
 
-    local healerCrossIcon2 = BetterBlizzPlatesSubPanel:CreateTexture(nil, "ARTWORK")
+    local borderHeal = CreateBorderBox(anchorSubHeal)
+
+    local healerCrossIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
     healerCrossIcon2:SetAtlas("greencross")
     healerCrossIcon2:SetSize(32, 32)
     healerCrossIcon2:SetPoint("BOTTOM", anchorSubHeal, "TOP", 0, 0)
     healerCrossIcon2:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875)
 
     -- Healer icon scale slider2
-    local healerIndicatorScaleSlider2 = BBP.CreateSlider("BetterBlizzPlates_healerIndicatorScaleSlider2", BetterBlizzPlatesSubPanel, "Size", 0.6, 2.5, 0.1, "healerIndicator")
+    local healerIndicatorScaleSlider2 = BBP.CreateSlider("BetterBlizzPlates_healerIndicatorScaleSlider2", contentFrame, "Size", 0.6, 2.5, 0.1, "healerIndicator")
     healerIndicatorScaleSlider2:SetPoint("TOP", anchorSubHeal, "BOTTOM", 0, -15)
     healerIndicatorScaleSlider2:SetValue(BetterBlizzPlatesDB.healerIndicatorScale)
 
     -- Healer x pos slider
-    local healerIndicatorXPosSlider2 = BBP.CreateSlider("BetterBlizzPlates_healerIndicatorXPosSlider2", BetterBlizzPlatesSubPanel, "x offset", -50, 50, 1, "healerIndicator", "X")
+    local healerIndicatorXPosSlider2 = BBP.CreateSlider("BetterBlizzPlates_healerIndicatorXPosSlider2", contentFrame, "x offset", -50, 50, 1, "healerIndicator", "X")
     healerIndicatorXPosSlider2:SetPoint("TOP", healerIndicatorScaleSlider2, "BOTTOM", 0, -15)
     healerIndicatorXPosSlider2:SetValue(BetterBlizzPlatesDB.healerIndicatorXPos or 0)
 
     -- Healer y pos slider
-    local healerIndicatorYPosSlider2 = BBP.CreateSlider("BetterBlizzPlates_healerIndicatorYPosSlider2", BetterBlizzPlatesSubPanel, "y offset", -50, 50, 1, "healerIndicator", "Y")
+    local healerIndicatorYPosSlider2 = BBP.CreateSlider("BetterBlizzPlates_healerIndicatorYPosSlider2", contentFrame, "y offset", -50, 50, 1, "healerIndicator", "Y")
     healerIndicatorYPosSlider2:SetPoint("TOP", healerIndicatorXPosSlider2, "BOTTOM", 0, -15)
     healerIndicatorYPosSlider2:SetValue(BetterBlizzPlatesDB.healerIndicatorYPos or 0)
 
     -- Healer icon anchor dropdown
     local healerIndicatorDropdown = BBP.CreateAnchorDropdown(
         "healerIndicatorDropdown",
-        BetterBlizzPlatesSubPanel,
+        contentFrame,
         "Select Anchor Point",
         "healerIndicatorAnchor",
         function(arg1)
@@ -1433,11 +1480,11 @@ local function guiPositionAndScale()
     )
     
     -- Healer icon tester
-    local checkBox_healerIndicatorTestMode2 = BBP.CreateCheckbox("healerIndicatorTestMode", "Test", BetterBlizzPlatesSubPanel)
+    local checkBox_healerIndicatorTestMode2 = BBP.CreateCheckbox("healerIndicatorTestMode", "Test", contentFrame)
     checkBox_healerIndicatorTestMode2:SetPoint("TOPLEFT", healerIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
     -- Only on enemy nameplate
-    local checkBox_healerIndicatorEnemyOnly2 = BBP.CreateCheckbox("healerIndicatorEnemyOnly", "Enemies only", BetterBlizzPlatesSubPanel)
+    local checkBox_healerIndicatorEnemyOnly2 = BBP.CreateCheckbox("healerIndicatorEnemyOnly", "Enemies only", contentFrame)
     checkBox_healerIndicatorEnemyOnly2:SetPoint("TOPLEFT", checkBox_healerIndicatorTestMode2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
 
@@ -1445,11 +1492,15 @@ local function guiPositionAndScale()
     -- Combat indicator
     ------------------------------------------------------------------------------------------------
     --Combat Indicator
-    local anchorSubOutOfCombat = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubOutOfCombat:SetPoint("TOPLEFT", mainGuiAnchor2, "CENTER", 170, -60)
+    local anchorSubOutOfCombat = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubOutOfCombat:SetPoint("CENTER", mainGuiAnchor2, "CENTER", secondLineX, firstLineY)
     anchorSubOutOfCombat:SetText("Combat Indicator")
 
-    local combatIconSub = BetterBlizzPlatesSubPanel:CreateTexture(nil, "ARTWORK")
+    local borderCombat = CreateBorderBox(anchorSubOutOfCombat)
+
+
+
+    local combatIconSub = contentFrame:CreateTexture(nil, "ARTWORK")
     if BetterBlizzPlatesDB.combatIndicatorSap then
         combatIconSub:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\ABILITY_SAP")
         combatIconSub:SetSize(38, 38)
@@ -1461,22 +1512,22 @@ local function guiPositionAndScale()
     end
 
     -- ooc scale Slider
-    local outOfCombatScaleSlider = BBP.CreateSlider("BetterBlizzPlates_outOfCombatScaleSlider", BetterBlizzPlatesSubPanel, "Size", 0.1, 1.9, 0.1, "combatIndicator")
+    local outOfCombatScaleSlider = BBP.CreateSlider("BetterBlizzPlates_outOfCombatScaleSlider", contentFrame, "Size", 0.1, 1.9, 0.1, "combatIndicator")
     outOfCombatScaleSlider:SetPoint("TOP", anchorSubOutOfCombat, "BOTTOM", 0, -15)
     outOfCombatScaleSlider:SetValue(BetterBlizzPlatesDB.combatIndicatorScale or 1)
 
-    local outOfCombatXPosSlider = BBP.CreateSlider("BetterBlizzPlates_outOfCombatXPosSlider", BetterBlizzPlatesSubPanel, "x offset", -50, 50, 1, "combatIndicator", "X")
+    local outOfCombatXPosSlider = BBP.CreateSlider("BetterBlizzPlates_outOfCombatXPosSlider", contentFrame, "x offset", -50, 50, 1, "combatIndicator", "X")
     outOfCombatXPosSlider:SetPoint("TOP", outOfCombatScaleSlider, "BOTTOM", 0, -15)
     outOfCombatXPosSlider:SetValue(BetterBlizzPlatesDB.combatIndicatorXPos or 0)
     
-    local outOfCombatYPosSlider = BBP.CreateSlider("BetterBlizzPlates_outOfCombatYPosSlider", BetterBlizzPlatesSubPanel, "y offset", -50, 50, 1, "combatIndicator", "Y")
+    local outOfCombatYPosSlider = BBP.CreateSlider("BetterBlizzPlates_outOfCombatYPosSlider", contentFrame, "y offset", -50, 50, 1, "combatIndicator", "Y")
     outOfCombatYPosSlider:SetPoint("TOP", outOfCombatXPosSlider, "BOTTOM", 0, -15)
     outOfCombatYPosSlider:SetValue(BetterBlizzPlatesDB.combatIndicatorYPos or 0)
             
     -- For the Out of Combat Icon:
     local combatIndicatorDropdown = BBP.CreateAnchorDropdown(
         "combatIndicatorDropdown",
-        BetterBlizzPlatesSubPanel,
+        contentFrame,
         "Select Anchor Point",
         "combatIndicatorAnchor",
         function(arg1) 
@@ -1487,15 +1538,15 @@ local function guiPositionAndScale()
     )
 
     -- Only on enemy nameplate
-    local checkBox_combatIndicatorEnemyOnly = BBP.CreateCheckbox("combatIndicatorEnemyOnly", "Enemies only", BetterBlizzPlatesSubPanel)
+    local checkBox_combatIndicatorEnemyOnly = BBP.CreateCheckbox("combatIndicatorEnemyOnly", "Enemies only", contentFrame)
     checkBox_combatIndicatorEnemyOnly:SetPoint("TOPLEFT", combatIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
     -- Only in arena
-    local checkBox_combatIndicatorArenaOnly = BBP.CreateCheckbox("combatIndicatorArenaOnly", "In arena only", BetterBlizzPlatesSubPanel)
+    local checkBox_combatIndicatorArenaOnly = BBP.CreateCheckbox("combatIndicatorArenaOnly", "In arena only", contentFrame)
     checkBox_combatIndicatorArenaOnly:SetPoint("TOPLEFT", checkBox_combatIndicatorEnemyOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
     -- use sap texture instead
-    local checkBox_combatIndicatorSap = BBP.CreateCheckbox("combatIndicatorSap", "Use sap icon instead", BetterBlizzPlatesSubPanel) --combatIndicatorSap
+    local checkBox_combatIndicatorSap = BBP.CreateCheckbox("combatIndicatorSap", "Use sap icon instead", contentFrame) --combatIndicatorSap
     checkBox_combatIndicatorSap:SetPoint("TOPLEFT", checkBox_combatIndicatorArenaOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     checkBox_combatIndicatorSap:SetScript("OnClick", function(self)
         if self:GetChecked() then
@@ -1514,7 +1565,7 @@ local function guiPositionAndScale()
     end)
 
     -- Only on players
-    local checkBox_combatIndicatorPlayersOnly = BBP.CreateCheckbox("combatIndicatorPlayersOnly", "On players only", BetterBlizzPlatesSubPanel)
+    local checkBox_combatIndicatorPlayersOnly = BBP.CreateCheckbox("combatIndicatorPlayersOnly", "On players only", contentFrame)
     checkBox_combatIndicatorPlayersOnly:SetPoint("TOPLEFT", checkBox_combatIndicatorSap, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
 
@@ -1523,34 +1574,36 @@ local function guiPositionAndScale()
     -- Hunter pet icon
     ------------------------------------------------------------------------------------------------
     --Hunter pet icon
-    local anchorSubPet = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubPet:SetPoint("TOPLEFT", mainGuiAnchor2, "CENTER", 350, -60)
+    local anchorSubPet = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubPet:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, firstLineY)
     anchorSubPet:SetText("Pet Indicator")
 
-    local petIndicator2 = BetterBlizzPlatesSubPanel:CreateTexture(nil, "ARTWORK")
+    local borderPet = CreateBorderBox(anchorSubPet)
+
+    local petIndicator2 = contentFrame:CreateTexture(nil, "ARTWORK")
     petIndicator2:SetAtlas("newplayerchat-chaticon-newcomer")
     petIndicator2:SetSize(38, 38)
     petIndicator2:SetPoint("BOTTOM", anchorSubPet, "TOP", 0, 0)
 
     -- Pet icon scale slider2
-    local petIndicatorScaleSlider = BBP.CreateSlider("BetterBlizzPlates_petIndicatorScaleSlider", BetterBlizzPlatesSubPanel, "Size", 0.1, 1.9, 0.1, "petIndicator")
+    local petIndicatorScaleSlider = BBP.CreateSlider("BetterBlizzPlates_petIndicatorScaleSlider", contentFrame, "Size", 0.1, 1.9, 0.1, "petIndicator")
     petIndicatorScaleSlider:SetPoint("TOP", anchorSubPet, "BOTTOM", 0, -15)
     petIndicatorScaleSlider:SetValue(BetterBlizzPlatesDB.petIndicatorScale)
 
     -- Pet x pos slider
-    local petIndicatorXPosSlider = BBP.CreateSlider("BetterBlizzPlates_petIndicatorXPosSlider", BetterBlizzPlatesSubPanel, "x offset", -50, 50, 1, "petIndicator", "X")
+    local petIndicatorXPosSlider = BBP.CreateSlider("BetterBlizzPlates_petIndicatorXPosSlider", contentFrame, "x offset", -50, 50, 1, "petIndicator", "X")
     petIndicatorXPosSlider:SetPoint("TOP", petIndicatorScaleSlider, "BOTTOM", 0, -15)
     petIndicatorXPosSlider:SetValue(BetterBlizzPlatesDB.petIndicatorXPos or 0)
 
     -- Pet y pos slider
-    local petIndicatorYPosSlider = BBP.CreateSlider("BetterBlizzPlates_petIndicatorYPosSlider", BetterBlizzPlatesSubPanel, "y offset", -50, 50, 1, "petIndicator", "Y")
+    local petIndicatorYPosSlider = BBP.CreateSlider("BetterBlizzPlates_petIndicatorYPosSlider", contentFrame, "y offset", -50, 50, 1, "petIndicator", "Y")
     petIndicatorYPosSlider:SetPoint("TOP", petIndicatorXPosSlider, "BOTTOM", 0, -15)
     petIndicatorYPosSlider:SetValue(BetterBlizzPlatesDB.petIndicatorYPos or 0)
 
     -- Pet icon anchor dropdown
     local petIndicatorDropdown = BBP.CreateAnchorDropdown(
         "petIndicatorDropdown",
-        BetterBlizzPlatesSubPanel,
+        contentFrame,
         "Select Anchor Point",
         "petIndicatorAnchor",
         function(arg1) --print("Selected anchor:", arg1);
@@ -1560,7 +1613,7 @@ local function guiPositionAndScale()
     )
 
     -- Pet icon tester
-    local checkBox_petIndicatorTestMode2 = BBP.CreateCheckbox("petIndicatorTestMode", "Test", BetterBlizzPlatesSubPanel)
+    local checkBox_petIndicatorTestMode2 = BBP.CreateCheckbox("petIndicatorTestMode", "Test", contentFrame)
     checkBox_petIndicatorTestMode2:SetPoint("TOPLEFT", petIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
 
@@ -1569,34 +1622,36 @@ local function guiPositionAndScale()
     -- absorb indicator
     ------------------------------------------------------------------------------------------------
     --absorb Indicator
-    local anchorSubAbsorb = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubAbsorb:SetPoint("TOPLEFT", mainGuiAnchor2, "CENTER", 510, -60)
+    local anchorSubAbsorb = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubAbsorb:SetPoint("CENTER", mainGuiAnchor2, "CENTER", fourthLineX, firstLineY)
     anchorSubAbsorb:SetText("Absorb Indicator")
 
-    local absorbIndicator2 = BetterBlizzPlatesSubPanel:CreateTexture(nil, "ARTWORK")
+    local borderAbsorb = CreateBorderBox(anchorSubAbsorb)
+
+    local absorbIndicator2 = contentFrame:CreateTexture(nil, "ARTWORK")
     absorbIndicator2:SetAtlas("ParagonReputation_Glow")
     absorbIndicator2:SetSize(56, 56)
     absorbIndicator2:SetPoint("BOTTOM", anchorSubAbsorb, "TOP", -1, -10)
 
     -- absorb icon scale slider2
-    local absorbIndicatorScaleSlider = BBP.CreateSlider("BetterBlizzPlates_absorbIndicatorScaleSlider", BetterBlizzPlatesSubPanel, "Size", 0.1, 1.9, 0.1, "absorbIndicator")
+    local absorbIndicatorScaleSlider = BBP.CreateSlider("BetterBlizzPlates_absorbIndicatorScaleSlider", contentFrame, "Size", 0.1, 1.9, 0.1, "absorbIndicator")
     absorbIndicatorScaleSlider:SetPoint("TOP", anchorSubAbsorb, "BOTTOM", 0, -15)
     absorbIndicatorScaleSlider:SetValue(BetterBlizzPlatesDB.absorbIndicatorScale or 1)
 
     -- absorb x pos slider
-    local absorbIndicatorXPosSlider = BBP.CreateSlider("BetterBlizzPlates_absorbIndicatorXPosSlider", BetterBlizzPlatesSubPanel, "x offset", -50, 50, 1, "absorbIndicator", "X")
+    local absorbIndicatorXPosSlider = BBP.CreateSlider("BetterBlizzPlates_absorbIndicatorXPosSlider", contentFrame, "x offset", -50, 50, 1, "absorbIndicator", "X")
     absorbIndicatorXPosSlider:SetPoint("TOP", absorbIndicatorScaleSlider, "BOTTOM", 0, -15)
     absorbIndicatorXPosSlider:SetValue(BetterBlizzPlatesDB.absorbIndicatorXPos or 0)
 
     -- absorb y pos slider
-    local absorbIndicatorYPosSlider = BBP.CreateSlider("BetterBlizzPlates_absorbIndicatorYPosSlider", BetterBlizzPlatesSubPanel, "y offset", -50, 50, 1, "absorbIndicator", "Y")
+    local absorbIndicatorYPosSlider = BBP.CreateSlider("BetterBlizzPlates_absorbIndicatorYPosSlider", contentFrame, "y offset", -50, 50, 1, "absorbIndicator", "Y")
     absorbIndicatorYPosSlider:SetPoint("TOP", absorbIndicatorXPosSlider, "BOTTOM", 0, -15)
     absorbIndicatorYPosSlider:SetValue(BetterBlizzPlatesDB.absorbIndicatorYPos or 0)
 
     -- absorb icon anchor dropdown
     local absorbIndicatorDropdown = BBP.CreateAnchorDropdown(
         "absorbIndicatorDropdown",
-        BetterBlizzPlatesSubPanel,
+        contentFrame,
         "Select Anchor Point",
         "absorbIndicatorAnchor",
         function(arg1) --print("Selected anchor:", arg1);
@@ -1606,15 +1661,15 @@ local function guiPositionAndScale()
     )
 
     -- Absorb icon tester
-    local checkBox_absorbIndicatorTestMode2 = BBP.CreateCheckbox("absorbIndicatorTestMode", "Test", BetterBlizzPlatesSubPanel)
+    local checkBox_absorbIndicatorTestMode2 = BBP.CreateCheckbox("absorbIndicatorTestMode", "Test", contentFrame)
     checkBox_absorbIndicatorTestMode2:SetPoint("TOPLEFT", absorbIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
     -- Only on enemy nameplate
-    local checkBox_absorbIndicatorEnemyOnly = BBP.CreateCheckbox("absorbIndicatorEnemyOnly", "Enemies only", BetterBlizzPlatesSubPanel)
+    local checkBox_absorbIndicatorEnemyOnly = BBP.CreateCheckbox("absorbIndicatorEnemyOnly", "Enemies only", contentFrame)
     checkBox_absorbIndicatorEnemyOnly:SetPoint("TOPLEFT", checkBox_absorbIndicatorTestMode2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
     -- Only on player nameplates
-    local checkBox_absorbIndicatorOnPlayersOnly = BBP.CreateCheckbox("absorbIndicatorOnPlayersOnly", "Players only", BetterBlizzPlatesSubPanel)
+    local checkBox_absorbIndicatorOnPlayersOnly = BBP.CreateCheckbox("absorbIndicatorOnPlayersOnly", "Players only", contentFrame)
     checkBox_absorbIndicatorOnPlayersOnly:SetPoint("TOPLEFT", checkBox_absorbIndicatorEnemyOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
 
@@ -1623,34 +1678,36 @@ local function guiPositionAndScale()
     -- totem
     ------------------------------------------------------------------------------------------------
     --totem Indicator
-    local anchorSubTotem = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubTotem:SetPoint("TOPLEFT", mainGuiAnchor2, "CENTER", 10, -360)
+    local anchorSubTotem = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubTotem:SetPoint("CENTER", mainGuiAnchor2, "CENTER", firstLineX, secondLineY)
     anchorSubTotem:SetText("Totem Indicator")
 
-    local totemIcon2 = BetterBlizzPlatesSubPanel:CreateTexture(nil, "ARTWORK")
+    local borderTotem = CreateBorderBox(anchorSubTotem)
+
+    local totemIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
     totemIcon2:SetAtlas("teleportationnetwork-ardenweald-32x32")
-    totemIcon2:SetSize(44, 44)
+    totemIcon2:SetSize(34, 34)
     totemIcon2:SetPoint("BOTTOM", anchorSubTotem, "TOP", 0, 0)
 
     -- Totem Important Icon Size Slider
-    local totemIndicatorScaleSlider = BBP.CreateSlider("BetterBlizzPlates_totemIndicatorScaleSlider", BetterBlizzPlatesSubPanel, "Size", 0.5, 3, 0.1, "totemIndicator")
+    local totemIndicatorScaleSlider = BBP.CreateSlider("BetterBlizzPlates_totemIndicatorScaleSlider", contentFrame, "Size", 0.5, 3, 0.1, "totemIndicator")
     totemIndicatorScaleSlider:SetPoint("TOP", anchorSubTotem, "BOTTOM", 0, -15)
     totemIndicatorScaleSlider:SetValue(BetterBlizzPlatesDB.totemIndicatorScale or 1)
 
     -- totem x pos slider
-    local totemIndicatorXPosSlider = BBP.CreateSlider("BetterBlizzPlates_totemIndicatorXPosSlider", BetterBlizzPlatesSubPanel, "x offset", -50, 50, 1, "totemIndicator", "X")
+    local totemIndicatorXPosSlider = BBP.CreateSlider("BetterBlizzPlates_totemIndicatorXPosSlider", contentFrame, "x offset", -50, 50, 1, "totemIndicator", "X")
     totemIndicatorXPosSlider:SetPoint("TOP", totemIndicatorScaleSlider, "BOTTOM", 0, -15)
     totemIndicatorXPosSlider:SetValue(BetterBlizzPlatesDB.totemIndicatorXPos or 0)
 
     -- totem y pos slider
-    local totemIndicatorYPosSlider = BBP.CreateSlider("BetterBlizzPlates_totemIndicatorYPosSlider", BetterBlizzPlatesSubPanel, "y offset", -50, 50, 1, "totemIndicator", "Y")
+    local totemIndicatorYPosSlider = BBP.CreateSlider("BetterBlizzPlates_totemIndicatorYPosSlider", contentFrame, "y offset", -50, 50, 1, "totemIndicator", "Y")
     totemIndicatorYPosSlider:SetPoint("TOP", totemIndicatorXPosSlider, "BOTTOM", 0, -15)
     totemIndicatorYPosSlider:SetValue(BetterBlizzPlatesDB.totemIndicatorYPos or 0)
 
     -- totem icon anchor dropdown
     local totemIndicatorDropdown = BBP.CreateAnchorDropdown(
         "totemIndicatorDropdown",
-        BetterBlizzPlatesSubPanel,
+        contentFrame,
         "Select Anchor Point",
         "totemIndicatorAnchor",
         function(arg1) --print("Selected anchor:", arg1);
@@ -1660,19 +1717,19 @@ local function guiPositionAndScale()
     )
 
     -- Toggle to test totem icons
-    local checkBox_totemTestIcons2 = BBP.CreateCheckbox("totemIndicatorTestMode", "Test", BetterBlizzPlatesSubPanel)
+    local checkBox_totemTestIcons2 = BBP.CreateCheckbox("totemIndicatorTestMode", "Test", contentFrame)
     checkBox_totemTestIcons2:SetPoint("TOPLEFT", totemIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
     -- Shift icon down and remove name
-    local checkBox_totemIndicatorHideNameAndShiftIconDown = BBP.CreateCheckbox("totemIndicatorHideNameAndShiftIconDown", "Hide name", BetterBlizzPlatesSubPanel)
+    local checkBox_totemIndicatorHideNameAndShiftIconDown = BBP.CreateCheckbox("totemIndicatorHideNameAndShiftIconDown", "Hide name", contentFrame)
     checkBox_totemIndicatorHideNameAndShiftIconDown:SetPoint("TOPLEFT", checkBox_totemTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
     -- Glow off
-    local checkBox_totemIndicatorGlowOff = BBP.CreateCheckbox("totemIndicatorGlowOff", "No glow", BetterBlizzPlatesSubPanel)
+    local checkBox_totemIndicatorGlowOff = BBP.CreateCheckbox("totemIndicatorGlowOff", "No glow", contentFrame)
     checkBox_totemIndicatorGlowOff:SetPoint("TOPLEFT", checkBox_totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
     -- Scale up important npcs
-    local checkBox_totemIndicatorScaleUpImportant = BBP.CreateCheckbox("totemIndicatorScaleUpImportant", "Scale up important", BetterBlizzPlatesSubPanel)
+    local checkBox_totemIndicatorScaleUpImportant = BBP.CreateCheckbox("totemIndicatorScaleUpImportant", "Scale up important", contentFrame)
     checkBox_totemIndicatorScaleUpImportant:SetPoint("TOPLEFT", checkBox_totemIndicatorGlowOff, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
 
@@ -1685,35 +1742,37 @@ local function guiPositionAndScale()
     -- Target indicator
     ------------------------------------------------------------------------------------------------
     --Target indicator
-    local anchorSubTarget = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubTarget:SetPoint("TOPLEFT", mainGuiAnchor2, "CENTER", 170, -360)
+    local anchorSubTarget = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubTarget:SetPoint("CENTER", mainGuiAnchor2, "CENTER", secondLineX, secondLineY)
     anchorSubTarget:SetText("Target Indicator")
 
-    local targetIndicator2 = BetterBlizzPlatesSubPanel:CreateTexture(nil, "ARTWORK")
+    local borderTarget = CreateBorderBox(anchorSubTarget)
+
+    local targetIndicator2 = contentFrame:CreateTexture(nil, "ARTWORK")
     targetIndicator2:SetAtlas("Navigation-Tracked-Arrow")
     targetIndicator2:SetRotation(math.rad(180))
     targetIndicator2:SetSize(48, 32)
     targetIndicator2:SetPoint("BOTTOM", anchorSubTarget, "TOP", -1, 2)
 
     -- Target indicator scale slider2
-    local targetIndicatorScaleSlider = BBP.CreateSlider("BetterBlizzPlates_targetIndicatorScaleSlider", BetterBlizzPlatesSubPanel, "Size", 0.1, 1.9, 0.1, "targetIndicator")
+    local targetIndicatorScaleSlider = BBP.CreateSlider("BetterBlizzPlates_targetIndicatorScaleSlider", contentFrame, "Size", 0.1, 1.9, 0.1, "targetIndicator")
     targetIndicatorScaleSlider:SetPoint("TOP", anchorSubTarget, "BOTTOM", 0, -15)
     targetIndicatorScaleSlider:SetValue(BetterBlizzPlatesDB.targetIndicatorScale)
 
     -- Target indicator x pos slider
-    local targetIndicatorXPosSlider = BBP.CreateSlider("BetterBlizzPlates_targetIndicatorXPosSlider", BetterBlizzPlatesSubPanel, "x offset", -50, 50, 1, "targetIndicator", "X")
+    local targetIndicatorXPosSlider = BBP.CreateSlider("BetterBlizzPlates_targetIndicatorXPosSlider", contentFrame, "x offset", -50, 50, 1, "targetIndicator", "X")
     targetIndicatorXPosSlider:SetPoint("TOP", targetIndicatorScaleSlider, "BOTTOM", 0, -15)
     targetIndicatorXPosSlider:SetValue(BetterBlizzPlatesDB.targetIndicatorXPos or 0)
 
     -- Target indicator y pos slider
-    local targetIndicatorYPosSlider = BBP.CreateSlider("BetterBlizzPlates_targetIndicatorYPosSlider", BetterBlizzPlatesSubPanel, "y offset", -50, 50, 1, "targetIndicator", "Y")
+    local targetIndicatorYPosSlider = BBP.CreateSlider("BetterBlizzPlates_targetIndicatorYPosSlider", contentFrame, "y offset", -50, 50, 1, "targetIndicator", "Y")
     targetIndicatorYPosSlider:SetPoint("TOP", targetIndicatorXPosSlider, "BOTTOM", 0, -15)
     targetIndicatorYPosSlider:SetValue(BetterBlizzPlatesDB.targetIndicatorYPos)
 
     -- Target indicator icon anchor dropdown
     local targetIndicatorDropdown = BBP.CreateAnchorDropdown(
         "targetIndicatorDropdown",
-        BetterBlizzPlatesSubPanel,
+        contentFrame,
         "Select Anchor Point",
         "targetIndicatorAnchor",
         function(arg1) --print("Selected anchor:", arg1);
@@ -1729,34 +1788,36 @@ local function guiPositionAndScale()
     -- Raid Indicator
     ------------------------------------------------------------------------------------------------
     -- Raid Indicator
-    local anchorSubRaidmark = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubRaidmark:SetPoint("TOPLEFT", mainGuiAnchor2, "CENTER", 350, -360)
+    local anchorSubRaidmark = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubRaidmark:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, secondLineY)
     anchorSubRaidmark:SetText("Raidmarker")
 
-    local raidmarkIcon = BetterBlizzPlatesSubPanel:CreateTexture(nil, "ARTWORK")
+    local borderRaidmarker = CreateBorderBox(anchorSubRaidmark)
+
+    local raidmarkIcon = contentFrame:CreateTexture(nil, "ARTWORK")
     raidmarkIcon:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcon_3")
     raidmarkIcon:SetSize(38, 38)
     raidmarkIcon:SetPoint("BOTTOM", anchorSubRaidmark, "TOP", 0, 0)
 
     -- Raid Indicator scale slider2
-    local raidmarkIndicatorScaleSlider = BBP.CreateSlider("BetterBlizzPlates_raidmarkIndicatorScaleSlider", BetterBlizzPlatesSubPanel, "Size", 0.6, 2.5, 0.1, "raidmarkIndicator")
+    local raidmarkIndicatorScaleSlider = BBP.CreateSlider("BetterBlizzPlates_raidmarkIndicatorScaleSlider", contentFrame, "Size", 0.6, 2.5, 0.1, "raidmarkIndicator")
     raidmarkIndicatorScaleSlider:SetPoint("TOP", anchorSubRaidmark, "BOTTOM", 0, -15)
     raidmarkIndicatorScaleSlider:SetValue(BetterBlizzPlatesDB.raidmarkIndicatorScale)
 
     -- Raid x pos slider
-    local raidmarkIndicatorXPosSlider = BBP.CreateSlider("BetterBlizzPlates_raidmarkIndicatorXPosSlider", BetterBlizzPlatesSubPanel, "x offset", -50, 50, 1, "raidmarkIndicator", "X")
+    local raidmarkIndicatorXPosSlider = BBP.CreateSlider("BetterBlizzPlates_raidmarkIndicatorXPosSlider", contentFrame, "x offset", -50, 50, 1, "raidmarkIndicator", "X")
     raidmarkIndicatorXPosSlider:SetPoint("TOP", raidmarkIndicatorScaleSlider, "BOTTOM", 0, -15)
     raidmarkIndicatorXPosSlider:SetValue(BetterBlizzPlatesDB.raidmarkIndicatorXPos or 0)
 
     -- Raid y pos slider
-    local raidmarkIndicatorYPosSlider = BBP.CreateSlider("BetterBlizzPlates_raidmarkIndicatorYPosSlider", BetterBlizzPlatesSubPanel, "y offset", -50, 50, 1, "raidmarkIndicator", "Y")
+    local raidmarkIndicatorYPosSlider = BBP.CreateSlider("BetterBlizzPlates_raidmarkIndicatorYPosSlider", contentFrame, "y offset", -50, 50, 1, "raidmarkIndicator", "Y")
     raidmarkIndicatorYPosSlider:SetPoint("TOP", raidmarkIndicatorXPosSlider, "BOTTOM", 0, -15)
     raidmarkIndicatorYPosSlider:SetValue(BetterBlizzPlatesDB.raidmarkIndicatorYPos or 0)
 
     -- Raid Indicator anchor dropdown
     local raidmarkIndicatorDropdown = BBP.CreateAnchorDropdown(
         "raidmarkIndicatorDropdown",
-        BetterBlizzPlatesSubPanel,
+        contentFrame,
         "Select Anchor Point",
         "raidmarkIndicatorAnchor",
         function(arg1) --print("Selected anchor:", arg1);
@@ -1771,34 +1832,36 @@ local function guiPositionAndScale()
     -- quest
     ------------------------------------------------------------------------------------------------
     --quest Indicator
-    local anchorSubquest = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubquest:SetPoint("TOPLEFT", mainGuiAnchor2, "CENTER", 510, -360)
+    local anchorSubquest = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubquest:SetPoint("CENTER", mainGuiAnchor2, "CENTER", fourthLineX, secondLineY)
     anchorSubquest:SetText("quest Indicator")
 
-    local questIcon2 = BetterBlizzPlatesSubPanel:CreateTexture(nil, "ARTWORK")
+    local borderQuest = CreateBorderBox(anchorSubquest)
+
+    local questIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
     questIcon2:SetAtlas("smallquestbang")
     questIcon2:SetSize(44, 44)
     questIcon2:SetPoint("BOTTOM", anchorSubquest, "TOP", 0, 0)
 
     -- quest Important Icon Size Slider
-    local questIndicatorScaleSlider = BBP.CreateSlider("BetterBlizzPlates_questIndicatorScaleSlider", BetterBlizzPlatesSubPanel, "Size", 0.1, 1.9, 0.1, "questIndicator")
+    local questIndicatorScaleSlider = BBP.CreateSlider("BetterBlizzPlates_questIndicatorScaleSlider", contentFrame, "Size", 0.1, 1.9, 0.1, "questIndicator")
     questIndicatorScaleSlider:SetPoint("TOP", anchorSubquest, "BOTTOM", 0, -15)
     questIndicatorScaleSlider:SetValue(BetterBlizzPlatesDB.questIndicatorScale or 1)
 
     -- quest x pos slider
-    local questIndicatorXPosSlider = BBP.CreateSlider("BetterBlizzPlates_questIndicatorXPosSlider", BetterBlizzPlatesSubPanel, "x offset", -50, 50, 1, "questIndicator", "X")
+    local questIndicatorXPosSlider = BBP.CreateSlider("BetterBlizzPlates_questIndicatorXPosSlider", contentFrame, "x offset", -50, 50, 1, "questIndicator", "X")
     questIndicatorXPosSlider:SetPoint("TOP", questIndicatorScaleSlider, "BOTTOM", 0, -15)
     questIndicatorXPosSlider:SetValue(BetterBlizzPlatesDB.questIndicatorXPos or 0)
 
     -- quest y pos slider
-    local questIndicatorYPosSlider = BBP.CreateSlider("BetterBlizzPlates_questIndicatorYPosSlider", BetterBlizzPlatesSubPanel, "y offset", -50, 50, 1, "questIndicator", "Y")
+    local questIndicatorYPosSlider = BBP.CreateSlider("BetterBlizzPlates_questIndicatorYPosSlider", contentFrame, "y offset", -50, 50, 1, "questIndicator", "Y")
     questIndicatorYPosSlider:SetPoint("TOP", questIndicatorXPosSlider, "BOTTOM", 0, -15)
     questIndicatorYPosSlider:SetValue(BetterBlizzPlatesDB.questIndicatorYPos or 0)
 
     -- quest icon anchor dropdown
     local questIndicatorDropdown = BBP.CreateAnchorDropdown(
         "questIndicatorDropdown",
-        BetterBlizzPlatesSubPanel,
+        contentFrame,
         "Select Anchor Point",
         "questIndicatorAnchor",
         function(arg1) --print("Selected anchor:", arg1);
@@ -1808,10 +1871,96 @@ local function guiPositionAndScale()
     )
 
     -- Toggle to test quest icons
-    local checkBox_questTestIcons2 = BBP.CreateCheckbox("questIndicatorTestMode", "Test", BetterBlizzPlatesSubPanel)
+    local checkBox_questTestIcons2 = BBP.CreateCheckbox("questIndicatorTestMode", "Test", contentFrame)
     checkBox_questTestIcons2:SetPoint("TOPLEFT", questIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
 
+
+
+
+    ------------------------------------------------------------------------------------------------
+    -- focusTarget --TODO: fix all values in this mode (not created yet)
+    ------------------------------------------------------------------------------------------------
+    --focusTarget Indicator
+    local anchorSubFocus = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubFocus:SetPoint("CENTER", mainGuiAnchor2, "CENTER", firstLineX, thirdLineY)
+    anchorSubFocus:SetText("Focus Target Indicator")
+
+    local borderFocus = CreateBorderBox(anchorSubFocus)
+
+    local focusIcon = contentFrame:CreateTexture(nil, "ARTWORK")
+    focusIcon:SetAtlas("Waypoint-MapPin-Untracked")
+    focusIcon:SetSize(44, 44)
+    focusIcon:SetPoint("BOTTOM", anchorSubFocus, "TOP", 0, 0)
+
+    -- focusTarget Important Icon Size Slider
+    local focusTargetIndicatorScaleSlider = BBP.CreateSlider("BetterBlizzPlates_focusTargetIndicatorScaleSlider", contentFrame, "Size", 0.5, 3, 0.1, "focusTargetIndicator")
+    focusTargetIndicatorScaleSlider:SetPoint("TOP", anchorSubFocus, "BOTTOM", 0, -15)
+    focusTargetIndicatorScaleSlider:SetValue(BetterBlizzPlatesDB.focusTargetIndicatorScale or 1)
+
+    -- focusTarget x pos slider
+    local focusTargetIndicatorXPosSlider = BBP.CreateSlider("BetterBlizzPlates_focusTargetIndicatorXPosSlider", contentFrame, "x offset", -50, 50, 1, "focusTargetIndicator", "X")
+    focusTargetIndicatorXPosSlider:SetPoint("TOP", focusTargetIndicatorScaleSlider, "BOTTOM", 0, -15)
+    focusTargetIndicatorXPosSlider:SetValue(BetterBlizzPlatesDB.focusTargetIndicatorXPos or 0)
+
+    -- focusTarget y pos slider
+    local focusTargetIndicatorYPosSlider = BBP.CreateSlider("BetterBlizzPlates_focusTargetIndicatorYPosSlider", contentFrame, "y offset", -50, 50, 1, "focusTargetIndicator", "Y")
+    focusTargetIndicatorYPosSlider:SetPoint("TOP", focusTargetIndicatorXPosSlider, "BOTTOM", 0, -15)
+    focusTargetIndicatorYPosSlider:SetValue(BetterBlizzPlatesDB.focusTargetIndicatorYPos or 0)
+
+    -- focusTarget icon anchor dropdown
+    local focusTargetIndicatorDropdown = BBP.CreateAnchorDropdown(
+        "focusTargetIndicatorDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "focusTargetIndicatorAnchor",
+        function(arg1) --print("Selected anchor:", arg1);
+        BBP.RefreshAllNameplates()
+    end,
+        { anchorFrame = focusTargetIndicatorYPosSlider, x = -15, y = -35, label = "Anchor" }
+    )
+
+    -- Toggle to test focusTarget icons
+    local checkBox_focusTargetTestIcons2 = BBP.CreateCheckbox("focusTargetIndicatorTestMode", "Test", contentFrame)
+    checkBox_focusTargetTestIcons2:SetPoint("TOPLEFT", focusTargetIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
+
+    -- Shift icon down and remove name
+    local checkBox_focusTargetIndicatorHideNameAndShiftIconDown = BBP.CreateCheckbox("focusTargetIndicatorHideNameAndShiftIconDown", "Color healthbar", contentFrame)
+    checkBox_focusTargetIndicatorHideNameAndShiftIconDown:SetPoint("TOPLEFT", checkBox_focusTargetTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+    -- Glow off
+    local checkBox_focusTargetIndicatorGlowOff = BBP.CreateCheckbox("focusTargetIndicatorGlowOff", "Change healthbar texture", contentFrame)
+    checkBox_focusTargetIndicatorGlowOff:SetPoint("TOPLEFT", checkBox_focusTargetIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+    -- Scale up important npcs
+    local checkBox_focusTargetIndicatorScaleUpImportant = BBP.CreateCheckbox("focusTargetIndicatorScaleUpImportant", "Scale up important", contentFrame)
+    checkBox_focusTargetIndicatorScaleUpImportant:SetPoint("TOPLEFT", checkBox_focusTargetIndicatorGlowOff, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
     local btn_reload_ui2 = CreateFrame("Button", nil, BetterBlizzPlatesSubPanel, "UIPanelButtonTemplate")
     btn_reload_ui2:SetText("Reload UI")
     btn_reload_ui2:SetWidth(85)

@@ -1147,6 +1147,11 @@ local function HandleNamePlateAdded(unit)
         BBP.TargetIndicator(frame)
     end
 
+    -- Show Focus Target Indicator
+    if BetterBlizzPlatesDB.focusTargetIndicator then
+        BBP.FocusTargetIndicator(frame)
+    end
+
     -- Show absorb amount
     if BetterBlizzPlatesDB.absorbIndicator or BetterBlizzPlatesDB.absorbIndicatorTestMode then
         BBP.AbsorbIndicator(frame)
