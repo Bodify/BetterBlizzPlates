@@ -4,39 +4,44 @@ BBP = BBP or {}
 local customFont = "Interface\\AddOns\\BetterBlizzPlates\\media\\YanoneKaffeesatz-Medium.ttf"
 
 
--- Define your custom function to set the position of BorderShield
-local function UpdateCastbarAnchors(frame, setupOptions)
-    -- Shield position
-    frame.castBar.BorderShield:ClearAllPoints()
-    local yOffset = BetterBlizzPlatesDB.castBarDragonflightShield and -1 or 0
-    PixelUtil.SetPoint(frame.castBar.BorderShield, "CENTER", frame.castBar, BetterBlizzPlatesDB.castBarIconAnchor, BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos + yOffset)
+-- TODO: figure shit out
+function UpdateCastbarAnchors(frame, setupOptions)
+    -- Healthbar height
+    --if GetCVar("nameplateShowFriends") == "0" then
+    --    if not InCombatLockdown() then
+    --        setupOptions.healthBarHeight = BetterBlizzPlatesDB.enemyNameplateHealthbarHeight or 10.8
+    --    end
+    --end
 
-    
-    -- Spell icon position
-    local customOptions = frame.customOptions;
-    if not customOptions or not customOptions.ignoreIconPoint then
-    frame.castBar.Icon:ClearAllPoints();
-    PixelUtil.SetPoint(frame.castBar.Icon, "CENTER", frame.castBar, BetterBlizzPlatesDB.castBarIconAnchor, BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos);
+    -- Shield position
+    if BetterBlizzPlatesDB.enableCastbarCustomization then
+        frame.castBar.BorderShield:ClearAllPoints()
+        local yOffset = BetterBlizzPlatesDB.castBarDragonflightShield and -1 or 0
+        PixelUtil.SetPoint(frame.castBar.BorderShield, "CENTER", frame.castBar, BetterBlizzPlatesDB.castBarIconAnchor, BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos + yOffset)
+
+        -- Spell icon position
+        local customOptions = frame.customOptions;
+        if not customOptions or not customOptions.ignoreIconPoint then
+            frame.castBar.Icon:ClearAllPoints();
+            PixelUtil.SetPoint(frame.castBar.Icon, "CENTER", frame.castBar, BetterBlizzPlatesDB.castBarIconAnchor, BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos);
+        end
     end
 end
 
-function BBP.CustomCastbarHook()
+--function BBP.HookDefaultCompactNamePlateFrameAnchorInternal()
     hooksecurefunc("DefaultCompactNamePlateFrameAnchorInternal", UpdateCastbarAnchors)
-end
+--end
 
 
 -- Cast emphasis
 function BBP.CustomizeCastbar(unitToken)
     if not BetterBlizzPlatesDB.enableCastbarCustomization then return end
     local nameplate = BBP.GetNameplate(unitToken)
-    if not (nameplate and nameplate.UnitFrame and nameplate.UnitFrame.castBar) then
-        return
-    end
+    if not (nameplate and nameplate.UnitFrame and nameplate.UnitFrame.castBar) then return end
+    if unitToken == "player" then return end
 
     local castBar = nameplate.UnitFrame.castBar
-    if castBar:IsForbidden() then
-        return
-    end
+    if castBar:IsForbidden() then return end
 
     castBar:SetStatusBarColor(1,1,1)
 
@@ -146,6 +151,7 @@ end
 -- Update text and color based on the target
 function BBP.UpdateNameplateTargetText(nameplate, unitID)
     if not nameplate or not unitID then return end
+    if unitID == "player" then return end
     
     if not nameplate.TargetText then
         nameplate.TargetText = nameplate:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -172,6 +178,8 @@ function BBP.UpdateNameplateTargetText(nameplate, unitID)
 end
 
 function BBP.UpdateCastTimer(nameplate, unitID)
+    if UnitIsUnit(unitID, "player") then return end
+
     if not nameplate.CastTimerFrame then
         nameplate.CastTimerFrame = CreateFrame("Frame", nil, nameplate)
         nameplate.CastTimer = nameplate.CastTimerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -194,14 +202,18 @@ function BBP.UpdateCastTimer(nameplate, unitID)
         local timeLeft = nameplate.CastTimer.endTime - currentTime
         if timeLeft <= 0 then
             nameplate.CastTimer:SetText("")
-            nameplate.TargetText:SetText("")-- more bandaid?
+            if nameplate.TargetText then
+                nameplate.TargetText:SetText("")
+            end
         else
             nameplate.CastTimer:SetText(string.format("%.1f", timeLeft))
             C_Timer.After(0.1, function() BBP.UpdateCastTimer(nameplate, unitID) end)
         end
     else
         nameplate.CastTimer:SetText("")
-        nameplate.TargetText:SetText("")-- more bandaid?
+        if nameplate.TargetText then
+            nameplate.TargetText:SetText("")
+        end
     end
 end
 
@@ -226,8 +238,12 @@ spellCastEventFrame:SetScript("OnEvent", function(self, event, unitID)
     
     if event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_SUCCEEDED" or 
        event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_INTERRUPTED" then
-        BBP.UpdateNameplateTargetText(nameplate, unitID)
-        BBP.UpdateCastTimer(nameplate, unitID) --bandaid?
+        if BetterBlizzPlatesDB.showNameplateTargetText then
+            BBP.UpdateNameplateTargetText(nameplate, unitID)
+        end
+        if BetterBlizzPlatesDB.showNameplateCastbarTimer then
+            BBP.UpdateCastTimer(nameplate, unitID)
+        end
         if BetterBlizzPlatesDB.enableCastbarCustomization then
             BBP.CustomizeCastbar(unitID)
         end

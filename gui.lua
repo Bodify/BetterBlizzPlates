@@ -35,6 +35,19 @@ local modesParty = {
     ["5: Replace name with ID + spec"] = "partyIndicatorModeFive",
     ["Off"] = "partyIndicatorModeOff",
 }
+-- Create a static popup for the confirmation dialog
+StaticPopupDialogs["CONFIRM_RELOAD"] = {
+    text = "This requires a reload. Reload now?",
+    button1 = "Yes",
+    button2 = "No",
+    OnAccept = function()
+        BetterBlizzPlatesDB.reopenOptions = true
+        ReloadUI()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+}
 
 local function DisableCheckboxes(frame)
     for i = 1, frame:GetNumChildren() do
@@ -271,6 +284,16 @@ function BBP.CreateSlider(name, parent, label, minValue, maxValue, stepValue, el
                         else
                             frame.targetIndicator:SetScale(value)
                         end
+                    -- Focus Target Indicator Pos and Scale
+                    elseif element == "focusTargetIndicator" then
+                        if not frame.targetIndicator then
+                            BBP.FocusTargetIndicator(frame)
+                        end
+                        if axis then
+                            frame.focusTargetIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
+                        else
+                            frame.focusTargetIndicator:SetScale(value)
+                        end
                     -- Totem Indicator Pos and Scale
                     elseif element == "totemIndicator" then
                         if not frame.totemIndicator then
@@ -338,12 +361,11 @@ function BBP.CreateSlider(name, parent, label, minValue, maxValue, stepValue, el
                     elseif element == "castBarEmphasisText" then
                         BetterBlizzPlatesDB.castBarEmphasisTextScale = value
 
-
-
-
-
-
-
+                    
+                    -- Enemy Nameplate height
+                    elseif element == "enemyNameplateHealthbarHeight" then
+                        BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = value
+                        --BBP.DefaultCompactNamePlateFrameAnchorInternal(frame, setupOptions)
 
 
                     -- Target Text for Cast Timer Pos and Scale
@@ -864,19 +886,6 @@ local function createScrollFrame(subPanel, listName, listData, refreshFunc, enab
 end
 
 
--- Create a static popup for the confirmation dialog
-StaticPopupDialogs["CONFIRM_RELOAD"] = {
-    text = "This requires a reload. Reload now?",
-    button1 = "Yes",
-    button2 = "No",
-    OnAccept = function()
-        BetterBlizzPlatesDB.reopenOptions = true
-        ReloadUI()
-    end,
-    timeout = 0,
-    whileDead = true,
-    hideOnEscape = true,
-}
 
 
 local function guiGeneralTab()
@@ -935,18 +944,13 @@ local function guiGeneralTab()
     local checkBox_hideTargetHighlight = BBP.CreateCheckbox("hideTargetHighlight", "Hide target highlight glow", BetterBlizzPlates)
     checkBox_hideTargetHighlight:SetPoint("TOPLEFT", checkBox_hideNameplateAuras, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    -- Put raidmarker on top of nameplates
-    local checkBox_raidmarkIndicator = BBP.CreateCheckbox("raidmarkIndicator", "Raidmarker on top of nameplate", BetterBlizzPlates, nil, BBP.ChangeRaidmarker)
+    -- Change raidmarker position
+    local checkBox_raidmarkIndicator = BBP.CreateCheckbox("raidmarkIndicator", "Change raidmarker position", BetterBlizzPlates, nil, BBP.ChangeRaidmarker)
     checkBox_raidmarkIndicator:SetPoint("TOPLEFT", checkBox_hideTargetHighlight, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-
-    -- Raidmarker slider
-    local raidmarkIndicatorScaleSlider = BBP.CreateSlider("raidmarkIndicatorScaleSlider", BetterBlizzPlates, "Raidmark Size", 1, 3, 0.1, "raidmarkIndicator")
-    raidmarkIndicatorScaleSlider:SetPoint("TOPLEFT", checkBox_raidmarkIndicator, "BOTTOMLEFT", 12, -10)
-    raidmarkIndicatorScaleSlider:SetValue(BetterBlizzPlatesDB.raidmarkIndicatorScale or 0.1)
 
     -- nameplate scale slider
     local nameplateScaleSlider = BBP.CreateSlider("NameplateScaleSlider", BetterBlizzPlates, "Nameplate Size", 0.5, 2, 0.1, "nameplate")
-    nameplateScaleSlider:SetPoint("TOPLEFT", raidmarkIndicatorScaleSlider, "BOTTOMLEFT", 0, -15)
+    nameplateScaleSlider:SetPoint("TOPLEFT", checkBox_raidmarkIndicator, "BOTTOMLEFT", 12, -10)
     nameplateScaleSlider:SetValue(BetterBlizzPlatesDB.nameplateMaxScale or 1)
 
     -- Reset button for nameplateScale slider
@@ -983,7 +987,7 @@ local function guiGeneralTab()
     ------------------------------------------------------------------------------------------------
     -- "Enemy nameplates:" text
     local enemyNameplatesText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    enemyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -250)
+    enemyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -210)
     enemyNameplatesText:SetText("Enemy nameplates")
     local enemyNameplateIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     enemyNameplateIcon:SetAtlas("groupfinder-icon-friend")
@@ -1009,9 +1013,28 @@ local function guiGeneralTab()
     enemyNameScaleSlider:SetPoint("TOPLEFT", checkBox_showNameplateTargetText, "BOTTOMLEFT", 12, -10)
     enemyNameScaleSlider:SetValue(BetterBlizzPlatesDB.enemyNameScale or 1)
 
+    -- Nameplate height slider
+    local enemyNameplateHealthbarHeightSlider = BBP.CreateSlider("enemyNameplateHealthbarHeightScaleSlider", BetterBlizzPlates, "Nameplate Height (*)", 2, 20, 0.1, "enemyNameplateHealthbarHeight")
+    enemyNameplateHealthbarHeightSlider:SetPoint("TOPLEFT", enemyNameScaleSlider, "BOTTOMLEFT", 0, -17)
+    enemyNameplateHealthbarHeightSlider:SetValue(BetterBlizzPlatesDB.enemyNameplateHealthbarHeight or 10.8)
+    enemyNameplateHealthbarHeightSlider:Disable()
+    enemyNameplateHealthbarHeightSlider:SetAlpha(0.5)
+    BBP.CreateTooltip(enemyNameplateHealthbarHeightSlider, "*Testing\nDisabled until I figure out stuff")
+
+    -- Button for resetting Enemy Nameplate Height
+    local btn_reset_enemyHeight = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
+    btn_reset_enemyHeight:SetText("Default")
+    btn_reset_enemyHeight:SetWidth(60)
+    btn_reset_enemyHeight:SetPoint("LEFT", enemyNameplateHealthbarHeightSlider, "RIGHT", 10, 0)
+    btn_reset_enemyHeight:Disable()
+    btn_reset_enemyHeight:SetAlpha(0.5)
+    btn_reset_enemyHeight:SetScript("OnClick", function()
+        BBP.ResetToDefaultHeight2(enemyNameplateHealthbarHeightSlider)
+    end)
+
     -- Enemy nameplate width
     local nameplateEnemyWidthSlider = BBP.CreateSlider("BetterBlizzPlates_nameplateEnemyWidthSlider", BetterBlizzPlates, "Nameplate Width", 50, 200, 1, "nameplateEnemyWidth")
-    nameplateEnemyWidthSlider:SetPoint("TOPLEFT", enemyNameScaleSlider, "BOTTOMLEFT", 0, -17)
+    nameplateEnemyWidthSlider:SetPoint("TOPLEFT", enemyNameplateHealthbarHeightSlider, "BOTTOMLEFT", 0, -17)
     nameplateEnemyWidthSlider:SetValue(BetterBlizzPlatesDB.nameplateEnemyWidth or 154)
 
     -- Button for resetting Enemy Nameplate width
@@ -1187,19 +1210,18 @@ local function guiGeneralTab()
     targetIndicatorIcon:SetPoint("RIGHT", checkBox_targetIndicator, "LEFT", -1, 0)
 
     -- Focus Target indicator
-    local checkBox_focusTargetIndicator = BBP.CreateCheckbox("focusTargetIndicator", "Focus-target indicator", BetterBlizzPlates, nil, BBP.ToggleFocusTargetIndicator)
+    local checkBox_focusTargetIndicator = BBP.CreateCheckbox("focusTargetIndicator", "Focus target indicator", BetterBlizzPlates, nil, BBP.ToggleFocusTargetIndicator)
     checkBox_focusTargetIndicator:SetPoint("TOPLEFT", checkBox_targetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    local targetTooltip = {
-        path = "Interface\\AddOns\\BetterBlizzPlates\\media\\targetIndicator",
-        width = 256,
-        height = 32
-    }
-    BBP.CreateTooltip(checkBox_focusTargetIndicator, "Show a marker on the focus nameplate", targetTooltip)
+    --local focusTargetTooltip = {
+    --    path = "Interface\\AddOns\\BetterBlizzPlates\\media\\targetIndicator",
+    --    width = 256,
+    --    height = 32
+    --}
+    BBP.CreateTooltip(checkBox_focusTargetIndicator, "Show a marker on the focus nameplate")
     local focusTargetIndicatorIcon = checkBox_healerIndicator:CreateTexture(nil, "ARTWORK")
-    focusTargetIndicatorIcon:SetAtlas("Navigation-Tracked-Arrow")
-    focusTargetIndicatorIcon:SetRotation(math.rad(180))
-    focusTargetIndicatorIcon:SetSize(19, 14)
-    focusTargetIndicatorIcon:SetPoint("RIGHT", checkBox_focusTargetIndicator, "LEFT", -1, 0)
+    focusTargetIndicatorIcon:SetAtlas("Waypoint-MapPin-Untracked")
+    focusTargetIndicatorIcon:SetSize(19, 19)
+    focusTargetIndicatorIcon:SetPoint("RIGHT", checkBox_focusTargetIndicator, "LEFT", 0, 0)
 
     -- Totem indicator
     local checkBox_totemIndicator = BBP.CreateCheckbox("totemIndicator", "Totem indicator", BetterBlizzPlates)
@@ -1229,7 +1251,7 @@ local function guiGeneralTab()
     ------------------------------------------------------------------------------------------------
     -- Font and texture
     local customFontandTextureText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    customFontandTextureText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, -450)
+    customFontandTextureText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, -480)
     customFontandTextureText:SetText("Font and texture")
     local customFontandTextureIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     customFontandTextureIcon:SetAtlas("barbershop-32x32")
@@ -1402,7 +1424,7 @@ local function guiPositionAndScale()
     local secondLineX = 222
     local secondLineY = -360
     local thirdLineX = 391
-    local thirdLineY = -660
+    local thirdLineY = -655
     local fourthLineX = 560
 
     -- ADVANCED SETTINGS PANEL
@@ -1826,7 +1848,9 @@ local function guiPositionAndScale()
         { anchorFrame = raidmarkIndicatorYPosSlider, x = -15, y = -35, label = "Anchor" }
     )
 
-
+    -- Change raidmarker position
+    local checkBox_raidmarkIndicator2 = BBP.CreateCheckbox("raidmarkIndicator", "Change raidmarker pos", contentFrame, nil, BBP.ChangeRaidmarker)
+    checkBox_raidmarkIndicator2:SetPoint("TOPLEFT", raidmarkIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
     ------------------------------------------------------------------------------------------------
     -- quest
@@ -1834,7 +1858,7 @@ local function guiPositionAndScale()
     --quest Indicator
     local anchorSubquest = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     anchorSubquest:SetPoint("CENTER", mainGuiAnchor2, "CENTER", fourthLineX, secondLineY)
-    anchorSubquest:SetText("quest Indicator")
+    anchorSubquest:SetText("Quest Indicator")
 
     local borderQuest = CreateBorderBox(anchorSubquest)
 
@@ -1924,24 +1948,61 @@ local function guiPositionAndScale()
     local checkBox_focusTargetTestIcons2 = BBP.CreateCheckbox("focusTargetIndicatorTestMode", "Test", contentFrame)
     checkBox_focusTargetTestIcons2:SetPoint("TOPLEFT", focusTargetIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
-    -- Shift icon down and remove name
-    local checkBox_focusTargetIndicatorHideNameAndShiftIconDown = BBP.CreateCheckbox("focusTargetIndicatorHideNameAndShiftIconDown", "Color healthbar", contentFrame)
-    checkBox_focusTargetIndicatorHideNameAndShiftIconDown:SetPoint("TOPLEFT", checkBox_focusTargetTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local function OpenColorPicker()
+        local r, g, b = unpack(BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB or {1, 1, 1})
+        ColorPickerFrame.previousValues = { r, g, b }
+        ColorPickerFrame.func = function()
+            r, g, b = ColorPickerFrame:GetColorRGB()
+            BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB = { r, g, b }
+            BBP.RefreshAllNameplates()
+        end
+    
+        ColorPickerFrame.cancelFunc = function()
+            r, g, b = unpack(ColorPickerFrame.previousValues)
+            BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB = { r, g, b }
+        end
+        ColorPickerFrame:Show()
+    end
+    
+    
+    
 
-    -- Glow off
-    local checkBox_focusTargetIndicatorGlowOff = BBP.CreateCheckbox("focusTargetIndicatorGlowOff", "Change healthbar texture", contentFrame)
-    checkBox_focusTargetIndicatorGlowOff:SetPoint("TOPLEFT", checkBox_focusTargetIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    -- Color nameplate
+    local checkBox_focusTargetIndicatorColorNameplate = BBP.CreateCheckbox("focusTargetIndicatorColorNameplate", "Color healthbar", contentFrame)
+    checkBox_focusTargetIndicatorColorNameplate:SetPoint("TOPLEFT", checkBox_focusTargetTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    -- Scale up important npcs
-    local checkBox_focusTargetIndicatorScaleUpImportant = BBP.CreateCheckbox("focusTargetIndicatorScaleUpImportant", "Scale up important", contentFrame)
-    checkBox_focusTargetIndicatorScaleUpImportant:SetPoint("TOPLEFT", checkBox_focusTargetIndicatorGlowOff, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local focusColorButton = CreateFrame("Button", nil, contentFrame, "UIPanelButtonTemplate")
+    focusColorButton:SetText("Color")
+    focusColorButton:SetPoint("LEFT", checkBox_focusTargetIndicatorColorNameplate.text, "RIGHT", -1, 0)
+    focusColorButton:SetSize(43, 18)
+    focusColorButton:SetScript("OnClick", OpenColorPicker)
 
+    checkBox_focusTargetIndicatorColorNameplate:SetScript("OnClick", function(self)
+        BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate = self:GetChecked()
+        if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate then
+            focusColorButton:Enable()
+            focusColorButton:SetAlpha(1)
+        else
+            focusColorButton:Disable()
+            focusColorButton:SetAlpha(0.5)
+        end
+        BBP.FocusTargetIndicator(frame)
+        BBP.RefreshAllNameplates()
+    end)
 
+    if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate then
+        focusColorButton:Enable()
+        focusColorButton:SetAlpha(1)
+    else
+        focusColorButton:Disable()
+        focusColorButton:SetAlpha(0.5)
+    end
 
-
-
-
-
+    -- Change texture
+    local checkBox_focusTargetIndicatorChangeTexture = BBP.CreateCheckbox("focusTargetIndicatorChangeTexture", "Change texture (soon)", contentFrame)
+    checkBox_focusTargetIndicatorChangeTexture:SetPoint("TOPLEFT", checkBox_focusTargetIndicatorColorNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    checkBox_focusTargetIndicatorChangeTexture:Disable()
+    checkBox_focusTargetIndicatorChangeTexture:SetAlpha(0.5)
 
 
 
@@ -2113,7 +2174,7 @@ local function guiCastbar()
 
     checkBox_enableCastbarCustomization:SetScript("OnClick", function(self)
         BetterBlizzPlatesDB.enableCastbarCustomization = self:GetChecked()
-        StaticPopup_Show("CONFIRM_RELOAD")
+        --StaticPopup_Show("CONFIRM_RELOAD")
         if BetterBlizzPlatesDB.enableCastbarCustomization then
             noteCast3:SetAlpha(1)
             btn_reset_castBarHeight:Enable()
@@ -2351,8 +2412,6 @@ local function guiCastbar()
 
 
 end
-
-
 
 local function guiFadeNPC()
     ------------------------------------------------------------------------------------------------

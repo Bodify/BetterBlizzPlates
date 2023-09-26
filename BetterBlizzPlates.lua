@@ -5,8 +5,8 @@ BBP = BBP or {}
 -- My first addon, a lot could be done better but its a start for now
 -- Things are getting more messy need a lot of cleaning lol
 
-local addonVersion = "1.00"
-local addonUpdates = "1.1 update"
+local addonVersion = "1.00" --too afraid to to touch for now
+local addonUpdates = "1.11"
 local db = BetterBlizzPlatesDB
 local customFont = "Interface\\AddOns\\BetterBlizzPlates\\media\\YanoneKaffeesatz-Medium.ttf"
 local customTexture = "Interface\\AddOns\\BetterBlizzPlates\\media\\UI-TargetingFrame-BarFill.tga"
@@ -20,6 +20,7 @@ local defaultSettings = {
     hideNameplateAuras = false,
     hideTargetHighlight = false,
     nameplateShowEnemyMinus = nil,
+    enemyNameplateHealthbarHeight = nil,
     fadeOutNPC = false,
     hideNPC = false,
     hideNPCWhitelistOn = false,
@@ -105,6 +106,15 @@ local defaultSettings = {
     targetIndicatorYPos = 0,
     targetIndicatorAnchor = "TOP",
     targetIndicatorTestMode = false,
+    -- Focus Target Indicator
+    focusTargetIndicator = false,
+    focusTargetIndicatorScale = 1,
+    focusTargetIndicatorXPos = 0,
+    focusTargetIndicatorYPos = 0,
+    focusTargetIndicatorAnchor = "TOPRIGHT",
+    focusTargetIndicatorTestMode = false,
+    focusTargetIndicatorColorNameplate = false,
+    focusTargetIndicatorColorNameplateRGB = {1, 1, 1},
     -- Totem Indicator
     totemIndicator = false,
     totemIndicatorScale = 1,
@@ -344,6 +354,11 @@ local function FetchAndSaveValuesOnFirstLogin()
     BetterBlizzPlatesDB.nameplateLargerScale = GetCVar("nameplateLargerScale")
     BetterBlizzPlatesDB.nameplatePlayerLargerScale = GetCVar("nameplatePlayerLargerScale")
     BetterBlizzPlatesDB.nameplateShowEnemyMinus = GetCVar("nameplateShowEnemyMinus")
+    if GetCVar("NamePlateHorizontalScale") == "1.4" then
+        BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
+    else
+        BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 4
+    end
 
     C_Timer.After(5, function()
         BetterBlizzPlatesDB.nameplateEnemyWidth, BetterBlizzPlatesDB.nameplateEnemyHeight = C_NamePlate.GetNamePlateEnemySize()
@@ -369,7 +384,7 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 local function SendUpdateMessage()
     C_Timer.After(7, function()
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates updates:")
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAdded castbar settings, cast emphasis etc. Added nameplate aura settings, add filters and buffs etc. Bugfix for PvE content (i dont pve, no more errors sry lol). More stuff inc soonTM.")
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAdded: Focus Target Indicator. Bugfix: Cast timer was always showing and in some wrong places")
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAccess settings with /bbp")
     end)
 end
@@ -631,6 +646,7 @@ function BBP.EnableAllActiveFeatureTestModes(option, value)
         "healerIndicator",
         "petIndicator",
         "targetIndicator",
+        "focusTargetIndicator",
         "totemIndicator",
         "questIndicator",
     }
@@ -716,6 +732,16 @@ function BBP.ResetToDefaultHeight(slider)
         slider:SetValue(18.8)
     else
         slider:SetValue(8)
+    end
+end
+
+function BBP.ResetToDefaultHeight2(slider)
+    if BBP.isLargeNameplatesEnabled() then
+        slider:SetValue(10.8)
+        BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
+    else
+        slider:SetValue(4)
+        BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 4
     end
 end
 
@@ -879,9 +905,89 @@ function BBP.ColorNPCs(frame)
 end
 
 hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
-    if not BetterBlizzPlatesDB.colorNPC then return end
-    BBP.ColorNPCs(frame)
+    if BetterBlizzPlatesDB.colorNPC then
+        BBP.ColorNPCs(frame)
+    end
+    if BetterBlizzPlatesDB.focusTargetIndicator then
+        BBP.FocusTargetIndicator(frame)
+    end
 end)
+
+
+-- Copy of blizzards update health color function
+function BBP.CompactUnitFrame_UpdateHealthColor(frame)
+	local r, g, b;
+	local unitIsConnected = UnitIsConnected(frame.unit);
+	local unitIsDead = unitIsConnected and UnitIsDead(frame.unit);
+	local unitIsPlayer = UnitIsPlayer(frame.unit) or UnitIsPlayer(frame.displayedUnit);
+
+	if ( not unitIsConnected or (unitIsDead and not unitIsPlayer) ) then
+		--Color it gray
+		r, g, b = 0.5, 0.5, 0.5;
+	else
+		if ( frame.optionTable.healthBarColorOverride ) then
+			local healthBarColorOverride = frame.optionTable.healthBarColorOverride;
+			r, g, b = healthBarColorOverride.r, healthBarColorOverride.g, healthBarColorOverride.b;
+		else
+			--Try to color it by class.
+			local localizedClass, englishClass = UnitClass(frame.unit);
+			local classColor = RAID_CLASS_COLORS[englishClass];
+			--debug
+			--classColor = RAID_CLASS_COLORS["PRIEST"];
+			local useClassColors = CompactUnitFrame_GetOptionUseClassColors(frame, frame.optionTable);
+			if ( (frame.optionTable.allowClassColorsForNPCs or UnitIsPlayer(frame.unit) or UnitTreatAsPlayerForDisplay(frame.unit)) and classColor and useClassColors ) then
+				-- Use class colors for players if class color option is turned on
+				r, g, b = classColor.r, classColor.g, classColor.b;
+			elseif ( CompactUnitFrame_IsTapDenied(frame) ) then
+				-- Use grey if not a player and can't get tap on unit
+				r, g, b = 0.9, 0.9, 0.9;
+			elseif ( frame.optionTable.colorHealthBySelection ) then
+				-- Use color based on the type of unit (neutral, etc.)
+				if ( frame.optionTable.considerSelectionInCombatAsHostile and CompactUnitFrame_IsOnThreatListWithPlayer(frame.displayedUnit) and not UnitIsFriend("player", frame.unit) ) then
+					r, g, b = 1.0, 0.0, 0.0;
+				elseif ( UnitIsPlayer(frame.displayedUnit) and UnitIsFriend("player", frame.displayedUnit) ) then
+					-- We don't want to use the selection color for friendly player nameplates because
+					-- it doesn't show player health clearly enough.
+					r, g, b = 0.667, 0.667, 1.0;
+				else
+					r, g, b = UnitSelectionColor(frame.unit, frame.optionTable.colorHealthWithExtendedColors);
+				end
+			elseif ( UnitIsFriend("player", frame.unit) ) then
+				r, g, b = 0.0, 1.0, 0.0;
+			else
+				r, g, b = 1.0, 0.0, 0.0;
+			end
+		end
+	end
+
+	local oldR, oldG, oldB = frame.healthBar:GetStatusBarColor();
+	if ( r ~= oldR or g ~= oldG or b ~= oldB ) then
+		frame.healthBar:SetStatusBarColor(r, g, b);
+
+		if (frame.optionTable.colorHealthWithExtendedColors) then
+			frame.selectionHighlight:SetVertexColor(r, g, b);
+		else
+			frame.selectionHighlight:SetVertexColor(1, 1, 1);
+		end
+	end
+
+	-- Update whether healthbar is hidden due to being dead - only applies to non-player nameplates
+	local hideHealthBecauseDead = unitIsDead and not unitIsPlayer;
+	CompactUnitFrame_SetHideHealth(frame, hideHealthBecauseDead, HEALTH_BAR_HIDE_REASON_UNIT_DEAD);
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 --################################################################################################
@@ -1042,6 +1148,12 @@ end
 
 
 
+
+
+-- Enemy Nameplate Height Updater
+function BBP.DefaultCompactNamePlateFrameAnchorInternal(frame, setupOptions)
+    --PixelUtil.SetHeight(frame.healthBar, BetterBlizzPlatesDB.enemyNameplateHealthbarHeight or 10.8);
+end
 
 
 --#################################################################################################
@@ -1275,6 +1387,8 @@ function BBP.RefreshAllNameplates()
             --BBP.On_NpRefreshOnce(unitFrame, namePlateFrameBase) --this line errors
         end
 
+        BBP.CompactUnitFrame_UpdateHealthColor(frame)
+
         -- Reset nameplate scale after testing totems
         if not BetterBlizzPlatesDB.totemIndicatorTestMode then
             if frame then
@@ -1349,9 +1463,15 @@ local function ConsolidatedUpdateName(frame)
         BBP.HealerIndicator(frame)
     end
 
+    -- Color NPC
     if BetterBlizzPlatesDB.colorNPCName then
         BBP.ColorNPCs(frame)
     end
+
+    -- Focus Target Indicator (color)
+    --if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate then
+        --BBP.FocusTargetIndicator(frame)
+    --end
 
     -- Color nameplate and pick random name or hide name during totem tester
     if BetterBlizzPlatesDB.totemIndicatorTestMode and frame.randomColor then
@@ -1385,9 +1505,9 @@ Frame:SetScript("OnEvent", function(...)
         BBP.RunAuraModule()
     end
 
-    if BetterBlizzPlatesDB.enableCastbarCustomization then
-        BBP.CustomCastbarHook()
-    end
+    --if BetterBlizzPlatesDB.enableCastbarCustomization then
+        --BBP.HookDefaultCompactNamePlateFrameAnchorInternal()
+    --end
 
 
     BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, BetterBlizzPlatesDB.defaultLargeFontSize)
@@ -1438,6 +1558,8 @@ First:SetScript("OnEvent", function(_, event, addonName)
             BetterBlizzPlatesDB.healerIndicatorTestMode = false
             BetterBlizzPlatesDB.arenaIndicatorTestMode = false
             BetterBlizzPlatesDB.totemIndicatorTestMode = false
+            BetterBlizzPlatesDB.targetIndicatorTestMode = false
+            BetterBlizzPlatesDB.focusTargetIndicatorTestMode = false
             BetterBlizzPlatesDB.questIndicatorTestMode = false
             BetterBlizzPlatesDB.testAllEnabledExtraFeatures = false
             
