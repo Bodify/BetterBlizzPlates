@@ -916,6 +916,7 @@ end)
 
 -- Copy of blizzards update health color function
 function BBP.CompactUnitFrame_UpdateHealthColor(frame)
+    if not frame then return end
 	local r, g, b;
 	local unitIsConnected = UnitIsConnected(frame.unit);
 	local unitIsDead = unitIsConnected and UnitIsDead(frame.unit);
