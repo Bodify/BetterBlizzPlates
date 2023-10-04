@@ -8,14 +8,25 @@ function BBP.ExecuteIndicator(frame)
     local health = UnitHealth(unit)
     local maxHealth = UnitHealthMax(unit)
     local healthPercentage = (health / maxHealth) * 100
+    local anchorPoint = BetterBlizzPlatesDB.executeIndicatorAnchor or "LEFT"
+    local oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
+    local xPos = BetterBlizzPlatesDB.executeIndicatorXPos or 0
+    local yPos = BetterBlizzPlatesDB.executeIndicatorYPos or 0
 
     -- Initialize
     if not frame.executeIndicator then
         frame.executeIndicator = frame.healthBar:CreateFontString(nil, "OVERLAY")
         BBP.SetFontBasedOnOption(frame.executeIndicator, 8, "THICKOUTLINE")
         frame.executeIndicator:SetTextColor(1, 1, 1)
-        frame.executeIndicator:SetPoint("LEFT", frame.healthBar, "LEFT", 24, -0.5)
     end
+
+    frame.executeIndicator:ClearAllPoints()
+    if anchorPoint == "LEFT" then
+        frame.executeIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos + 44, yPos + -0.5)
+    else
+        frame.executeIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos + -0.5)
+    end
+    --frame.executeIndicator:SetScale(BetterBlizzPlatesDB.executeIndicatorScale or 1)
 
     if BetterBlizzPlatesDB.executeIndicatorTestMode then
         frame.executeIndicator:SetText("19.5")
@@ -24,11 +35,29 @@ function BBP.ExecuteIndicator(frame)
     end
 
     -- Check if health is below 40% and if so show Execute Indicator
-    if healthPercentage < 40 and healthPercentage > 0.1 and not UnitIsFriend("player", unit) then
-        frame.executeIndicator:SetText(string.format("%.1f", healthPercentage))
-        frame.executeIndicator:Show()
-    else
-        frame.executeIndicator:Hide()
+    if not UnitIsFriend("player", unit) then
+        if healthPercentage > 0.1 then
+            frame.executeIndicator:SetText(string.format("%.1f", healthPercentage))
+            if BetterBlizzPlatesDB.executeIndicatorAlwaysOn then
+                if BetterBlizzPlatesDB.executeIndicatorNotOnFullHp then
+                    if healthPercentage < 99 then
+                        frame.executeIndicator:Show()
+                    else
+                        frame.executeIndicator:Hide()
+                    end
+                else
+                    frame.executeIndicator:Show()
+                end
+            else
+                if healthPercentage < BetterBlizzPlatesDB.executeIndicatorThreshold then
+                    frame.executeIndicator:Show()
+                else
+                    frame.executeIndicator:Hide()
+                end
+            end
+        else
+            frame.executeIndicator:Hide()
+        end
     end
 end
 

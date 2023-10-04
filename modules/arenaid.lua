@@ -249,7 +249,7 @@ function BBP.PartyIndicator3(frame)
                 local specID
                 local Details = Details
                 if Details and Details.realversion >= 134 then
-                    local unitGUID = UnitGUID(frame.unit,"party"..i)
+                    local unitGUID = UnitGUID(frame.unit)
                     specID = Details:GetSpecByGUID(unitGUID)
                 end
                 local specName = specID and specIDToName[specID]
@@ -285,7 +285,7 @@ function BBP.PartyIndicator4(frame)
                 local specID
                 local Details = Details
                 if Details and Details.realversion >= 134 then
-                    local unitGUID = UnitGUID(frame.unit,"party"..i)
+                    local unitGUID = UnitGUID(frame.unit)
                     specID = Details:GetSpecByGUID(unitGUID)
                 end
                 local specName = specID and specIDToName[specID]
@@ -329,7 +329,7 @@ function BBP.PartyIndicator5(frame)
                 local specID
                 local Details = Details
                 if Details and Details.realversion >= 134 then
-                    local unitGUID = UnitGUID(frame.unit,"party"..i)
+                    local unitGUID = UnitGUID(frame.unit)
                     specID = Details:GetSpecByGUID(unitGUID)
                 end
                 local specName = specID and specIDToName[specID]
@@ -735,10 +735,6 @@ function BBP.ArenaIndicatorCaller(frame, config)
             end
         end
     end
-end
-
-function BBP.CheatArenaIDCaller()
-    BBP.ArenaIndicatorCaller(frame, config)
 end
 
 -- Refresh nameplates between solo shuffle rounds (sometimes id and spec text stick)

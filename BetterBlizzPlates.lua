@@ -6,15 +6,15 @@ BBP = BBP or {}
 -- Things are getting more messy need a lot of cleaning lol
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.11"
+local addonUpdates = "1.13"
 local db = BetterBlizzPlatesDB
 local customFont = "Interface\\AddOns\\BetterBlizzPlates\\media\\YanoneKaffeesatz-Medium.ttf"
-local customTexture = "Interface\\AddOns\\BetterBlizzPlates\\media\\UI-TargetingFrame-BarFill.tga"
+local customTexture = "Interface\\AddOns\\BetterBlizzPlates\\media\\DragonflightTexture.tga"
 
 local defaultSettings = {
     version = addonVersion,
     updates = "empty",
-    wasOnLoadingScreen = false,
+    wasOnLoadingScreen = true,
     -- General
     removeRealmNames = true,
     hideNameplateAuras = false,
@@ -84,6 +84,13 @@ local defaultSettings = {
     -- Execute Indicator
     executeIndicator = false,
     executeIndicatorTestMode = false,
+    executeIndicatorAnchor = "LEFT",
+    executeIndicatorScale = 1,
+    executeIndicatorXPos = 0,
+    executeIndicatorYPos = 0,
+    executeIndicatorThreshold = 40,
+    executeIndicatorAlwaysOn = false,
+    executeIndicatorNotOnFullHp = false,
     -- Healer Indicator
     healerIndicator = false,
     healerIndicatorEnemyOnly = false,
@@ -147,6 +154,7 @@ local defaultSettings = {
     castBarEmphasisIconScale = 2,
     castBarEmphasisTextScale = 2,
     castBarEmphasisHeightValue = 24,
+    castBarEmphasisSparkHeight = 35,
     castBarDragonflightShield = true,
     castBarShieldAnchor = "LEFT",
     castBarShieldXPos = 0,
@@ -157,12 +165,13 @@ local defaultSettings = {
     castBarIconXPos = 0,
     castBarIconYPos = 0,
     castBarTextScale = 1,
-    castBarHeight = 18.8,
+    showCastbarIfTarget = false,
 
 
 
     -- Nameplate aura settings
     enableNameplateAuraCustomisation = false,
+    nameplateAurasCenteredAnchor = false,
     maxAurasOnNameplate = 12,
     nameplateAurasYPos = 0,
     nameplateAurasXPos = 0,
@@ -191,6 +200,7 @@ local defaultSettings = {
     otherNpdeBuffFilterWatchList = true,
     otherNpdeBuffFilterLessMinite = false,
     otherNpdeBuffFilterOnlyMe = false,
+    otherNpdeBuffPandemicGlow = false,
 
     otherNpBuffPurgeGlow = false,
     otherNpBuffBlueBorder = false,
@@ -215,7 +225,7 @@ local defaultSettings = {
     friendlyNpBuffEmphasisedBorder = false,
 
 
-    testAllEnabledExtraFeatures = false,
+    testAllEnabledFeatures = false,
 
 
     -- Default values for resets
@@ -273,9 +283,12 @@ local defaultSettings = {
         {name = "Earthgrab Totem", id = 60561, comment = ""},
     },
 
+    hideCastbarList = {},
+    hideCastbarWhitelist = {},
+
     colorNpcList = {
     },
-    
+
     auraWhitelist = {
     },
     auraBlacklist = {
@@ -356,8 +369,12 @@ local function FetchAndSaveValuesOnFirstLogin()
     BetterBlizzPlatesDB.nameplateShowEnemyMinus = GetCVar("nameplateShowEnemyMinus")
     if GetCVar("NamePlateHorizontalScale") == "1.4" then
         BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
+        BetterBlizzPlatesDB.castBarHeight = 18.8
+        BetterBlizzPlatesDB.largeNameplatesOn = true
     else
         BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 4
+        BetterBlizzPlatesDB.castBarHeight = 8
+        BetterBlizzPlatesDB.largeNameplatesOn = false
     end
 
     C_Timer.After(5, function()
@@ -378,26 +395,31 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
     preferredIndex = 3,  -- to avoid tainting, use a high value if other popups are used
 }
 
-
+-- Update message
 
 
 local function SendUpdateMessage()
     C_Timer.After(7, function()
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates updates:")
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAdded: Focus Target Indicator. Bugfix: Cast timer was always showing and in some wrong places")
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAccess settings with /bbp")
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAdded \"Hide Castbar\" options. More Execute Indicator settings. General improvements and castbar PvE bugfix. Access settings with /bbp")
+        --DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAccess settings with /bbp")
     end)
 end
 
+
 local function CheckForUpdate()
-    local db = BetterBlizzPlatesDB
-    if not db.hasSaved then
+    --BetterBlizzPlatesDB.UpdateMessage = true
+    if not BetterBlizzPlatesDB.hasSaved then
+        --BetterBlizzPlatesDB.UpdateMessage = false
         return
     end
-    if not db.updates or db.updates ~= addonUpdates then
-        SendUpdateMessage()
-        -- Update the stored version to the current version
-        db.updates = addonUpdates
+    if not BetterBlizzPlatesDB.updates or BetterBlizzPlatesDB.updates ~= addonUpdates then
+        --if BetterBlizzPlatesDB.UpdateMessage then
+            SendUpdateMessage()
+            -- Update the stored version to the current version
+            --BetterBlizzPlatesDB.UpdateMessage = true
+            BetterBlizzPlatesDB.updates = addonUpdates
+        --end
     end
 end
 
@@ -408,24 +430,34 @@ end
 ------------------------------------------------------------------------------------------------------
 --- Functions
 ------------------------------------------------------------------------------------------------------
--- Return early functions if was just on loading screen
-function BBP.SetLoadingScreenFalse()
-    BetterBlizzPlatesDB.wasOnLoadingScreen = false
+
+-- Checks if the unit is nameplate and legal
+function BBP.IsLegalNameplateUnit(frame)
+    if not (frame and frame.unit) then return end
+    if not string.match(frame.unit, "nameplate") then return end
+    if frame:IsForbidden() then return end
+    return true
 end
 
-local function OnEvent(_, event)
-    if event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_LEAVING_WORLD" then
+
+
+-- If player was just on loading screen set wasOnLoadingScreen to true and skip running functions
+local function LoadingScreenDetector(_, event)
+    if event == "PLAYER_ENTERING_WORLD" or event == "LOADING_SCREEN_ENABLED" then
         BetterBlizzPlatesDB.wasOnLoadingScreen = true
-        C_Timer.After(3, function()  -- wait for 3 seconds
-            BBP.SetLoadingScreenFalse()
+    elseif event == "LOADING_SCREEN_DISABLED" or event == "PLAYER_LEAVING_WORLD" then
+        C_Timer.After(1, function()
+            BetterBlizzPlatesDB.wasOnLoadingScreen = false
         end)
     end
 end
 
-local frame = CreateFrame("Frame")
-frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-frame:RegisterEvent("PLAYER_LEAVING_WORLD")
-frame:SetScript("OnEvent", OnEvent)
+local LoadingScreenFrame = CreateFrame("Frame")
+LoadingScreenFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+LoadingScreenFrame:RegisterEvent("PLAYER_LEAVING_WORLD")
+LoadingScreenFrame:RegisterEvent("LOADING_SCREEN_ENABLED")
+LoadingScreenFrame:RegisterEvent("LOADING_SCREEN_DISABLED")
+LoadingScreenFrame:SetScript("OnEvent", LoadingScreenDetector)
 
 -- Function to check combat and show popup if in combat
 function BBP.checkCombatAndWarn()
@@ -440,6 +472,19 @@ function BBP.checkCombatAndWarn()
         end
     end
     return false -- Player is not in combat
+end
+
+local function TurnOffTestModes()
+    BetterBlizzPlatesDB.absorbIndicatorTestMode = false
+    BetterBlizzPlatesDB.petIndicatorTestMode = false
+    BetterBlizzPlatesDB.healerIndicatorTestMode = false
+    BetterBlizzPlatesDB.arenaIndicatorTestMode = false
+    BetterBlizzPlatesDB.totemIndicatorTestMode = false
+    BetterBlizzPlatesDB.targetIndicatorTestMode = false
+    BetterBlizzPlatesDB.focusTargetIndicatorTestMode = false
+    BetterBlizzPlatesDB.questIndicatorTestMode = false
+    BetterBlizzPlatesDB.executeIndicatorTestMode = false
+    BetterBlizzPlatesDB.testAllEnabledFeatures = false
 end
 
 -- Extracts NPC ID from GUID
@@ -460,6 +505,20 @@ function BBP.GetDefaultFadeOutNPCsList()
     return defaultSettings.defaultFadeOutNPCsList
 end
 
+function BBP.GetOppositeAnchor(anchor)
+    local opposites = {
+        LEFT = "RIGHT",
+        RIGHT = "LEFT",
+        TOP = "BOTTOM",
+        BOTTOM = "TOP",
+        TOPLEFT = "BOTTOMRIGHT",
+        TOPRIGHT = "BOTTOMLEFT",
+        BOTTOMLEFT = "TOPRIGHT",
+        BOTTOMRIGHT = "TOPLEFT",
+    }
+    return opposites[anchor] or "CENTER"
+end
+
 --#################################################################################################
 -- Set nameplate width
 function BBP.ApplyNameplateWidth()
@@ -468,7 +527,7 @@ function BBP.ApplyNameplateWidth()
             local friendlyWidth = BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeFriendlyWidth or BetterBlizzPlatesDB.nameplateDefaultFriendlyWidth
             local enemyWidth = BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeEnemyWidth or BetterBlizzPlatesDB.nameplateDefaultEnemyWidth
             local friendlyHeight = BetterBlizzPlatesDB.friendlyNameplateClickthrough and 1 or (BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeFriendlyHeight or BetterBlizzPlatesDB.nameplateDefaultFriendlyHeight)
-            
+
             C_NamePlate.SetNamePlateFriendlySize(BetterBlizzPlatesDB.nameplateFriendlyWidth or friendlyWidth, friendlyHeight)
             C_NamePlate.SetNamePlateEnemySize(BetterBlizzPlatesDB.nameplateEnemyWidth or enemyWidth, BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeEnemyHeight or BetterBlizzPlatesDB.nameplateDefaultEnemyHeight)
         end
@@ -528,7 +587,7 @@ end
 
 --#################################################################################################
 function BBP.SetFontBasedOnOption(namePlateObj, specifiedSize, forcedOutline)
-    local font, outline
+    local font, outline, currentSize
 
     if BetterBlizzPlatesDB.useCustomFont then
         font = customFont
@@ -539,7 +598,7 @@ function BBP.SetFontBasedOnOption(namePlateObj, specifiedSize, forcedOutline)
         outline = forcedOutline or BetterBlizzPlatesDB.defaultNamePlateFontFlags
         currentSize = specifiedSize or BetterBlizzPlatesDB.defaultFontSize
     end
-    
+
     namePlateObj:SetFont(font, currentSize, outline)
 end
 
@@ -624,7 +683,7 @@ function BBP.ClassColorAndScaleNames(frame)
             frame.name:SetVertexColor(classColor.r, classColor.g, classColor.b)
         end
     end
-    
+
     -- Set the name's scale based on unit relation
     local scale = 1 -- Default scale
     if relation == "friendly" then
@@ -638,7 +697,18 @@ end
 
 --#################################################################################################
 -- test all active functions
-function BBP.EnableAllActiveFeatureTestModes(option, value)
+function BBP.ToggleTestAllEnabledFeatures()
+    if BetterBlizzPlatesDB.wasOnLoadingScreen then return end
+    if BetterBlizzPlatesDB.testAllEnabledFeatures then
+        BetterBlizzPlatesDB.testAllEnabledFeatures = false
+    else
+        BetterBlizzPlatesDB.testAllEnabledFeatures = true
+    end
+
+end
+
+
+function BBP.TestAllEnabledFeatures(option, value)
     if BetterBlizzPlatesDB.wasOnLoadingScreen then return end
     local featuresWithTestModes = {
         "absorbIndicator",
@@ -650,7 +720,7 @@ function BBP.EnableAllActiveFeatureTestModes(option, value)
         "totemIndicator",
         "questIndicator",
     }
-    
+
     -- Iterate over all features and update their test modes
     for _, feature in ipairs(featuresWithTestModes) do
         if BetterBlizzPlatesDB[feature] then
@@ -661,13 +731,14 @@ function BBP.EnableAllActiveFeatureTestModes(option, value)
     end
     -- Refresh all nameplates to apply the changes
     BBP.RefreshAllNameplates()
+    BBP.ToggleTestAllEnabledFeatures()
 end
 
 --#################################################################################################
 -- Reset slider to default value function
 function BBP.ResetToDefaultWidth(slider, isFriendly)
     local heightValue = BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeFriendlyHeight or BetterBlizzPlatesDB.nameplateDefaultFriendlyHeight
-    
+
     if isFriendly and BetterBlizzPlatesDB.friendlyNameplateClickthrough then
         heightValue = 1
     end
@@ -715,13 +786,13 @@ function BBP.ResetToDefaultScales(slider, targetType)
             SetCVar("nameplateMinScale", defaultMinScale)
             SetCVar("nameplateMaxScale", defaultMaxScale)
             SetCVar("nameplateGlobalScale", 1)
-            print("CVar nameplateMinScale set to " .. defaultMinScale)
-            print("CVar nameplateMaxScale set to " .. defaultMaxScale)
-            print("CVar nameplateGlobalScale set to 1")         
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMinScale set to " .. defaultMinScale)
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMaxScale set to " .. defaultMaxScale)
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateGlobalScale set to 1")      
         elseif targetType == "nameplateSelected" then
             BetterBlizzPlatesDB.nameplateSelectedScale = defaultSettings[targetType]
             SetCVar("nameplateSelectedScale", defaultSettings[targetType])
-            print("CVar nameplateSelectedScale set to " .. defaultSettings[targetType])
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateSelectedScale set to " .. defaultSettings[targetType])  
         end
     end
 end
@@ -730,25 +801,33 @@ end
 function BBP.ResetToDefaultHeight(slider)
     if BBP.isLargeNameplatesEnabled() then
         slider:SetValue(18.8)
+        BetterBlizzPlatesDB.castBarHeight = 18.8
     else
         slider:SetValue(8)
+        BetterBlizzPlatesDB.castBarHeight = 8
     end
 end
 
 function BBP.ResetToDefaultHeight2(slider)
     if BBP.isLargeNameplatesEnabled() then
-        slider:SetValue(10.8)
-        BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
+        --slider:SetValue(10.8)
+        --BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
+        slider:SetValue(2.7)
+        BetterBlizzPlatesDB.NamePlateVerticalScale = "2.7"
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar NamePlateVerticalScale set to 2.7")
     else
-        slider:SetValue(4)
-        BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 4
+        --slider:SetValue(4)
+        --BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 4
+        slider:SetValue(1)
+        BetterBlizzPlatesDB.NamePlateVerticalScale = "1"
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar NamePlateVerticalScale set to 1")
     end
 end
 
 function BBP.ToggleAndPrintCVAR(cvarName)
     local currentValue = GetCVar(cvarName)
     local newValue = (currentValue == "1") and "0" or "1"
-    
+
     SetCVar(cvarName, newValue)
     print(string.format("%s set to %s", cvarName, newValue))
 end
@@ -781,7 +860,7 @@ function BBP.FadeOutNPCs(frame)
             break
         end
     end
-    
+
     -- Check if the unit is the current target
     if UnitIsUnit(frame.displayedUnit, "target") then
         frame:SetAlpha(1)
@@ -802,7 +881,7 @@ function BBP.HideNPCs(frame)
     if BetterBlizzPlatesDB.hideNPCArenaOnly and not UnitInBattleground("player") then
         return
     end
-    
+
     -- Skip if the unit is a player
     if UnitIsPlayer(frame.displayedUnit) then return end
 
@@ -893,8 +972,8 @@ function BBP.ColorNPCs(frame)
             break
         end
     end
-    
-    
+
+
     -- Set the vertex color based on the NPC color values
     if inList and npcColor then
         frame.healthBar:SetStatusBarColor(npcColor.r, npcColor.g, npcColor.b)
@@ -905,11 +984,22 @@ function BBP.ColorNPCs(frame)
 end
 
 hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
+    if not frame.unit or not frame.unit:find("nameplate") then return end
+
     if BetterBlizzPlatesDB.colorNPC then
         BBP.ColorNPCs(frame)
     end
+
     if BetterBlizzPlatesDB.focusTargetIndicator then
         BBP.FocusTargetIndicator(frame)
+    end
+
+    if BetterBlizzPlatesDB.totemIndicator then
+        local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
+        if BBP.npcList[npcID] and BBP.npcList[npcID].color then
+            frame.healthBar:SetStatusBarColor(unpack(BBP.npcList[npcID].color))
+            frame.name:SetVertexColor(unpack(BBP.npcList[npcID].color))
+        end
     end
 end)
 
@@ -1072,7 +1162,7 @@ function BBP.RunAuraModule()
                 if self.hasShownAsName and not UnitIsUnit(self.unit, "player") then 
                     securecallfunction(self.Hide, self)
                 end
-                
+
                 if self.shouldHide then
                     securecallfunction(self.Hide, self)
                 end
@@ -1081,7 +1171,7 @@ function BBP.RunAuraModule()
             unitFrame.BuffFrame.UpdateAnchor = BBP.UpdateAnchor
             --unitFrame.BuffFrame.UpdateBuffs = BBP.UpdateBuffsRSV
             unitFrame.BuffFrame.UpdateBuffs = function() return end
-            
+
             --unitFrame.BuffFrame.UpdateBuffs = BBP.UpdateBuffsRSV --not enabled in rsplates
 
             unitFrame.rsed = true
@@ -1136,7 +1226,7 @@ function BBP.RunAuraModule()
         end)
 
 
-        
+
     --end
 
 
@@ -1260,11 +1350,6 @@ local function HandleNamePlateAdded(unit)
         BBP.TargetIndicator(frame)
     end
 
-    -- Show Focus Target Indicator
-    if BetterBlizzPlatesDB.focusTargetIndicator then
-        BBP.FocusTargetIndicator(frame)
-    end
-
     -- Show absorb amount
     if BetterBlizzPlatesDB.absorbIndicator or BetterBlizzPlatesDB.absorbIndicatorTestMode then
         BBP.AbsorbIndicator(frame)
@@ -1278,7 +1363,7 @@ local function HandleNamePlateAdded(unit)
     if not BetterBlizzPlatesDB.arenaIndicatorModeOff or not BetterBlizzPlatesDB.partyIndicatorModeOff or BetterBlizzPlatesDB.arenaIndicatorTestMode then
         BBP.ArenaIndicatorCaller(frame, BetterBlizzPlatesDB)
     end
-    
+
     if BetterBlizzPlatesDB.executeIndicator or BetterBlizzPlatesDB.executeIndicatorTestMode then
         BBP.ExecuteIndicator(frame)
     end
@@ -1295,6 +1380,14 @@ local function HandleNamePlateAdded(unit)
     if BetterBlizzPlatesDB.hideNPC then
         BBP.HideNPCs(frame)
     end
+
+--[[
+    if BetterBlizzPlatesDB.hideCastbar then
+        BBP.HideCastbar(unit)
+    end
+
+]]
+
 
     -- Color NPC
     if BetterBlizzPlatesDB.colorNPC then
@@ -1326,7 +1419,12 @@ local function HandleNamePlateAdded(unit)
         BBP.ApplyCustomTexture(nameplate)
     else
         frame.healthBar:SetStatusBarTexture("Interface/TargetingFrame/UI-TargetingFrame-BarFill") --added this only to deal with scenario where user toggles off custom textures and gets new nameplates (with custom textures) displaying, OPTIMIZE
-    end    
+    end
+
+    -- Show Focus Target Indicator
+    if BetterBlizzPlatesDB.focusTargetIndicator or BetterBlizzPlatesDB.focusTargetIndicatorTestMode then
+        BBP.FocusTargetIndicator(frame)
+    end
 end
 --#################################################################################################
 -- Event Listener
@@ -1384,11 +1482,29 @@ function BBP.RefreshAllNameplates()
             BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
         end
 
-        if namePlateFrameBase then
+        --if namePlateFrameBase then
             --BBP.On_NpRefreshOnce(unitFrame, namePlateFrameBase) --this line errors
+        --end
+
+        -- Hide quest indicator after testing
+        if BetterBlizzPlatesDB.questIndicator or not BetterBlizzPlatesDB.questIndicatorTestMode then
+            if frame.questIndicator then
+                frame.questIndicator:Hide()
+            end
+            if BetterBlizzPlatesDB.questIndicator then
+                BBP.QuestIndicator()
+            end
         end
 
-        BBP.CompactUnitFrame_UpdateHealthColor(frame)
+        -- Hide focus marker after testing
+        if BetterBlizzPlatesDB.focusTargetIndicator or not BetterBlizzPlatesDB.focusTargetIndicatorTestMode then
+            if frame.focusTargetIndicator then
+                frame.focusTargetIndicator:Hide()
+            end
+            if BetterBlizzPlatesDB.focusTargetIndicator then
+                BBP.FocusTargetIndicator()
+            end
+        end
 
         -- Reset nameplate scale after testing totems
         if not BetterBlizzPlatesDB.totemIndicatorTestMode then
@@ -1397,7 +1513,8 @@ function BBP.RefreshAllNameplates()
             end
         end
         -- Always update the name
-        BBP.RestoreOriginalNameplateColors(frame)
+        --BBP.RestoreOriginalNameplateColors(frame)
+        BBP.CompactUnitFrame_UpdateHealthColor(frame)
         CompactUnitFrame_UpdateName(frame)
         HandleNamePlateAdded(frame.unit)
         if not BetterBlizzPlatesDB.fadeOutNPC then
@@ -1441,11 +1558,12 @@ local function ConsolidatedUpdateName(frame)
     if not BetterBlizzPlatesDB.arenaIndicatorModeOff or not BetterBlizzPlatesDB.partyIndicatorModeOff or BetterBlizzPlatesDB.arenaIndicatorTestMode then
         BBP.ArenaIndicatorCaller(frame, BetterBlizzPlatesDB)
     end
-    
+
     -- Handle absorb indicator and reset absorb text if it exists
     if BetterBlizzPlatesDB.absorbIndicator then
         BBP.AbsorbIndicator(frame)
     end
+
     -- Show out of combat icon
     if BetterBlizzPlatesDB.combatIndicator then
         BBP.CombatIndicator(frame)
@@ -1457,7 +1575,7 @@ local function ConsolidatedUpdateName(frame)
     end
     -- Raidmarker change
     if BetterBlizzPlatesDB.raidmarkIndicator then
-        BBP.ApplyRaidmarkerChanges(nameplate)
+        --BBP.ApplyRaidmarkerChanges(nameplate)
     end
     -- Show healer icon
     if BetterBlizzPlatesDB.healerIndicatorTestMode or BetterBlizzPlatesDB.healerIndicator then
@@ -1468,11 +1586,6 @@ local function ConsolidatedUpdateName(frame)
     if BetterBlizzPlatesDB.colorNPCName then
         BBP.ColorNPCs(frame)
     end
-
-    -- Focus Target Indicator (color)
-    --if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate then
-        --BBP.FocusTargetIndicator(frame)
-    --end
 
     -- Color nameplate and pick random name or hide name during totem tester
     if BetterBlizzPlatesDB.totemIndicatorTestMode and frame.randomColor then
@@ -1548,24 +1661,58 @@ frame:SetScript("OnEvent", function(self, event, cvarName)
     end
 end)
 
+local function TurnOnEnabledFeaturesOnLogin()
+    if BetterBlizzPlatesDB.raidmarkIndicator then
+        BBP.ChangeRaidmarker()
+    end
+
+    if BetterBlizzPlatesDB.showNameplateCastbarTimer or
+    BetterBlizzPlatesDB.showNameplateTargetText or
+    BetterBlizzPlatesDB.enableCastbarCustomization or
+    BetterBlizzPlatesDB.hideCastbar then
+        BBP.ToggleSpellCastEventRegistration()
+    end
+
+    BBP.ApplyNameplateWidth()
+
+    if BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena then
+        BBP.ToggleFriendlyNameplatesInArena()
+    end
+
+    if BetterBlizzPlatesDB.absorbIndicator then
+        BBP.ToggleAbsorbIndicator()
+    end
+
+    if BetterBlizzPlatesDB.combatIndicator then
+        BBP.ToggleCombatIndicator()
+    end
+
+    if BetterBlizzPlatesDB.executeIndicator then
+        BBP.ToggleExecuteIndicator()
+    end
+
+    if BetterBlizzPlatesDB.targetIndicator then
+        BBP.ToggleTargetIndicator()
+    end
+
+    if BetterBlizzPlatesDB.focusTargetIndicator then
+        BBP.ToggleFocusTargetIndicator()
+    end
+end
+
 -- Event registration for PLAYER_LOGIN
 local First = CreateFrame("Frame")
 First:RegisterEvent("ADDON_LOADED")
 First:SetScript("OnEvent", function(_, event, addonName)
     if event == "ADDON_LOADED" and addonName then
         if addonName == "BetterBlizzPlates" then
-            BetterBlizzPlatesDB.absorbIndicatorTestMode = false
-            BetterBlizzPlatesDB.petIndicatorTestMode = false
-            BetterBlizzPlatesDB.healerIndicatorTestMode = false
-            BetterBlizzPlatesDB.arenaIndicatorTestMode = false
-            BetterBlizzPlatesDB.totemIndicatorTestMode = false
-            BetterBlizzPlatesDB.targetIndicatorTestMode = false
-            BetterBlizzPlatesDB.focusTargetIndicatorTestMode = false
-            BetterBlizzPlatesDB.questIndicatorTestMode = false
-            BetterBlizzPlatesDB.testAllEnabledExtraFeatures = false
-            
+            TurnOffTestModes()
+            BetterBlizzPlatesDB.castbarEventsOn = false
+            BetterBlizzPlatesDB.wasOnLoadingScreen = true
+
             InitializeSavedVariables()
             FetchAndSaveValuesOnFirstLogin()
+            TurnOnEnabledFeaturesOnLogin()
             BBP.InitializeOptions()
         end
     end

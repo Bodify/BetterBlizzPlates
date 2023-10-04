@@ -250,8 +250,8 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
 		buff.layoutIndex = buffIndex;
 		buff.spellID = aura.spellId;
 
-        
-        
+
+
 		buff.Icon:SetTexture(aura.icon);
 
 
@@ -355,6 +355,37 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
             end
         end
 
+--[[ -- im not smart enough to figure this one out yet
+        -- pandemic glow
+        if BetterBlizzPlatesDB.otherNpdeBuffPandemicGlow then
+            if not isPlayerUnit and isEnemyUnit then
+                if not aura.isHelpful and aura.duration then
+                    -- Create emphasis texture if it doesn't exist yet
+                    if not buff.buffBorderEmphasis then
+                        buff.buffBorderEmphasis = buff:CreateTexture(nil, "OVERLAY");
+                        if buff.Cooldown then
+                            buff.buffBorderEmphasis:SetParent(buff.Cooldown)
+                        end
+                        buff.buffBorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7);
+                        buff.buffBorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7);
+                        buff.buffBorderEmphasis:SetAtlas("newplayertutorial-drag-slotgreen");
+                        buff.buffBorderEmphasis:SetDesaturated(true)
+                        buff.buffBorderEmphasis:SetVertexColor(1, 0, 0)
+                    end
+
+                    BBP.UpdatePandemicGlowForAura(buff, aura, spellName, spellId);
+                end
+            end
+        else
+            if buff.buffBorderEmphasis then
+                buff.buffBorderEmphasis:Hide()
+                buff.Border:Show()
+            end
+        end
+
+]]
+
+
         if isPlayerUnit then
             if buff.Border then
                 buff.Border:Show()
@@ -420,7 +451,12 @@ function BBP:UpdateAnchor()
 	local isTarget = self:GetParent().unit and UnitIsUnit(self:GetParent().unit, "target");
 	local targetYOffset = self:GetBaseYOffset() + (isTarget and self:GetTargetYOffset() or 0.0);
 	if (self:GetParent().unit and ShouldShowName(self:GetParent())) then
-		self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
+        if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
+            self:ClearAllPoints()
+            self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
+        else
+            self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
+        end
 	else
 		self:SetPoint("BOTTOM", self:GetParent().healthBar, "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, 5 + targetYOffset);
 	end
@@ -432,10 +468,9 @@ function BBP.RefBuffFrameDisplay()
 		unitFrame.BuffFrame:UpdateAnchor()
 		if unitFrame.unit then 
 			local self = unitFrame.BuffFrame
-            -- 重新init全更新一遍所有buff
             BBP.UpdateBuffsRSV(self, unitFrame.unit, nil, {}, unitFrame)
         end
-	end	
+	end
 end
 
 --[[

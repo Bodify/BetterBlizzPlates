@@ -32,24 +32,6 @@ BBP.npcList = {
     [179867] =  { name = "Static Field Totem", icon = GetSpellTexture(355580),              duration = 6,  color = {0, 1, 0.78}, important = false },
 }
 
-BBP.originalNameplateColors = {}
-
-function BBP.StoreOriginalNameplateColors(frame)
-    local guid = UnitGUID(frame.unit)
-    if guid then
-        local r, g, b, a = frame.healthBar:GetStatusBarColor()
-        BBP.originalNameplateColors[guid] = {r = r, g = g, b = b, a = a}
-    end
-end
-
-function BBP.RestoreOriginalNameplateColors(frame)
-    local guid = UnitGUID(frame.unit)
-    if guid and BBP.originalNameplateColors[guid] then
-        local color = BBP.originalNameplateColors[guid]
-        frame.healthBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
-    end
-end
-
 function BBP.ResetNameplateTestAttributes()
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = nameplate.UnitFrame
@@ -67,12 +49,12 @@ function BBP.SetupUnifiedAnimation(frameWithAnimations)
     grow:SetOrder(1)
     grow:SetScale(1.1, 1.1)
     grow:SetDuration(0.5)
-    
+
     local shrink = animationGroup:CreateAnimation("Scale")
     shrink:SetOrder(2)
     shrink:SetScale(0.9091, 0.9091)
     shrink:SetDuration(0.5)
-    
+
     animationGroup:SetLooping("REPEAT")
 
     return animationGroup
@@ -84,7 +66,7 @@ function BBP.CreateTotemComponents(frame)
     local yPos = BetterBlizzPlatesDB.totemIndicatorYPos
     local totemIndicatorAnchor = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown and frame.healthBar or frame.name
     local yPosAdjustment = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown and yPos + 4 or yPos
-    
+
     if not frame.totemIndicator then
         frame.totemIndicator = CreateFrame("Frame", nil, frame)
         frame.totemIndicator:SetSize(30, 30)
@@ -110,7 +92,7 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color)
     if iconTexture then
         frame.customIcon:SetTexture(iconTexture)
         frame.customIcon:Show()
-        
+
         if duration then
             if not frame.customCooldown then
                 frame.customCooldown = CreateFrame("Cooldown", nil, frame.totemIndicator)
@@ -138,7 +120,7 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color)
             end)
         end
     end
-        
+
 
     -- Apply glow effect if color is provided
     if color then
@@ -147,11 +129,11 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color)
             frame.glowTexture:SetBlendMode("ADD")
             local widthOffset = 12
             local heightOffset = 12
-            
+
             frame.glowTexture:SetPoint('TOPLEFT', frame.totemIndicator, 'TOPLEFT', -widthOffset, heightOffset)
             frame.glowTexture:SetPoint('BOTTOMRIGHT', frame.totemIndicator, 'BOTTOMRIGHT', widthOffset, -heightOffset)
         end
-        
+
         frame.glowTexture:SetAtlas("clickcast-highlight-spellbook")
         frame.glowTexture:SetDesaturated(true)
         frame.glowTexture:SetVertexColor(unpack(color))
@@ -175,7 +157,7 @@ function BBP.GetRandomTotemAttributes()
 
     -- Decide whether to pick an important or less important totem
     local shouldPickImportant = math.random() < 0.5
-    
+
     local selectedKey
     if shouldPickImportant then
         selectedKey = importantKeys[math.random(1, #importantKeys)]
@@ -198,7 +180,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
     local npcData = BBP.npcList[npcID]
 
     frame:SetScale(1)
-    
+
     -- Early return if not in test mode and npcData is nil
     if not BetterBlizzPlatesDB.totemIndicatorTestMode and not npcData then
         return
@@ -209,7 +191,6 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
 
     -- Test mode
     if BetterBlizzPlatesDB.totemIndicatorTestMode then
-        BBP.StoreOriginalNameplateColors(frame)
         frame:SetScale(1)
         BBP.ResetNameplateTestAttributes()
 
@@ -273,15 +254,3 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
         frame.totemIndicator:SetPoint("BOTTOM", totemIndicatorSwappingAnchor, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos)
     end
 end
-
-
-
-hooksecurefunc("CompactUnitFrame_UpdateHealth", function(frame)
-    if not frame.unit or not frame.unit:find("nameplate") then return end
-
-    local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
-    if BBP.npcList[npcID] and BBP.npcList[npcID].color then
-        frame.healthBar:SetStatusBarColor(unpack(BBP.npcList[npcID].color))
-        frame.name:SetVertexColor(unpack(BBP.npcList[npcID].color))
-    end
-end)

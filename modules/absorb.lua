@@ -2,21 +2,6 @@
 BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
 BBP = BBP or {}
 
--- Get opposite anchor of main anchor to always have it outside of nameplate
-function BBP.GetOppositeAnchor(anchor)
-    local opposites = {
-        LEFT = "RIGHT",
-        RIGHT = "LEFT",
-        TOP = "BOTTOM",
-        BOTTOM = "TOP",
-        TOPLEFT = "BOTTOMRIGHT",
-        TOPRIGHT = "BOTTOMLEFT",
-        BOTTOMLEFT = "TOPRIGHT",
-        BOTTOMRIGHT = "TOPLEFT",
-    }
-    return opposites[anchor] or "CENTER"
-end
-
 -- Absorb Indicator
 function BBP.AbsorbIndicator(frame)
     local unit = frame.displayedUnit
@@ -34,7 +19,7 @@ function BBP.AbsorbIndicator(frame)
 
     frame.absorbIndicator:ClearAllPoints()
     frame.absorbIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos -2, yPos)
-    frame.absorbIndicator:SetScale(absorbIndicatorScale or 1)
+    frame.absorbIndicator:SetScale(BetterBlizzPlatesDB.absorbIndicatorScale or 1)
 
     -- Test mode
     if BetterBlizzPlatesDB.absorbIndicatorTestMode then

@@ -5,7 +5,8 @@ BBP = BBP or {}
 local previousTargetNameplate = nil
 local previousFocusTargetNameplate = nil
 
---local customFocusTexture = "Interface\\AddOns\\BetterBlizzPlates\\media\\focusTexture.tga"
+local customTexture = "Interface\\AddOns\\BetterBlizzPlates\\media\\DragonflightTexture.tga"
+local customFocusTexture = "Interface\\AddOns\\BetterBlizzPlates\\media\\focusTexture.tga"
 
 -- Target Indicator
 function BBP.TargetIndicator(frame)
@@ -98,12 +99,29 @@ function BBP.FocusTargetIndicator(frame)
         else
             BBP.CompactUnitFrame_UpdateHealthColor(frame)
         end
+        if BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture then
+            frame.healthBar:SetStatusBarTexture(customFocusTexture)
+        else
+            if BetterBlizzPlatesDB.useCustomTextureForBars then
+                frame.healthBar:SetStatusBarTexture(customTexture)
+            else
+                frame.healthBar:SetStatusBarTexture("Interface/TargetingFrame/UI-TargetingFrame-BarFill")
+            end
+        end
         return
     end
 
     if UnitIsUnit(frame.unit, "focus") then
         frame.focusTargetIndicator:Show()
-        --frame.healthBar:SetStatusBarTexture(customFocusTexture)
+        if BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture then
+            frame.healthBar:SetStatusBarTexture(customFocusTexture)
+        else
+            if BetterBlizzPlatesDB.useCustomTextureForBars then
+                frame.healthBar:SetStatusBarTexture(customTexture)
+            else
+                frame.healthBar:SetStatusBarTexture("Interface/TargetingFrame/UI-TargetingFrame-BarFill")
+            end
+        end
         if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate then
             local color = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB or {1, 1, 1}
             frame.healthBar:SetStatusBarColor(unpack(color))
@@ -127,6 +145,22 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
         if BetterBlizzPlatesDB.hideNPC then
             BBP.HideNPCs(previousTargetNameplate.UnitFrame)
         end
+        if BetterBlizzPlatesDB.hideCastbar then
+            if previousTargetNameplate.UnitFrame then
+                local castBar = previousTargetNameplate.UnitFrame.castBar --149
+                if castBar:IsForbidden() then return end
+                if castBar then
+                    castBar:SetAlpha(0)
+                    castBar.Icon:SetAlpha(0)
+                    if previousTargetNameplate.UnitFrame.CastTimer then
+                        previousTargetNameplate.UnitFrame.CastTimer:Hide()
+                    end
+                    if previousTargetNameplate.UnitFrame.TargetText then
+                        previousTargetNameplate.UnitFrame.TargetText:Hide()
+                    end
+                end
+            end
+        end
         previousTargetNameplate = nil
     end
 
@@ -137,6 +171,20 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
         end
         if BetterBlizzPlatesDB.hideNPC then
             BBP.HideNPCs(nameplateForTarget.UnitFrame)
+        end
+        if BetterBlizzPlatesDB.showCastbarIfTarget then
+            local castBar = nameplateForTarget.UnitFrame.castBar
+            if castBar:IsForbidden() then return end
+            if castBar then
+                castBar:SetAlpha(1)
+                castBar.Icon:SetAlpha(1)
+                if nameplateForTarget.UnitFrame.CastTimer then
+                    nameplateForTarget.UnitFrame.CastTimer:Show()
+                end
+                if nameplateForTarget.UnitFrame.TargetText then
+                    nameplateForTarget.UnitFrame.TargetText:Show()
+                end
+            end
         end
         previousTargetNameplate = nameplateForTarget
     end
