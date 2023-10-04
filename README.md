@@ -21,6 +21,7 @@
 - Color NPC
 - Quest Indicator
 - Castbar settings and emphasis mode
+- Hide Castbar
 - Nameplate aura settings, filter, buffs, etc.
 
 ## Arena Nameplates
