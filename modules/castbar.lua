@@ -48,6 +48,7 @@ local function ResetCastbarAfterFadeout(unitToken)
     if not (nameplate and nameplate.UnitFrame and nameplate.UnitFrame.castBar) then return end
     if unitToken == "player" then return end
     local castBar = nameplate.UnitFrame.castBar
+    local frame = nameplate.UnitFrame
     if castBar:IsForbidden() then return end
     C_Timer.After(0.5, function() 
         castBar:SetHeight(BetterBlizzPlatesDB.castBarHeight)
@@ -55,6 +56,11 @@ local function ResetCastbarAfterFadeout(unitToken)
         castBar.Spark:SetSize(4, BetterBlizzPlatesDB.castBarHeight + 5)
         castBar.Text:SetScale(BetterBlizzPlatesDB.castBarTextScale)
         castBar.BorderShield:SetScale(BetterBlizzPlatesDB.castBarIconScale)
+
+        if BetterBlizzPlatesDB.castBarEmphasisHealthbarColor then
+            if not frame or frame:IsForbidden() then return end
+            BBP.CompactUnitFrame_UpdateHealthColor(frame)
+        end
     end)
 end
 
@@ -139,6 +145,10 @@ function BBP.CustomizeCastbar(unitToken)
         if BetterBlizzPlatesDB.castBarEmphasisSpark then
             castBar.Spark:SetSize(4, BetterBlizzPlatesDB.castBarEmphasisSparkHeight)
         end
+
+        if BetterBlizzPlatesDB.castBarEmphasisHealthbarColor then
+            nameplate.UnitFrame.healthBar:SetStatusBarColor(castEmphasis.entryColors.text.r, castEmphasis.entryColors.text.g, castEmphasis.entryColors.text.b)
+        end
     end
 
     if BetterBlizzPlatesDB.enableCastbarEmphasis then
@@ -152,6 +162,7 @@ function BBP.CustomizeCastbar(unitToken)
                 for _, castEmphasis in ipairs(BetterBlizzPlatesDB.castEmphasisList) do
                     if (castEmphasis.name and spellName and strlower(castEmphasis.name) == strlower(spellName)) or (castEmphasis.id and spellID and castEmphasis.id == spellID) then
                         ApplyCastBarEmphasisSettings(castBar, castEmphasis, defaultR, defaultG, defaultB)
+                        nameplate.emphasizedCast = castEmphasis
                         break
                     end
                 end

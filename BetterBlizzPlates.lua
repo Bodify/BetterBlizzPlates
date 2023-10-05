@@ -155,6 +155,7 @@ local defaultSettings = {
     castBarEmphasisTextScale = 2,
     castBarEmphasisHeightValue = 24,
     castBarEmphasisSparkHeight = 35,
+    castBarEmphasisHealthbarColor = false,
     castBarDragonflightShield = true,
     castBarShieldAnchor = "LEFT",
     castBarShieldXPos = 0,
@@ -992,6 +993,14 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
 
     if BetterBlizzPlatesDB.focusTargetIndicator then
         BBP.FocusTargetIndicator(frame)
+    end
+
+    if BetterBlizzPlatesDB.castBarEmphasisHealthbarColor then
+        local nameplate = BBP.GetNameplate(frame.unit) -- Assuming BBP.GetNameplate retrieves the nameplate frame for the given unitToken
+        local isCasting = UnitCastingInfo(frame.unit) or UnitChannelInfo(frame.unit)
+        if nameplate and nameplate.emphasizedCast and isCasting then
+            frame.healthBar:SetStatusBarColor(nameplate.emphasizedCast.entryColors.text.r, nameplate.emphasizedCast.entryColors.text.g, nameplate.emphasizedCast.entryColors.text.b)
+        end
     end
 
     if BetterBlizzPlatesDB.totemIndicator then
