@@ -26,7 +26,7 @@ function BBP.ExecuteIndicator(frame)
     else
         frame.executeIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos + -0.5)
     end
-    --frame.executeIndicator:SetScale(BetterBlizzPlatesDB.executeIndicatorScale or 1)
+    frame.executeIndicator:SetScale(BetterBlizzPlatesDB.executeIndicatorScale or 1)
 
     if BetterBlizzPlatesDB.executeIndicatorTestMode then
         frame.executeIndicator:SetText("19.5")
