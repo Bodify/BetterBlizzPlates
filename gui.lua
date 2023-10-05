@@ -2020,8 +2020,12 @@ local function guiPositionAndScale()
     checkBox_executeIndicatorAlwaysOn:SetPoint("TOPLEFT", checkBox_executeTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
     local checkBox_executeIndicatorNotOnFullHp = CreateCheckbox("executeIndicatorNotOnFullHp", "< 100%", contentFrame)
-    checkBox_executeIndicatorNotOnFullHp:SetPoint("LEFT", checkBox_executeIndicatorAlwaysOn.text, "RIGHT", 5, 0)
+    checkBox_executeIndicatorNotOnFullHp:SetPoint("LEFT", checkBox_executeIndicatorAlwaysOn.text, "RIGHT", 2, 0)
     CreateTooltip(checkBox_executeIndicatorNotOnFullHp, "Hide on 100%")
+
+    local checkBox_executeIndicatorShowDecimal = CreateCheckbox("executeIndicatorShowDecimal", "Decimal", contentFrame)
+    checkBox_executeIndicatorShowDecimal:SetPoint("BOTTOMLEFT", checkBox_executeIndicatorNotOnFullHp, "TOPLEFT", 0, -pixelsBetweenBoxes)
+    CreateTooltip(checkBox_executeIndicatorShowDecimal, "Show decimal")
 
     local executeIndicatorThresholdSlider = CreateSlider("BetterBlizzPlates_executeIndicatorThresholdSlider", contentFrame, "Threshold", 5, 100, 1, "executeIndicatorThreshold", "Y")
     executeIndicatorThresholdSlider:SetPoint("TOP", checkBox_executeIndicatorAlwaysOn, "BOTTOM", 58, -15)

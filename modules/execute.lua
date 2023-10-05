@@ -37,7 +37,17 @@ function BBP.ExecuteIndicator(frame)
     -- Check if health is below 40% and if so show Execute Indicator
     if not UnitIsFriend("player", unit) then
         if healthPercentage > 0.1 then
-            frame.executeIndicator:SetText(string.format("%.1f", healthPercentage))
+            local text
+            if healthPercentage == 100 then
+                text = "100"
+            elseif BetterBlizzPlatesDB.executeIndicatorShowDecimal then
+                text = string.format("%.1f", healthPercentage)
+            else
+                text = string.format("%d", healthPercentage)
+            end
+
+            frame.executeIndicator:SetText(text)
+
             if BetterBlizzPlatesDB.executeIndicatorAlwaysOn then
                 if BetterBlizzPlatesDB.executeIndicatorNotOnFullHp then
                     if healthPercentage < 99 then
