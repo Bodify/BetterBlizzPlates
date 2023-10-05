@@ -593,7 +593,7 @@ function BBP.SetFontBasedOnOption(namePlateObj, specifiedSize, forcedOutline)
     if BetterBlizzPlatesDB.useCustomFont then
         font = customFont
         outline = forcedOutline or "THINOUTLINE"
-        currentSize = specifiedSize or (BetterBlizzPlatesDB.defaultFontSize + 3)
+        currentSize = (specifiedSize + 2) or (BetterBlizzPlatesDB.defaultFontSize + 3)
     else
         font = BetterBlizzPlatesDB.defaultNamePlateFont
         outline = forcedOutline or BetterBlizzPlatesDB.defaultNamePlateFontFlags
@@ -1482,7 +1482,7 @@ function BBP.RefreshAllNameplates()
             BBP.SetFontBasedOnOption(nameplate.UnitFrame.CastTimer, 11)
         end
         if frame.executeIndicator then
-            BBP.SetFontBasedOnOption(frame.executeIndicator, 8, "THICKOUTLINE")
+            BBP.SetFontBasedOnOption(frame.executeIndicator, 10, "THICKOUTLINE")
         end
         if frame.arenaNumberText then
             BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")

@@ -16,13 +16,13 @@ function BBP.ExecuteIndicator(frame)
     -- Initialize
     if not frame.executeIndicator then
         frame.executeIndicator = frame.healthBar:CreateFontString(nil, "OVERLAY")
-        BBP.SetFontBasedOnOption(frame.executeIndicator, 8, "THICKOUTLINE")
+        BBP.SetFontBasedOnOption(frame.executeIndicator, 10, "THICKOUTLINE")
         frame.executeIndicator:SetTextColor(1, 1, 1)
     end
 
     frame.executeIndicator:ClearAllPoints()
     if anchorPoint == "LEFT" then
-        frame.executeIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos + 44, yPos + -0.5)
+        frame.executeIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos + 46, yPos + -0.5)
     else
         frame.executeIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos + -0.5)
     end
