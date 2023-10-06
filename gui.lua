@@ -48,6 +48,37 @@ StaticPopupDialogs["CONFIRM_RELOAD"] = {
 }
 
 -- GUI Functions
+local function FetchCVarWhenLoaded(cvarName, callback)
+    local function FetchCVarValue()
+        if BBP.variablesLoaded then
+            local value = GetCVar(cvarName)
+            callback(value)
+        else
+            C_Timer.After(1, FetchCVarValue)
+        end
+    end
+
+    FetchCVarValue()
+end
+
+local function FetchWidthWhenLoaded(callback)
+    local function FetchWidthValue()
+        if BBP.variablesLoaded then
+            local value
+            if BBP.isLargeNameplatesEnabled() then
+                value = 154
+            else
+                value = 110
+            end
+            callback(value)
+        else
+            C_Timer.After(1, FetchWidthValue)
+        end
+    end
+
+    FetchWidthValue()
+end
+
 local function DisableCheckboxes(frame)
     for i = 1, frame:GetNumChildren() do
         local child = select(i, frame:GetChildren())
@@ -211,86 +242,28 @@ local function CreateSlider(name, parent, label, minValue, maxValue, stepValue, 
                     local frame = namePlate.UnitFrame
                     -- Absorb Indicator Pos and Scale
                     if element == "absorbIndicator" then
-                        if not frame.absorbIndicator then
-                            BBP.AbsorbIndicator(frame)
-                        end
-                        if axis then
-                            local oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
-                            frame.absorbIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos -2, yPos)
-                        else
-                            frame.absorbIndicator:SetScale(value)
-                        end
+                        BBP.AbsorbIndicator(frame)
                     -- Combat Indicator Pos and Scale
                     elseif element == "combatIndicator" then
-                        if not frame.combatIndicator then
-                            BBP.CombatIndicator(frame)
-                        end
-                        if axis then
-                            frame.combatIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
-                            frame.combatIndicatorSap:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
-                        else
-                            frame.combatIndicator:SetScale(value)
-                            frame.combatIndicatorSap:SetScale(value)
-                        end
+                        BBP.CombatIndicator(frame)
                     -- Healer Indicator Pos and Scale
                     elseif element == "healerIndicator" then
-                        if not frame.healerIndicator then
-                            BBP.HealerIndicator(frame)
-                        end
-                        if axis then
-                            frame.healerIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
-                        else
-                            frame.healerIndicator:SetScale(value)
-                        end
+                        BBP.HealerIndicator(frame)
                     -- Pet Indicator Pos and Scale
                     elseif element == "petIndicator" then
-                        if not frame.petIndicator then
-                            BBP.PetIndicator(frame)
-                        end
-                        if axis then
-                            frame.petIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
-                        else
-                            frame.petIndicator:SetScale(value)
-                        end
+                        BBP.PetIndicator(frame)
                     -- Quest Indicator Pos and Scale
                     elseif element == "questIndicator" then
-                        if not frame.questIndicator then
-                            BBP.QuestIndicator(frame)
-                        end
-                        if axis then
-                            if anchorPoint == "LEFT" then
-                                frame.questIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos +-8, yPos)
-                            else
-                                frame.questIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
-                            end
-                        else
-                            frame.questIndicator:SetScale(value)
-                        end
+                        BBP.QuestIndicator(frame)
                     -- Execute Indicator Pos and Scale
                     elseif element == "executeIndicator" then
                         BBP.ExecuteIndicator(frame)
-                    elseif element == "executeIndicatorThreshold" then
-                        BetterBlizzPlatesDB.executeIndicatorThreshold = value
                     -- Target Indicator Pos and Scale
                     elseif element == "targetIndicator" then
-                        if not frame.targetIndicator then
-                            BBP.TargetIndicator(frame)
-                        end
-                        if axis then
-                            frame.targetIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
-                        else
-                            frame.targetIndicator:SetScale(value)
-                        end
+                        BBP.TargetIndicator(frame)
                     -- Focus Target Indicator Pos and Scale
                     elseif element == "focusTargetIndicator" then
-                        if not frame.targetIndicator then
-                            BBP.FocusTargetIndicator(frame)
-                        end
-                        if axis then
-                            frame.focusTargetIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
-                        else
-                            frame.focusTargetIndicator:SetScale(value)
-                        end
+                        BBP.FocusTargetIndicator(frame)
                     -- Totem Indicator Pos and Scale
                     elseif element == "totemIndicator" then
                         if not frame.totemIndicator then
@@ -309,14 +282,7 @@ local function CreateSlider(name, parent, label, minValue, maxValue, stepValue, 
                         end
                     -- Cast Timer Pos and Scale
                     elseif element == "castTimer" then
-                        if not frame.CastTimer then
-                            --BBP.UpdateCastTimer(nameplate, unitID)
-                        end
-                        if axis then
-                            frame.CastTimer:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
-                        else
-                            frame.CastTimer:SetScale(value)
-                        end
+                        --not rdy
                     -- Cast bar icon pos and scale
                     elseif element == "castBarIcon" then
                         if axis then
@@ -331,53 +297,24 @@ local function CreateSlider(name, parent, label, minValue, maxValue, stepValue, 
                         end
                     -- Cast bar height
                     elseif element == "castBarHeight" then
-                        BetterBlizzPlatesDB.castBarHeight = value
                         frame.castBar:SetHeight(value)
                     elseif element == "castBarText" then
-                        BetterBlizzPlatesDB.castBarTextScale = value
                         frame.castBar.Text:SetScale(value)
-                    elseif element == "castBarEmphasisSpark" then
-                        BetterBlizzPlatesDB.castBarEmphasisSparkHeight = value
                     -- Cast bar emphasis icon pos and scale
                     elseif element == "castBarEmphasisIcon" then
                         if axis then
                             frame.castBar.Icon:SetPoint("CENTER", frame.castBar, "LEFT", xPos, yPos)
-                        else
-                            BetterBlizzPlatesDB.castBarEmphasisIconScale = value
                         end
-                    -- Cast bar emphasis height
-                    elseif element == "castBarEmphasisHeightValue" then
-                        BetterBlizzPlatesDB.castBarEmphasisHeightValue = value
-                    -- Cast bar emphasis text scale
-                    elseif element == "castBarEmphasisText" then
-                        BetterBlizzPlatesDB.castBarEmphasisTextScale = value
-
-
-                    -- Enemy Nameplate height
-                    elseif element == "enemyNameplateHealthbarHeight" then
-                        BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = value
-                        --BBP.DefaultCompactNamePlateFrameAnchorInternal(frame, setupOptions)
 
 
                     -- Target Text for Cast Timer Pos and Scale
                     elseif element == "targetText" then
-                        if not frame.TargetText then
-                            --BBP.UpdateNameplateTargetText(nameplate, unitID)
-                        end
-                        if axis then
-                            local oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
-                            frame.TargetText:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos)
-                        else
-                            frame.TargetText:SetScale(value)
-                        end
+                        --not rdy
                     -- Max auras on nameplate
                     elseif element == "maxAurasOnNameplate" then
-                        BetterBlizzPlatesDB.maxAurasOnNameplate = value
                         BBP.RefBuffFrameDisplay()
                     elseif element == "nameplateAuras" then
                         if axis then
-                            BetterBlizzPlatesDB.nameplateAurasYPos = yPos
-                            BetterBlizzPlatesDB.nameplateAurasXPos = xPos
                             BBP.RefBuffFrameDisplay()
                         end
                     -- Raidmarker Pos and Scale
@@ -395,134 +332,197 @@ local function CreateSlider(name, parent, label, minValue, maxValue, stepValue, 
                                 frame.RaidTargetFrame.RaidTargetIcon:SetScale(value)
                             end
                         end
-                    -- Nameplate scales
-                    elseif element == "nameplate" then
-                        if not BBP.checkCombatAndWarn() then
-                        local defaultMinScale = 0.8
-                        local defaultMaxScale = 1.0
-                        local ratio = defaultMinScale / defaultMaxScale
-                        -- Keep ratio between default values
-                        local newMaxScale = value
-                        local newMinScale = newMaxScale * ratio
-                        SetCVar("nameplateMinScale", newMinScale)
-                        SetCVar("nameplateMaxScale", newMaxScale)
-                        BetterBlizzPlatesDB.nameplateMinScale = newMinScale
-                        BetterBlizzPlatesDB.nameplateMaxScale = newMaxScale
-                        end
-                    -- Nameplate selected scale
-                    elseif element == "nameplateSelected" then
-                        if not BBP.checkCombatAndWarn() then
-                            SetCVar("nameplateSelectedScale", value)
-                            BetterBlizzPlatesDB.nameplateSelectedScale = value
-                        end
-                    -- Nameplate Height cvar
-                    elseif element == "NamePlateVerticalScale" then
-                        if not BBP.checkCombatAndWarn() then
-                            SetCVar("NamePlateVerticalScale", value)
-                            BetterBlizzPlatesDB.NamePlateVerticalScale = value
-                            if frame.castBar then
-                                if not BetterBlizzPlatesDB.enableCastbarCustomization then
-                                    if BBP.isLargeNameplatesEnabled() then
-                                        frame.castBar:SetHeight(18.8)
-                                    else
-                                        frame.castBar:SetHeight(8)
-                                    end
-                                else
-                                    frame.castBar:SetHeight(BetterBlizzPlatesDB.castBarHeight)
-                                end
-                            end
-                        end
-                    -- Nameplate Horizontal Overlap
-                    elseif element == "nameplateOverlapH" then
-                        if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateOverlapH", value)
-                        BetterBlizzPlatesDB.nameplateOverlapH = value
-                        end
-                    -- Nameplate Vertical Overlap
-                    elseif element == "nameplateOverlapV" then
-                        if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateOverlapV", value)
-                        BetterBlizzPlatesDB.nameplateOverlapV = value
-                        end
-                    -- Nameplate Motion Speed
-                    elseif element == "nameplateMotionSpeed" then
-                        if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateMotionSpeed", value)
-                        BetterBlizzPlatesDB.nameplateMotionSpeed = value
-                        end
                     -- Friendly name scale
                     elseif element == "friendlyText" then
                         if not BetterBlizzPlatesDB.arenaIndicatorTestMode then
-                            BBP.hasPrintedTestModeWarning = false
-                            BetterBlizzPlatesDB.friendlyNameScale = value
                             BBP.ClassColorAndScaleNames(frame)
-                        else
-                            if not BBP.hasPrintedTestModeWarning then
-                                print("ArenaID test mode active, disable to adjust this slider")
-                                BBP.hasPrintedTestModeWarning = true
-                            end
                         end
                     -- Enemy name scale
                     elseif element == "enemyText" then
                         if not BetterBlizzPlatesDB.arenaIndicatorTestMode then
-                            BBP.hasPrintedTestModeWarning = false
-                            BetterBlizzPlatesDB.enemyNameScale = value
                             BBP.ClassColorAndScaleNames(frame)
-                        else
-                            if not BBP.hasPrintedTestModeWarning then
-                                print("ArenaID test mode active, disable to adjust this slider")
-                                BBP.hasPrintedTestModeWarning = true
-                            end
                         end
-                    -- Arena ID scale
-                    elseif element == "arenaID" then
-                        BetterBlizzPlatesDB.arenaIDScale = value
-                        BBP.RefreshAllNameplatesLightVer()
-                    -- Arena spec scale
-                    elseif element == "arenaSpec" then
-                        BetterBlizzPlatesDB.arenaSpecScale = value
-                        BBP.RefreshAllNameplatesLightVer()
-                    -- Party ID scale
-                    elseif element == "partyID" then
-                        BetterBlizzPlatesDB.partyIDScale = value
-                        BBP.RefreshAllNameplatesLightVer()
-                    -- Party spec scale
-                    elseif element == "partySpec" then
-                        BetterBlizzPlatesDB.partySpecScale = value
-                        BBP.RefreshAllNameplatesLightVer()
                     -- Nameplate Widths
                     elseif element == "nameplateFriendlyWidth" then
                         if not BBP.checkCombatAndWarn() then
-                        BetterBlizzPlatesDB.nameplateFriendlyWidth = value
-                        local heightValue
-                        if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
-                            heightValue = 1
-                        else
-                            heightValue = BBP.isLargeNameplatesEnabled() and 64.125 or 40
-                        end
+                            BetterBlizzPlatesDB.nameplateFriendlyWidth = value
+                            local heightValue
+                            if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
+                                heightValue = 1
+                            else
+                                heightValue = BBP.isLargeNameplatesEnabled() and 64.125 or 40
+                            end
                         C_NamePlate.SetNamePlateFriendlySize(value, heightValue)
                         end
                     elseif element == "nameplateEnemyWidth" then
                         if not BBP.checkCombatAndWarn() then
-                        BetterBlizzPlatesDB.nameplateEnemyWidth = value
-                        local heightValue
-                        heightValue = BBP.isLargeNameplatesEnabled() and 64.125 or 40
-                        C_NamePlate.SetNamePlateEnemySize(value, heightValue)
+                            BetterBlizzPlatesDB.nameplateEnemyWidth = value
+                            local heightValue
+                            heightValue = BBP.isLargeNameplatesEnabled() and 64.125 or 40
+                            C_NamePlate.SetNamePlateEnemySize(value, heightValue)
                         end
                     elseif element == "fadeOutNPCsAlpha" then
                         if axis then
-                            BetterBlizzPlatesDB.fadeOutNPCsAlpha = value
                             BBP.FadeOutNPCs(frame)
                         end
                     end
                 end
             end
+
+
+
+
+
             --If no nameplates are present still adjust values
             if element == "NamePlateVerticalScale" then
                 if not BBP.checkCombatAndWarn() then
                     SetCVar("NamePlateVerticalScale", value)
                     BetterBlizzPlatesDB.NamePlateVerticalScale = value
                 end
+            elseif element == "executeIndicatorThreshold" then
+                BetterBlizzPlatesDB.executeIndicatorThreshold = value
+            elseif element == "castBarHeight" then
+                BetterBlizzPlatesDB.castBarHeight = value
+            elseif element == "castBarText" then
+                BetterBlizzPlatesDB.castBarTextScale = value
+            elseif element == "castBarEmphasisSpark" then
+                BetterBlizzPlatesDB.castBarEmphasisSparkHeight = value
+            elseif element == "castBarEmphasisIcon" then
+                BetterBlizzPlatesDB.castBarEmphasisIconScale = value
+            -- Cast bar emphasis height
+            elseif element == "castBarEmphasisHeightValue" then
+                BetterBlizzPlatesDB.castBarEmphasisHeightValue = value
+            -- Cast bar emphasis text scale
+            elseif element == "castBarEmphasisText" then
+                BetterBlizzPlatesDB.castBarEmphasisTextScale = value
+            -- Enemy Nameplate height
+            elseif element == "enemyNameplateHealthbarHeight" then
+                BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = value
+                --BBP.DefaultCompactNamePlateFrameAnchorInternal(frame, setupOptions)
+            elseif element == "maxAurasOnNameplate" then
+                BetterBlizzPlatesDB.maxAurasOnNameplate = value
+                -- Nameplate scales
+            elseif element == "nameplate" then
+                if not BBP.checkCombatAndWarn() then
+                local defaultMinScale = 0.8
+                local defaultMaxScale = 1.0
+                local ratio = defaultMinScale / defaultMaxScale
+                -- Keep ratio between default values
+                local newMaxScale = value
+                local newMinScale = newMaxScale * ratio
+                SetCVar("nameplateMinScale", newMinScale)
+                SetCVar("nameplateMaxScale", newMaxScale)
+                BetterBlizzPlatesDB.nameplateMinScale = newMinScale
+                BetterBlizzPlatesDB.nameplateMaxScale = newMaxScale
+                end
+            -- Nameplate selected scale
+            elseif element == "nameplateSelected" then
+                if not BBP.checkCombatAndWarn() then
+                    SetCVar("nameplateSelectedScale", value)
+                    BetterBlizzPlatesDB.nameplateSelectedScale = value
+                end
+            -- Nameplate Height cvar
+            elseif element == "NamePlateVerticalScale" then
+                if not BBP.checkCombatAndWarn() then
+                    SetCVar("NamePlateVerticalScale", value)
+                    BetterBlizzPlatesDB.NamePlateVerticalScale = value
+                    if frame.castBar then
+                        if not BetterBlizzPlatesDB.enableCastbarCustomization then
+                            if BBP.isLargeNameplatesEnabled() then
+                                frame.castBar:SetHeight(18.8)
+                            else
+                                frame.castBar:SetHeight(8)
+                            end
+                        else
+                            frame.castBar:SetHeight(BetterBlizzPlatesDB.castBarHeight)
+                        end
+                    end
+                end
+            -- Nameplate Horizontal Overlap
+            elseif element == "nameplateOverlapH" then
+                if not BBP.checkCombatAndWarn() then
+                    SetCVar("nameplateOverlapH", value)
+                    BetterBlizzPlatesDB.nameplateOverlapH = value
+                end
+            -- Nameplate Vertical Overlap
+            elseif element == "nameplateOverlapV" then
+                if not BBP.checkCombatAndWarn() then
+                    SetCVar("nameplateOverlapV", value)
+                    BetterBlizzPlatesDB.nameplateOverlapV = value
+                end
+            -- Nameplate Motion Speed
+            elseif element == "nameplateMotionSpeed" then
+                if not BBP.checkCombatAndWarn() then
+                    SetCVar("nameplateMotionSpeed", value)
+                    BetterBlizzPlatesDB.nameplateMotionSpeed = value
+                end
+                -- Friendly name scale
+            elseif element == "friendlyText" then
+                if not BetterBlizzPlatesDB.arenaIndicatorTestMode then
+                    BBP.hasPrintedTestModeWarning = false
+                    BetterBlizzPlatesDB.friendlyNameScale = value
+                else
+                    if not BBP.hasPrintedTestModeWarning then
+                        print("ArenaID test mode active, disable to adjust this slider")
+                        BBP.hasPrintedTestModeWarning = true
+                    end
+                end
+            -- Enemy name scale
+            elseif element == "enemyText" then
+                if not BetterBlizzPlatesDB.arenaIndicatorTestMode then
+                    BBP.hasPrintedTestModeWarning = false
+                    BetterBlizzPlatesDB.enemyNameScale = value
+                else
+                    if not BBP.hasPrintedTestModeWarning then
+                        print("ArenaID test mode active, disable to adjust this slider")
+                        BBP.hasPrintedTestModeWarning = true
+                    end
+                end
+            -- Arena ID scale
+            elseif element == "arenaID" then
+                BetterBlizzPlatesDB.arenaIDScale = value
+                BBP.RefreshAllNameplatesLightVer()
+            -- Arena spec scale
+            elseif element == "arenaSpec" then
+                BetterBlizzPlatesDB.arenaSpecScale = value
+                BBP.RefreshAllNameplatesLightVer()
+            -- Party ID scale
+            elseif element == "partyID" then
+                BetterBlizzPlatesDB.partyIDScale = value
+                BBP.RefreshAllNameplatesLightVer()
+            -- Party spec scale
+            elseif element == "partySpec" then
+                BetterBlizzPlatesDB.partySpecScale = value
+                BBP.RefreshAllNameplatesLightVer()
+            -- Nameplate Widths
+            elseif element == "nameplateFriendlyWidth" then
+                if not BBP.checkCombatAndWarn() then
+                    BetterBlizzPlatesDB.nameplateFriendlyWidth = value
+                    local heightValue
+                    if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
+                        heightValue = 1
+                    else
+                        heightValue = BBP.isLargeNameplatesEnabled() and 64.125 or 40
+                    end
+                C_NamePlate.SetNamePlateFriendlySize(value, heightValue)
+                end
+            elseif element == "nameplateEnemyWidth" then
+                if not BBP.checkCombatAndWarn() then
+                    BetterBlizzPlatesDB.nameplateEnemyWidth = value
+                    local heightValue
+                    heightValue = BBP.isLargeNameplatesEnabled() and 64.125 or 40
+                    C_NamePlate.SetNamePlateEnemySize(value, heightValue)
+                end
+            elseif element == "fadeOutNPCsAlpha" then
+                if axis then
+                    BetterBlizzPlatesDB.fadeOutNPCsAlpha = value
+                end
+            elseif element == "nameplateAuras" then
+                if axis then
+                    BetterBlizzPlatesDB.nameplateAurasYPos = yPos
+                    BetterBlizzPlatesDB.nameplateAurasXPos = xPos
+                end
+
             end
         --end
     end)
@@ -546,7 +546,6 @@ local function CreateTooltip(widget, tooltipText)
         GameTooltip:Hide()
     end)
 end
-
 
 local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggleFunc, point)
     local dropdown = CreateFrame("Frame", name, parent, "UIDropDownMenuTemplate")
@@ -927,7 +926,9 @@ local function guiGeneralTab()
     -- nameplate scale slider
     local nameplateScaleSlider = CreateSlider("NameplateScaleSlider", BetterBlizzPlates, "Nameplate Size", 0.5, 2, 0.1, "nameplate")
     nameplateScaleSlider:SetPoint("TOPLEFT", checkBox_raidmarkIndicator, "BOTTOMLEFT", 12, -10)
-    nameplateScaleSlider:SetValue(BetterBlizzPlatesDB.nameplateMaxScale or 1)
+    FetchCVarWhenLoaded("nameplateMaxScale", function(value)
+        nameplateScaleSlider:SetValue(BetterBlizzPlatesDB.nameplateMaxScale or value)
+    end)
 
     -- Reset button for nameplateScale slider
     local btn_reset_nameplateScale = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
@@ -941,7 +942,9 @@ local function guiGeneralTab()
     -- target nameplate scale
     local nameplateSelectedScaleSlider = CreateSlider("NameplateSelectedScaleSlider", BetterBlizzPlates, "Target Nameplate Size", 0.5, 3, 0.1, "nameplateSelected")
     nameplateSelectedScaleSlider:SetPoint("TOPLEFT", nameplateScaleSlider, "BOTTOMLEFT", 0, -17)
-    nameplateSelectedScaleSlider:SetValue(BetterBlizzPlatesDB.nameplateSelectedScale or 1.2)
+    FetchCVarWhenLoaded("nameplateSelectedScale", function(value)
+        nameplateSelectedScaleSlider:SetValue(BetterBlizzPlatesDB.nameplateSelectedScale or value)
+    end)
 
     -- Reset button for nameplateSelectedScale slider
     local btn_reset_nameplateSelected = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
@@ -956,7 +959,9 @@ local function guiGeneralTab()
     -- Nameplate Height
     local NamePlateVerticalScaleSlider = CreateSlider("NamePlateVerticalScaleSlider", BetterBlizzPlates, "Nameplate Height", 0.5, 5, 0.1, "NamePlateVerticalScale")
     NamePlateVerticalScaleSlider:SetPoint("TOPLEFT", nameplateSelectedScaleSlider, "BOTTOMLEFT", 0, -17)
-    NamePlateVerticalScaleSlider:SetValue(BetterBlizzPlatesDB.NamePlateVerticalScale or 2.7)
+    FetchCVarWhenLoaded("NamePlateVerticalScale", function(value)
+        NamePlateVerticalScaleSlider:SetValue(BetterBlizzPlatesDB.NamePlateVerticalScale or value)
+    end)
     CreateTooltip(NamePlateVerticalScaleSlider, "Changes the height of ALL nameplates.\n(Will also change the height of friendly castbars\nin PvE content due to Blizzard restrictions)")
 
     local btn_reset_nameplateHeight = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
@@ -1026,7 +1031,10 @@ local function guiGeneralTab()
     -- Enemy nameplate width
     local nameplateEnemyWidthSlider = CreateSlider("BetterBlizzPlates_nameplateEnemyWidthSlider", BetterBlizzPlates, "Nameplate Width", 50, 200, 1, "nameplateEnemyWidth")
     nameplateEnemyWidthSlider:SetPoint("TOPLEFT", enemyNameScaleSlider, "BOTTOMLEFT", 0, -17)
-    nameplateEnemyWidthSlider:SetValue(BetterBlizzPlatesDB.nameplateEnemyWidth or 154)
+    FetchWidthWhenLoaded(function(value)
+        nameplateEnemyWidthSlider:SetValue(BetterBlizzPlatesDB.nameplateEnemyWidth or value)
+    end)
+
 
     -- Button for resetting Enemy Nameplate width
     local btn_reset_enemy = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
@@ -1079,7 +1087,9 @@ local function guiGeneralTab()
     -- Friendly nameplate width slider
     local nameplateFriendlyWidthSlider = CreateSlider("nameplateFriendlyWidthSlider", BetterBlizzPlates, "Nameplate Width", 50, 200, 1, "nameplateFriendlyWidth")
     nameplateFriendlyWidthSlider:SetPoint("TOPLEFT", friendlyNameScaleSlider, "BOTTOMLEFT", 0, -20)
-    nameplateFriendlyWidthSlider:SetValue(BetterBlizzPlatesDB.nameplateFriendlyWidth or 154)
+    FetchWidthWhenLoaded(function(value)
+        nameplateFriendlyWidthSlider:SetValue(BetterBlizzPlatesDB.nameplateFriendlyWidth or value)
+    end)
 
     -- Button for resetting Friendly Nameplate width
     local btn_reset_friendly = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
@@ -2018,6 +2028,11 @@ local function guiPositionAndScale()
 
     local checkBox_executeIndicatorAlwaysOn = CreateCheckbox("executeIndicatorAlwaysOn", "Always on", contentFrame)
     checkBox_executeIndicatorAlwaysOn:SetPoint("TOPLEFT", checkBox_executeTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(checkBox_executeIndicatorAlwaysOn, "Always display health percentage")
+
+    local checkBox_executeIndicatorFriendly = CreateCheckbox("executeIndicatorFriendly", "Friendly", contentFrame)
+    checkBox_executeIndicatorFriendly:SetPoint("TOPLEFT", checkBox_executeIndicatorAlwaysOn, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(checkBox_executeIndicatorFriendly, "Show on friendly nameplates")
 
     local checkBox_executeIndicatorNotOnFullHp = CreateCheckbox("executeIndicatorNotOnFullHp", "< 100%", contentFrame)
     checkBox_executeIndicatorNotOnFullHp:SetPoint("LEFT", checkBox_executeIndicatorAlwaysOn.text, "RIGHT", 2, 0)
@@ -2028,7 +2043,7 @@ local function guiPositionAndScale()
     CreateTooltip(checkBox_executeIndicatorShowDecimal, "Show decimal")
 
     local executeIndicatorThresholdSlider = CreateSlider("BetterBlizzPlates_executeIndicatorThresholdSlider", contentFrame, "Threshold", 5, 100, 1, "executeIndicatorThreshold", "Y")
-    executeIndicatorThresholdSlider:SetPoint("TOP", checkBox_executeIndicatorAlwaysOn, "BOTTOM", 58, -15)
+    executeIndicatorThresholdSlider:SetPoint("TOP", checkBox_executeIndicatorAlwaysOn, "BOTTOM", 58, -29)
     executeIndicatorThresholdSlider:SetValue(BetterBlizzPlatesDB.executeIndicatorThreshold or 40)
     CreateTooltip(executeIndicatorThresholdSlider, "Percentage of when the execute indicator should show.")
 
@@ -2783,19 +2798,52 @@ local function guiMoreBlizzSettings()
     stackingNameplatesText:SetText("Stacking nameplate overlap amount")
 
     -- Nameplate Horizontal Overlap
-    local stackingNameplateOverlapHorizontal = CreateSlider("BetterBlizzPlates_nameplateOverlapH", BetterBlizzPlatesSubPanel5, "Space between nameplates horizontally", 0.05, 1, 0.05, "nameplateOverlapH")
+    local stackingNameplateOverlapHorizontal = CreateSlider("BetterBlizzPlates_nameplateOverlapH", BetterBlizzPlatesSubPanel5, "Horizontal overlap", 0.05, 1, 0.05, "nameplateOverlapH")
     stackingNameplateOverlapHorizontal:SetPoint("TOP", stackingNameplatesText, "BOTTOM", 0, -20)
-    stackingNameplateOverlapHorizontal:SetValue(BetterBlizzPlatesDB.nameplateOverlapH)
+    CreateTooltip(stackingNameplateOverlapHorizontal, "Space between nameplates horizontally")
+    FetchCVarWhenLoaded("nameplateOverlapH", function(value)
+        stackingNameplateOverlapHorizontal:SetValue(BetterBlizzPlatesDB.nameplateOverlapH or value)
+    end)
+
+    local btn_reset_nameplateOverlapH = CreateFrame("Button", nil, BetterBlizzPlatesSubPanel5, "UIPanelButtonTemplate")
+    btn_reset_nameplateOverlapH:SetText("Default")
+    btn_reset_nameplateOverlapH:SetWidth(60)
+    btn_reset_nameplateOverlapH:SetPoint("LEFT", stackingNameplateOverlapHorizontal, "RIGHT", 10, 0)
+    btn_reset_nameplateOverlapH:SetScript("OnClick", function()
+        BBP.ResetToDefaultValue(stackingNameplateOverlapHorizontal, "nameplateOverlapH")
+    end)
 
     -- Nameplate Vertical Overlap
-    local stackingNameplateOverlapVertical = CreateSlider("BetterBlizzPlates_nameplateOverlapV", BetterBlizzPlatesSubPanel5, "Space between nameplates vertically", 0.05, 1.1, 0.05, "nameplateOverlapV")
+    local stackingNameplateOverlapVertical = CreateSlider("BetterBlizzPlates_nameplateOverlapV", BetterBlizzPlatesSubPanel5, "Vertical overlap", 0.05, 1.1, 0.05, "nameplateOverlapV")
     stackingNameplateOverlapVertical:SetPoint("TOPLEFT", stackingNameplateOverlapHorizontal, "BOTTOMLEFT", 0, -20)
-    stackingNameplateOverlapVertical:SetValue(BetterBlizzPlatesDB.nameplateOverlapV)
+    CreateTooltip(stackingNameplateOverlapVertical, "Space between nameplates vertically")
+    FetchCVarWhenLoaded("nameplateOverlapV", function(value)
+        stackingNameplateOverlapVertical:SetValue(BetterBlizzPlatesDB.nameplateOverlapV or value)
+    end)
+
+    local btn_reset_nameplateOverlapV = CreateFrame("Button", nil, BetterBlizzPlatesSubPanel5, "UIPanelButtonTemplate")
+    btn_reset_nameplateOverlapV:SetText("Default")
+    btn_reset_nameplateOverlapV:SetWidth(60)
+    btn_reset_nameplateOverlapV:SetPoint("LEFT", stackingNameplateOverlapVertical, "RIGHT", 10, 0)
+    btn_reset_nameplateOverlapV:SetScript("OnClick", function()
+        BBP.ResetToDefaultValue(stackingNameplateOverlapVertical, "nameplateOverlapV")
+    end)
 
     -- Nameplate Motion Speed
     local nameplateMotionSpeed = CreateSlider("BetterBlizzPlates_nameplateMotionSpeed", BetterBlizzPlatesSubPanel5, "Nameplate motion speed", 0.01, 1, 0.01, "nameplateMotionSpeed")
     nameplateMotionSpeed:SetPoint("TOPLEFT", stackingNameplateOverlapVertical, "BOTTOMLEFT", 0, -20)
-    nameplateMotionSpeed:SetValue(BetterBlizzPlatesDB.nameplateMotionSpeed)
+    CreateTooltip(nameplateMotionSpeed, "The speed at which nameplates move into their new position")
+    FetchCVarWhenLoaded("nameplateMotionSpeed", function(value)
+        nameplateMotionSpeed:SetValue(BetterBlizzPlatesDB.nameplateMotionSpeed or value)
+    end)
+
+    local btn_reset_nameplateMotionSpeed = CreateFrame("Button", nil, BetterBlizzPlatesSubPanel5, "UIPanelButtonTemplate")
+    btn_reset_nameplateMotionSpeed:SetText("Default")
+    btn_reset_nameplateMotionSpeed:SetWidth(60)
+    btn_reset_nameplateMotionSpeed:SetPoint("LEFT", nameplateMotionSpeed, "RIGHT", 10, 0)
+    btn_reset_nameplateMotionSpeed:SetScript("OnClick", function()
+        BBP.ResetToDefaultValue(nameplateMotionSpeed, "nameplateMotionSpeed")
+    end)
 
     -- WIP text
     local moreBlizzSettings = BetterBlizzPlatesSubPanel5:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")

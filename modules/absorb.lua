@@ -13,13 +13,13 @@ function BBP.AbsorbIndicator(frame)
     -- Initialize
     if not frame.absorbIndicator then
         frame.absorbIndicator = frame.healthBar:CreateFontString(nil, "OVERLAY")
-        BBP.SetFontBasedOnOption(frame.absorbIndicator, 10)
         frame.absorbIndicator:SetTextColor(1, 1, 1)
     end
 
     frame.absorbIndicator:ClearAllPoints()
     frame.absorbIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos -2, yPos)
     frame.absorbIndicator:SetScale(BetterBlizzPlatesDB.absorbIndicatorScale or 1)
+    BBP.SetFontBasedOnOption(frame.absorbIndicator, 10, "OUTLINE")
 
     -- Test mode
     if BetterBlizzPlatesDB.absorbIndicatorTestMode then

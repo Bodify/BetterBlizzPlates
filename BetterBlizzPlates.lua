@@ -6,10 +6,11 @@ BBP = BBP or {}
 -- Things are getting more messy need a lot of cleaning lol
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.13"
+local addonUpdates = "1.14"
 local db = BetterBlizzPlatesDB
 local customFont = "Interface\\AddOns\\BetterBlizzPlates\\media\\YanoneKaffeesatz-Medium.ttf"
 local customTexture = "Interface\\AddOns\\BetterBlizzPlates\\media\\DragonflightTexture.tga"
+BBP.variablesLoaded = false
 
 local defaultSettings = {
     version = addonVersion,
@@ -91,6 +92,7 @@ local defaultSettings = {
     executeIndicatorThreshold = 40,
     executeIndicatorAlwaysOn = false,
     executeIndicatorNotOnFullHp = false,
+    executeIndicatorFriendly = false,
     -- Healer Indicator
     healerIndicator = false,
     healerIndicatorEnemyOnly = false,
@@ -308,11 +310,6 @@ local defaultSettings = {
         {name = "Haymaker"},
         {name = "Lightning Lasso"},
     },
-
-    --Extra Blizzard settings
-    nameplateOverlapH = 0.8,
-    nameplateOverlapV = 1.1,
-    nameplateMotionSpeed = 0.025,
 }
 
 local function InitializeSavedVariables()
@@ -358,29 +355,44 @@ local function FetchAndSaveValuesOnFirstLogin()
     -- Fetch Blizzard default values
     BetterBlizzPlatesDB.defaultLargeNamePlateFont, BetterBlizzPlatesDB.defaultLargeFontSize, BetterBlizzPlatesDB.defaultLargeNamePlateFontFlags = SystemFont_LargeNamePlate:GetFont()
     BetterBlizzPlatesDB.defaultNamePlateFont, BetterBlizzPlatesDB.defaultFontSize, BetterBlizzPlatesDB.defaultNamePlateFontFlags = SystemFont_NamePlate:GetFont()
-    BetterBlizzPlatesDB.nameplateHorizontalScale = GetCVar("NamePlateHorizontalScale")
-    BetterBlizzPlatesDB.NamePlateVerticalScale = GetCVar("NamePlateVerticalScale")
-    BetterBlizzPlatesDB.nameplateMinScale = GetCVar("nameplateMinScale")
-    BetterBlizzPlatesDB.nameplateMaxScale = GetCVar("nameplateMaxScale")
-    BetterBlizzPlatesDB.nameplateSelectedScale = GetCVar("nameplateSelectedScale")
-    BetterBlizzPlatesDB.NamePlateClassificationScale = GetCVar("NamePlateClassificationScale")
-    BetterBlizzPlatesDB.nameplateGlobalScale = GetCVar("nameplateGlobalScale")
-    BetterBlizzPlatesDB.nameplateLargerScale = GetCVar("nameplateLargerScale")
-    BetterBlizzPlatesDB.nameplatePlayerLargerScale = GetCVar("nameplatePlayerLargerScale")
-    BetterBlizzPlatesDB.nameplateShowEnemyMinus = GetCVar("nameplateShowEnemyMinus")
-    if GetCVar("NamePlateHorizontalScale") == "1.4" then
-        BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
-        BetterBlizzPlatesDB.castBarHeight = 18.8
-        BetterBlizzPlatesDB.largeNameplatesOn = true
-    else
-        BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 4
-        BetterBlizzPlatesDB.castBarHeight = 8
-        BetterBlizzPlatesDB.largeNameplatesOn = false
+
+    local function CVarFetcher()
+        if BBP.variablesLoaded then
+            BetterBlizzPlatesDB.nameplateEnemyWidth, BetterBlizzPlatesDB.nameplateEnemyHeight = C_NamePlate.GetNamePlateEnemySize()
+            BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = C_NamePlate.GetNamePlateFriendlySize()
+
+            BetterBlizzPlatesDB.nameplateOverlapH = GetCVar("nameplateOverlapH")
+            BetterBlizzPlatesDB.nameplateOverlapV = GetCVar("nameplateOverlapV")
+            BetterBlizzPlatesDB.nameplateMotionSpeed = GetCVar("nameplateMotionSpeed")
+            BetterBlizzPlatesDB.nameplateHorizontalScale = GetCVar("NamePlateHorizontalScale")
+            BetterBlizzPlatesDB.NamePlateVerticalScale = GetCVar("NamePlateVerticalScale")
+            BetterBlizzPlatesDB.nameplateMinScale = GetCVar("nameplateMinScale")
+            BetterBlizzPlatesDB.nameplateMaxScale = GetCVar("nameplateMaxScale")
+            BetterBlizzPlatesDB.nameplateSelectedScale = GetCVar("nameplateSelectedScale")
+            BetterBlizzPlatesDB.NamePlateClassificationScale = GetCVar("NamePlateClassificationScale")
+            BetterBlizzPlatesDB.nameplateGlobalScale = GetCVar("nameplateGlobalScale")
+            BetterBlizzPlatesDB.nameplateLargerScale = GetCVar("nameplateLargerScale")
+            BetterBlizzPlatesDB.nameplatePlayerLargerScale = GetCVar("nameplatePlayerLargerScale")
+
+            if GetCVar("NamePlateHorizontalScale") == "1.4" then
+                BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
+                BetterBlizzPlatesDB.castBarHeight = 18.8
+                BetterBlizzPlatesDB.largeNameplates = true
+            else
+                BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 4
+                BetterBlizzPlatesDB.castBarHeight = 8
+                BetterBlizzPlatesDB.largeNameplates = false
+            end
+        else
+            C_Timer.After(1, function()
+                CVarFetcher()
+            end)
+        end
     end
 
+    CVarFetcher()
+
     C_Timer.After(5, function()
-        BetterBlizzPlatesDB.nameplateEnemyWidth, BetterBlizzPlatesDB.nameplateEnemyHeight = C_NamePlate.GetNamePlateEnemySize()
-        BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = C_NamePlate.GetNamePlateFriendlySize()
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates first run. Thank you for trying out my AddOn. Access settings with /bbp")
         BetterBlizzPlatesDB.hasSaved = true
     end)
@@ -400,7 +412,7 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 local function SendUpdateMessage()
     C_Timer.After(7, function()
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAdded \"Hide Castbar\" options. More Execute Indicator settings. General improvements and castbar PvE bugfix. Access settings with /bbp")
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aSome more \"Execute Indicator\" changes, you may have to adjust your values if you use this feature. Other general improvements behind the scenes. Access settings with /bbp")
         --DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAccess settings with /bbp")
     end)
 end
@@ -408,6 +420,7 @@ end
 
 local function CheckForUpdate()
     if not BetterBlizzPlatesDB.hasSaved then
+        BetterBlizzPlatesDB.updates = addonUpdates
         return
     end
     if not BetterBlizzPlatesDB.updates or BetterBlizzPlatesDB.updates ~= addonUpdates then
@@ -816,6 +829,25 @@ function BBP.ResetToDefaultHeight2(slider)
         slider:SetValue(1)
         BetterBlizzPlatesDB.NamePlateVerticalScale = "1"
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar NamePlateVerticalScale set to 1")
+    end
+end
+
+function BBP.ResetToDefaultValue(slider, element)
+    if not BBP.checkCombatAndWarn() then
+        if element == "nameplateOverlapH" then
+            BetterBlizzPlatesDB.nameplateOverlapH = 0.8
+            SetCVar("nameplateOverlapH", 0.8)
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateOverlapH set to 0.8")
+        elseif element == "nameplateOverlapV" then
+            BetterBlizzPlatesDB.nameplateOverlapV = 1.1
+            SetCVar("nameplateOverlapV", 1.1)
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateOverlapV set to 1.1")
+        elseif element == "nameplateMotionSpeed" then
+            BetterBlizzPlatesDB.nameplateMotionSpeed = 0.025
+            SetCVar("nameplateMotionSpeed", 0.025)
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMotionSpeed set to 0.025")
+        end
+        slider:SetValue(BetterBlizzPlatesDB[element])
     end
 end
 
@@ -1720,3 +1752,14 @@ First:SetScript("OnEvent", function(_, event, addonName)
         end
     end
 end)
+
+local function OnVariablesLoaded(self, event)
+    if event == "VARIABLES_LOADED" then
+        BBP.variablesLoaded = true
+    end
+end
+
+-- Register the frame to listen for the "VARIABLES_LOADED" event
+local eventFrame = CreateFrame("Frame")
+eventFrame:RegisterEvent("VARIABLES_LOADED")
+eventFrame:SetScript("OnEvent", OnVariablesLoaded)

@@ -5,6 +5,13 @@ BBP = BBP or {}
 -- Update the Execute Indicator
 function BBP.ExecuteIndicator(frame)
     local unit = frame.displayedUnit
+
+    if not BetterBlizzPlatesDB.executeIndicatorFriendly then
+        if UnitIsFriend("player", unit) then
+            return
+        end
+    end
+
     local health = UnitHealth(unit)
     local maxHealth = UnitHealthMax(unit)
     local healthPercentage = (health / maxHealth) * 100
@@ -22,52 +29,56 @@ function BBP.ExecuteIndicator(frame)
 
     frame.executeIndicator:ClearAllPoints()
     if anchorPoint == "LEFT" then
-        frame.executeIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos + 46, yPos + -0.5)
+        frame.executeIndicator:SetPoint(anchorPoint, frame.healthBar, anchorPoint, xPos + 24, yPos + -0.5)
+    elseif anchorPoint == "RIGHT" then
+        frame.executeIndicator:SetPoint(anchorPoint, frame.healthBar, anchorPoint, xPos, yPos + -0.5)
     else
         frame.executeIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos + -0.5)
     end
     frame.executeIndicator:SetScale(BetterBlizzPlatesDB.executeIndicatorScale or 1)
 
     if BetterBlizzPlatesDB.executeIndicatorTestMode then
-        frame.executeIndicator:SetText("19.5")
+        if BetterBlizzPlatesDB.executeIndicatorShowDecimal then
+            frame.executeIndicator:SetText("19.5")
+        else
+            frame.executeIndicator:SetText("19")
+        end
         frame.executeIndicator:Show()
         return
     end
 
     -- Check if health is below 40% and if so show Execute Indicator
-    if not UnitIsFriend("player", unit) then
-        if healthPercentage > 0.1 then
-            local text
-            if healthPercentage == 100 then
-                text = "100"
-            elseif BetterBlizzPlatesDB.executeIndicatorShowDecimal then
-                text = string.format("%.1f", healthPercentage)
-            else
-                text = string.format("%d", healthPercentage)
-            end
+    if healthPercentage > 0.1 then
+        local text
+        if healthPercentage == 100 then
+            text = "100"
+        elseif BetterBlizzPlatesDB.executeIndicatorShowDecimal then
+            text = string.format("%.1f", healthPercentage)
+        else
+            text = string.format("%d", healthPercentage)
+        end
 
-            frame.executeIndicator:SetText(text)
+        frame.executeIndicator:SetText(text)
 
-            if BetterBlizzPlatesDB.executeIndicatorAlwaysOn then
-                if BetterBlizzPlatesDB.executeIndicatorNotOnFullHp then
-                    if healthPercentage < 99 then
-                        frame.executeIndicator:Show()
-                    else
-                        frame.executeIndicator:Hide()
-                    end
-                else
-                    frame.executeIndicator:Show()
-                end
-            else
-                if healthPercentage < BetterBlizzPlatesDB.executeIndicatorThreshold then
+        if BetterBlizzPlatesDB.executeIndicatorAlwaysOn then
+            if BetterBlizzPlatesDB.executeIndicatorNotOnFullHp then
+                if healthPercentage < 99 then
                     frame.executeIndicator:Show()
                 else
                     frame.executeIndicator:Hide()
                 end
+            else
+                frame.executeIndicator:Show()
             end
         else
-            frame.executeIndicator:Hide()
+            if healthPercentage < BetterBlizzPlatesDB.executeIndicatorThreshold then
+                frame.executeIndicator:Show()
+            else
+                frame.executeIndicator:Hide()
+            end
         end
+    else
+        frame.executeIndicator:Hide()
     end
 end
 

@@ -15,14 +15,12 @@ function BBP.CombatIndicator(frame)
         frame.combatIndicator = frame.healthBar:CreateTexture(nil, "OVERLAY")
         frame.combatIndicator:SetSize(18, 18)
         frame.combatIndicator:SetAtlas("food")
-        frame.combatIndicator:SetScale(BetterBlizzPlatesDB.combatIndicatorScale)
     end
     -- Create sap texture (create this anyway to make sliders happier)
     if not frame.combatIndicatorSap then
         frame.combatIndicatorSap = frame.healthBar:CreateTexture(nil, "OVERLAY")
         frame.combatIndicatorSap:SetSize(18, 16)
         frame.combatIndicatorSap:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\ABILITY_SAP")
-        frame.combatIndicatorSap:SetScale(BetterBlizzPlatesDB.combatIndicatorScale)
     end
 
     -- Conditions check: Only show during arena
@@ -49,12 +47,14 @@ function BBP.CombatIndicator(frame)
 
     -- Condition check: Use food or sap texture
     if BetterBlizzPlatesDB.combatIndicatorSap then
+        frame.combatIndicatorSap:SetScale(BetterBlizzPlatesDB.combatIndicatorScale)
         frame.combatIndicatorSap:Show()
         frame.combatIndicator:Hide()
     else
         if frame.combatIndicatorSap then
             frame.combatIndicatorSap:Hide()
         end
+        frame.combatIndicator:SetScale(BetterBlizzPlatesDB.combatIndicatorScale)
         frame.combatIndicator:Show()
     end
 
