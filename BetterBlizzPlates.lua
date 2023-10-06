@@ -93,6 +93,7 @@ local defaultSettings = {
     executeIndicatorAlwaysOn = false,
     executeIndicatorNotOnFullHp = false,
     executeIndicatorFriendly = false,
+    executeIndicatorShowDecimal = true,
     -- Healer Indicator
     healerIndicator = false,
     healerIndicatorEnemyOnly = false,
