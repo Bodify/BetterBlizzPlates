@@ -1068,7 +1068,7 @@ local function guiGeneralTab()
     -- Clickthrough plates
     local checkBox_friendlyNameplateClickthrough = CreateCheckbox("friendlyNameplateClickthrough", "Clickthrough", BetterBlizzPlates, nil, BBP.ApplyNameplateWidth)
     checkBox_friendlyNameplateClickthrough:SetPoint("TOPLEFT", friendlyNameplatesText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
-    CreateTooltip(checkBox_friendlyNameplateClickthrough, "Sets the clickable area height of friendly nameplates to 1.\nMaking them clickthrough and overlap even if you have stacking nameplates on.")
+    CreateTooltip(checkBox_friendlyNameplateClickthrough, "Make friendly nameplates clickthrough and make them overlap despite stacking nameplates setting.")
 
     -- Class colored friendly names
     local checkBox_friendlyClassColorName = CreateCheckbox("friendlyClassColorName", "Class colored names", BetterBlizzPlates)
