@@ -2556,7 +2556,7 @@ local function guiFadeNPC()
 
     local noteFade = BetterBlizzPlatesSubPanel2:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     noteFade:SetPoint("TOP", fadeOutNPCsAlphaSlider, "BOTTOM", 0, -20)
-    noteFade:SetText("This makes nameplates transparent.\n \nYou will still be able to click them\neven though you can't see them.\n \nIf you wish to completely get rid of a\nnameplate use Hide NPC list instead")
+    noteFade:SetText("This makes nameplates transparent.\n \nYou will still be able to click them\neven though you can't see them.")
 
     -- Fade out unimportant npcs in arena
     local checkBox_fadeOutNPCs2 = CreateCheckbox("fadeOutNPC", "Enable Fade NPC", BetterBlizzPlatesSubPanel2, nil, BBP.FadeOutNPCs)
@@ -2616,7 +2616,7 @@ local function guiHideNPC()
 
     local noteHide = BetterBlizzPlatesSubPanel3:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     noteHide:SetPoint("TOP", BetterBlizzPlatesSubPanel3, "TOP", 172, -127)
-    noteHide:SetText("This completely hides nameplates.\n \nYou will not be able to click them\n \nIf you wish to fade out and still be able\nto click them use Fade NPC instead")
+    noteHide:SetText("This hides nameplates.\n \nYou will still be able to click them\neven though you can't see them.")
 
 
     -- Hide NPC list
