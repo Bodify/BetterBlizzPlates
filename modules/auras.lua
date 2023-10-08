@@ -6,6 +6,60 @@ BBP = BBP or {}
 ---- Aura Function Copied From RSPlates and edited by me
 ----------------------------------------------------
 
+local trackedBuffs = {};
+local checkBuffsTimer = nil;
+
+local function StopCheckBuffsTimer()
+    if checkBuffsTimer then
+        checkBuffsTimer:Cancel();
+        checkBuffsTimer = nil;
+    end
+end
+
+-- Periodically check the remaining duration of tracked buffs
+local function CheckBuffs()
+    local currentGameTime = GetTime();
+    for spellId, buff in pairs(trackedBuffs) do
+        if buff.expirationTime then
+            local remainingDuration = buff.expirationTime - currentGameTime;
+            if remainingDuration <= 0 then
+                -- Buff has expired, remove it from the table
+                trackedBuffs[spellId] = nil;
+                buff.PandemicGlow:Hide();
+            elseif remainingDuration <= 5.1 then
+                -- Add border emphasis
+                if not buff.PandemicGlow then
+                    buff.PandemicGlow = buff:CreateTexture(nil, "OVERLAY");
+                    if buff.Cooldown then
+                        buff.PandemicGlow:SetParent(buff.Cooldown)
+                    end
+                    buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7);
+                    buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7);
+                    buff.PandemicGlow:SetAtlas("newplayertutorial-drag-slotgreen");
+                    buff.PandemicGlow:SetDesaturated(true)
+                    buff.PandemicGlow:SetVertexColor(1, 0, 0)
+                end
+                buff.PandemicGlow:Show();
+            else
+                if buff.PandemicGlow then
+                    buff.PandemicGlow:Hide();
+                end
+            end
+        end
+    end
+    if next(trackedBuffs) == nil then
+        StopCheckBuffsTimer();
+    end
+end
+
+local function StartCheckBuffsTimer()
+    if not checkBuffsTimer then
+        checkBuffsTimer = C_Timer.NewTicker(0.1, CheckBuffs);
+    end
+end
+
+
+
 local function FetchSpellName(spellId)
     local spellName, _, _ = GetSpellInfo(spellId)
     return spellName
@@ -48,7 +102,7 @@ function BBP.BBPShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterAll = BetterBlizzPlatesDB["personalNpBuffFilterAll"]
             local filterBlizzard = BetterBlizzPlatesDB["personalNpBuffFilterBlizzard"] and BlizzardShouldShow
             local filterWatchlist = BetterBlizzPlatesDB["personalNpBuffFilterWatchList"] and BBP.isInWhitelist(spellName, spellId)
-            local filterLessMinite = BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0) 
+            local filterLessMinite = BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             if filterAll or filterBlizzard or filterWatchlist then 
                 if filterLessMinite then return end
                 if BBP.isInBlacklist(spellName, spellId) then return end
@@ -59,7 +113,7 @@ function BBP.BBPShouldShowBuff(unit, aura, BlizzardShouldShow)
         if BetterBlizzPlatesDB["personalNpdeBuffEnable"] and aura.isHarmful then
             local filterAll = BetterBlizzPlatesDB["personalNpdeBuffFilterAll"]
             local filterWatchlist = BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"] and BBP.isInWhitelist(spellName, spellId)
-            local filterLessMinite = BetterBlizzPlatesDB["personalNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0) 
+            local filterLessMinite = BetterBlizzPlatesDB["personalNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             if filterAll or filterWatchlist then 
                 if filterLessMinite then return end
                 if BBP.isInBlacklist(spellName, spellId) then return end
@@ -73,7 +127,7 @@ function BBP.BBPShouldShowBuff(unit, aura, BlizzardShouldShow)
         if BetterBlizzPlatesDB["friendlyNpBuffEnable"] and aura.isHelpful then
             local filterAll = BetterBlizzPlatesDB["friendlyNpBuffFilterAll"]
             local filterWatchlist = BetterBlizzPlatesDB["friendlyNpBuffFilterWatchList"] and BBP.isInWhitelist(spellName, spellId)
-            local filterLessMinite = BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0) 
+            local filterLessMinite = BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             if filterAll or filterWatchlist then
                 if filterLessMinite then return end
                 if BBP.isInBlacklist(spellName, spellId) then return end
@@ -85,7 +139,7 @@ function BBP.BBPShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterAll = BetterBlizzPlatesDB["friendlyNpdeBuffFilterAll"]
             local filterBlizzard = BetterBlizzPlatesDB["friendlyNpdeBuffFilterBlizzard"] and BlizzardShouldShow
             local filterWatchlist = BetterBlizzPlatesDB["friendlyNpdeBuffFilterWatchList"] and BBP.isInWhitelist(spellName, spellId)
-            local filterLessMinite = BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0) 
+            local filterLessMinite = BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpdeBuffFilterOnlyMe"] and (caster ~= "player" and caster ~= "pet")
             if filterAll or filterWatchlist or filterBlizzard then 
                 if filterLessMinite or filterOnlyMe then return end
@@ -100,7 +154,7 @@ function BBP.BBPShouldShowBuff(unit, aura, BlizzardShouldShow)
         if BetterBlizzPlatesDB["otherNpBuffEnable"] and aura.isHelpful then
             local filterAll = BetterBlizzPlatesDB["otherNpBuffFilterAll"]
             local filterWatchlist = BetterBlizzPlatesDB["otherNpBuffFilterWatchList"] and BBP.isInWhitelist(spellName, spellId)
-            local filterLessMinite = BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0) 
+            local filterLessMinite = BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             local filterPurgeable = BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] and isPurgeable
             if filterAll or filterWatchlist or filterPurgeable then
                 if filterLessMinite then return end
@@ -113,7 +167,7 @@ function BBP.BBPShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterAll = BetterBlizzPlatesDB["otherNpdeBuffFilterAll"]
             local filterBlizzard = BetterBlizzPlatesDB["otherNpdeBuffFilterBlizzard"] and BlizzardShouldShow
             local filterWatchlist = BetterBlizzPlatesDB["otherNpdeBuffFilterWatchList"] and BBP.isInWhitelist(spellName, spellId)
-            local filterLessMinite = BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0) 
+            local filterLessMinite = BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             local filterOnlyMe = BetterBlizzPlatesDB["otherNpdeBuffFilterOnlyMe"] and (caster ~= "player" and caster ~= "pet")
             if filterAll or filterWatchlist or filterBlizzard then 
                 if filterLessMinite or filterOnlyMe then return end
@@ -171,7 +225,6 @@ function BBP.OnUnitAuraUpdateRSV(self, unit, unitAuraUpdateInfo)
 end
 
 function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame)
-    --local BetterBlizzPlatesDB = BBP.tabDB[BBP.iDBmark]
     local filters = {};
 	if auraSettings.helpful then
 		table.insert(filters, AuraUtil.AuraFilters.Helpful);
@@ -250,12 +303,8 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
 		buff.layoutIndex = buffIndex;
 		buff.spellID = aura.spellId;
 
-
-
 		buff.Icon:SetTexture(aura.icon);
 
-
-        -- If blue border
         local isPlayerUnit = UnitIsUnit("player", self.unit)
         local isEnemyUnit = UnitIsEnemy("player", self.unit)
         local spellName = FetchSpellName(aura.spellId)
@@ -287,14 +336,19 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
             end
         end
 
+        -- Pandemic Glow
+        if BetterBlizzPlatesDB.otherNpdeBuffPandemicGlow then
+            if aura.duration and aura.duration > 5 and buff and aura.expirationTime and not aura.isHelpful then
+                buff.expirationTime = aura.expirationTime;
+                trackedBuffs[aura.spellId] = buff;
+                StartCheckBuffsTimer();
+            end
+        end
 
-
-
-        -- Purge buff glow setting
+        -- Purge Glow
         if BetterBlizzPlatesDB.otherNpBuffPurgeGlow then
             if not isPlayerUnit and isEnemyUnit then
                 if aura.isHelpful and aura.isStealable then
-                    -- If extra glow for purge
                     if not buff.buffBorderPurge then
                         buff.buffBorderPurge = buff:CreateTexture(nil, "OVERLAY");
                         if buff.Cooldown then
@@ -320,71 +374,40 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
             end
         end
 
-        -- Red glow on whitelisted buffs
+        -- Emphasise Buff (Red Glow)
         if BetterBlizzPlatesDB.otherNpBuffEmphasisedBorder then
             if not isPlayerUnit and isEnemyUnit then
                 if aura.isHelpful and BBP.isInWhitelist(spellName, spellId) then
                     -- If extra glow for purge
-                    if not buff.buffBorderEmphasis then
-                        buff.buffBorderEmphasis = buff:CreateTexture(nil, "OVERLAY");
+                    if not buff.BorderEmphasis then
+                        buff.BorderEmphasis = buff:CreateTexture(nil, "OVERLAY");
                         if buff.Cooldown then
-                            buff.buffBorderEmphasis:SetParent(buff.Cooldown)
+                            buff.BorderEmphasis:SetParent(buff.Cooldown)
                         end
-                        buff.buffBorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7);
-                        buff.buffBorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7);
-                        buff.buffBorderEmphasis:SetAtlas("newplayertutorial-drag-slotgreen");
-                        buff.buffBorderEmphasis:SetDesaturated(true)
-                        buff.buffBorderEmphasis:SetVertexColor(1, 0, 0)
+                        buff.BorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7);
+                        buff.BorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7);
+                        buff.BorderEmphasis:SetAtlas("newplayertutorial-drag-slotgreen");
+                        buff.BorderEmphasis:SetDesaturated(true)
+                        buff.BorderEmphasis:SetVertexColor(1, 0, 0)
                     end
                     if buff.buffBorderPurge then
                         buff.buffBorderPurge:Hide()
                     end
-                    buff.buffBorderEmphasis:Show();
+                    buff.BorderEmphasis:Show();
                     buff.Border:Hide()
                 else
-                    if buff.buffBorderEmphasis then
-                        buff.buffBorderEmphasis:Hide()
+                    if buff.BorderEmphasis then
+                        buff.BorderEmphasis:Hide()
                         buff.Border:Show()
                     end
                 end
             end
         else
-            if buff.buffBorderEmphasis then
-                buff.buffBorderEmphasis:Hide()
+            if buff.BorderEmphasis then
+                buff.BorderEmphasis:Hide()
                 buff.Border:Show()
             end
         end
-
---[[ -- im not smart enough to figure this one out yet
-        -- pandemic glow
-        if BetterBlizzPlatesDB.otherNpdeBuffPandemicGlow then
-            if not isPlayerUnit and isEnemyUnit then
-                if not aura.isHelpful and aura.duration then
-                    -- Create emphasis texture if it doesn't exist yet
-                    if not buff.buffBorderEmphasis then
-                        buff.buffBorderEmphasis = buff:CreateTexture(nil, "OVERLAY");
-                        if buff.Cooldown then
-                            buff.buffBorderEmphasis:SetParent(buff.Cooldown)
-                        end
-                        buff.buffBorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7);
-                        buff.buffBorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7);
-                        buff.buffBorderEmphasis:SetAtlas("newplayertutorial-drag-slotgreen");
-                        buff.buffBorderEmphasis:SetDesaturated(true)
-                        buff.buffBorderEmphasis:SetVertexColor(1, 0, 0)
-                    end
-
-                    BBP.UpdatePandemicGlowForAura(buff, aura, spellName, spellId);
-                end
-            end
-        else
-            if buff.buffBorderEmphasis then
-                buff.buffBorderEmphasis:Hide()
-                buff.Border:Show()
-            end
-        end
-
-]]
-
 
         if isPlayerUnit then
             if buff.Border then
@@ -393,8 +416,8 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
             if buff.buffBorder then
                 buff.buffBorder:Hide()
             end
-            if buff.buffBorderEmphasis then
-                buff.buffBorderEmphasis:Hide()
+            if buff.BorderEmphasis then
+                buff.BorderEmphasis:Hide()
             end
             if buff.buffBorderPurge then
                 buff.buffBorderPurge:Hide()
@@ -448,18 +471,34 @@ end
 
 -- Source
 function BBP:UpdateAnchor()
-	local isTarget = self:GetParent().unit and UnitIsUnit(self:GetParent().unit, "target");
-	local targetYOffset = self:GetBaseYOffset() + (isTarget and self:GetTargetYOffset() or 0.0);
-	if (self:GetParent().unit and ShouldShowName(self:GetParent())) then
+    local unit = self:GetParent().unit;
+    local isTarget = unit and UnitIsUnit(unit, "target");
+    local targetYOffset = self:GetBaseYOffset() + (isTarget and self:GetTargetYOffset() or 0.0);
+    local isFriend = unit and UnitIsFriend(unit, "player");
+
+    if unit and ShouldShowName(self:GetParent()) then
         if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
             self:ClearAllPoints()
-            self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
+            self:SetPoint("BOTTOM", self:GetParent(), "TOP", xOffset, yOffset);
         else
-            self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
+            if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
+                if isFriend then
+                    self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + 65);
+                else
+                    self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
+                end
+            else
+                self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
+            end
         end
-	else
-		self:SetPoint("BOTTOM", self:GetParent().healthBar, "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, 5 + targetYOffset);
-	end
+    else
+        self:SetPoint("BOTTOM", self:GetParent().healthBar, "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, 5 + targetYOffset);
+    end
+end
+
+
+if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
+    targetYOffset = targetYOffset + 55
 end
 
 function BBP.RefBuffFrameDisplay()
