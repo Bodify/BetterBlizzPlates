@@ -30,14 +30,19 @@ local function CheckBuffs()
                 -- Add border emphasis
                 if not buff.PandemicGlow then
                     buff.PandemicGlow = buff:CreateTexture(nil, "OVERLAY");
-                    if buff.Cooldown then
-                        buff.PandemicGlow:SetParent(buff.Cooldown)
-                    end
-                    buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7);
-                    buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7);
                     buff.PandemicGlow:SetAtlas("newplayertutorial-drag-slotgreen");
                     buff.PandemicGlow:SetDesaturated(true)
                     buff.PandemicGlow:SetVertexColor(1, 0, 0)
+                    if buff.Cooldown then
+                        buff.PandemicGlow:SetParent(buff.Cooldown)
+                    end
+                    if BetterBlizzPlatesDB.nameplateAuraSquare then
+                        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
+                        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
+                    else
+                        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7);
+                        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7);
+                    end
                 end
                 buff.PandemicGlow:Show();
             else
@@ -305,6 +310,16 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
 
 		buff.Icon:SetTexture(aura.icon);
 
+        -- Square Aura
+        if BetterBlizzPlatesDB.nameplateAuraSquare then
+            buff:SetSize(20,20)
+            buff.Icon:SetPoint("TOPLEFT", buff,"TOPLEFT", 1, -1)
+            buff.Icon:SetPoint("BOTTOMRIGHT", buff,"BOTTOMRIGHT", -1, 1)
+            buff.Icon:SetTexCoord(0.1, 0.9,0.1 , 0.9)
+        end
+
+        buff:SetScale(BetterBlizzPlatesDB.nameplateAuraScale or 1)
+
         local isPlayerUnit = UnitIsUnit("player", self.unit)
         local isEnemyUnit = UnitIsEnemy("player", self.unit)
         local spellName = FetchSpellName(aura.spellId)
@@ -338,7 +353,7 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
 
         -- Pandemic Glow
         if BetterBlizzPlatesDB.otherNpdeBuffPandemicGlow then
-            if aura.duration and aura.duration > 5 and buff and aura.expirationTime and not aura.isHelpful then
+            if aura.duration and aura.duration > 5 and buff and aura.expirationTime and not aura.isHelpful and BBP.isInWhitelist(spellName, spellId) then
                 buff.expirationTime = aura.expirationTime;
                 trackedBuffs[aura.spellId] = buff;
                 StartCheckBuffsTimer();
@@ -351,12 +366,17 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
                 if aura.isHelpful and aura.isStealable then
                     if not buff.buffBorderPurge then
                         buff.buffBorderPurge = buff:CreateTexture(nil, "OVERLAY");
+                        buff.buffBorderPurge:SetAtlas("newplayertutorial-drag-slotblue");
                         if buff.Cooldown then
                             buff.buffBorderPurge:SetParent(buff.Cooldown)
                         end
-                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 6);
-                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -6);
-                        buff.buffBorderPurge:SetAtlas("newplayertutorial-drag-slotblue");
+                        if BetterBlizzPlatesDB.nameplateAuraSquare then
+                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
+                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
+                        else
+                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 6);
+                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -6);
+                        end
                     end
                     buff.buffBorderPurge:Show();
                     buff.Border:Hide()
@@ -381,14 +401,19 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
                     -- If extra glow for purge
                     if not buff.BorderEmphasis then
                         buff.BorderEmphasis = buff:CreateTexture(nil, "OVERLAY");
+                        buff.BorderEmphasis:SetAtlas("newplayertutorial-drag-slotgreen");
+                        buff.BorderEmphasis:SetVertexColor(1, 0, 0)
+                        buff.BorderEmphasis:SetDesaturated(true)
                         if buff.Cooldown then
                             buff.BorderEmphasis:SetParent(buff.Cooldown)
                         end
-                        buff.BorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7);
-                        buff.BorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7);
-                        buff.BorderEmphasis:SetAtlas("newplayertutorial-drag-slotgreen");
-                        buff.BorderEmphasis:SetDesaturated(true)
-                        buff.BorderEmphasis:SetVertexColor(1, 0, 0)
+                        if BetterBlizzPlatesDB.nameplateAuraSquare then
+                            buff.BorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
+                            buff.BorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
+                        else
+                            buff.BorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7);
+                            buff.BorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7);
+                        end
                     end
                     if buff.buffBorderPurge then
                         buff.buffBorderPurge:Hide()
@@ -479,7 +504,7 @@ function BBP:UpdateAnchor()
     if unit and ShouldShowName(self:GetParent()) then
         if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
             self:ClearAllPoints()
-            self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + 63);
+            self:SetPoint(BetterBlizzPlatesDB.nameplateAuraAnchor or "BOTTOM", self:GetParent(), BetterBlizzPlatesDB.nameplateAuraRelativeAnchor or "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + 63);
         else
             if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
                 if isFriend then
@@ -500,7 +525,7 @@ function BBP.RefBuffFrameDisplay()
 	for i, namePlate in ipairs(C_NamePlate.GetNamePlates(false)) do
 		local unitFrame = namePlate.UnitFrame
 		unitFrame.BuffFrame:UpdateAnchor()
-		if unitFrame.unit then 
+		if unitFrame.unit then
 			local self = unitFrame.BuffFrame
             BBP.UpdateBuffsRSV(self, unitFrame.unit, nil, {}, unitFrame)
         end

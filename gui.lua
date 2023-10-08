@@ -314,9 +314,7 @@ local function CreateSlider(name, parent, label, minValue, maxValue, stepValue, 
                     elseif element == "maxAurasOnNameplate" then
                         BBP.RefBuffFrameDisplay()
                     elseif element == "nameplateAuras" then
-                        if axis then
-                            BBP.RefBuffFrameDisplay()
-                        end
+                        BBP.RefBuffFrameDisplay()
                     -- Raidmarker Pos and Scale
                     elseif element == "raidmarkIndicator" then
                         if frame.RaidTargetFrame.RaidTargetIcon then
@@ -521,8 +519,9 @@ local function CreateSlider(name, parent, label, minValue, maxValue, stepValue, 
                 if axis then
                     BetterBlizzPlatesDB.nameplateAurasYPos = yPos
                     BetterBlizzPlatesDB.nameplateAurasXPos = xPos
+                else
+                    BetterBlizzPlatesDB.nameplateAuraScale = value
                 end
-
             end
         --end
     end)
@@ -3282,19 +3281,54 @@ local function guiNameplateAuras()
 
     ]]
 
+    local nameplateAurasXPosSlider = CreateSlider("BetterBlizzPlates_nameplateAurasXPosSlider", contentFrame, "x offset", -50, 50, 1, "nameplateAuras", "X")
+    nameplateAurasXPosSlider:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -240, -280)
+    nameplateAurasXPosSlider:SetValue(BetterBlizzPlatesDB.nameplateAurasXPos or 0)
+    CreateTooltip(nameplateAurasXPosSlider, "Only works with Custom Anchor enabled")
 
     local nameplateAurasYPosSlider = CreateSlider("BetterBlizzPlates_nameplateAurasYPosSlider", contentFrame, "y offset", -50, 50, 1, "nameplateAuras", "Y")
-    nameplateAurasYPosSlider:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -240, -280)
+    nameplateAurasYPosSlider:SetPoint("TOPLEFT", nameplateAurasXPosSlider, "BOTTOMLEFT", 0, -17)
     nameplateAurasYPosSlider:SetValue(BetterBlizzPlatesDB.nameplateAurasYPos or 0)
 
-    local cB_centerAuras = CreateCheckbox("nameplateAurasCenteredAnchor", "Center auras on top of nameplate", contentFrame)
-    cB_centerAuras:SetPoint("BOTTOM", nameplateAurasYPosSlider, "TOP", -30, 10)
-    cB_centerAuras:HookScript("OnClick", function(self)
+    local nameplateAuraScale = CreateSlider("BetterBlizzPlates_nameplateAuraScale", contentFrame, "Icon size", 0.7, 2, 0.05, "nameplateAuras")
+    nameplateAuraScale:SetPoint("TOPLEFT", nameplateAurasYPosSlider, "BOTTOMLEFT", 0, -17)
+    nameplateAuraScale:SetValue(BetterBlizzPlatesDB.nameplateAuraScale or 1)
+
+    local nameplateAuraDropdown = CreateAnchorDropdown(
+        "nameplateAuraDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "nameplateAuraAnchor",
+        function(arg1) --print("Selected anchor:", arg1);
+        BBP.RefreshAllNameplates()
+    end,
+        { anchorFrame = nameplateAuraScale, x = -15, y = -35, label = "Aura Anchor Point" }
+    )
+
+    local nameplateAuraRelativeDropdown = CreateAnchorDropdown(
+        "nameplateAuraRelativeDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "nameplateAuraRelativeAnchor",
+        function(arg1) --print("Selected anchor:", arg1);
+        BBP.RefreshAllNameplates()
+    end,
+        { anchorFrame = nameplateAuraScale, x = -15, y = -95, label = "Nameplate Relative Point" }
+    )
+
+
+    local cB_centerAuras = CreateCheckbox("nameplateAurasCenteredAnchor", "Custom Anchor", contentFrame)
+    cB_centerAuras:SetPoint("BOTTOM", nameplateAurasXPosSlider, "TOP", -30, 10)
+    CreateTooltip(cB_centerAuras, "Requires reload to turn back off")
+
+    local cb_squareAuras = CreateCheckbox("nameplateAuraSquare", "Square Auras", contentFrame)
+    cb_squareAuras:SetPoint("LEFT", cB_centerAuras.text, "RIGHT", 5, 0)
+    cb_squareAuras:HookScript("OnClick", function (self)
         if not self:GetChecked() then -- If checkbox is unchecked
             StaticPopup_Show("CONFIRM_RELOAD")
         end
     end)
-    CreateTooltip(cB_centerAuras, "Requires reload to turn back off")
+    CreateTooltip(cb_squareAuras, "Requires reload to turn back off")
 
     local maxAurasOnNameplateSlider = CreateSlider("BetterBlizzPlates_maxAurasOnNameplate", contentFrame, "Max auras on nameplate", 1, 24, 1, "maxAurasOnNameplate")
     maxAurasOnNameplateSlider:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -10, -280)
@@ -3308,12 +3342,32 @@ local function guiNameplateAuras()
 
 
 
+    local function customAnchorVisibility()
+        if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
+            nameplateAurasXPosSlider:Enable()
+            nameplateAurasXPosSlider:SetAlpha(1)
+            --nameplateAuraDropdown:Enable()
+            nameplateAuraDropdown:SetAlpha(1)
+            --nameplateAuraRelativeDropdown:Enable()
+            nameplateAuraRelativeDropdown:SetAlpha(1)
+        else
+            nameplateAurasXPosSlider:Disable()
+            nameplateAurasXPosSlider:SetAlpha(0.5)
+            --nameplateAuraDropdown:Disable()
+            nameplateAuraDropdown:SetAlpha(0.5)
+            --nameplateAuraRelativeDropdown:Disable()
+            nameplateAuraRelativeDropdown:SetAlpha(0.5)
+        end
+    end
+    
 
 
-
-
-
-
+    cB_centerAuras:HookScript("OnClick", function(self)
+        if not self:GetChecked() then -- If checkbox is unchecked
+            StaticPopup_Show("CONFIRM_RELOAD")
+        end
+        customAnchorVisibility()
+    end)
 
 
 
@@ -3354,7 +3408,7 @@ local function guiNameplateAuras()
     betaHighlight:SetPoint("RIGHT", checkBox_enableNameplateAuraCustomisation, "LEFT", 8, 0)
 
 
-
+    customAnchorVisibility()
 
 end
 

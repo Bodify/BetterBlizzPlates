@@ -294,7 +294,7 @@ end)
 -- Update text and color based on the target
 function BBP.UpdateNameplateTargetText(nameplate, unitID)
     if not nameplate or not unitID then return end
-    if unitID == "player" then return end
+    if UnitIsUnit(unitID, "player") then return end
 
     if not nameplate.TargetText then
         nameplate.TargetText = nameplate:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -309,7 +309,7 @@ function BBP.UpdateNameplateTargetText(nameplate, unitID)
         local color = RAID_CLASS_COLORS[class]
         nameplate.TargetText:SetText(name)
         nameplate.TargetText:SetTextColor(color.r, color.g, color.b)
-        if UnitIsEnemy("player", unitID) or (UnitReaction("player", unitID) or 0) < 5 then
+        if not UnitIsFriend("player", unitID) then
             nameplate.TargetText:SetPoint("RIGHT", nameplate, "BOTTOMRIGHT", -11, 0)  -- Set anchor point for enemy
         else
             nameplate.TargetText:SetPoint("CENTER", nameplate, "BOTTOM", 0, 0)  -- Set anchor point for friendly
