@@ -496,11 +496,6 @@ function BBP:UpdateAnchor()
     end
 end
 
-
-if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
-    targetYOffset = targetYOffset + 55
-end
-
 function BBP.RefBuffFrameDisplay()
 	for i, namePlate in ipairs(C_NamePlate.GetNamePlates(false)) do
 		local unitFrame = namePlate.UnitFrame
