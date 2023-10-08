@@ -181,6 +181,8 @@ local defaultSettings = {
     nameplateAurasXPos = 0,
     personalNpBuffEnable = true,
     personalNpdeBuffEnable = false,
+    nameplateAuraAnchor = "BOTTOM",
+    nameplateAuraRelativeAnchor = "TOP",
 
     personalNpBuffFilterAll = false,
     personalNpBuffFilterBlizzard = true,

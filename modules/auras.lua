@@ -449,8 +449,6 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
             end
         end
 
-        buff.Icon:SetScale(1)
-
 		if (aura.applications > 1) then
 			buff.CountFrame.Count:SetText(aura.applications);
 			buff.CountFrame.Count:Show();
@@ -496,30 +494,44 @@ end
 
 -- Source
 function BBP:UpdateAnchor()
-    local unit = self:GetParent().unit;
-    local isTarget = unit and UnitIsUnit(unit, "target");
-    local targetYOffset = self:GetBaseYOffset() + (isTarget and self:GetTargetYOffset() or 0.0);
-    local isFriend = unit and UnitIsFriend(unit, "player");
+    local unit = self:GetParent().unit
+    local isTarget = unit and UnitIsUnit(unit, "target")
+    local targetYOffset = self:GetBaseYOffset() + (isTarget and self:GetTargetYOffset() or 0.0)
+    local isFriend = unit and UnitIsFriend(unit, "player")
+    local anchor, relativeAnchor, xPos, yPos, relativeObject
 
     if unit and ShouldShowName(self:GetParent()) then
+        relativeObject = self:GetParent()
         if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
             self:ClearAllPoints()
-            self:SetPoint(BetterBlizzPlatesDB.nameplateAuraAnchor or "BOTTOM", self:GetParent(), BetterBlizzPlatesDB.nameplateAuraRelativeAnchor or "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + 63);
+            anchor = BetterBlizzPlatesDB.nameplateAuraAnchor or "BOTTOM"
+            relativeAnchor = BetterBlizzPlatesDB.nameplateAuraRelativeAnchor or "TOP"
+            xPos = BetterBlizzPlatesDB.nameplateAurasXPos
+            yPos = targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + (isFriend and 63 or 0)
         else
-            if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
-                if isFriend then
-                    self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + 63);
-                else
-                    self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
-                end
-            else
-                self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
-            end
+            anchor = "BOTTOM"
+            relativeAnchor = "TOP"
+            xPos = BetterBlizzPlatesDB.nameplateAurasXPos
+            yPos = targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + (isFriend and 63 or 0)
         end
     else
-        self:SetPoint("BOTTOM", self:GetParent().healthBar, "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, 5 + targetYOffset);
+        local additionalYOffset = 15 * (BetterBlizzPlatesDB.nameplateAuraScale - 1)
+        relativeObject = self:GetParent().healthBar
+        if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
+            self:ClearAllPoints()
+            anchor = BetterBlizzPlatesDB.nameplateAuraAnchor or "BOTTOM"
+            relativeAnchor = BetterBlizzPlatesDB.nameplateAuraRelativeAnchor or "TOP"
+        else
+            anchor = "BOTTOM"
+            relativeAnchor = "TOP"
+        end
+        xPos = BetterBlizzPlatesDB.nameplateAurasNoNameXPos
+        yPos = 5 + targetYOffset + BetterBlizzPlatesDB.nameplateAurasNoNameYPos + additionalYOffset
     end
+
+    self:SetPoint(anchor, relativeObject, relativeAnchor, xPos, yPos)
 end
+
 
 function BBP.RefBuffFrameDisplay()
 	for i, namePlate in ipairs(C_NamePlate.GetNamePlates(false)) do
@@ -534,33 +546,41 @@ end
 
 --[[
 function BBP:UpdateAnchor()
-    local isPlayer = self:GetParent().unit and UnitIsUnit("player", self:GetParent().unit)
-    local isTarget = self:GetParent().unit and UnitIsUnit(self:GetParent().unit, "target");
-	local targetYOffset = self:GetBaseYOffset() + (isTarget and self:GetTargetYOffset() or 0.0);
-    if isPlayer then 
-        self:SetPoint("BOTTOM", self:GetParent().healthBar, "TOP", 0, 5 + targetYOffset);
-	elseif (self:GetParent().unit and ShouldShowName(self:GetParent())) then
-        self:ClearAllPoints()
-        self:SetPoint("BOTTOMLEFT", self:GetParent(), "TOPLEFT", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
-	else
-        self:ClearAllPoints()
-		self:SetPoint("BOTTOMLEFT", self:GetParent().healthBar, "TOPLEFT", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, 5 + targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
-	end
+    local unit = self:GetParent().unit;
+    local isTarget = unit and UnitIsUnit(unit, "target");
+    local targetYOffset = self:GetBaseYOffset() + (isTarget and self:GetTargetYOffset() or 0.0);
+    local isFriend = unit and UnitIsFriend(unit, "player");
+
+    if unit and ShouldShowName(self:GetParent()) then
+        if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
+            self:ClearAllPoints()
+            if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
+                if isFriend then
+                    self:SetPoint(BetterBlizzPlatesDB.nameplateAuraAnchor or "BOTTOM", self:GetParent(), BetterBlizzPlatesDB.nameplateAuraRelativeAnchor or "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + 63);
+                else
+                    self:SetPoint(BetterBlizzPlatesDB.nameplateAuraAnchor or "BOTTOM", self:GetParent(), BetterBlizzPlatesDB.nameplateAuraRelativeAnchor or "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
+                end
+            end
+        else
+            if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
+                if isFriend then
+                    self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + 63);
+                else
+                    self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
+                end
+            else
+                self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
+            end
+        end
+    else
+        if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
+            local additionalYOffset = 15 * (BetterBlizzPlatesDB.nameplateAuraScale - 1)
+            self:ClearAllPoints()
+            self:SetPoint(BetterBlizzPlatesDB.nameplateAuraAnchor or "BOTTOM", self:GetParent().healthBar, BetterBlizzPlatesDB.nameplateAuraRelativeAnchor or "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasNoNameXPos, 5 + targetYOffset + BetterBlizzPlatesDB.nameplateAurasNoNameYPos + additionalYOffset);
+        else
+            local additionalYOffset = 15 * (BetterBlizzPlatesDB.nameplateAuraScale - 1)
+            self:SetPoint("BOTTOM", self:GetParent().healthBar, "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasNoNameXPos, 5 + targetYOffset + BetterBlizzPlatesDB.nameplateAurasNoNameYPos + additionalYOffset);
+        end
+    end
 end
-
-]]
-
-
---[[
-function BBP:UpdateAnchor()
-	local isTarget = self:GetParent().unit and UnitIsUnit(self:GetParent().unit, "target");
-	local targetYOffset = self:GetBaseYOffset() + (isTarget and self:GetTargetYOffset() or 0.0);
-	if (self:GetParent().unit and ShouldShowName(self:GetParent())) then
-		self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0, targetYOffset);
-	else
-		self:SetPoint("BOTTOM", self:GetParent().healthBar, "TOP", 0, 5 + targetYOffset);
-	end
-end
-
-
 ]]
