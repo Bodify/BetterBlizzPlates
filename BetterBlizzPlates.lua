@@ -1178,6 +1178,11 @@ end
 
 
 function BBP.RunAuraModule()
+    hooksecurefunc("DefaultCompactNamePlateFrameSetup", function(frame)
+        if frame and frame.BuffFrame then
+            frame.BuffFrame.UpdateAnchor = BBP.UpdateAnchor;
+        end
+    end);
 
     function BBP.On_Np_Add(unitToken)
         local namePlateFrameBase = C_NamePlate.GetNamePlateForUnit(unitToken, false)
@@ -1210,7 +1215,7 @@ function BBP.RunAuraModule()
                 end
             end)
 
-            unitFrame.BuffFrame.UpdateAnchor = BBP.UpdateAnchor
+            --unitFrame.BuffFrame.UpdateAnchor = BBP.UpdateAnchor
             --unitFrame.BuffFrame.UpdateBuffs = BBP.UpdateBuffsRSV
             unitFrame.BuffFrame.UpdateBuffs = function() return end
 
