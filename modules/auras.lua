@@ -213,7 +213,7 @@ function BBP.OnUnitAuraUpdateRSV(self, unit, unitAuraUpdateInfo)
 				auraSettings.raid = true;
 				auraSettings.showAll = true;
 			else
-				auraSettings.hideAll = true;
+				auraSettings.hideAll = false; -- changed to false (would sometimes hide buffs on friendly targets if buff setting was on, TODO figure out more)
 			end
 		end
 	end
@@ -483,7 +483,7 @@ function BBP:UpdateAnchor()
         else
             if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
                 if isFriend then
-                    self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + 65);
+                    self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + 63);
                 else
                     self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
                 end
