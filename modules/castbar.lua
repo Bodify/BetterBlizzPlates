@@ -5,12 +5,6 @@ BBP = BBP or {}
 -- TODO: figure shit out
 function UpdateCastbarAnchors(frame, setupOptions)
     if not BBP.IsLegalNameplateUnit(frame) then return end
-    -- Healthbar height
-    --if GetCVar("nameplateShowFriends") == "0" then
-    --    if not InCombatLockdown() then
-    --        setupOptions.healthBarHeight = BetterBlizzPlatesDB.enemyNameplateHealthbarHeight or 10.8
-    --    end
-    --end
 
     -- Castbar customization
     if BetterBlizzPlatesDB.enableCastbarCustomization then

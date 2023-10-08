@@ -3289,6 +3289,11 @@ local function guiNameplateAuras()
 
     local cB_centerAuras = CreateCheckbox("nameplateAurasCenteredAnchor", "Center auras on top of nameplate", contentFrame)
     cB_centerAuras:SetPoint("BOTTOM", nameplateAurasYPosSlider, "TOP", -30, 10)
+    cB_centerAuras:HookScript("OnClick", function(self)
+        if not self:GetChecked() then -- If checkbox is unchecked
+            StaticPopup_Show("CONFIRM_RELOAD")
+        end
+    end)
     CreateTooltip(cB_centerAuras, "Requires reload to turn back off")
 
     local maxAurasOnNameplateSlider = CreateSlider("BetterBlizzPlates_maxAurasOnNameplate", contentFrame, "Max auras on nameplate", 1, 24, 1, "maxAurasOnNameplate")

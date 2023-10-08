@@ -479,7 +479,7 @@ function BBP:UpdateAnchor()
     if unit and ShouldShowName(self:GetParent()) then
         if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
             self:ClearAllPoints()
-            self:SetPoint("BOTTOM", self:GetParent(), "TOP", xOffset, yOffset);
+            self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + 63);
         else
             if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
                 if isFriend then

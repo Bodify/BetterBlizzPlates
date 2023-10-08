@@ -1161,22 +1161,6 @@ function BBP.ChangeRaidmarker()
 end
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function BBP.RunAuraModule()
     hooksecurefunc("DefaultCompactNamePlateFrameSetup", function(frame)
         if frame and frame.BuffFrame then
@@ -1206,7 +1190,7 @@ function BBP.RunAuraModule()
 
             hooksecurefunc(unitFrame, "Show", function(self)
                 if self.IsForbidden and self:IsForbidden() then return end
-                if self.hasShownAsName and not UnitIsUnit(self.unit, "player") then 
+                if self.hasShownAsName and not UnitIsUnit(self.unit, "player") then
                     securecallfunction(self.Hide, self)
                 end
 
@@ -1277,20 +1261,6 @@ function BBP.RunAuraModule()
     --end
 
 
-end
-
-
-
-
-
-
-
-
-
-
--- Enemy Nameplate Height Updater
-function BBP.DefaultCompactNamePlateFrameAnchorInternal(frame, setupOptions)
-    --PixelUtil.SetHeight(frame.healthBar, BetterBlizzPlatesDB.enemyNameplateHealthbarHeight or 10.8);
 end
 
 
@@ -1427,14 +1397,6 @@ local function HandleNamePlateAdded(unit)
     if BetterBlizzPlatesDB.hideNPC then
         BBP.HideNPCs(frame)
     end
-
---[[
-    if BetterBlizzPlatesDB.hideCastbar then
-        BBP.HideCastbar(unit)
-    end
-
-]]
-
 
     -- Color NPC
     if BetterBlizzPlatesDB.colorNPC then
