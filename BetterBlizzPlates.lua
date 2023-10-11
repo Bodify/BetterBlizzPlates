@@ -6,7 +6,7 @@ BBP = BBP or {}
 -- Things are getting more messy need a lot of cleaning lol
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.14"
+local addonUpdates = "1.16"
 local db = BetterBlizzPlatesDB
 local customFont = "Interface\\AddOns\\BetterBlizzPlates\\media\\YanoneKaffeesatz-Medium.ttf"
 local customTexture = "Interface\\AddOns\\BetterBlizzPlates\\media\\DragonflightTexture.tga"
@@ -177,12 +177,17 @@ local defaultSettings = {
     enableNameplateAuraCustomisation = false,
     nameplateAurasCenteredAnchor = false,
     maxAurasOnNameplate = 12,
+    nameplateAuraRowAmount = 5,
+    nameplateAuraSquare = false,
+    nameplateAuraRowAbove = true,
+    nameplateAuraHeightGap = 4,
+    nameplateAuraWidthGap = 4,
     nameplateAurasYPos = 0,
     nameplateAurasXPos = 0,
     personalNpBuffEnable = true,
     personalNpdeBuffEnable = false,
-    nameplateAuraAnchor = "BOTTOM",
-    nameplateAuraRelativeAnchor = "TOP",
+    nameplateAuraAnchor = "BOTTOMLEFT",
+    nameplateAuraRelativeAnchor = "TOPLEFT",
 
     personalNpBuffFilterAll = false,
     personalNpBuffFilterBlizzard = true,
@@ -415,8 +420,11 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 local function SendUpdateMessage()
     C_Timer.After(7, function()
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAdded: Nameplate Aura settings: Custom anchor, Square Auras, Aura size, \"Pandemic Glow\" for enemy debuffs. Access settings with /bbp")
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAdded: Nameplate Aura: Reworked the anchor settings (Aura icon size now scales properly with centered auras!), Created a grid layout for nameplate auras (by default set to 5 auras per row), Bugfix for \"Pandemic Glow\" setting. Access settings with /bbp")
         --DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAccess settings with /bbp")
+        if BetterBlizzPlatesDB.enableNameplateAuraCustomisation == true then
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aReset nameplate aura anchors for new system. You might have to change yours back again if you changed them.")
+        end
     end)
 end
 
@@ -427,6 +435,12 @@ local function CheckForUpdate()
         return
     end
     if not BetterBlizzPlatesDB.updates or BetterBlizzPlatesDB.updates ~= addonUpdates then
+        if BetterBlizzPlatesDB.nameplateAuraAnchor ~= "BOTTOMLEFT" then
+            BetterBlizzPlatesDB.nameplateAuraAnchor = "BOTTOMLEFT"
+        end
+        if BetterBlizzPlatesDB.nameplateAuraRelativeAnchor ~= "TOPLEFT" then
+            BetterBlizzPlatesDB.nameplateAuraRelativeAnchor = "TOPLEFT"
+        end
         SendUpdateMessage()
         BetterBlizzPlatesDB.updates = addonUpdates
     end
@@ -536,6 +550,10 @@ function BBP.ApplyNameplateWidth()
             local friendlyWidth = BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeFriendlyWidth or BetterBlizzPlatesDB.nameplateDefaultFriendlyWidth
             local enemyWidth = BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeEnemyWidth or BetterBlizzPlatesDB.nameplateDefaultEnemyWidth
             local friendlyHeight = BetterBlizzPlatesDB.friendlyNameplateClickthrough and 1 or (BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeFriendlyHeight or BetterBlizzPlatesDB.nameplateDefaultFriendlyHeight)
+
+            if BetterBlizzPlatesDB.NamePlateVerticalScale then
+                SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
+            end
 
             if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
                 C_NamePlate.SetNamePlateFriendlyClickThrough(true)
@@ -1162,11 +1180,20 @@ function BBP.ChangeRaidmarker()
     end
 end
 
+function BBP.RefUnitAuraTotally(unitFrame)
+    local unit = unitFrame.unit
+    BBP.UpdateBuffs(unitFrame.BuffFrame, unit, nil, {}, unitFrame)
+end
 
 function BBP.RunAuraModule()
     hooksecurefunc("DefaultCompactNamePlateFrameSetup", function(frame)
         if frame and frame.BuffFrame then
             frame.BuffFrame.UpdateAnchor = BBP.UpdateAnchor;
+            frame.BuffFrame.Layout = function(self)
+                local children = self:GetLayoutChildren()
+                CustomBuffLayoutChildren(self, children)
+            end
+            frame.BuffFrame.UpdateBuffs = BBP.UpdateBuffs
         end
     end);
 
@@ -1202,10 +1229,14 @@ function BBP.RunAuraModule()
             end)
 
             --unitFrame.BuffFrame.UpdateAnchor = BBP.UpdateAnchor
-            --unitFrame.BuffFrame.UpdateBuffs = BBP.UpdateBuffsRSV
+            --unitFrame.BuffFrame.UpdateBuffs = BBP.UpdateBuffs
             unitFrame.BuffFrame.UpdateBuffs = function() return end
+            unitFrame.BuffFrame.Layout = function(self)
+                local children = self:GetLayoutChildren()
+                CustomBuffLayoutChildren(self, children)
+            end
 
-            --unitFrame.BuffFrame.UpdateBuffs = BBP.UpdateBuffsRSV --not enabled in rsplates
+            --unitFrame.BuffFrame.UpdateBuffs = BBP.UpdateBuffs --not enabled in rsplates
 
             unitFrame.rsed = true
         end
@@ -1216,10 +1247,6 @@ function BBP.RunAuraModule()
         BBP.RefUnitAuraTotally(unitFrame)
     end
 
-    function BBP.RefUnitAuraTotally(unitFrame)
-        local unit = unitFrame.unit
-        BBP.UpdateBuffsRSV(unitFrame.BuffFrame, unit, nil, {}, unitFrame)
-    end
 
     local function UIObj_Event(self, event, ...)
         if event == "NAME_PLATE_UNIT_ADDED" then
@@ -1230,7 +1257,7 @@ function BBP.RunAuraModule()
             if string.match(unit, "nameplate") then 
                 local npbase = C_NamePlate.GetNamePlateForUnit(unit, false)
                 if npbase then
-                    BBP.OnUnitAuraUpdateRSV(npbase.UnitFrame.BuffFrame, unit, unitAuraUpdateInfo)
+                    BBP.OnUnitAuraUpdate(npbase.UnitFrame.BuffFrame, unit, unitAuraUpdateInfo)
                 end
             end
         end
@@ -1280,8 +1307,8 @@ local function HandleNamePlateRemoved(unit)
         frame:SetScale(1)
     end
     -- Hide totem icons
-    if frame.customIcon then 
-        frame.customIcon:Hide() 
+    if frame.customIcon then
+        frame.customIcon:Hide()
     end
     if frame.glowTexture then
         frame.glowTexture:Hide()
@@ -1289,19 +1316,19 @@ local function HandleNamePlateRemoved(unit)
     if frame.animationGroup then
         frame.animationGroup:Stop()
     end
-    if frame.customCooldown then 
-        frame.customCooldown:Hide() 
+    if frame.customCooldown then
+        frame.customCooldown:Hide()
     end
     -- Hide healer icon
-    if frame.healerIndicator then 
-        frame.healerIndicator:Hide() 
+    if frame.healerIndicator then
+        frame.healerIndicator:Hide()
     end
     -- Hide out of combat icon
-    if frame.combatIndicatorSap then 
+    if frame.combatIndicatorSap then
         frame.combatIndicatorSap:Hide()
     end
     -- Hide out of combat icon
-    if frame.combatIndicator then 
+    if frame.combatIndicator then
         frame.combatIndicator:Hide()
     end
     -- Hide pet icon

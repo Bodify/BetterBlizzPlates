@@ -47,7 +47,9 @@ StaticPopupDialogs["CONFIRM_RELOAD"] = {
     hideOnEscape = true,
 }
 
--- GUI Functions
+------------------------------------------------------------
+-- GUI Creation Functions
+------------------------------------------------------------
 local function FetchCVarWhenLoaded(cvarName, callback)
     local function FetchCVarValue()
         if BBP.variablesLoaded then
@@ -79,22 +81,52 @@ local function FetchWidthWhenLoaded(callback)
     FetchWidthValue()
 end
 
-local function DisableCheckboxes(frame)
+local function DisableCheckboxes(frame, doChildrenOfChild)
+    if doChildrenOfChild == nil then
+        doChildrenOfChild = true -- Default to true if the second parameter is not provided
+    end
+
     for i = 1, frame:GetNumChildren() do
         local child = select(i, frame:GetChildren())
-        if child and child:GetObjectType() == "CheckButton" or child:GetObjectType() == "Slider" then
+        if child and (child:GetObjectType() == "CheckButton" or child:GetObjectType() == "Slider" or child:GetObjectType() == "Button") then
             child:Disable()
             child:SetAlpha(0.5)
+        end
+
+        if doChildrenOfChild then
+            -- Check if the child has children and if it's a CheckButton, Slider, or Button
+            for j = 1, child:GetNumChildren() do
+                local childOfChild = select(j, child:GetChildren())
+                if childOfChild and (childOfChild:GetObjectType() == "CheckButton" or childOfChild:GetObjectType() == "Slider" or childOfChild:GetObjectType() == "Button") then
+                    childOfChild:Disable()
+                    childOfChild:SetAlpha(0.5)
+                end
+            end
         end
     end
 end
 
-local function EnableCheckboxes(frame)
+local function EnableCheckboxes(frame, doChildrenOfChild)
+    if doChildrenOfChild == nil then
+        doChildrenOfChild = true -- Default to true if the second parameter is not provided
+    end
+
     for i = 1, frame:GetNumChildren() do
         local child = select(i, frame:GetChildren())
-        if child and child:GetObjectType() == "CheckButton" or child:GetObjectType() == "Slider" then
+        if child and (child:GetObjectType() == "CheckButton" or child:GetObjectType() == "Slider" or child:GetObjectType() == "Button") then
             child:Enable()
-            child:SetAlpha(1)
+            child:SetAlpha(1.0) -- Reset alpha to fully visible
+        end
+
+        if doChildrenOfChild then
+            -- Check if the child has children and if it's a CheckButton or Slider
+            for j = 1, child:GetNumChildren() do
+                local childOfChild = select(j, child:GetChildren())
+                if childOfChild and (childOfChild:GetObjectType() == "CheckButton" or childOfChild:GetObjectType() == "Slider" or childOfChild:GetObjectType() == "Button") then
+                    childOfChild:Enable()
+                    childOfChild:SetAlpha(1.0) -- Reset alpha to fully visible
+                end
+            end
         end
     end
 end
@@ -309,12 +341,6 @@ local function CreateSlider(name, parent, label, minValue, maxValue, stepValue, 
 
                     -- Target Text for Cast Timer Pos and Scale
                     elseif element == "targetText" then
-                        --not rdy
-                    -- Max auras on nameplate
-                    elseif element == "maxAurasOnNameplate" then
-                        BBP.RefBuffFrameDisplay()
-                    elseif element == "nameplateAuras" then
-                        BBP.RefBuffFrameDisplay()
                     -- Raidmarker Pos and Scale
                     elseif element == "raidmarkIndicator" then
                         if frame.RaidTargetFrame.RaidTargetIcon then
@@ -373,9 +399,9 @@ local function CreateSlider(name, parent, label, minValue, maxValue, stepValue, 
 
             --If no nameplates are present still adjust values
             if element == "NamePlateVerticalScale" then
+                BetterBlizzPlatesDB.NamePlateVerticalScale = value
                 if not BBP.checkCombatAndWarn() then
-                    SetCVar("NamePlateVerticalScale", value)
-                    BetterBlizzPlatesDB.NamePlateVerticalScale = value
+                    BBP.ApplyNameplateWidth()
                 end
             elseif element == "executeIndicatorThreshold" then
                 BetterBlizzPlatesDB.executeIndicatorThreshold = value
@@ -399,12 +425,33 @@ local function CreateSlider(name, parent, label, minValue, maxValue, stepValue, 
                 --BBP.DefaultCompactNamePlateFrameAnchorInternal(frame, setupOptions)
             elseif element == "maxAurasOnNameplate" then
                 BetterBlizzPlatesDB.maxAurasOnNameplate = value
+                BBP.RefreshBuffFrame()
             elseif element == "nameplateAurasNoNameYPos" then
                 BetterBlizzPlatesDB.nameplateAurasNoNameYPos = value
-                BBP.RefBuffFrameDisplay()
-            elseif element == "nameplateAurasNoNameXPos" then
-                BetterBlizzPlatesDB.nameplateAurasNoNameXPos = value
-                BBP.RefBuffFrameDisplay()
+                BBP.RefreshBuffFrame()
+            elseif element == "nameplateAuraRowAmount" then
+                BetterBlizzPlatesDB.nameplateAuraRowAmount = value
+                BBP.RefreshBuffFrame()
+            elseif element == "nameplateAuraWidthGap" then
+                BetterBlizzPlatesDB.nameplateAuraWidthGap = value
+                BBP.RefreshBuffFrame()
+            elseif element == "nameplateAuraHeightGap" then
+                BetterBlizzPlatesDB.nameplateAuraHeightGap = value
+                BBP.RefreshBuffFrame()
+            elseif element == "nameplateAuraWidthGap" then
+                BetterBlizzPlatesDB.nameplateAuraWidthGap = value
+                BBP.RefreshBuffFrame()
+            elseif element == "nameplateAuraHeightGap" then
+                BetterBlizzPlatesDB.nameplateAuraHeightGap = value
+                BBP.RefreshBuffFrame()
+            elseif element == "nameplateAuras" then
+                if axis then
+                    BetterBlizzPlatesDB.nameplateAurasYPos = yPos
+                    BetterBlizzPlatesDB.nameplateAurasXPos = xPos
+                else
+                    BetterBlizzPlatesDB.nameplateAuraScale = value
+                end
+                BBP.RefreshBuffFrame()
                 -- Nameplate scales
             elseif element == "nameplate" then
                 if not BBP.checkCombatAndWarn() then
@@ -521,13 +568,6 @@ local function CreateSlider(name, parent, label, minValue, maxValue, stepValue, 
                 if axis then
                     BetterBlizzPlatesDB.fadeOutNPCsAlpha = value
                 end
-            elseif element == "nameplateAuras" then
-                if axis then
-                    BetterBlizzPlatesDB.nameplateAurasYPos = yPos
-                    BetterBlizzPlatesDB.nameplateAurasXPos = xPos
-                else
-                    BetterBlizzPlatesDB.nameplateAuraScale = value
-                end
             end
         --end
     end)
@@ -626,7 +666,6 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
 
     return checkBox
 end
-
 
 local function CreateList(subPanel, listName, listData, refreshFunc, enableColorPicker)
     -- Create the scroll frame
@@ -862,9 +901,9 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
     end)
 end
 
-
-
-
+------------------------------------------------------------
+-- GUI Panels
+------------------------------------------------------------
 local function guiGeneralTab()
     ------------------------------------------------------------------------------------------------
     -- Main panel:
@@ -964,7 +1003,7 @@ local function guiGeneralTab()
     FetchCVarWhenLoaded("NamePlateVerticalScale", function(value)
         NamePlateVerticalScaleSlider:SetValue(BetterBlizzPlatesDB.NamePlateVerticalScale or value)
     end)
-    CreateTooltip(NamePlateVerticalScaleSlider, "Changes the height of ALL nameplates.\n(Will also change the height of friendly castbars\nin PvE content due to Blizzard restrictions)")
+    CreateTooltip(NamePlateVerticalScaleSlider, "Changes the height of ALL nameplates.\nIn PvE content, due to Blizzard restrictions,\nit will also change the height of friendly castbars")
 
     local btn_reset_nameplateHeight = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     btn_reset_nameplateHeight:SetText("Default")
@@ -2068,28 +2107,6 @@ local function guiPositionAndScale()
         executeIndicatorToggle()
     end)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     local btn_reload_ui2 = CreateFrame("Button", nil, BetterBlizzPlatesSubPanel, "UIPanelButtonTemplate")
     btn_reload_ui2:SetText("Reload UI")
     btn_reload_ui2:SetWidth(85)
@@ -2144,33 +2161,34 @@ local function guiCastbar()
     local checkBox_enableCastbarCustomization = CreateCheckbox("enableCastbarCustomization", "Enable castbar customization", BetterBlizzPlatesSubPanel7, nil, BBP.ToggleSpellCastEventRegistration)
     checkBox_enableCastbarCustomization:SetPoint("TOPLEFT", noteCast2, "BOTTOMLEFT", 0, pixelsOnFirstBox)
 
-    local checkBox_castBarDragonflightShield = CreateCheckbox("castBarDragonflightShield", "Dragonflight Shield on Non-Interruptable", BetterBlizzPlatesSubPanel7)
+
+    local checkBox_castBarDragonflightShield = CreateCheckbox("castBarDragonflightShield", "Dragonflight Shield on Non-Interruptable", checkBox_enableCastbarCustomization)
     checkBox_castBarDragonflightShield:SetPoint("TOPLEFT", checkBox_enableCastbarCustomization, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(checkBox_castBarDragonflightShield, "Replace the old pixelated non-interruptible\ncastbar shield with the new Dragonflight one")
 
     -- cast bar icon size
-    local castBarIconScaleSlider = CreateSlider("BetterBlizzPlates_castBarIconScaleSlider", BetterBlizzPlatesSubPanel7, "Castbar Icon Size", 0.1, 2.5, 0.1, "castBarIcon")
+    local castBarIconScaleSlider = CreateSlider("BetterBlizzPlates_castBarIconScaleSlider", checkBox_enableCastbarCustomization, "Castbar Icon Size", 0.1, 2.5, 0.1, "castBarIcon")
     castBarIconScaleSlider:SetPoint("TOPLEFT", checkBox_castBarDragonflightShield, "BOTTOMLEFT", 12, -10)
     castBarIconScaleSlider:SetValue(BetterBlizzPlatesDB.castBarIconScale or 1)
 
-    local castBarIconXPosSlider = CreateSlider("BetterBlizzPlates_castBarIconXPosSlider", BetterBlizzPlatesSubPanel7, "x offset", -50, 50, 1, "castBarIcon", "X")
+    local castBarIconXPosSlider = CreateSlider("BetterBlizzPlates_castBarIconXPosSlider", checkBox_enableCastbarCustomization, "Icon x offset", -50, 50, 1, "castBarIcon", "X")
     castBarIconXPosSlider:SetPoint("TOPLEFT", castBarIconScaleSlider, "BOTTOMLEFT", 0, -15)
     castBarIconXPosSlider:SetValue(BetterBlizzPlatesDB.castBarIconXPos or 0)
 
-    local castBarIconYPosSlider = CreateSlider("BetterBlizzPlates_castBarIconYPosSlider", BetterBlizzPlatesSubPanel7, "y offset", -50, 50, 1, "castBarIcon", "Y")
+    local castBarIconYPosSlider = CreateSlider("BetterBlizzPlates_castBarIconYPosSlider", checkBox_enableCastbarCustomization, "Icon y offset", -50, 50, 1, "castBarIcon", "Y")
     castBarIconYPosSlider:SetPoint("TOPLEFT", castBarIconXPosSlider, "BOTTOMLEFT", 0, -15)
     castBarIconYPosSlider:SetValue(BetterBlizzPlatesDB.castBarIconYPos or 0)
 
-
     -- cast bar height
-    local castBarHeightSlider = CreateSlider("BetterBlizzPlates_castBarHeightSlider", BetterBlizzPlatesSubPanel7, "Castbar height", 4, 36, 0.1, "castBarHeight", "Height")
+    local castBarHeightSlider = CreateSlider("BetterBlizzPlates_castBarHeightSlider", checkBox_enableCastbarCustomization, "Castbar height", 4, 36, 0.1, "castBarHeight", "Height")
     castBarHeightSlider:SetPoint("TOPLEFT", castBarIconYPosSlider, "BOTTOMLEFT", 0, -15)
     if BBP.isLargeNameplatesEnabled() then
         castBarHeightSlider:SetValue(BetterBlizzPlatesDB.castBarHeight or 18.8)
     else
         castBarHeightSlider:SetValue(BetterBlizzPlatesDB.castBarHeight or 8)
-    end    
+    end
     -- Reset button for nameplateSelectedScale slider
-    local btn_reset_castBarHeight = CreateFrame("Button", nil, BetterBlizzPlatesSubPanel7, "UIPanelButtonTemplate")
+    local btn_reset_castBarHeight = CreateFrame("Button", nil, checkBox_enableCastbarCustomization, "UIPanelButtonTemplate")
     btn_reset_castBarHeight:SetText("Default")
     btn_reset_castBarHeight:SetWidth(60)
     btn_reset_castBarHeight:SetPoint("LEFT", castBarHeightSlider, "RIGHT", 10, 0)
@@ -2180,7 +2198,7 @@ local function guiCastbar()
 
 
     -- cast bar text size
-    local castBarTextScaleSlider = CreateSlider("BetterBlizzPlates_castBarTextScaleSlider", BetterBlizzPlatesSubPanel7, "Castbar text size", 0.5, 2.5, 0.1, "castBarText")
+    local castBarTextScaleSlider = CreateSlider("BetterBlizzPlates_castBarTextScaleSlider", checkBox_enableCastbarCustomization, "Castbar text size", 0.5, 2.5, 0.1, "castBarText")
     castBarTextScaleSlider:SetPoint("TOPLEFT", castBarHeightSlider, "BOTTOMLEFT", 0, -15)
     castBarTextScaleSlider:SetValue(BetterBlizzPlatesDB.castBarTextScale or 1)
 
@@ -2195,9 +2213,18 @@ local function guiCastbar()
     castbarsettingsicon2:SetPoint("RIGHT", noteCast3, "LEFT", 5, 0)
 
 
-    local checkBox_enableCastbarEmphasis = CreateCheckbox("enableCastbarEmphasis", "Cast Emphasis", BetterBlizzPlatesSubPanel7)
-    CreateTooltip(checkBox_enableCastbarEmphasis, "Customize castbar for spells in the list")
+    local checkBox_enableCastbarEmphasis = CreateCheckbox("enableCastbarEmphasis", "Cast Emphasis", checkBox_enableCastbarCustomization)
     checkBox_enableCastbarEmphasis:SetPoint("TOPLEFT", noteCast3, "BOTTOMLEFT", 0, pixelsOnFirstBox)
+    checkBox_enableCastbarEmphasis:HookScript("OnClick", function(_, btn, down)
+        if BetterBlizzPlatesDB.enableCastbarEmphasis then
+            listFrame:SetAlpha(1)
+            EnableCheckboxes(checkBox_enableCastbarEmphasis)
+        else
+            listFrame:SetAlpha(0.5)
+            DisableCheckboxes(checkBox_enableCastbarEmphasis)
+        end
+    end)
+    CreateTooltip(checkBox_enableCastbarEmphasis, "Customize castbar for spells in the list")
 
     local checkBox_castBarEmphasisOnlyInterruptable = CreateCheckbox("castBarEmphasisOnlyInterruptable", "Only emphasize interruptable casts", checkBox_enableCastbarEmphasis)
     checkBox_castBarEmphasisOnlyInterruptable:SetPoint("TOPLEFT", checkBox_enableCastbarEmphasis, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
@@ -2246,130 +2273,39 @@ local function guiCastbar()
     castBarEmphasisSparkHeightSlider:SetPoint("TOPLEFT", castBarEmphasisTextScaleSlider, "BOTTOMLEFT", 0, -15)
     castBarEmphasisSparkHeightSlider:SetValue(4 + BetterBlizzPlatesDB.castBarEmphasisSparkHeight)
 
-
-
-
-
-    local function handleVisibility()
-        if BetterBlizzPlatesDB.enableCastbarCustomization then
-            listFrame:SetAlpha(1)
-            noteCast3:SetAlpha(1)
-            btn_reset_castBarHeight:Enable()
-            btn_reset_castBarHeight:SetAlpha(1.0)
-            castBarIconScaleSlider:Enable()
-            castBarIconScaleSlider:SetAlpha(1.0)
-            castBarHeightSlider:Enable()
-            castBarHeightSlider:SetAlpha(1.0)
-            castBarTextScaleSlider:Enable()
-            castBarTextScaleSlider:SetAlpha(1.0)
-            checkBox_enableCastbarEmphasis:Enable()
-            checkBox_enableCastbarEmphasis:SetAlpha(1.0)
-            checkBox_castBarDragonflightShield:Enable()
-            checkBox_castBarDragonflightShield:SetAlpha(1.0)
-            castBarIconXPosSlider:Enable()
-            castBarIconXPosSlider:SetAlpha(1.0)
-            castBarIconYPosSlider:Enable()
-            castBarIconYPosSlider:SetAlpha(1.0)
-            checkBox_castBarEmphasisOnlyInterruptable:Enable()
-            checkBox_castBarEmphasisOnlyInterruptable:SetAlpha(1.0)
-            checkBox_castBarEmphasisColor:Enable()
-            checkBox_castBarEmphasisColor:SetAlpha(1.0)
-            checkBox_castBarEmphasisIcon:Enable()
-            checkBox_castBarEmphasisIcon:SetAlpha(1.0)
-            checkBox_castBarEmphasisText:Enable()
-            checkBox_castBarEmphasisText:SetAlpha(1.0)
-            checkBox_castBarEmphasisHeight:Enable()
-            checkBox_castBarEmphasisHeight:SetAlpha(1.0)
-            checkBox_castBarEmphasisSpark:Enable()
-            checkBox_castBarEmphasisSpark:SetAlpha(1.0)
-            checkBox_castBarEmphasisHealthbarColor:Enable()
-            checkBox_castBarEmphasisHealthbarColor:SetAlpha(1.0)
-            castBarEmphasisIconScaleScaleSlider:Enable()
-            castBarEmphasisIconScaleScaleSlider:SetAlpha(1.0)
-            castBarEmphasisHeightValueSlider:Enable()
-            castBarEmphasisHeightValueSlider:SetAlpha(1.0)
-            castBarEmphasisTextScaleSlider:Enable()
-            castBarEmphasisTextScaleSlider:SetAlpha(1.0)
-            castBarEmphasisSparkHeightSlider:Enable()
-            castBarEmphasisSparkHeightSlider:SetAlpha(1.0)
+    checkBox_enableCastbarCustomization:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            EnableCheckboxes(checkBox_enableCastbarCustomization)
+            if not BetterBlizzPlatesDB.enableCastbarEmphasis then
+                DisableCheckboxes(checkBox_enableCastbarEmphasis)
+            end
         else
-            listFrame:SetAlpha(0.5)
-            noteCast3:SetAlpha(0.5)
-            btn_reset_castBarHeight:Disable()
-            btn_reset_castBarHeight:SetAlpha(0.5)
-            castBarIconScaleSlider:Disable()
-            castBarIconScaleSlider:SetAlpha(0.5)
-            castBarHeightSlider:Disable()
-            castBarHeightSlider:SetAlpha(0.5)
-            castBarTextScaleSlider:Disable()
-            castBarTextScaleSlider:SetAlpha(0.5)
-            checkBox_enableCastbarEmphasis:Disable()
-            checkBox_enableCastbarEmphasis:SetAlpha(0.5)
-            checkBox_castBarDragonflightShield:Disable()
-            checkBox_castBarDragonflightShield:SetAlpha(0.5)
-            castBarIconXPosSlider:Disable()
-            castBarIconXPosSlider:SetAlpha(0.5)
-            castBarIconYPosSlider:Disable()
-            castBarIconYPosSlider:SetAlpha(0.5)
-            checkBox_castBarEmphasisOnlyInterruptable:Disable()
-            checkBox_castBarEmphasisOnlyInterruptable:SetAlpha(0.5)
-            checkBox_castBarEmphasisColor:Disable()
-            checkBox_castBarEmphasisColor:SetAlpha(0.5)
-            checkBox_castBarEmphasisIcon:Disable()
-            checkBox_castBarEmphasisIcon:SetAlpha(0.5)
-            checkBox_castBarEmphasisText:Disable()
-            checkBox_castBarEmphasisText:SetAlpha(0.5)
-            checkBox_castBarEmphasisHeight:Disable()
-            checkBox_castBarEmphasisHeight:SetAlpha(0.5)
-            checkBox_castBarEmphasisSpark:Disable()
-            checkBox_castBarEmphasisSpark:SetAlpha(0.5)
-            checkBox_castBarEmphasisHealthbarColor:Disable()
-            checkBox_castBarEmphasisHealthbarColor:SetAlpha(0.5)
-            castBarEmphasisIconScaleScaleSlider:Disable()
-            castBarEmphasisIconScaleScaleSlider:SetAlpha(0.5)
-            castBarEmphasisHeightValueSlider:Disable()
-            castBarEmphasisHeightValueSlider:SetAlpha(0.5)
-            castBarEmphasisTextScaleSlider:Disable()
-            castBarEmphasisTextScaleSlider:SetAlpha(0.5)
-            castBarEmphasisSparkHeightSlider:Disable()
-            castBarEmphasisSparkHeightSlider:SetAlpha(0.5)
-        end
-    end
-
-    checkBox_enableCastbarCustomization:HookScript("OnClick", function(_, btn, down)
-        handleVisibility()
-    end)
-
-
-
-
-
-
-
-
-
-    checkBox_enableCastbarEmphasis:HookScript("OnClick", function(_, btn, down)
-        if BetterBlizzPlatesDB.enableCastbarEmphasis then
-            EnableCheckboxes(checkBox_enableCastbarEmphasis)
-        else
+            DisableCheckboxes(checkBox_enableCastbarCustomization)
             DisableCheckboxes(checkBox_enableCastbarEmphasis)
         end
     end)
-    if BetterBlizzPlatesDB.enableCastbarEmphasis then
-        EnableCheckboxes(checkBox_enableCastbarEmphasis)
-    else
-        DisableCheckboxes(checkBox_enableCastbarEmphasis)
+
+    local function TogglePanel()
+        if BBP.variablesLoaded then
+            if BetterBlizzPlatesDB.enableCastbarCustomization then
+                EnableCheckboxes(checkBox_enableCastbarCustomization)
+            else
+                DisableCheckboxes(checkBox_enableCastbarCustomization)
+            end
+            if BetterBlizzPlatesDB.enableCastbarEmphasis then
+                listFrame:SetAlpha(1)
+                EnableCheckboxes(checkBox_enableCastbarEmphasis)
+            else
+                listFrame:SetAlpha(0.5)
+                DisableCheckboxes(checkBox_enableCastbarEmphasis)
+            end
+        else
+            C_Timer.After(1, function()
+                TogglePanel()
+            end)
+        end
     end
-
-
-
-
-
-
-
-
-
-    handleVisibility()
+    TogglePanel()
 end
 
 local function guiHideCastbar()
@@ -2915,8 +2851,15 @@ local function guiNameplateAuras()
     checkBox_enableNameplateAuraCustomisation:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 50, 75)
 
 
-    local checkBox_otherNpBuffEnable = CreateCheckbox("otherNpBuffEnable", "Show BUFFS", contentFrame)
+    local checkBox_otherNpBuffEnable = CreateCheckbox("otherNpBuffEnable", "Show BUFFS", checkBox_enableNameplateAuraCustomisation)
     checkBox_otherNpBuffEnable:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 50, 25)
+    checkBox_otherNpBuffEnable:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            EnableCheckboxes(checkBox_otherNpBuffEnable)
+        else
+            DisableCheckboxes(checkBox_otherNpBuffEnable)
+        end
+    end)
 
     local bigEnemyBorderText = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     bigEnemyBorderText:SetPoint("LEFT", checkBox_otherNpBuffEnable, "CENTER", 0, 25)
@@ -2928,131 +2871,73 @@ local function guiNameplateAuras()
     enemyNameplateIcon2:SetDesaturated(1)
     enemyNameplateIcon2:SetVertexColor(1, 0, 0)
 
-    local checkBox_otherNpBuffFilterAll = CreateCheckbox("otherNpBuffFilterAll", "All", contentFrame)
+    local checkBox_otherNpBuffFilterAll = CreateCheckbox("otherNpBuffFilterAll", "All", checkBox_otherNpBuffEnable)
     checkBox_otherNpBuffFilterAll:SetPoint("TOPLEFT", checkBox_otherNpBuffEnable, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
 
-    local checkBox_otherNpBuffFilterWatchList = CreateCheckbox("otherNpBuffFilterWatchList", "Whitelist", contentFrame)
+    local checkBox_otherNpBuffFilterWatchList = CreateCheckbox("otherNpBuffFilterWatchList", "Whitelist", checkBox_otherNpBuffEnable)
     CreateTooltip(checkBox_otherNpBuffFilterWatchList, "Whitelist works in addition to the other filters selected.")
     checkBox_otherNpBuffFilterWatchList:SetPoint("TOPLEFT", checkBox_otherNpBuffFilterAll, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_otherNpBuffFilterLessMinite = CreateCheckbox("otherNpBuffFilterLessMinite", "Under one min", contentFrame)
+    local checkBox_otherNpBuffFilterLessMinite = CreateCheckbox("otherNpBuffFilterLessMinite", "Under one min", checkBox_otherNpBuffEnable)
     checkBox_otherNpBuffFilterLessMinite:SetPoint("TOPLEFT", checkBox_otherNpBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_otherNpBuffFilterPurgeable = CreateCheckbox("otherNpBuffFilterPurgeable", "Purgeable", contentFrame)
+    local checkBox_otherNpBuffFilterPurgeable = CreateCheckbox("otherNpBuffFilterPurgeable", "Purgeable", checkBox_otherNpBuffEnable)
     checkBox_otherNpBuffFilterPurgeable:SetPoint("TOPLEFT", checkBox_otherNpBuffFilterLessMinite, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_otherNpBuffPurgeGlow = CreateCheckbox("otherNpBuffPurgeGlow", "Glow on purgeable buffs", contentFrame)
+    local checkBox_otherNpBuffPurgeGlow = CreateCheckbox("otherNpBuffPurgeGlow", "Glow on purgeable buffs", checkBox_otherNpBuffEnable)
     checkBox_otherNpBuffPurgeGlow:SetPoint("TOPLEFT", checkBox_otherNpBuffFilterPurgeable, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_otherNpBuffBlueBorder = CreateCheckbox("otherNpBuffBlueBorder", "Blue border on buffs", contentFrame)
+    local checkBox_otherNpBuffBlueBorder = CreateCheckbox("otherNpBuffBlueBorder", "Blue border on buffs", checkBox_otherNpBuffEnable)
     checkBox_otherNpBuffBlueBorder:SetPoint("TOPLEFT", checkBox_otherNpBuffPurgeGlow, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_otherNpBuffEmphasisedBorder = CreateCheckbox("otherNpBuffEmphasisedBorder", "Red glow on whitelisted buffs", contentFrame)
+    local checkBox_otherNpBuffEmphasisedBorder = CreateCheckbox("otherNpBuffEmphasisedBorder", "Red glow on whitelisted buffs", checkBox_otherNpBuffEnable)
     checkBox_otherNpBuffEmphasisedBorder:SetPoint("TOPLEFT", checkBox_otherNpBuffBlueBorder, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local function ToggleOtherNpBuffCheckboxes()
-        if BetterBlizzPlatesDB.otherNpBuffEnable then
-            checkBox_otherNpBuffFilterAll:Enable()
-            checkBox_otherNpBuffFilterAll:SetAlpha(1.0)
-            checkBox_otherNpBuffFilterWatchList:Enable()
-            checkBox_otherNpBuffFilterWatchList:SetAlpha(1.0)
-            checkBox_otherNpBuffFilterLessMinite:Enable()
-            checkBox_otherNpBuffFilterLessMinite:SetAlpha(1.0)
-            checkBox_otherNpBuffFilterPurgeable:Enable()
-            checkBox_otherNpBuffFilterPurgeable:SetAlpha(1.0)
-            checkBox_otherNpBuffPurgeGlow:Enable()
-            checkBox_otherNpBuffPurgeGlow:SetAlpha(1.0)
-            checkBox_otherNpBuffBlueBorder:Enable()
-            checkBox_otherNpBuffBlueBorder:SetAlpha(1.0)
-            checkBox_otherNpBuffEmphasisedBorder:Enable()
-            checkBox_otherNpBuffEmphasisedBorder:SetAlpha(1.0)
-        else
-            checkBox_otherNpBuffFilterAll:Disable()
-            checkBox_otherNpBuffFilterAll:SetAlpha(0.5)
-            checkBox_otherNpBuffFilterWatchList:Disable()
-            checkBox_otherNpBuffFilterWatchList:SetAlpha(0.5)
-            checkBox_otherNpBuffFilterLessMinite:Disable()
-            checkBox_otherNpBuffFilterLessMinite:SetAlpha(0.5)
-            checkBox_otherNpBuffFilterPurgeable:Disable()
-            checkBox_otherNpBuffFilterPurgeable:SetAlpha(0.5)
-            checkBox_otherNpBuffPurgeGlow:Disable()
-            checkBox_otherNpBuffPurgeGlow:SetAlpha(0.5)
-            checkBox_otherNpBuffBlueBorder:Disable()
-            checkBox_otherNpBuffBlueBorder:SetAlpha(0.5)
-            checkBox_otherNpBuffEmphasisedBorder:Disable()
-            checkBox_otherNpBuffEmphasisedBorder:SetAlpha(0.5)
-        end
-    end
-
-    checkBox_otherNpBuffEnable:HookScript("OnClick", function(_, btn, down)
-        ToggleOtherNpBuffCheckboxes()
-    end)
-    ToggleOtherNpBuffCheckboxes()
 
 
 
-
-    local checkBox_otherNpdeBuffEnable = CreateCheckbox("otherNpdeBuffEnable", "Show DEBUFFS", contentFrame)
+    local checkBox_otherNpdeBuffEnable = CreateCheckbox("otherNpdeBuffEnable", "Show DEBUFFS", checkBox_enableNameplateAuraCustomisation)
     checkBox_otherNpdeBuffEnable:SetPoint("TOPLEFT", checkBox_otherNpBuffEmphasisedBorder, "BOTTOMLEFT", -15, -2)
+    checkBox_otherNpdeBuffEnable:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            EnableCheckboxes(checkBox_otherNpdeBuffEnable)
+        else
+            DisableCheckboxes(checkBox_otherNpdeBuffEnable)
+        end
+    end)
 
-    local checkBox_otherNpdeBuffFilterAll = CreateCheckbox("otherNpdeBuffFilterAll", "All", contentFrame)
+    local checkBox_otherNpdeBuffFilterAll = CreateCheckbox("otherNpdeBuffFilterAll", "All", checkBox_otherNpdeBuffEnable)
     checkBox_otherNpdeBuffFilterAll:SetPoint("TOPLEFT", checkBox_otherNpdeBuffEnable, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
 
-    local checkBox_otherNpdeBuffFilterBlizzard = CreateCheckbox("otherNpdeBuffFilterBlizzard", "Blizzard Default Filter", contentFrame)
+    local checkBox_otherNpdeBuffFilterBlizzard = CreateCheckbox("otherNpdeBuffFilterBlizzard", "Blizzard Default Filter", checkBox_otherNpdeBuffEnable)
     checkBox_otherNpdeBuffFilterBlizzard:SetPoint("TOPLEFT", checkBox_otherNpdeBuffFilterAll, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_otherNpdeBuffFilterWatchList = CreateCheckbox("otherNpdeBuffFilterWatchList", "Whitelist", contentFrame)
+    local checkBox_otherNpdeBuffFilterWatchList = CreateCheckbox("otherNpdeBuffFilterWatchList", "Whitelist", checkBox_otherNpdeBuffEnable)
     CreateTooltip(checkBox_otherNpdeBuffFilterWatchList, "Whitelist works in addition to the other filters selected.")
     checkBox_otherNpdeBuffFilterWatchList:SetPoint("TOPLEFT", checkBox_otherNpdeBuffFilterBlizzard, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_otherNpdeBuffFilterLessMinite = CreateCheckbox("otherNpdeBuffFilterLessMinite", "Under one min", contentFrame)
+    local checkBox_otherNpdeBuffFilterLessMinite = CreateCheckbox("otherNpdeBuffFilterLessMinite", "Under one min", checkBox_otherNpdeBuffEnable)
     checkBox_otherNpdeBuffFilterLessMinite:SetPoint("TOPLEFT", checkBox_otherNpdeBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_otherNpdeBuffFilterOnlyMe = CreateCheckbox("otherNpdeBuffFilterOnlyMe", "Only mine", contentFrame)
+    local checkBox_otherNpdeBuffFilterOnlyMe = CreateCheckbox("otherNpdeBuffFilterOnlyMe", "Only mine", checkBox_otherNpdeBuffEnable)
     checkBox_otherNpdeBuffFilterOnlyMe:SetPoint("TOPLEFT", checkBox_otherNpdeBuffFilterLessMinite, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_otherNpdeBuffPandemicGlow = CreateCheckbox("otherNpdeBuffPandemicGlow", "Pandemic Glow", contentFrame)
+    local checkBox_otherNpdeBuffPandemicGlow = CreateCheckbox("otherNpdeBuffPandemicGlow", "Pandemic Glow", checkBox_otherNpdeBuffEnable)
     checkBox_otherNpdeBuffPandemicGlow:SetPoint("TOPLEFT", checkBox_otherNpdeBuffFilterOnlyMe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(checkBox_otherNpdeBuffPandemicGlow, "Red glow on whitelisted debuffs with less than 5 seconds left.")
 
-    local function ToggleOtherNpDebuffCheckboxes()
-        if BetterBlizzPlatesDB.otherNpdeBuffEnable then
-            checkBox_otherNpdeBuffFilterAll:Enable()
-            checkBox_otherNpdeBuffFilterAll:SetAlpha(1.0)
-            checkBox_otherNpdeBuffFilterBlizzard:Enable()
-            checkBox_otherNpdeBuffFilterBlizzard:SetAlpha(1.0)
-            checkBox_otherNpdeBuffFilterWatchList:Enable()
-            checkBox_otherNpdeBuffFilterWatchList:SetAlpha(1.0)
-            checkBox_otherNpdeBuffFilterLessMinite:Enable()
-            checkBox_otherNpdeBuffFilterLessMinite:SetAlpha(1.0)
-            checkBox_otherNpdeBuffFilterOnlyMe:Enable()
-            checkBox_otherNpdeBuffFilterOnlyMe:SetAlpha(1.0)
-            checkBox_otherNpdeBuffPandemicGlow:Enable()
-            checkBox_otherNpdeBuffPandemicGlow:SetAlpha(1.0)
-        else
-            checkBox_otherNpdeBuffFilterAll:Disable()
-            checkBox_otherNpdeBuffFilterAll:SetAlpha(0.5)
-            checkBox_otherNpdeBuffFilterBlizzard:Disable()
-            checkBox_otherNpdeBuffFilterBlizzard:SetAlpha(0.5)
-            checkBox_otherNpdeBuffFilterWatchList:Disable()
-            checkBox_otherNpdeBuffFilterWatchList:SetAlpha(0.5)
-            checkBox_otherNpdeBuffFilterLessMinite:Disable()
-            checkBox_otherNpdeBuffFilterLessMinite:SetAlpha(0.5)
-            checkBox_otherNpdeBuffFilterOnlyMe:Disable()
-            checkBox_otherNpdeBuffFilterOnlyMe:SetAlpha(0.5)
-            checkBox_otherNpdeBuffPandemicGlow:Disable()
-            checkBox_otherNpdeBuffPandemicGlow:SetAlpha(0.5)
-        end
-    end
 
-    checkBox_otherNpdeBuffEnable:HookScript("OnClick", function(_, btn, down)
-        ToggleOtherNpDebuffCheckboxes()
-    end)
-    ToggleOtherNpDebuffCheckboxes()
 
-    --
-    local checkBox_friendlyNpBuffEnable = CreateCheckbox("friendlyNpBuffEnable", "Show BUFFS", contentFrame)
+
+    local checkBox_friendlyNpBuffEnable = CreateCheckbox("friendlyNpBuffEnable", "Show BUFFS", checkBox_enableNameplateAuraCustomisation)
     checkBox_friendlyNpBuffEnable:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 300, 45)
+    checkBox_friendlyNpBuffEnable:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            EnableCheckboxes(checkBox_friendlyNpBuffEnable)
+        else
+            DisableCheckboxes(checkBox_friendlyNpBuffEnable)
+        end
+    end)
 
     local bigEnemyBorderText2 = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     bigEnemyBorderText2:SetPoint("LEFT", checkBox_friendlyNpBuffEnable, "CENTER", 0, 25)
@@ -3062,120 +2947,57 @@ local function guiNameplateAuras()
     enemyNameplateIcon2:SetSize(28, 28)
     enemyNameplateIcon2:SetPoint("RIGHT", bigEnemyBorderText2, "LEFT", -3, 0)
 
-    local checkBox_friendlyNpBuffFilterAll = CreateCheckbox("friendlyNpBuffFilterAll", "All", contentFrame)
+    local checkBox_friendlyNpBuffFilterAll = CreateCheckbox("friendlyNpBuffFilterAll", "All", checkBox_friendlyNpBuffEnable)
     checkBox_friendlyNpBuffFilterAll:SetPoint("TOPLEFT", checkBox_friendlyNpBuffEnable, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
 
-    local checkBox_friendlyNpBuffFilterWatchList = CreateCheckbox("friendlyNpBuffFilterWatchList", "Whitelist", contentFrame)
+    local checkBox_friendlyNpBuffFilterWatchList = CreateCheckbox("friendlyNpBuffFilterWatchList", "Whitelist", checkBox_friendlyNpBuffEnable)
     CreateTooltip(checkBox_friendlyNpBuffFilterWatchList, "Whitelist works in addition to the other filters selected.")
     checkBox_friendlyNpBuffFilterWatchList:SetPoint("TOPLEFT", checkBox_friendlyNpBuffFilterAll, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_friendlyNpBuffFilterLessMinite = CreateCheckbox("friendlyNpBuffFilterLessMinite", "Under one min", contentFrame)
+    local checkBox_friendlyNpBuffFilterLessMinite = CreateCheckbox("friendlyNpBuffFilterLessMinite", "Under one min", checkBox_friendlyNpBuffEnable)
     checkBox_friendlyNpBuffFilterLessMinite:SetPoint("TOPLEFT", checkBox_friendlyNpBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local function ToggleFriendlyNpBuff()
-        if BetterBlizzPlatesDB.friendlyNpBuffEnable then
-            checkBox_friendlyNpBuffFilterAll:Enable()
-            checkBox_friendlyNpBuffFilterAll:SetAlpha(1.0)
-            checkBox_friendlyNpBuffFilterWatchList:Enable()
-            checkBox_friendlyNpBuffFilterWatchList:SetAlpha(1.0)
-            checkBox_friendlyNpBuffFilterLessMinite:Enable()
-            checkBox_friendlyNpBuffFilterLessMinite:SetAlpha(1.0)
-        else
-            checkBox_friendlyNpBuffFilterAll:Disable()
-            checkBox_friendlyNpBuffFilterAll:SetAlpha(0.5)
-            checkBox_friendlyNpBuffFilterWatchList:Disable()
-            checkBox_friendlyNpBuffFilterWatchList:SetAlpha(0.5)
-            checkBox_friendlyNpBuffFilterLessMinite:Disable()
-            checkBox_friendlyNpBuffFilterLessMinite:SetAlpha(0.5)
-        end
-    end
 
-    checkBox_friendlyNpBuffEnable:HookScript("OnClick", function(_, btn, down)
-        ToggleFriendlyNpBuff()
-    end)
-    ToggleFriendlyNpBuff()
 
-    local checkBox_friendlyNpdeBuffEnable = CreateCheckbox("friendlyNpdeBuffEnable", "Show DEBUFFS", contentFrame)
+
+
+
+
+    local checkBox_friendlyNpdeBuffEnable = CreateCheckbox("friendlyNpdeBuffEnable", "Show DEBUFFS", checkBox_enableNameplateAuraCustomisation)
     checkBox_friendlyNpdeBuffEnable:SetPoint("TOPLEFT", checkBox_friendlyNpBuffFilterLessMinite, "BOTTOMLEFT", -15, -2)
+    checkBox_friendlyNpdeBuffEnable:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            EnableCheckboxes(checkBox_friendlyNpdeBuffEnable)
+        else
+            DisableCheckboxes(checkBox_friendlyNpdeBuffEnable)
+        end
+    end)
 
-    local checkBox_friendlyNpdeBuffFilterAll = CreateCheckbox("friendlyNpdeBuffFilterAll", "All", contentFrame)
+    local checkBox_friendlyNpdeBuffFilterAll = CreateCheckbox("friendlyNpdeBuffFilterAll", "All", checkBox_friendlyNpdeBuffEnable)
     checkBox_friendlyNpdeBuffFilterAll:SetPoint("TOPLEFT", checkBox_friendlyNpdeBuffEnable, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
 
-    local checkBox_friendlyNpdeBuffFilterBlizzard = CreateCheckbox("friendlyNpdeBuffFilterBlizzard", "Blizzard Default Filter", contentFrame)
+    local checkBox_friendlyNpdeBuffFilterBlizzard = CreateCheckbox("friendlyNpdeBuffFilterBlizzard", "Blizzard Default Filter", checkBox_friendlyNpdeBuffEnable)
     checkBox_friendlyNpdeBuffFilterBlizzard:SetPoint("TOPLEFT", checkBox_friendlyNpdeBuffFilterAll, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_friendlyNpdeBuffFilterWatchList = CreateCheckbox("friendlyNpdeBuffFilterWatchList", "Whitelist", contentFrame)
+    local checkBox_friendlyNpdeBuffFilterWatchList = CreateCheckbox("friendlyNpdeBuffFilterWatchList", "Whitelist", checkBox_friendlyNpdeBuffEnable)
     CreateTooltip(checkBox_friendlyNpdeBuffFilterWatchList, "Whitelist works in addition to the other filters selected.")
     checkBox_friendlyNpdeBuffFilterWatchList:SetPoint("TOPLEFT", checkBox_friendlyNpdeBuffFilterBlizzard, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_friendlyNpdeBuffFilterLessMinite = CreateCheckbox("friendlyNpdeBuffFilterLessMinite", "Under one min", contentFrame)
+    local checkBox_friendlyNpdeBuffFilterLessMinite = CreateCheckbox("friendlyNpdeBuffFilterLessMinite", "Under one min", checkBox_friendlyNpdeBuffEnable)
     checkBox_friendlyNpdeBuffFilterLessMinite:SetPoint("TOPLEFT", checkBox_friendlyNpdeBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    --local checkBox_friendlyNpdeBuffFilterOnlyMe = CreateCheckbox("friendlyNpdeBuffFilterOnlyMe", "Only mine", contentFrame)
-    --checkBox_friendlyNpdeBuffFilterOnlyMe:SetPoint("TOPLEFT", checkBox_friendlyNpdeBuffFilterLessMinite, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
 
 
-    checkBox_friendlyNpdeBuffEnable:SetScript("OnClick", function(self)
-        BetterBlizzPlatesDB.friendlyNpdeBuffEnable = self:GetChecked()
-
-        BBP.RefreshAllNameplates()
-
-        if BetterBlizzPlatesDB.friendlyNpdeBuffEnable then
-            checkBox_friendlyNpdeBuffFilterAll:Enable()
-            checkBox_friendlyNpdeBuffFilterAll:SetAlpha(1.0)
-            checkBox_friendlyNpdeBuffFilterBlizzard:Enable()
-            checkBox_friendlyNpdeBuffFilterBlizzard:SetAlpha(1.0)
-            checkBox_friendlyNpdeBuffFilterWatchList:Enable()
-            checkBox_friendlyNpdeBuffFilterWatchList:SetAlpha(1.0)
-            checkBox_friendlyNpdeBuffFilterLessMinite:Enable()
-            checkBox_friendlyNpdeBuffFilterLessMinite:SetAlpha(1.0)
-            --checkBox_friendlyNpdeBuffFilterOnlyMe:Enable()
-            --checkBox_friendlyNpdeBuffFilterOnlyMe:SetAlpha(1.0)
+    local checkBox_personalNpBuffEnable = CreateCheckbox("personalNpBuffEnable", "Show BUFFS", checkBox_enableNameplateAuraCustomisation)
+    checkBox_personalNpBuffEnable:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 530, 45)
+    checkBox_personalNpBuffEnable:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            EnableCheckboxes(checkBox_personalNpBuffEnable)
         else
-            checkBox_friendlyNpdeBuffFilterAll:Disable()
-            checkBox_friendlyNpdeBuffFilterAll:SetAlpha(0.5)
-            checkBox_friendlyNpdeBuffFilterBlizzard:Disable()
-            checkBox_friendlyNpdeBuffFilterBlizzard:SetAlpha(0.5)
-            checkBox_friendlyNpdeBuffFilterWatchList:Disable()
-            checkBox_friendlyNpdeBuffFilterWatchList:SetAlpha(0.5)
-            checkBox_friendlyNpdeBuffFilterLessMinite:Disable()
-            checkBox_friendlyNpdeBuffFilterLessMinite:SetAlpha(0.5)
-            --checkBox_friendlyNpdeBuffFilterOnlyMe:Disable()
-            --checkBox_friendlyNpdeBuffFilterOnlyMe:SetAlpha(0.5)
+            DisableCheckboxes(checkBox_personalNpBuffEnable)
         end
     end)
-    if BetterBlizzPlatesDB.friendlyNpdeBuffEnable then
-        checkBox_friendlyNpdeBuffFilterAll:Enable()
-        checkBox_friendlyNpdeBuffFilterAll:SetAlpha(1.0)
-        checkBox_friendlyNpdeBuffFilterBlizzard:Enable()
-        checkBox_friendlyNpdeBuffFilterBlizzard:SetAlpha(1.0)
-        checkBox_friendlyNpdeBuffFilterWatchList:Enable()
-        checkBox_friendlyNpdeBuffFilterWatchList:SetAlpha(1.0)
-        checkBox_friendlyNpdeBuffFilterLessMinite:Enable()
-        checkBox_friendlyNpdeBuffFilterLessMinite:SetAlpha(1.0)
-        --checkBox_friendlyNpdeBuffFilterOnlyMe:Enable()
-        --checkBox_friendlyNpdeBuffFilterOnlyMe:SetAlpha(1.0)
-    else
-        checkBox_friendlyNpdeBuffFilterAll:Disable()
-        checkBox_friendlyNpdeBuffFilterAll:SetAlpha(0.5)
-        checkBox_friendlyNpdeBuffFilterBlizzard:Disable()
-        checkBox_friendlyNpdeBuffFilterBlizzard:SetAlpha(0.5)
-        checkBox_friendlyNpdeBuffFilterWatchList:Disable()
-        checkBox_friendlyNpdeBuffFilterWatchList:SetAlpha(0.5)
-        checkBox_friendlyNpdeBuffFilterLessMinite:Disable()
-        checkBox_friendlyNpdeBuffFilterLessMinite:SetAlpha(0.5)
-        --checkBox_friendlyNpdeBuffFilterOnlyMe:Disable()
-        --checkBox_friendlyNpdeBuffFilterOnlyMe:SetAlpha(0.5)
-    end
-
-
-
-
-
-
-    local checkBox_personalNpBuffEnable = CreateCheckbox("personalNpBuffEnable", "Show BUFFS", contentFrame)
-    checkBox_personalNpBuffEnable:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 530, 45)
 
     local bigEnemyBorderText3 = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     bigEnemyBorderText3:SetPoint("LEFT", checkBox_personalNpBuffEnable, "CENTER", 0, 25)
@@ -3194,120 +3016,62 @@ local function guiNameplateAuras()
     end
     enemyNameplateIcon3:SetBlendMode("ADD")
 
-    local checkBox_personalNpBuffFilterAll = CreateCheckbox("personalNpBuffFilterAll", "All", contentFrame)
+    local checkBox_personalNpBuffFilterAll = CreateCheckbox("personalNpBuffFilterAll", "All", checkBox_personalNpBuffEnable)
     checkBox_personalNpBuffFilterAll:SetPoint("TOPLEFT", checkBox_personalNpBuffEnable, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
 
-    local checkBox_personalNpBuffFilterBlizzard = CreateCheckbox("personalNpBuffFilterBlizzard", "Blizzard Default Filter", contentFrame)
+    local checkBox_personalNpBuffFilterBlizzard = CreateCheckbox("personalNpBuffFilterBlizzard", "Blizzard Default Filter", checkBox_personalNpBuffEnable)
     checkBox_personalNpBuffFilterBlizzard:SetPoint("TOPLEFT", checkBox_personalNpBuffFilterAll, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_personalNpBuffFilterWatchList = CreateCheckbox("personalNpBuffFilterWatchList", "Whitelist", contentFrame)
+    local checkBox_personalNpBuffFilterWatchList = CreateCheckbox("personalNpBuffFilterWatchList", "Whitelist", checkBox_personalNpBuffEnable)
     CreateTooltip(checkBox_personalNpBuffFilterWatchList, "Whitelist works in addition to the other filters selected.")
     checkBox_personalNpBuffFilterWatchList:SetPoint("TOPLEFT", checkBox_personalNpBuffFilterBlizzard, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_personalNpBuffFilterLessMinite = CreateCheckbox("personalNpBuffFilterLessMinite", "Under one min", contentFrame)
+    local checkBox_personalNpBuffFilterLessMinite = CreateCheckbox("personalNpBuffFilterLessMinite", "Under one min", checkBox_personalNpBuffEnable)
     checkBox_personalNpBuffFilterLessMinite:SetPoint("TOPLEFT", checkBox_personalNpBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local function TogglePersonalNpBuff()
-        if BetterBlizzPlatesDB.personalNpBuffEnable then
-            checkBox_personalNpBuffFilterAll:Enable()
-            checkBox_personalNpBuffFilterAll:SetAlpha(1.0)
-            checkBox_personalNpBuffFilterBlizzard:Enable()
-            checkBox_personalNpBuffFilterBlizzard:SetAlpha(1.0)
-            checkBox_personalNpBuffFilterWatchList:Enable()
-            checkBox_personalNpBuffFilterWatchList:SetAlpha(1.0)
-            checkBox_personalNpBuffFilterLessMinite:Enable()
-            checkBox_personalNpBuffFilterLessMinite:SetAlpha(1.0)
-        else
-            checkBox_personalNpBuffFilterAll:Disable()
-            checkBox_personalNpBuffFilterAll:SetAlpha(0.5)
-            checkBox_personalNpBuffFilterBlizzard:Disable()
-            checkBox_personalNpBuffFilterBlizzard:SetAlpha(0.5)
-            checkBox_personalNpBuffFilterWatchList:Disable()
-            checkBox_personalNpBuffFilterWatchList:SetAlpha(0.5)
-            checkBox_personalNpBuffFilterLessMinite:Disable()
-            checkBox_personalNpBuffFilterLessMinite:SetAlpha(0.5)
-        end
-    end
-
-    checkBox_personalNpBuffEnable:HookScript("OnClick", function(_, btn, down)
-        TogglePersonalNpBuff()
-    end)
-    TogglePersonalNpBuff()
 
 
 
 
-    local checkBox_personalNpdeBuffEnable = CreateCheckbox("personalNpdeBuffEnable", "Show DEBUFFS", contentFrame)
+
+    local checkBox_personalNpdeBuffEnable = CreateCheckbox("personalNpdeBuffEnable", "Show DEBUFFS", checkBox_enableNameplateAuraCustomisation)
     checkBox_personalNpdeBuffEnable:SetPoint("TOPLEFT", checkBox_personalNpBuffFilterLessMinite, "BOTTOMLEFT", -15, -2)
+    checkBox_personalNpdeBuffEnable:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            EnableCheckboxes(checkBox_otherNpdeBuffEnable)
+        else
+            DisableCheckboxes(checkBox_otherNpdeBuffEnable)
+        end
+    end)
 
-    local checkBox_personalNpdeBuffFilterAll = CreateCheckbox("personalNpdeBuffFilterAll", "All", contentFrame)
+    local checkBox_personalNpdeBuffFilterAll = CreateCheckbox("personalNpdeBuffFilterAll", "All", checkBox_personalNpdeBuffEnable)
     checkBox_personalNpdeBuffFilterAll:SetPoint("TOPLEFT", checkBox_personalNpdeBuffEnable, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
 
-    local checkBox_personalNpdeBuffFilterWatchList = CreateCheckbox("personalNpdeBuffFilterWatchList", "Whitelist", contentFrame)
+    local checkBox_personalNpdeBuffFilterWatchList = CreateCheckbox("personalNpdeBuffFilterWatchList", "Whitelist", checkBox_personalNpdeBuffEnable)
     CreateTooltip(checkBox_personalNpdeBuffFilterWatchList, "Whitelist works in addition to the other filters selected.")
     checkBox_personalNpdeBuffFilterWatchList:SetPoint("TOPLEFT", checkBox_personalNpdeBuffFilterAll, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local checkBox_personalNpdeBuffFilterLessMinite = CreateCheckbox("personalNpdeBuffFilterLessMinite", "Under one min", contentFrame)
+    local checkBox_personalNpdeBuffFilterLessMinite = CreateCheckbox("personalNpdeBuffFilterLessMinite", "Under one min", checkBox_personalNpdeBuffEnable)
     checkBox_personalNpdeBuffFilterLessMinite:SetPoint("TOPLEFT", checkBox_personalNpdeBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-
-    local function PersonalNpDebuffToggle()
-        if BetterBlizzPlatesDB.personalNpdeBuffEnable then
-            checkBox_personalNpdeBuffFilterAll:Enable()
-            checkBox_personalNpdeBuffFilterAll:SetAlpha(1.0)
-            checkBox_personalNpdeBuffFilterWatchList:Enable()
-            checkBox_personalNpdeBuffFilterWatchList:SetAlpha(1.0)
-            checkBox_personalNpdeBuffFilterLessMinite:Enable()
-            checkBox_personalNpdeBuffFilterLessMinite:SetAlpha(1.0)
-        else
-            checkBox_personalNpdeBuffFilterAll:Disable()
-            checkBox_personalNpdeBuffFilterAll:SetAlpha(0.5)
-            checkBox_personalNpdeBuffFilterWatchList:Enable()
-            checkBox_personalNpdeBuffFilterWatchList:SetAlpha(0.5)
-            checkBox_personalNpdeBuffFilterLessMinite:Enable()
-            checkBox_personalNpdeBuffFilterLessMinite:SetAlpha(0.5)
-        end
-    end
-
-    checkBox_personalNpdeBuffEnable:HookScript("OnClick", function(_, btn, down)
-        PersonalNpDebuffToggle()
-    end)
-    PersonalNpDebuffToggle()
-
-
-
-    --[[
-    -- Nameplateaura slider
-    local checkBox_nameplateAurasXPosSlider = CreateSlider("BetterBlizzPlates_nameplateAurasXPosSlider", contentFrame, "x offset", -50, 50, 1, "nameplateAuras", "X")
-    checkBox_nameplateAurasXPosSlider:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -240, -370)
-    checkBox_nameplateAurasXPosSlider:SetValue(BetterBlizzPlatesDB.nameplateAurasXPos or 0)
-
-    ]]
-
-    local nameplateAurasXPosSlider = CreateSlider("BetterBlizzPlates_nameplateAurasXPosSlider", contentFrame, "x offset", -50, 50, 1, "nameplateAuras", "X")
-    nameplateAurasXPosSlider:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -240, -280)
+    local nameplateAurasXPosSlider = CreateSlider("BetterBlizzPlates_nameplateAurasXPosSlider", checkBox_enableNameplateAuraCustomisation, "x offset", -50, 50, 1, "nameplateAuras", "X")
+    nameplateAurasXPosSlider:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -240, -300)
     nameplateAurasXPosSlider:SetValue(BetterBlizzPlatesDB.nameplateAurasXPos or 0)
-    CreateTooltip(nameplateAurasXPosSlider, "Aura x offset when name is showing\nx offset only works with \"Custom Anchor\" enabled")
+    CreateTooltip(nameplateAurasXPosSlider, "Aura x offset")
 
-    local nameplateAurasYPosSlider = CreateSlider("BetterBlizzPlates_nameplateAurasYPosSlider", contentFrame, "y offset", -50, 50, 1, "nameplateAuras", "Y")
+    local nameplateAurasYPosSlider = CreateSlider("BetterBlizzPlates_nameplateAurasYPosSlider", checkBox_enableNameplateAuraCustomisation, "y offset", -50, 50, 1, "nameplateAuras", "Y")
     nameplateAurasYPosSlider:SetPoint("TOPLEFT", nameplateAurasXPosSlider, "BOTTOMLEFT", 0, -17)
     nameplateAurasYPosSlider:SetValue(BetterBlizzPlatesDB.nameplateAurasYPos or 0)
     CreateTooltip(nameplateAurasYPosSlider, "Aura y offset when name is showing")
 
-    local nameplateAurasNoNameXPosSlider = CreateSlider("BetterBlizzPlates_nameplateAurasNoNameXPosSlider", contentFrame, "no name x offset", -50, 50, 1, "nameplateAurasNoNameXPos")
-    nameplateAurasNoNameXPosSlider:SetPoint("TOPLEFT", nameplateAurasYPosSlider, "BOTTOMLEFT", 0, -17)
-    nameplateAurasNoNameXPosSlider:SetValue(BetterBlizzPlatesDB.nameplateAurasNoNameXPos or 0)
-    CreateTooltip(nameplateAurasNoNameXPosSlider, "x offset of auras when name is hidden\nx offset only works with \"Custom Anchor\" enabled")
-
-    local nameplateAurasNoNameYPosSlider = CreateSlider("BetterBlizzPlates_nameplateAurasNoNameYPosSlider", contentFrame, "no name y offset", -50, 50, 1, "nameplateAurasNoNameYPos")
-    nameplateAurasNoNameYPosSlider:SetPoint("TOPLEFT", nameplateAurasNoNameXPosSlider, "BOTTOMLEFT", 0, -17)
+    local nameplateAurasNoNameYPosSlider = CreateSlider("BetterBlizzPlates_nameplateAurasNoNameYPosSlider", checkBox_enableNameplateAuraCustomisation, "no name y offset", -50, 50, 1, "nameplateAurasNoNameYPos")
+    nameplateAurasNoNameYPosSlider:SetPoint("TOPLEFT", nameplateAurasYPosSlider, "BOTTOMLEFT", 0, -17)
     nameplateAurasNoNameYPosSlider:SetValue(BetterBlizzPlatesDB.nameplateAurasNoNameYPos or 0)
-    CreateTooltip(nameplateAurasNoNameYPosSlider, "Aura y offset when name is hidden")
+    CreateTooltip(nameplateAurasNoNameYPosSlider, "Aura y offset when name is hidden\n(Unimportant non-targeted npcs etc)")
 
-    local nameplateAuraScale = CreateSlider("BetterBlizzPlates_nameplateAuraScale", contentFrame, "Icon size", 0.7, 2, 0.05, "nameplateAuras")
+    local nameplateAuraScale = CreateSlider("BetterBlizzPlates_nameplateAuraScale", checkBox_enableNameplateAuraCustomisation, "Aura size", 0.7, 2, 0.01, "nameplateAuras")
     nameplateAuraScale:SetPoint("TOPLEFT", nameplateAurasNoNameYPosSlider, "BOTTOMLEFT", 0, -17)
     nameplateAuraScale:SetValue(BetterBlizzPlatesDB.nameplateAuraScale or 1)
-    CreateTooltip(nameplateAuraScale, "The scale of aura icons.\n \nIf used together with \"Custom Anchor\" it can\nmess up the positioning a bit because by default\nthe icons are anchored on the left side and not center.\nI haven't figured out a way to change this yet\nor if it is even possible")
 
     local nameplateAuraDropdown = CreateAnchorDropdown(
         "nameplateAuraDropdown",
@@ -3332,94 +3096,139 @@ local function guiNameplateAuras()
     )
 
 
-    local cB_centerAuras = CreateCheckbox("nameplateAurasCenteredAnchor", "Custom Anchor", contentFrame)
-    cB_centerAuras:SetPoint("BOTTOM", nameplateAurasXPosSlider, "TOP", -30, 10)
-    CreateTooltip(cB_centerAuras, "Allows you to change the anchor point of the nameplate auras.\nFor example make auras centered on top of the nameplate.\nRequires reload to turn back off")
+    local cB_centerAuras = CreateCheckbox("nameplateAurasCenteredAnchor", "Center Auras", checkBox_enableNameplateAuraCustomisation)
+    cB_centerAuras:SetPoint("BOTTOM", nameplateAurasXPosSlider, "TOP", -30, 30)
+    CreateTooltip(cB_centerAuras, "Center auras on their anchor.\nSets aura icons centered on top of nameplate by default.")
 
-    local cb_squareAuras = CreateCheckbox("nameplateAuraSquare", "Square Auras", contentFrame)
+    local nameplateCenterAllRows = CreateCheckbox("nameplateCenterAllRows", "Center every row", checkBox_enableNameplateAuraCustomisation)
+    nameplateCenterAllRows:SetPoint("TOP", cB_centerAuras, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltip(nameplateCenterAllRows, "Centers every new row on top of the previous row.\n \nBy default the first icon of a new row starts\non top of the first icon of the last row.")
+
+    cB_centerAuras:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            nameplateCenterAllRows:Enable()
+            nameplateCenterAllRows:SetAlpha(1)
+            BetterBlizzPlatesDB.nameplateAuraAnchor = "BOTTOM"
+            BetterBlizzPlatesDB.nameplateAuraRelativeAnchor = "TOP"
+            UIDropDownMenu_SetText(nameplateAuraDropdown, "BOTTOM")
+            UIDropDownMenu_SetText(nameplateAuraRelativeDropdown, "TOP")
+            BBP.RefreshBuffFrame()
+        else
+            nameplateCenterAllRows:Disable()
+            nameplateCenterAllRows:SetAlpha(0.5)
+            BetterBlizzPlatesDB.nameplateAuraAnchor = "BOTTOMLEFT"
+            BetterBlizzPlatesDB.nameplateAuraRelativeAnchor = "TOPLEFT"
+            UIDropDownMenu_SetText(nameplateAuraDropdown, "BOTTOMLEFT")
+            UIDropDownMenu_SetText(nameplateAuraRelativeDropdown, "TOPLEFT")
+            BBP.RefreshBuffFrame()
+        end
+    end)
+
+    local cb_squareAuras = CreateCheckbox("nameplateAuraSquare", "Square Auras", checkBox_enableNameplateAuraCustomisation)
     cb_squareAuras:SetPoint("LEFT", cB_centerAuras.text, "RIGHT", 5, 0)
     cb_squareAuras:HookScript("OnClick", function (self)
         if not self:GetChecked() then
             StaticPopup_Show("CONFIRM_RELOAD")
         end
     end)
-    CreateTooltip(cb_squareAuras, "Requires reload to turn back off")
+    CreateTooltip(cb_squareAuras, "Square aura icons.\n \nRequires reload to turn back off")
 
-    local maxAurasOnNameplateSlider = CreateSlider("BetterBlizzPlates_maxAurasOnNameplate", contentFrame, "Max auras on nameplate", 1, 24, 1, "maxAurasOnNameplate")
+--[=[
+    local cb_AuraGrowLeft = CreateCheckbox("nameplateAurasGrowLeft", "Grow left", contentFrame)
+    cb_AuraGrowLeft:SetPoint("LEFT", cb_squareAuras.text, "RIGHT", 5, 0)
+
+]=]
+
+
+
+
+    local maxAurasOnNameplateSlider = CreateSlider("BetterBlizzPlates_maxAurasOnNameplate", checkBox_enableNameplateAuraCustomisation, "Max auras on nameplate", 1, 24, 1, "maxAurasOnNameplate")
     maxAurasOnNameplateSlider:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -10, -280)
     maxAurasOnNameplateSlider:SetValue(BetterBlizzPlatesDB.maxAurasOnNameplate or 12)
 
+    local nameplateAuraRowAmount = CreateSlider("BetterBlizzPlates_nameplateAuraRowAmount", checkBox_enableNameplateAuraCustomisation, "Max auras per row", 1, 24, 1, "nameplateAuraRowAmount")
+    nameplateAuraRowAmount:SetPoint("TOP", maxAurasOnNameplateSlider,  "BOTTOM", 0, -15)
+    nameplateAuraRowAmount:SetValue(BetterBlizzPlatesDB.nameplateAuraRowAmount or 12)
+
+    local nameplateAuraWidthGap = CreateSlider("BetterBlizzPlates_nameplateAuraWidthGap", checkBox_enableNameplateAuraCustomisation, "Horizontal gap between auras", 0, 18, 1, "nameplateAuraWidthGap")
+    nameplateAuraWidthGap:SetPoint("TOP", nameplateAuraRowAmount,  "BOTTOM", 0, -15)
+    nameplateAuraWidthGap:SetValue(BetterBlizzPlatesDB.nameplateAuraWidthGap or 4)
+
+    local nameplateAuraHeightGap = CreateSlider("BetterBlizzPlates_nameplateAuraHeightGap", checkBox_enableNameplateAuraCustomisation, "Vertical gap between auras", 0, 18, 1, "nameplateAuraHeightGap")
+    nameplateAuraHeightGap:SetPoint("TOP", nameplateAuraWidthGap,  "BOTTOM", 0, -15)
+    nameplateAuraHeightGap:SetValue(BetterBlizzPlatesDB.nameplateAuraHeightGap or 32)
 
     local imintoodeep = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     imintoodeep:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -50, -220)
     imintoodeep:SetText("will add more settings, very beta\nwould love feedback if u notice anything weird")
 
-
-
-
-    local function customAnchorVisibility()
-        if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
-            nameplateAurasXPosSlider:Enable()
-            nameplateAurasXPosSlider:SetAlpha(1)
-            nameplateAurasNoNameXPosSlider:Enable()
-            nameplateAurasNoNameXPosSlider:SetAlpha(1)
-            nameplateAuraDropdown:EnableDropdown()
-            nameplateAuraDropdown:SetAlpha(1)
-            nameplateAuraRelativeDropdown:EnableDropdown()
-            nameplateAuraRelativeDropdown:SetAlpha(1)
+    local function TogglePanel()
+        if BBP.variablesLoaded then
+            if BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
+                nameplateAuraDropdown:EnableDropdown()
+                nameplateAuraRelativeDropdown:EnableDropdown()
+                EnableCheckboxes(checkBox_enableNameplateAuraCustomisation, true)
+                if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
+                    nameplateCenterAllRows:Enable()
+                    nameplateCenterAllRows:SetAlpha(1)
+                else
+                    nameplateCenterAllRows:Disable()
+                    nameplateCenterAllRows:SetAlpha(0.5)
+                end
+                if BetterBlizzPlatesDB.otherNpBuffEnable then
+                    EnableCheckboxes(checkBox_otherNpBuffEnable)
+                else
+                    DisableCheckboxes(checkBox_otherNpBuffEnable)
+                end
+                if BetterBlizzPlatesDB.otherNpdeBuffEnable then
+                    EnableCheckboxes(checkBox_otherNpdeBuffEnable)
+                else
+                    DisableCheckboxes(checkBox_otherNpdeBuffEnable)
+                end
+                if BetterBlizzPlatesDB.friendlyNpBuffEnable then
+                    EnableCheckboxes(checkBox_friendlyNpBuffEnable)
+                else
+                    DisableCheckboxes(checkBox_friendlyNpBuffEnable)
+                end
+                if BetterBlizzPlatesDB.friendlyNpdeBuffEnable then
+                    EnableCheckboxes(checkBox_friendlyNpdeBuffEnable)
+                else
+                    DisableCheckboxes(checkBox_friendlyNpdeBuffEnable)
+                end
+                if BetterBlizzPlatesDB.personalNpBuffEnable then
+                    EnableCheckboxes(checkBox_personalNpBuffEnable)
+                else
+                    DisableCheckboxes(checkBox_personalNpBuffEnable)
+                end
+                if BetterBlizzPlatesDB.personalNpdeBuffEnable then
+                    EnableCheckboxes(checkBox_personalNpdeBuffEnable)
+                else
+                    DisableCheckboxes(checkBox_personalNpdeBuffEnable)
+                end
+            else
+                nameplateAuraDropdown:DisableDropdown()
+                nameplateAuraRelativeDropdown:DisableDropdown()
+                DisableCheckboxes(checkBox_enableNameplateAuraCustomisation, false)
+                DisableCheckboxes(checkBox_otherNpBuffEnable)
+                DisableCheckboxes(checkBox_otherNpdeBuffEnable)
+                DisableCheckboxes(checkBox_friendlyNpBuffEnable)
+                DisableCheckboxes(checkBox_friendlyNpdeBuffEnable)
+                DisableCheckboxes(checkBox_personalNpBuffEnable)
+                DisableCheckboxes(checkBox_personalNpdeBuffEnable)
+            end
         else
-            nameplateAurasXPosSlider:Disable()
-            nameplateAurasXPosSlider:SetAlpha(0.5)
-            nameplateAurasNoNameXPosSlider:Disable()
-            nameplateAurasNoNameXPosSlider:SetAlpha(0.5)
-            nameplateAuraDropdown:DisableDropdown()
-            nameplateAuraDropdown:SetAlpha(0.5)
-            nameplateAuraRelativeDropdown:DisableDropdown()
-            nameplateAuraRelativeDropdown:SetAlpha(0.5)
+            C_Timer.After(1, function()
+                TogglePanel()
+            end)
         end
     end
-    
 
 
-    cB_centerAuras:HookScript("OnClick", function(self)
-        if not self:GetChecked() then
-            StaticPopup_Show("CONFIRM_RELOAD")
-        end
-        customAnchorVisibility()
-    end)
-
-
-
-
-    checkBox_enableNameplateAuraCustomisation:SetScript("OnClick", function(self)
-        BetterBlizzPlatesDB.enableNameplateAuraCustomisation = self:GetChecked()
+    checkBox_enableNameplateAuraCustomisation:HookScript("OnClick", function (self)
         StaticPopup_Show("CONFIRM_RELOAD")
-
-        if BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
-            --contentFrame:SetAlpha(1)
-            EnableCheckboxes(contentFrame)
-            checkBox_enableNameplateAuraCustomisation:SetParent(scrollFrame)
-        else
-            --contentFrame:SetAlpha(0.5)
-            DisableCheckboxes(contentFrame)
-            checkBox_enableNameplateAuraCustomisation:Enable()
-            checkBox_enableNameplateAuraCustomisation:SetAlpha(1)
-            checkBox_enableNameplateAuraCustomisation:SetParent(scrollFrame)
-        end
+        TogglePanel()
     end)
-
-
-    if BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
-        --contentFrame:SetAlpha(1)
-        EnableCheckboxes(contentFrame)
-        checkBox_enableNameplateAuraCustomisation:SetParent(scrollFrame)
-    else
-        --contentFrame:SetAlpha(0.5)
-        DisableCheckboxes(contentFrame)
-        checkBox_enableNameplateAuraCustomisation:Enable()
-        checkBox_enableNameplateAuraCustomisation:SetAlpha(1)
-        checkBox_enableNameplateAuraCustomisation:SetParent(scrollFrame)
-    end
+    TogglePanel()
 
     local betaHighlight = checkBox_enableNameplateAuraCustomisation:CreateTexture(nil, "BACKGROUND")
     betaHighlight:SetAtlas("CharacterCreate-NewLabel")
@@ -3427,13 +3236,12 @@ local function guiNameplateAuras()
     betaHighlight:SetPoint("RIGHT", checkBox_enableNameplateAuraCustomisation, "LEFT", 8, 0)
 
 
-    customAnchorVisibility()
 
 end
 
-
-
+------------------------------------------------------------
 -- GUI Setup
+------------------------------------------------------------
 function BBP.InitializeOptions()
     if not BetterBlizzPlates then
         BetterBlizzPlates = CreateFrame("Frame")

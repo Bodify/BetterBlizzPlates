@@ -16,18 +16,17 @@ local function StopCheckBuffsTimer()
     end
 end
 
--- Periodically check the remaining duration of tracked buffs
 local function CheckBuffs()
     local currentGameTime = GetTime();
-    for spellId, buff in pairs(trackedBuffs) do
+    for auraInstanceID, buff in pairs(trackedBuffs) do
         if buff.expirationTime then
             local remainingDuration = buff.expirationTime - currentGameTime;
             if remainingDuration <= 0 then
-                -- Buff has expired, remove it from the table
-                trackedBuffs[spellId] = nil;
-                buff.PandemicGlow:Hide();
+                trackedBuffs[auraInstanceID] = nil;
+                if buff.PandemicGlow then
+                    buff.PandemicGlow:Hide();
+                end
             elseif remainingDuration <= 5.1 then
-                -- Add border emphasis
                 if not buff.PandemicGlow then
                     buff.PandemicGlow = buff:CreateTexture(nil, "OVERLAY");
                     buff.PandemicGlow:SetAtlas("newplayertutorial-drag-slotgreen");
@@ -40,8 +39,8 @@ local function CheckBuffs()
                         buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
                         buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
                     else
-                        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7);
-                        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7);
+                        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10.5, 7.5);
+                        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10.5, -7.5);
                     end
                 end
                 buff.PandemicGlow:Show();
@@ -63,7 +62,238 @@ local function StartCheckBuffsTimer()
     end
 end
 
+function CustomBuffLayoutChildren(container, children, ignored, expandToHeight)
+    -- Obtain the health bar details
+    local healthBar = container:GetParent().healthBar
+    local healthBarWidth = healthBar:GetWidth()
+    local healthBarCenter = healthBarWidth / 2
 
+    -- Define the spacing and row parameters
+    local horizontalSpacing = BetterBlizzPlatesDB.nameplateAuraWidthGap
+    local verticalSpacing = -28 - BetterBlizzPlatesDB.nameplateAuraHeightGap - (BetterBlizzPlatesDB.nameplateAuraSquare and 12 or 0)
+    local currentRow = 0
+    local maxBuffsPerRow = BetterBlizzPlatesDB.nameplateAuraRowAmount
+    local maxRowHeight = 0
+    local rowWidths = {}
+    local totalChildrenHeight = 0
+
+    -- Calculate the width of each row
+
+
+    for index, buff in ipairs(children) do
+        buff:SetScale(BetterBlizzPlatesDB.nameplateAuraScale)
+        local buffWidth, _ = buff:GetSize()
+
+        if container.respectChildScale then
+            local buffScale = buff:GetScale()
+            buffWidth = buffWidth * buffScale
+        end
+
+        local rowIndex = math.floor((index - 1) / maxBuffsPerRow) + 1
+        rowWidths[rowIndex] = (rowWidths[rowIndex] or 0) + buffWidth
+
+        if index % maxBuffsPerRow ~= 1 then
+            rowWidths[rowIndex] = rowWidths[rowIndex] + horizontalSpacing
+        end
+    end
+
+
+
+
+
+
+
+    local horizontalOffset = 0
+    local lastAuraInRow = nil
+
+    for index, buff in ipairs(children) do
+        local buffWidth, buffHeight = buff:GetSize()
+
+        -- Update the maximum row height
+        maxRowHeight = math.max(maxRowHeight, buffHeight)
+
+        -- Determine if it's the start of a new row
+        if index % maxBuffsPerRow == 1 then
+            local rowIndex = math.floor((index - 1) / maxBuffsPerRow) + 1
+
+            if BetterBlizzPlatesDB.nameplateAurasGrowLeft then
+                -- Calculate the total width of this row
+                local totalRowWidth = rowWidths[rowIndex] + (maxBuffsPerRow - 1) * horizontalSpacing - horizontalSpacing
+
+                -- Adjust horizontal offset for the first aura in the row
+                horizontalOffset = (healthBarWidth - totalRowWidth)  -- Start directly from the right edge
+                lastAuraInRow = buff
+            elseif BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
+                if rowIndex == 1 then
+                    horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2  -- Center the first row
+                else
+                    if not BetterBlizzPlatesDB.nameplateCenterAllRows then
+                        -- Put the first aura of every new row on top of the first aura on the first row
+                        horizontalOffset = (healthBarWidth - rowWidths[1]) / 2
+                    else
+                        horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2
+                    end
+                end
+            else
+                horizontalOffset = 0  -- or any other default starting offset
+            end
+
+            if index > 1 then
+                currentRow = currentRow + 1  -- Move to the next row
+            end
+        end
+
+
+
+        -- Position the buff on the nameplate
+        buff:ClearAllPoints()
+        local verticalOffset = -currentRow * (maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
+
+        if BetterBlizzPlatesDB.nameplateAurasGrowLeft then
+            if lastAuraInRow then
+                -- Adjust horizontal offset based on the last aura in the row
+                local lastAuraWidth, _ = lastAuraInRow:GetSize()
+                horizontalOffset = horizontalOffset + lastAuraWidth + horizontalSpacing
+            end
+        end
+
+        if BetterBlizzPlatesDB.nameplateAurasGrowLeft then
+            buff:SetPoint(BetterBlizzPlatesDB.nameplateAuraAnchor, container, BetterBlizzPlatesDB.nameplateAuraRelativeAnchor, horizontalOffset + buffWidth - BetterBlizzPlatesDB.nameplateAurasXPos - healthBarWidth - 20, verticalOffset - 13)
+        elseif BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
+            buff:SetPoint(BetterBlizzPlatesDB.nameplateAuraAnchor, container, BetterBlizzPlatesDB.nameplateAuraRelativeAnchor, horizontalOffset - healthBarCenter + 10 + BetterBlizzPlatesDB.nameplateAurasXPos, verticalOffset - 13)
+        else
+            buff:SetPoint(BetterBlizzPlatesDB.nameplateAuraAnchor, container, BetterBlizzPlatesDB.nameplateAuraRelativeAnchor, horizontalOffset + BetterBlizzPlatesDB.nameplateAurasXPos, verticalOffset - 13)
+        end
+        lastAuraInRow = buff
+        if not BetterBlizzPlatesDB.nameplateAurasGrowLeft then
+        horizontalOffset = horizontalOffset + buffWidth + horizontalSpacing
+        end
+    end
+
+    return totalChildrenWidth, totalChildrenHeight + currentRow * maxRowHeight, hasExpandableChild
+end
+
+local function SetSquareAura(buff)
+    if BetterBlizzPlatesDB.nameplateAuraSquare then
+        buff:SetSize(20, 20);
+        buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1);
+        buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1);
+        buff.Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9);
+    end
+end
+
+local function SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit, aura)
+    if BetterBlizzPlatesDB.otherNpBuffBlueBorder then
+        if not isPlayerUnit and isEnemyUnit then
+            if aura.isHelpful then
+                if not buff.buffBorder then
+                    buff.buffBorder = buff:CreateTexture(nil, "ARTWORK");
+                    if buff.Cooldown then
+                        buff.buffBorder:SetParent(buff.Cooldown)
+                    end
+                    buff.buffBorder:SetAllPoints()
+                    buff.buffBorder:SetAtlas("communities-create-avatar-border-hover");
+                end
+                buff.buffBorder:Show();
+                buff.Border:Hide()
+            else
+                if buff.buffBorder then
+                    buff.buffBorder:Hide();
+                    buff.Border:Show()
+                end
+            end
+            if not aura.isBuff then
+                buff.Border:Show()
+            end
+        end
+    end
+end
+
+local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
+    if BetterBlizzPlatesDB.otherNpBuffPurgeGlow then
+        if not isPlayerUnit and isEnemyUnit then
+            if aura.isHelpful and aura.isStealable then
+                if not buff.buffBorderPurge then
+                    buff.buffBorderPurge = buff:CreateTexture(nil, "OVERLAY");
+                    buff.buffBorderPurge:SetAtlas("newplayertutorial-drag-slotblue");
+                    if buff.Cooldown then
+                        buff.buffBorderPurge:SetParent(buff.Cooldown)
+                    end
+                    if BetterBlizzPlatesDB.nameplateAuraSquare then
+                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
+                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
+                    else
+                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 6);
+                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -6);
+                    end
+                end
+                buff.buffBorderPurge:Show();
+                buff.Border:Hide()
+            else
+                if buff.buffBorderPurge then
+                    buff.buffBorderPurge:Hide()
+                    buff.Border:Show()
+                end
+            end
+        end
+    else
+        if buff.buffBorderPurge then
+            buff.buffBorderPurge:Hide()
+            buff.Border:Show()
+        end
+    end
+end
+
+local function SetPandemicGlow(buff, aura, spellName, spellId)
+    if BetterBlizzPlatesDB.otherNpdeBuffPandemicGlow then
+        if aura.duration and buff and aura.expirationTime and not aura.isHelpful and BBP.isInWhitelist(spellName, spellId) then
+            buff.expirationTime = aura.expirationTime;
+            trackedBuffs[aura.auraInstanceID] = buff;
+            StartCheckBuffsTimer();
+        end
+    end
+end
+
+local function SetBuffEmphasisBorder(buff, aura, isPlayerUnit, isEnemyUnit, spellName, spellId)
+    if BetterBlizzPlatesDB.otherNpBuffEmphasisedBorder then
+        if not isPlayerUnit and isEnemyUnit then
+            if aura.isHelpful and BBP.isInWhitelist(spellName, spellId) then
+                -- If extra glow for purge
+                if not buff.BorderEmphasis then
+                    buff.BorderEmphasis = buff:CreateTexture(nil, "OVERLAY");
+                    buff.BorderEmphasis:SetAtlas("newplayertutorial-drag-slotgreen");
+                    buff.BorderEmphasis:SetVertexColor(1, 0, 0);
+                    buff.BorderEmphasis:SetDesaturated(true);
+                    if buff.Cooldown then
+                        buff.BorderEmphasis:SetParent(buff.Cooldown);
+                    end
+                    if BetterBlizzPlatesDB.nameplateAuraSquare then
+                        buff.BorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
+                        buff.BorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
+                    else
+                        buff.BorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7);
+                        buff.BorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7);
+                    end
+                end
+                if buff.buffBorderPurge then
+                    buff.buffBorderPurge:Hide();
+                end
+                buff.BorderEmphasis:Show();
+                buff.Border:Hide();
+            else
+                if buff.BorderEmphasis then
+                    buff.BorderEmphasis:Hide();
+                    buff.Border:Show();
+                end
+            end
+        end
+    else
+        if buff.BorderEmphasis then
+            buff.BorderEmphasis:Hide();
+            buff.Border:Show();
+        end
+    end
+end
 
 local function FetchSpellName(spellId)
     local spellName, _, _ = GetSpellInfo(spellId)
@@ -183,7 +413,7 @@ function BBP.BBPShouldShowBuff(unit, aura, BlizzardShouldShow)
     end
 end
 
-function BBP.OnUnitAuraUpdateRSV(self, unit, unitAuraUpdateInfo)
+function BBP.OnUnitAuraUpdate(self, unit, unitAuraUpdateInfo)
     local filter;
 	local showAll = false;
 
@@ -225,11 +455,11 @@ function BBP.OnUnitAuraUpdateRSV(self, unit, unitAuraUpdateInfo)
 
 	local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure());
 	if (nameplate) then
-		BBP.UpdateBuffsRSV(nameplate.UnitFrame.BuffFrame, nameplate.namePlateUnitToken, unitAuraUpdateInfo, auraSettings, nameplate.UnitFrame);
+		BBP.UpdateBuffs(nameplate.UnitFrame.BuffFrame, nameplate.namePlateUnitToken, unitAuraUpdateInfo, auraSettings, nameplate.UnitFrame);
 	end
 end
 
-function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame)
+function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame)
     local filters = {};
 	if auraSettings.helpful then
 		table.insert(filters, AuraUtil.AuraFilters.Helpful);
@@ -253,7 +483,7 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
 
 	local aurasChanged = false;
 	if unitAuraUpdateInfo == nil or unitAuraUpdateInfo.isFullUpdate or unit ~= previousUnit or self.auras == nil or filterString ~= previousFilter then
-		BBP.ParseAllAurasRSV(self, auraSettings.showAll, UnitFrame);
+		BBP.ParseAllAuras(self, auraSettings.showAll, UnitFrame);
 		aurasChanged = true;
 	else
 		if unitAuraUpdateInfo.addedAuras ~= nil then
@@ -294,12 +524,16 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
 
 	self.buffPool:ReleaseAll();
 
-	if auraSettings.hideAll or not self.isActive then
+	--if auraSettings.hideAll or not self.isActive then
+    if not self.isActive then
 		return;
 	end
 
 	local buffIndex = 1;
     local BBPMaxAuraNum = BetterBlizzPlatesDB.maxAurasOnNameplate
+    local rowOffset = 0;
+
+
 	self.auras:Iterate(function(auraInstanceID, aura)
         if buffIndex > BBPMaxAuraNum then return true end
 		local buff = self.buffPool:Acquire();
@@ -310,129 +544,26 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
 
 		buff.Icon:SetTexture(aura.icon);
 
-        -- Square Aura
-        if BetterBlizzPlatesDB.nameplateAuraSquare then
-            buff:SetSize(20,20)
-            buff.Icon:SetPoint("TOPLEFT", buff,"TOPLEFT", 1, -1)
-            buff.Icon:SetPoint("BOTTOMRIGHT", buff,"BOTTOMRIGHT", -1, 1)
-            buff.Icon:SetTexCoord(0.1, 0.9,0.1 , 0.9)
-        end
-
-        buff:SetScale(BetterBlizzPlatesDB.nameplateAuraScale or 1)
-
         local isPlayerUnit = UnitIsUnit("player", self.unit)
         local isEnemyUnit = UnitIsEnemy("player", self.unit)
         local spellName = FetchSpellName(aura.spellId)
         local spellId = aura.spellId
 
+        -- Square Aura
+        SetSquareAura(buff);
+
         -- Blue buff border setting
-        if BetterBlizzPlatesDB.otherNpBuffBlueBorder then
-            if not isPlayerUnit and isEnemyUnit then
-                if aura.isHelpful then
-                    if not buff.buffBorder then
-                        buff.buffBorder = buff:CreateTexture(nil, "ARTWORK");
-                        if buff.Cooldown then
-                            buff.buffBorder:SetParent(buff.Cooldown)
-                        end
-                        buff.buffBorder:SetAllPoints()
-                        buff.buffBorder:SetAtlas("communities-create-avatar-border-hover");
-                    end
-                    buff.buffBorder:Show();
-                    buff.Border:Hide()
-                else
-                    if buff.buffBorder then
-                        buff.buffBorder:Hide();
-                        buff.Border:Show()
-                    end
-                end
-                if not aura.isBuff then
-                    buff.Border:Show()
-                end
-            end
-        end
+        SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit, aura);
 
         -- Pandemic Glow
-        if BetterBlizzPlatesDB.otherNpdeBuffPandemicGlow then
-            if aura.duration and aura.duration > 5 and buff and aura.expirationTime and not aura.isHelpful and BBP.isInWhitelist(spellName, spellId) then
-                buff.expirationTime = aura.expirationTime;
-                trackedBuffs[aura.spellId] = buff;
-                StartCheckBuffsTimer();
-            end
-        end
+        SetPandemicGlow(buff, aura, spellName, spellId)
 
         -- Purge Glow
-        if BetterBlizzPlatesDB.otherNpBuffPurgeGlow then
-            if not isPlayerUnit and isEnemyUnit then
-                if aura.isHelpful and aura.isStealable then
-                    if not buff.buffBorderPurge then
-                        buff.buffBorderPurge = buff:CreateTexture(nil, "OVERLAY");
-                        buff.buffBorderPurge:SetAtlas("newplayertutorial-drag-slotblue");
-                        if buff.Cooldown then
-                            buff.buffBorderPurge:SetParent(buff.Cooldown)
-                        end
-                        if BetterBlizzPlatesDB.nameplateAuraSquare then
-                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
-                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
-                        else
-                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 6);
-                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -6);
-                        end
-                    end
-                    buff.buffBorderPurge:Show();
-                    buff.Border:Hide()
-                else
-                    if buff.buffBorderPurge then
-                        buff.buffBorderPurge:Hide()
-                        buff.Border:Show()
-                    end
-                end
-            end
-        else
-            if buff.buffBorderPurge then
-                buff.buffBorderPurge:Hide()
-                buff.Border:Show()
-            end
-        end
+        SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
 
         -- Emphasise Buff (Red Glow)
-        if BetterBlizzPlatesDB.otherNpBuffEmphasisedBorder then
-            if not isPlayerUnit and isEnemyUnit then
-                if aura.isHelpful and BBP.isInWhitelist(spellName, spellId) then
-                    -- If extra glow for purge
-                    if not buff.BorderEmphasis then
-                        buff.BorderEmphasis = buff:CreateTexture(nil, "OVERLAY");
-                        buff.BorderEmphasis:SetAtlas("newplayertutorial-drag-slotgreen");
-                        buff.BorderEmphasis:SetVertexColor(1, 0, 0)
-                        buff.BorderEmphasis:SetDesaturated(true)
-                        if buff.Cooldown then
-                            buff.BorderEmphasis:SetParent(buff.Cooldown)
-                        end
-                        if BetterBlizzPlatesDB.nameplateAuraSquare then
-                            buff.BorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
-                            buff.BorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
-                        else
-                            buff.BorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7);
-                            buff.BorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7);
-                        end
-                    end
-                    if buff.buffBorderPurge then
-                        buff.buffBorderPurge:Hide()
-                    end
-                    buff.BorderEmphasis:Show();
-                    buff.Border:Hide()
-                else
-                    if buff.BorderEmphasis then
-                        buff.BorderEmphasis:Hide()
-                        buff.Border:Show()
-                    end
-                end
-            end
-        else
-            if buff.BorderEmphasis then
-                buff.BorderEmphasis:Hide()
-                buff.Border:Show()
-            end
-        end
+        SetBuffEmphasisBorder(buff, aura, isPlayerUnit, isEnemyUnit, spellName, spellId)
+
 
         if isPlayerUnit then
             if buff.Border then
@@ -463,12 +594,10 @@ function BBP.UpdateBuffsRSV(self, unit, unitAuraUpdateInfo, auraSettings, UnitFr
 		buffIndex = buffIndex + 1;
 		return buffIndex >= BUFF_MAX_DISPLAY;
 	end);
-	self:Layout();
+    self:Layout();
 end
 
-function BBP.ParseAllAurasRSV(self, forceAll, UnitFrame)
-    --local BetterBlizzPlatesDB = BBP.tabDB[BBP.iDBmark] 
-
+function BBP.ParseAllAuras(self, forceAll, UnitFrame)
     if self.auras == nil then
 		self.auras = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable);
 	else
@@ -490,61 +619,6 @@ function BBP.ParseAllAurasRSV(self, forceAll, UnitFrame)
 	AuraUtil.ForEachAura(self.unit, "HELPFUL", batchCount, HandleAura, usePackedAura);
 end
 
-
-
--- Source
-function BBP:UpdateAnchor()
-    local unit = self:GetParent().unit
-    local isTarget = unit and UnitIsUnit(unit, "target")
-    local targetYOffset = self:GetBaseYOffset() + (isTarget and self:GetTargetYOffset() or 0.0)
-    local isFriend = unit and UnitIsFriend(unit, "player")
-    local anchor, relativeAnchor, xPos, yPos, relativeObject
-
-    if unit and ShouldShowName(self:GetParent()) then
-        relativeObject = self:GetParent()
-        if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
-            self:ClearAllPoints()
-            anchor = BetterBlizzPlatesDB.nameplateAuraAnchor or "BOTTOM"
-            relativeAnchor = BetterBlizzPlatesDB.nameplateAuraRelativeAnchor or "TOP"
-            xPos = BetterBlizzPlatesDB.nameplateAurasXPos
-            yPos = targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + (isFriend and 63 or 0)
-        else
-            anchor = "BOTTOM"
-            relativeAnchor = "TOP"
-            xPos = BetterBlizzPlatesDB.nameplateAurasXPos
-            yPos = targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + (isFriend and 63 or 0)
-        end
-    else
-        local additionalYOffset = 15 * (BetterBlizzPlatesDB.nameplateAuraScale - 1)
-        relativeObject = self:GetParent().healthBar
-        if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
-            self:ClearAllPoints()
-            anchor = BetterBlizzPlatesDB.nameplateAuraAnchor or "BOTTOM"
-            relativeAnchor = BetterBlizzPlatesDB.nameplateAuraRelativeAnchor or "TOP"
-        else
-            anchor = "BOTTOM"
-            relativeAnchor = "TOP"
-        end
-        xPos = BetterBlizzPlatesDB.nameplateAurasNoNameXPos
-        yPos = 5 + targetYOffset + BetterBlizzPlatesDB.nameplateAurasNoNameYPos + additionalYOffset
-    end
-
-    self:SetPoint(anchor, relativeObject, relativeAnchor, xPos, yPos)
-end
-
-
-function BBP.RefBuffFrameDisplay()
-	for i, namePlate in ipairs(C_NamePlate.GetNamePlates(false)) do
-		local unitFrame = namePlate.UnitFrame
-		unitFrame.BuffFrame:UpdateAnchor()
-		if unitFrame.unit then
-			local self = unitFrame.BuffFrame
-            BBP.UpdateBuffsRSV(self, unitFrame.unit, nil, {}, unitFrame)
-        end
-	end
-end
-
---[[
 function BBP:UpdateAnchor()
     local unit = self:GetParent().unit;
     local isTarget = unit and UnitIsUnit(unit, "target");
@@ -552,35 +626,28 @@ function BBP:UpdateAnchor()
     local isFriend = unit and UnitIsFriend(unit, "player");
 
     if unit and ShouldShowName(self:GetParent()) then
-        if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
-            self:ClearAllPoints()
-            if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
-                if isFriend then
-                    self:SetPoint(BetterBlizzPlatesDB.nameplateAuraAnchor or "BOTTOM", self:GetParent(), BetterBlizzPlatesDB.nameplateAuraRelativeAnchor or "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + 63);
-                else
-                    self:SetPoint(BetterBlizzPlatesDB.nameplateAuraAnchor or "BOTTOM", self:GetParent(), BetterBlizzPlatesDB.nameplateAuraRelativeAnchor or "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
-                end
+        if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
+            if isFriend then
+                self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0, -3 + targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + 63);
+            else
+                self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0, -3 + targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
             end
         else
-            if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
-                if isFriend then
-                    self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos + 63);
-                else
-                    self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
-                end
-            else
-                self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasXPos, targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
-            end
+            self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0, -3 + targetYOffset + BetterBlizzPlatesDB.nameplateAurasYPos);
         end
     else
-        if BetterBlizzPlatesDB.nameplateAurasCenteredAnchor then
-            local additionalYOffset = 15 * (BetterBlizzPlatesDB.nameplateAuraScale - 1)
-            self:ClearAllPoints()
-            self:SetPoint(BetterBlizzPlatesDB.nameplateAuraAnchor or "BOTTOM", self:GetParent().healthBar, BetterBlizzPlatesDB.nameplateAuraRelativeAnchor or "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasNoNameXPos, 5 + targetYOffset + BetterBlizzPlatesDB.nameplateAurasNoNameYPos + additionalYOffset);
-        else
-            local additionalYOffset = 15 * (BetterBlizzPlatesDB.nameplateAuraScale - 1)
-            self:SetPoint("BOTTOM", self:GetParent().healthBar, "TOP", 0 + BetterBlizzPlatesDB.nameplateAurasNoNameXPos, 5 + targetYOffset + BetterBlizzPlatesDB.nameplateAurasNoNameYPos + additionalYOffset);
-        end
+        local additionalYOffset = 15 * (BetterBlizzPlatesDB.nameplateAuraScale - 1)
+        self:SetPoint("BOTTOM", self:GetParent().healthBar, "TOP", 0, 4 + targetYOffset + BetterBlizzPlatesDB.nameplateAurasNoNameYPos + additionalYOffset);
     end
 end
-]]
+
+function BBP.RefreshBuffFrame()
+	for i, namePlate in ipairs(C_NamePlate.GetNamePlates(false)) do
+		local unitFrame = namePlate.UnitFrame
+		unitFrame.BuffFrame:UpdateAnchor()
+		if unitFrame.unit then
+			local self = unitFrame.BuffFrame
+            BBP.UpdateBuffs(self, unitFrame.unit, nil, {}, unitFrame)
+        end
+	end
+end
