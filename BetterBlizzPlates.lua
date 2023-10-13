@@ -1692,7 +1692,11 @@ local frame = CreateFrame("Frame")
 frame:RegisterEvent("CVAR_UPDATE")
 frame:SetScript("OnEvent", function(self, event, cvarName)
     if cvarName == "NamePlateHorizontalScale" then
-        -- Reapply nameplate width if user toggles Large Nameplates on/off
+        if BBP.isLargeNameplatesEnabled() then
+            BetterBlizzPlatesDB.NamePlateVerticalScale = 2.7
+        else
+            BetterBlizzPlatesDB.NamePlateVerticalScale = 1
+        end
         RunNextFrame(function()
             BBP.ApplyNameplateWidth()
         end)
