@@ -2171,6 +2171,11 @@ local function guiCastbar()
     enableCastbarEmphasis:SetPoint("TOPLEFT", castbarEmphasisSettingsText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
     enableCastbarEmphasis:HookScript("OnClick", function (self)
         CheckAndToggleCheckboxes(enableCastbarEmphasis)
+        if self:GetChecked() then
+            listFrame:SetAlpha(1)
+        else
+            listFrame:SetAlpha(0.5)
+        end
     end)
     CreateTooltip(enableCastbarEmphasis, "Customize castbar for spells in the list")
 
@@ -2473,20 +2478,16 @@ local function guiHideNPC()
 
     local hideNPCWhitelistOn = CreateCheckbox("hideNPCsWhitelistOn", "Whitelist mode", hideNPC, nil, BBP.hideNPC)
     hideNPCWhitelistOn:SetPoint("TOPLEFT", hideNPC, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(hideNPCWhitelistOn, "Hides ALL NPC's except the ones in the whitelist")
-
-    local function toggleWhitelist()
-        if BetterBlizzPlatesDB.hideNPCWhitelistOn then
+    hideNPCWhitelistOn:HookScript("OnClick", function (self)
+        if self:GetChecked() then
             hideNPCListFrame:Hide()
             hideNPCWhitelistFrame:Show()
         else
             hideNPCListFrame:Show()
             hideNPCWhitelistFrame:Hide()
         end
-    end
-    hideNPCWhitelistOn:HookScript("OnClick", function (self)
-        toggleWhitelist()
     end)
+    CreateTooltip(hideNPCWhitelistOn, "Hides ALL NPC's except the ones in the whitelist")
 
     local hideNPCArenaOnly = CreateCheckbox("hideNPCArenaOnly", "Only hide NPCs in arena", hideNPC, nil, BBP.hideNPC)
     hideNPCArenaOnly:SetPoint("TOPLEFT", hideNPCWhitelistOn, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -2495,10 +2496,22 @@ local function guiHideNPC()
         if BBP.variablesLoaded then
             if BetterBlizzPlatesDB.hideNPC then
                 listFrame:SetAlpha(1)
-                toggleWhitelist()
+                if BetterBlizzPlatesDB.hideNPCsWhitelistOn then
+                    hideNPCListFrame:Hide()
+                    hideNPCWhitelistFrame:Show()
+                else
+                    hideNPCListFrame:Show()
+                    hideNPCWhitelistFrame:Hide()
+                end
             else
                 listFrame:SetAlpha(0.5)
-                toggleWhitelist()
+                if BetterBlizzPlatesDB.hideNPCsWhitelistOn then
+                    hideNPCListFrame:Hide()
+                    hideNPCWhitelistFrame:Show()
+                else
+                    hideNPCListFrame:Show()
+                    hideNPCWhitelistFrame:Hide()
+                end
             end
         else
             C_Timer.After(1, function()
