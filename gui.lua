@@ -81,60 +81,29 @@ local function FetchWidthWhenLoaded(callback)
     FetchWidthValue()
 end
 
-local function DisableCheckboxChildren(frame, doChildrenOfChild)
-    if doChildrenOfChild == nil then
-        doChildrenOfChild = false
-    end
-
+local function CheckAndToggleCheckboxes(frame)
     for i = 1, frame:GetNumChildren() do
         local child = select(i, frame:GetChildren())
         if child and (child:GetObjectType() == "CheckButton" or child:GetObjectType() == "Slider" or child:GetObjectType() == "Button") then
-            child:Disable()
-            child:SetAlpha(0.5)
-        end
-
-        if doChildrenOfChild then
-            -- Check if the child has children and if it's a CheckButton or Slider
-            for j = 1, child:GetNumChildren() do
-                local childOfChild = select(j, child:GetChildren())
-                if childOfChild and (childOfChild:GetObjectType() == "CheckButton" or childOfChild:GetObjectType() == "Slider" or childOfChild:GetObjectType() == "Button") then
-                    if child:GetObjectType() == "CheckButton" and not child:GetChecked() then
-                        childOfChild:Disable()
-                        childOfChild:SetAlpha(0.5)
-                    else
-                        childOfChild:Enable()
-                        childOfChild:SetAlpha(1.0)
-                    end
-                end
+            if frame:GetChecked() then
+                child:Enable()
+                child:SetAlpha(1)
+            else
+                child:Disable()
+                child:SetAlpha(0.5)
             end
         end
-    end
-end
 
-local function EnableCheckboxChildren(frame, doChildrenOfChild)
-    if doChildrenOfChild == nil then
-        doChildrenOfChild = false
-    end
-
-    for i = 1, frame:GetNumChildren() do
-        local child = select(i, frame:GetChildren())
-        if child and (child:GetObjectType() == "CheckButton" or child:GetObjectType() == "Slider" or child:GetObjectType() == "Button") then
-            child:Enable()
-            child:SetAlpha(1.0) -- Reset alpha to fully visible
-        end
-
-        if doChildrenOfChild then
-            -- Check if the child has children and if it's a CheckButton or Slider
-            for j = 1, child:GetNumChildren() do
-                local childOfChild = select(j, child:GetChildren())
-                if childOfChild and (childOfChild:GetObjectType() == "CheckButton" or childOfChild:GetObjectType() == "Slider" or childOfChild:GetObjectType() == "Button") then
-                    if child:GetObjectType() == "CheckButton" and not child:GetChecked() then
-                        childOfChild:Disable()
-                        childOfChild:SetAlpha(0.5)
-                    else
-                        childOfChild:Enable()
-                        childOfChild:SetAlpha(1.0)
-                    end
+        -- Check if the child has children and if it's a CheckButton or Slider
+        for j = 1, child:GetNumChildren() do
+            local childOfChild = select(j, child:GetChildren())
+            if childOfChild and (childOfChild:GetObjectType() == "CheckButton" or childOfChild:GetObjectType() == "Slider" or childOfChild:GetObjectType() == "Button") then
+                if child.GetChecked and child:GetChecked() and frame.GetChecked and frame:GetChecked() then
+                    childOfChild:Enable()
+                    childOfChild:SetAlpha(1)
+                else
+                    childOfChild:Disable()
+                    childOfChild:SetAlpha(0.5)
                 end
             end
         end
@@ -150,7 +119,6 @@ local function EnableElement(element)
     element:Enable()
     element:SetAlpha(1)
 end
-
 
 local function CreateBorderBox(anchor)
     local contentFrame = anchor:GetParent()
@@ -2202,13 +2170,7 @@ local function guiCastbar()
     local enableCastbarEmphasis = CreateCheckbox("enableCastbarEmphasis", "Cast Emphasis", enableCastbarCustomization)
     enableCastbarEmphasis:SetPoint("TOPLEFT", castbarEmphasisSettingsText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
     enableCastbarEmphasis:HookScript("OnClick", function (self)
-        if self:GetChecked() then
-            listFrame:SetAlpha(1)
-            EnableCheckboxChildren(enableCastbarEmphasis)
-        else
-            listFrame:SetAlpha(0.5)
-            DisableCheckboxChildren(enableCastbarEmphasis)
-        end
+        CheckAndToggleCheckboxes(enableCastbarEmphasis)
     end)
     CreateTooltip(enableCastbarEmphasis, "Customize castbar for spells in the list")
 
@@ -2254,15 +2216,13 @@ local function guiCastbar()
     castBarEmphasisSparkHeight:SetValue(4 + BetterBlizzPlatesDB.castBarEmphasisSparkHeight)
 
     enableCastbarCustomization:HookScript("OnClick", function (self)
+        CheckAndToggleCheckboxes(enableCastbarCustomization)
         if self:GetChecked() then
             if BetterBlizzPlatesDB.enableCastbarEmphasis then
                 listFrame:SetAlpha(1)
             end
-            EnableCheckboxChildren(enableCastbarCustomization)
         else
             listFrame:SetAlpha(0.5)
-            DisableCheckboxChildren(enableCastbarCustomization)
-            DisableCheckboxChildren(enableCastbarEmphasis)
         end
     end)
 
@@ -2546,7 +2506,8 @@ local function guiHideNPC()
             end)
         end
     end
-    hideNPC:HookScript("OnClick", function (self)
+    hideNPC:HookScript("OnClick", function ()
+        CheckAndToggleCheckboxes(hideNPC)
         TogglePanel()
     end)
     TogglePanel()
@@ -2610,8 +2571,9 @@ local function guiColorNPC()
             end)
         end
     end
-    colorNPC:HookScript("OnClick", function (self)
+    colorNPC:HookScript("OnClick", function ()
         TogglePanel()
+        CheckAndToggleCheckboxes(colorNPC)
     end)
     TogglePanel()
 end
@@ -2670,12 +2632,8 @@ local function guiNameplateAuras()
     -- Enemy Buffs
     local otherNpBuffEnable = CreateCheckbox("otherNpBuffEnable", "Show BUFFS", enableNameplateAuraCustomisation)
     otherNpBuffEnable:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 50, 25)
-    otherNpBuffEnable:HookScript("OnClick", function (self)
-        if self:GetChecked() then
-            EnableCheckboxChildren(otherNpBuffEnable)
-        else
-            DisableCheckboxChildren(otherNpBuffEnable)
-        end
+    otherNpBuffEnable:HookScript("OnClick", function ()
+        CheckAndToggleCheckboxes(otherNpBuffEnable)
     end)
 
     local bigEnemyBorderText = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -2713,12 +2671,8 @@ local function guiNameplateAuras()
     -- Enemy Debuffs
     local otherNpdeBuffEnable = CreateCheckbox("otherNpdeBuffEnable", "Show DEBUFFS", enableNameplateAuraCustomisation)
     otherNpdeBuffEnable:SetPoint("TOPLEFT", otherNpBuffEmphasisedBorder, "BOTTOMLEFT", -15, -2)
-    otherNpdeBuffEnable:HookScript("OnClick", function (self)
-        if self:GetChecked() then
-            EnableCheckboxChildren(otherNpdeBuffEnable)
-        else
-            DisableCheckboxChildren(otherNpdeBuffEnable)
-        end
+    otherNpdeBuffEnable:HookScript("OnClick", function ()
+        CheckAndToggleCheckboxes(otherNpdeBuffEnable)
     end)
 
     local otherNpdeBuffFilterAll = CreateCheckbox("otherNpdeBuffFilterAll", "All", otherNpdeBuffEnable)
@@ -2747,12 +2701,8 @@ local function guiNameplateAuras()
     -- Friendly Buffs
     local friendlyNpBuffEnable = CreateCheckbox("friendlyNpBuffEnable", "Show BUFFS", enableNameplateAuraCustomisation)
     friendlyNpBuffEnable:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 300, 45)
-    friendlyNpBuffEnable:HookScript("OnClick", function (self)
-        if self:GetChecked() then
-            EnableCheckboxChildren(friendlyNpBuffEnable)
-        else
-            DisableCheckboxChildren(friendlyNpBuffEnable)
-        end
+    friendlyNpBuffEnable:HookScript("OnClick", function ()
+        CheckAndToggleCheckboxes(friendlyNpBuffEnable)
     end)
 
     local friendlyNameplatesText = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -2776,12 +2726,8 @@ local function guiNameplateAuras()
     -- Friendly Debuffs
     local friendlyNpdeBuffEnable = CreateCheckbox("friendlyNpdeBuffEnable", "Show DEBUFFS", enableNameplateAuraCustomisation)
     friendlyNpdeBuffEnable:SetPoint("TOPLEFT", friendlyNpBuffFilterLessMinite, "BOTTOMLEFT", -15, -2)
-    friendlyNpdeBuffEnable:HookScript("OnClick", function (self)
-        if self:GetChecked() then
-            EnableCheckboxChildren(friendlyNpdeBuffEnable)
-        else
-            DisableCheckboxChildren(friendlyNpdeBuffEnable)
-        end
+    friendlyNpdeBuffEnable:HookScript("OnClick", function ()
+        CheckAndToggleCheckboxes(friendlyNpdeBuffEnable)
     end)
 
     local friendlyNpdeBuffFilterAll = CreateCheckbox("friendlyNpdeBuffFilterAll", "All", friendlyNpdeBuffEnable)
@@ -2805,12 +2751,8 @@ local function guiNameplateAuras()
     -- Personal Bar Buffs
     local personalNpBuffEnable = CreateCheckbox("personalNpBuffEnable", "Show BUFFS", enableNameplateAuraCustomisation)
     personalNpBuffEnable:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 530, 45)
-    personalNpBuffEnable:HookScript("OnClick", function (self)
-        if self:GetChecked() then
-            EnableCheckboxChildren(personalNpBuffEnable)
-        else
-            DisableCheckboxChildren(personalNpBuffEnable)
-        end
+    personalNpBuffEnable:HookScript("OnClick", function ()
+        CheckAndToggleCheckboxes(personalNpBuffEnable)
     end)
 
     local personalBarText = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -2846,12 +2788,8 @@ local function guiNameplateAuras()
     -- Personal Bar Debuffs
     local personalNpdeBuffEnable = CreateCheckbox("personalNpdeBuffEnable", "Show DEBUFFS", enableNameplateAuraCustomisation)
     personalNpdeBuffEnable:SetPoint("TOPLEFT", personalNpBuffFilterLessMinite, "BOTTOMLEFT", -15, -2)
-    personalNpdeBuffEnable:HookScript("OnClick", function (self)
-        if self:GetChecked() then
-            EnableCheckboxChildren(otherNpdeBuffEnable)
-        else
-            DisableCheckboxChildren(otherNpdeBuffEnable)
-        end
+    personalNpdeBuffEnable:HookScript("OnClick", function ()
+        CheckAndToggleCheckboxes(personalNpdeBuffEnable)
     end)
 
     local personalNpdeBuffFilterAll = CreateCheckbox("personalNpdeBuffFilterAll", "All", personalNpdeBuffEnable)
@@ -2984,11 +2922,7 @@ local function guiNameplateAuras()
 
     enableNameplateAuraCustomisation:HookScript("OnClick", function (self)
         StaticPopup_Show("CONFIRM_RELOAD")
-        if self:GetChecked() then
-            EnableCheckboxChildren(enableNameplateAuraCustomisation, true)
-        else
-            DisableCheckboxChildren(enableNameplateAuraCustomisation, true)
-        end
+        CheckAndToggleCheckboxes(enableNameplateAuraCustomisation)
     end)
     --TogglePanel()
 
@@ -3071,8 +3005,6 @@ local function guiMoreBlizzSettings()
     moreBlizzSettingsText:SetPoint("BOTTOM", guiMoreBlizzSettings, "BOTTOM", 0, 10)
     moreBlizzSettingsText:SetText("Work in progress, more stuff inc soon™\n \nSome settings don't make much sense anymore because\nthe addon grew a bit more than I thought it would.\nWill clean up eventually\n \nIf you have any suggestions feel free to\nleave a comment on CurseForge")
 end
-
-
 
 ------------------------------------------------------------
 -- GUI Setup
