@@ -18,7 +18,7 @@ function BBP.HealerIndicator(frame)
     local anchorPoint = BetterBlizzPlatesDB.healerIndicatorAnchor or "CENTER"
     local xPos = BetterBlizzPlatesDB.healerIndicatorXPos or 0
     local yPos = BetterBlizzPlatesDB.healerIndicatorYPos or 0
-    
+
     -- Initialize
     if not frame.healerIndicator then
         frame.healerIndicator = frame.healthBar:CreateTexture(nil, "OVERLAY")

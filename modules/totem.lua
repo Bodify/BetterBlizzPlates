@@ -121,7 +121,6 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color)
         end
     end
 
-
     -- Apply glow effect if color is provided
     if color then
         if not frame.glowTexture then

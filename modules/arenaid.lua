@@ -174,7 +174,7 @@ function BBP.ArenaIndicator5(frame)
                 if not specName then
                     specName = className
                 end
-                
+
                 if not frame.specNameText then
                     frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
                     BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
@@ -338,7 +338,7 @@ function BBP.PartyIndicator5(frame)
                 if not specName then
                     specName = className
                 end
-                
+
                 if not frame.specNameText then
                     frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
                     BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
@@ -625,7 +625,7 @@ function BBP.TestPartyIndicator5(frame)
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
         if UnitIsFriend("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
-            
+
             if not frame.specNameText then
                 frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
                 BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")

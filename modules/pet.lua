@@ -35,7 +35,7 @@ function BBP.PetIndicator(frame)
 
     local unitGUID = UnitGUID(frame.displayedUnit)
     local npcID = select(6, strsplit("-", unitGUID or ""))
-    
+
     -- Move Pet Indicator to the left if both Pet Indicator and Combat Indicator are showing with the same anchor so they dont overlap
     if frame.combatIndicator and frame.combatIndicator:IsShown() and BetterBlizzPlatesDB.combatIndicator and (BetterBlizzPlatesDB.petIndicatorAnchor == BetterBlizzPlatesDB.combatIndicatorAnchor) then
         xPos = xPos - 10
