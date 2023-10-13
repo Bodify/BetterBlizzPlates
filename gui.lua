@@ -2922,13 +2922,15 @@ local function guiNameplateAuras()
     local function TogglePanel()
         if BBP.variablesLoaded then
             if BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
-                --
+                UIDropDownMenu_EnableDropDown(nameplateAuraDropdown)
+                UIDropDownMenu_EnableDropDown(nameplateAuraRelativeDropdown)
             else
-                --
+                UIDropDownMenu_DisableDropDown(nameplateAuraDropdown)
+                UIDropDownMenu_DisableDropDown(nameplateAuraRelativeDropdown)
             end
         else
             C_Timer.After(1, function()
-                --TogglePanel()
+                TogglePanel()
             end)
         end
     end
@@ -2936,8 +2938,9 @@ local function guiNameplateAuras()
     enableNameplateAuraCustomisation:HookScript("OnClick", function (self)
         StaticPopup_Show("CONFIRM_RELOAD")
         CheckAndToggleCheckboxes(enableNameplateAuraCustomisation)
+        TogglePanel()
     end)
-    --TogglePanel()
+    TogglePanel()
 
     local betaHighlightIcon = enableNameplateAuraCustomisation:CreateTexture(nil, "BACKGROUND")
     betaHighlightIcon:SetAtlas("CharacterCreate-NewLabel")
