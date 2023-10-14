@@ -434,7 +434,18 @@ local function SendUpdateMessage()
     C_Timer.After(7, function()
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a PvE bugfixes. Access settings with /bbp")
-        --DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aAccess settings with /bbp")
+        if BetterBlizzPlatesDB.arenaIndicatorModeOne or
+        BetterBlizzPlatesDB.arenaIndicatorModeTwo or
+        BetterBlizzPlatesDB.arenaIndicatorModeThree or
+        BetterBlizzPlatesDB.arenaIndicatorModeFour or
+        BetterBlizzPlatesDB.arenaIndicatorModeFive or
+        BetterBlizzPlatesDB.partyIndicatorModeOne or
+        BetterBlizzPlatesDB.partyIndicatorModeTwo or
+        BetterBlizzPlatesDB.partyIndicatorModeThree or
+        BetterBlizzPlatesDB.partyIndicatorModeFour or
+        BetterBlizzPlatesDB.partyIndicatorModeFive then
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a ArenaNameplates: Decreased the default spec name text size. You might have to re-adjust the size to your liking.")
+        end
     end)
 end
 
@@ -1513,7 +1524,7 @@ function BBP.RefreshAllNameplates()
             BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
         end
         if frame.specNameText then
-            BBP.SetFontBasedOnOption(frame.specNameText, 15, "THINOUTLINE")
+            BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
         end
 
         -- Hide quest indicator after testing
