@@ -78,8 +78,6 @@ function CustomBuffLayoutChildren(container, children, ignored, expandToHeight)
     local totalChildrenHeight = 0
 
     -- Calculate the width of each row
-
-
     for index, buff in ipairs(children) do
         buff:SetScale(BetterBlizzPlatesDB.nameplateAuraScale)
         local buffWidth, _ = buff:GetSize()
@@ -96,12 +94,6 @@ function CustomBuffLayoutChildren(container, children, ignored, expandToHeight)
             rowWidths[rowIndex] = rowWidths[rowIndex] + horizontalSpacing
         end
     end
-
-
-
-
-
-
 
     local horizontalOffset = 0
     local lastAuraInRow = nil

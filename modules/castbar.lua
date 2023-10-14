@@ -9,14 +9,12 @@ function UpdateCastbarAnchors(frame, setupOptions)
     -- Castbar customization
     if BetterBlizzPlatesDB.enableCastbarCustomization then
         -- Shield icon
-        frame.castBar.BorderShield:ClearAllPoints()
         local yOffset = BetterBlizzPlatesDB.castBarDragonflightShield and -1 or 0
         PixelUtil.SetPoint(frame.castBar.BorderShield, "CENTER", frame.castBar, BetterBlizzPlatesDB.castBarIconAnchor, BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos + yOffset)
 
         -- Spell icon position
         local customOptions = frame.customOptions;
         if not customOptions or not customOptions.ignoreIconPoint then
-            frame.castBar.Icon:ClearAllPoints();
             PixelUtil.SetPoint(frame.castBar.Icon, "CENTER", frame.castBar, BetterBlizzPlatesDB.castBarIconAnchor, BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos);
         end
     else
@@ -274,9 +272,6 @@ function BBP.HideCastbar(unitToken)
     end
 end
 
-
-
-
 hooksecurefunc(CastingBarMixin, "UpdateShownState", function(self)
     if not BetterBlizzPlatesDB.hideCastbar then return end
     if not BBP.IsLegalNameplateUnit(self) then return end
@@ -289,7 +284,6 @@ hooksecurefunc(CastingBarMixin, "UpdateShownState", function(self)
         end
     end
 end)
-
 
 -- Update text and color based on the target
 function BBP.UpdateNameplateTargetText(nameplate, unitID)
@@ -396,7 +390,6 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
     end
 end)
 
---#################################################################################################
 -- Event handler
 function BBP.ToggleSpellCastEventRegistration()
     if not BetterBlizzPlatesDB.castbarEventsOn then
