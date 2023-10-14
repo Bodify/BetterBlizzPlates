@@ -1,5 +1,6 @@
 BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
 BBP = BBP or {}
+local LSM = LibStub("LibSharedMedia-3.0")
 
 BetterBlizzPlates = nil
 local anchorPoints = {"CENTER", "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT"}
@@ -166,6 +167,84 @@ local function CreateModeDropdown(name, parent, defaultText, settingKey, toggleF
     dropdownText:SetText(textLabel)
     dropdownText:SetTextColor(unpack(textColor))
     dropdownText:SetFont(name, 10, style)
+
+    return dropdown
+end
+
+local function CreateFontDropdown(name, parent, defaultText, settingKey, toggleFunc, point)
+    local dropdown = CreateFrame("Frame", name, parent, "UIDropDownMenuTemplate")
+    UIDropDownMenu_SetWidth(dropdown, 135) 
+    UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
+
+    UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
+        local info = UIDropDownMenu_CreateInfo()
+        local fonts = LSM:HashTable(LSM.MediaType.FONT)
+        for fontName, fontPath in pairs(fonts) do
+            info.text = fontName
+            info.arg1 = fontName
+            info.func = function(self, arg1)
+                if BetterBlizzPlatesDB[settingKey] ~= arg1 then
+                    BetterBlizzPlatesDB[settingKey] = arg1
+                    UIDropDownMenu_SetText(dropdown, arg1)
+                    toggleFunc(fontPath)
+                    dropdown.Text:SetFont(fontPath, 12)
+                end
+            end
+            info.checked = (BetterBlizzPlatesDB[settingKey] == fontName)
+
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
+
+    local fontName = BetterBlizzPlatesDB.customFont
+    local fontPath = LSM:Fetch(LSM.MediaType.FONT, fontName)
+    dropdown.Text:SetFont(fontPath, 12)
+    dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
+
+    if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
+        UIDropDownMenu_DisableDropDown(dropdown)
+    else
+        UIDropDownMenu_EnableDropDown(dropdown)
+    end
+
+    return dropdown
+end
+
+local function CreateTextureDropdown(name, parent, defaultText, settingKey, toggleFunc, point, dropdownWidth)
+    local dropdown = CreateFrame("Frame", name, parent, "UIDropDownMenuTemplate")
+    UIDropDownMenu_SetWidth(dropdown, dropdownWidth or 135)
+    UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
+
+    UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
+        local info = UIDropDownMenu_CreateInfo()
+        local textures = LSM:HashTable(LSM.MediaType.STATUSBAR)
+        for textureName, texturePath in pairs(textures) do
+            info.text = textureName
+            info.arg1 = textureName
+            info.func = function(self, arg1)
+                if BetterBlizzPlatesDB[settingKey] ~= arg1 then
+                    BetterBlizzPlatesDB[settingKey] = arg1
+                    UIDropDownMenu_SetText(dropdown, arg1)
+                    toggleFunc(texturePath)
+                end
+            end
+            info.checked = (BetterBlizzPlatesDB[settingKey] == textureName)
+
+            -- Set the texture preview
+            info.icon = texturePath
+            info.iconInfo = { tCoordLeft = 0, tCoordRight = 1, tCoordTop = 0, tCoordBottom = 1, tSizeX = 50, tSizeY = 50 }
+
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
+
+    dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
+
+    if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
+        UIDropDownMenu_DisableDropDown(dropdown)
+    else
+        UIDropDownMenu_EnableDropDown(dropdown)
+    end
 
     return dropdown
 end
@@ -582,14 +661,6 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
         end
     end)
 
-    function dropdown:EnableDropdown()
-        UIDropDownMenu_EnableDropDown(dropdown)
-    end
-
-    function dropdown:DisableDropdown()
-        UIDropDownMenu_DisableDropDown(dropdown)
-    end
-
     dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
 
     local dropdownText = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -911,7 +982,7 @@ local function guiGeneralTab()
     ----------------------
     -- "General:" text
     local settingsText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    settingsText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -5)
+    settingsText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, 5)
     settingsText:SetText("General settings")
     local generalSettingsIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     generalSettingsIcon:SetAtlas("optionsicon-brown")
@@ -968,7 +1039,7 @@ local function guiGeneralTab()
     -- Enemy nameplates:
     ----------------------
     local enemyNameplatesText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    enemyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -230)
+    enemyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -215)
     enemyNameplatesText:SetText("Enemy nameplates")
     local enemyNameplateIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     enemyNameplateIcon:SetAtlas("groupfinder-icon-friend")
@@ -1025,7 +1096,7 @@ local function guiGeneralTab()
     -- Friendly nameplates:
     ----------------------
     local friendlyNameplatesText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    friendlyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -400)
+    friendlyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -385)
     friendlyNameplatesText:SetText("Friendly nameplates")
     local friendlyNameplateIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     friendlyNameplateIcon:SetAtlas("groupfinder-icon-friend")
@@ -1061,7 +1132,7 @@ local function guiGeneralTab()
     -- Extra features on nameplates:
     ----------------------
     local extraFeaturesText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    extraFeaturesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, -250)
+    extraFeaturesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 390, -230)
     extraFeaturesText:SetText("Extra Features")
     local extraFeaturesIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     extraFeaturesIcon:SetAtlas("Campaign-QuestLog-LoreBook")
@@ -1150,7 +1221,7 @@ local function guiGeneralTab()
     -- Font and texture
     ----------------------
     local customFontandTextureText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    customFontandTextureText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, -480)
+    customFontandTextureText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, -455)
     customFontandTextureText:SetText("Font and texture")
     local customFontandTextureIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     customFontandTextureIcon:SetAtlas("barbershop-32x32")
@@ -1161,13 +1232,53 @@ local function guiGeneralTab()
     useCustomFont:SetPoint("TOPLEFT", customFontandTextureText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
 
     local useCustomTexture = CreateCheckbox("useCustomTextureForBars", "Use a sexy texture for nameplates", BetterBlizzPlates)
-    useCustomTexture:SetPoint("TOPLEFT", useCustomFont, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    useCustomTexture:SetPoint("TOPLEFT", useCustomFont, "BOTTOMLEFT", 0, -20)
+
+    local fontDropdown = CreateFontDropdown(
+        "fontDropdown",
+        useCustomFont,
+        "Select Font",
+        "customFont",
+        function(arg1)
+            BBP.RefreshAllNameplates() 
+        end,
+        { anchorFrame = useCustomFont, x = 5, y = -21, label = "Font" }
+    )
+
+    local textureDropdown = CreateTextureDropdown(
+        "textureDropdown",
+        useCustomTexture,
+        "Select Texture",
+        "customTexture",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = useCustomTexture, x = 5, y = -21, label = "Texture" }
+    )
+
+
+    useCustomFont:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            UIDropDownMenu_EnableDropDown(fontDropdown)
+        else
+            UIDropDownMenu_DisableDropDown(fontDropdown)
+        end
+    end)
+
+    useCustomTexture:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            UIDropDownMenu_EnableDropDown(textureDropdown)
+        else
+            UIDropDownMenu_DisableDropDown(textureDropdown)
+        end
+    end)
+
 
     ----------------------
     -- Arena
     ----------------------
     local arenaSettingsText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    arenaSettingsText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, -5)
+    arenaSettingsText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, 5)
     arenaSettingsText:SetText("Arena nameplates")
     local arenaSettingsIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     arenaSettingsIcon:SetAtlas("questbonusobjective")
@@ -1356,7 +1467,7 @@ local function guiPositionAndScale()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = healerIndicatorYPos, x = -15, y = -35, label = "Anchor" }
+        { anchorFrame = healerIndicatorYPos, x = -16, y = -35, label = "Anchor" }
     )
 
     local healerIndicatorTestMode2 = CreateCheckbox("healerIndicatorTestMode", "Test", contentFrame)
@@ -1402,7 +1513,7 @@ local function guiPositionAndScale()
         function(arg1) 
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = combatIndicatorYPos, x = -15, y = -35, label = "Anchor" }
+        { anchorFrame = combatIndicatorYPos, x = -16, y = -35, label = "Anchor" }
     )
 
     local combatIndicatorEnemyOnly = CreateCheckbox("combatIndicatorEnemyOnly", "Enemies only", contentFrame)
@@ -1459,7 +1570,7 @@ local function guiPositionAndScale()
         function(arg1)
         BBP.RefreshAllNameplates()
     end,
-        { anchorFrame = petIndicatorYPos, x = -15, y = -35, label = "Anchor" }
+        { anchorFrame = petIndicatorYPos, x = -16, y = -35, label = "Anchor" }
     )
 
     local petIndicatorTestMode2 = CreateCheckbox("petIndicatorTestMode", "Test", contentFrame)
@@ -1496,7 +1607,7 @@ local function guiPositionAndScale()
         function(arg1)
         BBP.RefreshAllNameplates()
     end,
-        { anchorFrame = absorbIndicatorYPos, x = -15, y = -35, label = "Anchor" }
+        { anchorFrame = absorbIndicatorYPos, x = -16, y = -35, label = "Anchor" }
     )
 
     local absorbIndicatorTestMode2 = CreateCheckbox("absorbIndicatorTestMode", "Test", contentFrame)
@@ -1539,7 +1650,7 @@ local function guiPositionAndScale()
         function(arg1)
         BBP.RefreshAllNameplates()
     end,
-        { anchorFrame = totemIndicatorYPos, x = -15, y = -35, label = "Anchor" }
+        { anchorFrame = totemIndicatorYPos, x = -16, y = -35, label = "Anchor" }
     )
 
     local totemTestIcons2 = CreateCheckbox("totemIndicatorTestMode", "Test", contentFrame)
@@ -1588,7 +1699,7 @@ local function guiPositionAndScale()
         function(arg1)
         BBP.RefreshAllNameplates()
     end,
-        { anchorFrame = targetIndicatorYPos, x = -15, y = -35, label = "Anchor" }
+        { anchorFrame = targetIndicatorYPos, x = -16, y = -35, label = "Anchor" }
     )
 
     ----------------------
@@ -1622,7 +1733,7 @@ local function guiPositionAndScale()
         function(arg1)
         BBP.RefreshAllNameplates()
     end,
-        { anchorFrame = raidmarkIndicatorYPos, x = -15, y = -35, label = "Anchor" }
+        { anchorFrame = raidmarkIndicatorYPos, x = -16, y = -35, label = "Anchor" }
     )
 
     local raidmarkIndicator2 = CreateCheckbox("raidmarkIndicator", "Change raidmarker pos", contentFrame, nil, BBP.ChangeRaidmarker)
@@ -1659,7 +1770,7 @@ local function guiPositionAndScale()
         function(arg1)
         BBP.RefreshAllNameplates()
     end,
-        { anchorFrame = questIndicatorYPos, x = -15, y = -35, label = "Anchor" }
+        { anchorFrame = questIndicatorYPos, x = -16, y = -35, label = "Anchor" }
     )
 
     local questTestIcons2 = CreateCheckbox("questIndicatorTestMode", "Test", contentFrame)
@@ -1696,7 +1807,7 @@ local function guiPositionAndScale()
         function(arg1)
         BBP.RefreshAllNameplates()
     end,
-        { anchorFrame = focustargetIndicatorYPos, x = -15, y = -35, label = "Anchor" }
+        { anchorFrame = focustargetIndicatorYPos, x = -16, y = -35, label = "Anchor" }
     )
 
     local focusTargetTestIcons2 = CreateCheckbox("focusTargetIndicatorTestMode", "Test", contentFrame)
@@ -1752,6 +1863,26 @@ local function guiPositionAndScale()
     local focusTargetIndicatorChangeTexture = CreateCheckbox("focusTargetIndicatorChangeTexture", "Re-texture healthbar", contentFrame)
     focusTargetIndicatorChangeTexture:SetPoint("TOPLEFT", focusTargetIndicatorColorNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
+    local focusTargetIndicatorTexture = CreateTextureDropdown(
+        "focusTargetIndicatorTexture",
+        focusTargetIndicatorChangeTexture,
+        "Select Texture",
+        "focusTargetIndicatorTexture",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = focusTargetIndicatorChangeTexture, x = -16, y = -20, label = "Texture" },
+        125
+    )
+
+    focusTargetIndicatorChangeTexture:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            UIDropDownMenu_EnableDropDown(focusTargetIndicatorTexture)
+        else
+            UIDropDownMenu_DisableDropDown(focusTargetIndicatorTexture)
+        end
+    end)
+
     ----------------------
     -- Execute Indicator
     ----------------------
@@ -1783,7 +1914,7 @@ local function guiPositionAndScale()
         function(arg1)
         BBP.RefreshAllNameplates()
     end,
-        { anchorFrame = executeIndicatorYPos, x = -15, y = -35, label = "Anchor" }
+        { anchorFrame = executeIndicatorYPos, x = -16, y = -35, label = "Anchor" }
     )
 
     local executeTestIcons2 = CreateCheckbox("executeIndicatorTestMode", "Test", contentFrame)
@@ -2577,7 +2708,7 @@ local function guiNameplateAuras()
         function(arg1)
         BBP.RefreshAllNameplates()
     end,
-        { anchorFrame = nameplateAuraScale, x = -15, y = -35, label = "Aura Anchor Point" }
+        { anchorFrame = nameplateAuraScale, x = -16, y = -35, label = "Aura Anchor Point" }
     )
 
     local nameplateAuraRelativeDropdown = CreateAnchorDropdown(
@@ -2588,7 +2719,7 @@ local function guiNameplateAuras()
         function(arg1)
         BBP.RefreshAllNameplates()
     end,
-        { anchorFrame = nameplateAuraScale, x = -15, y = -95, label = "Nameplate Relative Point" }
+        { anchorFrame = nameplateAuraScale, x = -16, y = -95, label = "Nameplate Relative Point" }
     )
 
     local nameplateAurasCenteredAnchor = CreateCheckbox("nameplateAurasCenteredAnchor", "Center Auras", enableNameplateAuraCustomisation)

@@ -1,12 +1,10 @@
 -- Setting up the database
 BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
 BBP = BBP or {}
+local LSM = LibStub("LibSharedMedia-3.0")
 
 local previousTargetNameplate = nil
 local previousFocusTargetNameplate = nil
-
-local customTexture = "Interface\\AddOns\\BetterBlizzPlates\\media\\DragonflightTexture.tga"
-local customFocusTexture = "Interface\\AddOns\\BetterBlizzPlates\\media\\focusTexture.tga"
 
 -- Target Indicator
 function BBP.TargetIndicator(frame)
@@ -90,6 +88,11 @@ function BBP.FocusTargetIndicator(frame)
     frame.focusTargetIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
     frame.focusTargetIndicator:SetScale(dbScale)
 
+    local focusTextureName = BetterBlizzPlatesDB.focusTargetIndicatorTexture
+    local focusTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, focusTextureName)
+    local textureName = BetterBlizzPlatesDB.customTexture
+    local customTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
+
     -- Test mode
     if BetterBlizzPlatesDB.focusTargetIndicatorTestMode then
         frame.focusTargetIndicator:Show()
@@ -100,9 +103,10 @@ function BBP.FocusTargetIndicator(frame)
             BBP.CompactUnitFrame_UpdateHealthColor(frame)
         end
         if BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture then
-            frame.healthBar:SetStatusBarTexture(customFocusTexture)
+            frame.healthBar:SetStatusBarTexture(focusTexture)
         else
             if BetterBlizzPlatesDB.useCustomTextureForBars then
+
                 frame.healthBar:SetStatusBarTexture(customTexture)
             else
                 frame.healthBar:SetStatusBarTexture("Interface/TargetingFrame/UI-TargetingFrame-BarFill")
@@ -114,7 +118,7 @@ function BBP.FocusTargetIndicator(frame)
     if UnitIsUnit(frame.unit, "focus") then
         frame.focusTargetIndicator:Show()
         if BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture then
-            frame.healthBar:SetStatusBarTexture(customFocusTexture)
+            frame.healthBar:SetStatusBarTexture(focusTexture)
         else
             if BetterBlizzPlatesDB.useCustomTextureForBars then
                 frame.healthBar:SetStatusBarTexture(customTexture)

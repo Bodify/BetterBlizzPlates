@@ -5,10 +5,13 @@ BBP = BBP or {}
 -- My first addon, a lot could be done better but its a start for now
 -- Things are getting more messy need a lot of cleaning lol
 
+local LSM = LibStub("LibSharedMedia-3.0")
+LSM:Register("statusbar", "Dragonflight (BBP)", [[Interface\Addons\BetterBlizzPlates\media\DragonflightTexture]])
+LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPlates\media\focusTexture]])
+LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
+
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = "1.17.1"
-local customFont = "Interface\\AddOns\\BetterBlizzPlates\\media\\YanoneKaffeesatz-Medium.ttf"
-local customTexture = "Interface\\AddOns\\BetterBlizzPlates\\media\\DragonflightTexture.tga"
 BBP.variablesLoaded = false
 
 local defaultSettings = {
@@ -32,6 +35,8 @@ local defaultSettings = {
     raidmarkIndicatorAnchor = "TOP",
     raidmarkIndicatorXPos = 0,
     raidmarkIndicatorYPos = 0,
+    customTexture = "Dragonflight (BBP)",
+    customFont = "Yanone (BBP)",
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -124,6 +129,7 @@ local defaultSettings = {
     focusTargetIndicatorTestMode = false,
     focusTargetIndicatorColorNameplate = false,
     focusTargetIndicatorColorNameplateRGB = {1, 1, 1},
+    focusTargetIndicatorTexture = "Shattered DF (BBP)",
     -- Totem Indicator
     totemIndicator = false,
     totemIndicatorScale = 1,
@@ -616,27 +622,10 @@ function BBP.ApplyCustomTexture(namePlate)
     if unitFrame then
         if BetterBlizzPlatesDB.useCustomTextureForBars then
             if unitFrame.healthBar then
-                unitFrame.healthBar:SetStatusBarTexture(customTexture)
-            end
-        end
-    end
-end
-
---#################################################################################################
--- Set custom healthbar texture
-function BBP.SetCustomBarTextureToggle(value)
-    -- Loop through all visible nameplates
-    for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        local unitFrame = namePlate.UnitFrame
-        if unitFrame then
-            if value then
-                if unitFrame.healthBar then
-                    unitFrame.healthBar:SetStatusBarTexture(customTexture)
-                end
-            else
-                if unitFrame.healthBar then
-                    unitFrame.healthBar:SetStatusBarTexture("Interface/TargetingFrame/UI-TargetingFrame-BarFill")
-                end
+                -- Fetch the texture path from LibSharedMedia using the texture name saved in your DB.
+                local textureName = BetterBlizzPlatesDB.customTexture
+                local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
+                unitFrame.healthBar:SetStatusBarTexture(texturePath)
             end
         end
     end
@@ -647,7 +636,9 @@ function BBP.SetFontBasedOnOption(namePlateObj, specifiedSize, forcedOutline)
     local font, outline, currentSize
 
     if BetterBlizzPlatesDB.useCustomFont then
-        font = customFont
+        local fontName = BetterBlizzPlatesDB.customFont
+        local fontPath = LSM:Fetch(LSM.MediaType.FONT, fontName)
+        font = fontPath
         outline = forcedOutline or "THINOUTLINE"
         currentSize = (specifiedSize + 2) or (BetterBlizzPlatesDB.defaultFontSize + 3)
     else
@@ -1208,8 +1199,9 @@ function BBP.RefUnitAuraTotally(unitFrame)
     BBP.UpdateBuffs(unitFrame.BuffFrame, unit, nil, {}, unitFrame)
 end
 
-
+local auraModuleIsOn = false
 function BBP.RunAuraModule()
+    auraModuleIsOn = true
 --[[
     -- Bad idea cuz of protected frames. God I hate protected frames.
     hooksecurefunc("DefaultCompactNamePlateFrameSetup", function(frame)
@@ -1385,7 +1377,7 @@ local function HandleNamePlateAdded(unit)
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
 
-    if BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
+    if BetterBlizzPlatesDB.enableNameplateAuraCustomisation and auraModuleIsOn then
         BBP.HidePersonalBuffFrame()
     end
 
@@ -1674,10 +1666,6 @@ Frame:SetScript("OnEvent", function(...)
 
     SetCVarsOnLogin()
 
-    -- This needs to be delayed to work
-    C_Timer.After(3, function()  -- wait for 3 seconds
-        BBP.SetCustomBarTextureToggle(BetterBlizzPlatesDB.useCustomTextureForBars)
-    end)
     -- Re-open options when clicking reload button
     if BetterBlizzPlatesDB.reopenOptions then
         InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
