@@ -6,7 +6,7 @@ BBP = BBP or {}
 -- Things are getting more messy need a lot of cleaning lol
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.17"
+local addonUpdates = "1.17.1"
 local customFont = "Interface\\AddOns\\BetterBlizzPlates\\media\\YanoneKaffeesatz-Medium.ttf"
 local customTexture = "Interface\\AddOns\\BetterBlizzPlates\\media\\DragonflightTexture.tga"
 BBP.variablesLoaded = false
@@ -1695,14 +1695,16 @@ local frame = CreateFrame("Frame")
 frame:RegisterEvent("CVAR_UPDATE")
 frame:SetScript("OnEvent", function(self, event, cvarName)
     if cvarName == "NamePlateHorizontalScale" then
-        if BBP.isLargeNameplatesEnabled() then
-            BetterBlizzPlatesDB.NamePlateVerticalScale = 2.7
-        else
-            BetterBlizzPlatesDB.NamePlateVerticalScale = 1
+        if not BetterBlizzPlatesDB.wasOnLoadingScreen then
+            if BBP.isLargeNameplatesEnabled() then
+                BetterBlizzPlatesDB.NamePlateVerticalScale = 2.7
+            else
+                BetterBlizzPlatesDB.NamePlateVerticalScale = 1
+            end
+            RunNextFrame(function()
+                BBP.ApplyNameplateWidth()
+            end)
         end
-        RunNextFrame(function()
-            BBP.ApplyNameplateWidth()
-        end)
     end
 end)
 
