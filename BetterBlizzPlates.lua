@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.17.1"
+local addonUpdates = "1.18"
 BBP.variablesLoaded = false
 
 local defaultSettings = {
@@ -439,19 +439,7 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 local function SendUpdateMessage()
     C_Timer.After(7, function()
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a PvE bugfixes. Access settings with /bbp")
-        if BetterBlizzPlatesDB.arenaIndicatorModeOne or
-        BetterBlizzPlatesDB.arenaIndicatorModeTwo or
-        BetterBlizzPlatesDB.arenaIndicatorModeThree or
-        BetterBlizzPlatesDB.arenaIndicatorModeFour or
-        BetterBlizzPlatesDB.arenaIndicatorModeFive or
-        BetterBlizzPlatesDB.partyIndicatorModeOne or
-        BetterBlizzPlatesDB.partyIndicatorModeTwo or
-        BetterBlizzPlatesDB.partyIndicatorModeThree or
-        BetterBlizzPlatesDB.partyIndicatorModeFour or
-        BetterBlizzPlatesDB.partyIndicatorModeFive then
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a ArenaNameplates: Decreased the default spec name text size. You might have to re-adjust the size to your liking.")
-        end
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a More fonts and textures available aka LibSharedMedia-3.0 support. Access settings with /bbp")
     end)
 end
 
