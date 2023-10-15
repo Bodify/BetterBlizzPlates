@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.18"
+local addonUpdates = "1.18.1"
 BBP.variablesLoaded = false
 
 local defaultSettings = {
@@ -181,6 +181,7 @@ local defaultSettings = {
     maxAurasOnNameplate = 12,
     nameplateAuraRowAmount = 5,
     nameplateAuraSquare = false,
+    nameplateAuraTaller = false,
     nameplateAuraRowAbove = true,
     nameplateAuraHeightGap = 4,
     nameplateAuraWidthGap = 4,
@@ -439,7 +440,7 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 local function SendUpdateMessage()
     C_Timer.After(7, function()
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a More fonts and textures available aka LibSharedMedia-3.0 support. Access settings with /bbp")
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a More fonts and textures available aka LibSharedMedia-3.0 support. Actually this time |TInterface\\TargetingFrame\\UI-RaidTargetingIcon_8:0|t. Access settings with /bbp")
     end)
 end
 

@@ -494,6 +494,18 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "nameplateAuraScale" then
                     BetterBlizzPlatesDB.nameplateAuraScale = value
                     BBP.RefreshBuffFrame()
+                elseif element == "left" then
+                    BetterBlizzPlatesDB.left = value
+                    BBP.RefreshBuffFrame()
+                elseif element == "right" then
+                    BetterBlizzPlatesDB.right = value
+                    BBP.RefreshBuffFrame()
+                elseif element == "top" then
+                    BetterBlizzPlatesDB.top = value
+                    BBP.RefreshBuffFrame()
+                elseif element == "bottom" then
+                    BetterBlizzPlatesDB.bottom = value
+                    BBP.RefreshBuffFrame()
                     -- Nameplate scales
                 elseif element == "nameplateMaxScale" then
                     if not BBP.checkCombatAndWarn() then
@@ -2750,13 +2762,23 @@ local function guiNameplateAuras()
 
     local nameplateAuraSquare = CreateCheckbox("nameplateAuraSquare", "Square Auras", enableNameplateAuraCustomisation)
     nameplateAuraSquare:SetPoint("LEFT", nameplateAurasCenteredAnchor.text, "RIGHT", 5, 0)
-    nameplateAuraSquare:HookScript("OnClick", function (self)
-        if not self:GetChecked() then
-            StaticPopup_Show("CONFIRM_RELOAD")
+    CreateTooltip(nameplateAuraSquare, "Square aura icons.")
+
+    local nameplateAuraTaller = CreateCheckbox("nameplateAuraTaller", "Taller Auras", enableNameplateAuraCustomisation)
+    nameplateAuraTaller:SetPoint("LEFT", nameplateAuraSquare.text, "RIGHT", 5, 0)
+    CreateTooltip(nameplateAuraTaller, "Bit taller aura icons and more of the texture visible.")
+    nameplateAuraTaller:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            BetterBlizzPlatesDB.nameplateAuraSquare = false
+            nameplateAuraSquare:SetChecked(false)
         end
     end)
-    CreateTooltip(nameplateAuraSquare, "Square aura icons.\n \nRequires reload to turn back off")
-
+    nameplateAuraSquare:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            BetterBlizzPlatesDB.nameplateAuraTaller = false
+            nameplateAuraTaller:SetChecked(false)
+        end
+    end)
 --[=[
     local AuraGrowLeft = CreateCheckbox("nameplateAurasGrowLeft", "Grow left", contentFrame)
     AuraGrowLeft:SetPoint("LEFT", nameplateAuraSquare.text, "RIGHT", 5, 0)
@@ -2773,6 +2795,18 @@ local function guiNameplateAuras()
 
     local nameplateAuraHeightGap = CreateSlider(enableNameplateAuraCustomisation, "Vertical gap between auras", 0, 18, 1, "nameplateAuraHeightGap")
     nameplateAuraHeightGap:SetPoint("TOP", nameplateAuraWidthGap,  "BOTTOM", 0, -15)
+
+    local left = CreateSlider(enableNameplateAuraCustomisation, "left", 0.01, 1, 0.01, "left")
+    left:SetPoint("TOP", nameplateAuraHeightGap,  "BOTTOM", 0, -15)
+
+    local right = CreateSlider(enableNameplateAuraCustomisation, "rights", 0.01, 1, 0.01, "right")
+    right:SetPoint("TOP", left,  "BOTTOM", 0, -15)
+
+    local top = CreateSlider(enableNameplateAuraCustomisation, "top", 0.01, 1, 0.01, "top")
+    top:SetPoint("TOP", right,  "BOTTOM", 0, -15)
+
+    local bottom = CreateSlider(enableNameplateAuraCustomisation, "bottom", 0.01, 1, 0.01, "bottom")
+    bottom:SetPoint("TOP", top,  "BOTTOM", 0, -15)
 
     local imintoodeep = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     imintoodeep:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -50, -220)

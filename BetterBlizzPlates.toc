@@ -5,6 +5,9 @@
 ## OptionalDeps: LibSharedMedia-3.0
 ## IconAtlas: gmchat-icon-blizz
 ## Author: Bodify
+
+embeds.xml
+
 modules\combat.lua
 modules\castbar.lua
 modules\totem.lua
@@ -16,5 +19,6 @@ modules\absorb.lua
 modules\pet.lua
 modules\quest.lua
 modules\auras.lua
+
 gui.lua
 BetterBlizzPlates.lua
