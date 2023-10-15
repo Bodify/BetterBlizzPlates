@@ -263,6 +263,10 @@ local function SetPandemicGlow(buff, aura, spellName, spellId)
             buff.expirationTime = aura.expirationTime;
             trackedBuffs[aura.auraInstanceID] = buff;
             StartCheckBuffsTimer();
+        else
+            if buff.PandemicGlow then
+                buff.PandemicGlow:Hide()
+            end
         end
     end
 end
