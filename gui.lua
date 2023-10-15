@@ -2771,12 +2771,14 @@ local function guiNameplateAuras()
         if self:GetChecked() then
             BetterBlizzPlatesDB.nameplateAuraSquare = false
             nameplateAuraSquare:SetChecked(false)
+            BBP.RefreshAllNameplates()
         end
     end)
     nameplateAuraSquare:HookScript("OnClick", function (self)
         if self:GetChecked() then
             BetterBlizzPlatesDB.nameplateAuraTaller = false
             nameplateAuraTaller:SetChecked(false)
+            BBP.RefreshAllNameplates()
         end
     end)
 --[=[
