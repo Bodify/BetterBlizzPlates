@@ -2796,18 +2796,6 @@ local function guiNameplateAuras()
     local nameplateAuraHeightGap = CreateSlider(enableNameplateAuraCustomisation, "Vertical gap between auras", 0, 18, 1, "nameplateAuraHeightGap")
     nameplateAuraHeightGap:SetPoint("TOP", nameplateAuraWidthGap,  "BOTTOM", 0, -15)
 
-    local left = CreateSlider(enableNameplateAuraCustomisation, "left", 0.01, 1, 0.01, "left")
-    left:SetPoint("TOP", nameplateAuraHeightGap,  "BOTTOM", 0, -15)
-
-    local right = CreateSlider(enableNameplateAuraCustomisation, "rights", 0.01, 1, 0.01, "right")
-    right:SetPoint("TOP", left,  "BOTTOM", 0, -15)
-
-    local top = CreateSlider(enableNameplateAuraCustomisation, "top", 0.01, 1, 0.01, "top")
-    top:SetPoint("TOP", right,  "BOTTOM", 0, -15)
-
-    local bottom = CreateSlider(enableNameplateAuraCustomisation, "bottom", 0.01, 1, 0.01, "bottom")
-    bottom:SetPoint("TOP", top,  "BOTTOM", 0, -15)
-
     local imintoodeep = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     imintoodeep:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -50, -220)
     imintoodeep:SetText("will add more settings, very beta\nwould love feedback if u notice anything weird")

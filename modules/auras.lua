@@ -38,6 +38,9 @@ local function CheckBuffs()
                     if BetterBlizzPlatesDB.nameplateAuraSquare then
                         buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
                         buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
+                    elseif BetterBlizzPlatesDB.nameplateAuraTaller then
+                        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10.5, 8);
+                        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10.5, -8);
                     else
                         buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10.5, 7.5);
                         buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10.5, -7.5);
@@ -165,12 +168,27 @@ function CustomBuffLayoutChildren(container, children, ignored, expandToHeight)
     return totalChildrenWidth, totalChildrenHeight + currentRow * maxRowHeight, hasExpandableChild
 end
 
-local function SetSquareAura(buff)
+local auraSizeChanged = false
+local function SetAuraDimensions(buff)
     if BetterBlizzPlatesDB.nameplateAuraSquare then
+        auraSizeChanged = true
         buff:SetSize(20, 20);
         buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1);
         buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1);
         buff.Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9);
+    elseif BetterBlizzPlatesDB.nameplateAuraTaller then
+        auraSizeChanged = true
+        buff:SetSize(20, 15.5);
+        buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1);
+        buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1);
+        buff.Icon:SetTexCoord(0.05, 0.95, 0.15, 0.82);
+    else
+        if auraSizeChanged then
+            buff:SetSize(20, 14);
+            buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1);
+            buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1);
+            buff.Icon:SetTexCoord(0.05, 0.95, 0.1, 0.6);
+        end
     end
 end
 
@@ -214,6 +232,9 @@ local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
                     if BetterBlizzPlatesDB.nameplateAuraSquare then
                         buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
                         buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
+                    elseif BetterBlizzPlatesDB.nameplateAuraTaller then
+                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 6.5);
+                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -6.5);
                     else
                         buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 6);
                         buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -6);
@@ -262,6 +283,9 @@ local function SetBuffEmphasisBorder(buff, aura, isPlayerUnit, isEnemyUnit, spel
                     if BetterBlizzPlatesDB.nameplateAuraSquare then
                         buff.BorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
                         buff.BorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
+                    elseif BetterBlizzPlatesDB.nameplateAuraTaller then
+                        buff.BorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7.5);
+                        buff.BorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7.5);
                     else
                         buff.BorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7);
                         buff.BorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7);
@@ -541,8 +565,8 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         local spellName = FetchSpellName(aura.spellId)
         local spellId = aura.spellId
 
-        -- Square Aura
-        SetSquareAura(buff);
+        -- Set aura dimensions
+        SetAuraDimensions(buff);
 
         -- Blue buff border setting
         SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit, aura);
