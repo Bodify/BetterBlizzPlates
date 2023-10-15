@@ -73,7 +73,7 @@ function CustomBuffLayoutChildren(container, children, ignored, expandToHeight)
 
     -- Define the spacing and row parameters
     local horizontalSpacing = BetterBlizzPlatesDB.nameplateAuraWidthGap
-    local verticalSpacing = -28 - BetterBlizzPlatesDB.nameplateAuraHeightGap - (BetterBlizzPlatesDB.nameplateAuraSquare and 12 or 0)
+    local verticalSpacing = -28 - BetterBlizzPlatesDB.nameplateAuraHeightGap - (BetterBlizzPlatesDB.nameplateAuraSquare and 12 or 0) - (BetterBlizzPlatesDB.nameplateAuraTaller and 3 or 0)
     local currentRow = 0
     local maxBuffsPerRow = BetterBlizzPlatesDB.nameplateAuraRowAmount
     local maxRowHeight = 0
