@@ -43,7 +43,7 @@ function BBP.ArenaIndicator1(frame)
                 end
 
                 if not frame.arenaNumberText then 
-                    frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                    frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
 
@@ -70,7 +70,7 @@ function BBP.ArenaIndicator2(frame)
                 local r, g, b, a = frame.name:GetTextColor()
 
                 if not frame.arenaNumberText then 
-                    frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                    frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
 
@@ -103,7 +103,7 @@ function BBP.ArenaIndicator3(frame)
                 end
 
                 if not frame.specNameText then
-                    frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                    frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
                 end
 
@@ -133,12 +133,12 @@ function BBP.ArenaIndicator4(frame)
                 end
 
                 if not frame.specNameText then
-                    frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                    frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
                 end
 
                 if not frame.arenaNumberText then 
-                    frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                    frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
 
@@ -176,7 +176,7 @@ function BBP.ArenaIndicator5(frame)
                 end
 
                 if not frame.specNameText then
-                    frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                    frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
                 end
 
@@ -204,7 +204,7 @@ function BBP.PartyIndicator1(frame)
                 local r, g, b, a = frame.name:GetTextColor()
 
                 if not frame.arenaNumberText then 
-                    frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                    frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
 
@@ -227,7 +227,7 @@ function BBP.PartyIndicator2(frame)
                 local r, g, b, a = frame.name:GetTextColor()
 
                 if not frame.arenaNumberText then 
-                    frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                    frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
 
@@ -261,7 +261,7 @@ function BBP.PartyIndicator3(frame)
                 end
 
                 if not frame.specNameText then
-                    frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                    frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
                 end
 
@@ -296,12 +296,12 @@ function BBP.PartyIndicator4(frame)
                 end
 
                 if not frame.specNameText then
-                    frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                    frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
                 end
 
                 if not frame.arenaNumberText then 
-                    frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                    frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
 
@@ -340,7 +340,7 @@ function BBP.PartyIndicator5(frame)
                 end
 
                 if not frame.specNameText then
-                    frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                    frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
                 end
 
@@ -367,7 +367,7 @@ function BBP.TestArenaIndicator0(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.arenaNumberText then 
-                frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
@@ -387,7 +387,7 @@ function BBP.TestArenaIndicator1(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.arenaNumberText then 
-                frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
@@ -412,7 +412,7 @@ function BBP.TestArenaIndicator2(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.arenaNumberText then 
-                frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
@@ -436,7 +436,7 @@ function BBP.TestArenaIndicator3(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.specNameText then
-                frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
             end
 
@@ -457,12 +457,12 @@ function BBP.TestArenaIndicator4(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.specNameText then
-                frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
             end
 
             if not frame.arenaNumberText then 
-                frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
@@ -491,7 +491,7 @@ function BBP.TestArenaIndicator5(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.specNameText then
-                frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
             end
 
@@ -513,7 +513,7 @@ function BBP.TestPartyIndicator0(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.arenaNumberText then 
-                frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
@@ -534,7 +534,7 @@ function BBP.TestPartyIndicator1(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.arenaNumberText then 
-                frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
@@ -556,7 +556,7 @@ function BBP.TestPartyIndicator2(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.arenaNumberText then 
-                frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
@@ -576,7 +576,7 @@ function BBP.TestPartyIndicator3(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.specNameText then
-                frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
             end
 
@@ -597,12 +597,12 @@ function BBP.TestPartyIndicator4(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.specNameText then
-                frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
             end
 
             if not frame.arenaNumberText then 
-                frame.arenaNumberText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
             end
 
@@ -627,7 +627,7 @@ function BBP.TestPartyIndicator5(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.specNameText then
-                frame.specNameText = frame.healthBar:CreateFontString(nil, "OVERLAY")
+                frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
             end
 
