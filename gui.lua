@@ -359,7 +359,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         elseif element == "castTimer" then
                             --not rdy
                         -- Cast bar icon pos and scale
-                        elseif element == "castBarIconXPos" or element == "castBarIconYPos" or element == "castBarIconScale" then
+                        elseif element == "castBarIconXPos" or element == "castBarIconYPos" then
                             if axis then
                                 local yOffset = BetterBlizzPlatesDB.castBarDragonflightShield and -2 or 0
                                 frame.castBar.Icon:ClearAllPoints()
@@ -367,6 +367,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                                 frame.castBar.BorderShield:ClearAllPoints()
                                 frame.castBar.BorderShield:SetPoint("CENTER", frame.castBar, BetterBlizzPlatesDB.castBarIconAnchor, xPos, yPos + yOffset)
                             else
+                                BetterBlizzPlatesDB.castBarIconScale = value
                                 frame.castBar.Icon:SetScale(value)
                                 frame.castBar.BorderShield:SetScale(value)
                             end
@@ -425,12 +426,89 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     if not BBP.checkCombatAndWarn() then
                         BBP.ApplyNameplateWidth()
                     end
+
+                -- Absorb Indicator Pos and Scale
+                elseif element == "absorbIndicatorXPos" then
+                    BetterBlizzPlatesDB.absorbIndicatorXPos = value
+                elseif element == "absorbIndicatorYPos" then
+                    BetterBlizzPlatesDB.absorbIndicatorYPos = value
+                elseif element == "absorbIndicatorScale" then
+                    BetterBlizzPlatesDB.absorbIndicatorScale = value
+                -- Combat Indicator Pos and Scale
+                elseif element == "combatIndicatorXPos" then
+                    BetterBlizzPlatesDB.combatIndicatorXPos = value
+                elseif element == "combatIndicatorYPos" then
+                    BetterBlizzPlatesDB.combatIndicatorYPos = value
+                elseif element == "combatIndicatorScale" then
+                    BetterBlizzPlatesDB.combatIndicatorScale = value
+                -- Healer Indicator Pos and Scale
+                elseif element == "healerIndicatorXPos" then
+                    BetterBlizzPlatesDB.healerIndicatorXPos = value
+                elseif element == "healerIndicatorYPos" then
+                    BetterBlizzPlatesDB.healerIndicatorYPos = value
+                elseif element == "healerIndicatorScale" then
+                    BetterBlizzPlatesDB.healerIndicatorScale = value
+                -- Pet Indicator Pos and Scale
+                elseif element == "petIndicatorXPos" then
+                    BetterBlizzPlatesDB.petIndicatorXPos = value
+                elseif element == "petIndicatorYPos" then
+                    BetterBlizzPlatesDB.petIndicatorYPos = value
+                elseif element == "petIndicatorScale" then
+                    BetterBlizzPlatesDB.petIndicatorScale = value
+                -- Quest Indicator Pos and Scale
+                elseif element == "questIndicatorXPos" then
+                    BetterBlizzPlatesDB.questIndicatorXPos = value
+                elseif element == "questIndicatorYPos" then
+                    BetterBlizzPlatesDB.questIndicatorYPos = value
+                elseif element == "questIndicatorScale" then
+                    BetterBlizzPlatesDB.questIndicatorScale = value
+                -- Execute Indicator Pos and Scale
+                elseif element == "executeIndicatorXPos" then
+                    BetterBlizzPlatesDB.executeIndicatorXPos = value
+                elseif element == "executeIndicatorYPos" then
+                    BetterBlizzPlatesDB.executeIndicatorYPos = value
+                elseif element == "executeIndicatorScale" then
+                    BetterBlizzPlatesDB.executeIndicatorScale = value
+                -- Target Indicator Pos and Scale
+                elseif element == "targetIndicatorXPos" then
+                    BetterBlizzPlatesDB.targetIndicatorXPos = value
+                elseif element == "targetIndicatorYPos" then
+                    BetterBlizzPlatesDB.targetIndicatorYPos = value
+                elseif element == "targetIndicatorScale" then
+                    BetterBlizzPlatesDB.targetIndicatorScale = value
+                -- Focus Target Indicator Pos and Scale
+                elseif element == "focusTargetIndicatorXPos" then
+                    BetterBlizzPlatesDB.focusTargetIndicatorXPos = value
+                elseif element == "focusTargetIndicatorYPos" then
+                    BetterBlizzPlatesDB.focusTargetIndicatorYPos = value
+                elseif element == "focusTargetIndicatorScale" then
+                    BetterBlizzPlatesDB.focusTargetIndicatorScale = value
+                -- Raidmarker Indicator Pos and Scale
+                elseif element == "raidmarkIndicatorXPos" then
+                    BetterBlizzPlatesDB.raidmarkIndicatorXPos = value
+                elseif element == "raidmarkIndicatorYPos" then
+                    BetterBlizzPlatesDB.raidmarkIndicatorYPos = value
+                elseif element == "raidmarkIndicatorScale" then
+                    BetterBlizzPlatesDB.raidmarkIndicatorScale = value
+                -- Totem Indicator Pos and Scale
+                elseif element == "totemIndicatorXPos" then
+                    BetterBlizzPlatesDB.totemIndicatorXPos = value
+                elseif element == "totemIndicatorYPos" then
+                    BetterBlizzPlatesDB.totemIndicatorYPos = value
+                elseif element == "totemIndicatorScale" then
+                    BetterBlizzPlatesDB.totemIndicatorScale = value
                 elseif element == "executeIndicatorThreshold" then
                     BetterBlizzPlatesDB.executeIndicatorThreshold = value
                 elseif element == "castBarHeight" then
                     BetterBlizzPlatesDB.castBarHeight = value
                 elseif element == "castBarTextScale" then
                     BetterBlizzPlatesDB.castBarTextScale = value
+                elseif element == "castBarIconScale" then
+                    BetterBlizzPlatesDB.castBarIconScale = value
+                elseif element == "castBarIconXPos" then
+                    BetterBlizzPlatesDB.castBarIconXPos = value
+                elseif element == "castBarIconYPos" then
+                    BetterBlizzPlatesDB.castBarIconYPos = value
                 elseif element == "castBarEmphasisSparkHeight" then
                     BetterBlizzPlatesDB.castBarEmphasisSparkHeight = value
                 elseif element == "castBarEmphasisIconScale" then
@@ -496,16 +574,12 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BBP.RefreshBuffFrame()
                 elseif element == "left" then
                     BetterBlizzPlatesDB.left = value
-                    BBP.RefreshBuffFrame()
                 elseif element == "right" then
                     BetterBlizzPlatesDB.right = value
-                    BBP.RefreshBuffFrame()
                 elseif element == "top" then
                     BetterBlizzPlatesDB.top = value
-                    BBP.RefreshBuffFrame()
                 elseif element == "bottom" then
                     BetterBlizzPlatesDB.bottom = value
-                    BBP.RefreshBuffFrame()
                     -- Nameplate scales
                 elseif element == "nameplateMaxScale" then
                     if not BBP.checkCombatAndWarn() then
@@ -598,6 +672,18 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 -- Party spec scale
                 elseif element == "partySpecScale" then
                     BetterBlizzPlatesDB.partySpecScale = value
+                    BBP.RefreshAllNameplatesLightVer()
+                elseif element == "arenaIdXPos" then
+                    BetterBlizzPlatesDB.arenaIdXPos = value
+                    BBP.RefreshAllNameplatesLightVer()
+                elseif element == "arenaIdYPos" then
+                    BetterBlizzPlatesDB.arenaIdYPos = value
+                    BBP.RefreshAllNameplatesLightVer()
+                elseif element == "arenaSpecXPos" then
+                    BetterBlizzPlatesDB.arenaSpecXPos = value
+                    BBP.RefreshAllNameplatesLightVer()
+                elseif element == "arenaSpecYPos" then
+                    BetterBlizzPlatesDB.arenaSpecYPos = value
                     BBP.RefreshAllNameplatesLightVer()
                 -- Nameplate Widths
                 elseif element == "nameplateFriendlyWidth" then
@@ -1315,7 +1401,7 @@ local function guiGeneralTab()
     local arenaIndicatorTestMode = CreateCheckbox("arenaIndicatorTestMode", "Test", BetterBlizzPlates, BBP.RefreshAllNameplates)           
     arenaIndicatorTestMode:SetPoint("LEFT", arenaSettingsText, "RIGHT", 5, 0)
 
-    local arenaIDScale = CreateSlider(BetterBlizzPlates, "Arena ID Size", 1, 4, 0.1, "arenaIDScale")
+    local arenaIDScale = CreateSlider(BetterBlizzPlates, "Arena ID Size", 0.5, 4, 0.1, "arenaIDScale")
     arenaIDScale:SetPoint("TOPLEFT", arenaModeDropdown, "BOTTOMLEFT", 20, -9)
     CreateTooltip(arenaIDScale, "Size of the arena ID text on top of nameplate during arena.")
 
@@ -1338,7 +1424,7 @@ local function guiGeneralTab()
         {0.04, 0.76, 1, 1}
     )
 
-    local partyIDScale = CreateSlider(BetterBlizzPlates, "Party ID Size", 1, 4, 0.1, "partyIDScale")
+    local partyIDScale = CreateSlider(BetterBlizzPlates, "Party ID Size", 0.5, 4, 0.1, "partyIDScale")
     partyIDScale:SetPoint("TOPLEFT", partyModeDropdown, "BOTTOMLEFT", 20, -9)
 
     local partySpecScale = CreateSlider(BetterBlizzPlates, "Spec Size", 0.5, 3, 0.1, "partySpecScale")
@@ -1725,8 +1811,8 @@ local function guiPositionAndScale()
 
     local raidmarkIcon = contentFrame:CreateTexture(nil, "ARTWORK")
     raidmarkIcon:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcon_3")
-    raidmarkIcon:SetSize(38, 38)
-    raidmarkIcon:SetPoint("BOTTOM", anchorSubRaidmark, "TOP", 0, 0)
+    raidmarkIcon:SetSize(32, 32)
+    raidmarkIcon:SetPoint("BOTTOM", anchorSubRaidmark, "TOP", 0, 3)
 
     local raidmarkIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.1, "raidmarkIndicatorScale")
     raidmarkIndicatorScale:SetPoint("TOP", anchorSubRaidmark, "BOTTOM", 0, -15)
@@ -1763,7 +1849,7 @@ local function guiPositionAndScale()
     local questIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
     questIcon2:SetAtlas("smallquestbang")
     questIcon2:SetSize(44, 44)
-    questIcon2:SetPoint("BOTTOM", anchorSubquest, "TOP", 0, 0)
+    questIcon2:SetPoint("BOTTOM", anchorSubquest, "TOP", 0, -3)
 
     local questIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.1, "questIndicatorScale")
     questIndicatorScale:SetPoint("TOP", anchorSubquest, "BOTTOM", 0, -15)
@@ -1799,8 +1885,8 @@ local function guiPositionAndScale()
 
     local focusIcon = contentFrame:CreateTexture(nil, "ARTWORK")
     focusIcon:SetAtlas("Waypoint-MapPin-Untracked")
-    focusIcon:SetSize(44, 44)
-    focusIcon:SetPoint("BOTTOM", anchorSubFocus, "TOP", 0, 0)
+    focusIcon:SetSize(40, 40)
+    focusIcon:SetPoint("BOTTOM", anchorSubFocus, "TOP", 0, -2)
 
     local focusTargetIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.1, "focusTargetIndicatorScale")
     focusTargetIndicatorScale:SetPoint("TOP", anchorSubFocus, "BOTTOM", 0, -15)
@@ -1971,6 +2057,59 @@ local function guiPositionAndScale()
         executeIndicatorToggle()
     end)
 
+    ----------------------
+    -- Arena Indicator
+    ----------------------
+    local anchorSubArena = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubArena:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, thirdLineY)
+    anchorSubArena:SetText("Arena Indicator")
+
+    CreateBorderBox(anchorSubArena)
+
+    local arenaIndicator = contentFrame:CreateTexture(nil, "ARTWORK")
+    arenaIndicator:SetAtlas("questbonusobjective")
+    arenaIndicator:SetSize(32, 32)
+    arenaIndicator:SetPoint("BOTTOM", anchorSubArena, "TOP", 0, 3)
+
+    local arenaIndicatorXPos = CreateSlider(contentFrame, "ID x offset", -50, 50, 1, "arenaIdXPos", "X")
+    arenaIndicatorXPos:SetPoint("TOP", anchorSubArena, "BOTTOM", 0, -15)
+
+    local arenaIndicatorYPos = CreateSlider(contentFrame, "ID y offset", -50, 50, 1, "arenaIdYPos", "Y")
+    arenaIndicatorYPos:SetPoint("TOP", arenaIndicatorXPos, "BOTTOM", 0, -15)
+
+    local arenaSpecXPos = CreateSlider(contentFrame, "Spec x offset", -50, 50, 1, "arenaSpecXPos", "X")
+    arenaSpecXPos:SetPoint("TOP", arenaIndicatorYPos, "BOTTOM", 0, -15)
+
+    local arenaSpecYPos = CreateSlider(contentFrame, "Spec y offset", -50, 50, 1, "arenaSpecYPos", "Y")
+    arenaSpecYPos:SetPoint("TOP", arenaSpecXPos, "BOTTOM", 0, -15)
+
+    local arenaIdAnchorDropdown = CreateAnchorDropdown(
+        "arenaIdAnchorDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "arenaIdAnchor",
+        function(arg1)
+        BBP.RefreshAllNameplates()
+    end,
+        { anchorFrame = arenaSpecYPos, x = -16, y = -31, label = "ID Anchor" }
+    )
+
+    local arenaSpecAnchorDropdown = CreateAnchorDropdown(
+        "arenaSpecAnchorDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "arenaSpecAnchor",
+        function(arg1)
+        BBP.RefreshAllNameplates()
+    end,
+        { anchorFrame = arenaIdAnchorDropdown, x = 0, y = -41, label = "Spec Anchor" }
+    )
+
+    local arenaIndicatorTestMode2 = CreateCheckbox("arenaIndicatorTestMode", "Test", contentFrame)
+    arenaIndicatorTestMode2:SetPoint("TOPLEFT", arenaSpecAnchorDropdown, "BOTTOMLEFT", 16, 8)
+
+    ----
+
     local reloadUiButton2 = CreateFrame("Button", nil, BetterBlizzPlatesSubPanel, "UIPanelButtonTemplate")
     reloadUiButton2:SetText("Reload UI")
     reloadUiButton2:SetWidth(85)
@@ -2023,7 +2162,7 @@ local function guiCastbar()
     local castBarIconScale = CreateSlider(enableCastbarCustomization, "Castbar Icon Size", 0.1, 2.5, 0.1, "castBarIconScale")
     castBarIconScale:SetPoint("TOPLEFT", castBarDragonflightShield, "BOTTOMLEFT", 12, -10)
 
-    local castBarIconXPos = CreateSlider(enableCastbarCustomization, "Icon x offset", -50, 50, 1, "castBarIconScale", "X")
+    local castBarIconXPos = CreateSlider(enableCastbarCustomization, "Icon x offset", -50, 50, 1, "castBarIconXPos", "X")
     castBarIconXPos:SetPoint("TOPLEFT", castBarIconScale, "BOTTOMLEFT", 0, -15)
 
     local castBarIconYPos = CreateSlider(enableCastbarCustomization, "Icon y offset", -50, 50, 1, "castBarIconYPos", "Y")
@@ -2855,7 +2994,7 @@ local function guiMoreBlizzSettings()
     stackingNameplatesText:SetPoint("TOPLEFT", guiMoreBlizzSettings, "TOPLEFT", 13, -20)
     stackingNameplatesText:SetText("Stacking nameplate overlap amount")
 
-    local nameplateOverlapH = CreateSlider(guiMoreBlizzSettings, "Horizontal overlap", 0.05, 1, 0.05, "nameplateOverlapH")
+    local nameplateOverlapH = CreateSlider(guiMoreBlizzSettings, "Horizontal overlap", 0.05, 1, 0.01, "nameplateOverlapH")
     nameplateOverlapH:SetPoint("TOP", stackingNameplatesText, "BOTTOM", -15, -20)
     CreateTooltip(nameplateOverlapH, "Space between nameplates horizontally")
 
@@ -2867,7 +3006,7 @@ local function guiMoreBlizzSettings()
         BBP.ResetToDefaultValue(nameplateOverlapH, "nameplateOverlapH")
     end)
 
-    local nameplateOverlapV = CreateSlider(guiMoreBlizzSettings, "Vertical overlap", 0.05, 1.1, 0.05, "nameplateOverlapV")
+    local nameplateOverlapV = CreateSlider(guiMoreBlizzSettings, "Vertical overlap", 0.05, 1.1, 0.01, "nameplateOverlapV")
     nameplateOverlapV:SetPoint("TOPLEFT", nameplateOverlapH, "BOTTOMLEFT", 0, -20)
     CreateTooltip(nameplateOverlapV, "Space between nameplates vertically")
 

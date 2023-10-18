@@ -67,6 +67,12 @@ local defaultSettings = {
     partyIndicatorModeThree = false,
     partyIndicatorModeFour = false,
     partyIndicatorModeFive = false,
+    arenaIdXPos = 0,
+    arenaIdYPos = 0,
+    arenaSpecXPos = 0,
+    arenaSpecYPos = 0,
+    arenaIdAnchor = "TOP",
+    arenaSpecAnchor = "TOP",
     -- Absorb Indicator
     absorbIndicatorTestMode = false,
     absorbIndicator = false,
