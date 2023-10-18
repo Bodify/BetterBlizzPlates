@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.18.1"
+local addonUpdates = "1.18.2"
 BBP.variablesLoaded = false
 
 local defaultSettings = {
@@ -446,7 +446,7 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 local function SendUpdateMessage()
     C_Timer.After(7, function()
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a More fonts and textures available aka LibSharedMedia-3.0 support. Actually this time|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_8:0|t. Access settings with /bbp")
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Fixed slider values not saving. Thank you for reports. Access settings with /bbp")
     end)
 end
 
@@ -457,12 +457,6 @@ local function CheckForUpdate()
         return
     end
     if not BetterBlizzPlatesDB.updates or BetterBlizzPlatesDB.updates ~= addonUpdates then
-        if BetterBlizzPlatesDB.nameplateAuraAnchor ~= "BOTTOMLEFT" then
-            BetterBlizzPlatesDB.nameplateAuraAnchor = "BOTTOMLEFT"
-        end
-        if BetterBlizzPlatesDB.nameplateAuraRelativeAnchor ~= "TOPLEFT" then
-            BetterBlizzPlatesDB.nameplateAuraRelativeAnchor = "TOPLEFT"
-        end
         SendUpdateMessage()
         BetterBlizzPlatesDB.updates = addonUpdates
     end
