@@ -2652,6 +2652,11 @@ local function guiNameplateAuras()
 
     local enableNameplateAuraCustomisation = CreateCheckbox("enableNameplateAuraCustomisation", "Enable Aura Settings (BETA)", contentFrame)
     enableNameplateAuraCustomisation:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 50, 75)
+    enableNameplateAuraCustomisation:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            BetterBlizzPlatesDB.hideNameplateAuras = false
+        end
+    end)
 
     --------------------------
     -- Enemy Nameplates
