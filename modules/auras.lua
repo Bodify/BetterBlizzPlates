@@ -383,8 +383,9 @@ function BBP.BBPShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterAll = BetterBlizzPlatesDB["friendlyNpBuffFilterAll"]
             local filterWatchlist = BetterBlizzPlatesDB["friendlyNpBuffFilterWatchList"] and BBP.isInWhitelist(spellName, spellId)
             local filterLessMinite = BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
+            local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpBuffFilterOnlyMe"] and (caster ~= "player" and caster ~= "pet")
             if filterAll or filterWatchlist then
-                if filterLessMinite then return end
+                if filterLessMinite or filterOnlyMe then return end
                 if BBP.isInBlacklist(spellName, spellId) then return end
                 return true
             end

@@ -230,6 +230,7 @@ local defaultSettings = {
     friendlyNpBuffFilterAll = false,
     friendlyNpBuffFilterWatchList = false,
     friendlyNpBuffFilterLessMinite = false,
+    friendlyNpBuffFilterOnlyMe = false,
     friendlyNpBuffPurgeGlow = false,
     friendlyNpBuffBlueBorder = false,
     friendlyNpBuffEmphasisedBorder = false,
