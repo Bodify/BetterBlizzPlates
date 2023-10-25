@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.18.3"
+local addonUpdates = "1.19"
 BBP.variablesLoaded = false
 
 local defaultSettings = {
@@ -181,6 +181,28 @@ local defaultSettings = {
     castBarIconYPos = 0,
     castBarTextScale = 1,
     showCastbarIfTarget = false,
+    castBarRecolor = false,
+    castBarRecolorInterrupt = false,
+    castBarCastColor = {
+		1,
+		0.8431373238563538,
+		0.2000000178813934,
+	},
+    castBarChanneledColor = {
+		0.4862745404243469,
+		1,
+		0.294117659330368,
+	},
+    castBarNoInterruptColor = {
+		1,
+		0,
+		0.01568627543747425,
+	},
+    castBarDelayedInterruptColor = {
+		1,
+		0.4784314036369324,
+		0.9568628072738647,
+	},
     -- Nameplate aura settings
     enableNameplateAuraCustomisation = false,
     nameplateAurasCenteredAnchor = false,
@@ -447,7 +469,7 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 local function SendUpdateMessage()
     C_Timer.After(7, function()
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Added \"Only mine\" buff filter for friendly nameplates. Access settings with /bbp")
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Added more castbar settings (Recolor + Interrupt mode) and changed up how coloring works (should look more color'y now). Access settings with /bbp")
     end)
 end
 
@@ -1655,6 +1677,7 @@ Frame:SetScript("OnEvent", function(...)
     BBP.ApplyNameplateWidth()
 
     SetCVarsOnLogin()
+    BBP.InitializeInterruptSpellID() --possibly not needed, talent events seem to always run on login?
 
     -- Re-open options when clicking reload button
     if BetterBlizzPlatesDB.reopenOptions then
@@ -1722,10 +1745,14 @@ end)
 local function OnVariablesLoaded(self, event)
     if event == "VARIABLES_LOADED" then
         BBP.variablesLoaded = true
+    elseif event == "TRAIT_CONFIG_UPDATED" or event == "PLAYER_TALENT_UPDATE" then
+        BBP.InitializeInterruptSpellID()
     end
 end
 
 -- Register the frame to listen for the "VARIABLES_LOADED" event
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("VARIABLES_LOADED")
+eventFrame:RegisterEvent("TRAIT_CONFIG_UPDATED")
+eventFrame:RegisterEvent("PLAYER_TALENT_UPDATE")
 eventFrame:SetScript("OnEvent", OnVariablesLoaded)

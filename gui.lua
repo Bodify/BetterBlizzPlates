@@ -6,6 +6,7 @@ BetterBlizzPlates = nil
 local anchorPoints = {"CENTER", "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT"}
 local targetIndicatorAnchorPoints = {"TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT"}
 local pixelsBetweenBoxes = 5
+local pixelsBetweenBoxedWSlider = -8
 local pixelsOnFirstBox = -1
 
 local tooltips = {
@@ -2145,7 +2146,7 @@ local function guiCastbar()
     how2usecastemphasis:SetText("Add name or spell ID. Case-insensitive.\n \n \nAdd a comment to the entry with slash\nfor example 1337/comment or polymorph/kick this\n \nType a name or spell ID already in list to delete it")
 
     local castbarSettingsText = guiCastbar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    castbarSettingsText:SetPoint("LEFT", guiCastbar, "TOPRIGHT", -240, -20)
+    castbarSettingsText:SetPoint("LEFT", guiCastbar, "TOPRIGHT", -250, -13)
     castbarSettingsText:SetText("Castbar settings")
     local castbarSettingsIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
     castbarSettingsIcon:SetAtlas("powerswirlanimation-starburst-soulbinds")
@@ -2182,8 +2183,96 @@ local function guiCastbar()
     local castBarTextScale = CreateSlider(enableCastbarCustomization, "Castbar text size", 0.5, 2.5, 0.1, "castBarTextScale")
     castBarTextScale:SetPoint("TOPLEFT", castBarHeight, "BOTTOMLEFT", 0, -15)
 
+    local castBarRecolor = CreateCheckbox("castBarRecolor", "Re-color castbar", enableCastbarCustomization)
+    castBarRecolor:SetPoint("TOPLEFT", castBarTextScale, "BOTTOMLEFT", -12, -3)
+
+    local function UpdateColorSquare(icon, r, g, b)
+        if r and g and b then
+            icon:SetVertexColor(r, g, b)
+        end
+    end
+
+    local function OpenColorPicker(colorType, icon)
+        local r, g, b = unpack(BetterBlizzPlatesDB[colorType] or {1, 1, 1})
+        ColorPickerFrame.previousValues = { r, g, b }
+        UpdateColorSquare(icon, r, g, b)
+
+        ColorPickerFrame.func = function()
+            r, g, b = ColorPickerFrame:GetColorRGB()
+            BetterBlizzPlatesDB[colorType] = { r, g, b }
+            BBP.RefreshAllNameplates()
+            UpdateColorSquare(icon, r, g, b)
+        end
+
+        ColorPickerFrame.cancelFunc = function()
+            r, g, b = unpack(ColorPickerFrame.previousValues)
+            BetterBlizzPlatesDB[colorType] = { r, g, b }
+            UpdateColorSquare(icon, r, g, b)
+        end
+
+        ColorPickerFrame:Show()
+    end
+
+    local castBarCastColor = CreateFrame("Button", nil, castBarRecolor, "UIPanelButtonTemplate")
+    castBarCastColor:SetText("Cast")
+    castBarCastColor:SetPoint("TOPLEFT", castBarRecolor, "BOTTOMRIGHT", 0, 3)
+    castBarCastColor:SetSize(45, 20)
+    local castBarCastColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
+    castBarCastColorIcon:SetAtlas("newplayertutorial-icon-key")
+    castBarCastColorIcon:SetSize(18, 17)
+    castBarCastColorIcon:SetPoint("LEFT", castBarCastColor, "RIGHT", 0, -1)
+    UpdateColorSquare(castBarCastColorIcon, unpack(BetterBlizzPlatesDB["castBarCastColor"] or {1, 1, 1}))
+    castBarCastColor:SetScript("OnClick", function()
+        OpenColorPicker("castBarCastColor", castBarCastColorIcon)
+    end)
+
+    local castBarChanneledColor = CreateFrame("Button", nil, castBarRecolor, "UIPanelButtonTemplate")
+    castBarChanneledColor:SetText("Channel")
+    castBarChanneledColor:SetPoint("LEFT", castBarCastColor, "RIGHT", 24, 0)
+    castBarChanneledColor:SetSize(70, 20)
+    local castBarChanneledColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
+    castBarChanneledColorIcon:SetAtlas("newplayertutorial-icon-key")
+    castBarChanneledColorIcon:SetSize(18, 17)
+    castBarChanneledColorIcon:SetPoint("LEFT", castBarChanneledColor, "RIGHT", 0, -1)
+    UpdateColorSquare(castBarChanneledColorIcon, unpack(BetterBlizzPlatesDB["castBarChanneledColor"] or {1, 1, 1}))
+    castBarChanneledColor:SetScript("OnClick", function()
+        OpenColorPicker("castBarChanneledColor", castBarChanneledColorIcon)
+    end)
+
+    local castBarRecolorInterrupt = CreateCheckbox("castBarRecolorInterrupt", "Interrupt CD color", enableCastbarCustomization)
+    castBarRecolorInterrupt:SetPoint("TOPLEFT", castBarRecolor, "BOTTOMLEFT", 0, -23)
+    CreateTooltip(castBarRecolorInterrupt, "Checks if you have interrupt ready\nand color castbar thereafter.")
+
+    local castBarNoInterruptColor = CreateFrame("Button", nil, castBarRecolorInterrupt, "UIPanelButtonTemplate")
+    castBarNoInterruptColor:SetText("Interrupt on CD")
+    castBarNoInterruptColor:SetPoint("TOPLEFT", castBarRecolorInterrupt, "BOTTOMRIGHT", 0, 3)
+    castBarNoInterruptColor:SetSize(139, 20)
+    CreateTooltip(castBarNoInterruptColor, "Castbar color when interrupt is on CD")
+    local castBarNoInterruptColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
+    castBarNoInterruptColorIcon:SetAtlas("newplayertutorial-icon-key")
+    castBarNoInterruptColorIcon:SetSize(18, 17)
+    castBarNoInterruptColorIcon:SetPoint("LEFT", castBarNoInterruptColor, "RIGHT", 0, -1)
+    UpdateColorSquare(castBarNoInterruptColorIcon, unpack(BetterBlizzPlatesDB["castBarNoInterruptColor"] or {1, 1, 1}))
+    castBarNoInterruptColor:SetScript("OnClick", function()
+        OpenColorPicker("castBarNoInterruptColor", castBarNoInterruptColorIcon)
+    end)
+
+    local castBarDelayedInterruptColor = CreateFrame("Button", nil, castBarRecolorInterrupt, "UIPanelButtonTemplate")
+    castBarDelayedInterruptColor:SetText("Interrupt CD soon")
+    castBarDelayedInterruptColor:SetPoint("TOPLEFT", castBarNoInterruptColor, "BOTTOMLEFT", 0, -5)
+    castBarDelayedInterruptColor:SetSize(139, 20)
+    CreateTooltip(castBarDelayedInterruptColor, "Castbar color when interrupt is on CD but\nwill be ready before the cast ends")
+    local castBarDelayedInterruptColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
+    castBarDelayedInterruptColorIcon:SetAtlas("newplayertutorial-icon-key")
+    castBarDelayedInterruptColorIcon:SetSize(18, 17)
+    castBarDelayedInterruptColorIcon:SetPoint("LEFT", castBarDelayedInterruptColor, "RIGHT", 0, -1)
+    UpdateColorSquare(castBarDelayedInterruptColorIcon, unpack(BetterBlizzPlatesDB["castBarDelayedInterruptColor"] or {1, 1, 1}))
+    castBarDelayedInterruptColor:SetScript("OnClick", function()
+        OpenColorPicker("castBarDelayedInterruptColor", castBarDelayedInterruptColorIcon)
+    end)
+
     local castbarEmphasisSettingsText = guiCastbar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    castbarEmphasisSettingsText:SetPoint("LEFT", guiCastbar, "TOPRIGHT", -240, -260)
+    castbarEmphasisSettingsText:SetPoint("LEFT", guiCastbar, "TOPRIGHT", -250, -365)
     castbarEmphasisSettingsText:SetText("Castbar emphasis settings")
     local castbarSettingsEmphasisIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
     castbarSettingsEmphasisIcon:SetAtlas("powerswirlanimation-starburst-soulbinds")
@@ -2203,38 +2292,40 @@ local function guiCastbar()
     end)
     CreateTooltip(enableCastbarEmphasis, "Customize castbar for spells in the list")
 
-    local castBarEmphasisOnlyInterruptable = CreateCheckbox("castBarEmphasisOnlyInterruptable", "Only emphasize interruptable casts", enableCastbarEmphasis)
+    local castBarEmphasisOnlyInterruptable = CreateCheckbox("castBarEmphasisOnlyInterruptable", "Interruptable cast only", enableCastbarEmphasis)
     castBarEmphasisOnlyInterruptable:SetPoint("TOPLEFT", enableCastbarEmphasis, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+    CreateTooltip(castBarEmphasisOnlyInterruptable, "Only apply emphasis settings if the cast is interruptable")
 
-    local castBarEmphasisColor = CreateCheckbox("castBarEmphasisColor", "Cast Emphasis: Color castbar", enableCastbarEmphasis)
+    local castBarEmphasisColor = CreateCheckbox("castBarEmphasisColor", "Color castbar", enableCastbarEmphasis)
     castBarEmphasisColor:SetPoint("TOPLEFT", castBarEmphasisOnlyInterruptable, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local castBarEmphasisHeight = CreateCheckbox("castBarEmphasisHeight", "Cast Emphasis: Height", enableCastbarEmphasis)
-    castBarEmphasisHeight:SetPoint("TOPLEFT", castBarEmphasisColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local castBarEmphasisHealthbarColor = CreateCheckbox("castBarEmphasisHealthbarColor", "Color healthbar", enableCastbarEmphasis)
+    castBarEmphasisHealthbarColor:SetPoint("TOPLEFT", castBarEmphasisColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local castBarEmphasisIcon = CreateCheckbox("castBarEmphasisIcon", "Cast Emphasis: Icon Size", enableCastbarEmphasis)
-    castBarEmphasisIcon:SetPoint("TOPLEFT", castBarEmphasisHeight, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local castBarEmphasisHeight = CreateCheckbox("castBarEmphasisHeight", "Height", enableCastbarEmphasis)
+    castBarEmphasisHeight:SetPoint("TOPLEFT", castBarEmphasisHealthbarColor, "BOTTOMLEFT", 0, -4)
 
-    local castBarEmphasisText = CreateCheckbox("castBarEmphasisText", "Cast Emphasis: Text Size", enableCastbarEmphasis)
-    castBarEmphasisText:SetPoint("TOPLEFT", castBarEmphasisIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local castBarEmphasisIcon = CreateCheckbox("castBarEmphasisIcon", "Icon size", enableCastbarEmphasis)
+    castBarEmphasisIcon:SetPoint("TOPLEFT", castBarEmphasisHeight, "BOTTOMLEFT", 0, pixelsBetweenBoxedWSlider)
 
-    local castBarEmphasisSpark = CreateCheckbox("castBarEmphasisSpark", "Cast Emphasis: Spark", enableCastbarEmphasis)
-    castBarEmphasisSpark:SetPoint("TOPLEFT", castBarEmphasisText, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local castBarEmphasisText = CreateCheckbox("castBarEmphasisText", "Text size", enableCastbarEmphasis)
+    castBarEmphasisText:SetPoint("TOPLEFT", castBarEmphasisIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxedWSlider)
 
-    local castBarEmphasisHealthbarColor = CreateCheckbox("castBarEmphasisHealthbarColor", "Cast Emphasis: Color healthbar", enableCastbarEmphasis)
-    castBarEmphasisHealthbarColor:SetPoint("TOPLEFT", castBarEmphasisSpark, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local castBarEmphasisSpark = CreateCheckbox("castBarEmphasisSpark", "Spark", enableCastbarEmphasis)
+    castBarEmphasisSpark:SetPoint("TOPLEFT", castBarEmphasisText, "BOTTOMLEFT", 0, pixelsBetweenBoxedWSlider)
+    CreateTooltip(castBarEmphasisSpark, "Spark is the little texture at the end of the current cast progress")
 
     local castBarEmphasisHeightValue = CreateSlider(enableCastbarEmphasis, "Emphasis height", 4, 40, 0.1, "castBarEmphasisHeightValue", "Height")
-    castBarEmphasisHeightValue:SetPoint("TOPLEFT", castBarEmphasisHealthbarColor, "BOTTOMLEFT", 10, -10)
+    castBarEmphasisHeightValue:SetPoint("LEFT", castBarEmphasisHeight, "RIGHT", 50, -1)
 
     local castBarEmphasisIconScale = CreateSlider(enableCastbarEmphasis, "Emphasis Icon Size", 1, 3, 0.1, "castBarEmphasisIconScale")
-    castBarEmphasisIconScale:SetPoint("TOPLEFT", castBarEmphasisHeightValue, "BOTTOMLEFT", 0, -15)
+    castBarEmphasisIconScale:SetPoint("TOPLEFT", castBarEmphasisHeightValue, "BOTTOMLEFT", 0, -17)
 
     local castBarEmphasisTextScale = CreateSlider(enableCastbarEmphasis, "Emphasis text size", 0.5, 2.5, 0.1, "castBarEmphasisTextScale")
-    castBarEmphasisTextScale:SetPoint("TOPLEFT", castBarEmphasisIconScale, "BOTTOMLEFT", 0, -15)
+    castBarEmphasisTextScale:SetPoint("TOPLEFT", castBarEmphasisIconScale, "BOTTOMLEFT", 0, -17)
 
     local castBarEmphasisSparkHeight = CreateSlider(enableCastbarEmphasis, "Emphasis Spark Size", 25, 60, 1, "castBarEmphasisTextScale", "Height")
-    castBarEmphasisSparkHeight:SetPoint("TOPLEFT", castBarEmphasisTextScale, "BOTTOMLEFT", 0, -15)
+    castBarEmphasisSparkHeight:SetPoint("TOPLEFT", castBarEmphasisTextScale, "BOTTOMLEFT", 0, -17)
 
     enableCastbarCustomization:HookScript("OnClick", function (self)
         CheckAndToggleCheckboxes(enableCastbarCustomization)
@@ -2242,8 +2333,48 @@ local function guiCastbar()
             if BetterBlizzPlatesDB.enableCastbarEmphasis then
                 listFrame:SetAlpha(1)
             end
+            if BetterBlizzPlatesDB.castBarRecolor then
+                castBarCastColorIcon:SetAlpha(1)
+                castBarChanneledColorIcon:SetAlpha(1)
+            else
+                castBarCastColorIcon:SetAlpha(0)
+                castBarChanneledColorIcon:SetAlpha(0)
+            end
+            if BetterBlizzPlatesDB.castBarRecolorInterrupt then
+                castBarNoInterruptColorIcon:SetAlpha(1)
+                castBarDelayedInterruptColorIcon:SetAlpha(1)
+            else
+                castBarNoInterruptColorIcon:SetAlpha(0)
+                castBarDelayedInterruptColorIcon:SetAlpha(0)
+            end
         else
             listFrame:SetAlpha(0.5)
+            castBarCastColorIcon:SetAlpha(0)
+            castBarChanneledColorIcon:SetAlpha(0)
+            castBarNoInterruptColorIcon:SetAlpha(0)
+            castBarDelayedInterruptColorIcon:SetAlpha(0)
+        end
+    end)
+
+    castBarRecolor:HookScript("OnClick", function (self)
+        CheckAndToggleCheckboxes(castBarRecolor)
+        if self:GetChecked() then
+            castBarCastColorIcon:SetAlpha(1)
+            castBarChanneledColorIcon:SetAlpha(1)
+        else
+            castBarCastColorIcon:SetAlpha(0)
+            castBarChanneledColorIcon:SetAlpha(0)
+        end
+    end)
+
+    castBarRecolorInterrupt:HookScript("OnClick", function (self)
+        CheckAndToggleCheckboxes(castBarRecolorInterrupt)
+        if self:GetChecked() then
+            castBarNoInterruptColorIcon:SetAlpha(1)
+            castBarDelayedInterruptColorIcon:SetAlpha(1)
+        else
+            castBarNoInterruptColorIcon:SetAlpha(0)
+            castBarDelayedInterruptColorIcon:SetAlpha(0)
         end
     end)
 
@@ -2253,6 +2384,28 @@ local function guiCastbar()
                 listFrame:SetAlpha(1)
             else
                 listFrame:SetAlpha(0.5)
+            end
+            if BetterBlizzPlatesDB.castBarRecolor then
+                castBarCastColor:Enable()
+                castBarChanneledColor:Enable()
+                castBarCastColorIcon:SetAlpha(1)
+                castBarChanneledColorIcon:SetAlpha(1)
+            else
+                castBarCastColor:Disable()
+                castBarChanneledColor:Disable()
+                castBarCastColorIcon:SetAlpha(0)
+                castBarChanneledColorIcon:SetAlpha(0)
+            end
+            if BetterBlizzPlatesDB.castBarRecolorInterrupt then
+                castBarNoInterruptColor:Enable()
+                castBarDelayedInterruptColor:Enable()
+                castBarNoInterruptColorIcon:SetAlpha(1)
+                castBarDelayedInterruptColorIcon:SetAlpha(1)
+            else
+                castBarNoInterruptColor:Disable()
+                castBarDelayedInterruptColor:Disable()
+                castBarNoInterruptColorIcon:SetAlpha(0)
+                castBarDelayedInterruptColorIcon:SetAlpha(0)
             end
         else
             C_Timer.After(1, function()
