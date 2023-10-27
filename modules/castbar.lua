@@ -38,14 +38,14 @@ function BBP.InitializeInterruptSpellID()
 end
 
 -- Recheck interrupt spells when lock resummons/sacrifices pet
-local frame = CreateFrame("Frame")
+local recheckInterruptListener = CreateFrame("Frame")
 local function OnEvent(self, event, unit, _, spellID)
     if spellID == 691 or spellID == 108503 then
         BBP.InitializeInterruptSpellID()
     end
 end
-frame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-frame:SetScript("OnEvent", OnEvent)
+recheckInterruptListener:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+recheckInterruptListener:SetScript("OnEvent", OnEvent)
 
 function UpdateCastbarAnchors(frame, setupOptions)
     if not BBP.IsLegalNameplateUnit(frame) then return end
@@ -112,7 +112,9 @@ function BBP.CustomizeCastbar(unitToken)
     local castBarTexture = castBar:GetStatusBarTexture()
 
     if not BetterBlizzPlatesDB.castBarRecolor then
-        castBarTexture:SetDesaturated(false)
+        if castBarTexture then
+            castBarTexture:SetDesaturated(false)
+        end
     end
 
     castBar:SetStatusBarColor(1,1,1)
@@ -121,13 +123,17 @@ function BBP.CustomizeCastbar(unitToken)
     if UnitCastingInfo(unitToken) then
         spellName, _, _, _, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(unitToken)
         if BetterBlizzPlatesDB.castBarRecolor and not notInterruptible then
-            castBarTexture:SetDesaturated(true)
+            if castBarTexture then
+                castBarTexture:SetDesaturated(true)
+            end
             castBar:SetStatusBarColor(unpack(BetterBlizzPlatesDB.castBarCastColor))
         end
     elseif UnitChannelInfo(unitToken) then
         spellName, _, _, _, endTime, _, _, notInterruptible, spellID = UnitChannelInfo(unitToken)
         if BetterBlizzPlatesDB.castBarRecolor and not notInterruptible then
-            castBarTexture:SetDesaturated(true)
+            if castBarTexture then
+                castBarTexture:SetDesaturated(true)
+            end
             castBar:SetStatusBarColor(unpack(BetterBlizzPlatesDB.castBarChannelColor))
         end
     end
@@ -175,7 +181,9 @@ function BBP.CustomizeCastbar(unitToken)
 
     local function ApplyCastBarEmphasisSettings(castBar, castEmphasis, defaultR, defaultG, defaultB)
         if BetterBlizzPlatesDB.castBarEmphasisColor and castEmphasis.entryColors then
-            castBarTexture:SetDesaturated(true)
+            if castBarTexture then
+                castBarTexture:SetDesaturated(true)
+            end
             castBar:SetStatusBarColor(castEmphasis.entryColors.text.r, castEmphasis.entryColors.text.g, castEmphasis.entryColors.text.b)
         end
 
@@ -232,14 +240,20 @@ function BBP.CustomizeCastbar(unitToken)
 
                     if not notInterruptible then
                         if cooldownRemaining > 0 and cooldownRemaining > castRemaining then
-                            castBarTexture:SetDesaturated(true)
+                            if castBarTexture then
+                                castBarTexture:SetDesaturated(true)
+                            end
                             castBar:SetStatusBarColor(unpack(BetterBlizzPlatesDB.castBarNoInterruptColor))
                         elseif cooldownRemaining > 0 and cooldownRemaining <= castRemaining then
-                            castBarTexture:SetDesaturated(true)
+                            if castBarTexture then
+                                castBarTexture:SetDesaturated(true)
+                            end
                             castBar:SetStatusBarColor(unpack(BetterBlizzPlatesDB.castBarDelayedInterruptColor))
                         else
                             if not BetterBlizzPlatesDB.castBarRecolor then
-                                castBarTexture:SetDesaturated(false)
+                                if castBarTexture then
+                                    castBarTexture:SetDesaturated(false)
+                                end
                                 castBar:SetStatusBarColor(1, 1, 1) -- default
                             else
                                 if UnitCastingInfo(unitToken) then

@@ -343,7 +343,7 @@ function BBP.isInBlacklist(spellName, spellId)
 end
 
 function BBP.BBPShouldShowBuff(unit, aura, BlizzardShouldShow)
-    local spellName = FetchSpellName(aura.spellId)
+    local spellName = aura.name
     local spellId = aura.spellId
     local duration = aura.duration
     local expirationTime = aura.expirationTime
