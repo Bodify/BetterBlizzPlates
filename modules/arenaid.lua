@@ -576,7 +576,7 @@ function BBP.TestArenaIndicator3(frame)
 
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
-            if shortArenaSpecName and specID then
+            if shortArenaSpecName then
                 frame.specNameText:SetText("Aff")
             else
                 frame.specNameText:SetText("Affliction")
@@ -607,7 +607,7 @@ function BBP.TestArenaIndicator4(frame)
 
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
-            if shortArenaSpecName and specID then
+            if shortArenaSpecName then
                 frame.specNameText:SetText("Aff")
             else
                 frame.specNameText:SetText("Affliction")
@@ -641,7 +641,7 @@ function BBP.TestArenaIndicator5(frame)
 
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
-            if shortArenaSpecName and specID then
+            if shortArenaSpecName then
                 frame.specNameText:SetText("Aff" .. " " .. "3")
             else
                 frame.specNameText:SetText("Affliction" .. " " .. "3")
@@ -730,7 +730,7 @@ function BBP.TestPartyIndicator3(frame)
             end
 
             frame.name:SetText("")
-            if shortArenaSpecName and specID then
+            if shortArenaSpecName then
                 frame.specNameText:SetText("Aff")
             else
                 frame.specNameText:SetText("Affliction")
@@ -760,7 +760,7 @@ function BBP.TestPartyIndicator4(frame)
             end
 
             frame.name:SetText("")
-            if shortArenaSpecName and specID then
+            if shortArenaSpecName then
                 frame.specNameText:SetText("Aff")
             else
                 frame.specNameText:SetText("Affliction")
@@ -790,7 +790,7 @@ function BBP.TestPartyIndicator5(frame)
 
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
-            if shortArenaSpecName and specID then
+            if shortArenaSpecName then
                 frame.specNameText:SetText("Aff" .. " " .. "3")
             else
                 frame.specNameText:SetText("Affliction" .. " " .. "3")
