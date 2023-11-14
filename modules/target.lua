@@ -9,10 +9,17 @@ local previousFocusTargetNameplate = nil
 -- Target Indicator
 function BBP.TargetIndicator(frame)
     if not frame or not frame.unit then return end
+    local targetIndicator = BetterBlizzPlatesDB.targetIndicator
+    if not BetterBlizzPlatesDB.targetIndicator then
+        frame.targetIndicator:Hide()
+        return
+    end
     local anchorPoint = BetterBlizzPlatesDB.targetIndicatorAnchor or "TOP"
     local xPos = BetterBlizzPlatesDB.targetIndicatorXPos or 0
     local yPos = BetterBlizzPlatesDB.targetIndicatorYPos or 0
     local dbScale = BetterBlizzPlatesDB.targetIndicatorScale or 1
+
+    local testMode = BetterBlizzPlatesDB.targetIndicatorTestMode
 
     local rotation
 
@@ -41,7 +48,7 @@ function BBP.TargetIndicator(frame)
         frame.targetIndicator:SetSize(14, 9)
         frame.targetIndicator:SetAtlas("Navigation-Tracked-Arrow")
         frame.targetIndicator:Hide()
-        frame.targetIndicator:SetDrawLayer("OVERLAY", 7) 
+        frame.targetIndicator:SetDrawLayer("OVERLAY", 7)
         frame.targetIndicator:SetVertexColor(1,1,1)
     end
 
@@ -50,7 +57,7 @@ function BBP.TargetIndicator(frame)
     frame.targetIndicator:SetRotation(rotation)
 
     -- Test mode
-    if BetterBlizzPlatesDB.targetIndicatorTestMode then
+    if testMode then
         frame.targetIndicator:Show()
         return
     end
@@ -59,9 +66,6 @@ function BBP.TargetIndicator(frame)
     if UnitIsUnit(frame.unit, "target") then
         frame.targetIndicator:Show()
     else
-        frame.targetIndicator:Hide()
-    end
-    if not BetterBlizzPlatesDB.targetIndicator then
         frame.targetIndicator:Hide()
     end
 end

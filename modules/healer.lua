@@ -18,6 +18,7 @@ function BBP.HealerIndicator(frame)
     local anchorPoint = BetterBlizzPlatesDB.healerIndicatorAnchor or "CENTER"
     local xPos = BetterBlizzPlatesDB.healerIndicatorXPos or 0
     local yPos = BetterBlizzPlatesDB.healerIndicatorYPos or 0
+    local testMode = BetterBlizzPlatesDB.healerIndicatorTestMode
 
     -- Initialize
     if not frame.healerIndicator then
@@ -32,7 +33,7 @@ function BBP.HealerIndicator(frame)
     frame.healerIndicator:SetScale(BetterBlizzPlatesDB.healerIndicatorScale or 1)
 
     -- Test mode
-    if BetterBlizzPlatesDB.healerIndicatorTestMode then
+    if testMode then
         frame.healerIndicator:Show()
         return
     end

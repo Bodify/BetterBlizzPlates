@@ -15,6 +15,10 @@ function BBP.PetIndicator(frame)
     local anchorPoint = BetterBlizzPlatesDB.petIndicatorAnchor or "CENTER"
     local xPos = BetterBlizzPlatesDB.petIndicatorXPos or 0
     local yPos = BetterBlizzPlatesDB.petIndicatorYPos or 0
+    local testMode = BetterBlizzPlatesDB.petIndicatorTestMode
+    local combatIndicator = BetterBlizzPlatesDB.combatIndicator
+    local combatIndicatorAnchor = BetterBlizzPlatesDB.combatIndicatorAnchor
+    local petIndicatorAnchor = BetterBlizzPlatesDB.petIndicatorAnchor
 
     -- Initialize
     if not frame.petIndicator then
@@ -28,7 +32,7 @@ function BBP.PetIndicator(frame)
     frame.petIndicator:SetScale(BetterBlizzPlatesDB.petIndicatorScale or 1)
 
     -- Test mode
-    if BetterBlizzPlatesDB.petIndicatorTestMode then
+    if testMode then
         frame.petIndicator:Show()
         return
     end
@@ -37,7 +41,7 @@ function BBP.PetIndicator(frame)
     local npcID = select(6, strsplit("-", unitGUID or ""))
 
     -- Move Pet Indicator to the left if both Pet Indicator and Combat Indicator are showing with the same anchor so they dont overlap
-    if frame.combatIndicator and frame.combatIndicator:IsShown() and BetterBlizzPlatesDB.combatIndicator and (BetterBlizzPlatesDB.petIndicatorAnchor == BetterBlizzPlatesDB.combatIndicatorAnchor) then
+    if frame.combatIndicator and frame.combatIndicator:IsShown() and combatIndicator and (petIndicatorAnchor == combatIndicatorAnchor) then
         xPos = xPos - 10
     end
 

@@ -8,6 +8,15 @@ function BBP.CombatIndicator(frame)
     local inInstance, instanceType = IsInInstance()
     local XPos = BetterBlizzPlatesDB.combatIndicatorXPos
     local YPos = BetterBlizzPlatesDB.combatIndicatorYPos
+    local anchor = BetterBlizzPlatesDB.combatIndicatorAnchor
+
+    local arenaOnly = BetterBlizzPlatesDB.combatIndicatorArenaOnly
+    local enemyOnly = BetterBlizzPlatesDB.combatIndicatorEnemyOnly
+    local playerOnly = BetterBlizzPlatesDB.combatIndicatorPlayersOnly
+    local useSapTexture = BetterBlizzPlatesDB.combatIndicatorSap
+    local combatIndicatorScale = BetterBlizzPlatesDB.combatIndicatorScale
+    local petAndCombatTest = BetterBlizzPlatesDB.combatIndicatorTestMode or BetterBlizzPlatesDB.petIndicatorTestMode or BetterBlizzPlatesDB.petIndicator
+    local petAnchor = BetterBlizzPlatesDB.petIndicatorAnchor
 
     -- Initialize
     -- Create food texture
@@ -24,7 +33,7 @@ function BBP.CombatIndicator(frame)
     end
 
     -- Conditions check: Only show during arena
-    if BetterBlizzPlatesDB.combatIndicatorArenaOnly then
+    if arenaOnly then
         if not (inInstance and instanceType == "arena") then
             if frame.combatIndicatorSap then
                 frame.combatIndicatorSap:Hide()
@@ -37,38 +46,38 @@ function BBP.CombatIndicator(frame)
     end
 
     -- Conditon check: Only show on enemies
-    if BetterBlizzPlatesDB.combatIndicatorEnemyOnly then
+    if enemyOnly then
         notInCombat = notInCombat and UnitCanAttack("player", unit)
     end
 
-    if BetterBlizzPlatesDB.combatIndicatorPlayersOnly then
+    if playerOnly then
         notInCombat = notInCombat and UnitIsPlayer(unit)
     end
 
     -- Condition check: Use food or sap texture
-    if BetterBlizzPlatesDB.combatIndicatorSap then
-        frame.combatIndicatorSap:SetScale(BetterBlizzPlatesDB.combatIndicatorScale)
+    if useSapTexture then
+        frame.combatIndicatorSap:SetScale(combatIndicatorScale)
         frame.combatIndicatorSap:Show()
         frame.combatIndicator:Hide()
     else
         if frame.combatIndicatorSap then
             frame.combatIndicatorSap:Hide()
         end
-        frame.combatIndicator:SetScale(BetterBlizzPlatesDB.combatIndicatorScale)
+        frame.combatIndicator:SetScale(combatIndicatorScale)
         frame.combatIndicator:Show()
     end
 
     -- Add some offset if both Pet Indicator and Combat Indicator has the same anchor and shows at the same time
-    if frame.petIndicator and frame.petIndicator:IsShown() and (BetterBlizzPlatesDB.combatIndicatorTestMode or BetterBlizzPlatesDB.petIndicatorTestMode or BetterBlizzPlatesDB.petIndicator) and (BetterBlizzPlatesDB.petIndicatorAnchor == BetterBlizzPlatesDB.combatIndicatorAnchor) then
+    if frame.petIndicator and frame.petIndicator:IsShown() and petAndCombatTest and (petAnchor == anchor) then
         XPos = XPos + 10  -- Add some offset
     end
 
     -- Tiny adjustment to position depending on texture
-    local yPosAdjustment = BetterBlizzPlatesDB.combatIndicatorSap and 0 or 1
+    local yPosAdjustment = useSapTexture and 0 or 1
     if frame.combatIndicatorSap then
-        frame.combatIndicatorSap:SetPoint("CENTER", frame.healthBar, BetterBlizzPlatesDB.combatIndicatorAnchor, XPos, YPos + yPosAdjustment)
+        frame.combatIndicatorSap:SetPoint("CENTER", frame.healthBar, anchor, XPos, YPos + yPosAdjustment)
     end
-    frame.combatIndicator:SetPoint("CENTER", frame.healthBar, BetterBlizzPlatesDB.combatIndicatorAnchor, XPos, YPos + yPosAdjustment)
+    frame.combatIndicator:SetPoint("CENTER", frame.healthBar, anchor, XPos, YPos + yPosAdjustment)
 
     -- Target is not in combat so return
     if notInCombat then

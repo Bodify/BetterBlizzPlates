@@ -21,6 +21,8 @@ function BBP.QuestIndicator(frame)
     local anchorPoint = BetterBlizzPlatesDB.questIndicatorAnchor or "CENTER"
     local xPos = BetterBlizzPlatesDB.questIndicatorXPos or 0
     local yPos = BetterBlizzPlatesDB.questIndicatorYPos or 0
+    local testMode = BetterBlizzPlatesDB.questIndicatorTestMode
+    local questIndicator = BetterBlizzPlatesDB.questIndicator
 
     -- Set position and scale dynamically
     if anchorPoint == "LEFT" then
@@ -31,13 +33,13 @@ function BBP.QuestIndicator(frame)
     frame.questIndicator:SetScale(BetterBlizzPlatesDB.questIndicatorScale or 1)
 
     -- Test mode
-    if BetterBlizzPlatesDB.questIndicatorTestMode then
+    if testMode then
         frame.questIndicator:Show()
         return
     end
 
     local inInstance, instanceType = IsInInstance()
-    if not inInstance and BBP.IsQuestUnit(frame.unit) and BetterBlizzPlatesDB.questIndicator then
+    if not inInstance and BBP.IsQuestUnit(frame.unit) and questIndicator then
         frame.questIndicator:Show()
         return
     end

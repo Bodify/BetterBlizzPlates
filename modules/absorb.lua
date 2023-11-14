@@ -9,6 +9,8 @@ function BBP.AbsorbIndicator(frame)
     local oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
     local xPos = BetterBlizzPlatesDB["absorbIndicatorXPos"] or 0
     local yPos = BetterBlizzPlatesDB["absorbIndicatorYPos"] or 0
+    local enemyOnly = BetterBlizzPlatesDB.absorbIndicatorEnemyOnly and (not UnitIsEnemy("player", unit))
+    local playersOnly = BetterBlizzPlatesDB.absorbIndicatorOnPlayersOnly and (not UnitIsPlayer(unit))
 
     -- Initialize
     if not frame.absorbIndicator then
@@ -29,13 +31,13 @@ function BBP.AbsorbIndicator(frame)
     end
 
     -- Condition check: absorbIndicatorEnemyOnly
-    if BetterBlizzPlatesDB.absorbIndicatorEnemyOnly and (not UnitIsEnemy("player", unit)) then
+    if enemyOnly then
         if frame.absorbIndicator then frame.absorbIndicator:Hide() end
         return
     end
 
     -- Condition check: absorbIndicatorOnPlayersOnly
-    if BetterBlizzPlatesDB.absorbIndicatorOnPlayersOnly and (not UnitIsPlayer(unit)) then
+    if playersOnly then
         if frame.absorbIndicator then frame.absorbIndicator:Hide() end
         return
     end

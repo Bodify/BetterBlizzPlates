@@ -19,6 +19,9 @@ function BBP.ExecuteIndicator(frame)
     local oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
     local xPos = BetterBlizzPlatesDB.executeIndicatorXPos or 0
     local yPos = BetterBlizzPlatesDB.executeIndicatorYPos or 0
+    local scale = BetterBlizzPlatesDB.executeIndicatorScale
+    local testMode = BetterBlizzPlatesDB.executeIndicatorTestMode
+    local showDecimal = BetterBlizzPlatesDB.executeIndicatorShowDecimal
 
     -- Initialize
     if not frame.executeIndicator then
@@ -35,10 +38,10 @@ function BBP.ExecuteIndicator(frame)
     else
         frame.executeIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos + -0.5)
     end
-    frame.executeIndicator:SetScale(BetterBlizzPlatesDB.executeIndicatorScale or 1)
+    frame.executeIndicator:SetScale(scale or 1)
 
-    if BetterBlizzPlatesDB.executeIndicatorTestMode then
-        if BetterBlizzPlatesDB.executeIndicatorShowDecimal then
+    if testMode then
+        if showDecimal then
             frame.executeIndicator:SetText("19.5")
         else
             frame.executeIndicator:SetText("19")
@@ -49,10 +52,11 @@ function BBP.ExecuteIndicator(frame)
 
     -- Check if health is below 40% and if so show Execute Indicator
     if healthPercentage > 0.1 then
+        local alwaysOn = BetterBlizzPlatesDB.executeIndicatorAlwaysOn
         local text
         if healthPercentage == 100 then
             text = "100"
-        elseif BetterBlizzPlatesDB.executeIndicatorShowDecimal then
+        elseif showDecimal then
             text = string.format("%.1f", healthPercentage)
         else
             text = string.format("%d", healthPercentage)
@@ -60,8 +64,9 @@ function BBP.ExecuteIndicator(frame)
 
         frame.executeIndicator:SetText(text)
 
-        if BetterBlizzPlatesDB.executeIndicatorAlwaysOn then
-            if BetterBlizzPlatesDB.executeIndicatorNotOnFullHp then
+        if alwaysOn then
+            local hideOnFullHp = BetterBlizzPlatesDB.executeIndicatorNotOnFullHp
+            if hideOnFullHp then
                 if healthPercentage < 99 then
                     frame.executeIndicator:Show()
                 else
@@ -71,7 +76,8 @@ function BBP.ExecuteIndicator(frame)
                 frame.executeIndicator:Show()
             end
         else
-            if healthPercentage < BetterBlizzPlatesDB.executeIndicatorThreshold then
+            local threshold = BetterBlizzPlatesDB.executeIndicatorThreshold
+            if healthPercentage < threshold then
                 frame.executeIndicator:Show()
             else
                 frame.executeIndicator:Hide()

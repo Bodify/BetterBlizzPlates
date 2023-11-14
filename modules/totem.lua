@@ -64,23 +64,24 @@ end
 function BBP.CreateTotemComponents(frame)
     local xPos = BetterBlizzPlatesDB.totemIndicatorXPos
     local yPos = BetterBlizzPlatesDB.totemIndicatorYPos
-    local totemIndicatorAnchor = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown and frame.healthBar or frame.name
-    local yPosAdjustment = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown and yPos + 4 or yPos
+    local shiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
+    local anchor = BetterBlizzPlatesDB.totemIndicatorAnchor
 
     if not frame.totemIndicator then
+        local scale = BetterBlizzPlatesDB.totemIndicatorScale
         frame.totemIndicator = CreateFrame("Frame", nil, frame)
         frame.totemIndicator:SetSize(30, 30)
-        frame.totemIndicator:SetScale(BetterBlizzPlatesDB.totemIndicatorScale or 1) 
+        frame.totemIndicator:SetScale(scale or 1)
 
         frame.customIcon = frame.totemIndicator:CreateTexture(nil, "OVERLAY")
         frame.customIcon:SetAllPoints(frame.totemIndicator)
 
         frame.animationGroup = BBP.SetupUnifiedAnimation(frame.totemIndicator)
     end
-    if BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown then
-        frame.totemIndicator:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 4)
+    if shiftIconDown then
+        frame.totemIndicator:SetPoint("BOTTOM", frame.healthBar, anchor, xPos, yPos + 4)
     else
-        frame.totemIndicator:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 0)
+        frame.totemIndicator:SetPoint("BOTTOM", frame.name, anchor, xPos, yPos + 0)
     end
 end
 
