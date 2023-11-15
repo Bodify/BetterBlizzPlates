@@ -10,8 +10,10 @@ local previousFocusTargetNameplate = nil
 function BBP.TargetIndicator(frame)
     if not frame or not frame.unit then return end
     local targetIndicator = BetterBlizzPlatesDB.targetIndicator
-    if not BetterBlizzPlatesDB.targetIndicator then
-        frame.targetIndicator:Hide()
+    if not targetIndicator then
+        if frame.targetIndicator then
+            frame.targetIndicator:Hide()
+        end
         return
     end
     local anchorPoint = BetterBlizzPlatesDB.targetIndicatorAnchor or "TOP"
