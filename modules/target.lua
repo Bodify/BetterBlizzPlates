@@ -110,7 +110,6 @@ function BBP.FocusTargetIndicator(frame)
             frame.healthBar:SetStatusBarTexture(focusTexture)
         else
             if BetterBlizzPlatesDB.useCustomTextureForBars then
-
                 frame.healthBar:SetStatusBarTexture(customTexture)
             else
                 frame.healthBar:SetStatusBarTexture("Interface/TargetingFrame/UI-TargetingFrame-BarFill")

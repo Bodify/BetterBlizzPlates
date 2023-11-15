@@ -1361,7 +1361,7 @@ local function guiGeneralTab()
     -- Extra features on nameplates:
     ----------------------
     local extraFeaturesText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    extraFeaturesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 390, -230)
+    extraFeaturesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 390, -220)
     extraFeaturesText:SetText("Extra Features")
     local extraFeaturesIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     extraFeaturesIcon:SetAtlas("Campaign-QuestLog-LoreBook")
@@ -1450,7 +1450,7 @@ local function guiGeneralTab()
     -- Font and texture
     ----------------------
     local customFontandTextureText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    customFontandTextureText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, -455)
+    customFontandTextureText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, -435)
     customFontandTextureText:SetText("Font and texture")
     local customFontandTextureIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     customFontandTextureIcon:SetAtlas("barbershop-32x32")
@@ -1485,6 +1485,24 @@ local function guiGeneralTab()
         { anchorFrame = useCustomTexture, x = 5, y = -21, label = "Texture" }
     )
 
+    local textureDropdownFriendly = CreateTextureDropdown(
+        "textureDropdownFriendly",
+        useCustomTexture,
+        "Select Texture",
+        "customTextureFriendly",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = useCustomTexture, x = 5, y = -51, label = "Friendly" }
+    )
+
+    local useCustomTextureForEnemy = CreateCheckbox("useCustomTextureForEnemy", "Enemy", useCustomTexture)
+    useCustomTextureForEnemy:SetPoint("LEFT", textureDropdown, "RIGHT", -15, 1)
+    useCustomTextureForEnemy.text:SetTextColor(1,0,0)
+
+    local useCustomTextureForFriendly = CreateCheckbox("useCustomTextureForFriendly", "Friendly", useCustomTexture)
+    useCustomTextureForFriendly:SetPoint("LEFT", textureDropdownFriendly, "RIGHT", -15, 1)
+    useCustomTextureForFriendly.text:SetTextColor(0.04, 0.76, 1)
 
     useCustomFont:HookScript("OnClick", function(self)
         if self:GetChecked() then
@@ -1495,10 +1513,21 @@ local function guiGeneralTab()
     end)
 
     useCustomTexture:HookScript("OnClick", function(self)
+        CheckAndToggleCheckboxes(useCustomTexture)
         if self:GetChecked() then
             UIDropDownMenu_EnableDropDown(textureDropdown)
+            UIDropDownMenu_EnableDropDown(textureDropdownFriendly)
+            --useCustomTextureForEnemy:Enable()
+            --useCustomTextureForEnemy:SetAlpha(1)
+            --useCustomTextureForFriendly:Enable()
+            --useCustomTextureForFriendly:SetAlpha(1)
         else
             UIDropDownMenu_DisableDropDown(textureDropdown)
+            UIDropDownMenu_DisableDropDown(textureDropdownFriendly)
+            --useCustomTextureForEnemy:Disable()
+            --useCustomTextureForEnemy:SetAlpha(0)
+            --useCustomTextureForFriendly:Disable()
+            --useCustomTextureForFriendly:SetAlpha(0)
         end
     end)
 

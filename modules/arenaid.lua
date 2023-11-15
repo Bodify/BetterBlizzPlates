@@ -154,9 +154,10 @@ function BBP.ArenaIndicator3(frame)
                     specName = specIDToNameShort[specID]
                 end
                 local r, g, b, a = frame.name:GetTextColor()
-                local _, className = UnitClass("arena" .. i)
 
                 if not specName then
+                    local _, className = UnitClass("arena" .. i)
+                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
                     specName = className
                 end
 
@@ -200,9 +201,10 @@ function BBP.ArenaIndicator4(frame)
                 if shortArenaSpecName and specID then
                     specName = specIDToNameShort[specID]
                 end
-                local _, className = UnitClass("arena" .. i)
 
                 if not specName then
+                    local _, className = UnitClass("arena" .. i)
+                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
                     specName = className
                 end
 
@@ -255,9 +257,10 @@ function BBP.ArenaIndicator5(frame)
                 if shortArenaSpecName and specID then
                     specName = specIDToNameShort[specID]
                 end
-                local _, className = UnitClass("arena" .. i)
 
                 if not specName then
+                    local _, className = UnitClass("arena" .. i)
+                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
                     specName = className
                 end
 
@@ -360,9 +363,10 @@ function BBP.PartyIndicator3(frame)
                     specName = specIDToNameShort[specID]
                 end
                 local r, g, b, a = frame.name:GetTextColor()
-                local _, className = UnitClass("party" .. i)
 
                 if not specName then
+                    local _, className = UnitClass("party" .. i)
+                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
                     specName = className
                 end
 
@@ -411,9 +415,10 @@ function BBP.PartyIndicator4(frame)
                 if shortArenaSpecName and specID then
                     specName = specIDToNameShort[specID]
                 end
-                local _, className = UnitClass("party" .. i)
 
                 if not specName then
+                    local _, className = UnitClass("party" .. i)
+                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
                     specName = className
                 end
 
@@ -467,9 +472,10 @@ function BBP.PartyIndicator5(frame)
                 if shortArenaSpecName and specID then
                     specName = specIDToNameShort[specID]
                 end
-                local _, className = UnitClass("party" .. i)
 
                 if not specName then
+                    local _, className = UnitClass("party" .. i)
+                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
                     specName = className
                 end
 

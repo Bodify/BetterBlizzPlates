@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.19.5"
+local addonUpdates = "1.19.6"
 local _, playerClass
 local playerClassColor
 
@@ -39,6 +39,7 @@ local defaultSettings = {
     raidmarkIndicatorXPos = 0,
     raidmarkIndicatorYPos = 0,
     customTexture = "Dragonflight (BBP)",
+    customTextureFriendly = "Dragonflight (BBP)",
     customFont = "Yanone (BBP)",
     -- Enemy
     enemyClassColorName = false,
@@ -473,6 +474,11 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 -- Update message
 local function SendUpdateMessage()
     local hadSetting = BetterBlizzPlatesDB.nameplateAurasCenteredAnchor
+    local hadSetting2 = BetterBlizzPlatesDB.useCustomTextureForBars
+    if hadSetting2 then
+        BetterBlizzPlatesDB.useCustomTextureForFriendly = true
+        BetterBlizzPlatesDB.useCustomTextureForEnemy = true
+    end
     if hadSetting then
         BetterBlizzPlatesDB.nameplateAurasEnemyCenteredAnchor = true
         BetterBlizzPlatesDB.nameplateAurasFriendlyCenteredAnchor = true
@@ -483,6 +489,9 @@ local function SendUpdateMessage()
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Also got a new addon coming up. Think BBP but for TargetFrame, PartyFrame etc with aura filtering and much more. If you want to beta test type /bbp beta")
         if hadSetting then
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Changed how centered anchor on np auras works. You can now center enemy and friendly auras individually.")
+        end
+        if hadSetting2 then
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Changed how nameplate texture works. You can now change them individually between enemy/friendly.")
         end
         --DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Also released my second addon called \"Better|cff00c0ffBlizz|rFrames\". Think similar as this addon but for unitframes such as TargetFrame, PartyFrames etc. Some key features are: Buff & Debuff filtering, re-sizing and re-adjusting (also for player), Party castbars, Class color frames, Darkmode frames, Position&Hide/Show unitframe elements. Check it out on CurseForge!")
     end)
@@ -496,8 +505,9 @@ local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #4: Friendly NP: Color friendly nameplates a color of your choice.")
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #5: Personal NP: Class color personal nameplate.")
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #6: ArenaPlates: Abbreviated spec names.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #7: General: Right-click sliders to type in a specific value.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #8: I also have a new addon coming up soonTM which is basically BBP but for unit frames (TargetFrame Buff filtering, Party Castbars etc), if you're interested in beta testing type /bbp beta")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #7: NP Texture: Change texture individually between friendly/enemy.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #8: General: Right-click sliders to type in a specific value.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #9: I also have a new addon coming up soonTM which is basically BBP but for unit frames (TargetFrame Buff filtering, Party Castbars etc), if you're interested in beta testing type /bbp beta")
 end
 
 local function CheckForUpdate()
@@ -671,9 +681,20 @@ function BBP.ApplyCustomTexture(namePlate)
         local useCustomTextureForBars = BetterBlizzPlatesDB.useCustomTextureForBars
         if useCustomTextureForBars then
             if unitFrame.healthBar then
-                local textureName = BetterBlizzPlatesDB.customTexture
-                local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
-                unitFrame.healthBar:SetStatusBarTexture(texturePath)
+                local doFriend = BetterBlizzPlatesDB.useCustomTextureForFriendly and UnitIsFriend("player", unitFrame.unit)
+                local doEnemy = BetterBlizzPlatesDB.useCustomTextureForEnemy and not UnitIsFriend("player", unitFrame.unit)
+                local defaultTexture = "Interface/TargetingFrame/UI-TargetingFrame-BarFill"
+                if doFriend then
+                    local textureName = BetterBlizzPlatesDB.customTextureFriendly
+                    local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
+                    unitFrame.healthBar:SetStatusBarTexture(texturePath)
+                elseif doEnemy then
+                    local textureName = BetterBlizzPlatesDB.customTexture
+                    local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
+                    unitFrame.healthBar:SetStatusBarTexture(texturePath)
+                else
+                    unitFrame.healthBar:SetStatusBarTexture(defaultTexture)
+                end
             end
         end
     end
