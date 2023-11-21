@@ -1822,8 +1822,6 @@ SLASH_BBP1 = "/bbp"
 SlashCmdList["BBP"] = function(msg)
     if msg == "news" then
         NewsUpdateMessage()
-    elseif msg == "beta" then
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Hey! I am looking for a few beta testers for the addon before I release it to squish any missed bugs. It's still in beta meaning the GUI is a bit rough and missing some things. Contact me on discord if u wanna give it a go :) @bodify")
     else
         InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
     end
