@@ -146,7 +146,6 @@ function BBP.NahjProfile()
 	db.combatIndicatorAnchor = "CENTER"
 	db.nameplateAuraHeightGap = 4
 	db.hideNPC = false
-	db.nameplateHorizontalScale = "1.4"
 	db.healerIndicatorEnemyOnly = true
 	db.executeIndicatorFriendly = false
 	db.hideNameplateAuras = false
