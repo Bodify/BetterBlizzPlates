@@ -19,6 +19,7 @@ modules\absorb.lua
 modules\pet.lua
 modules\quest.lua
 modules\auras.lua
+modules\nahjProfile.lua
 
 gui.lua
 BetterBlizzPlates.lua

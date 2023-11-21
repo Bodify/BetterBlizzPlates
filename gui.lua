@@ -1166,7 +1166,7 @@ local function guiGeneralTab()
         BBP.ResetToDefaultScales(nameplateSelectedScale, "nameplateSelected")
     end)
 
-    local NamePlateVerticalScale = CreateSlider(BetterBlizzPlates, "Nameplate Height", 0.5, 5, 0.1, "NamePlateVerticalScale")
+    local NamePlateVerticalScale = CreateSlider(BetterBlizzPlates, "Nameplate Height", 0.5, 5, 0.01, "NamePlateVerticalScale")
     NamePlateVerticalScale:SetPoint("TOPLEFT", nameplateSelectedScale, "BOTTOMLEFT", 0, -17)
     CreateTooltip(NamePlateVerticalScale, "Changes the height of ALL nameplates.\nIn PvE content, due to Blizzard restrictions,\nit will also change the height of friendly castbars")
 
@@ -1259,7 +1259,7 @@ local function guiGeneralTab()
 
     local friendlyHealthBarColor = CreateCheckbox("friendlyHealthBarColor", "Color nameplate", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
     friendlyHealthBarColor:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(friendlyHealthBarColor, "Color friendly nameplates a color of your choice.")
+    CreateTooltip(friendlyHealthBarColor, "Color ALL friendly nameplates a color of your choice.")
 
     local friendlyNameColor = CreateCheckbox("friendlyNameColor", "Name", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
     friendlyNameColor:SetPoint("LEFT", friendlyHealthBarColor.Text, "RIGHT", 0, 0)
@@ -1607,53 +1607,21 @@ local function guiGeneralTab()
         ReloadUI()
     end)
 
-    local bodyProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    bodyProfileButton:SetText("Body Profile")
-    bodyProfileButton:SetWidth(100)
-    bodyProfileButton:SetPoint("RIGHT", reloadUiButton, "LEFT", -10, 0)
-    bodyProfileButton:SetScript("OnClick", function()
-        StaticPopup_Show("BBP_CONFIRM_BODY_PROFILE")
+    local nahjProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
+    nahjProfileButton:SetText("Nahj Profile")
+    nahjProfileButton:SetWidth(100)
+    nahjProfileButton:SetPoint("RIGHT", reloadUiButton, "LEFT", -10, 0)
+    nahjProfileButton:SetScript("OnClick", function()
+        StaticPopup_Show("BBP_CONFIRM_NAHJ_PROFILE")
     end)
+    CreateTooltip(nahjProfileButton, "Enable all of Nahj's profile settings.")
 
-    StaticPopupDialogs["BBP_CONFIRM_BODY_PROFILE"] = {
-        text = "This will change every setting to Body's Profile and reload UI. Are you sure you want to continue?",
+    StaticPopupDialogs["BBP_CONFIRM_NAHJ_PROFILE"] = {
+        text = "This action will modify all settings to Nahj's profile and reload the UI.\n\nYour existing blacklists and whitelists will be retained, with Nahj's additional entries\n\nAre you sure you want to continue?",
         button1 = "Yes",
         button2 = "No",
         OnAccept = function()
-            local db = BetterBlizzPlatesDB
-            db.reopenOptions = true
-            db.removeRealmNames = true
-            db.hideNameplateAuras = true
-            db.hideTargetHighlight = true
-            db.fadeOutNPC = true
-            db.raidmarkIndicator = true
-            db.raidmarkIndicatorScale = 1.3
-            db.enemyClassColorName = true
-            db.showNameplateCastbarTimer = true
-            db.showNameplateTargetText = true
-            db.enemyNameScale = 0.9
-            db.nameplateEnemyWidth = 144
-            db.nameplateEnemyHeight = 64.125
-            db.friendlyNameplateClickthrough = true
-            db.friendlyClassColorName = true
-            db.friendlyNameScale = 1.2
-            db.arenaIDScale = 1.9
-            db.arenaSpecScale = 1.1
-            db.arenaIndicatorModeFour = true
-            db.absorbIndicator = true
-            db.combatIndicator = true
-            db.combatIndicatorEnemyOnly = true
-            db.combatIndicatorArenaOnly = true
-            db.executeIndicator = true
-            db.healerIndicator = true
-            db.petIndicator = true
-            db.targetIndicator = true
-            db.totemIndicator = true
-            db.useCustomFont = true
-            db.useCustomTextureForBars = true
-            db.nameplateFriendlyWidth = 60
-            db.nameplateFriendlyHeight = 1
-            db.arenaIndicatorModeFour = true
+            BBP.NahjProfile()
             ReloadUI()
         end,
         timeout = 0,

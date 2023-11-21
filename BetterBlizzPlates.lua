@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.19.6"
+local addonUpdates = "1.19.7"
 local _, playerClass
 local playerClassColor
 
@@ -473,41 +473,17 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 
 -- Update message
 local function SendUpdateMessage()
-    local hadSetting = BetterBlizzPlatesDB.nameplateAurasCenteredAnchor
-    local hadSetting2 = BetterBlizzPlatesDB.useCustomTextureForBars
-    if hadSetting2 then
-        BetterBlizzPlatesDB.useCustomTextureForFriendly = true
-        BetterBlizzPlatesDB.useCustomTextureForEnemy = true
-    end
-    if hadSetting then
-        BetterBlizzPlatesDB.nameplateAurasEnemyCenteredAnchor = true
-        BetterBlizzPlatesDB.nameplateAurasFriendlyCenteredAnchor = true
-    end
     C_Timer.After(7, function()
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Added some new settings, for more info type /bbp news")
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Also got a new addon coming up. Think BBP but for TargetFrame, PartyFrame etc with aura filtering and much more. If you want to beta test type /bbp beta")
-        if hadSetting then
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Changed how centered anchor on np auras works. You can now center enemy and friendly auras individually.")
-        end
-        if hadSetting2 then
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Changed how nameplate texture works. You can now change them individually between enemy/friendly.")
-        end
-        --DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Also released my second addon called \"Better|cff00c0ffBlizz|rFrames\". Think similar as this addon but for unitframes such as TargetFrame, PartyFrames etc. Some key features are: Buff & Debuff filtering, re-sizing and re-adjusting (also for player), Party castbars, Class color frames, Darkmode frames, Position&Hide/Show unitframe elements. Check it out on CurseForge!")
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Added Nahj profile. (www.twitch.tv/nahj)")
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Released my second addon called \"Better|cff00c0ffBlizz|rFrames\". Think similar as this addon but for unitframes such as TargetFrame, PartyFrames etc. Some key features are: Buff & Debuff filtering, Party castbars, Darkmode frames, Position&Hide/Show unitframe elements. Check it out on CurseForge!")
     end)
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a New Better|cff00c0ffBlizz|rPlates settings:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Castbar: Show icon on non-interruptible casts.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Auras: Separate row for buffs.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Auras: Center auras on friendly/enemy nameplates individually.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #4: Friendly NP: Color friendly nameplates a color of your choice.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #5: Personal NP: Class color personal nameplate.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #6: ArenaPlates: Abbreviated spec names.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #7: NP Texture: Change texture individually between friendly/enemy.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #8: General: Right-click sliders to type in a specific value.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #9: I also have a new addon coming up soonTM which is basically BBP but for unit frames (TargetFrame Buff filtering, Party Castbars etc), if you're interested in beta testing type /bbp beta")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Nahj ttv one button profile setting.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Friendly nameplate on/off toggle bugfix.")
 end
 
 local function CheckForUpdate()
@@ -726,15 +702,25 @@ end
 --#################################################################################################
 -- Friendly nameplates on only in arena toggle automatically
 -- Event listening for Nameplates on in arena only
-local friendlyNameplatesOnOffFrame = CreateFrame("Frame")
-friendlyNameplatesOnOffFrame:SetScript("OnEvent", function(self, event, ...)
+local function ToggleFriendlyPlates()
     if BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena then
-        if IsActiveBattlefieldArena() then
-            SetCVar("nameplateShowFriends", 1)
+        if not InCombatLockdown() then
+            if IsActiveBattlefieldArena() then
+                SetCVar("nameplateShowFriends", 1)
+            else
+                SetCVar("nameplateShowFriends", 0)
+            end
         else
-            SetCVar("nameplateShowFriends", 0)
+            C_Timer.After(0.5, function()
+                ToggleFriendlyPlates()
+            end)
         end
     end
+end
+
+local friendlyNameplatesOnOffFrame = CreateFrame("Frame")
+friendlyNameplatesOnOffFrame:SetScript("OnEvent", function(self, event, ...)
+    ToggleFriendlyPlates()
 end)
 
 -- Toggle event listening on/off
