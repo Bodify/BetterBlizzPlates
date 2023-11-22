@@ -1118,6 +1118,9 @@ local function guiGeneralTab()
     addonNameIcon:SetAtlas("gmchat-icon-blizz")
     addonNameIcon:SetSize(22, 22)
     addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
+    local versionText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    versionText:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
+    versionText:SetText("v1.19.7b")--SetText("v" .. BetterBlizzPlatesDB.updates)
 
     ----------------------
     -- General:
