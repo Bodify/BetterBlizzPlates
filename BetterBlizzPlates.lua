@@ -732,6 +732,13 @@ function BBP.ToggleFriendlyNameplatesInArena(value)
         friendlyNameplatesOnOffFrame:UnregisterEvent("ZONE_CHANGED_NEW_AREA")
         friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_ENTERING_WORLD")
     end
+    if not InCombatLockdown() then
+        if IsActiveBattlefieldArena() then
+            SetCVar("nameplateShowFriends", 1)
+        else
+            SetCVar("nameplateShowFriends", 0)
+        end
+    end
 end
 
 --#################################################################################################
