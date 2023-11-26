@@ -736,6 +736,7 @@ function BBP.TestPartyIndicator3(frame)
             end
 
             frame.name:SetText("")
+            local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
             if shortArenaSpecName then
                 frame.specNameText:SetText("Aff")
             else
@@ -766,6 +767,7 @@ function BBP.TestPartyIndicator4(frame)
             end
 
             frame.name:SetText("")
+            local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
             if shortArenaSpecName then
                 frame.specNameText:SetText("Aff")
             else
