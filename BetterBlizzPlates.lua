@@ -1593,7 +1593,7 @@ local function HandleNamePlateAdded(unit)
     end
 
     if friendlyHideHealthBar then
-        if frame.healthBar and UnitIsFriend("player", unit) then
+        if frame.healthBar and (UnitIsFriend("player", unit) and not UnitIsUnit("player", unit)) then
             frame.healthBar:SetAlpha(0)
         else
             frame.healthBar:SetAlpha(1)
