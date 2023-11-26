@@ -179,7 +179,7 @@ function BBP.CustomizeCastbar(unitToken)
             castBar:SetStatusBarColor(unpack(castBarCastColor))
         end
     elseif UnitChannelInfo(unitToken) then
-        spellName, _, _, _, endTime, _, _, notInterruptible, spellID = UnitChannelInfo(unitToken)
+        spellName, _, _, _, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(unitToken)
         if castBarRecolor and not notInterruptible then
             if castBarTexture then
                 castBarTexture:SetDesaturated(true)

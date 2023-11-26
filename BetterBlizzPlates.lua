@@ -11,7 +11,8 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.19.7"
+local addonUpdates = "1.2.0"
+BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
 
@@ -475,15 +476,15 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 local function SendUpdateMessage()
     C_Timer.After(7, function()
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Added Nahj profile. (www.twitch.tv/nahj)")
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Released my second addon called \"Better|cff00c0ffBlizz|rFrames\". Think similar as this addon but for unitframes such as TargetFrame, PartyFrames etc. Some key features are: Buff & Debuff filtering, Party castbars, Darkmode frames, Position&Hide/Show unitframe elements. Check it out on CurseForge!")
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Accidentally had name size opposite on friend/enemy. You might have to re-adjust sizes to compensate the fix. For other updates type /bbp news")
     end)
 end
 
 local function NewsUpdateMessage()
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a New Better|cff00c0ffBlizz|rPlates settings:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Nahj ttv one button profile setting.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Friendly nameplate on/off toggle bugfix.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Right click slider to input value now allows values outside of the default slider value")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Healthbar hide option on friendly nameplates.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Hide friendly/enemy names.")
 end
 
 local function CheckForUpdate()
@@ -803,9 +804,9 @@ function BBP.ClassColorAndScaleNames(frame)
     -- Set the name's scale based on unit relation
     local scale = 1 -- Default scale
     if isFriend then
-        scale = enemyScale or 1
-    elseif isEnemy then
         scale = friendlyScale or 1
+    elseif isEnemy then
+        scale = enemyScale or 1
     end
     frame.name:SetScale(scale)
 end
@@ -1398,6 +1399,9 @@ local function HandleNamePlateRemoved(unit)
 
     if frame then
         frame:SetScale(1)
+        if frame.healthBar then
+            frame.healthBar:SetAlpha(1)
+        end
     end
     -- Hide totem icons
     if frame.customIcon then
@@ -1470,7 +1474,6 @@ local function HandleNamePlateAdded(unit)
     if not nameplate or not nameplate.UnitFrame then return end
     local frame = nameplate.UnitFrame
     if frame:IsForbidden() then return end
-    local unitFrame = nameplate.UnitFrame
 
     local customAuraOn = BetterBlizzPlatesDB.enableNameplateAuraCustomisation
     local customCastbar = BetterBlizzPlatesDB.enableCastbarCustomization
@@ -1490,6 +1493,7 @@ local function HandleNamePlateAdded(unit)
     local combatIndicator = BetterBlizzPlatesDB.combatIndicator
     local customTextureForBar = BetterBlizzPlatesDB.useCustomTextureForBars
     local focusIndicator = BetterBlizzPlatesDB.focusTargetIndicator or BetterBlizzPlatesDB.focusTargetIndicatorTestMode
+    local friendlyHideHealthBar = BetterBlizzPlatesDB.friendlyHideHealthBar
 
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
@@ -1587,6 +1591,14 @@ local function HandleNamePlateAdded(unit)
     if focusIndicator then
         BBP.FocusTargetIndicator(frame)
     end
+
+    if friendlyHideHealthBar then
+        if frame.healthBar and UnitIsFriend("player", unit) then
+            frame.healthBar:SetAlpha(0)
+        else
+            frame.healthBar:SetAlpha(1)
+        end
+    end
 end
 --#################################################################################################
 -- Event Listener
@@ -1678,6 +1690,11 @@ function BBP.RefreshAllNameplates()
         if not BetterBlizzPlatesDB.fadeOutNPC then
             frame:SetAlpha(1)
         end
+        if not BetterBlizzPlatesDB.friendlyHideHealthBar then
+            if frame.healthBar then
+                frame.healthBar:SetAlpha(1)
+            end
+        end
         if not BetterBlizzPlatesDB.hideNPC then
             if frame then
                 frame:Show()
@@ -1722,6 +1739,8 @@ function BBP.ConsolidatedUpdateName(frame)
     local friendlyNameColor = BetterBlizzPlatesDB.friendlyNameColor and BetterBlizzPlatesDB.friendlyHealthBarColor
     local totemIndicatorTest = BetterBlizzPlatesDB.totemIndicatorTestMode and frame.randomColor
     local totemIndicator = BetterBlizzPlatesDB.totemIndicator
+    local hideFriendlyNameText = BetterBlizzPlatesDB.hideFriendlyNameText
+    local hideEnemyNameText = BetterBlizzPlatesDB.hideEnemyNameText
 
     -- Use arena numbers
     if arenaIndicator then
@@ -1782,6 +1801,11 @@ function BBP.ConsolidatedUpdateName(frame)
             frame.healthBar:SetStatusBarColor(unpack(BBP.npcList[npcID].color))
             frame.name:SetVertexColor(unpack(BBP.npcList[npcID].color))
         end
+    end
+
+    if hideFriendlyNameText or hideEnemyNameText then
+        local isFriend = UnitIsFriend("player", frame.unit)
+        frame.name:SetAlpha(((hideFriendlyNameText and isFriend) or (hideEnemyNameText and not isFriend)) and 0 or 1)
     end
 end
 -- Use the consolidated function to hook into CompactUnitFrame_UpdateName

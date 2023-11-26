@@ -263,13 +263,37 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
     slider.Low:SetText(" ")
     slider.High:SetText(" ")
 
-    local function SetSliderValue()
-        if BBP.variablesLoaded and BBP.CVarsAreSaved() then
-            local initialValue = BetterBlizzPlatesDB[element]
-            slider:SetValue(BetterBlizzPlatesDB[element])
+    local function UpdateSliderRange(newValue, minValue, maxValue)
+        newValue = tonumber(newValue) -- Convert newValue to a number
 
-            local textValue = initialValue % 1 == 0 and tostring(math.floor(initialValue)) or string.format("%.2f", initialValue)
-            slider.Text:SetText(label .. ": " .. textValue)
+        if (axis == "X" or axis == "Y") and (newValue < minValue or newValue > maxValue) then
+            -- For X or Y axis: extend the range by ±30
+            local newMinValue = math.min(newValue - 30, minValue)
+            local newMaxValue = math.max(newValue + 30, maxValue)
+            slider:SetMinMaxValues(newMinValue, newMaxValue)
+        elseif newValue < minValue or newValue > maxValue then
+            -- For other sliders: adjust the range, ensuring it never goes below a specified minimum (e.g., 0)
+            local nonAxisRangeExtension = 2
+            local newMinValue = math.max(newValue - nonAxisRangeExtension, 0.1)  -- Prevent going below 0.1
+            local newMaxValue = math.max(newValue + nonAxisRangeExtension, maxValue)
+            slider:SetMinMaxValues(newMinValue, newMaxValue)
+        end
+    end
+
+    local function SetSliderValue()
+        if BBP.variablesLoaded then
+            local initialValue = tonumber(BetterBlizzPlatesDB[element]) -- Convert to number
+
+            if initialValue then
+                local currentMin, currentMax = slider:GetMinMaxValues() -- Fetch the latest min and max values
+
+                -- Check if the initial value is outside the current range and update range if necessary
+                UpdateSliderRange(initialValue, currentMin, currentMax)
+
+                slider:SetValue(initialValue) -- Set the initial value
+                local textValue = initialValue % 1 == 0 and tostring(math.floor(initialValue)) or string.format("%.2f", initialValue)
+                slider.Text:SetText(label .. ": " .. textValue)
+            end
         else
             C_Timer.After(0.1, SetSliderValue)
         end
@@ -305,11 +329,29 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
     -- Function to handle the entered value and update the slider
     local function HandleEditBoxInput()
         local inputValue = tonumber(editBox:GetText())
-        if inputValue and inputValue >= minValue and inputValue <= maxValue then
+        if inputValue then
+            -- Check if it's a non-axis slider and inputValue is <= 0
+            if (axis ~= "X" and axis ~= "Y") and inputValue <= 0 then
+                inputValue = 0.1  -- Set to minimum allowed value for non-axis sliders
+            end
+    
+            local currentMin, currentMax = slider:GetMinMaxValues()
+            if inputValue < currentMin or inputValue > currentMax then
+                UpdateSliderRange(inputValue, currentMin, currentMax)
+            end
+    
             slider:SetValue(inputValue)
+            BetterBlizzPlatesDB[element] = inputValue
         end
         editBox:Hide()
     end
+    
+
+
+
+
+
+
 
     slider:SetScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
@@ -1118,9 +1160,9 @@ local function guiGeneralTab()
     addonNameIcon:SetAtlas("gmchat-icon-blizz")
     addonNameIcon:SetSize(22, 22)
     addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
-    local versionText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    versionText:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
-    versionText:SetText("v1.19.7b")--SetText("v" .. BetterBlizzPlatesDB.updates)
+    local verNumber = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
+    verNumber:SetText("v" .. BBP.VersionNumber)--SetText("v" .. BetterBlizzPlatesDB.updates)
 
     ----------------------
     -- General:
@@ -1147,8 +1189,9 @@ local function guiGeneralTab()
     local raidmarkIndicator = CreateCheckbox("raidmarkIndicator", "Change raidmarker position", BetterBlizzPlates, nil, BBP.ChangeRaidmarker)
     raidmarkIndicator:SetPoint("TOPLEFT", hideTargetHighlight, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local nameplateMaxScale = CreateSlider(BetterBlizzPlates, "Nameplate Size", 0.5, 2, 0.1, "nameplateMaxScale")
+    local nameplateMaxScale = CreateSlider(BetterBlizzPlates, "Nameplate Size", 0.5, 2, 0.01, "nameplateMaxScale")
     nameplateMaxScale:SetPoint("TOPLEFT", raidmarkIndicator, "BOTTOMLEFT", 12, -10)
+    CreateTooltip(nameplateMaxScale, "General size of all nameplates (except Target nameplate)")
 
     local nameplateMaxScaleResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     nameplateMaxScaleResetButton:SetText("Default")
@@ -1158,8 +1201,9 @@ local function guiGeneralTab()
         BBP.ResetToDefaultScales(nameplateMaxScale, "nameplateScale")
     end)
 
-    local nameplateSelectedScale = CreateSlider(BetterBlizzPlates, "Target Nameplate Size", 0.5, 3, 0.1, "nameplateSelectedScale")
+    local nameplateSelectedScale = CreateSlider(BetterBlizzPlates, "Target Nameplate Size", 0.5, 3, 0.01, "nameplateSelectedScale")
     nameplateSelectedScale:SetPoint("TOPLEFT", nameplateMaxScale, "BOTTOMLEFT", 0, -17)
+    CreateTooltip(nameplateSelectedScale, "Size of your current target's nameplate")
 
     local nameplateSelectedScaleResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     nameplateSelectedScaleResetButton:SetText("Default")
@@ -1171,7 +1215,7 @@ local function guiGeneralTab()
 
     local NamePlateVerticalScale = CreateSlider(BetterBlizzPlates, "Nameplate Height", 0.5, 5, 0.01, "NamePlateVerticalScale")
     NamePlateVerticalScale:SetPoint("TOPLEFT", nameplateSelectedScale, "BOTTOMLEFT", 0, -17)
-    CreateTooltip(NamePlateVerticalScale, "Changes the height of ALL nameplates.\nIn PvE content, due to Blizzard restrictions,\nit will also change the height of friendly castbars")
+    CreateTooltip(NamePlateVerticalScale, "Changes the height of ALL nameplates.\n\nDue to Blizzard restrictions it will also change\nthe height of friendly castbars in PvE instances.")
 
     local NamePlateVerticalScaleResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     NamePlateVerticalScaleResetButton:SetText("Default")
@@ -1185,7 +1229,7 @@ local function guiGeneralTab()
     -- Enemy nameplates:
     ----------------------
     local enemyNameplatesText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    enemyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -215)
+    enemyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -205)
     enemyNameplatesText:SetText("Enemy nameplates")
     local enemyNameplateIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     enemyNameplateIcon:SetAtlas("groupfinder-icon-friend")
@@ -1196,6 +1240,7 @@ local function guiGeneralTab()
 
     local enemyClassColorName = CreateCheckbox("enemyClassColorName", "Class colored names", BetterBlizzPlates)
     enemyClassColorName:SetPoint("TOPLEFT", enemyNameplatesText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
+    CreateTooltip(enemyClassColorName, "Class color the enemy name text on nameplate")
 
     local showNameplateCastbarTimer = CreateCheckbox("showNameplateCastbarTimer", "Cast timer next to castbar", BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
     showNameplateCastbarTimer:SetPoint("TOPLEFT", enemyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -1206,6 +1251,11 @@ local function guiGeneralTab()
 
     local enemyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 1.5, 0.01, "enemyNameScale")
     enemyNameScale:SetPoint("TOPLEFT", showNameplateTargetText, "BOTTOMLEFT", 12, -10)
+    CreateTooltip(enemyNameScale, "Size of enemy name text above nameplate")
+
+    local hideEnemyNameText = CreateCheckbox("hideEnemyNameText", "Hide name", BetterBlizzPlates)
+    hideEnemyNameText:SetPoint("LEFT", enemyNameScale, "RIGHT", 2, 0)
+    CreateTooltip(hideEnemyNameText, "Hide enemy nameplate name text")
 
 --[[
     -- Nameplate height slider
@@ -1243,7 +1293,7 @@ local function guiGeneralTab()
     -- Friendly nameplates:
     ----------------------
     local friendlyNameplatesText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    friendlyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -375)
+    friendlyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -360)
     friendlyNameplatesText:SetText("Friendly nameplates")
     local friendlyNameplateIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     friendlyNameplateIcon:SetAtlas("groupfinder-icon-friend")
@@ -1256,11 +1306,12 @@ local function guiGeneralTab()
 
     local friendlyClassColorName = CreateCheckbox("friendlyClassColorName", "Class colored names", BetterBlizzPlates)
     friendlyClassColorName:SetPoint("TOPLEFT", friendlyNameplateClickthrough, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(friendlyClassColorName, "Class color the friendly name text on nameplate")
 
     local classColorPersonalNameplate = CreateCheckbox("classColorPersonalNameplate", "Class colored personal nameplate", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
     classColorPersonalNameplate:SetPoint("TOPLEFT", friendlyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local friendlyHealthBarColor = CreateCheckbox("friendlyHealthBarColor", "Color nameplate", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
+    local friendlyHealthBarColor = CreateCheckbox("friendlyHealthBarColor", "Custom nameplate color", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
     friendlyHealthBarColor:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(friendlyHealthBarColor, "Color ALL friendly nameplates a color of your choice.")
 
@@ -1342,12 +1393,21 @@ local function guiGeneralTab()
         friendlyHealthBarColorButton:SetAlpha(0) --default slider creation only does 0.5 alpha
     end
 
+    local friendlyHideHealthBar = CreateCheckbox("friendlyHideHealthBar", "Hide healthbar", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
+    friendlyHideHealthBar:SetPoint("TOPLEFT", friendlyHealthBarColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(friendlyHideHealthBar, "Hide friendly nameplate healthbars. Castbar and name will still show.")
+
     local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Toggle on/off for Arena auto", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesInArena)
-    toggleFriendlyNameplatesInArena:SetPoint("TOPLEFT", friendlyHealthBarColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    toggleFriendlyNameplatesInArena:SetPoint("TOPLEFT", friendlyHideHealthBar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(toggleFriendlyNameplatesInArena, "Turn on friendly nameplates when you enter arena and off again when you leave.")
 
-    local friendlyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 3, 0.1, "friendlyNameScale")
+    local friendlyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 3, 0.01, "friendlyNameScale")
     friendlyNameScale:SetPoint("TOPLEFT", toggleFriendlyNameplatesInArena, "BOTTOMLEFT", 12, -10)
+    CreateTooltip(friendlyNameScale, "Size of the friendly name text above nameplates")
+
+    local hideFriendlyNameText = CreateCheckbox("hideFriendlyNameText", "Hide name", BetterBlizzPlates)
+    hideFriendlyNameText:SetPoint("LEFT", friendlyNameScale, "RIGHT", 2, 0)
+    CreateTooltip(hideFriendlyNameText, "Hide friendly nameplate name text")
 
     local nameplateFriendlyWidth = CreateSlider(BetterBlizzPlates, "Nameplate Width", 50, 200, 1, "nameplateFriendlyWidth")
     nameplateFriendlyWidth:SetPoint("TOPLEFT", friendlyNameScale, "BOTTOMLEFT", 0, -20)
@@ -1569,13 +1629,13 @@ local function guiGeneralTab()
     arenaIndicatorTestMode:SetPoint("LEFT", shortArenaSpecName.Text, "RIGHT", 5, 0)
     CreateTooltip(arenaIndicatorTestMode, "Test the selected Arena Nameplates mode.", "ANCHOR_LEFT")
 
-    local arenaIDScale = CreateSlider(BetterBlizzPlates, "Arena ID Size", 0.5, 4, 0.1, "arenaIDScale")
+    local arenaIDScale = CreateSlider(BetterBlizzPlates, "Arena ID Size", 0.5, 4, 0.01, "arenaIDScale")
     arenaIDScale:SetPoint("TOPLEFT", arenaModeDropdown, "BOTTOMLEFT", 20, -9)
-    CreateTooltip(arenaIDScale, "Size of the arena ID text on top of nameplate during arena.")
+    CreateTooltip(arenaIDScale, "Size of the enemy arena ID text on top of nameplate during arena.")
 
-    local arenaSpecScale = CreateSlider(BetterBlizzPlates, "Spec Size", 0.5, 3, 0.1, "arenaSpecScale")
+    local arenaSpecScale = CreateSlider(BetterBlizzPlates, "Spec Size", 0.5, 3, 0.01, "arenaSpecScale")
     arenaSpecScale:SetPoint("TOPLEFT", arenaIDScale, "BOTTOMLEFT", 0, -11)
-    CreateTooltip(arenaSpecScale, "Size of the spec name text on top of nameplate during arena.")
+    CreateTooltip(arenaSpecScale, "Size of the enemy spec name text on top of nameplate during arena.")
 
     local partyModeDropdown = CreateModeDropdown(
         "partyModeDropdown",
@@ -1592,11 +1652,13 @@ local function guiGeneralTab()
         {0.04, 0.76, 1, 1}
     )
 
-    local partyIDScale = CreateSlider(BetterBlizzPlates, "Party ID Size", 0.5, 4, 0.1, "partyIDScale")
+    local partyIDScale = CreateSlider(BetterBlizzPlates, "Party ID Size", 0.5, 4, 0.01, "partyIDScale")
     partyIDScale:SetPoint("TOPLEFT", partyModeDropdown, "BOTTOMLEFT", 20, -9)
+    CreateTooltip(partyIDScale, "Size of the friendly party ID text on top of nameplate during arena.")
 
-    local partySpecScale = CreateSlider(BetterBlizzPlates, "Spec Size", 0.5, 3, 0.1, "partySpecScale")
+    local partySpecScale = CreateSlider(BetterBlizzPlates, "Spec Size", 0.5, 3, 0.01, "partySpecScale")
     partySpecScale:SetPoint("TOPLEFT", partyIDScale, "BOTTOMLEFT", 0, -11)
+    CreateTooltip(partySpecScale, "Size of the friendly spec name text on top of nameplate during arena.")
 
     ----------------------
     -- Reload etc
@@ -1684,7 +1746,7 @@ local function guiPositionAndScale()
     healerCrossIcon2:SetPoint("BOTTOM", anchorSubHeal, "TOP", 0, 0)
     healerCrossIcon2:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875)
 
-    local healerIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.1, "healerIndicatorScale")
+    local healerIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "healerIndicatorScale")
     healerIndicatorScale:SetPoint("TOP", anchorSubHeal, "BOTTOM", 0, -15)
 
     local healerIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "healerIndicatorXPos", "X")
@@ -1710,6 +1772,12 @@ local function guiPositionAndScale()
     local healerIndicatorEnemyOnly2 = CreateCheckbox("healerIndicatorEnemyOnly", "Enemies only", contentFrame)
     healerIndicatorEnemyOnly2:SetPoint("TOPLEFT", healerIndicatorTestMode2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
+    local healerIndicatorArenaOnly = CreateCheckbox("healerIndicatorArenaOnly", "Arena only", contentFrame)
+    healerIndicatorArenaOnly:SetPoint("TOPLEFT", healerIndicatorEnemyOnly2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+    local healerIndicatorBgOnly = CreateCheckbox("healerIndicatorBgOnly", "Battleground only", contentFrame)
+    healerIndicatorBgOnly:SetPoint("TOPLEFT", healerIndicatorArenaOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
     ----------------------
     -- Combat indicator
     ----------------------
@@ -1730,7 +1798,7 @@ local function guiPositionAndScale()
         combatIconSub:SetPoint("BOTTOM", anchorSubOutOfCombat, "TOP", -1, 0)
     end
 
-    local combatIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.1, "combatIndicatorScale")
+    local combatIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "combatIndicatorScale")
     combatIndicatorScale:SetPoint("TOP", anchorSubOutOfCombat, "BOTTOM", 0, -15)
 
     local combatIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "combatIndicatorXPos", "X")
@@ -1787,7 +1855,7 @@ local function guiPositionAndScale()
     petIndicator2:SetSize(38, 38)
     petIndicator2:SetPoint("BOTTOM", anchorSubPet, "TOP", 0, 0)
 
-    local petIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.1, "petIndicatorScale")
+    local petIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "petIndicatorScale")
     petIndicatorScale:SetPoint("TOP", anchorSubPet, "BOTTOM", 0, -15)
 
     local petIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "petIndicatorXPos", "X")
@@ -1824,7 +1892,7 @@ local function guiPositionAndScale()
     absorbIndicator2:SetSize(56, 56)
     absorbIndicator2:SetPoint("BOTTOM", anchorSubAbsorb, "TOP", -1, -10)
 
-    local absorbIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.1, "absorbIndicatorScale")
+    local absorbIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "absorbIndicatorScale")
     absorbIndicatorScale:SetPoint("TOP", anchorSubAbsorb, "BOTTOM", 0, -15)
 
     local absorbIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "absorbIndicatorXPos", "X")
@@ -1867,7 +1935,7 @@ local function guiPositionAndScale()
     totemIcon2:SetSize(34, 34)
     totemIcon2:SetPoint("BOTTOM", anchorSubTotem, "TOP", 0, 0)
 
-    local totemIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.1, "totemIndicatorScale")
+    local totemIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.01, "totemIndicatorScale")
     totemIndicatorScale:SetPoint("TOP", anchorSubTotem, "BOTTOM", 0, -15)
 
     local totemIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "totemIndicatorXPos", "X")
@@ -1916,7 +1984,7 @@ local function guiPositionAndScale()
     targetIndicator2:SetSize(48, 32)
     targetIndicator2:SetPoint("BOTTOM", anchorSubTarget, "TOP", -1, 2)
 
-    local targetIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.1, "targetIndicatorScale")
+    local targetIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "targetIndicatorScale")
     targetIndicatorScale:SetPoint("TOP", anchorSubTarget, "BOTTOM", 0, -15)
 
     local targetIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "targetIndicatorXPos", "X")
@@ -1950,7 +2018,7 @@ local function guiPositionAndScale()
     raidmarkIcon:SetSize(32, 32)
     raidmarkIcon:SetPoint("BOTTOM", anchorSubRaidmark, "TOP", 0, 3)
 
-    local raidmarkIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.1, "raidmarkIndicatorScale")
+    local raidmarkIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "raidmarkIndicatorScale")
     raidmarkIndicatorScale:SetPoint("TOP", anchorSubRaidmark, "BOTTOM", 0, -15)
 
     local raidmarkIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "raidmarkIndicatorXPos", "X")
@@ -1987,7 +2055,7 @@ local function guiPositionAndScale()
     questIcon2:SetSize(44, 44)
     questIcon2:SetPoint("BOTTOM", anchorSubquest, "TOP", 0, -3)
 
-    local questIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.1, "questIndicatorScale")
+    local questIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "questIndicatorScale")
     questIndicatorScale:SetPoint("TOP", anchorSubquest, "BOTTOM", 0, -15)
 
     local questIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "questIndicatorXPos", "X")
@@ -2024,7 +2092,7 @@ local function guiPositionAndScale()
     focusIcon:SetSize(40, 40)
     focusIcon:SetPoint("BOTTOM", anchorSubFocus, "TOP", 0, -2)
 
-    local focusTargetIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.1, "focusTargetIndicatorScale")
+    local focusTargetIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.01, "focusTargetIndicatorScale")
     focusTargetIndicatorScale:SetPoint("TOP", anchorSubFocus, "BOTTOM", 0, -15)
 
     local focusTargetIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "focusTargetIndicatorXPos", "X")
@@ -2131,7 +2199,7 @@ local function guiPositionAndScale()
     executeIcon:SetSize(56, 60)
     executeIcon:SetPoint("BOTTOM", anchorSubExecute, "TOP", 0, -10)
 
-    local executeIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 2.5, 0.05, "executeIndicatorScale")
+    local executeIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 2.5, 0.01, "executeIndicatorScale")
     executeIndicatorScale:SetPoint("TOP", anchorSubExecute, "BOTTOM", 0, -15)
 
     local executeIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "executeIndicatorScale", "X")
@@ -2170,7 +2238,7 @@ local function guiPositionAndScale()
     executeIndicatorShowDecimal:SetPoint("BOTTOMLEFT", executeIndicatorNotOnFullHp, "TOPLEFT", 0, -pixelsBetweenBoxes)
     CreateTooltip(executeIndicatorShowDecimal, "Show decimal")
 
-    local executeIndicatorThreshold = CreateSlider(contentFrame, "Threshold", 5, 100, 1, "executeIndicatorThreshold", "Y")
+    local executeIndicatorThreshold = CreateSlider(contentFrame, "Threshold", 5, 100, 1, "executeIndicatorThreshold")
     executeIndicatorThreshold:SetPoint("TOP", executeIndicatorAlwaysOn, "BOTTOM", 58, -29)
     CreateTooltip(executeIndicatorThreshold, "Percentage of when the execute indicator should show.")
 
@@ -2783,7 +2851,7 @@ local function guiHideNPC()
     CreateList(hideNPCListFrame, "hideNPCsList", BetterBlizzPlatesDB.hideNPCsList, BBP.RefreshAllNameplates, false)
     CreateList(hideNPCWhitelistFrame, "hideNPCsWhitelist", BetterBlizzPlatesDB.hideNPCsWhitelist, BBP.RefreshAllNameplates, false)
 
-    local hideNPCWhitelistOn = CreateCheckbox("hideNPCsWhitelistOn", "Whitelist mode", hideNPC, nil, BBP.hideNPC)
+    local hideNPCWhitelistOn = CreateCheckbox("hideNPCWhitelistOn", "Whitelist mode", hideNPC, nil, BBP.hideNPC)
     hideNPCWhitelistOn:SetPoint("TOPLEFT", hideNPC, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     hideNPCWhitelistOn:HookScript("OnClick", function (self)
         if self:GetChecked() then
@@ -2803,7 +2871,7 @@ local function guiHideNPC()
         if BBP.variablesLoaded then
             if BetterBlizzPlatesDB.hideNPC then
                 listFrame:SetAlpha(1)
-                if BetterBlizzPlatesDB.hideNPCsWhitelistOn then
+                if BetterBlizzPlatesDB.hideNPCWhitelistOn then
                     hideNPCListFrame:Hide()
                     hideNPCWhitelistFrame:Show()
                 else
@@ -2812,7 +2880,7 @@ local function guiHideNPC()
                 end
             else
                 listFrame:SetAlpha(0.5)
-                if BetterBlizzPlatesDB.hideNPCsWhitelistOn then
+                if BetterBlizzPlatesDB.hideNPCWhitelistOn then
                     hideNPCListFrame:Hide()
                     hideNPCWhitelistFrame:Show()
                 else
@@ -3144,7 +3212,7 @@ local function guiNameplateAuras()
     nameplateAurasYPos:SetPoint("TOPLEFT", nameplateAurasXPos, "BOTTOMLEFT", 0, -17)
     CreateTooltip(nameplateAurasYPos, "Aura y offset when name is showing")
 
-    local nameplateAurasNoNameYPos = CreateSlider(enableNameplateAuraCustomisation, "no name y offset", -50, 50, 1, "nameplateAurasNoNameYPos")
+    local nameplateAurasNoNameYPos = CreateSlider(enableNameplateAuraCustomisation, "no name y offset", -50, 50, 1, "nameplateAurasNoNameYPos", "Y")
     nameplateAurasNoNameYPos:SetPoint("TOPLEFT", nameplateAurasYPos, "BOTTOMLEFT", 0, -17)
     CreateTooltip(nameplateAurasNoNameYPos, "Aura y offset when name is hidden\n(Unimportant non-targeted npcs etc)")
 

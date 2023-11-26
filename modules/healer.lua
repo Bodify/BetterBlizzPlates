@@ -19,6 +19,9 @@ function BBP.HealerIndicator(frame)
     local xPos = BetterBlizzPlatesDB.healerIndicatorXPos or 0
     local yPos = BetterBlizzPlatesDB.healerIndicatorYPos or 0
     local testMode = BetterBlizzPlatesDB.healerIndicatorTestMode
+    local inInstance, instanceType = IsInInstance()
+    local arenaOnly = BetterBlizzPlatesDB.healerIndicatorArenaOnly
+    local bgOnly = BetterBlizzPlatesDB.healerIndicatorBgOnly
 
     -- Initialize
     if not frame.healerIndicator then
@@ -41,6 +44,11 @@ function BBP.HealerIndicator(frame)
     -- Check for Details
     local Details = Details
     if not Details or Details.realversion < 134 then
+        frame.healerIndicator:Hide()
+        return
+    end
+
+    if (arenaOnly and not (inInstance and instanceType == "arena")) or (bgOnly and not (inInstance and instanceType == "pvp")) then
         frame.healerIndicator:Hide()
         return
     end
