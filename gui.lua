@@ -281,7 +281,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
     end
 
     local function SetSliderValue()
-        if BBP.variablesLoaded then
+        if BBP.variablesLoaded and BBP.CVarsAreSaved() then
             local initialValue = tonumber(BetterBlizzPlatesDB[element]) -- Convert to number
 
             if initialValue then
