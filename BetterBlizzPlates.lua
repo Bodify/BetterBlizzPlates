@@ -725,13 +725,15 @@ friendlyNameplatesOnOffFrame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 -- Toggle event listening on/off
-function BBP.ToggleFriendlyNameplatesInArena(value)
+function BBP.ToggleFriendlyNameplatesInArena()
     if BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena then
         friendlyNameplatesOnOffFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
         friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+        friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_ENTERING_BATTLEGROUND")
     else
         friendlyNameplatesOnOffFrame:UnregisterEvent("ZONE_CHANGED_NEW_AREA")
         friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_ENTERING_WORLD")
+        friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_ENTERING_BATTLEGROUND")
     end
     if not InCombatLockdown() then
         if IsActiveBattlefieldArena() then
@@ -1595,6 +1597,7 @@ local function HandleNamePlateAdded(unit)
     if friendlyHideHealthBar then
         if frame.healthBar and (UnitIsFriend("player", unit) and not UnitIsUnit("player", unit)) then
             frame.healthBar:SetAlpha(0)
+            frame.selectionHighlight:SetAlpha(0)
         else
             frame.healthBar:SetAlpha(1)
         end
