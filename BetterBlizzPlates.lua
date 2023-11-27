@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.2.0"
+local addonUpdates = "1.2.1"
 BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
@@ -475,8 +475,8 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 -- Update message
 local function SendUpdateMessage()
     C_Timer.After(7, function()
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Accidentally had name size opposite on friend/enemy. You might have to re-adjust sizes to compensate the fix. For other updates type /bbp news")
+        --DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
+        --DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Accidentally had name size opposite on friend/enemy. You might have to re-adjust sizes to compensate the fix. For other updates type /bbp news")
     end)
 end
 
