@@ -1,6 +1,7 @@
 BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
 BBP = BBP or {}
 local LSM = LibStub("LibSharedMedia-3.0")
+local LibDD = LibStub:GetLibrary("LibUIDropDownMenu-4.0")
 
 BetterBlizzPlates = nil
 local anchorPoints = {"CENTER", "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT"}
@@ -103,22 +104,24 @@ local function CreateBorderBox(anchor)
 end
 
 local function CreateModeDropdown(name, parent, defaultText, settingKey, toggleFunc, point, modes, tooltips, textLabel, textColor)
-    local dropdown = CreateFrame("Frame", name, parent, "UIDropDownMenuTemplate")
-    UIDropDownMenu_SetWidth(dropdown, 135)
-    UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
+    -- Create the dropdown frame using the library's creation function
+    local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
+    LibDD:UIDropDownMenu_SetWidth(dropdown, 135)
+    LibDD:UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
 
-    -- Get the FontString object representing the text and set its color
-    local dropdownTextFontString = _G[dropdown:GetName() .. "Text"]
-    if dropdownTextFontString then
-        dropdownTextFontString:SetTextColor(1, 1, 0) -- Set text color to yellow
-    end
-
-    UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
-        local info = UIDropDownMenu_CreateInfo()
+    -- Initialize the dropdown using the library's initialize function
+    LibDD:UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
+        local info = LibDD:UIDropDownMenu_CreateInfo()
         local orderedKeys = {}
 
         for displayText, _ in pairs(modes) do
             table.insert(orderedKeys, displayText)
+        end
+
+        local dropdownTextFontString = _G[dropdown:GetName() .. "Text"]
+        if dropdownTextFontString then
+            -- Set text color (example: yellow)
+            dropdownTextFontString:SetTextColor(1, 1, 0) -- RGB for yellow
         end
 
         table.sort(orderedKeys)
@@ -135,7 +138,7 @@ local function CreateModeDropdown(name, parent, defaultText, settingKey, toggleF
                 -- Store the selected mode's display text
                 BetterBlizzPlatesDB[settingKey] = displayText
 
-                UIDropDownMenu_SetText(dropdown, displayText)
+                LibDD:UIDropDownMenu_SetText(dropdown, displayText)
                 toggleFunc(displayText)
             end
             info.checked = (BetterBlizzPlatesDB[settingKey] == displayText)
@@ -147,17 +150,18 @@ local function CreateModeDropdown(name, parent, defaultText, settingKey, toggleF
             if tooltips[displayText] then
                 info.tooltipTitle = displayText
                 info.tooltipText = tooltips[displayText]
-                info.tooltipOnButton = 1
+                info.tooltipOnButton = true
             else
                 info.tooltipTitle = nil
                 info.tooltipText = nil
                 info.tooltipOnButton = nil
             end
 
-            UIDropDownMenu_AddButton(info)
+            LibDD:UIDropDownMenu_AddButton(info)
         end
     end)
 
+    -- Position the dropdown
     dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
 
     -- Create and set up the label
@@ -173,12 +177,12 @@ local function CreateModeDropdown(name, parent, defaultText, settingKey, toggleF
 end
 
 local function CreateFontDropdown(name, parent, defaultText, settingKey, toggleFunc, point)
-    local dropdown = CreateFrame("Frame", name, parent, "UIDropDownMenuTemplate")
-    UIDropDownMenu_SetWidth(dropdown, 135) 
-    UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
+    local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
+    LibDD:UIDropDownMenu_SetWidth(dropdown, 135) 
+    LibDD:UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
 
-    UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
-        local info = UIDropDownMenu_CreateInfo()
+    LibDD:UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
+        local info = LibDD:UIDropDownMenu_CreateInfo()
         local fonts = LSM:HashTable(LSM.MediaType.FONT)
         for fontName, fontPath in pairs(fonts) do
             info.text = fontName
@@ -186,14 +190,14 @@ local function CreateFontDropdown(name, parent, defaultText, settingKey, toggleF
             info.func = function(self, arg1)
                 if BetterBlizzPlatesDB[settingKey] ~= arg1 then
                     BetterBlizzPlatesDB[settingKey] = arg1
-                    UIDropDownMenu_SetText(dropdown, arg1)
+                    LibDD:UIDropDownMenu_SetText(dropdown, arg1)
                     toggleFunc(fontPath)
                     dropdown.Text:SetFont(fontPath, 12)
                 end
             end
             info.checked = (BetterBlizzPlatesDB[settingKey] == fontName)
 
-            UIDropDownMenu_AddButton(info)
+            LibDD:UIDropDownMenu_AddButton(info)
         end
     end)
 
@@ -203,21 +207,23 @@ local function CreateFontDropdown(name, parent, defaultText, settingKey, toggleF
     dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
 
     if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
-        UIDropDownMenu_DisableDropDown(dropdown)
+        LibDD:UIDropDownMenu_DisableDropDown(dropdown)
     else
-        UIDropDownMenu_EnableDropDown(dropdown)
+        LibDD:UIDropDownMenu_EnableDropDown(dropdown)
     end
 
     return dropdown
 end
 
 local function CreateTextureDropdown(name, parent, defaultText, settingKey, toggleFunc, point, dropdownWidth)
-    local dropdown = CreateFrame("Frame", name, parent, "UIDropDownMenuTemplate")
-    UIDropDownMenu_SetWidth(dropdown, dropdownWidth or 135)
-    UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
+    -- Create the dropdown frame using the library's creation function
+    local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
+    LibDD:UIDropDownMenu_SetWidth(dropdown, dropdownWidth or 135)
+    LibDD:UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
 
-    UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
-        local info = UIDropDownMenu_CreateInfo()
+    -- Initialize the dropdown using the library's initialize function
+    LibDD:UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
+        local info = LibDD:UIDropDownMenu_CreateInfo()
         local textures = LSM:HashTable(LSM.MediaType.STATUSBAR)
         for textureName, texturePath in pairs(textures) do
             info.text = textureName
@@ -225,7 +231,7 @@ local function CreateTextureDropdown(name, parent, defaultText, settingKey, togg
             info.func = function(self, arg1)
                 if BetterBlizzPlatesDB[settingKey] ~= arg1 then
                     BetterBlizzPlatesDB[settingKey] = arg1
-                    UIDropDownMenu_SetText(dropdown, arg1)
+                    LibDD:UIDropDownMenu_SetText(dropdown, arg1)
                     toggleFunc(texturePath)
                 end
             end
@@ -235,16 +241,19 @@ local function CreateTextureDropdown(name, parent, defaultText, settingKey, togg
             info.icon = texturePath
             info.iconInfo = { tCoordLeft = 0, tCoordRight = 1, tCoordTop = 0, tCoordBottom = 1, tSizeX = 50, tSizeY = 50 }
 
-            UIDropDownMenu_AddButton(info)
+            -- Add each button using the library's add button function
+            LibDD:UIDropDownMenu_AddButton(info)
         end
     end)
 
+    -- Position the dropdown
     dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
 
+    -- Enable or disable the dropdown based on the parent's check state
     if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
-        UIDropDownMenu_DisableDropDown(dropdown)
+        LibDD:UIDropDownMenu_DisableDropDown(dropdown)
     else
-        UIDropDownMenu_EnableDropDown(dropdown)
+        LibDD:UIDropDownMenu_EnableDropDown(dropdown)
     end
 
     return dropdown
@@ -811,41 +820,48 @@ local function CreateTooltip(widget, tooltipText, anchor)
 end
 
 local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggleFunc, point)
-    local dropdown = CreateFrame("Frame", name, parent, "UIDropDownMenuTemplate")
-    UIDropDownMenu_SetWidth(dropdown, 125)
-    UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
+    -- Create the dropdown frame using the library's creation function
+    local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
+    LibDD:UIDropDownMenu_SetWidth(dropdown, 125)
+    LibDD:UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
+
     local anchorPointsToUse = anchorPoints
     if name == "targetIndicatorDropdown" then
         anchorPointsToUse = targetIndicatorAnchorPoints
     end
-    UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
-        local info = UIDropDownMenu_CreateInfo()
+
+    -- Initialize the dropdown using the library's initialize function
+    LibDD:UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
+        local info = LibDD:UIDropDownMenu_CreateInfo()
         for _, anchor in ipairs(anchorPointsToUse) do
             info.text = anchor
             info.arg1 = anchor
             info.func = function(self, arg1)
                 if BetterBlizzPlatesDB[settingKey] ~= arg1 then
                     BetterBlizzPlatesDB[settingKey] = arg1
-                    UIDropDownMenu_SetText(dropdown, arg1)
+                    LibDD:UIDropDownMenu_SetText(dropdown, arg1)
                     toggleFunc(arg1)
                     BBP.RefreshAllNameplates()
                 end
             end
             info.checked = (BetterBlizzPlatesDB[settingKey] == anchor)
-            UIDropDownMenu_AddButton(info)
+            LibDD:UIDropDownMenu_AddButton(info)
         end
     end)
 
+    -- Position the dropdown
     dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
 
+    -- Create and set up the label
     local dropdownText = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     dropdownText:SetPoint("BOTTOM", dropdown, "TOP", 0, 3)
     dropdownText:SetText(point.label)
 
+    -- Enable or disable the dropdown based on the parent's check state
     if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
-        UIDropDownMenu_DisableDropDown(dropdown)
+        LibDD:UIDropDownMenu_DisableDropDown(dropdown)
     else
-        UIDropDownMenu_EnableDropDown(dropdown)
+        LibDD:UIDropDownMenu_EnableDropDown(dropdown)
     end
 
     return dropdown
