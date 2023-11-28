@@ -343,24 +343,18 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
             if (axis ~= "X" and axis ~= "Y") and inputValue <= 0 then
                 inputValue = 0.1  -- Set to minimum allowed value for non-axis sliders
             end
-    
+
             local currentMin, currentMax = slider:GetMinMaxValues()
             if inputValue < currentMin or inputValue > currentMax then
                 UpdateSliderRange(inputValue, currentMin, currentMax)
             end
-    
+
             slider:SetValue(inputValue)
             BetterBlizzPlatesDB[element] = inputValue
         end
         editBox:Hide()
+        BBP.RefreshAllNameplates()
     end
-    
-
-
-
-
-
-
 
     slider:SetScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
