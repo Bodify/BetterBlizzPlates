@@ -87,7 +87,7 @@ function BBP.FocusTargetIndicator(frame)
         frame.focusTargetIndicator:SetSize(20, 20)
         frame.focusTargetIndicator:SetAtlas("Waypoint-MapPin-Untracked")
         frame.focusTargetIndicator:Hide()
-        frame.focusTargetIndicator:SetDrawLayer("OVERLAY", 7) 
+        frame.focusTargetIndicator:SetDrawLayer("OVERLAY", 7)
         frame.focusTargetIndicator:SetVertexColor(1, 1, 1)
     end
 

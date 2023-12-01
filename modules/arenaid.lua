@@ -816,6 +816,47 @@ end
 --#########################################################################################################
 -- The big consolidated caller
 function BBP.ArenaIndicatorCaller(frame, config)
+    -- Arena and party logic
+    if IsActiveBattlefieldArena() then
+        local unitType
+        if UnitIsEnemy("player", frame.unit) then
+            unitType = "arena"
+        else
+            unitType = "party"
+        end
+
+        if unitType == "arena" then
+            if not config.arenaIndicatorModeOff then
+                if config.arenaIndicatorModeOne then
+                    BBP.ArenaIndicator1(frame)
+                elseif config.arenaIndicatorModeTwo then
+                    BBP.ArenaIndicator2(frame)
+                elseif config.arenaIndicatorModeThree then
+                    BBP.ArenaIndicator3(frame)
+                elseif config.arenaIndicatorModeFour then
+                    BBP.ArenaIndicator4(frame)
+                elseif config.arenaIndicatorModeFive then
+                    BBP.ArenaIndicator5(frame)
+                end
+                return
+            end
+        elseif unitType == "party" then
+            if not config.partyIndicatorModeOff then
+                if config.partyIndicatorModeOne then
+                    BBP.PartyIndicator1(frame)
+                elseif config.partyIndicatorModeTwo then
+                    BBP.PartyIndicator2(frame)
+                elseif config.partyIndicatorModeThree then
+                    BBP.PartyIndicator3(frame)
+                elseif config.partyIndicatorModeFour then
+                    BBP.PartyIndicator4(frame)
+                elseif config.partyIndicatorModeFive then
+                    BBP.PartyIndicator5(frame)
+                end
+                return
+            end
+        end
+    end
     if BetterBlizzPlatesDB.arenaIndicatorTestMode then
         local unitType
         if UnitIsEnemy("player", frame.unit) or (UnitReaction("player", frame.unit) or 0) < 5 then
@@ -862,46 +903,6 @@ function BBP.ArenaIndicatorCaller(frame, config)
                 BBP.TestPartyIndicator4(frame)
             elseif config.partyIndicatorModeFive then
                 BBP.TestPartyIndicator5(frame)
-            end
-        end
-    end
-
-    -- Arena and party logic
-    if IsActiveBattlefieldArena() then
-        local unitType
-        if UnitIsEnemy("player", frame.unit) then
-            unitType = "arena"
-        else
-            unitType = "party"
-        end        
-
-        if unitType == "arena" then
-            if not config.arenaIndicatorModeOff then
-                if config.arenaIndicatorModeOne then
-                    BBP.ArenaIndicator1(frame)
-                elseif config.arenaIndicatorModeTwo then
-                    BBP.ArenaIndicator2(frame)
-                elseif config.arenaIndicatorModeThree then
-                    BBP.ArenaIndicator3(frame)
-                elseif config.arenaIndicatorModeFour then
-                    BBP.ArenaIndicator4(frame)
-                elseif config.arenaIndicatorModeFive then
-                    BBP.ArenaIndicator5(frame)
-                end
-            end
-        elseif unitType == "party" then
-            if not config.partyIndicatorModeOff then
-                if config.partyIndicatorModeOne then
-                    BBP.PartyIndicator1(frame)
-                elseif config.partyIndicatorModeTwo then
-                    BBP.PartyIndicator2(frame)
-                elseif config.partyIndicatorModeThree then
-                    BBP.PartyIndicator3(frame)
-                elseif config.partyIndicatorModeFour then
-                    BBP.PartyIndicator4(frame)
-                elseif config.partyIndicatorModeFive then
-                    BBP.PartyIndicator5(frame)
-                end
             end
         end
     end

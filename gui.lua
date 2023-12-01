@@ -2861,7 +2861,7 @@ local function guiHideNPC()
     CreateList(hideNPCListFrame, "hideNPCsList", BetterBlizzPlatesDB.hideNPCsList, BBP.RefreshAllNameplates, false)
     CreateList(hideNPCWhitelistFrame, "hideNPCsWhitelist", BetterBlizzPlatesDB.hideNPCsWhitelist, BBP.RefreshAllNameplates, false)
 
-    local hideNPCWhitelistOn = CreateCheckbox("hideNPCWhitelistOn", "Whitelist mode", hideNPC, nil, BBP.hideNPC)
+    local hideNPCWhitelistOn = CreateCheckbox("hideNPCWhitelistOn", "Whitelist mode", hideNPC)
     hideNPCWhitelistOn:SetPoint("TOPLEFT", hideNPC, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     hideNPCWhitelistOn:HookScript("OnClick", function (self)
         if self:GetChecked() then
@@ -2874,8 +2874,12 @@ local function guiHideNPC()
     end)
     CreateTooltip(hideNPCWhitelistOn, "Hides ALL NPC's except the ones in the whitelist")
 
-    local hideNPCArenaOnly = CreateCheckbox("hideNPCArenaOnly", "Only hide NPCs in arena", hideNPC, nil, BBP.hideNPC)
+    local hideNPCArenaOnly = CreateCheckbox("hideNPCArenaOnly", "Only hide NPCs in arena", hideNPC)
     hideNPCArenaOnly:SetPoint("TOPLEFT", hideNPCWhitelistOn, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+    local hideNPCPetsOnly = CreateCheckbox("hideNPCPetsOnly", "Hide Player Pets", hideNPC)
+    hideNPCPetsOnly:SetPoint("TOPLEFT", hideNPCArenaOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(hideNPCPetsOnly, "Hide all player pets.")
 
     local function TogglePanel()
         if BBP.variablesLoaded then

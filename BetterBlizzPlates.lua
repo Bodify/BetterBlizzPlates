@@ -797,7 +797,7 @@ function BBP.ClassColorAndScaleNames(frame)
     end
 
     -- Set the name's color based on unit relation
-    if frame.optionTable.colorNameBySelection and UnitIsPlayer(frame.unit) then
+    if UnitIsPlayer(frame.unit) then
         local settingKey = relation .. "ClassColorName"
         if BetterBlizzPlatesDB[settingKey] then
             local _, class = UnitClass(frame.unit)
@@ -910,11 +910,11 @@ function BBP.ResetToDefaultScales(slider, targetType)
             SetCVar("nameplateGlobalScale", 1)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMinScale set to " .. defaultMinScale)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMaxScale set to " .. defaultMaxScale)
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateGlobalScale set to 1")      
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateGlobalScale set to 1")
         elseif targetType == "nameplateSelected" then
             BetterBlizzPlatesDB.nameplateSelectedScale = defaultSettings[targetType]
             SetCVar("nameplateSelectedScale", defaultSettings[targetType])
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateSelectedScale set to " .. defaultSettings[targetType])  
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateSelectedScale set to " .. defaultSettings[targetType])
         end
     end
 end
@@ -1023,7 +1023,9 @@ function BBP.HideNPCs(frame)
 
     local hideNPCArenaOnly = BetterBlizzPlatesDB.hideNPCArenaOnly
     local hideNPCWhitelistOn = BetterBlizzPlatesDB.hideNPCWhitelistOn
+    local hideNPCPetsOnly = BetterBlizzPlatesDB.hideNPCPetsOnly
     local inBg = UnitInBattleground("player")
+    local isPet = (UnitGUID(frame.displayedUnit) and select(6, strsplit("-", UnitGUID(frame.displayedUnit))) == "Pet")
 
     if hideNPCArenaOnly and not inBg then
         return
@@ -1078,7 +1080,7 @@ function BBP.HideNPCs(frame)
         -- Check if the unit is the current target and show accordingly
         if UnitIsUnit(frame.displayedUnit, "target") then
             frame:Show()
-        elseif inList then
+        elseif inList or (hideNPCPetsOnly and isPet) then
             frame:Hide()
         else
             frame:Show()
