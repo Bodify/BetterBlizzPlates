@@ -34,10 +34,7 @@ local UnitIsPlayer = UnitIsPlayer
 local UnitIsUnit = UnitIsUnit
 local UnitName = UnitName
 
-
-
 local interruptSpellIDs = {}
-
 function BBP.InitializeInterruptSpellID()
     interruptSpellIDs = {}
     for spellID in pairs(interruptList) do
@@ -56,49 +53,6 @@ local function OnEvent(self, event, unit, _, spellID)
 end
 recheckInterruptListener:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 recheckInterruptListener:SetScript("OnEvent", OnEvent)
-
-function UpdateCastbarAnchors(frame, setupOptions)
-    if not BBP.IsLegalNameplateUnit(frame) then return end
-
-    local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
-    local castBarDragonflightShield = BetterBlizzPlatesDB.castBarDragonflightShield
-    local castBarIconAnchor = BetterBlizzPlatesDB.castBarIconAnchor
-    local castBarIconXPos = BetterBlizzPlatesDB.castBarIconXPos
-    local castBarIconYPos = BetterBlizzPlatesDB.castBarIconYPos
-    local showCastBarIconWhenNoninterruptible = BetterBlizzPlatesDB.showCastBarIconWhenNoninterruptible
-    local namePlateVerticalScale = tonumber(BetterBlizzPlatesDB.NamePlateVerticalScale)
-
-    -- Castbar customization
-    if enableCastbarCustomization then
-        -- Shield icon
-        local yOffset = castBarDragonflightShield and -1 or 0
-        PixelUtil.SetPoint(frame.castBar.BorderShield, "CENTER", frame.castBar, castBarIconAnchor, castBarIconXPos, castBarIconYPos + yOffset)
-
-        -- Spell icon position
-        local customOptions = frame.customOptions
-        if not customOptions or not customOptions.ignoreIconPoint then
-            PixelUtil.SetPoint(frame.castBar.Icon, "CENTER", frame.castBar, castBarIconAnchor, castBarIconXPos, castBarIconYPos)
-        end
-
-        if showCastBarIconWhenNoninterruptible then
-            frame.castBar.BorderShield:SetDrawLayer("OVERLAY", 1)
-            frame.castBar.Icon:Show()
-            frame.castBar.Icon:SetDrawLayer("OVERLAY", 2)
-        end
-    else
-        if not (namePlateVerticalScale == 2.7 or namePlateVerticalScale == 1) then
-            if BBP.isLargeNameplatesEnabled() then
-                frame.castBar:SetHeight(18.8)
-            else
-                frame.castBar:SetHeight(8)
-            end
-        end
-    end
-end
-
---function BBP.HookDefaultCompactNamePlateFrameAnchorInternal()
-    hooksecurefunc("DefaultCompactNamePlateFrameAnchorInternal", UpdateCastbarAnchors)
---end
 
 -- Castbar has a fade out animation after UNIT_SPELLCAST_STOP has triggered, reset castbar settings after this fadeout
 local function ResetCastbarAfterFadeout(unitToken)
@@ -153,13 +107,10 @@ function BBP.CustomizeCastbar(unitToken)
     local castBarTexture = castBar:GetStatusBarTexture()
     local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
     local castBarDragonflightShield = BetterBlizzPlatesDB.castBarDragonflightShield
-    local castBarIconAnchor = BetterBlizzPlatesDB.castBarIconAnchor
-    local castBarIconXPos = BetterBlizzPlatesDB.castBarIconXPos
-    local castBarIconYPos = BetterBlizzPlatesDB.castBarIconYPos
     local castBarHeight = BetterBlizzPlatesDB.castBarHeight
     local castBarTextScale = BetterBlizzPlatesDB.castBarTextScale
     local castBarCastColor = BetterBlizzPlatesDB.castBarCastColor
-    local castBarChannelColor = BetterBlizzPlatesDB.castBarChannelColor
+    local castBarChanneledColor = BetterBlizzPlatesDB.castBarChanneledColor
 
     if not castBarRecolor then
         if castBarTexture then
@@ -184,7 +135,7 @@ function BBP.CustomizeCastbar(unitToken)
             if castBarTexture then
                 castBarTexture:SetDesaturated(true)
             end
-            castBar:SetStatusBarColor(unpack(castBarChannelColor))
+            castBar:SetStatusBarColor(unpack(castBarChanneledColor))
         end
     end
 
@@ -196,13 +147,6 @@ function BBP.CustomizeCastbar(unitToken)
     else
         castBar.BorderShield:SetAtlas("nameplates-InterruptShield")
     end
-
-    castBar.Icon:ClearAllPoints()
-    castBar.Icon:SetPoint("CENTER", castBar, castBarIconAnchor, castBarIconXPos, castBarIconYPos)
-
-    local yOffset = castBarDragonflightShield and -1 or 0
-    castBar.BorderShield:ClearAllPoints()
-    castBar.BorderShield:SetPoint("CENTER", castBar, castBarIconAnchor, castBarIconXPos, castBarIconYPos + yOffset)
 
     castBar.Icon:SetScale(castBarIconScale)
     castBar.BorderShield:SetScale(borderShieldSize)
@@ -317,7 +261,7 @@ function BBP.CustomizeCastbar(unitToken)
                                 if UnitCastingInfo(unitToken) then
                                     castBar:SetStatusBarColor(unpack(castBarCastColor))
                                 elseif UnitChannelInfo(unitToken) then
-                                    castBar:SetStatusBarColor(unpack(castBarChannelColor))
+                                    castBar:SetStatusBarColor(unpack(castBarChanneledColor))
                                 end
                             end
                         end

@@ -2380,14 +2380,18 @@ local function guiCastbar()
     local castBarIconScale = CreateSlider(enableCastbarCustomization, "Castbar Icon Size", 0.1, 2.5, 0.1, "castBarIconScale")
     castBarIconScale:SetPoint("TOPLEFT", castBarDragonflightShield, "BOTTOMLEFT", 12, -10)
 
+--[=[
     local castBarIconXPos = CreateSlider(enableCastbarCustomization, "Icon x offset", -50, 50, 1, "castBarIconXPos", "X")
     castBarIconXPos:SetPoint("TOPLEFT", castBarIconScale, "BOTTOMLEFT", 0, -15)
 
     local castBarIconYPos = CreateSlider(enableCastbarCustomization, "Icon y offset", -50, 50, 1, "castBarIconYPos", "Y")
     castBarIconYPos:SetPoint("TOPLEFT", castBarIconXPos, "BOTTOMLEFT", 0, -15)
 
+]=]
+
+
     local castBarHeight = CreateSlider(enableCastbarCustomization, "Castbar height", 4, 36, 0.1, "castBarHeight", "Height")
-    castBarHeight:SetPoint("TOPLEFT", castBarIconYPos, "BOTTOMLEFT", 0, -15)
+    castBarHeight:SetPoint("TOPLEFT", castBarIconScale, "BOTTOMLEFT", 0, -15)
 
     local castbarHeightResetButton = CreateFrame("Button", nil, enableCastbarCustomization, "UIPanelButtonTemplate")
     castbarHeightResetButton:SetText("Default")
@@ -2489,7 +2493,7 @@ local function guiCastbar()
     end)
 
     local castbarEmphasisSettingsText = guiCastbar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    castbarEmphasisSettingsText:SetPoint("LEFT", guiCastbar, "TOPRIGHT", -250, -380)
+    castbarEmphasisSettingsText:SetPoint("LEFT", guiCastbar, "TOPRIGHT", -250, -340)
     castbarEmphasisSettingsText:SetText("Castbar emphasis settings")
     local castbarSettingsEmphasisIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
     castbarSettingsEmphasisIcon:SetAtlas("powerswirlanimation-starburst-soulbinds")

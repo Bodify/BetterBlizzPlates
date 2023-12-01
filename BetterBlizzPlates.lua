@@ -477,17 +477,15 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 local function SendUpdateMessage()
     if sendUpdate then
         C_Timer.After(7, function()
-            --DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            --DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Accidentally had name size opposite on friend/enemy. You might have to re-adjust sizes to compensate the fix. For other updates type /bbp news")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Removed the option to adjust castbar icon yx position. Also, castbar height will now be affected by the \"Nameplate Height\" slider. The reason being they had a massive impact on performance. Performance should now be roughly 5-10x better. For other updates type /bbp news")
         end)
     end
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Right click slider to input value now allows values outside of the default slider value")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Healthbar hide option on friendly nameplates.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Hide friendly/enemy names.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Added \"Hide Player Pets\" in Hide NPC module.")
 end
 
 local function CheckForUpdate()
