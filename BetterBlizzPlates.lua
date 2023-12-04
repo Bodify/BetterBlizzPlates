@@ -11,8 +11,8 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.2.2"
-local sendUpdate = false
+local addonUpdates = "1.2.4"
+local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
@@ -391,7 +391,13 @@ local function InitializeSavedVariables()
 end
 
 local function FetchAndSaveValuesOnFirstLogin()
-    -- Check if already saved the first login values
+    if not BetterBlizzPlatesDB.nameplateMinAlpha then
+        BetterBlizzPlatesDB.nameplateMinAlpha = GetCVar("nameplateMinAlpha")
+        BetterBlizzPlatesDB.nameplateMinAlphaDistance = GetCVar("nameplateMinAlphaDistance")
+        BetterBlizzPlatesDB.nameplateMaxAlpha = GetCVar("nameplateMaxAlpha")
+        BetterBlizzPlatesDB.nameplateMaxAlphaDistance = GetCVar("nameplateMaxAlphaDistance")
+        BetterBlizzPlatesDB.nameplateOccludedAlphaMult = GetCVar("nameplateOccludedAlphaMult")
+    end
     if BetterBlizzPlatesDB.hasSaved then
         return
     end
@@ -416,6 +422,11 @@ local function FetchAndSaveValuesOnFirstLogin()
             BetterBlizzPlatesDB.nameplateGlobalScale = GetCVar("nameplateGlobalScale")
             BetterBlizzPlatesDB.nameplateLargerScale = GetCVar("nameplateLargerScale")
             BetterBlizzPlatesDB.nameplatePlayerLargerScale = GetCVar("nameplatePlayerLargerScale")
+            BetterBlizzPlatesDB.nameplateMinAlpha = GetCVar("nameplateMinAlpha")
+            BetterBlizzPlatesDB.nameplateMinAlphaDistance = GetCVar("nameplateMinAlphaDistance")
+            BetterBlizzPlatesDB.nameplateMaxAlpha = GetCVar("nameplateMaxAlpha")
+            BetterBlizzPlatesDB.nameplateMaxAlphaDistance = GetCVar("nameplateMaxAlphaDistance")
+            BetterBlizzPlatesDB.nameplateOccludedAlphaMult = GetCVar("nameplateOccludedAlphaMult")
 
             if GetCVar("NamePlateHorizontalScale") == "1.4" then
                 BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
@@ -456,7 +467,12 @@ function BBP.CVarsAreSaved()
        db.NamePlateClassificationScale and
        db.nameplateGlobalScale and
        db.nameplateLargerScale and
-       db.nameplatePlayerLargerScale then
+       db.nameplatePlayerLargerScale and
+       db.nameplateMinAlpha and
+       db.nameplateMinAlphaDistance and
+       db.nameplateMaxAlpha and
+       db.nameplateMaxAlphaDistance and
+       db.nameplateOccludedAlphaMult then
         return true
     else
         return false
@@ -478,14 +494,15 @@ local function SendUpdateMessage()
     if sendUpdate then
         C_Timer.After(7, function()
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Removed the option to adjust castbar icon yx position. Also, castbar height will now be affected by the \"Nameplate Height\" slider. The reason being they had a massive impact on performance. Performance should now be roughly 5-10x better. For other updates type /bbp news")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Removed the option to adjust castbar icon yx position. Also, castbar height will now be affected by the \"Nameplate Height\" slider. Performance should now be roughly 10-20x better because of this, oops. For other updates type /bbp news")
         end)
     end
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Added \"Hide Player Pets\" in Hide NPC module.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Roughly 10-20x performance increase sacrificing two minor settings.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Added \"Hide Player Pets\" option in Hide NPC module.")
 end
 
 local function CheckForUpdate()
@@ -958,6 +975,26 @@ function BBP.ResetToDefaultValue(slider, element)
             BetterBlizzPlatesDB.nameplateMotionSpeed = 0.025
             SetCVar("nameplateMotionSpeed", 0.025)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMotionSpeed set to 0.025")
+        elseif element == "nameplateMinAlpha" then
+            BetterBlizzPlatesDB.nameplateMinAlpha = 0.6
+            SetCVar("nameplateMinAlpha", 0.6)
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMinAlpha set to 0.6")
+        elseif element == "nameplateMinAlphaDistance" then
+            BetterBlizzPlatesDB.nameplateMinAlphaDistance = 10
+            SetCVar("nameplateMinAlphaDistance", 10)
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMinAlphaDistance set to 10")
+        elseif element == "nameplateMaxAlpha" then
+            BetterBlizzPlatesDB.nameplateMaxAlpha = 1
+            SetCVar("nameplateMaxAlpha", 1)
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMotionSpeed set to 1")
+        elseif element == "nameplateMaxAlphaDistance" then
+            BetterBlizzPlatesDB.nameplateMaxAlphaDistance = 40
+            SetCVar("nameplateMaxAlphaDistance", 40)
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMaxAlphaDistance set to 40")
+        elseif element == "nameplateOccludedAlphaMult" then
+            BetterBlizzPlatesDB.nameplateOccludedAlphaMult = 0.4
+            SetCVar("nameplateOccludedAlphaMult", 0.4)
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateOccludedAlphaMult set to 0.4")
         end
         slider:SetValue(BetterBlizzPlatesDB[element])
     end

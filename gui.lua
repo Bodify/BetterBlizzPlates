@@ -103,6 +103,17 @@ local function CreateBorderBox(anchor)
     return texture
 end
 
+local function CreateResetButton(relativeTo, settingKey, parent)
+    local resetButton = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    resetButton:SetText("Default")
+    resetButton:SetWidth(60)
+    resetButton:SetPoint("LEFT", relativeTo, "RIGHT", 10, 0)
+    resetButton:SetScript("OnClick", function()
+        BBP.ResetToDefaultValue(relativeTo, settingKey)
+    end)
+    return resetButton
+end
+
 local function CreateModeDropdown(name, parent, defaultText, settingKey, toggleFunc, point, modes, tooltips, textLabel, textColor)
     -- Create the dropdown frame using the library's creation function
     local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
@@ -711,6 +722,31 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         SetCVar("nameplateMotionSpeed", value)
                         BetterBlizzPlatesDB.nameplateMotionSpeed = value
                     end
+                elseif element == "nameplateMinAlpha" then
+                    if not BBP.checkCombatAndWarn() then
+                        SetCVar("nameplateMinAlpha", value)
+                        BetterBlizzPlatesDB.nameplateMinAlpha = value
+                    end
+                elseif element == "nameplateMinAlphaDistance" then
+                    if not BBP.checkCombatAndWarn() then
+                        SetCVar("nameplateMinAlphaDistance", value)
+                        BetterBlizzPlatesDB.nameplateMinAlphaDistance = value
+                    end
+                elseif element == "nameplateMaxAlpha" then
+                    if not BBP.checkCombatAndWarn() then
+                        SetCVar("nameplateMaxAlpha", value)
+                        BetterBlizzPlatesDB.nameplateMaxAlpha = value
+                    end
+                elseif element == "nameplateMaxAlphaDistance" then
+                    if not BBP.checkCombatAndWarn() then
+                        SetCVar("nameplateMaxAlphaDistance", value)
+                        BetterBlizzPlatesDB.nameplateMaxAlphaDistance = value
+                    end
+                elseif element == "nameplateOccludedAlphaMult" then
+                    if not BBP.checkCombatAndWarn() then
+                        SetCVar("nameplateOccludedAlphaMult", value)
+                        BetterBlizzPlatesDB.nameplateOccludedAlphaMult = value
+                    end
                     -- Friendly name scale
                 elseif element == "friendlyNameScale" then
                     if not BetterBlizzPlatesDB.arenaIndicatorTestMode then
@@ -1225,7 +1261,7 @@ local function guiGeneralTab()
 
     local NamePlateVerticalScale = CreateSlider(BetterBlizzPlates, "Nameplate Height", 0.5, 5, 0.01, "NamePlateVerticalScale")
     NamePlateVerticalScale:SetPoint("TOPLEFT", nameplateSelectedScale, "BOTTOMLEFT", 0, -17)
-    CreateTooltip(NamePlateVerticalScale, "Changes the height of ALL nameplates.\n\nDue to Blizzard restrictions it will also change\nthe height of friendly castbars in PvE instances.")
+    CreateTooltip(NamePlateVerticalScale, "Changes the height of ALL nameplates.\n\nWill also increase castbar height by default,\ncan be re-adjusted with castbar customization.")
 
     local NamePlateVerticalScaleResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     NamePlateVerticalScaleResetButton:SetText("Default")
@@ -3392,44 +3428,56 @@ local function guiMoreBlizzSettings()
     moreBlizzSettings:SetText("Settings not available in Blizzard's standard UI")
 
     local stackingNameplatesText = guiMoreBlizzSettings:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    stackingNameplatesText:SetPoint("TOPLEFT", guiMoreBlizzSettings, "TOPLEFT", 13, -20)
+    stackingNameplatesText:SetPoint("TOPLEFT", guiMoreBlizzSettings, "TOPLEFT", 13, -35)
     stackingNameplatesText:SetText("Stacking nameplate overlap amount")
 
-    local nameplateOverlapH = CreateSlider(guiMoreBlizzSettings, "Horizontal overlap", 0.05, 1, 0.01, "nameplateOverlapH")
+    local nameplateOverlapH = CreateSlider(guiMoreBlizzSettings, "Horizontal Overlap", 0.05, 1, 0.01, "nameplateOverlapH")
     nameplateOverlapH:SetPoint("TOP", stackingNameplatesText, "BOTTOM", -15, -20)
     CreateTooltip(nameplateOverlapH, "Space between nameplates horizontally")
+    CreateResetButton(nameplateOverlapH, "nameplateOverlapH", guiMoreBlizzSettings)
 
-    local nameplateOverlapHResetButton = CreateFrame("Button", nil, guiMoreBlizzSettings, "UIPanelButtonTemplate")
-    nameplateOverlapHResetButton:SetText("Default")
-    nameplateOverlapHResetButton:SetWidth(60)
-    nameplateOverlapHResetButton:SetPoint("LEFT", nameplateOverlapH, "RIGHT", 10, 0)
-    nameplateOverlapHResetButton:SetScript("OnClick", function()
-        BBP.ResetToDefaultValue(nameplateOverlapH, "nameplateOverlapH")
-    end)
-
-    local nameplateOverlapV = CreateSlider(guiMoreBlizzSettings, "Vertical overlap", 0.05, 1.1, 0.01, "nameplateOverlapV")
+    local nameplateOverlapV = CreateSlider(guiMoreBlizzSettings, "Vertical Overlap", 0.05, 1.1, 0.01, "nameplateOverlapV")
     nameplateOverlapV:SetPoint("TOPLEFT", nameplateOverlapH, "BOTTOMLEFT", 0, -20)
     CreateTooltip(nameplateOverlapV, "Space between nameplates vertically")
+    CreateResetButton(nameplateOverlapV, "nameplateOverlapV", guiMoreBlizzSettings)
 
-    local nameplateOverlapVResetButton = CreateFrame("Button", nil, guiMoreBlizzSettings, "UIPanelButtonTemplate")
-    nameplateOverlapVResetButton:SetText("Default")
-    nameplateOverlapVResetButton:SetWidth(60)
-    nameplateOverlapVResetButton:SetPoint("LEFT", nameplateOverlapV, "RIGHT", 10, 0)
-    nameplateOverlapVResetButton:SetScript("OnClick", function()
-        BBP.ResetToDefaultValue(nameplateOverlapV, "nameplateOverlapV")
-    end)
-
-    local nameplateMotionSpeed = CreateSlider(guiMoreBlizzSettings, "Nameplate motion speed", 0.01, 1, 0.01, "nameplateMotionSpeed")
+    local nameplateMotionSpeed = CreateSlider(guiMoreBlizzSettings, "Nameplate Motion Speed", 0.01, 1, 0.01, "nameplateMotionSpeed")
     nameplateMotionSpeed:SetPoint("TOPLEFT", nameplateOverlapV, "BOTTOMLEFT", 0, -20)
     CreateTooltip(nameplateMotionSpeed, "The speed at which nameplates move into their new position")
+    CreateResetButton(nameplateMotionSpeed, "nameplateMotionSpeed", guiMoreBlizzSettings)
 
-    local nameplateMotionSpeedResetButton = CreateFrame("Button", nil, guiMoreBlizzSettings, "UIPanelButtonTemplate")
-    nameplateMotionSpeedResetButton:SetText("Default")
-    nameplateMotionSpeedResetButton:SetWidth(60)
-    nameplateMotionSpeedResetButton:SetPoint("LEFT", nameplateMotionSpeed, "RIGHT", 10, 0)
-    nameplateMotionSpeedResetButton:SetScript("OnClick", function()
-        BBP.ResetToDefaultValue(nameplateMotionSpeed, "nameplateMotionSpeed")
-    end)
+    local nameplateAlphaText = guiMoreBlizzSettings:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    nameplateAlphaText:SetPoint("TOPLEFT", guiMoreBlizzSettings, "TOPLEFT", 300, -35)
+    nameplateAlphaText:SetText("Nameplate alpha settings")
+
+    local nameplateMinAlpha = CreateSlider(guiMoreBlizzSettings, "Min Alpha", 0, 1, 0.01, "nameplateMinAlpha")
+    nameplateMinAlpha:SetPoint("TOP", nameplateAlphaText, "BOTTOM", 0, -20)
+    CreateTooltip(nameplateMinAlpha, "The minimum alpha value of nameplates")
+    CreateResetButton(nameplateMinAlpha, "nameplateMinAlpha", guiMoreBlizzSettings)
+
+    local nameplateMinAlphaDistance = CreateSlider(guiMoreBlizzSettings, "Min Alpha Distance", 0, 60, 1, "nameplateMinAlphaDistance")
+    nameplateMinAlphaDistance:SetPoint("TOPLEFT", nameplateMinAlpha, "BOTTOMLEFT", 0, -20)
+    CreateTooltip(nameplateMinAlphaDistance, "The distance from the max distance\nthat nameplates will reach their minimum alpha.")
+    CreateResetButton(nameplateMinAlphaDistance, "nameplateMinAlphaDistance", guiMoreBlizzSettings)
+
+    local nameplateMaxAlpha = CreateSlider(guiMoreBlizzSettings, "Max Alpha", 0, 1, 0.01, "nameplateMaxAlpha")
+    nameplateMaxAlpha:SetPoint("TOP", nameplateMinAlphaDistance, "BOTTOM", 0, -20)
+    CreateTooltip(nameplateMaxAlpha, "The maximum alpha value of nameplates")
+    CreateResetButton(nameplateMaxAlpha, "nameplateMaxAlpha", guiMoreBlizzSettings)
+
+    local nameplateMaxAlphaDistance = CreateSlider(guiMoreBlizzSettings, "Max Alpha Distance", 0, 60, 1, "nameplateMaxAlphaDistance")
+    nameplateMaxAlphaDistance:SetPoint("TOPLEFT", nameplateMaxAlpha, "BOTTOMLEFT", 0, -20)
+    CreateTooltip(nameplateMaxAlphaDistance, "The distance from the camera that\nnameplates will reach their maximum alpha.\n\nNote: Yes, it is from the camera POV, and not player unfortunately.")
+    CreateResetButton(nameplateMaxAlphaDistance, "nameplateMaxAlphaDistance", guiMoreBlizzSettings)
+
+    local nameplateOccludedAlphaMult = CreateSlider(guiMoreBlizzSettings, "Occluded Alpha", 0, 1, 0.01, "nameplateOccludedAlphaMult")
+    nameplateOccludedAlphaMult:SetPoint("TOPLEFT", nameplateMaxAlphaDistance, "BOTTOMLEFT", 0, -20)
+    CreateTooltip(nameplateOccludedAlphaMult, "The alpha value on nameplates that\nare behind cover like pillars etc.")
+    CreateResetButton(nameplateOccludedAlphaMult, "nameplateOccludedAlphaMult", guiMoreBlizzSettings)
+
+
+
+
 
     local moreBlizzSettingsText = guiMoreBlizzSettings:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     moreBlizzSettingsText:SetPoint("BOTTOM", guiMoreBlizzSettings, "BOTTOM", 0, 10)
