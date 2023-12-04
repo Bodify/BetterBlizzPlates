@@ -494,15 +494,14 @@ local function SendUpdateMessage()
     if sendUpdate then
         C_Timer.After(7, function()
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Removed the option to adjust castbar icon yx position. Also, castbar height will now be affected by the \"Nameplate Height\" slider. Performance should now be roughly 10-20x better because of this, oops. For other updates type /bbp news")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Few extra sliders for nameplate CVar's available in \"More Blizz Settings\".")
         end)
     end
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Roughly 10-20x performance increase sacrificing two minor settings.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Added \"Hide Player Pets\" option in Hide NPC module.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Few extra sliders for nameplate CVar's available in \"More Blizz Settings\".")
 end
 
 local function CheckForUpdate()
