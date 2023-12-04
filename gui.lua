@@ -2496,8 +2496,12 @@ local function guiCastbar()
         OpenColorPicker("castBarChanneledColor", castBarChanneledColorIcon)
     end)
 
+    local interruptedByIndicator = CreateCheckbox("interruptedByIndicator", "Show who interrupted", enableCastbarCustomization)
+    interruptedByIndicator:SetPoint("TOPLEFT", castBarRecolor, "BOTTOMLEFT", 0, -23)
+    CreateTooltip(interruptedByIndicator, "Show the name of who interrupted the cast\ninstead of just the standard \"Interrupted\" text.")
+
     local castBarRecolorInterrupt = CreateCheckbox("castBarRecolorInterrupt", "Interrupt CD color", enableCastbarCustomization)
-    castBarRecolorInterrupt:SetPoint("TOPLEFT", castBarRecolor, "BOTTOMLEFT", 0, -23)
+    castBarRecolorInterrupt:SetPoint("TOPLEFT", interruptedByIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(castBarRecolorInterrupt, "Checks if you have interrupt ready\nand color castbar thereafter.")
 
     local castBarNoInterruptColor = CreateFrame("Button", nil, castBarRecolorInterrupt, "UIPanelButtonTemplate")

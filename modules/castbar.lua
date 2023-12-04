@@ -482,14 +482,15 @@ end
 -- Spellcast events
 local castbarEventFrame = CreateFrame("Frame")
 castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
-    local nameplate = BBP.GetNameplate(unitID)
-    if not nameplate then return end
-
-    local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
-    local showNameplateCastbarTimer = BetterBlizzPlatesDB.showNameplateCastbarTimer
-    local showNameplateTargetText = BetterBlizzPlatesDB.showNameplateTargetText
+    local showWhoInterrupted = BetterBlizzPlatesDB.interruptedByIndicator
 
     if event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" then
+        local nameplate = BBP.GetNameplate(unitID)
+        if not nameplate then return end
+
+        local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
+        local showNameplateCastbarTimer = BetterBlizzPlatesDB.showNameplateCastbarTimer
+        local showNameplateTargetText = BetterBlizzPlatesDB.showNameplateTargetText
         if enableCastbarCustomization then
             BBP.CustomizeCastbar(unitID)
         end
@@ -504,6 +505,12 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
 
     if event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_SUCCEEDED" or
        event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_INTERRUPTED" then
+        local nameplate = BBP.GetNameplate(unitID)
+        if not nameplate then return end
+
+        local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
+        local showNameplateCastbarTimer = BetterBlizzPlatesDB.showNameplateCastbarTimer
+        local showNameplateTargetText = BetterBlizzPlatesDB.showNameplateTargetText
         if showNameplateTargetText then
             BBP.UpdateNameplateTargetText(nameplate, unitID)
         end
@@ -512,6 +519,31 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
         end
         if enableCastbarCustomization then
             ResetCastbarAfterFadeout(unitID)
+        end
+    end
+
+    if showWhoInterrupted then
+        if event == "COMBAT_LOG_EVENT_UNFILTERED" then
+            local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags = CombatLogGetCurrentEventInfo()
+            if subevent == "SPELL_INTERRUPT" then
+
+                local destUnit = UnitTokenFromGUID(destGUID)
+                if string.match(destUnit or "", "nameplate") then
+                    local npbase = C_NamePlate.GetNamePlateForUnit(destUnit, false)
+                    if npbase then
+                        if sourceName then
+                            local name, server = strsplit("-", sourceName)
+                            local colorStr = "ffFFFFFF"
+
+                            if C_PlayerInfo.GUIDIsPlayer(sourceGUID) then
+                                local localizedClass, englishClass, localizedRace, englishRace, sex, _name, realm = GetPlayerInfoByGUID(sourceGUID)
+                                colorStr = RAID_CLASS_COLORS[englishClass].colorStr
+                            end
+                            npbase.UnitFrame.castBar.Text:SetText(string.format("|c%s[%s]|r", colorStr, name))
+                        end
+                    end
+                end
+            end
         end
     end
 end)
@@ -526,6 +558,9 @@ function BBP.ToggleSpellCastEventRegistration()
             castbarEventFrame:RegisterEvent("UNIT_SPELLCAST_STOP")
             castbarEventFrame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
             castbarEventFrame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+            if BetterBlizzPlatesDB.interruptedByIndicator then
+                castbarEventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+            end
             BetterBlizzPlatesDB.castbarEventsOn = true
         end
     else
@@ -536,6 +571,9 @@ function BBP.ToggleSpellCastEventRegistration()
             castbarEventFrame:UnregisterEvent("UNIT_SPELLCAST_STOP")
             castbarEventFrame:UnregisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
             castbarEventFrame:UnregisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+            if not BetterBlizzPlatesDB.interruptedByIndicator then
+                castbarEventFrame:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+            end
             BetterBlizzPlatesDB.castbarEventsOn = false
         end
     end
