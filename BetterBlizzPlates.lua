@@ -1448,6 +1448,10 @@ local function HandleNamePlateRemoved(unit)
         if frame.healthBar then
             frame.healthBar:SetAlpha(1)
         end
+        local hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
+        if not hideTargetHighlight then
+            frame.selectionHighlight:SetAlpha(0.22)
+        end
     end
     -- Hide totem icons
     if frame.customIcon then
@@ -1671,6 +1675,8 @@ function BBP.RefreshAllNameplates()
         if not frame or frame:IsForbidden() then return end
         local unitToken = frame.unit
 
+        local hideHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
+
         BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, BetterBlizzPlatesDB.defaultLargeFontSize)
         BBP.SetFontBasedOnOption(SystemFont_NamePlate, BetterBlizzPlatesDB.defaultFontSize)
         BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, BetterBlizzPlatesDB.defaultLargeFontSize)
@@ -1739,12 +1745,26 @@ function BBP.RefreshAllNameplates()
         end
         if not BetterBlizzPlatesDB.friendlyHideHealthBar then
             if frame.healthBar then
-                frame.healthBar:SetAlpha(1)
+                if not hideHealthBar and not BetterBlizzPlatesDB.totemIndicatorTestMode then
+                    frame.healthBar:SetAlpha(1)
+                end
             end
         end
         if not BetterBlizzPlatesDB.hideNPC then
             if frame then
                 frame:Show()
+            end
+        end
+        if BetterBlizzPlatesDB.totemIndicatorTestMode then
+            if hideHealthBar then
+                frame.healthBar:SetAlpha(0)
+                frame.selectionHighlight:SetAlpha(0)
+            else
+                local hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
+                frame.healthBar:SetAlpha(1)
+                if not hideTargetHighlight then
+                    frame.selectionHighlight:SetAlpha(0.22)
+                end
             end
         end
     end

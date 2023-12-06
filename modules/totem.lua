@@ -177,12 +177,14 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
     local yPos = BetterBlizzPlatesDB.totemIndicatorYPos
     local totemIndicatorSwappingAnchor = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown and frame.healthBar or frame.name
     local yPosAdjustment = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown and yPos + 4 or yPos
+    local testMode = BetterBlizzPlatesDB.totemIndicatorTestMode
+    local hideHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
     local npcData = BBP.npcList[npcID]
 
     frame:SetScale(1)
 
     -- Early return if not in test mode and npcData is nil
-    if not BetterBlizzPlatesDB.totemIndicatorTestMode and not npcData then
+    if not testMode and not npcData then
         return
     end
 
@@ -190,7 +192,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
     BBP.CreateTotemComponents(frame)
 
     -- Test mode
-    if BetterBlizzPlatesDB.totemIndicatorTestMode then
+    if testMode then
         frame:SetScale(1)
         BBP.ResetNameplateTestAttributes()
 
@@ -216,7 +218,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
                 BBP.ApplyTotemAttributes(frame, nil, nil, frame.randomColor)
             end
         end
-
+        if hideHealthBar then
+            frame.healthBar:SetAlpha(0)
+            frame.selectionHighlight:SetAlpha(0)
+        end
     -- Totem Indicator
     elseif npcData then
         frame:SetScale(1)
@@ -239,6 +244,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
             if frame.animationGroup then
                 frame.animationGroup:Stop()
             end
+        end
+        if hideHealthBar then
+            frame.healthBar:SetAlpha(0)
+            frame.selectionHighlight:SetAlpha(0)
         end
     else
         frame:SetScale(1)
