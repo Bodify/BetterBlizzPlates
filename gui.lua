@@ -938,7 +938,7 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
     return checkBox
 end
 
-local function CreateList(subPanel, listName, listData, refreshFunc, enableColorPicker)
+local function CreateList(subPanel, listName, listData, refreshFunc, enableColorPicker, extraBoxes)
     -- Create the scroll frame
     local scrollFrame = CreateFrame("ScrollFrame", nil, subPanel, "UIPanelScrollFrameTemplate")
     scrollFrame:SetSize(322, 390)
@@ -1088,6 +1088,65 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             colorPickerButton:SetScript("OnClick", OpenColorPicker)
         end
 
+        if extraBoxes then
+            -- Ensure the npc.flags table exists
+            if not npc.flags then
+                npc.flags = { important = false, pandemic = false }
+            end
+
+            -- Create Checkbox I (Important)
+            local checkBoxI = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
+            checkBoxI:SetSize(24, 24)
+            checkBoxI:SetPoint("RIGHT", deleteButton, "LEFT", -38, 0)
+
+            -- Create a texture for the checkbox
+            checkBoxI.texture = checkBoxI:CreateTexture(nil, "ARTWORK",nil,1)
+            checkBoxI.texture:SetAtlas("newplayertutorial-drag-slotgreen")
+            checkBoxI.texture:SetSize(27, 27)
+
+            checkBoxI.texture:SetPoint("CENTER", checkBoxI, "CENTER", -0.5,0.5)
+            CreateTooltip(checkBoxI, "Important Glow\n\nCheck for a green glow on the aura to highlight it.", "ANCHOR_TOPRIGHT")
+
+            -- Handler for the I checkbox
+            checkBoxI:SetScript("OnClick", function(self)
+                npc.flags.important = self:GetChecked() -- Save the state in the npc flags
+            end)
+            checkBoxI:HookScript("OnClick", BBP.RefreshAllNameplates)
+
+
+            -- Initialize state from npc flags
+            if npc.flags.important then
+                checkBoxI:SetChecked(true)
+            end
+
+            -- Create Checkbox P (Pandemic)
+            local checkBoxP = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
+            checkBoxP:SetSize(24, 24)
+            checkBoxP:SetPoint("LEFT", checkBoxI, "RIGHT", 6, 0)
+
+            -- Create a texture for the checkbox
+            checkBoxP.texture = checkBoxP:CreateTexture(nil, "ARTWORK",nil,1)
+            checkBoxP.texture:SetAtlas("newplayertutorial-drag-slotgreen")
+            checkBoxP.texture:SetDesaturated(true)
+            checkBoxP.texture:SetVertexColor(1, 0, 0)
+            checkBoxP.texture:SetSize(27, 27)
+
+            -- Center the texture within the checkbox
+            checkBoxP.texture:SetPoint("CENTER", checkBoxP, "CENTER", -0.5,0.5)
+            CreateTooltip(checkBoxP, "Pandemic Glow\n\nCheck for a red glow when the aura has less than 5 sec remaining.", "ANCHOR_TOPRIGHT")
+
+            -- Handler for the P checkbox
+            checkBoxP:SetScript("OnClick", function(self)
+                npc.flags.pandemic = self:GetChecked() -- Save the state in the npc flags
+            end)
+            checkBoxP:HookScript("OnClick", BBP.RefreshAllNameplates)
+
+            -- Initialize state from npc flags
+            if npc.flags.pandemic then
+                checkBoxP:SetChecked(true)
+            end
+        end
+
         button.deleteButton = deleteButton
         table.insert(textLines, button)
         updateBackgroundColors()  -- Update background colors after adding a new entry
@@ -1128,6 +1187,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
     editBox:SetSize(260, 19)
     editBox:SetPoint("TOP", scrollFrame, "BOTTOM", -15, -5)
     editBox:SetAutoFocus(false)
+    CreateTooltip(editBox, "Filter auras by spell id and/or spell name", "ANCHOR_TOP")
 
     local function addOrUpdateEntry(inputText)
         selectedLineIndex = nil
@@ -1159,6 +1219,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             if isDuplicate then
                 StaticPopup_Show("BBP_DUPLICATE_NPC_CONFIRM_" .. listName)
             else
+                local newEntry = { name = name, id = id, comment = comment, flags = { important = false, pandemic = false } }
                 table.insert(listData, { name = name, id = id, comment = comment })
                 createTextLineButton({ name = name, id = id, comment = comment }, #textLines + 1, enableColorPicker)
                 refreshFunc()
@@ -3062,7 +3123,7 @@ local function guiNameplateAuras()
     blacklistText:SetPoint("BOTTOM", auraBlacklistFrame, "TOP", 10, 0)
     blacklistText:SetText("Blacklist")
 
-    CreateList(auraWhitelistFrame, "auraWhitelist", BetterBlizzPlatesDB.auraWhitelist, BBP.RefreshAllNameplates)
+    CreateList(auraWhitelistFrame, "auraWhitelist", BetterBlizzPlatesDB.auraWhitelist, BBP.RefreshAllNameplates, nil, true)
 
     local whitelistText = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     whitelistText:SetPoint("BOTTOM", auraWhitelistFrame, "TOP", 10, 0)
@@ -3117,6 +3178,7 @@ local function guiNameplateAuras()
 
     local otherNpBuffEmphasisedBorder = CreateCheckbox("otherNpBuffEmphasisedBorder", "Red glow on whitelisted buffs", otherNpBuffEnable)
     otherNpBuffEmphasisedBorder:SetPoint("TOPLEFT", otherNpBuffBlueBorder, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(otherNpBuffEmphasisedBorder, "Note: This is specifically for all whitelisted buffs,\nnot to be confused with pandemic glow\neven though they look the same.\nWill probably remove this setting soonTM idk")
 
     -- Enemy Debuffs
     local otherNpdeBuffEnable = CreateCheckbox("otherNpdeBuffEnable", "Show DEBUFFS", enableNameplateAuraCustomisation)
@@ -3141,9 +3203,13 @@ local function guiNameplateAuras()
     local otherNpdeBuffFilterOnlyMe = CreateCheckbox("otherNpdeBuffFilterOnlyMe", "Only mine", otherNpdeBuffEnable)
     otherNpdeBuffFilterOnlyMe:SetPoint("TOPLEFT", otherNpdeBuffFilterLessMinite, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
+--[=[
     local otherNpdeBuffPandemicGlow = CreateCheckbox("otherNpdeBuffPandemicGlow", "Pandemic Glow", otherNpdeBuffEnable)
     otherNpdeBuffPandemicGlow:SetPoint("TOPLEFT", otherNpdeBuffFilterOnlyMe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(otherNpdeBuffPandemicGlow, "Red glow on whitelisted debuffs with less than 5 seconds left.")
+
+]=]
+
 
     --------------------------
     -- Friendly Nameplates
