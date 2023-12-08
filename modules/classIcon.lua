@@ -99,12 +99,20 @@ function BBP.ClassIndicator(frame)
     end
 
     local specIcon
+    local specID
     local Details = Details
-    if BetterBlizzPlatesDB.classIndicatorSpecIcon and Details then
-        local unitGUID = UnitGUID(frame.displayedUnit)
-        local spec = Details:GetSpecByGUID(unitGUID)
-        if spec then
-            specIcon = select(4, GetSpecializationInfoByID(spec))
+    if useSpecIcon then
+        if isFriendly and Details then
+            local unitGUID = UnitGUID(frame.displayedUnit)
+            specID = Details:GetSpecByGUID(unitGUID)
+            if specID then
+                specIcon = select(4, GetSpecializationInfoByID(specID))
+            end
+        elseif isEnemy and IsActiveBattlefieldArena() then
+            specID = GetArenaOpponentSpec(frame.displayedUnit)
+            if specID then
+                specIcon = select(4, GetSpecializationInfoByID(specID))
+            end
         end
     end
 

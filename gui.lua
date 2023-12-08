@@ -2499,7 +2499,7 @@ local function guiPositionAndScale()
 
     local classIndicatorSpecIcon = CreateCheckbox("classIndicatorSpecIcon", "Spec", contentFrame)
     classIndicatorSpecIcon:SetPoint("LEFT", classIconArenaOnly.text, "RIGHT", 0, 0)
-    CreateTooltip(classIndicatorSpecIcon, "Show spec icon instead. (Requires Details)\n\nNote: The spec information might not always\nbe available and it will default to class icon.")
+    CreateTooltip(classIndicatorSpecIcon, "Show spec icon instead. (Requires Details)\n\nNote: The spec information might not always\nbe available and it will default to class icon.\nExpect this to be a bit wonky for now.")
 
     local classIconBgOnly = CreateCheckbox("classIconBgOnly", "Battleground only", contentFrame)
     classIconBgOnly:SetPoint("TOPLEFT", classIconArenaOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
