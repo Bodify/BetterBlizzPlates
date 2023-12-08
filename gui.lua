@@ -412,6 +412,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         -- Healer Indicator Pos and Scale
                         elseif element == "healerIndicatorXPos" or element == "healerIndicatorYPos" or element == "healerIndicatorScale" then
                             BBP.HealerIndicator(frame)
+                        -- Healer Indicator Pos and Scale
+                        elseif element == "classIndicatorXPos" or element == "classIndicatorYPos" or element == "classIndicatorScale" then
+                            BBP.ClassIndicator(frame)
                         -- Pet Indicator Pos and Scale
                         elseif element == "petIndicatorXPos" or element == "petIndicatorYPos" or element == "petIndicatorScale" then
                             BBP.PetIndicator(frame)
@@ -600,6 +603,12 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BetterBlizzPlatesDB.castBarEmphasisSparkHeight = value
                 elseif element == "castBarEmphasisIconScale" then
                     BetterBlizzPlatesDB.castBarEmphasisIconScale = value
+                elseif element == "classIndicatorXPos" then
+                    BetterBlizzPlatesDB.classIndicatorXPos = value
+                elseif element == "classIndicatorYPos" then
+                    BetterBlizzPlatesDB.classIndicatorYPos = value
+                elseif element == "classIndicatorScale" then
+                    BetterBlizzPlatesDB.classIndicatorScale = value
                     -- Nameplate Widths
                 elseif element == "nameplateFriendlyWidth" then
                     if not BBP.checkCombatAndWarn() then
@@ -1531,7 +1540,7 @@ local function guiGeneralTab()
     -- Extra features on nameplates:
     ----------------------
     local extraFeaturesText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    extraFeaturesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 390, -220)
+    extraFeaturesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 390, -205)
     extraFeaturesText:SetText("Extra Features")
     local extraFeaturesIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     extraFeaturesIcon:SetAtlas("Campaign-QuestLog-LoreBook")
@@ -1549,10 +1558,19 @@ local function guiGeneralTab()
     local absorbsIcon = absorbIndicator:CreateTexture(nil, "ARTWORK")
     absorbsIcon:SetAtlas("ParagonReputation_Glow")
     absorbsIcon:SetSize(22, 22)
-    absorbsIcon:SetPoint("RIGHT", absorbIndicator, "LEFT", 0, 0)
+    absorbsIcon:SetPoint("RIGHT", absorbIndicator, "LEFT", 2, 0)
+
+    local classIndicator = CreateCheckbox("classIndicator", "Class indicator", BetterBlizzPlates)
+    classIndicator:SetPoint("TOPLEFT", absorbIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+    CreateTooltip(classIndicator, "Show class icon on nameplates")
+    local classIndicatorIcon = classIndicator:CreateTexture(nil, "ARTWORK")
+    classIndicatorIcon:SetAtlas("groupfinder-icon-class-mage")
+    classIndicatorIcon:SetSize(18, 18)
+    classIndicatorIcon:SetPoint("RIGHT", classIndicator, "LEFT", 0, 0)
 
     local combatIndicator = CreateCheckbox("combatIndicator", "Combat indicator", BetterBlizzPlates, nil, BBP.ToggleCombatIndicator)
-    combatIndicator:SetPoint("TOPLEFT", absorbIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    combatIndicator:SetPoint("TOPLEFT", classIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(combatIndicator, "Show a food icon on nameplates that are out of combat")
     local combatIcon = combatIndicator:CreateTexture(nil, "ARTWORK")
     combatIcon:SetAtlas("food")
@@ -1706,7 +1724,7 @@ local function guiGeneralTab()
     -- Arena
     ----------------------
     local arenaSettingsText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    arenaSettingsText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, 5)
+    arenaSettingsText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, 20)
     arenaSettingsText:SetText("Arena nameplates")
     local arenaSettingsIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     arenaSettingsIcon:SetAtlas("questbonusobjective")
@@ -1842,15 +1860,15 @@ local function guiPositionAndScale()
     -- Healer indicator
     ---------------------------
     local anchorSubHeal = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubHeal:SetPoint("CENTER", mainGuiAnchor2, "CENTER", firstLineX, firstLineY)
+    anchorSubHeal:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, secondLineY)
     anchorSubHeal:SetText("Healer Indicator")
 
     CreateBorderBox(anchorSubHeal)
 
     local healerCrossIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
     healerCrossIcon2:SetAtlas("greencross")
-    healerCrossIcon2:SetSize(32, 32)
-    healerCrossIcon2:SetPoint("BOTTOM", anchorSubHeal, "TOP", 0, 0)
+    healerCrossIcon2:SetSize(29, 29)
+    healerCrossIcon2:SetPoint("BOTTOM", anchorSubHeal, "TOP", 0, 3)
     healerCrossIcon2:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875)
 
     local healerIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "healerIndicatorScale")
@@ -1889,7 +1907,7 @@ local function guiPositionAndScale()
     -- Combat indicator
     ----------------------
     local anchorSubOutOfCombat = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubOutOfCombat:SetPoint("CENTER", mainGuiAnchor2, "CENTER", secondLineX, firstLineY)
+    anchorSubOutOfCombat:SetPoint("CENTER", mainGuiAnchor2, "CENTER", fourthLineX, firstLineY)
     anchorSubOutOfCombat:SetText("Combat Indicator")
 
     CreateBorderBox(anchorSubOutOfCombat)
@@ -1901,7 +1919,7 @@ local function guiPositionAndScale()
         combatIconSub:SetPoint("BOTTOM", anchorSubOutOfCombat, "TOP", 0, 0)
     else
         combatIconSub:SetAtlas("food")
-        combatIconSub:SetSize(42, 42)
+        combatIconSub:SetSize(40, 40)
         combatIconSub:SetPoint("BOTTOM", anchorSubOutOfCombat, "TOP", -1, 0)
     end
 
@@ -1952,14 +1970,14 @@ local function guiPositionAndScale()
     -- Hunter pet icon
     ----------------------
     local anchorSubPet = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubPet:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, firstLineY)
+    anchorSubPet:SetPoint("CENTER", mainGuiAnchor2, "CENTER", fourthLineX, secondLineY)
     anchorSubPet:SetText("Pet Indicator")
 
     CreateBorderBox(anchorSubPet)
 
     local petIndicator2 = contentFrame:CreateTexture(nil, "ARTWORK")
     petIndicator2:SetAtlas("newplayerchat-chaticon-newcomer")
-    petIndicator2:SetSize(38, 38)
+    petIndicator2:SetSize(36, 36)
     petIndicator2:SetPoint("BOTTOM", anchorSubPet, "TOP", 0, 0)
 
     local petIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "petIndicatorScale")
@@ -1989,14 +2007,14 @@ local function guiPositionAndScale()
     -- Absorb Indicator
     ----------------------
     local anchorSubAbsorb = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubAbsorb:SetPoint("CENTER", mainGuiAnchor2, "CENTER", fourthLineX, firstLineY)
+    anchorSubAbsorb:SetPoint("CENTER", mainGuiAnchor2, "CENTER", firstLineX, firstLineY)
     anchorSubAbsorb:SetText("Absorb Indicator")
 
     CreateBorderBox(anchorSubAbsorb)
 
     local absorbIndicator2 = contentFrame:CreateTexture(nil, "ARTWORK")
     absorbIndicator2:SetAtlas("ParagonReputation_Glow")
-    absorbIndicator2:SetSize(56, 56)
+    absorbIndicator2:SetSize(51, 51)
     absorbIndicator2:SetPoint("BOTTOM", anchorSubAbsorb, "TOP", -1, -10)
 
     local absorbIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "absorbIndicatorScale")
@@ -2032,7 +2050,7 @@ local function guiPositionAndScale()
     -- Totem Indicator
     ----------------------
     local anchorSubTotem = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubTotem:SetPoint("CENTER", mainGuiAnchor2, "CENTER", firstLineX, secondLineY)
+    anchorSubTotem:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, thirdLineY)
     anchorSubTotem:SetText("Totem Indicator")
 
     CreateBorderBox(anchorSubTotem)
@@ -2070,7 +2088,7 @@ local function guiPositionAndScale()
 
     local totemIndicatorHideHealthBar = CreateCheckbox("totemIndicatorHideHealthBar", "Hide hp", contentFrame)
     totemIndicatorHideHealthBar:SetPoint("LEFT", totemIndicatorHideNameAndShiftIconDown.text, "RIGHT", 0, 0)
-    CreateTooltip(totemIndicatorHideHealthBar, "Hide the healthbar on totems")
+    CreateTooltip(totemIndicatorHideHealthBar, "Hide the healthbar on totems.\nWill still show if targeted.")
 
     local totemIndicatorGlowOff = CreateCheckbox("totemIndicatorGlowOff", "No glow", contentFrame)
     totemIndicatorGlowOff:SetPoint("TOPLEFT", totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -2084,7 +2102,7 @@ local function guiPositionAndScale()
     -- Target indicator
     ----------------------
     local anchorSubTarget = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubTarget:SetPoint("CENTER", mainGuiAnchor2, "CENTER", secondLineX, secondLineY)
+    anchorSubTarget:SetPoint("CENTER", mainGuiAnchor2, "CENTER", secondLineX, thirdLineY)
     anchorSubTarget:SetText("Target Indicator")
 
     CreateBorderBox(anchorSubTarget)
@@ -2119,7 +2137,7 @@ local function guiPositionAndScale()
     -- Raid Indicator
     ----------------------
     local anchorSubRaidmark = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubRaidmark:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, secondLineY)
+    anchorSubRaidmark:SetPoint("CENTER", mainGuiAnchor2, "CENTER", firstLineX, thirdLineY)
     anchorSubRaidmark:SetText("Raidmarker")
 
     CreateBorderBox(anchorSubRaidmark)
@@ -2156,7 +2174,7 @@ local function guiPositionAndScale()
     -- Quest Indicator
     ----------------------
     local anchorSubquest = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubquest:SetPoint("CENTER", mainGuiAnchor2, "CENTER", fourthLineX, secondLineY)
+    anchorSubquest:SetPoint("CENTER", mainGuiAnchor2, "CENTER", fourthLineX, thirdLineY)
     anchorSubquest:SetText("Quest Indicator")
 
     CreateBorderBox(anchorSubquest)
@@ -2193,7 +2211,7 @@ local function guiPositionAndScale()
     -- Focus Target Indicator
     ----------------------
     local anchorSubFocus = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubFocus:SetPoint("CENTER", mainGuiAnchor2, "CENTER", firstLineX, thirdLineY)
+    anchorSubFocus:SetPoint("CENTER", mainGuiAnchor2, "CENTER", secondLineX, secondLineY)
     anchorSubFocus:SetText("Focus Target Indicator")
 
     CreateBorderBox(anchorSubFocus)
@@ -2300,7 +2318,7 @@ local function guiPositionAndScale()
     -- Execute Indicator
     ----------------------
     local anchorSubExecute = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubExecute:SetPoint("CENTER", mainGuiAnchor2, "CENTER", secondLineX, thirdLineY)
+    anchorSubExecute:SetPoint("CENTER", mainGuiAnchor2, "CENTER", firstLineX, secondLineY)
     anchorSubExecute:SetText("Execute Indicator")
 
     CreateBorderBox(anchorSubExecute)
@@ -2376,7 +2394,7 @@ local function guiPositionAndScale()
     -- Arena Indicator
     ----------------------
     local anchorSubArena = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubArena:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, thirdLineY)
+    anchorSubArena:SetPoint("CENTER", mainGuiAnchor2, "CENTER", secondLineX, firstLineY)
     anchorSubArena:SetText("Arena Indicator")
 
     CreateBorderBox(anchorSubArena)
@@ -2422,6 +2440,70 @@ local function guiPositionAndScale()
 
     local arenaIndicatorTestMode2 = CreateCheckbox("arenaIndicatorTestMode", "Test", contentFrame)
     arenaIndicatorTestMode2:SetPoint("TOPLEFT", arenaSpecAnchorDropdown, "BOTTOMLEFT", 16, 8)
+
+
+    ----------------------
+    -- Class Icon
+    ----------------------
+    local anchorSubClassIcon = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubClassIcon:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, firstLineY)
+    anchorSubClassIcon:SetText("Class Icon")
+
+    CreateBorderBox(anchorSubClassIcon)
+
+    local classIconIcon = contentFrame:CreateTexture(nil, "ARTWORK")
+    classIconIcon:SetAtlas("groupfinder-icon-class-mage")
+    classIconIcon:SetSize(33, 33)
+    classIconIcon:SetPoint("BOTTOM", anchorSubClassIcon, "TOP", 0, 1.5)
+    --classIconIcon:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875)
+
+    local classIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "classIndicatorScale")
+    classIndicatorScale:SetPoint("TOP", anchorSubClassIcon, "BOTTOM", 0, -15)
+
+    local classIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "classIndicatorXPos", "X")
+    classIndicatorXPos:SetPoint("TOP", classIndicatorScale, "BOTTOM", 0, -15)
+
+    local classIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "classIndicatorYPos", "Y")
+    classIndicatorYPos:SetPoint("TOP", classIndicatorXPos, "BOTTOM", 0, -15)
+
+    local classIconDropdown = CreateAnchorDropdown(
+        "classIconDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "classIndicatorAnchor",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = classIndicatorYPos, x = -16, y = -35, label = "Anchor" }
+    )
+
+    local classIconSquareBorder = CreateCheckbox("classIconSquareBorder", "Square", contentFrame)
+    classIconSquareBorder:SetPoint("TOPLEFT", classIconDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
+    CreateTooltip(classIconSquareBorder, "Square border instead of circle")
+
+    local classIconColorBorder = CreateCheckbox("classIconColorBorder", "Color", contentFrame)
+    classIconColorBorder:SetPoint("LEFT", classIconSquareBorder.text, "RIGHT", 0, 0)
+    CreateTooltip(classIconColorBorder, "Class color border")
+
+    local classIndicatorEnemy = CreateCheckbox("classIndicatorEnemy", "Enemies", contentFrame)
+    classIndicatorEnemy:SetPoint("TOPLEFT", classIconSquareBorder, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(classIndicatorEnemy, "Show on enemy players only")
+
+    local classIndicatorFriendly = CreateCheckbox("classIndicatorFriendly", "Friendly", contentFrame)
+    classIndicatorFriendly:SetPoint("LEFT", classIndicatorEnemy.text, "RIGHT", 0, 0)
+    CreateTooltip(classIndicatorFriendly, "Show on friendly players only")
+
+    local classIconArenaOnly = CreateCheckbox("classIconArenaOnly", "Arena only", contentFrame)
+    classIconArenaOnly:SetPoint("TOPLEFT", classIndicatorEnemy, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(classIconArenaOnly, "Show in arena only")
+
+    local classIndicatorSpecIcon = CreateCheckbox("classIndicatorSpecIcon", "Spec", contentFrame)
+    classIndicatorSpecIcon:SetPoint("LEFT", classIconArenaOnly.text, "RIGHT", 0, 0)
+    CreateTooltip(classIndicatorSpecIcon, "Show spec icon instead. (Requires Details)\n\nNote: The spec information might not always\nbe available and it will default to class icon.")
+
+    local classIconBgOnly = CreateCheckbox("classIconBgOnly", "Battleground only", contentFrame)
+    classIconBgOnly:SetPoint("TOPLEFT", classIconArenaOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(classIconBgOnly, "Show in battlegrounds only")
 
     ----
 

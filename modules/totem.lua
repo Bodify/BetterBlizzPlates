@@ -219,8 +219,16 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
             end
         end
         if hideHealthBar then
-            frame.healthBar:SetAlpha(0)
-            frame.selectionHighlight:SetAlpha(0)
+            if not UnitIsUnit(unit, "target") then
+                frame.healthBar:SetAlpha(0)
+                frame.selectionHighlight:SetAlpha(0)
+            else
+                local hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
+                frame.healthBar:SetAlpha(1)
+                if not hideTargetHighlight then
+                    frame.selectionHighlight:SetAlpha(0.22)
+                end
+            end
         end
     -- Totem Indicator
     elseif npcData then
@@ -246,8 +254,16 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
             end
         end
         if hideHealthBar then
-            frame.healthBar:SetAlpha(0)
-            frame.selectionHighlight:SetAlpha(0)
+            if not UnitIsUnit(unit, "target") then
+                frame.healthBar:SetAlpha(0)
+                frame.selectionHighlight:SetAlpha(0)
+            else
+                local hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
+                frame.healthBar:SetAlpha(1)
+                if not hideTargetHighlight then
+                    frame.selectionHighlight:SetAlpha(0.22)
+                end
+            end
         end
     else
         frame:SetScale(1)

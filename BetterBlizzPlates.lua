@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.2.5"
+local addonUpdates = "1.2.6"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -119,6 +119,16 @@ local defaultSettings = {
     healerIndicatorYPos = 0,
     healerIndicatorAnchor = "TOPRIGHT",
     healerIndicatorTestMode = false,
+    -- Class Icon
+    classIndicator = false,
+    classIndicatorXPos = 0,
+    classIndicatorYPos = 0,
+    classIndicatorAnchor = "TOP",
+    classIndicatorScale = 1,
+    classIndicatorEnemy = true,
+    classIndicatorFriendly = true,
+    classIconColorBorder = true,
+
     -- Pet Indicator
     petIndicator = false,
     petIndicatorScale = 1,
@@ -494,19 +504,15 @@ local function SendUpdateMessage()
     if sendUpdate then
         C_Timer.After(7, function()
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a A couple of new settings, type /bbp news.")
-            if BetterBlizzPlatesDB.otherNpdeBuffPandemicGlow then
-                DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a IMPORTANT NOTE: I've changed how Pandemic Glow works, it no longer auto adds to ALL whitelisted auras, only the ones you check the Pandemic Glow box on. You have you check the auras you want pandemic glow on.")
-            end
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Class/Spec icons on nameplates and some other stuff, type /bbp news.")
         end)
     end
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: \"Interrupted by\" setting that shows who kicked the cast.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Pandemic Glow checkboxes for auras.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Important Glow checkboxes for auras.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Class/Spec Icon on nameplates setting.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Totem Indicator: Hide totem healthbars setting.")
 end
 
 local function CheckForUpdate()
@@ -777,7 +783,6 @@ function BBP.HideOrShowNameplateAurasAndTargetHighlight(frame)
         frame.BuffFrame:SetAlpha(1)
     end
 
-    -- Handle target highlight's alpha
     if hideTargetHighlight then
         frame.selectionHighlight:SetAlpha(0)
     else
@@ -1292,8 +1297,8 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame)
 	end
 
 	-- Update whether healthbar is hidden due to being dead - only applies to non-player nameplates
-	local hideHealthBecauseDead = unitIsDead and not unitIsPlayer;
-	CompactUnitFrame_SetHideHealth(frame, hideHealthBecauseDead, HEALTH_BAR_HIDE_REASON_UNIT_DEAD);
+	--local hideHealthBecauseDead = unitIsDead and not unitIsPlayer;
+	--CompactUnitFrame_SetHideHealth(frame, hideHealthBecauseDead, HEALTH_BAR_HIDE_REASON_UNIT_DEAD);
 end
 
 
@@ -1441,7 +1446,7 @@ local function HandleNamePlateRemoved(unit)
     local nameplate = BBP.GetNameplate(unit)
     if not nameplate or not nameplate.UnitFrame then return end
     local frame = nameplate.UnitFrame
-    if frame:IsForbidden() then return end
+    if frame:IsForbidden() or frame:IsProtected() then return end
 
     if frame then
         frame:SetScale(1)
@@ -1513,6 +1518,10 @@ local function HandleNamePlateRemoved(unit)
     if frame.executeIndicator then
         frame.executeIndicator:SetText("")
     end
+
+    if frame.classIndicator then
+        frame.classIndicator:Hide()
+    end
 end
 
 --#################################################################################################
@@ -1523,7 +1532,12 @@ local function HandleNamePlateAdded(unit)
     local nameplate = BBP.GetNameplate(unit)
     if not nameplate or not nameplate.UnitFrame then return end
     local frame = nameplate.UnitFrame
-    if frame:IsForbidden() then return end
+    if frame:IsForbidden() or frame:IsProtected() then return end
+    local isPlayer = UnitIsUnit("player", unit)
+
+    if isPlayer then
+        return
+    end
 
     local customAuraOn = BetterBlizzPlatesDB.enableNameplateAuraCustomisation
     local customCastbar = BetterBlizzPlatesDB.enableCastbarCustomization
@@ -1544,6 +1558,7 @@ local function HandleNamePlateAdded(unit)
     local customTextureForBar = BetterBlizzPlatesDB.useCustomTextureForBars
     local focusIndicator = BetterBlizzPlatesDB.focusTargetIndicator or BetterBlizzPlatesDB.focusTargetIndicatorTestMode
     local friendlyHideHealthBar = BetterBlizzPlatesDB.friendlyHideHealthBar
+    local classIndicator = BetterBlizzPlatesDB.classIndicator
 
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
@@ -1556,9 +1571,15 @@ local function HandleNamePlateAdded(unit)
     if customCastbar then
         BBP.CustomizeCastbar(unit)
     end
+
     -- Show Quest Indicator
     if questIndicator then
         BBP.QuestIndicator(frame)
+    end
+
+    -- Show Class Indicator
+    if classIndicator then
+        BBP.ClassIndicator(frame)
     end
 
     -- Show Target indicator
@@ -1571,11 +1592,6 @@ local function HandleNamePlateAdded(unit)
         BBP.AbsorbIndicator(frame)
     end
 
-    -- Show totem icons
-    if totemIndicator then
-        BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
-    end
-
     if arenaIndicators then
         BBP.ArenaIndicatorCaller(frame, BetterBlizzPlatesDB)
     end
@@ -1586,6 +1602,15 @@ local function HandleNamePlateAdded(unit)
 
     -- Handle nameplate aura and target highlight visibility
     BBP.HideOrShowNameplateAurasAndTargetHighlight(frame)
+
+    if friendlyHideHealthBar then
+        if frame.healthBar and (UnitIsFriend("player", unit)) then
+            frame.healthBar:SetAlpha(0)
+            frame.selectionHighlight:SetAlpha(0)
+        else
+            frame.healthBar:SetAlpha(1)
+        end
+    end
 
     -- Fade out NPCs from list if enabled
     if fadeOutNpc then
@@ -1642,13 +1667,9 @@ local function HandleNamePlateAdded(unit)
         BBP.FocusTargetIndicator(frame)
     end
 
-    if friendlyHideHealthBar then
-        if frame.healthBar and (UnitIsFriend("player", unit) and not UnitIsUnit("player", unit)) then
-            frame.healthBar:SetAlpha(0)
-            frame.selectionHighlight:SetAlpha(0)
-        else
-            frame.healthBar:SetAlpha(1)
-        end
+    -- Show totem icons
+    if totemIndicator then
+        BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
     end
 end
 --#################################################################################################
@@ -1672,7 +1693,7 @@ function BBP.RefreshAllNameplates()
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = nameplate.UnitFrame
         local unitFrame = nameplate.UnitFrame
-        if not frame or frame:IsForbidden() then return end
+        if not frame or frame:IsForbidden() or frame:IsProtected() then return end
         local unitToken = frame.unit
 
         local hideHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
@@ -1785,7 +1806,7 @@ end
 --#################################################################################################
 -- Nameplate updater etc
 function BBP.ConsolidatedUpdateName(frame)
-    if not frame or frame:IsForbidden() then return end
+    if not frame or frame:IsForbidden() or frame:IsProtected() then return end
     local removeRealmName = BetterBlizzPlatesDB.removeRealmNames
     if removeRealmName then
         BBP.RemoveRealmName(frame)
@@ -1835,6 +1856,11 @@ function BBP.ConsolidatedUpdateName(frame)
     -- Show healer icon
     if healerIndicator then
         BBP.HealerIndicator(frame)
+    end
+
+    -- Show Class Indicator
+    if classIndicator then
+        BBP.ClassIndicator(frame)
     end
 
     -- Color NPC

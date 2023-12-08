@@ -146,6 +146,8 @@ frameTargetChanged:RegisterEvent("PLAYER_TARGET_CHANGED")
 frameTargetChanged:SetScript("OnEvent", function(self, event)
     local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
 
+    local hideTotemHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
+
     if previousTargetNameplate then
         BBP.TargetIndicator(previousTargetNameplate.UnitFrame)
         if BetterBlizzPlatesDB.fadeOutNPC then
@@ -153,6 +155,9 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
         end
         if BetterBlizzPlatesDB.hideNPC then
             BBP.HideNPCs(previousTargetNameplate.UnitFrame)
+        end
+        if hideTotemHealthBar then
+            BBP.ApplyTotemIconsAndColorNameplate(previousTargetNameplate.UnitFrame, previousTargetNameplate.UnitFrame.unit)
         end
         if BetterBlizzPlatesDB.hideCastbar then
             if previousTargetNameplate.UnitFrame then
@@ -180,6 +185,9 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
         end
         if BetterBlizzPlatesDB.hideNPC then
             BBP.HideNPCs(nameplateForTarget.UnitFrame)
+        end
+        if hideTotemHealthBar then
+            BBP.ApplyTotemIconsAndColorNameplate(nameplateForTarget.UnitFrame, nameplateForTarget.UnitFrame.unit)
         end
         if BetterBlizzPlatesDB.showCastbarIfTarget then
             local castBar = nameplateForTarget.UnitFrame.castBar

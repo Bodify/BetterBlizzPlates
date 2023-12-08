@@ -16,6 +16,7 @@ modules\execute.lua
 modules\target.lua
 modules\healer.lua
 modules\absorb.lua
+modules\classIcon.lua
 modules\pet.lua
 modules\quest.lua
 modules\auras.lua
