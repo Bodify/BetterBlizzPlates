@@ -180,6 +180,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
     local testMode = BetterBlizzPlatesDB.totemIndicatorTestMode
     local hideHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
     local npcData = BBP.npcList[npcID]
+    local showEnemyOnly = BetterBlizzPlatesDB.totemIndicatorEnemyOnly
 
     frame:SetScale(1)
 
@@ -187,6 +188,8 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
     if not testMode and not npcData then
         return
     end
+
+    local isEnemy = UnitIsEnemy("player", unit)
 
     -- Initialize totem components
     BBP.CreateTotemComponents(frame)
@@ -232,6 +235,9 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
         end
     -- Totem Indicator
     elseif npcData then
+        if showEnemyOnly and not isEnemy then
+            return
+        end
         frame:SetScale(1)
 
         BBP.ApplyTotemAttributes(frame, npcData.icon, npcData.duration, nil)

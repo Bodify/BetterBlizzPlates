@@ -6,5 +6,9 @@
     <Include file="libs\LibUIDropDownMenu\LibUIDropDownMenu.xml"/>
     <Script file="libs\LibUIDropDownMenu\LibEasyMenu.lua"/>
     <Script file="libs\LibUIDropDownMenu\LibUIDropDownMenu.lua"/>
+    <Include file="libs\LibOpenRaid\lib.xml"/>
+    <Script file="libs\LibOpenRaid\LibOpenRaid.lua"/>
+    <Include file="libs\LibDeflate\lib.xml"/>
+    <Script file="libs\LibDeflate\LibDeflate.lua"/>
 <!--@end-non-debug@-->
 </Ui>

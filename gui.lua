@@ -1513,6 +1513,23 @@ local function guiGeneralTab()
     friendlyHideHealthBar:SetPoint("TOPLEFT", friendlyHealthBarColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(friendlyHideHealthBar, "Hide friendly nameplate healthbars. Castbar and name will still show.")
 
+    local friendlyHideHealthBarNpc = CreateCheckbox("friendlyHideHealthBarNpc", "NPC's", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
+    friendlyHideHealthBarNpc:SetPoint("LEFT", friendlyHideHealthBar.text, "RIGHT", 0, 0)
+    CreateTooltip(friendlyHideHealthBarNpc, "Hide friendly NPC nameplate healthbars. Castbar and name will still show.")
+
+    friendlyHideHealthBar:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            friendlyHideHealthBarNpc:Enable()
+            friendlyHideHealthBarNpc:SetAlpha(1)
+        else
+            friendlyHideHealthBarNpc:Disable()
+            friendlyHideHealthBarNpc:SetAlpha(0)
+        end
+    end)
+    if not BetterBlizzPlatesDB.friendlyHideHealthBar then
+        friendlyHideHealthBarNpc:SetAlpha(0)
+    end
+
     local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Toggle on/off for Arena auto", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesInArena)
     toggleFriendlyNameplatesInArena:SetPoint("TOPLEFT", friendlyHideHealthBar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(toggleFriendlyNameplatesInArena, "Turn on friendly nameplates when you enter arena and off again when you leave.")
@@ -2083,6 +2100,10 @@ local function guiPositionAndScale()
     local totemTestIcons2 = CreateCheckbox("totemIndicatorTestMode", "Test", contentFrame)
     totemTestIcons2:SetPoint("TOPLEFT", totemIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
+    local totemIndicatorEnemyOnly = CreateCheckbox("totemIndicatorEnemyOnly", "Enemies only", contentFrame)
+    totemIndicatorEnemyOnly:SetPoint("LEFT", totemTestIcons2.text, "RIGHT", 0, 0)
+    CreateTooltip(totemIndicatorEnemyOnly, "Show on enemy totems only")
+
     local totemIndicatorHideNameAndShiftIconDown = CreateCheckbox("totemIndicatorHideNameAndShiftIconDown", "Hide name", contentFrame)
     totemIndicatorHideNameAndShiftIconDown:SetPoint("TOPLEFT", totemTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
@@ -2487,23 +2508,27 @@ local function guiPositionAndScale()
 
     local classIndicatorEnemy = CreateCheckbox("classIndicatorEnemy", "Enemies", contentFrame)
     classIndicatorEnemy:SetPoint("TOPLEFT", classIconSquareBorder, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(classIndicatorEnemy, "Show on enemy players only")
+    CreateTooltip(classIndicatorEnemy, "Show class indicator on enemy nameplates")
 
     local classIndicatorFriendly = CreateCheckbox("classIndicatorFriendly", "Friendly", contentFrame)
     classIndicatorFriendly:SetPoint("LEFT", classIndicatorEnemy.text, "RIGHT", 0, 0)
-    CreateTooltip(classIndicatorFriendly, "Show on friendly players only")
+    CreateTooltip(classIndicatorFriendly, "Show class indicator on friendly nameplates")
 
     local classIconArenaOnly = CreateCheckbox("classIconArenaOnly", "Arena only", contentFrame)
     classIconArenaOnly:SetPoint("TOPLEFT", classIndicatorEnemy, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(classIconArenaOnly, "Show in arena only")
 
-    local classIndicatorSpecIcon = CreateCheckbox("classIndicatorSpecIcon", "Spec", contentFrame)
-    classIndicatorSpecIcon:SetPoint("LEFT", classIconArenaOnly.text, "RIGHT", 0, 0)
-    CreateTooltip(classIndicatorSpecIcon, "Show spec icon instead. (Requires Details)\n\nNote: The spec information might not always\nbe available and it will default to class icon.\nExpect this to be a bit wonky for now.")
-
-    local classIconBgOnly = CreateCheckbox("classIconBgOnly", "Battleground only", contentFrame)
-    classIconBgOnly:SetPoint("TOPLEFT", classIconArenaOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local classIconBgOnly = CreateCheckbox("classIconBgOnly", "BG only", contentFrame)
+    classIconBgOnly:SetPoint("LEFT", classIconArenaOnly.text, "RIGHT", 0, 0)
     CreateTooltip(classIconBgOnly, "Show in battlegrounds only")
+
+    local classIndicatorSpecIcon = CreateCheckbox("classIndicatorSpecIcon", "Spec", contentFrame)
+    classIndicatorSpecIcon:SetPoint("TOPLEFT", classIconArenaOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(classIndicatorSpecIcon, "Show spec instead of class icon. (Requires Details)\n\nNote: The spec information might not always\nbe available and it will default to class icon.")
+
+    local classIndicatorHealer = CreateCheckbox("classIndicatorHealer", "Healer Icon", contentFrame)
+    classIndicatorHealer:SetPoint("LEFT", classIndicatorSpecIcon.text, "RIGHT", 0, 0)
+    CreateTooltip(classIndicatorHealer, "Show cross instead of class/spec icon on healers")
 
     ----
 

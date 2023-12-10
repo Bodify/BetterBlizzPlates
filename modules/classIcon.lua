@@ -2,19 +2,32 @@
 BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
 BBP = BBP or {}
 
+-- Healer spec id's
+local HealerSpecs = {
+    [105]  = true,  --> druid resto
+    [270]  = true,  --> monk mw
+    [65]   = true,  --> paladin holy
+    [256]  = true,  --> priest disc
+    [257]  = true,  --> priest holy
+    [264]  = true,  --> shaman resto
+    [1468] = true,  --> preservation evoker  
+}
+
 -- Class Indicator
-function BBP.ClassIndicator(frame)
+function BBP.ClassIndicator(frame, fetchedSpecID)
     local anchorPoint = BetterBlizzPlatesDB.classIndicatorAnchor
     local oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
     local xPos = BetterBlizzPlatesDB.classIndicatorXPos
     local yPos = BetterBlizzPlatesDB.classIndicatorYPos + (anchorPoint == "TOP" and 2 or 0)
-    local scale = BetterBlizzPlatesDB.classIndicatorScale
+    local scale = BetterBlizzPlatesDB.classIndicatorScale + 0.3
     local inInstance, instanceType = IsInInstance()
     local arenaOnly = BetterBlizzPlatesDB.classIconArenaOnly
     local bgOnly = BetterBlizzPlatesDB.classIconBgOnly
     local friendlyOnly = BetterBlizzPlatesDB.classIndicatorFriendly
     local enemyOnly = BetterBlizzPlatesDB.classIndicatorEnemy
     local useSpecIcon = BetterBlizzPlatesDB.classIndicatorSpecIcon
+    local showHealerIcon = BetterBlizzPlatesDB.classIndicatorHealer
+    local squareIcon = BetterBlizzPlatesDB.classIconSquareBorder
 
     -- Initialize Class Icon Frame
     if not frame.classIndicator then
@@ -31,6 +44,12 @@ function BBP.ClassIndicator(frame)
     local isFriendly = UnitIsFriend("player", frame.unit)
     local isEnemy = not isFriendly
     local isPlayer = UnitIsPlayer(frame.unit)
+    local isUser = UnitIsUnit(frame.unit, "player")
+
+    if isUser then
+        frame.classIndicator:Hide()
+        return
+    end
 
     if not isPlayer then
         frame.classIndicator:Hide()
@@ -43,7 +62,8 @@ function BBP.ClassIndicator(frame)
     end
 
     -- Configure for square or circle border and apply mask
-    if BetterBlizzPlatesDB.classIconSquareBorder then
+    if squareIcon then
+        scale = scale + 0.2
         frame.classIndicator.icon:SetSize(20, 20)
         frame.classIndicator.mask:SetAtlas("UI-Frame-IconMask")
         frame.classIndicator.mask:SetSize(20, 20)
@@ -99,27 +119,75 @@ function BBP.ClassIndicator(frame)
     end
 
     local specIcon
-    local specID
+    local specID = fetchedSpecID
     local Details = Details
-    if useSpecIcon then
-        if isFriendly and Details then
-            local unitGUID = UnitGUID(frame.displayedUnit)
-            specID = Details:GetSpecByGUID(unitGUID)
-            if specID then
-                specIcon = select(4, GetSpecializationInfoByID(specID))
+    if useSpecIcon or showHealerIcon then
+        if not specID then
+            if isFriendly and Details then
+                local unitGUID = UnitGUID(frame.displayedUnit)
+                if Details then
+                    specID = Details:GetSpecByGUID(unitGUID)
+                end
+                if specID then
+                    specIcon = select(4, GetSpecializationInfoByID(specID))
+                end
+            elseif isEnemy and IsActiveBattlefieldArena() then
+                for i = 1, 3 do
+                    local arenaUnit = "arena" .. i
+                    if UnitIsUnit(frame.displayedUnit, arenaUnit) then
+                        specID = GetArenaOpponentSpec(i)
+                        if specID then
+                            specIcon = select(4, GetSpecializationInfoByID(specID))
+                            break
+                        end
+                    end
+                end
+            elseif isEnemy then
+                local unitGUID = UnitGUID(frame.displayedUnit)
+                if Details then
+                    specID = Details:GetSpecByGUID(unitGUID)
+                end
+                if specID then
+                    specIcon = select(4, GetSpecializationInfoByID(specID))
+                end
             end
-        elseif isEnemy and IsActiveBattlefieldArena() then
-            specID = GetArenaOpponentSpec(frame.displayedUnit)
-            if specID then
-                specIcon = select(4, GetSpecializationInfoByID(specID))
-            end
+        else
+            specIcon = select(4, GetSpecializationInfoByID(specID))
         end
     end
 
     -- Set class icon texture and coordinates
     if specIcon and useSpecIcon then
-        frame.classIndicator.icon:SetTexture(specIcon)
-        frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
+        if showHealerIcon then
+            if HealerSpecs[specID] then
+                if not squareIcon then
+                    frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
+                    frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87)
+                else
+                    frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
+                    frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856)
+                end
+            else
+                frame.classIndicator.icon:SetTexture(specIcon)
+                frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
+            end
+        else
+            frame.classIndicator.icon:SetTexture(specIcon)
+            frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
+        end
+    elseif showHealerIcon then
+        if HealerSpecs[specID] then
+            if not squareIcon then
+                frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
+                frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87)
+            else
+                frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
+                frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856)
+            end
+        else
+            frame.classIndicator.icon:SetTexture(classIcon)
+            frame.classIndicator.icon:SetTexCoord(unpack(coords))
+        end
     else
         frame.classIndicator.icon:SetTexture(classIcon)
         frame.classIndicator.icon:SetTexCoord(unpack(coords))
