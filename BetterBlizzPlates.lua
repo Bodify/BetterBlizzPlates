@@ -1324,7 +1324,9 @@ function BBP.OnUnitUpdate(unitId, unitInfo, allUnitsInfo)
     local nameplate = C_NamePlate.GetNamePlateForUnit(unitId, false)
     if nameplate then
         local frame = nameplate.UnitFrame
-        BBP.ClassIndicator(frame, unitInfo.specId)
+        if BetterBlizzPlatesDB.classIndicator then
+            BBP.ClassIndicator(frame, unitInfo.specId)
+        end
     end
 end
 --registering the callback:
