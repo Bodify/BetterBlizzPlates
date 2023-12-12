@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.2.7"
+local addonUpdates = "1.2.8"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -343,14 +343,12 @@ local defaultSettings = {
 
     hideCastbarList = {},
     hideCastbarWhitelist = {},
-
-    colorNpcList = {
-    },
-
-    auraWhitelist = {
-    },
-    auraBlacklist = {
-    },
+    colorNpcList = {},
+    auraWhitelist = {},
+    auraBlacklist = {},
+    auraColorList = {},
+    enemyColorNameRGB = {1, 1, 1},
+    friendlyColorNameRGB = {1, 1, 1},
 
     castEmphasisList = {
         {name = "Cyclone"},
@@ -506,15 +504,15 @@ local function SendUpdateMessage()
     if sendUpdate then
         C_Timer.After(7, function()
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Class Indicator adjustments + healer icon option + bugfixes, type /bbp news.")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Color nameplate by aura + color enemy/friendly name specific color.")
         end)
     end
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Class/Spec Icon on nameplates setting.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Totem Indicator: Hide totem healthbars setting.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Color nameplate by aura.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Color enemy/friendly names.")
 end
 
 local function CheckForUpdate()
@@ -808,28 +806,29 @@ hooksecurefunc(NamePlateDriverFrame.pools:GetPool("ForbiddenNamePlateUnitFrameTe
 --#################################################################################################
 -- Class color and scale names 
 function BBP.ClassColorAndScaleNames(frame)
-    local relation
+    local isPlayer = UnitIsPlayer(frame.unit)
     local isFriend = UnitIsFriend("player", frame.unit)
-    local isEnemy = UnitIsEnemy("player", frame.unit) or (UnitReaction("player", frame.unit) == 4)
+    local isEnemy = not isFriend
     local enemyScale = BetterBlizzPlatesDB.enemyNameScale
     local friendlyScale = BetterBlizzPlatesDB.friendlyNameScale
+    local enemyColorName = BetterBlizzPlatesDB.enemyColorName
+    local friendlyColorName = BetterBlizzPlatesDB.friendlyColorName
+    local enemyClassColorName = BetterBlizzPlatesDB.enemyClassColorName
+    local friendlyClassColorName = BetterBlizzPlatesDB.friendlyClassColorName
 
-    if isFriend then
-        relation = "friendly"
-    elseif isEnemy then
-        relation = "enemy"
-    else
-        relation = "neutral"
-    end
-
-    -- Set the name's color based on unit relation
-    if UnitIsPlayer(frame.unit) then
-        local settingKey = relation .. "ClassColorName"
-        if BetterBlizzPlatesDB[settingKey] then
+    -- Set the name's color based on unit relation and options
+    if isPlayer then
+        if (isEnemy and enemyClassColorName) or (isFriend and friendlyClassColorName) then
             local _, class = UnitClass(frame.unit)
             local classColor = RAID_CLASS_COLORS[class]
             frame.name:SetVertexColor(classColor.r, classColor.g, classColor.b)
+        elseif (isEnemy and enemyColorName) or (isFriend and friendlyColorName) then
+            local color = isEnemy and BetterBlizzPlatesDB.enemyColorNameRGB or BetterBlizzPlatesDB.friendlyColorNameRGB
+            frame.name:SetVertexColor(unpack(color))
         end
+    elseif (isEnemy and enemyColorName) or (isFriend and friendlyColorName) then
+        local color = isEnemy and BetterBlizzPlatesDB.enemyColorNameRGB or BetterBlizzPlatesDB.friendlyColorNameRGB
+        frame.name:SetVertexColor(unpack(color))
     end
 
     -- Set the name's scale based on unit relation
@@ -841,6 +840,7 @@ function BBP.ClassColorAndScaleNames(frame)
     end
     frame.name:SetScale(scale)
 end
+
 
 
 --#################################################################################################
@@ -1182,6 +1182,64 @@ function BBP.ColorNPCs(frame)
     end
 end
 
+function BBP.AuraColor(frame)
+    if not BetterBlizzPlatesDB.colorNPC then return end
+    if not frame or not frame.displayedUnit then return end
+
+    local highestPriority = 0  -- Initialize the highest priority to 0
+    local auraColor = nil  -- Initialize the aura color to nil
+
+    local auraColorList = BetterBlizzPlatesDB.auraColorList
+    local displayedUnit = frame.displayedUnit
+
+    for _, npc in ipairs(auraColorList) do
+        if npc.id or npc.name then
+            local entryPriority = npc.priority or 0  -- Initialize the priority for this aura to 0
+            for index = 1, 40 do
+                local auraName, _, _, _, _, _, _, _, _, spellId = UnitAura(displayedUnit, index, "HELPFUL|HARMFUL")
+                if auraName then
+                    -- Convert auraName to lowercase for case-insensitive comparison
+                    local lowerCaseAuraName = strlower(auraName)
+
+                    if (npc.id == tonumber(spellId) or (npc.name and strlower(npc.name) == lowerCaseAuraName)) then
+                        -- Update the aura color if priority is higher
+                        if entryPriority > highestPriority then
+                            highestPriority = entryPriority
+                            auraColor = npc.entryColors.text
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    -- Set the vertex color based on the highest priority aura color
+    if auraColor then
+        frame.healthBar:SetStatusBarColor(auraColor.r, auraColor.g, auraColor.b)
+    end
+end
+local UnitAuraEventFrame = nil
+
+local function UnitAuraColorEvent(self, event, ...)
+    local unit = ...
+    if string.match(unit, "nameplate") then
+        local nameplate = C_NamePlate.GetNamePlateForUnit(unit, false)
+        if nameplate then
+            local frame = nameplate.UnitFrame
+            BBP.AuraColor(frame)
+        end
+    end
+end
+
+function BBP.CreateUnitAuraEventFrame()
+    if not BetterBlizzPlatesDB.auraColor or UnitAuraEventFrame then
+        return
+    end
+    UnitAuraEventFrame = CreateFrame("Frame")
+    UnitAuraEventFrame:SetScript("OnEvent", UnitAuraColorEvent)
+    UnitAuraEventFrame:RegisterEvent("UNIT_AURA")
+end
+
 hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
     if not frame.unit or not frame.unit:find("nameplate") then return end
     if not BBP.IsLegalNameplateUnit(frame) then return end
@@ -1192,6 +1250,7 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
     local castEmphasisColor = BetterBlizzPlatesDB.castBarEmphasisHealthbarColor
     local totemIndicator = BetterBlizzPlatesDB.totemIndicator
     local colorPersonalNp = BetterBlizzPlatesDB.classColorPersonalNameplate
+    local auraColor = BetterBlizzPlatesDB.auraColor
 
     if colorPersonalNp then
         local isPlayer = UnitIsUnit(frame.unit, "player")
@@ -1239,6 +1298,10 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
                 end
             end
         end
+    end
+
+    if auraColor then
+        BBP.AuraColor(frame)
     end
 end)
 
@@ -1577,6 +1640,7 @@ local function HandleNamePlateAdded(unit)
     local focusIndicator = BetterBlizzPlatesDB.focusTargetIndicator or BetterBlizzPlatesDB.focusTargetIndicatorTestMode
     local friendlyHideHealthBar = BetterBlizzPlatesDB.friendlyHideHealthBar
     local classIndicator = BetterBlizzPlatesDB.classIndicator
+    local auraColor = BetterBlizzPlatesDB.auraColor
 
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
@@ -1696,6 +1760,10 @@ local function HandleNamePlateAdded(unit)
     -- Show totem icons
     if totemIndicator then
         BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
+    end
+
+    if auraColor then
+        BBP.AuraColor(frame)
     end
 end
 --#################################################################################################
@@ -1982,6 +2050,7 @@ Frame:SetScript("OnEvent", function(...)
         InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
         BetterBlizzPlatesDB.reopenOptions = false
     end
+    BBP.CreateUnitAuraEventFrame()
 end)
 
 -- Slash command

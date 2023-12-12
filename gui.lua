@@ -947,15 +947,15 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
     return checkBox
 end
 
-local function CreateList(subPanel, listName, listData, refreshFunc, enableColorPicker, extraBoxes)
+local function CreateList(subPanel, listName, listData, refreshFunc, enableColorPicker, extraBoxes, prioSlider, width, height)
     -- Create the scroll frame
     local scrollFrame = CreateFrame("ScrollFrame", nil, subPanel, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetSize(322, 390)
+    scrollFrame:SetSize(width or 322, height or 390)
     scrollFrame:SetPoint("TOPLEFT", 10, -10)
 
     -- Create the content frame
     local contentFrame = CreateFrame("Frame", nil, scrollFrame)
-    contentFrame:SetSize(322, 390)
+    contentFrame:SetSize(width or 322, height or 390)
     scrollFrame:SetScrollChild(contentFrame)
 
     local textLines = {}
@@ -971,6 +971,27 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 bg:SetColorTexture(0.3, 0.3, 0.3, 0.3)  -- Light color for odd lines
             end
         end
+    end
+
+    local function updatePriority(index, priority)
+        if not index then return end
+
+        -- Update the priority in the listData
+        listData[index].priority = priority
+
+        -- Update the auraColorList table with the new priority
+        local auraColorList = BetterBlizzPlatesDB.auraColorList
+        local auraName = listData[index].name
+        local spellId = listData[index].id
+
+        for _, npc in ipairs(auraColorList) do
+            if (npc.id == tonumber(spellId) or (npc.name and strlower(npc.name) == strlower(auraName))) then
+                npc.priority = priority
+                break
+            end
+        end
+
+        refreshFunc()
     end
 
     local function deleteEntry(index)
@@ -1003,7 +1024,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
 
     local function createTextLineButton(npc, index, enableColorPicker)
         local button = CreateFrame("Frame", nil, contentFrame)
-        button:SetSize(310, 20)
+        button:SetSize((width and width - 12) or 310, 20)
         button:SetPoint("TOPLEFT", 10, -(index - 1) * 20)
 
         local bg = button:CreateTexture(nil, "BACKGROUND")
@@ -1011,7 +1032,11 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         button.bgImg = bg  -- Store the background texture for later color updates
 
         local displayText = npc.id and npc.id or ""
-        if listName == "auraBlacklist" or listName == "auraWhitelist" then
+        if listName == "auraBlacklist" or
+        listName == "auraWhitelist" or
+        listName == "auraColorList" or
+        listName == "auraColorList" or
+        listName == "hideCastbarWhitelist" then
             if npc.id then
                 local spellName, _, _ = GetSpellInfo(npc.id)
                 if spellName then
@@ -1156,6 +1181,34 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             end
         end
 
+        if prioSlider then
+            local prioritySlider = CreateFrame("Slider", nil, button, "OptionsSliderTemplate")
+            prioritySlider:SetSize(100, 16)
+            prioritySlider:SetPoint("RIGHT", colorPickerButton or deleteButton, "LEFT", -65, 0)
+            prioritySlider:SetOrientation("HORIZONTAL")
+            prioritySlider:SetMinMaxValues(1, 10)
+            prioritySlider:SetValueStep(1)
+            prioritySlider:SetValue(npc.priority or 1) -- Set the default priority to 1 if not specified
+            prioritySlider:SetObeyStepOnDrag(true)
+            prioritySlider.Low:SetText("")
+            prioritySlider.High:SetText("")
+            CreateTooltip(prioritySlider, "Priority value.\nWhichever aura has the highest priority will determine the color.")
+
+            local priorityText = prioritySlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            priorityText:SetPoint("RIGHT", prioritySlider, "LEFT", -5, 0)
+            priorityText:SetText(prioritySlider:GetValue())
+            priorityText:SetTextColor(1, 0.8196, 0, 1)
+
+            prioritySlider:SetScript("OnValueChanged", function(self, value)
+                local newValue = floor(value + 0.5) -- Round to the nearest integer
+                self:SetValue(newValue)
+                priorityText:SetText(newValue)
+                updatePriority(index, newValue) -- Update the priority when the slider value changes
+            end)
+
+            button.prioritySlider = prioritySlider
+        end
+
         button.deleteButton = deleteButton
         table.insert(textLines, button)
         updateBackgroundColors()  -- Update background colors after adding a new entry
@@ -1196,7 +1249,17 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
     editBox:SetSize(260, 19)
     editBox:SetPoint("TOP", scrollFrame, "BOTTOM", -15, -5)
     editBox:SetAutoFocus(false)
-    CreateTooltip(editBox, "Filter auras by spell id and/or spell name", "ANCHOR_TOP")
+    if listName == "auraBlacklist" or
+    listName == "auraWhitelist" or
+    listName == "auraColorList" or
+    listName == "auraColorList" or
+    listName == "hideCastbarWhitelist" then
+        CreateTooltip(editBox, "Filter auras by spell id and/or spell name", "ANCHOR_TOP")
+    elseif listName == "hideCastbarList" then
+        CreateTooltip(editBox, "Filter auras/npcs by spell/npc id and/or spell/npc name", "ANCHOR_TOP")
+    else
+        CreateTooltip(editBox, "Filter npcs by npc id and/or npc name", "ANCHOR_TOP")
+    end
 
     local function addOrUpdateEntry(inputText)
         selectedLineIndex = nil
@@ -1354,9 +1417,35 @@ local function guiGeneralTab()
     enemyNameplateIcon:SetDesaturated(1)
     enemyNameplateIcon:SetVertexColor(1, 0, 0)
 
-    local enemyClassColorName = CreateCheckbox("enemyClassColorName", "Class colored names", BetterBlizzPlates)
+    local enemyClassColorName = CreateCheckbox("enemyClassColorName", "Class color name", BetterBlizzPlates)
     enemyClassColorName:SetPoint("TOPLEFT", enemyNameplatesText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
     CreateTooltip(enemyClassColorName, "Class color the enemy name text on nameplate")
+
+    local enemyColorName = CreateCheckbox("enemyColorName", "Color name", BetterBlizzPlates)
+    enemyColorName:SetPoint("LEFT", enemyClassColorName.text, "RIGHT", 0, 0)
+    CreateTooltip(enemyColorName, "Pick one color for all enemy names\nIf class color name is also enabled this setting will only color the name of npcs")
+
+    local function OpenColorPicker()
+        local r, g, b = unpack(BetterBlizzPlatesDB.enemyColorNameRGB or {1, 1, 1})
+        ColorPickerFrame.previousValues = { r, g, b }
+        ColorPickerFrame.func = function()
+            r, g, b = ColorPickerFrame:GetColorRGB()
+            BetterBlizzPlatesDB.enemyColorNameRGB = { r, g, b }
+            BBP.RefreshAllNameplates()
+        end
+
+        ColorPickerFrame.cancelFunc = function()
+            r, g, b = unpack(ColorPickerFrame.previousValues)
+            BetterBlizzPlatesDB.enemyColorNameRGB = { r, g, b }
+        end
+        ColorPickerFrame:Show()
+    end
+
+    local enemyColorNameButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
+    enemyColorNameButton:SetText("Color")
+    enemyColorNameButton:SetPoint("LEFT", enemyColorName.text, "RIGHT", -1, 0)
+    enemyColorNameButton:SetSize(45, 20)
+    enemyColorNameButton:SetScript("OnClick", OpenColorPicker)
 
     local showNameplateCastbarTimer = CreateCheckbox("showNameplateCastbarTimer", "Cast timer next to castbar", BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
     showNameplateCastbarTimer:SetPoint("TOPLEFT", enemyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -1420,9 +1509,35 @@ local function guiGeneralTab()
     friendlyNameplateClickthrough:SetPoint("TOPLEFT", friendlyNameplatesText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
     CreateTooltip(friendlyNameplateClickthrough, "Make friendly nameplates clickthrough and make them overlap despite stacking nameplates setting.")
 
-    local friendlyClassColorName = CreateCheckbox("friendlyClassColorName", "Class colored names", BetterBlizzPlates)
+    local friendlyClassColorName = CreateCheckbox("friendlyClassColorName", "Class color name", BetterBlizzPlates)
     friendlyClassColorName:SetPoint("TOPLEFT", friendlyNameplateClickthrough, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(friendlyClassColorName, "Class color the friendly name text on nameplate")
+
+    local friendlyColorName = CreateCheckbox("friendlyColorName", "Color name", BetterBlizzPlates)
+    friendlyColorName:SetPoint("LEFT", friendlyClassColorName.text, "RIGHT", 0, 0)
+    CreateTooltip(friendlyColorName, "Pick one color for all enemy names\nIf class color name is also enabled this setting will only color the name of npcs")
+
+    local function OpenColorPicker2()
+        local r, g, b = unpack(BetterBlizzPlatesDB.friendlyColorNameRGB or {1, 1, 1})
+        ColorPickerFrame.previousValues = { r, g, b }
+        ColorPickerFrame.func = function()
+            r, g, b = ColorPickerFrame:GetColorRGB()
+            BetterBlizzPlatesDB.friendlyColorNameRGB = { r, g, b }
+            BBP.RefreshAllNameplates()
+        end
+
+        ColorPickerFrame.cancelFunc = function()
+            r, g, b = unpack(ColorPickerFrame.previousValues)
+            BetterBlizzPlatesDB.friendlyColorNameRGB = { r, g, b }
+        end
+        ColorPickerFrame:Show()
+    end
+
+    local friendlyColorNameButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
+    friendlyColorNameButton:SetText("Color")
+    friendlyColorNameButton:SetPoint("LEFT", friendlyColorName.text, "RIGHT", -1, 0)
+    friendlyColorNameButton:SetSize(45, 20)
+    friendlyColorNameButton:SetScript("OnClick", OpenColorPicker2)
 
     local classColorPersonalNameplate = CreateCheckbox("classColorPersonalNameplate", "Class colored personal nameplate", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
     classColorPersonalNameplate:SetPoint("TOPLEFT", friendlyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -3196,6 +3311,68 @@ local function guiColorNPC()
     TogglePanel()
 end
 
+local function guiAuraColor()
+    -------------------
+    -- Color NPC
+    -------------------
+    local guiAuraColor = CreateFrame("Frame")
+    guiAuraColor.name = "Color by Aura"
+    guiAuraColor.parent = BetterBlizzPlates.name
+    InterfaceOptions_AddCategory(guiAuraColor)
+
+    local bgImg = guiAuraColor:CreateTexture(nil, "BACKGROUND")
+    bgImg:SetAtlas("professions-recipe-background")
+    bgImg:SetPoint("CENTER", guiAuraColor, "CENTER", -8, 4)
+    bgImg:SetSize(680, 610)
+    bgImg:SetAlpha(0.4)
+    bgImg:SetVertexColor(0,0,0)
+
+    local listFrame = CreateFrame("Frame", nil, guiAuraColor)
+    listFrame:SetAllPoints(guiAuraColor)
+
+    CreateList(listFrame, "auraColorList", BetterBlizzPlatesDB.auraColorList, BBP.RefreshAllNameplates, true, false, true, 390)
+
+    local listExplanationText = guiAuraColor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    listExplanationText:SetPoint("TOP", guiAuraColor, "BOTTOMLEFT", 180, 155)
+    listExplanationText:SetText("Add name or spell ID. Case-insensitive.\n\nType a name or spell ID already in list to delete it")
+
+    local auraColorExplanationText = guiAuraColor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    auraColorExplanationText:SetPoint("TOP", guiAuraColor, "TOP", 190, -127)
+    auraColorExplanationText:SetText("Color nameplates\ndepending on their auras.\n \nAdd a name/spellID\nand select a color")
+
+    local auraColor = CreateCheckbox("auraColor", "Enable Color by Aura", guiAuraColor, nil, BBP.CreateUnitAuraEventFrame)
+    auraColor:SetPoint("TOPLEFT", auraColorExplanationText, "BOTTOMLEFT", 10, -15)
+    CreateTooltip(auraColor, "Chose nameplate color depending on the aura on them")
+
+    local reloadUiButton = CreateFrame("Button", nil, guiAuraColor, "UIPanelButtonTemplate")
+    reloadUiButton:SetText("Reload UI")
+    reloadUiButton:SetWidth(85)
+    reloadUiButton:SetPoint("TOP", guiAuraColor, "BOTTOMRIGHT", -140, -9)
+    reloadUiButton:SetScript("OnClick", function()
+        BetterBlizzPlatesDB.reopenOptions = true
+        ReloadUI()
+    end)
+
+    local function TogglePanel()
+        if BBP.variablesLoaded then
+            if BetterBlizzPlatesDB.auraColor then
+                listFrame:SetAlpha(1)
+            else
+                listFrame:SetAlpha(0.5)
+            end
+        else
+            C_Timer.After(1, function()
+                TogglePanel()
+            end)
+        end
+    end
+    auraColor:HookScript("OnClick", function ()
+        TogglePanel()
+        CheckAndToggleCheckboxes(auraColor)
+    end)
+    TogglePanel()
+end
+
 local function guiNameplateAuras()
     ----------------------
     -- Nameplate Auras
@@ -3681,6 +3858,7 @@ function BBP.InitializeOptions()
         guiFadeNPC()
         guiHideNPC()
         guiColorNPC()
+        guiAuraColor()
         guiNameplateAuras()
         guiMoreBlizzSettings()
     end
