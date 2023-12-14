@@ -11,8 +11,8 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.2.8"
-local sendUpdate = true
+local addonUpdates = "1.2.8b"
+local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
@@ -801,7 +801,7 @@ function BBP.ClickthroughNameplateAuras(pool, namePlateFrameBase)
     end
 end
 hooksecurefunc(NamePlateDriverFrame.pools:GetPool("NamePlateUnitFrameTemplate"),"resetterFunc",BBP.ClickthroughNameplateAuras)
-hooksecurefunc(NamePlateDriverFrame.pools:GetPool("ForbiddenNamePlateUnitFrameTemplate"),"resetterFunc",BBP.ClickthroughNameplateAuras)
+--hooksecurefunc(NamePlateDriverFrame.pools:GetPool("ForbiddenNamePlateUnitFrameTemplate"),"resetterFunc",BBP.ClickthroughNameplateAuras)
 
 --#################################################################################################
 -- Class color and scale names 
@@ -1268,7 +1268,7 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
     end
 
     if friendlyHealthColor then
-        local isFriend = UnitIsFriend("player", frame.unit) and frame.unit ~= "player"
+        local isFriend = UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit)
         local color = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
         if isFriend then
             frame.healthBar:SetStatusBarColor(unpack(color))
@@ -1718,7 +1718,7 @@ local function HandleNamePlateAdded(unit)
     end
 
     if friendlyHealthbarColor then
-        local isFriend = UnitIsFriend("player", unit)
+        local isFriend = UnitIsFriend("player", unit) and not isPlayer
         local color = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
         if isFriend then
             frame.healthBar:SetStatusBarColor(unpack(color))
@@ -1971,7 +1971,7 @@ function BBP.ConsolidatedUpdateName(frame)
     end
 
     if friendlyNameColor then
-        local isFriend = UnitIsFriend("player", frame.unit)
+        local isFriend = UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit)
         local color = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
         if isFriend then
             frame.name:SetTextColor(unpack(color))
