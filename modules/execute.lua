@@ -22,6 +22,7 @@ function BBP.ExecuteIndicator(frame)
     local scale = BetterBlizzPlatesDB.executeIndicatorScale
     local testMode = BetterBlizzPlatesDB.executeIndicatorTestMode
     local showDecimal = BetterBlizzPlatesDB.executeIndicatorShowDecimal
+    local percentSymbol = BetterBlizzPlatesDB.executeIndicatorPercentSymbol
 
     -- Initialize
     if not frame.executeIndicator then
@@ -47,6 +48,9 @@ function BBP.ExecuteIndicator(frame)
             frame.executeIndicator:SetText("19")
         end
         frame.executeIndicator:Show()
+        if percentSymbol then
+            frame.executeIndicator:SetText(frame.executeIndicator:GetText() .. "%")
+        end
         return
     end
 
@@ -60,6 +64,9 @@ function BBP.ExecuteIndicator(frame)
             text = string.format("%.1f", healthPercentage)
         else
             text = string.format("%d", healthPercentage)
+        end
+        if percentSymbol then
+            text = text .. "%"
         end
 
         frame.executeIndicator:SetText(text)

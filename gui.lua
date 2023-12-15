@@ -1643,6 +1643,7 @@ local function guiGeneralTab()
     end)
     if not BetterBlizzPlatesDB.friendlyHideHealthBar then
         friendlyHideHealthBarNpc:SetAlpha(0)
+        friendlyHideHealthBarNpc:Disable()
     end
 
     local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Toggle on/off for Arena auto", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesInArena)
@@ -2498,6 +2499,10 @@ local function guiPositionAndScale()
     local executeIndicatorNotOnFullHp = CreateCheckbox("executeIndicatorNotOnFullHp", "< 100%", contentFrame)
     executeIndicatorNotOnFullHp:SetPoint("LEFT", executeIndicatorAlwaysOn.text, "RIGHT", 2, 0)
     CreateTooltip(executeIndicatorNotOnFullHp, "Hide on 100%")
+
+    local executeIndicatorPercentSymbol = CreateCheckbox("executeIndicatorPercentSymbol", "% Symbol", contentFrame)
+    executeIndicatorPercentSymbol:SetPoint("TOPLEFT", executeIndicatorNotOnFullHp, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(executeIndicatorPercentSymbol, "Show % Symbol")
 
     local executeIndicatorShowDecimal = CreateCheckbox("executeIndicatorShowDecimal", "Decimal", contentFrame)
     executeIndicatorShowDecimal:SetPoint("BOTTOMLEFT", executeIndicatorNotOnFullHp, "TOPLEFT", 0, -pixelsBetweenBoxes)
