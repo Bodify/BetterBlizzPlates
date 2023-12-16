@@ -684,7 +684,7 @@ local function SetCVarsOnLogin()
         SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
         SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
         SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
-        SetCVar("nameplateGlobalScale", 1)
+        SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
     end
 end
 
@@ -939,11 +939,13 @@ function BBP.ResetToDefaultScales(slider, targetType)
             -- Reset both nameplateMinScale and nameplateMaxScale based on their ratio
             local defaultMinScale = 0.8
             local defaultMaxScale = 1.0
+            local defaultGlobalScale = 1
             BetterBlizzPlatesDB.nameplateMinScale = defaultMinScale
             BetterBlizzPlatesDB.nameplateMaxScale = defaultMaxScale
+            BetterBlizzPlatesDB.nameplateGlobalScale = defaultGlobalScale
             SetCVar("nameplateMinScale", defaultMinScale)
             SetCVar("nameplateMaxScale", defaultMaxScale)
-            SetCVar("nameplateGlobalScale", 1)
+            SetCVar("nameplateGlobalScale", defaultGlobalScale)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMinScale set to " .. defaultMinScale)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMaxScale set to " .. defaultMaxScale)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateGlobalScale set to 1")
