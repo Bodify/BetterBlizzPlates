@@ -189,35 +189,67 @@ end
 
 local function CreateFontDropdown(name, parent, defaultText, settingKey, toggleFunc, point)
     local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
-    LibDD:UIDropDownMenu_SetWidth(dropdown, 135) 
+    LibDD:UIDropDownMenu_SetWidth(dropdown, 135)
     LibDD:UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
 
-    LibDD:UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
+    dropdown.initialize = function(self, level, menuList)
         local info = LibDD:UIDropDownMenu_CreateInfo()
         local fonts = LSM:HashTable(LSM.MediaType.FONT)
-        for fontName, fontPath in pairs(fonts) do
-            info.text = fontName
-            info.arg1 = fontName
-            info.func = function(self, arg1)
-                if BetterBlizzPlatesDB[settingKey] ~= arg1 then
+        local sortedFonts = {}
+
+        -- Extract and sort font names
+        for fontName in pairs(fonts) do
+            table.insert(sortedFonts, fontName)
+        end
+        table.sort(sortedFonts)
+
+        -- If level 1, create categories
+        if level == 1 then
+            local categorySize = 12  -- Number of items per category
+            local numFonts = #sortedFonts
+
+            for i = 1, math.ceil(numFonts / categorySize) do
+                info.hasArrow = true
+                info.notCheckable = true
+                info.checked = nil
+                info.text = "Fonts " .. i
+                info.icon = nil
+                info.menuList = i
+                info.func = nil
+                info.arg1 = nil
+                LibDD:UIDropDownMenu_AddButton(info)
+            end
+        -- If level 2, add items to the selected category
+        elseif level == 2 then
+            local categorySize = 12
+            local startIndex = (menuList - 1) * categorySize + 1
+            local endIndex = startIndex + categorySize - 1
+
+            for i = startIndex, math.min(endIndex, #sortedFonts) do
+                local fontName = sortedFonts[i]
+                local fontPath = fonts[fontName]
+                info.hasArrow = nil
+                info.notCheckable = nil
+                info.checked = (BetterBlizzPlatesDB[settingKey] == fontName)
+                info.text = fontName
+                info.arg1 = fontName
+                info.func = function(_, arg1)
                     BetterBlizzPlatesDB[settingKey] = arg1
                     LibDD:UIDropDownMenu_SetText(dropdown, arg1)
                     toggleFunc(fontPath)
                     dropdown.Text:SetFont(fontPath, 12)
                 end
+                LibDD:UIDropDownMenu_AddButton(info, level)
             end
-            info.checked = (BetterBlizzPlatesDB[settingKey] == fontName)
-
-            LibDD:UIDropDownMenu_AddButton(info)
         end
-    end)
+    end
 
     local fontName = BetterBlizzPlatesDB.customFont
     local fontPath = LSM:Fetch(LSM.MediaType.FONT, fontName)
     dropdown.Text:SetFont(fontPath, 12)
     dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
 
-    if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
+    if parent:GetObjectType() == "CheckButton" and not parent:GetChecked() then
         LibDD:UIDropDownMenu_DisableDropDown(dropdown)
     else
         LibDD:UIDropDownMenu_EnableDropDown(dropdown)
@@ -227,41 +259,70 @@ local function CreateFontDropdown(name, parent, defaultText, settingKey, toggleF
 end
 
 local function CreateTextureDropdown(name, parent, defaultText, settingKey, toggleFunc, point, dropdownWidth)
-    -- Create the dropdown frame using the library's creation function
+    -- Create the dropdown frame
     local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
     LibDD:UIDropDownMenu_SetWidth(dropdown, dropdownWidth or 135)
     LibDD:UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
 
-    -- Initialize the dropdown using the library's initialize function
-    LibDD:UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
+    -- Define the initialize function
+    dropdown.initialize = function(self, level, menuList)
         local info = LibDD:UIDropDownMenu_CreateInfo()
         local textures = LSM:HashTable(LSM.MediaType.STATUSBAR)
-        for textureName, texturePath in pairs(textures) do
-            info.text = textureName
-            info.arg1 = textureName
-            info.func = function(self, arg1)
-                if BetterBlizzPlatesDB[settingKey] ~= arg1 then
+        local sortedTextures = {}
+
+        -- Extract and sort texture names
+        for textureName in pairs(textures) do
+            table.insert(sortedTextures, textureName)
+        end
+        table.sort(sortedTextures)
+
+        -- If level 1, create categories
+        if level == 1 then
+            local categorySize = 12  -- Number of items per category
+            local numTextures = #sortedTextures
+
+            for i = 1, math.ceil(numTextures / categorySize) do
+                info.hasArrow = true
+                info.notCheckable = true
+                info.checked = nil
+                info.text = "Textures " .. i
+                info.icon = nil
+                info.menuList = i
+                info.func = nil
+                info.arg1 = nil
+                LibDD:UIDropDownMenu_AddButton(info)
+            end
+        -- If level 2, add items to the selected category
+        elseif level == 2 then
+            local categorySize = 12
+            local startIndex = (menuList - 1) * categorySize + 1
+            local endIndex = startIndex + categorySize - 1
+
+            for i = startIndex, math.min(endIndex, #sortedTextures) do
+                local textureName = sortedTextures[i]
+                local texturePath = textures[textureName]
+                info.hasArrow = nil
+                info.notCheckable = nil
+                info.checked = (BetterBlizzPlatesDB[settingKey] == textureName)
+                info.text = textureName
+                info.icon = texturePath
+                info.menuList = nil
+                info.func = function(_, arg1)
                     BetterBlizzPlatesDB[settingKey] = arg1
                     LibDD:UIDropDownMenu_SetText(dropdown, arg1)
                     toggleFunc(texturePath)
                 end
+                info.arg1 = textureName
+                LibDD:UIDropDownMenu_AddButton(info, level)
             end
-            info.checked = (BetterBlizzPlatesDB[settingKey] == textureName)
-
-            -- Set the texture preview
-            info.icon = texturePath
-            info.iconInfo = { tCoordLeft = 0, tCoordRight = 1, tCoordTop = 0, tCoordBottom = 1, tSizeX = 50, tSizeY = 50 }
-
-            -- Add each button using the library's add button function
-            LibDD:UIDropDownMenu_AddButton(info)
         end
-    end)
+    end
 
     -- Position the dropdown
     dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
 
-    -- Enable or disable the dropdown based on the parent's check state
-    if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
+    -- Enable or disable based on parent's check state
+    if parent:GetObjectType() == "CheckButton" and not parent:GetChecked() then
         LibDD:UIDropDownMenu_DisableDropDown(dropdown)
     else
         LibDD:UIDropDownMenu_EnableDropDown(dropdown)
@@ -609,6 +670,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BetterBlizzPlatesDB.classIndicatorYPos = value
                 elseif element == "classIndicatorScale" then
                     BetterBlizzPlatesDB.classIndicatorScale = value
+                elseif element == "nameplateResourceScale" then
+                    BetterBlizzPlatesDB.nameplateResourceScale = value
+                    BBP.ApplySettingsToAllNameplates()
                     -- Nameplate Widths
                 elseif element == "nameplateFriendlyWidth" then
                     if not BBP.checkCombatAndWarn() then
@@ -1626,6 +1690,9 @@ local function guiGeneralTab()
 
     local friendlyHideHealthBar = CreateCheckbox("friendlyHideHealthBar", "Hide healthbar", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
     friendlyHideHealthBar:SetPoint("TOPLEFT", friendlyHealthBarColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    friendlyHideHealthBar:HookScript("OnClick", function()
+        BBP.HideHealthbarInPvEMagicCaller()
+    end)
     CreateTooltip(friendlyHideHealthBar, "Hide friendly nameplate healthbars. Castbar and name will still show.")
 
     local friendlyHideHealthBarNpc = CreateCheckbox("friendlyHideHealthBarNpc", "NPC's", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
@@ -3808,6 +3875,16 @@ local function guiMoreBlizzSettings()
     nameplateMotionSpeed:SetPoint("TOPLEFT", nameplateOverlapV, "BOTTOMLEFT", 0, -20)
     CreateTooltip(nameplateMotionSpeed, "The speed at which nameplates move into their new position")
     CreateResetButton(nameplateMotionSpeed, "nameplateMotionSpeed", guiMoreBlizzSettings)
+
+    --
+    local nameplateResourceText = guiMoreBlizzSettings:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    nameplateResourceText:SetPoint("TOPLEFT", guiMoreBlizzSettings, "TOPLEFT", 45, -250)
+    nameplateResourceText:SetText("Nameplate Resource")
+
+    local nameplateResourceScale = CreateSlider(guiMoreBlizzSettings, "Resource Scale", 0.2, 1.7, 0.01, "nameplateResourceScale")
+    nameplateResourceScale:SetPoint("TOP", nameplateResourceText, "BOTTOM", 0, -20)
+    CreateTooltip(nameplateResourceScale, "Resource Scale (Combo points, warlock shards etc.)")
+    CreateResetButton(nameplateResourceScale, "nameplateResourceScale", guiMoreBlizzSettings)
 
     local nameplateAlphaText = guiMoreBlizzSettings:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     nameplateAlphaText:SetPoint("TOPLEFT", guiMoreBlizzSettings, "TOPLEFT", 300, -35)

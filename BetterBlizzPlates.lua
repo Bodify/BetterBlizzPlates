@@ -11,8 +11,8 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.2.8b"
-local sendUpdate = false
+local addonUpdates = "1.2.9"
+local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
@@ -44,6 +44,7 @@ local defaultSettings = {
     customTextureFriendly = "Dragonflight (BBP)",
     customFont = "Yanone (BBP)",
     friendlyHideHealthBarNpc = true,
+    nameplateResourceScale = 0.7,
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -504,15 +505,16 @@ local function SendUpdateMessage()
     if sendUpdate then
         C_Timer.After(7, function()
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Color nameplate by aura + color enemy/friendly name specific color.")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a \"Hide healthbar\" setting on friendly nameplates now also hides in PvE dungeons. Added nameplate resource scale slider in \"More Blizz Settings\" section. Made dropdown menus a bit better.")
         end)
     end
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Color nameplate by aura.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Color enemy/friendly names.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: \"Hide healthbar\" setting on friendly nameplates now also hides in PvE dungeons")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Added nameplate resource scale slider in \"More Blizz Settings\" section.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Made dropdown menus a bit better.")
 end
 
 local function CheckForUpdate()
@@ -669,26 +671,6 @@ function BBP.RemoveRealmName(frame)
 end
 
 --#################################################################################################
--- Set CVars that keep changing
-local function SetCVarsOnLogin()
-    if BetterBlizzPlatesDB.hasSaved then
-        SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
-        SetCVar("nameplateOverlapV", BetterBlizzPlatesDB.nameplateOverlapV)
-        SetCVar("nameplateMotionSpeed", BetterBlizzPlatesDB.nameplateMotionSpeed)
-        SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
-        SetCVar("nameplateSelectedScale", BetterBlizzPlatesDB.nameplateSelectedScale)
-        SetCVar("nameplateMinScale", BetterBlizzPlatesDB.nameplateMinScale)
-        SetCVar("nameplateMaxScale", BetterBlizzPlatesDB.nameplateMaxScale)
-        SetCVar("nameplateMinAlpha", BetterBlizzPlatesDB.nameplateMinAlpha)
-        SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
-        SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
-        SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
-        SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
-        SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
-    end
-end
-
---#################################################################################################
 -- Set custom healthbar texture
 function BBP.ApplyCustomTexture(namePlate)
     local unitFrame = namePlate.UnitFrame
@@ -761,6 +743,28 @@ local friendlyNameplatesOnOffFrame = CreateFrame("Frame")
 friendlyNameplatesOnOffFrame:SetScript("OnEvent", function(self, event, ...)
     ToggleFriendlyPlates()
 end)
+
+--#################################################################################################
+-- Set CVars that keep changing
+local function SetCVarsOnLogin()
+    if BetterBlizzPlatesDB.hasSaved then
+        SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
+        SetCVar("nameplateOverlapV", BetterBlizzPlatesDB.nameplateOverlapV)
+        SetCVar("nameplateMotionSpeed", BetterBlizzPlatesDB.nameplateMotionSpeed)
+        SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
+        SetCVar("nameplateSelectedScale", BetterBlizzPlatesDB.nameplateSelectedScale)
+        SetCVar("nameplateMinScale", BetterBlizzPlatesDB.nameplateMinScale)
+        SetCVar("nameplateMaxScale", BetterBlizzPlatesDB.nameplateMaxScale)
+        SetCVar("nameplateMinAlpha", BetterBlizzPlatesDB.nameplateMinAlpha)
+        SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
+        SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
+        SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
+        SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
+        SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
+
+        ToggleFriendlyPlates()
+    end
+end
 
 -- Toggle event listening on/off
 function BBP.ToggleFriendlyNameplatesInArena()
@@ -1018,6 +1022,9 @@ function BBP.ResetToDefaultValue(slider, element)
             BetterBlizzPlatesDB.nameplateOccludedAlphaMult = 0.4
             SetCVar("nameplateOccludedAlphaMult", 0.4)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateOccludedAlphaMult set to 0.4")
+        elseif element == "nameplateResourceScale" then
+            BetterBlizzPlatesDB.nameplateResourceScale = 0.7
+            BBP.ApplySettingsToAllNameplates()
         end
         slider:SetValue(BetterBlizzPlatesDB[element])
     end
@@ -1917,6 +1924,16 @@ function BBP.RefreshAllNameplatesLightVer()
     --end
 end
 
+function BBP.ApplySettingsToAllNameplates()
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+
+        if nameplate.driverFrame.classNamePlateMechanicFrame then
+            nameplate.driverFrame.classNamePlateMechanicFrame:SetScale(BetterBlizzPlatesDB.nameplateResourceScale or 0.7)
+        end
+    end
+end
+
 --#################################################################################################
 -- Nameplate updater etc
 function BBP.ConsolidatedUpdateName(frame)
@@ -2027,6 +2044,78 @@ end
 -- Use the consolidated function to hook into CompactUnitFrame_UpdateName
 hooksecurefunc("CompactUnitFrame_UpdateName", BBP.ConsolidatedUpdateName)
 
+local function setNil(table, member)
+    TextureLoadingGroupMixin.RemoveTexture(
+        { textures = table }, member
+    )
+end
+
+local function setTrue(table, member)
+    TextureLoadingGroupMixin.AddTexture(
+        { textures = table }, member
+    )
+end
+
+local isInPvEContent = false
+-- Function to update the instance status
+local function UpdateInstanceStatus()
+    local inInstance, instanceType = IsInInstance()
+    isInPvEContent = inInstance and (instanceType == "party" or instanceType == "raid" or instanceType == "scenario")
+end
+
+-- Function to set the nameplate behavior
+local function SetNameplateBehavior()
+    if InCombatLockdown() then
+        C_Timer.After(1, SetNameplateBehavior)
+    else
+        if isInPvEContent then
+            SetCVar('nameplateShowOnlyNames', 1)
+        else
+            SetCVar('nameplateShowOnlyNames', 0)
+        end
+    end
+end
+
+-- Event handler function
+local function CheckIfInInstance(self, event, ...)
+    UpdateInstanceStatus()
+    SetNameplateBehavior()
+end
+
+local hookedGetNamePlateTypeFromUnit = false
+
+-- Function to set up your nameplate modifications
+local function HideHealthbarInPvEMagic()
+    if BetterBlizzPlatesDB.friendlyHideHealthBar and not hookedGetNamePlateTypeFromUnit then
+        -- Set the hook flag
+        hookedGetNamePlateTypeFromUnit = true
+
+        -- Register events
+        local eventFrame = CreateFrame("Frame")
+        eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+        eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+        eventFrame:SetScript("OnEvent", CheckIfInInstance)
+
+        hooksecurefunc(
+            NamePlateDriverFrame,
+            'GetNamePlateTypeFromUnit',
+            function(_, unit)
+                if not UnitIsFriend('player', unit) then
+                    setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
+                    setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
+                else
+                    setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
+                    setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
+                end
+            end
+        )
+    end
+end
+
+function BBP.HideHealthbarInPvEMagicCaller()
+    HideHealthbarInPvEMagic()
+end
+
 -- Event registration for PLAYER_LOGIN
 local Frame = CreateFrame("Frame")
 Frame:RegisterEvent("PLAYER_LOGIN")
@@ -2054,6 +2143,10 @@ Frame:SetScript("OnEvent", function(...)
 
     BBP.ApplyNameplateWidth()
 
+    C_Timer.After(1, function()
+        BBP.ApplySettingsToAllNameplates()
+    end)
+
     SetCVarsOnLogin()
     BBP.InitializeInterruptSpellID() --possibly not needed, talent events seem to always run on login?
 
@@ -2063,6 +2156,9 @@ Frame:SetScript("OnEvent", function(...)
         BetterBlizzPlatesDB.reopenOptions = false
     end
     BBP.CreateUnitAuraEventFrame()
+
+    -- Modify the hooksecurefunc based on instance status
+    HideHealthbarInPvEMagic()
 end)
 
 -- Slash command
