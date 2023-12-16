@@ -675,6 +675,16 @@ local function SetCVarsOnLogin()
         SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
         SetCVar("nameplateOverlapV", BetterBlizzPlatesDB.nameplateOverlapV)
         SetCVar("nameplateMotionSpeed", BetterBlizzPlatesDB.nameplateMotionSpeed)
+        SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
+        SetCVar("nameplateSelectedScale", BetterBlizzPlatesDB.nameplateSelectedScale)
+        SetCVar("nameplateMinScale", BetterBlizzPlatesDB.nameplateMinScale)
+        SetCVar("nameplateMaxScale", BetterBlizzPlatesDB.nameplateMaxScale)
+        SetCVar("nameplateMinAlpha", BetterBlizzPlatesDB.nameplateMinAlpha)
+        SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
+        SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
+        SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
+        SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
+        SetCVar("nameplateGlobalScale", 1)
     end
 end
 
