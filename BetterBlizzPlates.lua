@@ -11,8 +11,8 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.2.9"
-local sendUpdate = true
+local addonUpdates = "1.2.9b"
+local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
