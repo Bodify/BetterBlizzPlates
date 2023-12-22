@@ -322,16 +322,16 @@ local defaultSettings = {
         {name = "Wild Imp (Warlock)", id = 55659, comment = ""},
     },
     hideNPCsWhitelist = {
-        {name = "Hunter pet (they all have same ID)", id = 165189, comment = ""},
+        {name = "Hunter Pet (they all have same ID)", id = 165189, comment = ""},
+        {name = "Healing Tide Totem", id = 59764, comment = ""},
+        {name = "Spirit Link Totem", id = 53006, comment = ""},
         {name = "Felguard (Demo Pet)", id = 17252, comment = ""},
         {name = "Felhunter (Warlock)", id = 417, comment = ""},
         {name = "Succubus (Warlock)", id = 1863, comment = ""},
         {name = "Tyrant (Warlock)", id = 135002, comment = ""},
         {name = "Observer (Warlock)", id = 107100, comment = ""},
         {name = "War Banner", id = 119052, comment = ""},
-        {name = "Healing Tide Totem", id = 59764, comment = ""},
         {name = "Grounding Totem", id = 5925, comment = ""},
-        {name = "Spirit Link Totem", id = 53006, comment = ""},
         {name = "Capacitor Totem", id = 61245, comment = ""},
         {name = "Counterstrike Totem", id = 105451, comment = ""},
         {name = "Fel Obelisk (Warlock)", id = 179193, comment = ""},
@@ -340,6 +340,9 @@ local defaultSettings = {
         {name = "Tremor Totem", id = 5913, comment = ""},
         {name = "Guardian Queen (prot pala)", id = 114565, comment = ""},
         {name = "Earthgrab Totem", id = 60561, comment = ""},
+        {name = "Static Field Totem", id = 179867, comment = ""},
+        {name = "Healing Stream Totem", id = 3527, comment = ""},
+    
     },
 
     hideCastbarList = {},
@@ -2145,6 +2148,10 @@ Frame:SetScript("OnEvent", function(...)
 
     C_Timer.After(1, function()
         BBP.ApplySettingsToAllNameplates()
+
+        if BetterBlizzPlatesDB.executeIndicatorScale < 0 then --had a slider with borked values
+            BetterBlizzPlatesDB.executeIndicatorScale = 1     --this will fix it for every user who made the error while bug was live
+        end
     end)
 
     SetCVarsOnLogin()

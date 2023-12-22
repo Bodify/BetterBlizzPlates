@@ -2535,7 +2535,7 @@ local function guiPositionAndScale()
     local executeIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 2.5, 0.01, "executeIndicatorScale")
     executeIndicatorScale:SetPoint("TOP", anchorSubExecute, "BOTTOM", 0, -15)
 
-    local executeIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "executeIndicatorScale", "X")
+    local executeIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "executeIndicatorXPos", "X")
     executeIndicatorXPos:SetPoint("TOP", executeIndicatorScale, "BOTTOM", 0, -15)
 
     local executeIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "executeIndicatorYPos", "Y")
