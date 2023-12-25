@@ -773,6 +773,12 @@ local function SetCVarsOnLogin()
         SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
         SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
 
+        if BetterBlizzPlatesDB.NamePlateVerticalScale >= 2 then
+            SetCVar("NamePlateHorizontalScale", 1.4)
+        else
+            SetCVar("NamePlateHorizontalScale", 1)
+        end
+
         ToggleFriendlyPlates()
     end
 end
@@ -1156,10 +1162,13 @@ function BBP.HideNPCs(frame)
         -- Check if the unit is the current target and show accordingly
         if UnitIsUnit(frame.displayedUnit, "target") then
             frame:Show()
+            frame.hideCastInfo = false
         elseif inList or (hideNPCPetsOnly and isPet) then
             frame:Hide()
+            frame.hideCastInfo = true
         else
             frame:Show()
+            frame.hideCastInfo = false
         end
     end
 end
@@ -1572,6 +1581,10 @@ local function HandleNamePlateRemoved(unit)
         if not hideTargetHighlight then
             frame.selectionHighlight:SetAlpha(0.22)
         end
+    end
+
+    if frame.hideCastInfo then
+        frame.hideCastInfo = false
     end
     -- Hide totem icons
     if frame.customIcon then

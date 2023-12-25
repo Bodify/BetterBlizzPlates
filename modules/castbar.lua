@@ -414,7 +414,7 @@ function BBP.UpdateNameplateTargetText(nameplate, unitID)
 
     local isCasting = UnitCastingInfo(unitID) or UnitChannelInfo(unitID)
 
-    if isCasting and UnitExists(unitID.."target") then
+    if isCasting and UnitExists(unitID.."target") and not nameplate.UnitFrame.hideCastInfo then
         local targetOfTarget = unitID.."target"
         local name = UnitName(targetOfTarget)
         local _, class = UnitClass(targetOfTarget)
@@ -435,6 +435,7 @@ function BBP.UpdateNameplateTargetText(nameplate, unitID)
 end
 
 function BBP.UpdateCastTimer(nameplate, unitID)
+    if not nameplate or not unitID then return end
     if UnitIsUnit(unitID, "player") then return end
 
     if not nameplate.CastTimerFrame then
@@ -450,7 +451,7 @@ function BBP.UpdateCastTimer(nameplate, unitID)
         name, _, _, startTime, endTime = UnitChannelInfo(unitID)
     end
 
-    if name and endTime and startTime then
+    if name and endTime and startTime and not nameplate.UnitFrame.hideCastInfo then
         local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
 
         if enableCastbarCustomization then

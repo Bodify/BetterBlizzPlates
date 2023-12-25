@@ -765,6 +765,11 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     if not BBP.checkCombatAndWarn() then
                         SetCVar("NamePlateVerticalScale", value)
                         BetterBlizzPlatesDB.NamePlateVerticalScale = value
+                        if BetterBlizzPlatesDB.NamePlateVerticalScale >= 2 then
+                            SetCVar("NamePlateHorizontalScale", 1.4)
+                        else
+                            SetCVar("NamePlateHorizontalScale", 1)
+                        end
                         if frame.castBar then
                             if not BetterBlizzPlatesDB.enableCastbarCustomization then
                                 if BBP.isLargeNameplatesEnabled() then
