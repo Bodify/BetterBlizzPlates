@@ -11,8 +11,8 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.2.9b"
-local sendUpdate = false
+local addonUpdates = "1.3.0"
+local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
@@ -320,6 +320,7 @@ local defaultSettings = {
     hideNPCsList = {
         {name = "Mirror Images (Mage)", id = 31216, comment = ""},
         {name = "Wild Imp (Warlock)", id = 55659, comment = ""},
+        {name = "Wild Imp (Warlock)", id = 143622, comment = ""},
     },
     hideNPCsWhitelist = {
         {name = "Hunter Pet (they all have same ID)", id = 165189, comment = ""},
@@ -348,6 +349,9 @@ local defaultSettings = {
         {name = "Windfury Totem", id = 6112, comment = ""},
         {name = "Mindbender", id = 62982, comment = ""},
         {name = "Static Field Totem", id = 179867, comment = ""},
+        {name = "Stoneskin Totem", id = 194117, comment = ""},
+        {name = "Poison Cleansing Totem", id = 5923, comment = ""},
+        {name = "Tranquil Air Totem", id = 194118, comment = ""},
         {name = "Felguard (Demo Pet)", id = 17252, comment = ""},
         {name = "Felhunter (Warlock)", id = 417, comment = ""},
         {name = "Succubus (Warlock)", id = 1863, comment = ""},
@@ -516,16 +520,16 @@ local function SendUpdateMessage()
     if sendUpdate then
         C_Timer.After(7, function()
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a \"Hide healthbar\" setting on friendly nameplates now also hides in PvE dungeons. Added nameplate resource scale slider in \"More Blizz Settings\" section. Made dropdown menus a bit better.")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Adjusted nameplate height logic. Possible you might have toggle large nameplate on/off or re-adjust nameplate height. More totem indicator settings inc (sizes, show/hide icon, glow/noglow), settings made but no GUI yet. You can edit totem.lua in BetterBlizzPlates\\modules and change the values now if you are comfortable.")
         end)
     end
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: \"Hide healthbar\" setting on friendly nameplates now also hides in PvE dungeons")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Added nameplate resource scale slider in \"More Blizz Settings\" section.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Made dropdown menus a bit better.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Adjusted nameplate height logic. Possible you might have toggle large nameplate on/off or re-adjust nameplate height.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: More totem indicator settings inc (sizes, show/hide icon, glow/noglow), settings made but no GUI yet. You can edit totem.lua in BetterBlizzPlates\\modules and change the values now if you are comfortable.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Hide targetname + casttimer on hidden nameplates bugfix.")
 end
 
 local function CheckForUpdate()

@@ -2305,7 +2305,7 @@ local function guiPositionAndScale()
 
     local totemIndicatorScaleUpImportant = CreateCheckbox("totemIndicatorScaleUpImportant", "Scale up important", contentFrame)
     totemIndicatorScaleUpImportant:SetPoint("TOPLEFT", totemIndicatorGlowOff, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(totemIndicatorScaleUpImportant, "Scale up important nameplates slightly.")
+    CreateTooltip(totemIndicatorScaleUpImportant, "Inactive, will be removed in favor\nof new system soonTM")
 
     ----------------------
     -- Target indicator

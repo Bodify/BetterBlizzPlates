@@ -4,39 +4,41 @@ BBP = BBP or {}
 
 -- List of NPCs and their associated icons and durations
 BBP.npcList = {
-    [59764] =   { name = "Healing Tide Totem", icon = GetSpellTexture(108280),              duration = 12, color = {0, 1, 0.39}, important = true },
-    [5925] =    { name = "Grounding Totem", icon = GetSpellTexture(204336),                 duration = 3,  color = {1, 0, 1}, important = true },
-    [53006] =   { name = "Spirit Link Totem", icon = GetSpellTexture(98008),                duration = 6,  color = {0, 1, 0.78}, important = true },
-    [5913] =    { name = "Tremor Totem", icon = GetSpellTexture(8143),                      duration = 10, color = {0.49, 0.9, 0.08}, important = true },
-    [104818] =  { name = "Ancestral Protection Totem", icon = GetSpellTexture(207399),      duration = 30, color = {0, 1, 0.78}, important = true },
-    [119052] =  { name = "War Banner", icon = GetSpellTexture(236320),                      duration = 15, color = {1, 0, 1}, important = true },
-    [61245] =   { name = "Capacitor Totem", icon = GetSpellTexture(192058),                 duration = 2,  color = {1, 0.69, 0}, important = true },
-    [105451] =  { name = "Counterstrike Totem", icon = GetSpellTexture(204331),             duration = 15, color = {1, 0.27, 0.59}, important = true },
-    [179193] =  { name = "Fel Obelisk", icon = GetSpellTexture(353601),                     duration = 15, color = {1, 0.69, 0}, important = true },
-    [101398] =  { name = "Psyfiend", icon = GetSpellTexture(199824),                        duration = 15, color = {0.49, 0, 1}, important = true },
-    [100943] =  { name = "Earthen Wall Totem", icon = GetSpellTexture(198838),              duration = 15, color = {0.78, 0.49, 0.35}, important = true },
-    [107100] =  { name = "Observer", icon = GetSpellTexture(112869),                        duration = 20, color = {1, 0.69, 0}, important = true },
-    [135002] =  { name = "Tyrant", icon = GetSpellTexture(265187),                          duration = 15, color = {1, 0.69, 0}, important = true },
-    [114565] =  { name = "Guardian of the Forgotten Queen", icon = GetSpellTexture(228049), duration = 10, color = {1, 0, 1}, important = true },
+    [59764] =   { name = "Healing Tide Totem", icon = GetSpellTexture(108280),              hideIcon = false, size = 30, duration = 10.5, color = {0, 1, 0.39}, important = true },
+    [5925] =    { name = "Grounding Totem", icon = GetSpellTexture(204336),                 hideIcon = false, size = 30, duration = 3.5,  color = {1, 0, 1}, important = true },
+    [53006] =   { name = "Spirit Link Totem", icon = GetSpellTexture(98008),                hideIcon = false, size = 30, duration = 6,  color = {0, 1, 0.78}, important = true },
+    [5913] =    { name = "Tremor Totem", icon = GetSpellTexture(8143),                      hideIcon = false, size = 30, duration = 10, color = {0.49, 0.9, 0.08}, important = true },
+    [104818] =  { name = "Ancestral Protection Totem", icon = GetSpellTexture(207399),      hideIcon = false, size = 30, duration = 30, color = {0, 1, 0.78}, important = true },
+    [119052] =  { name = "War Banner", icon = GetSpellTexture(236320),                      hideIcon = false, size = 30, duration = 15, color = {1, 0, 1}, important = true },
+    [61245] =   { name = "Capacitor Totem", icon = GetSpellTexture(192058),                 hideIcon = false, size = 30, duration = 2,  color = {1, 0.69, 0}, important = true },
+    [105451] =  { name = "Counterstrike Totem", icon = GetSpellTexture(204331),             hideIcon = false, size = 30, duration = 15, color = {1, 0.27, 0.59}, important = true },
+    [179193] =  { name = "Fel Obelisk", icon = GetSpellTexture(353601),                     hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
+    [101398] =  { name = "Psyfiend", icon = GetSpellTexture(199824),                        hideIcon = false, size = 30, duration = 15, color = {0.49, 0, 1}, important = true },
+    [100943] =  { name = "Earthen Wall Totem", icon = GetSpellTexture(198838),              hideIcon = false, size = 30, duration = 15, color = {0.78, 0.49, 0.35}, important = true },
+    [107100] =  { name = "Observer", icon = GetSpellTexture(112869),                        hideIcon = false, size = 30, duration = 20, color = {1, 0.69, 0}, important = true },
+    [135002] =  { name = "Tyrant", icon = GetSpellTexture(265187),                          hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
+    [114565] =  { name = "Guardian of the Forgotten Queen", icon = GetSpellTexture(228049), hideIcon = false, size = 30, duration = 10, color = {1, 0, 1}, important = true },
     -- Less important
-    [3527] =    { name = "Healing Stream Totem", icon = GetSpellTexture(5394),              duration = 15, color = {0, 1, 0.39}, important = false },
-    [78001] =   { name = "Cloudburst Totem", icon = GetSpellTexture(157153),                duration = 15, color = {0, 1, 0.39}, important = false },
-    [10467] =   { name = "Mana Tide Totem", icon = GetSpellTexture(16191),                  duration = 8,  color = {0.08, 0.82, 0.78}, important = false },
-    [97285] =   { name = "Wind Rush Totem", icon = GetSpellTexture(192077),                 duration = 15, color = {0.08, 0.82, 0.78}, important = false },
-    [60561] =   { name = "Earthgrab Totem", icon = GetSpellTexture(51485),                  duration = 20, color = {0.75, 0.31, 0.10}, important = false },
-    [2630] =    { name = "Earthbind Totem", icon = GetSpellTexture(2484),                   duration = 20, color = {0.78, 0.51, 0.39}, important = false },
-    [105427] =  { name = "Skyfury Totem", icon = GetSpellTexture(204330),                   duration = 15, color = {1, 0.27, 0.59}, important = false },
-    [97369] =   { name = "Liquid Magma Totem", icon = GetSpellTexture(192222),              duration = 6,  color = {1, 0.69, 0}, important = false },
-    [6112] =    { name = "Windfury Totem", icon = GetSpellTexture(8512),                    duration = nil,color = {0.08, 0.82, 0.78}, important = false },
-    [62982] =   { name = "Mindbender", icon = GetSpellTexture(123040),                      duration = 15, color = {1, 0.69, 0}, important = false },
-    [179867] =  { name = "Static Field Totem", icon = GetSpellTexture(355580),              duration = 6,  color = {0, 1, 0.78}, important = false },
+    [3527] =    { name = "Healing Stream Totem", icon = GetSpellTexture(5394),              hideIcon = false, size = 24, duration = 15, color = {0, 0.7, 0.7}, important = false },
+    [78001] =   { name = "Cloudburst Totem", icon = GetSpellTexture(157153),                hideIcon = false, size = 24, duration = 15, color = {0, 1, 0.39}, important = false },
+    [10467] =   { name = "Mana Tide Totem", icon = GetSpellTexture(16191),                  hideIcon = false, size = 24, duration = 8,  color = {0.08, 0.82, 0.78}, important = false },
+    [97285] =   { name = "Wind Rush Totem", icon = GetSpellTexture(192077),                 hideIcon = false, size = 24, duration = 15, color = {0.08, 0.82, 0.78}, important = false },
+    [60561] =   { name = "Earthgrab Totem", icon = GetSpellTexture(51485),                  hideIcon = false, size = 24, duration = 20, color = {0.75, 0.31, 0.10}, important = false },
+    [2630] =    { name = "Earthbind Totem", icon = GetSpellTexture(2484),                   hideIcon = false, size = 24, duration = 20, color = {0.78, 0.51, 0.39}, important = false },
+    [105427] =  { name = "Skyfury Totem", icon = GetSpellTexture(204330),                   hideIcon = false, size = 24, duration = 15, color = {1, 0.27, 0.59}, important = false },
+    [97369] =   { name = "Liquid Magma Totem", icon = GetSpellTexture(192222),              hideIcon = false, size = 24, duration = 6,  color = {1, 0.69, 0}, important = false },
+    [6112] =    { name = "Windfury Totem", icon = GetSpellTexture(8512),                    hideIcon = false, size = 24, duration = nil,color = {0.08, 0.82, 0.78}, important = false },
+    [62982] =   { name = "Mindbender", icon = GetSpellTexture(123040),                      hideIcon = false, size = 24, duration = 15, color = {1, 0.69, 0}, important = false },
+    [179867] =  { name = "Static Field Totem", icon = GetSpellTexture(355580),              hideIcon = false, size = 24, duration = 6,  color = {0, 1, 0.78}, important = false },
+    [194117] =  { name = "Stoneskin Totem", icon = GetSpellTexture(383017),                 hideIcon = false, size = 24, duration = 15,  color = {0.78, 0.49, 0.35}, important = false },
+    [5923] =    { name = "Poison Cleansing Totem", icon = GetSpellTexture(383013),          hideIcon = false, size = 24, duration = 6,  color = {0.49, 0.9, 0.08}, important = false },
+    [194118] =  { name = "Tranquil Air Totem", icon = GetSpellTexture(383019),              hideIcon = false, size = 24, duration = 20,  color = {0, 1, 0.78}, important = false },
 }
 
 function BBP.ResetNameplateTestAttributes()
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = nameplate.UnitFrame
         frame.randomIcon = nil
-        --frame.randomColor = nil idk why, probably cuz loop thing, but resetting this will make it so name text doesnt always gets colored, just removing it seems to be fine?
         frame.isImportant = nil
     end
 end
@@ -61,7 +63,7 @@ function BBP.SetupUnifiedAnimation(frameWithAnimations)
 end
 
 -- Function to create the necessary components for the totem indicator
-function BBP.CreateTotemComponents(frame)
+function BBP.CreateTotemComponents(frame, size)
     local xPos = BetterBlizzPlatesDB.totemIndicatorXPos
     local yPos = BetterBlizzPlatesDB.totemIndicatorYPos
     local shiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
@@ -78,6 +80,8 @@ function BBP.CreateTotemComponents(frame)
 
         frame.animationGroup = BBP.SetupUnifiedAnimation(frame.totemIndicator)
     end
+    frame.totemIndicator:SetSize(size, size)
+    frame.totemIndicator:SetScale(scale or 1)
     if shiftIconDown then
         frame.totemIndicator:SetPoint("BOTTOM", frame.healthBar, anchor, xPos, yPos + 4)
     else
@@ -86,59 +90,85 @@ function BBP.CreateTotemComponents(frame)
 end
 
 -- Function to apply totem icons and other attributes
-function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color)
-    BBP.CreateTotemComponents(frame)
+function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hideIcon)
+    BBP.CreateTotemComponents(frame, size)
 
-    -- Set icon texture and cooldown if provided
-    if iconTexture then
-        frame.customIcon:SetTexture(iconTexture)
-        frame.customIcon:Show()
+    -- Only apply the following if hideIcon is false
+    if not hideIcon then
+        -- Set icon texture and cooldown if provided
+        if iconTexture then
+            frame.customIcon:SetTexture(iconTexture)
+            frame.customIcon:Show()
 
-        if duration then
-            if not frame.customCooldown then
-                frame.customCooldown = CreateFrame("Cooldown", nil, frame.totemIndicator)
-                frame.customCooldown:SetAllPoints(frame.customIcon)
-            end
-            frame.customCooldown:SetCooldown(GetTime(), duration)
-            frame.customCooldown:SetScript("OnUpdate", function(self, elapsed)
-                local start, dur = self:GetCooldownTimes()
-                if start and dur and start > 0 and dur > 0 then
-                    local remaining = start / 1000 + dur / 1000 - GetTime()
-                    if remaining <= 0 then
+            if duration then
+                if not frame.customCooldown then
+                    frame.customCooldown = CreateFrame("Cooldown", nil, frame.totemIndicator,"CooldownFrameTemplate")
+                    frame.customCooldown:SetAllPoints(frame.totemIndicator)
+                end
+                frame.customCooldown:SetCooldown(GetTime(), duration)
+                frame.customCooldown:SetReverse(true)
+                frame.customCooldown:SetDrawSwipe(false)
+                frame.customCooldown:SetDrawEdge(false)
+                frame.customCooldown:SetScript("OnUpdate", function(self, elapsed)
+                    local start, dur = self:GetCooldownTimes()
+                    if start and dur and start > 0 and dur > 0 then
+                        local remaining = start / 1000 + dur / 1000 - GetTime()
+                        if remaining <= 0 then
+                            frame.customIcon:Hide()
+                            if frame.glowTexture then
+                                frame.glowTexture:Hide()
+                            end
+                            self:SetScript("OnUpdate", nil)
+                            self:Hide()
+                        end
+                    else
                         frame.customIcon:Hide()
                         if frame.glowTexture then
                             frame.glowTexture:Hide()
                         end
                         self:SetScript("OnUpdate", nil)
                     end
-                else
-                    frame.customIcon:Hide()
-                    if frame.glowTexture then
-                        frame.glowTexture:Hide()
-                    end
-                    self:SetScript("OnUpdate", nil)
-                end
-            end)
+                end)
+            end
         end
-    end
 
-    -- Apply glow effect if color is provided
-    if color then
-        if not frame.glowTexture then
-            frame.glowTexture = frame.totemIndicator:CreateTexture(nil, "OVERLAY")
-            frame.glowTexture:SetBlendMode("ADD")
-            local widthOffset = 12
-            local heightOffset = 12
+        -- Apply glow effect if color is provided
+        if color then
+            local offsetMultiplier = 0.41
+            local widthOffset = size * offsetMultiplier
+            local heightOffset = size * offsetMultiplier
+
+            if not frame.glowTexture then
+                frame.glowTexture = frame.totemIndicator:CreateTexture(nil, "OVERLAY")
+                frame.glowTexture:SetBlendMode("ADD")
+                frame.glowTexture:SetParent(frame.customCooldown)
+                frame.glowTexture:SetAtlas("clickcast-highlight-spellbook")
+                frame.glowTexture:SetDesaturated(true)
+            end
 
             frame.glowTexture:SetPoint('TOPLEFT', frame.totemIndicator, 'TOPLEFT', -widthOffset, heightOffset)
             frame.glowTexture:SetPoint('BOTTOMRIGHT', frame.totemIndicator, 'BOTTOMRIGHT', widthOffset, -heightOffset)
-        end
 
-        frame.glowTexture:SetAtlas("clickcast-highlight-spellbook")
-        frame.glowTexture:SetDesaturated(true)
-        frame.glowTexture:SetVertexColor(unpack(color))
-        frame.glowTexture:Show()
-        frame.animationGroup:Play()
+            frame.glowTexture:SetVertexColor(unpack(color))
+            frame.glowTexture:Show()
+            frame.animationGroup:Play()
+        end
+    else
+        -- If hideIcon is true, ensure icon, cooldown, and glow are not displayed
+        if frame.customIcon then
+            frame.customIcon:Hide()
+        end
+        if frame.customCooldown then
+            frame.customCooldown:Hide()
+        end
+        if frame.glowTexture then
+            frame.glowTexture:Hide()
+        end
+    end
+
+    local cdText = frame.customCooldown and frame.customCooldown:GetRegions()
+    if cdText then
+        cdText:SetScale(1) --cooldown text scale
     end
 end
 
@@ -181,6 +211,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
     local hideHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
     local npcData = BBP.npcList[npcID]
     local showEnemyOnly = BetterBlizzPlatesDB.totemIndicatorEnemyOnly
+    local size = npcData and npcData.size or 30
 
     frame:SetScale(1)
 
@@ -192,7 +223,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
     local isEnemy = UnitIsEnemy("player", unit)
 
     -- Initialize totem components
-    BBP.CreateTotemComponents(frame)
+    BBP.CreateTotemComponents(frame, size)
 
     -- Test mode
     if testMode then
@@ -204,7 +235,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
             frame.randomIcon, frame.randomColor, frame.isImportant, frame.randomName = BBP.GetRandomTotemAttributes()
         end
 
-        BBP.ApplyTotemAttributes(frame, frame.randomIcon, nil, nil)
+        BBP.ApplyTotemAttributes(frame, frame.randomIcon, nil, nil, npcData.size, npcData.hideIcon)
         frame.healthBar:SetStatusBarColor(unpack(frame.randomColor))
         frame.name:SetVertexColor(unpack(frame.randomColor))
         frame.name:SetText(frame.randomName)
@@ -215,10 +246,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
 
         if frame.isImportant then
             if BetterBlizzPlatesDB.totemIndicatorScaleUpImportant then
-                frame:SetScale(1.2)
+                --frame:SetScale(1.2) messes with targeting, kill for now
             end
             if not BetterBlizzPlatesDB.totemIndicatorGlowOff then
-                BBP.ApplyTotemAttributes(frame, nil, nil, frame.randomColor)
+                BBP.ApplyTotemAttributes(frame, nil, nil, frame.randomColor, npcData.size, npcData.hideIcon)
             end
         end
         if hideHealthBar then
@@ -240,7 +271,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
         end
         frame:SetScale(1)
 
-        BBP.ApplyTotemAttributes(frame, npcData.icon, npcData.duration, nil)
+        BBP.ApplyTotemAttributes(frame, npcData.icon, npcData.duration, nil, npcData.size, npcData.hideIcon)
 
         if npcData.color then
             frame.healthBar:SetStatusBarColor(unpack(npcData.color))
@@ -249,10 +280,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
 
         if npcData.important then
             if BetterBlizzPlatesDB.totemIndicatorScaleUpImportant then
-                frame:SetScale(1.2)
+                --frame:SetScale(1.2) messes with targeting, kill for now
             end
             if not BetterBlizzPlatesDB.totemIndicatorGlowOff then
-                BBP.ApplyTotemAttributes(frame, nil, nil, npcData.color)
+                BBP.ApplyTotemAttributes(frame, nil, nil, npcData.color, npcData.size, npcData.hideIcon)
             end
         else
             if frame.animationGroup then
