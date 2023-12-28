@@ -164,7 +164,9 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
             BBP.HideNPCs(previousTargetNameplate.UnitFrame)
         end
         if hideTotemHealthBar then
-            BBP.ApplyTotemIconsAndColorNameplate(previousTargetNameplate.UnitFrame, previousTargetNameplate.UnitFrame.unit)
+            if previousTargetNameplate.UnitFrame then
+                BBP.ApplyTotemIconsAndColorNameplate(previousTargetNameplate.UnitFrame, previousTargetNameplate.UnitFrame.unit)
+            end
         end
         if BetterBlizzPlatesDB.hideCastbar then
             if previousTargetNameplate.UnitFrame then
