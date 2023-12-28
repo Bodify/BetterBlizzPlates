@@ -152,6 +152,13 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
         BBP.TargetIndicator(previousTargetNameplate.UnitFrame)
         if BetterBlizzPlatesDB.fadeOutNPC then
             BBP.FadeOutNPCs(previousTargetNameplate.UnitFrame)
+            local fadeAllButTarget = BetterBlizzPlatesDB.fadeAllButTarget
+            if fadeAllButTarget then
+                for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
+                    local frame = namePlate.UnitFrame
+                    frame:SetAlpha(1)
+                end
+            end
         end
         if BetterBlizzPlatesDB.hideNPC then
             BBP.HideNPCs(previousTargetNameplate.UnitFrame)
@@ -182,6 +189,24 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
         BBP.TargetIndicator(nameplateForTarget.UnitFrame)
         if BetterBlizzPlatesDB.fadeOutNPC then
             BBP.FadeOutNPCs(nameplateForTarget.UnitFrame)
+            local fadeAllButTarget = BetterBlizzPlatesDB.fadeAllButTarget
+            if fadeAllButTarget then
+                local fadeOutNPCsAlpha = BetterBlizzPlatesDB.fadeOutNPCsAlpha
+                for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
+                    local frame = namePlate.UnitFrame
+                    if UnitExists("target") and not UnitIsPlayer(frame.unit) then
+                        -- Check if this unit frame's unit is the current target
+                        local isTarget = UnitIsUnit(frame.unit, "target")
+                        if not isTarget then
+                            frame:SetAlpha(fadeOutNPCsAlpha)
+                        else
+                            frame:SetAlpha(1)
+                        end
+                    else
+                        frame:SetAlpha(1)
+                    end
+                end
+            end
         end
         if BetterBlizzPlatesDB.hideNPC then
             BBP.HideNPCs(nameplateForTarget.UnitFrame)

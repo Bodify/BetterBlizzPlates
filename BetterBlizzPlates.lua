@@ -161,11 +161,46 @@ local defaultSettings = {
     totemIndicatorXPos = 0,
     totemIndicatorYPos = 0,
     totemIndicatorAnchor = "TOP",
-    totemIndicatorGlowOff = false,
     totemIndicatorScaleUpImportant = false,
     totemIndicatorHideNameAndShiftIconDown = false,
     totemIndicatorTestMode = false,
     totemIndicatorEnemyOnly = true,
+    totemIndicatorDefaultCooldownTextSize = 1,
+    showTotemIndicatorCooldownSwipe = true,
+    totemIndicatorNpcList = {
+        [59764] =   { name = "Healing Tide Totem", icon = GetSpellTexture(108280),              hideIcon = false, size = 30, duration = 10, color = {0, 1, 0.39}, important = true },
+        [5925] =    { name = "Grounding Totem", icon = GetSpellTexture(204336),                 hideIcon = false, size = 30, duration = 3,  color = {1, 0, 1}, important = true },
+        [53006] =   { name = "Spirit Link Totem", icon = GetSpellTexture(98008),                hideIcon = false, size = 30, duration = 6,  color = {0, 1, 0.78}, important = true },
+        [5913] =    { name = "Tremor Totem", icon = GetSpellTexture(8143),                      hideIcon = false, size = 30, duration = 10, color = {0.49, 0.9, 0.08}, important = true },
+        [104818] =  { name = "Ancestral Protection Totem", icon = GetSpellTexture(207399),      hideIcon = false, size = 30, duration = 30, color = {0, 1, 0.78}, important = true },
+        [119052] =  { name = "War Banner", icon = GetSpellTexture(236320),                      hideIcon = false, size = 30, duration = 15, color = {1, 0, 1}, important = true },
+        [61245] =   { name = "Capacitor Totem", icon = GetSpellTexture(192058),                 hideIcon = false, size = 30, duration = 2,  color = {1, 0.69, 0}, important = true },
+        [105451] =  { name = "Counterstrike Totem", icon = GetSpellTexture(204331),             hideIcon = false, size = 30, duration = 15, color = {1, 0.27, 0.59}, important = true },
+        [179193] =  { name = "Fel Obelisk", icon = GetSpellTexture(353601),                     hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
+        [101398] =  { name = "Psyfiend", icon = GetSpellTexture(199824),                        hideIcon = false, size = 35, duration = 12, color = {0.49, 0, 1}, important = true },
+        [100943] =  { name = "Earthen Wall Totem", icon = GetSpellTexture(198838),              hideIcon = false, size = 30, duration = 15, color = {0.78, 0.49, 0.35}, important = true },
+        [107100] =  { name = "Observer", icon = GetSpellTexture(112869),                        hideIcon = false, size = 30, duration = 20, color = {1, 0.69, 0}, important = true },
+        [135002] =  { name = "Tyrant", icon = GetSpellTexture(265187),                          hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
+        [114565] =  { name = "Guardian of the Forgotten Queen", icon = GetSpellTexture(228049), hideIcon = false, size = 30, duration = 10, color = {1, 0, 1}, important = true },
+        [107024] =  { name = "Fel Lord", icon = GetSpellTexture(212459),                        hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
+        -- Less important
+        [89] =      { name = "Infernal", icon = GetSpellTexture(1122),                          hideIcon = false, size = 24, duration = 30, color = {1, 0.69, 0}, important = false },
+        [196111] =  { name = "Pit Lord", icon = GetSpellTexture(138789),                        hideIcon = false, size = 24, duration = 10, color = {1, 0.69, 0}, important = false },
+        [3527] =    { name = "Healing Stream Totem", icon = GetSpellTexture(5394),              hideIcon = false, size = 24, duration = 15, color = {0, 1, 0.78}, important = false },
+        [78001] =   { name = "Cloudburst Totem", icon = GetSpellTexture(157153),                hideIcon = false, size = 24, duration = 15, color = {0, 1, 0.39}, important = false },
+        [10467] =   { name = "Mana Tide Totem", icon = GetSpellTexture(16191),                  hideIcon = false, size = 24, duration = 8,  color = {0.08, 0.82, 0.78}, important = false },
+        [97285] =   { name = "Wind Rush Totem", icon = GetSpellTexture(192077),                 hideIcon = false, size = 24, duration = 15, color = {0.08, 0.82, 0.78}, important = false },
+        [60561] =   { name = "Earthgrab Totem", icon = GetSpellTexture(51485),                  hideIcon = false, size = 24, duration = 20, color = {0.75, 0.31, 0.10}, important = false },
+        [2630] =    { name = "Earthbind Totem", icon = GetSpellTexture(2484),                   hideIcon = false, size = 24, duration = 20, color = {0.78, 0.51, 0.39}, important = false },
+        [105427] =  { name = "Skyfury Totem", icon = GetSpellTexture(204330),                   hideIcon = false, size = 24, duration = 15, color = {1, 0.27, 0.59}, important = false },
+        [97369] =   { name = "Liquid Magma Totem", icon = GetSpellTexture(192222),              hideIcon = false, size = 24, duration = 6,  color = {1, 0.69, 0}, important = false },
+        [6112] =    { name = "Windfury Totem", icon = GetSpellTexture(8512),                    hideIcon = false, size = 24, duration = nil,color = {0.08, 0.82, 0.78}, important = false },
+        [62982] =   { name = "Mindbender", icon = GetSpellTexture(123040),                      hideIcon = false, size = 24, duration = 15, color = {1, 0.69, 0}, important = false },
+        [179867] =  { name = "Static Field Totem", icon = GetSpellTexture(355580),              hideIcon = false, size = 24, duration = 6,  color = {0, 1, 0.78}, important = false },
+        [194117] =  { name = "Stoneskin Totem", icon = GetSpellTexture(383017),                 hideIcon = false, size = 24, duration = 15, color = {0.78, 0.49, 0.35}, important = false },
+        [5923] =    { name = "Poison Cleansing Totem", icon = GetSpellTexture(383013),          hideIcon = false, size = 24, duration = 6,  color = {0.49, 0.9, 0.08}, important = false },
+        [194118] =  { name = "Tranquil Air Totem", icon = GetSpellTexture(383019),              hideIcon = false, size = 24, duration = 20, color = {0, 1, 0.78}, important = false },
+    },
     -- Quest Indicator
     questIndicator = false,
     questIndicatorScale = 1,
@@ -241,6 +276,7 @@ local defaultSettings = {
     nameplateAurasNoNameYPos = 0,
     nameplateAuraScale = 1,
     hideDefaultPersonalNameplateAuras = false,
+    defaultNpAuraCdSize = 0.5,
 
     personalNpBuffEnable = true,
     personalNpBuffFilterAll = false,
@@ -355,6 +391,7 @@ local defaultSettings = {
         {name = "Felguard (Demo Pet)", id = 17252, comment = ""},
         {name = "Felhunter (Warlock)", id = 417, comment = ""},
         {name = "Succubus (Warlock)", id = 1863, comment = ""},
+        {name = "Infernal (Warlock)", id = 89, comment = ""},
     },
 
     hideCastbarList = {},
@@ -416,72 +453,93 @@ local function InitializeSavedVariables()
     end
 end
 
-local function FetchAndSaveValuesOnFirstLogin()
-    if not BetterBlizzPlatesDB.nameplateMinAlpha then
+function CVarFetcher()
+    if BBP.variablesLoaded then
+        BetterBlizzPlatesDB.nameplateEnemyWidth, BetterBlizzPlatesDB.nameplateEnemyHeight = C_NamePlate.GetNamePlateEnemySize()
+        BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = C_NamePlate.GetNamePlateFriendlySize()
+        BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight = C_NamePlate.GetNamePlateSelfSize()
+
+        BetterBlizzPlatesDB.nameplateOverlapH = GetCVar("nameplateOverlapH")
+        BetterBlizzPlatesDB.nameplateOverlapV = GetCVar("nameplateOverlapV")
+        BetterBlizzPlatesDB.nameplateMotionSpeed = GetCVar("nameplateMotionSpeed")
+        BetterBlizzPlatesDB.nameplateHorizontalScale = GetCVar("NamePlateHorizontalScale")
+        BetterBlizzPlatesDB.NamePlateVerticalScale = GetCVar("NamePlateVerticalScale")
+        BetterBlizzPlatesDB.nameplateMinScale = GetCVar("nameplateMinScale")
+        BetterBlizzPlatesDB.nameplateMaxScale = GetCVar("nameplateMaxScale")
+        BetterBlizzPlatesDB.nameplateSelectedScale = GetCVar("nameplateSelectedScale")
+        BetterBlizzPlatesDB.NamePlateClassificationScale = GetCVar("NamePlateClassificationScale")
+        BetterBlizzPlatesDB.nameplateGlobalScale = GetCVar("nameplateGlobalScale")
+        BetterBlizzPlatesDB.nameplateLargerScale = GetCVar("nameplateLargerScale")
+        BetterBlizzPlatesDB.nameplatePlayerLargerScale = GetCVar("nameplatePlayerLargerScale")
         BetterBlizzPlatesDB.nameplateMinAlpha = GetCVar("nameplateMinAlpha")
         BetterBlizzPlatesDB.nameplateMinAlphaDistance = GetCVar("nameplateMinAlphaDistance")
         BetterBlizzPlatesDB.nameplateMaxAlpha = GetCVar("nameplateMaxAlpha")
         BetterBlizzPlatesDB.nameplateMaxAlphaDistance = GetCVar("nameplateMaxAlphaDistance")
         BetterBlizzPlatesDB.nameplateOccludedAlphaMult = GetCVar("nameplateOccludedAlphaMult")
-    end
-    if BetterBlizzPlatesDB.hasSaved then
-        return
-    end
-    -- Fetch Blizzard default values
-    BetterBlizzPlatesDB.defaultLargeNamePlateFont, BetterBlizzPlatesDB.defaultLargeFontSize, BetterBlizzPlatesDB.defaultLargeNamePlateFontFlags = SystemFont_LargeNamePlate:GetFont()
-    BetterBlizzPlatesDB.defaultNamePlateFont, BetterBlizzPlatesDB.defaultFontSize, BetterBlizzPlatesDB.defaultNamePlateFontFlags = SystemFont_NamePlate:GetFont()
 
-    local function CVarFetcher()
-        if BBP.variablesLoaded then
-            BetterBlizzPlatesDB.nameplateEnemyWidth, BetterBlizzPlatesDB.nameplateEnemyHeight = C_NamePlate.GetNamePlateEnemySize()
-            BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = C_NamePlate.GetNamePlateFriendlySize()
+        BetterBlizzPlatesDB.nameplateMinAlpha = GetCVar("nameplateMinAlpha")
+        BetterBlizzPlatesDB.nameplateMinAlphaDistance = GetCVar("nameplateMinAlphaDistance")
+        BetterBlizzPlatesDB.nameplateMaxAlpha = GetCVar("nameplateMaxAlpha")
+        BetterBlizzPlatesDB.nameplateMaxAlphaDistance = GetCVar("nameplateMaxAlphaDistance")
+        BetterBlizzPlatesDB.nameplateOccludedAlphaMult = GetCVar("nameplateOccludedAlphaMult")
+        BetterBlizzPlatesDB.nameplateMotion = GetCVar("nameplateMotion")
 
-            BetterBlizzPlatesDB.nameplateOverlapH = GetCVar("nameplateOverlapH")
-            BetterBlizzPlatesDB.nameplateOverlapV = GetCVar("nameplateOverlapV")
-            BetterBlizzPlatesDB.nameplateMotionSpeed = GetCVar("nameplateMotionSpeed")
-            BetterBlizzPlatesDB.nameplateHorizontalScale = GetCVar("NamePlateHorizontalScale")
-            BetterBlizzPlatesDB.NamePlateVerticalScale = GetCVar("NamePlateVerticalScale")
-            BetterBlizzPlatesDB.nameplateMinScale = GetCVar("nameplateMinScale")
-            BetterBlizzPlatesDB.nameplateMaxScale = GetCVar("nameplateMaxScale")
-            BetterBlizzPlatesDB.nameplateSelectedScale = GetCVar("nameplateSelectedScale")
-            BetterBlizzPlatesDB.NamePlateClassificationScale = GetCVar("NamePlateClassificationScale")
-            BetterBlizzPlatesDB.nameplateGlobalScale = GetCVar("nameplateGlobalScale")
-            BetterBlizzPlatesDB.nameplateLargerScale = GetCVar("nameplateLargerScale")
-            BetterBlizzPlatesDB.nameplatePlayerLargerScale = GetCVar("nameplatePlayerLargerScale")
-            BetterBlizzPlatesDB.nameplateMinAlpha = GetCVar("nameplateMinAlpha")
-            BetterBlizzPlatesDB.nameplateMinAlphaDistance = GetCVar("nameplateMinAlphaDistance")
-            BetterBlizzPlatesDB.nameplateMaxAlpha = GetCVar("nameplateMaxAlpha")
-            BetterBlizzPlatesDB.nameplateMaxAlphaDistance = GetCVar("nameplateMaxAlphaDistance")
-            BetterBlizzPlatesDB.nameplateOccludedAlphaMult = GetCVar("nameplateOccludedAlphaMult")
+        BetterBlizzPlatesDB.nameplateShowEnemyGuardians = GetCVar("nameplateShowEnemyGuardians")
+        BetterBlizzPlatesDB.nameplateShowEnemyMinions = GetCVar("nameplateShowEnemyMinions")
+        BetterBlizzPlatesDB.nameplateShowEnemyMinus = GetCVar("nameplateShowEnemyMinus")
+        BetterBlizzPlatesDB.nameplateShowEnemyPets = GetCVar("nameplateShowEnemyPets")
+        BetterBlizzPlatesDB.nameplateShowEnemyTotems = GetCVar("nameplateShowEnemyTotems")
 
-            if GetCVar("NamePlateHorizontalScale") == "1.4" then
-                BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
-                BetterBlizzPlatesDB.castBarHeight = 18.8
-                BetterBlizzPlatesDB.largeNameplates = true
-            else
-                BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 4
-                BetterBlizzPlatesDB.castBarHeight = 8
-                BetterBlizzPlatesDB.largeNameplates = false
-            end
+        BetterBlizzPlatesDB.nameplateShowFriendlyGuardians = GetCVar("nameplateShowFriendlyGuardians")
+        BetterBlizzPlatesDB.nameplateShowFriendlyMinions = GetCVar("nameplateShowFriendlyMinions")
+        BetterBlizzPlatesDB.nameplateShowFriendlyPets = GetCVar("nameplateShowFriendlyPets")
+        BetterBlizzPlatesDB.nameplateShowFriendlyTotems = GetCVar("nameplateShowFriendlyTotems")
+
+        if GetCVar("NamePlateHorizontalScale") == "1.4" then
+            BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
+            BetterBlizzPlatesDB.castBarHeight = 18.8
+            BetterBlizzPlatesDB.largeNameplates = true
         else
-            C_Timer.After(1, function()
-                CVarFetcher()
-            end)
+            BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 4
+            BetterBlizzPlatesDB.castBarHeight = 8
+            BetterBlizzPlatesDB.largeNameplates = false
         end
+
+    else
+        C_Timer.After(1, function()
+            CVarFetcher()
+        end)
     end
+end
 
-    CVarFetcher()
+local function FetchAndSaveValuesOnFirstLogin()
+    if BBP.variablesLoaded then
+        if not BetterBlizzPlatesDB.nameplateMinAlpha or not BetterBlizzPlatesDB.nameplateShowFriendlyMinions or not BetterBlizzPlatesDB.nameplateSelfWidth then
+            CVarFetcher()
+        end
 
-    C_Timer.After(5, function()
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates first run. Thank you for trying out my AddOn. Access settings with /bbp")
-        BetterBlizzPlatesDB.hasSaved = true
-    end)
+        if BetterBlizzPlatesDB.hasSaved then
+            return
+        end
+
+        CVarFetcher()
+
+        C_Timer.After(5, function()
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates first run. Thank you for trying out my AddOn. Access settings with /bbp")
+            BetterBlizzPlatesDB.hasSaved = true
+        end)
+    else
+        C_Timer.After(1, function()
+            FetchAndSaveValuesOnFirstLogin()
+        end)
+    end
 end
 
 function BBP.CVarsAreSaved()
     local db = BetterBlizzPlatesDB
     if db.nameplateEnemyWidth and
        db.nameplateFriendlyWidth and
+       db.nameplateSelfWidth and
        db.nameplateOverlapH and
        db.nameplateOverlapV and
        db.nameplateMotionSpeed and
@@ -519,17 +577,26 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 local function SendUpdateMessage()
     if sendUpdate then
         C_Timer.After(7, function()
+            --bbp news
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Adjusted nameplate height logic. Possible you might have toggle large nameplate on/off or re-adjust nameplate height. More totem indicator settings inc (sizes, show/hide icon, glow/noglow), settings made but no GUI yet. You can edit totem.lua in BetterBlizzPlates\\modules and change the values now if you are comfortable.")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Many new settings and changes. Possible you might have to toggle large nameplates on/off if something has changed. For all news please type /bbp news")
+            if BetterBlizzPlatesDB.totemIndicatorGlowOff then
+                DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Removed totem indicator glow off setting in favor of individual glow settings. You will have to turn them off manually.")
+            end
         end)
     end
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Adjusted nameplate height logic. Possible you might have toggle large nameplate on/off or re-adjust nameplate height.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: More totem indicator settings inc (sizes, show/hide icon, glow/noglow), settings made but no GUI yet. You can edit totem.lua in BetterBlizzPlates\\modules and change the values now if you are comfortable.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Hide targetname + casttimer on hidden nameplates bugfix.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Adjusted nameplate height logic. Possible you might have to toggle large nameplate on/off or re-adjust nameplate height.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: More totem indicator settings, individual sizes, show/hide icon, glow/noglow etc.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: New Fade NPC setting that fades all nameplates except your current target.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #4: Nameplate aura default CD counter setting.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #5: Added \"Nameplate Visibility\" CVar settings in \"More Blizz Settings\".")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #6: Added \"Personal Nameplate Width\" settings in \"More Blizz Settings\".")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #7: Hide targetname + casttimer on hidden nameplates bugfix.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #8: PvE friendly hide healthbar clickthrough nameplates bugfix.")
 end
 
 local function CheckForUpdate()
@@ -669,6 +736,10 @@ function BBP.ApplyNameplateWidth()
                 C_NamePlate.SetNamePlateFriendlyClickThrough(false)
             end
 
+            if BetterBlizzPlatesDB.nameplateSelfHeight then
+                C_NamePlate.SetNamePlateSelfSize(BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight)
+            end
+
             C_NamePlate.SetNamePlateFriendlySize(BetterBlizzPlatesDB.nameplateFriendlyWidth or friendlyWidth, friendlyHeight)
             C_NamePlate.SetNamePlateEnemySize(BetterBlizzPlatesDB.nameplateEnemyWidth or enemyWidth, BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeEnemyHeight or BetterBlizzPlatesDB.nameplateDefaultEnemyHeight)
         end
@@ -776,11 +847,31 @@ local function SetCVarsOnLogin()
         SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
         SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
         SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
+        if BetterBlizzPlatesDB.nameplateMotion then
+            SetCVar("nameplateMotion", BetterBlizzPlatesDB.nameplateMotion)
+        end
 
-        if BetterBlizzPlatesDB.NamePlateVerticalScale >= 2 then
-            SetCVar("NamePlateHorizontalScale", 1.4)
-        else
-            SetCVar("NamePlateHorizontalScale", 1)
+        if BetterBlizzPlatesDB.NamePlateVerticalScale then
+            local verticalScale = tonumber(BetterBlizzPlatesDB.NamePlateVerticalScale)
+            if verticalScale and verticalScale >= 2 then
+                SetCVar("NamePlateHorizontalScale", 1.4)
+            else
+                SetCVar("NamePlateHorizontalScale", 1)
+            end
+        end
+
+        if BetterBlizzPlatesDB.setCVarAcrossAllCharacters then
+            SetCVar("nameplateShowEnemyGuardians", BetterBlizzPlatesDB.nameplateShowEnemyGuardians)
+            SetCVar("nameplateShowEnemyMinions", BetterBlizzPlatesDB.nameplateShowEnemyMinions)
+            SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
+            SetCVar("nameplateShowEnemyPets", BetterBlizzPlatesDB.nameplateShowEnemyPets)
+            SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
+
+            SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
+            SetCVar("nameplateShowFriendlyMinions", BetterBlizzPlatesDB.nameplateShowFriendlyMinions)
+            SetCVar("nameplateShowFriendlyMinus", BetterBlizzPlatesDB.nameplateShowFriendlyMinus)
+            SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
+            SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
         end
 
         ToggleFriendlyPlates()
@@ -936,12 +1027,17 @@ function BBP.ResetToDefaultWidth(slider, isFriendly)
                 slider:SetValue(110)
             end
         else
-            if BBP.isLargeNameplatesEnabled() then
-                C_NamePlate.SetNamePlateEnemySize(154, heightValue)
-                slider:SetValue(154)
+            if slider ~= nameplateSelfWidth then
+                if BBP.isLargeNameplatesEnabled() then
+                    C_NamePlate.SetNamePlateEnemySize(154, heightValue)
+                    slider:SetValue(154)
+                else
+                    C_NamePlate.SetNamePlateEnemySize(110, heightValue)
+                    slider:SetValue(110)
+                end
             else
-                C_NamePlate.SetNamePlateEnemySize(110, heightValue)
-                slider:SetValue(110)
+                C_NamePlate.SetNamePlateFriendlySize(154, BetterBlizzPlatesDB.nameplateSelfHeight)
+                slider:SetValue(154)
             end
         end
     end
@@ -1072,6 +1168,22 @@ function BBP.FadeOutNPCs(frame)
 
     local npcID = select(6, strsplit("-", unitGUID))
     local npcName = UnitName(frame.displayedUnit)
+    local isTarget = UnitIsUnit(frame.displayedUnit, "target")
+    local fadeOutNPCsAlpha = BetterBlizzPlatesDB.fadeOutNPCsAlpha
+    local fadeAllButTarget = BetterBlizzPlatesDB.fadeAllButTarget
+
+    if fadeAllButTarget then
+        if UnitExists("target") then
+            if not isTarget then
+                frame:SetAlpha(fadeOutNPCsAlpha)
+            else
+                frame:SetAlpha(1)
+            end
+        else
+            frame:SetAlpha(1)
+        end
+        return
+    end
 
     -- Convert npcName to lowercase for case insensitive comparison
     local lowerCaseNpcName = strlower(npcName)
@@ -1090,10 +1202,9 @@ function BBP.FadeOutNPCs(frame)
     end
 
     -- Check if the unit is the current target
-    if UnitIsUnit(frame.displayedUnit, "target") then
+    if isTarget then
         frame:SetAlpha(1)
     elseif inList then
-        local fadeOutNPCsAlpha = BetterBlizzPlatesDB.fadeOutNPCsAlpha
         frame:SetAlpha(fadeOutNPCsAlpha)
     else
         frame:SetAlpha(1)
@@ -1146,8 +1257,10 @@ function BBP.HideNPCs(frame)
         -- Show the frame only if the NPC is in the whitelist or is the current target
         if UnitIsUnit(frame.displayedUnit, "target") or inWhitelist then
             frame:Show()
+            frame.hideCastInfo = false
         else
             frame:Hide()
+            frame.hideCastInfo = true
         end
     else
         -- Check if the NPC is in the blacklist by ID or name (case-insensitive)
@@ -1328,16 +1441,16 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
 
     if totemIndicator then
         local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
-        if BBP.npcList[npcID] and BBP.npcList[npcID].color then
+        if BetterBlizzPlatesDB.totemIndicatorNpcList[npcID] and BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color then
             local isFriend = UnitIsFriend("player", frame.unit)
             local showEnemyOnly = BetterBlizzPlatesDB.totemIndicatorEnemyOnly
             if not isFriend then
-                frame.healthBar:SetStatusBarColor(unpack(BBP.npcList[npcID].color))
-                frame.name:SetVertexColor(unpack(BBP.npcList[npcID].color))
+                frame.healthBar:SetStatusBarColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
+                frame.name:SetVertexColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
             else
                 if not showEnemyOnly then
-                    frame.healthBar:SetStatusBarColor(unpack(BBP.npcList[npcID].color))
-                    frame.name:SetVertexColor(unpack(BBP.npcList[npcID].color))
+                    frame.healthBar:SetStatusBarColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
+                    frame.name:SetVertexColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
                 end
             end
         end
@@ -2049,16 +2162,16 @@ function BBP.ConsolidatedUpdateName(frame)
     -- Ensure totem nameplate color is correct
     if totemIndicator then
         local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
-        if BBP.npcList[npcID] and BBP.npcList[npcID].color then
+        if BetterBlizzPlatesDB.totemIndicatorNpcList[npcID] and BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color then
             local isFriend = UnitIsFriend("player", frame.unit)
             local showEnemyOnly = BetterBlizzPlatesDB.totemIndicatorEnemyOnly
             if not isFriend then
-                frame.healthBar:SetStatusBarColor(unpack(BBP.npcList[npcID].color))
-                frame.name:SetVertexColor(unpack(BBP.npcList[npcID].color))
+                frame.healthBar:SetStatusBarColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
+                frame.name:SetVertexColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
             else
                 if not showEnemyOnly then
-                    frame.healthBar:SetStatusBarColor(unpack(BBP.npcList[npcID].color))
-                    frame.name:SetVertexColor(unpack(BBP.npcList[npcID].color))
+                    frame.healthBar:SetStatusBarColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
+                    frame.name:SetVertexColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
                 end
             end
         end
@@ -2098,8 +2211,10 @@ local function SetNameplateBehavior()
     else
         if isInPvEContent then
             SetCVar('nameplateShowOnlyNames', 1)
+            BBP.ApplyNameplateWidth()
         else
             SetCVar('nameplateShowOnlyNames', 0)
+            BBP.ApplyNameplateWidth()
         end
     end
 end
@@ -2165,16 +2280,16 @@ Frame:SetScript("OnEvent", function(...)
 
 
     BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, BetterBlizzPlatesDB.defaultLargeFontSize)
-    BBP.SetFontBasedOnOption(SystemFont_NamePlate, BetterBlizzPlatesDB.defaultFontSize) 
+    BBP.SetFontBasedOnOption(SystemFont_NamePlate, BetterBlizzPlatesDB.defaultFontSize)
     BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, BetterBlizzPlatesDB.defaultLargeFontSize)
-    BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, BetterBlizzPlatesDB.defaultFontSize)    
+    BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, BetterBlizzPlatesDB.defaultFontSize)
 
     BBP.ApplyNameplateWidth()
 
     C_Timer.After(1, function()
         BBP.ApplySettingsToAllNameplates()
 
-        if BetterBlizzPlatesDB.executeIndicatorScale < 0 then --had a slider with borked values
+        if BetterBlizzPlatesDB.executeIndicatorScale <= 0 then --had a slider with borked values
             BetterBlizzPlatesDB.executeIndicatorScale = 1     --this will fix it for every user who made the error while bug was live
         end
     end)
@@ -2248,7 +2363,11 @@ First:SetScript("OnEvent", function(_, event, addonName)
             BetterBlizzPlatesDB.wasOnLoadingScreen = true
 
             InitializeSavedVariables()
+            -- Fetch Blizzard default values
+            BetterBlizzPlatesDB.defaultLargeNamePlateFont, BetterBlizzPlatesDB.defaultLargeFontSize, BetterBlizzPlatesDB.defaultLargeNamePlateFontFlags = SystemFont_LargeNamePlate:GetFont()
+            BetterBlizzPlatesDB.defaultNamePlateFont, BetterBlizzPlatesDB.defaultFontSize, BetterBlizzPlatesDB.defaultNamePlateFontFlags = SystemFont_NamePlate:GetFont()
             FetchAndSaveValuesOnFirstLogin()
+
             TurnOnEnabledFeaturesOnLogin()
             BBP.InitializeOptions()
         end

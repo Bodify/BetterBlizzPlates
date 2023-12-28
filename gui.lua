@@ -9,6 +9,7 @@ local targetIndicatorAnchorPoints = {"TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "RIGH
 local pixelsBetweenBoxes = 5
 local pixelsBetweenBoxedWSlider = -4
 local pixelsOnFirstBox = -1
+local npcEditFrame = nil
 
 local tooltips = {
     ["5: Replace name with spec + ID on same row"] = "Shows as for example \"Frost 2\"",
@@ -692,6 +693,13 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         heightValue = BBP.isLargeNameplatesEnabled() and 64.125 or 40
                         C_NamePlate.SetNamePlateEnemySize(value, heightValue)
                     end
+                elseif element == "nameplateSelfWidth" then
+                    if not BBP.checkCombatAndWarn() then
+                        BetterBlizzPlatesDB.nameplateSelfWidth = value
+                        local heightValue
+                        heightValue = 45 --BBP.isLargeNameplatesEnabled() and 64.125 or 40
+                        C_NamePlate.SetNamePlateSelfSize(value, heightValue)
+                    end
                 -- Cast bar emphasis height
                 elseif element == "castBarEmphasisHeightValue" then
                     BetterBlizzPlatesDB.castBarEmphasisHeightValue = value
@@ -732,6 +740,11 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "nameplateAuraScale" then
                     BetterBlizzPlatesDB.nameplateAuraScale = value
                     BBP.RefreshBuffFrame()
+                elseif element == "defaultNpAuraCdSize" then
+                    BetterBlizzPlatesDB.defaultNpAuraCdSize = value
+                    BBP.RefreshBuffFrame()
+                elseif element == "totemIndicatorDefaultCooldownTextSize" then
+                    BetterBlizzPlatesDB.totemIndicatorDefaultCooldownTextSize = value
                 elseif element == "left" then
                     BetterBlizzPlatesDB.left = value
                 elseif element == "right" then
@@ -765,7 +778,8 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     if not BBP.checkCombatAndWarn() then
                         SetCVar("NamePlateVerticalScale", value)
                         BetterBlizzPlatesDB.NamePlateVerticalScale = value
-                        if BetterBlizzPlatesDB.NamePlateVerticalScale >= 2 then
+                        local verticalScale = tonumber(BetterBlizzPlatesDB.NamePlateVerticalScale)
+                        if verticalScale and verticalScale >= 2 then
                             SetCVar("NamePlateHorizontalScale", 1.4)
                         else
                             SetCVar("NamePlateHorizontalScale", 1)
@@ -975,7 +989,7 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
     return dropdown
 end
 
-local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
+local function CreateCheckbox(option, label, parent, cvar, extraFunc)
     local checkBox = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
     checkBox.Text:SetText(label)
 
@@ -985,6 +999,17 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
         end
 
         BetterBlizzPlatesDB[option] = value
+
+        if cvar then
+            if value == "0" then
+                value = false
+            elseif value == "1" then
+                value = true
+            end
+            if BetterBlizzPlatesDB[option] ~= nil and not BetterBlizzPlatesDB.wasOnLoadingScreen then
+                SetCVar(option, BetterBlizzPlatesDB[option])
+            end
+        end
         checkBox:SetChecked(value)
 
         local grandparent = parent:GetParent()
@@ -1007,7 +1032,20 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
         --print("Checkbox option '" .. option .. "' changed to:", value)
     end
 
+    local function PeriodicCheck()
+        if BetterBlizzPlatesDB[option] ~= nil then
+            UpdateOption(BetterBlizzPlatesDB[option])
+        else
+            -- Handle the nil case if necessary, or set a default value
+            C_Timer.After(1, PeriodicCheck) -- Recursively call this function every second
+        end
+    end
+    
     UpdateOption(BetterBlizzPlatesDB[option])
+    
+    if cvar then
+        PeriodicCheck()
+    end
 
     checkBox:HookScript("OnClick", function(_, _, _)
         UpdateOption(checkBox:GetChecked())
@@ -1184,7 +1222,8 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                     entryColors.text.r, entryColors.text.g, entryColors.text.b = r, g, b
                     SetTextColor(r, g, b)  -- Update text color if canceled
                 end
-
+                ColorPickerFrame:ClearAllPoints()
+                ColorPickerFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
                 ColorPickerFrame:Show()
             end
 
@@ -1383,6 +1422,624 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
     end)
 end
 
+local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
+    local scrollFrame = CreateFrame("ScrollFrame", nil, subPanel, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetSize(width or 322, height or 390)
+    scrollFrame:SetPoint("TOPLEFT", 10, -10)
+
+    local contentFrame = CreateFrame("Frame", nil, scrollFrame)
+    contentFrame:SetSize(width or 322, height or 390)
+    scrollFrame:SetScrollChild(contentFrame)
+
+    local textLines = {}
+    local selectedNpcId = nil
+    local selectedLineIndex = nil
+
+    StaticPopupDialogs["BBP_DELETE_NPC_CONFIRM"] = {
+        text = "Are you sure you want to delete this entry?\nHold shift to delete without this prompt",
+        button1 = "Yes",
+        button2 = "No",
+        OnAccept = function()
+            deleteEntry(selectedLineIndex)  -- Delete the entry when "Yes" is clicked
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+    }
+
+    local function updateBackgroundColors()
+        for i, button in ipairs(textLines) do
+            local bg = button.bgImg
+            if i % 2 == 0 then
+                bg:SetColorTexture(0.3, 0.3, 0.3, 0.1)
+            else
+                bg:SetColorTexture(0.3, 0.3, 0.3, 0.3)
+            end
+        end
+    end
+
+    local function deleteEntry(index)
+        if not index or not textLines[index] then return end
+
+        local npcId = textLines[index].npcId
+        if not npcId or not npcList[npcId] then return end
+
+        npcList[npcId] = nil
+        textLines[index]:Hide()
+        table.remove(textLines, index)
+
+        for i = index, #textLines do
+            textLines[i]:SetPoint("TOPLEFT", 10, -(i - 1) * 20)
+            textLines[i].deleteButton:SetScript("OnClick", function()
+                if IsShiftKeyDown() then
+                    deleteEntry(i)
+                else
+                    selectedLineIndex = i
+                    StaticPopup_Show("BBP_DELETE_NPC_CONFIRM")
+                end
+            end)
+        end
+
+        updateBackgroundColors()
+        refreshFunc()
+    end
+
+    local function updateImportantFlag(npcId, importantFlag)
+        if not npcId then return end
+
+        local npcData = npcList[npcId]
+        if npcData then
+            npcData.important = importantFlag
+        end
+
+        refreshFunc()
+    end
+
+    local function updateHideIconFlag(npcId, hideIconFlag)
+        if not npcId then return end
+
+        local npcData = npcList[npcId]
+        if npcData then
+            npcData.hideIcon = hideIconFlag
+        end
+
+        refreshFunc()
+    end
+
+    local function updateEntryColor(npcId, color)
+        if not npcId then return end
+
+        local npcData = npcList[npcId]
+        if npcData then
+            npcData.color = color
+        end
+
+        refreshFunc()
+    end
+
+    local function createNpcLineButton(npcId, npcData, index)
+        local button = CreateFrame("Frame", nil, contentFrame)
+        button:SetSize((width and width - 12) or 310, 20)
+        button:SetPoint("TOPLEFT", 10, -(index - 1) * 20)
+
+        local bg = button:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints()
+        button.bgImg = bg
+
+        local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        text:SetPoint("LEFT", button, "LEFT", 5, 0)
+        text:SetText((npcData.name .. " ("..npcId .. ")") or "")
+
+        -- Delete button
+        local deleteButton = CreateFrame("Button", nil, button, "UIPanelButtonTemplate")
+        deleteButton:SetSize(20, 20)
+        deleteButton:SetPoint("RIGHT", button, "RIGHT", 4, 0)
+        deleteButton:SetText("X")
+
+        deleteButton:SetScript("OnClick", function()
+            if IsShiftKeyDown() then
+                deleteEntry(index)
+            else
+                selectedLineIndex = index
+                StaticPopup_Show("BBP_DELETE_NPC_CONFIRM")
+            end
+        end)
+        button.deleteButton = deleteButton
+
+        -- Set text color based on NPC color attribute
+        local color = npcData.color or {1, 1, 1}
+        text:SetTextColor(color[1], color[2], color[3])
+
+        -- Function to create a label and an edit box for a given property
+        local function CreatePropertyField(frame, labelText, anchorFrame, offsetX, offsetY, editBoxWidth, editBoxHeight)
+            local label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            label:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", offsetX, offsetY)
+            label:SetText(labelText)
+
+            local editBox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
+            editBox:SetSize(editBoxWidth, editBoxHeight)
+            editBox:SetPoint("LEFT", label, "RIGHT", 5, 0)
+            editBox:SetAutoFocus(false)
+
+            return label, editBox
+        end
+
+
+        local function CreateEditFrame()
+            npcEditFrame = CreateFrame("Frame", "NPC_EditFrame", UIParent, "BasicFrameTemplateWithInset")
+            npcEditFrame:SetSize(350, 250)
+            npcEditFrame:SetPoint("CENTER")
+            npcEditFrame:SetFrameStrata("HIGH") -- Set the frame strata
+
+            -- Make the frame movable
+            npcEditFrame:SetMovable(true)
+            npcEditFrame:EnableMouse(true)
+            npcEditFrame:RegisterForDrag("LeftButton")
+            npcEditFrame:SetScript("OnDragStart", npcEditFrame.StartMoving)
+            npcEditFrame:SetScript("OnDragStop", function(self)
+                self:StopMovingOrSizing()
+                -- Optionally save the position here
+            end)
+
+            -- Creating a custom title for the frame
+            local title = npcEditFrame:CreateFontString(nil, "OVERLAY")
+            title:SetFontObject("GameFontHighlight")
+            title:SetPoint("TOPLEFT", npcEditFrame, "TOPLEFT", 7, -7)
+            title:SetText("Edit NPC Details")
+            npcEditFrame.title = title
+
+            -- Icon
+            local iconTexture = npcEditFrame:CreateTexture(nil, "ARTWORK")
+            iconTexture:SetSize(70, 70)
+            iconTexture:SetPoint("TOPLEFT", npcEditFrame, "TOPLEFT", 70, -100)
+            npcEditFrame.iconTexture = iconTexture
+
+            -- IconGlow
+            local iconGlowTexture = npcEditFrame:CreateTexture(nil, "OVERLAY")
+            iconGlowTexture:SetSize(70, 70)
+            iconGlowTexture:SetBlendMode("ADD")
+            iconGlowTexture:SetAtlas("clickcast-highlight-spellbook")
+            iconGlowTexture:SetDesaturated(true)
+            iconGlowTexture:SetPoint('TOPLEFT', iconTexture, 'TOPLEFT', -26, 26)
+            iconGlowTexture:SetPoint('BOTTOMRIGHT', iconTexture, 'BOTTOMRIGHT', 26, -26)
+            iconGlowTexture:SetVertexColor(unpack(color))
+            npcEditFrame.iconGlowTexture = iconGlowTexture
+
+            -- Edit Boxes and Labels for NPC properties
+            local nameLabel, nameEditBox = CreatePropertyField(npcEditFrame, "Name:", npcEditFrame.iconTexture, -35, 125, 220, 25)
+            npcEditFrame.nameEditBox = nameEditBox
+
+            local durationLabel, durationEditBox = CreatePropertyField(npcEditFrame, "Duration:", npcEditFrame.iconTexture, 95, 90, 50, 20)
+            npcEditFrame.durationEditBox = durationEditBox
+            CreateTooltip(durationEditBox, "Enter new duration (0 for no duration)")
+
+            local sizeLabel, sizeEditBox = CreatePropertyField(npcEditFrame, "Size:", durationLabel, 0, -15, 50, 20)
+            npcEditFrame.sizeEditBox = sizeEditBox
+            CreateTooltip(sizeEditBox, "Enter new size")
+
+            local iconLabel, iconEditBox = CreatePropertyField(npcEditFrame, "Icon:", sizeLabel, 0, -15, 50, 20)
+            npcEditFrame.iconEditBox = iconEditBox
+            CreateTooltip(iconEditBox, "Enter new icon ID\n\nUse Wowhead to find a new icon.\nSearch for a spell then click on its icon and an icon ID will show.")
+
+
+            local GlowText = npcEditFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            GlowText:SetPoint("TOPLEFT", iconLabel, "BOTTOMLEFT", 0, -15)
+            GlowText:SetText("Glow")
+
+            local importantCheckBox = CreateFrame("CheckButton", nil, npcEditFrame, "UICheckButtonTemplate")
+            importantCheckBox:SetSize(28, 28)
+            importantCheckBox:SetPoint("LEFT", GlowText, "RIGHT", 5, 0)
+            CreateTooltip(importantCheckBox, "Important Glow")
+            npcEditFrame.importantCheckBox = importantCheckBox
+            if npcData.important then
+                iconGlowTexture:Show()
+                importantCheckBox:SetChecked(true)
+            else
+                iconGlowTexture:Hide()
+            end
+
+            local colorPickerButton = CreateFrame("Button", nil, npcEditFrame, "UIPanelButtonTemplate")
+            colorPickerButton:SetSize(50, 20)
+            colorPickerButton:SetPoint("LEFT", npcEditFrame.importantCheckBox, "RIGHT", 0, 0)
+            colorPickerButton:SetText("Color")
+            colorPickerButton:SetScript("OnClick", function()
+                local currentColor = npcEditFrame.currentColor or {1, 1, 1}
+                ColorPickerFrame.func = function()
+                    local r, g, b = ColorPickerFrame:GetColorRGB()
+                    text:SetTextColor(r, g, b)
+                    npcEditFrame.iconGlowTexture:SetVertexColor(r, g, b)
+                    npcEditFrame.nameEditBox:SetTextColor(r, g, b)
+                    updateEntryColor(npcId, {r, g, b})
+                end
+                ColorPickerFrame:SetColorRGB(unpack(currentColor))
+                ColorPickerFrame:ClearAllPoints()
+                ColorPickerFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+                ColorPickerFrame:Show()
+            end)
+
+            local HideText = npcEditFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            HideText:SetPoint("TOPLEFT", GlowText, "BOTTOMLEFT", 0, -15)
+            HideText:SetText("Hide Icon")
+
+            -- Creation of the hideIconCheckbox
+            local hideIconCheckbox = CreateFrame("CheckButton", nil, npcEditFrame, "UICheckButtonTemplate")
+            hideIconCheckbox:SetSize(28, 28)
+            hideIconCheckbox:SetPoint("LEFT", HideText, "RIGHT", 5, 0)
+
+            CreateTooltip(hideIconCheckbox, "Hide Icon")
+
+            npcEditFrame.hideIconCheckbox = hideIconCheckbox
+            
+            if npcData.hideIcon then
+                npcEditFrame.hideIconCheckbox:SetChecked(true)
+                npcEditFrame.iconTexture:Hide()
+                npcEditFrame.iconGlowTexture:Hide()
+            end
+
+            -- Update Button
+            local updateButton = CreateFrame("Button", nil, npcEditFrame, "UIPanelButtonTemplate")
+            updateButton:SetSize(80, 22)
+            updateButton:SetPoint("BOTTOM", npcEditFrame, "BOTTOM", 0, 10)
+            updateButton:SetText("Update")
+            npcEditFrame.updateButton = updateButton
+        end
+
+        local function PopulateEditFrame(npcId)
+            local npcData = npcList[npcId]
+            if not npcData then return end
+            if not npcEditFrame then return end
+
+            npcEditFrame.iconTexture:SetTexture(npcData.icon)
+            npcEditFrame.sizeEditBox:SetText(npcData.size or "")
+            npcEditFrame.durationEditBox:SetText(npcData.duration or "")
+            npcEditFrame.nameEditBox:SetText(npcData.name or "")
+            local color = npcData.color
+            npcEditFrame.nameEditBox:SetTextColor(color[1], color[2], color[3])
+            npcEditFrame.iconGlowTexture:SetVertexColor(unpack(color))
+            npcEditFrame.iconEditBox:SetText(npcData.icon or "")
+            if npcData.important then
+                npcEditFrame.iconGlowTexture:Show()
+                npcEditFrame.importantCheckBox:SetChecked(true)
+            else
+                npcEditFrame.iconGlowTexture:Hide()
+                npcEditFrame.importantCheckBox:SetChecked(false)
+            end
+            if npcData.hideIcon then
+                npcEditFrame.iconTexture:Hide()
+                npcEditFrame.iconGlowTexture:Hide()
+                npcEditFrame.hideIconCheckbox:SetChecked(true)
+            else
+                npcEditFrame.iconTexture:Show()
+                if npcData.important then
+                    npcEditFrame.iconGlowTexture:Show()
+                end
+                npcEditFrame.hideIconCheckbox:SetChecked(false)
+            end
+            npcEditFrame.currentColor = npcData.color
+
+            local function updateNpcData()
+                local newSize = tonumber(npcEditFrame.sizeEditBox:GetText())
+                if newSize then
+                    npcList[npcId].size = newSize
+                end
+
+                local newDuration = tonumber(npcEditFrame.durationEditBox:GetText())
+                if newDuration then
+                    npcList[npcId].duration = (newDuration == 0) and nil or newDuration
+                end
+
+                local newIcon = tonumber(npcEditFrame.iconEditBox:GetText())
+                if newIcon then
+                    npcList[npcId].icon = newIcon
+                end
+
+                local newName = npcEditFrame.nameEditBox:GetText()
+                if newName then
+                    npcList[npcId].name = newName
+                end
+
+                npcEditFrame.iconTexture:SetTexture(npcData.icon)
+                npcEditFrame.iconGlowTexture:SetVertexColor(unpack(color))
+                npcEditFrame.currentColor = npcData.color
+                if npcData.important then
+                    npcEditFrame.iconGlowTexture:Show()
+                else
+                    npcEditFrame.iconGlowTexture:Hide()
+                end
+
+                if npcData.hideIcon then -- this only checks and then sets it, this needs to SET IT (so prob just remove the checkbox set checked, bodify)
+                    npcEditFrame.iconTexture:Hide()
+                    npcEditFrame.iconGlowTexture:Hide()
+                    --npcEditFrame.hideIconCheckbox:SetChecked(true)
+                else
+                    npcEditFrame.iconTexture:Show()
+                    if npcData.important then
+                        npcEditFrame.iconGlowTexture:Show()
+                    end
+                    --npcEditFrame.hideIconCheckbox:SetChecked(false)
+                end
+                -- Refresh the list
+                BBP.refreshNpcList()
+            end
+
+            npcEditFrame.sizeEditBox:SetScript("OnEnterPressed", function()
+                updateNpcData()
+                npcEditFrame.sizeEditBox:ClearFocus()
+            end)
+
+            npcEditFrame.durationEditBox:SetScript("OnEnterPressed", function()
+                updateNpcData()
+                npcEditFrame.durationEditBox:ClearFocus()
+            end)
+
+            npcEditFrame.nameEditBox:SetScript("OnEnterPressed", function()
+                updateNpcData()
+                npcEditFrame.nameEditBox:ClearFocus()
+            end)
+
+            npcEditFrame.iconEditBox:SetScript("OnEnterPressed", function()
+                updateNpcData()
+                npcEditFrame.iconEditBox:ClearFocus()
+            end)
+
+            npcEditFrame.hideIconCheckbox:SetScript("OnClick", function(self)
+                updateHideIconFlag(npcId, self:GetChecked())
+                local npcData = npcList[npcId]
+                if self:GetChecked() then
+                    npcData.hideIcon = true  -- Corrected line
+                    BBP.refreshNpcList()
+                    npcEditFrame.iconTexture:Hide()
+                    npcEditFrame.iconGlowTexture:Hide()
+                else
+                    npcData.hideIcon = false  -- Corrected line
+                    BBP.refreshNpcList()
+                    npcEditFrame.iconTexture:Show()
+                    if npcData.important then
+                        npcEditFrame.iconGlowTexture:Show()
+                    end
+                end
+            end)
+
+
+            npcEditFrame.importantCheckBox:SetScript("OnClick", function(self)
+                updateImportantFlag(npcId, self:GetChecked())
+                local npcData = npcList[npcId]
+                if self:GetChecked() then
+                    if not npcData.hideIcon then
+                        npcEditFrame.iconGlowTexture:Show()
+                    end
+                else
+                    npcEditFrame.iconGlowTexture:Hide()
+                end
+                BBP.refreshNpcList()
+            end)
+
+            -- Update Button Script
+            npcEditFrame.updateButton:SetScript("OnClick", function()
+                updateNpcData()
+            end)
+
+        end
+
+        local function ShowEditFrame(npcId)
+            if not npcEditFrame then
+                CreateEditFrame()
+            end
+
+            PopulateEditFrame(npcId)
+            if npcEditFrame then
+                npcEditFrame:Show()
+            end
+        end
+
+        -- Edit button
+        local editButton = CreateFrame("Button", nil, button, "UIPanelButtonTemplate")
+        editButton:SetSize(50, 20)
+        editButton:SetPoint("RIGHT", button, "RIGHT", -80, 0)
+        editButton:SetText("Edit")
+        editButton:SetScript("OnClick", function()
+            ShowEditFrame(npcId)
+        end)
+        button.editButton = editButton
+
+        -- Size button
+        local sizeButton = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        sizeButton:SetPoint("RIGHT", button, "RIGHT", -140, 0)
+        local sizeText = npcData.size and "Size: " .. npcData.size or "Set Size"
+        sizeButton:SetText(sizeText)
+
+        -- Creation of the hideIconCheckbox
+        local hideIconCheckboxButton = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
+        hideIconCheckboxButton:SetSize(24, 24)
+        hideIconCheckboxButton:SetPoint("RIGHT", button, "RIGHT", -20, 0)
+        hideIconCheckboxButton:SetScript("OnClick", function(self)
+            updateHideIconFlag(npcId, self:GetChecked())
+        end)
+        CreateTooltip(hideIconCheckboxButton, "Hide Icon")
+
+        if npcData.hideIcon then
+            hideIconCheckboxButton:SetChecked(true)
+        end
+
+        button.hideIconCheckboxButton = hideIconCheckboxButton
+
+        local importantCheckBox = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
+        importantCheckBox:SetSize(24, 24)
+        importantCheckBox:SetPoint("RIGHT", button, "RIGHT", -45, 0)
+        importantCheckBox:SetScript("OnClick", function(self)
+            updateImportantFlag(npcId, self:GetChecked())
+        end)
+        CreateTooltip(importantCheckBox, "Important Glow")
+
+        if npcData.important then
+            importantCheckBox:SetChecked(true)
+        end
+
+        button.importantCheckBox = importantCheckBox
+        return button
+    end
+
+    StaticPopupDialogs["BBP_SET_SIZE"] = {
+        text = "Enter new size (minimum 10):",
+        button1 = "Set",
+        button2 = "Cancel",
+        hasEditBox = true,
+        maxLetters = 3,
+        OnAccept = function(self)
+            local newSize = self.editBox:GetText()
+            self.data(newSize)
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+    }
+
+    -- Static popup for setting duration
+    StaticPopupDialogs["BBP_SET_DURATION"] = {
+        text = "Enter new duration (0 for no duration):",
+        button1 = "Set",
+        button2 = "Cancel",
+        hasEditBox = true,
+        maxLetters = 6,
+        OnAccept = function(self)
+            local input = self.editBox:GetText()
+            self.data(input)
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+    }
+
+    StaticPopupDialogs["BBP_DUPLICATE_NPC_CONFIRM_TOTEM"] = {
+        text = "This name or npcID is already in the list. Do you want to remove it from the list?",
+        button1 = "Yes",
+        button2 = "No",
+        OnAccept = function()
+            deleteEntry(selectedLineIndex)  -- Delete the entry when "Yes" is clicked
+            BBP.refreshNpcList()
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+    }
+
+    local function getSortedNpcList()
+        local sortableNpcList = {}
+        for npcId, npcData in pairs(npcList) do
+            table.insert(sortableNpcList, {npcId = npcId, npcData = npcData})
+        end
+
+        table.sort(sortableNpcList, function(a, b)
+            return a.npcData.name:lower() < b.npcData.name:lower()
+        end)
+
+        return sortableNpcList
+    end
+
+    local sortedNpcList = getSortedNpcList()
+    for _, entry in ipairs(sortedNpcList) do
+        local button = createNpcLineButton(entry.npcId, entry.npcData, #textLines + 1)
+        button.npcId = entry.npcId
+        table.insert(textLines, button)
+    end
+
+    updateBackgroundColors()
+    contentFrame:SetHeight(#textLines * 20)
+
+    -- Edit Box for input
+    local editBox = CreateFrame("EditBox", nil, subPanel, "InputBoxTemplate")
+    editBox:SetSize(260, 19)
+    editBox:SetPoint("TOP", scrollFrame, "BOTTOM", -15, -5)
+    editBox:SetAutoFocus(false)
+    CreateTooltip(editBox, "Enter NPC ID first, name second and Spell ID (for icon) third.\n\nSeparate with commas. Name and Spell ID are optional.\n\nExample: 192123, Hermit Crab, 52127", "ANCHOR_TOP")
+
+    function BBP.refreshNpcList()
+        -- Clear existing buttons
+        for _, button in ipairs(textLines) do
+            button:Hide()
+        end
+        wipe(textLines)
+
+        local sortedNpcList = getSortedNpcList()
+
+        -- Repopulate list with sorted entries
+        for _, entry in ipairs(sortedNpcList) do
+            local button = createNpcLineButton(entry.npcId, entry.npcData, #textLines + 1)
+            button.npcId = entry.npcId
+            table.insert(textLines, button)
+        end
+
+        updateBackgroundColors()
+        contentFrame:SetHeight(#textLines * 20)
+    end
+
+    local function addOrUpdateEntry(inputText)
+        editBox:SetText("")
+        if not inputText or inputText == "" then return end
+
+        -- Splitting the input text into arguments
+        local args = {}
+        for word in string.gmatch(inputText, "[^,]+") do
+            table.insert(args, word:match("^%s*(.-)%s*$")) -- Trim leading and trailing spaces
+        end
+
+        local npcId = tonumber(args[1])
+        local name = args[2] and args[2]:gsub("^%s*(.-)%s*$", "%1") or "A no name entry"
+        local spellId = tonumber(args[3])
+
+        if not npcId then
+            print("Invalid NPC ID.")
+            return
+        end
+
+        -- Check for duplicates
+        for index, line in ipairs(textLines) do
+            if line.npcId == npcId then
+                selectedLineIndex = index  -- Set the index of the duplicate entry
+                StaticPopup_Show("BBP_DUPLICATE_NPC_CONFIRM_TOTEM")
+                return
+            end
+        end
+
+        -- Create or update the npc entry
+        local npcData = {
+            id = npcId,
+            name = name,  -- Name from input, or default if not provided
+            icon = spellId and GetSpellTexture(spellId) or nil,  -- Get icon if spellId is provided
+            hideIcon = false,
+            size = 30,  -- Default size
+            duration = nil,
+            color = {1, 1, 1},
+            important = true
+        }
+        npcList[npcId] = npcData
+
+        -- Create a new line button for the npc
+        local newButton = createNpcLineButton(npcId, npcData, #textLines + 1)
+        newButton.npcId = npcId  -- Assign npcId to the button
+        table.insert(textLines, newButton)  -- Insert the button, not the index
+
+        updateBackgroundColors()
+        contentFrame:SetHeight(#textLines * 20)
+        BBP.refreshNpcList()
+        BBP.RefreshAllNameplates()
+    end
+
+    editBox:SetScript("OnEnterPressed", function(self)
+        addOrUpdateEntry(self:GetText())
+        editBox:ClearFocus()
+    end)
+
+    local addButton = CreateFrame("Button", nil, subPanel, "UIPanelButtonTemplate")
+    addButton:SetSize(60, 24)
+    addButton:SetText("Add")
+    addButton:SetPoint("LEFT", editBox, "RIGHT", 10, 0)
+    addButton:SetScript("OnClick", function()
+        addOrUpdateEntry(editBox:GetText())
+    end)
+end
 ------------------------------------------------------------
 -- GUI Panels
 ------------------------------------------------------------
@@ -2267,6 +2924,7 @@ local function guiPositionAndScale()
 
     local totemIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.01, "totemIndicatorScale")
     totemIndicatorScale:SetPoint("TOP", anchorSubTotem, "BOTTOM", 0, -15)
+    CreateTooltip(totemIndicatorScale, "This changes the scale of ALL icons.\n\nYou can adjust individual sizes in the \"Totem Indicator List\" tab.", "ANCHOR_LEFT")
 
     local totemIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "totemIndicatorXPos", "X")
     totemIndicatorXPos:SetPoint("TOP", totemIndicatorScale, "BOTTOM", 0, -15)
@@ -2299,13 +2957,13 @@ local function guiPositionAndScale()
     totemIndicatorHideHealthBar:SetPoint("LEFT", totemIndicatorHideNameAndShiftIconDown.text, "RIGHT", 0, 0)
     CreateTooltip(totemIndicatorHideHealthBar, "Hide the healthbar on totems.\nWill still show if targeted.")
 
-    local totemIndicatorGlowOff = CreateCheckbox("totemIndicatorGlowOff", "No glow", contentFrame)
-    totemIndicatorGlowOff:SetPoint("TOPLEFT", totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(totemIndicatorGlowOff, "Turn off the glow around the icons on important nameplates.")
+    local showTotemIndicatorCooldownSwipe = CreateCheckbox("showTotemIndicatorCooldownSwipe", "Cooldown swipe", contentFrame)
+    showTotemIndicatorCooldownSwipe:SetPoint("TOPLEFT", totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(showTotemIndicatorCooldownSwipe, "Show CD Swipe")
 
-    local totemIndicatorScaleUpImportant = CreateCheckbox("totemIndicatorScaleUpImportant", "Scale up important", contentFrame)
-    totemIndicatorScaleUpImportant:SetPoint("TOPLEFT", totemIndicatorGlowOff, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(totemIndicatorScaleUpImportant, "Inactive, will be removed in favor\nof new system soonTM")
+    local totemIndicatorDefaultCooldownTextSize = CreateSlider(contentFrame, "Default CD Size", 0.3, 2, 0.01, "totemIndicatorDefaultCooldownTextSize")
+    totemIndicatorDefaultCooldownTextSize:SetPoint("TOP", showTotemIndicatorCooldownSwipe, "BOTTOM", 58, -29)
+    CreateTooltip(totemIndicatorDefaultCooldownTextSize, "Size of the default Blizz CD text.\n\nWill not work with OmniCC.")
 
     ----------------------
     -- Target indicator
@@ -3204,6 +3862,10 @@ local function guiFadeNPC()
     local fadeOutNPC = CreateCheckbox("fadeOutNPC", "Enable Fade NPC", guiFadeNpc, nil, BBP.FadeOutNPCs)
     fadeOutNPC:SetPoint("TOPLEFT", noteFade, "BOTTOMLEFT", 20, -15)
 
+    local fadeAllButTarget = CreateCheckbox("fadeAllButTarget", "Fade All Except Target", fadeOutNPC, nil, BBP.FadeOutNPCs)
+    fadeAllButTarget:SetPoint("TOPLEFT", fadeOutNPC, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(fadeAllButTarget, "Fade out all other nameplates when you have a target.\nDisregards the fade list")
+
     local function TogglePanel()
         if BBP.variablesLoaded then
             if BetterBlizzPlatesDB.fadeOutNPC then
@@ -3218,6 +3880,7 @@ local function guiFadeNPC()
         end
     end
     fadeOutNPC:HookScript("OnClick", function (self)
+        CheckAndToggleCheckboxes(fadeOutNPC)
         TogglePanel()
     end)
     TogglePanel()
@@ -3770,6 +4433,10 @@ local function guiNameplateAuras()
     nameplateAuraSquare:SetPoint("LEFT", nameplateAurasEnemyCenteredAnchor.text, "RIGHT", 5, 0)
     CreateTooltip(nameplateAuraSquare, "Square aura icons.")
 
+    local showDefaultCooldownNumbersOnNpAuras = CreateCheckbox("showDefaultCooldownNumbersOnNpAuras", "Default CD", enableNameplateAuraCustomisation)
+    showDefaultCooldownNumbersOnNpAuras:SetPoint("TOPLEFT", nameplateAuraSquare, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(showDefaultCooldownNumbersOnNpAuras, "Show Blizz default cooldown counter.\n\nIf you use OmniCC this setting will not work.")
+
     local nameplateAuraTaller = CreateCheckbox("nameplateAuraTaller", "Taller Auras", enableNameplateAuraCustomisation)
     nameplateAuraTaller:SetPoint("LEFT", nameplateAuraSquare.text, "RIGHT", 5, 0)
     CreateTooltip(nameplateAuraTaller, "Bit taller aura icons and more of the texture visible.")
@@ -3808,6 +4475,19 @@ local function guiNameplateAuras()
 
     local nameplateAuraHeightGap = CreateSlider(enableNameplateAuraCustomisation, "Vertical gap between auras", 0, 18, 0.5, "nameplateAuraHeightGap")
     nameplateAuraHeightGap:SetPoint("TOP", nameplateAuraWidthGap,  "BOTTOM", 0, -15)
+
+    local defaultNpAuraCdSize = CreateSlider(showDefaultCooldownNumbersOnNpAuras, "Default CD Text Size", 0.1, 2, 0.01, "defaultNpAuraCdSize")
+    defaultNpAuraCdSize:SetPoint("TOP", nameplateAuraHeightGap,  "BOTTOM", 0, -15)
+    CreateTooltip(defaultNpAuraCdSize, "The text size of the default Blizz CD counter.\n\nIf you use OmniCC this setting will not work.")
+    showDefaultCooldownNumbersOnNpAuras:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            defaultNpAuraCdSize:Enable()
+            defaultNpAuraCdSize:SetAlpha(1)
+        else
+            defaultNpAuraCdSize:Disable()
+            defaultNpAuraCdSize:SetAlpha(0.5)
+        end
+    end)
 
     local imintoodeep = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     imintoodeep:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -50, -220)
@@ -3866,8 +4546,12 @@ local function guiMoreBlizzSettings()
     stackingNameplatesText:SetPoint("TOPLEFT", guiMoreBlizzSettings, "TOPLEFT", 13, -35)
     stackingNameplatesText:SetText("Stacking nameplate overlap amount")
 
+    local nameplateMotion = CreateCheckbox("nameplateMotion", "Stacking nameplates", guiMoreBlizzSettings, true)
+    nameplateMotion:SetPoint("TOP", stackingNameplatesText, "BOTTOM", -65, -5)
+    CreateTooltip(nameplateMotion, "Turn on stacking nameplates.\n\nI recommend using around 0.30 Vertical Overlap")
+
     local nameplateOverlapH = CreateSlider(guiMoreBlizzSettings, "Horizontal Overlap", 0.05, 1, 0.01, "nameplateOverlapH")
-    nameplateOverlapH:SetPoint("TOP", stackingNameplatesText, "BOTTOM", -15, -20)
+    nameplateOverlapH:SetPoint("TOP", stackingNameplatesText, "BOTTOM", -15, -45)
     CreateTooltip(nameplateOverlapH, "Space between nameplates horizontally")
     CreateResetButton(nameplateOverlapH, "nameplateOverlapH", guiMoreBlizzSettings)
 
@@ -3890,6 +4574,18 @@ local function guiMoreBlizzSettings()
     nameplateResourceScale:SetPoint("TOP", nameplateResourceText, "BOTTOM", 0, -20)
     CreateTooltip(nameplateResourceScale, "Resource Scale (Combo points, warlock shards etc.)")
     CreateResetButton(nameplateResourceScale, "nameplateResourceScale", guiMoreBlizzSettings)
+
+
+    local nameplateSelfWidth = CreateSlider(guiMoreBlizzSettings, "Personal Nameplate Width", 50, 200, 1, "nameplateSelfWidth")
+    nameplateSelfWidth:SetPoint("TOP", nameplateResourceText, "BOTTOM", 0, -60)
+
+    local nameplateSelfWidthResetButton = CreateFrame("Button", nil, guiMoreBlizzSettings, "UIPanelButtonTemplate")
+    nameplateSelfWidthResetButton:SetText("Default")
+    nameplateSelfWidthResetButton:SetWidth(60)
+    nameplateSelfWidthResetButton:SetPoint("LEFT", nameplateSelfWidth, "RIGHT", 10, 0)
+    nameplateSelfWidthResetButton:SetScript("OnClick", function()
+        BBP.ResetToDefaultWidth(nameplateSelfWidth, false)
+    end)
 
     local nameplateAlphaText = guiMoreBlizzSettings:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     nameplateAlphaText:SetPoint("TOPLEFT", guiMoreBlizzSettings, "TOPLEFT", 300, -35)
@@ -3920,15 +4616,80 @@ local function guiMoreBlizzSettings()
     CreateTooltip(nameplateOccludedAlphaMult, "The alpha value on nameplates that\nare behind cover like pillars etc.")
     CreateResetButton(nameplateOccludedAlphaMult, "nameplateOccludedAlphaMult", guiMoreBlizzSettings)
 
+    local nameplateCVarText = guiMoreBlizzSettings:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    nameplateCVarText:SetPoint("TOPLEFT", guiMoreBlizzSettings, "TOPLEFT", 350, -270)
+    nameplateCVarText:SetText("Nameplate Visibility CVars")
 
+    local setCVarAcrossAllCharacters = CreateCheckbox("setCVarAcrossAllCharacters", "Force these CVars across all characters", guiMoreBlizzSettings)
+    setCVarAcrossAllCharacters:SetPoint("TOP", nameplateCVarText, "BOTTOM", -100, 0)
+    CreateTooltip(setCVarAcrossAllCharacters, "(By default you have to set them on each character separately.)")
 
+    local nameplateShowEnemyGuardians = CreateCheckbox("nameplateShowEnemyGuardians", "Show Enemy Guardians", guiMoreBlizzSettings, true)
+    nameplateShowEnemyGuardians:SetPoint("TOP", nameplateCVarText, "BOTTOM", -135, -20)
+    CreateTooltip(nameplateShowEnemyGuardians, "Show Enemy Guardian Nameplates.\n\n\"Guardians\" are usually \"semi controllable\"\nlarger summoned pets, like Earth Elemental/Infernal.")
 
+    local nameplateShowEnemyMinions = CreateCheckbox("nameplateShowEnemyMinions", "Show Enemy Minions", guiMoreBlizzSettings, true)
+    nameplateShowEnemyMinions:SetPoint("TOP", nameplateShowEnemyGuardians, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltip(nameplateShowEnemyMinions, "Show Enemy Minion Nameplates.\n\n\"Minions\" are usually uncontrollable\nsmaller summoned pets, like Psyfiend/Mindflayer.")
+
+    local nameplateShowEnemyMinus = CreateCheckbox("nameplateShowEnemyMinus", "Show Enemy Minus", guiMoreBlizzSettings, true)
+    nameplateShowEnemyMinus:SetPoint("TOP", nameplateShowEnemyMinions, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltip(nameplateShowEnemyMinus, "Show Enemy Minus Nameplates.\n\n\"Minus\" are usually uncontrollable very small\nsummoned pets with little hp, like Warlock Imps.")
+
+    local nameplateShowEnemyPets = CreateCheckbox("nameplateShowEnemyPets", "Show Enemy Pets", guiMoreBlizzSettings, true)
+    nameplateShowEnemyPets:SetPoint("TOP", nameplateShowEnemyMinus, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltip(nameplateShowEnemyPets, "Show Enemy Pets Nameplates.\n\n\"Pets\" are the main controllable pets,\nlike Hunter Pet, Warlock Pet etc.")
+
+    local nameplateShowEnemyTotems = CreateCheckbox("nameplateShowEnemyTotems", "Show Enemy Totems", guiMoreBlizzSettings, true)
+    nameplateShowEnemyTotems:SetPoint("TOP", nameplateShowEnemyPets, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltip(nameplateShowEnemyTotems, "Show Enemy Totem Nameplates.\n\n\"Totems\" are totems, like totems :)")
+
+    local nameplateShowFriendlyGuardians = CreateCheckbox("nameplateShowFriendlyGuardians", "Show Friendly Guardians", guiMoreBlizzSettings, true)
+    nameplateShowFriendlyGuardians:SetPoint("TOP", nameplateCVarText, "BOTTOM", 35, -20)
+    CreateTooltip(nameplateShowFriendlyGuardians, "Show Friendly Guardian Nameplates.\n\n\"Guardians\" are usually \"semi controllable\"\nlarger summoned pets, like Earth Elemental/Infernal.")
+
+    local nameplateShowFriendlyMinions = CreateCheckbox("nameplateShowFriendlyMinions", "Show Friendly Minions", guiMoreBlizzSettings, true)
+    nameplateShowFriendlyMinions:SetPoint("TOP", nameplateShowFriendlyGuardians, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltip(nameplateShowFriendlyMinions, "Show Friendly Minion Nameplates.\n\n\"Minions\" are usually uncontrollable\nsmaller summoned pets, like Psyfiend/Mindflayer.")
+
+    local nameplateShowFriendlyPets = CreateCheckbox("nameplateShowFriendlyPets", "Show Friendly Pets", guiMoreBlizzSettings, true)
+    nameplateShowFriendlyPets:SetPoint("TOP", nameplateShowFriendlyMinions, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltip(nameplateShowFriendlyPets, "Show Friendly Pets Nameplates.\n\n\"Pets\" are the main controllable pets,\nlike Hunter Pet, Warlock Pet etc.")
+
+    local nameplateShowFriendlyTotems = CreateCheckbox("nameplateShowFriendlyTotems", "Show Friendly Totems", guiMoreBlizzSettings, true)
+    nameplateShowFriendlyTotems:SetPoint("TOP", nameplateShowFriendlyPets, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltip(nameplateShowFriendlyTotems, "Show Friendly Totem Nameplates.\n\n\"Totems\" are totems, like totems :)")
 
     local moreBlizzSettingsText = guiMoreBlizzSettings:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     moreBlizzSettingsText:SetPoint("BOTTOM", guiMoreBlizzSettings, "BOTTOM", 0, 10)
     moreBlizzSettingsText:SetText("Work in progress, more stuff inc soon™\n \nSome settings don't make much sense anymore because\nthe addon grew a bit more than I thought it would.\nWill clean up eventually\n \nIf you have any suggestions feel free to\nleave a comment on CurseForge")
 end
 
+local function guiTotemList()
+    -----------------------
+    -- Hide NPC
+    -----------------------
+    local guiTotemList = CreateFrame("Frame")
+    guiTotemList.name = "Totem Indicator List"
+    guiTotemList.parent = BetterBlizzPlates.name
+    InterfaceOptions_AddCategory(guiTotemList)
+
+    local bgImg = guiTotemList:CreateTexture(nil, "BACKGROUND")
+    bgImg:SetAtlas("professions-recipe-background")
+    bgImg:SetPoint("CENTER", guiTotemList, "CENTER", -8, 4)
+    bgImg:SetSize(680, 610)
+    bgImg:SetAlpha(0.4)
+    bgImg:SetVertexColor(0,0,0)
+
+    local listFrame = CreateFrame("Frame", nil, guiTotemList)
+    listFrame:SetAllPoints(guiTotemList)
+
+    local totemListFrame = CreateFrame("Frame", nil, listFrame)
+    totemListFrame:SetSize(322, 390)
+    totemListFrame:SetPoint("TOPLEFT", 0, 0)
+
+    CreateNpcList(totemListFrame, BetterBlizzPlatesDB.totemIndicatorNpcList, BBP.RefreshAllNameplates, 630, 560)
+end
 ------------------------------------------------------------
 -- GUI Setup
 ------------------------------------------------------------
@@ -3948,5 +4709,6 @@ function BBP.InitializeOptions()
         guiAuraColor()
         guiNameplateAuras()
         guiMoreBlizzSettings()
+        guiTotemList()
     end
 end
