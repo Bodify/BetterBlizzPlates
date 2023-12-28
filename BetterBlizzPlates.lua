@@ -165,7 +165,7 @@ local defaultSettings = {
     totemIndicatorHideNameAndShiftIconDown = false,
     totemIndicatorTestMode = false,
     totemIndicatorEnemyOnly = true,
-    totemIndicatorDefaultCooldownTextSize = 1,
+    totemIndicatorDefaultCooldownTextSize = 0.85,
     showTotemIndicatorCooldownSwipe = true,
     totemIndicatorNpcList = {
         [59764] =   { name = "Healing Tide Totem", icon = GetSpellTexture(108280),              hideIcon = false, size = 30, duration = 10, color = {0, 1, 0.39}, important = true },

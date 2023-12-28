@@ -129,10 +129,16 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
         end
 
         -- Set cooldown text scale
-        local cdText = frame.customCooldown and frame.customCooldown:GetRegions()
-        if cdText then
-            cdText:SetScale(BetterBlizzPlatesDB.totemIndicatorDefaultCooldownTextSize)
-        end
+        --local displayCdText = BetterBlizzPlatesDB.totemIndicatorDisplayCdText
+        --if displayCdText then
+            if frame.customCooldown then
+                local cdText = frame.customCooldown:GetRegions()
+                if cdText then
+                    --frame.customCooldown:SetHideCountdownNumbers(false)
+                    cdText:SetScale(BetterBlizzPlatesDB.totemIndicatorDefaultCooldownTextSize)
+                end
+            end
+        --end
     else
         -- If hideIcon is true, ensure icon, cooldown, and glow are not displayed
         if frame.customIcon then frame.customIcon:Hide() end
