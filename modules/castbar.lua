@@ -451,7 +451,7 @@ function BBP.UpdateCastTimer(nameplate, unitID)
         name, _, _, startTime, endTime = UnitChannelInfo(unitID)
     end
 
-    if name and endTime and startTime and not nameplate.UnitFrame.hideCastInfo then
+    if name and endTime and startTime and nameplate.UnitFrame and not nameplate.UnitFrame.hideCastInfo then
         local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
 
         if enableCastbarCustomization then
