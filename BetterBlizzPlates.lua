@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.3.0"
+local addonUpdates = "1.3.1"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -52,12 +52,15 @@ local defaultSettings = {
     enemyNameScale = 1,
     nameplateEnemyWidth = nil,
     nameplateEnemyHeight = nil,
+    enemyHealthBarColorRGB = {1, 0, 0},
+    enemyNeutralHealthBarColorRGB = {1, 1, 0},
     -- Friendly
     friendlyNameplateClickthrough = false,
     friendlyClassColorName = false,
     friendlyNameScale = 1,
     friendlyNameplatesOnlyInArena = false,
     friendlyHealthBarColorRGB = {0, 1, 0},
+    guildNameScale = 1,
     -- Arena Indicator
     arenaIndicatorTestMode = false,
     arenaIDScale = 1,
@@ -579,10 +582,7 @@ local function SendUpdateMessage()
         C_Timer.After(7, function()
             --bbp news
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Many new settings and changes. Possible you might have to toggle large nameplates on/off if something has changed. For all news please type /bbp news")
-            if BetterBlizzPlatesDB.totemIndicatorGlowOff then
-                DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Removed totem indicator glow off setting in favor of individual glow settings. You will have to turn them off manually.")
-            end
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Enemy nameplate custom colors. Guild name setting. Misc settings category.")
         end)
     end
 end
@@ -597,6 +597,7 @@ local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #6: Added \"Personal Nameplate Width\" settings in \"More Blizz Settings\".")
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #7: Hide targetname + casttimer on hidden nameplates bugfix.")
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #8: PvE friendly hide healthbar clickthrough nameplates bugfix.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #9: Display Guild Name setting.")
 end
 
 local function CheckForUpdate()
@@ -1402,7 +1403,8 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
 
     local colorNpc = BetterBlizzPlatesDB.colorNPC
     local focusIndicator = BetterBlizzPlatesDB.focusTargetIndicator
-    local friendlyHealthColor = BetterBlizzPlatesDB.friendlyHealthBarColor
+    local friendlyHealthBarColor = BetterBlizzPlatesDB.friendlyHealthBarColor
+    local enemyHealthBarColor = BetterBlizzPlatesDB.enemyHealthBarColor
     local castEmphasisColor = BetterBlizzPlatesDB.castBarEmphasisHealthbarColor
     local totemIndicator = BetterBlizzPlatesDB.totemIndicator
     local colorPersonalNp = BetterBlizzPlatesDB.classColorPersonalNameplate
@@ -1423,11 +1425,25 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         BBP.FocusTargetIndicator(frame)
     end
 
-    if friendlyHealthColor then
-        local isFriend = UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit)
-        local color = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
-        if isFriend then
+    if friendlyHealthBarColor or enemyHealthBarColor then
+        local isFriend = UnitIsFriend("player", frame.unit)
+        local isOtherPlayer = UnitIsPlayer(frame.unit)
+        if isFriend and not isOtherPlayer then
+            local color = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
             frame.healthBar:SetStatusBarColor(unpack(color))
+        elseif not isFriend then
+            local npcOnly = BetterBlizzPlatesDB.enemyHealthBarColorNpcOnly
+            if UnitReaction("player", frame.unit) == 4 then
+                local color = BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 0, 0}
+                if not npcOnly or (npcOnly and not isOtherPlayer) then
+                    frame.healthBar:SetStatusBarColor(unpack(color))
+                end
+            else
+                local color = BetterBlizzPlatesDB.enemyHealthBarColorRGB or {1, 0, 0}
+                if not npcOnly or (npcOnly and not isOtherPlayer) then
+                    frame.healthBar:SetStatusBarColor(unpack(color))
+                end
+            end
         end
     end
 
@@ -1545,6 +1561,28 @@ function BBP.OnUnitUpdate(unitId, unitInfo, allUnitsInfo)
         local frame = nameplate.UnitFrame
         if BetterBlizzPlatesDB.classIndicator then
             BBP.ClassIndicator(frame, unitInfo.specId)
+        end
+        if BetterBlizzPlatesDB.showGuildNames then
+            if not frame.guildName then
+                frame.guildName = frame:CreateFontString(nil, "BACKGROUND")
+                local font, size, outline = frame.name:GetFont()
+                frame.guildName:SetFont(font, 14, outline)
+            end
+
+            local guildName, guildRankName, guildRankIndex = GetGuildInfo(unit)
+            if guildName then
+                frame.guildName:SetText("<"..guildName..">")
+                if BetterBlizzPlatesDB.guildNameColor then
+                    local color = BetterBlizzPlatesDB.guildNameColorRGB or {0, 1, 0}
+                    frame.guildName:SetTextColor(unpack(color))
+                else
+                    frame.guildName:SetTextColor(frame.name:GetTextColor())
+                end
+                frame.guildName:SetPoint("TOP", frame.name, "BOTTOM", 0, 0)
+                frame.guildName:SetScale(BetterBlizzPlatesDB.guildNameScale or 1)
+            else
+                frame.guildName:SetText("")
+            end
         end
     end
 end
@@ -1767,6 +1805,10 @@ local function HandleNamePlateRemoved(unit)
     if frame.classIndicator then
         frame.classIndicator:Hide()
     end
+
+    if frame.guildName then
+        frame.guildName:SetText("")
+    end
 end
 
 --#################################################################################################
@@ -1791,7 +1833,8 @@ local function HandleNamePlateAdded(unit)
     local fadeOutNpc = BetterBlizzPlatesDB.fadeOutNPC
     local hideNpc = BetterBlizzPlatesDB.hideNPC
     local colorNpc = BetterBlizzPlatesDB.colorNPC
-    local friendlyHealthbarColor = BetterBlizzPlatesDB.friendlyHealthBarColor
+    local friendlyHealthBarColor = BetterBlizzPlatesDB.friendlyHealthBarColor
+    local enemyHealthBarColor = BetterBlizzPlatesDB.enemyHealthBarColor
     local petIndicator = BetterBlizzPlatesDB.petIndicator or BetterBlizzPlatesDB.petIndicatorTestMode
     local raidIndicator = BetterBlizzPlatesDB.raidmarkIndicator
     local healerIndicator = BetterBlizzPlatesDB.healerIndicatorTestMode or BetterBlizzPlatesDB.healerIndicator
@@ -1856,9 +1899,34 @@ local function HandleNamePlateAdded(unit)
             else
                 frame.healthBar:SetAlpha(0)
                 frame.selectionHighlight:SetAlpha(0)
+                if BetterBlizzPlatesDB.showGuildNames then
+                    if not frame.guildName then
+                        frame.guildName = frame:CreateFontString(nil, "BACKGROUND")
+                        local font, size, outline = frame.name:GetFont()
+                        frame.guildName:SetFont(font, 14, outline)
+                    end
+
+                    local guildName, guildRankName, guildRankIndex = GetGuildInfo(unit)
+                    if guildName then
+                        frame.guildName:SetText("<"..guildName..">")
+                        if BetterBlizzPlatesDB.guildNameColor then
+                            local color = BetterBlizzPlatesDB.guildNameColorRGB or {0, 1, 0}
+                            frame.guildName:SetTextColor(unpack(color))
+                        else
+                            frame.guildName:SetTextColor(frame.name:GetTextColor())
+                        end
+                        frame.guildName:SetPoint("TOP", frame.name, "BOTTOM", 0, 0)
+                        frame.guildName:SetScale(BetterBlizzPlatesDB.guildNameScale or 1)
+                    else
+                        frame.guildName:SetText("")
+                    end
+                end
             end
         else
             frame.healthBar:SetAlpha(1)
+            if frame.guildName then
+                frame.guildName:SetText("")
+            end
         end
     end
 
@@ -1877,11 +1945,25 @@ local function HandleNamePlateAdded(unit)
         BBP.ColorNPCs(frame)
     end
 
-    if friendlyHealthbarColor then
-        local isFriend = UnitIsFriend("player", unit) and not isPlayer
-        local color = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
-        if isFriend then
+    if friendlyHealthBarColor or enemyHealthBarColor then
+        local isFriend = UnitIsFriend("player", unit)
+        local isOtherPlayer = UnitIsPlayer(unit)
+        if isFriend and not isOtherPlayer then
+            local color = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
             frame.healthBar:SetStatusBarColor(unpack(color))
+        elseif not isFriend then
+            local npcOnly = BetterBlizzPlatesDB.enemyHealthBarColorNpcOnly
+            if UnitReaction("player", unit) == 4 then
+                local color = BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 0, 0}
+                if not npcOnly or (npcOnly and not isOtherPlayer) then
+                    frame.healthBar:SetStatusBarColor(unpack(color))
+                end
+            else
+                local color = BetterBlizzPlatesDB.enemyHealthBarColorRGB or {1, 0, 0}
+                if not npcOnly or (npcOnly and not isOtherPlayer) then
+                    frame.healthBar:SetStatusBarColor(unpack(color))
+                end
+            end
         end
     end
 
@@ -1982,6 +2064,26 @@ function BBP.RefreshAllNameplates()
         end
         if frame.specNameText then
             BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
+        end
+        if frame.guildName then
+            if BetterBlizzPlatesDB.showGuildNames then
+                local guildName, guildRankName, guildRankIndex = GetGuildInfo(nameplate.UnitFrame.unit)
+                if guildName then
+                    frame.guildName:SetText("<"..guildName..">")
+                    if BetterBlizzPlatesDB.guildNameColor then
+                        local color = BetterBlizzPlatesDB.guildNameColorRGB or {0, 1, 0}
+                        frame.guildName:SetTextColor(unpack(color))
+                    else
+                        frame.guildName:SetTextColor(frame.name:GetTextColor())
+                    end
+                    frame.guildName:SetPoint("TOP", frame.name, "BOTTOM", 0, 0)
+                    frame.guildName:SetScale(BetterBlizzPlatesDB.guildNameScale or 1)
+                else
+                    frame.guildName:SetText("")
+                end
+            else
+                frame.guildName:SetText("")
+            end
         end
 
         -- Hide quest indicator after testing
@@ -2101,6 +2203,7 @@ function BBP.ConsolidatedUpdateName(frame)
     local totemIndicator = BetterBlizzPlatesDB.totemIndicator
     local hideFriendlyNameText = BetterBlizzPlatesDB.hideFriendlyNameText
     local hideEnemyNameText = BetterBlizzPlatesDB.hideEnemyNameText
+    local showGuildNames = BetterBlizzPlatesDB.showGuildNames
 
     -- Use arena numbers
     if arenaIndicator then
