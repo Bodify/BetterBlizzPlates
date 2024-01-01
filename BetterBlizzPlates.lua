@@ -1428,21 +1428,28 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
     if friendlyHealthBarColor or enemyHealthBarColor then
         local isFriend = UnitIsFriend("player", frame.unit)
         local isOtherPlayer = UnitIsPlayer(frame.unit)
-        if isFriend and not isOtherPlayer then
+        local npcOnly = BetterBlizzPlatesDB.enemyHealthBarColorNpcOnly
+
+        if isFriend and friendlyHealthBarColor then
+            -- Coloring friendly health bars
             local color = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
             frame.healthBar:SetStatusBarColor(unpack(color))
-        elseif not isFriend then
-            local npcOnly = BetterBlizzPlatesDB.enemyHealthBarColorNpcOnly
-            if UnitReaction("player", frame.unit) == 4 then
-                local color = BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 0, 0}
-                if not npcOnly or (npcOnly and not isOtherPlayer) then
-                    frame.healthBar:SetStatusBarColor(unpack(color))
+        elseif not isFriend and enemyHealthBarColor then
+            -- Handling enemy health bars
+            if not (npcOnly and isOtherPlayer) then
+                -- This block will execute only if npcOnly is false or the unit is not a player
+                local unitReaction = UnitReaction("player", frame.unit)
+                local color
+
+                if unitReaction == 4 then
+                    -- Neutral NPC
+                    color = BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 0, 0}
+                else
+                    -- Hostile NPC
+                    color = BetterBlizzPlatesDB.enemyHealthBarColorRGB or {1, 0, 0}
                 end
-            else
-                local color = BetterBlizzPlatesDB.enemyHealthBarColorRGB or {1, 0, 0}
-                if not npcOnly or (npcOnly and not isOtherPlayer) then
-                    frame.healthBar:SetStatusBarColor(unpack(color))
-                end
+
+                frame.healthBar:SetStatusBarColor(unpack(color))
             end
         end
     end
@@ -1948,21 +1955,28 @@ local function HandleNamePlateAdded(unit)
     if friendlyHealthBarColor or enemyHealthBarColor then
         local isFriend = UnitIsFriend("player", unit)
         local isOtherPlayer = UnitIsPlayer(unit)
-        if isFriend and not isOtherPlayer then
+        local npcOnly = BetterBlizzPlatesDB.enemyHealthBarColorNpcOnly
+
+        if isFriend and friendlyHealthBarColor then
+            -- Coloring friendly health bars
             local color = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
             frame.healthBar:SetStatusBarColor(unpack(color))
-        elseif not isFriend then
-            local npcOnly = BetterBlizzPlatesDB.enemyHealthBarColorNpcOnly
-            if UnitReaction("player", unit) == 4 then
-                local color = BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 0, 0}
-                if not npcOnly or (npcOnly and not isOtherPlayer) then
-                    frame.healthBar:SetStatusBarColor(unpack(color))
+        elseif not isFriend and enemyHealthBarColor then
+            -- Handling enemy health bars
+            if not (npcOnly and isOtherPlayer) then
+                -- This block will execute only if npcOnly is false or the unit is not a player
+                local unitReaction = UnitReaction("player", unit)
+                local color
+
+                if unitReaction == 4 then
+                    -- Neutral NPC
+                    color = BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 0, 0}
+                else
+                    -- Hostile NPC
+                    color = BetterBlizzPlatesDB.enemyHealthBarColorRGB or {1, 0, 0}
                 end
-            else
-                local color = BetterBlizzPlatesDB.enemyHealthBarColorRGB or {1, 0, 0}
-                if not npcOnly or (npcOnly and not isOtherPlayer) then
-                    frame.healthBar:SetStatusBarColor(unpack(color))
-                end
+
+                frame.healthBar:SetStatusBarColor(unpack(color))
             end
         end
     end
