@@ -37,9 +37,9 @@ function BBP.CreateTotemComponents(frame, size)
     local yPos = BetterBlizzPlatesDB.totemIndicatorYPos
     local shiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
     local anchor = BetterBlizzPlatesDB.totemIndicatorAnchor
+    local scale = BetterBlizzPlatesDB.totemIndicatorScale
 
     if not frame.totemIndicator then
-        local scale = BetterBlizzPlatesDB.totemIndicatorScale
         frame.totemIndicator = CreateFrame("Frame", nil, frame)
         frame.totemIndicator:SetSize(30, 30)
         frame.totemIndicator:SetScale(scale or 1)

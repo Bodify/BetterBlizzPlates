@@ -495,17 +495,19 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         -- Totem Indicator Pos and Scale
                         elseif element == "totemIndicatorXPos" or element == "totemIndicatorYPos" or element == "totemIndicatorScale" then
                             if not frame.totemIndicator then
-                                BBP.CreateTotemComponents(frame)
-                            end
-                            if axis then
-                                local yPosAdjustment = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown and yPos + 4 or yPos
-                                if BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown then
-                                    frame.totemIndicator:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 4)
-                                else
-                                    frame.totemIndicator:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 0)
-                                end
+                                --BBP.CreateTotemComponents(frame, 30)
+                                BBP.ApplyTotemIconsAndColorNameplate(frame, frame.unit)
                             else
-                                frame.totemIndicator:SetScale(value)
+                                if axis then
+                                    local yPosAdjustment = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown and yPos + 4 or yPos
+                                    if BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown then
+                                        frame.totemIndicator:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 4)
+                                    else
+                                        frame.totemIndicator:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 0)
+                                    end
+                                else
+                                    frame.totemIndicator:SetScale(value)
+                                end
                             end
                         -- Cast Timer Pos and Scale
                         elseif element == "castTimer" then
