@@ -332,7 +332,7 @@ local function CreateTextureDropdown(name, parent, defaultText, settingKey, togg
     return dropdown
 end
 
-local function CreateSlider(parent, label, minValue, maxValue, stepValue, element, axis)
+local function CreateSlider(parent, label, minValue, maxValue, stepValue, element, axis, width)
     local slider = CreateFrame("Slider", name, parent, "OptionsSliderTemplate")
     slider:SetOrientation('HORIZONTAL')
     slider:SetMinMaxValues(minValue, maxValue)
@@ -344,6 +344,10 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
 
     slider.Low:SetText(" ")
     slider.High:SetText(" ")
+
+    if width then
+        slider:SetWidth(width)
+    end
 
     local function UpdateSliderRange(newValue, minValue, maxValue)
         newValue = tonumber(newValue) -- Convert newValue to a number
@@ -475,7 +479,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         elseif element == "healerIndicatorXPos" or element == "healerIndicatorYPos" or element == "healerIndicatorScale" then
                             BBP.HealerIndicator(frame)
                         -- Healer Indicator Pos and Scale
-                        elseif element == "classIndicatorXPos" or element == "classIndicatorYPos" or element == "classIndicatorScale" then
+                        elseif element == "classIndicatorXPos" or element == "classIndicatorYPos" or element == "classIndicatorScale" or element == "classIndicatorFriendlyXPos" or element == "classIndicatorFriendlyYPos" or element == "classIndicatorFriendlyScale" then
                             BBP.ClassIndicator(frame)
                         -- Pet Indicator Pos and Scale
                         elseif element == "petIndicatorXPos" or element == "petIndicatorYPos" or element == "petIndicatorScale" then
@@ -673,6 +677,12 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BetterBlizzPlatesDB.classIndicatorYPos = value
                 elseif element == "classIndicatorScale" then
                     BetterBlizzPlatesDB.classIndicatorScale = value
+                elseif element == "classIndicatorFriendlyXPos" then
+                    BetterBlizzPlatesDB.classIndicatorFriendlyXPos = value
+                elseif element == "classIndicatorFriendlyYPos" then
+                    BetterBlizzPlatesDB.classIndicatorFriendlyYPos = value
+                elseif element == "classIndicatorFriendlyScale" then
+                    BetterBlizzPlatesDB.classIndicatorFriendlyScale = value
                 elseif element == "nameplateResourceScale" then
                     BetterBlizzPlatesDB.nameplateResourceScale = value
                     BBP.ApplySettingsToAllNameplates()
@@ -946,10 +956,10 @@ local function CreateTooltip(widget, tooltipText, anchor)
     end)
 end
 
-local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggleFunc, point)
+local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggleFunc, point, width)
     -- Create the dropdown frame using the library's creation function
     local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
-    LibDD:UIDropDownMenu_SetWidth(dropdown, 125)
+    LibDD:UIDropDownMenu_SetWidth(dropdown, width or 125)
     LibDD:UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
 
     local anchorPointsToUse = anchorPoints
@@ -3444,14 +3454,29 @@ local function guiPositionAndScale()
     classIconIcon:SetPoint("BOTTOM", anchorSubClassIcon, "TOP", 0, 1.5)
     --classIconIcon:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875)
 
-    local classIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "classIndicatorScale")
-    classIndicatorScale:SetPoint("TOP", anchorSubClassIcon, "BOTTOM", 0, -15)
+    local classIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "classIndicatorFriendlyScale", false, 72)
+    classIndicatorScale:SetPoint("TOP", anchorSubClassIcon, "BOTTOM", 36, -15)
+    CreateTooltip(classIndicatorScale, "Friendly Scale")
 
-    local classIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "classIndicatorXPos", "X")
+    local classIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "classIndicatorFriendlyXPos", "X", 72)
     classIndicatorXPos:SetPoint("TOP", classIndicatorScale, "BOTTOM", 0, -15)
+    CreateTooltip(classIndicatorXPos, "Friendly X Offset")
 
-    local classIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "classIndicatorYPos", "Y")
+    local classIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "classIndicatorFriendlyYPos", "Y", 72)
     classIndicatorYPos:SetPoint("TOP", classIndicatorXPos, "BOTTOM", 0, -15)
+    CreateTooltip(classIndicatorYPos, "Friendly Y Offset")
+
+    local classIndicatorScale2 = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "classIndicatorScale", false, 72)
+    classIndicatorScale2:SetPoint("TOP", anchorSubClassIcon, "BOTTOM", -36, -15)
+    CreateTooltip(classIndicatorScale2, "Enemy Scale")
+
+    local classIndicatorXPos2 = CreateSlider(contentFrame, "x offset", -50, 50, 1, "classIndicatorXPos", "X", 72)
+    classIndicatorXPos2:SetPoint("TOP", classIndicatorScale2, "BOTTOM", 0, -15)
+    CreateTooltip(classIndicatorXPos2, "Enemy X Offset")
+
+    local classIndicatorYPos2 = CreateSlider(contentFrame, "y offset", -50, 50, 1, "classIndicatorYPos", "Y", 72)
+    classIndicatorYPos2:SetPoint("TOP", classIndicatorXPos2, "BOTTOM", 0, -15)
+    CreateTooltip(classIndicatorYPos2, "Enemy Y Offset")
 
     local classIconDropdown = CreateAnchorDropdown(
         "classIconDropdown",
@@ -3461,8 +3486,23 @@ local function guiPositionAndScale()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = classIndicatorYPos, x = -16, y = -35, label = "Anchor" }
+        { anchorFrame = classIndicatorYPos, x = -90, y = -35, label = "Enemy" },
+        55
     )
+    CreateTooltip(classIconDropdown, "Enemy Anchor")
+
+    local classIconDropdown2 = CreateAnchorDropdown(
+        "classIconDropdown2",
+        contentFrame,
+        "Select Anchor Point",
+        "classIndicatorFriendlyAnchor",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = classIndicatorYPos, x = -16, y = -35, label = "Friendly" },
+        55
+    )
+    CreateTooltip(classIconDropdown2, "Friendly Anchor")
 
     local classIconSquareBorder = CreateCheckbox("classIconSquareBorder", "Square", contentFrame)
     classIconSquareBorder:SetPoint("TOPLEFT", classIconDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
@@ -4839,6 +4879,9 @@ local function guiMisc()
     guildNameColorButton:SetSize(45, 20)
     guildNameColorButton:SetScript("OnClick", OpenColorPicker)
 
+    local friendIndicator = CreateCheckbox("friendIndicator", "Friend/Guildie Indicator", guiMisc)
+    friendIndicator:SetPoint("TOPLEFT", guildNameColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(friendIndicator, "Places a little icon to the left of a friend/guildies name")
 
     --
     local nameplateResourceText = guiMisc:CreateFontString(nil, "OVERLAY", "GameFontNormal")

@@ -811,7 +811,22 @@ function BBP.TestPartyIndicator5(frame)
     end
 end
 
-
+function BBP.CleanArenaIndicators(frame)
+    if frame.name then
+        local removeRealmName = BetterBlizzPlatesDB.removeRealmNames
+        if removeRealmName then
+            BBP.RemoveRealmName(frame)
+        else
+            frame.name:SetText(GetUnitName(frame.unit, true))
+        end
+    end
+    if frame.arenaNumberText then
+        frame.arenaNumberText:SetText("")
+    end
+    if frame.specNameText then
+        frame.specNameText:SetText("")
+    end
+end
 
 --#########################################################################################################
 -- The big consolidated caller
@@ -837,6 +852,8 @@ function BBP.ArenaIndicatorCaller(frame, config)
                     BBP.ArenaIndicator4(frame)
                 elseif config.arenaIndicatorModeFive then
                     BBP.ArenaIndicator5(frame)
+                else
+                    BBP.CleanArenaIndicators(frame)
                 end
                 return
             end
@@ -852,6 +869,8 @@ function BBP.ArenaIndicatorCaller(frame, config)
                     BBP.PartyIndicator4(frame)
                 elseif config.partyIndicatorModeFive then
                     BBP.PartyIndicator5(frame)
+                else
+                    BBP.CleanArenaIndicators(frame)
                 end
                 return
             end

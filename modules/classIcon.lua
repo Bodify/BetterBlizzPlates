@@ -15,11 +15,11 @@ local HealerSpecs = {
 
 -- Class Indicator
 function BBP.ClassIndicator(frame, fetchedSpecID)
-    local anchorPoint = BetterBlizzPlatesDB.classIndicatorAnchor
-    local oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
-    local xPos = BetterBlizzPlatesDB.classIndicatorXPos
-    local yPos = BetterBlizzPlatesDB.classIndicatorYPos + (anchorPoint == "TOP" and 2 or 0)
-    local scale = BetterBlizzPlatesDB.classIndicatorScale + 0.3
+    local anchorPoint
+    local oppositeAnchor
+    local xPos
+    local yPos
+    local scale
     local inInstance, instanceType = IsInInstance()
     local arenaOnly = BetterBlizzPlatesDB.classIconArenaOnly
     local bgOnly = BetterBlizzPlatesDB.classIconBgOnly
@@ -33,7 +33,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     if not frame.classIndicator then
         frame.classIndicator = CreateFrame("Frame", nil, frame)
         frame.classIndicator:SetSize(24, 24)
-        frame.classIndicator:SetScale(scale)
+        --frame.classIndicator:SetScale(scale)
         frame.classIndicator.icon = frame.classIndicator:CreateTexture(nil, "BORDER")
         frame.classIndicator.icon:SetPoint("CENTER", frame.classIndicator)
         frame.classIndicator.mask = frame.classIndicator:CreateMaskTexture()
@@ -87,6 +87,20 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
 
     -- Set position and scale dynamically
+    if isFriendly then
+        anchorPoint = BetterBlizzPlatesDB.classIndicatorFriendlyAnchor
+        oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
+        xPos = BetterBlizzPlatesDB.classIndicatorFriendlyXPos
+        yPos = BetterBlizzPlatesDB.classIndicatorFriendlyYPos + (anchorPoint == "TOP" and 2 or 0)
+        scale = BetterBlizzPlatesDB.classIndicatorFriendlyScale + 0.3
+    elseif isEnemy then
+        anchorPoint = BetterBlizzPlatesDB.classIndicatorAnchor
+        oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
+        xPos = BetterBlizzPlatesDB.classIndicatorXPos
+        yPos = BetterBlizzPlatesDB.classIndicatorYPos + (anchorPoint == "TOP" and 2 or 0)
+        scale = BetterBlizzPlatesDB.classIndicatorScale + 0.3
+    end
+
     frame.classIndicator:ClearAllPoints()
     if anchorPoint == "TOP" then
         frame.classIndicator:SetPoint(oppositeAnchor, frame.name, anchorPoint, xPos, yPos)

@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.3.2b"
+local addonUpdates = "1.3.3"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -127,9 +127,13 @@ local defaultSettings = {
     -- Class Icon
     classIndicator = false,
     classIndicatorXPos = 0,
+    classIndicatorFriendlyXPos = 0,
     classIndicatorYPos = 0,
+    classIndicatorFriendlyYPos = 0,
     classIndicatorAnchor = "TOP",
+    classIndicatorFriendlyAnchor = "TOP",
     classIndicatorScale = 1,
+    classIndicatorFriendlyScale = 1,
     classIndicatorEnemy = true,
     classIndicatorFriendly = true,
     classIconColorBorder = true,
@@ -449,6 +453,13 @@ local function InitializeSavedVariables()
         BetterBlizzPlatesDB.version = addonVersion  -- Update the version number in the database
     end
 
+    if not BetterBlizzPlatesDB.classIndicatorFriendlyYPos then
+        BetterBlizzPlatesDB.classIndicatorFriendlyXPos = BetterBlizzPlatesDB.classIndicatorXPos
+        BetterBlizzPlatesDB.classIndicatorFriendlyYPos = BetterBlizzPlatesDB.classIndicatorYPos
+        BetterBlizzPlatesDB.classIndicatorFriendlyAnchor = BetterBlizzPlatesDB.classIndicatorAnchor
+        BetterBlizzPlatesDB.classIndicatorFriendlyScale = BetterBlizzPlatesDB.classIndicatorScale
+    end
+
     for key, defaultValue in pairs(defaultSettings) do
         if BetterBlizzPlatesDB[key] == nil then
             BetterBlizzPlatesDB[key] = defaultValue
@@ -603,22 +614,16 @@ local function SendUpdateMessage()
         C_Timer.After(7, function()
             --bbp news
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Totem indicator scale bugfix (sometimes just used 1 as scale instead of user setting). If sizes look weird try adjusting scale in \"Advanced Settings\" tab. Please let me know if you run into any bugs so I can fix em :)")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Separate settings for \"Class Indicator\" for friend/enemy. Misc setting \"Friend Indicator\". Also set up a Patreon link on CurseForge in case you would want to support me during my programming studies :)")
         end)
     end
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Adjusted nameplate height logic. Possible you might have to toggle large nameplate on/off or re-adjust nameplate height.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: More totem indicator settings, individual sizes, show/hide icon, glow/noglow etc.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: New Fade NPC setting that fades all nameplates except your current target.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #4: Nameplate aura default CD counter setting.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #5: Added \"Nameplate Visibility\" CVar settings in \"More Blizz Settings\".")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #6: Added \"Personal Nameplate Width\" settings in \"More Blizz Settings\".")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #7: Hide targetname + casttimer on hidden nameplates bugfix.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #8: PvE friendly hide healthbar clickthrough nameplates bugfix.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #9: Display Guild Name setting.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Separate settings for class indicator for friend and enemy.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Friend Indicator setting in the Misc tab.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Patreon link: www.patreon.com/bodydev")
 end
 
 local function CheckForUpdate()
@@ -777,6 +782,40 @@ function BBP.RemoveRealmName(frame)
         frame.name:SetText(name)
     end
 end
+
+
+--#################################################################################################
+local function isUnitFriend(unit)
+    for i = 1, C_FriendList.GetNumFriends() do
+        local friendInfo = C_FriendList.GetFriendInfoByIndex(i)
+        if friendInfo and friendInfo.name == UnitName(unit) then
+            return true
+        end
+    end
+    return false
+end
+
+local function isUnitGuildmate(unit)
+    local guildName = GetGuildInfo(unit)
+    local playerGuildName = GetGuildInfo("player")
+    return guildName and playerGuildName and (guildName == playerGuildName)
+end
+
+local function isUnitBNetFriend(unit)
+    local unitName = UnitName(unit)
+    local numBNetFriends = BNGetNumFriends()
+    for i = 1, numBNetFriends do
+        local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
+        if accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.isOnline then
+            local characterName = accountInfo.gameAccountInfo.characterName
+            if characterName and characterName == unitName then
+                return true
+            end
+        end
+    end
+    return false
+end
+
 
 --#################################################################################################
 -- Set custom healthbar texture
@@ -1837,6 +1876,10 @@ local function HandleNamePlateRemoved(unit)
     if frame.guildName then
         frame.guildName:SetText("")
     end
+
+    if frame.friendIndicator then
+        frame.friendIndicator:Hide()
+    end
 end
 
 --#################################################################################################
@@ -1872,6 +1915,7 @@ local function HandleNamePlateAdded(unit)
     local friendlyHideHealthBar = BetterBlizzPlatesDB.friendlyHideHealthBar
     local classIndicator = BetterBlizzPlatesDB.classIndicator
     local auraColor = BetterBlizzPlatesDB.auraColor
+    local friendIndicator = BetterBlizzPlatesDB.friendIndicator
 
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
@@ -2042,6 +2086,31 @@ local function HandleNamePlateAdded(unit)
     if auraColor then
         BBP.AuraColor(frame)
     end
+
+    if friendIndicator then
+        local isFriend = isUnitFriend(unit)
+        local isBnetFriend = isUnitBNetFriend(unit)
+        local isGuildmate = isUnitGuildmate(unit)
+
+        if not frame.friendIndicator then
+            frame.friendIndicator = frame:CreateTexture(nil, "OVERLAY")
+            frame.friendIndicator:SetAtlas("groupfinder-icon-friend")
+            frame.friendIndicator:SetSize(20, 21)
+            frame.friendIndicator:SetPoint("RIGHT", frame.name, "LEFT", 0, 0)
+        end
+
+        if isFriend or isBnetFriend then
+            frame.friendIndicator:SetDesaturated(false)
+            frame.friendIndicator:SetVertexColor(1, 1, 1)
+            frame.friendIndicator:Show()
+        elseif isGuildmate then
+            frame.friendIndicator:SetDesaturated(true)
+            frame.friendIndicator:SetVertexColor(0, 1, 0)
+            frame.friendIndicator:Show()
+        else
+            frame.friendIndicator:Hide()
+        end
+    end
 end
 --#################################################################################################
 -- Event Listener
@@ -2184,10 +2253,9 @@ end
 
 hooksecurefunc(NamePlateDriverFrame, "OnUnitFactionChanged", function(self,unit)
     if not string.match(unit, "nameplate") then return end
-    local nameplate = C_NamePlate.GetNamePlateForUnit(unit, false)
-    if nameplate then
+    C_Timer.After(0.1, function()
         HandleNamePlateAdded(unit)
-    end
+    end)
 end)
 
 function BBP.RefreshAllNameplatesLightVer()
@@ -2238,7 +2306,7 @@ function BBP.ConsolidatedUpdateName(frame)
     local totemIndicator = BetterBlizzPlatesDB.totemIndicator
     local hideFriendlyNameText = BetterBlizzPlatesDB.hideFriendlyNameText
     local hideEnemyNameText = BetterBlizzPlatesDB.hideEnemyNameText
-    local showGuildNames = BetterBlizzPlatesDB.showGuildNames
+    --local showGuildNames = BetterBlizzPlatesDB.showGuildNames
 
     -- Use arena numbers
     if arenaIndicator then
