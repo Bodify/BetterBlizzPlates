@@ -27,7 +27,8 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     local enemyOnly = BetterBlizzPlatesDB.classIndicatorEnemy
     local useSpecIcon = BetterBlizzPlatesDB.classIndicatorSpecIcon
     local showHealerIcon = BetterBlizzPlatesDB.classIndicatorHealer
-    local squareIcon = BetterBlizzPlatesDB.classIconSquareBorder
+    local squareIconEnemy = BetterBlizzPlatesDB.classIconSquareBorder
+    local squareIconFriendly = BetterBlizzPlatesDB.classIconSquareBorderFriendly
 
     -- Initialize Class Icon Frame
     if not frame.classIndicator then
@@ -61,26 +62,6 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         return
     end
 
-    -- Configure for square or circle border and apply mask
-    if squareIcon then
-        scale = scale + 0.2
-        frame.classIndicator.icon:SetSize(20, 20)
-        frame.classIndicator.mask:SetAtlas("UI-Frame-IconMask")
-        frame.classIndicator.mask:SetSize(20, 20)
-        frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
-        frame.classIndicator.border:SetAtlas("UI-HUD-ActionBar-IconFrame-AddRow")
-        frame.classIndicator.border:SetSize(23, 23)
-        frame.classIndicator.border:ClearAllPoints()
-        frame.classIndicator.border:SetPoint("CENTER", frame.classIndicator.icon, 1.5, -1.5)
-    else
-        frame.classIndicator.icon:SetSize(24, 24)
-        frame.classIndicator.mask:SetTexture("Interface/Masks/CircleMaskScalable")
-        frame.classIndicator.mask:SetSize(24, 24)
-        frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
-        frame.classIndicator.border:SetAtlas("ui-frame-genericplayerchoice-portrait-border")
-        frame.classIndicator.border:SetAllPoints(frame.classIndicator)
-    end
-
     frame.classIndicator.icon:AddMaskTexture(frame.classIndicator.mask)
 
     frame.classIndicator.icon:SetPoint("CENTER", frame.classIndicator)
@@ -93,12 +74,49 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         xPos = BetterBlizzPlatesDB.classIndicatorFriendlyXPos
         yPos = BetterBlizzPlatesDB.classIndicatorFriendlyYPos + (anchorPoint == "TOP" and 2 or 0)
         scale = BetterBlizzPlatesDB.classIndicatorFriendlyScale + 0.3
+
+            -- Configure for square or circle border and apply mask
+        if squareIconFriendly then
+            frame.classIndicator.icon:SetSize(20, 20)
+            frame.classIndicator.mask:SetAtlas("UI-Frame-IconMask")
+            frame.classIndicator.mask:SetSize(20, 20)
+            frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
+            frame.classIndicator.border:SetAtlas("UI-HUD-ActionBar-IconFrame-AddRow")
+            frame.classIndicator.border:SetSize(23, 23)
+            frame.classIndicator.border:ClearAllPoints()
+            frame.classIndicator.border:SetPoint("CENTER", frame.classIndicator.icon, 1.5, -1.5)
+        else
+            frame.classIndicator.icon:SetSize(24, 24)
+            frame.classIndicator.mask:SetTexture("Interface/Masks/CircleMaskScalable")
+            frame.classIndicator.mask:SetSize(24, 24)
+            frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
+            frame.classIndicator.border:SetAtlas("ui-frame-genericplayerchoice-portrait-border")
+            frame.classIndicator.border:SetAllPoints(frame.classIndicator)
+        end
     elseif isEnemy then
         anchorPoint = BetterBlizzPlatesDB.classIndicatorAnchor
         oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
         xPos = BetterBlizzPlatesDB.classIndicatorXPos
         yPos = BetterBlizzPlatesDB.classIndicatorYPos + (anchorPoint == "TOP" and 2 or 0)
         scale = BetterBlizzPlatesDB.classIndicatorScale + 0.3
+
+        if squareIconEnemy then
+            frame.classIndicator.icon:SetSize(20, 20)
+            frame.classIndicator.mask:SetAtlas("UI-Frame-IconMask")
+            frame.classIndicator.mask:SetSize(20, 20)
+            frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
+            frame.classIndicator.border:SetAtlas("UI-HUD-ActionBar-IconFrame-AddRow")
+            frame.classIndicator.border:SetSize(23, 23)
+            frame.classIndicator.border:ClearAllPoints()
+            frame.classIndicator.border:SetPoint("CENTER", frame.classIndicator.icon, 1.5, -1.5)
+        else
+            frame.classIndicator.icon:SetSize(24, 24)
+            frame.classIndicator.mask:SetTexture("Interface/Masks/CircleMaskScalable")
+            frame.classIndicator.mask:SetSize(24, 24)
+            frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
+            frame.classIndicator.border:SetAtlas("ui-frame-genericplayerchoice-portrait-border")
+            frame.classIndicator.border:SetAllPoints(frame.classIndicator)
+        end
     end
 
     frame.classIndicator:ClearAllPoints()
@@ -174,7 +192,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     if specIcon and useSpecIcon then
         if showHealerIcon then
             if HealerSpecs[specID] then
-                if not squareIcon then
+                if not (isEnemy and squareIconEnemy) or (isFriend or squareIconFriendly) then
                     frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
                     frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87)
                 else
@@ -191,7 +209,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         end
     elseif showHealerIcon then
         if HealerSpecs[specID] then
-            if not squareIcon then
+            if not (isEnemy and squareIconEnemy) or (isFriend or squareIconFriendly) then
                 frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
                 frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87)
             else

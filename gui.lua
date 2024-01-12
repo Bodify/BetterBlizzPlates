@@ -3506,11 +3506,11 @@ local function guiPositionAndScale()
 
     local classIconSquareBorder = CreateCheckbox("classIconSquareBorder", "Square", contentFrame)
     classIconSquareBorder:SetPoint("TOPLEFT", classIconDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
-    CreateTooltip(classIconSquareBorder, "Square border instead of circle")
+    CreateTooltip(classIconSquareBorder, "Square instead of circle icon for enemy.")
 
-    local classIconColorBorder = CreateCheckbox("classIconColorBorder", "Color", contentFrame)
-    classIconColorBorder:SetPoint("LEFT", classIconSquareBorder.text, "RIGHT", 0, 0)
-    CreateTooltip(classIconColorBorder, "Class color border")
+    local classIconSquareBorderFriendly = CreateCheckbox("classIconSquareBorderFriendly", "Square Friend", contentFrame)
+    classIconSquareBorderFriendly:SetPoint("LEFT", classIconSquareBorder.text, "RIGHT", -2, 0)
+    CreateTooltip(classIconSquareBorderFriendly, "Square instead of circle icon for friendly.")
 
     local classIndicatorEnemy = CreateCheckbox("classIndicatorEnemy", "Enemies", contentFrame)
     classIndicatorEnemy:SetPoint("TOPLEFT", classIconSquareBorder, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -3532,9 +3532,13 @@ local function guiPositionAndScale()
     classIndicatorSpecIcon:SetPoint("TOPLEFT", classIconArenaOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(classIndicatorSpecIcon, "Show spec instead of class icon. (Requires Details)\n\nNote: The spec information might not always\nbe available and it will default to class icon.")
 
-    local classIndicatorHealer = CreateCheckbox("classIndicatorHealer", "Healer Icon", contentFrame)
-    classIndicatorHealer:SetPoint("LEFT", classIndicatorSpecIcon.text, "RIGHT", 0, 0)
+    local classIndicatorHealer = CreateCheckbox("classIndicatorHealer", "Heal", contentFrame)
+    classIndicatorHealer:SetPoint("LEFT", classIndicatorSpecIcon.text, "RIGHT", -2, 0)
     CreateTooltip(classIndicatorHealer, "Show cross instead of class/spec icon on healers")
+
+    local classIconColorBorder = CreateCheckbox("classIconColorBorder", "Color", contentFrame)
+    classIconColorBorder:SetPoint("LEFT", classIndicatorHealer.text, "RIGHT", -2, 0)
+    CreateTooltip(classIconColorBorder, "Class color border")
 
     ----
 
