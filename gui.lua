@@ -4725,6 +4725,10 @@ local function guiBlizzCVars()
     CreateTooltip(nameplateMotionSpeed, "The speed at which nameplates move into their new position")
     CreateResetButton(nameplateMotionSpeed, "nameplateMotionSpeed", guiBlizzCVars)
 
+    local nameplateResourceOnTarget = CreateCheckbox("nameplateResourceOnTarget", "Combo points etc on nameplate", guiBlizzCVars, true)
+    nameplateResourceOnTarget:SetPoint("TOP", stackingNameplatesText, "BOTTOM", -65, -155)
+    CreateTooltip(nameplateResourceOnTarget, "Show combo points, warlock shards, arcane charges etc on nameplates.")
+
     local nameplateAlphaText = guiBlizzCVars:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     nameplateAlphaText:SetPoint("TOPLEFT", guiBlizzCVars, "TOPLEFT", 300, -35)
     nameplateAlphaText:SetText("Nameplate alpha settings")

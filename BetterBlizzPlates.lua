@@ -490,6 +490,7 @@ function CVarFetcher()
         BetterBlizzPlatesDB.nameplateMaxAlpha = GetCVar("nameplateMaxAlpha")
         BetterBlizzPlatesDB.nameplateMaxAlphaDistance = GetCVar("nameplateMaxAlphaDistance")
         BetterBlizzPlatesDB.nameplateOccludedAlphaMult = GetCVar("nameplateOccludedAlphaMult")
+        BetterBlizzPlatesDB.nameplateResourceOnTarget = GetCVar("nameplateResourceOnTarget")
 
         BetterBlizzPlatesDB.nameplateMinAlpha = GetCVar("nameplateMinAlpha")
         BetterBlizzPlatesDB.nameplateMinAlphaDistance = GetCVar("nameplateMinAlphaDistance")
@@ -528,7 +529,8 @@ end
 
 local function FetchAndSaveValuesOnFirstLogin()
     if BBP.variablesLoaded then
-        if not BetterBlizzPlatesDB.nameplateMinAlpha or not BetterBlizzPlatesDB.nameplateShowFriendlyMinions or not BetterBlizzPlatesDB.nameplateSelfWidth then
+        -- collect some cvars added at a later time
+        if not BetterBlizzPlatesDB.nameplateMinAlpha or not BetterBlizzPlatesDB.nameplateShowFriendlyMinions or not BetterBlizzPlatesDB.nameplateSelfWidth or not BetterBlizzPlatesDB.nameplateResourceOnTarget then
             CVarFetcher()
         end
 
@@ -2529,7 +2531,7 @@ end
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("CVAR_UPDATE")
 frame:SetScript("OnEvent", function(self, event, cvarName)
-    if cvarName == "NamePlateHorizontalScale" then
+    if cvarName == "NamePlateHorizontalScale" or cvarName == "nameplateResourceOnTarget" then
         if not BetterBlizzPlatesDB.wasOnLoadingScreen then
             if BBP.isLargeNameplatesEnabled() then
                 BetterBlizzPlatesDB.NamePlateVerticalScale = 2.7
