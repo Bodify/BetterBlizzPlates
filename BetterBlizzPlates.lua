@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.3.3"
+local addonUpdates = "1.3.4"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -616,7 +616,7 @@ local function SendUpdateMessage()
         C_Timer.After(7, function()
             --bbp news
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Separate settings for \"Class Indicator\" for friend/enemy. Misc setting \"Friend Indicator\". Also set up a Patreon link on CurseForge in case you would want to support me during my programming studies :)")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Added toggle for combo points etc on nameplate in \"Blizzard CVar's\". Fixed the resource scale setting. Updated for 10.2.5")
         end)
     end
 end
@@ -1924,6 +1924,11 @@ local function HandleNamePlateAdded(unit)
 
     if customAuraOn and auraModuleIsOn then
         BBP.HidePersonalBuffFrame()
+    end
+
+    if nameplate.driverFrame.classNamePlateMechanicFrame then
+        local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
+        nameplate.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
     end
 
     -- Castbar customization

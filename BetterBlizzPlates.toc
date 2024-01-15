@@ -1,4 +1,4 @@
-## Interface: 100200
+## Interface: 100205
 ## Title: Better|cff00c0ffBlizz|rPlates
 ## Notes: Standard Blizzard nameplates with more features and easy settings
 ## SavedVariables: BetterBlizzPlatesDB
