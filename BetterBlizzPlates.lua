@@ -2526,7 +2526,7 @@ SLASH_BBP1 = "/bbp"
 SlashCmdList["BBP"] = function(msg)
     if msg == "news" then
         NewsUpdateMessage()
-    elseif msg == "nahj" then
+    elseif msg == "nahj" or msg == "Nahj" then
         StaticPopup_Show("BBP_CONFIRM_NAHJ_PROFILE")
     else
         InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)

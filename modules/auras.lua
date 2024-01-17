@@ -694,6 +694,13 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         end
         CooldownFrame_Set(buff.Cooldown, aura.expirationTime - aura.duration, aura.duration, aura.duration > 0, true);
 
+        if BetterBlizzPlatesDB.hideNpAuraSwipe then
+            if buff.Cooldown then
+                buff.Cooldown:SetDrawSwipe(false)
+                buff.Cooldown:SetDrawEdge(false)
+            end
+        end
+
         if BetterBlizzPlatesDB.showDefaultCooldownNumbersOnNpAuras then
             if buff.Cooldown then
                 buff.Cooldown:SetHideCountdownNumbers(false)
