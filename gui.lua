@@ -1069,7 +1069,7 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
     return checkBox
 end
 
-local function CreateList(subPanel, listName, listData, refreshFunc, enableColorPicker, extraBoxes, prioSlider, width, height)
+local function CreateList(subPanel, listName, listData, refreshFunc, enableColorPicker, extraBoxes, prioSlider, width, height, colorText)
     -- Create the scroll frame
     local scrollFrame = CreateFrame("ScrollFrame", nil, subPanel, "UIPanelScrollFrameTemplate")
     scrollFrame:SetSize(width or 322, height or 390)
@@ -1199,12 +1199,20 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         npc.entryColors = entryColors  -- Save the colors back to the npc data
 
         if not entryColors.text then
-            entryColors.text = { r = 1, g = 1, b = 0 } -- Default to yellow color
+            entryColors.text = { r = 0, g = 1, b = 0 } -- Default to green color
         end
 
         -- Function to set the text color
         local function SetTextColor(r, g, b)
-            text:SetTextColor(r, g, b)
+            if colorText then
+                if npc.flags.important then
+                    text:SetTextColor(r, g, b)
+                else
+                    text:SetTextColor(1,1,0)
+                end
+            else
+                text:SetTextColor(1,1,0)
+            end
         end
 
         -- Set initial text and background colors from entryColors
@@ -1237,7 +1245,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 --ColorPickerFrame:SetColorRGB(r, g, b)
                 ColorPickerFrame.previousValues = { r, g, b }
 
-                ColorPickerFrame.func = function()
+                ColorPickerFrame.swatchFunc = function()
                     r, g, b = ColorPickerFrame:GetColorRGB()
                     entryColors.text.r, entryColors.text.g, entryColors.text.b = r, g, b
                     SetTextColor(r, g, b)  -- Update text color when the color picker changes
@@ -1270,11 +1278,12 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             -- Create Checkbox I (Important)
             local checkBoxI = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
             checkBoxI:SetSize(24, 24)
-            checkBoxI:SetPoint("RIGHT", deleteButton, "LEFT", -38, 0)
+            checkBoxI:SetPoint("RIGHT", deleteButton, "LEFT", -50, 0)
 
             -- Create a texture for the checkbox
             checkBoxI.texture = checkBoxI:CreateTexture(nil, "ARTWORK",nil,1)
             checkBoxI.texture:SetAtlas("newplayertutorial-drag-slotgreen")
+            checkBoxI.texture:SetDesaturated(true)
             checkBoxI.texture:SetSize(27, 27)
 
             checkBoxI.texture:SetPoint("CENTER", checkBoxI, "CENTER", -0.5,0.5)
@@ -1284,7 +1293,18 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             checkBoxI:SetScript("OnClick", function(self)
                 npc.flags.important = self:GetChecked() -- Save the state in the npc flags
             end)
-            checkBoxI:HookScript("OnClick", BBP.RefreshAllNameplates)
+            local function SetImportantBoxColor(r, g, b)
+                if npc.flags.important then
+                    checkBoxI.texture:SetVertexColor(r, g, b)
+                else
+                    checkBoxI.texture:SetVertexColor(0,1,0)
+                end
+            end
+            checkBoxI:HookScript("OnClick", function()
+                BBP.RefreshAllNameplates()
+                SetTextColor(entryColors.text.r, entryColors.text.g, entryColors.text.b)
+                SetImportantBoxColor(entryColors.text.r, entryColors.text.g, entryColors.text.b)
+            end)
 
 
             -- Initialize state from npc flags
@@ -1292,10 +1312,50 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 checkBoxI:SetChecked(true)
             end
 
+            local colorPickerButton2 = CreateFrame("Button", nil, button, "UIPanelButtonTemplate")
+            colorPickerButton2:SetSize(20, 18)
+            colorPickerButton2:SetPoint("LEFT", checkBoxI, "RIGHT", 0, 1)
+            colorPickerButton2:SetText("C")
+            CreateTooltip(colorPickerButton2, "Important Glow Color", "ANCHOR_TOPRIGHT")
+
+            SetImportantBoxColor(entryColors.text.r, entryColors.text.g, entryColors.text.b)
+
+            -- Function to open the color picker
+            local function OpenColorPicker()
+                local r, g, b = entryColors.text.r, entryColors.text.g, entryColors.text.b
+
+                --ColorPickerFrame:SetColorRGB(r, g, b)
+                ColorPickerFrame.previousValues = { r, g, b }
+
+                ColorPickerFrame.swatchFunc = function()
+                    r, g, b = ColorPickerFrame:GetColorRGB()
+                    entryColors.text.r, entryColors.text.g, entryColors.text.b = r, g, b
+                    SetTextColor(r, g, b)  -- Update text color when the color picker changes
+                    SetImportantBoxColor(r, g, b)
+                    BBP.RefreshAllNameplates()
+
+                    -- Update the npc entry in listData with the new color
+                    npc.entryColors.text.r, npc.entryColors.text.g, npc.entryColors.text.b = r, g, b
+                    listData[index] = npc  -- Update the entry in the listData
+                end
+
+                ColorPickerFrame.cancelFunc = function()
+                    r, g, b = unpack(ColorPickerFrame.previousValues)
+                    entryColors.text.r, entryColors.text.g, entryColors.text.b = r, g, b
+                    SetTextColor(r, g, b)  -- Update text color if canceled
+                    SetImportantBoxColor(r, g, b)
+                end
+                ColorPickerFrame:ClearAllPoints()
+                ColorPickerFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+                ColorPickerFrame:Show()
+            end
+
+            colorPickerButton2:SetScript("OnClick", OpenColorPicker)
+
             -- Create Checkbox P (Pandemic)
             local checkBoxP = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
             checkBoxP:SetSize(24, 24)
-            checkBoxP:SetPoint("LEFT", checkBoxI, "RIGHT", 6, 0)
+            checkBoxP:SetPoint("LEFT", checkBoxI, "RIGHT", 26, 0)
 
             -- Create a texture for the checkbox
             checkBoxP.texture = checkBoxP:CreateTexture(nil, "ARTWORK",nil,1)
@@ -1431,8 +1491,8 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 StaticPopup_Show("BBP_DUPLICATE_NPC_CONFIRM_" .. listName)
             else
                 local newEntry = { name = name, id = id, comment = comment, flags = { important = false, pandemic = false } }
-                table.insert(listData, { name = name, id = id, comment = comment })
-                createTextLineButton({ name = name, id = id, comment = comment }, #textLines + 1, enableColorPicker)
+                table.insert(listData, newEntry)
+                createTextLineButton(newEntry, #textLines + 1, enableColorPicker)
                 refreshFunc()
             end
         end
@@ -1692,7 +1752,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             colorPickerButton:SetText("Color")
             colorPickerButton:SetScript("OnClick", function()
                 local currentColor = npcEditFrame.currentColor or {1, 1, 1}
-                ColorPickerFrame.func = function()
+                ColorPickerFrame.swatchFunc = function()
                     local r, g, b = ColorPickerFrame:GetColorRGB()
                     text:SetTextColor(r, g, b)
                     npcEditFrame.iconGlowTexture:SetVertexColor(r, g, b)
@@ -2204,7 +2264,7 @@ local function guiGeneralTab()
     local function OpenColorPicker()
         local r, g, b = unpack(BetterBlizzPlatesDB.enemyColorNameRGB or {1, 1, 1})
         ColorPickerFrame.previousValues = { r, g, b }
-        ColorPickerFrame.func = function()
+        ColorPickerFrame.swatchFunc = function()
             r, g, b = ColorPickerFrame:GetColorRGB()
             BetterBlizzPlatesDB.enemyColorNameRGB = { r, g, b }
             BBP.RefreshAllNameplates()
@@ -2235,7 +2295,7 @@ local function guiGeneralTab()
         local r, g, b = unpack(BetterBlizzPlatesDB[colorType] or {1, 1, 1})
         ColorPickerFrame.previousValues = { r, g, b }
 
-        ColorPickerFrame.func = function()
+        ColorPickerFrame.swatchFunc = function()
             r, g, b = ColorPickerFrame:GetColorRGB()
             BetterBlizzPlatesDB[colorType] = { r, g, b }
             BBP.RefreshAllNameplates()
@@ -2366,7 +2426,7 @@ local function guiGeneralTab()
     local function OpenColorPicker2()
         local r, g, b = unpack(BetterBlizzPlatesDB.friendlyColorNameRGB or {1, 1, 1})
         ColorPickerFrame.previousValues = { r, g, b }
-        ColorPickerFrame.func = function()
+        ColorPickerFrame.swatchFunc = function()
             r, g, b = ColorPickerFrame:GetColorRGB()
             BetterBlizzPlatesDB.friendlyColorNameRGB = { r, g, b }
             BBP.RefreshAllNameplates()
@@ -2420,7 +2480,7 @@ local function guiGeneralTab()
         ColorPickerFrame.previousValues = { r, g, b }
         UpdateColorSquare(icon, r, g, b)
 
-        ColorPickerFrame.func = function()
+        ColorPickerFrame.swatchFunc = function()
             r, g, b = ColorPickerFrame:GetColorRGB()
             BetterBlizzPlatesDB[colorType] = { r, g, b }
             BBP.RefreshAllNameplates()
@@ -3240,7 +3300,7 @@ local function guiPositionAndScale()
     local function OpenColorPicker()
         local r, g, b = unpack(BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB or {1, 1, 1})
         ColorPickerFrame.previousValues = { r, g, b }
-        ColorPickerFrame.func = function()
+        ColorPickerFrame.swatchFunc = function()
             r, g, b = ColorPickerFrame:GetColorRGB()
             BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB = { r, g, b }
             BBP.RefreshAllNameplates()
@@ -3636,7 +3696,7 @@ local function guiCastbar()
         ColorPickerFrame.previousValues = { r, g, b }
         UpdateColorSquare(icon, r, g, b)
 
-        ColorPickerFrame.func = function()
+        ColorPickerFrame.swatchFunc = function()
             r, g, b = ColorPickerFrame:GetColorRGB()
             BetterBlizzPlatesDB[colorType] = { r, g, b }
             BBP.RefreshAllNameplates()
@@ -4311,7 +4371,7 @@ local function guiNameplateAuras()
     blacklistText:SetPoint("BOTTOM", auraBlacklistFrame, "TOP", 10, 0)
     blacklistText:SetText("Blacklist")
 
-    CreateList(auraWhitelistFrame, "auraWhitelist", BetterBlizzPlatesDB.auraWhitelist, BBP.RefreshAllNameplates, nil, true)
+    CreateList(auraWhitelistFrame, "auraWhitelist", BetterBlizzPlatesDB.auraWhitelist, BBP.RefreshAllNameplates, nil, true, nil, nil, nil, true)
 
     local whitelistText = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     whitelistText:SetPoint("BOTTOM", auraWhitelistFrame, "TOP", 10, 0)
@@ -4872,7 +4932,7 @@ local function guiMisc()
     local function OpenColorPicker()
         local r, g, b = unpack(BetterBlizzPlatesDB.guildNameColorRGB or {1, 1, 1})
         ColorPickerFrame.previousValues = { r, g, b }
-        ColorPickerFrame.func = function()
+        ColorPickerFrame.swatchFunc = function()
             r, g, b = ColorPickerFrame:GetColorRGB()
             BetterBlizzPlatesDB.guildNameColorRGB = { r, g, b }
             BBP.RefreshAllNameplates()

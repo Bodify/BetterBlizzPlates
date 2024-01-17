@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.3.4"
+local addonUpdates = "1.3.5"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -609,6 +609,21 @@ local function updateDurations(userTable)
     end
 end
 
+local function UpdateAuraColorsToGreen()
+    if BetterBlizzPlatesDB and BetterBlizzPlatesDB["auraWhitelist"] then
+        for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
+            if entry.entryColors and entry.entryColors.text then
+                -- Update to green color
+                entry.entryColors.text.r = 0
+                entry.entryColors.text.g = 1
+                entry.entryColors.text.b = 0
+            else
+                entry.entryColors = { text = { r = 0, g = 1, b = 0 } }
+            end
+        end
+    end
+end
+
 -- Update message
 local function SendUpdateMessage()
     if sendUpdate then
@@ -616,16 +631,17 @@ local function SendUpdateMessage()
         C_Timer.After(7, function()
             --bbp news
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Added toggle for combo points etc on nameplate in \"Blizzard CVar's\". Fixed the resource scale setting. Updated for 10.2.5")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a You can now change the \"Important Glow\" color for individual auras. Hide nameplate cooldown swipe setting for auras. ColorPicker 10.2.5 fix.")
         end)
     end
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Separate settings for class indicator for friend and enemy.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Friend Indicator setting in the Misc tab.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Patreon link: www.patreon.com/bodydev")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: You can now change the \"Important Glow\" color for individual auras.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Hide nameplate cooldown swipe setting for auras.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: ColorPicker 10.2.5 fix")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Patreon link: www.patreon.com/bodydev")
 end
 
 local function CheckForUpdate()
@@ -2580,6 +2596,11 @@ First:SetScript("OnEvent", function(_, event, addonName)
             BetterBlizzPlatesDB.defaultLargeNamePlateFont, BetterBlizzPlatesDB.defaultLargeFontSize, BetterBlizzPlatesDB.defaultLargeNamePlateFontFlags = SystemFont_LargeNamePlate:GetFont()
             BetterBlizzPlatesDB.defaultNamePlateFont, BetterBlizzPlatesDB.defaultFontSize, BetterBlizzPlatesDB.defaultNamePlateFontFlags = SystemFont_NamePlate:GetFont()
             FetchAndSaveValuesOnFirstLogin()
+
+            if not BetterBlizzPlatesDB.auraWhitelistColorsUpdated then
+                UpdateAuraColorsToGreen() --update default yellow text to green for new color featur
+                BetterBlizzPlatesDB.auraWhitelistColorsUpdated = true
+            end
 
             TurnOnEnabledFeaturesOnLogin()
             BBP.InitializeOptions()
