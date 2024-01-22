@@ -266,6 +266,7 @@ local defaultSettings = {
 		0.4784314036369324,
 		0.9568628072738647,
 	},
+    castBarBackgroundColor = {0.33,0.33,0.33,1},
     -- Nameplate aura settings
     enableNameplateAuraCustomisation = false,
     nameplateAurasCenteredAnchor = false,
@@ -485,11 +486,6 @@ function CVarFetcher()
         BetterBlizzPlatesDB.nameplateGlobalScale = GetCVar("nameplateGlobalScale")
         BetterBlizzPlatesDB.nameplateLargerScale = GetCVar("nameplateLargerScale")
         BetterBlizzPlatesDB.nameplatePlayerLargerScale = GetCVar("nameplatePlayerLargerScale")
-        BetterBlizzPlatesDB.nameplateMinAlpha = GetCVar("nameplateMinAlpha")
-        BetterBlizzPlatesDB.nameplateMinAlphaDistance = GetCVar("nameplateMinAlphaDistance")
-        BetterBlizzPlatesDB.nameplateMaxAlpha = GetCVar("nameplateMaxAlpha")
-        BetterBlizzPlatesDB.nameplateMaxAlphaDistance = GetCVar("nameplateMaxAlphaDistance")
-        BetterBlizzPlatesDB.nameplateOccludedAlphaMult = GetCVar("nameplateOccludedAlphaMult")
         BetterBlizzPlatesDB.nameplateResourceOnTarget = GetCVar("nameplateResourceOnTarget")
 
         BetterBlizzPlatesDB.nameplateMinAlpha = GetCVar("nameplateMinAlpha")
@@ -579,7 +575,121 @@ function BBP.CVarsAreSaved()
     end
 end
 
--- Define the popup window
+local function ResetNameplates()
+    BetterBlizzPlatesDB.nameplateEnemyWidth, BetterBlizzPlatesDB.nameplateEnemyHeight = 110, 45
+    BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = 110, 45
+    BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight = 110, 45
+
+    BetterBlizzPlatesDB.nameplateOverlapH = 0.8
+    BetterBlizzPlatesDB.nameplateOverlapV = 1.1
+    BetterBlizzPlatesDB.nameplateMotionSpeed = 0.025
+    BetterBlizzPlatesDB.nameplateHorizontalScale = 1
+    BetterBlizzPlatesDB.NamePlateVerticalScale = 1
+    BetterBlizzPlatesDB.nameplateMinScale = 0.8
+    BetterBlizzPlatesDB.nameplateMaxScale = 1
+    BetterBlizzPlatesDB.nameplateSelectedScale = 1.2
+    BetterBlizzPlatesDB.NamePlateClassificationScale = 1
+    BetterBlizzPlatesDB.nameplateGlobalScale = 1
+    BetterBlizzPlatesDB.nameplateLargerScale = 1.2
+    BetterBlizzPlatesDB.nameplatePlayerLargerScale = 1.8
+    BetterBlizzPlatesDB.nameplateResourceOnTarget = 0
+
+    BetterBlizzPlatesDB.nameplateMinAlpha = 0.6
+    BetterBlizzPlatesDB.nameplateMinAlphaDistance = 10
+    BetterBlizzPlatesDB.nameplateMaxAlpha = 1.0
+    BetterBlizzPlatesDB.nameplateMaxAlphaDistance = 40
+    BetterBlizzPlatesDB.nameplateOccludedAlphaMult = 0.4
+
+    BetterBlizzPlatesDB.nameplateShowEnemyGuardians = 1
+    BetterBlizzPlatesDB.nameplateShowEnemyMinions = 1
+    BetterBlizzPlatesDB.nameplateShowEnemyMinus = 0
+    BetterBlizzPlatesDB.nameplateShowEnemyPets = 1
+    BetterBlizzPlatesDB.nameplateShowEnemyTotems = 1
+
+    BetterBlizzPlatesDB.nameplateShowFriendlyGuardians = 0
+    BetterBlizzPlatesDB.nameplateShowFriendlyMinions = 0
+    BetterBlizzPlatesDB.nameplateShowFriendlyPets = 0
+    BetterBlizzPlatesDB.nameplateShowFriendlyTotems = 0
+
+    if GetCVar("NamePlateHorizontalScale") == "1.4" then
+        BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
+        BetterBlizzPlatesDB.castBarHeight = 18.8
+        BetterBlizzPlatesDB.largeNameplates = true
+    else
+        BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 4
+        BetterBlizzPlatesDB.castBarHeight = 8
+        BetterBlizzPlatesDB.largeNameplates = false
+    end
+
+    SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
+    SetCVar("nameplateOverlapV", BetterBlizzPlatesDB.nameplateOverlapV)
+    SetCVar("nameplateMotionSpeed", BetterBlizzPlatesDB.nameplateMotionSpeed)
+    SetCVar("nameplateHorizontalScale", BetterBlizzPlatesDB.nameplateHorizontalScale)
+    SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
+    SetCVar("nameplateMinScale", BetterBlizzPlatesDB.nameplateMinScale)
+    SetCVar("nameplateMaxScale", BetterBlizzPlatesDB.nameplateMaxScale)
+    SetCVar("nameplateSelectedScale", BetterBlizzPlatesDB.nameplateSelectedScale)
+    SetCVar("NamePlateClassificationScale", BetterBlizzPlatesDB.NamePlateClassificationScale)
+    SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
+    SetCVar("nameplateLargerScale", BetterBlizzPlatesDB.nameplateLargerScale)
+    SetCVar("nameplatePlayerLargerScale", BetterBlizzPlatesDB.nameplatePlayerLargerScale)
+    SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
+    SetCVar("nameplateMinAlpha", BetterBlizzPlatesDB.nameplateMinAlpha)
+    SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
+    SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
+    SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
+    SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
+    SetCVar("nameplateShowEnemyGuardians", BetterBlizzPlatesDB.nameplateShowEnemyGuardians)
+    SetCVar("nameplateShowEnemyMinions", BetterBlizzPlatesDB.nameplateShowEnemyMinions)
+    SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
+    SetCVar("nameplateShowEnemyPets", BetterBlizzPlatesDB.nameplateShowEnemyPets)
+    SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
+    SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
+    SetCVar("nameplateShowFriendlyMinions", BetterBlizzPlatesDB.nameplateShowFriendlyMinions)
+    SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
+    SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
+    SetCVar('nameplateShowOnlyNames', 0)
+
+    ReloadUI()
+end
+
+local function ResetBBP()
+    BetterBlizzPlatesDB = {}
+
+    ResetNameplates()
+
+    BetterBlizzPlatesDB.hasSaved = true
+
+    ReloadUI()
+end
+
+StaticPopupDialogs["CONFIRM_RESET_BETTERBLIZZPLATESDB"] = {
+    text = "Are you sure you want to reset all BetterBlizzPlates settings?\nThis action cannot be undone.",
+    button1 = "Confirm",
+    button2 = "Cancel",
+    OnAccept = function()
+        ResetBBP()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3,
+}
+
+StaticPopupDialogs["CONFIRM_FIX_NAMEPLATES_BBP"] = {
+    text = "Are you sure you want to reset nameplate CVar's?\nThis action cannot be undone.",
+    button1 = "Confirm",
+    button2 = "Cancel",
+    OnAccept = function()
+        ResetNameplates()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3,
+}
+
+
 StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
     text = "Leave combat to adjust this setting.",
     button1 = "Okay",
@@ -588,6 +698,7 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
     hideOnEscape = true,
     preferredIndex = 3,
 }
+
 
 local updatedDurations = {
     [5913] = 13,     -- New duration for Tremor Totem
@@ -619,6 +730,18 @@ local function UpdateAuraColorsToGreen()
                 entry.entryColors.text.b = 0
             else
                 entry.entryColors = { text = { r = 0, g = 1, b = 0 } }
+            end
+        end
+    end
+end
+
+local function AddAlphaValuesToAuraColors()
+    if BetterBlizzPlatesDB and BetterBlizzPlatesDB["auraWhitelist"] then
+        for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
+            if entry.entryColors and entry.entryColors.text then
+                entry.entryColors.text.a = 1
+            else
+                entry.entryColors = { text = { r = 0, g = 1, b = 0, a = 1 } }
             end
         end
     end
@@ -1942,6 +2065,19 @@ local function HandleNamePlateAdded(unit)
         BBP.HidePersonalBuffFrame()
     end
 
+--[[
+    if frame.castBar and not frame.castBar.bbpHook then
+        print("hooked")
+        frame.castBar:HookScript("OnShow", function()
+            print("KEKBOOM")
+        end)
+
+        frame.castBar.bbpHook = true
+    end
+
+]]
+
+
     if nameplate.driverFrame.classNamePlateMechanicFrame then
         local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
         nameplate.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
@@ -2461,6 +2597,7 @@ local function HideHealthbarInPvEMagic()
     if BetterBlizzPlatesDB.friendlyHideHealthBar and not hookedGetNamePlateTypeFromUnit then
         -- Set the hook flag
         hookedGetNamePlateTypeFromUnit = true
+        local showFriendlyCastbar = true
 
         -- Register events
         local eventFrame = CreateFrame("Frame")
@@ -2477,7 +2614,11 @@ local function HideHealthbarInPvEMagic()
                     setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
                 else
                     setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
-                    setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
+                    if showFriendlyCastbar then
+                        setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
+                    else
+                        setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
+                    end
                 end
             end
         )
@@ -2540,10 +2681,15 @@ end)
 -- Slash command
 SLASH_BBP1 = "/bbp"
 SlashCmdList["BBP"] = function(msg)
-    if msg == "news" then
+    local command = string.lower(msg)
+    if command == "news" then
         NewsUpdateMessage()
-    elseif msg == "nahj" or msg == "Nahj" then
+    elseif command == "nahj" then
         StaticPopup_Show("BBP_CONFIRM_NAHJ_PROFILE")
+    elseif command == "reset" then
+        StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
+    elseif command == "fixnameplates" then
+        StaticPopup_Show("CONFIRM_FIX_NAMEPLATES_BBP")
     else
         InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
     end
@@ -2600,6 +2746,11 @@ First:SetScript("OnEvent", function(_, event, addonName)
             if not BetterBlizzPlatesDB.auraWhitelistColorsUpdated then
                 UpdateAuraColorsToGreen() --update default yellow text to green for new color featur
                 BetterBlizzPlatesDB.auraWhitelistColorsUpdated = true
+            end
+
+            if not BetterBlizzPlatesDB.auraWhitelistAlphaUpdated then
+                AddAlphaValuesToAuraColors()
+                BetterBlizzPlatesDB.auraWhitelistAlphaUpdated = true
             end
 
             TurnOnEnabledFeaturesOnLogin()

@@ -34,10 +34,11 @@ local function GetAuraDetails(spellName, spellId)
         if (entry.name and spellName and string.lower(entry.name) == string.lower(spellName)) or entry.id == spellId then
             local isImportant = entry.flags and entry.flags.important or false
             local isPandemic = entry.flags and entry.flags.pandemic or false
-            return true, isImportant, isPandemic
+            local auraColor = entry.entryColors and entry.entryColors.text or nil
+            return true, isImportant, isPandemic, auraColor
         end
     end
-    return false, false, false
+    return false, false, false, false
 end
 
 local trackedBuffs = {};
@@ -376,7 +377,7 @@ local function SetBuffEmphasisBorder(buff, aura, isPlayerUnit, isEnemyUnit, shou
     end
 end
 
-local function SetImportantGlow(buff, isPlayerUnit, isImportant)
+local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
     local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
     local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
 
@@ -386,6 +387,7 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant)
             if not buff.ImportantGlow then
                 buff.ImportantGlow = buff:CreateTexture(nil, "OVERLAY")
                 buff.ImportantGlow:SetAtlas("newplayertutorial-drag-slotgreen")
+                buff.ImportantGlow:SetDesaturated(true)
                 if buff.Cooldown and buff.Cooldown:IsVisible() then
                     buff.ImportantGlow:SetParent(buff.Cooldown)
                 end
@@ -402,6 +404,11 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant)
             end
             if buff.buffBorderPurge then
                 buff.buffBorderPurge:Hide()
+            end
+            if auraColor then
+                buff.ImportantGlow:SetVertexColor(auraColor.r, auraColor.g, auraColor.b, auraColor.a)
+            else
+                buff.ImportantGlow:SetVertexColor(0, 1, 0)
             end
             buff.ImportantGlow:Show()
             buff.Border:Hide()
@@ -637,7 +644,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     local isPlayerUnit = UnitIsUnit("player", self.unit)
     local isEnemyUnit = not UnitIsFriend("player", self.unit)
     self.isEnemyUnit = isEnemyUnit
-    local shouldShowAura, isImportant, isPandemic
+    local shouldShowAura, isImportant, isPandemic, auraColor
 
 
     self.auras:Iterate(function(auraInstanceID, aura)
@@ -653,7 +660,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         local spellName = FetchSpellName(aura.spellId)
         local spellId = aura.spellId
 
-        shouldShowAura, isImportant, isPandemic = GetAuraDetails(spellName, spellId)
+        shouldShowAura, isImportant, isPandemic, auraColor = GetAuraDetails(spellName, spellId)
 
         -- Set aura dimensions
         SetAuraDimensions(buff);
@@ -663,7 +670,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
         -- Pandemic Glow
         SetPandemicGlow(buff, aura, isPandemic)
-        SetImportantGlow(buff, isPlayerUnit, isImportant)
+        SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
 
         -- Purge Glow
         SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)

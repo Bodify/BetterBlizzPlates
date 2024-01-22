@@ -4,16 +4,21 @@ BBP = BBP or {}
 
 local nahjAuraWhitelist = {
     {
+        ["flags"] = {
+            ["pandemic"] = false,
+            ["important"] = true,
+        },
+        ["comment"] = "",
         ["id"] = 102351,
         ["entryColors"] = {
             ["text"] = {
-                ["r"] = 1,
+                ["a"] = 1,
+                ["r"] = 0,
                 ["g"] = 1,
                 ["b"] = 0,
             },
         },
         ["name"] = "",
-        ["comment"] = "",
     }, -- [1]
 }
 
@@ -263,7 +268,7 @@ function BBP.NahjProfile()
 	db.nameplateMinAlphaDistance = "10"
 	db.castBarHeight = 18.8
 	db.arenaIndicatorModeTwo = false
-	db.nameplateOverlapV = "1.3600000143051"
+	db.nameplateOverlapV = "0.3"
 	db.nameplateEnemyWidthScale = 135
 	db.executeIndicatorAlwaysOn = false
 	db.castBarEmphasisHeight = false

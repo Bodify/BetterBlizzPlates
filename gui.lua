@@ -1205,7 +1205,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         -- Function to set the text color
         local function SetTextColor(r, g, b)
             if colorText then
-                if npc.flags.important then
+                if npc.flags and npc.flags.important then
                     text:SetTextColor(r, g, b)
                 else
                     text:SetTextColor(1,1,0)
@@ -1293,17 +1293,17 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             checkBoxI:SetScript("OnClick", function(self)
                 npc.flags.important = self:GetChecked() -- Save the state in the npc flags
             end)
-            local function SetImportantBoxColor(r, g, b)
-                if npc.flags.important then
-                    checkBoxI.texture:SetVertexColor(r, g, b)
+            local function SetImportantBoxColor(r, g, b, a)
+                if npc.flags and npc.flags.important then
+                    checkBoxI.texture:SetVertexColor(r, g, b, a)
                 else
-                    checkBoxI.texture:SetVertexColor(0,1,0)
+                    checkBoxI.texture:SetVertexColor(0,1,0,1)
                 end
             end
             checkBoxI:HookScript("OnClick", function()
                 BBP.RefreshAllNameplates()
                 SetTextColor(entryColors.text.r, entryColors.text.g, entryColors.text.b)
-                SetImportantBoxColor(entryColors.text.r, entryColors.text.g, entryColors.text.b)
+                SetImportantBoxColor(entryColors.text.r, entryColors.text.g, entryColors.text.b, entryColors.text.a)
             end)
 
 
@@ -1318,36 +1318,41 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             colorPickerButton2:SetText("C")
             CreateTooltip(colorPickerButton2, "Important Glow Color", "ANCHOR_TOPRIGHT")
 
-            SetImportantBoxColor(entryColors.text.r, entryColors.text.g, entryColors.text.b)
+            SetImportantBoxColor(entryColors.text.r, entryColors.text.g, entryColors.text.b, entryColors.text.a)
 
             -- Function to open the color picker
             local function OpenColorPicker()
-                local r, g, b = entryColors.text.r, entryColors.text.g, entryColors.text.b
+                local colorData = entryColors.text or {}
+                local r, g, b = colorData.r or 1, colorData.g or 1, colorData.b or 1
+                local a = colorData.a or 1 -- Default alpha to 1 if not present
 
-                --ColorPickerFrame:SetColorRGB(r, g, b)
-                ColorPickerFrame.previousValues = { r, g, b }
-
-                ColorPickerFrame.swatchFunc = function()
-                    r, g, b = ColorPickerFrame:GetColorRGB()
-                    entryColors.text.r, entryColors.text.g, entryColors.text.b = r, g, b
-                    SetTextColor(r, g, b)  -- Update text color when the color picker changes
-                    SetImportantBoxColor(r, g, b)
+                local function updateColors()
+                    entryColors.text.r, entryColors.text.g, entryColors.text.b, entryColors.text.a = r, g, b, a
+                    SetTextColor(r, g, b, 1)  -- Update text color
+                    SetImportantBoxColor(r, g, b, a)
                     BBP.RefreshAllNameplates()
-
-                    -- Update the npc entry in listData with the new color
-                    npc.entryColors.text.r, npc.entryColors.text.g, npc.entryColors.text.b = r, g, b
-                    listData[index] = npc  -- Update the entry in the listData
                 end
 
-                ColorPickerFrame.cancelFunc = function()
-                    r, g, b = unpack(ColorPickerFrame.previousValues)
-                    entryColors.text.r, entryColors.text.g, entryColors.text.b = r, g, b
-                    SetTextColor(r, g, b)  -- Update text color if canceled
-                    SetImportantBoxColor(r, g, b)
+                local function swatchFunc()
+                    r, g, b = ColorPickerFrame:GetColorRGB()
+                    updateColors()
                 end
-                ColorPickerFrame:ClearAllPoints()
-                ColorPickerFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-                ColorPickerFrame:Show()
+
+                local function opacityFunc()
+                    a = ColorPickerFrame:GetColorAlpha()
+                    updateColors()
+                end
+
+                local function cancelFunc()
+                    r, g, b, a = unpack(ColorPickerFrame.previousValues)
+                    updateColors()
+                end
+
+                ColorPickerFrame.previousValues = {r, g, b, a}
+                ColorPickerFrame:SetupColorPickerAndShow({
+                    r = r, g = g, b = b, opacity = a, hasOpacity = true,
+                    swatchFunc = swatchFunc, opacityFunc = opacityFunc, cancelFunc = cancelFunc
+                })
             end
 
             colorPickerButton2:SetScript("OnClick", OpenColorPicker)
@@ -2736,24 +2741,24 @@ local function guiGeneralTab()
 
     useCustomFont:HookScript("OnClick", function(self)
         if self:GetChecked() then
-            UIDropDownMenu_EnableDropDown(fontDropdown)
+            LibDD:UIDropDownMenu_EnableDropDown(fontDropdown)
         else
-            UIDropDownMenu_DisableDropDown(fontDropdown)
+            LibDD:UIDropDownMenu_DisableDropDown(fontDropdown)
         end
     end)
 
     useCustomTexture:HookScript("OnClick", function(self)
         CheckAndToggleCheckboxes(useCustomTexture)
         if self:GetChecked() then
-            UIDropDownMenu_EnableDropDown(textureDropdown)
-            UIDropDownMenu_EnableDropDown(textureDropdownFriendly)
+            LibDD:UIDropDownMenu_EnableDropDown(textureDropdown)
+            LibDD:UIDropDownMenu_EnableDropDown(textureDropdownFriendly)
             --useCustomTextureForEnemy:Enable()
             --useCustomTextureForEnemy:SetAlpha(1)
             --useCustomTextureForFriendly:Enable()
             --useCustomTextureForFriendly:SetAlpha(1)
         else
-            UIDropDownMenu_DisableDropDown(textureDropdown)
-            UIDropDownMenu_DisableDropDown(textureDropdownFriendly)
+            LibDD:UIDropDownMenu_DisableDropDown(textureDropdown)
+            LibDD:UIDropDownMenu_DisableDropDown(textureDropdownFriendly)
             --useCustomTextureForEnemy:Disable()
             --useCustomTextureForEnemy:SetAlpha(0)
             --useCustomTextureForFriendly:Disable()
@@ -3346,6 +3351,7 @@ local function guiPositionAndScale()
 
     local focusTargetIndicatorChangeTexture = CreateCheckbox("focusTargetIndicatorChangeTexture", "Re-texture healthbar", contentFrame)
     focusTargetIndicatorChangeTexture:SetPoint("TOPLEFT", focusTargetIndicatorColorNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(focusTargetIndicatorChangeTexture, "Re-texture the castbar.\nNOTE: This is still being tested, very beta alpha atm im fighting blizz functions to make it work.")
 
     local focusTargetIndicatorTexture = CreateTextureDropdown(
         "focusTargetIndicatorTexture",
@@ -3361,9 +3367,9 @@ local function guiPositionAndScale()
 
     focusTargetIndicatorChangeTexture:HookScript("OnClick", function(self)
         if self:GetChecked() then
-            UIDropDownMenu_EnableDropDown(focusTargetIndicatorTexture)
+            LibDD:UIDropDownMenu_EnableDropDown(focusTargetIndicatorTexture)
         else
-            UIDropDownMenu_DisableDropDown(focusTargetIndicatorTexture)
+            LibDD:UIDropDownMenu_DisableDropDown(focusTargetIndicatorTexture)
         end
     end)
 
@@ -3637,7 +3643,7 @@ local function guiCastbar()
     how2usecastemphasis:SetText("Add name or spell ID. Case-insensitive.\n \n \nAdd a comment to the entry with slash\nfor example 1337/comment or polymorph/kick this\n \nType a name or spell ID already in list to delete it")
 
     local castbarSettingsText = guiCastbar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    castbarSettingsText:SetPoint("LEFT", guiCastbar, "TOPRIGHT", -250, -13)
+    castbarSettingsText:SetPoint("LEFT", guiCastbar, "TOPRIGHT", -280, -13)
     castbarSettingsText:SetText("Castbar settings")
     local castbarSettingsIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
     castbarSettingsIcon:SetAtlas("powerswirlanimation-starburst-soulbinds")
@@ -3685,31 +3691,47 @@ local function guiCastbar()
     local castBarRecolor = CreateCheckbox("castBarRecolor", "Re-color castbar", enableCastbarCustomization)
     castBarRecolor:SetPoint("TOPLEFT", castBarTextScale, "BOTTOMLEFT", -12, -3)
 
-    local function UpdateColorSquare(icon, r, g, b)
-        if r and g and b then
+    local function UpdateColorSquare(icon, r, g, b, a)
+        if r and g and b and a then
+            icon:SetVertexColor(r, g, b, a)
+        else
             icon:SetVertexColor(r, g, b)
         end
     end
 
     local function OpenColorPicker(colorType, icon)
-        local r, g, b = unpack(BetterBlizzPlatesDB[colorType] or {1, 1, 1})
-        ColorPickerFrame.previousValues = { r, g, b }
-        UpdateColorSquare(icon, r, g, b)
+        local colorData = BetterBlizzPlatesDB[colorType] or {1, 1, 1}
+        local r, g, b = colorData[1], colorData[2], colorData[3]
+        local a = colorData[4] -- This could be nil for older configurations
 
-        ColorPickerFrame.swatchFunc = function()
-            r, g, b = ColorPickerFrame:GetColorRGB()
-            BetterBlizzPlatesDB[colorType] = { r, g, b }
-            BBP.RefreshAllNameplates()
-            UpdateColorSquare(icon, r, g, b)
-        end
+        -- Set default alpha value if it's nil
+        if a == nil then a = 1 end
 
-        ColorPickerFrame.cancelFunc = function()
-            r, g, b = unpack(ColorPickerFrame.previousValues)
-            BetterBlizzPlatesDB[colorType] = { r, g, b }
-            UpdateColorSquare(icon, r, g, b)
-        end
+        ColorPickerFrame.previousValues = {r, g, b, a}
+        UpdateColorSquare(icon, r, g, b, a)
 
-        ColorPickerFrame:Show()
+        local colorPickerInfo = {
+            swatchFunc = function()
+                r, g, b = ColorPickerFrame:GetColorRGB()
+                a = ColorPickerFrame:GetColorAlpha()
+                BetterBlizzPlatesDB[colorType] = {r, g, b, a}
+                BBP.RefreshAllNameplates()
+                UpdateColorSquare(icon, r, g, b, a)
+            end,
+            opacityFunc = function()
+                a = ColorPickerFrame:GetColorAlpha()
+                BetterBlizzPlatesDB[colorType] = {r, g, b, a}
+                UpdateColorSquare(icon, r, g, b, a)
+            end,
+            cancelFunc = function()
+                r, g, b, a = unpack(ColorPickerFrame.previousValues)
+                BetterBlizzPlatesDB[colorType] = {r, g, b, a}
+                UpdateColorSquare(icon, r, g, b, a)
+            end,
+            r = r, g = g, b = b, opacity = a, hasOpacity = true
+        }
+
+        ColorPickerFrame:SetupColorPickerAndShow(colorPickerInfo)
     end
 
     local castBarCastColor = CreateFrame("Button", nil, castBarRecolor, "UIPanelButtonTemplate")
@@ -3738,8 +3760,76 @@ local function guiCastbar()
         OpenColorPicker("castBarChanneledColor", castBarChanneledColorIcon)
     end)
 
+    local useCustomCastbarTexture = CreateCheckbox("useCustomCastbarTexture", "Re-texture Castbar", enableCastbarCustomization)
+    useCustomCastbarTexture:SetPoint("TOPLEFT", castBarRecolor, "BOTTOMLEFT", 0, -16)
+
+    local customCastbarTextureDropdown = CreateTextureDropdown(
+        "customCastbarTextureDropdown",
+        useCustomCastbarTexture,
+        "Select Texture",
+        "customCastbarTexture",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = useCustomCastbarTexture, x = 5, y = -20, label = "CustomCastbar" }
+    )
+    CreateTooltip(customCastbarTextureDropdown, "Castbar Texture")
+
+    local customCastbarBGTextureDropdown = CreateTextureDropdown(
+        "customCastbarBGTextureDropdown",
+        useCustomCastbarTexture,
+        "Select Texture",
+        "customCastbarBGTexture",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = useCustomCastbarTexture, x = 5, y = -51, label = "CustomBGCastbar" }
+    )
+    CreateTooltip(customCastbarBGTextureDropdown, "Background Texture")
+
+    local useCustomCastbarBGTexture = CreateCheckbox("useCustomCastbarBGTexture", "BG", useCustomCastbarTexture)
+    useCustomCastbarBGTexture:SetPoint("LEFT", customCastbarBGTextureDropdown, "RIGHT", -15, 1)
+    CreateTooltip(useCustomCastbarBGTexture, "Change the background texture as well.")
+    useCustomCastbarBGTexture:SetFrameStrata("HIGH")
+
+    local castBarBackgroundColor = CreateFrame("Button", nil, useCustomCastbarBGTexture, "UIPanelButtonTemplate")
+    castBarBackgroundColor:SetText("Color")
+    castBarBackgroundColor:SetPoint("LEFT", useCustomCastbarBGTexture, "RIGHT", 16, 0)
+    castBarBackgroundColor:SetSize(45, 20)
+    local castBarBackgroundColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
+    castBarBackgroundColorIcon:SetAtlas("newplayertutorial-icon-key")
+    castBarBackgroundColorIcon:SetSize(18, 17)
+    castBarBackgroundColorIcon:SetPoint("LEFT", castBarBackgroundColor, "RIGHT", 0, -1)
+    UpdateColorSquare(castBarBackgroundColorIcon, unpack(BetterBlizzPlatesDB["castBarBackgroundColor"] or {1, 1, 1, 1}))
+    castBarBackgroundColor:SetScript("OnClick", function()
+        OpenColorPicker("castBarBackgroundColor", castBarBackgroundColorIcon)
+    end)
+
+    useCustomCastbarTexture:HookScript("OnClick", function(self)
+        CheckAndToggleCheckboxes(useCustomCastbarTexture)
+        if self:GetChecked() then
+            LibDD:UIDropDownMenu_EnableDropDown(customCastbarTextureDropdown)
+            if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
+                LibDD:UIDropDownMenu_EnableDropDown(customCastbarBGTextureDropdown)
+                castBarBackgroundColor:Enable()
+                castBarBackgroundColor:SetAlpha(1)
+                castBarBackgroundColorIcon:SetAlpha(1)
+            else
+                castBarBackgroundColor:Disable()
+                castBarBackgroundColor:SetAlpha(0)
+                castBarBackgroundColorIcon:SetAlpha(0)
+            end
+        else
+            LibDD:UIDropDownMenu_DisableDropDown(customCastbarTextureDropdown)
+            LibDD:UIDropDownMenu_DisableDropDown(customCastbarBGTextureDropdown)
+            castBarBackgroundColor:Disable()
+            castBarBackgroundColor:SetAlpha(0)
+            castBarBackgroundColorIcon:SetAlpha(0)
+        end
+    end)
+
     local interruptedByIndicator = CreateCheckbox("interruptedByIndicator", "Show who interrupted", enableCastbarCustomization)
-    interruptedByIndicator:SetPoint("TOPLEFT", castBarRecolor, "BOTTOMLEFT", 0, -23)
+    interruptedByIndicator:SetPoint("TOPLEFT", useCustomCastbarTexture, "BOTTOMLEFT", 0, -53)
     CreateTooltip(interruptedByIndicator, "Show the name of who interrupted the cast\ninstead of just the standard \"Interrupted\" text.")
 
     local castBarRecolorInterrupt = CreateCheckbox("castBarRecolorInterrupt", "Interrupt CD color", enableCastbarCustomization)
@@ -3775,7 +3865,7 @@ local function guiCastbar()
     end)
 
     local castbarEmphasisSettingsText = guiCastbar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    castbarEmphasisSettingsText:SetPoint("LEFT", guiCastbar, "TOPRIGHT", -250, -340)
+    castbarEmphasisSettingsText:SetPoint("LEFT", guiCastbar, "TOPRIGHT", -265, -410)
     castbarEmphasisSettingsText:SetText("Castbar emphasis settings")
     local castbarSettingsEmphasisIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
     castbarSettingsEmphasisIcon:SetAtlas("powerswirlanimation-starburst-soulbinds")
@@ -3796,14 +3886,14 @@ local function guiCastbar()
     CreateTooltip(enableCastbarEmphasis, "Customize castbar for spells in the list")
 
     local castBarEmphasisOnlyInterruptable = CreateCheckbox("castBarEmphasisOnlyInterruptable", "Interruptable cast only", enableCastbarEmphasis)
-    castBarEmphasisOnlyInterruptable:SetPoint("TOPLEFT", enableCastbarEmphasis, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+    castBarEmphasisOnlyInterruptable:SetPoint("LEFT", enableCastbarEmphasis.text, "RIGHT", 0, 0)
     CreateTooltip(castBarEmphasisOnlyInterruptable, "Only apply emphasis settings if the cast is interruptable")
 
-    local castBarEmphasisColor = CreateCheckbox("castBarEmphasisColor", "Color castbar", enableCastbarEmphasis)
-    castBarEmphasisColor:SetPoint("TOPLEFT", castBarEmphasisOnlyInterruptable, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-
     local castBarEmphasisHealthbarColor = CreateCheckbox("castBarEmphasisHealthbarColor", "Color healthbar", enableCastbarEmphasis)
-    castBarEmphasisHealthbarColor:SetPoint("TOPLEFT", castBarEmphasisColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    castBarEmphasisHealthbarColor:SetPoint("TOPLEFT", enableCastbarEmphasis, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+
+    local castBarEmphasisColor = CreateCheckbox("castBarEmphasisColor", "Color castbar", enableCastbarEmphasis)
+    castBarEmphasisColor:SetPoint("LEFT", castBarEmphasisHealthbarColor.text, "RIGHT", 0, 0)
 
     local castBarEmphasisHeight = CreateCheckbox("castBarEmphasisHeight", "Height", enableCastbarEmphasis)
     castBarEmphasisHeight:SetPoint("TOPLEFT", castBarEmphasisHealthbarColor, "BOTTOMLEFT", 0, -2)
@@ -3850,12 +3940,29 @@ local function guiCastbar()
                 castBarNoInterruptColorIcon:SetAlpha(0)
                 castBarDelayedInterruptColorIcon:SetAlpha(0)
             end
+            if BetterBlizzPlatesDB.useCustomCastbarTexture then
+                if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
+                    castBarBackgroundColor:Enable()
+                    castBarBackgroundColor:SetAlpha(1)
+                    castBarBackgroundColorIcon:SetAlpha(1)
+                else
+                    castBarBackgroundColor:Disable()
+                    castBarBackgroundColor:SetAlpha(0)
+                    castBarBackgroundColorIcon:SetAlpha(0)
+                end
+            else
+                castBarBackgroundColor:SetAlpha(0)
+                castBarBackgroundColor:Disable()
+                castBarBackgroundColorIcon:SetAlpha(0)
+            end
         else
             listFrame:SetAlpha(0.5)
             castBarCastColorIcon:SetAlpha(0)
             castBarChanneledColorIcon:SetAlpha(0)
             castBarNoInterruptColorIcon:SetAlpha(0)
             castBarDelayedInterruptColorIcon:SetAlpha(0)
+            castBarBackgroundColor:SetAlpha(0)
+            castBarBackgroundColorIcon:SetAlpha(0)
         end
     end)
 
@@ -3878,6 +3985,21 @@ local function guiCastbar()
         else
             castBarNoInterruptColorIcon:SetAlpha(0)
             castBarDelayedInterruptColorIcon:SetAlpha(0)
+        end
+    end)
+
+    useCustomCastbarBGTexture:HookScript("OnClick", function (self)
+        CheckAndToggleCheckboxes(useCustomCastbarBGTexture)
+        if self:GetChecked() then
+            LibDD:UIDropDownMenu_EnableDropDown(customCastbarBGTextureDropdown)
+            castBarBackgroundColor:Enable()
+            castBarBackgroundColor:SetAlpha(1)
+            castBarBackgroundColorIcon:SetAlpha(1)
+        else
+            LibDD:UIDropDownMenu_DisableDropDown(customCastbarBGTextureDropdown)
+            castBarBackgroundColor:Disable()
+            castBarBackgroundColor:SetAlpha(0)
+            castBarBackgroundColorIcon:SetAlpha(0)
         end
     end)
 
@@ -3909,6 +4031,21 @@ local function guiCastbar()
                 castBarDelayedInterruptColor:Disable()
                 castBarNoInterruptColorIcon:SetAlpha(0)
                 castBarDelayedInterruptColorIcon:SetAlpha(0)
+            end
+            if BetterBlizzPlatesDB.useCustomCastbarTexture then
+                if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
+                    castBarBackgroundColor:Enable()
+                    castBarBackgroundColor:SetAlpha(1)
+                    castBarBackgroundColorIcon:SetAlpha(1)
+                else
+                    castBarBackgroundColor:Disable()
+                    castBarBackgroundColor:SetAlpha(0)
+                    castBarBackgroundColorIcon:SetAlpha(0)
+                end
+            else
+                castBarBackgroundColor:Disable()
+                castBarBackgroundColor:SetAlpha(0)
+                castBarBackgroundColorIcon:SetAlpha(0)
             end
         else
             C_Timer.After(1, function()
@@ -4720,11 +4857,11 @@ local function guiNameplateAuras()
     local function TogglePanel()
         if BBP.variablesLoaded then
             if BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
-                UIDropDownMenu_EnableDropDown(nameplateAuraDropdown)
-                UIDropDownMenu_EnableDropDown(nameplateAuraRelativeDropdown)
+                LibDD:UIDropDownMenu_EnableDropDown(nameplateAuraDropdown)
+                LibDD:UIDropDownMenu_EnableDropDown(nameplateAuraRelativeDropdown)
             else
-                UIDropDownMenu_DisableDropDown(nameplateAuraDropdown)
-                UIDropDownMenu_DisableDropDown(nameplateAuraRelativeDropdown)
+                LibDD:UIDropDownMenu_DisableDropDown(nameplateAuraDropdown)
+                LibDD:UIDropDownMenu_DisableDropDown(nameplateAuraRelativeDropdown)
             end
         else
             C_Timer.After(1, function()
