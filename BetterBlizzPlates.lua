@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.3.5"
+local addonUpdates = "1.3.6"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -754,7 +754,7 @@ local function SendUpdateMessage()
         C_Timer.After(7, function()
             --bbp news
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a You can now change the \"Important Glow\" color for individual auras. Hide nameplate cooldown swipe setting for auras. ColorPicker 10.2.5 fix.")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Some new beta stuff + bugfixes.")
         end)
     end
 end
