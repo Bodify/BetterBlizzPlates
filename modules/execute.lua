@@ -108,10 +108,10 @@ end)
 function BBP.ToggleExecuteIndicator(value)
     if BetterBlizzPlatesDB.executeIndicator then
         executeEventFrame:RegisterEvent("UNIT_HEALTH")
-        executeEventFrame:RegisterEvent("UNIT_MAXHEALTH")
+        --executeEventFrame:RegisterEvent("UNIT_MAXHEALTH")
     else
         executeEventFrame:UnregisterEvent("UNIT_HEALTH")
-        executeEventFrame:UnregisterEvent("UNIT_MAXHEALTH")
+        --executeEventFrame:UnregisterEvent("UNIT_MAXHEALTH")
     end
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         BBP.ExecuteIndicator(nameplate.UnitFrame)

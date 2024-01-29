@@ -73,7 +73,7 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
         -- Set cooldown if provided
         if duration then
             if not frame.customCooldown then
-                frame.customCooldown = CreateFrame("Cooldown", nil, frame.totemIndicator, "CooldownFrameTemplate")
+                frame.customCooldown = CreateFrame("Cooldown", "totemIndicator", frame.totemIndicator, "CooldownFrameTemplate")
                 frame.customCooldown:SetPoint('TOPLEFT', frame.totemIndicator, 'TOPLEFT', 1, -1)
                 frame.customCooldown:SetPoint('BOTTOMRIGHT', frame.totemIndicator, 'BOTTOMRIGHT', -1, 1)
             end
@@ -160,21 +160,28 @@ function BBP.GetRandomTotemAttributes()
         end
     end
 
-    -- Decide whether to pick an important or less important totem
-    local shouldPickImportant = math.random() < 0.5
-
     local selectedKey
-    if shouldPickImportant then
-        selectedKey = importantKeys[math.random(1, #importantKeys)]
-    else
-        selectedKey = lessImportantKeys[math.random(1, #lessImportantKeys)]
+    if #importantKeys > 0 or #lessImportantKeys > 0 then
+        local shouldPickImportant = math.random() < 0.5
+        if shouldPickImportant and #importantKeys > 0 then
+            selectedKey = importantKeys[math.random(1, #importantKeys)]
+        elseif #lessImportantKeys > 0 then
+            selectedKey = lessImportantKeys[math.random(1, #lessImportantKeys)]
+        end
     end
 
-    -- Retrieve the selected NPC data
-    local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[selectedKey]
-
-    -- Return the icon, color, importance flag, name, size, and hideIcon status associated with the selected NPC
-    return npcData.icon, npcData.color, npcData.important, npcData.name, npcData.size, npcData.hideIcon
+    if selectedKey then
+        local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[selectedKey]
+        return npcData.icon, npcData.color, npcData.important, npcData.name, npcData.size, npcData.hideIcon
+    else
+        -- Return a dummy set of attributes
+        return "Interface\\Icons\\inv_misc_questionmark", -- Dummy icon
+               {1, 0, 0}, -- Dummy color (red)
+               false, -- Not important
+               "Dummy NPC", -- Dummy name
+               30, -- Dummy size
+               true -- Show icon
+    end
 end
 
 -- Apply totem icons and color nameplate
@@ -196,7 +203,8 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame, unit)
         return
     end
 
-    local isEnemy = UnitIsEnemy("player", unit)
+    local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
+    isEnemy = isEnemy or isNeutral
 
     -- Initialize totem components
     BBP.CreateTotemComponents(frame, size)

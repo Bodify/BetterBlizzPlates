@@ -102,12 +102,6 @@ function BBP.FocusTargetIndicator(frame)
     -- Test mode
     if BetterBlizzPlatesDB.focusTargetIndicatorTestMode then
         frame.focusTargetIndicator:Show()
-        if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate then
-            local color = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB or {1, 1, 1}
-            frame.healthBar:SetStatusBarColor(unpack(color))
-        else
-            BBP.CompactUnitFrame_UpdateHealthColor(frame)
-        end
         if BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture then
             frame.healthBar:SetStatusBarTexture(focusTexture)
         else
@@ -116,6 +110,12 @@ function BBP.FocusTargetIndicator(frame)
             else
                 frame.healthBar:SetStatusBarTexture("Interface/TargetingFrame/UI-TargetingFrame-BarFill")
             end
+        end
+        if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate then
+            local color = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB or {1, 1, 1}
+            frame.healthBar:SetStatusBarColor(unpack(color))
+        else
+            BBP.CompactUnitFrame_UpdateHealthColor(frame)
         end
         return
     end
@@ -142,7 +142,7 @@ end
 
 -- Event listener for Target Indicator
 local frameTargetChanged = CreateFrame("Frame")
-frameTargetChanged:RegisterEvent("PLAYER_TARGET_CHANGED")
+--frameTargetChanged:RegisterEvent("PLAYER_TARGET_CHANGED")
 frameTargetChanged:SetScript("OnEvent", function(self, event)
     local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
 
@@ -168,6 +168,7 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.ApplyTotemIconsAndColorNameplate(previousTargetNameplate.UnitFrame, previousTargetNameplate.UnitFrame.unit)
             end
         end
+--[[
         if BetterBlizzPlatesDB.hideCastbar then
             if previousTargetNameplate.UnitFrame then
                 local castBar = previousTargetNameplate.UnitFrame.castBar --149
@@ -184,6 +185,8 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
         end
+]]
+
         previousTargetNameplate = nil
     end
 
@@ -250,7 +253,7 @@ end
 
 -- Event listener for Focus Target Indicator
 local frameFocusTargetChanged = CreateFrame("Frame")
-frameFocusTargetChanged:RegisterEvent("PLAYER_FOCUS_CHANGED")
+--frameFocusTargetChanged:RegisterEvent("PLAYER_FOCUS_CHANGED")
 frameFocusTargetChanged:SetScript("OnEvent", function(self, event)
     local nameplateForFocusTarget = C_NamePlate.GetNamePlateForUnit("focus")
 

@@ -42,8 +42,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         frame.classIndicator:SetFrameStrata("HIGH")
     end
 
-    local isFriendly = UnitIsFriend("player", frame.unit)
-    local isEnemy = not isFriendly
+    local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(frame.unit)
     local isPlayer = UnitIsPlayer(frame.unit)
     local isUser = UnitIsUnit(frame.unit, "player")
 
@@ -57,7 +56,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         return
     end
 
-    if (isFriendly and not friendlyOnly) or (isEnemy and not enemyOnly) then
+    if (isFriend and not friendlyOnly) or (isEnemy and not enemyOnly) then
         frame.classIndicator:Hide()
         return
     end
@@ -68,7 +67,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
 
     -- Set position and scale dynamically
-    if isFriendly then
+    if isFriend then
         anchorPoint = BetterBlizzPlatesDB.classIndicatorFriendlyAnchor
         oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
         xPos = BetterBlizzPlatesDB.classIndicatorFriendlyXPos
@@ -155,7 +154,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     local Details = Details
     if useSpecIcon or showHealerIcon then
         if not specID then
-            if isFriendly and Details then
+            if isFriend and Details then
                 local unitGUID = UnitGUID(frame.displayedUnit)
                 if Details then
                     specID = Details:GetSpecByGUID(unitGUID)

@@ -1204,14 +1204,17 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
 
         -- Function to set the text color
         local function SetTextColor(r, g, b)
+            r = r or 1
+            b = b or 0
+            g = g or 0.8196
             if colorText then
                 if npc.flags and npc.flags.important then
                     text:SetTextColor(r, g, b)
                 else
-                    text:SetTextColor(1,1,0)
+                    text:SetTextColor(1, 1, 0)  -- Keeping alpha consistent
                 end
             else
-                text:SetTextColor(1,1,0)
+                text:SetTextColor(1, 1, 0)  -- Keeping alpha consistent
             end
         end
 
@@ -1238,34 +1241,60 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             colorPickerButton:SetPoint("RIGHT", deleteButton, "LEFT", -5, 0)
             colorPickerButton:SetText("Color")
 
-            -- Function to open the color picker
-            local function OpenColorPicker()
-                local r, g, b = entryColors.text.r, entryColors.text.g, entryColors.text.b
+            local colorPickerIcon = button:CreateTexture(nil, "ARTWORK")
+            colorPickerIcon:SetAtlas("newplayertutorial-icon-key")
+            colorPickerIcon:SetSize(18, 17)
+            colorPickerIcon:SetPoint("RIGHT", colorPickerButton, "LEFT", 0, -1)
 
-                --ColorPickerFrame:SetColorRGB(r, g, b)
-                ColorPickerFrame.previousValues = { r, g, b }
-
-                ColorPickerFrame.swatchFunc = function()
-                    r, g, b = ColorPickerFrame:GetColorRGB()
-                    entryColors.text.r, entryColors.text.g, entryColors.text.b = r, g, b
-                    SetTextColor(r, g, b)  -- Update text color when the color picker changes
-
-                    -- Update the npc entry in listData with the new color
-                    npc.entryColors.text.r, npc.entryColors.text.g, npc.entryColors.text.b = r, g, b
-                    listData[index] = npc  -- Update the entry in the listData
-                    BBP.RefreshAllNameplates()
-                end
-
-                ColorPickerFrame.cancelFunc = function()
-                    r, g, b = unpack(ColorPickerFrame.previousValues)
-                    entryColors.text.r, entryColors.text.g, entryColors.text.b = r, g, b
-                    SetTextColor(r, g, b)  -- Update text color if canceled
-                end
-                ColorPickerFrame:ClearAllPoints()
-                ColorPickerFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-                ColorPickerFrame:Show()
+                -- Function to update the icon's color
+            local function UpdateIconColor(r, g, b)
+                colorPickerIcon:SetVertexColor(r, g, b)
             end
 
+            -- Initial color update for the icon
+            local initialColor = entryColors.text
+            UpdateIconColor(initialColor.r, initialColor.g, initialColor.b)
+
+            -- Function to open the color picker
+            local function OpenColorPicker()
+                local colorData = entryColors.text or {}
+                local r, g, b = colorData.r or 1, colorData.g or 1, colorData.b or 1
+                local a = colorData.a or 1 -- Default alpha to 1 if not present
+
+                local function updateColors()
+                    entryColors.text.r, entryColors.text.g, entryColors.text.b, entryColors.text.a = r, g, b, a
+                    SetTextColor(r, g, b)  -- Update text color
+                    SetImportantBoxColor(r, g, b, a)  -- Update other elements as needed
+                    BBF.RefreshAllAuraFrames()  -- Refresh frames or elements that depend on these colors
+                end
+
+                local function swatchFunc()
+                    r, g, b = ColorPickerFrame:GetColorRGB()
+                    updateColors()  -- Update colors based on the new selection
+                end
+
+                local function opacityFunc()
+                    a = ColorPickerFrame:GetColorAlpha()
+                    updateColors()  -- Update colors including the alpha value
+                end
+
+                local function cancelFunc(previousValues)
+                    -- Revert to previous values if the selection is cancelled
+                    if previousValues then
+                        r, g, b, a = previousValues.r, previousValues.g, previousValues.b, previousValues.a
+                        updateColors()  -- Reapply the previous colors
+                    end
+                end
+
+                -- Store the initial values before showing the color picker
+                ColorPickerFrame.previousValues = { r = r, g = g, b = b, a = a }
+
+                -- Setup and show the color picker with the necessary callbacks and initial values
+                ColorPickerFrame:SetupColorPickerAndShow({
+                    r = r, g = g, b = b, opacity = a, hasOpacity = true,
+                    swatchFunc = swatchFunc, opacityFunc = opacityFunc, cancelFunc = cancelFunc
+                })
+            end
             colorPickerButton:SetScript("OnClick", OpenColorPicker)
         end
 
@@ -1294,6 +1323,10 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 npc.flags.important = self:GetChecked() -- Save the state in the npc flags
             end)
             local function SetImportantBoxColor(r, g, b, a)
+                r = r or 0
+                b = b or 0
+                g = g or 1
+                a = a or 1
                 if npc.flags and npc.flags.important then
                     checkBoxI.texture:SetVertexColor(r, g, b, a)
                 else
@@ -1328,7 +1361,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
 
                 local function updateColors()
                     entryColors.text.r, entryColors.text.g, entryColors.text.b, entryColors.text.a = r, g, b, a
-                    SetTextColor(r, g, b, 1)  -- Update text color
+                    SetTextColor(r, g, b)  -- Update text color
                     SetImportantBoxColor(r, g, b, a)
                     BBP.RefreshAllNameplates()
                 end
@@ -1388,7 +1421,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         if prioSlider then
             local prioritySlider = CreateFrame("Slider", nil, button, "OptionsSliderTemplate")
             prioritySlider:SetSize(100, 16)
-            prioritySlider:SetPoint("RIGHT", colorPickerButton or deleteButton, "LEFT", -65, 0)
+            prioritySlider:SetPoint("RIGHT", colorPickerButton or deleteButton, "LEFT", -75, 0)
             prioritySlider:SetOrientation("HORIZONTAL")
             prioritySlider:SetMinMaxValues(1, 10)
             prioritySlider:SetValueStep(1)
@@ -1757,18 +1790,29 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             colorPickerButton:SetText("Color")
             colorPickerButton:SetScript("OnClick", function()
                 local currentColor = npcEditFrame.currentColor or {1, 1, 1}
-                ColorPickerFrame.swatchFunc = function()
-                    local r, g, b = ColorPickerFrame:GetColorRGB()
-                    text:SetTextColor(r, g, b)
-                    npcEditFrame.iconGlowTexture:SetVertexColor(r, g, b)
-                    npcEditFrame.nameEditBox:SetTextColor(r, g, b)
-                    updateEntryColor(npcId, {r, g, b})
-                end
-                ColorPickerFrame:SetColorRGB(unpack(currentColor))
-                ColorPickerFrame:ClearAllPoints()
-                ColorPickerFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-                ColorPickerFrame:Show()
+            
+                ColorPickerFrame:SetupColorPickerAndShow({
+                    r = currentColor[1], g = currentColor[2], b = currentColor[3],
+                    hasOpacity = false, -- Assuming opacity is not needed; set to true if needed
+                    swatchFunc = function()
+                        local r, g, b = ColorPickerFrame:GetColorRGB()
+                        text:SetTextColor(r, g, b)
+                        npcEditFrame.iconGlowTexture:SetVertexColor(r, g, b)
+                        npcEditFrame.nameEditBox:SetTextColor(r, g, b)
+                        updateEntryColor(npcId, {r, g, b})
+                        npcEditFrame.currentColor = {r, g, b} -- Update the current color
+                    end,
+                    cancelFunc = function(previousValues)
+                        local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                        text:SetTextColor(r, g, b)
+                        npcEditFrame.iconGlowTexture:SetVertexColor(r, g, b)
+                        npcEditFrame.nameEditBox:SetTextColor(r, g, b)
+                        updateEntryColor(npcId, {r, g, b})
+                        npcEditFrame.currentColor = {r, g, b} -- Revert to the original color
+                    end,
+                })
             end)
+            
 
             local HideText = npcEditFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             HideText:SetPoint("TOPLEFT", GlowText, "BOTTOMLEFT", 0, -15)
@@ -2120,12 +2164,11 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
 
         -- Create or update the npc entry
         local npcData = {
-            id = npcId,
             name = name,  -- Name from input, or default if not provided
             icon = spellId and GetSpellTexture(spellId) or nil,  -- Get icon if spellId is provided
             hideIcon = false,
             size = 30,  -- Default size
-            duration = nil,
+            duration = nil,  -- Ensure duration is set to nil
             color = {1, 1, 1},
             important = true
         }
@@ -2141,6 +2184,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         BBP.refreshNpcList()
         BBP.RefreshAllNameplates()
     end
+
 
     editBox:SetScript("OnEnterPressed", function(self)
         addOrUpdateEntry(self:GetText())
@@ -2266,27 +2310,91 @@ local function guiGeneralTab()
     enemyColorName:SetPoint("LEFT", enemyClassColorName.text, "RIGHT", 0, 0)
     CreateTooltip(enemyColorName, "Pick one color for all enemy names\nIf class color name is also enabled this setting will only color the name of npcs")
 
-    local function OpenColorPicker()
-        local r, g, b = unpack(BetterBlizzPlatesDB.enemyColorNameRGB or {1, 1, 1})
-        ColorPickerFrame.previousValues = { r, g, b }
-        ColorPickerFrame.swatchFunc = function()
-            r, g, b = ColorPickerFrame:GetColorRGB()
-            BetterBlizzPlatesDB.enemyColorNameRGB = { r, g, b }
-            BBP.RefreshAllNameplates()
+    local function UpdateColorSquare(icon, r, g, b)
+        if r and g and b then
+            icon:SetVertexColor(r, g, b)
         end
-
-        ColorPickerFrame.cancelFunc = function()
-            r, g, b = unpack(ColorPickerFrame.previousValues)
-            BetterBlizzPlatesDB.enemyColorNameRGB = { r, g, b }
-        end
-        ColorPickerFrame:Show()
     end
 
-    local enemyColorNameButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    enemyColorNameButton:SetText("Color")
-    enemyColorNameButton:SetPoint("LEFT", enemyColorName.text, "RIGHT", -1, 0)
-    enemyColorNameButton:SetSize(45, 20)
-    enemyColorNameButton:SetScript("OnClick", OpenColorPicker)
+    local enemyColorNameIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
+    enemyColorNameIcon:SetAtlas("newplayertutorial-icon-key")
+    enemyColorNameIcon:SetSize(18, 17)
+    UpdateColorSquare(enemyColorNameIcon, unpack(BetterBlizzPlatesDB.enemyColorNameRGB or {1, 1, 1}))
+
+    local function OpenColorPicker(colorType, icon)
+        local r, g, b = unpack(BetterBlizzPlatesDB[colorType] or {1, 1, 1})
+
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b,
+            hasOpacity = false,
+            swatchFunc = function()
+                local r, g, b = ColorPickerFrame:GetColorRGB()
+                BetterBlizzPlatesDB[colorType] = { r, g, b }
+                BBP.RefreshAllNameplates()
+                UpdateColorSquare(icon, r, g, b)
+            end,
+            cancelFunc = function(previousValues)
+                local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                BetterBlizzPlatesDB[colorType] = { r, g, b }
+                BBP.RefreshAllNameplates()
+                UpdateColorSquare(icon, r, g, b)
+            end,
+        })
+    end
+
+    local enemyColorNameButtonIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
+    enemyColorNameButtonIcon:SetAtlas("newplayertutorial-icon-key")
+    enemyColorNameButtonIcon:SetSize(18, 17)
+    UpdateColorSquare(enemyColorNameButtonIcon, unpack(BetterBlizzPlatesDB.enemyColorNameRGB or {1, 1, 1}))
+    local enemyColorNameButton = CreateFrame("Button", nil, enemyColorName, "UIPanelButtonTemplate")
+    enemyColorNameButton:SetText("Hostile")
+    enemyColorNameButton:SetPoint("LEFT", enemyColorName.Text, "RIGHT", -1, 0)
+    enemyColorNameButton:SetSize(55, 20)
+    enemyColorNameButton:SetScript("OnClick", function()
+        OpenColorPicker("enemyColorNameRGB", enemyColorNameButtonIcon)
+    end)
+    CreateTooltip(enemyColorNameButton, "Hostile color")
+    enemyColorNameButtonIcon:SetPoint("LEFT", enemyColorNameButton, "RIGHT", 0, -0.5)
+
+    local enemyNeutralColorNameButtonIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
+    enemyNeutralColorNameButtonIcon:SetAtlas("newplayertutorial-icon-key")
+    enemyNeutralColorNameButtonIcon:SetSize(18, 17)
+    UpdateColorSquare(enemyNeutralColorNameButtonIcon, unpack(BetterBlizzPlatesDB.enemyNeutralColorNameRGB or {1, 1, 1}))
+    local enemyNeutralColorNameButton = CreateFrame("Button", nil, enemyColorName, "UIPanelButtonTemplate")
+    enemyNeutralColorNameButton:SetText("Neutral")
+    enemyNeutralColorNameButton:SetPoint("LEFT", enemyColorNameButtonIcon, "RIGHT", 0, 0.5)
+    enemyNeutralColorNameButton:SetSize(55, 20)
+    enemyNeutralColorNameButton:SetScript("OnClick", function()
+        OpenColorPicker("enemyNeutralColorNameRGB", enemyNeutralColorNameButtonIcon)
+    end)
+    CreateTooltip(enemyNeutralColorNameButton, "Neutral color")
+    enemyNeutralColorNameButtonIcon:SetPoint("LEFT", enemyNeutralColorNameButton, "RIGHT", 0, -0.5)
+
+    enemyColorName:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            enemyNeutralColorNameButton:Enable()
+            enemyNeutralColorNameButton:SetAlpha(1)
+            enemyColorNameButton:Enable()
+            enemyColorNameButton:SetAlpha(1)
+            enemyColorNameButtonIcon:Show()
+            enemyNeutralColorNameButtonIcon:Show()
+        else
+            enemyNeutralColorNameButton:Disable()
+            enemyNeutralColorNameButton:SetAlpha(0)
+            enemyColorNameButton:Disable()
+            enemyColorNameButton:SetAlpha(0)
+            enemyColorNameButtonIcon:Hide()
+            enemyNeutralColorNameButtonIcon:Hide()
+        end
+    end)
+    if not BetterBlizzPlatesDB.enemyColorName then
+        enemyNeutralColorNameButton:Disable()
+        enemyNeutralColorNameButton:SetAlpha(0)
+        enemyColorNameButton:SetAlpha(0)
+        enemyColorNameButton:Disable()
+        enemyColorNameButtonIcon:Hide()
+        enemyNeutralColorNameButtonIcon:Hide()
+    end
 
     local enemyHealthBarColor = CreateCheckbox("enemyHealthBarColor", "Custom nameplate color", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
     enemyHealthBarColor:SetPoint("TOPLEFT", enemyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -2298,22 +2406,29 @@ local function guiGeneralTab()
 
     local function OpenColorPicker(colorType, icon)
         local r, g, b = unpack(BetterBlizzPlatesDB[colorType] or {1, 1, 1})
-        ColorPickerFrame.previousValues = { r, g, b }
 
-        ColorPickerFrame.swatchFunc = function()
-            r, g, b = ColorPickerFrame:GetColorRGB()
-            BetterBlizzPlatesDB[colorType] = { r, g, b }
-            BBP.RefreshAllNameplates()
-        end
-
-        ColorPickerFrame.cancelFunc = function()
-            r, g, b = unpack(ColorPickerFrame.previousValues)
-            BetterBlizzPlatesDB[colorType] = { r, g, b }
-        end
-
-        ColorPickerFrame:Show()
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b,
+            hasOpacity = false,
+            swatchFunc = function()
+                local r, g, b = ColorPickerFrame:GetColorRGB()
+                BetterBlizzPlatesDB[colorType] = { r, g, b }
+                BBP.RefreshAllNameplates()
+                UpdateColorSquare(icon, r, g, b)
+            end,
+            cancelFunc = function(previousValues)
+                local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                BetterBlizzPlatesDB[colorType] = { r, g, b }
+                BBP.RefreshAllNameplates()
+                UpdateColorSquare(icon, r, g, b)
+            end,
+        })
     end
 
+    local enemyHealthBarColorButtonIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
+    enemyHealthBarColorButtonIcon:SetAtlas("newplayertutorial-icon-key")
+    enemyHealthBarColorButtonIcon:SetSize(18, 17)
+    UpdateColorSquare(enemyHealthBarColorButtonIcon, unpack(BetterBlizzPlatesDB.enemyHealthBarColorRGB or {1, 1, 1}))
     local enemyHealthBarColorButton = CreateFrame("Button", nil, enemyHealthBarColor, "UIPanelButtonTemplate")
     enemyHealthBarColorButton:SetText("Hostile")
     enemyHealthBarColorButton:SetPoint("LEFT", enemyHealthBarColorNpcOnly.Text, "RIGHT", -1, 0)
@@ -2322,15 +2437,21 @@ local function guiGeneralTab()
         OpenColorPicker("enemyHealthBarColorRGB", enemyHealthBarColorButtonIcon)
     end)
     CreateTooltip(enemyHealthBarColorButton, "Hostile color")
+    enemyHealthBarColorButtonIcon:SetPoint("LEFT", enemyHealthBarColorButton, "RIGHT", 0, -0.5)
 
+    local enemyNeutralHealthBarColorButtonIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
+    enemyNeutralHealthBarColorButtonIcon:SetAtlas("newplayertutorial-icon-key")
+    enemyNeutralHealthBarColorButtonIcon:SetSize(18, 17)
+    UpdateColorSquare(enemyNeutralHealthBarColorButtonIcon, unpack(BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 1, 1}))
     local enemyNeutralHealthBarColorButton = CreateFrame("Button", nil, enemyHealthBarColor, "UIPanelButtonTemplate")
     enemyNeutralHealthBarColorButton:SetText("Neutral")
-    enemyNeutralHealthBarColorButton:SetPoint("LEFT", enemyHealthBarColorButton, "RIGHT", 0, 0)
+    enemyNeutralHealthBarColorButton:SetPoint("LEFT", enemyHealthBarColorButtonIcon, "RIGHT", 0, 0.5)
     enemyNeutralHealthBarColorButton:SetSize(55, 20)
     enemyNeutralHealthBarColorButton:SetScript("OnClick", function()
-        OpenColorPicker("enemyNeutralHealthBarColorRGB", enemyNeutralHealthBarColorButton)
+        OpenColorPicker("enemyNeutralHealthBarColorRGB", enemyNeutralHealthBarColorButtonIcon)
     end)
     CreateTooltip(enemyNeutralHealthBarColorButton, "Neutral color")
+    enemyNeutralHealthBarColorButtonIcon:SetPoint("LEFT", enemyNeutralHealthBarColorButton, "RIGHT", 0, -0.5)
 
     enemyHealthBarColor:HookScript("OnClick", function(self)
         if self:GetChecked() then
@@ -2340,6 +2461,8 @@ local function guiGeneralTab()
             enemyNeutralHealthBarColorButton:SetAlpha(1)
             enemyHealthBarColorButton:Enable()
             enemyHealthBarColorButton:SetAlpha(1)
+            enemyHealthBarColorButtonIcon:Show()
+            enemyNeutralHealthBarColorButtonIcon:Show()
         else
             enemyHealthBarColorNpcOnly:SetAlpha(0)
             enemyHealthBarColorNpcOnly:Disable()
@@ -2347,6 +2470,8 @@ local function guiGeneralTab()
             enemyNeutralHealthBarColorButton:SetAlpha(0)
             enemyHealthBarColorButton:Disable()
             enemyHealthBarColorButton:SetAlpha(0)
+            enemyHealthBarColorButtonIcon:Hide()
+            enemyNeutralHealthBarColorButtonIcon:Hide()
         end
     end)
     if not BetterBlizzPlatesDB.enemyHealthBarColor then
@@ -2356,6 +2481,8 @@ local function guiGeneralTab()
         enemyNeutralHealthBarColorButton:SetAlpha(0)
         enemyHealthBarColorButton:SetAlpha(0)
         enemyHealthBarColorButton:Disable()
+        enemyHealthBarColorButtonIcon:Hide()
+        enemyNeutralHealthBarColorButtonIcon:Hide()
     end
 
     local showNameplateCastbarTimer = CreateCheckbox("showNameplateCastbarTimer", "Cast timer next to castbar", BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
@@ -2428,20 +2555,27 @@ local function guiGeneralTab()
     friendlyColorName:SetPoint("LEFT", friendlyClassColorName.text, "RIGHT", 0, 0)
     CreateTooltip(friendlyColorName, "Pick one color for all enemy names\nIf class color name is also enabled this setting will only color the name of npcs")
 
+    local friendlyColorNameIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
+    friendlyColorNameIcon:SetAtlas("newplayertutorial-icon-key")
+    friendlyColorNameIcon:SetSize(18, 17)
+    UpdateColorSquare(friendlyColorNameIcon, unpack(BetterBlizzPlatesDB.friendlyColorNameRGB or {1, 1, 1}))
+
     local function OpenColorPicker2()
         local r, g, b = unpack(BetterBlizzPlatesDB.friendlyColorNameRGB or {1, 1, 1})
-        ColorPickerFrame.previousValues = { r, g, b }
-        ColorPickerFrame.swatchFunc = function()
-            r, g, b = ColorPickerFrame:GetColorRGB()
-            BetterBlizzPlatesDB.friendlyColorNameRGB = { r, g, b }
-            BBP.RefreshAllNameplates()
-        end
-
-        ColorPickerFrame.cancelFunc = function()
-            r, g, b = unpack(ColorPickerFrame.previousValues)
-            BetterBlizzPlatesDB.friendlyColorNameRGB = { r, g, b }
-        end
-        ColorPickerFrame:Show()
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b, hasOpacity = false,
+            swatchFunc = function()
+                local r, g, b = ColorPickerFrame:GetColorRGB()
+                BetterBlizzPlatesDB.friendlyColorNameRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+                UpdateColorSquare(friendlyColorNameIcon, r, g, b)
+            end,
+            cancelFunc = function(previousValues)
+                BetterBlizzPlatesDB.friendlyColorNameRGB = { previousValues.r, previousValues.g, previousValues.b }
+                BBP.RefreshAllNameplates()
+                UpdateColorSquare(friendlyColorNameIcon, r, g, b)
+            end
+        })
     end
 
     local friendlyColorNameButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
@@ -2449,6 +2583,25 @@ local function guiGeneralTab()
     friendlyColorNameButton:SetPoint("LEFT", friendlyColorName.text, "RIGHT", -1, 0)
     friendlyColorNameButton:SetSize(45, 20)
     friendlyColorNameButton:SetScript("OnClick", OpenColorPicker2)
+    friendlyColorNameIcon:SetPoint("LEFT", friendlyColorNameButton, "RIGHT", 0, -0.5)
+    friendlyColorName:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            friendlyColorNameButton:Show()
+            friendlyColorNameIcon:Show()
+            friendlyColorNameButton:Enable()
+        else
+            friendlyColorNameButton:Hide()
+            friendlyColorNameIcon:Hide()
+            friendlyColorNameButton:Disable()
+        end
+    end)
+    if friendlyColorName:GetChecked() then
+        friendlyColorNameButton:Show()
+        friendlyColorNameIcon:Show()
+    else
+        friendlyColorNameButton:Hide()
+        friendlyColorNameIcon:Hide()
+    end
 
     local classColorPersonalNameplate = CreateCheckbox("classColorPersonalNameplate", "Class colored personal nameplate", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
     classColorPersonalNameplate:SetPoint("TOPLEFT", friendlyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -2482,23 +2635,24 @@ local function guiGeneralTab()
 
     local function OpenColorPicker(colorType, icon)
         local r, g, b = unpack(BetterBlizzPlatesDB[colorType] or {1, 1, 1})
-        ColorPickerFrame.previousValues = { r, g, b }
         UpdateColorSquare(icon, r, g, b)
 
-        ColorPickerFrame.swatchFunc = function()
-            r, g, b = ColorPickerFrame:GetColorRGB()
-            BetterBlizzPlatesDB[colorType] = { r, g, b }
-            BBP.RefreshAllNameplates()
-            UpdateColorSquare(icon, r, g, b)
-        end
-
-        ColorPickerFrame.cancelFunc = function()
-            r, g, b = unpack(ColorPickerFrame.previousValues)
-            BetterBlizzPlatesDB[colorType] = { r, g, b }
-            UpdateColorSquare(icon, r, g, b)
-        end
-
-        ColorPickerFrame:Show()
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b,
+            hasOpacity = false,
+            swatchFunc = function()
+                local r, g, b = ColorPickerFrame:GetColorRGB()
+                BetterBlizzPlatesDB[colorType] = { r, g, b }
+                BBP.RefreshAllNameplates()
+                UpdateColorSquare(icon, r, g, b)
+            end,
+            cancelFunc = function(previousValues)
+                local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                BetterBlizzPlatesDB[colorType] = { r, g, b }
+                BBP.RefreshAllNameplates()
+                UpdateColorSquare(icon, r, g, b)
+            end,
+        })
     end
 
     local friendlyHealthBarColorButton = CreateFrame("Button", nil, friendlyHealthBarColor, "UIPanelButtonTemplate")
@@ -2546,18 +2700,28 @@ local function guiGeneralTab()
     friendlyHideHealthBarNpc:SetPoint("LEFT", friendlyHideHealthBar.text, "RIGHT", 0, 0)
     CreateTooltip(friendlyHideHealthBarNpc, "Hide friendly NPC nameplate healthbars. Castbar and name will still show.")
 
+    local hideFriendlyCastbar = CreateCheckbox("hideFriendlyCastbar", "Hide castbar", BetterBlizzPlates, nil, BBP.CheckIfInInstanceCaller)
+    hideFriendlyCastbar:SetPoint("LEFT", friendlyHideHealthBarNpc.text, "RIGHT", 0, 0)
+    CreateTooltip(hideFriendlyCastbar, "Hide friendly castbar\nNOTE: Only works with hide friendly healthbar on (for now).")
+
     friendlyHideHealthBar:HookScript("OnClick", function(self)
         if self:GetChecked() then
             friendlyHideHealthBarNpc:Enable()
             friendlyHideHealthBarNpc:SetAlpha(1)
+            hideFriendlyCastbar:Enable()
+            hideFriendlyCastbar:SetAlpha(1)
         else
             friendlyHideHealthBarNpc:Disable()
             friendlyHideHealthBarNpc:SetAlpha(0)
+            hideFriendlyCastbar:Disable()
+            hideFriendlyCastbar:SetAlpha(0)
         end
     end)
     if not BetterBlizzPlatesDB.friendlyHideHealthBar then
         friendlyHideHealthBarNpc:SetAlpha(0)
         friendlyHideHealthBarNpc:Disable()
+        hideFriendlyCastbar:Disable()
+        hideFriendlyCastbar:SetAlpha(0)
     end
 
     local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Toggle on/off for Arena auto", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesInArena)
@@ -3302,24 +3466,31 @@ local function guiPositionAndScale()
     local focusTargetTestIcons2 = CreateCheckbox("focusTargetIndicatorTestMode", "Test", contentFrame)
     focusTargetTestIcons2:SetPoint("TOPLEFT", focusTargetIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
-    local function OpenColorPicker()
-        local r, g, b = unpack(BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB or {1, 1, 1})
-        ColorPickerFrame.previousValues = { r, g, b }
-        ColorPickerFrame.swatchFunc = function()
-            r, g, b = ColorPickerFrame:GetColorRGB()
-            BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB = { r, g, b }
-            BBP.RefreshAllNameplates()
-        end
-
-        ColorPickerFrame.cancelFunc = function()
-            r, g, b = unpack(ColorPickerFrame.previousValues)
-            BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB = { r, g, b }
-        end
-        ColorPickerFrame:Show()
-    end
-
     local focusTargetIndicatorColorNameplate = CreateCheckbox("focusTargetIndicatorColorNameplate", "Color healthbar", contentFrame)
     focusTargetIndicatorColorNameplate:SetPoint("TOPLEFT", focusTargetTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate then
+        focusTargetIndicatorColorNameplate.Text:SetTextColor(unpack(BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB))
+    end
+
+    local function OpenColorPicker()
+        local r, g, b = unpack(BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB or {1, 1, 1})
+
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b,
+            swatchFunc = function()
+                local r, g, b = ColorPickerFrame:GetColorRGB()
+                BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+                focusTargetIndicatorColorNameplate.Text:SetTextColor(unpack(BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB))
+            end,
+            cancelFunc = function(previousValues)
+                local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+                focusTargetIndicatorColorNameplate.Text:SetTextColor(unpack(BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB))
+            end,
+        })
+    end
 
     local focusColorButton = CreateFrame("Button", nil, contentFrame, "UIPanelButtonTemplate")
     focusColorButton:SetText("Color")
@@ -3331,9 +3502,11 @@ local function guiPositionAndScale()
         BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate = self:GetChecked()
         local nameplateForFocusTarget = C_NamePlate.GetNamePlateForUnit("focus")
         if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate then
+            focusTargetIndicatorColorNameplate.Text:SetTextColor(unpack(BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB))
             focusColorButton:Enable()
             focusColorButton:SetAlpha(1)
         else
+            focusTargetIndicatorColorNameplate.Text:SetTextColor(1, 0.819607, 0)
             focusColorButton:Disable()
             focusColorButton:SetAlpha(0.5)
         end
@@ -3700,38 +3873,30 @@ local function guiCastbar()
     end
 
     local function OpenColorPicker(colorType, icon)
-        local colorData = BetterBlizzPlatesDB[colorType] or {1, 1, 1}
-        local r, g, b = colorData[1], colorData[2], colorData[3]
-        local a = colorData[4] -- This could be nil for older configurations
+        local originalColorData = BetterBlizzPlatesDB[colorType] or {1, 1, 1}
+        local r, g, b = unpack(originalColorData)
 
-        -- Set default alpha value if it's nil
-        if a == nil then a = 1 end
+        local function updateColors()
+            UpdateColorSquare(icon, r, g, b)
+            BBP.RefreshAllNameplates()
+        end
 
-        ColorPickerFrame.previousValues = {r, g, b, a}
-        UpdateColorSquare(icon, r, g, b, a)
+        local function swatchFunc()
+            r, g, b = ColorPickerFrame:GetColorRGB()
+            BetterBlizzPlatesDB[colorType] = {r, g, b}
+            updateColors()
+        end
 
-        local colorPickerInfo = {
-            swatchFunc = function()
-                r, g, b = ColorPickerFrame:GetColorRGB()
-                a = ColorPickerFrame:GetColorAlpha()
-                BetterBlizzPlatesDB[colorType] = {r, g, b, a}
-                BBP.RefreshAllNameplates()
-                UpdateColorSquare(icon, r, g, b, a)
-            end,
-            opacityFunc = function()
-                a = ColorPickerFrame:GetColorAlpha()
-                BetterBlizzPlatesDB[colorType] = {r, g, b, a}
-                UpdateColorSquare(icon, r, g, b, a)
-            end,
-            cancelFunc = function()
-                r, g, b, a = unpack(ColorPickerFrame.previousValues)
-                BetterBlizzPlatesDB[colorType] = {r, g, b, a}
-                UpdateColorSquare(icon, r, g, b, a)
-            end,
-            r = r, g = g, b = b, opacity = a, hasOpacity = true
-        }
+        local function cancelFunc()
+            r, g, b = unpack(originalColorData)
+            BetterBlizzPlatesDB[colorType] = {r, g, b}
+            updateColors()
+        end
 
-        ColorPickerFrame:SetupColorPickerAndShow(colorPickerInfo)
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b, hasOpacity = false,
+            swatchFunc = swatchFunc, cancelFunc = cancelFunc
+        })
     end
 
     local castBarCastColor = CreateFrame("Button", nil, castBarRecolor, "UIPanelButtonTemplate")
@@ -3762,6 +3927,7 @@ local function guiCastbar()
 
     local useCustomCastbarTexture = CreateCheckbox("useCustomCastbarTexture", "Re-texture Castbar", enableCastbarCustomization)
     useCustomCastbarTexture:SetPoint("TOPLEFT", castBarRecolor, "BOTTOMLEFT", 0, -16)
+    useCustomCastbarTexture:HookScript("OnClick", BBP.ToggleSpellCastEventRegistration)
 
     local customCastbarTextureDropdown = CreateTextureDropdown(
         "customCastbarTextureDropdown",
@@ -3891,9 +4057,11 @@ local function guiCastbar()
 
     local castBarEmphasisHealthbarColor = CreateCheckbox("castBarEmphasisHealthbarColor", "Color healthbar", enableCastbarEmphasis)
     castBarEmphasisHealthbarColor:SetPoint("TOPLEFT", enableCastbarEmphasis, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+    CreateTooltip(castBarEmphasisHealthbarColor, "Color the healthbar the color you've set\nin the list if that spell is being cast.")
 
     local castBarEmphasisColor = CreateCheckbox("castBarEmphasisColor", "Color castbar", enableCastbarEmphasis)
     castBarEmphasisColor:SetPoint("LEFT", castBarEmphasisHealthbarColor.text, "RIGHT", 0, 0)
+    CreateTooltip(castBarEmphasisColor, "Color the castbar the color you've set\nin the list if that spell is being cast.")
 
     local castBarEmphasisHeight = CreateCheckbox("castBarEmphasisHeight", "Height", enableCastbarEmphasis)
     castBarEmphasisHeight:SetPoint("TOPLEFT", castBarEmphasisHealthbarColor, "BOTTOMLEFT", 0, -2)
@@ -4930,6 +5098,10 @@ local function guiBlizzCVars()
     nameplateResourceOnTarget:SetPoint("TOP", stackingNameplatesText, "BOTTOM", -65, -155)
     CreateTooltip(nameplateResourceOnTarget, "Show combo points, warlock shards, arcane charges etc on nameplates.")
 
+    local disableCVarForceOnLogin = CreateCheckbox("disableCVarForceOnLogin", "Disable all CVar forcing", guiBlizzCVars, true)
+    disableCVarForceOnLogin:SetPoint("TOP", nameplateResourceOnTarget, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltip(disableCVarForceOnLogin, "Disables all forcing of CVar's on login (Not recommended)")
+
     local nameplateAlphaText = guiBlizzCVars:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     nameplateAlphaText:SetPoint("TOPLEFT", guiBlizzCVars, "TOPLEFT", 300, -35)
     nameplateAlphaText:SetText("Nameplate alpha settings")
@@ -5036,7 +5208,7 @@ end
 
 local function guiMisc()
     local guiMisc = CreateFrame("Frame")
-    guiMisc.name = "Misc"
+    guiMisc.name = "Misc"--"|A:GarrMission_CurrencyIcon-Material:19:19|a Misc"
     guiMisc.parent = BetterBlizzPlates.name
     InterfaceOptions_AddCategory(guiMisc)
 
@@ -5068,18 +5240,21 @@ local function guiMisc()
 
     local function OpenColorPicker()
         local r, g, b = unpack(BetterBlizzPlatesDB.guildNameColorRGB or {1, 1, 1})
-        ColorPickerFrame.previousValues = { r, g, b }
-        ColorPickerFrame.swatchFunc = function()
-            r, g, b = ColorPickerFrame:GetColorRGB()
-            BetterBlizzPlatesDB.guildNameColorRGB = { r, g, b }
-            BBP.RefreshAllNameplates()
-        end
 
-        ColorPickerFrame.cancelFunc = function()
-            r, g, b = unpack(ColorPickerFrame.previousValues)
-            BetterBlizzPlatesDB.guildNameColorRGB = { r, g, b }
-        end
-        ColorPickerFrame:Show()
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b,
+            hasOpacity = false,
+            swatchFunc = function()
+                local r, g, b = ColorPickerFrame:GetColorRGB()
+                BetterBlizzPlatesDB.guildNameColorRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+            end,
+            cancelFunc = function(previousValues)
+                local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                BetterBlizzPlatesDB.guildNameColorRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+            end,
+        })
     end
 
     local guildNameColorButton = CreateFrame("Button", nil, guiMisc, "UIPanelButtonTemplate")
@@ -5091,6 +5266,10 @@ local function guiMisc()
     local friendIndicator = CreateCheckbox("friendIndicator", "Friend/Guildie Indicator", guiMisc)
     friendIndicator:SetPoint("TOPLEFT", guildNameColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(friendIndicator, "Places a little icon to the left of a friend/guildies name")
+
+    local anonMode = CreateCheckbox("anonMode", "Anon Mode", guiMisc)
+    anonMode:SetPoint("TOPLEFT", friendIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(anonMode, "Changes the names of players to their class instead.\nWill be overwritten by Arena Names module.")
 
     --
     local nameplateResourceText = guiMisc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -5120,7 +5299,7 @@ end
 function BBP.InitializeOptions()
     if not BetterBlizzPlates then
         BetterBlizzPlates = CreateFrame("Frame")
-        BetterBlizzPlates.name = "BetterBlizzPlates"
+        BetterBlizzPlates.name = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates"
         InterfaceOptions_AddCategory(BetterBlizzPlates)
 
         guiGeneralTab()

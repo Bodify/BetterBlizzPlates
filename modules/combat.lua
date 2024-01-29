@@ -96,7 +96,7 @@ end
 -- Event Listener for Combat Indicator
 local combatIndicatorFrame = CreateFrame("Frame")
 combatIndicatorFrame:SetScript("OnEvent", function(self, event, arg1)
-    if event == "UNIT_FLAGS" or event == "UNIT_COMBAT" then
+    if event == "UNIT_FLAGS" then --or event == "UNIT_COMBAT" then
         local frame = C_NamePlate.GetNamePlateForUnit(arg1)
         if frame then
             BBP.CombatIndicator(frame.UnitFrame)
@@ -108,9 +108,9 @@ end)
 function BBP.ToggleCombatIndicator()
     if BetterBlizzPlatesDB.combatIndicator then
         combatIndicatorFrame:RegisterEvent("UNIT_FLAGS")
-        combatIndicatorFrame:RegisterEvent("UNIT_COMBAT")
+        --combatIndicatorFrame:RegisterEvent("UNIT_COMBAT")
     else
         combatIndicatorFrame:UnregisterEvent("UNIT_FLAGS")
-        combatIndicatorFrame:UnregisterEvent("UNIT_COMBAT")
+        --combatIndicatorFrame:UnregisterEvent("UNIT_COMBAT")
     end
 end

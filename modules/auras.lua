@@ -427,12 +427,14 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
 end
 
 local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
+    if not aura then return false end
     local spellName = aura.name
     local spellId = aura.spellId
     local duration = aura.duration
     local expirationTime = aura.expirationTime
     local caster = aura.sourceUnit
     local isPurgeable = aura.isStealable
+    local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
 
     -- PLAYER
     if UnitIsUnit(unit, "player") then
@@ -463,7 +465,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
         end
 
     -- FRIENDLY
-    elseif UnitIsFriend(unit, "player") then
+    elseif isFriend then
         -- Buffs
         if BetterBlizzPlatesDB["friendlyNpBuffEnable"] and aura.isHelpful then
             local isInWhitelist, isImportant, isPandemic = GetAuraDetails(spellName, spellId)
@@ -529,7 +531,8 @@ function BBP.OnUnitAuraUpdate(self, unit, unitAuraUpdateInfo)
     local showAll = false;
 
     local isPlayer = UnitIsUnit("player", unit);
-    local isEnemy = not UnitIsFriend("player", unit)
+    local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
+    isEnemy = isEnemy or isNeutral
     local showDebuffsOnFriendly = self.showDebuffsOnFriendly;
 
     local auraSettings =
@@ -642,7 +645,8 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     local BBPMaxAuraNum = BetterBlizzPlatesDB.maxAurasOnNameplate
     local rowOffset = 0;
     local isPlayerUnit = UnitIsUnit("player", self.unit)
-    local isEnemyUnit = not UnitIsFriend("player", self.unit)
+    local isEnemyUnit, isFriend, isNeutral = BBP.GetUnitReaction(self.unit)
+    isEnemyUnit = isEnemyUnit or isNeutral
     self.isEnemyUnit = isEnemyUnit
     local shouldShowAura, isImportant, isPandemic, auraColor
 
@@ -754,7 +758,11 @@ function BBP:UpdateAnchor()
     local unit = self:GetParent().unit
     local isTarget = unit and UnitIsUnit(unit, "target")
     local targetYOffset = self:GetBaseYOffset() + (isTarget and self:GetTargetYOffset() or 0.0)
-    local isFriend = unit and UnitIsFriend(unit, "player")
+    local isEnemy, isFriend, isNeutral
+    if unit then
+        isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
+        isEnemy = isEnemy or isNeutral
+    end
 
     local friendlyNameplateClickthrough = BetterBlizzPlatesDB.friendlyNameplateClickthrough
     local nameplateAurasYPos = BetterBlizzPlatesDB.nameplateAurasYPos

@@ -35,6 +35,9 @@ local UnitIsFriend = UnitIsFriend
 local UnitIsPlayer = UnitIsPlayer
 local UnitIsUnit = UnitIsUnit
 local UnitName = UnitName
+local UnitReaction = UnitReaction
+
+local useCustomCastbarTextureHooked
 
 local interruptSpellIDs = {}
 function BBP.InitializeInterruptSpellID()
@@ -101,6 +104,7 @@ local function ResetCastbarAfterFadeout(unitToken)
         castBar.Spark:SetSize(4, castBarHeight + 5)
         castBar.Text:SetScale(castBarTextScale)
         castBar.BorderShield:SetScale(borderShieldSize)
+        castBar.BorderShield:Hide()
 
         if castBarEmphasisHealthbarColor then
             if not frame or frame:IsForbidden() then return end
@@ -164,31 +168,33 @@ function BBP.CustomizeCastbar(unitToken)
     end
 
     if useCustomCastbarTexture then
-        --if castBarTexture then
-            local textureName = BetterBlizzPlatesDB.customCastbarTexture
-            local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
-            local bgTextureName = BetterBlizzPlatesDB.customCastbarBGTexture
-            local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, bgTextureName)
-            local changeBgTexture = BetterBlizzPlatesDB.useCustomCastbarBGTexture
-            castBar:SetStatusBarTexture(texturePath)
-            castBarTexture:SetDesaturated(true)
-            if castBarTexture then
-                if changeBgTexture then
-                    local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
-                    castBar.Background:SetDesaturated(true)
-                    castBar.Background:SetTexture(bgTexture)
-                    castBar.Background:SetVertexColor(unpack(bgColor))
+        local textureName = BetterBlizzPlatesDB.customCastbarTexture
+        local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
+        local bgTextureName = BetterBlizzPlatesDB.customCastbarBGTexture
+        local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, bgTextureName)
+        local changeBgTexture = BetterBlizzPlatesDB.useCustomCastbarBGTexture
+        castBar:SetStatusBarTexture(texturePath)
+        castBarTexture:SetDesaturated(true)
+        if castBarTexture then
+            if changeBgTexture then
+                local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
+                castBar.Background:SetDesaturated(true)
+                castBar.Background:SetTexture(bgTexture)
+                castBar.Background:SetVertexColor(unpack(bgColor))
                 end
                 if not castBarRecolor then
                     castBarTexture:SetDesaturated(true)
                     if casting then
-                        castBar:SetStatusBarColor(unpack(castBarCastColor))
+                        if not nameplate.emphasizedCast then
+                            castBar:SetStatusBarColor(unpack(castBarCastColor))
                     elseif channeling then
-                        castBar:SetStatusBarColor(unpack(castBarChanneledColor))
+                        if not nameplate.emphasizedCast then
+                            castBar:SetStatusBarColor(unpack(castBarChanneledColor))
+                        end
                     end
                 end
             end
-        --end
+        end
     end
 
     BBP.SetFontBasedOnOption(castBar.Text, 12, "OUTLINE")
@@ -267,17 +273,20 @@ function BBP.CustomizeCastbar(unitToken)
 
     if enableCastbarEmphasis then
         if spellName or spellID then
-            if not UnitIsFriend(unitToken, "player") then
+            local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
+            if isEnemy or isNeutral then
                 if castBarEmphasisOnlyInterruptable and notInterruptible then
                     -- Skip emphasizing non-kickable casts when configured to do so
                     return
                 end
 
                 for _, castEmphasis in ipairs(castEmphasisList) do
-                    if (castEmphasis.name and spellName and strlower(castEmphasis.name) == strlower(spellName)) or 
+                    if (castEmphasis.name and spellName and strlower(castEmphasis.name) == strlower(spellName)) or
                        (castEmphasis.id and spellID and castEmphasis.id == spellID) then
                         ApplyCastBarEmphasisSettings(castBar, castEmphasis)
                         nameplate.emphasizedCast = castEmphasis
+                    else
+                        nameplate.emphasizedCast = nil
                     end
                 end
             end
@@ -325,16 +334,30 @@ function BBP.CustomizeCastbar(unitToken)
 end
 
 -- Hide npcs from list
-function BBP.HideCastbar(unitToken)
-    local nameplate = BBP.GetNameplate(unitToken)
+function BBP.HideCastbar(nameplate, unitToken)
     if not (nameplate and nameplate.UnitFrame and nameplate.UnitFrame.castBar) then return end
 
     local castBar = nameplate.UnitFrame.castBar
     if castBar:IsForbidden() then return end
 
+    --local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
+
     local showCastbarIfTarget = BetterBlizzPlatesDB.showCastbarIfTarget
     local hideCastbarWhitelistOn = BetterBlizzPlatesDB.hideCastbarWhitelistOn
     local onlyShowInterruptableCasts = BetterBlizzPlatesDB.onlyShowInterruptableCasts
+
+--[[
+    local hideFriendlyCastbars = true--BetterBlizzPlatesDB.hideFriendlyCastbars
+
+    if hideFriendlyCastbars then
+        if isFriend then
+            castBar:Hide()
+            return
+        end
+    end
+
+]]
+
 
     castBar:Show()
 
@@ -448,11 +471,12 @@ function BBP.UpdateNameplateTargetText(nameplate, unitID)
 
     if not nameplate.TargetText then
         nameplate.TargetText = nameplate:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        nameplate.TargetText:SetJustifyH("CENTER")
     end
 
     local isCasting = UnitCastingInfo(unitID) or UnitChannelInfo(unitID)
 
-    if isCasting and UnitExists(unitID.."target") and not nameplate.UnitFrame.hideCastInfo then
+    if isCasting and UnitExists(unitID.."target") and nameplate.UnitFrame.healthBar:IsShown() and not nameplate.UnitFrame.hideCastInfo then
         local targetOfTarget = unitID.."target"
         local name = UnitName(targetOfTarget)
         local _, class = UnitClass(targetOfTarget)
@@ -479,8 +503,9 @@ function BBP.UpdateCastTimer(nameplate, unitID)
     if not nameplate.CastTimerFrame then
         nameplate.CastTimerFrame = CreateFrame("Frame", nil, nameplate)
         nameplate.CastTimer = nameplate.CastTimerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        nameplate.CastTimer:SetPoint("LEFT", nameplate, "BOTTOMRIGHT", -10, 15)
-        BBP.SetFontBasedOnOption(nameplate.CastTimer, 11)
+        --nameplate.CastTimer:SetPoint("LEFT", nameplate, "BOTTOMRIGHT", -10, 15)
+        nameplate.CastTimer:SetPoint("LEFT", nameplate.UnitFrame.castBar, "RIGHT", 5, 0)
+        BBP.SetFontBasedOnOption(nameplate.CastTimer, 12, "OUTLINE")
         nameplate.CastTimer:SetTextColor(1, 1, 1)
     end
 
@@ -489,7 +514,7 @@ function BBP.UpdateCastTimer(nameplate, unitID)
         name, _, _, startTime, endTime = UnitChannelInfo(unitID)
     end
 
-    if name and endTime and startTime and nameplate.UnitFrame and not nameplate.UnitFrame.hideCastInfo then
+    if name and endTime and startTime and nameplate.UnitFrame and nameplate.UnitFrame.healthBar:IsShown() and not nameplate.UnitFrame.hideCastInfo then
         local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
 
         if enableCastbarCustomization then
@@ -528,11 +553,16 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
         local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
         local showNameplateCastbarTimer = BetterBlizzPlatesDB.showNameplateCastbarTimer
         local showNameplateTargetText = BetterBlizzPlatesDB.showNameplateTargetText
+        local hideCastbar = BetterBlizzPlatesDB.hideCastbar
         if enableCastbarCustomization then
             BBP.CustomizeCastbar(unitID)
         end
         if showNameplateCastbarTimer then
             BBP.UpdateCastTimer(nameplate, unitID)
+        end
+
+        if hideCastbar then
+            BBP.HideCastbar(nameplate, unitID)
         end
 
         if showNameplateTargetText then
@@ -608,6 +638,32 @@ function BBP.ToggleSpellCastEventRegistration()
             if BetterBlizzPlatesDB.interruptedByIndicator then
                 castbarEventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
             end
+            if not useCustomCastbarTextureHooked and BetterBlizzPlatesDB.useCustomCastbarTexture then
+                hooksecurefunc(CastingBarMixin, "OnEvent", function(self)
+                    if self and not self.unit:find("nameplate") then return end
+                    local textureName = BetterBlizzPlatesDB.customCastbarTexture
+                    local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
+                    if not self.hooked then
+                        hooksecurefunc(self, "SetStatusBarTexture", function(self)
+                            if self.changing then return end
+                            self.changing = true
+                            self:SetStatusBarTexture(texturePath)
+                            self.changing = false
+                        end)
+                        if self.Flash then
+                            hooksecurefunc(self.Flash, "SetAtlas", function(self)
+                                if self.changing then return end
+                                self.changing = true
+                                self:SetTexture(texturePath)
+                                self.changing = false
+                            end)
+                        end
+                        self.hooked = true
+                    end
+                end)
+                useCustomCastbarTextureHooked = true
+            end
+
             BetterBlizzPlatesDB.castbarEventsOn = true
         end
     else
@@ -630,3 +686,30 @@ function BBP.ToggleSpellCastEventRegistration()
         end
     end
 end
+
+
+--[[
+hooksecurefunc(CastingBarMixin, "OnEvent", function(self)
+    if self and not self.unit:find("nameplate") then return end
+    local textureName = BetterBlizzPlatesDB.customCastbarTexture
+    local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
+    if not self.hooked then
+        hooksecurefunc(self, "SetStatusBarTexture", function(self)
+            if self.changing then return end
+            self.changing = true 
+            self:SetStatusBarTexture(texturePath) 
+            self.changing = false
+        end)
+        if self.Flash then
+            hooksecurefunc(self.Flash, "SetAtlas", function(self)
+                if self.changing then return end
+                self.changing = true
+                self:SetTexture(texturePath)
+                self.changing = false
+            end)
+        end
+        self.hooked = true
+    end
+end)
+
+]]
