@@ -5269,7 +5269,7 @@ local function guiMisc()
 
     local anonMode = CreateCheckbox("anonMode", "Anon Mode", guiMisc)
     anonMode:SetPoint("TOPLEFT", friendIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(anonMode, "Changes the names of players to their class instead.\nWill be overwritten by Arena Names module.")
+    CreateTooltip(anonMode, "Changes the names of players to their class instead.\nWill be overwritten by Arena Names module during arenas.")
 
     --
     local nameplateResourceText = guiMisc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
