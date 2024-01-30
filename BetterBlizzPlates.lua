@@ -11,7 +11,7 @@ LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.3.8"
+local addonUpdates = "1.3.9"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -758,7 +758,7 @@ local function SendUpdateMessage()
         C_Timer.After(7, function()
             --bbp news
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a New settings: Misc: Anon Mode, CVar: Don't force CVars. Potential MC bugfix (works in duels, yet to be tested in a real arena situation). Updated Nahj profile. ")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a New Target Indicator settings: hide icon + color nameplate. Bugfixes.")
         end)
     end
 end
@@ -769,6 +769,7 @@ local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: CVar: Don't force CVar option.")
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Bugfix: MC bug fixed?")
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #4: Updated Nahj profile.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #5: New Target Indicator settings: hide icon + color nameplate")
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Patreon link: www.patreon.com/bodydev")
 end
 

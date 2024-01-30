@@ -1264,6 +1264,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 local function updateColors()
                     entryColors.text.r, entryColors.text.g, entryColors.text.b, entryColors.text.a = r, g, b, a
                     SetTextColor(r, g, b)  -- Update text color
+                    UpdateIconColor(r, g, b)
                     BBF.RefreshAllAuraFrames()  -- Refresh frames or elements that depend on these colors
                 end
 
