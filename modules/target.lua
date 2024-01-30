@@ -22,6 +22,9 @@ function BBP.TargetIndicator(frame)
     local dbScale = BetterBlizzPlatesDB.targetIndicatorScale or 1
 
     local testMode = BetterBlizzPlatesDB.targetIndicatorTestMode
+    local hideIcon = BetterBlizzPlatesDB.targetIndicatorHideIcon
+    local colorNp = BetterBlizzPlatesDB.targetIndicatorColorNameplate
+    local colorName = BetterBlizzPlatesDB.targetIndicatorColorName
 
     local rotation
 
@@ -66,7 +69,20 @@ function BBP.TargetIndicator(frame)
 
     -- Show or hide Target Indicator
     if UnitIsUnit(frame.unit, "target") then
-        frame.targetIndicator:Show()
+        if not hideIcon then
+            frame.targetIndicator:Show()
+        end
+        local shouldColorize = colorNp or colorName
+        local color
+        if shouldColorize then
+            color = BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB
+        end
+        if colorNp then
+            frame.healthBar:SetStatusBarColor(unpack(color))
+        end
+        if colorName then
+            frame.name:SetVertexColor(unpack(color))
+        end
     else
         frame.targetIndicator:Hide()
     end
@@ -140,6 +156,14 @@ function BBP.FocusTargetIndicator(frame)
     end
 end
 
+function BBP.ColorTargetNameplate(frame)
+    local color = BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB
+
+    if UnitIsUnit(frame.unit, "target") then
+        frame.healthBar:SetStatusBarColor(unpack(color))
+    end
+end
+
 -- Event listener for Target Indicator
 local frameTargetChanged = CreateFrame("Frame")
 --frameTargetChanged:RegisterEvent("PLAYER_TARGET_CHANGED")
@@ -149,6 +173,7 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
     local hideTotemHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
 
     if previousTargetNameplate then
+        BBP.CompactUnitFrame_UpdateHealthColor(previousTargetNameplate.UnitFrame)
         BBP.TargetIndicator(previousTargetNameplate.UnitFrame)
         if BetterBlizzPlatesDB.fadeOutNPC then
             BBP.FadeOutNPCs(previousTargetNameplate.UnitFrame)
@@ -186,6 +211,7 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
             end
         end
 ]]
+        
 
         previousTargetNameplate = nil
     end
@@ -233,6 +259,7 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
         end
+        --BBP.ColorTargetNameplate(nameplateForTarget.UnitFrame)
         previousTargetNameplate = nameplateForTarget
     end
 end)

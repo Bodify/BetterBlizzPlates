@@ -156,6 +156,7 @@ local defaultSettings = {
     targetIndicatorYPos = 0,
     targetIndicatorAnchor = "TOP",
     targetIndicatorTestMode = false,
+    targetIndicatorColorNameplateRGB = {1, 0, 0.44},
     -- Focus Target Indicator
     focusTargetIndicator = false,
     focusTargetIndicatorScale = 1,
@@ -1657,6 +1658,7 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
     local totemIndicatorTest = BetterBlizzPlatesDB.totemIndicatorTestMode
     local colorPersonalNp = BetterBlizzPlatesDB.classColorPersonalNameplate
     local auraColor = BetterBlizzPlatesDB.auraColor
+    local colorTarget = BetterBlizzPlatesDB.targetIndicatorColorNameplate
 
     if colorPersonalNp then
         local isPlayer = UnitIsUnit(frame.unit, "player")
@@ -1739,6 +1741,10 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
 
     if auraColor then
         BBP.AuraColor(frame)
+    end
+
+    if colorTarget then
+        BBP.ColorTargetNameplate(frame)
     end
 end)
 
@@ -1854,6 +1860,8 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame)
     if auraColor then
         BBP.AuraColor(frame)
     end
+
+    --BBP.ColorTargetNameplate(frame)
 
     if castEmphasisColor then
         local nameplate = BBP.GetNameplate(frame.unit)
@@ -2606,6 +2614,7 @@ function BBP.ConsolidatedUpdateName(frame)
     local hideFriendlyNameText = BetterBlizzPlatesDB.hideFriendlyNameText
     local hideEnemyNameText = BetterBlizzPlatesDB.hideEnemyNameText
     --local showGuildNames = BetterBlizzPlatesDB.showGuildNames
+    local colorName = BetterBlizzPlatesDB.targetIndicatorColorName and BetterBlizzPlatesDB.targetIndicator
 
     if anonModeOn then
         anonMode(frame)
@@ -2681,6 +2690,14 @@ function BBP.ConsolidatedUpdateName(frame)
                     frame.name:SetVertexColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
                 end
             end
+        end
+    end
+
+    if colorName then
+        local color = BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB
+        local isTarget = UnitIsUnit(frame.unit, "target")
+        if isTarget then
+            frame.name:SetVertexColor(unpack(color))
         end
     end
 

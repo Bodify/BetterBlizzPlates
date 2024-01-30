@@ -1264,7 +1264,6 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 local function updateColors()
                     entryColors.text.r, entryColors.text.g, entryColors.text.b, entryColors.text.a = r, g, b, a
                     SetTextColor(r, g, b)  -- Update text color
-                    SetImportantBoxColor(r, g, b, a)  -- Update other elements as needed
                     BBF.RefreshAllAuraFrames()  -- Refresh frames or elements that depend on these colors
                 end
 
@@ -3354,6 +3353,92 @@ local function guiPositionAndScale()
     end,
         { anchorFrame = targetIndicatorYPos, x = -16, y = -35, label = "Anchor" }
     )
+
+    local targetIndicatorHideIcon = CreateCheckbox("targetIndicatorHideIcon", "Hide Target Marker", contentFrame)
+    targetIndicatorHideIcon:SetPoint("TOPLEFT", targetIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
+
+    local targetIndicatorColorNameplate = CreateCheckbox("targetIndicatorColorNameplate", "Color healthbar", contentFrame)
+    targetIndicatorColorNameplate:SetPoint("TOPLEFT", targetIndicatorHideIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+    local targetIndicatorColorName = CreateCheckbox("targetIndicatorColorName", "Also color name", contentFrame)
+    targetIndicatorColorName:SetPoint("TOPLEFT", targetIndicatorColorNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+    if BetterBlizzPlatesDB.targetIndicatorColorNameplate then
+        targetIndicatorColorNameplate.Text:SetTextColor(unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB))
+    end
+
+    if BetterBlizzPlatesDB.targetIndicatorColorName then
+        targetIndicatorColorName.Text:SetTextColor(unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB))
+    end
+
+    local function OpenColorPicker()
+        local r, g, b = unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB or {1, 1, 1})
+
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b,
+            swatchFunc = function()
+                local r, g, b = ColorPickerFrame:GetColorRGB()
+                BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+                targetIndicatorColorNameplate.Text:SetTextColor(unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB))
+                if BetterBlizzPlatesDB.targetIndicatorColorName then
+                    targetIndicatorColorName.Text:SetTextColor(unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB))
+                end
+            end,
+            cancelFunc = function(previousValues)
+                local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+                targetIndicatorColorNameplate.Text:SetTextColor(unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB))
+                if BetterBlizzPlatesDB.targetIndicatorColorName then
+                    targetIndicatorColorName.Text:SetTextColor(unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB))
+                end
+            end,
+        })
+    end
+
+    local targetColorButton = CreateFrame("Button", nil, contentFrame, "UIPanelButtonTemplate")
+    targetColorButton:SetText("Color")
+    targetColorButton:SetPoint("LEFT", targetIndicatorColorNameplate.text, "RIGHT", -1, 0)
+    targetColorButton:SetSize(43, 18)
+    targetColorButton:SetScript("OnClick", OpenColorPicker)
+
+    targetIndicatorColorName:SetScript("OnClick", function(self)
+        BetterBlizzPlatesDB.targetIndicatorColorName = self:GetChecked()
+        local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
+        if BetterBlizzPlatesDB.targetIndicatorColorName then
+            targetIndicatorColorName.Text:SetTextColor(unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB))
+        else
+            targetIndicatorColorName.Text:SetTextColor(1, 0.819607, 0)
+        end
+        BBP.TargetIndicator(nameplateForTarget)
+        BBP.RefreshAllNameplates()
+    end)
+
+    targetIndicatorColorNameplate:SetScript("OnClick", function(self)
+        BetterBlizzPlatesDB.targetIndicatorColorNameplate = self:GetChecked()
+        local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
+        if BetterBlizzPlatesDB.targetIndicatorColorNameplate then
+            targetIndicatorColorNameplate.Text:SetTextColor(unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB))
+            targetColorButton:Enable()
+            targetColorButton:SetAlpha(1)
+        else
+            targetIndicatorColorNameplate.Text:SetTextColor(1, 0.819607, 0)
+            targetColorButton:Disable()
+            targetColorButton:SetAlpha(0.5)
+        end
+        BBP.TargetIndicator(nameplateForTarget)
+        BBP.RefreshAllNameplates()
+    end)
+
+    if BetterBlizzPlatesDB.targetIndicatorColorNameplate then
+        targetColorButton:Enable()
+        targetColorButton:SetAlpha(1)
+    else
+        targetColorButton:Disable()
+        targetColorButton:SetAlpha(0.5)
+    end
+
 
     ----------------------
     -- Raid Indicator
