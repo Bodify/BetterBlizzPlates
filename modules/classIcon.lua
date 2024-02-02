@@ -160,6 +160,14 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         end
     end
 
+    if frame.classIndicator.highlightSelect then
+        if UnitIsUnit(frame.unit, "target") then
+            BBP.ClassIndicatorTargetHighlight(frame)
+        else
+            frame.classIndicator.highlightSelect:Hide()
+        end
+    end
+
     frame.classIndicator:ClearAllPoints()
     if anchorPoint == "TOP" then
         frame.classIndicator:SetPoint(oppositeAnchor, frame.name, anchorPoint, xPos, yPos)

@@ -223,8 +223,10 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.ApplyTotemIconsAndColorNameplate(previousTargetNameplate.UnitFrame, previousTargetNameplate.UnitFrame.unit)
             end
         end
-        if previousTargetNameplate.UnitFrame and previousTargetNameplate.UnitFrame.classIndicator.highlightSelect then
-            previousTargetNameplate.UnitFrame.classIndicator.highlightSelect:Hide()
+        if previousTargetNameplate.UnitFrame and
+        previousTargetNameplate.UnitFrame.classIndicator and
+        previousTargetNameplate.UnitFrame.classIndicator.highlightSelect then
+         previousTargetNameplate.UnitFrame.classIndicator.highlightSelect:Hide()
         end
 --[[
         if BetterBlizzPlatesDB.hideCastbar then

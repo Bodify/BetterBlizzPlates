@@ -60,11 +60,10 @@ recheckInterruptListener:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 recheckInterruptListener:SetScript("OnEvent", OnEvent)
 
 -- Castbar has a fade out animation after UNIT_SPELLCAST_STOP has triggered, reset castbar settings after this fadeout
-local function ResetCastbarAfterFadeout(unitToken)
+local function ResetCastbarAfterFadeout(nameplate, unitToken)
     local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
     if not enableCastbarCustomization then return end
 
-    local nameplate = BBP.GetNameplate(unitToken)
     if not (nameplate and nameplate.UnitFrame and nameplate.UnitFrame.castBar) then return end
     if unitToken == "player" then return end
 
@@ -580,7 +579,7 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
         local showNameplateCastbarTimer = BetterBlizzPlatesDB.showNameplateCastbarTimer
         local showNameplateTargetText = BetterBlizzPlatesDB.showNameplateTargetText
         if enableCastbarCustomization then
-            ResetCastbarAfterFadeout(unitID)
+            ResetCastbarAfterFadeout(nameplate, unitID)
             if event =="UNIT_SPELLCAST_INTERRUPTED" then
                 if nameplate.UnitFrame.castBar then
                     nameplate.UnitFrame.castBar:SetStatusBarColor(1,0,0)
