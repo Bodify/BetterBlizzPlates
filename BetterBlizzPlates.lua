@@ -8,10 +8,11 @@ BBP = BBP or {}
 local LSM = LibStub("LibSharedMedia-3.0")
 LSM:Register("statusbar", "Dragonflight (BBP)", [[Interface\Addons\BetterBlizzPlates\media\DragonflightTexture]])
 LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPlates\media\focusTexture]])
+LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlates\media\targetTexture]])
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.3.9"
+local addonUpdates = "1.4.0"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -157,6 +158,7 @@ local defaultSettings = {
     targetIndicatorAnchor = "TOP",
     targetIndicatorTestMode = false,
     targetIndicatorColorNameplateRGB = {1, 0, 0.44},
+    targetIndicatorTexture = "Checkered (BBP)",
     -- Focus Target Indicator
     focusTargetIndicator = false,
     focusTargetIndicatorScale = 1,
@@ -758,7 +760,7 @@ local function SendUpdateMessage()
         C_Timer.After(7, function()
             --bbp news
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a New Target Indicator settings: hide icon + color nameplate. Bugfixes.")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a New Settings: #1: Target Indicator: Change texture. #2: Class Indicator: Target Highlight. #3: Hide Combo Points etc on friendly nameplates setting.")
         end)
     end
 end
@@ -769,7 +771,8 @@ local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: CVar: Don't force CVar option.")
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Bugfix: MC bug fixed?")
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #4: Updated Nahj profile.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #5: New Target Indicator settings: hide icon + color nameplate")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #5: New Target Indicator settings: Hide icon, Color nameplate, Change texture.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #6: Class Indicator: Target Highlight.")
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Patreon link: www.patreon.com/bodydev")
 end
 
@@ -2200,6 +2203,7 @@ local function HandleNamePlateAdded(unit)
     local classIndicator = BetterBlizzPlatesDB.classIndicator
     local auraColor = BetterBlizzPlatesDB.auraColor
     local friendIndicator = BetterBlizzPlatesDB.friendIndicator
+    local hideResourceOnFriend = BetterBlizzPlatesDB.hideResourceOnFriend
 
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
@@ -2226,10 +2230,19 @@ local function HandleNamePlateAdded(unit)
     end
 ]]
 
+--[[
     if nameplate.driverFrame.classNamePlateMechanicFrame then
         local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
         nameplate.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
+        if isFriend and hideResourceOnFriend then
+            nameplate.driverFrame.classNamePlateMechanicFrame:SetAlpha(0)
+        else
+            nameplate.driverFrame.classNamePlateMechanicFrame:SetAlpha(1)
+        end
     end
+
+]]
+
 
     -- Castbar customization
     if customCastbar then
@@ -2554,6 +2567,10 @@ function BBP.RefreshAllNameplates()
                 end
             end
         end
+
+        if BetterBlizzPlatesDB.targetIndicator then
+            BBP.TargetIndicator(frame)
+        end
     end
 end
 
@@ -2615,7 +2632,8 @@ function BBP.ConsolidatedUpdateName(frame)
     local hideFriendlyNameText = BetterBlizzPlatesDB.hideFriendlyNameText
     local hideEnemyNameText = BetterBlizzPlatesDB.hideEnemyNameText
     --local showGuildNames = BetterBlizzPlatesDB.showGuildNames
-    local colorName = BetterBlizzPlatesDB.targetIndicatorColorName and BetterBlizzPlatesDB.targetIndicator
+    local colorTargetName = BetterBlizzPlatesDB.targetIndicatorColorName and BetterBlizzPlatesDB.targetIndicator
+    local colorFocusName = BetterBlizzPlatesDB.focusTargetIndicatorColorName and BetterBlizzPlatesDB.focusTargetIndicator
 
     if anonModeOn then
         anonMode(frame)
@@ -2694,7 +2712,15 @@ function BBP.ConsolidatedUpdateName(frame)
         end
     end
 
-    if colorName then
+    if colorFocusName then
+        local color = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB
+        local isFocus = UnitIsUnit(frame.unit, "focus")
+        if isFocus then
+            frame.name:SetVertexColor(unpack(color))
+        end
+    end
+
+    if colorTargetName then
         local color = BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB
         local isTarget = UnitIsUnit(frame.unit, "target")
         if isTarget then

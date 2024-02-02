@@ -104,7 +104,9 @@ local function ResetCastbarAfterFadeout(unitToken)
         castBar.Spark:SetSize(4, castBarHeight + 5)
         castBar.Text:SetScale(castBarTextScale)
         castBar.BorderShield:SetScale(borderShieldSize)
-        castBar.BorderShield:Hide()
+        if (not UnitCastingInfo(unitToken) and not UnitChannelInfo(unitToken)) then
+            castBar.BorderShield:Hide()
+        end
 
         if castBarEmphasisHealthbarColor then
             if not frame or frame:IsForbidden() then return end

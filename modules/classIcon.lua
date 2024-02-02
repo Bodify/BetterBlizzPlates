@@ -29,6 +29,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     local showHealerIcon = BetterBlizzPlatesDB.classIndicatorHealer
     local squareIconEnemy = BetterBlizzPlatesDB.classIconSquareBorder
     local squareIconFriendly = BetterBlizzPlatesDB.classIconSquareBorderFriendly
+    local classIndicatorHighlight = BetterBlizzPlatesDB.classIndicatorHighlight
 
     -- Initialize Class Icon Frame
     if not frame.classIndicator then
@@ -40,6 +41,15 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         frame.classIndicator.mask = frame.classIndicator:CreateMaskTexture()
         frame.classIndicator.border = frame.classIndicator:CreateTexture(nil, "OVERLAY")
         frame.classIndicator:SetFrameStrata("HIGH")
+    end
+
+    if classIndicatorHighlight and not frame.classIndicator.highlightSelect then
+        frame.classIndicator.highlightSelect = frame.classIndicator:CreateTexture(nil, "OVERLAY")
+        frame.classIndicator.highlightSelect:SetAtlas("charactercreate-ring-select")
+        frame.classIndicator.highlightSelect:Hide()
+        frame.classIndicator.highlightSelect:SetPoint("CENTER", frame.classIndicator, "CENTER", 0,0)
+        frame.classIndicator.highlightSelect:SetSize(33, 33)
+        frame.classIndicator.highlightSelect:SetDrawLayer("OVERLAY", 1)
     end
 
     local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(frame.unit)
@@ -84,6 +94,14 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
             frame.classIndicator.border:SetSize(23, 23)
             frame.classIndicator.border:ClearAllPoints()
             frame.classIndicator.border:SetPoint("CENTER", frame.classIndicator.icon, 1.5, -1.5)
+            ------
+            ------
+            if frame.classIndicator.highlightSelect then
+                frame.classIndicator.highlightSelect:SetSize(36,36)
+                frame.classIndicator.highlightSelect:SetAtlas("newplayertutorial-drag-slotblue")
+                frame.classIndicator.highlightSelect:SetDesaturated(true)
+                frame.classIndicator.highlightSelect:SetVertexColor(1,0.88,0)
+            end
         else
             frame.classIndicator.icon:SetSize(24, 24)
             frame.classIndicator.mask:SetTexture("Interface/Masks/CircleMaskScalable")
@@ -91,6 +109,14 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
             frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
             frame.classIndicator.border:SetAtlas("ui-frame-genericplayerchoice-portrait-border")
             frame.classIndicator.border:SetAllPoints(frame.classIndicator)
+            ------
+            ------
+            if frame.classIndicator.highlightSelect then
+                frame.classIndicator.highlightSelect:SetDesaturated(false)
+                frame.classIndicator.highlightSelect:SetSize(33, 33)
+                frame.classIndicator.highlightSelect:SetAtlas("charactercreate-ring-select")
+                frame.classIndicator.highlightSelect:SetVertexColor(1,0.88,0)
+            end
         end
     elseif isEnemy then
         anchorPoint = BetterBlizzPlatesDB.classIndicatorAnchor
@@ -108,6 +134,14 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
             frame.classIndicator.border:SetSize(23, 23)
             frame.classIndicator.border:ClearAllPoints()
             frame.classIndicator.border:SetPoint("CENTER", frame.classIndicator.icon, 1.5, -1.5)
+            ------
+            ------
+            if frame.classIndicator.highlightSelect then
+                frame.classIndicator.highlightSelect:SetSize(36,36)
+                frame.classIndicator.highlightSelect:SetAtlas("newplayertutorial-drag-slotblue")
+                frame.classIndicator.highlightSelect:SetDesaturated(true)
+                frame.classIndicator.highlightSelect:SetVertexColor(1,0.88,0)
+            end
         else
             frame.classIndicator.icon:SetSize(24, 24)
             frame.classIndicator.mask:SetTexture("Interface/Masks/CircleMaskScalable")
@@ -115,6 +149,14 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
             frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
             frame.classIndicator.border:SetAtlas("ui-frame-genericplayerchoice-portrait-border")
             frame.classIndicator.border:SetAllPoints(frame.classIndicator)
+            ------
+            ------
+            if frame.classIndicator.highlightSelect then
+                frame.classIndicator.highlightSelect:SetDesaturated(false)
+                frame.classIndicator.highlightSelect:SetSize(33, 33)
+                frame.classIndicator.highlightSelect:SetAtlas("charactercreate-ring-select")
+                frame.classIndicator.highlightSelect:SetVertexColor(1,0.88,0)
+            end
         end
     end
 
@@ -235,4 +277,14 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
 
     -- Show the class icon frame
     frame.classIndicator:Show()
+end
+
+function BBP.ClassIndicatorTargetHighlight(frame)
+    frame.classIndicator.highlightSelect:Show()
+    if BetterBlizzPlatesDB.classIndicatorHighlightColor then
+        local _, class = UnitClass(frame.unit)
+        local classColor = RAID_CLASS_COLORS[class]
+        frame.classIndicator.highlightSelect:SetDesaturated(true)
+        frame.classIndicator.highlightSelect:SetVertexColor(classColor.r, classColor.g, classColor.b)
+    end
 end

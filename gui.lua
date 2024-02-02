@@ -104,6 +104,17 @@ local function CreateBorderBox(anchor)
     return texture
 end
 
+local function CreateBorderBox(anchor)
+    local contentFrame = anchor:GetParent()
+    local texture = contentFrame:CreateTexture(nil, "BACKGROUND")
+    texture:SetAtlas("UI-Frame-Neutral-PortraitWiderDisable")
+    texture:SetDesaturated(true)
+    texture:SetRotation(math.rad(90))
+    texture:SetSize(315, 163)
+    texture:SetPoint("CENTER", anchor, "CENTER", 0, -106)
+    return texture
+end
+
 local function CreateResetButton(relativeTo, settingKey, parent)
     local resetButton = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     resetButton:SetText("Default")
@@ -3038,9 +3049,9 @@ local function guiPositionAndScale()
     local firstLineX = 53
     local firstLineY = -65
     local secondLineX = 222
-    local secondLineY = -360
+    local secondLineY = -380
     local thirdLineX = 391
-    local thirdLineY = -655
+    local thirdLineY = -695
     local fourthLineX = 560
 
     local BetterBlizzPlatesSubPanel = CreateFrame("Frame")
@@ -3361,7 +3372,7 @@ local function guiPositionAndScale()
     local targetIndicatorColorNameplate = CreateCheckbox("targetIndicatorColorNameplate", "Color healthbar", contentFrame)
     targetIndicatorColorNameplate:SetPoint("TOPLEFT", targetIndicatorHideIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local targetIndicatorColorName = CreateCheckbox("targetIndicatorColorName", "Also color name", contentFrame)
+    local targetIndicatorColorName = CreateCheckbox("targetIndicatorColorName", "Color name", contentFrame)
     targetIndicatorColorName:SetPoint("TOPLEFT", targetIndicatorColorNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
     if BetterBlizzPlatesDB.targetIndicatorColorNameplate then
@@ -3409,8 +3420,14 @@ local function guiPositionAndScale()
         local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
         if BetterBlizzPlatesDB.targetIndicatorColorName then
             targetIndicatorColorName.Text:SetTextColor(unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB))
+            targetColorButton:Enable()
+            targetColorButton:SetAlpha(1)
         else
             targetIndicatorColorName.Text:SetTextColor(1, 0.819607, 0)
+            if (not BetterBlizzPlatesDB.targetIndicatorColorName and not BetterBlizzPlatesDB.targetIndicatorColorNameplate) then
+                targetColorButton:Disable()
+                targetColorButton:SetAlpha(0.5)
+            end
         end
         BBP.TargetIndicator(nameplateForTarget)
         BBP.RefreshAllNameplates()
@@ -3425,20 +3442,46 @@ local function guiPositionAndScale()
             targetColorButton:SetAlpha(1)
         else
             targetIndicatorColorNameplate.Text:SetTextColor(1, 0.819607, 0)
-            targetColorButton:Disable()
-            targetColorButton:SetAlpha(0.5)
+            if (not BetterBlizzPlatesDB.targetIndicatorColorName and not BetterBlizzPlatesDB.targetIndicatorColorNameplate) then
+                targetColorButton:Disable()
+                targetColorButton:SetAlpha(0.5)
+            end
         end
         BBP.TargetIndicator(nameplateForTarget)
         BBP.RefreshAllNameplates()
     end)
 
-    if BetterBlizzPlatesDB.targetIndicatorColorNameplate then
+    if BetterBlizzPlatesDB.targetIndicatorColorNameplate or BetterBlizzPlatesDB.targetIndicatorColorName then
         targetColorButton:Enable()
         targetColorButton:SetAlpha(1)
     else
         targetColorButton:Disable()
         targetColorButton:SetAlpha(0.5)
     end
+
+    local targetIndicatorChangeTexture = CreateCheckbox("targetIndicatorChangeTexture", "Re-texture healthbar", contentFrame)
+    targetIndicatorChangeTexture:SetPoint("TOPLEFT", targetIndicatorColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(targetIndicatorChangeTexture, "Re-texture the healthbar of your current target.")
+
+    local targetIndicatorTexture = CreateTextureDropdown(
+        "targetIndicatorTexture",
+        targetIndicatorChangeTexture,
+        "Select Texture",
+        "targetIndicatorTexture",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = targetIndicatorChangeTexture, x = -16, y = -20, label = "Texture" },
+        125
+    )
+
+    targetIndicatorChangeTexture:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            LibDD:UIDropDownMenu_EnableDropDown(targetIndicatorTexture)
+        else
+            LibDD:UIDropDownMenu_DisableDropDown(targetIndicatorTexture)
+        end
+    end)
 
 
     ----------------------
@@ -3552,6 +3595,13 @@ local function guiPositionAndScale()
     local focusTargetTestIcons2 = CreateCheckbox("focusTargetIndicatorTestMode", "Test", contentFrame)
     focusTargetTestIcons2:SetPoint("TOPLEFT", focusTargetIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
+    local focusTargetIndicatorColorName = CreateCheckbox("focusTargetIndicatorColorName", "Color name", contentFrame)
+    focusTargetIndicatorColorName:SetPoint("LEFT", focusTargetTestIcons2.Text, "RIGHT", 0, 0)
+
+    if BetterBlizzPlatesDB.focusTargetIndicatorColorName then
+        focusTargetIndicatorColorName.Text:SetTextColor(unpack(BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB))
+    end
+
     local focusTargetIndicatorColorNameplate = CreateCheckbox("focusTargetIndicatorColorNameplate", "Color healthbar", contentFrame)
     focusTargetIndicatorColorNameplate:SetPoint("TOPLEFT", focusTargetTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate then
@@ -3584,6 +3634,24 @@ local function guiPositionAndScale()
     focusColorButton:SetSize(43, 18)
     focusColorButton:SetScript("OnClick", OpenColorPicker)
 
+    focusTargetIndicatorColorName:SetScript("OnClick", function(self)
+        BetterBlizzPlatesDB.focusTargetIndicatorColorName = self:GetChecked()
+        local nameplateForFocus = C_NamePlate.GetNamePlateForUnit("focus")
+        if BetterBlizzPlatesDB.focusTargetIndicatorColorName then
+            focusTargetIndicatorColorName.Text:SetTextColor(unpack(BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB))
+            focusColorButton:Enable()
+            focusColorButton:SetAlpha(1)
+        else
+            focusTargetIndicatorColorName.Text:SetTextColor(1, 0.819607, 0)
+            if (not BetterBlizzPlatesDB.focusTargetIndicatorColorName and not BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate) then
+                focusColorButton:Disable()
+                focusColorButton:SetAlpha(0.5)
+            end
+        end
+        BBP.FocusTargetIndicator(nameplateForFocus)
+        BBP.RefreshAllNameplates()
+    end)
+
     focusTargetIndicatorColorNameplate:SetScript("OnClick", function(self)
         BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate = self:GetChecked()
         local nameplateForFocusTarget = C_NamePlate.GetNamePlateForUnit("focus")
@@ -3593,14 +3661,16 @@ local function guiPositionAndScale()
             focusColorButton:SetAlpha(1)
         else
             focusTargetIndicatorColorNameplate.Text:SetTextColor(1, 0.819607, 0)
-            focusColorButton:Disable()
-            focusColorButton:SetAlpha(0.5)
+            if (not BetterBlizzPlatesDB.focusTargetIndicatorColorName and not BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate) then
+                focusColorButton:Disable()
+                focusColorButton:SetAlpha(0.5)
+            end
         end
         BBP.FocusTargetIndicator(nameplateForFocusTarget)
         BBP.RefreshAllNameplates()
     end)
 
-    if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate then
+    if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate or BetterBlizzPlatesDB.focusTargetIndicatorColorName then
         focusColorButton:Enable()
         focusColorButton:SetAlpha(1)
     else
@@ -3610,7 +3680,7 @@ local function guiPositionAndScale()
 
     local focusTargetIndicatorChangeTexture = CreateCheckbox("focusTargetIndicatorChangeTexture", "Re-texture healthbar", contentFrame)
     focusTargetIndicatorChangeTexture:SetPoint("TOPLEFT", focusTargetIndicatorColorNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(focusTargetIndicatorChangeTexture, "Re-texture the castbar.\nNOTE: This is still being tested, very beta alpha atm im fighting blizz functions to make it work.")
+    CreateTooltip(focusTargetIndicatorChangeTexture, "Re-texture the healthbar of the focus target")
 
     local focusTargetIndicatorTexture = CreateTextureDropdown(
         "focusTargetIndicatorTexture",
@@ -3864,6 +3934,14 @@ local function guiPositionAndScale()
     local classIconColorBorder = CreateCheckbox("classIconColorBorder", "Color", contentFrame)
     classIconColorBorder:SetPoint("LEFT", classIndicatorHealer.text, "RIGHT", -2, 0)
     CreateTooltip(classIconColorBorder, "Class color border")
+
+    local classIndicatorHighlight = CreateCheckbox("classIndicatorHighlight", "Highlight", contentFrame)
+    classIndicatorHighlight:SetPoint("TOPLEFT", classIndicatorSpecIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(classIndicatorHighlight, "Show highlight on current target")
+
+    local classIndicatorHighlightColor = CreateCheckbox("classIndicatorHighlightColor", "Color HL", contentFrame)
+    classIndicatorHighlightColor:SetPoint("LEFT", classIndicatorHighlight.text, "RIGHT", -2, 0)
+    CreateTooltip(classIndicatorHighlightColor, "Class color target highlight")
 
     ----
 
@@ -5184,8 +5262,12 @@ local function guiBlizzCVars()
     nameplateResourceOnTarget:SetPoint("TOP", stackingNameplatesText, "BOTTOM", -65, -155)
     CreateTooltip(nameplateResourceOnTarget, "Show combo points, warlock shards, arcane charges etc on nameplates.")
 
+    local hideResourceOnFriend = CreateCheckbox("hideResourceOnFriend", "Hide combo points etc on friendly nameplates", guiBlizzCVars)
+    hideResourceOnFriend:SetPoint("TOP", nameplateResourceOnTarget, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltip(hideResourceOnFriend, "Hide combo points, warlock shards, arcane charges etc on friendly nameplates.")
+
     local disableCVarForceOnLogin = CreateCheckbox("disableCVarForceOnLogin", "Disable all CVar forcing", guiBlizzCVars, true)
-    disableCVarForceOnLogin:SetPoint("TOP", nameplateResourceOnTarget, "BOTTOM", 0, pixelsBetweenBoxes)
+    disableCVarForceOnLogin:SetPoint("TOP", hideResourceOnFriend, "BOTTOM", 0, pixelsBetweenBoxes)
     CreateTooltip(disableCVarForceOnLogin, "Disables all forcing of CVar's on login (Not recommended)")
 
     local nameplateAlphaText = guiBlizzCVars:CreateFontString(nil, "OVERLAY", "GameFontNormal")
