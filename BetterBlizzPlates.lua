@@ -1754,7 +1754,7 @@ end)
 
 
 -- Copy of blizzards update health color function
-function BBP.CompactUnitFrame_UpdateHealthColor(frame)
+function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
     if not frame or not frame.unit then return end
 	local r, g, b;
 	local unitIsConnected = UnitIsConnected(frame.unit);
@@ -1857,7 +1857,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame)
         BBP.ColorNPCs(frame)
     end
 
-    if focusIndicator then
+    if focusIndicator  and not exitLoop then
         BBP.FocusTargetIndicator(frame)
     end
 

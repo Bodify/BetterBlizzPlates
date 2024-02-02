@@ -21,7 +21,6 @@ function BBP.TargetIndicator(frame)
     local yPos = BetterBlizzPlatesDB.targetIndicatorYPos or 0
     local dbScale = BetterBlizzPlatesDB.targetIndicatorScale or 1
 
-    local testMode = BetterBlizzPlatesDB.targetIndicatorTestMode
     local hideIcon = BetterBlizzPlatesDB.targetIndicatorHideIcon
     local colorNp = BetterBlizzPlatesDB.targetIndicatorColorNameplate
     local colorName = BetterBlizzPlatesDB.targetIndicatorColorName
@@ -66,12 +65,6 @@ function BBP.TargetIndicator(frame)
     local targetTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, targetIndicatorTextureName)
     local textureName = BetterBlizzPlatesDB.customTexture
     local customTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
-
-    -- Test mode
-    if testMode then
-        frame.targetIndicator:Show()
-        return
-    end
 
     -- Show or hide Target Indicator
     if UnitIsUnit(frame.unit, "target") then
@@ -157,7 +150,8 @@ function BBP.FocusTargetIndicator(frame)
             local color = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB or {1, 1, 1}
             frame.healthBar:SetStatusBarColor(unpack(color))
         else
-            BBP.CompactUnitFrame_UpdateHealthColor(frame)
+            local exitLoop = true
+            BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         end
         return
     end
@@ -295,7 +289,7 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
         if hideTotemHealthBar then
             BBP.ApplyTotemIconsAndColorNameplate(nameplateForTarget.UnitFrame, nameplateForTarget.UnitFrame.unit)
         end
-        if nameplateForTarget.UnitFrame.classIndicator.highlightSelect then
+        if nameplateForTarget.UnitFrame and nameplateForTarget.UnitFrame.classIndicator and nameplateForTarget.UnitFrame.classIndicator.highlightSelect then
             BBP.ClassIndicatorTargetHighlight(nameplateForTarget.UnitFrame)
         end
         if BetterBlizzPlatesDB.showCastbarIfTarget then
