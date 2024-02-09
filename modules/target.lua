@@ -253,22 +253,22 @@ frameTargetChanged:SetScript("OnEvent", function(self, event)
 
     if nameplateForTarget then
         BBP.TargetIndicator(nameplateForTarget.UnitFrame)
-        if nameplateForTarget.driverFrame then
-            if nameplateForTarget.driverFrame.classNamePlateMechanicFrame then
-                if BetterBlizzPlatesDB.hideResourceOnFriend then
-                    if not UnitCanAttack(nameplateForTarget.UnitFrame.unit, "player") then
-                        nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetAlpha(0)
-                    else
-                        nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetAlpha(1)
-                    end
-                end
-                local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
-                nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
+        -- if nameplateForTarget.driverFrame then
+        --     if nameplateForTarget.driverFrame.classNamePlateMechanicFrame then
+        --         if BetterBlizzPlatesDB.hideResourceOnFriend then
+        --             if not UnitCanAttack(nameplateForTarget.UnitFrame.unit, "player") then
+        --                 nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetAlpha(0)
+        --             else
+        --                 nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetAlpha(1)
+        --             end
+        --         end
+        --         local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
+        --         nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
 
-                nameplateForTarget.driverFrame.classNamePlateMechanicFrame:ClearAllPoints();
-                PixelUtil.SetPoint(nameplateForTarget.driverFrame.classNamePlateMechanicFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
-            end
-        end
+        --         nameplateForTarget.driverFrame.classNamePlateMechanicFrame:ClearAllPoints();
+        --         PixelUtil.SetPoint(nameplateForTarget.driverFrame.classNamePlateMechanicFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
+        --     end
+        -- end
         if BetterBlizzPlatesDB.fadeOutNPC then
             BBP.FadeOutNPCs(nameplateForTarget.UnitFrame)
             local fadeAllButTarget = BetterBlizzPlatesDB.fadeAllButTarget
@@ -372,3 +372,16 @@ function BBP.TargetResourceUpdater()
         end
     end
 end
+
+-- make this optional
+hooksecurefunc(NamePlateDriverFrame, "SetupClassNameplateBars", function(self)
+    if self.classNamePlateMechanicFrame then
+        local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
+        if nameplateForTarget then
+            local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
+            nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
+            nameplateForTarget.driverFrame.classNamePlateMechanicFrame:ClearAllPoints();
+            PixelUtil.SetPoint(nameplateForTarget.driverFrame.classNamePlateMechanicFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
+        end
+    end
+end)
