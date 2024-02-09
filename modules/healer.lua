@@ -48,11 +48,9 @@ function BBP.HealerIndicator(frame)
     -- Test mode
     if testMode then
         frame.healerIndicator:Show()
-        if not isFriend then
-            if redCrossEnemy then
-                frame.healerIndicator:SetDesaturated(true)
-                frame.healerIndicator:SetVertexColor(1,0,0)
-            end
+        if redCrossEnemy and not isFriend then
+            frame.healerIndicator:SetDesaturated(true)
+            frame.healerIndicator:SetVertexColor(1,0,0)
         else
             frame.healerIndicator:SetDesaturated(false)
             frame.healerIndicator:SetVertexColor(1,1,1)
@@ -82,7 +80,7 @@ function BBP.HealerIndicator(frame)
             if frame.healerIndicator then frame.healerIndicator:Hide() end
             return
         end
-        if redCrossEnemy then
+        if redCrossEnemy and not isFriend then
             frame.healerIndicator:SetDesaturated(true)
             frame.healerIndicator:SetVertexColor(1,0,0)
         else
