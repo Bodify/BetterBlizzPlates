@@ -2605,7 +2605,7 @@ function BBP.RefreshAllNameplates()
         end
 
         if frame.castBar then
-            if not BetterBlizzPlatesDB.useCustomCastbarBGTexture then
+            if not BetterBlizzPlatesDB.useCustomCastbarBGTexture or not BetterBlizzPlatesDB.useCustomCastbarTexture then
                 frame.castBar.Background:SetDesaturated(false)
                 frame.castBar.Background:SetVertexColor(1,1,1,1)
                 frame.castBar.Background:SetAtlas("UI-CastingBar-Background")
@@ -3060,6 +3060,12 @@ local function NamePlateCastBarTestMode(frame)
 
                 castBar.Icon:SetScale(castBarIconScale)
                 castBar.BorderShield:SetScale(borderShieldSize)
+
+                if not BetterBlizzPlatesDB.useCustomCastbarBGTexture or not BetterBlizzPlatesDB.useCustomCastbarTexture then
+                    frame.castBar.Background:SetDesaturated(false)
+                    frame.castBar.Background:SetVertexColor(1,1,1,1)
+                    frame.castBar.Background:SetAtlas("UI-CastingBar-Background")
+                end
 
                 if castBarTimer then
                     if not frame.dummyTimer then

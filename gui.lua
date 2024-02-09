@@ -473,37 +473,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
 
     editBox:SetFontObject(GameFontHighlightSmall)
 
-    -- Function to handle the entered value and update the slider
-    local function HandleEditBoxInput()
-        local inputValue = tonumber(editBox:GetText())
-        if inputValue then
-            -- Check if it's a non-axis slider and inputValue is <= 0
-            if (axis ~= "X" and axis ~= "Y") and inputValue <= 0 then
-                inputValue = 0.1  -- Set to minimum allowed value for non-axis sliders
-            end
-
-            local currentMin, currentMax = slider:GetMinMaxValues()
-            if inputValue < currentMin or inputValue > currentMax then
-                UpdateSliderRange(inputValue, currentMin, currentMax)
-            end
-
-            slider:SetValue(inputValue)
-            BetterBlizzPlatesDB[element] = inputValue
-        end
-        editBox:Hide()
-        BBP.RefreshAllNameplates()
-    end
-
-    slider:SetScript("OnMouseDown", function(self, button)
-        if button == "RightButton" then
-            editBox:Show()
-            editBox:SetFocus()
-        end
-    end)
-
-    editBox:SetScript("OnEnterPressed", HandleEditBoxInput)
-
-    slider:SetScript("OnValueChanged", function(self, value)
+    local function SliderOnValueChanged(self, value)
         if not BetterBlizzPlatesDB.wasOnLoadingScreen then
             local textValue = value % 1 == 0 and tostring(math.floor(value)) or string.format("%.2f", value)
             self.Text:SetText(label .. ": " .. textValue)
@@ -582,7 +552,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                             if axis then
                                 local yOffset = BetterBlizzPlatesDB.castBarDragonflightShield and -2 or 0
                                 frame.castBar.Icon:ClearAllPoints()
-                                frame.castBar.Icon:SetPoint("CENTER", frame.castBar, "RIGHT", xPos, yPos)
+                                frame.castBar.Icon:SetPoint("CENTER", frame.castBar, "LEFT", xPos, yPos)
                                 frame.castBar.BorderShield:ClearAllPoints()
                                 frame.castBar.BorderShield:SetPoint("CENTER", frame.castBar.Icon, "CENTER", 0, 0)
                             else
@@ -637,10 +607,6 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         end
                     end
                 end
-
-
-
-
 
                 --If no nameplates are present still adjust values
                 if element == "NamePlateVerticalScale" then
@@ -1010,7 +976,38 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 end
             end
         --end
+    end
+
+    -- Function to handle the entered value and update the slider
+    local function HandleEditBoxInput()
+        local inputValue = tonumber(editBox:GetText())
+        if inputValue then
+            if (axis ~= "X" and axis ~= "Y") and inputValue <= 0 then
+                inputValue = 0.1  -- Set to minimum allowed value for non-axis sliders
+            end
+
+            local currentMin, currentMax = slider:GetMinMaxValues()
+            if inputValue < currentMin or inputValue > currentMax then
+                UpdateSliderRange(inputValue, currentMin, currentMax)
+            end
+
+            slider:SetValue(inputValue)
+            SliderOnValueChanged(slider, inputValue) -- Call the OnValueChanged functionality explicitly
+            BetterBlizzPlatesDB[element] = inputValue
+        end
+        editBox:Hide()
+        BBP.RefreshAllNameplates()
+    end
+
+    slider:SetScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            editBox:Show()
+            editBox:SetFocus()
+        end
     end)
+
+    editBox:SetScript("OnEnterPressed", HandleEditBoxInput)
+    slider:SetScript("OnValueChanged", SliderOnValueChanged)
 
     return slider
 end
