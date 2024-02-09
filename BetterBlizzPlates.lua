@@ -787,6 +787,7 @@ local function SendUpdateMessage()
         updateDurations(BetterBlizzPlatesDB.totemIndicatorNpcList)
         C_Timer.After(7, function()
             --bbp news
+            PlaySoundFile(567439)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Move and scale nameplate Combo points etc. Castbar test mode. Castbar Icon xy positioning. Castbar Edge Highlighter. Hide raidmark on class icon nameplates. A button to reset all of BBP settings. Fixed Color By Aura, god knows how long this has been broken. Healer Indicator separate settings for friend/enemy and red icon for enemy.")
         end)
