@@ -289,7 +289,7 @@ function BBP.CustomizeCastbar(unitToken)
     local castBarNoInterruptColor = BetterBlizzPlatesDB.castBarNoInterruptColor
     local castBarDelayedInterruptColor = BetterBlizzPlatesDB.castBarDelayedInterruptColor
 
-    if spellName and castDuration and BetterBlizzPlatesDB.castBarInterruptHighlighter then
+    if spellName and castDuration and BetterBlizzPlatesDB.castBarInterruptHighlighter and not notInterruptible then
         local currentTime = GetTime() -- currentTime is in seconds
         -- Convert startTime and endTime from milliseconds to seconds for these calculations
         local castStartSeconds = castStart / 1000
