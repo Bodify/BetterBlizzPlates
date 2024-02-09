@@ -2979,9 +2979,9 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 BetterBlizzPlatesDB.auraWhitelistAlphaUpdated = true
             end
 
-            if BetterBLizzPlatesDB.castBarIconXPos and not BetterBlizzPlatesDB.castBarIconPosReset then
-                BetterBLizzPlatesDB.castBarIconXPos = 0
-                BetterBLizzPlatesDB.castBarIconYPos = 0
+            if BetterBlizzPlatesDB.castBarIconXPos and not BetterBlizzPlatesDB.castBarIconPosReset then
+                BetterBlizzPlatesDB.castBarIconXPos = 0
+                BetterBlizzPlatesDB.castBarIconYPos = 0
                 BetterBlizzPlatesDB.castBarIconPosReset = true
             end
 
