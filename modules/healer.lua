@@ -22,6 +22,8 @@ function BBP.HealerIndicator(frame)
     local inInstance, instanceType = IsInInstance()
     local arenaOnly = BetterBlizzPlatesDB.healerIndicatorArenaOnly
     local bgOnly = BetterBlizzPlatesDB.healerIndicatorBgOnly
+    local redCrossEnemy = BetterBlizzPlatesDB.healerIndicatorRedCrossEnemy
+    local scale = BetterBlizzPlatesDB.healerIndicatorScale
 
     -- Initialize
     if not frame.healerIndicator then
@@ -31,13 +33,30 @@ function BBP.HealerIndicator(frame)
         frame.healerIndicator:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875) -- Theres a few ugly white pixels around this texture, this gets rid of them
     end
 
+    local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(frame.displayedUnit)
+    if not isFriend then
+        xPos = BetterBlizzPlatesDB.healerIndicatorEnemyXPos
+        yPos = BetterBlizzPlatesDB.healerIndicatorEnemyYPos
+        anchorPoint = BetterBlizzPlatesDB.healerIndicatorEnemyAnchor
+        scale = BetterBlizzPlatesDB.healerIndicatorEnemyScale
+    end
+
     -- Set position and scale dynamically
     frame.healerIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
-    frame.healerIndicator:SetScale(BetterBlizzPlatesDB.healerIndicatorScale or 1)
+    frame.healerIndicator:SetScale(scale)
 
     -- Test mode
     if testMode then
         frame.healerIndicator:Show()
+        if not isFriend then
+            if redCrossEnemy then
+                frame.healerIndicator:SetDesaturated(true)
+                frame.healerIndicator:SetVertexColor(1,0,0)
+            end
+        else
+            frame.healerIndicator:SetDesaturated(false)
+            frame.healerIndicator:SetVertexColor(1,1,1)
+        end
         return
     end
 
@@ -59,9 +78,16 @@ function BBP.HealerIndicator(frame)
 
     -- Condition check: healerIndicatorEnemyOnly
     if UnitIsPlayer(frame.displayedUnit) and HealerSpecs[spec] then
-        if BetterBlizzPlatesDB.healerIndicatorEnemyOnly and not UnitIsEnemy("player", frame.displayedUnit) then
+        if BetterBlizzPlatesDB.healerIndicatorEnemyOnly and not isEnemy then
             if frame.healerIndicator then frame.healerIndicator:Hide() end
             return
+        end
+        if redCrossEnemy then
+            frame.healerIndicator:SetDesaturated(true)
+            frame.healerIndicator:SetVertexColor(1,0,0)
+        else
+            frame.healerIndicator:SetDesaturated(false)
+            frame.healerIndicator:SetVertexColor(1,1,1)
         end
         frame.healerIndicator:Show()
     else

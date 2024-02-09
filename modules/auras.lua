@@ -54,13 +54,14 @@ end
 local function CheckBuffs()
     local currentGameTime = GetTime();
     for auraInstanceID, buff in pairs(trackedBuffs) do
-        if buff.expirationTime then
+        if buff.isPandemic and buff.expirationTime then
             local remainingDuration = buff.expirationTime - currentGameTime;
             if remainingDuration <= 0 then
                 trackedBuffs[auraInstanceID] = nil;
                 if buff.PandemicGlow then
                     buff.PandemicGlow:Hide();
                 end
+                buff.isPandemicActive = false
             elseif remainingDuration <= 5.1 then
                 if not buff.PandemicGlow then
                     buff.PandemicGlow = buff:CreateTexture(nil, "OVERLAY");
@@ -81,11 +82,18 @@ local function CheckBuffs()
                         buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10.5, -7.5);
                     end
                 end
+                buff.isPandemicActive = true
                 buff.PandemicGlow:Show();
             else
                 if buff.PandemicGlow then
                     buff.PandemicGlow:Hide();
                 end
+                buff.isPandemicActive = false
+            end
+        else
+            buff.isPandemicActive = false
+            for auraInstanceID, _ in pairs(trackedBuffs) do
+                trackedBuffs[auraInstanceID] = nil
             end
         end
     end
@@ -318,7 +326,8 @@ end
 
 
 local function SetPandemicGlow(buff, aura, isPandemic)
-    if aura.duration and buff and aura.expirationTime and not aura.isHelpful and isPandemic then
+    if aura.duration and buff and aura.expirationTime and isPandemic then
+        buff.isPandemic = true
         buff.expirationTime = aura.expirationTime;
         trackedBuffs[aura.auraInstanceID] = buff;
         StartCheckBuffsTimer();
@@ -326,6 +335,7 @@ local function SetPandemicGlow(buff, aura, isPandemic)
         if buff.PandemicGlow then
             buff.PandemicGlow:Hide()
         end
+        buff.isPandemic = false
     end
 end
 
@@ -674,6 +684,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
         -- Pandemic Glow
         SetPandemicGlow(buff, aura, isPandemic)
+
         SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
 
         -- Purge Glow

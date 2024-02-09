@@ -30,6 +30,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     local squareIconEnemy = BetterBlizzPlatesDB.classIconSquareBorder
     local squareIconFriendly = BetterBlizzPlatesDB.classIconSquareBorderFriendly
     local classIndicatorHighlight = BetterBlizzPlatesDB.classIndicatorHighlight
+    local hideRaidmarker = BetterBlizzPlatesDB.classIndicatorHideRaidMarker
 
     -- Initialize Class Icon Frame
     if not frame.classIndicator then
@@ -284,6 +285,11 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     end
 
     -- Show the class icon frame
+    if hideRaidmarker then
+        frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(0)
+    else
+        frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
+    end
     frame.classIndicator:Show()
 end
 

@@ -12,7 +12,7 @@ LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlate
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.4.0"
+local addonUpdates = "1.4.1"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -129,6 +129,10 @@ local defaultSettings = {
     healerIndicatorYPos = 0,
     healerIndicatorAnchor = "TOPRIGHT",
     healerIndicatorTestMode = false,
+    healerIndicatorEnemyXPos = 0,
+    healerIndicatorEnemyYPos = 0,
+    healerIndicatorEnemyAnchor = "TOPRIGHT",
+    healerIndicatorEnemyScale = 1,
     -- Class Icon
     classIndicator = false,
     classIndicatorXPos = 0,
@@ -263,6 +267,11 @@ local defaultSettings = {
 		1,
 		0.294117659330368,
 	},
+    castBarNoninterruptibleColor = {
+        0.4,
+        0.4,
+        0.4,
+    },
     castBarNoInterruptColor = {
 		1,
 		0,
@@ -430,6 +439,18 @@ local defaultSettings = {
         {name = "Haymaker"},
         {name = "Lightning Lasso"},
     },
+
+    castBarInterruptHighlighter = false,
+    castBarInterruptHighlighterColorDontInterrupt = false,
+    castBarInterruptHighlighterInterruptRGB = {0, 1, 0},
+    castBarInterruptHighlighterDontInterruptRGB = {0, 0, 0},
+    castBarInterruptHighlighterStartPercentage = 15,
+    castBarInterruptHighlighterEndPercentage = 80,
+
+    nameplateResourceXPos = 0,
+    nameplateResourceYPos = 4,
+
+
 }
 
 local function InitializeSavedVariables()
@@ -465,6 +486,13 @@ local function InitializeSavedVariables()
         BetterBlizzPlatesDB.classIndicatorFriendlyYPos = BetterBlizzPlatesDB.classIndicatorYPos
         BetterBlizzPlatesDB.classIndicatorFriendlyAnchor = BetterBlizzPlatesDB.classIndicatorAnchor
         BetterBlizzPlatesDB.classIndicatorFriendlyScale = BetterBlizzPlatesDB.classIndicatorScale
+    end
+
+    if not BetterBlizzPlatesDB.healerIndicatorEnemyXPos then
+        BetterBlizzPlatesDB.healerIndicatorEnemyXPos = BetterBlizzPlatesDB.healerIndicatorXPos
+        BetterBlizzPlatesDB.healerIndicatorEnemyYPos = BetterBlizzPlatesDB.healerIndicatorYPos
+        BetterBlizzPlatesDB.healerIndicatorEnemyAnchor = BetterBlizzPlatesDB.healerIndicatorAnchor
+        BetterBlizzPlatesDB.healerIndicatorEnemyScale = BetterBlizzPlatesDB.healerIndicatorScale
     end
 
     for key, defaultValue in pairs(defaultSettings) do
@@ -760,19 +788,21 @@ local function SendUpdateMessage()
         C_Timer.After(7, function()
             --bbp news
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a New Settings: #1: Target Indicator: Change texture. #2: Class Indicator: Target Highlight. #3: Hide Combo Points etc on friendly nameplates setting.")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Move and scale nameplate Combo points etc. Castbar test mode. Castbar Icon xy positioning. Castbar Edge Highlighter. Hide raidmark on class icon nameplates. A button to reset all of BBP settings. Fixed Color By Aura, god knows how long this has been broken. Healer Indicator separate settings for friend/enemy and red icon for enemy.")
         end)
     end
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Misc: Anon Mode, replace names with class.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: CVar: Don't force CVar option.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Bugfix: MC bug fixed?")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #4: Updated Nahj profile.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #5: New Target Indicator settings: Hide icon, Color nameplate, Change texture.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #6: Class Indicator: Target Highlight.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Move and scale nameplate Combo points etc (Blizz CVar's).")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Castbar test mode (Castbar).")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Castbar xy positioning (Castbar).")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #4: Castbar Edge Highlighter (Castbar).")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #5: Hide raidmark on class icon nameplates (Advanced Settings, Class Indicator).")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #6: Fixed \"Color By Aura\" nameplate setting.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #7: A button to reset all of BBP settings (General).")
+
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Patreon link: www.patreon.com/bodydev")
 end
 
@@ -1101,6 +1131,7 @@ local function SetCVarsOnLogin()
         SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
         SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
         SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
+        SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
         if BetterBlizzPlatesDB.nameplateMotion then
             SetCVar("nameplateMotion", BetterBlizzPlatesDB.nameplateMotion)
         end
@@ -1394,7 +1425,10 @@ function BBP.ResetToDefaultValue(slider, element)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateOccludedAlphaMult set to 0.4")
         elseif element == "nameplateResourceScale" then
             BetterBlizzPlatesDB.nameplateResourceScale = 0.7
-            BBP.ApplySettingsToAllNameplates()
+        elseif element == "nameplateResourceXPos" then
+            BetterBlizzPlatesDB.nameplateResourceXPos = 0
+        elseif element == "nameplateResourceYPos" then
+            BetterBlizzPlatesDB.nameplateResourceYPos = 4
         end
         slider:SetValue(BetterBlizzPlatesDB[element])
     end
@@ -1592,7 +1626,7 @@ function BBP.ColorNPCs(frame)
 end
 
 function BBP.AuraColor(frame)
-    if not BetterBlizzPlatesDB.colorNPC then return end
+    if not BetterBlizzPlatesDB.auraColor then return end
     if not frame or not frame.displayedUnit then return end
 
     local highestPriority = 0  -- Initialize the highest priority to 0
@@ -1604,6 +1638,7 @@ function BBP.AuraColor(frame)
     for _, npc in ipairs(auraColorList) do
         if npc.id or npc.name then
             local entryPriority = npc.priority or 0  -- Initialize the priority for this aura to 0
+            --print(npc.priority)
             for index = 1, 40 do
                 local auraName, _, _, _, _, _, _, _, _, spellId = UnitAura(displayedUnit, index, "HELPFUL|HARMFUL")
                 if auraName then
@@ -1946,9 +1981,8 @@ openRaidLib.RegisterCallback(BBP, "UnitInfoUpdate", "OnUnitUpdate")
 
 --################################################################################################
 -- Apply raidmarker change
-function BBP.ApplyRaidmarkerChanges(nameplate)
-    if not nameplate then return end
-    local frame = nameplate.UnitFrame
+function BBP.ApplyRaidmarkerChanges(frame)
+    if not frame then return end
     if not frame or frame:IsForbidden() then return end
 
     local raidmarkIndicator = BetterBlizzPlatesDB.raidmarkIndicator
@@ -1980,7 +2014,8 @@ end
 -- Change raidmarker
 function BBP.ChangeRaidmarker()
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        BBP.ApplyRaidmarkerChanges(namePlate)
+        local frame = namePlate.UnitFrame
+        BBP.ApplyRaidmarkerChanges(frame)
     end
 end
 
@@ -2372,7 +2407,7 @@ local function HandleNamePlateAdded(unit)
 
     -- Handle raid marker changes
     if raidIndicator then
-        BBP.ApplyRaidmarkerChanges(nameplate)
+        BBP.ApplyRaidmarkerChanges(frame)
     end
 
     -- Healer icon
@@ -2568,6 +2603,14 @@ function BBP.RefreshAllNameplates()
             end
         end
 
+        if frame.castBar then
+            if not BetterBlizzPlatesDB.useCustomCastbarBGTexture then
+                frame.castBar.Background:SetDesaturated(false)
+                frame.castBar.Background:SetVertexColor(1,1,1,1)
+                frame.castBar.Background:SetAtlas("UI-CastingBar-Background")
+            end
+        end
+
         if BetterBlizzPlatesDB.targetIndicator then
             BBP.TargetIndicator(frame)
         end
@@ -2591,16 +2634,6 @@ function BBP.RefreshAllNameplatesLightVer()
             BBP.ArenaIndicatorCaller(frame, BetterBlizzPlatesDB)
         end
     --end
-end
-
-function BBP.ApplySettingsToAllNameplates()
-    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
-        --local frame = nameplate.UnitFrame
-
-        if nameplate.driverFrame.classNamePlateMechanicFrame then
-            nameplate.driverFrame.classNamePlateMechanicFrame:SetScale(BetterBlizzPlatesDB.nameplateResourceScale or 0.7)
-        end
-    end
 end
 
 --#################################################################################################
@@ -2847,8 +2880,6 @@ Frame:SetScript("OnEvent", function(...)
     BBP.ApplyNameplateWidth()
 
     C_Timer.After(1, function()
-        BBP.ApplySettingsToAllNameplates()
-
         if BetterBlizzPlatesDB.executeIndicatorScale <= 0 then --had a slider with borked values
             BetterBlizzPlatesDB.executeIndicatorScale = 1     --this will fix it for every user who made the error while bug was live
         end
@@ -2967,3 +2998,267 @@ eventFrame:RegisterEvent("VARIABLES_LOADED")
 eventFrame:RegisterEvent("TRAIT_CONFIG_UPDATED")
 eventFrame:RegisterEvent("PLAYER_TALENT_UPDATE")
 eventFrame:SetScript("OnEvent", OnVariablesLoaded)
+
+
+
+
+--#########################################
+-- Nameplate castbar test mode, a fiesta mess... another one for the refactor
+local nameplates = {}
+local timers = {}
+local temporaryNpCastTest = CreateFrame("Frame")
+
+local function NamePlateCastBarTestMode(frame)
+    local castBar = frame.castBar
+    if castBar then
+        castBar:Show()
+        castBar:SetAlpha(1)
+
+        local minValue, maxValue = 0, 100
+        local duration = 2 -- in seconds
+        local stepsPerSecond = 50 -- adjust for smoothness
+        local totalSteps = duration * stepsPerSecond
+        local stepValue = (maxValue - minValue) / totalSteps
+        local currentValue = maxValue -- Start at 100% for channeled cast
+        local uninterruptibleChance = 0.2 -- 20% chance of being uninterruptible
+        local channeledChance = 0.3 -- 30% chance of being channeled
+        local isChanneled = false -- Flag to indicate channeled cast
+
+        castBar:SetMinMaxValues(minValue, maxValue)
+        castBar:SetValue(currentValue)
+
+        local castType = "normal" -- Initialize as normal cast
+
+        if not castBar.tickTimer then
+            castBar.tickTimer = C_Timer.NewTicker(1 / stepsPerSecond, function()
+
+                local castBarCastColor = BetterBlizzPlatesDB.castBarCastColor
+                local castBarNonInterruptibleColor = BetterBlizzPlatesDB.castBarNoninterruptibleColor
+                local castBarChanneledColor = BetterBlizzPlatesDB.castBarChanneledColor
+                local showCastBarIconWhenNoninterruptible = BetterBlizzPlatesDB.showCastBarIconWhenNoninterruptible
+                local castBarIconScale = BetterBlizzPlatesDB.castBarIconScale
+                local additionalShieldSizeRatio = 1.3
+                local borderShieldSize = showCastBarIconWhenNoninterruptible and (castBarIconScale * additionalShieldSizeRatio) or castBarIconScale
+
+                local textureName = BetterBlizzPlatesDB.customCastbarTexture
+                local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
+                local nonInterruptibleTextureName = BetterBlizzPlatesDB.customCastbarNonInterruptibleTexture
+                local nonInterruptibleTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, nonInterruptibleTextureName)
+
+                local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
+                local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
+                local castBarTimer = BetterBlizzPlatesDB.showNameplateCastbarTimer
+                local targetText = BetterBlizzPlatesDB.showNameplateTargetText
+
+
+                castBar.Icon:SetScale(castBarIconScale)
+                castBar.BorderShield:SetScale(borderShieldSize)
+
+                if castBarTimer then
+                    if not frame.dummyTimer then
+                        frame.dummyTimer = frame.healthBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                        frame.dummyTimer:SetPoint("LEFT", frame.castBar, "RIGHT", 5, 0)
+                        frame.dummyTimer:SetTextColor(1, 1, 1)
+                        frame.dummyTimer:SetText("1.5")
+                    end
+                    BBP.SetFontBasedOnOption(frame.dummyTimer, 12, "OUTLINE")
+                    frame.dummyTimer:Show()
+                else
+                    if frame.dummyTimer then
+                        frame.dummyTimer:Hide()
+                    end
+                end
+
+                if targetText then
+                    if not frame.dummyNameText then
+                        frame.dummyNameText = frame.healthBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                        frame.dummyNameText:SetJustifyH("CENTER")
+
+                        local _, classIdentifier = UnitClass("player") -- Capture both localized name and class identifier
+                        local color = RAID_CLASS_COLORS[classIdentifier] -- Use the class identifier to get the color
+
+                        if color then -- Check if color is not nil
+                            frame.dummyNameText:SetText(GetUnitName("player"))
+                            frame.dummyNameText:SetTextColor(color.r, color.g, color.b)
+                            frame.dummyNameText:SetPoint("RIGHT", frame, "BOTTOMRIGHT", -11, 0)
+                        else -- Fallback color in case something goes wrong
+                            frame.dummyNameText:SetTextColor(1, 1, 1) -- Set to white or any default color
+                        end
+                    end
+
+                    local useCustomFont = BetterBlizzPlatesDB.useCustomFont
+                    BBP.SetFontBasedOnOption(frame.dummyNameText, useCustomFont and 11 or 12)
+                    frame.dummyNameText:Show()
+                else
+                    if frame.dummyNameText then
+                        frame.dummyNameText:Hide()
+                    end
+                end
+
+                if isChanneled then
+                    currentValue = currentValue - stepValue
+                    -- Check if the cast has reached the end
+                    if currentValue <= minValue then
+                        isChanneled = false
+                        castBar.BorderShield:Hide()
+                        if useCustomCastbarTexture then
+                            castBar:SetStatusBarTexture(texturePath)
+                        else
+                            castBar:SetStatusBarTexture("ui-castingbar-filling-standard")
+                            local castBarTexture = castBar:GetStatusBarTexture()
+                            castBarTexture:SetDesaturated(false)
+                            castBar:SetStatusBarColor(1,1,1,1)
+                        end
+                        castBar.Text:SetText("Frostbolt")
+                        castBar.Icon:Show()
+                        castBar.Icon:SetTexture(GetSpellTexture(116))
+                        if useCustomCastbarTexture or castBarRecolor then
+                            local castBarTexture = castBar:GetStatusBarTexture()
+                            castBarTexture:SetDesaturated(true)
+                            castBar:SetStatusBarColor(unpack(castBarCastColor))
+                        end
+                    end
+                else
+                    currentValue = currentValue + stepValue
+                    -- Check if the cast is completed
+                    if currentValue >= maxValue then
+                        -- Reset current value
+                        currentValue = minValue
+                        -- Determine if the cast type should change
+                        if math.random() <= uninterruptibleChance then
+                            castType = "uninterruptible"
+                        elseif math.random() <= channeledChance then
+                            castType = "channeled"
+                            isChanneled = true
+                            currentValue = maxValue
+                        else
+                            castType = "normal"
+                        end
+
+                        if castType == "uninterruptible" then
+                            castBar.BorderShield:Show()
+                            if useCustomCastbarTexture then
+                                castBar:SetStatusBarTexture(nonInterruptibleTexturePath)
+                            else
+                                castBar:SetStatusBarTexture("ui-castingbar-uninterruptable")
+                                local castBarTexture = castBar:GetStatusBarTexture()
+                                castBarTexture:SetDesaturated(false)
+                                castBar:SetStatusBarColor(1,1,1,1)
+                            end
+                            castBar.Text:SetText("Shattering Throw")
+                            if showCastBarIconWhenNoninterruptible then
+                                castBar.Icon:SetTexture(GetSpellTexture(64382))
+                            else
+                                castBar.Icon:Hide()
+                            end
+                            if useCustomCastbarTexture or castBarRecolor then
+                                local castBarTexture = castBar:GetStatusBarTexture()
+                                castBarTexture:SetDesaturated(true)
+                                castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
+                            end
+                        elseif castType == "channeled" then
+                            castBar.BorderShield:Hide()
+                            if useCustomCastbarTexture then
+                                castBar:SetStatusBarTexture(texturePath)
+                            else
+                                castBar:SetStatusBarTexture("ui-castingbar-filling-channel")
+                                local castBarTexture = castBar:GetStatusBarTexture()
+                                castBarTexture:SetDesaturated(false)
+                                castBar:SetStatusBarColor(1,1,1,1)
+                            end
+                            castBar.Text:SetText("Soothing Mist")
+                            castBar.Icon:Show()
+                            castBar.Icon:SetTexture(GetSpellTexture(115175))
+                            if useCustomCastbarTexture or castBarRecolor then
+                                local castBarTexture = castBar:GetStatusBarTexture()
+                                castBarTexture:SetDesaturated(true)
+                                castBar:SetStatusBarColor(unpack(castBarChanneledColor))
+                            end
+                        else
+                            castBar.BorderShield:Hide()
+                            if useCustomCastbarTexture then
+                                castBar:SetStatusBarTexture(texturePath)
+                            else
+                                castBar:SetStatusBarTexture("ui-castingbar-filling-standard")
+                                local castBarTexture = castBar:GetStatusBarTexture()
+                                castBarTexture:SetDesaturated(false)
+                                castBar:SetStatusBarColor(1,1,1,1)
+                            end
+                            castBar.Text:SetText("Frostbolt")
+                            castBar.Icon:Show()
+                            castBar.Icon:SetTexture(GetSpellTexture(116))
+                            if useCustomCastbarTexture or castBarRecolor then
+                                local castBarTexture = castBar:GetStatusBarTexture()
+                                castBarTexture:SetDesaturated(true)
+                                castBar:SetStatusBarColor(unpack(castBarCastColor))
+                            end
+                        end
+                    end
+                end
+                castBar:SetValue(currentValue)
+            end)
+            -- Store the timer object
+            table.insert(timers, castBar.tickTimer)
+        end
+    end
+end
+
+local function OnEvent(self, event, unit)
+    local namePlateFrame = C_NamePlate.GetNamePlateForUnit(unit)
+    if namePlateFrame then
+        local frame = namePlateFrame.UnitFrame
+        if frame then
+            NamePlateCastBarTestMode(frame)
+            -- Add this nameplate to the tracking table
+            table.insert(nameplates, namePlateFrame)
+        end
+    end
+end
+
+function BBP.nameplateCastBarTestMode()
+    -- Clear existing nameplates
+    wipe(nameplates)
+
+    temporaryNpCastTest:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+    temporaryNpCastTest:SetScript("OnEvent", OnEvent)
+
+    -- Populate nameplates table
+    nameplates = C_NamePlate.GetNamePlates()
+
+    for _, nameplate in ipairs(nameplates) do
+        local frame = nameplate.UnitFrame
+        NamePlateCastBarTestMode(frame)
+    end
+end
+
+function BBP.cancelTimers()
+    for _, timer in ipairs(timers) do
+        timer:Cancel()
+        timer = nil
+    end
+    -- Clear the timers table
+    wipe(timers)
+    -- Hide cast bars when canceling timers
+    for _, nameplate in ipairs(nameplates) do
+        local frame = nameplate.UnitFrame
+        if frame then
+            local castBar = frame.castBar
+            if castBar then
+                castBar:Hide()
+                if castBar.tickTimer then
+                    castBar.tickTimer:Cancel()
+                    castBar.tickTimer = nil
+                end
+            end
+            if frame.dummyTimer then
+                frame.dummyTimer:SetText("")
+                frame.dummyTimer = nil
+            end
+            if frame.dummyNameText then
+                frame.dummyNameText:SetText("")
+                frame.dummyNameText = nil
+            end
+        end
+    end
+    temporaryNpCastTest:UnregisterEvent("NAME_PLATE_UNIT_ADDED")
+end
