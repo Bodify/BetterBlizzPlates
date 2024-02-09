@@ -5523,7 +5523,7 @@ local function guiBlizzCVars()
 
     local nameplateResourceYPos = CreateSlider(guiBlizzCVars, "y offset", -100, 100, 1, "nameplateResourceYPos")
     nameplateResourceYPos:SetPoint("TOPLEFT", nameplateResourceXPos, "BOTTOMLEFT", 0, -17)
-    CreateTooltip(nameplateResourceYPos, "X offset for Nameplate Resource")
+    CreateTooltip(nameplateResourceYPos, "Y offset for Nameplate Resource")
     CreateResetButton(nameplateResourceYPos, "nameplateResourceYPos", guiBlizzCVars)
 
     local disableCVarForceOnLogin = CreateCheckbox("disableCVarForceOnLogin", "Disable all CVar forcing", guiBlizzCVars, true)
