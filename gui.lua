@@ -345,7 +345,7 @@ local function CreateTextureDropdown(name, parent, defaultText, settingKey, togg
     return dropdown
 end
 
-local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggleFunc, point, width)
+local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggleFunc, point, width, textColor)
     -- Create the dropdown frame using the library's creation function
     local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
     LibDD:UIDropDownMenu_SetWidth(dropdown, width or 125)
@@ -382,6 +382,9 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
     local dropdownText = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     dropdownText:SetPoint("BOTTOM", dropdown, "TOP", 0, 3)
     dropdownText:SetText(point.label)
+    if textColor then
+        dropdownText:SetTextColor(unpack(textColor))
+    end
 
     -- Enable or disable the dropdown based on the parent's check state
     if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
@@ -3114,26 +3117,32 @@ local function guiPositionAndScale()
 
     local healerIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "healerIndicatorScale", false, 72)
     healerIndicatorScale:SetPoint("TOP", anchorSubHeal, "BOTTOM", 36, -15)
+    healerIndicatorScale.Text:SetTextColor(0.04, 0.76, 1)
     CreateTooltip(healerIndicatorScale, "Friendly Scale")
 
     local healerIndicatorEnemyScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "healerIndicatorEnemyScale", false, 72)
     healerIndicatorEnemyScale:SetPoint("TOP", anchorSubHeal, "BOTTOM", -36, -15)
+    healerIndicatorEnemyScale.Text:SetTextColor(1,0,0)
     CreateTooltip(healerIndicatorEnemyScale, "Enemy Scale")
 
     local healerIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "healerIndicatorXPos", "X", 72)
     healerIndicatorXPos:SetPoint("TOP", healerIndicatorScale, "BOTTOM", 0, -15)
+    healerIndicatorXPos.Text:SetTextColor(0.04, 0.76, 1)
     CreateTooltip(healerIndicatorXPos, "Friendly X Offset")
 
     local healerIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "healerIndicatorYPos", "Y", 72)
     healerIndicatorYPos:SetPoint("TOP", healerIndicatorXPos, "BOTTOM", 0, -15)
+    healerIndicatorYPos.Text:SetTextColor(0.04, 0.76, 1)
     CreateTooltip(healerIndicatorYPos, "Friendly Y Offset")
 
     local healerIndicatorEnemyXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "healerIndicatorEnemyXPos", "X", 72)
     healerIndicatorEnemyXPos:SetPoint("TOP", healerIndicatorEnemyScale, "BOTTOM", 0, -15)
+    healerIndicatorEnemyXPos.Text:SetTextColor(1,0,0)
     CreateTooltip(healerIndicatorEnemyXPos, "Enemy X Offset")
 
     local healerIndicatorEnemyYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "healerIndicatorEnemyYPos", "Y", 72)
     healerIndicatorEnemyYPos:SetPoint("TOP", healerIndicatorEnemyXPos, "BOTTOM", 0, -15)
+    healerIndicatorEnemyYPos.Text:SetTextColor(1,0,0)
     CreateTooltip(healerIndicatorEnemyYPos, "Enemy Y Offset")
 
     local healerIndicatorDropdown = CreateAnchorDropdown(
@@ -3144,8 +3153,9 @@ local function guiPositionAndScale()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = healerIndicatorYPos, x = -90, y = -35, label = "Anchor" },
-        55
+        { anchorFrame = healerIndicatorYPos, x = -90, y = -35, label = "Enemy" },
+        55,
+        {1, 0, 0, 1}
     )
     CreateTooltip(healerIndicatorDropdown, "Enemy Anchor")
 
@@ -3157,8 +3167,9 @@ local function guiPositionAndScale()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = healerIndicatorYPos, x = -16, y = -35, label = "Anchor" },
-        55
+        { anchorFrame = healerIndicatorYPos, x = -16, y = -35, label = "Friendly" },
+        55,
+        {0.04, 0.76, 1, 1}
     )
     CreateTooltip(healerIndicatorDropdown2, "Friendly Anchor")
 
@@ -3924,26 +3935,32 @@ local function guiPositionAndScale()
 
     local classIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "classIndicatorFriendlyScale", false, 72)
     classIndicatorScale:SetPoint("TOP", anchorSubClassIcon, "BOTTOM", 36, -15)
+    classIndicatorScale.Text:SetTextColor(0.04, 0.76, 1)
     CreateTooltip(classIndicatorScale, "Friendly Scale")
 
     local classIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "classIndicatorFriendlyXPos", "X", 72)
     classIndicatorXPos:SetPoint("TOP", classIndicatorScale, "BOTTOM", 0, -15)
+    classIndicatorXPos.Text:SetTextColor(0.04, 0.76, 1)
     CreateTooltip(classIndicatorXPos, "Friendly X Offset")
 
     local classIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "classIndicatorFriendlyYPos", "Y", 72)
     classIndicatorYPos:SetPoint("TOP", classIndicatorXPos, "BOTTOM", 0, -15)
+    classIndicatorYPos.Text:SetTextColor(0.04, 0.76, 1)
     CreateTooltip(classIndicatorYPos, "Friendly Y Offset")
 
     local classIndicatorScale2 = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "classIndicatorScale", false, 72)
     classIndicatorScale2:SetPoint("TOP", anchorSubClassIcon, "BOTTOM", -36, -15)
+    classIndicatorScale2.Text:SetTextColor(1,0,0)
     CreateTooltip(classIndicatorScale2, "Enemy Scale")
 
     local classIndicatorXPos2 = CreateSlider(contentFrame, "x offset", -50, 50, 1, "classIndicatorXPos", "X", 72)
     classIndicatorXPos2:SetPoint("TOP", classIndicatorScale2, "BOTTOM", 0, -15)
+    classIndicatorXPos2.Text:SetTextColor(1,0,0)
     CreateTooltip(classIndicatorXPos2, "Enemy X Offset")
 
     local classIndicatorYPos2 = CreateSlider(contentFrame, "y offset", -50, 50, 1, "classIndicatorYPos", "Y", 72)
     classIndicatorYPos2:SetPoint("TOP", classIndicatorXPos2, "BOTTOM", 0, -15)
+    classIndicatorYPos2.Text:SetTextColor(1,0,0)
     CreateTooltip(classIndicatorYPos2, "Enemy Y Offset")
 
     local classIconDropdown = CreateAnchorDropdown(
@@ -3955,7 +3972,8 @@ local function guiPositionAndScale()
             BBP.RefreshAllNameplates()
         end,
         { anchorFrame = classIndicatorYPos, x = -90, y = -35, label = "Enemy" },
-        55
+        55,
+        {1, 0, 0, 1}
     )
     CreateTooltip(classIconDropdown, "Enemy Anchor")
 
@@ -3968,28 +3986,29 @@ local function guiPositionAndScale()
             BBP.RefreshAllNameplates()
         end,
         { anchorFrame = classIndicatorYPos, x = -16, y = -35, label = "Friendly" },
-        55
+        55,
+        {0.04, 0.76, 1, 1}
     )
     CreateTooltip(classIconDropdown2, "Friendly Anchor")
 
-    local classIconSquareBorder = CreateCheckbox("classIconSquareBorder", "Square", contentFrame)
-    classIconSquareBorder:SetPoint("TOPLEFT", classIconDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
-    CreateTooltip(classIconSquareBorder, "Square instead of circle icon for enemy.")
-
-    local classIconSquareBorderFriendly = CreateCheckbox("classIconSquareBorderFriendly", "Square Friend", contentFrame)
-    classIconSquareBorderFriendly:SetPoint("LEFT", classIconSquareBorder.text, "RIGHT", -2, 0)
-    CreateTooltip(classIconSquareBorderFriendly, "Square instead of circle icon for friendly.")
-
     local classIndicatorEnemy = CreateCheckbox("classIndicatorEnemy", "Enemies", contentFrame)
-    classIndicatorEnemy:SetPoint("TOPLEFT", classIconSquareBorder, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    classIndicatorEnemy:SetPoint("TOPLEFT", classIconDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
     CreateTooltip(classIndicatorEnemy, "Show class indicator on enemy nameplates")
 
     local classIndicatorFriendly = CreateCheckbox("classIndicatorFriendly", "Friendly", contentFrame)
-    classIndicatorFriendly:SetPoint("LEFT", classIndicatorEnemy.text, "RIGHT", 0, 0)
+    classIndicatorFriendly:SetPoint("LEFT", classIndicatorEnemy.text, "RIGHT", -2, 0)
     CreateTooltip(classIndicatorFriendly, "Show class indicator on friendly nameplates")
 
+    local classIconSquareBorder = CreateCheckbox("classIconSquareBorder", "Square", contentFrame)
+    classIconSquareBorder:SetPoint("TOPLEFT", classIndicatorEnemy, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(classIconSquareBorder, "Square instead of circle icon for enemy.")
+
+    local classIconSquareBorderFriendly = CreateCheckbox("classIconSquareBorderFriendly", "Square Friend", contentFrame)
+    classIconSquareBorderFriendly:SetPoint("LEFT", classIconSquareBorder.text, "RIGHT", 0, 0)
+    CreateTooltip(classIconSquareBorderFriendly, "Square instead of circle icon for friendly.")
+
     local classIconArenaOnly = CreateCheckbox("classIconArenaOnly", "Arena only", contentFrame)
-    classIconArenaOnly:SetPoint("TOPLEFT", classIndicatorEnemy, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    classIconArenaOnly:SetPoint("TOPLEFT", classIconSquareBorder, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(classIconArenaOnly, "Show in arena only")
 
     local classIconBgOnly = CreateCheckbox("classIconBgOnly", "BG only", contentFrame)

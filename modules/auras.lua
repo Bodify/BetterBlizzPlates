@@ -456,8 +456,9 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterWatchlist = BetterBlizzPlatesDB["personalNpBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             if filterAll or filterBlizzard or filterWatchlist or isImportant or isPandemic then
-                if filterLessMinite then return end
                 if isInBlacklist(spellName, spellId) then return end
+                if filterBlizzard then return true, isImportant, isPandemic end
+                if filterLessMinite then return end
                 return true, isImportant, isPandemic
             end
         end
@@ -498,8 +499,9 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterLessMinite = BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpdeBuffFilterOnlyMe"] and (caster ~= "player" and caster ~= "pet")
             if filterAll or filterWatchlist or filterBlizzard or isImportant or isPandemic then
-                if filterLessMinite or filterOnlyMe then return end
                 if isInBlacklist(spellName, spellId) then return end
+                if filterBlizzard then return true, isImportant, isPandemic end
+                if filterLessMinite or filterOnlyMe then return end
                 return true, isImportant, isPandemic
             end
         end
@@ -528,8 +530,9 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterLessMinite = BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             local filterOnlyMe = BetterBlizzPlatesDB["otherNpdeBuffFilterOnlyMe"] and (caster ~= "player" and caster ~= "pet")
             if filterAll or filterWatchlist or filterBlizzard or isImportant or isPandemic then
-                if filterLessMinite or filterOnlyMe then return end
                 if isInBlacklist(spellName, spellId) then return end
+                if filterBlizzard then return true, isImportant, isPandemic end
+                if filterLessMinite or filterOnlyMe then return end
                 return true, isImportant, isPandemic
             end
         end
