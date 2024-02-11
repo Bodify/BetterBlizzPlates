@@ -45,6 +45,11 @@ function BBP.PetIndicator(frame)
         xPos = xPos - 10
     end
 
+    -- Demo lock pet
+    if npcID == "17252" then
+        frame.petIndicator:Show()
+        return
+    end
     -- All hunter pets have same NPC id, check for it.
     if npcID == "165189" then
         for i = 1, 6 do -- Only loop through the first 5 buffs

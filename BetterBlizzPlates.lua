@@ -2098,9 +2098,6 @@ function BBP.RunAuraModule()
             if npbase then
                 BBP.On_NpRefreshOnce(npbase.UnitFrame)
             end
-            C_Timer.After(0.1, function()
-                --HandleNamePlateAdded(unit)
-            end)
         end)
     --end
 end
@@ -2466,6 +2463,47 @@ local function HandleNamePlateAdded(unit)
             frame.friendIndicator:Hide()
         end
     end
+
+    -- if not nameplate.driverFrame.hookedComboPoints then
+    --     hooksecurefunc(nameplate.driverFrame.classNamePlateMechanicFrame, "SetPoint", function(self)
+    --         print("1")
+    --         if IsInInstance() then print("is in instance") return end
+    --         if self.changing then
+    --             return
+    --         end
+
+    --         if nameplate:IsForbidden() then
+    --             print("nameplate is forbodden")
+    --         end
+
+    --         if self:IsForbidden() then
+    --             print("forbidden")
+    --             --return
+    --         end
+
+    --         local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
+
+    --         if nameplateForTarget and nameplateForTarget.driverFrame and UnitExists("target") then
+    --             print("inside")
+    --             if nameplateForTarget.UnitFrame:IsProtected() then
+    --                 print("kekksy")
+    --                 return
+    --             end
+    --             self.changing = true
+    --             --if UnitIsFriend(nameplateForTarget.UnitFrame.unit, "player") then print("kek") return end
+    --             --nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetParent(nameplateForTarget)
+    --             nameplateForTarget.driverFrame.classNamePlateMechanicFrame:ClearAllPoints();
+    --             PixelUtil.SetPoint(nameplateForTarget.driverFrame.classNamePlateMechanicFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
+
+    --             --nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetPoint()
+    --             local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
+    --             nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
+    --         end
+
+    --         self.changing = false
+    --     end)
+    --     nameplate.driverFrame.hookedComboPoints = true
+    -- end
 end
 --#################################################################################################
 -- Event Listener
@@ -2872,6 +2910,9 @@ Frame:SetScript("OnEvent", function(...)
         --BBP.HookDefaultCompactNamePlateFrameAnchorInternal()
     --end
 
+    if BetterBlizzPlatesDB.nameplateResourceOnTarget or GetCVarBool("nameplateShowSelf") then
+        BBP.TargetResourceUpdater()
+    end
 
     BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, BetterBlizzPlatesDB.defaultLargeFontSize)
     BBP.SetFontBasedOnOption(SystemFont_NamePlate, BetterBlizzPlatesDB.defaultFontSize)
