@@ -5,3 +5,8 @@
 ## OptionalDeps: Ace3, AceGUI-3.0-SharedMediaWidgets, LibSharedMedia-3.0
 ## IconAtlas: gmchat-icon-blizz
 ## Author: Bodify
+
+embeds.xml
+
+core\boot.lua
+core\init.lua
