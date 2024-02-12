@@ -9,4 +9,5 @@
 embeds.xml
 
 core\boot.lua
+core\events.lua
 core\init.lua
