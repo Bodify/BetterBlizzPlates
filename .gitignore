@@ -118,3 +118,6 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# WoW libs
+Libs/*
