@@ -4323,6 +4323,10 @@ local function guiCastbar()
     interruptedByIndicator:SetPoint("TOPLEFT", useCustomCastbarTexture, "BOTTOMLEFT", 0, -84)
     CreateTooltip(interruptedByIndicator, "Show the name of who interrupted the cast\ninstead of just the standard \"Interrupted\" text.")
 
+    local normalCastbarForEmpoweredCasts = CreateCheckbox("normalCastbarForEmpoweredCasts", "Normal empowered cast", enableCastbarCustomization)
+    normalCastbarForEmpoweredCasts:SetPoint("LEFT", interruptedByIndicator.text, "RIGHT", -1, 0)
+    CreateTooltip(normalCastbarForEmpoweredCasts, "Instead of the jank tiered castbar that always kinda looks uninterruptible,\nchange the empowered castbars to just look like normal ones.", "ANCHOR_LEFT")
+
     local castBarRecolorInterrupt = CreateCheckbox("castBarRecolorInterrupt", "Interrupt CD color", enableCastbarCustomization)
     castBarRecolorInterrupt:SetPoint("TOPLEFT", interruptedByIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(castBarRecolorInterrupt, "Checks if you have interrupt ready\nand color castbar thereafter.")

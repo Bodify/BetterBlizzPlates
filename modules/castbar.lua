@@ -767,39 +767,25 @@ function BBP.ToggleSpellCastEventRegistration()
             if not castIconHooked and not useCustomCastbarTextureHooked and not BetterBlizzPlatesDB.useCustomCastbarTexture then
                 hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
                     if self.unit and self.unit:find("nameplate") then
+                        if BetterBlizzPlatesDB.normalCastbarForEmpoweredCasts then
+                            if ( event == "UNIT_SPELLCAST_EMPOWER_START" ) then
+                                if not self:IsForbidden() then
+                                    if self.barType == "empowered" or self.barType == "standard" then
+                                        self:SetStatusBarTexture("ui-castingbar-filling-standard")
+                                    end
+                                    self.ChargeTier1:Hide()
+                                    self.ChargeTier2:Hide()
+                                    self.ChargeTier3:Hide()
+
+                                    -- self.StagePip1:Hide()
+                                    -- self.StagePip2:Hide()
+                                    -- self.StagePip3:Hide()
+                                end
+                            end
+                        end
                         if not self.hooked then
                             local castbar = self
                             local borderShield = self.BorderShield
-
-                            hooksecurefunc(self, "SetStatusBarTexture", function(self, texture)
-                                if self.changing or not self.unit or self:IsForbidden() then if self:IsForbidden() then print("xd") end return end
-
-                                local textureName = BetterBlizzPlatesDB.customCastbarTexture
-                                local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
-                                local nonInterruptibleTextureName = BetterBlizzPlatesDB.customCastbarNonInterruptibleTexture
-                                local nonInterruptibleTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, nonInterruptibleTextureName)
-                                self.changing = true
-
-                                if self.barType then
-                                    if self.barType == "uninterruptable" then
-                                        self:SetStatusBarTexture(nonInterruptibleTexturePath)
-                                        self.OldTextureWas = nonInterruptibleTexturePath
-                                    else
-                                        --if self.barType == "standard" then
-                                            self:SetStatusBarTexture(texturePath)
-                                            self.OldTextureWas = texturePath
-                                        --end
-                                    end
-                                else
-                                    if self.OldTextureWas then --the castbar sometimes does a flash of the casting texture that was so this has to be re-set here to not flash an old/changed texture
-                                        self:SetStatusBarTexture(self.OldTextureWas)
-                                    else
-                                        self:SetStatusBarTexture(texturePath)
-                                    end
-                                end
-
-                                self.changing = false
-                            end)
 
                             if self.Icon then
                                 hooksecurefunc(self.Icon, "SetPoint", function(self)

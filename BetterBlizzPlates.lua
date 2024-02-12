@@ -12,7 +12,7 @@ LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlate
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.4.1"
+local addonUpdates = "1.4.2"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -787,9 +787,9 @@ local function SendUpdateMessage()
         updateDurations(BetterBlizzPlatesDB.totemIndicatorNpcList)
         C_Timer.After(7, function()
             --bbp news
-            PlaySoundFile(567439)
+            --PlaySoundFile(567439) --quest complete sfx
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Move and scale nameplate Combo points etc. Castbar test mode. Castbar Icon xy positioning. Castbar Edge Highlighter. Hide raidmark on class icon nameplates. A button to reset all of BBP settings. Fixed Color By Aura, god knows how long this has been broken. Healer Indicator separate settings for friend/enemy and red icon for enemy.")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Added a Castbar setting that makes Empowered Castbars now look like normal ones. Bugfixes for combopoints and pve stuff.")
         end)
     end
 end
