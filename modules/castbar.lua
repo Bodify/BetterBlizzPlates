@@ -728,7 +728,7 @@ function BBP.ToggleSpellCastEventRegistration()
 
                             if self.Flash then
                                 hooksecurefunc(self.Flash, "SetAtlas", function(self)
-                                    if self.changing or not self.unit or self:IsForbidden() then return end
+                                    if self.changing or self:IsForbidden() then return end
                                     self.changing = true
                                     self:SetAtlas(nil)
                                     self.changing = false
@@ -739,7 +739,7 @@ function BBP.ToggleSpellCastEventRegistration()
 
                             if self.Icon then
                                 hooksecurefunc(self.Icon, "SetPoint", function(self)
-                                    if self.changing or not self.unit or self:IsForbidden() then return end
+                                    if self.changing or self:IsForbidden() then return end
                                     self.changing = true
                                     self:SetPoint("CENTER", castbar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
                                     borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
@@ -789,13 +789,12 @@ function BBP.ToggleSpellCastEventRegistration()
 
                             if self.Icon then
                                 hooksecurefunc(self.Icon, "SetPoint", function(self)
-                                    if self.changing or not self.unit or self:IsForbidden() then return end
+                                    if self.changing or self:IsForbidden() then return end
                                     self.changing = true
                                     self:SetPoint("CENTER", castbar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
                                     borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
                                     self.changing = false
                                 end)
-                                castIconHooked = true
                             end
                             self.hooked = true
                         end
