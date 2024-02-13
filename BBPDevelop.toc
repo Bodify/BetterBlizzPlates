@@ -1,7 +1,7 @@
 ## Interface: 100205
-## Title: Better|cff00c0ffBlizz|rPlates
+## Title: BBPDevelop
 ## Notes: Standard Blizzard nameplates with more features and easy settings
-## SavedVariables: BetterBlizzPlatesDB
+## SavedVariables: BBPDB
 ## OptionalDeps: Ace3, AceGUI-3.0-SharedMediaWidgets, LibSharedMedia-3.0
 ## IconAtlas: gmchat-icon-blizz
 ## Author: Bodify
