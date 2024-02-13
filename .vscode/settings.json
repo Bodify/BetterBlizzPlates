@@ -1,0 +1,29 @@
+{
+    "Lua.diagnostics.globals": [
+        "class",
+        "NOT_BOUND",
+        "SetDesaturation",
+        "GameFontHighlightSmall",
+        "ChatFontNormal",
+        "OKAY",
+        "ColorPickerFrame",
+        "OpacitySliderFrame",
+        "CLOSE",
+        "ACCEPT",
+        "NORMAL_FONT_COLOR",
+        "GameFontNormal",
+        "GameFontHighlight",
+        "CANCEL",
+        "Settings",
+        "InterfaceOptions_AddCategory",
+        "GameFontHighlightLarge",
+        "SELECTED_CHAT_FRAME",
+        "DEFAULT_CHAT_FRAME",
+        "SlashCmdList",
+        "hash_SlashCmdList",
+        "NORMAL_FONT_COLOR_CODE",
+        "FONT_COLOR_CODE_CLOSE",
+        "GameFontDisableSmall",
+        "GameFontNormalSmall"
+    ]
+}

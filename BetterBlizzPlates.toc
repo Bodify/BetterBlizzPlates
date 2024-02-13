@@ -2,25 +2,12 @@
 ## Title: Better|cff00c0ffBlizz|rPlates
 ## Notes: Standard Blizzard nameplates with more features and easy settings
 ## SavedVariables: BetterBlizzPlatesDB
-## OptionalDeps: LibSharedMedia-3.0
+## OptionalDeps: Ace3, AceGUI-3.0-SharedMediaWidgets, LibSharedMedia-3.0
 ## IconAtlas: gmchat-icon-blizz
 ## Author: Bodify
 
 embeds.xml
 
-modules\combat.lua
-modules\castbar.lua
-modules\totem.lua
-modules\arenaid.lua
-modules\execute.lua
-modules\target.lua
-modules\healer.lua
-modules\absorb.lua
-modules\classIcon.lua
-modules\pet.lua
-modules\quest.lua
-modules\auras.lua
-modules\nahjProfile.lua
-
-gui.lua
-BetterBlizzPlates.lua
+core\boot.lua
+core\events.lua
+core\init.lua
