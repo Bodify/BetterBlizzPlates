@@ -6,7 +6,6 @@ local addon = LibStub('AceAddon-3.0'):GetAddon(addonName)
 ---@class Callback
 ---@field cb fun(...)
 ---@field a any
-local callbackProto = {}
 
 ---@class Events: AceModule
 ---@field _eventHandler AceEvent-3.0
@@ -38,10 +37,19 @@ function events:RegisterEvent(event, callback, arg)
   table.insert(self._events[event].cbs, {cb = callback, a = arg})
 end
 
-function events:UnregisterEvent(event)
-    self._events[event] = nil
-    self._eventHandler.UnregisterEvent(self, event)
-    print("UnregisterEvent: " .. event)
+function events:UnregisterEvent(event, callback)
+    if self._events[event] then
+        if #self._events[event].cbs > 1 then
+            for index, cb in pairs(self._events[event].cbs) do
+                if cb.cb == callback then
+                    return table.remove(self._events[event].cbs, index)
+                end
+            end
+        else
+            self._events[event] = nil
+            self._eventHandler.UnregisterEvent(self, event)
+        end
+    end
 end
 
 events:Enable()
