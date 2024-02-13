@@ -11,7 +11,8 @@ local eventsTests = addon:GetModule("EventsTests")
 
 tests:SetDefaultModuleState(false)
 
-function tests:OnInitialize()
+function tests:OnEnable()
     eventsTests:Enable()
 end
 
+tests:Disable()

@@ -8,10 +8,13 @@ local addon = LibStub('AceAddon-3.0'):GetAddon(addonName)
 ---@class Events: AceModule
 local events = addon:GetModule("Events")
 
-local enableTests = true
 
 function addon:OnInitialize()
     print("BBP Initialized.")
+end
+
+function addon:OnEnable()
+    local enableTests = false
     if enableTests then
         addon:GetModule("Tests"):Enable()
     else

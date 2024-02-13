@@ -30,34 +30,45 @@ end
 
 --#region Test functions
 local function testRegisterEvent()
-    events._events = {}
     registerEvent(1)
-    assert(#events._events[event].cbs == 1, "TestRegisterEvent1")
+    assert(#events._events[event].cbs == 1)
     registerEvent(2)
-    assert(#events._events[event].cbs == 2, "TestRegisterEvent2")
+    assert(#events._events[event].cbs == 2)
     registerEvent(3)
-    assert(#events._events[event].cbs == 3, "TestRegisterEvent2")
+    assert(#events._events[event].cbs == 3)
+    events:UnregisterAllEventCallbacks(event)
 end
 
-local function testUnregisterEvent()
-    events._events = {}
+local function testUnregisterEventCallback()
     registerEvent(1)
     registerEvent(2)
     events:RegisterEvent(event, testCallback)
     assert(#events._events[event].cbs == 3)
     assert(events._events[event].cbs[3].cb == testCallback)
 
-    events:UnregisterEvent(event, testCallback)
+    events:UnregisterEventCallback(event, testCallback)
     assert(#events._events[event].cbs == 2)
     table.foreach(events._events[event].cbs, function (_, value)
         assert(value ~= testCallback)
     end)
+    events:UnregisterAllEventCallbacks(event)
+end
 
-    events._events[event].fn()
+local function testUnregisterAllEventCallbacks()
+    registerEvent(1)
+    registerEvent(2)
+    registerEvent(3)
+    events:UnregisterAllEventCallbacks(event)
+    assert(events._events[event] == nil)
+    events:UnregisterAllEventCallbacks(event)
 end
 --#endregion
 
-function eventsTests:OnInitialize()
+function eventsTests:OnEnable()
+    print("TESTING")
     testRegisterEvent()
-    testUnregisterEvent()
+    testUnregisterEventCallback()
+    testUnregisterAllEventCallbacks()
 end
+
+eventsTests:Disable()
