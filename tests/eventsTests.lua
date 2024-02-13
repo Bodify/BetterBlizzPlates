@@ -19,7 +19,7 @@ local event = "NAME_PLATE_UNIT_ADDED"
 
 ---@param arg number
 local function registerEvent(arg)
-    events:RegisterEvent(event, print(arg))
+    events:RegisterEvent(event, print)
 end
 
 local function testCallback()
@@ -52,6 +52,8 @@ local function testUnregisterEvent()
     table.foreach(events._events[event].cbs, function (_, value)
         assert(value ~= testCallback)
     end)
+
+    events._events[event].fn()
 end
 --#endregion
 
