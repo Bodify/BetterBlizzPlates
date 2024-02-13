@@ -10,4 +10,6 @@ embeds.xml
 
 core\boot.lua
 core\events.lua
+tests\eventsTests.lua
+tests\init.lua
 core\init.lua

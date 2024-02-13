@@ -1,3 +1,4 @@
+--#region Setup
 local addonName = ... ---@type string
 
 ---@class BetterBlizzPlates: AceAddon
@@ -17,7 +18,10 @@ function events:OnInitialize()
   self._events = {}
   LibStub:GetLibrary('AceEvent-3.0'):Embed(self._eventHandler)
 end
+--#endregion
 
+
+--#region Methods
 function events:RegisterEvent(event, callback, arg)
   if self._events[event] == nil then
     self._events[event] = {
@@ -51,5 +55,7 @@ function events:UnregisterEvent(event, callback)
         end
     end
 end
+--#endregion
+
 
 events:Enable()
