@@ -22,6 +22,10 @@ end
 
 
 --#region Methods
+
+---@param event string
+---@param callback fun(...)
+---@param arg any
 function events:RegisterEvent(event, callback, arg)
   if self._events[event] == nil then
     self._events[event] = {
@@ -41,7 +45,9 @@ function events:RegisterEvent(event, callback, arg)
   table.insert(self._events[event].cbs, {cb = callback, a = arg})
 end
 
-function events:UnregisterEvent(event, callback)
+---@param event string
+---@param callback fun(...)
+function events:UnregisterEventCallback(event, callback)
     if self._events[event] then
         if #self._events[event].cbs > 1 then
             for index, cb in pairs(self._events[event].cbs) do
@@ -51,9 +57,15 @@ function events:UnregisterEvent(event, callback)
             end
         else
             self._events[event] = nil
-            self._eventHandler.UnregisterEvent(self, event)
+            self._eventHandler:UnregisterEvent(event)
         end
     end
+end
+
+---@param event string
+function events:UnregisterAllEventCallbacks(event)
+    self._events[event] = nil
+    self._eventHandler:UnregisterEvent(event)
 end
 --#endregion
 
