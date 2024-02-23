@@ -67,6 +67,37 @@ local nahjAuraWhitelist = {
         ["comment"] = "",
         ["name"] = "Lifebloom",
     }, -- [4]
+    {
+        ["flags"] = {
+            ["pandemic"] = false,
+            ["important"] = true,
+        },
+        ["entryColors"] = {
+            ["text"] = {
+                ["a"] = 1,
+                ["r"] = 0,
+                ["g"] = 1,
+                ["b"] = 0.2156862914562225,
+            },
+        },
+        ["name"] = "Subterfuge",
+        ["comment"] = "",
+    }, -- [5]
+    {
+        ["flags"] = {
+            ["important"] = true,
+            ["pandemic"] = false,
+        },
+        ["entryColors"] = {
+            ["text"] = {
+                ["r"] = 0,
+                ["g"] = 1,
+                ["b"] = 0,
+            },
+        },
+        ["name"] = "Heart of the Wild",
+        ["comment"] = "",
+    }, -- [6]
 }
 
 local nahjTotemList = {
@@ -278,17 +309,17 @@ local nahjTotemList = {
         ["icon"] = 136070,
         ["size"] = 24,
     },
-    [107024] = {
+    [119052] = {
         ["important"] = true,
-        ["name"] = "Fel Lord",
+        ["name"] = "War Banner",
         ["hideIcon"] = false,
         ["color"] = {
             1, -- [1]
-            0.69, -- [2]
-            0, -- [3]
+            0, -- [2]
+            1, -- [3]
         },
         ["duration"] = 15,
-        ["icon"] = 1113433,
+        ["icon"] = 603532,
         ["size"] = 30,
     },
     [179867] = {
@@ -304,18 +335,18 @@ local nahjTotemList = {
         ["icon"] = 1020304,
         ["size"] = 24,
     },
-    [2630] = {
-        ["important"] = false,
-        ["name"] = "Earthbind Totem",
+    [135002] = {
+        ["important"] = true,
+        ["name"] = "Tyrant",
         ["hideIcon"] = false,
         ["color"] = {
-            0.78, -- [1]
-            0.51, -- [2]
-            0.39, -- [3]
+            1, -- [1]
+            0.69, -- [2]
+            0, -- [3]
         },
-        ["duration"] = 30,
-        ["icon"] = 136102,
-        ["size"] = 24,
+        ["duration"] = 15,
+        ["icon"] = 2065628,
+        ["size"] = 30,
     },
     [6112] = {
         ["name"] = "Windfury Totem",
@@ -329,17 +360,17 @@ local nahjTotemList = {
         ["icon"] = 136114,
         ["size"] = 24,
     },
-    [119052] = {
+    [107024] = {
         ["important"] = true,
-        ["name"] = "War Banner",
+        ["name"] = "Fel Lord",
         ["hideIcon"] = false,
         ["color"] = {
             1, -- [1]
-            0, -- [2]
-            1, -- [3]
+            0.69, -- [2]
+            0, -- [3]
         },
         ["duration"] = 15,
-        ["icon"] = 603532,
+        ["icon"] = 1113433,
         ["size"] = 30,
     },
     [3527] = {
@@ -353,20 +384,20 @@ local nahjTotemList = {
         },
         ["duration"] = 18,
         ["icon"] = 135127,
-        ["size"] = 24,
+        ["size"] = 30,
     },
-    [135002] = {
-        ["important"] = true,
-        ["name"] = "Tyrant",
+    [2630] = {
+        ["important"] = false,
+        ["name"] = "Earthbind Totem",
         ["hideIcon"] = false,
         ["color"] = {
-            1, -- [1]
-            0.69, -- [2]
-            0, -- [3]
+            0.78, -- [1]
+            0.51, -- [2]
+            0.39, -- [3]
         },
-        ["duration"] = 15,
-        ["icon"] = 2065628,
-        ["size"] = 30,
+        ["duration"] = 30,
+        ["icon"] = 136102,
+        ["size"] = 24,
     },
     [114565] = {
         ["important"] = true,
@@ -381,19 +412,6 @@ local nahjTotemList = {
         ["icon"] = 135919,
         ["size"] = 30,
     },
-    [105451] = {
-        ["important"] = true,
-        ["name"] = "Counterstrike Totem",
-        ["hideIcon"] = false,
-        ["color"] = {
-            1, -- [1]
-            0.27, -- [2]
-            0.59, -- [3]
-        },
-        ["duration"] = 15,
-        ["icon"] = 511726,
-        ["size"] = 30,
-    },
     [196111] = {
         ["important"] = false,
         ["name"] = "Pit Lord",
@@ -406,6 +424,19 @@ local nahjTotemList = {
         ["duration"] = 10,
         ["icon"] = 236423,
         ["size"] = 24,
+    },
+    [105451] = {
+        ["important"] = true,
+        ["name"] = "Counterstrike Totem",
+        ["hideIcon"] = false,
+        ["color"] = {
+            1, -- [1]
+            0.27, -- [2]
+            0.59, -- [3]
+        },
+        ["duration"] = 15,
+        ["icon"] = 511726,
+        ["size"] = 30,
     },
     [179193] = {
         ["important"] = true,
@@ -511,9 +542,10 @@ function BBP.NahjProfile()
     updateAuraList(nahjTotemList, BetterBlizzPlatesDB.totemIndicatorNpcList)
 
     local db = BetterBlizzPlatesDB
-	db.classIndicatorFriendlyScale = 1
+    db.classIndicatorFriendlyScale = 1
 	db.nameplateAuraTaller = false
-	db.totemIndicatorScale = 1.299999952316284
+	db.useCustomTextureForEnemy = true
+	db.totemIndicatorScale = 2
 	db.NamePlateClassificationScale = "1.25"
 	db.defaultLargeNamePlateFont = "Fonts\\FRIZQT__.TTF"
 	db.executeIndicatorAnchor = "LEFT"
@@ -523,23 +555,25 @@ function BBP.NahjProfile()
 	db.nameplateDefaultFriendlyHeight = 45
 	db.friendlyNpBuffFilterLessMinite = false
 	db.otherNpdeBuffFilterWatchList = true
+	db.castBarInterruptHighlighterColorDontInterrupt = true
 	db.castBarRecolorInterrupt = false
 	db.customTextureFriendly = "Dragonflight (BBP)"
 	db.classIndicatorXPos = 0
 	db.colorNPCName = false
 	db.absorbIndicatorYPos = 0
+	db.castBarInterruptHighlighter = true
 	db.targetIndicatorYPos = 0
 	db.friendlyNpBuffFilterAll = false
 	db.focusTargetIndicatorTexture = "Shattered DF (BBP)"
 	db.classIndicatorFriendlyAnchor = "TOP"
 	db.personalNpdeBuffEnable = false
 	db.nameplateDefaultEnemyHeight = 45
+	db.useCustomCastbarTexture = false
 	db.otherNpBuffFilterWatchList = true
 	db.castbarEventsOn = true
 	db.targetIndicatorScale = 1
 	db.showNameplateCastbarTimer = true
 	db.partyIndicatorModeOff = false
-    db.interruptedByIndicator = true
 	db.questIndicatorAnchor = "LEFT"
 	db.otherNpdeBuffPandemicGlow = false
 	db.otherNpdeBuffEnable = false
@@ -548,7 +582,7 @@ function BBP.NahjProfile()
 	db.combatIndicatorXPos = 0
 	db.friendlyNpdeBuffFilterWatchList = false
 	db.auraWhitelistColorsUpdated = true
-	db.nameplateMinAlpha = "0.6"
+	db.nameplateMinAlpha = "1"
 	db.classIndicatorScale = 1
 	db.focusTargetIndicatorColorNameplate = false
 	db.reopenOptions = false
@@ -558,6 +592,11 @@ function BBP.NahjProfile()
 	db.arenaIdAnchor = "TOP"
 	db.NamePlateVerticalScale = "2.8"
 	db.castBarDragonflightShield = true
+	db.castBarNoninterruptibleColor = {
+		0.4, -- [1]
+		0.4, -- [2]
+		0.4, -- [3]
+	}
 	db.focusTargetIndicatorTestMode = false
 	db.targetIndicatorTestMode = false
 	db.absorbIndicator = true
@@ -575,8 +614,9 @@ function BBP.NahjProfile()
 	db.customFontSize = 12
 	db.nameplateAurasCenteredAnchor = false
 	db.questIndicatorYPos = 0
+	db.nameplateMinAlphaScale = 1
 	db.friendlyNpBuffPurgeGlow = false
-	db.nameplateShowFriendlyMinions = "1"
+	db.nameplateShowFriendlyMinions = "0"
 	db.arenaIdXPos = 0
 	db.castBarShieldYPos = 0
 	db.arenaIndicatorModeThree = false
@@ -593,12 +633,12 @@ function BBP.NahjProfile()
 	db.personalNpdeBuffFilterLessMinite = false
 	db.friendlyNpdeBuffFilterAll = false
 	db.partyIDScale = 1
-	db.nameplateShowFriendlyGuardians = "1"
+	db.nameplateShowFriendlyGuardians = "0"
 	db.totemIndicatorHideNameAndShiftIconDown = false
 	db.petIndicator = true
 	db.enemyNameplateHealthbarHeight = 10.8
 	db.customFont = "Yanone (BBP)"
-	db.nameplateSelfHeight = 45.00000762939453
+	db.nameplateSelfHeight = 45
 	db.defaultLargeNamePlateFontFlags = ""
 	db.personalNpBuffEnable = true
 	db.nameplateAuraRelativeAnchor = "TOPLEFT"
@@ -606,198 +646,260 @@ function BBP.NahjProfile()
 	db.totemIndicatorAnchor = "TOP"
 	db.healerIndicatorYPos = 0
 	db.totemIndicatorYPos = 0
-	db.nameplateLargerScale = "1.2"
+	db.nameplateLargerScale = "1.1"
 	db.defaultNamePlateFontFlags = ""
-	db.fadeOutNPCsAlpha = 0.2
+	db.fadeOutNPCsAlpha = 0.3
 	db.castBarRecolor = false
+	db.castBarChanneledColor = {
+		0.4862745404243469, -- [1]
+		1, -- [2]
+		0.294117659330368, -- [3]
+		1, -- [4]
+	}
 	db.combatIndicator = true
 	db.nameplateMaxAlpha = "1.0"
 	db.useCustomFont = false
 	db.classIndicatorFriendlyYPos = 0
 	db.otherNpdeBuffFilterLessMinite = false
 	db.classIndicatorYPos = 0
+	db.castBarInterruptHighlighterInterruptRGB = {
+		0, -- [1]
+		1, -- [2]
+		0.8784314393997192, -- [3]
+		1, -- [4]
+	}
 	db.defaultFontSize = 9
 	db.combatIndicatorAnchor = "CENTER"
 	db.nameplateAuraHeightGap = 4
-	db.hideNPC = false
+	db.hideNPC = true
 	db.nameplateHorizontalScale = "1.4"
 	db.healerIndicatorEnemyOnly = false
+	db.normalCastbarForEmpoweredCasts = true
 	db.executeIndicatorFriendly = false
 	db.hideNameplateAuras = false
 	db.combatIndicatorPlayersOnly = true
 	db.friendlyNameColor = false
-	db.totemIndicatorDefaultCooldownTextSize = 0.85
+	db.totemIndicatorDefaultCooldownTextSize = 0.9
 	db.arenaModeSettingKey = "4: Replace name with spec + ID on top"
 	db.arenaSpecScale = 1
 	db.combatIndicatorArenaOnly = true
 	db.nameplateOverlapH = "0.8"
 	db.focusTargetIndicatorYPos = 0
+	db.healerIndicatorEnemyScale = 1
 	db.castBarEmphasisText = false
 	db.nameplateFriendlyWidth = 60
+	db.nameplateShowEnemyTotems = "1"
+	db.raidmarkIndicatorAnchor = "TOP"
+	db.castBarInterruptHighlighterStartPercentage = 15
 	db.petIndicatorScale = 1
 	db.personalNpdeBuffFilterAll = false
+	db.nameplateAurasNoNameYPos = 0
 	db.totemIndicatorTestMode = false
 	db.friendlyHideHealthBarNpc = true
 	db.totemIndicatorGlowOff = false
 	db.nameplateAuraScale = 1
-	db.executeIndicatorThreshold = 40
-	db.totemIndicatorScaleUpImportant = true
+	db.targetIndicatorXPos = 0
+	db.arenaSpecYPos = 0
 	db.nameplateShowEnemyPets = "1"
+	db.focusTargetIndicatorXPos = 0
+	db.interruptedByIndicator = false
 	db.combatIndicatorScale = 1
 	db.personalNpBuffFilterAll = false
 	db.partyModeSettingKey = "2: Arena ID on top of name"
-	db.hideTargetHighlight = true
-	db.focusTargetIndicatorXPos = 0
+	db.castBarInterruptHighlighterDontInterruptRGB = {
+		0, -- [1]
+		1, -- [2]
+		0.8784314393997192, -- [3]
+		1, -- [4]
+	}
+	db.targetIndicatorTexture = "Checkered (BBP)"
+	db.castBarEmphasisOnlyInterruptable = false
 	db.partyIndicatorModeFour = false
 	db.arenaSpecXPos = 0
 	db.friendlyNpdeBuffEnable = false
 	db.arenaIndicatorModeFive = false
-	db.setCVarAcrossAllCharacters = true
-	db.combatIndicatorYPos = 0
+	db.targetIndicatorAnchor = "TOP"
 	db.enableCastbarEmphasis = false
 	db.healerIndicator = false
-	db.hideDefaultPersonalNameplateAuras = false
 	db.shortArenaSpecName = true
 	db.classColorPersonalNameplate = true
+	db.partyIndicatorModeFive = false
 	db.friendlyNameplateClickthrough = true
 	db.otherNpdeBuffFilterOnlyMe = false
+	db.friendlyNpBuffEmphasisedBorder = false
+	db.hideNPCArenaOnly = false
+	db.hideTargetHighlight = true
 	db.arenaIndicatorTestMode = false
-	db.absorbIndicatorEnemyOnly = false
+	db.customTexture = "Dragonflight (BBP)"
 	db.nameplateDefaultLargeFriendlyWidth = 154
 	db.personalNpdeBuffFilterWatchList = true
-	db.nameplateShowFriendlyTotems = "1"
-	db.castBarEmphasisOnlyInterruptable = false
+	db.nameplateMinScale = "1"
+	db.castBarHeight = 18.8
+	db.nameplateAurasXPos = 0
+	db.petIndicatorYPos = 0
+	db.nameplateAuraRowAmount = 5
+	db.castBarHeightHeight = 18.8
 	db.castBarShieldXPos = 0
-	db.largeNameplates = true
+	db.castBarEmphasisIcon = false
 	db.healerIndicatorAnchor = "TOPRIGHT"
 	db.executeIndicatorShowDecimal = true
+	db.nameplateShowEnemyMinus = "0"
+	db.executeIndicator = false
 	db.castBarEmphasisIconScale = 2
+	db.fadeOutNPC = true
 	db.nameplateShowEnemyMinions = "1"
-	db.partyIndicatorModeFive = false
+	db.castBarInterruptHighlighterEndPercentage = 85
+	db.nameplateSelfWidth = 154
+	db.raidmarkIndicator = false
 	db.petIndicatorAnchor = "CENTER"
-	db.classIndicatorEnemy = true
-	db.absorbIndicatorScale = 1
+	db.nameplateSelectedScale = "1.25"
+	db.castBarEmphasisHealthbarColor = false
 	db.partyIndicatorModeOne = false
-	db.classIndicator = false
-	db.nameplateAurasNoNameYPos = 0
+	db.classIconSquareBorderFriendly = true
+	db.totemIndicatorEnemyOnly = true
+	db.nameplateShowFriendlyTotems = "1"
 	db.castBarEmphasisHeightValue = 24
 	db.questIndicatorXPos = 0
-	db.nameplateResourceScale = 0.7
+	db.questIndicatorScale = 1
 	db.healerIndicatorXPos = 0
 	db.enemyNameScale = 1
-	db.testAllEnabledFeatures = false
+	db.focusTargetIndicatorColorNameplateRGB = {
+		1, -- [1]
+		1, -- [2]
+		1, -- [3]
+	}
 	db.castBarIconXPos = 0
 	db.nameplateOccludedAlphaMult = "0.4"
-	db.nameplateFriendlyHeight = 1
-	db.nameplateShowEnemyTotems = "1"
-	db.guildNameScale = 1
+	db.enableCastbarCustomization = true
+	db.petIndicatorTestMode = false
+	db.nameplateResourceScale = 0.7
 	db.classIconColorBorder = true
-	db.wasOnLoadingScreen = false
+	db.combatIndicatorSap = true
 	db.executeIndicatorNotOnFullHp = false
 	db.focusTargetIndicatorAnchor = "TOPRIGHT"
-	db.raidmarkIndicatorScale = 1
-	db.nameplateShowEnemyMinus = "0"
-	db.friendlyClassColorName = true
-	db.executeIndicatorScale = 1
-	db.customTexture = "Dragonflight (BBP)"
-	db.executeIndicator = false
-	db.fadeOutNPC = false
-	db.healerIndicatorScale = 1
-	db.nameplateDefaultFriendlyWidth = 110
-	db.NamePlateVerticalScaleScale = 2.8
-	db.nameplateAuraRowAmount = 5
+	db.castBarIconScale = 1
+	db.totemIndicatorScaleUpImportant = true
+	db.enableNameplateAuraCustomisation = true
+	db.testAllEnabledFeatures = false
+	db.showCastBarIconWhenNoninterruptible = true
+	db.enemyNeutralColorNameRGB = {
+		1, -- [1]
+		1, -- [2]
+		0, -- [3]
+	}
+	db.nameplateAuraRowAbove = true
+	db.nameplateMinAlphaDistanceScale = 60
+	db.hideDefaultPersonalNameplateAuras = false
 	db.healerIndicatorTestMode = false
-	db.nameplateSelectedScale = "1.25"
+	db.executeIndicatorScale = 1
 	db.nameplateEnemyWidth = 135
-	db.arenaIndicatorModeOne = false
-	db.nameplateMinScale = "1"
-	db.questIndicatorScale = 1
+	db.absorbIndicatorEnemyOnly = false
+	db.setCVarAcrossAllCharacters = true
+	db.totemIndicatorDefaultCooldownTextSizeScale = 0.9
 	db.totemIndicator = true
 	db.absorbIndicatorOnPlayersOnly = true
-	db.enableCastbarCustomization = false
+	db.castBarCastColor = {
+		0.4862745404243469, -- [1]
+		1, -- [2]
+		0.294117659330368, -- [3]
+		1, -- [4]
+	}
+	db.otherNpBuffEmphasisedBorder = false
 	db.raidmarkIndicatorXPos = 0
-	db.petIndicatorTestMode = false
-	db.totemIndicatorEnemyOnly = true
-	db.castBarEmphasisHealthbarColor = false
-	db.raidmarkIndicatorYPos = 0
+	db.removeRealmNames = true
+	db.largeNameplates = true
+	db.nameplateResourceOnTarget = "0"
+	db.castBarInterruptHighlighterEndPercentageHeight = 85
+	db.castBarDelayedInterruptColor = {
+		0, -- [1]
+		1, -- [2]
+		0.7843137979507446, -- [3]
+		1, -- [4]
+	}
 	db.executeIndicatorYPos = 0
 	db.otherNpBuffFilterLessMinite = false
-	db.partyIndicatorModeTwo = true
 	db.showTotemIndicatorCooldownSwipe = true
 	db.nameplateMaxScale = "1.1"
-	db.hideNPCArenaOnly = false
-	db.friendlyNpBuffFilterWatchList = false
+	db.absorbIndicatorScale = 1
+	db.nameplateResourceXPos = 0
+	db.friendlyNpBuffFilterWatchList = true
 	db.showCastbarIfTarget = false
-	db.enableNameplateAuraCustomisation = true
 	db.nameplateMotionSpeed = "0.05"
-	db.enemyClassColorName = true
 	db.nameplateMotion = "0"
-	db.arenaSpecAnchor = "TOP"
-	db.totemIndicatorXPos = 0
-	db.questIndicatorTestMode = false
-	db.absorbIndicatorXPos = 0
-	db.nameplateMinAlphaDistance = "10"
-	db.nameplateSelfWidth = 154.0000305175781
-	db.targetIndicator = true
-	db.arenaSpecYPos = 0
-	db.removeRealmNames = true
-	db.friendlyNameScale = 1
-	db.nameplateDefaultLargeFriendlyHeight = 64.125
-	db.absorbIndicatorAnchor = "LEFT"
-	db.otherNpBuffEmphasisedBorder = false
-	db.nameplateResourceOnTarget = "0"
-	db.friendlyNpdeBuffFilterLessMinite = false
-	db.otherNpBuffEnable = true
-	db.arenaIndicatorModeTwo = false
-	db.nameplateOverlapV = "1.3600000143051"
-	db.nameplateEnemyWidthScale = 135
-	db.defaultLargeFontSize = 12
-	db.castBarEmphasisHeight = false
-	db.combatIndicatorSap = true
-	db.personalNpBuffFilterWatchList = true
+	db.enemyClassColorName = true
+	db.castBarIconPosReset = true
 	db.otherNpBuffFilterAll = false
+	db.totemIndicatorXPos = 0
 	db.arenaIDScale = 1
-	db.nameplateShowFriendlyPets = "1"
+	db.absorbIndicatorXPos = 0
+	db.nameplateMinAlphaDistance = "60"
+	db.nameplateDefaultLargeEnemyWidth = 154
+	db.healerIndicatorEnemyXPos = 0
+	db.targetIndicator = true
+	db.absorbIndicatorTestMode = false
+	db.healerIndicatorEnemyAnchor = "TOPRIGHT"
+	db.otherNpBuffEnable = true
+	db.nameplateDefaultLargeFriendlyHeight = 64.125
+	db.defaultLargeFontSize = 12
+	db.friendlyNpdeBuffFilterLessMinite = false
+	db.nameplateDefaultFriendlyWidth = 110
+	db.questIndicatorTestMode = false
+	db.nameplateDefaultEnemyWidth = 110
+	db.arenaIndicatorModeTwo = false
+	db.nameplateOverlapV = "1.36"
+	db.nameplateEnemyWidthScale = 135
+	db.friendlyNameScale = 1
+	db.castBarEmphasisHeight = false
+	db.absorbIndicatorAnchor = "LEFT"
+	db.raidmarkIndicatorYPos = 0
+	db.personalNpBuffFilterWatchList = true
+	db.nameplateFriendlyHeight = 1
+	db.nameplateShowFriendlyPets = "0"
 	db.focusTargetIndicator = false
 	db.castBarIconYPos = 0
+	db.useCustomTextureForFriendly = true
 	db.executeIndicatorTestMode = false
-	db.nameplateDefaultEnemyWidth = 110
+	db.wasOnLoadingScreen = false
 	db.friendlyNpdeBuffFilterOnlyMe = false
 	db.auraWhitelistAlphaUpdated = true
-	db.partyIndicatorModeThree = false
-	db.raidmarkIndicator = false
-	db.absorbIndicatorTestMode = false
+	db.classIndicatorFriendly = true
+	db.healerIndicatorEnemyYPos = 0
 	db.castBarShieldScale = 1
 	db.otherNpBuffPurgeGlow = false
-	db.friendlyNpBuffEnable = false
-	db.nameplateAuraRowAbove = true
-	db.petIndicatorXPos = 0
-	db.nameplateDefaultLargeEnemyWidth = 154
-	db.defaultNpAuraCdSize = 0.5
-	db.friendlyNpBuffEmphasisedBorder = false
-	db.castBarHeight = 18.8
-	db.personalNpBuffFilterBlizzard = true
-	db.targetIndicatorXPos = 0
-	db.totemIndicatorScaleScale = 1.299999952316284
-	db.friendlyNpBuffFilterOnlyMe = false
+	db.friendlyNpBuffEnable = true
 	db.personalNpBuffFilterLessMinite = false
+	db.petIndicatorXPos = 0
+	db.combatIndicatorYPos = 0
+	db.friendlyClassColorName = true
+	db.classIndicator = false
+	db.useCustomTextureForBars = false
+	db.guildNameScale = 1
+	db.personalNpBuffFilterBlizzard = true
+	db.executeIndicatorAlwaysOn = false
+	db.raidmarkIndicatorScale = 1
+	db.friendlyNpBuffFilterOnlyMe = false
+	db.defaultNpAuraCdSize = 0.5
 	db.nameplateGlobalScale = "1.0"
 	db.nameplateAuraAnchor = "BOTTOMLEFT"
-	db.useCustomTextureForBars = false
-	db.executeIndicatorAlwaysOn = false
+	db.executeIndicatorThreshold = 40
+	db.nameplateResourceYPos = 4
 	db.castBarEmphasisTextScale = 2
 	db.nameplateMaxAlphaDistance = "40"
-	db.showCastBarIconWhenNoninterruptible = false
-	db.raidmarkIndicatorAnchor = "TOP"
+	db.classIndicatorEnemy = true
+	db.partyIndicatorModeThree = false
 	db.castBarIconAnchor = "LEFT"
-	db.petIndicatorYPos = 0
-	db.castBarIconScale = 1
-	db.classIndicatorFriendly = true
+	db.healerIndicatorScale = 1
+	db.arenaSpecAnchor = "TOP"
+	db.castBarNoInterruptColor = {
+		1, -- [1]
+		0, -- [2]
+		0.01568627543747425, -- [3]
+	}
 	db.friendlyNpdeBuffFilterBlizzard = false
-	db.nameplateAurasXPos = 0
-	db.targetIndicatorAnchor = "TOP"
+	db.arenaIndicatorModeOne = false
+	db.partyIndicatorModeTwo = true
+	db.castBarInterruptHighlighterStartPercentageHeight = 15
 	db.maxAurasOnNameplate = 12
 	db.friendlyNameplatesOnlyInArena = true
-	db.castBarEmphasisIcon = false
 	db.hideNPCWhitelistOn = false
 end

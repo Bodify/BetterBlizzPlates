@@ -64,6 +64,8 @@ local IsActiveBattlefieldArena = IsActiveBattlefieldArena
 local UnitIsUnit = UnitIsUnit
 local GetArenaOpponentSpec = GetArenaOpponentSpec
 
+--there is so much room for improvement here... oh well future me will surely have improved it.
+
 -- Arena Indicator for Arena Units
 -- Mode 1: Replace name with ID
 function BBP.ArenaIndicator1(frame)
@@ -74,6 +76,35 @@ function BBP.ArenaIndicator1(frame)
         local arenaIdXPos = BetterBlizzPlatesDB.arenaIdXPos
         local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
         local arenaIDScale = BetterBlizzPlatesDB.arenaIDScale
+
+        if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
+            local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
+            for i, unit in ipairs(enemyUnits) do
+                if UnitIsUnit(frame.unit, unit) then
+                    local r, g, b, a = 1, 1, 0, 1
+                    if enemyClassColorName then
+                        r, g, b, a = frame.name:GetTextColor()
+                    end
+
+                    if not frame.arenaNumberText then
+                        frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
+                        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
+                    end
+
+                    frame.name:SetText("")
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                    frame.arenaNumberText:SetText(i)
+                    if enemyClassColorName then
+                        frame.arenaNumberText:SetTextColor(r, g, b, a)
+                    else
+                        frame.arenaNumberText:SetTextColor(1, 1, 0)
+                    end
+                    frame.arenaNumberText:SetScale(arenaIDScale)
+                    break
+                end
+            end
+            return
+        end
 
         for i = 1, 3 do
             if UnitIsUnit(frame.unit, "arena" .. i) then
@@ -112,6 +143,31 @@ function BBP.ArenaIndicator2(frame)
         local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
         local arenaIDScale = BetterBlizzPlatesDB.arenaIDScale
 
+        if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
+            local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
+            for i, unit in ipairs(enemyUnits) do
+                if UnitIsUnit(frame.unit, unit) then
+                    local r, g, b, a = frame.name:GetTextColor()
+
+                    if not frame.arenaNumberText then
+                        frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
+                        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
+                    end
+
+                    frame.arenaNumberText:SetText(i)
+                    if enemyClassColorName then
+                        frame.arenaNumberText:SetTextColor(r, g, b, a)
+                    else
+                        frame.arenaNumberText:SetTextColor(1, 1, 0)
+                    end
+                    frame.arenaNumberText:SetScale(arenaIDScale)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                    break
+                end
+            end
+            return
+        end
+
         for i = 1, 3 do
             if UnitIsUnit(frame.unit, "arena" .. i) then
                 local r, g, b, a = frame.name:GetTextColor()
@@ -144,6 +200,40 @@ function BBP.ArenaIndicator3(frame)
         local arenaSpecAnchor = BetterBlizzPlatesDB.arenaSpecAnchor
         local arenaSpecXPos = BetterBlizzPlatesDB.arenaSpecXPos
         local arenaSpecYPos = BetterBlizzPlatesDB.arenaSpecYPos
+
+        if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
+            local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
+            for i, unit in ipairs(enemyUnits) do
+                if UnitIsUnit(frame.unit, unit) then
+                    local specID = GetArenaOpponentSpec(i)
+                    local specName = specID and specIDToName[specID]
+
+                    if shortArenaSpecName and specID then
+                        specName = specIDToNameShort[specID]
+                    end
+                    local r, g, b, a = frame.name:GetTextColor()
+
+                    if not specName then
+                        local _, className = UnitClass("arena" .. i)
+                        className = className:sub(1, 1):upper() .. className:sub(2):lower()
+                        specName = className
+                    end
+
+                    if not frame.specNameText then
+                        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
+                        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
+                    end
+
+                    frame.name:SetText("")
+                    frame.specNameText:SetText(specName)
+                    frame.specNameText:SetTextColor(r, g, b, a)
+                    frame.specNameText:SetScale(arenaSpecScale)
+                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    break
+                end
+            end
+            return
+        end
 
         for i = 1, 3 do
             if UnitIsUnit(frame.unit, "arena" .. i) then
@@ -192,6 +282,54 @@ function BBP.ArenaIndicator4(frame)
         local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
         local enemyClassColorName = BetterBlizzPlatesDB.enemyClassColorName
 
+        if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
+            local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
+            for i, unit in ipairs(enemyUnits) do
+                if UnitIsUnit(frame.unit, unit) then
+                    local r, g, b, a = frame.name:GetTextColor()
+                    local specID = GetArenaOpponentSpec(i)
+                    local specName = specID and specIDToName[specID]
+
+                    if shortArenaSpecName and specID then
+                        specName = specIDToNameShort[specID]
+                    end
+
+                    if not specName then
+                        local _, className = UnitClass("arena" .. i)
+                        className = className:sub(1, 1):upper() .. className:sub(2):lower()
+                        specName = className
+                    end
+
+                    if not frame.specNameText then
+                        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
+                        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
+                    end
+
+                    if not frame.arenaNumberText then
+                        frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
+                        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
+                    end
+
+                    frame.name:SetText("")
+                    frame.specNameText:SetText(specName)
+                    frame.specNameText:SetTextColor(r, g, b, a)
+                    frame.specNameText:SetScale(arenaSpecScale)
+                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+
+                    frame.arenaNumberText:SetText(i)
+                    if enemyClassColorName then
+                        frame.arenaNumberText:SetTextColor(r, g, b, a)
+                    else
+                        frame.arenaNumberText:SetTextColor(1, 1, 0)
+                    end
+                    frame.arenaNumberText:SetScale(arenaIDScale)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos, arenaIdYPos - 1)
+                    break
+                end
+            end
+            return
+        end
+
         for i = 1, 3 do
             if UnitIsUnit(frame.unit, "arena" .. i) then
                 local r, g, b, a = frame.name:GetTextColor()
@@ -213,7 +351,7 @@ function BBP.ArenaIndicator4(frame)
                     BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
                 end
 
-                if not frame.arenaNumberText then 
+                if not frame.arenaNumberText then
                     frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
@@ -247,6 +385,40 @@ function BBP.ArenaIndicator5(frame)
         local arenaSpecAnchor = BetterBlizzPlatesDB.arenaSpecAnchor
         local arenaSpecXPos = BetterBlizzPlatesDB.arenaSpecXPos
         local arenaSpecYPos = BetterBlizzPlatesDB.arenaSpecYPos
+
+        if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
+            local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
+            for i, unit in ipairs(enemyUnits) do
+                if UnitIsUnit(frame.unit, unit) then
+                    local r, g, b, a = frame.name:GetTextColor()
+                    local specID = GetArenaOpponentSpec(i)
+                    local specName = specID and specIDToName[specID]
+
+                    if shortArenaSpecName and specID then
+                        specName = specIDToNameShort[specID]
+                    end
+
+                    if not specName then
+                        local _, className = UnitClass("arena" .. i)
+                        className = className:sub(1, 1):upper() .. className:sub(2):lower()
+                        specName = className
+                    end
+
+                    if not frame.specNameText then
+                        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
+                        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
+                    end
+
+                    frame.name:SetText("")
+                    frame.specNameText:SetText(specName .. " " .. i)
+                    frame.specNameText:SetTextColor(r, g, b, a)
+                    frame.specNameText:SetScale(arenaSpecScale)
+                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    break
+                end
+            end
+            return
+        end
 
         for i = 1, 3 do
             if UnitIsUnit(frame.unit, "arena" .. i) then
@@ -291,11 +463,33 @@ function BBP.PartyIndicator1(frame)
         local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
         local partyIDScale = BetterBlizzPlatesDB.partyIDScale
 
+        if FrameSortApi and (FrameSortDB.Options.Sorting.Arena.Default.Enabled or FrameSortDB.Options.Sorting.Arena.Twos.Enabled) then
+            local friendlyUnits = FrameSortApi.v2.Sorting:GetFriendlyUnits()
+            for i, unit in ipairs(friendlyUnits) do
+                if UnitIsUnit(frame.unit, unit) then
+                    local r, g, b, a = frame.name:GetTextColor()
+
+                    if not frame.arenaNumberText then
+                        frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
+                        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
+                    end
+
+                    frame.name:SetText("")
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                    frame.arenaNumberText:SetText(i)
+                    frame.arenaNumberText:SetTextColor(r, g, b, a)
+                    frame.arenaNumberText:SetScale(partyIDScale)
+                    break
+                end
+            end
+            return
+        end
+
         for i = 1, 3 do
             if UnitIsUnit(frame.unit, "party" .. i) then
                 local r, g, b, a = frame.name:GetTextColor()
 
-                if not frame.arenaNumberText then 
+                if not frame.arenaNumberText then
                     frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
@@ -320,11 +514,32 @@ function BBP.PartyIndicator2(frame)
         local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
         local partyIDScale = BetterBlizzPlatesDB.partyIDScale
 
+        if FrameSortApi and (FrameSortDB.Options.Sorting.Arena.Default.Enabled or FrameSortDB.Options.Sorting.Arena.Twos.Enabled) then
+            local friendlyUnits = FrameSortApi.v2.Sorting:GetFriendlyUnits()
+            for i, unit in ipairs(friendlyUnits) do
+                if UnitIsUnit(frame.unit, unit) then
+                    local r, g, b, a = frame.name:GetTextColor()
+
+                    if not frame.arenaNumberText then
+                        frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
+                        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
+                    end
+
+                    frame.arenaNumberText:SetText(i)
+                    frame.arenaNumberText:SetTextColor(r, g, b, a)
+                    frame.arenaNumberText:SetScale(partyIDScale)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                    break
+                end
+            end
+            return
+        end
+
         for i = 1, 3 do
             if UnitIsUnit(frame.unit, "party" .. i) then
                 local r, g, b, a = frame.name:GetTextColor()
 
-                if not frame.arenaNumberText then 
+                if not frame.arenaNumberText then
                     frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                     BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                 end
@@ -349,6 +564,44 @@ function BBP.PartyIndicator3(frame)
         local arenaSpecXPos = BetterBlizzPlatesDB.arenaSpecXPos
         local arenaSpecYPos = BetterBlizzPlatesDB.arenaSpecYPos
         local Details = Details
+
+        if FrameSortApi and (FrameSortDB.Options.Sorting.Arena.Default.Enabled or FrameSortDB.Options.Sorting.Arena.Twos.Enabled) then
+            local friendlyUnits = FrameSortApi.v2.Sorting:GetFriendlyUnits()
+            for i, unit in ipairs(friendlyUnits) do
+                if UnitIsUnit(frame.unit, unit) then
+                    local specID
+                    if Details and Details.realversion >= 134 then
+                        local unitGUID = UnitGUID(frame.unit)
+                        specID = Details:GetSpecByGUID(unitGUID)
+                    end
+                    local specName = specID and specIDToName[specID]
+
+                    if shortArenaSpecName and specID then
+                        specName = specIDToNameShort[specID]
+                    end
+                    local r, g, b, a = frame.name:GetTextColor()
+
+                    if not specName then
+                        local _, className = UnitClass("party" .. i)
+                        className = className:sub(1, 1):upper() .. className:sub(2):lower()
+                        specName = className
+                    end
+
+                    if not frame.specNameText then
+                        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
+                        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
+                    end
+
+                    frame.name:SetText("")
+                    frame.specNameText:SetText(specName)
+                    frame.specNameText:SetTextColor(r, g, b, a)
+                    frame.specNameText:SetScale(partySpecScale)
+                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    break
+                end
+            end
+            return
+        end
 
         for i = 1, 3 do
             if UnitIsUnit(frame.unit, "party" .. i) then
@@ -401,6 +654,54 @@ function BBP.PartyIndicator4(frame)
         local arenaIdXPos = BetterBlizzPlatesDB.arenaIdXPos
         local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
         local Details = Details
+
+        if FrameSortApi and (FrameSortDB.Options.Sorting.Arena.Default.Enabled or FrameSortDB.Options.Sorting.Arena.Twos.Enabled) then
+            local friendlyUnits = FrameSortApi.v2.Sorting:GetFriendlyUnits()
+            for i, unit in ipairs(friendlyUnits) do
+                if UnitIsUnit(frame.unit, unit) then
+                    local r, g, b, a = frame.name:GetTextColor()
+                    local specID
+                    if Details and Details.realversion >= 134 then
+                        local unitGUID = UnitGUID(frame.unit)
+                        specID = Details:GetSpecByGUID(unitGUID)
+                    end
+                    local specName = specID and specIDToName[specID]
+
+                    if shortArenaSpecName and specID then
+                        specName = specIDToNameShort[specID]
+                    end
+
+                    if not specName then
+                        local _, className = UnitClass("party" .. i)
+                        className = className:sub(1, 1):upper() .. className:sub(2):lower()
+                        specName = className
+                    end
+
+                    if not frame.specNameText then
+                        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
+                        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
+                    end
+
+                    if not frame.arenaNumberText then 
+                        frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
+                        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
+                    end
+
+                    frame.name:SetText("")
+                    frame.specNameText:SetText(specName)
+                    frame.specNameText:SetTextColor(r, g, b, a)
+                    frame.specNameText:SetScale(partySpecScale)
+                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+
+                    frame.arenaNumberText:SetText(i)
+                    frame.arenaNumberText:SetTextColor(r, g, b, a)
+                    frame.arenaNumberText:SetScale(partyIDScale)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos, arenaIdYPos - 1)
+                    break
+                end
+            end
+            return
+        end
 
         for i = 1, 3 do
             if UnitIsUnit(frame.unit, "party" .. i) then
@@ -458,6 +759,44 @@ function BBP.PartyIndicator5(frame)
         local arenaSpecXPos = BetterBlizzPlatesDB.arenaSpecXPos
         local arenaSpecYPos = BetterBlizzPlatesDB.arenaSpecYPos
         local Details = Details
+
+        if FrameSortApi and (FrameSortDB.Options.Sorting.Arena.Default.Enabled or FrameSortDB.Options.Sorting.Arena.Twos.Enabled) then
+            local friendlyUnits = FrameSortApi.v2.Sorting:GetFriendlyUnits()
+            for i, unit in ipairs(friendlyUnits) do
+                if UnitIsUnit(frame.unit, unit) then
+                    local r, g, b, a = frame.name:GetTextColor()
+                    local specID
+                    if Details and Details.realversion >= 134 then
+                        local unitGUID = UnitGUID(frame.unit)
+                        specID = Details:GetSpecByGUID(unitGUID)
+                    end
+                    local specName = specID and specIDToName[specID]
+
+                    if shortArenaSpecName and specID then
+                        specName = specIDToNameShort[specID]
+                    end
+
+                    if not specName then
+                        local _, className = UnitClass("party" .. i)
+                        className = className:sub(1, 1):upper() .. className:sub(2):lower()
+                        specName = className
+                    end
+
+                    if not frame.specNameText then
+                        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
+                        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
+                    end
+
+                    frame.name:SetText("")
+                    frame.specNameText:SetText(specName .. " " .. i)
+                    frame.specNameText:SetTextColor(r, g, b, a)
+                    frame.specNameText:SetScale(partySpecScale)
+                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    break
+                end
+            end
+            return
+        end
 
         for i = 1, 3 do
             if UnitIsUnit(frame.unit, "party" .. i) then

@@ -290,37 +290,40 @@ function BBP.CustomizeCastbar(unitToken)
     local castBarDelayedInterruptColor = BetterBlizzPlatesDB.castBarDelayedInterruptColor
 
     if spellName and castDuration and BetterBlizzPlatesDB.castBarInterruptHighlighter and not notInterruptible then
-        local currentTime = GetTime() -- currentTime is in seconds
-        -- Convert startTime and endTime from milliseconds to seconds for these calculations
-        local castStartSeconds = castStart / 1000
-        local castEndSeconds = endTime / 1000
-        local totalCastTime = castEndSeconds - castStartSeconds
-        local currentCastTime = currentTime - castStartSeconds
-        local castProgressPercentage = (currentCastTime / totalCastTime) * 100
+        local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
+        if not isFriend then
+            local currentTime = GetTime() -- currentTime is in seconds
+            -- Convert startTime and endTime from milliseconds to seconds for these calculations
+            local castStartSeconds = castStart / 1000
+            local castEndSeconds = endTime / 1000
+            local totalCastTime = castEndSeconds - castStartSeconds
+            local currentCastTime = currentTime - castStartSeconds
+            local castProgressPercentage = (currentCastTime / totalCastTime) * 100
 
-        local startPercentage = BetterBlizzPlatesDB.castBarInterruptHighlighterStartPercentage
-        local endPercentage = BetterBlizzPlatesDB.castBarInterruptHighlighterEndPercentage
+            local startPercentage = BetterBlizzPlatesDB.castBarInterruptHighlighterStartPercentage
+            local endPercentage = BetterBlizzPlatesDB.castBarInterruptHighlighterEndPercentage
 
-        if castProgressPercentage <= startPercentage or castProgressPercentage >= endPercentage then
-            -- Color the cast bar green for the first 10% and last 20% of the cast
-            local color = BetterBlizzPlatesDB.castBarInterruptHighlighterInterruptRGB
-            if castBarTexture then
-                castBarTexture:SetDesaturated()
-            end
-            castBar:SetStatusBarColor(unpack(color)) -- RGB for green
-        else
-            local colorDontInterrupt = BetterBlizzPlatesDB.castBarInterruptHighlighterColorDontInterrupt
-            if colorDontInterrupt then
-                local color = BetterBlizzPlatesDB.castBarInterruptHighlighterDontInterruptRGB
+            if castProgressPercentage <= startPercentage or castProgressPercentage >= endPercentage then
+                -- Color the cast bar green for the first 10% and last 20% of the cast
+                local color = BetterBlizzPlatesDB.castBarInterruptHighlighterInterruptRGB
                 if castBarTexture then
                     castBarTexture:SetDesaturated()
                 end
-                castBar:SetStatusBarColor(unpack(color)) -- RGB for red
+                castBar:SetStatusBarColor(unpack(color)) -- RGB for green
             else
-                if castBarTexture then
-                    castBarTexture:SetDesaturated(false)
+                local colorDontInterrupt = BetterBlizzPlatesDB.castBarInterruptHighlighterColorDontInterrupt
+                if colorDontInterrupt then
+                    local color = BetterBlizzPlatesDB.castBarInterruptHighlighterDontInterruptRGB
+                    if castBarTexture then
+                        castBarTexture:SetDesaturated()
+                    end
+                    castBar:SetStatusBarColor(unpack(color)) -- RGB for red
+                else
+                    if castBarTexture then
+                        castBarTexture:SetDesaturated(false)
+                    end
+                    castBar:SetStatusBarColor(1, 1, 1)
                 end
-                castBar:SetStatusBarColor(1, 1, 1)
             end
         end
     end
@@ -563,9 +566,9 @@ function BBP.UpdateCastTimer(nameplate, unitID)
         nameplate.CastTimer:SetTextColor(1, 1, 1)
     end
 
-    local name, _, _, startTime, endTime = UnitCastingInfo(unitID)
+    local name, temp_, temp__, startTime, endTime = UnitCastingInfo(unitID)
     if not name then
-        name, _, _, startTime, endTime = UnitChannelInfo(unitID)
+        name, temp_, temp__, startTime, endTime = UnitChannelInfo(unitID)
     end
 
     if name and endTime and startTime and nameplate.UnitFrame and nameplate.UnitFrame.healthBar:IsShown() and not nameplate.UnitFrame.hideCastInfo then
@@ -646,26 +649,23 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
             end
         end
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
-        local showWhoInterrupted = BetterBlizzPlatesDB.interruptedByIndicator
-        if showWhoInterrupted then
-            local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags = CombatLogGetCurrentEventInfo()
-            if subevent == "SPELL_INTERRUPT" then
+        local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags = CombatLogGetCurrentEventInfo()
+        if subevent == "SPELL_INTERRUPT" then
 
-                local destUnit = UnitTokenFromGUID(destGUID)
-                if string.match(destUnit or "", "nameplate") then
-                    local npbase = C_NamePlate.GetNamePlateForUnit(destUnit, false)
-                    if npbase then
-                        if sourceName then
-                            local name, server = strsplit("-", sourceName)
-                            local colorStr = "ffFFFFFF"
+            local destUnit = UnitTokenFromGUID(destGUID)
+            if string.match(destUnit or "", "nameplate") then
+                local npbase = C_NamePlate.GetNamePlateForUnit(destUnit, false)
+                if npbase then
+                    if sourceName then
+                        local name, server = strsplit("-", sourceName)
+                        local colorStr = "ffFFFFFF"
 
-                            if C_PlayerInfo.GUIDIsPlayer(sourceGUID) then
-                                local localizedClass, englishClass, localizedRace, englishRace, sex, _name, realm = GetPlayerInfoByGUID(sourceGUID)
-                                colorStr = RAID_CLASS_COLORS[englishClass].colorStr
-                            end
-                            if showWhoInterrupted then
-                                npbase.UnitFrame.castBar.Text:SetText(string.format("|c%s[%s]|r", colorStr, name))
-                            end
+                        if C_PlayerInfo.GUIDIsPlayer(sourceGUID) then
+                            local localizedClass, englishClass, localizedRace, englishRace, sex, _name, realm = GetPlayerInfoByGUID(sourceGUID)
+                            colorStr = RAID_CLASS_COLORS[englishClass].colorStr
+                        end
+                        if showWhoInterrupted then
+                            npbase.UnitFrame.castBar.Text:SetText(string.format("|c%s[%s]|r", colorStr, name))
                         end
                     end
                 end

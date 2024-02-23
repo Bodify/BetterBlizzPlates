@@ -11,6 +11,103 @@ local function FetchSpellName(spellId)
     return spellName
 end
 
+local fakeAuras = {
+    -- 6 Fake Debuffs
+    {
+        auraInstanceID = "777",
+        spellId = 201,
+        icon = "interface/icons/spell_shadow_shadowwordpain",
+        duration = 30,
+        isHarmful = true,
+        applications = 1,
+    },
+    {
+        auraInstanceID = "778",
+        spellId = 202,
+        icon = "interface/icons/spell_shadow_curseofsargeras",
+        duration = 18,
+        isHarmful = true,
+        applications = 18,
+    },
+    {
+        auraInstanceID = "779",
+        spellId = 203,
+        icon = "interface/icons/spell_frost_frostnova",
+        duration = 10,
+        isHarmful = true,
+        applications = 1,
+    },
+    {
+        auraInstanceID = "780",
+        spellId = 204,
+        icon = 132092,
+        duration = 22,
+        applications = 1,
+        isHarmful = true,
+    },
+    {
+        auraInstanceID = "781",
+        spellId = 205,
+        icon = 135978,
+        duration = 24,
+        isHarmful = true,
+        applications = 1,
+    },
+    {
+        auraInstanceID = "782",
+        spellId = 206,
+        icon = "interface/icons/spell_shadow_plaguecloud",
+        duration = 16,
+        isHarmful = true,
+        applications = 3,
+    },
+    -- 5 Fake Buffs
+    {
+        auraInstanceID = "666",
+        spellId = 101,
+        icon = "interface/icons/spell_nature_regeneration",
+        duration = 20,
+        isHelpful = true,
+        applications = 1,
+        isStealable = true,
+    },
+    {
+        auraInstanceID = "667",
+        spellId = 102,
+        icon = 132341,
+        duration = 0,
+        expirationTime = 0,
+        isHelpful = true,
+        applications = 1,
+    },
+    {
+        auraInstanceID = "668",
+        spellId = 103,
+        icon = "interface/icons/spell_holy_flashheal",
+        duration = 25,
+        isHelpful = true,
+        applications = 2,
+    },
+    {
+        auraInstanceID = "669",
+        spellId = 104,
+        icon = 132144,
+        duration = 0,
+        expirationTime = 0,
+        isHelpful = true,
+        applications = 1,
+    },
+    {
+        auraInstanceID = "670",
+        spellId = 105,
+        icon = 135939,
+        duration = 15,
+        isHelpful = true,
+        applications = 1,
+        isStealable = true,
+    },
+}
+
 local function isInWhitelist(spellName, spellId)
     for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
         if (entry.name and spellName and string.lower(entry.name) == string.lower(spellName)) or entry.id == spellId then
@@ -68,7 +165,7 @@ local function CheckBuffs()
                     buff.PandemicGlow:SetAtlas("newplayertutorial-drag-slotgreen");
                     buff.PandemicGlow:SetDesaturated(true)
                     buff.PandemicGlow:SetVertexColor(1, 0, 0)
-                    if buff.Cooldown then
+                    if buff.Cooldown and buff.Cooldown:IsVisible() then
                         buff.PandemicGlow:SetParent(buff.Cooldown)
                     end
                     if BetterBlizzPlatesDB.nameplateAuraSquare then
@@ -261,7 +358,7 @@ local function SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit, aura)
             if aura.isHelpful then
                 if not buff.buffBorder then
                     buff.buffBorder = buff:CreateTexture(nil, "ARTWORK");
-                    if buff.Cooldown then
+                    if buff.Cooldown and buff.Cooldown:IsVisible() then
                         buff.buffBorder:SetParent(buff.Cooldown)
                     end
                     buff.buffBorder:SetAllPoints()
@@ -279,6 +376,11 @@ local function SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit, aura)
                 buff.Border:Show()
             end
         end
+    else
+        if buff.buffBorder then
+            buff.buffBorder:Hide()
+            buff.Border:Show()
+        end
     end
 end
 
@@ -293,7 +395,7 @@ local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
                 if not buff.buffBorderPurge then
                     buff.buffBorderPurge = buff:CreateTexture(nil, "OVERLAY")
                     buff.buffBorderPurge:SetAtlas("newplayertutorial-drag-slotblue")
-                    if buff.Cooldown then
+                    if buff.Cooldown and buff.Cooldown:IsVisible() then
                         buff.buffBorderPurge:SetParent(buff.Cooldown)
                     end
                     if nameplateAuraSquare then
@@ -353,7 +455,7 @@ local function SetBuffEmphasisBorder(buff, aura, isPlayerUnit, isEnemyUnit, shou
                     buff.BorderEmphasis:SetAtlas("newplayertutorial-drag-slotgreen")
                     buff.BorderEmphasis:SetVertexColor(1, 0, 0)
                     buff.BorderEmphasis:SetDesaturated(true)
-                    if buff.Cooldown then
+                    if buff.Cooldown and buff.Cooldown:IsVisible() then
                         buff.BorderEmphasis:SetParent(buff.Cooldown)
                     end
                     if nameplateAuraSquare then
@@ -446,12 +548,14 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
     local isPurgeable = aura.isStealable
     local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
 
+    local filterAllOverride = BetterBlizzPlatesDB.nameplateAuraTestMode or nil
+
     -- PLAYER
     if UnitIsUnit(unit, "player") then
         -- Buffs
         if BetterBlizzPlatesDB["personalNpBuffEnable"] and aura.isHelpful then
             local isInWhitelist, isImportant, isPandemic = GetAuraDetails(spellName, spellId)
-            local filterAll = BetterBlizzPlatesDB["personalNpBuffFilterAll"]
+            local filterAll = filterAllOverride or BetterBlizzPlatesDB["personalNpBuffFilterAll"]
             local filterBlizzard = BetterBlizzPlatesDB["personalNpBuffFilterBlizzard"] and BlizzardShouldShow
             local filterWatchlist = BetterBlizzPlatesDB["personalNpBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
@@ -465,7 +569,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
         -- Debuffs
         if BetterBlizzPlatesDB["personalNpdeBuffEnable"] and aura.isHarmful then
             local isInWhitelist, isImportant, isPandemic = GetAuraDetails(spellName, spellId)
-            local filterAll = BetterBlizzPlatesDB["personalNpdeBuffFilterAll"]
+            local filterAll = filterAllOverride or BetterBlizzPlatesDB["personalNpdeBuffFilterAll"]
             local filterWatchlist = BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["personalNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             if filterAll or filterWatchlist or isImportant or isPandemic then
@@ -480,7 +584,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
         -- Buffs
         if BetterBlizzPlatesDB["friendlyNpBuffEnable"] and aura.isHelpful then
             local isInWhitelist, isImportant, isPandemic = GetAuraDetails(spellName, spellId)
-            local filterAll = BetterBlizzPlatesDB["friendlyNpBuffFilterAll"]
+            local filterAll = filterAllOverride or BetterBlizzPlatesDB["friendlyNpBuffFilterAll"]
             local filterWatchlist = BetterBlizzPlatesDB["friendlyNpBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpBuffFilterOnlyMe"] and (caster ~= "player" and caster ~= "pet")
@@ -493,7 +597,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
         -- Debuffs
         if BetterBlizzPlatesDB["friendlyNpdeBuffEnable"] and aura.isHarmful then
             local isInWhitelist, isImportant, isPandemic = GetAuraDetails(spellName, spellId)
-            local filterAll = BetterBlizzPlatesDB["friendlyNpdeBuffFilterAll"]
+            local filterAll = filterAllOverride or BetterBlizzPlatesDB["friendlyNpdeBuffFilterAll"]
             local filterBlizzard = BetterBlizzPlatesDB["friendlyNpdeBuffFilterBlizzard"] and BlizzardShouldShow
             local filterWatchlist = BetterBlizzPlatesDB["friendlyNpdeBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
@@ -511,7 +615,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
         -- Buffs
         if BetterBlizzPlatesDB["otherNpBuffEnable"] and aura.isHelpful then
             local isInWhitelist, isImportant, isPandemic = GetAuraDetails(spellName, spellId)
-            local filterAll = BetterBlizzPlatesDB["otherNpBuffFilterAll"]
+            local filterAll = filterAllOverride or BetterBlizzPlatesDB["otherNpBuffFilterAll"]
             local filterWatchlist = BetterBlizzPlatesDB["otherNpBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             local filterPurgeable = BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] and isPurgeable
@@ -524,7 +628,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
         -- Debuffs
         if BetterBlizzPlatesDB["otherNpdeBuffEnable"] and aura.isHarmful then
             local isInWhitelist, isImportant, isPandemic = GetAuraDetails(spellName, spellId)
-            local filterAll = BetterBlizzPlatesDB["otherNpdeBuffFilterAll"]
+            local filterAll = filterAllOverride or BetterBlizzPlatesDB["otherNpdeBuffFilterAll"]
             local filterBlizzard = BetterBlizzPlatesDB["otherNpdeBuffFilterBlizzard"] and BlizzardShouldShow
             local filterWatchlist = BetterBlizzPlatesDB["otherNpdeBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
@@ -766,6 +870,16 @@ function BBP.ParseAllAuras(self, forceAll, UnitFrame)
     local usePackedAura = true;
     AuraUtil.ForEachAura(self.unit, "HARMFUL", batchCount, HandleAura, usePackedAura);
     AuraUtil.ForEachAura(self.unit, "HELPFUL", batchCount, HandleAura, usePackedAura);
+
+    -- Injecting fake auras for testing
+    local isTestModeEnabled = BetterBlizzPlatesDB.nameplateAuraTestMode
+    if isTestModeEnabled then
+        local currentTime = GetTime()
+        for _, fakeAura in ipairs(fakeAuras) do
+            fakeAura.expirationTime = currentTime + fakeAura.duration
+            HandleAura(fakeAura)
+        end
+    end
 end
 
 function BBP:UpdateAnchor()

@@ -12,7 +12,7 @@ LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlate
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.4.2"
+local addonUpdates = "1.4.3"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -789,20 +789,17 @@ local function SendUpdateMessage()
             --bbp news
             --PlaySoundFile(567439) --quest complete sfx
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Added a Castbar setting that makes Empowered Castbars now look like normal ones. Bugfixes for combopoints and pve stuff.")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Added FrameSort support for Arena ID etc on nameplates. Added nameplate aura test mode. Fixed some np aura settings. Updated Nahj profile.")
         end)
     end
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: Move and scale nameplate Combo points etc (Blizz CVar's).")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Castbar test mode (Castbar).")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Castbar xy positioning (Castbar).")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #4: Castbar Edge Highlighter (Castbar).")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #5: Hide raidmark on class icon nameplates (Advanced Settings, Class Indicator).")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #6: Fixed \"Color By Aura\" nameplate setting.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #7: A button to reset all of BBP settings (General).")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: FrameSort support for ArenaID etc on nameplates.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Nameplate aura test mode.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Fixed np aura settings: Blue buff border, Purgeglow & Pandemic.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #4: Updated Nahj profile.")
 
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Patreon link: www.patreon.com/bodydev")
 end
@@ -920,6 +917,7 @@ local function TurnOffTestModes()
     db.questIndicatorTestMode = false
     db.executeIndicatorTestMode = false
     db.testAllEnabledFeatures = false
+    db.nameplateAuraTestMode = false
 end
 
 -- Extracts NPC ID from GUID
@@ -2053,7 +2051,7 @@ function BBP.RunAuraModule()
             end
             --unitFrame.BuffFrame.UpdateBuffs = BBP.UpdateBuffs
             unitFrame.BuffFrame.UpdateBuffs = function() return end
-            unitFrame.healthBar.AuraR, unitFrame.healthBar.AuraG, unitFrame.healthBar.AuraB = nil, nil, nil
+            --unitFrame.healthBar.AuraR, unitFrame.healthBar.AuraG, unitFrame.healthBar.AuraB = nil, nil, nil
             BBP.On_NpRefreshOnce(unitFrame, namePlateFrameBase)
         end
     end
@@ -2097,6 +2095,15 @@ function BBP.RunAuraModule()
             local npbase = C_NamePlate.GetNamePlateForUnit(unit, false)
             if npbase then
                 BBP.On_NpRefreshOnce(npbase.UnitFrame)
+                C_Timer.After(0.2, function()
+                    local npbase = C_NamePlate.GetNamePlateForUnit(unit, false)
+                    if npbase then
+                        if npbase.UnitFrame then
+                            BBP.On_NpRefreshOnce(npbase.UnitFrame)
+                            --print("debug, late refresh aura")
+                        end
+                    end
+                end)
             end
         end)
     --end
@@ -2943,7 +2950,14 @@ end)
 
 local nameplateWidthOnEnterWorld = CreateFrame("Frame")
 nameplateWidthOnEnterWorld:RegisterEvent("PLAYER_ENTERING_WORLD")
-nameplateWidthOnEnterWorld:SetScript("OnEvent", BBP.ApplyNameplateWidth)
+nameplateWidthOnEnterWorld:SetScript("OnEvent", function()
+    BBP.ApplyNameplateWidth()
+    C_Timer.After(1, function()
+        if not InCombatLockdown() then
+            BBP.ApplyNameplateWidth()
+        end
+    end)
+end)
 
 -- Slash command
 SLASH_BBP1 = "/bbp"

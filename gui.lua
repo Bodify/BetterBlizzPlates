@@ -5338,6 +5338,10 @@ local function guiNameplateAuras()
     nameplateAurasEnemyCenteredAnchor:SetPoint("BOTTOM", nameplateAurasXPos, "TOP", -30, 50)
     CreateTooltip(nameplateAurasEnemyCenteredAnchor, "Keep auras centered on enemy nameplates.")
 
+    local nameplateAuraTestMode = CreateCheckbox("nameplateAuraTestMode", "Test Mode", enableNameplateAuraCustomisation)
+    nameplateAuraTestMode:SetPoint("RIGHT", nameplateAurasEnemyCenteredAnchor, "LEFT", -52, 0)
+    CreateTooltip(nameplateAuraTestMode, "Add some auras to nameplates for testing.\nTemporarily enables the \"All\" filter.")
+
     local nameplateAurasFriendlyCenteredAnchor = CreateCheckbox("nameplateAurasFriendlyCenteredAnchor", "Center Auras on Friendly", enableNameplateAuraCustomisation)
     nameplateAurasFriendlyCenteredAnchor:SetPoint("TOPLEFT", nameplateAurasEnemyCenteredAnchor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(nameplateAurasFriendlyCenteredAnchor, "Keep auras centered on friendly nameplates.")
@@ -5650,6 +5654,10 @@ local function guiTotemList()
     local totemListFrame = CreateFrame("Frame", nil, listFrame)
     totemListFrame:SetSize(322, 390)
     totemListFrame:SetPoint("TOPLEFT", -5, 3)
+
+    local totemListTip = guiTotemList:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    totemListTip:SetPoint("TOP", guiTotemList, "TOP", 0, 8)
+    totemListTip:SetText("(Adjust general size of ALL icons in the Advanced Settings tab)")
 
     CreateNpcList(totemListFrame, BetterBlizzPlatesDB.totemIndicatorNpcList, BBP.RefreshAllNameplates, 630, 560)
 end
