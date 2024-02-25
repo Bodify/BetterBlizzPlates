@@ -582,7 +582,7 @@ function BBP.PartyIndicator3(frame)
                     local r, g, b, a = frame.name:GetTextColor()
 
                     if not specName then
-                        local _, className = UnitClass("party" .. i)
+                        local _, className = UnitClass(frame.unit)
                         className = className:sub(1, 1):upper() .. className:sub(2):lower()
                         specName = className
                     end
@@ -672,7 +672,7 @@ function BBP.PartyIndicator4(frame)
                     end
 
                     if not specName then
-                        local _, className = UnitClass("party" .. i)
+                        local _, className = UnitClass(frame.unit)
                         className = className:sub(1, 1):upper() .. className:sub(2):lower()
                         specName = className
                     end
@@ -777,7 +777,7 @@ function BBP.PartyIndicator5(frame)
                     end
 
                     if not specName then
-                        local _, className = UnitClass("party" .. i)
+                        local _, className = UnitClass(frame.unit)
                         className = className:sub(1, 1):upper() .. className:sub(2):lower()
                         specName = className
                     end
@@ -879,6 +879,18 @@ function BBP.TestArenaIndicator1(frame)
                 frame.arenaNumberText:SetTextColor(1, 1, 0)
             end
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaIDScale)
+            if not frame.arenaNumberCircle then
+                frame.arenaNumberCircle = frame:CreateTexture(nil, "BACKGROUND")
+                frame.arenaNumberCircle:SetAtlas("UI-QuestPoi-QuestNumber-SuperTracked")
+                frame.arenaNumberCircle:SetSize(32,32)
+                frame.arenaNumberCircle:SetDesaturated(true)
+                frame.arenaNumberCircle:SetVertexColor(0,1,0)
+                frame.arenaNumberCircle:SetPoint("CENTER", frame.arenaNumberText, "CENTER", -1, 0.5) --if 1 then xPos 0.5
+                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THICKOUTLINE")
+                print("AYO")
+            end
+            frame.arenaNumberText:SetTextColor(1,1,1)
+            frame.arenaNumberText:SetText("3")
             break
         end
     end
@@ -1024,7 +1036,7 @@ end
 -- Mode 1: Replace name with ID 
 function BBP.TestPartyIndicator1(frame)
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if UnitIsFriend("player", frame.unit) then
+        if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.arenaNumberText then
@@ -1046,7 +1058,7 @@ end
 -- Mode 2: Put ID on top of name
 function BBP.TestPartyIndicator2(frame)
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if UnitIsFriend("player", frame.unit) then
+        if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.arenaNumberText then
@@ -1066,7 +1078,7 @@ end
 -- Mode 3: Replace name with Spec
 function BBP.TestPartyIndicator3(frame)
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if UnitIsFriend("player", frame.unit) then
+        if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.specNameText then
@@ -1092,7 +1104,7 @@ end
 -- Mode 4: Replace name with spec and ID on top
 function BBP.TestPartyIndicator4(frame)
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if UnitIsFriend("player", frame.unit) then
+        if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.specNameText then
@@ -1127,7 +1139,7 @@ end
 -- Mode 5: Put ID and Spec on same line instead of name
 function BBP.TestPartyIndicator5(frame)
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if UnitIsFriend("player", frame.unit) then
+        if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.specNameText then
@@ -1175,7 +1187,7 @@ function BBP.ArenaIndicatorCaller(frame, config)
         local unitType
         if UnitIsEnemy("player", frame.unit) then
             unitType = "arena"
-        else
+        elseif not UnitIsUnit("player", frame.unit) then
             unitType = "party"
         end
 
@@ -1219,7 +1231,7 @@ function BBP.ArenaIndicatorCaller(frame, config)
         local unitType
         if UnitIsEnemy("player", frame.unit) or (UnitReaction("player", frame.unit) or 0) < 5 then
             unitType = "arena"
-        else
+        elseif not UnitIsUnit("player", frame.unit) then
             unitType = "party"
         end
 
