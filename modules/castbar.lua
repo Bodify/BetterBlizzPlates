@@ -140,6 +140,7 @@ function BBP.CustomizeCastbar(unitToken)
     local castBarNonInterruptibleColor = BetterBlizzPlatesDB.castBarNoninterruptibleColor
     local castBarChanneledColor = BetterBlizzPlatesDB.castBarChanneledColor
     local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
+    local hideCastbarText = BetterBlizzPlatesDB.hideCastbarText
 
     if not castBarRecolor then
         if castBarTexture then
@@ -217,6 +218,18 @@ function BBP.CustomizeCastbar(unitToken)
 
     BBP.SetFontBasedOnOption(castBar.Text, 12, "OUTLINE")
 
+    if hideCastbarText then
+        local text = castBar.Text:GetText()
+        -- First, check if 'text' is not nil and then check its content
+        if text and (string.match(text, "Interrupted") or string.match(text, "%b[]")) then
+            -- If the text contains "Interrupted" or is within square brackets, ensure it's visible
+            castBar.Text:SetAlpha(1)
+        else
+            -- For all other cases, including when 'text' is nil, hide the text
+            castBar.Text:SetAlpha(0)
+        end
+    end
+
     if castBarDragonflightShield then
         castBar.BorderShield:SetTexture(nil)
         castBar.BorderShield:SetAtlas("ui-castingbar-shield")
@@ -230,10 +243,12 @@ function BBP.CustomizeCastbar(unitToken)
     castBar.Spark:SetSize(4, castBarHeight) --4 width, 5 height original
     castBar.Text:SetScale(castBarTextScale)
 
-    if showCastBarIconWhenNoninterruptible then
+    if showCastBarIconWhenNoninterruptible and notInterruptible then
         castBar.BorderShield:SetDrawLayer("OVERLAY", 1)
         castBar.Icon:Show()
         castBar.Icon:SetDrawLayer("OVERLAY", 2)
+    elseif not notInterruptible then
+        castBar.Icon:Show() --attempt to fix icon randomly not showing (blizz bug)
     end
 
     local function ApplyCastBarEmphasisSettings(castBar, castEmphasis)
@@ -664,9 +679,7 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                             local localizedClass, englishClass, localizedRace, englishRace, sex, _name, realm = GetPlayerInfoByGUID(sourceGUID)
                             colorStr = RAID_CLASS_COLORS[englishClass].colorStr
                         end
-                        if showWhoInterrupted then
-                            npbase.UnitFrame.castBar.Text:SetText(string.format("|c%s[%s]|r", colorStr, name))
-                        end
+                        npbase.UnitFrame.castBar.Text:SetText(string.format("|c%s[%s]|r", colorStr, name))
                     end
                 end
             end
@@ -675,6 +688,7 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
 end)
 
 -- Event handler
+local interruptCombatLog
 function BBP.ToggleSpellCastEventRegistration()
     if not BetterBlizzPlatesDB.castbarEventsOn then
         if BetterBlizzPlatesDB.showNameplateCastbarTimer or BetterBlizzPlatesDB.showNameplateTargetText or BetterBlizzPlatesDB.enableCastbarCustomization or BetterBlizzPlatesDB.hideCastbar then
@@ -689,8 +703,9 @@ function BBP.ToggleSpellCastEventRegistration()
             castbarEventFrame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_START")
             castbarEventFrame:RegisterEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE")
             castbarEventFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-            if BetterBlizzPlatesDB.interruptedByIndicator then
+            if BetterBlizzPlatesDB.interruptedByIndicator and not interruptCombatLog then
                 castbarEventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+                interruptCombatLog = true
             end
             if not useCustomCastbarTextureHooked and BetterBlizzPlatesDB.useCustomCastbarTexture then
                 hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
@@ -806,6 +821,13 @@ function BBP.ToggleSpellCastEventRegistration()
             BetterBlizzPlatesDB.castbarEventsOn = true
         end
     else
+        if BetterBlizzPlatesDB.interruptedByIndicator and not interruptCombatLog then
+            castbarEventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+            interruptCombatLog = true
+        else
+            castbarEventFrame:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+            interruptCombatLog = false
+        end
         if not BetterBlizzPlatesDB.showNameplateCastbarTimer and not BetterBlizzPlatesDB.showNameplateTargetText and not BetterBlizzPlatesDB.enableCastbarCustomization and not BetterBlizzPlatesDB.hideCastbar then
             castbarEventFrame:UnregisterEvent("UNIT_SPELLCAST_START")
             castbarEventFrame:UnregisterEvent("UNIT_SPELLCAST_STOP")
@@ -821,6 +843,7 @@ function BBP.ToggleSpellCastEventRegistration()
             castbarEventFrame:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 
             BetterBlizzPlatesDB.castbarEventsOn = false
+            interruptCombatLog = false
         end
     end
 end
