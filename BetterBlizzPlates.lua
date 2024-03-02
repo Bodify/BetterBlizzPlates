@@ -12,7 +12,7 @@ LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlate
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.4.3c"
+local addonUpdates = "1.4.3d"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -789,7 +789,7 @@ local function SendUpdateMessage()
             --bbp news
             --PlaySoundFile(567439) --quest complete sfx
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Hide castbar text setting + \"Interrupted by\" bugfix.")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Focus Nameplate Texture change bugfix.")
         end)
     end
 end

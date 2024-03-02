@@ -702,7 +702,7 @@ function BBP.NahjProfile()
 	db.arenaSpecYPos = 0
 	db.nameplateShowEnemyPets = "1"
 	db.focusTargetIndicatorXPos = 0
-	db.interruptedByIndicator = false
+	db.interruptedByIndicator = true
 	db.combatIndicatorScale = 1
 	db.personalNpBuffFilterAll = false
 	db.partyModeSettingKey = "2: Arena ID on top of name"
