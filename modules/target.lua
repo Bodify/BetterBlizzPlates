@@ -111,6 +111,7 @@ function BBP.FocusTargetIndicator(frame)
     local xPos = BetterBlizzPlatesDB.focusTargetIndicatorXPos or 0
     local yPos = BetterBlizzPlatesDB.focusTargetIndicatorYPos or 0
     local dbScale = BetterBlizzPlatesDB.focusTargetIndicatorScale or 1
+    local useCustomTexture = BetterBlizzPlatesDB.useCustomTextureForBars
 
     -- Initialize
     if not frame.focusTargetIndicator then
@@ -140,7 +141,7 @@ function BBP.FocusTargetIndicator(frame)
         if BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture then
             frame.healthBar:SetStatusBarTexture(focusTexture)
         else
-            if BetterBlizzPlatesDB.useCustomTextureForBars then
+            if useCustomTexture then
                 frame.healthBar:SetStatusBarTexture(customTexture)
             else
                 frame.healthBar:SetStatusBarTexture("Interface/TargetingFrame/UI-TargetingFrame-BarFill")
@@ -161,7 +162,7 @@ function BBP.FocusTargetIndicator(frame)
         if changeTexture then
             frame.healthBar:SetStatusBarTexture(focusTexture)
         else
-            if BetterBlizzPlatesDB.useCustomTextureForBars then
+            if useCustomTexture then
                 frame.healthBar:SetStatusBarTexture(customTexture)
             else
                 frame.healthBar:SetStatusBarTexture("Interface/TargetingFrame/UI-TargetingFrame-BarFill")
@@ -180,6 +181,11 @@ function BBP.FocusTargetIndicator(frame)
         end
     else
         frame.focusTargetIndicator:Hide()
+        if useCustomTexture then
+            frame.healthBar:SetStatusBarTexture(customTexture)
+        else
+            frame.healthBar:SetStatusBarTexture("Interface/TargetingFrame/UI-TargetingFrame-BarFill")
+        end
         if colorName then
             BBP.ClassColorAndScaleNames(frame)
         end
