@@ -93,6 +93,101 @@ local function EnableElement(element)
     element:SetAlpha(1)
 end
 
+local function UpdateColorSquare(icon, r, g, b, a)
+    if r and g and b then
+        icon:SetVertexColor(r, g, b, a)
+    end
+end
+
+local function OpenColorPicker(colorType, icon)
+    -- Initialize color with default RGBA if not present
+    BetterBlizzPlatesDB[colorType] = BetterBlizzPlatesDB[colorType] or {1, 1, 1, 1}
+    local r, g, b, a = unpack(BetterBlizzPlatesDB[colorType])
+
+    local function updateColors()
+        BetterBlizzPlatesDB[colorType] = {r, g, b, a}
+        if icon then
+            UpdateColorSquare(icon, r, g, b, a)
+        end
+        BBP.RefreshAllNameplates()
+        ColorPickerFrame.Content.ColorSwatchCurrent:SetAlpha(a)
+    end
+
+    local function swatchFunc()
+        r, g, b = ColorPickerFrame:GetColorRGB()
+        a = ColorPickerFrame:GetColorAlpha()
+        updateColors()
+    end
+
+    local function opacityFunc()
+        a = ColorPickerFrame:GetColorAlpha()
+        updateColors()
+    end
+
+    local function cancelFunc(previousValues)
+        if previousValues then
+            r, g, b, a = previousValues.r, previousValues.g, previousValues.b, previousValues.a
+            updateColors()
+        end
+    end
+
+    -- Setup and show the color picker
+    ColorPickerFrame.previousValues = {r, g, b, a}
+    ColorPickerFrame:SetupColorPickerAndShow({
+        r = r, g = g, b = b, opacity = a,
+        hasOpacity = true,
+        swatchFunc = swatchFunc,
+        opacityFunc = opacityFunc,
+        cancelFunc = cancelFunc,
+        previousValues = {r, g, b, a},
+    })
+end
+
+
+function CreateColorBox(parent, colorVar, labelText)
+    local frame = CreateFrame("Frame", nil, parent)
+    frame:SetSize(55, 20) -- Adjust size as needed
+    frame:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
+
+    -- Border Frame (slightly larger to act as a border)
+    local borderFrame = CreateFrame("Frame", nil, frame)
+    borderFrame:SetSize(18, 18) -- Slightly larger than the color texture
+    borderFrame:SetPoint("LEFT", frame, "LEFT", 4, 0) -- Adjust to center the border around the color texture
+
+    local border = borderFrame:CreateTexture(nil, "OVERLAY", nil, 5)
+    border:SetAtlas("talents-node-square-gray")
+    border:SetAllPoints()
+
+    -- Create the color texture within the border frame
+    local colorTexture = borderFrame:CreateTexture(nil, "OVERLAY")
+    colorTexture:SetSize(15, 15) -- Adjust size as needed
+    colorTexture:SetPoint("CENTER", borderFrame, "CENTER", 0, 0)
+    colorTexture:SetColorTexture(unpack(BetterBlizzPlatesDB[colorVar] or {1, 1, 1}))
+
+    -- Label text for the color box
+    local text = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+    text:SetText(labelText)
+    text:SetPoint("LEFT", borderFrame, "RIGHT", 5, 0) -- Adjust position as needed
+
+    -- Make the frame clickable and open a color picker on click
+    frame:SetScript("OnMouseDown", function()
+        if frame:GetAlpha() == 1 then
+            OpenColorPicker(colorVar, colorTexture)
+        end
+    end)
+
+    local grandparent = parent:GetParent()
+
+    if parent:GetObjectType() == "CheckButton" and (parent:GetChecked() == false or (grandparent:GetObjectType() == "CheckButton" and grandparent:GetChecked() == false)) then
+        frame:SetAlpha(0.5)
+    else
+        frame:SetAlpha(1)
+    end
+
+    return frame
+end
+
+
 local function CreateBorderBox(anchor)
     local contentFrame = anchor:GetParent()
     local texture = contentFrame:CreateTexture(nil, "BACKGROUND")
@@ -1276,7 +1371,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                     entryColors.text.r, entryColors.text.g, entryColors.text.b, entryColors.text.a = r, g, b, a
                     SetTextColor(r, g, b)  -- Update text color
                     UpdateIconColor(r, g, b)
-                    BBF.RefreshAllAuraFrames()  -- Refresh frames or elements that depend on these colors
+                    BBP.RefreshAllNameplates()  -- Refresh frames or elements that depend on these colors
                     ColorPickerFrame.Content.ColorSwatchCurrent:SetAlpha(a)
                 end
 
@@ -4095,10 +4190,14 @@ local function guiCastbar()
     CreateTooltip(nameplateCastbarTestMode, "Test nameplate castbars.\nOnly works for the basic settings.\nDoes not work for interrupt color, emphasis etc.")
 
     local enableCastbarCustomization = CreateCheckbox("enableCastbarCustomization", "Enable castbar customization", guiCastbar, nil, BBP.ToggleSpellCastEventRegistration)
-    enableCastbarCustomization:SetPoint("TOPLEFT", castbarSettingsText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
+    enableCastbarCustomization:SetPoint("TOPLEFT", castbarSettingsText, "BOTTOMLEFT", -10, pixelsOnFirstBox)
+
+    local castbarQuickHide = CreateCheckbox("castbarQuickHide", "Castbar Quick Hide", enableCastbarCustomization)
+    castbarQuickHide:SetPoint("TOPLEFT", enableCastbarCustomization, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(castbarQuickHide, "Hide the castbar instantly when a cast is finished/interrupted\n\nIf \"Show who interrupted\" is turned on the castbar will\nnot be immediately hidden under those circumstances.")
 
     local showCastBarIconWhenNoninterruptible = CreateCheckbox("showCastBarIconWhenNoninterruptible", "Show Cast Icon on Non-Interruptable", enableCastbarCustomization)
-    showCastBarIconWhenNoninterruptible:SetPoint("TOPLEFT", enableCastbarCustomization, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    showCastBarIconWhenNoninterruptible:SetPoint("TOPLEFT", castbarQuickHide, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(showCastBarIconWhenNoninterruptible, "Show the cast icon on non-interruptable casts (on top of shield),\njust like every other castbar in the game.\n\nBest used together with Dragonflight Shield setting on.")
 
     local castBarDragonflightShield = CreateCheckbox("castBarDragonflightShield", "Dragonflight Shield on Non-Interruptable", enableCastbarCustomization)
@@ -4336,9 +4435,9 @@ local function guiCastbar()
     CreateTooltip(castBarRecolorInterrupt, "Checks if you have interrupt ready\nand color castbar thereafter.")
 
     local castBarNoInterruptColor = CreateFrame("Button", nil, castBarRecolorInterrupt, "UIPanelButtonTemplate")
-    castBarNoInterruptColor:SetText("Interrupt on CD")
-    castBarNoInterruptColor:SetPoint("TOPLEFT", castBarRecolorInterrupt, "BOTTOMRIGHT", 0, 3)
-    castBarNoInterruptColor:SetSize(139, 20)
+    castBarNoInterruptColor:SetText("Kick on cd")
+    castBarNoInterruptColor:SetPoint("TOPLEFT", castBarRecolorInterrupt, "BOTTOMRIGHT", -15, 3)
+    castBarNoInterruptColor:SetSize(95, 20)
     CreateTooltip(castBarNoInterruptColor, "Castbar color when interrupt is on CD")
     local castBarNoInterruptColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
     castBarNoInterruptColorIcon:SetAtlas("newplayertutorial-icon-key")
@@ -4350,9 +4449,9 @@ local function guiCastbar()
     end)
 
     local castBarDelayedInterruptColor = CreateFrame("Button", nil, castBarRecolorInterrupt, "UIPanelButtonTemplate")
-    castBarDelayedInterruptColor:SetText("Interrupt CD soon")
-    castBarDelayedInterruptColor:SetPoint("TOPLEFT", castBarNoInterruptColor, "BOTTOMLEFT", 0, -5)
-    castBarDelayedInterruptColor:SetSize(139, 20)
+    castBarDelayedInterruptColor:SetText("Kick soon")
+    castBarDelayedInterruptColor:SetPoint("LEFT", castBarNoInterruptColor, "RIGHT", 30, 0)
+    castBarDelayedInterruptColor:SetSize(95, 20)
     CreateTooltip(castBarDelayedInterruptColor, "Castbar color when interrupt is on CD but\nwill be ready before the cast ends")
     local castBarDelayedInterruptColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
     castBarDelayedInterruptColorIcon:SetAtlas("newplayertutorial-icon-key")
@@ -4364,7 +4463,7 @@ local function guiCastbar()
     end)
 
     local castbarEmphasisSettingsText = guiCastbar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    castbarEmphasisSettingsText:SetPoint("LEFT", guiCastbar, "TOPRIGHT", -265, -430)
+    castbarEmphasisSettingsText:SetPoint("LEFT", guiCastbar, "TOPRIGHT", -280, -430)
     castbarEmphasisSettingsText:SetText("Castbar emphasis settings")
     local castbarSettingsEmphasisIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
     castbarSettingsEmphasisIcon:SetAtlas("powerswirlanimation-starburst-soulbinds")
@@ -4373,7 +4472,7 @@ local function guiCastbar()
     castbarSettingsEmphasisIcon:SetPoint("RIGHT", castbarEmphasisSettingsText, "LEFT", 5, 0)
 
     local enableCastbarEmphasis = CreateCheckbox("enableCastbarEmphasis", "Cast Emphasis", enableCastbarCustomization)
-    enableCastbarEmphasis:SetPoint("TOPLEFT", castbarEmphasisSettingsText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
+    enableCastbarEmphasis:SetPoint("TOPLEFT", castbarEmphasisSettingsText, "BOTTOMLEFT", -10, pixelsOnFirstBox)
     enableCastbarEmphasis:HookScript("OnClick", function (self)
         CheckAndToggleCheckboxes(enableCastbarEmphasis)
         if self:GetChecked() then
@@ -5737,6 +5836,78 @@ local function guiMisc()
 
     local nameplateSelfWidth = CreateSlider(guiMisc, "Personal Nameplate Width", 50, 200, 1, "nameplateSelfWidth")
     nameplateSelfWidth:SetPoint("TOPLEFT", anonMode, "BOTTOMLEFT", 10, -20)
+
+
+
+
+
+
+
+    local changeNameplateBorderColor = CreateCheckbox("changeNameplateBorderColor", "Change Nameplate Border Color", guiMisc)
+    changeNameplateBorderColor:SetPoint("TOPLEFT", anonMode, "BOTTOMLEFT", 0, -50)
+
+    local npBorderTargetColor = CreateCheckbox("npBorderTargetColor", "Target Border", guiMisc)
+    npBorderTargetColor:SetPoint("TOPLEFT", changeNameplateBorderColor, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+    CreateTooltip(npBorderTargetColor, "Enable to change the color of the target nameplate border")
+
+    local npBorderTargetColorRGB = CreateColorBox(guiMisc, "npBorderTargetColorRGB", "Target Border")
+    npBorderTargetColorRGB:SetPoint("TOPLEFT", npBorderTargetColor, "BOTTOMLEFT", 15, 0)
+
+    local npBorderNonTargetColorRGB = CreateColorBox(guiMisc, "npBorderNonTargetColorRGB", "Non-Target Border")
+    npBorderNonTargetColorRGB:SetPoint("TOPLEFT", npBorderTargetColorRGB, "BOTTOMLEFT", 0, -2)
+
+    npBorderTargetColor:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            npBorderTargetColorRGB:SetAlpha(1)
+            npBorderNonTargetColorRGB:SetAlpha(1)
+        else
+            npBorderTargetColorRGB:SetAlpha(0.5)
+            npBorderNonTargetColorRGB:SetAlpha(0.5)
+        end
+    end)
+
+    local npBorderFriendFoeColor = CreateCheckbox("npBorderFriendFoeColor", "Reaction Color Border", guiMisc)
+    npBorderFriendFoeColor:SetPoint("TOPLEFT", npBorderNonTargetColorRGB, "BOTTOMLEFT", -15, 0)
+    CreateTooltip(npBorderFriendFoeColor, "Enable to change the color of nameplate borders depending on their reaction")
+
+    local npBorderEnemyColorRGB = CreateColorBox(npBorderFriendFoeColor, "npBorderEnemyColorRGB", "Enemy Border")
+    npBorderEnemyColorRGB:SetPoint("TOPLEFT", npBorderFriendFoeColor, "BOTTOMLEFT", 15, 0)
+
+    local npBorderFriendlyColorRGB = CreateColorBox(npBorderFriendFoeColor, "npBorderFriendlyColorRGB", "Friendly Border")
+    npBorderFriendlyColorRGB:SetPoint("TOPLEFT", npBorderEnemyColorRGB, "BOTTOMLEFT", 0, -2)
+
+    local npBorderNeutralColorRGB = CreateColorBox(npBorderFriendFoeColor, "npBorderNeutralColorRGB", "Neutral Border")
+    npBorderNeutralColorRGB:SetPoint("TOPLEFT", npBorderFriendlyColorRGB, "BOTTOMLEFT", 0, -2)
+
+    npBorderFriendFoeColor:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            npBorderEnemyColorRGB:SetAlpha(1)
+            npBorderFriendlyColorRGB:SetAlpha(1)
+            npBorderNeutralColorRGB:SetAlpha(1)
+        else
+            npBorderEnemyColorRGB:SetAlpha(0.5)
+            npBorderFriendlyColorRGB:SetAlpha(0.5)
+            npBorderNeutralColorRGB:SetAlpha(0.5)
+        end
+    end)
+
+    local npBorderClassColor = CreateCheckbox("npBorderClassColor", "Class Color Border", guiMisc)
+    npBorderClassColor:SetPoint("TOPLEFT", npBorderNeutralColorRGB, "BOTTOMLEFT", -15, 0)
+    CreateTooltip(npBorderClassColor, "Enable to change the color of nameplate borders depending on their class")
+
+    local npBorderNpcColorRGB = CreateColorBox(npBorderClassColor, "npBorderNpcColorRGB", "NPC Border")
+    npBorderNpcColorRGB:SetPoint("TOPLEFT", npBorderClassColor, "BOTTOMLEFT", 15, 0)
+
+    npBorderClassColor:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            npBorderNpcColorRGB:SetAlpha(1)
+        else
+            npBorderNpcColorRGB:SetAlpha(0.5)
+        end
+    end)
+
+
+
 
     local nameplateSelfWidthResetButton = CreateFrame("Button", nil, guiMisc, "UIPanelButtonTemplate")
     nameplateSelfWidthResetButton:SetText("Default")

@@ -879,18 +879,17 @@ function BBP.TestArenaIndicator1(frame)
                 frame.arenaNumberText:SetTextColor(1, 1, 0)
             end
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaIDScale)
-            if not frame.arenaNumberCircle then
-                frame.arenaNumberCircle = frame:CreateTexture(nil, "BACKGROUND")
-                frame.arenaNumberCircle:SetAtlas("UI-QuestPoi-QuestNumber-SuperTracked")
-                frame.arenaNumberCircle:SetSize(32,32)
-                frame.arenaNumberCircle:SetDesaturated(true)
-                frame.arenaNumberCircle:SetVertexColor(0,1,0)
-                frame.arenaNumberCircle:SetPoint("CENTER", frame.arenaNumberText, "CENTER", -1, 0.5) --if 1 then xPos 0.5
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THICKOUTLINE")
-                print("AYO")
-            end
-            frame.arenaNumberText:SetTextColor(1,1,1)
-            frame.arenaNumberText:SetText("3")
+            -- if not frame.arenaNumberCircle then
+            --     frame.arenaNumberCircle = frame:CreateTexture(nil, "BACKGROUND")
+            --     frame.arenaNumberCircle:SetAtlas("UI-QuestPoi-QuestNumber-SuperTracked")
+            --     frame.arenaNumberCircle:SetSize(32,32)
+            --     frame.arenaNumberCircle:SetDesaturated(true)
+            --     frame.arenaNumberCircle:SetVertexColor(0,1,0)
+            --     frame.arenaNumberCircle:SetPoint("CENTER", frame.arenaNumberText, "CENTER", -1, 0.5) --if 1 then xPos 0.5
+            --     BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THICKOUTLINE")
+            -- end
+            -- frame.arenaNumberText:SetTextColor(1,1,1)
+            -- frame.arenaNumberText:SetText("3")
             break
         end
     end

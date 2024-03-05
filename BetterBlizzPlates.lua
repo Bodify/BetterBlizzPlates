@@ -12,7 +12,7 @@ LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlate
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.4.3d"
+local addonUpdates = "1.4.4"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -66,6 +66,13 @@ local defaultSettings = {
     friendlyHealthBarColorRGB = {0, 1, 0},
     guildNameScale = 1,
     useCustomTextureForFriendly = true,
+    -- Nameplate Border
+    npBorderTargetColorRGB = {1, 1, 1, 1},
+    npBorderEnemyColorRGB = {1, 0, 0, 1},
+    npBorderFriendlyColorRGB = {0, 1, 0, 1},
+    npBorderNeutralColorRGB = {1, 1, 0, 1},
+    npBorderNpcColorRGB = {0, 0, 0, 1},
+    npBorderNonTargetColorRGB = {0, 0, 0, 1},
     -- Arena Indicator
     arenaIndicatorTestMode = false,
     arenaIDScale = 1,
@@ -789,7 +796,7 @@ local function SendUpdateMessage()
             --bbp news
             --PlaySoundFile(567439) --quest complete sfx
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Focus Nameplate Texture change bugfix.")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Added \"Quick Castbar Hide\" setting to instantly hide castbars after a finished cast. Added Nameplate Border color settings under the Misc tab (use transparent to hide it).")
         end)
     end
 end
@@ -2243,7 +2250,8 @@ local function HandleNamePlateAdded(unit)
     local classIndicator = BetterBlizzPlatesDB.classIndicator
     local auraColor = BetterBlizzPlatesDB.auraColor
     local friendIndicator = BetterBlizzPlatesDB.friendIndicator
-    local hideResourceOnFriend = BetterBlizzPlatesDB.hideResourceOnFriend
+    local changeNameplateBorderColor = BetterBlizzPlatesDB.changeNameplateBorderColor
+    --local hideResourceOnFriend = BetterBlizzPlatesDB.hideResourceOnFriend
 
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
@@ -2258,6 +2266,59 @@ local function HandleNamePlateAdded(unit)
 
     if customAuraOn and auraModuleIsOn then
         BBP.HidePersonalBuffFrame()
+    end
+
+    if changeNameplateBorderColor then
+        if not frame.healthBar.border.hooked then
+            hooksecurefunc(frame.healthBar.border, "SetVertexColor", function(self)
+                local useTargetColor = BetterBlizzPlatesDB.npBorderTargetColor
+                local useFriendlyFoeColor = BetterBlizzPlatesDB.npBorderFriendFoeColor
+                local useClassColors = BetterBlizzPlatesDB.npBorderClassColor
+
+                if self.changing or self:IsForbidden() then return end
+                self.changing = true
+                if UnitIsUnit(frame.unit, "target") and useTargetColor then
+                    local target = BetterBlizzPlatesDB.npBorderTargetColorRGB
+                    self:SetVertexColor(unpack(target))
+                else
+                    --non target
+                    if useFriendlyFoeColor then
+                        local enemy = BetterBlizzPlatesDB.npBorderEnemyColorRGB
+                        local friendly = BetterBlizzPlatesDB.npBorderFriendlyColorRGB
+                        local neutral = BetterBlizzPlatesDB.npBorderNeutralColorRGB
+
+                        local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(frame.unit)
+                        if isEnemy then
+                            self:SetVertexColor(unpack(enemy))
+                        elseif isNeutral then
+                            self:SetVertexColor(unpack(neutral))
+                        elseif isFriend then
+                            self:SetVertexColor(unpack(friendly))
+                        end
+                    end
+
+                    if useClassColors then
+                        if UnitIsPlayer(frame.unit) and not UnitIsUnit(frame.unit, "player") then
+                            local _, class = UnitClass(frame.unit)
+                            local classColor = RAID_CLASS_COLORS[class]
+                            self:SetVertexColor(classColor.r, classColor.g, classColor.b)
+                        else
+                            local npc = BetterBlizzPlatesDB.npBorderNpcColorRGB
+
+                            self:SetVertexColor(unpack(npc))
+                        end
+                    end
+
+                    if not useFriendlyFoeColor and not useClassColors then
+                        local npBorderNonTargetColorRGB = BetterBlizzPlatesDB.npBorderNonTargetColorRGB
+                        self:SetVertexColor(unpack(npBorderNonTargetColorRGB))
+                    end
+                end
+                self.changing = false
+            end)
+            frame.healthBar.border:SetVertexColor(0,0,0)
+            frame.healthBar.border.hooked = true
+        end
     end
 
 --[[
@@ -3216,6 +3277,8 @@ local function NamePlateCastBarTestMode(frame)
                             castBar.Text:SetText("Shattering Throw")
                             if showCastBarIconWhenNoninterruptible then
                                 castBar.Icon:SetTexture(GetSpellTexture(64382))
+                                castBar.BorderShield:SetDrawLayer("OVERLAY", 1)
+                                castBar.Icon:SetDrawLayer("OVERLAY", 2)
                             else
                                 castBar.Icon:Hide()
                             end
@@ -3330,3 +3393,15 @@ function BBP.cancelTimers()
     end
     temporaryNpCastTest:UnregisterEvent("NAME_PLATE_UNIT_ADDED")
 end
+
+-- hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
+--     if not frame.unit or not frame.unit:find("nameplate") then return end
+
+--     if UnitIsUnit(frame.unit, "target") then
+--         frame.healthBar.border:SetVertexColor(1,0,0)
+--         print("target")
+--     else
+--         frame.healthBar.border:SetVertexColor(0,1,0)
+--         print("not")
+--     end
+-- end)
