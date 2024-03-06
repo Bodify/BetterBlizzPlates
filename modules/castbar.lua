@@ -695,8 +695,10 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
             end
         end
         if castbarQuickHide then
-            if nameplate.UnitFrame.castBar then
-                nameplate.UnitFrame.castBar:Hide()
+            if not event == "UNIT_SPELLCAST_SUCCEEDED" then
+                if nameplate.UnitFrame.castBar then
+                    nameplate.UnitFrame.castBar:Hide()
+                end
             end
         end
     end

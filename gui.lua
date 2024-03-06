@@ -1149,7 +1149,18 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
                 value = true
             end
             if BetterBlizzPlatesDB[option] ~= nil and not BetterBlizzPlatesDB.wasOnLoadingScreen then
-                SetCVar(option, BetterBlizzPlatesDB[option])
+                local printedMsg = false
+                local function setCVar()
+                    if InCombatLockdown() and not printedMsg then
+                        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: This is a CVar setting and needs to be set outside of combat. Retrying once combat has ended.")
+                        printedMsg = true
+                        C_Timer.After(1.5, setCVar)
+                    else
+                        SetCVar(option, BetterBlizzPlatesDB[option])
+                        printedMsg = false
+                    end
+                end
+                setCVar()
             end
         end
         checkBox:SetChecked(value)
@@ -2950,6 +2961,21 @@ local function guiGeneralTab()
 
     local totemIndicator = CreateCheckbox("totemIndicator", "Totem indicator", BetterBlizzPlates)
     totemIndicator:SetPoint("TOPLEFT", focusTargetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    totemIndicator:HookScript("OnClick", function(self)
+        local function setTotemCVar()
+            if InCombatLockdown() then
+                C_Timer.After(1.5, setTotemCVar)
+            else
+                if self:GetChecked() and GetCVar("nameplateShowEnemyTotems") ~= "1" then
+                    BetterBlizzPlatesDB.nameplateShowEnemyTotems = 1
+                    SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
+                    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"Blizzard CVar's\" section of the addon.")
+                end
+            end
+        end
+        setTotemCVar()
+    end)
+
     CreateTooltip(totemIndicator, "Color and put icons on key npc and totem nameplates.\nImportant npcs and totems will be slightly larger and\nhave a glow around the icon")
     local totemsIcon = totemIndicator:CreateTexture(nil, "ARTWORK")
     totemsIcon:SetAtlas("teleportationnetwork-ardenweald-32x32")

@@ -71,7 +71,7 @@ local GetArenaOpponentSpec = GetArenaOpponentSpec
 function BBP.ArenaIndicator1(frame)
     local isActiveArena = IsActiveBattlefieldArena()
     if isActiveArena then
-        local enemyClassColorName = BetterBlizzPlatesDB.enemyClassColorName
+        local enemyClassColorName = BetterBlizzPlatesDB.enemyClassColorName or BetterBlizzPlatesDB.enemyColorName or BetterBlizzPlatesDB.enemyColorName
         local arenaIdAnchor = BetterBlizzPlatesDB.arenaIdAnchor
         local arenaIdXPos = BetterBlizzPlatesDB.arenaIdXPos
         local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
@@ -137,7 +137,7 @@ end
 function BBP.ArenaIndicator2(frame)
     local isActiveArena = IsActiveBattlefieldArena()
     if isActiveArena then
-        local enemyClassColorName = BetterBlizzPlatesDB.enemyClassColorName
+        local enemyClassColorName = BetterBlizzPlatesDB.enemyClassColorName or BetterBlizzPlatesDB.enemyColorName
         local arenaIdAnchor = BetterBlizzPlatesDB.arenaIdAnchor
         local arenaIdXPos = BetterBlizzPlatesDB.arenaIdXPos
         local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
@@ -280,7 +280,7 @@ function BBP.ArenaIndicator4(frame)
         local arenaIdAnchor = BetterBlizzPlatesDB.arenaIdAnchor
         local arenaIdXPos = BetterBlizzPlatesDB.arenaIdXPos
         local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
-        local enemyClassColorName = BetterBlizzPlatesDB.enemyClassColorName
+        local enemyClassColorName = BetterBlizzPlatesDB.enemyClassColorName or BetterBlizzPlatesDB.enemyColorName
 
         if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
             local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
