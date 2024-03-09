@@ -1480,6 +1480,8 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 local r, g, b = colorData.r or 1, colorData.g or 1, colorData.b or 1
                 local a = colorData.a or 1 -- Default alpha to 1 if not present
 
+                local backupColorData = {r = r, g = g, b = b, a = a}
+
                 local function updateColors()
                     entryColors.text.r, entryColors.text.g, entryColors.text.b, entryColors.text.a = r, g, b, a
                     SetTextColor(r, g, b)  -- Update text color
@@ -1499,7 +1501,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 end
 
                 local function cancelFunc()
-                    r, g, b, a = unpack(ColorPickerFrame.previousValues)
+                    r, g, b, a = backupColorData.r, backupColorData.g, backupColorData.b, backupColorData.a
                     updateColors()
                 end
 
