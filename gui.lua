@@ -1044,6 +1044,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "nameplateResourceYPos" then
                     BetterBlizzPlatesDB.nameplateResourceYPos = value
                     BBP.TargetResourceUpdater()
+                elseif element == "darkModeNameplateColor" then
+                    BetterBlizzPlatesDB.darkModeNameplateColor = value
+                    BBP.DarkModeNameplateResources()
                 elseif element == "castBarInterruptHighlighterStartPercentage" then
                     BetterBlizzPlatesDB.castBarInterruptHighlighterStartPercentage = value
                 elseif element == "castBarInterruptHighlighterEndPercentage" then
@@ -1911,7 +1914,8 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             colorPickerButton:SetText("Color")
             colorPickerButton:SetScript("OnClick", function()
                 local currentColor = npcEditFrame.currentColor or {1, 1, 1}
-            
+                local currentNpcId = npcEditFrame.currentNpcId
+
                 ColorPickerFrame:SetupColorPickerAndShow({
                     r = currentColor[1], g = currentColor[2], b = currentColor[3],
                     hasOpacity = false, -- Assuming opacity is not needed; set to true if needed
@@ -1920,20 +1924,21 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
                         text:SetTextColor(r, g, b)
                         npcEditFrame.iconGlowTexture:SetVertexColor(r, g, b)
                         npcEditFrame.nameEditBox:SetTextColor(r, g, b)
-                        updateEntryColor(npcId, {r, g, b})
+                        updateEntryColor(currentNpcId, {r, g, b})
                         npcEditFrame.currentColor = {r, g, b} -- Update the current color
+                        BBP.refreshNpcList()
                     end,
                     cancelFunc = function(previousValues)
                         local r, g, b = previousValues.r, previousValues.g, previousValues.b
                         text:SetTextColor(r, g, b)
                         npcEditFrame.iconGlowTexture:SetVertexColor(r, g, b)
                         npcEditFrame.nameEditBox:SetTextColor(r, g, b)
-                        updateEntryColor(npcId, {r, g, b})
+                        updateEntryColor(currentNpcId, {r, g, b})
                         npcEditFrame.currentColor = {r, g, b} -- Revert to the original color
+                        BBP.refreshNpcList()
                     end,
                 })
             end)
-            
 
             local HideText = npcEditFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             HideText:SetPoint("TOPLEFT", GlowText, "BOTTOMLEFT", 0, -15)
@@ -1958,7 +1963,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             local updateButton = CreateFrame("Button", nil, npcEditFrame, "UIPanelButtonTemplate")
             updateButton:SetSize(80, 22)
             updateButton:SetPoint("BOTTOM", npcEditFrame, "BOTTOM", 0, 10)
-            updateButton:SetText("Update")
+            updateButton:SetText("Close")
             npcEditFrame.updateButton = updateButton
         end
 
@@ -1966,6 +1971,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             local npcData = npcList[npcId]
             if not npcData then return end
             if not npcEditFrame then return end
+            npcEditFrame.currentNpcId = npcId
 
             npcEditFrame.iconTexture:SetTexture(npcData.icon)
             npcEditFrame.sizeEditBox:SetText(npcData.size or "")
@@ -2017,8 +2023,8 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
                 end
 
                 npcEditFrame.iconTexture:SetTexture(npcData.icon)
-                npcEditFrame.iconGlowTexture:SetVertexColor(unpack(color))
                 npcEditFrame.currentColor = npcData.color
+                npcEditFrame.iconGlowTexture:SetVertexColor(unpack(npcEditFrame.currentColor))
                 if npcData.important then
                     npcEditFrame.iconGlowTexture:Show()
                 else
@@ -2091,7 +2097,12 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
 
             -- Update Button Script
             npcEditFrame.updateButton:SetScript("OnClick", function()
+                local currentNpcId = npcEditFrame.currentNpcId
+                local currentColor = npcEditFrame.currentColor
+                local r, g, b = currentColor[1], currentColor[2], currentColor[3]
+                updateEntryColor(currentNpcId, {r, g, b})
                 updateNpcData()
+                npcEditFrame:Hide()
             end)
 
         end
@@ -5656,7 +5667,7 @@ local function guiBlizzCVars()
     comboPointIcon:SetSize(16, 16)
     comboPointIcon:SetPoint("RIGHT", comboPointsText, "LEFT", -3, 0)
 
-    local nameplateResourceOnTarget = CreateCheckbox("nameplateResourceOnTarget", "Show resource on nameplate", guiBlizzCVars, true)
+    local nameplateResourceOnTarget = CreateCheckbox("nameplateResourceOnTarget", "Show resource on nameplate", guiBlizzCVars, true, BBP.TargetResourceUpdater)
     nameplateResourceOnTarget:SetPoint("TOPLEFT", comboPointsText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
     CreateTooltip(nameplateResourceOnTarget, "Show combo points, warlock shards, arcane charges etc on nameplates.")
 
@@ -5678,6 +5689,18 @@ local function guiBlizzCVars()
     nameplateResourceYPos:SetPoint("TOPLEFT", nameplateResourceXPos, "BOTTOMLEFT", 0, -17)
     CreateTooltip(nameplateResourceYPos, "Y offset for Nameplate Resource")
     CreateResetButton(nameplateResourceYPos, "nameplateResourceYPos", guiBlizzCVars)
+
+    local darkModeNameplateResource = CreateCheckbox("darkModeNameplateResource", "Dark Mode", guiBlizzCVars, nil, BBP.DarkModeNameplateResources)
+    darkModeNameplateResource:SetPoint("TOPLEFT", nameplateResourceYPos, "BOTTOMLEFT", -12, -4)
+    CreateTooltip(darkModeNameplateResource, "Dark Mode for Nameplate Resource")
+
+    local darkModeNameplateColor = CreateSlider(darkModeNameplateResource, "Darkness Amount", 0, 1, 0.01, "darkModeNameplateColor")
+    darkModeNameplateColor:SetPoint("TOPLEFT", darkModeNameplateResource, "BOTTOMLEFT", 12, -10)
+    CreateTooltip(darkModeNameplateColor, "How dark you want nameplate resource")
+
+    darkModeNameplateResource:HookScript("OnClick", function(self)
+        CheckAndToggleCheckboxes(darkModeNameplateResource)
+    end)
 
     local disableCVarForceOnLogin = CreateCheckbox("disableCVarForceOnLogin", "Disable all CVar forcing", guiBlizzCVars, true)
     disableCVarForceOnLogin:SetPoint("BOTTOM", guiBlizzCVars, "BOTTOM", -80, 60)

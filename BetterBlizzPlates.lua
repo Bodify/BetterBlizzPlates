@@ -12,7 +12,7 @@ LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlate
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.4.4"
+local addonUpdates = "1.4.5"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -46,6 +46,7 @@ local defaultSettings = {
     customFont = "Yanone (BBP)",
     friendlyHideHealthBarNpc = true,
     nameplateResourceScale = 0.7,
+    darkModeNameplateColor = 0.2,
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -796,19 +797,26 @@ local function SendUpdateMessage()
             --bbp news
             --PlaySoundFile(567439) --quest complete sfx
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Added \"Quick Castbar Hide\" setting to instantly hide castbars after a finished cast. Added Nameplate Border color settings under the Misc tab (use transparent to hide it).")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Features:")
+            DEFAULT_CHAT_FRAME:AddMessage("   Dark Mode for Nameplate Resource.")
+
+            DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes:")
+            DEFAULT_CHAT_FRAME:AddMessage("   Fix Totem Indicator List color edit functionality.")
+            DEFAULT_CHAT_FRAME:AddMessage("   Fix some issues with FrameSort ArenaID names")
         end)
     end
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #1: FrameSort support for ArenaID etc on nameplates.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #2: Nameplate aura test mode.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #3: Fixed np aura settings: Blue buff border, Purgeglow & Pandemic.")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a #4: Updated Nahj profile.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Features:")
+    DEFAULT_CHAT_FRAME:AddMessage("   Dark Mode for Nameplate Resource.")
 
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Patreon link: www.patreon.com/bodydev")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes:")
+    DEFAULT_CHAT_FRAME:AddMessage("   Fix Totem Indicator List color edit functionality.")
+    DEFAULT_CHAT_FRAME:AddMessage("   Fix some issues with FrameSort ArenaID names")
+
+    DEFAULT_CHAT_FRAME:AddMessage("|A:GarrisonTroops-Health:16:16|a Patreon link: www.patreon.com/bodydev")
 end
 
 local function CheckForUpdate()
@@ -1255,6 +1263,112 @@ function BBP.ClassColorAndScaleNames(frame)
         scale = enemyScale or 1
     end
     frame.name:SetScale(scale)
+end
+
+
+--#################################################################################################
+-- Dark Mode for Nameplate Resources
+local function applySettings(frame, desaturate, colorValue)
+    if frame then
+        if desaturate ~= nil and frame.SetDesaturated then -- Check if SetDesaturated is available
+            frame:SetDesaturated(desaturate)
+        end
+        if frame.SetVertexColor then
+            frame:SetVertexColor(colorValue, colorValue, colorValue) -- Alpha set to 1
+        end
+    end
+end
+
+function BBP.DarkModeNameplateResources()
+    local darkModeNpSatVal = BetterBlizzPlatesDB.darkModeNameplateResource and true or false
+    local vertexColor = BetterBlizzPlatesDB.darkModeNameplateResource and BetterBlizzPlatesDB.darkModeNameplateColor or 1
+    local druidComboPoint = BetterBlizzPlatesDB.darkModeNameplateResource and (vertexColor + 0.2) or 1
+    local druidComboPointActive = BetterBlizzPlatesDB.darkModeNameplateResource and (vertexColor + 0.1) or 1
+    local actionBarColor = BetterBlizzPlatesDB.darkModeActionBars and (vertexColor + 0.15) or 1
+    local rogueCombo = BetterBlizzPlatesDB.darkModeNameplateResource and (vertexColor + 0.45) or 1
+    local rogueComboActive = BetterBlizzPlatesDB.darkModeNameplateResource and (vertexColor + 0.30) or 1
+    local monkChi = BetterBlizzPlatesDB.darkModeNameplateResource and (vertexColor + 0.10) or 1
+
+
+    local nameplateRunes = _G.DeathKnightResourceOverlayFrame
+    if nameplateRunes and darkModeNameplateResource then
+        local dkNpRunes = vertexColor or 1
+        for i = 1, 6 do
+            applySettings(nameplateRunes["Rune" .. i].BG_Active, darkModeNpSatVal, dkNpRunes)
+            applySettings(nameplateRunes["Rune" .. i].BG_Inactive, darkModeNpSatVal, dkNpRunes)
+        end
+    end
+
+    local soulShardsNameplate = _G.ClassNameplateBarWarlockFrame
+    if soulShardsNameplate then
+        local soulShardNp = vertexColor or 1
+        for _, v in pairs({soulShardsNameplate:GetChildren()}) do
+            applySettings(v.Background, darkModeNpSatVal, soulShardNp)
+        end
+    end
+
+    local druidComboPointsNameplate = _G.ClassNameplateBarFeralDruidFrame
+    if druidComboPointsNameplate then
+        local druidComboPointNp = druidComboPoint or 1
+        local druidComboPointActiveNp = druidComboPointActive or 1
+        for _, v in pairs({druidComboPointsNameplate:GetChildren()}) do
+            applySettings(v.BG_Inactive, darkModeNpSatVal, druidComboPointNp)
+            applySettings(v.BG_Active, darkModeNpSatVal, druidComboPointActiveNp)
+        end
+    end
+
+    local mageArcaneChargesNameplate = _G.ClassNameplateBarMageFrame
+    if mageArcaneChargesNameplate then
+        local mageChargeNp = actionBarColor or 1
+        for _, v in pairs({mageArcaneChargesNameplate:GetChildren()}) do
+            applySettings(v.ArcaneBG, darkModeNpSatVal, mageChargeNp)
+            --applySettings(v.BG_Active, desaturationValue, druidComboPointActive)
+        end
+    end
+
+    local monkChiPointsNameplate = _G.ClassNameplateBarWindwalkerMonkFrame
+    if monkChiPointsNameplate then
+        local monkChiNp = monkChi or 1
+        for _, v in pairs({monkChiPointsNameplate:GetChildren()}) do
+            applySettings(v.Chi_BG, darkModeNpSatVal, monkChiNp)
+            applySettings(v.Chi_BG_Active, darkModeNpSatVal, monkChiNp)
+        end
+    end
+
+    local rogueComboPointsNameplate = _G.ClassNameplateBarRogueFrame
+    if rogueComboPointsNameplate then
+        local rogueComboNp = rogueCombo or 1
+        local rogueComboActiveNp = rogueComboActive or 1
+        for _, v in pairs({rogueComboPointsNameplate:GetChildren()}) do
+            applySettings(v.BGInactive, darkModeNpSatVal, rogueComboNp)
+            applySettings(v.BGActive, darkModeNpSatVal, rogueComboActiveNp)
+        end
+    end
+
+    local paladinHolyPowerNameplate = _G.ClassNameplateBarPaladinFrame
+    if paladinHolyPowerNameplate then
+        local palaPowerNp = vertexColor or 1
+        applySettings(ClassNameplateBarPaladinFrame.Background, darkModeNpSatVal, palaPowerNp)
+        applySettings(ClassNameplateBarPaladinFrame.ActiveTexture, darkModeNpSatVal, palaPowerNp)
+    end
+
+    local evokerEssencePointsNameplate = _G.ClassNameplateBarDracthyrFrame
+    if evokerEssencePointsNameplate then
+        local evokerColorOne = monkChi or 1
+        local evokerColorTwo = vertexColor or 1
+        for _, v in pairs({evokerEssencePointsNameplate:GetChildren()}) do
+            applySettings(v.EssenceFillDone.CircBG, darkModeNpSatVal, evokerColorOne)
+            applySettings(v.EssenceFilling.EssenceBG, darkModeNpSatVal, evokerColorTwo)
+            applySettings(v.EssenceEmpty.EssenceBG, darkModeNpSatVal, evokerColorTwo)
+            applySettings(v.EssenceFillDone.CircBGActive, darkModeNpSatVal, evokerColorTwo)
+
+            applySettings(v.EssenceDepleting.EssenceBG, darkModeNpSatVal, evokerColorTwo)
+            applySettings(v.EssenceDepleting.CircBGActive, darkModeNpSatVal, evokerColorTwo)
+
+            applySettings(v.EssenceFillDone.RimGlow, darkModeNpSatVal, evokerColorOne)
+            applySettings(v.EssenceDepleting.RimGlow, darkModeNpSatVal, evokerColorOne)
+        end
+    end
 end
 
 
@@ -3018,6 +3132,9 @@ nameplateWidthOnEnterWorld:SetScript("OnEvent", function()
             BBP.ApplyNameplateWidth()
         end
     end)
+    if BetterBlizzPlatesDB.darkModeNameplateResource then
+        BBP.DarkModeNameplateResources()
+    end
 end)
 
 -- Slash command

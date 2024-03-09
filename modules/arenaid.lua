@@ -205,7 +205,8 @@ function BBP.ArenaIndicator3(frame)
             local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
             for i, unit in ipairs(enemyUnits) do
                 if UnitIsUnit(frame.unit, unit) then
-                    local specID = GetArenaOpponentSpec(i)
+                    local arenaIndex = tonumber(string.match(unit, "arena(%d+)"))
+                    local specID = GetArenaOpponentSpec(arenaIndex)
                     local specName = specID and specIDToName[specID]
 
                     if shortArenaSpecName and specID then
@@ -214,7 +215,7 @@ function BBP.ArenaIndicator3(frame)
                     local r, g, b, a = frame.name:GetTextColor()
 
                     if not specName then
-                        local _, className = UnitClass("arena" .. i)
+                        local _, className = UnitClass(frame.unit)
                         className = className:sub(1, 1):upper() .. className:sub(2):lower()
                         specName = className
                     end
@@ -287,7 +288,8 @@ function BBP.ArenaIndicator4(frame)
             for i, unit in ipairs(enemyUnits) do
                 if UnitIsUnit(frame.unit, unit) then
                     local r, g, b, a = frame.name:GetTextColor()
-                    local specID = GetArenaOpponentSpec(i)
+                    local arenaIndex = tonumber(string.match(unit, "arena(%d+)"))
+                    local specID = GetArenaOpponentSpec(arenaIndex)
                     local specName = specID and specIDToName[specID]
 
                     if shortArenaSpecName and specID then
@@ -295,7 +297,7 @@ function BBP.ArenaIndicator4(frame)
                     end
 
                     if not specName then
-                        local _, className = UnitClass("arena" .. i)
+                        local _, className = UnitClass(frame.unit)
                         className = className:sub(1, 1):upper() .. className:sub(2):lower()
                         specName = className
                     end
@@ -391,7 +393,8 @@ function BBP.ArenaIndicator5(frame)
             for i, unit in ipairs(enemyUnits) do
                 if UnitIsUnit(frame.unit, unit) then
                     local r, g, b, a = frame.name:GetTextColor()
-                    local specID = GetArenaOpponentSpec(i)
+                    local arenaIndex = tonumber(string.match(unit, "arena(%d+)"))
+                    local specID = GetArenaOpponentSpec(arenaIndex)
                     local specName = specID and specIDToName[specID]
 
                     if shortArenaSpecName and specID then
@@ -399,7 +402,7 @@ function BBP.ArenaIndicator5(frame)
                     end
 
                     if not specName then
-                        local _, className = UnitClass("arena" .. i)
+                        local _, className = UnitClass(frame.unit)
                         className = className:sub(1, 1):upper() .. className:sub(2):lower()
                         specName = className
                     end
@@ -465,6 +468,8 @@ function BBP.PartyIndicator1(frame)
 
         if FrameSortApi and (FrameSortDB.Options.Sorting.Arena.Default.Enabled or FrameSortDB.Options.Sorting.Arena.Twos.Enabled) then
             local friendlyUnits = FrameSortApi.v2.Sorting:GetFriendlyUnits()
+            local instanceSize = GetNumGroupMembers()
+            local reduceID = (FrameSortDB.Options.Sorting.Arena.Twos.PlayerSortMode == "Top" and instanceSize == 2) or (FrameSortDB.Options.Sorting.Arena.Default.PlayerSortMode == "Top" and instanceSize == 3)
             for i, unit in ipairs(friendlyUnits) do
                 if UnitIsUnit(frame.unit, unit) then
                     local r, g, b, a = frame.name:GetTextColor()
@@ -474,9 +479,13 @@ function BBP.PartyIndicator1(frame)
                         BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                     end
 
+                    local displayNumber = i
+                    if reduceID and i > 1 then
+                        displayNumber = i - 1
+                    end
                     frame.name:SetText("")
                     frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
-                    frame.arenaNumberText:SetText(i)
+                    frame.arenaNumberText:SetText(displayNumber)
                     frame.arenaNumberText:SetTextColor(r, g, b, a)
                     frame.arenaNumberText:SetScale(partyIDScale)
                     break
@@ -516,6 +525,8 @@ function BBP.PartyIndicator2(frame)
 
         if FrameSortApi and (FrameSortDB.Options.Sorting.Arena.Default.Enabled or FrameSortDB.Options.Sorting.Arena.Twos.Enabled) then
             local friendlyUnits = FrameSortApi.v2.Sorting:GetFriendlyUnits()
+            local instanceSize = GetNumGroupMembers()
+            local reduceID = (FrameSortDB.Options.Sorting.Arena.Twos.PlayerSortMode == "Top" and instanceSize == 2) or (FrameSortDB.Options.Sorting.Arena.Default.PlayerSortMode == "Top" and instanceSize == 3)
             for i, unit in ipairs(friendlyUnits) do
                 if UnitIsUnit(frame.unit, unit) then
                     local r, g, b, a = frame.name:GetTextColor()
@@ -525,7 +536,11 @@ function BBP.PartyIndicator2(frame)
                         BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
                     end
 
-                    frame.arenaNumberText:SetText(i)
+                    local displayNumber = i
+                    if reduceID and i > 1 then
+                        displayNumber = i - 1
+                    end
+                    frame.arenaNumberText:SetText(displayNumber)
                     frame.arenaNumberText:SetTextColor(r, g, b, a)
                     frame.arenaNumberText:SetScale(partyIDScale)
                     frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
@@ -639,7 +654,6 @@ function BBP.PartyIndicator3(frame)
     end
 end
 
-
 -- Mode 4: Replace name with spec and ID on top
 function BBP.PartyIndicator4(frame)
     local isActiveArena = IsActiveBattlefieldArena()
@@ -657,6 +671,8 @@ function BBP.PartyIndicator4(frame)
 
         if FrameSortApi and (FrameSortDB.Options.Sorting.Arena.Default.Enabled or FrameSortDB.Options.Sorting.Arena.Twos.Enabled) then
             local friendlyUnits = FrameSortApi.v2.Sorting:GetFriendlyUnits()
+            local instanceSize = GetNumGroupMembers()
+            local reduceID = (FrameSortDB.Options.Sorting.Arena.Twos.PlayerSortMode == "Top" and instanceSize == 2) or (FrameSortDB.Options.Sorting.Arena.Default.PlayerSortMode == "Top" and instanceSize == 3)
             for i, unit in ipairs(friendlyUnits) do
                 if UnitIsUnit(frame.unit, unit) then
                     local r, g, b, a = frame.name:GetTextColor()
@@ -693,7 +709,11 @@ function BBP.PartyIndicator4(frame)
                     frame.specNameText:SetScale(partySpecScale)
                     frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 
-                    frame.arenaNumberText:SetText(i)
+                    local displayNumber = i
+                    if reduceID and i > 1 then
+                        displayNumber = i - 1
+                    end
+                    frame.arenaNumberText:SetText(displayNumber)
                     frame.arenaNumberText:SetTextColor(r, g, b, a)
                     frame.arenaNumberText:SetScale(partyIDScale)
                     frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos, arenaIdYPos - 1)
@@ -762,6 +782,8 @@ function BBP.PartyIndicator5(frame)
 
         if FrameSortApi and (FrameSortDB.Options.Sorting.Arena.Default.Enabled or FrameSortDB.Options.Sorting.Arena.Twos.Enabled) then
             local friendlyUnits = FrameSortApi.v2.Sorting:GetFriendlyUnits()
+            local instanceSize = GetNumGroupMembers()
+            local reduceID = (FrameSortDB.Options.Sorting.Arena.Twos.PlayerSortMode == "Top" and instanceSize == 2) or (FrameSortDB.Options.Sorting.Arena.Default.PlayerSortMode == "Top" and instanceSize == 3)
             for i, unit in ipairs(friendlyUnits) do
                 if UnitIsUnit(frame.unit, unit) then
                     local r, g, b, a = frame.name:GetTextColor()
@@ -788,7 +810,11 @@ function BBP.PartyIndicator5(frame)
                     end
 
                     frame.name:SetText("")
-                    frame.specNameText:SetText(specName .. " " .. i)
+                    local displayNumber = i
+                    if reduceID and i > 1 then
+                        displayNumber = i - 1
+                    end
+                    frame.specNameText:SetText(specName .. " " .. displayNumber)
                     frame.specNameText:SetTextColor(r, g, b, a)
                     frame.specNameText:SetScale(partySpecScale)
                     frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)

@@ -247,8 +247,12 @@ function BBP.CustomizeCastbar(unitToken)
         castBar.BorderShield:SetDrawLayer("OVERLAY", 1)
         castBar.Icon:Show()
         castBar.Icon:SetDrawLayer("OVERLAY", 2)
-    elseif not notInterruptible then
-        castBar.Icon:Show() --attempt to fix icon randomly not showing (blizz bug)
+    else
+        if not notInterruptible then
+            castBar.Icon:Show() --attempt to fix icon randomly not showing (blizz bug)
+        else
+            castBar.Icon:Hide()
+        end
     end
 
     local function ApplyCastBarEmphasisSettings(castBar, castEmphasis)
@@ -304,41 +308,51 @@ function BBP.CustomizeCastbar(unitToken)
     local castBarNoInterruptColor = BetterBlizzPlatesDB.castBarNoInterruptColor
     local castBarDelayedInterruptColor = BetterBlizzPlatesDB.castBarDelayedInterruptColor
 
-    if spellName and castDuration and BetterBlizzPlatesDB.castBarInterruptHighlighter and not notInterruptible then
-        local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
-        if not isFriend then
-            local currentTime = GetTime() -- currentTime is in seconds
-            -- Convert startTime and endTime from milliseconds to seconds for these calculations
-            local castStartSeconds = castStart / 1000
-            local castEndSeconds = endTime / 1000
-            local totalCastTime = castEndSeconds - castStartSeconds
-            local currentCastTime = currentTime - castStartSeconds
-            local castProgressPercentage = (currentCastTime / totalCastTime) * 100
+    if BetterBlizzPlatesDB.castBarInterruptHighlighter then
+        local interruptedCastbar = castBar.barType == "interrupted"
+        if spellName and not interruptedCastbar and castDuration and not notInterruptible then
+            local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
+            if not isFriend then
+                local currentTime = GetTime() -- currentTime is in seconds
+                -- Convert startTime and endTime from milliseconds to seconds for these calculations
+                local castStartSeconds = castStart / 1000
+                local castEndSeconds = endTime / 1000
+                local totalCastTime = castEndSeconds - castStartSeconds
+                local currentCastTime = currentTime - castStartSeconds
+                local castProgressPercentage = (currentCastTime / totalCastTime) * 100
 
-            local startPercentage = BetterBlizzPlatesDB.castBarInterruptHighlighterStartPercentage
-            local endPercentage = BetterBlizzPlatesDB.castBarInterruptHighlighterEndPercentage
+                local startPercentage = BetterBlizzPlatesDB.castBarInterruptHighlighterStartPercentage
+                local endPercentage = BetterBlizzPlatesDB.castBarInterruptHighlighterEndPercentage
 
-            if castProgressPercentage <= startPercentage or castProgressPercentage >= endPercentage then
-                -- Color the cast bar green for the first 10% and last 20% of the cast
-                local color = BetterBlizzPlatesDB.castBarInterruptHighlighterInterruptRGB
-                if castBarTexture then
-                    castBarTexture:SetDesaturated()
-                end
-                castBar:SetStatusBarColor(unpack(color)) -- RGB for green
-            else
-                local colorDontInterrupt = BetterBlizzPlatesDB.castBarInterruptHighlighterColorDontInterrupt
-                if colorDontInterrupt then
-                    local color = BetterBlizzPlatesDB.castBarInterruptHighlighterDontInterruptRGB
+                if castProgressPercentage <= startPercentage or castProgressPercentage >= endPercentage then
+                    -- Color the cast bar green for the first 10% and last 20% of the cast
+                    local color = BetterBlizzPlatesDB.castBarInterruptHighlighterInterruptRGB
                     if castBarTexture then
                         castBarTexture:SetDesaturated()
                     end
-                    castBar:SetStatusBarColor(unpack(color)) -- RGB for red
+                    castBar:SetStatusBarColor(unpack(color)) -- RGB for green
                 else
-                    if castBarTexture then
-                        castBarTexture:SetDesaturated(false)
+                    local colorDontInterrupt = BetterBlizzPlatesDB.castBarInterruptHighlighterColorDontInterrupt
+                    if colorDontInterrupt then
+                        local color = BetterBlizzPlatesDB.castBarInterruptHighlighterDontInterruptRGB
+                        if castBarTexture then
+                            castBarTexture:SetDesaturated()
+                        end
+                        castBar:SetStatusBarColor(unpack(color)) -- RGB for red
+                    else
+                        if castBarTexture then
+                            castBarTexture:SetDesaturated(false)
+                        end
+                        castBar:SetStatusBarColor(1, 1, 1)
                     end
-                    castBar:SetStatusBarColor(1, 1, 1)
                 end
+            end
+        else
+            if interruptedCastbar then
+                if castBarTexture then
+                    castBarTexture:SetDesaturated(false)
+                end
+                castBar:SetStatusBarColor(1, 1, 1)
             end
         end
     end
@@ -692,6 +706,9 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                 if nameplate.UnitFrame.castBar and (castBarRecolor or useCustomCastbarTexture) then
                     nameplate.UnitFrame.castBar:SetStatusBarColor(1,0,0)
                 end
+                if BetterBlizzPlatesDB.castBarInterruptHighlighter then
+                    nameplate.UnitFrame.castBar:SetStatusBarColor(1,1,1)
+                end
             end
         end
         if castbarQuickHide then
@@ -724,115 +741,118 @@ function BBP.ToggleSpellCastEventRegistration()
                 castbarEventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
                 interruptCombatLog = true
             end
-            if not useCustomCastbarTextureHooked and BetterBlizzPlatesDB.useCustomCastbarTexture then
-                hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
-                    if self.unit and self.unit:find("nameplate") then
-                        if not self.hooked then
-                            hooksecurefunc(self, "SetStatusBarTexture", function(self, texture)
-                                if self.changing or not self.unit or self:IsForbidden() then return end
 
-                                local textureName = BetterBlizzPlatesDB.customCastbarTexture
-                                local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
-                                local nonInterruptibleTextureName = BetterBlizzPlatesDB.customCastbarNonInterruptibleTexture
-                                local nonInterruptibleTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, nonInterruptibleTextureName)
-                                self.changing = true
+            if BetterBlizzPlatesDB.enableCastbarCustomization then
+                if not useCustomCastbarTextureHooked and BetterBlizzPlatesDB.useCustomCastbarTexture then
+                    hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
+                        if self.unit and self.unit:find("nameplate") then
+                            if not self.hooked then
+                                hooksecurefunc(self, "SetStatusBarTexture", function(self, texture)
+                                    if self.changing or not self.unit or self:IsForbidden() then return end
 
-                                if self.barType then
-                                    if self.barType == "uninterruptable" then
-                                        self:SetStatusBarTexture(nonInterruptibleTexturePath)
-                                        self.OldTextureWas = nonInterruptibleTexturePath
+                                    local textureName = BetterBlizzPlatesDB.customCastbarTexture
+                                    local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
+                                    local nonInterruptibleTextureName = BetterBlizzPlatesDB.customCastbarNonInterruptibleTexture
+                                    local nonInterruptibleTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, nonInterruptibleTextureName)
+                                    self.changing = true
+
+                                    if self.barType then
+                                        if self.barType == "uninterruptable" then
+                                            self:SetStatusBarTexture(nonInterruptibleTexturePath)
+                                            self.OldTextureWas = nonInterruptibleTexturePath
+                                        else
+                                            --if self.barType == "standard" then
+                                                self:SetStatusBarTexture(texturePath)
+                                                self.OldTextureWas = texturePath
+                                            --end
+                                        end
                                     else
-                                        --if self.barType == "standard" then
+                                        if self.OldTextureWas then --the castbar sometimes does a flash of the casting texture that was so this has to be re-set here to not flash an old/changed texture
+                                            self:SetStatusBarTexture(self.OldTextureWas)
+                                        else
                                             self:SetStatusBarTexture(texturePath)
-                                            self.OldTextureWas = texturePath
-                                        --end
+                                        end
                                     end
-                                else
-                                    if self.OldTextureWas then --the castbar sometimes does a flash of the casting texture that was so this has to be re-set here to not flash an old/changed texture
-                                        self:SetStatusBarTexture(self.OldTextureWas)
-                                    else
-                                        self:SetStatusBarTexture(texturePath)
+
+                                    self.changing = false
+                                end)
+
+                                if self.Flash then
+                                    hooksecurefunc(self.Flash, "SetAtlas", function(self)
+                                        if self.changing or self:IsForbidden() then return end
+                                        self.changing = true
+                                        self:SetAtlas(nil)
+                                        self.changing = false
+                                    end)
+                                end
+                                local castbar = self
+                                local borderShield = self.BorderShield
+
+                                if self.Icon then
+                                    hooksecurefunc(self.Icon, "SetPoint", function(self)
+                                        if self.changing or self:IsForbidden() then return end
+                                        self.changing = true
+                                        self:SetPoint("CENTER", castbar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
+                                        borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
+                                        self.changing = false
+                                    end)
+                                    castIconHooked = true
+                                end
+                                --local icon = self.Icon
+                                -- if self.BorderShield then
+                                --     hooksecurefunc(self.BorderShield, "SetPoint", function(self, atlas)
+                                --         if self.changing then return end
+                                --         self.changing = true
+                                --         self:SetPoint("CENTER", icon, "CENTER", 0, 0)
+                                --         self.changing = false
+                                --     end)
+                                --     castIconHooked = true
+                                -- end
+                                self.hooked = true
+                            end
+                        end
+                    end)
+                    useCustomCastbarTextureHooked = true
+                end
+
+                if not castIconHooked and not useCustomCastbarTextureHooked and not BetterBlizzPlatesDB.useCustomCastbarTexture then
+                    hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
+                        if self.unit and self.unit:find("nameplate") then
+                            if BetterBlizzPlatesDB.normalCastbarForEmpoweredCasts then
+                                if ( event == "UNIT_SPELLCAST_EMPOWER_START" ) then
+                                    if not self:IsForbidden() then
+                                        if self.barType == "empowered" or self.barType == "standard" then
+                                            self:SetStatusBarTexture("ui-castingbar-filling-standard")
+                                        end
+                                        self.ChargeTier1:Hide()
+                                        self.ChargeTier2:Hide()
+                                        self.ChargeTier3:Hide()
+
+                                        -- self.StagePip1:Hide()
+                                        -- self.StagePip2:Hide()
+                                        -- self.StagePip3:Hide()
                                     end
                                 end
-
-                                self.changing = false
-                            end)
-
-                            if self.Flash then
-                                hooksecurefunc(self.Flash, "SetAtlas", function(self)
-                                    if self.changing or self:IsForbidden() then return end
-                                    self.changing = true
-                                    self:SetAtlas(nil)
-                                    self.changing = false
-                                end)
                             end
-                            local castbar = self
-                            local borderShield = self.BorderShield
+                            if not self.hooked then
+                                local castbar = self
+                                local borderShield = self.BorderShield
 
-                            if self.Icon then
-                                hooksecurefunc(self.Icon, "SetPoint", function(self)
-                                    if self.changing or self:IsForbidden() then return end
-                                    self.changing = true
-                                    self:SetPoint("CENTER", castbar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
-                                    borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
-                                    self.changing = false
-                                end)
-                                castIconHooked = true
-                            end
-                            --local icon = self.Icon
-                            -- if self.BorderShield then
-                            --     hooksecurefunc(self.BorderShield, "SetPoint", function(self, atlas)
-                            --         if self.changing then return end
-                            --         self.changing = true
-                            --         self:SetPoint("CENTER", icon, "CENTER", 0, 0)
-                            --         self.changing = false
-                            --     end)
-                            --     castIconHooked = true
-                            -- end
-                            self.hooked = true
-                        end
-                    end
-                end)
-                useCustomCastbarTextureHooked = true
-            end
-
-            if not castIconHooked and not useCustomCastbarTextureHooked and not BetterBlizzPlatesDB.useCustomCastbarTexture then
-                hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
-                    if self.unit and self.unit:find("nameplate") then
-                        if BetterBlizzPlatesDB.normalCastbarForEmpoweredCasts then
-                            if ( event == "UNIT_SPELLCAST_EMPOWER_START" ) then
-                                if not self:IsForbidden() then
-                                    if self.barType == "empowered" or self.barType == "standard" then
-                                        self:SetStatusBarTexture("ui-castingbar-filling-standard")
-                                    end
-                                    self.ChargeTier1:Hide()
-                                    self.ChargeTier2:Hide()
-                                    self.ChargeTier3:Hide()
-
-                                    -- self.StagePip1:Hide()
-                                    -- self.StagePip2:Hide()
-                                    -- self.StagePip3:Hide()
+                                if self.Icon then
+                                    hooksecurefunc(self.Icon, "SetPoint", function(self)
+                                        if self.changing or self:IsForbidden() then return end
+                                        self.changing = true
+                                        self:SetPoint("CENTER", castbar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
+                                        borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
+                                        self.changing = false
+                                    end)
                                 end
+                                self.hooked = true
                             end
                         end
-                        if not self.hooked then
-                            local castbar = self
-                            local borderShield = self.BorderShield
-
-                            if self.Icon then
-                                hooksecurefunc(self.Icon, "SetPoint", function(self)
-                                    if self.changing or self:IsForbidden() then return end
-                                    self.changing = true
-                                    self:SetPoint("CENTER", castbar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
-                                    borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
-                                    self.changing = false
-                                end)
-                            end
-                            self.hooked = true
-                        end
-                    end
-                end)
-                castIconHooked = true
+                    end)
+                    castIconHooked = true
+                end
             end
 
             BetterBlizzPlatesDB.castbarEventsOn = true
