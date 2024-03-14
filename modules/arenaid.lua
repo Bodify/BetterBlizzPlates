@@ -60,11 +60,32 @@ local specIDToNameShort = {
     [71] = "Arms", [72] = "Fury", [73] = "Prot",
 }
 
+local idCircleColor = {
+    [1] = {0.9, 0.2, 0.2, 1}, -- Red
+    [2] = {0.2, 0.9, 0.2, 1}, -- Green
+    [3] = {0.2, 0.2, 0.9, 1}, -- Blue
+}
+
 local IsActiveBattlefieldArena = IsActiveBattlefieldArena
 local UnitIsUnit = UnitIsUnit
 local GetArenaOpponentSpec = GetArenaOpponentSpec
 
 --there is so much room for improvement here... oh well future me will surely have improved it.
+
+local function addIdCircle(frame, index)
+    local color = idCircleColor[index]
+    if not frame.arenaNumberCircle then
+        frame.arenaNumberCircle = frame:CreateTexture(nil, "BACKGROUND")
+        frame.arenaNumberCircle:SetAtlas("UI-QuestPoi-QuestNumber-SuperTracked")
+        frame.arenaNumberCircle:SetSize(32, 32)
+        frame.arenaNumberCircle:SetDesaturated(true)
+        frame.arenaNumberCircle:SetVertexColor(unpack(color))
+        frame.arenaNumberCircle:SetPoint("CENTER", frame.arenaNumberText, "CENTER", -1, 0.5)
+    end
+    frame.arenaNumberCircle:Show()
+    frame.arenaNumberText:SetTextColor(1,1,1)
+    frame.arenaNumberCircle:SetVertexColor(unpack(color))
+end
 
 -- Arena Indicator for Arena Units
 -- Mode 1: Replace name with ID
@@ -76,6 +97,8 @@ function BBP.ArenaIndicator1(frame)
         local arenaIdXPos = BetterBlizzPlatesDB.arenaIdXPos
         local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
         local arenaIDScale = BetterBlizzPlatesDB.arenaIDScale
+        local idCircle = BetterBlizzPlatesDB.showCircleOnArenaID
+        local idCircleOffset = idCircle and 1 or 0
 
         if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
             local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
@@ -92,7 +115,7 @@ function BBP.ArenaIndicator1(frame)
                     end
 
                     frame.name:SetText("")
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
                     frame.arenaNumberText:SetText(i)
                     if enemyClassColorName then
                         frame.arenaNumberText:SetTextColor(r, g, b, a)
@@ -100,6 +123,10 @@ function BBP.ArenaIndicator1(frame)
                         frame.arenaNumberText:SetTextColor(1, 1, 0)
                     end
                     frame.arenaNumberText:SetScale(arenaIDScale)
+
+                    if idCircle then
+                        addIdCircle(frame, i)
+                    end
                     break
                 end
             end
@@ -119,7 +146,7 @@ function BBP.ArenaIndicator1(frame)
                 end
 
                 frame.name:SetText("")
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
                 frame.arenaNumberText:SetText(i)
                 if enemyClassColorName then
                     frame.arenaNumberText:SetTextColor(r, g, b, a)
@@ -127,6 +154,10 @@ function BBP.ArenaIndicator1(frame)
                     frame.arenaNumberText:SetTextColor(1, 1, 0)
                 end
                 frame.arenaNumberText:SetScale(arenaIDScale)
+
+                if idCircle then
+                    addIdCircle(frame, i)
+                end
                 break
             end
         end
@@ -142,6 +173,8 @@ function BBP.ArenaIndicator2(frame)
         local arenaIdXPos = BetterBlizzPlatesDB.arenaIdXPos
         local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
         local arenaIDScale = BetterBlizzPlatesDB.arenaIDScale
+        local idCircle = BetterBlizzPlatesDB.showCircleOnArenaID
+        local idCircleOffset = idCircle and 1 or 0
 
         if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
             local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
@@ -161,7 +194,11 @@ function BBP.ArenaIndicator2(frame)
                         frame.arenaNumberText:SetTextColor(1, 1, 0)
                     end
                     frame.arenaNumberText:SetScale(arenaIDScale)
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+
+                    if idCircle then
+                        addIdCircle(frame, i)
+                    end
                     break
                 end
             end
@@ -184,7 +221,11 @@ function BBP.ArenaIndicator2(frame)
                     frame.arenaNumberText:SetTextColor(1, 1, 0)
                 end
                 frame.arenaNumberText:SetScale(arenaIDScale)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+
+                if idCircle then
+                    addIdCircle(frame, i)
+                end
                 break
             end
         end
@@ -282,6 +323,8 @@ function BBP.ArenaIndicator4(frame)
         local arenaIdXPos = BetterBlizzPlatesDB.arenaIdXPos
         local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
         local enemyClassColorName = BetterBlizzPlatesDB.enemyClassColorName or BetterBlizzPlatesDB.enemyColorName
+        local idCircle = BetterBlizzPlatesDB.showCircleOnArenaID
+        local idCircleOffset = idCircle and 1 or 0
 
         if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
             local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
@@ -325,7 +368,11 @@ function BBP.ArenaIndicator4(frame)
                         frame.arenaNumberText:SetTextColor(1, 1, 0)
                     end
                     frame.arenaNumberText:SetScale(arenaIDScale)
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos, arenaIdYPos - 1)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos - 1)
+
+                    if idCircle then
+                        addIdCircle(frame, i)
+                    end
                     break
                 end
             end
@@ -371,7 +418,11 @@ function BBP.ArenaIndicator4(frame)
                     frame.arenaNumberText:SetTextColor(1, 1, 0)
                 end
                 frame.arenaNumberText:SetScale(arenaIDScale)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos, arenaIdYPos - 1)
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos - 1)
+
+                if idCircle then
+                    addIdCircle(frame, i)
+                end
                 break
             end
         end
@@ -484,7 +535,7 @@ function BBP.PartyIndicator1(frame)
                         displayNumber = i - 1
                     end
                     frame.name:SetText("")
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
                     frame.arenaNumberText:SetText(displayNumber)
                     frame.arenaNumberText:SetTextColor(r, g, b, a)
                     frame.arenaNumberText:SetScale(partyIDScale)
@@ -504,7 +555,7 @@ function BBP.PartyIndicator1(frame)
                 end
 
                 frame.name:SetText("")
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
                 frame.arenaNumberText:SetText(i)
                 frame.arenaNumberText:SetTextColor(r, g, b, a)
                 frame.arenaNumberText:SetScale(partyIDScale)
@@ -543,7 +594,7 @@ function BBP.PartyIndicator2(frame)
                     frame.arenaNumberText:SetText(displayNumber)
                     frame.arenaNumberText:SetTextColor(r, g, b, a)
                     frame.arenaNumberText:SetScale(partyIDScale)
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
                     break
                 end
             end
@@ -562,7 +613,7 @@ function BBP.PartyIndicator2(frame)
                 frame.arenaNumberText:SetText(i)
                 frame.arenaNumberText:SetTextColor(r, g, b, a)
                 frame.arenaNumberText:SetScale(partyIDScale)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
                 break
             end
         end
@@ -716,7 +767,7 @@ function BBP.PartyIndicator4(frame)
                     frame.arenaNumberText:SetText(displayNumber)
                     frame.arenaNumberText:SetTextColor(r, g, b, a)
                     frame.arenaNumberText:SetScale(partyIDScale)
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos, arenaIdYPos - 1)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos - 1)
                     break
                 end
             end
@@ -762,7 +813,7 @@ function BBP.PartyIndicator4(frame)
                 frame.arenaNumberText:SetText(i)
                 frame.arenaNumberText:SetTextColor(r, g, b, a)
                 frame.arenaNumberText:SetScale(partyIDScale)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos, arenaIdYPos - 1)
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos - 1)
                 break
             end
         end
@@ -887,6 +938,8 @@ function BBP.TestArenaIndicator0(frame)
 end
 -- Mode 1: Replace name with ID
 function BBP.TestArenaIndicator1(frame)
+    local idCircle = BetterBlizzPlatesDB.showCircleOnArenaID
+    local idCircleOffset = idCircle and 1 or 0
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
         if not UnitIsFriend("player", frame.unit) and (UnitReaction("player", frame.unit) or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
@@ -894,10 +947,11 @@ function BBP.TestArenaIndicator1(frame)
             if not frame.arenaNumberText then
                 frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
                 BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
+                frame.arenaNumberText:SetJustifyH("CENTER")
             end
 
             frame.name:SetText("")
-            frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos)
+            frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
             frame.arenaNumberText:SetText("1")
             if BetterBlizzPlatesDB.enemyClassColorName then
                 frame.arenaNumberText:SetTextColor(r, g, b, a)
@@ -905,17 +959,12 @@ function BBP.TestArenaIndicator1(frame)
                 frame.arenaNumberText:SetTextColor(1, 1, 0)
             end
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaIDScale)
-            -- if not frame.arenaNumberCircle then
-            --     frame.arenaNumberCircle = frame:CreateTexture(nil, "BACKGROUND")
-            --     frame.arenaNumberCircle:SetAtlas("UI-QuestPoi-QuestNumber-SuperTracked")
-            --     frame.arenaNumberCircle:SetSize(32,32)
-            --     frame.arenaNumberCircle:SetDesaturated(true)
-            --     frame.arenaNumberCircle:SetVertexColor(0,1,0)
-            --     frame.arenaNumberCircle:SetPoint("CENTER", frame.arenaNumberText, "CENTER", -1, 0.5) --if 1 then xPos 0.5
-            --     BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THICKOUTLINE")
-            -- end
-            -- frame.arenaNumberText:SetTextColor(1,1,1)
-            -- frame.arenaNumberText:SetText("3")
+
+            if idCircle then
+                local i = math.random(1, 3)
+                frame.arenaNumberText:SetText(tostring(i))
+                addIdCircle(frame, i)
+            end
             break
         end
     end
@@ -923,6 +972,8 @@ end
 
 -- Mode 2: Put ID on top of name
 function BBP.TestArenaIndicator2(frame)
+    local idCircle = BetterBlizzPlatesDB.showCircleOnArenaID
+    local idCircleOffset = idCircle and 1 or 0
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
         if not UnitIsFriend("player", frame.unit) and (UnitReaction("player", frame.unit) or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
@@ -939,7 +990,13 @@ function BBP.TestArenaIndicator2(frame)
                 frame.arenaNumberText:SetTextColor(1, 1, 0)
             end
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaIDScale)
-            frame.arenaNumberText:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos)
+            frame.arenaNumberText:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
+
+            if idCircle then
+                local i = math.random(1, 3)
+                frame.arenaNumberText:SetText(tostring(i))
+                addIdCircle(frame, i)
+            end
             break
         end
     end
@@ -973,6 +1030,8 @@ end
 
 -- Mode 4: Replace name with spec and ID on top
 function BBP.TestArenaIndicator4(frame)
+    local idCircle = BetterBlizzPlatesDB.showCircleOnArenaID
+    local idCircleOffset = idCircle and 1 or 0
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
         if not UnitIsFriend("player", frame.unit) and (UnitReaction("player", frame.unit) or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
@@ -1004,7 +1063,13 @@ function BBP.TestArenaIndicator4(frame)
                 frame.arenaNumberText:SetTextColor(1, 1, 0)
             end
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaIDScale)
-            frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos - 1)
+            frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos - 1)
+
+            if idCircle then
+                local i = math.random(1, 3)
+                frame.arenaNumberText:SetText(tostring(i))
+                addIdCircle(frame, i)
+            end
             break
         end
     end

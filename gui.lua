@@ -1210,11 +1210,15 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
     return checkBox
 end
 
-local function CreateList(subPanel, listName, listData, refreshFunc, enableColorPicker, extraBoxes, prioSlider, width, height, colorText)
+local function CreateList(subPanel, listName, listData, refreshFunc, enableColorPicker, extraBoxes, prioSlider, width, height, colorText, pos)
     -- Create the scroll frame
     local scrollFrame = CreateFrame("ScrollFrame", nil, subPanel, "UIPanelScrollFrameTemplate")
     scrollFrame:SetSize(width or 322, height or 390)
-    scrollFrame:SetPoint("TOPLEFT", 10, -10)
+    if not pos then
+        scrollFrame:SetPoint("TOPLEFT", 10, -10)
+    else
+        scrollFrame:SetPoint("TOPLEFT", -33, -10)
+    end
 
     -- Create the content frame
     local contentFrame = CreateFrame("Frame", nil, scrollFrame)
@@ -1607,7 +1611,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
     }
 
     local editBox = CreateFrame("EditBox", nil, subPanel, "InputBoxTemplate")
-    editBox:SetSize(260, 19)
+    editBox:SetSize((width and width - 62) or (322 - 62), 19)
     editBox:SetPoint("TOP", scrollFrame, "BOTTOM", -15, -5)
     editBox:SetAutoFocus(false)
     if listName == "auraBlacklist" or
@@ -2395,6 +2399,7 @@ local function guiGeneralTab()
             BBP.TempScuffedRadio()
         end
     end)
+    CreateTooltip(BBP.raidmarkIndicator, "Change the position of the raidmarker.\n\nChange specifics in \"Advanced Settings\".")
 
     local nameplateMaxScale = CreateSlider(BetterBlizzPlates, "Nameplate Size", 0.5, 2, 0.01, "nameplateMaxScale")
     nameplateMaxScale:SetPoint("TOPLEFT", BBP.raidmarkIndicator, "BOTTOMLEFT", 12, -10)
@@ -2867,9 +2872,13 @@ local function guiGeneralTab()
         hideFriendlyCastbar:SetAlpha(0)
     end
 
-    local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Toggle on/off for Arena auto", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesInArena)
+    local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Toggle on/off for Arena auto", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
     toggleFriendlyNameplatesInArena:SetPoint("TOPLEFT", friendlyHideHealthBar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(toggleFriendlyNameplatesInArena, "Turn on friendly nameplates when you enter arena and off again when you leave.")
+
+    local friendlyNameplatesOnlyInDungeons = CreateCheckbox("friendlyNameplatesOnlyInDungeons", "Toggle for Dungeons", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    friendlyNameplatesOnlyInDungeons:SetPoint("LEFT", toggleFriendlyNameplatesInArena.text, "RIGHT", 0, 0)
+    CreateTooltip(friendlyNameplatesOnlyInDungeons, "Turn on friendly nameplates when you enter dungeons and off again when you leave.")
 
     local friendlyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 3, 0.01, "friendlyNameScale")
     friendlyNameScale:SetPoint("TOPLEFT", toggleFriendlyNameplatesInArena, "BOTTOMLEFT", 12, -10)
@@ -3698,6 +3707,10 @@ local function guiPositionAndScale()
     BBP.raidmarkIndicator2 = CreateCheckbox("raidmarkIndicator", "Change raidmarker pos", contentFrame, nil, BBP.ChangeRaidmarker)
     CreateTooltip(BBP.raidmarkIndicator2, "Enable this to move raidmarker on nameplates")
 
+    local hideRaidmarkIndicator = CreateCheckbox("hideRaidmarkIndicator", "Hide raidmarker", contentFrame)
+    hideRaidmarkIndicator:SetPoint("TOPLEFT", BBP.raidmarkIndicator2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(hideRaidmarkIndicator, "Hide every raidmarker on nameplates")
+
     local raidmarkIndicatorScale = CreateSlider(BBP.raidmarkIndicator2, "Size", 0.6, 2.5, 0.01, "raidmarkIndicatorScale")
     raidmarkIndicatorScale:SetPoint("TOP", anchorSubRaidmark, "BOTTOM", 0, -15)
 
@@ -4051,6 +4064,9 @@ local function guiPositionAndScale()
     local arenaIndicatorTestMode2 = CreateCheckbox("arenaIndicatorTestMode", "Test", contentFrame)
     arenaIndicatorTestMode2:SetPoint("TOPLEFT", arenaSpecAnchorDropdown, "BOTTOMLEFT", 16, 8)
 
+    local showCircleOnArenaID = CreateCheckbox("showCircleOnArenaID", "Show Circle on ID", contentFrame)
+    showCircleOnArenaID:SetPoint("TOPLEFT", arenaIndicatorTestMode2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(showCircleOnArenaID, "Show a colored circle on each ID, red green and blue\n\n(Needs some finetuning still)")
 
     ----------------------
     -- Class Icon
@@ -5224,20 +5240,36 @@ local function guiNameplateAuras()
     auraBlacklistFrame:SetSize(322, 390)
     auraBlacklistFrame:SetPoint("TOPLEFT", 6, -15)
 
-    CreateList(auraBlacklistFrame, "auraBlacklist", BetterBlizzPlatesDB.auraBlacklist, BBP.RefreshAllNameplates)
+    CreateList(auraBlacklistFrame, "auraBlacklist", BetterBlizzPlatesDB.auraBlacklist, BBP.RefreshAllNameplates, nil, nil, nil, 280, 270)
 
     local blacklistText = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    blacklistText:SetPoint("BOTTOM", auraBlacklistFrame, "TOP", 10, 0)
+    blacklistText:SetPoint("BOTTOM", auraBlacklistFrame, "TOP", 10, -5)
     blacklistText:SetText("Blacklist")
 
-    CreateList(auraWhitelistFrame, "auraWhitelist", BetterBlizzPlatesDB.auraWhitelist, BBP.RefreshAllNameplates, nil, true, nil, nil, nil, true)
+    CreateList(auraWhitelistFrame, "auraWhitelist", BetterBlizzPlatesDB.auraWhitelist, BBP.RefreshAllNameplates, nil, true, nil, 364, 270, true, true)
 
     local whitelistText = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    whitelistText:SetPoint("BOTTOM", auraWhitelistFrame, "TOP", 10, 0)
+    whitelistText:SetPoint("BOTTOM", auraWhitelistFrame, "TOP", -60, -5)
     whitelistText:SetText("Whitelist")
 
-    local enableNameplateAuraCustomisation = CreateCheckbox("enableNameplateAuraCustomisation", "Enable Aura Settings (BETA)", contentFrame)
-    enableNameplateAuraCustomisation:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 50, 75)
+    local importantAuraTexture = contentFrame:CreateTexture(nil, "OVERLAY")
+    importantAuraTexture:SetAtlas("importantavailablequesticon")
+    importantAuraTexture:SetPoint("LEFT", whitelistText, "RIGHT", 123, 0)
+    importantAuraTexture:SetSize(17,16)
+    importantAuraTexture:SetDesaturated(true)
+    importantAuraTexture:SetVertexColor(0,1,0)
+    CreateTooltip(importantAuraTexture, "Important Aura Checkboxes")
+
+    local pandemicAuraTexture = contentFrame:CreateTexture(nil, "OVERLAY")
+    pandemicAuraTexture:SetAtlas("elementalstorm-boss-air")
+    pandemicAuraTexture:SetPoint("LEFT", importantAuraTexture, "RIGHT", 20, 1)
+    pandemicAuraTexture:SetSize(26,26)
+    pandemicAuraTexture:SetDesaturated(true)
+    pandemicAuraTexture:SetVertexColor(1,0,0)
+    CreateTooltip(pandemicAuraTexture, "Pandemic Aura Checkboxes")
+
+    local enableNameplateAuraCustomisation = CreateCheckbox("enableNameplateAuraCustomisation", "Enable Aura Settings", contentFrame)
+    enableNameplateAuraCustomisation:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 50, 195)
     enableNameplateAuraCustomisation:HookScript("OnClick", function (self)
         if self:GetChecked() then
             BetterBlizzPlatesDB.hideNameplateAuras = false
@@ -5249,7 +5281,7 @@ local function guiNameplateAuras()
     --------------------------
     -- Enemy Buffs
     local otherNpBuffEnable = CreateCheckbox("otherNpBuffEnable", "Show BUFFS", enableNameplateAuraCustomisation)
-    otherNpBuffEnable:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 50, 25)
+    otherNpBuffEnable:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 50, 145)
     otherNpBuffEnable:HookScript("OnClick", function ()
         CheckAndToggleCheckboxes(otherNpBuffEnable)
     end)
@@ -5323,7 +5355,7 @@ local function guiNameplateAuras()
     --------------------------
     -- Friendly Buffs
     local friendlyNpBuffEnable = CreateCheckbox("friendlyNpBuffEnable", "Show BUFFS", enableNameplateAuraCustomisation)
-    friendlyNpBuffEnable:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 300, 45)
+    friendlyNpBuffEnable:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 300, 170)
     friendlyNpBuffEnable:HookScript("OnClick", function ()
         CheckAndToggleCheckboxes(friendlyNpBuffEnable)
     end)
@@ -5374,7 +5406,7 @@ local function guiNameplateAuras()
     --------------------------
     -- Personal Bar Buffs
     local personalNpBuffEnable = CreateCheckbox("personalNpBuffEnable", "Show BUFFS", enableNameplateAuraCustomisation)
-    personalNpBuffEnable:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 525, 45)
+    personalNpBuffEnable:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 525, 170)
     personalNpBuffEnable:HookScript("OnClick", function ()
         CheckAndToggleCheckboxes(personalNpBuffEnable)
     end)
@@ -5436,7 +5468,7 @@ local function guiNameplateAuras()
     -- Nameplate settings
     --------------------------
     local nameplateAurasXPos = CreateSlider(enableNameplateAuraCustomisation, "x offset", -50, 50, 1, "nameplateAurasXPos", "X")
-    nameplateAurasXPos:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -240, -330)
+    nameplateAurasXPos:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -230, -220)
     CreateTooltip(nameplateAurasXPos, "Aura x offset")
 
     local nameplateAurasYPos = CreateSlider(enableNameplateAuraCustomisation, "y offset", -50, 50, 1, "nameplateAurasYPos", "Y")
@@ -5477,12 +5509,8 @@ local function guiNameplateAuras()
 ]]
 
     local nameplateAurasEnemyCenteredAnchor = CreateCheckbox("nameplateAurasEnemyCenteredAnchor", "Center Auras on Enemy", enableNameplateAuraCustomisation)
-    nameplateAurasEnemyCenteredAnchor:SetPoint("BOTTOM", nameplateAurasXPos, "TOP", -30, 50)
+    nameplateAurasEnemyCenteredAnchor:SetPoint("BOTTOM", nameplateAurasXPos, "TOP", -80, 60)
     CreateTooltip(nameplateAurasEnemyCenteredAnchor, "Keep auras centered on enemy nameplates.")
-
-    local nameplateAuraTestMode = CreateCheckbox("nameplateAuraTestMode", "Test Mode", enableNameplateAuraCustomisation)
-    nameplateAuraTestMode:SetPoint("RIGHT", nameplateAurasEnemyCenteredAnchor, "LEFT", -52, 0)
-    CreateTooltip(nameplateAuraTestMode, "Add some auras to nameplates for testing.\nTemporarily enables the \"All\" filter.")
 
     local nameplateAurasFriendlyCenteredAnchor = CreateCheckbox("nameplateAurasFriendlyCenteredAnchor", "Center Auras on Friendly", enableNameplateAuraCustomisation)
     nameplateAurasFriendlyCenteredAnchor:SetPoint("TOPLEFT", nameplateAurasEnemyCenteredAnchor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -5516,6 +5544,10 @@ local function guiNameplateAuras()
     nameplateAuraSquare:SetPoint("LEFT", nameplateAurasEnemyCenteredAnchor.text, "RIGHT", 5, 0)
     CreateTooltip(nameplateAuraSquare, "Square aura icons.")
 
+    local nameplateAuraTestMode = CreateCheckbox("nameplateAuraTestMode", "Test Mode", enableNameplateAuraCustomisation)
+    nameplateAuraTestMode:SetPoint("BOTTOMLEFT", nameplateAuraSquare, "TOPLEFT", 0, 0)
+    CreateTooltip(nameplateAuraTestMode, "Add some auras to nameplates for testing.\nTemporarily enables the \"All\" filter.")
+
     local showDefaultCooldownNumbersOnNpAuras = CreateCheckbox("showDefaultCooldownNumbersOnNpAuras", "Default CD", enableNameplateAuraCustomisation)
     showDefaultCooldownNumbersOnNpAuras:SetPoint("TOPLEFT", nameplateAuraSquare, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(showDefaultCooldownNumbersOnNpAuras, "Show Blizz default cooldown counter.\n\nIf you use OmniCC this setting will not work.")
@@ -5525,7 +5557,7 @@ local function guiNameplateAuras()
     CreateTooltip(hideNpAuraSwipe, "Hide the cooldown swipe animation.")
 
     local nameplateAuraTaller = CreateCheckbox("nameplateAuraTaller", "Taller Auras", enableNameplateAuraCustomisation)
-    nameplateAuraTaller:SetPoint("LEFT", nameplateAuraSquare.text, "RIGHT", 5, 0)
+    nameplateAuraTaller:SetPoint("LEFT", nameplateAuraSquare.text, "RIGHT", 9, 0)
     CreateTooltip(nameplateAuraTaller, "Bit taller aura icons and more of the texture visible.")
     nameplateAuraTaller:HookScript("OnClick", function (self)
         if self:GetChecked() then
@@ -5546,25 +5578,29 @@ local function guiNameplateAuras()
     separateAuraBuffRow:SetPoint("TOPLEFT", nameplateAuraTaller, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(separateAuraBuffRow, "Show Buffs on a separate row on top of debuffs.", "ANCHOR_LEFT")
 
+    local onlyPandemicAuraMine = CreateCheckbox("onlyPandemicAuraMine", "Only Pandemic Mine", enableNameplateAuraCustomisation)
+    onlyPandemicAuraMine:SetPoint("TOPLEFT", separateAuraBuffRow, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(onlyPandemicAuraMine, "Only show the red pandemic aura glow on my own auras", "ANCHOR_LEFT")
+
 --[=[
     local AuraGrowLeft = CreateCheckbox("nameplateAurasGrowLeft", "Grow left", contentFrame)
     AuraGrowLeft:SetPoint("LEFT", nameplateAuraSquare.text, "RIGHT", 5, 0)
 ]=]
 
     local maxAurasOnNameplate = CreateSlider(enableNameplateAuraCustomisation, "Max auras on nameplate", 1, 24, 1, "maxAurasOnNameplate")
-    maxAurasOnNameplate:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -10, -330)
+    maxAurasOnNameplate:SetPoint("LEFT", nameplateAurasXPos, "RIGHT", 30, 0)
 
     local nameplateAuraRowAmount = CreateSlider(enableNameplateAuraCustomisation, "Max auras per row", 2, 24, 1, "nameplateAuraRowAmount")
-    nameplateAuraRowAmount:SetPoint("TOP", maxAurasOnNameplate,  "BOTTOM", 0, -15)
+    nameplateAuraRowAmount:SetPoint("TOP", maxAurasOnNameplate,  "BOTTOM", 0, -17)
 
     local nameplateAuraWidthGap = CreateSlider(enableNameplateAuraCustomisation, "Horizontal gap between auras", 0, 18, 0.5, "nameplateAuraWidthGap")
-    nameplateAuraWidthGap:SetPoint("TOP", nameplateAuraRowAmount,  "BOTTOM", 0, -15)
+    nameplateAuraWidthGap:SetPoint("TOP", nameplateAuraRowAmount,  "BOTTOM", 0, -17)
 
     local nameplateAuraHeightGap = CreateSlider(enableNameplateAuraCustomisation, "Vertical gap between auras", 0, 18, 0.5, "nameplateAuraHeightGap")
-    nameplateAuraHeightGap:SetPoint("TOP", nameplateAuraWidthGap,  "BOTTOM", 0, -15)
+    nameplateAuraHeightGap:SetPoint("TOP", nameplateAuraWidthGap,  "BOTTOM", 0, -17)
 
     local defaultNpAuraCdSize = CreateSlider(showDefaultCooldownNumbersOnNpAuras, "Default CD Text Size", 0.1, 2, 0.01, "defaultNpAuraCdSize")
-    defaultNpAuraCdSize:SetPoint("TOP", nameplateAuraHeightGap,  "BOTTOM", 0, -15)
+    defaultNpAuraCdSize:SetPoint("TOP", nameplateAuraHeightGap,  "BOTTOM", 0, -17)
     CreateTooltip(defaultNpAuraCdSize, "The text size of the default Blizz CD counter.\n\nIf you use OmniCC this setting will not work.")
     showDefaultCooldownNumbersOnNpAuras:HookScript("OnClick", function(self)
         if self:GetChecked() then
@@ -5576,9 +5612,9 @@ local function guiNameplateAuras()
         end
     end)
 
-    local imintoodeep = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    imintoodeep:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -50, -220)
-    imintoodeep:SetText("will add more settings, very beta\nI'll clean this up soon Clueless.png")
+    local imintoodeep1 = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    imintoodeep1:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -95, -80)
+    imintoodeep1:SetText("Scroll down for more settings")
 
     local function TogglePanel()
         if BBP.variablesLoaded then
@@ -5897,14 +5933,14 @@ local function guiMisc()
     local changeNameplateBorderColor = CreateCheckbox("changeNameplateBorderColor", "Change Nameplate Border Color", guiMisc)
     changeNameplateBorderColor:SetPoint("TOPLEFT", anonMode, "BOTTOMLEFT", 0, -50)
 
-    local npBorderTargetColor = CreateCheckbox("npBorderTargetColor", "Target Border", guiMisc)
+    local npBorderTargetColor = CreateCheckbox("npBorderTargetColor", "Target Border", changeNameplateBorderColor)
     npBorderTargetColor:SetPoint("TOPLEFT", changeNameplateBorderColor, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
     CreateTooltip(npBorderTargetColor, "Enable to change the color of the target nameplate border")
 
-    local npBorderTargetColorRGB = CreateColorBox(guiMisc, "npBorderTargetColorRGB", "Target Border")
+    local npBorderTargetColorRGB = CreateColorBox(npBorderTargetColor, "npBorderTargetColorRGB", "Target Border")
     npBorderTargetColorRGB:SetPoint("TOPLEFT", npBorderTargetColor, "BOTTOMLEFT", 15, 0)
 
-    local npBorderNonTargetColorRGB = CreateColorBox(guiMisc, "npBorderNonTargetColorRGB", "Non-Target Border")
+    local npBorderNonTargetColorRGB = CreateColorBox(npBorderTargetColor, "npBorderNonTargetColorRGB", "Non-Target Border")
     npBorderNonTargetColorRGB:SetPoint("TOPLEFT", npBorderTargetColorRGB, "BOTTOMLEFT", 0, -2)
 
     npBorderTargetColor:HookScript("OnClick", function(self)
@@ -5917,7 +5953,7 @@ local function guiMisc()
         end
     end)
 
-    local npBorderFriendFoeColor = CreateCheckbox("npBorderFriendFoeColor", "Reaction Color Border", guiMisc)
+    local npBorderFriendFoeColor = CreateCheckbox("npBorderFriendFoeColor", "Reaction Color Border", changeNameplateBorderColor)
     npBorderFriendFoeColor:SetPoint("TOPLEFT", npBorderNonTargetColorRGB, "BOTTOMLEFT", -15, 0)
     CreateTooltip(npBorderFriendFoeColor, "Enable to change the color of nameplate borders depending on their reaction")
 
@@ -5942,7 +5978,7 @@ local function guiMisc()
         end
     end)
 
-    local npBorderClassColor = CreateCheckbox("npBorderClassColor", "Class Color Border", guiMisc)
+    local npBorderClassColor = CreateCheckbox("npBorderClassColor", "Class Color Border", changeNameplateBorderColor)
     npBorderClassColor:SetPoint("TOPLEFT", npBorderNeutralColorRGB, "BOTTOMLEFT", -15, 0)
     CreateTooltip(npBorderClassColor, "Enable to change the color of nameplate borders depending on their class")
 
@@ -5957,7 +5993,12 @@ local function guiMisc()
         end
     end)
 
-
+    changeNameplateBorderColor:HookScript("OnClick", function(self)
+        CheckAndToggleCheckboxes(changeNameplateBorderColor)
+        CheckAndToggleCheckboxes(npBorderTargetColor)
+        CheckAndToggleCheckboxes(npBorderFriendFoeColor)
+        CheckAndToggleCheckboxes(npBorderClassColor)
+    end)
 
 
     local nameplateSelfWidthResetButton = CreateFrame("Button", nil, guiMisc, "UIPanelButtonTemplate")
@@ -5967,6 +6008,40 @@ local function guiMisc()
     nameplateSelfWidthResetButton:SetScript("OnClick", function()
         BBP.ResetToDefaultWidth(nameplateSelfWidth, false)
     end)
+
+    local discordLinkEditBox = CreateFrame("EditBox", nil, guiMisc, "InputBoxTemplate")
+    discordLinkEditBox:SetPoint("TOPLEFT", settingsText, "BOTTOMLEFT", 210, -540)
+    discordLinkEditBox:SetSize(180, 20)
+    discordLinkEditBox:SetAutoFocus(false)
+    discordLinkEditBox:SetFontObject("ChatFontNormal")
+    discordLinkEditBox:SetText("https://discord.gg/cjqVaEMm25")
+    discordLinkEditBox:SetCursorPosition(0) -- Places cursor at start of the text
+    discordLinkEditBox:ClearFocus() -- Removes focus from the EditBox
+    discordLinkEditBox:SetScript("OnEscapePressed", function(self)
+        self:ClearFocus() -- Allows user to press escape to unfocus the EditBox
+    end)
+
+    -- Make the EditBox text selectable and readonly
+    discordLinkEditBox:SetScript("OnTextChanged", function(self)
+        self:SetText("https://discord.gg/cjqVaEMm25")
+    end)
+    --discordLinkEditBox:HighlightText() -- Highlights the text for easy copying
+    discordLinkEditBox:SetScript("OnCursorChanged", function() end) -- Prevents cursor changes
+    discordLinkEditBox:SetScript("OnEditFocusGained", function(self) self:HighlightText() end) -- Re-highlights text when focused
+    discordLinkEditBox:SetScript("OnMouseUp", function(self)
+        if not self:IsMouseOver() then
+            self:ClearFocus()
+        end
+    end)
+
+    local discordText = guiMisc:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    discordText:SetPoint("BOTTOM", discordLinkEditBox, "TOP", 18, 8)
+    discordText:SetText("Join the Discord for info\nand help with BBP/BBF")
+
+    local joinDiscord = guiMisc:CreateTexture(nil, "ARTWORK")
+    joinDiscord:SetAtlas("token-choice-bnet")
+    joinDiscord:SetSize(68, 68)
+    joinDiscord:SetPoint("RIGHT", discordText, "LEFT", 5, 1)
 end
 ------------------------------------------------------------
 -- GUI Setup

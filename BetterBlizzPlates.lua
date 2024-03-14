@@ -12,7 +12,7 @@ LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlate
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.4.5"
+local addonUpdates = "1.4.6"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -226,6 +226,7 @@ local defaultSettings = {
         [194117] =  { name = "Stoneskin Totem", icon = GetSpellTexture(383017),                 hideIcon = false, size = 24, duration = 15, color = {0.78, 0.49, 0.35}, important = false },
         [5923] =    { name = "Poison Cleansing Totem", icon = GetSpellTexture(383013),          hideIcon = false, size = 24, duration = 9,  color = {0.49, 0.9, 0.08}, important = false },
         [194118] =  { name = "Tranquil Air Totem", icon = GetSpellTexture(383019),              hideIcon = false, size = 24, duration = 20, color = {0, 1, 0.78}, important = false },
+        [65282] =   { name = "Void Tendril", icon = GetSpellTexture(108920),                    hideIcon = false, size = 24, duration = 6,  color = {0.33, 0.35, 1}, important = false },
     },
     -- Quest Indicator
     questIndicator = false,
@@ -309,6 +310,7 @@ local defaultSettings = {
     nameplateAuraScale = 1,
     hideDefaultPersonalNameplateAuras = false,
     defaultNpAuraCdSize = 0.5,
+    onlyPandemicAuraMine = true,
 
     personalNpBuffEnable = true,
     personalNpBuffFilterAll = false,
@@ -797,24 +799,30 @@ local function SendUpdateMessage()
             --bbp news
             --PlaySoundFile(567439) --quest complete sfx
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Features:")
-            DEFAULT_CHAT_FRAME:AddMessage("   Dark Mode for Nameplate Resource.")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Settings:")
+            DEFAULT_CHAT_FRAME:AddMessage("   - ArenaID Color Circle (Advanced Setting).")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Hide raidmarker (Advanced Setting).")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Only Pandemic Aura own auras (on by default) (Nameplate Auras).")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Toggle Friendly Nameplates on/off auto for dungeons (General).")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Added a link to Discord server for BBP/BBF addons (Misc).")
 
             DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes:")
-            DEFAULT_CHAT_FRAME:AddMessage("   Fix Totem Indicator List color edit functionality.")
-            DEFAULT_CHAT_FRAME:AddMessage("   Fix some issues with FrameSort ArenaID names")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Fix \"Center all auras\" being on by default and not being able to turn it off.")
         end)
     end
 end
 
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
-    DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Features:")
-    DEFAULT_CHAT_FRAME:AddMessage("   Dark Mode for Nameplate Resource.")
+    DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Settings:")
+    DEFAULT_CHAT_FRAME:AddMessage("   - ArenaID Color Circle (Advanced Setting).")
+    DEFAULT_CHAT_FRAME:AddMessage("   - Hide raidmarker (Advanced Setting).")
+    DEFAULT_CHAT_FRAME:AddMessage("   - Only Pandemic Aura own auras (Nameplate Auras).")
+    DEFAULT_CHAT_FRAME:AddMessage("   - Toggle Friendly Nameplates on/off auto for dungeons (General).")
+    DEFAULT_CHAT_FRAME:AddMessage("   - Added a link to Discord server for BBP/BBF addons (Misc).")
 
     DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes:")
-    DEFAULT_CHAT_FRAME:AddMessage("   Fix Totem Indicator List color edit functionality.")
-    DEFAULT_CHAT_FRAME:AddMessage("   Fix some issues with FrameSort ArenaID names")
+    DEFAULT_CHAT_FRAME:AddMessage("   - Fix \"Center all auras\" being on by default and not being able to turn it off.")
 
     DEFAULT_CHAT_FRAME:AddMessage("|A:GarrisonTroops-Health:16:16|a Patreon link: www.patreon.com/bodydev")
 end
@@ -1107,26 +1115,62 @@ end
 --#################################################################################################
 -- Friendly nameplates on only in arena toggle automatically
 -- Event listening for Nameplates on in arena only
+local toggleEventsRegistered = false
+local inCombatEventRegistered = false
+
+local friendlyNameplatesOnOffFrame = CreateFrame("Frame")
+
+local function IsInArenaOrDungeon()
+    local instanceType = select(2, IsInInstance())
+    local isInArena = instanceType == "arena" and BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena
+    local isInDungeon = (instanceType == "party" or instanceType == "raid" or instanceType == "scenario") and BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons
+    return isInArena or isInDungeon
+end
+
+local function ApplyCVarChange()
+    local shouldShow = IsInArenaOrDungeon() and "1" or "0"
+    if GetCVar("nameplateShowFriends") ~= shouldShow then
+        SetCVar("nameplateShowFriends", shouldShow)
+    end
+    if inCombatEventRegistered then
+        friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_REGEN_ENABLED")
+        inCombatEventRegistered = false
+    end
+end
+
 local function ToggleFriendlyPlates()
-    if BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena then
-        if not InCombatLockdown() then
-            if IsActiveBattlefieldArena() then
-                SetCVar("nameplateShowFriends", 1)
-            else
-                SetCVar("nameplateShowFriends", 0)
-            end
-        else
-            C_Timer.After(0.5, function()
-                ToggleFriendlyPlates()
-            end)
+    if BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena or BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons then
+        if InCombatLockdown() and not inCombatEventRegistered then
+            friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+            inCombatEventRegistered = true
+        elseif not InCombatLockdown() then
+            ApplyCVarChange()
         end
     end
 end
 
-local friendlyNameplatesOnOffFrame = CreateFrame("Frame")
 friendlyNameplatesOnOffFrame:SetScript("OnEvent", function(self, event, ...)
-    ToggleFriendlyPlates()
+    if event == "PLAYER_REGEN_ENABLED" then
+        ApplyCVarChange()
+    else
+        ToggleFriendlyPlates()
+    end
 end)
+
+function BBP.ToggleFriendlyNameplatesAuto()
+    if (BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena or BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons) and not toggleEventsRegistered then
+        friendlyNameplatesOnOffFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+        friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+        friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_ENTERING_BATTLEGROUND")
+        toggleEventsRegistered = true
+    elseif toggleEventsRegistered then
+        friendlyNameplatesOnOffFrame:UnregisterEvent("ZONE_CHANGED_NEW_AREA")
+        friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_ENTERING_WORLD")
+        friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_ENTERING_BATTLEGROUND")
+        toggleEventsRegistered = false
+    end
+    ToggleFriendlyPlates()
+end
 
 --#################################################################################################
 -- Set CVars that keep changing
@@ -1174,26 +1218,6 @@ local function SetCVarsOnLogin()
         end
 
         ToggleFriendlyPlates()
-    end
-end
-
--- Toggle event listening on/off
-function BBP.ToggleFriendlyNameplatesInArena()
-    if BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena then
-        friendlyNameplatesOnOffFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-        friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-        friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_ENTERING_BATTLEGROUND")
-    else
-        friendlyNameplatesOnOffFrame:UnregisterEvent("ZONE_CHANGED_NEW_AREA")
-        friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_ENTERING_WORLD")
-        friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_ENTERING_BATTLEGROUND")
-    end
-    if not InCombatLockdown() then
-        if IsActiveBattlefieldArena() then
-            SetCVar("nameplateShowFriends", 1)
-        else
-            SetCVar("nameplateShowFriends", 0)
-        end
     end
 end
 
@@ -2131,6 +2155,13 @@ function BBP.ApplyRaidmarkerChanges(frame)
     end
 end
 
+function BBP.HideRaidmarker(frame)
+    if not frame then return end
+    if not frame or frame:IsForbidden() then return end
+
+    frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(0)
+end
+
 -- Change raidmarker
 function BBP.ChangeRaidmarker()
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
@@ -2327,6 +2358,10 @@ local function HandleNamePlateRemoved(unit)
     if frame.friendIndicator then
         frame.friendIndicator:Hide()
     end
+
+    if frame.arenaNumberCircle then
+        frame.arenaNumberCircle:Hide()
+    end
 end
 
 --#################################################################################################
@@ -2356,6 +2391,7 @@ local function HandleNamePlateAdded(unit)
     local enemyHealthBarColor = BetterBlizzPlatesDB.enemyHealthBarColor
     local petIndicator = BetterBlizzPlatesDB.petIndicator or BetterBlizzPlatesDB.petIndicatorTestMode
     local raidIndicator = BetterBlizzPlatesDB.raidmarkIndicator
+    local hideRaidmarkIndicator = BetterBlizzPlatesDB.hideRaidmarkIndicator
     local healerIndicator = BetterBlizzPlatesDB.healerIndicatorTestMode or BetterBlizzPlatesDB.healerIndicator
     local combatIndicator = BetterBlizzPlatesDB.combatIndicator
     local customTextureForBar = BetterBlizzPlatesDB.useCustomTextureForBars
@@ -2588,6 +2624,10 @@ local function HandleNamePlateAdded(unit)
     -- Handle raid marker changes
     if raidIndicator then
         BBP.ApplyRaidmarkerChanges(frame)
+    end
+
+    if hideRaidmarkIndicator then
+        BBP.HideRaidmarker(frame)
     end
 
     -- Healer icon
@@ -2834,6 +2874,10 @@ function BBP.RefreshAllNameplates()
 
         if BetterBlizzPlatesDB.targetIndicator then
             BBP.TargetIndicator(frame)
+        end
+
+        if not BetterBlizzPlatesDB.hideRaidmarkIndicator then
+            frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
         end
     end
 end
@@ -3178,7 +3222,7 @@ local function TurnOnEnabledFeaturesOnLogin()
 
     BBP.ToggleSpellCastEventRegistration()
     BBP.ApplyNameplateWidth()
-    BBP.ToggleFriendlyNameplatesInArena()
+    BBP.ToggleFriendlyNameplatesAuto()
     BBP.ToggleAbsorbIndicator()
     BBP.ToggleCombatIndicator()
     BBP.ToggleExecuteIndicator()

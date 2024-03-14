@@ -260,6 +260,7 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local function LayoutAuras(auras, startRow)
         local currentRow = startRow
         local horizontalOffset = 0
+        local firstRowOffset = nil
 
         for index, buff in ipairs(auras) do
             local buffWidth, buffHeight = buff:GetSize()
@@ -271,10 +272,20 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
             if index % maxBuffsPerRow == 1 then
                 local rowIndex = math.floor((index - 1) / maxBuffsPerRow) + 1
 
-                if (BetterBlizzPlatesDB.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit) or (BetterBlizzPlatesDB.nameplateAurasEnemyCenteredAnchor and isEnemyUnit) then
-                    horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2
+                if rowIndex == 1 or BetterBlizzPlatesDB.nameplateCenterAllRows then
+                    -- Center the first row or all rows based on configuration
+                    if (BetterBlizzPlatesDB.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit) or 
+                       (BetterBlizzPlatesDB.nameplateAurasEnemyCenteredAnchor and isEnemyUnit) or
+                       BetterBlizzPlatesDB.nameplateCenterAllRows then
+                        horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2
+                    end
                 else
-                    horizontalOffset = 0  -- or any other default starting offset
+                    -- Align subsequent rows to match the first aura of the first row
+                    horizontalOffset = firstRowOffset or 0
+                end
+
+                if index == 1 then
+                    firstRowOffset = horizontalOffset -- Remember the start of the first aura for alignment
                 end
 
                 if index > 1 then
@@ -286,11 +297,7 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
             buff:ClearAllPoints()
             local verticalOffset = -currentRow * (maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
 
-            if (BetterBlizzPlatesDB.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit) or (BetterBlizzPlatesDB.nameplateAurasEnemyCenteredAnchor and isEnemyUnit) then
-                buff:SetPoint("BOTTOM", container, "TOP", horizontalOffset - healthBarWidth / 2 + 10 + BetterBlizzPlatesDB.nameplateAurasXPos, verticalOffset - 13)
-            else
-                buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", horizontalOffset + BetterBlizzPlatesDB.nameplateAurasXPos, verticalOffset - 13)
-            end
+            buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", horizontalOffset + BetterBlizzPlatesDB.nameplateAurasXPos, verticalOffset - 13)
             horizontalOffset = horizontalOffset + buffWidth + horizontalSpacing
         end
 
@@ -559,6 +566,11 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterBlizzard = BetterBlizzPlatesDB["personalNpBuffFilterBlizzard"] and BlizzardShouldShow
             local filterWatchlist = BetterBlizzPlatesDB["personalNpBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
+
+            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and (caster ~= "player" and caster ~= "pet") then
+                isPandemic = false
+            end
+
             if filterAll or filterBlizzard or filterWatchlist or isImportant or isPandemic then
                 if isInBlacklist(spellName, spellId) then return end
                 if filterBlizzard then return true, isImportant, isPandemic end
@@ -572,6 +584,11 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterAll = filterAllOverride or BetterBlizzPlatesDB["personalNpdeBuffFilterAll"]
             local filterWatchlist = BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["personalNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
+
+            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and (caster ~= "player" and caster ~= "pet") then
+                isPandemic = false
+            end
+
             if filterAll or filterWatchlist or isImportant or isPandemic then
                 if filterLessMinite then return end
                 if isInBlacklist(spellName, spellId) then return end
@@ -588,6 +605,11 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterWatchlist = BetterBlizzPlatesDB["friendlyNpBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpBuffFilterOnlyMe"] and (caster ~= "player" and caster ~= "pet")
+
+            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and (caster ~= "player" and caster ~= "pet") then
+                isPandemic = false
+            end
+
             if filterAll or filterWatchlist or isImportant or isPandemic then
                 if filterLessMinite or filterOnlyMe then return end
                 if isInBlacklist(spellName, spellId) then return end
@@ -602,6 +624,11 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterWatchlist = BetterBlizzPlatesDB["friendlyNpdeBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpdeBuffFilterOnlyMe"] and (caster ~= "player" and caster ~= "pet")
+
+            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and (caster ~= "player" and caster ~= "pet") then
+                isPandemic = false
+            end
+
             if filterAll or filterWatchlist or filterBlizzard or isImportant or isPandemic then
                 if isInBlacklist(spellName, spellId) then return end
                 if filterBlizzard then return true, isImportant, isPandemic end
@@ -619,6 +646,11 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterWatchlist = BetterBlizzPlatesDB["otherNpBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             local filterPurgeable = BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] and isPurgeable
+
+            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and (caster ~= "player" and caster ~= "pet") then
+                isPandemic = false
+            end
+
             if filterAll or filterWatchlist or filterPurgeable or isImportant or isPandemic then
                 if filterLessMinite then return end
                 if isInBlacklist(spellName, spellId) then return end
@@ -633,6 +665,12 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterWatchlist = BetterBlizzPlatesDB["otherNpdeBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
             local filterOnlyMe = BetterBlizzPlatesDB["otherNpdeBuffFilterOnlyMe"] and (caster ~= "player" and caster ~= "pet")
+
+            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and (caster ~= "player" and caster ~= "pet") then
+                isPandemic = false
+            end
+
+
             if filterAll or filterWatchlist or filterBlizzard or isImportant or isPandemic then
                 if isInBlacklist(spellName, spellId) then return end
                 if filterBlizzard then return true, isImportant, isPandemic end
