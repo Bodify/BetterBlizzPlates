@@ -535,7 +535,7 @@ function BBP.PartyIndicator1(frame)
                         displayNumber = i - 1
                     end
                     frame.name:SetText("")
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
                     frame.arenaNumberText:SetText(displayNumber)
                     frame.arenaNumberText:SetTextColor(r, g, b, a)
                     frame.arenaNumberText:SetScale(partyIDScale)
@@ -555,7 +555,7 @@ function BBP.PartyIndicator1(frame)
                 end
 
                 frame.name:SetText("")
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
                 frame.arenaNumberText:SetText(i)
                 frame.arenaNumberText:SetTextColor(r, g, b, a)
                 frame.arenaNumberText:SetScale(partyIDScale)
@@ -594,7 +594,7 @@ function BBP.PartyIndicator2(frame)
                     frame.arenaNumberText:SetText(displayNumber)
                     frame.arenaNumberText:SetTextColor(r, g, b, a)
                     frame.arenaNumberText:SetScale(partyIDScale)
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
                     break
                 end
             end
@@ -613,7 +613,7 @@ function BBP.PartyIndicator2(frame)
                 frame.arenaNumberText:SetText(i)
                 frame.arenaNumberText:SetTextColor(r, g, b, a)
                 frame.arenaNumberText:SetScale(partyIDScale)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
                 break
             end
         end
@@ -767,7 +767,7 @@ function BBP.PartyIndicator4(frame)
                     frame.arenaNumberText:SetText(displayNumber)
                     frame.arenaNumberText:SetTextColor(r, g, b, a)
                     frame.arenaNumberText:SetScale(partyIDScale)
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos - 1)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos, arenaIdYPos - 1)
                     break
                 end
             end
@@ -813,7 +813,7 @@ function BBP.PartyIndicator4(frame)
                 frame.arenaNumberText:SetText(i)
                 frame.arenaNumberText:SetTextColor(r, g, b, a)
                 frame.arenaNumberText:SetScale(partyIDScale)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos - 1)
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos, arenaIdYPos - 1)
                 break
             end
         end
