@@ -12,7 +12,7 @@ LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlate
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.4.6"
+local addonUpdates = "1.4.7"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -317,6 +317,7 @@ local defaultSettings = {
     personalNpBuffFilterBlizzard = true,
     personalNpBuffFilterWatchList = true,
     personalNpBuffFilterLessMinite = false,
+    personalNpBuffFilterOnlyMe = false,
 
     personalNpdeBuffEnable = false,
     personalNpdeBuffFilterAll = false,
@@ -354,6 +355,13 @@ local defaultSettings = {
     friendlyNpdeBuffFilterWatchList = false,
     friendlyNpdeBuffFilterLessMinite = false,
     friendlyNpdeBuffFilterOnlyMe = false,
+
+    personalNpBuffFilterBlacklist = true,
+    personalNpdeBuffFilterBlacklist = true,
+    friendlyNpBuffFilterBlacklist = true,
+    friendlyNpdeBuffFilterBlacklist = true,
+    otherNpBuffFilterBlacklist = true,
+    otherNpdeBuffFilterBlacklist = true,
 
     testAllEnabledFeatures = false,
 
@@ -620,15 +628,17 @@ function BBP.CVarsAreSaved()
 end
 
 local function ResetNameplates()
-    BetterBlizzPlatesDB.nameplateEnemyWidth, BetterBlizzPlatesDB.nameplateEnemyHeight = 110, 45
-    BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = 110, 45
-    BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight = 110, 45
+    local big = GetCVar("NamePlateHorizontalScale") == "1.4"
+    BetterBlizzPlatesDB.nameplateEnemyWidth, BetterBlizzPlatesDB.nameplateEnemyHeight = big and 154 or 110, big and 64.125 or 45
+    BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = big and 154 or 110, big and 64.125 or 45
+    BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight = big and 154 or 110, big and 64.125 or 45
 
     BetterBlizzPlatesDB.nameplateOverlapH = 0.8
     BetterBlizzPlatesDB.nameplateOverlapV = 1.1
+    BetterBlizzPlatesDB.nameplateMotion = 0
     BetterBlizzPlatesDB.nameplateMotionSpeed = 0.025
-    BetterBlizzPlatesDB.nameplateHorizontalScale = 1
-    BetterBlizzPlatesDB.NamePlateVerticalScale = 1
+    BetterBlizzPlatesDB.nameplateHorizontalScale = big and 1.4 or 1
+    BetterBlizzPlatesDB.NamePlateVerticalScale = big and 2.7 or 1
     BetterBlizzPlatesDB.nameplateMinScale = 0.8
     BetterBlizzPlatesDB.nameplateMaxScale = 1
     BetterBlizzPlatesDB.nameplateSelectedScale = 1.2
@@ -655,18 +665,13 @@ local function ResetNameplates()
     BetterBlizzPlatesDB.nameplateShowFriendlyPets = 0
     BetterBlizzPlatesDB.nameplateShowFriendlyTotems = 0
 
-    if GetCVar("NamePlateHorizontalScale") == "1.4" then
-        BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
-        BetterBlizzPlatesDB.castBarHeight = 18.8
-        BetterBlizzPlatesDB.largeNameplates = true
-    else
-        BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 4
-        BetterBlizzPlatesDB.castBarHeight = 8
-        BetterBlizzPlatesDB.largeNameplates = false
-    end
+    BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = big and 10.8 or 4
+    BetterBlizzPlatesDB.castBarHeight = big and 18.8 or 8
+    BetterBlizzPlatesDB.largeNameplates = big and true or false
 
     SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
     SetCVar("nameplateOverlapV", BetterBlizzPlatesDB.nameplateOverlapV)
+    SetCVar("nameplateMotion", BetterBlizzPlatesDB.nameplateMotion)
     SetCVar("nameplateMotionSpeed", BetterBlizzPlatesDB.nameplateMotionSpeed)
     SetCVar("nameplateHorizontalScale", BetterBlizzPlatesDB.nameplateHorizontalScale)
     SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
@@ -800,14 +805,13 @@ local function SendUpdateMessage()
             --PlaySoundFile(567439) --quest complete sfx
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
             DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Settings:")
-            DEFAULT_CHAT_FRAME:AddMessage("   - ArenaID Color Circle (Advanced Setting).")
-            DEFAULT_CHAT_FRAME:AddMessage("   - Hide raidmarker (Advanced Setting).")
-            DEFAULT_CHAT_FRAME:AddMessage("   - Only Pandemic Aura own auras (on by default) (Nameplate Auras).")
-            DEFAULT_CHAT_FRAME:AddMessage("   - Toggle Friendly Nameplates on/off auto for dungeons (General).")
-            DEFAULT_CHAT_FRAME:AddMessage("   - Added a link to Discord server for BBP/BBF addons (Misc).")
+            DEFAULT_CHAT_FRAME:AddMessage("   - I changed up how nameplate aura filters work. I removed the \"All\" filter as a part of this.")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Anchor Nameplate Combopoints to bottom of healthbar/castbar (Blizzard CVar's).")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Hide nameplate auras on NPC's (Nameplate Auras).")
 
             DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes:")
-            DEFAULT_CHAT_FRAME:AddMessage("   - Fix \"Center all auras\" being on by default and not being able to turn it off.")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Fix \"Castbar Quick Hide\" setting.")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Fixed the \"Center auras\" fix... They should now work properly.")
         end)
     end
 end
@@ -815,14 +819,13 @@ end
 local function NewsUpdateMessage()
     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates news:")
     DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Settings:")
-    DEFAULT_CHAT_FRAME:AddMessage("   - ArenaID Color Circle (Advanced Setting).")
-    DEFAULT_CHAT_FRAME:AddMessage("   - Hide raidmarker (Advanced Setting).")
-    DEFAULT_CHAT_FRAME:AddMessage("   - Only Pandemic Aura own auras (Nameplate Auras).")
-    DEFAULT_CHAT_FRAME:AddMessage("   - Toggle Friendly Nameplates on/off auto for dungeons (General).")
-    DEFAULT_CHAT_FRAME:AddMessage("   - Added a link to Discord server for BBP/BBF addons (Misc).")
+    DEFAULT_CHAT_FRAME:AddMessage("   - I changed up how nameplate aura filters work. I removed the \"All\" filter as a part of this.")
+    DEFAULT_CHAT_FRAME:AddMessage("   - Anchor Nameplate Combopoints to bottom of healthbar/castbar (Blizzard CVar's).")
+    DEFAULT_CHAT_FRAME:AddMessage("   - Hide nameplate auras on NPC's (Nameplate Auras).")
 
     DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes:")
-    DEFAULT_CHAT_FRAME:AddMessage("   - Fix \"Center all auras\" being on by default and not being able to turn it off.")
+    DEFAULT_CHAT_FRAME:AddMessage("   - Fix \"Castbar Quick Hide\" setting.")
+    DEFAULT_CHAT_FRAME:AddMessage("   - Fixed the \"Center auras\" fix... They should now work properly.")
 
     DEFAULT_CHAT_FRAME:AddMessage("|A:GarrisonTroops-Health:16:16|a Patreon link: www.patreon.com/bodydev")
 end
@@ -1222,21 +1225,37 @@ local function SetCVarsOnLogin()
 end
 
 --#################################################################################################
-function BBP.HideOrShowNameplateAurasAndTargetHighlight(frame)
-    local hideNameplateAuras = BetterBlizzPlatesDB.hideNameplateAuras
-    local hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
-    -- Handle Buff Frame's alpha
-    if hideNameplateAuras then
-        frame.BuffFrame:SetAlpha(0)
-    else
-        frame.BuffFrame:SetAlpha(1)
-    end
+function BBP.ToggleNameplateAuras(frame)
+    local db = BetterBlizzPlatesDB
+    if not db.nameplateAuraPlayersOnly then return end
+    if not frame then return end
 
-    if hideTargetHighlight then
-        frame.selectionHighlight:SetAlpha(0)
-    else
-        frame.selectionHighlight:SetAlpha(0.22)
+    local isTarget = UnitIsUnit(frame.unit, "target")
+    local isPlayer = UnitIsPlayer(frame.unit)
+    local shouldShowAuras = isPlayer or (db.nameplateAuraPlayersOnlyShowTarget and isTarget)
+
+    frame.BuffFrame:SetAlpha(shouldShowAuras and 1 or 0)
+end
+
+--#################################################################################################
+function BBP.HideOrShowNameplateAurasAndTargetHighlight(frame)
+    local db = BetterBlizzPlatesDB
+
+    -- Decide the alpha for BuffFrame
+    local buffFrameAlpha = 1
+    if db.hideNameplateAuras then
+        buffFrameAlpha = 0
+    elseif db.nameplateAuraPlayersOnly then
+        if db.nameplateAuraPlayersOnlyShowTarget and UnitIsUnit(frame.unit, "target") then
+            buffFrameAlpha = 1
+        else
+            buffFrameAlpha = UnitIsPlayer(frame.unit) and 1 or 0
+        end
     end
+    frame.BuffFrame:SetAlpha(buffFrameAlpha)
+
+    -- Set alpha for selectionHighlight based on hideTargetHighlight
+    frame.selectionHighlight:SetAlpha(db.hideTargetHighlight and 0 or 0.22)
 end
 
 --#################################################################################################
@@ -2220,6 +2239,11 @@ function BBP.RunAuraModule()
             BBP.On_Np_Add(unit)
         elseif event == "UNIT_AURA" then
             local unit, unitAuraUpdateInfo = ...
+            -- if unitAuraUpdateInfo then
+            --     for key, _ in pairs(unitAuraUpdateInfo) do
+            --         print("Key:", key)
+            --     end
+            -- end
             if string.match(unit, "nameplate") then 
                 local npbase = C_NamePlate.GetNamePlateForUnit(unit, false)
                 if npbase then
@@ -2402,6 +2426,7 @@ local function HandleNamePlateAdded(unit)
     local friendIndicator = BetterBlizzPlatesDB.friendIndicator
     local changeNameplateBorderColor = BetterBlizzPlatesDB.changeNameplateBorderColor
     --local hideResourceOnFriend = BetterBlizzPlatesDB.hideResourceOnFriend
+    local nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
 
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
@@ -2416,6 +2441,17 @@ local function HandleNamePlateAdded(unit)
 
     if customAuraOn and auraModuleIsOn then
         BBP.HidePersonalBuffFrame()
+    end
+
+    if nameplateResourceUnderCastbar then
+        if not frame.castBar.hideHooked then
+            hooksecurefunc(frame.castBar, "Hide", function(self)
+                if UnitIsUnit(frame.unit, "target") then
+                    BBP.UpdateNamplateResourcePositionForCasting(nameplate, true)
+                end
+            end)
+            frame.castBar.hideHooked = true
+        end
     end
 
     if changeNameplateBorderColor then
@@ -3167,6 +3203,53 @@ Frame:SetScript("OnEvent", function(...)
     HideHealthbarInPvEMagic()
 end)
 
+local nameToggleFrame
+local function UpdateCVarBasedOnPvE()
+    if isInPvEContent then
+        SetCVar("UnitNameFriendlyPlayerName", 0)
+    else
+        SetCVar("UnitNameFriendlyPlayerName", 1)
+    end
+end
+local function CheckAndUpdateForPVE()
+    UpdateInstanceStatus() -- Updates the 'isInPvEContent' variable.
+    if InCombatLockdown() then
+        -- In combat, set a flag to wait for combat to end
+        nameToggleFrame.waitingForCombatToEnd = true
+    else
+        -- Not in combat, safe to update CVar
+        UpdateCVarBasedOnPvE()
+    end
+end
+local function OnEvent(self, event, ...)
+    if event == "PLAYER_REGEN_ENABLED" then
+        if self.waitingForCombatToEnd then
+            -- Player left combat, update for PvE
+            UpdateCVarBasedOnPvE()
+            -- Clear the flag and unregister the event to avoid repetition
+            self.waitingForCombatToEnd = false
+            self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+        end
+    elseif event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
+        CheckAndUpdateForPVE()
+    end
+end
+function BBP.ToggleNamesOffDuringPvE()
+    if BetterBlizzPlatesDB.toggleNamesOffDuringPVE and not nameToggleFrame then
+        -- Create and setup the frame if it doesn't exist
+        nameToggleFrame = CreateFrame("Frame")
+        nameToggleFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+        nameToggleFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+        nameToggleFrame:SetScript("OnEvent", OnEvent)
+        nameToggleFrame.waitingForCombatToEnd = false -- Initialize the flag
+    end
+
+    if nameToggleFrame and not nameToggleFrame:IsEventRegistered("PLAYER_REGEN_ENABLED") and InCombatLockdown() then
+        -- Register the combat end event only if it's not already registered and we're in combat
+        nameToggleFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+    end
+end
+
 local nameplateWidthOnEnterWorld = CreateFrame("Frame")
 nameplateWidthOnEnterWorld:RegisterEvent("PLAYER_ENTERING_WORLD")
 nameplateWidthOnEnterWorld:SetScript("OnEvent", function()
@@ -3228,6 +3311,8 @@ local function TurnOnEnabledFeaturesOnLogin()
     BBP.ToggleExecuteIndicator()
     BBP.ToggleTargetIndicator()
     BBP.ToggleFocusTargetIndicator()
+    BBP:RegisterTargetCastingEvents()
+    BBP.ToggleNamesOffDuringPvE()
 end
 
 -- Event registration for PLAYER_LOGIN
@@ -3554,15 +3639,3 @@ function BBP.cancelTimers()
     end
     temporaryNpCastTest:UnregisterEvent("NAME_PLATE_UNIT_ADDED")
 end
-
--- hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
---     if not frame.unit or not frame.unit:find("nameplate") then return end
-
---     if UnitIsUnit(frame.unit, "target") then
---         frame.healthBar.border:SetVertexColor(1,0,0)
---         print("target")
---     else
---         frame.healthBar.border:SetVertexColor(0,1,0)
---         print("not")
---     end
--- end)

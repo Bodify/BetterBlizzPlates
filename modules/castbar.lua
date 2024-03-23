@@ -674,16 +674,26 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
 
                         local castbarQuickHide = BetterBlizzPlatesDB.castbarQuickHide
                         if castbarQuickHide then
+                            local nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceOnTarget and BetterBlizzPlatesDB.nameplateResourceUnderCastbar
                             npbase.UnitFrame.castBar:Show()
-                            npbase.UnitFrame.castBar:PlayFadeAnim()
+
+                            if nameplateResourceUnderCastbar then
+                                BBP.UpdateNamplateResourcePositionForCasting(npbase)
+                            end
+
+                            C_Timer.After(0.5, function()
+                                if not UnitCastingInfo(destUnit) and not UnitChannelInfo(destUnit) then
+                                    if npbase.UnitFrame.castBar then
+                                        npbase.UnitFrame.castBar:PlayFadeAnim()
+                                    end
+                                end
+                            end)
                         end
                     end
                 end
             end
         end
-    elseif event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_SUCCEEDED" or
-       event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_INTERRUPTED" or
-       event == "UNIT_SPELLCAST_EMPOWER_STOP" then
+    elseif event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_INTERRUPTED" or event == "UNIT_SPELLCAST_EMPOWER_STOP" then
         local nameplate = BBP.GetNameplate(unitID)
         if not nameplate then return end
 
@@ -712,9 +722,35 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
             end
         end
         if castbarQuickHide then
-            if not event == "UNIT_SPELLCAST_SUCCEEDED" then
-                if nameplate.UnitFrame.castBar then
-                    nameplate.UnitFrame.castBar:Hide()
+            local nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
+            if nameplate.UnitFrame.castBar then
+                nameplate.UnitFrame.castBar:Hide()
+            end
+        end
+    elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
+        local nameplate = BBP.GetNameplate(unitID)
+        if not nameplate then return end
+
+        local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
+        local showNameplateCastbarTimer = BetterBlizzPlatesDB.showNameplateCastbarTimer
+        local showNameplateTargetText = BetterBlizzPlatesDB.showNameplateTargetText
+
+        if showNameplateTargetText then
+            BBP.UpdateNameplateTargetText(nameplate, unitID)
+        end
+        if showNameplateCastbarTimer then
+            BBP.UpdateCastTimer(nameplate, unitID)
+        end
+        if enableCastbarCustomization then
+            ResetCastbarAfterFadeout(nameplate, unitID)
+            if event =="UNIT_SPELLCAST_INTERRUPTED" then
+                local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
+                local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
+                if nameplate.UnitFrame.castBar and (castBarRecolor or useCustomCastbarTexture) then
+                    nameplate.UnitFrame.castBar:SetStatusBarColor(1,0,0)
+                end
+                if BetterBlizzPlatesDB.castBarInterruptHighlighter then
+                    nameplate.UnitFrame.castBar:SetStatusBarColor(1,1,1)
                 end
             end
         end

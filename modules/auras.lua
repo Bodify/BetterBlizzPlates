@@ -132,10 +132,11 @@ local function GetAuraDetails(spellName, spellId)
             local isImportant = entry.flags and entry.flags.important or false
             local isPandemic = entry.flags and entry.flags.pandemic or false
             local auraColor = entry.entryColors and entry.entryColors.text or nil
-            return true, isImportant, isPandemic, auraColor
+            local onlyMine = entry.flags and entry.flags.onlyMine or false
+            return true, isImportant, isPandemic, auraColor, onlyMine
         end
     end
-    return false, false, false, false
+    return false, false, false, false, false
 end
 
 local trackedBuffs = {};
@@ -260,7 +261,11 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local function LayoutAuras(auras, startRow)
         local currentRow = startRow
         local horizontalOffset = 0
-        local firstRowOffset = nil
+        local firstRowFirstAuraOffset = nil  -- Variable to store the horizontal offset of the first aura in the first row
+        local nameplateAurasFriendlyCenteredAnchor = BetterBlizzPlatesDB.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit
+        local nameplateAurasEnemyCenteredAnchor = BetterBlizzPlatesDB.nameplateAurasEnemyCenteredAnchor and isEnemyUnit
+        local nameplateCenterAllRows = BetterBlizzPlatesDB.nameplateCenterAllRows and (nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor)
+        local xPos = BetterBlizzPlatesDB.nameplateAurasXPos
 
         for index, buff in ipairs(auras) do
             local buffWidth, buffHeight = buff:GetSize()
@@ -272,20 +277,17 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
             if index % maxBuffsPerRow == 1 then
                 local rowIndex = math.floor((index - 1) / maxBuffsPerRow) + 1
 
-                if rowIndex == 1 or BetterBlizzPlatesDB.nameplateCenterAllRows then
-                    -- Center the first row or all rows based on configuration
-                    if (BetterBlizzPlatesDB.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit) or 
-                       (BetterBlizzPlatesDB.nameplateAurasEnemyCenteredAnchor and isEnemyUnit) or
-                       BetterBlizzPlatesDB.nameplateCenterAllRows then
+                if nameplateCenterAllRows then
+                    horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2
+                elseif nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
+                    if rowIndex == 1 then
                         horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2
+                        firstRowFirstAuraOffset = horizontalOffset  -- Save this offset for the first aura
+                    else
+                        horizontalOffset = firstRowFirstAuraOffset or 0  -- Use the saved offset for the first aura of subsequent rows
                     end
                 else
-                    -- Align subsequent rows to match the first aura of the first row
-                    horizontalOffset = firstRowOffset or 0
-                end
-
-                if index == 1 then
-                    firstRowOffset = horizontalOffset -- Remember the start of the first aura for alignment
+                    horizontalOffset = 0  -- or any other default starting offset
                 end
 
                 if index > 1 then
@@ -297,7 +299,11 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
             buff:ClearAllPoints()
             local verticalOffset = -currentRow * (maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
 
-            buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", horizontalOffset + BetterBlizzPlatesDB.nameplateAurasXPos, verticalOffset - 13)
+            if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
+                buff:SetPoint("BOTTOM", container, "TOP", horizontalOffset - healthBarWidth / 2 + 10 + xPos, verticalOffset - 13)
+            else
+                buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", horizontalOffset + xPos, verticalOffset - 13)
+            end
             horizontalOffset = horizontalOffset + buffWidth + horizontalSpacing
         end
 
@@ -322,14 +328,8 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
     -- Calculate total children height
     totalChildrenHeight = (lastRow + 1) * (maxRowHeight + verticalSpacing)
 
-    return totalChildrenWidth, totalChildrenHeight, hasExpandableChild -- Adjust 'hasExpandableChild' as needed
+    return totalChildrenWidth, totalChildrenHeight, hasExpandableChild
 end
-
-
-
-
-
-
 
 local auraSizeChanged = false
 local function SetAuraDimensions(buff)
@@ -554,6 +554,8 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
     local caster = aura.sourceUnit
     local isPurgeable = aura.isStealable
     local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
+    local castByPlayer = (caster == "player" or caster == "pet")
+    local lessThanOneMin = (duration < 61 and duration ~= 0 and expirationTime ~= 0)
 
     local filterAllOverride = BetterBlizzPlatesDB.nameplateAuraTestMode or nil
 
@@ -561,122 +563,173 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
     if UnitIsUnit(unit, "player") then
         -- Buffs
         if BetterBlizzPlatesDB["personalNpBuffEnable"] and aura.isHelpful then
-            local isInWhitelist, isImportant, isPandemic = GetAuraDetails(spellName, spellId)
-            local filterAll = filterAllOverride or BetterBlizzPlatesDB["personalNpBuffFilterAll"]
+            local isInBlacklist = BetterBlizzPlatesDB["personalNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
+            if isInBlacklist then return end
+
+            local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
+
             local filterBlizzard = BetterBlizzPlatesDB["personalNpBuffFilterBlizzard"] and BlizzardShouldShow
             local filterWatchlist = BetterBlizzPlatesDB["personalNpBuffFilterWatchList"] and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
+            local filterLessMinite = BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
+            local filterOnlyMe = BetterBlizzPlatesDB["personalNpBuffFilterOnlyMe"] and castByPlayer
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and (caster ~= "player" and caster ~= "pet") then
+            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
                 isPandemic = false
             end
 
-            if filterAll or filterBlizzard or filterWatchlist or isImportant or isPandemic then
-                if isInBlacklist(spellName, spellId) then return end
-                if filterBlizzard then return true, isImportant, isPandemic end
-                if filterLessMinite then return end
+            -- Shorter than 60 override
+            if filterOnlyMe and BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] and not isInWhitelist then
+                if lessThanOneMin then
+                    return true, isImportant, isPandemic
+                else
+                    return false
+                end
+            end
+
+            if filterBlizzard or filterLessMinite or filterWatchlist or filterAllOverride or isImportant or isPandemic then
+                if not castByPlayer and onlyMine then return false end
                 return true, isImportant, isPandemic
             end
+            if not BetterBlizzPlatesDB["personalNpBuffFilterBlizzard"] and not BetterBlizzPlatesDB["personalNpBuffFilterWatchList"] and not BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] then return true end
         end
         -- Debuffs
         if BetterBlizzPlatesDB["personalNpdeBuffEnable"] and aura.isHarmful then
-            local isInWhitelist, isImportant, isPandemic = GetAuraDetails(spellName, spellId)
-            local filterAll = filterAllOverride or BetterBlizzPlatesDB["personalNpdeBuffFilterAll"]
-            local filterWatchlist = BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"] and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["personalNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
+            local isInBlacklist = BetterBlizzPlatesDB["personalNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
+            if isInBlacklist then return end
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and (caster ~= "player" and caster ~= "pet") then
+            local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
+
+            local filterWatchlist = BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"] and isInWhitelist
+            local filterLessMinite = BetterBlizzPlatesDB["personalNpdeBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
+
+            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
                 isPandemic = false
             end
 
-            if filterAll or filterWatchlist or isImportant or isPandemic then
-                if filterLessMinite then return end
-                if isInBlacklist(spellName, spellId) then return end
+            if filterLessMinite or filterWatchlist or isImportant or isPandemic then
+                if not castByPlayer and onlyMine then return false end
                 return true, isImportant, isPandemic
             end
+            if not BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"] and not BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"] then return true end
         end
 
     -- FRIENDLY
     elseif isFriend then
         -- Buffs
         if BetterBlizzPlatesDB["friendlyNpBuffEnable"] and aura.isHelpful then
-            local isInWhitelist, isImportant, isPandemic = GetAuraDetails(spellName, spellId)
-            local filterAll = filterAllOverride or BetterBlizzPlatesDB["friendlyNpBuffFilterAll"]
-            local filterWatchlist = BetterBlizzPlatesDB["friendlyNpBuffFilterWatchList"] and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
-            local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpBuffFilterOnlyMe"] and (caster ~= "player" and caster ~= "pet")
+            local isInBlacklist = BetterBlizzPlatesDB["friendlyNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
+            if isInBlacklist then return end
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and (caster ~= "player" and caster ~= "pet") then
+            local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
+
+            local filterWatchlist = BetterBlizzPlatesDB["friendlyNpBuffFilterWatchList"] and isInWhitelist
+            local filterLessMinite = BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and lessThanOneMin
+            local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpBuffFilterOnlyMe"] and castByPlayer
+
+            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and not castByPlayer then
                 isPandemic = false
             end
 
-            if filterAll or filterWatchlist or isImportant or isPandemic then
-                if filterLessMinite or filterOnlyMe then return end
-                if isInBlacklist(spellName, spellId) then return end
+            -- Shorter than 60 override
+            if filterOnlyMe and BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and not isInWhitelist then
+                if lessThanOneMin then
+                    return true, isImportant, isPandemic
+                else
+                    return false
+                end
+            end
+
+            if filterLessMinite or filterOnlyMe or filterWatchlist or filterAllOverride or isImportant or isPandemic then
+                if not castByPlayer and onlyMine then return false end
                 return true, isImportant, isPandemic
             end
+            if not BetterBlizzPlatesDB["friendlyNpBuffFilterWatchList"] and not BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and not BetterBlizzPlatesDB["friendlyNpBuffFilterOnlyMe"] then return true end
         end
         -- Debuffs
         if BetterBlizzPlatesDB["friendlyNpdeBuffEnable"] and aura.isHarmful then
-            local isInWhitelist, isImportant, isPandemic = GetAuraDetails(spellName, spellId)
-            local filterAll = filterAllOverride or BetterBlizzPlatesDB["friendlyNpdeBuffFilterAll"]
+            local isInBlacklist = BetterBlizzPlatesDB["friendlyNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
+            if isInBlacklist then return end
+
+            local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
+
             local filterBlizzard = BetterBlizzPlatesDB["friendlyNpdeBuffFilterBlizzard"] and BlizzardShouldShow
             local filterWatchlist = BetterBlizzPlatesDB["friendlyNpdeBuffFilterWatchList"] and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
-            local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpdeBuffFilterOnlyMe"] and (caster ~= "player" and caster ~= "pet")
+            local filterLessMinite = BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
+            local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpdeBuffFilterOnlyMe"] and notCastByPlayer
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and (caster ~= "player" and caster ~= "pet") then
+            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
                 isPandemic = false
             end
 
-            if filterAll or filterWatchlist or filterBlizzard or isImportant or isPandemic then
-                if isInBlacklist(spellName, spellId) then return end
-                if filterBlizzard then return true, isImportant, isPandemic end
-                if filterLessMinite or filterOnlyMe then return end
+            -- Shorter than 60 override
+            if filterOnlyMe and BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and not isInWhitelist then
+                if lessThanOneMin then
+                    return true, isImportant, isPandemic
+                else
+                    return false
+                end
+            end
+
+            if filterLessMinite or filterOnlyMe or filterBlizzard or filterWatchlist or filterAllOverride or isImportant or isPandemic then
+                if not castByPlayer and onlyMine then return false end
                 return true, isImportant, isPandemic
             end
+            if not BetterBlizzPlatesDB["friendlyNpdeBuffFilterBlizzard"] and not BetterBlizzPlatesDB["friendlyNpdeBuffFilterWatchList"] and not BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and not BetterBlizzPlatesDB["friendlyNpdeBuffFilterOnlyMe"] then return true end
         end
 
     -- ENEMY
     else
         -- Buffs
         if BetterBlizzPlatesDB["otherNpBuffEnable"] and aura.isHelpful then
-            local isInWhitelist, isImportant, isPandemic = GetAuraDetails(spellName, spellId)
-            local filterAll = filterAllOverride or BetterBlizzPlatesDB["otherNpBuffFilterAll"]
+            local isInBlacklist = BetterBlizzPlatesDB["otherNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
+            if isInBlacklist then return end
+
+            local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
+
             local filterWatchlist = BetterBlizzPlatesDB["otherNpBuffFilterWatchList"] and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
+            local filterLessMinite = BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
             local filterPurgeable = BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] and isPurgeable
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and (caster ~= "player" and caster ~= "pet") then
+            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
                 isPandemic = false
             end
 
-            if filterAll or filterWatchlist or filterPurgeable or isImportant or isPandemic then
-                if filterLessMinite then return end
-                if isInBlacklist(spellName, spellId) then return end
+            if filterPurgeable or filterLessMinite or filterWatchlist or filterAllOverride or isImportant or isPandemic then
+                if not castByPlayer and onlyMine then return false end
                 return true, isImportant, isPandemic
             end
+            if not BetterBlizzPlatesDB["otherNpBuffFilterWatchList"] and not BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"] and not BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] then return true end
         end
         -- Debuffs
         if BetterBlizzPlatesDB["otherNpdeBuffEnable"] and aura.isHarmful then
-            local isInWhitelist, isImportant, isPandemic = GetAuraDetails(spellName, spellId)
-            local filterAll = filterAllOverride or BetterBlizzPlatesDB["otherNpdeBuffFilterAll"]
+            local isInBlacklist = BetterBlizzPlatesDB["otherNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
+            if isInBlacklist then return end
+
+            local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
+
             local filterBlizzard = BetterBlizzPlatesDB["otherNpdeBuffFilterBlizzard"] and BlizzardShouldShow
             local filterWatchlist = BetterBlizzPlatesDB["otherNpdeBuffFilterWatchList"] and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and (duration > 60 or duration == 0 or expirationTime == 0)
-            local filterOnlyMe = BetterBlizzPlatesDB["otherNpdeBuffFilterOnlyMe"] and (caster ~= "player" and caster ~= "pet")
+            local filterLessMinite = BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
+            local filterOnlyMe = BetterBlizzPlatesDB["otherNpdeBuffFilterOnlyMe"] and notCastByPlayer
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and (caster ~= "player" and caster ~= "pet") then
+            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
                 isPandemic = false
             end
 
+            -- Shorter than 60 override
+            if filterOnlyMe and BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and not isInWhitelist then
+                if lessThanOneMin then
+                    return true, isImportant, isPandemic
+                else
+                    return false
+                end
+            end
 
-            if filterAll or filterWatchlist or filterBlizzard or isImportant or isPandemic then
-                if isInBlacklist(spellName, spellId) then return end
-                if filterBlizzard then return true, isImportant, isPandemic end
-                if filterLessMinite or filterOnlyMe then return end
+            if filterBlizzard or filterLessMinite or filterOnlyMe or filterWatchlist or isImportant or isPandemic then
+                if not castByPlayer and onlyMine then return false end
                 return true, isImportant, isPandemic
             end
+            if not BetterBlizzPlatesDB["otherNpdeBuffFilterBlizzard"] and not BetterBlizzPlatesDB["otherNpdeBuffFilterWatchList"] and not BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and not BetterBlizzPlatesDB["otherNpdeBuffFilterOnlyMe"] then return true end
         end
     end
 end
