@@ -75,7 +75,9 @@ function BBP.TargetIndicator(frame)
             frame.healthBar:SetStatusBarTexture(targetTexture)
         else
             if BetterBlizzPlatesDB.useCustomTextureForBars then
-                frame.healthBar:SetStatusBarTexture(customTexture)
+                if not UnitIsUnit(frame.unit, "player") then
+                    frame.healthBar:SetStatusBarTexture(customTexture)
+                end
             else
                 frame.healthBar:SetStatusBarTexture("Interface/TargetingFrame/UI-TargetingFrame-BarFill")
             end
@@ -95,7 +97,9 @@ function BBP.TargetIndicator(frame)
         frame.targetIndicator:Hide()
         if changeTexture then
             if BetterBlizzPlatesDB.useCustomTextureForBars then
-                frame.healthBar:SetStatusBarTexture(customTexture)
+                if not UnitIsUnit(frame.unit, "player") then
+                    frame.healthBar:SetStatusBarTexture(customTexture)
+                end
             else
                 frame.healthBar:SetStatusBarTexture("Interface/TargetingFrame/UI-TargetingFrame-BarFill")
             end
@@ -163,7 +167,9 @@ function BBP.FocusTargetIndicator(frame)
             frame.healthBar:SetStatusBarTexture(focusTexture)
         else
             if useCustomTexture then
-                frame.healthBar:SetStatusBarTexture(customTexture)
+                if not UnitIsUnit(frame.unit, "player") then
+                    frame.healthBar:SetStatusBarTexture(customTexture)
+                end
             else
                 frame.healthBar:SetStatusBarTexture("Interface/TargetingFrame/UI-TargetingFrame-BarFill")
             end
@@ -182,7 +188,9 @@ function BBP.FocusTargetIndicator(frame)
     else
         frame.focusTargetIndicator:Hide()
         if useCustomTexture then
-            frame.healthBar:SetStatusBarTexture(customTexture)
+            if not UnitIsUnit(frame.unit, "player") then
+                frame.healthBar:SetStatusBarTexture(customTexture)
+            end
         else
             frame.healthBar:SetStatusBarTexture("Interface/TargetingFrame/UI-TargetingFrame-BarFill")
         end
@@ -399,8 +407,16 @@ function BBP.UpdateNamplateResourcePositionForCasting(nameplate, bypass)
         end
     end
 end
+local classPadding = {
+    ["MONK"] = -8,
+    ["EVOKER"] = -9,
+    ["WARLOCK"] = -8
+}
+
+
 
 function BBP.TargetResourceUpdater()
+    local _, className = UnitClass("player")
     nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget == 1 or BetterBlizzPlatesDB.nameplateResourceOnTarget == true
     nameplateShowSelf = GetCVarBool("nameplateShowSelf")
     nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
@@ -477,7 +493,7 @@ function BBP.TargetResourceUpdater()
                         nameplatePlayer.driverFrame.classNamePlateMechanicFrame:SetParent(nameplatePlayer)
                         nameplatePlayer.driverFrame.classNamePlateMechanicFrame:ClearAllPoints();
 
-                        local padding = nameplatePlayer.driverFrame.classNamePlateMechanicFrame.paddingOverride or 0
+                        local padding = nameplatePlayer.driverFrame.classNamePlateMechanicFrame.paddingOverride or classPadding[className] or 0
                         PixelUtil.SetPoint(nameplatePlayer.driverFrame.classNamePlateMechanicFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
 
                         local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7

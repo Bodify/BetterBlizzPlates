@@ -661,7 +661,7 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
             local destUnit = UnitTokenFromGUID(destGUID)
             if string.match(destUnit or "", "nameplate") then
                 local npbase = C_NamePlate.GetNamePlateForUnit(destUnit, false)
-                if npbase then
+                if npbase and npbase.UnitFrame then
                     if sourceName then
                         local name, server = strsplit("-", sourceName)
                         local colorStr = "ffFFFFFF"
@@ -683,7 +683,7 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
 
                             C_Timer.After(0.5, function()
                                 if not UnitCastingInfo(destUnit) and not UnitChannelInfo(destUnit) then
-                                    if npbase.UnitFrame.castBar then
+                                    if npbase and npbase.UnitFrame and npbase.UnitFrame.castBar then
                                         npbase.UnitFrame.castBar:PlayFadeAnim()
                                     end
                                 end

@@ -210,7 +210,13 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
     -- Obtain the health bar details
     local healthBar = container:GetParent().healthBar
     local healthBarWidth = healthBar:GetWidth()
-
+    local healthBarCenter = healthBarWidth / 4
+    -- if not container.GreenOverlay then
+    --     local greenOverlay = container:CreateTexture("GreenOverlay", "OVERLAY")
+    --     greenOverlay:SetColorTexture(0, 1, 0, 0.5)  -- RGBA: Solid green with 50% opacity
+    --     greenOverlay:SetAllPoints(container)  -- Make the texture cover the entire container
+    --     container.GreenOverlay = greenOverlay  -- Assign the texture to the container for future reference
+    -- end
     -- Define the spacing and row parameters
     local horizontalSpacing = BetterBlizzPlatesDB.nameplateAuraWidthGap
     local verticalSpacing = -28 - BetterBlizzPlatesDB.nameplateAuraHeightGap - (BetterBlizzPlatesDB.nameplateAuraSquare and 12 or 0) - (BetterBlizzPlatesDB.nameplateAuraTaller and 3 or 0)
@@ -242,10 +248,10 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
             buff:SetScale(BetterBlizzPlatesDB.nameplateAuraScale)
             local buffWidth, _ = buff:GetSize()
 
-            if container.respectChildScale then
+            --if container.respectChildScale then
                 local buffScale = buff:GetScale()
                 buffWidth = buffWidth * buffScale
-            end
+            --end
 
             local rowIndex = math.floor((index - 1) / maxBuffsPerRow) + 1
             widths[rowIndex] = (widths[rowIndex] or 0) + buffWidth
@@ -269,6 +275,12 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
 
         for index, buff in ipairs(auras) do
             local buffWidth, buffHeight = buff:GetSize()
+            local buffWidth2 = buffWidth * buff:GetScale()
+            local buffScale = buff:GetScale()
+            local bfw3 = buffWidth2 / 4
+            local bfw4 = buffWidth / 2
+
+            local ten = 10 *buffScale
 
             -- Update the maximum row height
             maxRowHeight = math.max(maxRowHeight, buffHeight)
@@ -300,11 +312,11 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
             local verticalOffset = -currentRow * (maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
 
             if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
-                buff:SetPoint("BOTTOM", container, "TOP", horizontalOffset - healthBarWidth / 2 + 10 + xPos, verticalOffset - 13)
+                buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) +(xPos+1/buffScale), verticalOffset - 13)
             else
-                buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", horizontalOffset + xPos, verticalOffset - 13)
+                buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + xPos, verticalOffset - 13)
             end
-            horizontalOffset = horizontalOffset + buffWidth + horizontalSpacing
+            horizontalOffset = horizontalOffset + ((buffWidth)*buffScale) + horizontalSpacing
         end
 
         return currentRow
@@ -545,7 +557,7 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
     end
 end
 
-local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
+local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
     if not aura then return false end
     local spellName = aura.name
     local spellId = aura.spellId
@@ -556,8 +568,6 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
     local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
     local castByPlayer = (caster == "player" or caster == "pet")
     local lessThanOneMin = (duration < 61 and duration ~= 0 and expirationTime ~= 0)
-
-    local filterAllOverride = BetterBlizzPlatesDB.nameplateAuraTestMode or nil
 
     -- PLAYER
     if UnitIsUnit(unit, "player") then
@@ -573,21 +583,11 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterLessMinite = BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
             local filterOnlyMe = BetterBlizzPlatesDB["personalNpBuffFilterOnlyMe"] and castByPlayer
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
-                isPandemic = false
-            end
-
-            -- Shorter than 60 override
-            if filterOnlyMe and BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] and not isInWhitelist then
-                if lessThanOneMin then
-                    return true, isImportant, isPandemic
-                else
-                    return false
-                end
-            end
-
-            if filterBlizzard or filterLessMinite or filterWatchlist or filterAllOverride or isImportant or isPandemic then
-                if not castByPlayer and onlyMine then return false end
+            if filterBlizzard or filterLessMinite or filterWatchlist or isImportant or isPandemic or filterAllOverride then
+                if filterAllOverride then return true, isImportant, isPandemic end
+                if not castByPlayer and onlyMine then return end --it was cast by player and specificly told to not count
+                if filterWatchlist then return true, isImportant, isPandemic end --its in the whitelist so should just go through at this point
+                if filterOnlyMe and not filterBlizzard then return end --it was not cast by me and setting is on so dont let it go thru
                 return true, isImportant, isPandemic
             end
             if not BetterBlizzPlatesDB["personalNpBuffFilterBlizzard"] and not BetterBlizzPlatesDB["personalNpBuffFilterWatchList"] and not BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] then return true end
@@ -602,11 +602,8 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterWatchlist = BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["personalNpdeBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
-                isPandemic = false
-            end
-
-            if filterLessMinite or filterWatchlist or isImportant or isPandemic then
+            if filterLessMinite or filterWatchlist or isImportant or isPandemic or filterAllOverride then
+                if filterAllOverride then return true, isImportant, isPandemic end
                 if not castByPlayer and onlyMine then return false end
                 return true, isImportant, isPandemic
             end
@@ -626,21 +623,11 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterLessMinite = BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and lessThanOneMin
             local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpBuffFilterOnlyMe"] and castByPlayer
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and not castByPlayer then
-                isPandemic = false
-            end
-
-            -- Shorter than 60 override
-            if filterOnlyMe and BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and not isInWhitelist then
-                if lessThanOneMin then
-                    return true, isImportant, isPandemic
-                else
-                    return false
-                end
-            end
-
-            if filterLessMinite or filterOnlyMe or filterWatchlist or filterAllOverride or isImportant or isPandemic then
-                if not castByPlayer and onlyMine then return false end
+            if filterLessMinite or filterOnlyMe or filterWatchlist or isImportant or isPandemic or filterAllOverride then
+                if filterAllOverride then return true, isImportant, isPandemic end
+                if not castByPlayer and onlyMine then return end --it was cast by player and specificly told to not count
+                if filterWatchlist then return true, isImportant, isPandemic end --its in the whitelist so should just go through at this point
+                if filterOnlyMe then return end --it was not cast by me and setting is on so dont let it go thru
                 return true, isImportant, isPandemic
             end
             if not BetterBlizzPlatesDB["friendlyNpBuffFilterWatchList"] and not BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and not BetterBlizzPlatesDB["friendlyNpBuffFilterOnlyMe"] then return true end
@@ -655,23 +642,13 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterBlizzard = BetterBlizzPlatesDB["friendlyNpdeBuffFilterBlizzard"] and BlizzardShouldShow
             local filterWatchlist = BetterBlizzPlatesDB["friendlyNpdeBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
-            local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpdeBuffFilterOnlyMe"] and notCastByPlayer
+            local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpdeBuffFilterOnlyMe"] and not castByPlayer
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
-                isPandemic = false
-            end
-
-            -- Shorter than 60 override
-            if filterOnlyMe and BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and not isInWhitelist then
-                if lessThanOneMin then
-                    return true, isImportant, isPandemic
-                else
-                    return false
-                end
-            end
-
-            if filterLessMinite or filterOnlyMe or filterBlizzard or filterWatchlist or filterAllOverride or isImportant or isPandemic then
-                if not castByPlayer and onlyMine then return false end
+            if filterLessMinite or filterOnlyMe or filterBlizzard or filterWatchlist or isImportant or isPandemic or filterAllOverride then
+                if filterAllOverride then return true, isImportant, isPandemic end
+                if not castByPlayer and onlyMine then return end --it was cast by player and specificly told to not count
+                if filterWatchlist then return true, isImportant, isPandemic end --its in the whitelist so should just go through at this point
+                if filterOnlyMe and not filterBlizzard then return end --it was not cast by me and setting is on so dont let it go thru
                 return true, isImportant, isPandemic
             end
             if not BetterBlizzPlatesDB["friendlyNpdeBuffFilterBlizzard"] and not BetterBlizzPlatesDB["friendlyNpdeBuffFilterWatchList"] and not BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and not BetterBlizzPlatesDB["friendlyNpdeBuffFilterOnlyMe"] then return true end
@@ -690,12 +667,9 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterLessMinite = BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
             local filterPurgeable = BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] and isPurgeable
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
-                isPandemic = false
-            end
-
-            if filterPurgeable or filterLessMinite or filterWatchlist or filterAllOverride or isImportant or isPandemic then
-                if not castByPlayer and onlyMine then return false end
+            if filterPurgeable or filterLessMinite or filterWatchlist or isImportant or isPandemic or filterAllOverride then
+                if filterAllOverride then return true, isImportant, isPandemic end
+                if not castByPlayer and onlyMine then return end
                 return true, isImportant, isPandemic
             end
             if not BetterBlizzPlatesDB["otherNpBuffFilterWatchList"] and not BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"] and not BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] then return true end
@@ -710,23 +684,13 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
             local filterBlizzard = BetterBlizzPlatesDB["otherNpdeBuffFilterBlizzard"] and BlizzardShouldShow
             local filterWatchlist = BetterBlizzPlatesDB["otherNpdeBuffFilterWatchList"] and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
-            local filterOnlyMe = BetterBlizzPlatesDB["otherNpdeBuffFilterOnlyMe"] and notCastByPlayer
+            local filterOnlyMe = BetterBlizzPlatesDB["otherNpdeBuffFilterOnlyMe"] and not castByPlayer
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
-                isPandemic = false
-            end
-
-            -- Shorter than 60 override
-            if filterOnlyMe and BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and not isInWhitelist then
-                if lessThanOneMin then
-                    return true, isImportant, isPandemic
-                else
-                    return false
-                end
-            end
-
-            if filterBlizzard or filterLessMinite or filterOnlyMe or filterWatchlist or isImportant or isPandemic then
-                if not castByPlayer and onlyMine then return false end
+            if filterLessMinite or filterOnlyMe or filterBlizzard or filterWatchlist or isImportant or isPandemic or filterAllOverride then
+                if filterAllOverride then return true, isImportant, isPandemic end
+                if not castByPlayer and onlyMine then return end --it was cast by player and specificly told to not count
+                if filterWatchlist then return true, isImportant, isPandemic end --its in the whitelist so should just go through at this point
+                if filterOnlyMe and not filterBlizzard then return end --it was not cast by me and setting is on so dont let it go thru
                 return true, isImportant, isPandemic
             end
             if not BetterBlizzPlatesDB["otherNpdeBuffFilterBlizzard"] and not BetterBlizzPlatesDB["otherNpdeBuffFilterWatchList"] and not BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and not BetterBlizzPlatesDB["otherNpdeBuffFilterOnlyMe"] then return true end
@@ -851,13 +815,14 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
     local buffIndex = 1;
     local BBPMaxAuraNum = BetterBlizzPlatesDB.maxAurasOnNameplate
-    local rowOffset = 0;
     local isPlayerUnit = UnitIsUnit("player", self.unit)
     local isEnemyUnit, isFriend, isNeutral = BBP.GetUnitReaction(self.unit)
     isEnemyUnit = isEnemyUnit or isNeutral
     self.isEnemyUnit = isEnemyUnit
     local shouldShowAura, isImportant, isPandemic, auraColor
-
+    local onlyPandemicMine = BetterBlizzPlatesDB.onlyPandemicAuraMine
+    local showDefaultCooldownNumbersOnNpAuras = BetterBlizzPlatesDB.showDefaultCooldownNumbersOnNpAuras
+    local hideNpAuraSwipe = BetterBlizzPlatesDB.hideNpAuraSwipe
 
     self.auras:Iterate(function(auraInstanceID, aura)
         if buffIndex > BBPMaxAuraNum then return true end
@@ -871,8 +836,13 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
         local spellName = FetchSpellName(aura.spellId)
         local spellId = aura.spellId
+        local caster = aura.sourceUnit
+        local castByPlayer = (caster == "player" or caster == "pet")
 
         shouldShowAura, isImportant, isPandemic, auraColor = GetAuraDetails(spellName, spellId)
+        if onlyPandemicMine and not castByPlayer then
+            isPandemic = false
+        end
 
         -- Set aura dimensions
         SetAuraDimensions(buff);
@@ -914,14 +884,14 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         end
         CooldownFrame_Set(buff.Cooldown, aura.expirationTime - aura.duration, aura.duration, aura.duration > 0, true);
 
-        if BetterBlizzPlatesDB.hideNpAuraSwipe then
+        if hideNpAuraSwipe then
             if buff.Cooldown then
                 buff.Cooldown:SetDrawSwipe(false)
                 buff.Cooldown:SetDrawEdge(false)
             end
         end
 
-        if BetterBlizzPlatesDB.showDefaultCooldownNumbersOnNpAuras then
+        if showDefaultCooldownNumbersOnNpAuras then
             if buff.Cooldown then
                 buff.Cooldown:SetHideCountdownNumbers(false)
                 local cdText = buff.Cooldown and buff.Cooldown:GetRegions()
@@ -940,6 +910,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     self:Layout();
 end
 
+
 function BBP.ParseAllAuras(self, forceAll, UnitFrame)
     if self.auras == nil then
         self.auras = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable);
@@ -947,9 +918,9 @@ function BBP.ParseAllAuras(self, forceAll, UnitFrame)
         self.auras:Clear();
     end
 
-    local function HandleAura(aura)
+    local function HandleAura(aura, isTestModeEnabled)
         local BlizzardShouldShow = self:ShouldShowBuff(aura, forceAll)
-        local shouldShowAura, isImportant, isPandemic = ShouldShowBuff(self.unit, aura, BlizzardShouldShow)
+        local shouldShowAura, isImportant, isPandemic = ShouldShowBuff(self.unit, aura, BlizzardShouldShow, isTestModeEnabled)
         if shouldShowAura then
             self.auras[aura.auraInstanceID] = aura;
         end
@@ -968,7 +939,7 @@ function BBP.ParseAllAuras(self, forceAll, UnitFrame)
         local currentTime = GetTime()
         for _, fakeAura in ipairs(fakeAuras) do
             fakeAura.expirationTime = currentTime + fakeAura.duration
-            HandleAura(fakeAura)
+            HandleAura(fakeAura, isTestModeEnabled)
         end
     end
 end
