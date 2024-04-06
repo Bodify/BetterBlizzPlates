@@ -12,13 +12,20 @@ local petValidSpellIDs = {
 
 -- Pet Indicator
 function BBP.PetIndicator(frame)
-    local anchorPoint = BetterBlizzPlatesDB.petIndicatorAnchor or "CENTER"
-    local xPos = BetterBlizzPlatesDB.petIndicatorXPos or 0
-    local yPos = BetterBlizzPlatesDB.petIndicatorYPos or 0
-    local testMode = BetterBlizzPlatesDB.petIndicatorTestMode
-    local combatIndicator = BetterBlizzPlatesDB.combatIndicator
-    local combatIndicatorAnchor = BetterBlizzPlatesDB.combatIndicatorAnchor
-    local petIndicatorAnchor = BetterBlizzPlatesDB.petIndicatorAnchor
+    local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo
+
+    if not config.petIndicatorInitialized or BBP.needsUpdate then
+        config.petIndicatorAnchor = BetterBlizzPlatesDB.petIndicatorAnchor or "CENTER"
+        config.petIndicatorXPos = BetterBlizzPlatesDB.petIndicatorpetIndicatorXPos or 0
+        config.petIndicatorYPos = BetterBlizzPlatesDB.petIndicatorpetIndicatorYPos or 0
+        config.petIndicatorTestMode = BetterBlizzPlatesDB.petIndicatorpetIndicatorTestMode
+        config.combatIndicator = BetterBlizzPlatesDB.combatIndicator
+        config.combatIndicatorAnchor = BetterBlizzPlatesDB.combatIndicatorAnchor
+        config.petIndicatorScale = BetterBlizzPlatesDB.petIndicatorScale or 1
+
+        config.petIndicatorInitialized = true
+    end
 
     -- Initialize
     if not frame.petIndicator then
@@ -28,21 +35,20 @@ function BBP.PetIndicator(frame)
     end
 
     -- Set position and scale dynamically
-    frame.petIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
-    frame.petIndicator:SetScale(BetterBlizzPlatesDB.petIndicatorScale or 1)
+    frame.petIndicator:SetPoint("CENTER", frame.healthBar, config.petIndicatorAnchor, config.petIndicatorXPos, config.petIndicatorYPos)
+    frame.petIndicator:SetScale(config.petIndicatorScale)
 
     -- Test mode
-    if testMode then
+    if config.petIndicatorTestMode then
         frame.petIndicator:Show()
         return
     end
 
-    local unitGUID = UnitGUID(frame.displayedUnit)
-    local npcID = select(6, strsplit("-", unitGUID or ""))
+    local npcID = select(6, strsplit("-", info.GUID or ""))
 
     -- Move Pet Indicator to the left if both Pet Indicator and Combat Indicator are showing with the same anchor so they dont overlap
-    if frame.combatIndicator and frame.combatIndicator:IsShown() and combatIndicator and (petIndicatorAnchor == combatIndicatorAnchor) then
-        xPos = xPos - 10
+    if frame.combatIndicator and frame.combatIndicator:IsShown() and combatIndicator and (config.petIndicatorAnchor == combatIndicatorAnchor) then
+        config.petIndicatorXPos = config.petIndicatorXPos - 10
     end
 
     -- Demo lock pet

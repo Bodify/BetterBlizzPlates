@@ -15,22 +15,50 @@ local HealerSpecs = {
 
 -- Class Indicator
 function BBP.ClassIndicator(frame, fetchedSpecID)
-    local anchorPoint
-    local oppositeAnchor
-    local xPos
-    local yPos
-    local scale
+    local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo
+
+    if not config.classIndicatorInitialized or BBP.needsUpdate then
+        config.classIconArenaOnly = BetterBlizzPlatesDB.classIconArenaOnly
+        config.classIconBgOnly = BetterBlizzPlatesDB.classIconBgOnly
+        config.classIndicatorFriendly = BetterBlizzPlatesDB.classIndicatorFriendly
+        config.classIndicatorEnemy = BetterBlizzPlatesDB.classIndicatorEnemy
+        config.classIndicatorSpecIcon = BetterBlizzPlatesDB.classIndicatorSpecIcon
+        config.classIndicatorHealer = BetterBlizzPlatesDB.classIndicatorHealer
+        config.classIconSquareBorder = BetterBlizzPlatesDB.classIconSquareBorder
+        config.classIconSquareBorderFriendly = BetterBlizzPlatesDB.classIconSquareBorderFriendly
+        config.classIndicatorHighlight = BetterBlizzPlatesDB.classIndicatorHighlight
+        config.classIndicatorHighlightColor = BetterBlizzPlatesDB.classIndicatorHighlightColor
+        config.classIndicatorHideRaidMarker = BetterBlizzPlatesDB.classIndicatorHideRaidMarker
+        config.classIndicatorAnchor = BetterBlizzPlatesDB.classIndicatorAnchor
+        config.classIndicatorXPos = BetterBlizzPlatesDB.classIndicatorXPos
+        config.classIndicatorYPos = BetterBlizzPlatesDB.classIndicatorYPos
+        config.classIndicatorScale = BetterBlizzPlatesDB.classIndicatorScale
+        config.classIndicatorFriendlyAnchor = BetterBlizzPlatesDB.classIndicatorFriendlyAnchor
+        config.classIndicatorFriendlyXPos = BetterBlizzPlatesDB.classIndicatorFriendlyXPos
+        config.classIndicatorFriendlyYPos = BetterBlizzPlatesDB.classIndicatorFriendlyYPos
+        config.classIndicatorFriendlyScale = BetterBlizzPlatesDB.classIndicatorFriendlyScale
+        config.classIconColorBorder = BetterBlizzPlatesDB.classIconColorBorder
+
+        config.classIndicatorInitialized = true
+    end
+
+    if not info.class then
+        if config.classIndicatorHideRaidMarker then
+            frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
+        end
+        if frame.classIndicator then
+            frame.classIndicator:Hide()
+        end
+        return
+    end
+
+    local anchorPoint = (info.isFriend and config.classIndicatorFriendlyAnchor) or (info.isEnemy and config.classIndicatorAnchor)
+    local oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
+    local xPos = (info.isFriend and config.classIndicatorFriendlyXPos) or (info.isEnemy and config.classIndicatorXPos)
+    local yPos = (info.isFriend and config.classIndicatorFriendlyYPos + (anchorPoint == "TOP" and 2 or 0)) or (info.isEnemy and config.classIndicatorYPos + (anchorPoint == "TOP" and 2 or 0))
+    local scale = (info.isFriend and config.classIndicatorFriendlyScale + 0.3) or (info.isEnemy and config.classIndicatorScale + 0.3)
     local inInstance, instanceType = IsInInstance()
-    local arenaOnly = BetterBlizzPlatesDB.classIconArenaOnly
-    local bgOnly = BetterBlizzPlatesDB.classIconBgOnly
-    local friendlyOnly = BetterBlizzPlatesDB.classIndicatorFriendly
-    local enemyOnly = BetterBlizzPlatesDB.classIndicatorEnemy
-    local useSpecIcon = BetterBlizzPlatesDB.classIndicatorSpecIcon
-    local showHealerIcon = BetterBlizzPlatesDB.classIndicatorHealer
-    local squareIconEnemy = BetterBlizzPlatesDB.classIconSquareBorder
-    local squareIconFriendly = BetterBlizzPlatesDB.classIconSquareBorderFriendly
-    local classIndicatorHighlight = BetterBlizzPlatesDB.classIndicatorHighlight
-    local hideRaidmarker = BetterBlizzPlatesDB.classIndicatorHideRaidMarker
 
     -- Initialize Class Icon Frame
     if not frame.classIndicator then
@@ -44,7 +72,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         frame.classIndicator:SetFrameStrata("HIGH")
     end
 
-    if classIndicatorHighlight and not frame.classIndicator.highlightSelect then
+    if (config.classIndicatorHighlight or config.classIndicatorHighlightColor) and not frame.classIndicator.highlightSelect then
         frame.classIndicator.highlightSelect = frame.classIndicator:CreateTexture(nil, "OVERLAY")
         frame.classIndicator.highlightSelect:SetAtlas("charactercreate-ring-select")
         frame.classIndicator.highlightSelect:Hide()
@@ -53,21 +81,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         frame.classIndicator.highlightSelect:SetDrawLayer("OVERLAY", 1)
     end
 
-    local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(frame.unit)
-    local isPlayer = UnitIsPlayer(frame.unit)
-    local isUser = UnitIsUnit(frame.unit, "player")
-
-    if isUser then
-        frame.classIndicator:Hide()
-        return
-    end
-
-    if not isPlayer then
-        frame.classIndicator:Hide()
-        return
-    end
-
-    if (isFriend and not friendlyOnly) or (isEnemy and not enemyOnly) then
+    if (info.isFriend and not config.classIndicatorFriendly) or (info.isEnemy and not config.classIndicatorEnemy) then
         frame.classIndicator:Hide()
         return
     end
@@ -78,15 +92,9 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
 
     -- Set position and scale dynamically
-    if isFriend then
-        anchorPoint = BetterBlizzPlatesDB.classIndicatorFriendlyAnchor
-        oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
-        xPos = BetterBlizzPlatesDB.classIndicatorFriendlyXPos
-        yPos = BetterBlizzPlatesDB.classIndicatorFriendlyYPos + (anchorPoint == "TOP" and 2 or 0)
-        scale = BetterBlizzPlatesDB.classIndicatorFriendlyScale + 0.3
-
+    if info.isFriend then
             -- Configure for square or circle border and apply mask
-        if squareIconFriendly then
+        if config.classIconSquareBorderFriendly then
             frame.classIndicator.icon:SetSize(20, 20)
             frame.classIndicator.mask:SetAtlas("UI-Frame-IconMask")
             frame.classIndicator.mask:SetSize(20, 20)
@@ -119,14 +127,8 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
                 frame.classIndicator.highlightSelect:SetVertexColor(1,0.88,0)
             end
         end
-    elseif isEnemy then
-        anchorPoint = BetterBlizzPlatesDB.classIndicatorAnchor
-        oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
-        xPos = BetterBlizzPlatesDB.classIndicatorXPos
-        yPos = BetterBlizzPlatesDB.classIndicatorYPos + (anchorPoint == "TOP" and 2 or 0)
-        scale = BetterBlizzPlatesDB.classIndicatorScale + 0.3
-
-        if squareIconEnemy then
+    elseif info.isEnemy then
+        if config.classIconSquareBorder then
             frame.classIndicator.icon:SetSize(20, 20)
             frame.classIndicator.mask:SetAtlas("UI-Frame-IconMask")
             frame.classIndicator.mask:SetSize(20, 20)
@@ -161,8 +163,8 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         end
     end
 
-    if frame.classIndicator.highlightSelect then
-        if UnitIsUnit(frame.unit, "target") then
+    if frame.classIndicator.highlightSelect or config.classIndicatorHighlightColor then
+        if info.isTarget then
             BBP.ClassIndicatorTargetHighlight(frame)
         else
             frame.classIndicator.highlightSelect:Hide()
@@ -171,30 +173,26 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
 
     frame.classIndicator:ClearAllPoints()
     if anchorPoint == "TOP" then
-        frame.classIndicator:SetPoint(oppositeAnchor, frame.name, anchorPoint, xPos, yPos)
+        local resourceAnchor = nil
+        if config.nameplateResourceOnTarget == true and not nameplateResourceUnderCastbar and info.isTarget and not (BetterBlizzPlatesDB.hideResourceOnFriend and info.isFriend) then
+            resourceAnchor = frame:GetParent().driverFrame.classNamePlateMechanicFrame
+        end
+        frame.classIndicator:SetPoint(oppositeAnchor, resourceAnchor or frame.fakeName or frame.name, anchorPoint, xPos, yPos)
     else
         frame.classIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos)
     end
     frame.classIndicator:SetScale(scale)
 
     -- Visibility checks
-    if (arenaOnly and not (inInstance and instanceType == "arena")) or (bgOnly and not (inInstance and instanceType == "pvp")) then
-        frame.classIndicator:Hide()
-        return
-    end
-
-    -- Get class from the unit frame
-    local unit = frame.unit or frame.displayedUnit
-    local _, class = UnitClass(unit)
-    if not class then
+    if (config.classIconArenaOnly and not (inInstance and instanceType == "arena")) or (config.classIconBgOnly and not (inInstance and instanceType == "pvp")) then
         frame.classIndicator:Hide()
         return
     end
 
     -- Get class icon texture and coordinates
     local classIcon = "Interface/GLUES/CHARACTERCREATE/UI-CHARACTERCREATE-CLASSES"
-    local classColor = RAID_CLASS_COLORS[class]
-    local coords = CLASS_ICON_TCOORDS[class]
+    local classColor = RAID_CLASS_COLORS[info.class]
+    local coords = CLASS_ICON_TCOORDS[info.class]
     if not coords then
         frame.classIndicator:Hide()
         return
@@ -203,17 +201,16 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     local specIcon
     local specID = fetchedSpecID
     local Details = Details
-    if useSpecIcon or showHealerIcon then
+    if config.classIndicatorSpecIcon or config.classIndicatorHealer then
         if not specID then
-            if isFriend and Details then
-                local unitGUID = UnitGUID(frame.displayedUnit)
+            if info.isFriend and Details then
                 if Details then
-                    specID = Details:GetSpecByGUID(unitGUID)
+                    specID = Details:GetSpecByGUID(info.unitGUID)
                 end
                 if specID then
                     specIcon = select(4, GetSpecializationInfoByID(specID))
                 end
-            elseif isEnemy and IsActiveBattlefieldArena() then
+            elseif info.isEnemy and IsActiveBattlefieldArena() then
                 for i = 1, 3 do
                     local arenaUnit = "arena" .. i
                     if UnitIsUnit(frame.displayedUnit, arenaUnit) then
@@ -224,10 +221,9 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
                         end
                     end
                 end
-            elseif isEnemy then
-                local unitGUID = UnitGUID(frame.displayedUnit)
+            elseif info.isEnemy then
                 if Details then
-                    specID = Details:GetSpecByGUID(unitGUID)
+                    specID = Details:GetSpecByGUID(info.unitGUID)
                 end
                 if specID then
                     specIcon = select(4, GetSpecializationInfoByID(specID))
@@ -239,10 +235,10 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     end
 
     -- Set class icon texture and coordinates
-    if specIcon and useSpecIcon then
-        if showHealerIcon then
+    if specIcon and config.classIndicatorSpecIcon then
+        if config.classIndicatorHealer then
             if HealerSpecs[specID] then
-                if not (isEnemy and squareIconEnemy) or (isFriend or squareIconFriendly) then
+                if not (info.isEnemy and config.classIconSquareBorder) or (info.isFriend or config.classIconSquareBorderFriendly) then
                     frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
                     frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87)
                 else
@@ -257,9 +253,9 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
             frame.classIndicator.icon:SetTexture(specIcon)
             frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
         end
-    elseif showHealerIcon then
+    elseif config.classIndicatorHealer then
         if HealerSpecs[specID] then
-            if not (isEnemy and squareIconEnemy) or (isFriend or squareIconFriendly) then
+            if not (info.isEnemy and config.classIconSquareBorder) or (info.isFriend or config.classIconSquareBorderFriendly) then
                 frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
                 frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87)
             else
@@ -276,7 +272,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     end
 
     -- Optional class coloring for the border
-    if BetterBlizzPlatesDB.classIconColorBorder then
+    if config.classIconColorBorder then
         frame.classIndicator.border:SetDesaturated(true)
         frame.classIndicator.border:SetVertexColor(classColor.r, classColor.g, classColor.b)
     else
@@ -285,20 +281,25 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     end
 
     -- Show the class icon frame
-    if hideRaidmarker then
+    if config.classIndicatorHideRaidMarker then
         frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(0)
-    else
+        config.classIndicatorHiddenRaidmarker = true
+    elseif config.classIndicatorHiddenRaidmarker then
         frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
+        config.classIndicatorHiddenRaidmarker = nil
     end
     frame.classIndicator:Show()
 end
 
 function BBP.ClassIndicatorTargetHighlight(frame)
-    frame.classIndicator.highlightSelect:Show()
-    if BetterBlizzPlatesDB.classIndicatorHighlightColor then
-        local _, class = UnitClass(frame.unit)
-        local classColor = RAID_CLASS_COLORS[class]
-        frame.classIndicator.highlightSelect:SetDesaturated(true)
-        frame.classIndicator.highlightSelect:SetVertexColor(classColor.r, classColor.g, classColor.b)
+    local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo
+    if config.classIndicatorHighlight or config.classIndicatorHighlightColor then
+        frame.classIndicator.highlightSelect:Show()
+        if info.class and config.classIndicatorHighlightColor then
+            local classColor = RAID_CLASS_COLORS[info.class]
+            frame.classIndicator.highlightSelect:SetDesaturated(true)
+            frame.classIndicator.highlightSelect:SetVertexColor(classColor.r, classColor.g, classColor.b)
+        end
     end
 end

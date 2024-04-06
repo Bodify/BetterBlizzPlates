@@ -133,12 +133,14 @@ local function GetAuraDetails(spellName, spellId)
             local isPandemic = entry.flags and entry.flags.pandemic or false
             local auraColor = entry.entryColors and entry.entryColors.text or nil
             local onlyMine = entry.flags and entry.flags.onlyMine or false
-            return true, isImportant, isPandemic, auraColor, onlyMine
+            local isEnlarged = entry.flags and entry.flags.enlarged or false
+            local isCompacted = entry.flags and entry.flags.compacted or false
+            return true, isImportant, isPandemic, auraColor, onlyMine, isEnlarged, isCompacted
         end
     end
     return false, false, false, false, false
 end
-
+local importantGlowOffset = 10 * (BetterBlizzPlatesDB.nameplateAuraEnlargedScale or 1)
 local trackedBuffs = {};
 local checkBuffsTimer = nil;
 
@@ -162,14 +164,21 @@ local function CheckBuffs()
                 buff.isPandemicActive = false
             elseif remainingDuration <= 5.1 then
                 if not buff.PandemicGlow then
-                    buff.PandemicGlow = buff:CreateTexture(nil, "OVERLAY");
+                    buff.PandemicGlow = buff:CreateTexture(nil, "ARTWORK");
                     buff.PandemicGlow:SetAtlas("newplayertutorial-drag-slotgreen");
                     buff.PandemicGlow:SetDesaturated(true)
                     buff.PandemicGlow:SetVertexColor(1, 0, 0)
                     if buff.Cooldown and buff.Cooldown:IsVisible() then
                         buff.PandemicGlow:SetParent(buff.Cooldown)
                     end
-                    if BetterBlizzPlatesDB.nameplateAuraSquare then
+                    if buff.isEnlarged then
+                        importantGlowOffset = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                        buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
+                        buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
+                    elseif buff.isCompacted then
+                        buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
+                        buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
+                    elseif BetterBlizzPlatesDB.nameplateAuraSquare then
                         buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
                         buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
                     elseif BetterBlizzPlatesDB.nameplateAuraTaller then
@@ -210,14 +219,37 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
     -- Obtain the health bar details
     local healthBar = container:GetParent().healthBar
     local healthBarWidth = healthBar:GetWidth()
-
+    -- if not container.GreenOverlay then
+    --     local greenOverlay = container:CreateTexture("GreenOverlay", "OVERLAY")
+    --     greenOverlay:SetColorTexture(0, 1, 0, 0.5)  -- RGBA: Solid green with 50% opacity
+    --     greenOverlay:SetAllPoints(container)  -- Make the texture cover the entire container
+    --     container.GreenOverlay = greenOverlay  -- Assign the texture to the container for future reference
+    -- end
     -- Define the spacing and row parameters
     local horizontalSpacing = BetterBlizzPlatesDB.nameplateAuraWidthGap
-    local verticalSpacing = -28 - BetterBlizzPlatesDB.nameplateAuraHeightGap - (BetterBlizzPlatesDB.nameplateAuraSquare and 12 or 0) - (BetterBlizzPlatesDB.nameplateAuraTaller and 3 or 0)
-    local maxBuffsPerRow = BetterBlizzPlatesDB.nameplateAuraRowAmount
+    local verticalSpacing = -BetterBlizzPlatesDB.nameplateAuraHeightGap-- + (BetterBlizzPlatesDB.nameplateAuraSquare and 12 or 0) + (BetterBlizzPlatesDB.nameplateAuraTaller and 3 or 0)
+    local maxBuffsPerRow = (isEnemyUnit and BetterBlizzPlatesDB.nameplateAuraRowAmount) or (not isEnemyUnit and BetterBlizzPlatesDB.nameplateAuraRowFriendlyAmount)
     local maxRowHeight = 0
     local rowWidths = {}
     local totalChildrenHeight = 0
+    local maxBuffsPerRowAdjusted = maxBuffsPerRow
+    local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
+    local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
+    local auraHeightSetting = (nameplateAuraSquare and 20) or (nameplateAuraTaller and 15.5) or 14
+    local square = BetterBlizzPlatesDB.nameplateAuraEnlargedSquare
+    local compactSquare = BetterBlizzPlatesDB.nameplateAuraCompactedSquare
+    local auraSize = square and 20 or auraHeightSetting
+    local compactSize = compactSquare and 10 or 20
+    local nameplateAuraEnlargedScale = BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+    local nameplateAuraCompactedScale = BetterBlizzPlatesDB.nameplateAuraCompactedScale
+    local auraSizeScaled = auraSize * nameplateAuraEnlargedScale
+    local sizeMultiplier = 20 * nameplateAuraEnlargedScale
+    local texCoord = nameplateAuraSquare and {0.1, 0.9, 0.1, 0.9} or nameplateAuraTaller and {0.05, 0.95, 0.15, 0.82} or {0.05, 0.95, 0.1, 0.6}
+    local compactTexCoord = not compactSquare and texCoord or nameplateAuraSquare and {0.25, 0.75, 0.05, 0.95} or nameplateAuraTaller and {0.3, 0.7, 0.15, 0.82} or {0.3, 0.7, 0.15, 0.80}
+    local nameplateAuraScale = BetterBlizzPlatesDB.nameplateAuraScale
+
+    local scaledCompactWidth = compactSize * nameplateAuraCompactedScale
+    local scaledCompactHeight = auraHeightSetting * nameplateAuraCompactedScale
 
     -- Separate buffs and debuffs if needed
     local buffs = {}
@@ -238,19 +270,60 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
     -- Calculate the width of each row
     local function CalculateRowWidths(auras)
         local widths = {}
+        local compactTracker = 0
         for index, buff in ipairs(auras) do
-            buff:SetScale(BetterBlizzPlatesDB.nameplateAuraScale)
-            local buffWidth, _ = buff:GetSize()
+            buff:SetScale(nameplateAuraScale)
+            local buffWidth
+            if buff.isEnlarged then
+                buff:SetSize(sizeMultiplier, auraSizeScaled)
+                buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
+                buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
+                if not square then
+                    buff.Icon:SetTexCoord(unpack(texCoord))
+                else
+                    buff.Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+                end
+                buffWidth = sizeMultiplier
+                --buffHeight = sizeMultiplier
+                compactTracker = 0
+            elseif buff.isCompacted then
+                buff:SetSize(scaledCompactWidth, scaledCompactHeight)
+                buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
+                buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
+                --if not compactSquare then
+                    buff.Icon:SetTexCoord(unpack(compactTexCoord))
+                -- else
 
-            if container.respectChildScale then
-                local buffScale = buff:GetScale()
-                buffWidth = buffWidth * buffScale
+                -- end
+                buffWidth = scaledCompactWidth
+                --buffHeight = 14
+                compactTracker = compactTracker + 1
+            else
+                buff:SetSize(20, auraHeightSetting)
+                buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
+                buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
+                buff.Icon:SetTexCoord(unpack(texCoord))
+                buffWidth = 20
+                --buffHeight = 14
+                compactTracker = 0
             end
 
-            local rowIndex = math.floor((index - 1) / maxBuffsPerRow) + 1
-            widths[rowIndex] = (widths[rowIndex] or 0) + buffWidth
+            local extraOffset = 0
+            if compactSquare and compactTracker == 2 and buff.isCompacted then
+                extraOffset = horizontalSpacing
+                maxBuffsPerRowAdjusted = maxBuffsPerRowAdjusted + 1
+                compactTracker = 0
+            end
 
-            if index % maxBuffsPerRow ~= 1 then
+            --if container.respectChildScale then
+                local buffScale = buff:GetScale()
+                buffWidth = buffWidth * buffScale
+            --end
+
+            local rowIndex = math.floor((index - 1) / maxBuffsPerRowAdjusted) + 1
+            widths[rowIndex] = (widths[rowIndex] or 0) + buffWidth -extraOffset
+
+            if index % maxBuffsPerRowAdjusted ~= 1 then
                 widths[rowIndex] = widths[rowIndex] + horizontalSpacing
             end
         end
@@ -266,16 +339,31 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
         local nameplateAurasEnemyCenteredAnchor = BetterBlizzPlatesDB.nameplateAurasEnemyCenteredAnchor and isEnemyUnit
         local nameplateCenterAllRows = BetterBlizzPlatesDB.nameplateCenterAllRows and (nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor)
         local xPos = BetterBlizzPlatesDB.nameplateAurasXPos
+        local compactTracker = 0
 
         for index, buff in ipairs(auras) do
             local buffWidth, buffHeight = buff:GetSize()
+            if buff.isEnlarged then
+                compactTracker = 0
+            elseif buff.isCompacted then
+                compactTracker = compactTracker + 1
+            else
+                compactTracker = 0
+            end
+
+            local buffScale = buff:GetScale()
 
             -- Update the maximum row height
             maxRowHeight = math.max(maxRowHeight, buffHeight)
 
             -- Determine if it's the start of a new row
-            if index % maxBuffsPerRow == 1 then
-                local rowIndex = math.floor((index - 1) / maxBuffsPerRow) + 1
+            if index % maxBuffsPerRowAdjusted == 1 then
+                local rowIndex = math.floor((index - 1) / maxBuffsPerRowAdjusted) + 1
+                if buff.isCompacted then
+                    compactTracker = 1
+                else
+                    compactTracker = 0
+                end
 
                 if nameplateCenterAllRows then
                     horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2
@@ -297,14 +385,20 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
 
             -- Position the buff on the nameplate
             buff:ClearAllPoints()
-            local verticalOffset = -currentRow * (maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
+            local verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
+
+            local extraOffset = 0
+            if compactSquare and compactTracker == 2 and buff.isCompacted then
+                extraOffset = BetterBlizzPlatesDB.nameplateAuraWidthGap
+                compactTracker = 0
+            end
 
             if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
-                buff:SetPoint("BOTTOM", container, "TOP", horizontalOffset - healthBarWidth / 2 + 10 + xPos, verticalOffset - 13)
+                buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) +(xPos+1-extraOffset/buffScale), verticalOffset - 13)
             else
-                buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", horizontalOffset + xPos, verticalOffset - 13)
+                buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + xPos-extraOffset/buffScale, verticalOffset - 13)
             end
-            horizontalOffset = horizontalOffset + buffWidth + horizontalSpacing
+            horizontalOffset = horizontalOffset + ((buffWidth)*buffScale) + horizontalSpacing-extraOffset
         end
 
         return currentRow
@@ -333,29 +427,29 @@ end
 
 local auraSizeChanged = false
 local function SetAuraDimensions(buff)
-    local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
-    local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
+    -- local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
+    -- local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
 
-    if nameplateAuraSquare then
-        auraSizeChanged = true
-        buff:SetSize(20, 20)
-        buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-        buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-        buff.Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-    elseif nameplateAuraTaller then
-        auraSizeChanged = true
-        buff:SetSize(20, 15.5)
-        buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-        buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-        buff.Icon:SetTexCoord(0.05, 0.95, 0.15, 0.82)
-    else
-        if auraSizeChanged then
-            buff:SetSize(20, 14)
-            buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-            buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-            buff.Icon:SetTexCoord(0.05, 0.95, 0.1, 0.6)
-        end
-    end
+    -- if nameplateAuraSquare then
+    --     auraSizeChanged = true
+    --     buff:SetSize(20, 20)
+    --     buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
+    --     buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
+    --     buff.Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+    -- elseif nameplateAuraTaller then
+    --     auraSizeChanged = true
+    --     buff:SetSize(20, 15.5)
+    --     buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
+    --     buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
+    --     buff.Icon:SetTexCoord(0.05, 0.95, 0.15, 0.82)
+    -- else
+    --     if auraSizeChanged then
+    --         buff:SetSize(20, 14)
+    --         buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
+    --         buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
+    --         buff.Icon:SetTexCoord(0.05, 0.95, 0.1, 0.6)
+    --     end
+    -- end
 end
 
 local function SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit, aura)
@@ -400,12 +494,19 @@ local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
         if not isPlayerUnit and isEnemyUnit then
             if aura.isHelpful and aura.isStealable then
                 if not buff.buffBorderPurge then
-                    buff.buffBorderPurge = buff:CreateTexture(nil, "OVERLAY")
+                    buff.buffBorderPurge = buff:CreateTexture(nil, "ARTWORK")
                     buff.buffBorderPurge:SetAtlas("newplayertutorial-drag-slotblue")
                     if buff.Cooldown and buff.Cooldown:IsVisible() then
                         buff.buffBorderPurge:SetParent(buff.Cooldown)
                     end
-                    if nameplateAuraSquare then
+                    if buff.isEnlarged then
+                        importantGlowOffset = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                        buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
+                        buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
+                    elseif buff.isCompacted then
+                        buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
+                        buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
+                    elseif nameplateAuraSquare then
                         buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10)
                         buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10)
                     elseif nameplateAuraTaller then
@@ -448,79 +549,40 @@ local function SetPandemicGlow(buff, aura, isPandemic)
     end
 end
 
-local function SetBuffEmphasisBorder(buff, aura, isPlayerUnit, isEnemyUnit, shouldShowAura)
-    local otherNpBuffEmphasisedBorder = BetterBlizzPlatesDB.otherNpBuffEmphasisedBorder
-    local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
-    local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
-
-    if otherNpBuffEmphasisedBorder then
-        if not isPlayerUnit and isEnemyUnit then
-            if aura.isHelpful and shouldShowAura then
-                -- If extra glow for purge
-                if not buff.BorderEmphasis then
-                    buff.BorderEmphasis = buff:CreateTexture(nil, "OVERLAY")
-                    buff.BorderEmphasis:SetAtlas("newplayertutorial-drag-slotgreen")
-                    buff.BorderEmphasis:SetVertexColor(1, 0, 0)
-                    buff.BorderEmphasis:SetDesaturated(true)
-                    if buff.Cooldown and buff.Cooldown:IsVisible() then
-                        buff.BorderEmphasis:SetParent(buff.Cooldown)
-                    end
-                    if nameplateAuraSquare then
-                        buff.BorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10)
-                        buff.BorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10)
-                    elseif nameplateAuraTaller then
-                        buff.BorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7.5)
-                        buff.BorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7.5)
-                    else
-                        buff.BorderEmphasis:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7)
-                        buff.BorderEmphasis:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7)
-                    end
-                end
-                if buff.buffBorderPurge then
-                    buff.buffBorderPurge:Hide()
-                end
-                buff.BorderEmphasis:Show()
-                buff.Border:Hide()
-            else
-                if buff.BorderEmphasis then
-                    buff.BorderEmphasis:Hide()
-                    buff.Border:Show()
-                end
-            end
-        end
-    else
-        if buff.BorderEmphasis then
-            buff.BorderEmphasis:Hide()
-            buff.Border:Show()
-        end
-    end
-end
-
 local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
     local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
     local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
 
     if isImportant then
         if not isPlayerUnit then
-            -- If extra glow for purge
             if not buff.ImportantGlow then
-                buff.ImportantGlow = buff:CreateTexture(nil, "OVERLAY")
+                buff.ImportantGlow = buff:CreateTexture(nil, "ARTWORK")
                 buff.ImportantGlow:SetAtlas("newplayertutorial-drag-slotgreen")
                 buff.ImportantGlow:SetDesaturated(true)
-                if buff.Cooldown and buff.Cooldown:IsVisible() then
-                    buff.ImportantGlow:SetParent(buff.Cooldown)
-                end
-                if nameplateAuraSquare then
-                    buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10)
-                    buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10)
-                elseif nameplateAuraTaller then
-                    buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7.5)
-                    buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7.5)
-                else
-                    buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7)
-                    buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7)
-                end
             end
+            if buff.Cooldown and buff.duration ~= 0 then
+                buff.ImportantGlow:SetParent(buff.Cooldown)
+            else
+                buff.ImportantGlow:SetParent(buff)
+            end
+            if buff.isEnlarged then
+                importantGlowOffset = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
+                buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
+            elseif buff.isCompacted then
+                buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
+                buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
+            elseif nameplateAuraSquare then
+                buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10)
+                buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10)
+            elseif nameplateAuraTaller then
+                buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7.5)
+                buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7.5)
+            else
+                buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -9.5, 7)
+                buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 9.5, -7)
+            end
+            -- If extra glow for purge
             if buff.buffBorderPurge then
                 buff.buffBorderPurge:Hide()
             end
@@ -545,7 +607,7 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
     end
 end
 
-local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
+local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
     if not aura then return false end
     local spellName = aura.name
     local spellId = aura.spellId
@@ -555,42 +617,50 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
     local isPurgeable = aura.isStealable
     local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
     local castByPlayer = (caster == "player" or caster == "pet")
-    local lessThanOneMin = (duration < 61 and duration ~= 0 and expirationTime ~= 0)
-
-    local filterAllOverride = BetterBlizzPlatesDB.nameplateAuraTestMode or nil
+    local moreThanOneMin = (duration > 60 or duration == 0 or expirationTime == 0)
+    local lessThanOneMin = duration < 61 or duration == 0 or expirationTime == 0
 
     -- PLAYER
     if UnitIsUnit(unit, "player") then
         -- Buffs
-        if BetterBlizzPlatesDB["personalNpBuffEnable"] and aura.isHelpful then
+        if BetterBlizzPlatesDB["personalNpBuffEnable"] then
             local isInBlacklist = BetterBlizzPlatesDB["personalNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
-            if isInBlacklist then return end
+            if isInBlacklist then return false end
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
-            local filterBlizzard = BetterBlizzPlatesDB["personalNpBuffFilterBlizzard"] and BlizzardShouldShow
-            local filterWatchlist = BetterBlizzPlatesDB["personalNpBuffFilterWatchList"] and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
-            local filterOnlyMe = BetterBlizzPlatesDB["personalNpBuffFilterOnlyMe"] and castByPlayer
+            local filterWhitelist = BetterBlizzPlatesDB["personalNpBuffFilterWatchList"]
+            local auraWhitelisted = filterWhitelist and isInWhitelist
+            local filterLessMinite = BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"]
+            local filterOnlyMe = BetterBlizzPlatesDB["personalNpBuffFilterOnlyMe"]
+            local filterBlizzard = BetterBlizzPlatesDB["personalNpBuffFilterBlizzard"]
+            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
-                isPandemic = false
-            end
+            if filterAllOverride then return true end
+            if onlyMine and not castByPlayer then return false end
 
-            -- Shorter than 60 override
-            if filterOnlyMe and BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] and not isInWhitelist then
-                if lessThanOneMin then
-                    return true, isImportant, isPandemic
-                else
+            if not anyFilter then
+                if filterWhitelist and not isInWhitelist then return false end
+                return true
+            else
+                if auraWhitelisted then return true end
+                -- Filter to hide long duration auras
+                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                -- Handle filter for only showing the player's auras and Blizzard's recommendations
+                if filterOnlyMe then
+                    if castByPlayer then return true end
+                    if filterBlizzard then return BlizzardShouldShow end
+                    if not auraWhitelisted then return false end
+                end
+                -- Filter to show only Blizzard recommended auras
+                if not BlizzardShouldShow and filterBlizzard and not auraWhitelisted then
+                    if filterLessMinite and lessThanOneMin then return true end
+                    if filterOnlyMe then return true end
                     return false
                 end
+                -- If none of the specific sub-filter conditions are met, show the aura
+                return true
             end
-
-            if filterBlizzard or filterLessMinite or filterWatchlist or filterAllOverride or isImportant or isPandemic then
-                if not castByPlayer and onlyMine then return false end
-                return true, isImportant, isPandemic
-            end
-            if not BetterBlizzPlatesDB["personalNpBuffFilterBlizzard"] and not BetterBlizzPlatesDB["personalNpBuffFilterWatchList"] and not BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"] then return true end
         end
         -- Debuffs
         if BetterBlizzPlatesDB["personalNpdeBuffEnable"] and aura.isHarmful then
@@ -599,18 +669,21 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
-            local filterWatchlist = BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"] and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["personalNpdeBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
+            local filterWhitelist = BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"]
+            local auraWhitelisted = filterWhitelist and isInWhitelist
+            local filterLessMinite = BetterBlizzPlatesDB["personalNpdeBuffFilterLessMinite"]
+            local anyFilter = filterLessMinite
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
-                isPandemic = false
+            if filterAllOverride then return true end
+            if onlyMine and not castByPlayer then return false end
+            if not anyFilter then
+                if filterWhitelist and not isInWhitelist then return false end
+                return true
+            else
+                -- Filter to hide long duration auras
+                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                return true
             end
-
-            if filterLessMinite or filterWatchlist or isImportant or isPandemic then
-                if not castByPlayer and onlyMine then return false end
-                return true, isImportant, isPandemic
-            end
-            if not BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"] and not BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"] then return true end
         end
 
     -- FRIENDLY
@@ -622,28 +695,31 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
-            local filterWatchlist = BetterBlizzPlatesDB["friendlyNpBuffFilterWatchList"] and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and lessThanOneMin
-            local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpBuffFilterOnlyMe"] and castByPlayer
+            local filterWhitelist = BetterBlizzPlatesDB["friendlyNpBuffFilterWatchList"]
+            local auraWhitelisted = filterWhitelist and isInWhitelist
+            local filterLessMinite = BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"]
+            local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpBuffFilterOnlyMe"]
+            local anyFilter = filterLessMinite or filterOnlyMe
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and not castByPlayer then
-                isPandemic = false
-            end
+            if filterAllOverride then return true end
+            if onlyMine and not castByPlayer then return false end
 
-            -- Shorter than 60 override
-            if filterOnlyMe and BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and not isInWhitelist then
-                if lessThanOneMin then
-                    return true, isImportant, isPandemic
-                else
-                    return false
+            if not anyFilter then
+                if filterWhitelist and not isInWhitelist then return false end
+                return true
+            else
+                if auraWhitelisted then return true end
+                -- Filter to hide long duration auras
+                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                -- Handle filter for only showing the player's auras and Blizzard's recommendations
+                if filterOnlyMe then
+                    if castByPlayer then return true end
+                    if filterBlizzard then return BlizzardShouldShow end
+                    if not auraWhitelisted then return false end
                 end
+                -- If none of the specific sub-filter conditions are met, show the aura
+                return true
             end
-
-            if filterLessMinite or filterOnlyMe or filterWatchlist or filterAllOverride or isImportant or isPandemic then
-                if not castByPlayer and onlyMine then return false end
-                return true, isImportant, isPandemic
-            end
-            if not BetterBlizzPlatesDB["friendlyNpBuffFilterWatchList"] and not BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"] and not BetterBlizzPlatesDB["friendlyNpBuffFilterOnlyMe"] then return true end
         end
         -- Debuffs
         if BetterBlizzPlatesDB["friendlyNpdeBuffEnable"] and aura.isHarmful then
@@ -652,31 +728,39 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
-            local filterBlizzard = BetterBlizzPlatesDB["friendlyNpdeBuffFilterBlizzard"] and BlizzardShouldShow
-            local filterWatchlist = BetterBlizzPlatesDB["friendlyNpdeBuffFilterWatchList"] and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
-            local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpdeBuffFilterOnlyMe"] and notCastByPlayer
+            local filterWhitelist = BetterBlizzPlatesDB["friendlyNpdeBuffFilterWatchList"]
+            local auraWhitelisted = filterWhitelist and isInWhitelist
+            local filterBlizzard = BetterBlizzPlatesDB["friendlyNpdeBuffFilterBlizzard"]
+            local filterLessMinite = BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"]
+            local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpdeBuffFilterOnlyMe"]
+            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
-                isPandemic = false
-            end
+            if filterAllOverride then return true end
+            if onlyMine and not castByPlayer then return false end
 
-            -- Shorter than 60 override
-            if filterOnlyMe and BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and not isInWhitelist then
-                if lessThanOneMin then
-                    return true, isImportant, isPandemic
-                else
+            if not anyFilter then
+                if filterWhitelist and not isInWhitelist then return false end
+                return true
+            else
+                if auraWhitelisted then return true end
+                -- Filter to hide long duration auras
+                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                -- Handle filter for only showing the player's auras and Blizzard's recommendations
+                if filterOnlyMe then
+                    if castByPlayer then return true end
+                    if filterBlizzard then return BlizzardShouldShow end
+                    if not auraWhitelisted then return false end
+                end
+                -- Filter to show only Blizzard recommended auras
+                if not BlizzardShouldShow and filterBlizzard and not auraWhitelisted then
+                    if filterLessMinite and lessThanOneMin then return true end
+                    if filterOnlyMe then return true end
                     return false
                 end
+                -- If none of the specific sub-filter conditions are met, show the aura
+                return true
             end
-
-            if filterLessMinite or filterOnlyMe or filterBlizzard or filterWatchlist or filterAllOverride or isImportant or isPandemic then
-                if not castByPlayer and onlyMine then return false end
-                return true, isImportant, isPandemic
-            end
-            if not BetterBlizzPlatesDB["friendlyNpdeBuffFilterBlizzard"] and not BetterBlizzPlatesDB["friendlyNpdeBuffFilterWatchList"] and not BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"] and not BetterBlizzPlatesDB["friendlyNpdeBuffFilterOnlyMe"] then return true end
         end
-
     -- ENEMY
     else
         -- Buffs
@@ -686,19 +770,26 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
-            local filterWatchlist = BetterBlizzPlatesDB["otherNpBuffFilterWatchList"] and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
+            local filterWhitelist = BetterBlizzPlatesDB["otherNpBuffFilterWatchList"]
+            local auraWhitelisted = filterWhitelist and isInWhitelist
+            local filterLessMinite = BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"]
             local filterPurgeable = BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] and isPurgeable
+            local anyFilter = filterLessMinite or filterPurgeable
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
-                isPandemic = false
-            end
+            if filterAllOverride then return true end
+            if onlyMine and not castByPlayer then return false end
 
-            if filterPurgeable or filterLessMinite or filterWatchlist or filterAllOverride or isImportant or isPandemic then
-                if not castByPlayer and onlyMine then return false end
-                return true, isImportant, isPandemic
+            if not anyFilter then
+                if filterWhitelist and not isInWhitelist then return false end
+                return true
+            else
+                if auraWhitelisted then return true end
+                -- Filter to hide long duration auras
+                if filterPurgeable then return true end
+                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                -- If none of the specific sub-filter conditions are met, show the aura
+                return true
             end
-            if not BetterBlizzPlatesDB["otherNpBuffFilterWatchList"] and not BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"] and not BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] then return true end
         end
         -- Debuffs
         if BetterBlizzPlatesDB["otherNpdeBuffEnable"] and aura.isHarmful then
@@ -707,29 +798,38 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow)
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
-            local filterBlizzard = BetterBlizzPlatesDB["otherNpdeBuffFilterBlizzard"] and BlizzardShouldShow
-            local filterWatchlist = BetterBlizzPlatesDB["otherNpdeBuffFilterWatchList"] and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and (duration < 61 and duration ~= 0 and expirationTime ~= 0)
-            local filterOnlyMe = BetterBlizzPlatesDB["otherNpdeBuffFilterOnlyMe"] and notCastByPlayer
+            local filterWhitelist = BetterBlizzPlatesDB["otherNpdeBuffFilterWatchList"]
+            local auraWhitelisted = filterWhitelist and isInWhitelist
+            local filterBlizzard = BetterBlizzPlatesDB["otherNpdeBuffFilterBlizzard"]
+            local filterLessMinite = BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"]
+            local filterOnlyMe = BetterBlizzPlatesDB["otherNpdeBuffFilterOnlyMe"]
+            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe
 
-            if BetterBlizzPlatesDB["onlyPandemicAuraMine"] and notCastByPlayer then
-                isPandemic = false
-            end
+            if filterAllOverride then return true end
+            if onlyMine and not castByPlayer then return false end
 
-            -- Shorter than 60 override
-            if filterOnlyMe and BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and not isInWhitelist then
-                if lessThanOneMin then
-                    return true, isImportant, isPandemic
-                else
+            if not anyFilter then
+                if filterWhitelist and not isInWhitelist then return false end
+                return true
+            else
+                if auraWhitelisted then return true end
+                -- Filter to hide long duration auras
+                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                -- Handle filter for only showing the player's auras and Blizzard's recommendations
+                if filterOnlyMe then
+                    if castByPlayer then return true end
+                    if filterBlizzard then return BlizzardShouldShow end
+                    if not auraWhitelisted then return false end
+                end
+                -- Filter to show only Blizzard recommended auras
+                if not BlizzardShouldShow and filterBlizzard and not auraWhitelisted then
+                    if filterLessMinite and lessThanOneMin then return true end
+                    if filterOnlyMe then return true end
                     return false
                 end
+                -- If none of the specific sub-filter conditions are met, show the aura
+                return true
             end
-
-            if filterBlizzard or filterLessMinite or filterOnlyMe or filterWatchlist or isImportant or isPandemic then
-                if not castByPlayer and onlyMine then return false end
-                return true, isImportant, isPandemic
-            end
-            if not BetterBlizzPlatesDB["otherNpdeBuffFilterBlizzard"] and not BetterBlizzPlatesDB["otherNpdeBuffFilterWatchList"] and not BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"] and not BetterBlizzPlatesDB["otherNpdeBuffFilterOnlyMe"] then return true end
         end
     end
 end
@@ -851,13 +951,14 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
     local buffIndex = 1;
     local BBPMaxAuraNum = BetterBlizzPlatesDB.maxAurasOnNameplate
-    local rowOffset = 0;
     local isPlayerUnit = UnitIsUnit("player", self.unit)
     local isEnemyUnit, isFriend, isNeutral = BBP.GetUnitReaction(self.unit)
     isEnemyUnit = isEnemyUnit or isNeutral
     self.isEnemyUnit = isEnemyUnit
-    local shouldShowAura, isImportant, isPandemic, auraColor
-
+    local shouldShowAura, isImportant, isPandemic, auraColor, onlyMine, isEnlarged, isCompacted
+    local onlyPandemicMine = BetterBlizzPlatesDB.onlyPandemicAuraMine
+    local showDefaultCooldownNumbersOnNpAuras = BetterBlizzPlatesDB.showDefaultCooldownNumbersOnNpAuras
+    local hideNpAuraSwipe = BetterBlizzPlatesDB.hideNpAuraSwipe
 
     self.auras:Iterate(function(auraInstanceID, aura)
         if buffIndex > BBPMaxAuraNum then return true end
@@ -866,13 +967,31 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         buff.isBuff = aura.isHelpful;
         buff.layoutIndex = buffIndex;
         buff.spellID = aura.spellId;
+        buff.duration = aura.duration;
 
         buff.Icon:SetTexture(aura.icon);
 
         local spellName = FetchSpellName(aura.spellId)
         local spellId = aura.spellId
+        local caster = aura.sourceUnit
+        local castByPlayer = (caster == "player" or caster == "pet")
 
-        shouldShowAura, isImportant, isPandemic, auraColor = GetAuraDetails(spellName, spellId)
+        shouldShowAura, isImportant, isPandemic, auraColor, onlyMine, isEnlarged, isCompacted = GetAuraDetails(spellName, spellId)
+        if onlyPandemicMine and not castByPlayer then
+            isPandemic = false
+        end
+
+        if isEnlarged then
+            buff.isEnlarged = true
+        else
+            buff.isEnlarged = false
+        end
+
+        if isCompacted then
+            buff.isCompacted = true
+        else
+            buff.isCompacted = false
+        end
 
         -- Set aura dimensions
         SetAuraDimensions(buff);
@@ -887,9 +1006,6 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
         -- Purge Glow
         SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
-
-        -- Emphasise Buff (Red Glow)
-        SetBuffEmphasisBorder(buff, aura, isPlayerUnit, isEnemyUnit, shouldShowAura)
 
         if isPlayerUnit then
             if buff.Border then
@@ -914,14 +1030,14 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         end
         CooldownFrame_Set(buff.Cooldown, aura.expirationTime - aura.duration, aura.duration, aura.duration > 0, true);
 
-        if BetterBlizzPlatesDB.hideNpAuraSwipe then
+        if hideNpAuraSwipe then
             if buff.Cooldown then
                 buff.Cooldown:SetDrawSwipe(false)
                 buff.Cooldown:SetDrawEdge(false)
             end
         end
 
-        if BetterBlizzPlatesDB.showDefaultCooldownNumbersOnNpAuras then
+        if showDefaultCooldownNumbersOnNpAuras then
             if buff.Cooldown then
                 buff.Cooldown:SetHideCountdownNumbers(false)
                 local cdText = buff.Cooldown and buff.Cooldown:GetRegions()
@@ -947,9 +1063,9 @@ function BBP.ParseAllAuras(self, forceAll, UnitFrame)
         self.auras:Clear();
     end
 
-    local function HandleAura(aura)
+    local function HandleAura(aura, isTestModeEnabled)
         local BlizzardShouldShow = self:ShouldShowBuff(aura, forceAll)
-        local shouldShowAura, isImportant, isPandemic = ShouldShowBuff(self.unit, aura, BlizzardShouldShow)
+        local shouldShowAura, isImportant, isPandemic = ShouldShowBuff(self.unit, aura, BlizzardShouldShow, isTestModeEnabled)
         if shouldShowAura then
             self.auras[aura.auraInstanceID] = aura;
         end
@@ -968,35 +1084,70 @@ function BBP.ParseAllAuras(self, forceAll, UnitFrame)
         local currentTime = GetTime()
         for _, fakeAura in ipairs(fakeAuras) do
             fakeAura.expirationTime = currentTime + fakeAura.duration
-            HandleAura(fakeAura)
+            HandleAura(fakeAura, isTestModeEnabled)
         end
     end
 end
 
+-- Table of classes and their specs that have a nameplate resource
+local specsForResource = {
+    [62] = true,  -- Arcane Mage
+    [259] = true, -- Assassination Rogue
+    [260] = true, -- Outlaw Rogue
+    [261] = true, -- Subtlety Rogue
+    [250] = true, -- Blood DK
+    [251] = true, -- Frost DK
+    [252] = true, -- Unholy DK
+    --[102] = true, -- Balance Druid (has combopoints but not used)
+    [105] = true, -- Resto Druid (doubtful but potentially)
+    [104] = true, -- Guardian Druid
+    [103] = true, -- Feral Druid
+    [1467] = true, -- Devoker
+    [1468] = true, -- Prevoker
+    [269] = true, -- Windwalker Monk
+    [65] = true, -- Holy Pala
+    [66] = true, -- Prot Pala
+    [70] = true, -- Ret Pala
+    [265] = true, -- Aff Lock
+    [266] = true, -- Demo Lock
+    [267] = true, -- Destro Lock
+}
+-- Function to check if the current player's class spec has a nameplate resource
+function BBP.PlayerSpecHasResource()
+    local specID, _, _, _, _, _, _ = GetSpecializationInfo(GetSpecialization())
+    return specsForResource[specID] or false
+end
+
 function BBP:UpdateAnchor()
-    local unit = self:GetParent().unit
-    local isTarget = unit and UnitIsUnit(unit, "target")
-    local targetYOffset = self:GetBaseYOffset() + (isTarget and self:GetTargetYOffset() or 0.0)
-    local isEnemy, isFriend, isNeutral
-    if unit then
-        isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
-        isEnemy = isEnemy or isNeutral
+    local frame = self:GetParent()
+
+    local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
+    local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
+
+    local isTarget = frame.unit and UnitIsUnit(frame.unit, "target")
+    local isFriend = info and info.isFriend --frame.unit and UnitReaction(frame.unit, "player") > 4
+
+    local shouldNotOffset = config.nameplateResourceDoNotRaiseAuras or config.nameplateResourceUnderCastbar or not BBP.PlayerSpecHasResource()
+    local targetYOffset = self:GetBaseYOffset() + (isTarget and not shouldNotOffset and self:GetTargetYOffset() or 0.0)
+
+    if not config.buffAnchorInitalized or BBP.needsUpdate then
+        config.friendlyNameplateClickthrough = BetterBlizzPlatesDB.friendlyNameplateClickthrough
+        config.nameplateAurasYPos = BetterBlizzPlatesDB.nameplateAurasYPos
+        config.nameplateAurasNoNameYPos = BetterBlizzPlatesDB.nameplateAurasNoNameYPos
+        config.nameplateAuraScale = BetterBlizzPlatesDB.nameplateAuraScale
+
+        config.buffAnchorInitalized = true
     end
 
-    local friendlyNameplateClickthrough = BetterBlizzPlatesDB.friendlyNameplateClickthrough
-    local nameplateAurasYPos = BetterBlizzPlatesDB.nameplateAurasYPos
-    local nameplateAurasNoNameYPos = BetterBlizzPlatesDB.nameplateAurasNoNameYPos
-    local nameplateAuraScale = BetterBlizzPlatesDB.nameplateAuraScale
-
-    if unit and ShouldShowName(self:GetParent()) then
-        if friendlyNameplateClickthrough and isFriend then
-            self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0, -3 + targetYOffset + nameplateAurasYPos + 63)
+    if frame.unit and ShouldShowName(frame) then
+        if config.friendlyNameplateClickthrough and isFriend then
+            self:SetPoint("BOTTOM", frame, "TOP", 0, -3 + targetYOffset + config.nameplateAurasYPos + 63)
         else
-            self:SetPoint("BOTTOM", self:GetParent(), "TOP", 0, -3 + targetYOffset + nameplateAurasYPos)
+            self:SetPoint("BOTTOM", frame, "TOP", 0, -3 + targetYOffset + config.nameplateAurasYPos)
         end
     else
-        local additionalYOffset = 15 * (nameplateAuraScale - 1)
-        self:SetPoint("BOTTOM", self:GetParent().healthBar, "TOP", 0, 4 + targetYOffset + nameplateAurasNoNameYPos + 1 + additionalYOffset)
+        local additionalYOffset = 15 * (config.nameplateAuraScale - 1)
+        self:SetPoint("BOTTOM", frame.healthBar, "TOP", 0, 4 + targetYOffset + config.nameplateAurasNoNameYPos + 1 + additionalYOffset)
     end
 end
 
@@ -1009,4 +1160,11 @@ function BBP.RefreshBuffFrame()
             BBP.UpdateBuffs(self, unitFrame.unit, nil, {}, unitFrame)
         end
 	end
+end
+
+function BBP.HideNameplateAuraTooltip()
+    if BetterBlizzPlatesDB.hideNameplateAuraTooltip and not BBP.hookedNameplateAuraTooltip then
+        hooksecurefunc(NameplateBuffButtonTemplateMixin, "OnEnter", function(self) self:EnableMouse(false) end)
+        BBP.hookedNameplateAuraTooltip = true
+    end
 end

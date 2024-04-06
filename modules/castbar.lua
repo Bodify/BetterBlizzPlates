@@ -73,24 +73,6 @@ local function ResetCastbarAfterFadeout(nameplate, unitToken)
     local frame = nameplate.UnitFrame
     if castBar:IsForbidden() then return end
 
-    local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
-    -- if useCustomCastbarTexture and event and unitID then
-    --     if not nameplate then return end
-    --     local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
-    --     local castBarTexture = castBar:GetStatusBarTexture()
-    --     local textureName = BetterBlizzPlatesDB.customCastbarTexture
-    --     local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
-    --     if castBar.Flash then
-    --         castBar.Flash:SetTexture(texturePath)
-    --     end
-    --     if castBarTexture then
-    --         castBar:SetStatusBarTexture(texturePath)
-    --         if not castBarRecolor then
-    --             castBarTexture:SetDesaturated(true)
-    --         end
-    --     end
-    -- end
-
     C_Timer.After(0.5, function()
         local showCastBarIconWhenNoninterruptible = BetterBlizzPlatesDB.showCastBarIconWhenNoninterruptible
         local castBarIconScale = BetterBlizzPlatesDB.castBarIconScale
@@ -205,10 +187,10 @@ function BBP.CustomizeCastbar(unitToken)
                 if notInterruptible then
                     castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
                 elseif casting then
-                    if not nameplate.emphasizedCast then
+                    if not nameplate.UnitFrame.emphasizedCast then
                         castBar:SetStatusBarColor(unpack(castBarCastColor))
                 elseif channeling then
-                    if not nameplate.emphasizedCast then
+                    if not nameplate.UnitFrame.emphasizedCast then
                         castBar:SetStatusBarColor(unpack(castBarChanneledColor))
                     end
                 end
@@ -370,9 +352,9 @@ function BBP.CustomizeCastbar(unitToken)
                     if (castEmphasis.name and spellName and strlower(castEmphasis.name) == strlower(spellName)) or
                        (castEmphasis.id and spellID and castEmphasis.id == spellID) then
                         ApplyCastBarEmphasisSettings(castBar, castEmphasis)
-                        nameplate.emphasizedCast = castEmphasis
+                        nameplate.UnitFrame.emphasizedCast = castEmphasis
                     else
-                        nameplate.emphasizedCast = nil
+                        nameplate.UnitFrame.emphasizedCast = nil
                     end
                 end
             end
@@ -419,34 +401,23 @@ function BBP.CustomizeCastbar(unitToken)
     end
 end
 
+
 -- Hide npcs from list
-function BBP.HideCastbar(nameplate, unitToken)
-    if not (nameplate and nameplate.UnitFrame and nameplate.UnitFrame.castBar) then return end
+function BBP.HideCastbar(frame, unitToken)
+    if not frame.castBar then return end
+    local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or BBP.InitializeNameplateSettings(frame)
+    local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
 
-    local castBar = nameplate.UnitFrame.castBar
-    if castBar:IsForbidden() then return end
-
-    --local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
-
-    local showCastbarIfTarget = BetterBlizzPlatesDB.showCastbarIfTarget
-    local hideCastbarWhitelistOn = BetterBlizzPlatesDB.hideCastbarWhitelistOn
-    local onlyShowInterruptableCasts = BetterBlizzPlatesDB.onlyShowInterruptableCasts
-
---[[
-    local hideFriendlyCastbars = true--BetterBlizzPlatesDB.hideFriendlyCastbars
-
-    if hideFriendlyCastbars then
-        if isFriend then
-            castBar:Hide()
-            return
-        end
+    if not config.showCastbarIfTarget or BBP.needsUpdate then
+        config.showCastbarIfTarget = BetterBlizzPlatesDB.showCastbarIfTarget
+        config.hideCastbarWhitelistOn = BetterBlizzPlatesDB.hideCastbarWhitelistOn
+        config.onlyShowInterruptableCasts = BetterBlizzPlatesDB.onlyShowInterruptableCasts
+        config.hideNpcCastbar = BetterBlizzPlatesDB.hideNpcCastbar
+        config.hideCastbarFriendly = BetterBlizzPlatesDB.hideCastbarFriendly
+        config.hideCastbarEnemy = BetterBlizzPlatesDB.hideCastbarEnemy
     end
 
-]]
-
-
-    castBar:Show()
-
+    local castBar = frame.castBar
     local spellName, spellID, notInterruptible, npcID, npcName
 
     if UnitCastingInfo(unitToken) then
@@ -455,22 +426,53 @@ function BBP.HideCastbar(nameplate, unitToken)
         spellName, _, _, _, _, _, _, notInterruptible, spellID = UnitChannelInfo(unitToken)
     end
 
+    local isCasting = spellName
+
     local unitGUID = UnitGUID(unitToken)
     if unitGUID then
         npcID = select(6, strsplit("-", unitGUID))
-        npcName = UnitName(unitToken)
+        npcName = info and info.name
     end
 
-    if showCastbarIfTarget and UnitIsUnit(unitToken, "target") then
-        -- Show the castBar if the unit is the player's current target
+    if config.showCastbarIfTarget and info and info.isTarget then
         castBar:Show()
-        if nameplate.CastTimer then
-            nameplate.CastTimer:Show()
+        return
+    end
+
+    if config.onlyShowInterruptableCasts then
+        if notInterruptible then
+            castBar:Hide()
+            return
         end
-        if nameplate.TargetText then
-            nameplate.TargetText:Show()
+    end
+
+    if (config.hideCastbarFriendly and info and info.isFriend) or (config.hideCastbarEnemy and info and not info.isFriend) then
+        local hideCastbar = true
+        if config.hideCastbarWhitelistOn then
+            -- Whitelist logic
+            local inWhitelist = false
+            local hideCastbarWhitelist = BetterBlizzPlatesDB.hideCastbarWhitelist
+            for _, entry in ipairs(hideCastbarWhitelist) do
+                if (entry.name and spellName and strlower(entry.name) == strlower(spellName)) or
+                    (entry.id and spellID and entry.id == spellID) or
+                    (entry.id and npcID and entry.id == tonumber(npcID)) or
+                    (entry.name and npcName and strlower(entry.name) == strlower(npcName)) then
+                    inWhitelist = true
+                    break
+                end
+            end
+
+            if inWhitelist and isCasting then
+                hideCastbar = false
+            end
         end
-    elseif hideCastbarWhitelistOn then
+        if hideCastbar then
+            castBar:Hide()
+            return
+        end
+    end
+
+    if config.hideCastbarWhitelistOn then
         -- Check if the NPC is in the whitelist by ID, Name, spell ID, or spell Name (case-insensitive)
         local inWhitelist = false
         local hideCastbarWhitelist = BetterBlizzPlatesDB.hideCastbarWhitelist
@@ -485,28 +487,15 @@ function BBP.HideCastbar(nameplate, unitToken)
         end
 
         -- Show the castBar only if the NPC is in the whitelist and is currently casting
-        if inWhitelist and UnitCastingInfo(unitToken) then
+        if inWhitelist and isCasting then
             castBar:Show()
-            if nameplate.CastTimer then
-                nameplate.CastTimer:Show()
-            end
-            if nameplate.TargetText then
-                nameplate.TargetText:Show()
-            end
         else
             castBar:Hide()
-            if nameplate.CastTimer then
-                nameplate.CastTimer:Hide()
-            end
-            if nameplate.TargetText then
-                nameplate.TargetText:Hide()
-            end
         end
     else
         -- Check if the NPC is in the blacklist by ID, Name, spell ID, or spell Name (case-insensitive)
         local inList = false
         local hideCastbarList = BetterBlizzPlatesDB.hideCastbarList
-        local hideNpcCastbar = BetterBlizzPlatesDB.hideNpcCastbar
 
         for _, entry in ipairs(hideCastbarList) do
             if (entry.name and spellName and strlower(entry.name) == strlower(spellName)) or
@@ -519,33 +508,15 @@ function BBP.HideCastbar(nameplate, unitToken)
         end
 
         -- Check if the unit is currently casting and is not in the blacklist
-        if UnitCastingInfo(unitToken) and not inList then
+        if isCasting and not inList then
             castBar:Show()
-            if nameplate.CastTimer then
-                nameplate.CastTimer:Show()
-            end
-            if nameplate.TargetText then
-                nameplate.TargetText:Show()
-            end
         else
             castBar:Hide()
-            if nameplate.CastTimer then
-                nameplate.CastTimer:Hide()
-            end
-            if nameplate.TargetText then
-                nameplate.TargetText:Hide()
-            end
         end
-        if hideNpcCastbar then
-            if not UnitIsPlayer(unitToken) then
+        if config.hideNpcCastbar then
+            if info and not info.isPlayer then
                 castBar:Hide()
             end
-        end
-    end
-
-    if onlyShowInterruptableCasts then
-        if notInterruptible then
-            castBar:Hide()
         end
     end
 end
@@ -633,7 +604,7 @@ end
 local castbarEventFrame = CreateFrame("Frame")
 castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
     if event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" or event == "UNIT_SPELLCAST_EMPOWER_START" then
-        local nameplate = BBP.GetNameplate(unitID)
+        local nameplate, frame = BBP.GetSafeNameplate(unitID)
         if not nameplate then return end
 
         local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
@@ -648,7 +619,8 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
         end
 
         if hideCastbar then
-            BBP.HideCastbar(nameplate, unitID)
+            if not frame then return end
+            --BBP.HideCastbar(nameplate, unitID)
         end
 
         if showNameplateTargetText then
@@ -660,8 +632,8 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
 
             local destUnit = UnitTokenFromGUID(destGUID)
             if string.match(destUnit or "", "nameplate") then
-                local npbase = C_NamePlate.GetNamePlateForUnit(destUnit, false)
-                if npbase then
+                local nameplate, frame = BBP.GetSafeNameplate(destUnit)
+                if frame then
                     if sourceName then
                         local name, server = strsplit("-", sourceName)
                         local colorStr = "ffFFFFFF"
@@ -670,21 +642,26 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                             local localizedClass, englishClass, localizedRace, englishRace, sex, _name, realm = GetPlayerInfoByGUID(sourceGUID)
                             colorStr = RAID_CLASS_COLORS[englishClass].colorStr
                         end
-                        npbase.UnitFrame.castBar.Text:SetText(string.format("|c%s[%s]|r", colorStr, name))
+                        frame.castBar.Text:SetText(string.format("|c%s[%s]|r", colorStr, name))
+                        local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
+                        local castBarTexture = frame.castBar:GetStatusBarTexture()
+                        if castBarTexture and not useCustomCastbarTexture then
+                            castBarTexture:SetDesaturated(false)
+                        end
 
                         local castbarQuickHide = BetterBlizzPlatesDB.castbarQuickHide
                         if castbarQuickHide then
                             local nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceOnTarget and BetterBlizzPlatesDB.nameplateResourceUnderCastbar
-                            npbase.UnitFrame.castBar:Show()
+                            frame.castBar:Show()
 
                             if nameplateResourceUnderCastbar then
-                                BBP.UpdateNamplateResourcePositionForCasting(npbase)
+                                BBP.UpdateNamplateResourcePositionForCasting(nameplate)
                             end
 
                             C_Timer.After(0.5, function()
                                 if not UnitCastingInfo(destUnit) and not UnitChannelInfo(destUnit) then
-                                    if npbase.UnitFrame.castBar then
-                                        npbase.UnitFrame.castBar:PlayFadeAnim()
+                                    if frame and frame.castBar then
+                                        frame.castBar:PlayFadeAnim()
                                     end
                                 end
                             end)
@@ -694,7 +671,7 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
             end
         end
     elseif event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_INTERRUPTED" or event == "UNIT_SPELLCAST_EMPOWER_STOP" then
-        local nameplate = BBP.GetNameplate(unitID)
+        local nameplate, frame = BBP.GetSafeNameplate(unitID)
         if not nameplate then return end
 
         local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
@@ -728,7 +705,7 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
             end
         end
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
-        local nameplate = BBP.GetNameplate(unitID)
+        local nameplate, frame = BBP.GetSafeNameplate(unitID)
         if not nameplate then return end
 
         local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
@@ -894,7 +871,7 @@ function BBP.ToggleSpellCastEventRegistration()
             BetterBlizzPlatesDB.castbarEventsOn = true
         end
     else
-        if BetterBlizzPlatesDB.interruptedByIndicator and not interruptCombatLog then
+        if BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.interruptedByIndicator and not interruptCombatLog then
             castbarEventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
             interruptCombatLog = true
         else
@@ -920,3 +897,32 @@ function BBP.ToggleSpellCastEventRegistration()
         end
     end
 end
+
+
+-- quickfix for now
+hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
+    if self.unit and self.unit:find("nameplate") then
+        local nameplate, frame = BBP.GetSafeNameplate(self.unit)
+        if not frame then return end
+        local alwaysHideFriendlyCastbar = BetterBlizzPlatesDB.alwaysHideFriendlyCastbar
+        local alwaysHideEnemyCastbar = BetterBlizzPlatesDB.alwaysHideEnemyCastbar
+        local hideCastbar = BetterBlizzPlatesDB.hideCastbar
+        if frame.hideCastbarOverride then
+            frame.castBar:Hide()
+            return
+        end
+        if alwaysHideFriendlyCastbar or alwaysHideEnemyCastbar then
+            local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(self.unit)
+            if (alwaysHideFriendlyCastbar and isFriend) then
+                frame.castBar:Hide()
+                return
+            elseif (alwaysHideEnemyCastbar and not isFriend) then
+                frame.castBar:Hide()
+                return
+            end
+        end
+        if hideCastbar then
+            BBP.HideCastbar(frame, self.unit)
+        end
+    end
+end)

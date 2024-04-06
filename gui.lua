@@ -11,6 +11,60 @@ local pixelsBetweenBoxedWSlider = -4
 local pixelsOnFirstBox = -1
 local npcEditFrame = nil
 
+local LibDeflate = LibStub("LibDeflate")
+local LibSerialize = LibStub("LibSerialize")
+
+local function ExportProfile(profileTable, dataType)
+    -- Include a dataType in the table being serialized
+    local exportTable = {
+        dataType = dataType,
+        data = profileTable
+    }
+    local serialized = LibSerialize:Serialize(exportTable)
+    local compressed = LibDeflate:CompressDeflate(serialized)
+    local encoded = LibDeflate:EncodeForPrint(compressed)
+    return "!BBP" .. encoded .. "!BBP"
+end
+
+
+
+
+
+local function ImportProfile(encodedString, expectedDataType)
+    if encodedString:sub(1, 4) == "!BBP" and encodedString:sub(-4) == "!BBP" then
+        encodedString = encodedString:sub(5, -5) -- Remove both prefix and suffix
+    else
+        return nil, "Invalid format: Prefix or suffix not found."
+    end
+
+    local compressed = LibDeflate:DecodeForPrint(encodedString)
+    local serialized, decompressMsg = LibDeflate:DecompressDeflate(compressed)
+    if not serialized then
+        return nil, "Error decompressing: " .. tostring(decompressMsg)
+    end
+
+    local success, importTable = LibSerialize:Deserialize(serialized)
+    if not success or importTable.dataType ~= expectedDataType then
+        return nil, "Error deserializing or data type mismatch"
+    end
+
+    return importTable.data, nil
+end
+
+
+local function deepMergeTables(destination, source)
+    for k, v in pairs(source) do
+        if type(v) == "table" then
+            if not destination[k] then
+                destination[k] = {}
+            end
+            deepMergeTables(destination[k], v) -- Recursive merge for nested tables
+        else
+            destination[k] = v
+        end
+    end
+end
+
 local tooltips = {
     ["5: Replace name with spec + ID on same row"] = "Shows as for example \"Frost 2\"",
     ["Off"] = "Turn the functionaly off and just use normal names",
@@ -50,6 +104,34 @@ StaticPopupDialogs["BBP_CONFIRM_RELOAD"] = {
     whileDead = true,
     hideOnEscape = true,
 }
+
+StaticPopupDialogs["BBP_CONFIRM_MAGNUSZ_PROFILE"] = {
+    text = "This action will modify all settings to Magnusz's profile and reload the UI.\n\nYour existing blacklists and whitelists will be retained, with Magnusz's additional entries.\n\nAre you sure you want to continue?",
+    button1 = "Yes",
+    button2 = "No",
+    OnAccept = function()
+        BBP.MagnuszProfile()
+        ReloadUI()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+}
+
+StaticPopupDialogs["BBP_CONFIRM_NAHJ_PROFILE"] = {
+    text = "This action will modify all settings to Nahj's profile and reload the UI.\n\nYour existing blacklists and whitelists will be retained, with Nahj's additional entries.\n\nAre you sure you want to continue?",
+    button1 = "Yes",
+    button2 = "No",
+    OnAccept = function()
+        BBP.NahjProfile()
+        ReloadUI()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+}
+
+
 
 ------------------------------------------------------------
 -- GUI Creation Functions
@@ -143,7 +225,6 @@ local function OpenColorPicker(colorType, icon)
     })
 end
 
-
 function CreateColorBox(parent, colorVar, labelText)
     local frame = CreateFrame("Frame", nil, parent)
     frame:SetSize(55, 20) -- Adjust size as needed
@@ -187,7 +268,6 @@ function CreateColorBox(parent, colorVar, labelText)
     return frame
 end
 
-
 local function CreateBorderBox(anchor)
     local contentFrame = anchor:GetParent()
     local texture = contentFrame:CreateTexture(nil, "BACKGROUND")
@@ -217,6 +297,7 @@ local function CreateResetButton(relativeTo, settingKey, parent)
     resetButton:SetPoint("LEFT", relativeTo, "RIGHT", 10, 0)
     resetButton:SetScript("OnClick", function()
         BBP.ResetToDefaultValue(relativeTo, settingKey)
+        BBP.needsUpdate = true
     end)
     return resetButton
 end
@@ -257,6 +338,7 @@ local function CreateModeDropdown(name, parent, defaultText, settingKey, toggleF
                 BetterBlizzPlatesDB[settingKey] = displayText
 
                 LibDD:UIDropDownMenu_SetText(dropdown, displayText)
+                BBP.needsUpdate = true
                 toggleFunc(displayText)
             end
             info.checked = (BetterBlizzPlatesDB[settingKey] == displayText)
@@ -343,6 +425,7 @@ local function CreateFontDropdown(name, parent, defaultText, settingKey, toggleF
                 info.func = function(_, arg1)
                     BetterBlizzPlatesDB[settingKey] = arg1
                     LibDD:UIDropDownMenu_SetText(dropdown, arg1)
+                    BBP.needsUpdate = true
                     toggleFunc(fontPath)
                     dropdown.Text:SetFont(fontPath, 12)
                     LibDD:CloseDropDownMenus()
@@ -418,6 +501,7 @@ local function CreateTextureDropdown(name, parent, defaultText, settingKey, togg
                 info.func = function(_, arg1)
                     BetterBlizzPlatesDB[settingKey] = arg1
                     LibDD:UIDropDownMenu_SetText(dropdown, arg1)
+                    BBP.needsUpdate = true
                     toggleFunc(texturePath)
                     LibDD:CloseDropDownMenus()
                 end
@@ -461,6 +545,7 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
                 if BetterBlizzPlatesDB[settingKey] ~= arg1 then
                     BetterBlizzPlatesDB[settingKey] = arg1
                     LibDD:UIDropDownMenu_SetText(dropdown, arg1)
+                    BBP.needsUpdate = true
                     toggleFunc(arg1)
                     BBP.RefreshAllNameplates()
                 end
@@ -573,8 +658,10 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
 
     local function SliderOnValueChanged(self, value)
         if not BetterBlizzPlatesDB.wasOnLoadingScreen then
+            BBP.needsUpdate = true
             local textValue = value % 1 == 0 and tostring(math.floor(value)) or string.format("%.2f", value)
             self.Text:SetText(label .. ": " .. textValue)
+            value = tonumber(textValue)
             --if not BBP.checkCombatAndWarn() then
                 -- Update the X or Y position based on the axis
                 if axis == "X" then
@@ -598,6 +685,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
                     if namePlate.UnitFrame then
                         local frame = namePlate.UnitFrame
+                        if frame:IsForbidden() or frame:IsProtected() then return end
                         -- Absorb Indicator Pos and Scale
                         if element == "absorbIndicatorXPos" or element == "absorbIndicatorYPos" or element == "absorbIndicatorScale" then
                             BBP.AbsorbIndicator(frame)
@@ -619,6 +707,16 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         -- Execute Indicator Pos and Scale
                         elseif element == "executeIndicatorXPos" or element == "executeIndicatorYPos" or element == "executeIndicatorScale" then
                             BBP.ExecuteIndicator(frame)
+                        -- Party Pointer Pos and Scale
+                        elseif element == "partyPointerXPos" or element == "partyPointerYPos" or element == "partyPointerScale"  or element == "partyPointerHealerScale" or element == "partyPointerWidth" then
+                            BBP.PartyPointer(frame)
+                        elseif element == "hideNpcMurlocScale" or element == "hideNpcMurlocYPos" then
+                            BBP.HideNPCs(frame)
+                        elseif element == "nameplateAuraEnlargedScale" or element == "nameplateAuraCompactedScale" then
+                            BBP.RefUnitAuraTotally(frame)
+                        -- Fake name
+                        elseif element == "fakeNameXPos" or element == "fakeNameYPos" or element == "fakeNameFriendlyXPos" or element == "fakeNameFriendlyYPos" then
+                            BBP.SetupFakeName(frame)
                         -- Target Indicator Pos and Scale
                         elseif element == "targetIndicatorXPos" or element == "targetIndicatorYPos" or element == "targetIndicatorScale" then
                             BBP.TargetIndicator(frame)
@@ -636,7 +734,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                                     if BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown then
                                         frame.totemIndicator:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 4)
                                     else
-                                        frame.totemIndicator:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 0)
+                                        frame.totemIndicator:SetPoint("BOTTOM", frame.fakeName or frame.name, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 0)
                                     end
                                 else
                                     frame.totemIndicator:SetScale(value)
@@ -677,7 +775,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                                 --     if axis then
                                 --         if anchorPoint == "TOP" then
                                 --             frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
-                                --             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.name, anchorPoint, xPos, yPos)
+                                --             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.fakeName or frame.name, anchorPoint, xPos, yPos)
                                 --         else
                                 --             frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
                                 --             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.healthBar, anchorPoint, xPos, yPos)
@@ -712,7 +810,32 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     if not BBP.checkCombatAndWarn() then
                         BBP.ApplyNameplateWidth()
                     end
-
+                elseif element == "partyPointerScale" then
+                    BetterBlizzPlatesDB.partyPointerScale = value
+                elseif element == "partyPointerHealerScale" then
+                    BetterBlizzPlatesDB.partyPointerHealerScale = value
+                elseif element == "partyPointerXPos" then
+                    BetterBlizzPlatesDB.partyPointerXPos = value
+                elseif element == "partyPointerYPos" then
+                    BetterBlizzPlatesDB.partyPointerYPos = value
+                elseif element == "partyPointerWidth" then
+                    BetterBlizzPlatesDB.partyPointerWidth = value
+                elseif element == "fakeNameXPos" then
+                    BetterBlizzPlatesDB.fakeNameXPos = value
+                elseif element == "fakeNameYPos" then
+                    BetterBlizzPlatesDB.fakeNameYPos = value
+                elseif element == "fakeNameFriendlyXPos" then
+                    BetterBlizzPlatesDB.fakeNameFriendlyXPos = value
+                elseif element == "fakeNameFriendlyYPos" then
+                    BetterBlizzPlatesDB.fakeNameFriendlyYPos = value
+                elseif element == "hideNpcMurlocScale" then
+                    BetterBlizzPlatesDB.hideNpcMurlocScale = value
+                elseif element == "hideNpcMurlocYPos" then
+                    BetterBlizzPlatesDB.hideNpcMurlocYPos = value
+                elseif element == "nameplateAuraEnlargedScale" then
+                    BetterBlizzPlatesDB.nameplateAuraEnlargedScale = value
+                elseif element == "nameplateAuraCompactedScale" then
+                    BetterBlizzPlatesDB.nameplateAuraCompactedScale = value
                 -- Absorb Indicator Pos and Scale
                 elseif element == "absorbIndicatorXPos" then
                     BetterBlizzPlatesDB.absorbIndicatorXPos = value
@@ -861,6 +984,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BBP.RefreshBuffFrame()
                 elseif element == "nameplateAuraRowAmount" then
                     BetterBlizzPlatesDB.nameplateAuraRowAmount = value
+                    BBP.RefreshBuffFrame()
+                elseif element == "nameplateAuraRowFriendlyAmount" then
+                    BetterBlizzPlatesDB.nameplateAuraRowFriendlyAmount = value
                     BBP.RefreshBuffFrame()
                 elseif element == "nameplateAuraWidthGap" then
                     BetterBlizzPlatesDB.nameplateAuraWidthGap = value
@@ -1113,8 +1239,14 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
     return slider
 end
 
-local function CreateTooltip(widget, tooltipText, anchor)
+local function CreateTooltip(widget, tooltipText, anchor, cvarName)
     widget:SetScript("OnEnter", function(self)
+        local finalTooltipText = tooltipText -- Start with the original tooltip text
+        if cvarName then
+            -- Append the additional text if cvarName is provided
+            finalTooltipText = finalTooltipText .. "\n\nThis controls the CVar: " .. cvarName
+        end
+
         if GameTooltip:IsShown() then
             GameTooltip:Hide()
         end
@@ -1124,7 +1256,7 @@ local function CreateTooltip(widget, tooltipText, anchor)
         else
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         end
-        GameTooltip:SetText(tooltipText)
+        GameTooltip:SetText(finalTooltipText)
 
         GameTooltip:Show()
     end)
@@ -1134,6 +1266,133 @@ local function CreateTooltip(widget, tooltipText, anchor)
     end)
 end
 
+local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarName)
+    widget:SetScript("OnEnter", function(self)
+        -- Clear the tooltip before showing new information
+        GameTooltip:ClearLines()
+        if GameTooltip:IsShown() then
+            GameTooltip:Hide()
+        end
+        if anchor then
+            GameTooltip:SetOwner(self, anchor)
+        else
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        end
+        -- Set the bold title
+        GameTooltip:AddLine(title)
+        --GameTooltip:AddLine(" ") -- Adding an empty line as a separator
+        -- Set the main text
+        GameTooltip:AddLine(mainText, 1, 1, 1, true) -- true for wrap text
+        -- Set the subtext
+        if subText then
+            GameTooltip:AddLine("____________________________", 0.8, 0.8, 0.8, true)
+            GameTooltip:AddLine(subText, 0.8, 0.80, 0.80, true)
+        end
+        -- Add CVar information if provided
+        if cvarName then
+            --GameTooltip:AddLine(" ")
+            --GameTooltip:AddLine("Default Value: " .. cvarName, 0.5, 0.5, 0.5) -- grey color for subtext
+            GameTooltip:AddDoubleLine("Changes CVar:", cvarName, 0.2, 1, 0.6, 0.2, 1, 0.6)
+        end
+        GameTooltip:Show()
+    end)
+    widget:SetScript("OnLeave", function(self)
+        GameTooltip:Hide()
+    end)
+end
+
+local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableName)
+    -- Frame to hold all import/export elements
+    local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    frame:SetSize(210, 65) -- Adjust size as needed
+    frame:SetPoint("TOPLEFT", parent, "TOPLEFT", posX, posY)
+    
+    -- Setting the backdrop
+    frame:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground", -- More subtle background
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", -- Sleeker border
+        tile = false, tileSize = 16, edgeSize = 16,
+        insets = { left = 4, right = 4, top = 4, bottom = 4 }
+    })
+    frame:SetBackdropColor(0, 0, 0, 0.7) -- Semi-transparent black
+
+    -- Title
+    local titleText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalMed2")
+    titleText:SetPoint("BOTTOM", frame, "TOP", 0, 0)
+    titleText:SetText(title)
+
+    -- Export EditBox
+    local exportBox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
+    exportBox:SetSize(100, 20)
+    exportBox:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -15, -10)
+    exportBox:SetAutoFocus(false)
+    CreateTooltipTwo(exportBox, "Ctrl+C to copy and share")
+
+    -- Import EditBox
+    local importBox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
+    importBox:SetSize(100, 20)
+    importBox:SetPoint("TOP", exportBox, "BOTTOM", 0, -5)
+    importBox:SetAutoFocus(false)
+
+    -- Export Button
+    local exportBtn = CreateFrame("Button", nil, frame, "GameMenuButtonTemplate")
+    exportBtn:SetPoint("RIGHT", exportBox, "LEFT", -10, 0)
+    exportBtn:SetSize(73, 20)
+    exportBtn:SetText("Export")
+    exportBtn:SetNormalFontObject("GameFontNormal")
+    exportBtn:SetHighlightFontObject("GameFontHighlight")
+    CreateTooltipTwo(exportBtn, "Export Data", "Create an export string to share your data.")
+
+    -- Import Button
+    local importBtn = CreateFrame("Button", nil, frame, "GameMenuButtonTemplate")
+    importBtn:SetPoint("RIGHT", importBox, "LEFT", -10, 0)
+    --importBtn:SetSize(title ~= "Full Profile" and 52 or 73, 20)
+    importBtn:SetSize(73, 20)
+    importBtn:SetText("Import")
+    importBtn:SetNormalFontObject("GameFontNormal")
+    importBtn:SetHighlightFontObject("GameFontHighlight")
+    CreateTooltipTwo(importBtn, "Import Data", "Import an export string.\nWill remove any current data (optional setting coming in non-beta)")
+
+    -- Keep Old Checkbox
+    -- if title ~= "Full Profile" then
+    --     local keepOldCheckbox = CreateFrame("CheckButton", nil, frame, "InterfaceOptionsCheckButtonTemplate")
+    --     keepOldCheckbox:SetPoint("RIGHT", importBtn, "LEFT", 3, -1)
+    --     keepOldCheckbox:SetChecked(true)
+    --     CreateTooltipTwo(keepOldCheckbox, "Keep Old Data (BETA)", "(BETA) Not expected to work currently. Import new data while keeping your old one. Uncheck to remove current data.")
+    -- end
+
+    -- Button scripts
+    exportBtn:SetScript("OnClick", function()
+        local exportString = ExportProfile(dataTable, tableName)
+        exportBox:SetText(exportString)
+        exportBox:SetFocus()
+        exportBox:HighlightText()
+    end)
+
+
+    importBtn:SetScript("OnClick", function()
+        local importString = importBox:GetText()
+        local profileData, errorMessage = ImportProfile(importString, tableName)
+        if errorMessage then
+            print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Error importing " .. title .. ":", errorMessage)
+        else
+            if keepOldCheckbox and keepOldCheckbox:GetChecked() then
+                -- Perform a deep merge if "Keep Old" is checked
+                deepMergeTables(dataTable, profileData)
+            else
+                -- Replace existing data with imported data
+                --for k in pairs(dataTable) do dataTable[k] = nil end -- Clear current table
+                for k, v in pairs(profileData) do
+                    dataTable[k] = v -- Populate with new data
+                end
+            end
+            print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: " .. title .. " imported successfully.")
+        end
+    end)
+    return frame
+end
+
+local combatCheck = CreateFrame("Frame")
 local function CreateCheckbox(option, label, parent, cvar, extraFunc)
     local checkBox = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
     checkBox.Text:SetText(label)
@@ -1152,15 +1411,20 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
                 value = true
             end
             if BetterBlizzPlatesDB[option] ~= nil and not BetterBlizzPlatesDB.wasOnLoadingScreen then
-                local printedMsg = false
                 local function setCVar()
-                    if InCombatLockdown() and not printedMsg then
-                        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: This is a CVar setting and needs to be set outside of combat. Retrying once combat has ended.")
-                        printedMsg = true
-                        C_Timer.After(1.5, setCVar)
+                    if InCombatLockdown() then
+                        if not combatCheck.registered then
+                            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: This is a CVar setting and needs to be set outside of combat. Will automatically retry once combat has ended.")
+                            combatCheck:RegisterEvent("PLAYER_REGEN_ENABLED")
+                            combatCheck:SetScript("OnEvent", function(self, event)
+                                if event == "PLAYER_REGEN_ENABLED" then
+                                    SetCVar(option, BetterBlizzPlatesDB[option])
+                                    self:UnregisterEvent(event)
+                                end
+                            end)
+                        end
                     else
                         SetCVar(option, BetterBlizzPlatesDB[option])
-                        printedMsg = false
                     end
                 end
                 setCVar()
@@ -1183,6 +1447,7 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
         end
 
         if not BetterBlizzPlatesDB.wasOnLoadingScreen then
+            BBP.needsUpdate = true
             BBP.RefreshAllNameplates()
         end
         --print("Checkbox option '" .. option .. "' changed to:", value)
@@ -1209,7 +1474,8 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
 
     return checkBox
 end
-
+local selectedLineIndex = nil
+local selectedNpcData = nil
 local function CreateList(subPanel, listName, listData, refreshFunc, enableColorPicker, extraBoxes, prioSlider, width, height, colorText, pos)
     -- Create the scroll frame
     local scrollFrame = CreateFrame("ScrollFrame", nil, subPanel, "UIPanelScrollFrameTemplate")
@@ -1217,7 +1483,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
     if not pos then
         scrollFrame:SetPoint("TOPLEFT", 10, -10)
     else
-        scrollFrame:SetPoint("TOPLEFT", -33, -10)
+        scrollFrame:SetPoint("TOPLEFT", -48, -10)
     end
 
     -- Create the content frame
@@ -1226,7 +1492,6 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
     scrollFrame:SetScrollChild(contentFrame)
 
     local textLines = {}
-    local selectedLineIndex = nil
 
     -- Function to update the background colors of the entries
     local function updateBackgroundColors()
@@ -1240,38 +1505,23 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         end
     end
 
-    local function deleteEntry(index)
-        if not index then return end
-
-        -- Remove the selected entry from the list and saved variables
-        table.remove(listData, index)
-
-        -- Remove the button from the frame and the textLines table
-        textLines[index]:Hide()
-        table.remove(textLines, index)
-
-        -- Re-anchor all buttons below the removed one and update their OnClick scripts
-        for i = index, #textLines do
-            textLines[i]:SetPoint("TOPLEFT", 10, -(i - 1) * 20)
-            textLines[i].deleteButton:SetScript("OnClick", function()
-                if IsShiftKeyDown() then
-                    deleteEntry(i)
-                else
-                    selectedLineIndex = i
-                    StaticPopup_Show("BBP_DELETE_NPC_CONFIRM_" .. listName)
-                end
-            end)
+    local function deleteEntry(dataEntry)
+        if not dataEntry then return end
+        -- Find and remove the entry from listData based on the reference
+        for i, entry in ipairs(listData) do
+            if entry == dataEntry then
+                table.remove(listData, i)
+                break
+            end
         end
-
-        selectedLineIndex = nil
-        updateBackgroundColors()
-        refreshFunc()
+        contentFrame.refreshList()
     end
 
     local function createTextLineButton(npc, index, enableColorPicker)
         local button = CreateFrame("Frame", nil, contentFrame)
         button:SetSize((width and width - 12) or 310, 20)
         button:SetPoint("TOPLEFT", 10, -(index - 1) * 20)
+        button.npcData = npc
 
         local bg = button:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
@@ -1286,12 +1536,6 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         listName == "castEmphasisList" or
         listName == "hideCastbarWhitelist" then
             addIcon = true
-            if npc.id then
-                local spellName, _, _ = GetSpellInfo(npc.id)
-                if spellName then
-                    displayText = displayText .. " - " .. spellName
-                end
-            end
         end
 
         if addIcon then
@@ -1317,6 +1561,12 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         text:SetPoint("LEFT", button, "LEFT", addIcon and 25 or 5, 0)
         text:SetText(displayText)
+
+        if listName == "auraWhitelist" then
+            text:SetWidth(210)
+            text:SetWordWrap(false)
+            text:SetJustifyH("LEFT")
+        end
 
         -- Initialize the text color and background color for this entry from npc table or with default values
         local entryColors = npc.entryColors or {}
@@ -1352,9 +1602,9 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
 
         deleteButton:SetScript("OnClick", function()
             if IsShiftKeyDown() then
-                deleteEntry(index)
+                deleteEntry(button.npcData)
             else
-                selectedLineIndex = index
+                selectedLineIndex = button.npcData
                 StaticPopup_Show("BBP_DELETE_NPC_CONFIRM_" .. listName)
             end
         end)
@@ -1391,6 +1641,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                     UpdateIconColor(r, g, b)
                     BBP.RefreshAllNameplates()  -- Refresh frames or elements that depend on these colors
                     ColorPickerFrame.Content.ColorSwatchCurrent:SetAlpha(a)
+                    BBP.auraListNeedsUpdate = true
                 end
 
                 local function swatchFunc()
@@ -1423,35 +1674,79 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             colorPickerButton:SetScript("OnClick", OpenColorPicker)
         end
 
+        if listName == "hideNPCsList" or listName == "hideNPCsWhitelist" then
+            if not npc.flags then
+                npc.flags = { murloc = false }
+            end
+            -- Create Checkbox P (Pandemic)
+            local checkBoxMurloc = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
+            checkBoxMurloc:SetSize(24, 24)
+            checkBoxMurloc:SetPoint("RIGHT", deleteButton, "LEFT", -11, 0)
+
+            -- Center the texture within the checkbox
+            CreateTooltipTwo(checkBoxMurloc, "Murloc Icon |A:newplayerchat-chaticon-newcomer:22:22|a", "Instead of hiding the nameplate completely show a small Murloc icon.", nil, "ANCHOR_TOPRIGHT")
+
+            -- Handler for the P checkbox
+            checkBoxMurloc:SetScript("OnClick", function(self)
+                npc.flags.murloc = self:GetChecked() -- Save the state in the npc flags
+            end)
+            checkBoxMurloc:HookScript("OnClick", BBP.RefreshAllNameplates)
+
+            -- Initialize state from npc flags
+            if npc.flags.murloc then
+                checkBoxMurloc:SetChecked(true)
+            end
+        end
+
         if extraBoxes then
             -- Ensure the npc.flags table exists
             if not npc.flags then
-                npc.flags = { important = false, pandemic = false }
+                npc.flags = { important = false, pandemic = false, enlarged = false }
+            end
+
+            -- Create Checkbox P (Pandemic)
+            local checkBoxP = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
+            checkBoxP:SetSize(24, 24)
+            checkBoxP:SetPoint("RIGHT", deleteButton, "LEFT", 4, 0) -- Positioned first, to the left of deleteButton
+
+            -- Create a texture for the checkbox
+            checkBoxP.texture = checkBoxP:CreateTexture(nil, "ARTWORK", nil, 1)
+            checkBoxP.texture:SetAtlas("newplayertutorial-drag-slotgreen")
+            checkBoxP.texture:SetDesaturated(true)
+            checkBoxP.texture:SetVertexColor(1, 0, 0)
+            checkBoxP.texture:SetSize(27, 27)
+            checkBoxP.texture:SetPoint("CENTER", checkBoxP, "CENTER", -0.5, 0.5)
+            CreateTooltipTwo(checkBoxP, "Pandemic Glow |A:elementalstorm-boss-air:22:22|a", "Check for a red glow when the aura has less than 5 sec remaining.", nil, "ANCHOR_TOPRIGHT")
+
+            -- Handler for the P checkbox
+            checkBoxP:SetScript("OnClick", function(self)
+                npc.flags.pandemic = self:GetChecked() -- Save the state in the npc flags
+                BBP.RefreshAllNameplates()
+            end)
+
+            -- Initialize state from npc flags
+            if npc.flags.pandemic then
+                checkBoxP:SetChecked(true)
             end
 
             -- Create Checkbox I (Important)
             local checkBoxI = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
             checkBoxI:SetSize(24, 24)
-            checkBoxI:SetPoint("RIGHT", deleteButton, "LEFT", -41, 0)
+            checkBoxI:SetPoint("RIGHT", checkBoxP, "LEFT", -12, 0) -- Positioned next to checkBoxP
 
             -- Create a texture for the checkbox
-            checkBoxI.texture = checkBoxI:CreateTexture(nil, "ARTWORK",nil,1)
+            checkBoxI.texture = checkBoxI:CreateTexture(nil, "ARTWORK", nil, 1)
             checkBoxI.texture:SetAtlas("newplayertutorial-drag-slotgreen")
-            checkBoxI.texture:SetDesaturated(true)
             checkBoxI.texture:SetSize(27, 27)
-
-            checkBoxI.texture:SetPoint("CENTER", checkBoxI, "CENTER", -0.5,0.5)
-            CreateTooltip(checkBoxI, "Important Glow\n\nCheck for a green glow on the aura to highlight it.", "ANCHOR_TOPRIGHT")
+            checkBoxI.texture:SetDesaturated(true)
+            checkBoxI.texture:SetPoint("CENTER", checkBoxI, "CENTER", -0.5, 0.5)
+            CreateTooltipTwo(checkBoxI, "Important Glow |A:importantavailablequesticon:22:22|a", "Check for a glow on the aura to highlight it.", nil, "ANCHOR_TOPRIGHT")
 
             -- Handler for the I checkbox
             checkBoxI:SetScript("OnClick", function(self)
                 npc.flags.important = self:GetChecked() -- Save the state in the npc flags
             end)
             local function SetImportantBoxColor(r, g, b, a)
-                r = r or 0
-                b = b or 0
-                g = g or 1
-                a = a or 1
                 if npc.flags and npc.flags.important then
                     checkBoxI.texture:SetVertexColor(r, g, b, a)
                 else
@@ -1460,23 +1755,22 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             end
             checkBoxI:HookScript("OnClick", function()
                 BBP.RefreshAllNameplates()
-                SetTextColor(entryColors.text.r, entryColors.text.g, entryColors.text.b)
+                SetTextColor(entryColors.text.r, entryColors.text.g, entryColors.text.b, 1)
                 SetImportantBoxColor(entryColors.text.r, entryColors.text.g, entryColors.text.b, entryColors.text.a)
             end)
-
 
             -- Initialize state from npc flags
             if npc.flags.important then
                 checkBoxI:SetChecked(true)
             end
 
-            local colorPickerButton2 = CreateFrame("Button", nil, button, "UIPanelButtonTemplate")
-            colorPickerButton2:SetSize(20, 18)
-            colorPickerButton2:SetPoint("LEFT", checkBoxI, "RIGHT", -6, 1)
-            colorPickerButton2:SetText("C")
-            CreateTooltip(colorPickerButton2, "Important Glow Color", "ANCHOR_TOPRIGHT")
-
             SetImportantBoxColor(entryColors.text.r, entryColors.text.g, entryColors.text.b, entryColors.text.a)
+
+            local colorPickerButton = CreateFrame("Button", nil, button, "UIPanelButtonTemplate")
+            colorPickerButton:SetSize(20, 18)
+            colorPickerButton:SetPoint("RIGHT", checkBoxP, "LEFT", 1, 1)
+            colorPickerButton:SetText("C")
+            CreateTooltipTwo(colorPickerButton, "Important Glow Color", nil, nil, "ANCHOR_TOPRIGHT")
 
             -- Function to open the color picker
             local function OpenColorPicker()
@@ -1492,6 +1786,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                     SetImportantBoxColor(r, g, b, a)
                     BBP.RefreshAllNameplates()
                     ColorPickerFrame.Content.ColorSwatchCurrent:SetAlpha(a)
+                    BBP.auraListNeedsUpdate = true
                 end
 
                 local function swatchFunc()
@@ -1516,50 +1811,61 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 })
             end
 
-            colorPickerButton2:SetScript("OnClick", OpenColorPicker)
+            colorPickerButton:SetScript("OnClick", OpenColorPicker)
 
-            -- Create Checkbox P (Pandemic)
-            local checkBoxP = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
-            checkBoxP:SetSize(24, 24)
-            checkBoxP:SetPoint("LEFT", checkBoxI, "RIGHT", 17, 0)
-
-            -- Create a texture for the checkbox
-            checkBoxP.texture = checkBoxP:CreateTexture(nil, "ARTWORK",nil,1)
-            checkBoxP.texture:SetAtlas("newplayertutorial-drag-slotgreen")
-            checkBoxP.texture:SetDesaturated(true)
-            checkBoxP.texture:SetVertexColor(1, 0, 0)
-            checkBoxP.texture:SetSize(27, 27)
-
-            -- Center the texture within the checkbox
-            checkBoxP.texture:SetPoint("CENTER", checkBoxP, "CENTER", -0.5,0.5)
-            CreateTooltip(checkBoxP, "Pandemic Glow\n\nCheck for a red glow when the aura has less than 5 sec remaining.", "ANCHOR_TOPRIGHT")
-
-            -- Handler for the P checkbox
-            checkBoxP:SetScript("OnClick", function(self)
-                npc.flags.pandemic = self:GetChecked() -- Save the state in the npc flags
-            end)
-            checkBoxP:HookScript("OnClick", BBP.RefreshAllNameplates)
+            -- Create Checkbox C (Compacted)
+            local checkBoxC = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
+            checkBoxC:SetSize(24, 24)
+            checkBoxC:SetPoint("RIGHT", checkBoxI, "LEFT", 3, 0)
+            CreateTooltipTwo(checkBoxC, "Compacted Aura |A:ui-hud-minimap-zoom-out:22:22|a", "Check to make the aura half-sized and smaller.", "You can turn off half-size and adjust size in settings below.", "ANCHOR_TOPRIGHT")
 
             -- Initialize state from npc flags
-            if npc.flags.pandemic then
-                checkBoxP:SetChecked(true)
+            if npc.flags.compacted then
+                checkBoxC:SetChecked(true)
             end
 
-            -- Create Checkbox OnlyMine
-            local checkBoxMine = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
-            checkBoxMine:SetSize(24, 24)
-            checkBoxMine:SetPoint("RIGHT", checkBoxI, "LEFT", -5, 0)
-            CreateTooltip(checkBoxMine, "Only Mine\n\nOnly show my aura.", "ANCHOR_TOPRIGHT")
+            -- Create Checkbox E (Enlarged)
+            local checkBoxE = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
+            checkBoxE:SetSize(24, 24)
+            checkBoxE:SetPoint("RIGHT", checkBoxC, "LEFT", 3, 0)
+            CreateTooltipTwo(checkBoxE, "Enlarged Aura |A:ui-hud-minimap-zoom-in:22:22|a", "Check to make the aura square and bigger.", "You can turn off square and adjust size in settings below.", "ANCHOR_TOPRIGHT")
 
-            -- Handler for the I checkbox
-            checkBoxMine:SetScript("OnClick", function(self)
-                npc.flags.onlyMine = self:GetChecked() -- Save the state in the npc flags
+            -- Handler for the C checkbox
+            checkBoxC:SetScript("OnClick", function(self)
+                npc.flags.compacted = self:GetChecked()
+                checkBoxE:SetChecked(false)
+                npc.flags.enlarged = false
+                BBP.RefreshAllNameplates()
+            end)
+
+            -- Handler for the E checkbox
+            checkBoxE:SetScript("OnClick", function(self)
+                npc.flags.enlarged = self:GetChecked()
+                checkBoxC:SetChecked(false)
+                npc.flags.compacted = false
+                BBP.RefreshAllNameplates()
+            end)
+
+            -- Initialize state from npc flags
+            if npc.flags.enlarged then
+                checkBoxE:SetChecked(true)
+            end
+
+            -- Create Checkbox Only Mine
+            local checkBoxOnlyMine = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
+            checkBoxOnlyMine:SetSize(24, 24)
+            checkBoxOnlyMine:SetPoint("RIGHT", checkBoxE, "LEFT", 3, 0)
+            CreateTooltipTwo(checkBoxOnlyMine, "Only My Aura |A:UI-HUD-UnitFrame-Player-Group-FriendOnlineIcon:22:22|a", "Only show my aura.", nil, "ANCHOR_TOPRIGHT")
+
+            -- Handler for the E checkbox
+            checkBoxOnlyMine:SetScript("OnClick", function(self)
+                npc.flags.onlyMine = self:GetChecked()
                 BBP.RefreshAllNameplates()
             end)
 
             -- Initialize state from npc flags
             if npc.flags.onlyMine then
-                checkBoxMine:SetChecked(true)
+                checkBoxOnlyMine:SetChecked(true)
             end
         end
 
@@ -1574,7 +1880,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             prioritySlider:SetObeyStepOnDrag(true)
             prioritySlider.Low:SetText("")
             prioritySlider.High:SetText("")
-            CreateTooltip(prioritySlider, "Priority value.\nWhichever aura has the highest priority will determine the color.")
+            CreateTooltipTwo(prioritySlider, "Priority value", "Whichever aura has the highest priority will determine the color.")
 
             local priorityText = prioritySlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
             priorityText:SetPoint("RIGHT", prioritySlider, "LEFT", -5, 0)
@@ -1586,6 +1892,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 self:SetValue(newValue)
                 priorityText:SetText(newValue)
                 npc.priority = newValue
+                BBP.auraListNeedsUpdate = true
             end)
 
             button.prioritySlider = prioritySlider
@@ -1596,11 +1903,76 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         updateBackgroundColors()  -- Update background colors after adding a new entry
     end
 
+    local function updateNamesInListData()
+        for _, entry in ipairs(listData) do
+            if entry.id and (not entry.name or entry.name == "") then
+                local spellName = GetSpellInfo(entry.id)
+                if spellName then
+                    entry.name = spellName  -- Update the name field with the fetched spell name
+                end
+            end
+        end
+    end
 
-    -- Create and initialize textLine buttons with or without color pickers
-    for i, npc in ipairs(listData) do
+    local function getSortedNpcList()
+        updateNamesInListData()
+
+        table.sort(listData, function(a, b)
+            local nameA = a.name:lower()
+            local nameB = b.name:lower()
+            return nameA < nameB
+        end)
+
+        return listData
+    end
+
+    local sortedListData = getSortedNpcList()
+    for i, npc in ipairs(sortedListData) do
         createTextLineButton(npc, i, enableColorPicker)
     end
+    local currentSearchFilter = ""
+    local function refreshList()
+        -- Clear all existing buttons to reuse or recreate them as needed
+        for _, button in ipairs(textLines) do
+            button:Hide()
+        end
+        wipe(textLines)
+
+        -- Filter listData based on the current search filter
+        local filteredListData = {}
+        if currentSearchFilter and currentSearchFilter ~= "" then
+            for _, entry in ipairs(listData) do
+                local name = entry.name and entry.name:lower() or ""
+                local id = entry.id and tostring(entry.id):lower() or ""
+                local comment = entry.comment and entry.comment:lower() or ""
+                if name:match(currentSearchFilter) or id:match(currentSearchFilter) or comment:match(currentSearchFilter) then
+                    table.insert(filteredListData, entry)
+                end
+            end
+        else
+            filteredListData = listData
+        end
+
+            table.sort(filteredListData, function(a, b)
+                local nameA = a.name:lower()
+                local nameB = b.name:lower()
+                return nameA < nameB
+            end)
+
+        -- Recreate the UI elements
+        for i, npc in ipairs(filteredListData) do
+            createTextLineButton(npc, i, enableColorPicker)
+        end
+
+        local newHeight = #filteredListData * 20
+        contentFrame:SetHeight(newHeight)
+    end
+    contentFrame.refreshList = refreshList
+
+    local editBox = CreateFrame("EditBox", nil, subPanel, "InputBoxTemplate")
+    editBox:SetSize((width and width - 62) or (322 - 62), 19)
+    editBox:SetPoint("TOP", scrollFrame, "BOTTOM", -15, -5)
+    editBox:SetAutoFocus(false)
 
     -- Create static popup dialogs for duplicate and delete confirmations
     StaticPopupDialogs["BBP_DUPLICATE_NPC_CONFIRM_" .. listName] = {
@@ -1608,7 +1980,9 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         button1 = "Yes",
         button2 = "No",
         OnAccept = function()
-            deleteEntry(selectedLineIndex)
+            currentSearchFilter = ""
+            editBox:SetText("")
+            deleteEntry(selectedNpcData)
         end,
         timeout = 0,
         whileDead = true,
@@ -1627,22 +2001,18 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         hideOnEscape = true,
     }
 
-    local editBox = CreateFrame("EditBox", nil, subPanel, "InputBoxTemplate")
-    editBox:SetSize((width and width - 62) or (322 - 62), 19)
-    editBox:SetPoint("TOP", scrollFrame, "BOTTOM", -15, -5)
-    editBox:SetAutoFocus(false)
     if listName == "auraBlacklist" or
     listName == "auraWhitelist" or
     listName == "auraColorList" or
     listName == "auraColorList" or
     listName == "hideCastbarWhitelist" then
-        CreateTooltip(editBox, "Filter auras by spell id and/or spell name", "ANCHOR_TOP")
+        CreateTooltipTwo(editBox, "Add new aura or Search", "Add new aura to the list with name or spell id. Typing also searches in the list.", nil, "ANCHOR_TOP")
     elseif listName == "hideCastbarList" then
-        CreateTooltip(editBox, "Filter auras/npcs by spell/npc id and/or spell/npc name", "ANCHOR_TOP")
+        CreateTooltipTwo(editBox, "Add new spell or NPC", "Filter auras/npcs by spell/npc id and/or spell/npc name. Typing also searches in the list.", nil, "ANCHOR_TOP")
     elseif listName == "castEmphasisList" then
-        CreateTooltip(editBox, "Add spells by spell id and/or name", "ANCHOR_TOP")
+        CreateTooltipTwo(editBox, "Add new spell or NPC", "Add spells by spell id and/or name. Typing also searches in the list.", nil, "ANCHOR_TOP")
     else
-        CreateTooltip(editBox, "Filter npcs by npc id and/or npc name", "ANCHOR_TOP")
+        CreateTooltipTwo(editBox, "Add new NPC", "Filter npcs by npc id and/or npc name. Typing also searches in the list.", nil, "ANCHOR_TOP")
     end
 
     local function addOrUpdateEntry(inputText)
@@ -1661,13 +2031,13 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         name = gsub(name, "[%/%(%)%[%]]", "")
         comment = gsub(comment, "[%/%(%)%[%]]", "")
 
+        local isDuplicate = false
         if (name ~= "" or id) then
-            local isDuplicate = false
 
             for i, npc in ipairs(listData) do
                 if (id and npc.id == id) or (not id and strlower(npc.name) == strlower(name)) then
                     isDuplicate = true
-                    selectedLineIndex = i
+                    selectedNpcData = npc
                     break
                 end
             end
@@ -1676,18 +2046,39 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 StaticPopup_Show("BBP_DUPLICATE_NPC_CONFIRM_" .. listName)
             else
                 local newEntry = { name = name, id = id, comment = comment, flags = { important = false, pandemic = false } }
+                if prioSlider then
+                    newEntry = { name = name, id = id, comment = comment, flags = { important = false, pandemic = false }, priority = 1 }
+                end
                 table.insert(listData, newEntry)
                 createTextLineButton(newEntry, #textLines + 1, enableColorPicker)
                 refreshFunc()
             end
+            BBP.auraListNeedsUpdate = true
         end
 
-        editBox:SetText("") -- Clear the EditBox
+
+        if not isDuplicate then
+            currentSearchFilter = ""
+            editBox:SetText("")
+            refreshList()
+        end
     end
 
     editBox:SetScript("OnEnterPressed", function(self)
         addOrUpdateEntry(self:GetText())
+        refreshList()
     end)
+
+    local function searchList(searchText)
+        currentSearchFilter = searchText:lower()
+        refreshList()
+    end
+
+    editBox:SetScript("OnTextChanged", function(self, userInput)
+        if userInput then
+            searchList(self:GetText())
+        end
+    end, true)
 
     local addButton = CreateFrame("Button", nil, subPanel, "UIPanelButtonTemplate")
     addButton:SetSize(60, 24)
@@ -1777,6 +2168,17 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         local npcData = npcList[npcId]
         if npcData then
             npcData.hideIcon = hideIconFlag
+        end
+
+        refreshFunc()
+    end
+
+    local function updateHideHpFlag(npcId, hideHpFlag)
+        if not npcId then return end
+
+        local npcData = npcList[npcId]
+        if npcData then
+            npcData.hideHp = hideHpFlag
         end
 
         refreshFunc()
@@ -1902,27 +2304,27 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             local nameLabel, nameEditBox = CreatePropertyField(npcEditFrame, "Name:", npcEditFrame.iconTexture, -35, 125, 220, 25)
             npcEditFrame.nameEditBox = nameEditBox
 
-            local durationLabel, durationEditBox = CreatePropertyField(npcEditFrame, "Duration:", npcEditFrame.iconTexture, 95, 90, 50, 20)
+            local durationLabel, durationEditBox = CreatePropertyField(npcEditFrame, "Duration:", npcEditFrame.iconTexture, 95, 91, 50, 20)
             npcEditFrame.durationEditBox = durationEditBox
-            CreateTooltip(durationEditBox, "Enter new duration (0 for no duration)")
+            CreateTooltipTwo(durationEditBox, "Duration", "Enter new duration (0 for no duration)")
 
-            local sizeLabel, sizeEditBox = CreatePropertyField(npcEditFrame, "Size:", durationLabel, 0, -15, 50, 20)
+            local sizeLabel, sizeEditBox = CreatePropertyField(npcEditFrame, "Size:", durationLabel, 0, -10, 50, 20)
             npcEditFrame.sizeEditBox = sizeEditBox
-            CreateTooltip(sizeEditBox, "Enter new size")
+            CreateTooltipTwo(sizeEditBox, "Size", "Enter new size")
 
-            local iconLabel, iconEditBox = CreatePropertyField(npcEditFrame, "Icon:", sizeLabel, 0, -15, 50, 20)
+            local iconLabel, iconEditBox = CreatePropertyField(npcEditFrame, "Icon:", sizeLabel, 0, -10, 50, 20)
             npcEditFrame.iconEditBox = iconEditBox
-            CreateTooltip(iconEditBox, "Enter new icon ID\n\nUse Wowhead to find a new icon.\nSearch for a spell then click on its icon and an icon ID will show.")
+            CreateTooltipTwo(iconEditBox, "Icon", "Enter new icon ID", "Use Wowhead to find a new icon. Search for a spell then click on its icon and an icon ID will show.")
 
 
             local GlowText = npcEditFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            GlowText:SetPoint("TOPLEFT", iconLabel, "BOTTOMLEFT", 0, -15)
+            GlowText:SetPoint("TOPLEFT", iconLabel, "BOTTOMLEFT", 0, -10)
             GlowText:SetText("Glow")
 
             local importantCheckBox = CreateFrame("CheckButton", nil, npcEditFrame, "UICheckButtonTemplate")
             importantCheckBox:SetSize(28, 28)
             importantCheckBox:SetPoint("LEFT", GlowText, "RIGHT", 5, 0)
-            CreateTooltip(importantCheckBox, "Important Glow")
+            CreateTooltipTwo(importantCheckBox, "Important Glow")
             npcEditFrame.importantCheckBox = importantCheckBox
             if npcData.important then
                 iconGlowTexture:Show()
@@ -1964,7 +2366,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             end)
 
             local HideText = npcEditFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            HideText:SetPoint("TOPLEFT", GlowText, "BOTTOMLEFT", 0, -15)
+            HideText:SetPoint("TOPLEFT", GlowText, "BOTTOMLEFT", 0, -10)
             HideText:SetText("Hide Icon")
 
             -- Creation of the hideIconCheckbox
@@ -1972,8 +2374,18 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             hideIconCheckbox:SetSize(28, 28)
             hideIconCheckbox:SetPoint("LEFT", HideText, "RIGHT", 5, 0)
 
-            CreateTooltip(hideIconCheckbox, "Hide Icon")
+            local HideHpText = npcEditFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            HideHpText:SetPoint("TOPLEFT", HideText, "BOTTOMLEFT", 0, -10)
+            HideHpText:SetText("Hide HP")
 
+            -- Creation of the hideIconCheckbox
+            local hideHpCheckbox = CreateFrame("CheckButton", nil, npcEditFrame, "UICheckButtonTemplate")
+            hideHpCheckbox:SetSize(28, 28)
+            hideHpCheckbox:SetPoint("LEFT", HideHpText, "RIGHT", 5, 0)
+
+            CreateTooltipTwo(hideIconCheckbox, "Hide Icon")
+
+            npcEditFrame.hideHpCheckbox = hideHpCheckbox
             npcEditFrame.hideIconCheckbox = hideIconCheckbox
 
             if npcData.hideIcon then
@@ -2021,6 +2433,9 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
                     npcEditFrame.iconGlowTexture:Show()
                 end
                 npcEditFrame.hideIconCheckbox:SetChecked(false)
+            end
+            if npcData.hideHp then
+                npcEditFrame.hideHpCheckbox:SetChecked(true)
             end
             npcEditFrame.currentColor = npcData.color
 
@@ -2104,6 +2519,18 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
                 end
             end)
 
+            npcEditFrame.hideIconCheckbox:SetScript("OnClick", function(self)
+                updateHideHpFlag(npcId, self:GetChecked())
+                local npcData = npcList[npcId]
+                if self:GetChecked() then
+                    npcData.hideHp = true
+                    BBP.refreshNpcList()
+                else
+                    npcData.hideIcon = false
+                    BBP.refreshNpcList()
+                end
+            end)
+
 
             npcEditFrame.importantCheckBox:SetScript("OnClick", function(self)
                 updateImportantFlag(npcId, self:GetChecked())
@@ -2144,16 +2571,17 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         -- Edit button
         local editButton = CreateFrame("Button", nil, button, "UIPanelButtonTemplate")
         editButton:SetSize(50, 20)
-        editButton:SetPoint("RIGHT", button, "RIGHT", -80, 0)
+        editButton:SetPoint("RIGHT", button, "RIGHT", -105, 0)
         editButton:SetText("Edit")
         editButton:SetScript("OnClick", function()
             ShowEditFrame(npcId)
         end)
         button.editButton = editButton
+        CreateTooltipTwo(editButton, "Edit NPC details", "Change size, duration, icon and glow.")
 
         -- Size button
         local sizeButton = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        sizeButton:SetPoint("RIGHT", button, "RIGHT", -140, 0)
+        sizeButton:SetPoint("RIGHT", button, "RIGHT", -165, 0)
         local sizeText = npcData.size and "Size: " .. npcData.size or "Set Size"
         sizeButton:SetText(sizeText)
 
@@ -2169,7 +2597,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
                 iconTexture:Show()
             end
         end)
-        CreateTooltip(hideIconCheckboxButton, "Hide Icon")
+        CreateTooltipTwo(hideIconCheckboxButton, "Hide Icon")
 
         if npcData.hideIcon then
             hideIconCheckboxButton:SetChecked(true)
@@ -2179,7 +2607,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
 
         local importantCheckBox = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
         importantCheckBox:SetSize(24, 24)
-        importantCheckBox:SetPoint("RIGHT", button, "RIGHT", -45, 0)
+        importantCheckBox:SetPoint("RIGHT", button, "RIGHT", -70, 0)
         importantCheckBox:SetScript("OnClick", function(self)
             updateImportantFlag(npcId, self:GetChecked())
         end)
@@ -2190,6 +2618,23 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         end
 
         button.importantCheckBox = importantCheckBox
+
+        -- Creation of the hideIconCheckbox
+        local hideHealthBarCheckBox = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
+        hideHealthBarCheckBox:SetSize(24, 24)
+        hideHealthBarCheckBox:SetPoint("RIGHT", button, "RIGHT", -45, 0)
+        hideHealthBarCheckBox:SetScript("OnClick", function(self)
+            updateHideHpFlag(npcId, self:GetChecked())
+            BBP.RefreshAllNameplates()
+        end)
+        CreateTooltipTwo(hideHealthBarCheckBox, "Hide Healthbar")
+
+        if npcData.hideHp then
+            hideHealthBarCheckBox:SetChecked(true)
+        end
+
+        button.hideHealthBarCheckBox = hideHealthBarCheckBox
+
         return button
     end
 
@@ -2267,7 +2712,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
     editBox:SetSize(260, 19)
     editBox:SetPoint("TOP", scrollFrame, "BOTTOM", -15, -5)
     editBox:SetAutoFocus(false)
-    CreateTooltip(editBox, "Enter NPC ID first, name second and Spell ID (for icon) third.\n\nSeparate with commas. Name and Spell ID are optional.\n\nExample: 192123, Hermit Crab, 52127", "ANCHOR_TOP")
+    CreateTooltipTwo(editBox, "Add new NPC", "Enter NPC ID first, name second and Spell ID (for icon) third. Separate with commas. Name and Spell ID are optional.", "Example: 192123, Hermit Crab, 52127", "ANCHOR_TOP")
 
     function BBP.refreshNpcList()
         -- Clear existing buttons
@@ -2373,7 +2818,7 @@ local function guiGeneralTab()
     bgImg:SetVertexColor(0,0,0)
 
     local addonNameText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    addonNameText:SetPoint("TOPLEFT", mainGuiAnchor, "TOPLEFT", -20, 17)
+    addonNameText:SetPoint("TOPLEFT", mainGuiAnchor, "TOPLEFT", -20, 47)
     addonNameText:SetText("BetterBlizzPlates")
     local addonNameIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     addonNameIcon:SetAtlas("gmchat-icon-blizz")
@@ -2388,7 +2833,7 @@ local function guiGeneralTab()
     ----------------------
     -- "General:" text
     local settingsText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    settingsText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, 8)
+    settingsText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, 30)
     settingsText:SetText("General settings")
     local generalSettingsIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     generalSettingsIcon:SetAtlas("optionsicon-brown")
@@ -2400,27 +2845,23 @@ local function guiGeneralTab()
 
     local hideNameplateAuras = CreateCheckbox("hideNameplateAuras", "Hide nameplate auras", BetterBlizzPlates)
     hideNameplateAuras:SetPoint("TOPLEFT", removeRealmNames, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(hideNameplateAuras, "Hide Nameplate Auras", "Hide all Nameplate Auras.")
+
+    local hideNameplateAuraTooltip = CreateCheckbox("hideNameplateAuraTooltip", "Hide aura tooltip", BetterBlizzPlates)
+    hideNameplateAuraTooltip:SetPoint("LEFT", hideNameplateAuras.text, "RIGHT", 0, 0)
+    hideNameplateAuraTooltip:HookScript("OnClick", function()
+        BBP.HideNameplateAuraTooltip()
+        StaticPopup_Show("BBP_CONFIRM_RELOAD")
+    end)
+    CreateTooltipTwo(hideNameplateAuraTooltip, "Hide Aura Tooltip", "Hide Nameplate Aura Tooltips.")
 
     local hideTargetHighlight = CreateCheckbox("hideTargetHighlight", "Hide target highlight glow", BetterBlizzPlates)
     hideTargetHighlight:SetPoint("TOPLEFT", hideNameplateAuras, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(hideTargetHighlight, "Hide the bright glow on your current targets nameplate.")
-
-    BBP.raidmarkIndicator = CreateCheckbox("raidmarkIndicator", "Change raidmarker position", BetterBlizzPlates, nil, BBP.ChangeRaidmarker)
-    BBP.raidmarkIndicator:SetPoint("TOPLEFT", hideTargetHighlight, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    BBP.raidmarkIndicator:HookScript("OnClick", function(self)
-        if self:GetChecked() then
-            BBP.raidmarkIndicator2:SetChecked(true)
-            BBP.TempScuffedRadio()
-        else
-            BBP.raidmarkIndicator2:SetChecked(false)
-            BBP.TempScuffedRadio()
-        end
-    end)
-    CreateTooltip(BBP.raidmarkIndicator, "Change the position of the raidmarker.\n\nChange specifics in \"Advanced Settings\".")
+    CreateTooltipTwo(hideTargetHighlight, "Hide Target Highlight", "Hide the bright glow on your current target nameplate")
 
     local nameplateMaxScale = CreateSlider(BetterBlizzPlates, "Nameplate Size", 0.5, 2, 0.01, "nameplateMaxScale")
-    nameplateMaxScale:SetPoint("TOPLEFT", BBP.raidmarkIndicator, "BOTTOMLEFT", 12, -10)
-    CreateTooltip(nameplateMaxScale, "General size of all nameplates (except Target nameplate)")
+    nameplateMaxScale:SetPoint("TOPLEFT", hideTargetHighlight, "BOTTOMLEFT", 12, -10)
+    CreateTooltipTwo(nameplateMaxScale, "Nameplate Size", "General size of all nameplates (except Target nameplate)", nil, nil, "nameplateMaxScale")
 
     local nameplateMaxScaleResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     nameplateMaxScaleResetButton:SetText("Default")
@@ -2432,7 +2873,7 @@ local function guiGeneralTab()
 
     local nameplateSelectedScale = CreateSlider(BetterBlizzPlates, "Target Nameplate Size", 0.5, 3, 0.01, "nameplateSelectedScale")
     nameplateSelectedScale:SetPoint("TOPLEFT", nameplateMaxScale, "BOTTOMLEFT", 0, -17)
-    CreateTooltip(nameplateSelectedScale, "Size of your current target's nameplate")
+    CreateTooltipTwo(nameplateSelectedScale, "Target Nameplate Size", "Size of your current target's nameplate", nil, nil, "nameplateSelectedScale")
 
     local nameplateSelectedScaleResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     nameplateSelectedScaleResetButton:SetText("Default")
@@ -2444,7 +2885,7 @@ local function guiGeneralTab()
 
     local NamePlateVerticalScale = CreateSlider(BetterBlizzPlates, "Nameplate Height", 0.5, 5, 0.01, "NamePlateVerticalScale")
     NamePlateVerticalScale:SetPoint("TOPLEFT", nameplateSelectedScale, "BOTTOMLEFT", 0, -17)
-    CreateTooltip(NamePlateVerticalScale, "Changes the height of ALL nameplates.\n\nWill also increase castbar height by default,\ncan be re-adjusted with castbar customization.")
+    CreateTooltipTwo(NamePlateVerticalScale, "Nameplate Height", "Changes the height of ALL nameplates.", "Will also increase castbar height by default. Can be re-adjusted in castbar section.", nil, "NamePlateVerticalScale")
 
     local NamePlateVerticalScaleResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     NamePlateVerticalScaleResetButton:SetText("Default")
@@ -2458,7 +2899,7 @@ local function guiGeneralTab()
     -- Enemy nameplates:
     ----------------------
     local enemyNameplatesText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    enemyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -196)
+    enemyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -151)
     enemyNameplatesText:SetText("Enemy nameplates")
     local enemyNameplateIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     enemyNameplateIcon:SetAtlas("groupfinder-icon-friend")
@@ -2469,11 +2910,11 @@ local function guiGeneralTab()
 
     local enemyClassColorName = CreateCheckbox("enemyClassColorName", "Class color name", BetterBlizzPlates)
     enemyClassColorName:SetPoint("TOPLEFT", enemyNameplatesText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
-    CreateTooltip(enemyClassColorName, "Class color the enemy name text on nameplate")
+    CreateTooltipTwo(enemyClassColorName, "Class Color Name", "Class color the enemy name text on nameplate")
 
     local enemyColorName = CreateCheckbox("enemyColorName", "Color name", BetterBlizzPlates)
     enemyColorName:SetPoint("LEFT", enemyClassColorName.text, "RIGHT", 0, 0)
-    CreateTooltip(enemyColorName, "Pick one color for all enemy names\nIf class color name is also enabled this setting will only color the name of npcs")
+    CreateTooltipTwo(enemyColorName, "Color Name", "Pick one color for all enemy names", "If class color name is also enabled this setting will only color the name of npcs")
 
     local function UpdateColorSquare(icon, r, g, b)
         if r and g and b then
@@ -2518,7 +2959,7 @@ local function guiGeneralTab()
     enemyColorNameButton:SetScript("OnClick", function()
         OpenColorPicker("enemyColorNameRGB", enemyColorNameButtonIcon)
     end)
-    CreateTooltip(enemyColorNameButton, "Hostile color")
+    CreateTooltipTwo(enemyColorNameButton, "Hostile Color")
     enemyColorNameButtonIcon:SetPoint("LEFT", enemyColorNameButton, "RIGHT", 0, -0.5)
 
     local enemyNeutralColorNameButtonIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
@@ -2532,7 +2973,7 @@ local function guiGeneralTab()
     enemyNeutralColorNameButton:SetScript("OnClick", function()
         OpenColorPicker("enemyNeutralColorNameRGB", enemyNeutralColorNameButtonIcon)
     end)
-    CreateTooltip(enemyNeutralColorNameButton, "Neutral color")
+    CreateTooltipTwo(enemyNeutralColorNameButton, "Neutral Color")
     enemyNeutralColorNameButtonIcon:SetPoint("LEFT", enemyNeutralColorNameButton, "RIGHT", 0, -0.5)
 
     enemyColorName:HookScript("OnClick", function(self)
@@ -2563,11 +3004,15 @@ local function guiGeneralTab()
 
     local enemyHealthBarColor = CreateCheckbox("enemyHealthBarColor", "Custom nameplate color", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
     enemyHealthBarColor:SetPoint("TOPLEFT", enemyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(enemyHealthBarColor, "Color ALL enemy nameplates a color of your choice.")
+    CreateTooltipTwo(enemyHealthBarColor, "Custom Nameplate Color", "Color ALL enemy nameplates a color of your choice.", "Has sub-setting to color NPC's only")
+
+    local alwaysHideEnemyCastbar = CreateCheckbox("alwaysHideEnemyCastbar", "Hide Castbar", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
+    alwaysHideEnemyCastbar:SetPoint("TOPLEFT", enemyHealthBarColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(alwaysHideEnemyCastbar, "Hide Castbar", "Always hide Enemy castbar.")
 
     local enemyHealthBarColorNpcOnly = CreateCheckbox("enemyHealthBarColorNpcOnly", "Npc only", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
     enemyHealthBarColorNpcOnly:SetPoint("LEFT", enemyHealthBarColor.Text, "RIGHT", 0, 0)
-    CreateTooltip(enemyHealthBarColorNpcOnly, "Only color NPC's.")
+    CreateTooltipTwo(enemyHealthBarColorNpcOnly, "Only color NPC's.")
 
     local function OpenColorPicker(colorType, icon)
         local r, g, b = unpack(BetterBlizzPlatesDB[colorType] or {1, 1, 1})
@@ -2601,7 +3046,7 @@ local function guiGeneralTab()
     enemyHealthBarColorButton:SetScript("OnClick", function()
         OpenColorPicker("enemyHealthBarColorRGB", enemyHealthBarColorButtonIcon)
     end)
-    CreateTooltip(enemyHealthBarColorButton, "Hostile color")
+    CreateTooltipTwo(enemyHealthBarColorButton, "Hostile Color")
     enemyHealthBarColorButtonIcon:SetPoint("LEFT", enemyHealthBarColorButton, "RIGHT", 0, -0.5)
 
     local enemyNeutralHealthBarColorButtonIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
@@ -2615,7 +3060,7 @@ local function guiGeneralTab()
     enemyNeutralHealthBarColorButton:SetScript("OnClick", function()
         OpenColorPicker("enemyNeutralHealthBarColorRGB", enemyNeutralHealthBarColorButtonIcon)
     end)
-    CreateTooltip(enemyNeutralHealthBarColorButton, "Neutral color")
+    CreateTooltipTwo(enemyNeutralHealthBarColorButton, "Neutral Color")
     enemyNeutralHealthBarColorButtonIcon:SetPoint("LEFT", enemyNeutralHealthBarColorButton, "RIGHT", 0, -0.5)
 
     enemyHealthBarColor:HookScript("OnClick", function(self)
@@ -2651,19 +3096,19 @@ local function guiGeneralTab()
     end
 
     local showNameplateCastbarTimer = CreateCheckbox("showNameplateCastbarTimer", "Cast timer next to castbar", BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
-    showNameplateCastbarTimer:SetPoint("TOPLEFT", enemyHealthBarColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    showNameplateCastbarTimer:SetPoint("TOPLEFT", alwaysHideEnemyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
     local showNameplateTargetText = CreateCheckbox("showNameplateTargetText", "Show target underneath castbar", BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
     showNameplateTargetText:SetPoint("TOPLEFT", showNameplateCastbarTimer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(showNameplateTargetText, "Show the targets name under their castbar")
+    CreateTooltipTwo(showNameplateTargetText, "Nameplate Target Text", "Show the nameplate's current target underneath the castbar while casting")
 
     local enemyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 1.5, 0.01, "enemyNameScale")
     enemyNameScale:SetPoint("TOPLEFT", showNameplateTargetText, "BOTTOMLEFT", 12, -10)
-    CreateTooltip(enemyNameScale, "Size of enemy name text above nameplate")
+    CreateTooltipTwo(enemyNameScale, "Name Size", "Change Name size on Enemy nameplates")
 
     local hideEnemyNameText = CreateCheckbox("hideEnemyNameText", "Hide name", BetterBlizzPlates)
     hideEnemyNameText:SetPoint("LEFT", enemyNameScale, "RIGHT", 2, 0)
-    CreateTooltip(hideEnemyNameText, "Hide enemy nameplate name text")
+    CreateTooltip(hideEnemyNameText, "Hide Name", "Hide Name on Enemy nameplates")
 
 --[[
     -- Nameplate height slider
@@ -2686,7 +3131,7 @@ local function guiGeneralTab()
 
 ]]
 
-    local nameplateEnemyWidth = CreateSlider(BetterBlizzPlates, "Nameplate Width", 50, 200, 1, "nameplateEnemyWidth")
+    local nameplateEnemyWidth = CreateSlider(BetterBlizzPlates, "Nameplate Width", 26, 200, 1, "nameplateEnemyWidth")
     nameplateEnemyWidth:SetPoint("TOPLEFT", enemyNameScale, "BOTTOMLEFT", 0, -17)
 
     local nameplateEnemyWidthResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
@@ -2701,7 +3146,7 @@ local function guiGeneralTab()
     -- Friendly nameplates:
     ----------------------
     local friendlyNameplatesText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    friendlyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -363)
+    friendlyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -342)
     friendlyNameplatesText:SetText("Friendly nameplates")
     local friendlyNameplateIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     friendlyNameplateIcon:SetAtlas("groupfinder-icon-friend")
@@ -2710,15 +3155,15 @@ local function guiGeneralTab()
 
     local friendlyNameplateClickthrough = CreateCheckbox("friendlyNameplateClickthrough", "Clickthrough", BetterBlizzPlates, nil, BBP.ApplyNameplateWidth)
     friendlyNameplateClickthrough:SetPoint("TOPLEFT", friendlyNameplatesText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
-    CreateTooltip(friendlyNameplateClickthrough, "Make friendly nameplates clickthrough and make them overlap despite stacking nameplates setting.")
+    CreateTooltipTwo(friendlyNameplateClickthrough, "Clickthrough Nameplate", "Make friendly nameplates clickthrough and make them overlap.",  "Overlaps even with stacking nameplates setting.")
 
     local friendlyClassColorName = CreateCheckbox("friendlyClassColorName", "Class color name", BetterBlizzPlates)
     friendlyClassColorName:SetPoint("TOPLEFT", friendlyNameplateClickthrough, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(friendlyClassColorName, "Class color the friendly name text on nameplate")
+    CreateTooltipTwo(friendlyClassColorName, "Class Color Name", "Class color the Friendly name text on nameplates")
 
     local friendlyColorName = CreateCheckbox("friendlyColorName", "Color name", BetterBlizzPlates)
     friendlyColorName:SetPoint("LEFT", friendlyClassColorName.text, "RIGHT", 0, 0)
-    CreateTooltip(friendlyColorName, "Pick one color for all enemy names\nIf class color name is also enabled this setting will only color the name of npcs")
+    CreateTooltipTwo(friendlyColorName, "Color Name", "Pick one color for all friendly names.", "If class color name is also enabled this setting will only color the name of npcs")
 
     local friendlyColorNameIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     friendlyColorNameIcon:SetAtlas("newplayertutorial-icon-key")
@@ -2770,10 +3215,26 @@ local function guiGeneralTab()
 
     local classColorPersonalNameplate = CreateCheckbox("classColorPersonalNameplate", "Class colored personal nameplate", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
     classColorPersonalNameplate:SetPoint("TOPLEFT", friendlyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    classColorPersonalNameplate:HookScript("OnClick", function(self)
+        local nameplate, frame = BBP.GetSafeNameplate("player")
+        if frame then
+            if self:GetChecked() then
+                local localizedClass, englishClass = UnitClass(frame.unit);
+                local playerClassColor = RAID_CLASS_COLORS[englishClass];
+                frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
+            else
+                frame.healthBar:SetStatusBarColor(0,1,0)
+            end
+        end
+    end)
 
     local friendlyHealthBarColor = CreateCheckbox("friendlyHealthBarColor", "Custom nameplate color", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
     friendlyHealthBarColor:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(friendlyHealthBarColor, "Color ALL friendly nameplates a color of your choice.")
+    CreateTooltipTwo(friendlyHealthBarColor, "Custom Nameplate Color", "Color ALL Friendly nameplates a color of your choice.")
+
+    local alwaysHideFriendlyCastbar = CreateCheckbox("alwaysHideFriendlyCastbar", "Hide castbar", BetterBlizzPlates)
+    alwaysHideFriendlyCastbar:SetPoint("TOPLEFT", friendlyHealthBarColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(alwaysHideFriendlyCastbar, "Hide Castbar", "Always hide Friendly castbars.")
 
     local friendlyNameColor = CreateCheckbox("friendlyNameColor", "Name", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
     friendlyNameColor:SetPoint("LEFT", friendlyHealthBarColor.Text, "RIGHT", 0, 0)
@@ -2783,7 +3244,7 @@ local function guiGeneralTab()
             friendlyClassColorName:SetChecked(false)
         end
     end)
-    CreateTooltip(friendlyNameColor, "Color friendly name text as well.")
+    CreateTooltipTwo(friendlyNameColor, "Color Name", "Color Friendly name text as well.")
 
     friendlyClassColorName:HookScript("OnClick", function(self)
         if self:GetChecked(true) then
@@ -2855,55 +3316,45 @@ local function guiGeneralTab()
     end
 
     local friendlyHideHealthBar = CreateCheckbox("friendlyHideHealthBar", "Hide healthbar", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
-    friendlyHideHealthBar:SetPoint("TOPLEFT", friendlyHealthBarColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    friendlyHideHealthBar:SetPoint("TOPLEFT", alwaysHideFriendlyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     friendlyHideHealthBar:HookScript("OnClick", function()
         BBP.HideHealthbarInPvEMagicCaller()
     end)
-    CreateTooltip(friendlyHideHealthBar, "Hide friendly nameplate healthbars. Castbar and name will still show.")
+    CreateTooltipTwo(friendlyHideHealthBar, "Hide Healthbar", "Hide healthbars on Friendly nameplates.", "Castbar and name will still show.\nThis also hides healthbars in PvE, if you don't want that check the setting in Misc.")
 
     local friendlyHideHealthBarNpc = CreateCheckbox("friendlyHideHealthBarNpc", "NPC's", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
     friendlyHideHealthBarNpc:SetPoint("LEFT", friendlyHideHealthBar.text, "RIGHT", 0, 0)
-    CreateTooltip(friendlyHideHealthBarNpc, "Hide friendly NPC nameplate healthbars. Castbar and name will still show.")
-
-    local hideFriendlyCastbar = CreateCheckbox("hideFriendlyCastbar", "Hide castbar", BetterBlizzPlates, nil, BBP.CheckIfInInstanceCaller)
-    hideFriendlyCastbar:SetPoint("LEFT", friendlyHideHealthBarNpc.text, "RIGHT", 0, 0)
-    CreateTooltip(hideFriendlyCastbar, "Hide friendly castbar\nNOTE: Only works with hide friendly healthbar on (for now).")
+    CreateTooltipTwo(friendlyHideHealthBarNpc, "Hide NPC Healthbar", "Hide healthbars on Friendly NPC's", "Castbar and name will still show.")
 
     friendlyHideHealthBar:HookScript("OnClick", function(self)
         if self:GetChecked() then
             friendlyHideHealthBarNpc:Enable()
             friendlyHideHealthBarNpc:SetAlpha(1)
-            hideFriendlyCastbar:Enable()
-            hideFriendlyCastbar:SetAlpha(1)
         else
             friendlyHideHealthBarNpc:Disable()
             friendlyHideHealthBarNpc:SetAlpha(0)
-            hideFriendlyCastbar:Disable()
-            hideFriendlyCastbar:SetAlpha(0)
         end
     end)
     if not BetterBlizzPlatesDB.friendlyHideHealthBar then
         friendlyHideHealthBarNpc:SetAlpha(0)
         friendlyHideHealthBarNpc:Disable()
-        hideFriendlyCastbar:Disable()
-        hideFriendlyCastbar:SetAlpha(0)
     end
 
-    local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Toggle on/off for Arena auto", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Arena Toggle", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
     toggleFriendlyNameplatesInArena:SetPoint("TOPLEFT", friendlyHideHealthBar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(toggleFriendlyNameplatesInArena, "Turn on friendly nameplates when you enter arena and off again when you leave.")
+    CreateTooltipTwo(toggleFriendlyNameplatesInArena, "Arena Toggle", "Turn on friendly nameplates when you enter arena and off again when you leave.")
 
-    local friendlyNameplatesOnlyInDungeons = CreateCheckbox("friendlyNameplatesOnlyInDungeons", "Toggle for Dungeons", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    local friendlyNameplatesOnlyInDungeons = CreateCheckbox("friendlyNameplatesOnlyInDungeons", "Dungeon/raid Toggle", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
     friendlyNameplatesOnlyInDungeons:SetPoint("LEFT", toggleFriendlyNameplatesInArena.text, "RIGHT", 0, 0)
-    CreateTooltip(friendlyNameplatesOnlyInDungeons, "Turn on friendly nameplates when you enter dungeons and off again when you leave.")
+    CreateTooltipTwo(friendlyNameplatesOnlyInDungeons, "Dungeon/Raid Toggle", "Turn on friendly nameplates when you enter dungeons/raids and off again when you leave.")
 
     local friendlyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 3, 0.01, "friendlyNameScale")
     friendlyNameScale:SetPoint("TOPLEFT", toggleFriendlyNameplatesInArena, "BOTTOMLEFT", 12, -10)
-    CreateTooltip(friendlyNameScale, "Size of the friendly name text above nameplates")
+    CreateTooltipTwo(friendlyNameScale, "Name Size", "Change Name size on Friendly nameplates.")
 
     local hideFriendlyNameText = CreateCheckbox("hideFriendlyNameText", "Hide name", BetterBlizzPlates)
     hideFriendlyNameText:SetPoint("LEFT", friendlyNameScale, "RIGHT", 2, 0)
-    CreateTooltip(hideFriendlyNameText, "Hide friendly nameplate name text")
+    CreateTooltipTwo(hideFriendlyNameText, "Hide Name", "Hide Name on Friendly nameplates")
 
     local nameplateFriendlyWidth = CreateSlider(BetterBlizzPlates, "Nameplate Width", 26, 200, 1, "nameplateFriendlyWidth")
     nameplateFriendlyWidth:SetPoint("TOPLEFT", friendlyNameScale, "BOTTOMLEFT", 0, -20)
@@ -2920,21 +3371,20 @@ local function guiGeneralTab()
     -- Extra features on nameplates:
     ----------------------
     local extraFeaturesText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    extraFeaturesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 390, -205)
+    extraFeaturesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 390, -105)
     extraFeaturesText:SetText("Extra Features")
     local extraFeaturesIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     extraFeaturesIcon:SetAtlas("Campaign-QuestLog-LoreBook")
     extraFeaturesIcon:SetSize(24, 24)
     extraFeaturesIcon:SetPoint("RIGHT", extraFeaturesText, "LEFT", -3, 0)
 
-    local testAllEnabledFeatures = CreateCheckbox("testAllEnabledFeatures", "Test", BetterBlizzPlates, nil, BBP.TestAllEnabledFeatures)           
+    local testAllEnabledFeatures = CreateCheckbox("testAllEnabledFeatures", "Test", BetterBlizzPlates, nil, BBP.TestAllEnabledFeatures)
     testAllEnabledFeatures:SetPoint("LEFT", extraFeaturesText, "RIGHT", 5, 0)
-    CreateTooltip(testAllEnabledFeatures, "Test all enabled features. Check advanced settings for more")
+    CreateTooltipTwo(testAllEnabledFeatures, "Test all features", "Test all enabled features.", "Check advanced settings for more settings for each individual feature.")
 
     local absorbIndicator = CreateCheckbox("absorbIndicator", "Absorb indicator", BetterBlizzPlates, nil, BBP.ToggleAbsorbIndicator)
     absorbIndicator:SetPoint("TOPLEFT", extraFeaturesText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
-
-    CreateTooltip(absorbIndicator, "Show absorb amount on nameplates")
+    CreateTooltipTwo(absorbIndicator, "Absorb Indicator |A:ParagonReputation_Glow:18:18|a", "Show absorb amount on nameplates")
     local absorbsIcon = absorbIndicator:CreateTexture(nil, "ARTWORK")
     absorbsIcon:SetAtlas("ParagonReputation_Glow")
     absorbsIcon:SetSize(22, 22)
@@ -2942,8 +3392,7 @@ local function guiGeneralTab()
 
     local classIndicator = CreateCheckbox("classIndicator", "Class indicator", BetterBlizzPlates)
     classIndicator:SetPoint("TOPLEFT", absorbIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-
-    CreateTooltip(classIndicator, "Show class icon on nameplates")
+    CreateTooltipTwo(classIndicator, "Class Indicator |A:groupfinder-icon-class-mage:16:16|a", "Show class icon on nameplates\nHides default raidmarker.")
     local classIndicatorIcon = classIndicator:CreateTexture(nil, "ARTWORK")
     classIndicatorIcon:SetAtlas("groupfinder-icon-class-mage")
     classIndicatorIcon:SetSize(18, 18)
@@ -2951,7 +3400,7 @@ local function guiGeneralTab()
 
     local combatIndicator = CreateCheckbox("combatIndicator", "Combat indicator", BetterBlizzPlates, nil, BBP.ToggleCombatIndicator)
     combatIndicator:SetPoint("TOPLEFT", classIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(combatIndicator, "Show a food icon on nameplates that are out of combat")
+    CreateTooltipTwo(combatIndicator, "Combat Indicator |A:food:16:16|a", "Show a food (or sap) icon on nameplates that are out of combat.")
     local combatIcon = combatIndicator:CreateTexture(nil, "ARTWORK")
     combatIcon:SetAtlas("food")
     combatIcon:SetSize(19, 19)
@@ -2959,7 +3408,7 @@ local function guiGeneralTab()
 
     local executeIndicator = CreateCheckbox("executeIndicator", "Execute indicator", BetterBlizzPlates, nil, BBP.ToggleExecuteIndicator)
     executeIndicator:SetPoint("TOPLEFT", combatIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(executeIndicator, "Starts tracking health percentage once target\ndips below a certain percentage.\n40% by default, can be changed in Advanced Settings.")
+    CreateTooltipTwo(executeIndicator, "Execute Indicator |A:islands-azeriteboss:24:24|a", "Starts tracking health percentage once target dips below a certain percentage (40% by default).")
     local executeIndicatorIcon = executeIndicator:CreateTexture(nil, "ARTWORK")
     executeIndicatorIcon:SetAtlas("islands-azeriteboss")
     executeIndicatorIcon:SetSize(28, 30)
@@ -2967,32 +3416,44 @@ local function guiGeneralTab()
 
     local healerIndicator = CreateCheckbox("healerIndicator", "Healer indicator", BetterBlizzPlates)
     healerIndicator:SetPoint("TOPLEFT", executeIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(healerIndicator, "Show a cross on healers. Requires Details to work.")
+    CreateTooltipTwo(healerIndicator, "Healer Indicator |A:greencross:21:21|a", "Show a cross on healers. Requires Details to work.")
     local healerCrossIcon = healerIndicator:CreateTexture(nil, "ARTWORK")
     healerCrossIcon:SetAtlas("greencross")
     healerCrossIcon:SetSize(21, 21)
     healerCrossIcon:SetPoint("RIGHT", healerIndicator, "LEFT", 0, 0)
 
+    local partyPointer = CreateCheckbox("partyPointer", "Party pointer", BetterBlizzPlates)
+    partyPointer:SetPoint("TOPLEFT", healerIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(partyPointer, "Party Pointer |A:UI-QuestPoiImportant-QuestNumber-SuperTracked:21:16|a", "Show a class colored pointer above friendly player nameplates.", "Hides default raidmarkers. Only shows in Arena by default or during testing. Can show extra + sign on healers in settings.")
+    local partyPointerIcon = partyPointer:CreateTexture(nil, "ARTWORK")
+    partyPointerIcon:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
+    partyPointerIcon:SetSize(16, 20)
+    partyPointerIcon:SetPoint("RIGHT", partyPointer, "LEFT", -2.5, 1.5)
+    partyPointerIcon:SetDesaturated(true)
+    partyPointerIcon:SetVertexColor(0.04, 0.76, 1)
+
     local petIndicator = CreateCheckbox("petIndicator", "Pet indicator", BetterBlizzPlates)
-    petIndicator:SetPoint("TOPLEFT", healerIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    petIndicator:SetPoint("TOPLEFT", partyPointer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(petIndicator, "Show a murloc on the main hunter pet")
+    CreateTooltipTwo(petIndicator, "Pet Indicator |A:newplayerchat-chaticon-newcomer:18:18|a", "Show a murloc on the main hunter and demo warlock pet.")
     local petIndicatorIcon = petIndicator:CreateTexture(nil, "ARTWORK")
     petIndicatorIcon:SetAtlas("newplayerchat-chaticon-newcomer")
     petIndicatorIcon:SetSize(18, 18)
     petIndicatorIcon:SetPoint("RIGHT", petIndicator, "LEFT", -1, 0)
 
-    local targetIndicator = CreateCheckbox("targetIndicator", "Target indicator", BetterBlizzPlates, nil, BBP.ToggleTargetIndicator)
+    local targetIndicator = CreateCheckbox("targetIndicator", "Target indicator", BetterBlizzPlates)
     targetIndicator:SetPoint("TOPLEFT", petIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(targetIndicator, "Show a pointer on your current target")
+    CreateTooltipTwo(targetIndicator, "Target Indicator |A:Navigation-Tracked-Arrow:14:19|a", "Show a pointer on your current target.")
     local targetIndicatorIcon = healerIndicator:CreateTexture(nil, "ARTWORK")
     targetIndicatorIcon:SetAtlas("Navigation-Tracked-Arrow")
     targetIndicatorIcon:SetRotation(math.rad(180))
     targetIndicatorIcon:SetSize(19, 14)
     targetIndicatorIcon:SetPoint("RIGHT", targetIndicator, "LEFT", -1, 0)
 
-    local focusTargetIndicator = CreateCheckbox("focusTargetIndicator", "Focus target indicator", BetterBlizzPlates, nil, BBP.ToggleFocusTargetIndicator)
+    local focusTargetIndicator = CreateCheckbox("focusTargetIndicator", "Focus target indicator", BetterBlizzPlates)
     focusTargetIndicator:SetPoint("TOPLEFT", targetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(focusTargetIndicator, "Show a marker on the focus nameplate")
+    CreateTooltipTwo(focusTargetIndicator, "Focus Target Indicator |A:Waypoint-MapPin-Untracked:19:19|a", "Show a marker on your focus nameplate.")
     local focusTargetIndicatorIcon = healerIndicator:CreateTexture(nil, "ARTWORK")
     focusTargetIndicatorIcon:SetAtlas("Waypoint-MapPin-Untracked")
     focusTargetIndicatorIcon:SetSize(19, 19)
@@ -3008,14 +3469,14 @@ local function guiGeneralTab()
                 if self:GetChecked() and GetCVar("nameplateShowEnemyTotems") ~= "1" then
                     BetterBlizzPlatesDB.nameplateShowEnemyTotems = 1
                     SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
-                    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"Blizzard CVar's\" section of the addon.")
+                    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"CVar Control\" section of the addon.")
                 end
             end
         end
         setTotemCVar()
     end)
 
-    CreateTooltip(totemIndicator, "Color and put icons on key npc and totem nameplates.\nImportant npcs and totems will be slightly larger and\nhave a glow around the icon")
+    CreateTooltipTwo(totemIndicator, "Totem Indicator |A:teleportationnetwork-ardenweald-32x32:17:17|a", "Show icon on and color important NPC nameplates.", "Full list available in \"Totem Indicator List\" section, designed for PvP.")
     local totemsIcon = totemIndicator:CreateTexture(nil, "ARTWORK")
     totemsIcon:SetAtlas("teleportationnetwork-ardenweald-32x32")
     totemsIcon:SetSize(17, 17)
@@ -3023,7 +3484,7 @@ local function guiGeneralTab()
 
     local questIndicator = CreateCheckbox("questIndicator", "Quest indicator", BetterBlizzPlates)
     questIndicator:SetPoint("TOPLEFT", totemIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(questIndicator, "Quest symbol on quest npcs")
+    CreateTooltipTwo(questIndicator, "Quest Indicator|A:smallquestbang:20:20|a", "Quest symbol on quest NPC's.")
     local questsIcon = questIndicator:CreateTexture(nil, "ARTWORK")
     questsIcon:SetAtlas("smallquestbang")
     questsIcon:SetSize(20, 20)
@@ -3033,18 +3494,20 @@ local function guiGeneralTab()
     -- Font and texture
     ----------------------
     local customFontandTextureText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    customFontandTextureText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, -435)
+    customFontandTextureText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, -365)
     customFontandTextureText:SetText("Font and texture")
     local customFontandTextureIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     customFontandTextureIcon:SetAtlas("barbershop-32x32")
     customFontandTextureIcon:SetSize(24, 24)
     customFontandTextureIcon:SetPoint("RIGHT", customFontandTextureText, "LEFT", -3, 0)
 
-    local useCustomFont = CreateCheckbox("useCustomFont", "Use a sexy font for nameplates", BetterBlizzPlates)
+    local useCustomFont = CreateCheckbox("useCustomFont", "Change the nameplate font", BetterBlizzPlates)
     useCustomFont:SetPoint("TOPLEFT", customFontandTextureText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
+    CreateTooltipTwo(useCustomFont, "Custom Font", "Change the nameplate font.", "If you want to completely skip nameplate font adjustment there is a setting in the Misc section for that")
 
-    local useCustomTexture = CreateCheckbox("useCustomTextureForBars", "Use a sexy texture for nameplates", BetterBlizzPlates)
+    local useCustomTexture = CreateCheckbox("useCustomTextureForBars", "Change the nameplate texture", BetterBlizzPlates)
     useCustomTexture:SetPoint("TOPLEFT", useCustomFont, "BOTTOMLEFT", 0, -20)
+    CreateTooltipTwo(useCustomTexture, "Custom Texture", "Change the nameplate texture.")
 
     local fontDropdown = CreateFontDropdown(
         "fontDropdown",
@@ -3079,13 +3542,99 @@ local function guiGeneralTab()
         { anchorFrame = useCustomTexture, x = 5, y = -51, label = "Friendly" }
     )
 
+    local textureDropdownSelf = CreateTextureDropdown(
+        "textureDropdownFriendly",
+        useCustomTexture,
+        "Select Texture",
+        "customTextureSelf",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = useCustomTexture, x = 5, y = -81, label = "Personal" }
+    )
+
+    local textureDropdownSelfMana = CreateTextureDropdown(
+        "textureDropdownFriendly",
+        useCustomTexture,
+        "Select Texture",
+        "customTextureSelfMana",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = useCustomTexture, x = 5, y = -111, label = "Personal Mana" }
+    )
+
     local useCustomTextureForEnemy = CreateCheckbox("useCustomTextureForEnemy", "Enemy", useCustomTexture)
     useCustomTextureForEnemy:SetPoint("LEFT", textureDropdown, "RIGHT", -15, 1)
     useCustomTextureForEnemy.text:SetTextColor(1,0,0)
+    useCustomTextureForEnemy:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            LibDD:UIDropDownMenu_EnableDropDown(textureDropdown)
+        else
+            LibDD:UIDropDownMenu_DisableDropDown(textureDropdown)
+        end
+    end)
+    CreateTooltipTwo(useCustomTextureForEnemy, "Enemy Texture", "Change Enemy healthbar texture.", nil, "ANCHOR_LEFT")
 
     local useCustomTextureForFriendly = CreateCheckbox("useCustomTextureForFriendly", "Friendly", useCustomTexture)
     useCustomTextureForFriendly:SetPoint("LEFT", textureDropdownFriendly, "RIGHT", -15, 1)
     useCustomTextureForFriendly.text:SetTextColor(0.04, 0.76, 1)
+    useCustomTextureForFriendly:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            LibDD:UIDropDownMenu_EnableDropDown(textureDropdownFriendly)
+        else
+            LibDD:UIDropDownMenu_DisableDropDown(textureDropdownFriendly)
+        end
+    end)
+    CreateTooltipTwo(useCustomTextureForFriendly, "Friendly Texture", "Change Friendly healthbar texture.", nil, "ANCHOR_LEFT")
+
+    local useCustomTextureForSelf = CreateCheckbox("useCustomTextureForSelf", "Self", useCustomTexture)
+    useCustomTextureForSelf:SetPoint("LEFT", textureDropdownSelf, "RIGHT", -15, 1)
+    useCustomTextureForSelf:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            LibDD:UIDropDownMenu_EnableDropDown(textureDropdownSelf)
+        else
+            LibDD:UIDropDownMenu_DisableDropDown(textureDropdownSelf)
+        end
+    end)
+    CreateTooltipTwo(useCustomTextureForSelf, "Personal Texture", "Change Personal resource healthbar texture.", nil, "ANCHOR_LEFT")
+
+    local useCustomTextureForSelfMana = CreateCheckbox("useCustomTextureForSelfMana", "Self Mana", useCustomTexture)
+    useCustomTextureForSelfMana:SetPoint("LEFT", textureDropdownSelfMana, "RIGHT", -15, 1)
+    useCustomTextureForSelfMana:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            LibDD:UIDropDownMenu_EnableDropDown(textureDropdownSelfMana)
+        else
+            LibDD:UIDropDownMenu_DisableDropDown(textureDropdownSelfMana)
+        end
+    end)
+    CreateTooltipTwo(useCustomTextureForSelfMana, "Personal Mana/Resource Texture", "Change Personal Resource mana/resource-bar texture", nil, "ANCHOR_LEFT")
+
+    local function SetClassAndPowerColor()
+        -- Retrieve the player's class information
+        local _, class = UnitClass("player")
+        local classColor = RAID_CLASS_COLORS[class]
+        -- Retrieve the player's primary power type
+        local powerType, powerToken = UnitPowerType("player")
+        local powerColor
+        if PowerBarColor[powerType] then
+            powerColor = PowerBarColor[powerType]
+        elseif PowerBarColor[powerToken] then
+            powerColor = PowerBarColor[powerToken]
+        end
+        -- Check if both classColor and powerColor are not nil
+        if classColor and powerColor then
+            -- Set text color using the class color
+            useCustomTextureForSelf.text:SetTextColor(classColor.r, classColor.g, classColor.b)
+            -- Set text color using the power color
+            useCustomTextureForSelfMana.text:SetTextColor(powerColor.r, powerColor.g, powerColor.b)
+        else
+            -- Retry after 1 second if either color is nil
+            C_Timer.After(1, SetClassAndPowerColor)
+        end
+    end
+
+    SetClassAndPowerColor()
 
     useCustomFont:HookScript("OnClick", function(self)
         if self:GetChecked() then
@@ -3100,17 +3649,13 @@ local function guiGeneralTab()
         if self:GetChecked() then
             LibDD:UIDropDownMenu_EnableDropDown(textureDropdown)
             LibDD:UIDropDownMenu_EnableDropDown(textureDropdownFriendly)
-            --useCustomTextureForEnemy:Enable()
-            --useCustomTextureForEnemy:SetAlpha(1)
-            --useCustomTextureForFriendly:Enable()
-            --useCustomTextureForFriendly:SetAlpha(1)
+            LibDD:UIDropDownMenu_EnableDropDown(textureDropdownSelf)
+            LibDD:UIDropDownMenu_EnableDropDown(textureDropdownSelfMana)
         else
             LibDD:UIDropDownMenu_DisableDropDown(textureDropdown)
             LibDD:UIDropDownMenu_DisableDropDown(textureDropdownFriendly)
-            --useCustomTextureForEnemy:Disable()
-            --useCustomTextureForEnemy:SetAlpha(0)
-            --useCustomTextureForFriendly:Disable()
-            --useCustomTextureForFriendly:SetAlpha(0)
+            LibDD:UIDropDownMenu_DisableDropDown(textureDropdownSelf)
+            LibDD:UIDropDownMenu_DisableDropDown(textureDropdownSelfMana)
         end
     end)
 
@@ -3119,12 +3664,13 @@ local function guiGeneralTab()
     -- Arena
     ----------------------
     local arenaSettingsText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    arenaSettingsText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, 20)
+    arenaSettingsText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, 30)
     arenaSettingsText:SetText("Arena nameplates")
     local arenaSettingsIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     arenaSettingsIcon:SetAtlas("questbonusobjective")
     arenaSettingsIcon:SetSize(24, 24)
     arenaSettingsIcon:SetPoint("RIGHT", arenaSettingsText, "LEFT", -3, 0)
+    CreateTooltipTwo(arenaSettingsText, "Arena ID/Spec Name", "Replace names in arena to their arena ID or their specialization", nil, "ANCHOR_LEFT")
 
     local arenaModeDropdown = CreateModeDropdown(
         "arenaModeDropdown",
@@ -3134,28 +3680,29 @@ local function guiGeneralTab()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = arenaSettingsText, x = -20, y = -30, label = "Mode" },
+        { anchorFrame = arenaSettingsText, x = -90, y = -33, label = "Mode" },
         modes,
         tooltips,
         "Enemy",
         {1, 0, 0, 1}
     )
+    CreateTooltipTwo(arenaModeDropdown, "Arena ID/Spec Name", "Replace names in arena to their arena ID or their specialization", nil, "ANCHOR_LEFT")
 
     local shortArenaSpecName = CreateCheckbox("shortArenaSpecName", "Short", BetterBlizzPlates)
     shortArenaSpecName:SetPoint("LEFT", arenaSettingsText, "RIGHT", 5, 0)
-    CreateTooltip(shortArenaSpecName, "Enable to use abbreviated specialization names.\nFor instance, \"Assassination\" will be displayed as \"Assa\".", "ANCHOR_LEFT")
+    CreateTooltipTwo(shortArenaSpecName, "Short Spec Names", "Enable to use abbreviated specialization names. For instance, \"Assassination\" will be displayed as \"Assa\".", nil, "ANCHOR_LEFT")
 
     local arenaIndicatorTestMode = CreateCheckbox("arenaIndicatorTestMode", "Test", BetterBlizzPlates)
     arenaIndicatorTestMode:SetPoint("LEFT", shortArenaSpecName.Text, "RIGHT", 5, 0)
-    CreateTooltip(arenaIndicatorTestMode, "Test the selected Arena Nameplates mode.", "ANCHOR_LEFT")
+    CreateTooltipTwo(arenaIndicatorTestMode, "Test Arena ID/Spec", "Test the selected Arena Nameplates mode.", nil, "ANCHOR_LEFT")
 
     local arenaIDScale = CreateSlider(BetterBlizzPlates, "Arena ID Size", 0.5, 4, 0.01, "arenaIDScale")
     arenaIDScale:SetPoint("TOPLEFT", arenaModeDropdown, "BOTTOMLEFT", 20, -9)
-    CreateTooltip(arenaIDScale, "Size of the enemy arena ID text on top of nameplate during arena.")
+    CreateTooltipTwo(arenaIDScale, "Arena ID Size", "Size of the enemy arena ID text on top of nameplate during arena.")
 
     local arenaSpecScale = CreateSlider(BetterBlizzPlates, "Spec Size", 0.5, 3, 0.01, "arenaSpecScale")
     arenaSpecScale:SetPoint("TOPLEFT", arenaIDScale, "BOTTOMLEFT", 0, -11)
-    CreateTooltip(arenaSpecScale, "Size of the enemy spec name text on top of nameplate during arena.")
+    CreateTooltipTwo(arenaSpecScale, "Arena Spec Size", "Size of the enemy spec name text on top of nameplate during arena.")
 
     local partyModeDropdown = CreateModeDropdown(
         "partyModeDropdown",
@@ -3165,20 +3712,21 @@ local function guiGeneralTab()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = arenaSpecScale, x = -20, y = -30, label = "Mode" },
+        { anchorFrame = arenaSettingsText, x = 70, y = -33, label = "Mode" },
         modesParty,
         tooltipsParty,
         "Friendly",
         {0.04, 0.76, 1, 1}
     )
+    CreateTooltipTwo(partyModeDropdown, "Arena ID/Spec Name", "Replace names in arena to their arena ID or their specialization", nil, "ANCHOR_LEFT")
 
     local partyIDScale = CreateSlider(BetterBlizzPlates, "Party ID Size", 0.5, 4, 0.01, "partyIDScale")
     partyIDScale:SetPoint("TOPLEFT", partyModeDropdown, "BOTTOMLEFT", 20, -9)
-    CreateTooltip(partyIDScale, "Size of the friendly party ID text on top of nameplate during arena.")
+    CreateTooltipTwo(partyIDScale, "Arena ID Size", "Size of the friendly party ID text on top of nameplate during arena.")
 
     local partySpecScale = CreateSlider(BetterBlizzPlates, "Spec Size", 0.5, 3, 0.01, "partySpecScale")
     partySpecScale:SetPoint("TOPLEFT", partyIDScale, "BOTTOMLEFT", 0, -11)
-    CreateTooltip(partySpecScale, "Size of the friendly spec name text on top of nameplate during arena.")
+    CreateTooltipTwo(partySpecScale, "Arena Spec Size", "Size of the friendly spec name text on top of nameplate during arena.")
 
     ----------------------
     -- Reload etc
@@ -3195,33 +3743,29 @@ local function guiGeneralTab()
     local nahjProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     nahjProfileButton:SetText("Nahj Profile")
     nahjProfileButton:SetWidth(100)
-    nahjProfileButton:SetPoint("RIGHT", reloadUiButton, "LEFT", -10, 0)
+    nahjProfileButton:SetPoint("RIGHT", reloadUiButton, "LEFT", -50, 0)
     nahjProfileButton:SetScript("OnClick", function()
         StaticPopup_Show("BBP_CONFIRM_NAHJ_PROFILE")
     end)
-    CreateTooltip(nahjProfileButton, "Enable all of Nahj's profile settings.")
+    CreateTooltipTwo(nahjProfileButton, "Nahj Profile", "Enable all of Nahj's profile settings.", "www.twitch.tv/nahj", "ANCHOR_TOP")
 
-    StaticPopupDialogs["BBP_CONFIRM_NAHJ_PROFILE"] = {
-        text = "This action will modify all settings to Nahj's profile and reload the UI.\n\nYour existing blacklists and whitelists will be retained, with Nahj's additional entries.\n\nAre you sure you want to continue?",
-        button1 = "Yes",
-        button2 = "No",
-        OnAccept = function()
-            BBP.NahjProfile()
-            ReloadUI()
-        end,
-        timeout = 0,
-        whileDead = true,
-        hideOnEscape = true,
-    }
+    local magnuszProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
+    magnuszProfileButton:SetText("Magnusz Profile")
+    magnuszProfileButton:SetWidth(120)
+    magnuszProfileButton:SetPoint("RIGHT", nahjProfileButton, "LEFT", -5, 0)
+    magnuszProfileButton:SetScript("OnClick", function()
+        StaticPopup_Show("BBP_CONFIRM_MAGNUSZ_PROFILE")
+    end)
+    CreateTooltipTwo(magnuszProfileButton, "Magnusz Profile", "Enable all of Magnusz's profile settings.", "www.twitch.tv/magnusz", "ANCHOR_TOP")
 
     local resetBBPButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     resetBBPButton:SetText("Reset BetterBlizzPlates")
-    resetBBPButton:SetWidth(180)
-    resetBBPButton:SetPoint("RIGHT", nahjProfileButton, "LEFT", -170, 0)
+    resetBBPButton:SetWidth(165)
+    resetBBPButton:SetPoint("RIGHT", nahjProfileButton, "LEFT", -180, 0)
     resetBBPButton:SetScript("OnClick", function()
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     end)
-    CreateTooltip(resetBBPButton, "Reset ALL BetterBlizzPlates settings.")
+    CreateTooltipTwo(resetBBPButton, "Reset", "Reset ALL BetterBlizzPlates settings")
 end
 
 local function guiPositionAndScale()
@@ -3235,6 +3779,7 @@ local function guiPositionAndScale()
     local thirdLineX = 391
     local thirdLineY = -695
     local fourthLineX = 560
+    local fourthLineY = -1010
 
     local BetterBlizzPlatesSubPanel = CreateFrame("Frame")
     BetterBlizzPlatesSubPanel.name = "Advanced Settings"
@@ -3278,32 +3823,32 @@ local function guiPositionAndScale()
     local healerIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "healerIndicatorScale", false, 72)
     healerIndicatorScale:SetPoint("TOP", anchorSubHeal, "BOTTOM", 36, -15)
     healerIndicatorScale.Text:SetTextColor(0.04, 0.76, 1)
-    CreateTooltip(healerIndicatorScale, "Friendly Scale")
+    CreateTooltipTwo(healerIndicatorScale, "Friendly Scale")
 
     local healerIndicatorEnemyScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "healerIndicatorEnemyScale", false, 72)
     healerIndicatorEnemyScale:SetPoint("TOP", anchorSubHeal, "BOTTOM", -36, -15)
     healerIndicatorEnemyScale.Text:SetTextColor(1,0,0)
-    CreateTooltip(healerIndicatorEnemyScale, "Enemy Scale")
+    CreateTooltipTwo(healerIndicatorEnemyScale, "Enemy Scale")
 
     local healerIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "healerIndicatorXPos", "X", 72)
     healerIndicatorXPos:SetPoint("TOP", healerIndicatorScale, "BOTTOM", 0, -15)
     healerIndicatorXPos.Text:SetTextColor(0.04, 0.76, 1)
-    CreateTooltip(healerIndicatorXPos, "Friendly X Offset")
+    CreateTooltipTwo(healerIndicatorXPos, "Friendly X Offset")
 
     local healerIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "healerIndicatorYPos", "Y", 72)
     healerIndicatorYPos:SetPoint("TOP", healerIndicatorXPos, "BOTTOM", 0, -15)
     healerIndicatorYPos.Text:SetTextColor(0.04, 0.76, 1)
-    CreateTooltip(healerIndicatorYPos, "Friendly Y Offset")
+    CreateTooltipTwo(healerIndicatorYPos, "Friendly Y Offset")
 
     local healerIndicatorEnemyXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "healerIndicatorEnemyXPos", "X", 72)
     healerIndicatorEnemyXPos:SetPoint("TOP", healerIndicatorEnemyScale, "BOTTOM", 0, -15)
     healerIndicatorEnemyXPos.Text:SetTextColor(1,0,0)
-    CreateTooltip(healerIndicatorEnemyXPos, "Enemy X Offset")
+    CreateTooltipTwo(healerIndicatorEnemyXPos, "Enemy X Offset")
 
     local healerIndicatorEnemyYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "healerIndicatorEnemyYPos", "Y", 72)
     healerIndicatorEnemyYPos:SetPoint("TOP", healerIndicatorEnemyXPos, "BOTTOM", 0, -15)
     healerIndicatorEnemyYPos.Text:SetTextColor(1,0,0)
-    CreateTooltip(healerIndicatorEnemyYPos, "Enemy Y Offset")
+    CreateTooltipTwo(healerIndicatorEnemyYPos, "Enemy Y Offset")
 
     local healerIndicatorDropdown = CreateAnchorDropdown(
         "healerIndicatorDropdown",
@@ -3550,8 +4095,16 @@ local function guiPositionAndScale()
     showTotemIndicatorCooldownSwipe:SetPoint("TOPLEFT", totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(showTotemIndicatorCooldownSwipe, "Show Cooldown Swipe Animation")
 
+    local totemIndicatorColorName = CreateCheckbox("totemIndicatorColorName", "Color Name", contentFrame)
+    totemIndicatorColorName:SetPoint("TOPLEFT", showTotemIndicatorCooldownSwipe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(totemIndicatorColorName, "Color name text")
+
+    local totemIndicatorColorHealthBar = CreateCheckbox("totemIndicatorColorHealthBar", "Color HP", contentFrame)
+    totemIndicatorColorHealthBar:SetPoint("LEFT", showTotemIndicatorCooldownSwipe.text, "RIGHT", 0, 0)
+    CreateTooltip(totemIndicatorColorHealthBar, "Color healthbar")
+
     local totemIndicatorDefaultCooldownTextSize = CreateSlider(contentFrame, "Default CD Size", 0.3, 2, 0.01, "totemIndicatorDefaultCooldownTextSize")
-    totemIndicatorDefaultCooldownTextSize:SetPoint("TOP", totemIndicatorHideNameAndShiftIconDown, "BOTTOM", 58, -29)
+    totemIndicatorDefaultCooldownTextSize:SetPoint("TOP", totemIndicatorHideNameAndShiftIconDown, "BOTTOM", 58, -48)
     CreateTooltip(totemIndicatorDefaultCooldownTextSize, "Size of the default Blizz CD text.\n\nWill not work with OmniCC.")
 
     ----------------------
@@ -3641,6 +4194,7 @@ local function guiPositionAndScale()
     targetIndicatorColorName:SetScript("OnClick", function(self)
         BetterBlizzPlatesDB.targetIndicatorColorName = self:GetChecked()
         local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
+        local frame = nameplateForTarget and nameplateForTarget.UnitFrame
         if BetterBlizzPlatesDB.targetIndicatorColorName then
             targetIndicatorColorName.Text:SetTextColor(unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB))
             targetColorButton:Enable()
@@ -3652,13 +4206,14 @@ local function guiPositionAndScale()
                 targetColorButton:SetAlpha(0.5)
             end
         end
-        BBP.TargetIndicator(nameplateForTarget)
+        if frame then BBP.TargetIndicator(frame) end
         BBP.RefreshAllNameplates()
     end)
 
     targetIndicatorColorNameplate:SetScript("OnClick", function(self)
         BetterBlizzPlatesDB.targetIndicatorColorNameplate = self:GetChecked()
         local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
+        local frame = nameplateForTarget and nameplateForTarget.UnitFrame
         if BetterBlizzPlatesDB.targetIndicatorColorNameplate then
             targetIndicatorColorNameplate.Text:SetTextColor(unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB))
             targetColorButton:Enable()
@@ -3670,7 +4225,7 @@ local function guiPositionAndScale()
                 targetColorButton:SetAlpha(0.5)
             end
         end
-        BBP.TargetIndicator(nameplateForTarget)
+        if frame then BBP.TargetIndicator(frame) end
         BBP.RefreshAllNameplates()
     end)
 
@@ -3721,13 +4276,14 @@ local function guiPositionAndScale()
     raidmarkIcon:SetSize(32, 32)
     raidmarkIcon:SetPoint("BOTTOM", anchorSubRaidmark, "TOP", 0, 3)
 
-    BBP.raidmarkIndicator2 = CreateCheckbox("raidmarkIndicator", "Change raidmarker pos", contentFrame, nil, BBP.ChangeRaidmarker)
+    BBP.raidmarkIndicator2 = CreateCheckbox("raidmarkIndicator", "Move raidmarker", contentFrame, nil, BBP.ChangeRaidmarker)
     CreateTooltip(BBP.raidmarkIndicator2, "Enable this to move raidmarker on nameplates")
 
     local hideRaidmarkIndicator = CreateCheckbox("hideRaidmarkIndicator", "Hide raidmarker", contentFrame)
     hideRaidmarkIndicator:SetPoint("TOPLEFT", BBP.raidmarkIndicator2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(hideRaidmarkIndicator, "Hide every raidmarker on nameplates")
-
+    --CreateTooltip(hideRaidmarkIndicator, "Hide all raidmarkers on nameplates\n\n(Class Indicator and Party Pointer has their own setting\nto only hide on those specific nameplates where those icons show)")
+    CreateTooltipTwo(hideRaidmarkIndicator, "Hide Raidmarker", "Hide all raidmarkers on nameplates", "Class Indicator and Party Pointer has their own setting to only hide on those specific nameplates where those icons show", anchor, cvarName)
+    --(widget, title, mainText, subText, anchor, cvarName)
     local raidmarkIndicatorScale = CreateSlider(BBP.raidmarkIndicator2, "Size", 0.6, 2.5, 0.01, "raidmarkIndicatorScale")
     raidmarkIndicatorScale:SetPoint("TOP", anchorSubRaidmark, "BOTTOM", 0, -15)
 
@@ -3752,11 +4308,9 @@ local function guiPositionAndScale()
     BBP.raidmarkIndicator2:SetPoint("TOPLEFT", raidmarkIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
     function BBP.TempScuffedRadio()
         if BetterBlizzPlatesDB.raidmarkIndicator then
-            BBP.raidmarkIndicator:SetChecked(true)
             CheckAndToggleCheckboxes(BBP.raidmarkIndicator2)
             LibDD:UIDropDownMenu_EnableDropDown(raidmarkIndicatorDropdown)
         else
-            BBP.raidmarkIndicator:SetChecked(false)
             CheckAndToggleCheckboxes(BBP.raidmarkIndicator2)
             LibDD:UIDropDownMenu_DisableDropDown(raidmarkIndicatorDropdown)
         end
@@ -3896,8 +4450,6 @@ local function guiPositionAndScale()
                 focusColorButton:SetAlpha(0.5)
             end
         end
-        BBP.FocusTargetIndicator(nameplateForFocus)
-        BBP.RefreshAllNameplates()
     end)
 
     focusTargetIndicatorColorNameplate:SetScript("OnClick", function(self)
@@ -3914,8 +4466,6 @@ local function guiPositionAndScale()
                 focusColorButton:SetAlpha(0.5)
             end
         end
-        BBP.FocusTargetIndicator(nameplateForFocusTarget)
-        BBP.RefreshAllNameplates()
     end)
 
     if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate or BetterBlizzPlatesDB.focusTargetIndicatorColorName then
@@ -4090,7 +4640,7 @@ local function guiPositionAndScale()
     ----------------------
     local anchorSubClassIcon = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     anchorSubClassIcon:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, firstLineY)
-    anchorSubClassIcon:SetText("Class Icon")
+    anchorSubClassIcon:SetText("Class Indicator")
 
     CreateBorderBox(anchorSubClassIcon)
 
@@ -4205,6 +4755,120 @@ local function guiPositionAndScale()
     local classIndicatorHideRaidMarker = CreateCheckbox("classIndicatorHideRaidMarker", "Hide", contentFrame)
     classIndicatorHideRaidMarker:SetPoint("LEFT", classIndicatorHighlightColor.text, "RIGHT", -2, 0)
     CreateTooltip(classIndicatorHideRaidMarker, "Hide RaidMarker on nameplates with class icons")
+
+    ----------------------
+    -- Party Pointer
+    ----------------------
+    local anchorSubPointerIndicator = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubPointerIndicator:SetPoint("CENTER", mainGuiAnchor2, "CENTER", firstLineX, fourthLineY)
+    anchorSubPointerIndicator:SetText("Party Pointer")
+
+    CreateBorderBox(anchorSubPointerIndicator)
+
+    local pointerIconSub = contentFrame:CreateTexture(nil, "ARTWORK")
+    pointerIconSub:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
+    pointerIconSub:SetSize(25, 30)
+    pointerIconSub:SetPoint("BOTTOM", anchorSubPointerIndicator, "TOP", -1, 5)
+    pointerIconSub:SetDesaturated(true)
+    pointerIconSub:SetVertexColor(0.04, 0.76, 1)
+    CreateTooltip(pointerIconSub, "Show a class colored pointer above\nfriendly player nameplates.")
+
+    local partyPointerScale = CreateSlider(contentFrame, "Size", 0.5, 2.2, 0.01, "partyPointerScale", false, 72)
+    partyPointerScale:SetPoint("TOP", anchorSubPointerIndicator, "BOTTOM", -36, -15)
+
+    local partyPointerWidth = CreateSlider(contentFrame, "Width", 20, 55, 1, "partyPointerWidth", false, 72)
+    partyPointerWidth:SetPoint("TOP", anchorSubPointerIndicator, "BOTTOM", 36, -15)
+
+    local partyPointerHealerScale = CreateSlider(contentFrame, "Healer Icon Size", 0.5, 2.2, 0.01, "partyPointerHealerScale")
+    partyPointerHealerScale:SetPoint("TOP", partyPointerScale, "BOTTOM", 36, -15)
+
+    local partyPointerXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "partyPointerXPos", "X")
+    partyPointerXPos:SetPoint("TOP", partyPointerHealerScale, "BOTTOM", 0, -15)
+
+    local partyPointerYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "partyPointerYPos", "Y")
+    partyPointerYPos:SetPoint("TOP", partyPointerXPos, "BOTTOM", 0, -15)
+
+    local partyPointerDropdown = CreateAnchorDropdown(
+        "partyPointerDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "partyPointerAnchor",
+        function(arg1) 
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = partyPointerYPos, x = -16, y = -35, label = "Anchor" }
+    )
+
+    local partyPointerTestMode = CreateCheckbox("partyPointerTestMode", "Test", contentFrame)
+    partyPointerTestMode:SetPoint("TOPLEFT", partyPointerDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
+
+    local partyPointerHideRaidmarker = CreateCheckbox("partyPointerHideRaidmarker", "No raidmarker", contentFrame)
+    partyPointerHideRaidmarker:SetPoint("LEFT", partyPointerTestMode.text, "RIGHT", 0, 0)
+    CreateTooltip(partyPointerHideRaidmarker, "Hide raidmarker on nameplates with party pointer.")
+
+    local partyPointerArenaOnly = CreateCheckbox("partyPointerArenaOnly", "Arena only", contentFrame)
+    partyPointerArenaOnly:SetPoint("TOPLEFT", partyPointerTestMode, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(partyPointerArenaOnly, "Show in Arena only.")
+
+    local partyPointerBgOnly = CreateCheckbox("partyPointerBgOnly", "BG only", contentFrame)
+    partyPointerBgOnly:SetPoint("LEFT", partyPointerArenaOnly.text, "RIGHT", 0, 0)
+    CreateTooltip(partyPointerBgOnly, "Show in Battlegrounds only.")
+
+    local partyPointerClassColor = CreateCheckbox("partyPointerClassColor", "Class color", contentFrame)
+    partyPointerClassColor:SetPoint("TOPLEFT", partyPointerArenaOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(partyPointerClassColor, "Class color pointer.")
+
+    local partyPointerHealer = CreateCheckbox("partyPointerHealer", "Healer", contentFrame)
+    partyPointerHealer:SetPoint("LEFT", partyPointerClassColor.text, "RIGHT", 0, 0)
+    CreateTooltip(partyPointerHealer, "Show a cross on top of the pointer on healers\n(Requires addon Details and might not always show in world but fine in bgs and arena).")
+
+        ----------------------
+    -- Fake Name Reposition
+    ----------------------
+    local anchorSubFakeName = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubFakeName:SetPoint("CENTER", mainGuiAnchor2, "CENTER", secondLineX, fourthLineY)
+    anchorSubFakeName:SetText("Name Reposition")
+
+    CreateBorderBox(anchorSubFakeName)
+
+    local nameIcon = contentFrame:CreateTexture(nil, "ARTWORK")
+    nameIcon:SetAtlas("MiniMap-PositionArrows")
+    nameIcon:SetSize(32, 44)
+    nameIcon:SetPoint("BOTTOM", anchorSubFakeName, "TOP", 0, -3)
+    nameIcon:SetRotation(math.pi / 2)
+    nameIcon:SetDesaturated(true)
+    nameIcon:SetVertexColor(1,1,0.1)
+
+    local useFakeName = CreateCheckbox("useFakeName", "Enable Name Reposition", contentFrame)
+
+    local fakeNameXPos = CreateSlider(useFakeName, "|cffFF0000Enemy x offset|r", -50, 50, 1, "fakeNameXPos", "X")
+    fakeNameXPos:SetPoint("TOP", anchorSubFakeName, "BOTTOM", 0, -15)
+
+    local fakeNameYPos = CreateSlider(useFakeName, "|cffFF0000Enemy y offset|r", -50, 50, 1, "fakeNameYPos", "Y")
+    fakeNameYPos:SetPoint("TOP", fakeNameXPos, "BOTTOM", 0, -15)
+
+    local fakeNameFriendlyXPos = CreateSlider(useFakeName, "|cff0CC2FFFriendly x offset|r", -50, 50, 1, "fakeNameFriendlyXPos", "X")
+    fakeNameFriendlyXPos:SetPoint("TOP", fakeNameYPos, "BOTTOM", 0, -15)
+
+    local fakeNameFriendlyYPos = CreateSlider(useFakeName, "|cff0CC2FFFriendly y offset|r", -50, 50, 1, "fakeNameFriendlyYPos", "Y")
+    fakeNameFriendlyYPos:SetPoint("TOP", fakeNameFriendlyXPos, "BOTTOM", 0, -15)
+
+    --local useFakeName = CreateCheckbox("useFakeName", "Enable Name Reposition", contentFrame) --moved up
+    useFakeName:SetPoint("TOPLEFT", fakeNameFriendlyYPos, "BOTTOMLEFT", 0, pixelsOnFirstBox)
+    useFakeName:HookScript("OnClick", function()
+        CheckAndToggleCheckboxes(useFakeName)
+    end)
+    CreateTooltip(useFakeName, "Enables name repositioning by using a \"fake name\" and hiding the real one.")
+    CreateTooltip(nameIcon, "Enables name repositioning by using a \"fake name\" and hiding the real one.")
+
+    local useFakeNameAnchorBottom = CreateCheckbox("useFakeNameAnchorBottom", "Anchor friend bottom", useFakeName)
+    useFakeNameAnchorBottom:SetPoint("TOPLEFT", useFakeName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(useFakeNameAnchorBottom, "Anchor the name of friendly nameplates to the bottom of healthbar\ninstead of on top so name no longer shifts up when targeted.")
+
+
+
+
+
 
     ----
 
@@ -4639,6 +5303,11 @@ local function guiCastbar()
         OpenColorPicker("castBarInterruptHighlighterInterruptRGB", castBarInterruptHighlighterInterruptRGBIcon)
     end)
 
+    CheckAndToggleCheckboxes(castBarInterruptHighlighter)
+    if not BetterBlizzPlatesDB.castBarInterruptHighlighter then
+        castBarInterruptHighlighterInterruptRGBIcon:SetAlpha(0)
+    end
+
     enableCastbarCustomization:HookScript("OnClick", function (self)
         CheckAndToggleCheckboxes(enableCastbarCustomization)
         if self:GetChecked() then
@@ -4838,7 +5507,7 @@ local function guiHideCastbar()
     hideCastbarExplanationText:SetPoint("TOP", guiHideCastbar, "TOP", 172, -127)
     hideCastbarExplanationText:SetText("Hide the castbar for chosen spells,\nor only show whitelisted ones.\n \nYou will still be able to click them\neven though you can't see them")
 
-    local hideCastbar = CreateCheckbox("hideCastbar", "Enable Hide Castbar", guiHideCastbar, nil, BBP.HideCastbar)
+    local hideCastbar = CreateCheckbox("hideCastbar", "Enable Hide Castbar", guiHideCastbar)
     hideCastbar:SetPoint("TOPLEFT", hideCastbarExplanationText, "BOTTOMLEFT", 25, -15)
     hideCastbar:HookScript("OnClick", function(_, btn, down)
         BBP.ToggleSpellCastEventRegistration()
@@ -4860,19 +5529,27 @@ local function guiHideCastbar()
     CreateList(hideCastbarFrame, "hideCastbarList", BetterBlizzPlatesDB.hideCastbarList, BBP.RefreshAllNameplates, false)
     CreateList(hideCastbarWhitelistFrame, "hideCastbarWhitelist", BetterBlizzPlatesDB.hideCastbarWhitelist, BBP.RefreshAllNameplates, false)
 
-    local hideCastbarWhitelist = CreateCheckbox("hideCastbarWhitelistOn", "Whitelist mode", guiHideCastbar, nil, BBP.HideCastbar)
+    local hideCastbarWhitelist = CreateCheckbox("hideCastbarWhitelistOn", "Whitelist mode", hideCastbar)
     hideCastbarWhitelist:SetPoint("TOPLEFT", hideCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(hideCastbarWhitelist, "Hide castbar for ALL spells except the ones in the whitelist")
 
-    local showCastbarIfTarget = CreateCheckbox("showCastbarIfTarget", "Always show castbar on target", guiHideCastbar, nil, BBP.HideCastbar)
+    local showCastbarIfTarget = CreateCheckbox("showCastbarIfTarget", "Always show castbar on target", hideCastbar)
     showCastbarIfTarget:SetPoint("TOPLEFT", hideCastbarWhitelist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local onlyShowInterruptableCasts = CreateCheckbox("onlyShowInterruptableCasts", "Only show interruptable casts", guiHideCastbar, nil, BBP.HideCastbar)
+    local onlyShowInterruptableCasts = CreateCheckbox("onlyShowInterruptableCasts", "Only show interruptable casts", hideCastbar)
     onlyShowInterruptableCasts:SetPoint("TOPLEFT", showCastbarIfTarget, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local hideNpcCastbar = CreateCheckbox("hideNpcCastbar", "Hide all NPC castbars", guiHideCastbar, nil, BBP.HideCastbar)
+    local hideNpcCastbar = CreateCheckbox("hideNpcCastbar", "Hide all NPC castbars", hideCastbar)
     hideNpcCastbar:SetPoint("TOPLEFT", onlyShowInterruptableCasts, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(hideNpcCastbar, "Hide all NPC castbars (except whitelisted ones).")
+    CreateTooltipTwo(hideNpcCastbar, "Hide NPC Castbars", "Hide all NPC castbars (except whitelisted ones).")
+
+    local hideCastbarFriendly = CreateCheckbox("hideCastbarFriendly", "Hide friendly castbars", hideCastbar)
+    hideCastbarFriendly:SetPoint("TOPLEFT", hideNpcCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(hideCastbarFriendly, "Hide Friendly Castbars", "Hide all friendly castbars (except whitelisted ones).")
+
+    local hideCastbarEnemy = CreateCheckbox("hideCastbarEnemy", "Hide enemy castbars", hideCastbar)
+    hideCastbarEnemy:SetPoint("TOPLEFT", hideCastbarFriendly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(hideCastbarEnemy, "Hide Enemy Castbars", "Hide all enemy castbars (except whitelisted ones).")
 
     local function handleVisibility()
         if BetterBlizzPlatesDB.hideCastbarWhitelistOn then
@@ -4888,33 +5565,21 @@ local function guiHideCastbar()
     end)
     handleVisibility()
 
-    local function handleVisibility2()
-        if BetterBlizzPlatesDB.hideCastbar then
+    hideCastbar:HookScript("OnClick", function(_, btn, down)
+        CheckAndToggleCheckboxes(hideCastbar)
+    end)
+
+    hideCastbar:HookScript("OnClick", function(self)
+        CheckAndToggleCheckboxes(hideCastbar)
+        if self:GetChecked() then
             listFrame:SetAlpha(1)
-            hideCastbarWhitelist:SetAlpha(1)
-            hideCastbarWhitelist:Enable()
-            showCastbarIfTarget:SetAlpha(1)
-            showCastbarIfTarget:Enable()
-            onlyShowInterruptableCasts:SetAlpha(1)
-            onlyShowInterruptableCasts:Enable()
-            hideNpcCastbar:SetAlpha(1)
-            hideNpcCastbar:Enable()
         else
             listFrame:SetAlpha(0.5)
-            hideCastbarWhitelist:SetAlpha(0.5)
-            hideCastbarWhitelist:Disable()
-            showCastbarIfTarget:SetAlpha(0.5)
-            showCastbarIfTarget:Disable()
-            onlyShowInterruptableCasts:SetAlpha(0.5)
-            onlyShowInterruptableCasts:Disable()
-            hideNpcCastbar:SetAlpha(0.5)
-            hideNpcCastbar:Disable()
         end
-    end
-    hideCastbar:HookScript("OnClick", function(_, btn, down)
-        handleVisibility2()
     end)
-    handleVisibility2()
+    if not BetterBlizzPlatesDB.hideCastbar then
+        listFrame:SetAlpha(0.5)
+    end
 end
 
 local function guiFadeNPC()
@@ -4971,10 +5636,10 @@ local function guiFadeNPC()
     noteFade:SetPoint("TOP", fadeOutNPCsAlpha, "BOTTOM", 0, -20)
     noteFade:SetText("This makes nameplates transparent.\n \nYou will still be able to click them\neven though you can't see them.")
 
-    local fadeOutNPC = CreateCheckbox("fadeOutNPC", "Enable Fade NPC", guiFadeNpc, nil, BBP.FadeOutNPCs)
+    local fadeOutNPC = CreateCheckbox("fadeOutNPC", "Enable Fade NPC", guiFadeNpc)
     fadeOutNPC:SetPoint("TOPLEFT", noteFade, "BOTTOMLEFT", 20, -15)
 
-    local fadeAllButTarget = CreateCheckbox("fadeAllButTarget", "Fade All Except Target", fadeOutNPC, nil, BBP.FadeOutNPCs)
+    local fadeAllButTarget = CreateCheckbox("fadeAllButTarget", "Fade All Except Target", fadeOutNPC)
     fadeAllButTarget:SetPoint("TOPLEFT", fadeOutNPC, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(fadeAllButTarget, "Fade out all other nameplates when you have a target.\nDisregards the fade list")
 
@@ -5043,6 +5708,18 @@ local function guiHideNPC()
 
     CreateList(hideNPCListFrame, "hideNPCsList", BetterBlizzPlatesDB.hideNPCsList, BBP.RefreshAllNameplates, false)
     CreateList(hideNPCWhitelistFrame, "hideNPCsWhitelist", BetterBlizzPlatesDB.hideNPCsWhitelist, BBP.RefreshAllNameplates, false)
+
+    local murlocTexture = guiHideNpc:CreateTexture(nil, "OVERLAY")
+    murlocTexture:SetAtlas("newplayerchat-chaticon-newcomer")
+    murlocTexture:SetPoint("BOTTOM", hideNPCListFrame, "TOPRIGHT", -30, -9)
+    murlocTexture:SetSize(17,17)
+    CreateTooltip(murlocTexture, "Murloc Icon Checkboxes")
+
+    local hideNpcMurlocScale = CreateSlider(hideNPC, "Murloc Size", 0.7, 2.2, 0.05, "hideNpcMurlocScale")
+    hideNpcMurlocScale:SetPoint("TOPRIGHT", guiHideNpc, "TOPRIGHT", -90, -300)
+
+    local hideNpcMurlocYPos = CreateSlider(hideNPC, "Murloc Y Position", -50, 50, 1, "hideNpcMurlocYPos", "Y")
+    hideNpcMurlocYPos:SetPoint("TOPRIGHT", guiHideNpc, "TOPRIGHT", -90, -335)
 
     local hideNPCWhitelistOn = CreateCheckbox("hideNPCWhitelistOn", "Whitelist mode", hideNPC)
     hideNPCWhitelistOn:SetPoint("TOPLEFT", hideNPC, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -5257,21 +5934,39 @@ local function guiNameplateAuras()
     auraBlacklistFrame:SetSize(322, 390)
     auraBlacklistFrame:SetPoint("TOPLEFT", 6, -15)
 
-    CreateList(auraBlacklistFrame, "auraBlacklist", BetterBlizzPlatesDB.auraBlacklist, BBP.RefreshAllNameplates, nil, nil, nil, 280, 270)
+    CreateList(auraBlacklistFrame, "auraBlacklist", BetterBlizzPlatesDB.auraBlacklist, BBP.RefreshAllNameplates, nil, nil, nil, 265, 270)
 
     local blacklistText = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     blacklistText:SetPoint("BOTTOM", auraBlacklistFrame, "TOP", 10, -5)
     blacklistText:SetText("Blacklist")
 
-    CreateList(auraWhitelistFrame, "auraWhitelist", BetterBlizzPlatesDB.auraWhitelist, BBP.RefreshAllNameplates, nil, true, nil, 364, 270, true, true)
+    CreateList(auraWhitelistFrame, "auraWhitelist", BetterBlizzPlatesDB.auraWhitelist, BBP.RefreshAllNameplates, nil, true, nil, 379, 270, true, true)
 
     local whitelistText = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     whitelistText:SetPoint("BOTTOM", auraWhitelistFrame, "TOP", -60, -5)
     whitelistText:SetText("Whitelist")
 
+    local onlyMeTexture = contentFrame:CreateTexture(nil, "OVERLAY")
+    onlyMeTexture:SetAtlas("UI-HUD-UnitFrame-Player-Group-FriendOnlineIcon")
+    onlyMeTexture:SetPoint("LEFT", whitelistText, "RIGHT", 68.5, -2)
+    onlyMeTexture:SetSize(18,20)
+    CreateTooltip(onlyMeTexture, "Only My Aura Checkboxes")
+
+    local enlargeAuraTexture = contentFrame:CreateTexture(nil, "OVERLAY")
+    enlargeAuraTexture:SetAtlas("ui-hud-minimap-zoom-in")
+    enlargeAuraTexture:SetPoint("LEFT", onlyMeTexture, "RIGHT", 4, 0)
+    enlargeAuraTexture:SetSize(18,18)
+    CreateTooltip(enlargeAuraTexture, "Enlarged Aura Checkboxes")
+
+    local compactAuraTexture = contentFrame:CreateTexture(nil, "OVERLAY")
+    compactAuraTexture:SetAtlas("ui-hud-minimap-zoom-out")
+    compactAuraTexture:SetPoint("LEFT", enlargeAuraTexture, "RIGHT", 4, 0)
+    compactAuraTexture:SetSize(18,18)
+    CreateTooltip(compactAuraTexture, "Compact Aura Checkboxes")
+
     local importantAuraTexture = contentFrame:CreateTexture(nil, "OVERLAY")
     importantAuraTexture:SetAtlas("importantavailablequesticon")
-    importantAuraTexture:SetPoint("LEFT", whitelistText, "RIGHT", 123, 0)
+    importantAuraTexture:SetPoint("LEFT", compactAuraTexture, "RIGHT", 2, 0)
     importantAuraTexture:SetSize(17,16)
     importantAuraTexture:SetDesaturated(true)
     importantAuraTexture:SetVertexColor(0,1,0)
@@ -5279,7 +5974,7 @@ local function guiNameplateAuras()
 
     local pandemicAuraTexture = contentFrame:CreateTexture(nil, "OVERLAY")
     pandemicAuraTexture:SetAtlas("elementalstorm-boss-air")
-    pandemicAuraTexture:SetPoint("LEFT", importantAuraTexture, "RIGHT", 20, 1)
+    pandemicAuraTexture:SetPoint("LEFT", importantAuraTexture, "RIGHT", 15, 1)
     pandemicAuraTexture:SetSize(26,26)
     pandemicAuraTexture:SetDesaturated(true)
     pandemicAuraTexture:SetVertexColor(1,0,0)
@@ -5321,15 +6016,15 @@ local function guiNameplateAuras()
 
     local otherNpBuffFilterWatchList = CreateCheckbox("otherNpBuffFilterWatchList", "Whitelist", otherNpBuffEnable)
     otherNpBuffFilterWatchList:SetPoint("TOPLEFT", otherNpBuffFilterBlacklist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(otherNpBuffFilterWatchList, "Hide all buffs except whitelisted ones. Each filter is additive.")
+    CreateTooltipTwo(otherNpBuffFilterWatchList, "Whitelist", "Only show whitelisted buffs.\n(Plus other filters)", "You can have spells whitelisted to add settings such as \"Only Mine\" and \"Important\" etc without needing to enable the whitelist filter here.\n\nOnly check this if you only want whitelisted auras here or the addition of them.\n(Plus other filters)")
 
     local otherNpBuffFilterLessMinite = CreateCheckbox("otherNpBuffFilterLessMinite", "Under one min", otherNpBuffEnable)
     otherNpBuffFilterLessMinite:SetPoint("TOPLEFT", otherNpBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(otherNpBuffFilterLessMinite, "Only show buffs under one minute long. Each filter is additive.")
+    CreateTooltip(otherNpBuffFilterLessMinite, "Only show buffs under one minute long. (Plus other filters)")
 
     local otherNpBuffFilterPurgeable = CreateCheckbox("otherNpBuffFilterPurgeable", "Purgeable", otherNpBuffEnable)
     otherNpBuffFilterPurgeable:SetPoint("TOPLEFT", otherNpBuffFilterLessMinite, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(otherNpBuffFilterPurgeable, "Only show purgeable/stealable buffs. Each filter is additive.")
+    CreateTooltip(otherNpBuffFilterPurgeable, "Only show purgeable/stealable buffs. (Plus other filters)")
 
     local otherNpBuffPurgeGlow = CreateCheckbox("otherNpBuffPurgeGlow", "Glow on Purgeable", otherNpBuffEnable)
     otherNpBuffPurgeGlow:SetPoint("TOPLEFT", otherNpBuffFilterPurgeable, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -5353,19 +6048,19 @@ local function guiNameplateAuras()
 
     local otherNpdeBuffFilterWatchList = CreateCheckbox("otherNpdeBuffFilterWatchList", "Whitelist", otherNpdeBuffEnable)
     otherNpdeBuffFilterWatchList:SetPoint("TOPLEFT", otherNpdeBuffFilterBlacklist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(otherNpdeBuffFilterWatchList, "Hide all debuffs except whitelisted ones. Each filter is additive.")
+    CreateTooltipTwo(otherNpdeBuffFilterWatchList, "Whitelist", "Only show whitelisted buffs.\n(Plus other filters)", "You can have spells whitelisted to add settings such as \"Only Mine\" and \"Important\" etc without needing to enable the whitelist filter here.\n\nOnly check this if you only want whitelisted auras here or the addition of them.\n(Plus other filters)")
 
     local otherNpdeBuffFilterBlizzard = CreateCheckbox("otherNpdeBuffFilterBlizzard", "Blizzard Default Filter", otherNpdeBuffEnable)
     otherNpdeBuffFilterBlizzard:SetPoint("TOPLEFT", otherNpdeBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(otherNpdeBuffFilterBlizzard, "Enable the default Blizzard nameplate filter (most of own auras + some cc etc).")
+    CreateTooltip(otherNpdeBuffFilterBlizzard, "Only show debuffs that are in the Blizzard Default nameplate filter\n(most of own auras + some cc etc) (Plus other filters).")
 
     local otherNpdeBuffFilterLessMinite = CreateCheckbox("otherNpdeBuffFilterLessMinite", "Under one min", otherNpdeBuffEnable)
     otherNpdeBuffFilterLessMinite:SetPoint("TOPLEFT", otherNpdeBuffFilterBlizzard, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(otherNpdeBuffFilterLessMinite, "Only show debuffs under one minute long.\n\nThis filter overrides \"Only mine\"\nif both conditions are met,\notherwise filters are additive.")
+    CreateTooltip(otherNpdeBuffFilterLessMinite, "Only show debuffs under one minute long.\n\nThis filter gets overriden by \"Only mine\" if both\nconditions are met, otherwise filters are additive.")
 
     local otherNpdeBuffFilterOnlyMe = CreateCheckbox("otherNpdeBuffFilterOnlyMe", "Only mine", otherNpdeBuffEnable)
     otherNpdeBuffFilterOnlyMe:SetPoint("TOPLEFT", otherNpdeBuffFilterLessMinite, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(otherNpdeBuffFilterOnlyMe, "Only show my debuffs. (Can select individual in whitelist too)\n\nThis filter gets overridden by \"Under one min\"\nif both conditions are met,\notherwise filters are additive.")
+    CreateTooltip(otherNpdeBuffFilterOnlyMe, "Only show my debuffs. (Can select individual in whitelist too)\n\nThis filter allows auras from the Blizzard Default filter if it is enabled.")
 
 --[=[
     local otherNpdeBuffPandemicGlow = CreateCheckbox("otherNpdeBuffPandemicGlow", "Pandemic Glow", otherNpdeBuffEnable)
@@ -5399,16 +6094,16 @@ local function guiNameplateAuras()
     CreateTooltip(friendlyNpBuffFilterBlacklist, "Hide blacklisted buffs.")
 
     local friendlyNpBuffFilterWatchList = CreateCheckbox("friendlyNpBuffFilterWatchList", "Whitelist", friendlyNpBuffEnable)
-    CreateTooltip(friendlyNpBuffFilterWatchList, "Hide all buffs except whitelisted ones. Each filter is additive.")
+    CreateTooltipTwo(friendlyNpBuffFilterWatchList, "Whitelist", "Only show whitelisted buffs.\n(Plus other filters)", "You can have spells whitelisted to add settings such as \"Only Mine\" and \"Important\" etc without needing to enable the whitelist filter here.\n\nOnly check this if you only want whitelisted auras here or the addition of them.\n(Plus other filters)")
     friendlyNpBuffFilterWatchList:SetPoint("TOPLEFT", friendlyNpBuffFilterBlacklist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
     local friendlyNpBuffFilterLessMinite = CreateCheckbox("friendlyNpBuffFilterLessMinite", "Under one min", friendlyNpBuffEnable)
     friendlyNpBuffFilterLessMinite:SetPoint("TOPLEFT", friendlyNpBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(friendlyNpBuffFilterLessMinite, "Only show buffs under one minute long.\n\nThis filter overrides \"Only mine\" if both conditions are met,\notherwise filters are additive.")
+    CreateTooltip(friendlyNpBuffFilterLessMinite, "Only show buffs under one minute long. (Plus other filters)")
 
     local friendlyNpBuffFilterOnlyMe = CreateCheckbox("friendlyNpBuffFilterOnlyMe", "Only mine", friendlyNpBuffEnable)
     friendlyNpBuffFilterOnlyMe:SetPoint("TOPLEFT", friendlyNpBuffFilterLessMinite, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(friendlyNpBuffFilterOnlyMe, "Only show my buffs. (Can select individual in whitelist too)\n\nThis filter gets overridden by \"Under one min\"\nif both conditions are met,\notherwise filters are additive.")
+    CreateTooltip(friendlyNpBuffFilterOnlyMe, "Only show my buffs. (Plus other filters)")
 
     -- Friendly Debuffs
     local friendlyNpdeBuffEnable = CreateCheckbox("friendlyNpdeBuffEnable", "Show DEBUFFS", enableNameplateAuraCustomisation)
@@ -5424,15 +6119,15 @@ local function guiNameplateAuras()
 
     local friendlyNpdeBuffFilterWatchList = CreateCheckbox("friendlyNpdeBuffFilterWatchList", "Whitelist", friendlyNpdeBuffEnable)
     friendlyNpdeBuffFilterWatchList:SetPoint("TOPLEFT", friendlyNpdeBuffFilterBlacklist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(friendlyNpdeBuffFilterWatchList, "Hide all debuffs except whitelisted ones. Each filter is additive.")
+    CreateTooltipTwo(friendlyNpdeBuffFilterWatchList, "Whitelist", "Only show whitelisted debuffs.\n(Plus other filters)", "You can have spells whitelisted to add settings such as \"Only Mine\" and \"Important\" etc without needing to enable the whitelist filter here.\n\nOnly check this if you only want whitelisted auras here or the addition of them.\n(Plus other filters)")
 
     local friendlyNpdeBuffFilterBlizzard = CreateCheckbox("friendlyNpdeBuffFilterBlizzard", "Blizzard Default Filter", friendlyNpdeBuffEnable)
     friendlyNpdeBuffFilterBlizzard:SetPoint("TOPLEFT", friendlyNpdeBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(friendlyNpdeBuffFilterBlizzard, "Enable the default Blizzard nameplate filter (most of own auras + some cc etc).")
+    CreateTooltip(friendlyNpdeBuffFilterBlizzard, "Only show debuffs that are in the Blizzard Default nameplate filter\n(most of own auras + some cc etc) (Plus other filters).")
 
     local friendlyNpdeBuffFilterLessMinite = CreateCheckbox("friendlyNpdeBuffFilterLessMinite", "Under one min", friendlyNpdeBuffEnable)
     friendlyNpdeBuffFilterLessMinite:SetPoint("TOPLEFT", friendlyNpdeBuffFilterBlizzard, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(friendlyNpdeBuffFilterLessMinite, "Only show debuffs under one minute long. Each filter is additive.")
+    CreateTooltip(friendlyNpdeBuffFilterLessMinite, "Only show debuffs under one minute long. (Plus other filters)")
 
     --------------------------
     -- Personal Bar
@@ -5473,19 +6168,19 @@ local function guiNameplateAuras()
 
     local personalNpBuffFilterWatchList = CreateCheckbox("personalNpBuffFilterWatchList", "Whitelist", personalNpBuffEnable)
     personalNpBuffFilterWatchList:SetPoint("TOPLEFT", personalNpBuffFilterBlacklist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(personalNpBuffFilterWatchList, "Hide all Buffs except whitelisted ones. Each filter is additive.", "ANCHOR_LEFT")
+    CreateTooltip(personalNpBuffFilterWatchList, "Whitelist", "Only show whitelisted buffs.\n(Plus other filters)", "You can have spells whitelisted to add settings such as \"Only Mine\" and \"Important\" etc without needing to enable the whitelist filter here.\n\nOnly check this if you only want whitelisted auras here or the addition of them.\n(Plus other filters)", "ANCHOR_LEFT")
 
     local personalNpBuffFilterBlizzard = CreateCheckbox("personalNpBuffFilterBlizzard", "Blizzard Default Filter", personalNpBuffEnable)
     personalNpBuffFilterBlizzard:SetPoint("TOPLEFT", personalNpBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(personalNpBuffFilterBlizzard, "Enable the default Blizzard nameplate filter (most of own auras + some cc etc).", "ANCHOR_LEFT")
+    CreateTooltip(personalNpBuffFilterBlizzard, "Only show buffs that are in the Blizzard Default nameplate filter. (Plus other filters)", "ANCHOR_LEFT")
 
     local personalNpBuffFilterLessMinite = CreateCheckbox("personalNpBuffFilterLessMinite", "Under one min", personalNpBuffEnable)
     personalNpBuffFilterLessMinite:SetPoint("TOPLEFT", personalNpBuffFilterBlizzard, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(personalNpBuffFilterLessMinite, "Only show buffs under one minute long.\n\nThis filter overrides \"Only mine\" if both conditions are met,\notherwise filters are additive.", "ANCHOR_LEFT")
+    CreateTooltip(personalNpBuffFilterLessMinite, "Only show buffs under one minute long. (Plus other filters)", "ANCHOR_LEFT")
 
     local personalNpBuffFilterOnlyMe = CreateCheckbox("personalNpBuffFilterOnlyMe", "Only mine", personalNpBuffEnable)
     personalNpBuffFilterOnlyMe:SetPoint("TOPLEFT", personalNpBuffFilterLessMinite, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(personalNpBuffFilterOnlyMe, "Only show my buffs. (Can select individual in whitelist too)\n\nThis filter gets overridden by \"Under one min\"\nif both conditions are met,\notherwise filters are additive.", "ANCHOR_LEFT")
+    CreateTooltip(personalNpBuffFilterOnlyMe, "Only show my buffs. (Can select individual in whitelist too)\n\nThis filter allows auras from the Blizzard Default filter if it is enabled.", "ANCHOR_LEFT")
 
     -- Personal Bar Debuffs
     local personalNpdeBuffEnable = CreateCheckbox("personalNpdeBuffEnable", "Show DEBUFFS", enableNameplateAuraCustomisation)
@@ -5501,11 +6196,11 @@ local function guiNameplateAuras()
 
     local personalNpdeBuffFilterWatchList = CreateCheckbox("personalNpdeBuffFilterWatchList", "Whitelist", personalNpdeBuffEnable)
     personalNpdeBuffFilterWatchList:SetPoint("TOPLEFT", personalNpdeBuffFilterBlacklist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(personalNpdeBuffFilterWatchList, "Hide all Debuffs except whitelisted ones. Each filter is additive.", "ANCHOR_LEFT")
+    CreateTooltipTwo(personalNpdeBuffFilterWatchList, "Whitelist", "Only show whitelisted debuffs.\n(Plus other filters)", "You can have spells whitelisted to add settings such as \"Only Mine\" and \"Important\" etc without needing to enable the whitelist filter here.\n\nOnly check this if you only want whitelisted auras here or the addition of them.\n(Plus other filters)",  "ANCHOR_LEFT")
 
     local personalNpdeBuffFilterLessMinite = CreateCheckbox("personalNpdeBuffFilterLessMinite", "Under one min", personalNpdeBuffEnable)
     personalNpdeBuffFilterLessMinite:SetPoint("TOPLEFT", personalNpdeBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(personalNpdeBuffFilterLessMinite, "Only show debuffs under one minute long. Each filter is additive.", "ANCHOR_LEFT")
+    CreateTooltip(personalNpdeBuffFilterLessMinite, "Only show debuffs under one minute long. (Plus other filters)", "ANCHOR_LEFT")
 
     --------------------------
     -- Nameplate settings
@@ -5522,8 +6217,30 @@ local function guiNameplateAuras()
     nameplateAurasNoNameYPos:SetPoint("TOPLEFT", nameplateAurasYPos, "BOTTOMLEFT", 0, -17)
     CreateTooltip(nameplateAurasNoNameYPos, "Aura y offset when name is hidden\n(Unimportant non-targeted npcs etc)")
 
-    local nameplateAuraScale = CreateSlider(enableNameplateAuraCustomisation, "Aura size", 0.7, 2, 0.01, "nameplateAuraScale")
+    local nameplateAuraScale = CreateSlider(enableNameplateAuraCustomisation, "Aura Size", 0.7, 2, 0.01, "nameplateAuraScale")
     nameplateAuraScale:SetPoint("TOPLEFT", nameplateAurasNoNameYPos, "BOTTOMLEFT", 0, -17)
+
+    local nameplateAuraEnlargedScale = CreateSlider(enableNameplateAuraCustomisation, "Enlarged Aura Size", 1, 2, 0.01, "nameplateAuraEnlargedScale")
+    nameplateAuraEnlargedScale:SetPoint("TOPLEFT", nameplateAuraScale, "BOTTOMLEFT", 0, -17)
+    local enlargedAuraIcon = contentFrame:CreateTexture(nil, "ARTWORK")
+    enlargedAuraIcon:SetAtlas("ui-hud-minimap-zoom-in")
+    enlargedAuraIcon:SetSize(18, 18)
+    enlargedAuraIcon:SetPoint("RIGHT", nameplateAuraEnlargedScale, "LEFT", -3, 0)
+
+    local nameplateAuraEnlargedSquare = CreateCheckbox("nameplateAuraEnlargedSquare", "Square Aura", enableNameplateAuraCustomisation)
+    nameplateAuraEnlargedSquare:SetPoint("RIGHT", enlargedAuraIcon, "LEFT", -60, 1)
+    CreateTooltipTwo(nameplateAuraEnlargedSquare, "Square Enlarged Aura", "Square the Enlarged Aura.", nil, "ANCHOR_LEFT")
+
+    local nameplateAuraCompactedScale = CreateSlider(enableNameplateAuraCustomisation, "Compacted Aura Size", 0.4, 1, 0.01, "nameplateAuraCompactedScale")
+    nameplateAuraCompactedScale:SetPoint("TOPLEFT", nameplateAuraEnlargedScale, "BOTTOMLEFT", 0, -17)
+    local compactedAuraIcon = contentFrame:CreateTexture(nil, "ARTWORK")
+    compactedAuraIcon:SetAtlas("ui-hud-minimap-zoom-out")
+    compactedAuraIcon:SetSize(18, 18)
+    compactedAuraIcon:SetPoint("RIGHT", nameplateAuraCompactedScale, "LEFT", -3, 0)
+
+    local nameplateAuraCompactedSquare = CreateCheckbox("nameplateAuraCompactedSquare", "Halve Aura", enableNameplateAuraCustomisation)
+    nameplateAuraCompactedSquare:SetPoint("RIGHT", compactedAuraIcon, "LEFT", -60, 1)
+    CreateTooltipTwo(nameplateAuraCompactedSquare, "Halve Compacted Aura", "Halve the Compacted Aura.", "Half-sized auras will count as half towards \"max buffs per row\" and if two are next to eachother they will combine taking up the space of 1 normal aura slot.", "ANCHOR_LEFT")
 
 --[[
     local nameplateAuraDropdown = CreateAnchorDropdown(
@@ -5553,17 +6270,17 @@ local function guiNameplateAuras()
 
     local nameplateAurasEnemyCenteredAnchor = CreateCheckbox("nameplateAurasEnemyCenteredAnchor", "Center Auras on Enemy", enableNameplateAuraCustomisation)
     nameplateAurasEnemyCenteredAnchor:SetPoint("BOTTOM", nameplateAurasXPos, "TOP", -80, 80)
-    CreateTooltip(nameplateAurasEnemyCenteredAnchor, "Keep auras centered on enemy nameplates.")
+    CreateTooltip(nameplateAurasEnemyCenteredAnchor, "Keep auras centered on enemy nameplates.\n\nBug: If you load into the game with nameplates around you\nthat have auras on them it will not center correctly.\nIt will fix itself as you encounter more nameplates.\nStill trying to figure out a fix.")
 
     local nameplateAurasFriendlyCenteredAnchor = CreateCheckbox("nameplateAurasFriendlyCenteredAnchor", "Center Auras on Friendly", enableNameplateAuraCustomisation)
     nameplateAurasFriendlyCenteredAnchor:SetPoint("TOPLEFT", nameplateAurasEnemyCenteredAnchor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(nameplateAurasFriendlyCenteredAnchor, "Keep auras centered on friendly nameplates.")
+    CreateTooltip(nameplateAurasFriendlyCenteredAnchor, "Keep auras centered on friendly nameplates.\n\nBug: If you load into the game with nameplates around you\nthat have auras on them it will not center correctly.\nIt will fix itself as you encounter more nameplates.\nStill trying to figure out a fix.")
 
     local nameplateCenterAllRows = CreateCheckbox("nameplateCenterAllRows", "Center every row", enableNameplateAuraCustomisation)
     nameplateCenterAllRows:SetPoint("TOP", nameplateAurasFriendlyCenteredAnchor, "BOTTOM", 0, pixelsBetweenBoxes)
     CreateTooltip(nameplateCenterAllRows, "Centers every new row on top of the previous row.\n \nBy default the first icon of a new row starts\non top of the first icon of the last row.")
 
-    if BetterBlizzPlatesDB.nameplateAurasEnemyCenteredAnchor or BetterBlizzPlatesDB.nameplateAurasFriendlyCenteredAnchor then
+    if BetterBlizzPlatesDB.enableNameplateAuraCustomisation and (BetterBlizzPlatesDB.nameplateAurasEnemyCenteredAnchor or BetterBlizzPlatesDB.nameplateAurasFriendlyCenteredAnchor) then
         EnableElement(nameplateCenterAllRows)
     else
         DisableElement(nameplateCenterAllRows)
@@ -5638,11 +6355,11 @@ local function guiNameplateAuras()
 
     local nameplateAuraTestMode = CreateCheckbox("nameplateAuraTestMode", "Test Mode", enableNameplateAuraCustomisation)
     nameplateAuraTestMode:SetPoint("BOTTOMLEFT", nameplateAuraSquare, "TOPLEFT", 0, 0)
-    CreateTooltip(nameplateAuraTestMode, "Add some auras to nameplates for testing.\nTemporarily enables the \"All\" filter.")
+    CreateTooltip(nameplateAuraTestMode, "Add some auras to nameplates for testing.\nNOTE: Testing only respects the Show BUFF/DEBUFF filters and none of the sub-filters.", "ANCHOR_TOP")
 
     local showDefaultCooldownNumbersOnNpAuras = CreateCheckbox("showDefaultCooldownNumbersOnNpAuras", "Default CD", enableNameplateAuraCustomisation)
     showDefaultCooldownNumbersOnNpAuras:SetPoint("TOPLEFT", nameplateAuraSquare, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(showDefaultCooldownNumbersOnNpAuras, "Show Blizz default cooldown counter.\n\nIf you use OmniCC this setting will not work.")
+    CreateTooltipTwo(showDefaultCooldownNumbersOnNpAuras, "Show Blizzard Cooldown", "Show default cooldown counter.\nIf you use OmniCC this setting is irrelevant and will not work.", "This setting requires the Blizzard setting \"Show Numbers for Cooldowns\" turned on. It is in Options->Gameplay->Action Bars")
 
     local hideNpAuraSwipe = CreateCheckbox("hideNpAuraSwipe", "Hide CD Swipe", enableNameplateAuraCustomisation)
     hideNpAuraSwipe:SetPoint("TOPLEFT", showDefaultCooldownNumbersOnNpAuras, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -5675,6 +6392,10 @@ local function guiNameplateAuras()
     onlyPandemicAuraMine:SetPoint("TOPLEFT", separateAuraBuffRow, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(onlyPandemicAuraMine, "Only show the red pandemic aura glow on my own auras", "ANCHOR_LEFT")
 
+    local nameplateResourceDoNotRaiseAuras = CreateCheckbox("nameplateResourceDoNotRaiseAuras", "Don't raise for resource", enableNameplateAuraCustomisation)
+    nameplateResourceDoNotRaiseAuras:SetPoint("TOPLEFT", onlyPandemicAuraMine, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(nameplateResourceDoNotRaiseAuras, "Don't raise auras when nameplate resource is on.\n(By default they get raised an extra 18 pixels)", "ANCHOR_LEFT")
+
 --[=[
     local AuraGrowLeft = CreateCheckbox("nameplateAurasGrowLeft", "Grow left", contentFrame)
     AuraGrowLeft:SetPoint("LEFT", nameplateAuraSquare.text, "RIGHT", 5, 0)
@@ -5683,11 +6404,14 @@ local function guiNameplateAuras()
     local maxAurasOnNameplate = CreateSlider(enableNameplateAuraCustomisation, "Max auras on nameplate", 1, 24, 1, "maxAurasOnNameplate")
     maxAurasOnNameplate:SetPoint("LEFT", nameplateAurasXPos, "RIGHT", 30, 0)
 
-    local nameplateAuraRowAmount = CreateSlider(enableNameplateAuraCustomisation, "Max auras per row", 2, 24, 1, "nameplateAuraRowAmount")
+    local nameplateAuraRowAmount = CreateSlider(enableNameplateAuraCustomisation, "Enemy Max auras per row", 2, 24, 1, "nameplateAuraRowAmount")
     nameplateAuraRowAmount:SetPoint("TOP", maxAurasOnNameplate,  "BOTTOM", 0, -17)
 
+    local nameplateAuraRowFriendlyAmount = CreateSlider(enableNameplateAuraCustomisation, "Friendly Max auras per row", 2, 24, 1, "nameplateAuraRowFriendlyAmount")
+    nameplateAuraRowFriendlyAmount:SetPoint("TOP", nameplateAuraRowAmount,  "BOTTOM", 0, -17)
+
     local nameplateAuraWidthGap = CreateSlider(enableNameplateAuraCustomisation, "Horizontal gap between auras", 0, 18, 0.5, "nameplateAuraWidthGap")
-    nameplateAuraWidthGap:SetPoint("TOP", nameplateAuraRowAmount,  "BOTTOM", 0, -17)
+    nameplateAuraWidthGap:SetPoint("TOP", nameplateAuraRowFriendlyAmount,  "BOTTOM", 0, -17)
 
     local nameplateAuraHeightGap = CreateSlider(enableNameplateAuraCustomisation, "Vertical gap between auras", 0, 18, 0.5, "nameplateAuraHeightGap")
     nameplateAuraHeightGap:SetPoint("TOP", nameplateAuraWidthGap,  "BOTTOM", 0, -17)
@@ -5738,47 +6462,48 @@ local function guiNameplateAuras()
     betaHighlightIcon:SetPoint("RIGHT", enableNameplateAuraCustomisation, "LEFT", 8, 0)
 end
 
-local function guiBlizzCVars()
+local function guiCVarControl()
     --------------------------
     -- More Blizz Settings
     --------------------------
-    local guiBlizzCVars = CreateFrame("Frame")
-    guiBlizzCVars.name = "Blizzard CVar's"
-    guiBlizzCVars.parent = BetterBlizzPlates.name
-    InterfaceOptions_AddCategory(guiBlizzCVars)
+    local guiCVarControl = CreateFrame("Frame")
+    guiCVarControl.name = "CVar Control"
+    guiCVarControl.parent = BetterBlizzPlates.name
+    InterfaceOptions_AddCategory(guiCVarControl)
 
-    local bgImg = guiBlizzCVars:CreateTexture(nil, "BACKGROUND")
+    local bgImg = guiCVarControl:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")
-    bgImg:SetPoint("CENTER", guiBlizzCVars, "CENTER", -8, 4)
+    bgImg:SetPoint("CENTER", guiCVarControl, "CENTER", -8, 4)
     bgImg:SetSize(680, 610)
     bgImg:SetAlpha(0.4)
     bgImg:SetVertexColor(0,0,0)
 
-    local moreBlizzSettings = guiBlizzCVars:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    moreBlizzSettings:SetPoint("TOPLEFT", guiBlizzCVars, "TOPLEFT", 0, 0)
+    local moreBlizzSettings = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    moreBlizzSettings:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 0, 0)
     moreBlizzSettings:SetText("Blizzard CVar settings not available in base UI")
 
-    local stackingNameplatesText = guiBlizzCVars:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    stackingNameplatesText:SetPoint("TOPLEFT", guiBlizzCVars, "TOPLEFT", 20, -35)
+    local stackingNameplatesText = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    stackingNameplatesText:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 20, -35)
     stackingNameplatesText:SetText("Stacking nameplate overlap amount")
 
-    local nameplateMotion = CreateCheckbox("nameplateMotion", "Stacking nameplates", guiBlizzCVars, true)
+    local nameplateMotion = CreateCheckbox("nameplateMotion", "Stacking nameplates", guiCVarControl, true)
     nameplateMotion:SetPoint("TOPLEFT", stackingNameplatesText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
-    CreateTooltip(nameplateMotion, "Turn on stacking nameplates.\n\nI recommend using around 0.30 Vertical Overlap")
+    --CreateTooltip(nameplateMotion, "Turn on stacking nameplates.\n\nI recommend using around 0.30 Vertical Overlap", nil, "nameplateMotion")
+    CreateTooltipTwo(nameplateMotion, "Stacking Nameplates", "Turn on stacking nameplates.", nil, nil, "nameplateMotion")
 
     local nameplateOverlapH = CreateSlider(nameplateMotion, "Horizontal Overlap", 0.05, 1, 0.01, "nameplateOverlapH")
     nameplateOverlapH:SetPoint("TOPLEFT", nameplateMotion, "BOTTOMLEFT", 12, -10)
-    CreateTooltip(nameplateOverlapH, "Space between nameplates horizontally")
+    CreateTooltipTwo(nameplateOverlapH, "Horizontal Overlap", "Space between nameplates horizontally", nil, nil, "nameplateOverlapH")
     local nameplateOverlapHReset = CreateResetButton(nameplateOverlapH, "nameplateOverlapH", nameplateMotion)
 
     local nameplateOverlapV = CreateSlider(nameplateMotion, "Vertical Overlap", 0.05, 1.1, 0.01, "nameplateOverlapV")
     nameplateOverlapV:SetPoint("TOPLEFT", nameplateOverlapH, "BOTTOMLEFT", 0, -17)
-    CreateTooltip(nameplateOverlapV, "Space between nameplates vertically")
+    CreateTooltipTwo(nameplateOverlapV, "Vertical Overlap", "Space between nameplates vertically", nil, nil, "nameplateOverlapV")
     local nameplateOverlapVReset = CreateResetButton(nameplateOverlapV, "nameplateOverlapV", nameplateMotion)
 
     local nameplateMotionSpeed = CreateSlider(nameplateMotion, "Nameplate Motion Speed", 0.01, 1, 0.01, "nameplateMotionSpeed")
     nameplateMotionSpeed:SetPoint("TOPLEFT", nameplateOverlapV, "BOTTOMLEFT", 0, -17)
-    CreateTooltip(nameplateMotionSpeed, "The speed at which nameplates move into their new position")
+    CreateTooltipTwo(nameplateMotionSpeed, "Nameplate Motion Speed", "The speed at which nameplates move into their new position", nil, nil, "nameplateMotionSpeed")
     local nameplateMotionSpeedReset = CreateResetButton(nameplateMotionSpeed, "nameplateMotionSpeed", nameplateMotion)
 
     if not BetterBlizzPlatesDB.nameplateMotion then
@@ -5790,132 +6515,135 @@ local function guiBlizzCVars()
 
 
 
-    local comboPointsText = guiBlizzCVars:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    comboPointsText:SetPoint("TOPLEFT", guiBlizzCVars, "TOPLEFT", 20, -210)
+    local comboPointsText = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    comboPointsText:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 20, -210)
     comboPointsText:SetText("Resource Settings (Combo points etc)")
-    local comboPointIcon = guiBlizzCVars:CreateTexture(nil, "ARTWORK")
+    local comboPointIcon = guiCVarControl:CreateTexture(nil, "ARTWORK")
     comboPointIcon:SetAtlas("ClassOverlay-ComboPoint")
     comboPointIcon:SetSize(16, 16)
     comboPointIcon:SetPoint("RIGHT", comboPointsText, "LEFT", -3, 0)
 
-    local nameplateResourceOnTarget = CreateCheckbox("nameplateResourceOnTarget", "Show resource on nameplate", guiBlizzCVars, true, BBP.TargetResourceUpdater)
+    local nameplateResourceOnTarget = CreateCheckbox("nameplateResourceOnTarget", "Show resource on nameplate", guiCVarControl, true, BBP.TargetResourceUpdater)
     nameplateResourceOnTarget:SetPoint("TOPLEFT", comboPointsText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
-    CreateTooltip(nameplateResourceOnTarget, "Show combo points, warlock shards, arcane charges etc on nameplates.")
+    CreateTooltipTwo(nameplateResourceOnTarget, "Nameplate Resource", "Show combo points, warlock shards, arcane charges etc on nameplates.", nil, nil, "nameplateResourceOnTarget")
 
-    local nameplateResourceUnderCastbar = CreateCheckbox("nameplateResourceUnderCastbar", "Anchor resource underneath healthbar/castbar", guiBlizzCVars, nil, BBP.RegisterTargetCastingEvents)
+    local nameplateResourceUnderCastbar = CreateCheckbox("nameplateResourceUnderCastbar", "Anchor resource underneath healthbar/castbar", nameplateResourceOnTarget, nil, BBP.RegisterTargetCastingEvents)
     nameplateResourceUnderCastbar:SetPoint("TOP", nameplateResourceOnTarget, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltip(nameplateResourceUnderCastbar, "Anchor nameplate combo points etc underneath the healthbar\nand underneath the castbar during casts.")
+    CreateTooltipTwo(nameplateResourceUnderCastbar, "Anchor Resource Under", "Anchor nameplate combo points etc underneath the healthbar and underneath the castbar during casts.")
+    nameplateResourceOnTarget:HookScript("OnClick", function()
+        CheckAndToggleCheckboxes(nameplateResourceOnTarget)
+    end)
 
-    local hideResourceOnFriend = CreateCheckbox("hideResourceOnFriend", "Hide resource on friendly nameplates", guiBlizzCVars)
+    local hideResourceOnFriend = CreateCheckbox("hideResourceOnFriend", "Hide resource on friendly nameplates", guiCVarControl)
     hideResourceOnFriend:SetPoint("TOP", nameplateResourceUnderCastbar, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltip(hideResourceOnFriend, "Hide combo points, warlock shards, arcane charges etc on friendly nameplates.")
+    CreateTooltipTwo(hideResourceOnFriend, "Hide Resource on Friendly", "Hide combo points, warlock shards, arcane charges etc on friendly nameplates.")
 
-    local nameplateResourceScale = CreateSlider(guiBlizzCVars, "Resource Scale", 0.2, 1.7, 0.01, "nameplateResourceScale")
+    local nameplateResourceScale = CreateSlider(guiCVarControl, "Resource Scale", 0.2, 1.7, 0.01, "nameplateResourceScale")
     nameplateResourceScale:SetPoint("TOPLEFT", hideResourceOnFriend, "BOTTOMLEFT", 12, -10)
-    CreateTooltip(nameplateResourceScale, "Resource Scale (Combo points, warlock shards etc.)")
-    CreateResetButton(nameplateResourceScale, "nameplateResourceScale", guiBlizzCVars)
+    CreateTooltipTwo(nameplateResourceScale, "Resource Scale", "The scale of nameplate Resource (Combo points etc)")
+    CreateResetButton(nameplateResourceScale, "nameplateResourceScale", guiCVarControl)
 
-    local nameplateResourceXPos = CreateSlider(guiBlizzCVars, "x offset", -100, 100, 1, "nameplateResourceXPos", "X")
+    local nameplateResourceXPos = CreateSlider(guiCVarControl, "x offset", -100, 100, 1, "nameplateResourceXPos", "X")
     nameplateResourceXPos:SetPoint("TOPLEFT", nameplateResourceScale, "BOTTOMLEFT", 0, -17)
-    CreateTooltip(nameplateResourceXPos, "X offset for Nameplate Resource")
-    CreateResetButton(nameplateResourceXPos, "nameplateResourceXPos", guiBlizzCVars)
+    CreateTooltipTwo(nameplateResourceXPos, "Nameplate Resource X Position", "X offset for Nameplate Resource")
+    CreateResetButton(nameplateResourceXPos, "nameplateResourceXPos", guiCVarControl)
 
-    local nameplateResourceYPos = CreateSlider(guiBlizzCVars, "y offset", -100, 100, 1, "nameplateResourceYPos", "Y")
+    local nameplateResourceYPos = CreateSlider(guiCVarControl, "y offset", -100, 100, 1, "nameplateResourceYPos", "Y")
     nameplateResourceYPos:SetPoint("TOPLEFT", nameplateResourceXPos, "BOTTOMLEFT", 0, -17)
-    CreateTooltip(nameplateResourceYPos, "Y offset for Nameplate Resource")
-    CreateResetButton(nameplateResourceYPos, "nameplateResourceYPos", guiBlizzCVars)
+    CreateTooltipTwo(nameplateResourceYPos, "Nameplate Resource Y Position", "Y offset for Nameplate Resource")
+    CreateResetButton(nameplateResourceYPos, "nameplateResourceYPos", guiCVarControl)
 
-    local darkModeNameplateResource = CreateCheckbox("darkModeNameplateResource", "Dark Mode", guiBlizzCVars, nil, BBP.DarkModeNameplateResources)
+    local darkModeNameplateResource = CreateCheckbox("darkModeNameplateResource", "Dark Mode", guiCVarControl, nil, BBP.DarkModeNameplateResources)
     darkModeNameplateResource:SetPoint("TOPLEFT", nameplateResourceYPos, "BOTTOMLEFT", -12, -4)
-    CreateTooltip(darkModeNameplateResource, "Dark Mode for Nameplate Resource")
+    CreateTooltipTwo(darkModeNameplateResource, "Resource Dark Mode", "Dark Mode for Nameplate Resource")
 
     local darkModeNameplateColor = CreateSlider(darkModeNameplateResource, "Darkness Amount", 0, 1, 0.01, "darkModeNameplateColor")
     darkModeNameplateColor:SetPoint("TOPLEFT", darkModeNameplateResource, "BOTTOMLEFT", 12, -10)
-    CreateTooltip(darkModeNameplateColor, "How dark you want nameplate resource")
+    CreateTooltipTwo(darkModeNameplateColor, "How dark you want nameplate resource")
 
     darkModeNameplateResource:HookScript("OnClick", function(self)
         CheckAndToggleCheckboxes(darkModeNameplateResource)
     end)
 
-    local disableCVarForceOnLogin = CreateCheckbox("disableCVarForceOnLogin", "Disable all CVar forcing", guiBlizzCVars, true)
-    disableCVarForceOnLogin:SetPoint("BOTTOM", guiBlizzCVars, "BOTTOM", -80, 60)
-    CreateTooltip(disableCVarForceOnLogin, "Disables all forcing of CVar's on login (Not recommended)\n\n(Sliders adjusting CVar values will still change CVars.)")
+    local disableCVarForceOnLogin = CreateCheckbox("disableCVarForceOnLogin", "Disable all CVar forcing", guiCVarControl, true)
+    disableCVarForceOnLogin:SetPoint("BOTTOM", guiCVarControl, "BOTTOM", -80, 60)
+    CreateTooltipTwo(disableCVarForceOnLogin, "Disable all CVar Forcing", "Disables all forcing of CVar's on login (Not recommended)", "(Sliders adjusting CVar values will still change CVars.)")
 
-    local nameplateAlphaText = guiBlizzCVars:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    nameplateAlphaText:SetPoint("TOPLEFT", guiBlizzCVars, "TOPLEFT", 400, -35)
+    local nameplateAlphaText = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    nameplateAlphaText:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 400, -35)
     nameplateAlphaText:SetText("Nameplate alpha settings")
 
-    local nameplateMinAlpha = CreateSlider(guiBlizzCVars, "Min Alpha", 0, 1, 0.01, "nameplateMinAlpha")
+    local nameplateMinAlpha = CreateSlider(guiCVarControl, "Min Alpha", 0, 1, 0.01, "nameplateMinAlpha")
     nameplateMinAlpha:SetPoint("TOP", nameplateAlphaText, "BOTTOM", 0, -17)
-    CreateTooltip(nameplateMinAlpha, "The minimum alpha value of nameplates")
-    CreateResetButton(nameplateMinAlpha, "nameplateMinAlpha", guiBlizzCVars)
+    CreateTooltipTwo(nameplateMinAlpha, "Min Alpha", "The minimum alpha value of nameplates", "If you never want nameplates to be faded set this to 1.\nFor LOS alpha adjust \"Occluded Alpha\".", nil, "nameplateMinAlpha")
+    CreateResetButton(nameplateMinAlpha, "nameplateMinAlpha", guiCVarControl)
 
-    local nameplateMinAlphaDistance = CreateSlider(guiBlizzCVars, "Min Alpha Distance", 0, 60, 1, "nameplateMinAlphaDistance")
+    local nameplateMinAlphaDistance = CreateSlider(guiCVarControl, "Min Alpha Distance", 0, 60, 1, "nameplateMinAlphaDistance")
     nameplateMinAlphaDistance:SetPoint("TOPLEFT", nameplateMinAlpha, "BOTTOMLEFT", 0, -17)
-    CreateTooltip(nameplateMinAlphaDistance, "The distance from the max distance\nthat nameplates will reach their minimum alpha.")
-    CreateResetButton(nameplateMinAlphaDistance, "nameplateMinAlphaDistance", guiBlizzCVars)
+    CreateTooltipTwo(nameplateMinAlphaDistance, "Min Alpha Distance", "The distance from the max distance that nameplates will reach their minimum alpha.", nil, nil, "nameplateMinAlphaDistance")
+    CreateResetButton(nameplateMinAlphaDistance, "nameplateMinAlphaDistance", guiCVarControl)
 
-    local nameplateMaxAlpha = CreateSlider(guiBlizzCVars, "Max Alpha", 0, 1, 0.01, "nameplateMaxAlpha")
+    local nameplateMaxAlpha = CreateSlider(guiCVarControl, "Max Alpha", 0, 1, 0.01, "nameplateMaxAlpha")
     nameplateMaxAlpha:SetPoint("TOP", nameplateMinAlphaDistance, "BOTTOM", 0, -17)
-    CreateTooltip(nameplateMaxAlpha, "The maximum alpha value of nameplates")
-    CreateResetButton(nameplateMaxAlpha, "nameplateMaxAlpha", guiBlizzCVars)
+    CreateTooltipTwo(nameplateMaxAlpha, "Max Alpha", "The maximum alpha value of nameplates", nil, nil, "nameplateMaxAlpha")
+    CreateResetButton(nameplateMaxAlpha, "nameplateMaxAlpha", guiCVarControl)
 
-    local nameplateMaxAlphaDistance = CreateSlider(guiBlizzCVars, "Max Alpha Distance", 0, 60, 1, "nameplateMaxAlphaDistance")
+    local nameplateMaxAlphaDistance = CreateSlider(guiCVarControl, "Max Alpha Distance", 0, 60, 1, "nameplateMaxAlphaDistance")
     nameplateMaxAlphaDistance:SetPoint("TOPLEFT", nameplateMaxAlpha, "BOTTOMLEFT", 0, -17)
-    CreateTooltip(nameplateMaxAlphaDistance, "The distance from the camera that\nnameplates will reach their maximum alpha.\n\nNote: Yes, it is from the camera POV, and not player unfortunately.")
-    CreateResetButton(nameplateMaxAlphaDistance, "nameplateMaxAlphaDistance", guiBlizzCVars)
+    CreateTooltipTwo(nameplateMaxAlphaDistance, "Max Alpha Distance", "The distance from the camera that nameplates will reach their maximum alpha.", "Note: It is from the camera POV, and not player. Almost useless, I did not make this, blame Blizzard.", nil, "nameplateMaxAlphaDistance")
+    CreateResetButton(nameplateMaxAlphaDistance, "nameplateMaxAlphaDistance", guiCVarControl)
 
-    local nameplateOccludedAlphaMult = CreateSlider(guiBlizzCVars, "Occluded Alpha", 0, 1, 0.01, "nameplateOccludedAlphaMult")
+    local nameplateOccludedAlphaMult = CreateSlider(guiCVarControl, "Occluded Alpha", 0, 1, 0.01, "nameplateOccludedAlphaMult")
     nameplateOccludedAlphaMult:SetPoint("TOPLEFT", nameplateMaxAlphaDistance, "BOTTOMLEFT", 0, -17)
-    CreateTooltip(nameplateOccludedAlphaMult, "The alpha value on nameplates that\nare behind cover like pillars etc.")
-    CreateResetButton(nameplateOccludedAlphaMult, "nameplateOccludedAlphaMult", guiBlizzCVars)
+    CreateTooltipTwo(nameplateOccludedAlphaMult, "Occluded Alpha", "The alpha value of nameplates that are not in line of sight.", nil, nil, "nameplateOccludedAlphaMult")
+    CreateResetButton(nameplateOccludedAlphaMult, "nameplateOccludedAlphaMult", guiCVarControl)
 
-    local nameplateCVarText = guiBlizzCVars:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    nameplateCVarText:SetPoint("TOPLEFT", guiBlizzCVars, "TOPLEFT", 400, -270)
+    local nameplateCVarText = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    nameplateCVarText:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 400, -270)
     nameplateCVarText:SetText("Nameplate Visibility CVars")
 
-    local setCVarAcrossAllCharacters = CreateCheckbox("setCVarAcrossAllCharacters", "Force these CVars across all characters", guiBlizzCVars)
+    local setCVarAcrossAllCharacters = CreateCheckbox("setCVarAcrossAllCharacters", "Force these CVars across all characters", guiCVarControl)
     setCVarAcrossAllCharacters:SetPoint("TOP", nameplateCVarText, "BOTTOM", -100, 0)
-    CreateTooltip(setCVarAcrossAllCharacters, "(By default you have to set them on each character separately.)")
+    CreateTooltipTwo(setCVarAcrossAllCharacters, "Force CVars", "By default you have to set them on each character separately.")
 
-    local nameplateShowEnemyGuardians = CreateCheckbox("nameplateShowEnemyGuardians", "Show Enemy Guardians", guiBlizzCVars, true)
+    local nameplateShowEnemyGuardians = CreateCheckbox("nameplateShowEnemyGuardians", "Show Enemy Guardians", guiCVarControl, true)
     nameplateShowEnemyGuardians:SetPoint("TOP", nameplateCVarText, "BOTTOM", -127, -20)
-    CreateTooltip(nameplateShowEnemyGuardians, "Show Enemy Guardian Nameplates.\n\n\"Guardians\" are usually \"semi controllable\"\nlarger summoned pets, like Earth Elemental/Infernal.")
+    CreateTooltipTwo(nameplateShowEnemyGuardians, "Show Enemy Guardian Nameplates", "Guardians are usually \"semi controllable\" larger summoned pets, like Earth Elemental/Infernal.", nil, nil, "nameplateShowEnemyGuardians")
 
-    local nameplateShowEnemyMinions = CreateCheckbox("nameplateShowEnemyMinions", "Show Enemy Minions", guiBlizzCVars, true)
+    local nameplateShowEnemyMinions = CreateCheckbox("nameplateShowEnemyMinions", "Show Enemy Minions", guiCVarControl, true)
     nameplateShowEnemyMinions:SetPoint("TOP", nameplateShowEnemyGuardians, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltip(nameplateShowEnemyMinions, "Show Enemy Minion Nameplates.\n\n\"Minions\" are usually uncontrollable\nsmaller summoned pets, like Psyfiend/Mindflayer.")
+    CreateTooltipTwo(nameplateShowEnemyMinions, "Show Enemy Minion Nameplates", "Minions are usually uncontrollable smaller summoned pets, like Psyfiend/Mindflayer.", nil, nil, "nameplateShowEnemyMinions")
 
-    local nameplateShowEnemyMinus = CreateCheckbox("nameplateShowEnemyMinus", "Show Enemy Minus", guiBlizzCVars, true)
+    local nameplateShowEnemyMinus = CreateCheckbox("nameplateShowEnemyMinus", "Show Enemy Minus", guiCVarControl, true)
     nameplateShowEnemyMinus:SetPoint("TOP", nameplateShowEnemyMinions, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltip(nameplateShowEnemyMinus, "Show Enemy Minus Nameplates.\n\n\"Minus\" are usually uncontrollable very small\nsummoned pets with little hp, like Warlock Imps.")
+    CreateTooltipTwo(nameplateShowEnemyMinus, "Show Enemy Minus Nameplates", "Minus are usually uncontrollable very small summoned pets with little hp, like Warlock Imps.", nil, nil, "nameplateShowEnemyMinus")
 
-    local nameplateShowEnemyPets = CreateCheckbox("nameplateShowEnemyPets", "Show Enemy Pets", guiBlizzCVars, true)
+    local nameplateShowEnemyPets = CreateCheckbox("nameplateShowEnemyPets", "Show Enemy Pets", guiCVarControl, true)
     nameplateShowEnemyPets:SetPoint("TOP", nameplateShowEnemyMinus, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltip(nameplateShowEnemyPets, "Show Enemy Pets Nameplates.\n\n\"Pets\" are the main controllable pets,\nlike Hunter Pet, Warlock Pet etc.")
+    CreateTooltipTwo(nameplateShowEnemyPets, "Show Enemy Pets Nameplates", "Pets are the main controllable pets like Hunter Pet, Warlock Pet etc.", nil, nil, "nameplateShowEnemyPets")
 
-    local nameplateShowEnemyTotems = CreateCheckbox("nameplateShowEnemyTotems", "Show Enemy Totems", guiBlizzCVars, true)
+    local nameplateShowEnemyTotems = CreateCheckbox("nameplateShowEnemyTotems", "Show Enemy Totems", guiCVarControl, true)
     nameplateShowEnemyTotems:SetPoint("TOP", nameplateShowEnemyPets, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltip(nameplateShowEnemyTotems, "Show Enemy Totem Nameplates.\n\n\"Totems\" are totems, like totems :)")
+    CreateTooltipTwo(nameplateShowEnemyTotems, "Show Enemy Totem Nameplates", "Totems are totems...", nil, nil, "nameplateShowEnemyTotems")
 
-    local nameplateShowFriendlyGuardians = CreateCheckbox("nameplateShowFriendlyGuardians", "Show Friendly Guardians", guiBlizzCVars, true)
+    local nameplateShowFriendlyGuardians = CreateCheckbox("nameplateShowFriendlyGuardians", "Show Friendly Guardians", guiCVarControl, true)
     nameplateShowFriendlyGuardians:SetPoint("TOP", nameplateCVarText, "BOTTOM", 25, -20)
-    CreateTooltip(nameplateShowFriendlyGuardians, "Show Friendly Guardian Nameplates.\n\n\"Guardians\" are usually \"semi controllable\"\nlarger summoned pets, like Earth Elemental/Infernal.")
+    CreateTooltipTwo(nameplateShowFriendlyGuardians, "Show Friendly Guardian Nameplates", "Guardians are usually \"semi controllable\" larger summoned pets, like Earth Elemental/Infernal.", nil, nil, "nameplateShowFriendlyGuardians")
 
-    local nameplateShowFriendlyMinions = CreateCheckbox("nameplateShowFriendlyMinions", "Show Friendly Minions", guiBlizzCVars, true)
+    local nameplateShowFriendlyMinions = CreateCheckbox("nameplateShowFriendlyMinions", "Show Friendly Minions", guiCVarControl, true)
     nameplateShowFriendlyMinions:SetPoint("TOP", nameplateShowFriendlyGuardians, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltip(nameplateShowFriendlyMinions, "Show Friendly Minion Nameplates.\n\n\"Minions\" are usually uncontrollable\nsmaller summoned pets, like Psyfiend/Mindflayer.")
+    CreateTooltipTwo(nameplateShowFriendlyMinions, "Show Friendly Minion Nameplates", "Minions are usually uncontrollable\nsmaller summoned pets, like Psyfiend/Mindflayer.", nil, nil, "nameplateShowFriendlyMinions")
 
-    local nameplateShowFriendlyPets = CreateCheckbox("nameplateShowFriendlyPets", "Show Friendly Pets", guiBlizzCVars, true)
+    local nameplateShowFriendlyPets = CreateCheckbox("nameplateShowFriendlyPets", "Show Friendly Pets", guiCVarControl, true)
     nameplateShowFriendlyPets:SetPoint("TOP", nameplateShowFriendlyMinions, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltip(nameplateShowFriendlyPets, "Show Friendly Pets Nameplates.\n\n\"Pets\" are the main controllable pets,\nlike Hunter Pet, Warlock Pet etc.")
+    CreateTooltipTwo(nameplateShowFriendlyPets, "Show Friendly Pets Nameplates", "Pets are the main controllable pets like Hunter Pet, Warlock Pet etc.", nil, nil, "nameplateShowFriendlyPets")
 
-    local nameplateShowFriendlyTotems = CreateCheckbox("nameplateShowFriendlyTotems", "Show Friendly Totems", guiBlizzCVars, true)
+    local nameplateShowFriendlyTotems = CreateCheckbox("nameplateShowFriendlyTotems", "Show Friendly Totems", guiCVarControl, true)
     nameplateShowFriendlyTotems:SetPoint("TOP", nameplateShowFriendlyPets, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltip(nameplateShowFriendlyTotems, "Show Friendly Totem Nameplates.\n\n\"Totems\" are totems, like totems :)")
+    CreateTooltipTwo(nameplateShowFriendlyTotems, "Show Friendly Totem Nameplate", "Totems are totems...", nil, nil, "nameplateShowFriendlyTotems")
 
-    --local moreBlizzSettingsText = guiBlizzCVars:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    --moreBlizzSettingsText:SetPoint("BOTTOM", guiBlizzCVars, "BOTTOM", 0, 10)
+    --local moreBlizzSettingsText = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    --moreBlizzSettingsText:SetPoint("BOTTOM", guiCVarControl, "BOTTOM", 0, 10)
     --moreBlizzSettingsText:SetText("Work in progress, more stuff inc soon™\n \nSome settings don't make much sense anymore because\nthe addon grew a bit more than I thought it would.\nWill clean up eventually\n \nIf you have any suggestions feel free to\nleave a comment on CurseForge")
 end
 
@@ -6014,8 +6742,15 @@ local function guiMisc()
     anonMode:SetPoint("TOPLEFT", friendIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(anonMode, "Changes the names of players to their class instead.\nWill be overwritten by Arena Names module during arenas.")
 
+    local skipAdjustingFixedFonts = CreateCheckbox("skipAdjustingFixedFonts", "Skip adjusting nameplate fonts", guiMisc)
+    skipAdjustingFixedFonts:SetPoint("TOPLEFT", anonMode, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(skipAdjustingFixedFonts, "Skip adjusting nameplate fonts.\n\n1080p can cause name scaling issues and this setting will fix it.\nIt will however also make you unable to change fonts with this addon\n(you can do it manually in game files still).\n\nNOTE: Still don't fully understand Blizzards code and how this nameplate font thing works\nso check this at own risk and report to me if it's not working as expected.")
+    skipAdjustingFixedFonts:HookScript("OnClick", function()
+        StaticPopup_Show("BBP_CONFIRM_RELOAD")
+    end)
+
     local toggleNamesOffDuringPVE = CreateCheckbox("toggleNamesOffDuringPVE", "Toggle Friendly Player Name", guiMisc)
-    toggleNamesOffDuringPVE:SetPoint("TOPLEFT", anonMode, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    toggleNamesOffDuringPVE:SetPoint("TOPLEFT", skipAdjustingFixedFonts, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(toggleNamesOffDuringPVE, "Toggle friendly player names (on nameplate) off\nduring PvE content and back on again outside.")
 
     -- local nameplateResourceText = guiMisc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -6031,7 +6766,7 @@ local function guiMisc()
 
 
 
-    local changeNameplateBorderColor = CreateCheckbox("changeNameplateBorderColor", "Change Nameplate Border Color", guiMisc, nil, BBP.ToggleNamesOffDuringPvE)
+    local changeNameplateBorderColor = CreateCheckbox("changeNameplateBorderColor", "Change Nameplate Border Color", guiMisc)
     changeNameplateBorderColor:SetPoint("TOPLEFT", toggleNamesOffDuringPVE, "BOTTOMLEFT", 0, -50)
 
     local npBorderTargetColor = CreateCheckbox("npBorderTargetColor", "Target Border", changeNameplateBorderColor)
@@ -6144,6 +6879,47 @@ local function guiMisc()
     joinDiscord:SetSize(68, 68)
     joinDiscord:SetPoint("RIGHT", discordText, "LEFT", 5, 1)
 end
+
+local function guiImportAndExport()
+    local guiImportAndExport = CreateFrame("Frame")
+    guiImportAndExport.name = "Import & Export"--"|A:GarrMission_CurrencyIcon-Material:19:19|a Misc"
+    guiImportAndExport.parent = BetterBlizzPlates.name
+    InterfaceOptions_AddCategory(guiImportAndExport)
+
+    local bgImg = guiImportAndExport:CreateTexture(nil, "BACKGROUND")
+    bgImg:SetAtlas("professions-recipe-background")
+    bgImg:SetPoint("CENTER", guiImportAndExport, "CENTER", -8, 4)
+    bgImg:SetSize(680, 610)
+    bgImg:SetAlpha(0.4)
+    bgImg:SetVertexColor(0,0,0)
+
+    local text = guiImportAndExport:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+    text:SetText("BETA")
+    text:SetPoint("TOP", guiImportAndExport, "TOPRIGHT", -220, 0)
+
+    local text2 = guiImportAndExport:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    text2:SetText("Please backup your settings just in case.\nWTF\\Account\\ACCOUNT_NAME\\SavedVariables\n\nWhile this is beta any export codes\nwill be temporary until non-beta.")
+    text2:SetPoint("TOP", text, "BOTTOM", 0, 0)
+
+    local fullProfile = CreateImportExportUI(guiImportAndExport, "Full Profile", BetterBlizzPlatesDB, 20, -20, "fullProfile")
+
+    local auraWhitelist = CreateImportExportUI(fullProfile, "Aura Whitelist", BetterBlizzPlatesDB.auraWhitelist, 0, -100, "auraWhitelist")
+    local auraBlacklist = CreateImportExportUI(auraWhitelist, "Aura Blacklist", BetterBlizzPlatesDB.auraBlacklist, 210, 0, "auraBlacklist")
+
+    local totemIndicatorList = CreateImportExportUI(auraWhitelist, "Totem Indicator List", BetterBlizzPlatesDB.totemIndicatorNpcList, 0, -100, "totemIndicatorNpcList")
+
+    local hideNpcList = CreateImportExportUI(totemIndicatorList, "Hide NPC Blacklist", BetterBlizzPlatesDB.hideNPCsList, 0, -100, "hideNPCsList")
+    local hideNPCsWhitelist = CreateImportExportUI(hideNpcList, "Hide NPC Whitelist", BetterBlizzPlatesDB.hideNPCsWhitelist, 210, 0, "hideNPCsWhitelist")
+
+    local castEmphasisList = CreateImportExportUI(hideNpcList, "Cast Emphasis List", BetterBlizzPlatesDB.castEmphasisList, 0, -100, "castEmphasisList")
+    local hideCastbarList = CreateImportExportUI(castEmphasisList, "Hide Castbar Blacklist", BetterBlizzPlatesDB.hideCastbarList, 210, 0, "hideCastbarList")
+    local hideCastbarWhitelist = CreateImportExportUI(hideCastbarList, "Hide Castbar Whitelist", BetterBlizzPlatesDB.hideCastbarWhitelist, 210, 0, "hideCastbarWhitelist")
+
+    local colorNpcList = CreateImportExportUI(castEmphasisList, "Color NPC List", BetterBlizzPlatesDB.colorNpcList, 0, -100, "colorNpcList")
+
+
+
+end
 ------------------------------------------------------------
 -- GUI Setup
 ------------------------------------------------------------
@@ -6162,8 +6938,9 @@ function BBP.InitializeOptions()
         guiColorNPC()
         guiAuraColor()
         guiNameplateAuras()
-        guiBlizzCVars()
+        guiCVarControl()
         guiMisc()
+        guiImportAndExport()
         guiTotemList()
     end
 end
@@ -6191,5 +6968,4 @@ end
 -- hooksecurefunc(NamePlateDriverFrame.namePlateSetInsetFunctions, "enemy", function()
 --     --C_NamePlate.SetNamePlateEnemyPreferredClickInsets (0, 0, 0, 0)
 --     CustomSetInset("enemy", 0, 0, 0, 0)
---     print("aa")
 -- end)

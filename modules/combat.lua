@@ -1,22 +1,33 @@
 BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
 BBP = BBP or {}
 
+local UnitAffectingCombat = UnitAffectingCombat
 -- Combat Indicator
 function BBP.CombatIndicator(frame)
+    local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo
+
+    if not config.combatIndicatorInitialized or BBP.needsUpdate then
+        config.combatIndicatorXPos = BetterBlizzPlatesDB.combatIndicatorXPos
+        config.combatIndicatorYPos = BetterBlizzPlatesDB.combatIndicatorYPos
+
+        config.combatIndicatorAnchor = BetterBlizzPlatesDB.combatIndicatorAnchor
+        config.combatIndicatorArenaOnly = BetterBlizzPlatesDB.combatIndicatorArenaOnly
+        config.combatIndicatorEnemyOnly = BetterBlizzPlatesDB.combatIndicatorEnemyOnly
+        config.combatIndicatorPlayersOnly = BetterBlizzPlatesDB.combatIndicatorPlayersOnly
+        config.combatIndicatorSap = BetterBlizzPlatesDB.combatIndicatorSap
+        config.combatIndicatorScale = BetterBlizzPlatesDB.combatIndicatorScale
+        config.combatIndicatorTestMode = BetterBlizzPlatesDB.combatIndicatorTestMode
+        config.petIndicatorTestMode = BetterBlizzPlatesDB.petIndicatorTestMode
+        config.petIndicator = BetterBlizzPlatesDB.petIndicator
+        config.petIndicatorAnchor = BetterBlizzPlatesDB.petIndicatorAnchor
+
+        config.combatIndicatorInitialized = true
+    end
+
     local unit = frame.displayedUnit
     local notInCombat = not UnitAffectingCombat(unit)
-    local inInstance, instanceType = IsInInstance()
-    local XPos = BetterBlizzPlatesDB.combatIndicatorXPos
-    local YPos = BetterBlizzPlatesDB.combatIndicatorYPos
-    local anchor = BetterBlizzPlatesDB.combatIndicatorAnchor
-
-    local arenaOnly = BetterBlizzPlatesDB.combatIndicatorArenaOnly
-    local enemyOnly = BetterBlizzPlatesDB.combatIndicatorEnemyOnly
-    local playerOnly = BetterBlizzPlatesDB.combatIndicatorPlayersOnly
-    local useSapTexture = BetterBlizzPlatesDB.combatIndicatorSap
-    local combatIndicatorScale = BetterBlizzPlatesDB.combatIndicatorScale
-    local petAndCombatTest = BetterBlizzPlatesDB.combatIndicatorTestMode or BetterBlizzPlatesDB.petIndicatorTestMode or BetterBlizzPlatesDB.petIndicator
-    local petAnchor = BetterBlizzPlatesDB.petIndicatorAnchor
+    local petAndCombatTest = config.combatIndicatorTestMode or config.petIndicatorTestMode or config.petIndicator
 
     -- Initialize
     -- Create food texture
@@ -33,8 +44,8 @@ function BBP.CombatIndicator(frame)
     end
 
     -- Conditions check: Only show during arena
-    if arenaOnly then
-        if not (inInstance and instanceType == "arena") then
+    if config.combatIndicatorArenaOnly then
+        if not BBP.isInArena then
             if frame.combatIndicatorSap then
                 frame.combatIndicatorSap:Hide()
             end
@@ -46,38 +57,38 @@ function BBP.CombatIndicator(frame)
     end
 
     -- Conditon check: Only show on enemies
-    if enemyOnly then
-        notInCombat = notInCombat and UnitCanAttack("player", unit)
+    if config.combatIndicatorEnemyOnly then
+        notInCombat = notInCombat and (info.isEnemy or info.isNeutral)
     end
 
-    if playerOnly then
-        notInCombat = notInCombat and UnitIsPlayer(unit)
+    if config.combatIndicatorPlayersOnly then
+        notInCombat = notInCombat and info.isPlayer
     end
 
     -- Condition check: Use food or sap texture
-    if useSapTexture then
-        frame.combatIndicatorSap:SetScale(combatIndicatorScale)
+    if config.combatIndicatorSap then
+        frame.combatIndicatorSap:SetScale(config.combatIndicatorScale)
         frame.combatIndicatorSap:Show()
         frame.combatIndicator:Hide()
     else
         if frame.combatIndicatorSap then
             frame.combatIndicatorSap:Hide()
         end
-        frame.combatIndicator:SetScale(combatIndicatorScale)
+        frame.combatIndicator:SetScale(config.combatIndicatorScale)
         frame.combatIndicator:Show()
     end
 
     -- Add some offset if both Pet Indicator and Combat Indicator has the same anchor and shows at the same time
-    if frame.petIndicator and frame.petIndicator:IsShown() and petAndCombatTest and (petAnchor == anchor) then
-        XPos = XPos + 10  -- Add some offset
+    if frame.petIndicator and frame.petIndicator:IsShown() and petAndCombatTest and (config.petIndicatorAnchor == config.combatIndicatorAnchor) then
+        config.combatIndicatorXPos = config.combatIndicatorXPos + 10  -- Add some offset
     end
 
     -- Tiny adjustment to position depending on texture
-    local yPosAdjustment = useSapTexture and 0 or 1
+    local yPosAdjustment = config.combatIndicatorSap and 0 or 1
     if frame.combatIndicatorSap then
-        frame.combatIndicatorSap:SetPoint("CENTER", frame.healthBar, anchor, XPos, YPos + yPosAdjustment)
+        frame.combatIndicatorSap:SetPoint("CENTER", frame.healthBar, config.combatIndicatorAnchor, config.combatIndicatorXPos, config.combatIndicatorYPos + yPosAdjustment)
     end
-    frame.combatIndicator:SetPoint("CENTER", frame.healthBar, anchor, XPos, YPos + yPosAdjustment)
+    frame.combatIndicator:SetPoint("CENTER", frame.healthBar, config.combatIndicatorAnchor, config.combatIndicatorXPos, config.combatIndicatorYPos + yPosAdjustment)
 
     -- Target is not in combat so return
     if notInCombat then
@@ -95,12 +106,10 @@ end
 
 -- Event Listener for Combat Indicator
 local combatIndicatorFrame = CreateFrame("Frame")
-combatIndicatorFrame:SetScript("OnEvent", function(self, event, arg1)
-    if event == "UNIT_FLAGS" then --or event == "UNIT_COMBAT" then
-        local frame = C_NamePlate.GetNamePlateForUnit(arg1)
-        if frame then
-            BBP.CombatIndicator(frame.UnitFrame)
-        end
+combatIndicatorFrame:SetScript("OnEvent", function(self, event, unit)
+    local nameplate, frame = BBP.GetSafeNameplate(unit)
+    if frame then
+        BBP.CombatIndicator(frame)
     end
 end)
 
@@ -108,9 +117,7 @@ end)
 function BBP.ToggleCombatIndicator()
     if BetterBlizzPlatesDB.combatIndicator then
         combatIndicatorFrame:RegisterEvent("UNIT_FLAGS")
-        --combatIndicatorFrame:RegisterEvent("UNIT_COMBAT")
     else
         combatIndicatorFrame:UnregisterEvent("UNIT_FLAGS")
-        --combatIndicatorFrame:UnregisterEvent("UNIT_COMBAT")
     end
 end

@@ -70,6 +70,15 @@ local IsActiveBattlefieldArena = IsActiveBattlefieldArena
 local UnitIsUnit = UnitIsUnit
 local GetArenaOpponentSpec = GetArenaOpponentSpec
 
+local function isFistweaver(unit)
+    if BBP.fistweaverFound then return true end
+    local isFistweaver = AuraUtil.FindAuraByName("Ancient Teachings", unit, "HELPFUL")
+    if isFistweaver then
+        BBP.fistweaverFound = true
+        return true
+    end
+end
+
 --there is so much room for improvement here... oh well future me will surely have improved it.
 
 local function addIdCircle(frame, index)
@@ -103,7 +112,7 @@ function BBP.ArenaIndicator1(frame)
         if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
             local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
             for i, unit in ipairs(enemyUnits) do
-                if UnitIsUnit(frame.unit, unit) then
+                if UnitIsUnit(frame.unit, unit) and UnitIsPlayer(unit) then
                     local r, g, b, a = 1, 1, 0, 1
                     if enemyClassColorName then
                         r, g, b, a = frame.name:GetTextColor()
@@ -115,10 +124,15 @@ function BBP.ArenaIndicator1(frame)
                     end
 
                     frame.name:SetText("")
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+                    if frame.fakeName then
+                        frame.fakeName:SetText("")
+                        frame.arenaNumberText:SetPoint("CENTER", frame.fakeName, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+                    else
+                        frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+                    end
                     frame.arenaNumberText:SetText(i)
                     if enemyClassColorName then
-                        frame.arenaNumberText:SetTextColor(r, g, b, a)
+                        frame.arenaNumberText:SetTextColor(r, g, b, 1)
                     else
                         frame.arenaNumberText:SetTextColor(1, 1, 0)
                     end
@@ -146,10 +160,15 @@ function BBP.ArenaIndicator1(frame)
                 end
 
                 frame.name:SetText("")
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+                if frame.fakeName then
+                    frame.fakeName:SetText("")
+                    frame.arenaNumberText:SetPoint("CENTER", frame.fakeName, arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
+                else
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
+                end
                 frame.arenaNumberText:SetText(i)
                 if enemyClassColorName then
-                    frame.arenaNumberText:SetTextColor(r, g, b, a)
+                    frame.arenaNumberText:SetTextColor(r, g, b, 1)
                 else
                     frame.arenaNumberText:SetTextColor(1, 1, 0)
                 end
@@ -179,7 +198,7 @@ function BBP.ArenaIndicator2(frame)
         if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
             local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
             for i, unit in ipairs(enemyUnits) do
-                if UnitIsUnit(frame.unit, unit) then
+                if UnitIsUnit(frame.unit, unit) and UnitIsPlayer(unit) then
                     local r, g, b, a = frame.name:GetTextColor()
 
                     if not frame.arenaNumberText then
@@ -189,12 +208,12 @@ function BBP.ArenaIndicator2(frame)
 
                     frame.arenaNumberText:SetText(i)
                     if enemyClassColorName then
-                        frame.arenaNumberText:SetTextColor(r, g, b, a)
+                        frame.arenaNumberText:SetTextColor(r, g, b, 1)
                     else
                         frame.arenaNumberText:SetTextColor(1, 1, 0)
                     end
                     frame.arenaNumberText:SetScale(arenaIDScale)
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.fakeName or frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
 
                     if idCircle then
                         addIdCircle(frame, i)
@@ -216,12 +235,12 @@ function BBP.ArenaIndicator2(frame)
 
                 frame.arenaNumberText:SetText(i)
                 if enemyClassColorName then
-                    frame.arenaNumberText:SetTextColor(r, g, b, a)
+                    frame.arenaNumberText:SetTextColor(r, g, b, 1)
                 else
                     frame.arenaNumberText:SetTextColor(1, 1, 0)
                 end
                 frame.arenaNumberText:SetScale(arenaIDScale)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.fakeName or frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
 
                 if idCircle then
                     addIdCircle(frame, i)
@@ -245,7 +264,7 @@ function BBP.ArenaIndicator3(frame)
         if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
             local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
             for i, unit in ipairs(enemyUnits) do
-                if UnitIsUnit(frame.unit, unit) then
+                if UnitIsUnit(frame.unit, unit) and UnitIsPlayer(unit) then
                     local arenaIndex = tonumber(string.match(unit, "arena(%d+)"))
                     local specID = GetArenaOpponentSpec(arenaIndex)
                     local specName = specID and specIDToName[specID]
@@ -268,9 +287,19 @@ function BBP.ArenaIndicator3(frame)
 
                     frame.name:SetText("")
                     frame.specNameText:SetText(specName)
-                    frame.specNameText:SetTextColor(r, g, b, a)
+                    if specID == 270 then
+                        if isFistweaver(frame.unit) then
+                            frame.specNameText:SetText("Fistweaver")
+                        end
+                    end
+                    frame.specNameText:SetTextColor(r, g, b, 1)
                     frame.specNameText:SetScale(arenaSpecScale)
-                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    if frame.fakeName then
+                        frame.fakeName:SetText("")
+                        frame.specNameText:SetPoint("CENTER", frame.fakeName, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    else
+                        frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    end
                     break
                 end
             end
@@ -300,9 +329,19 @@ function BBP.ArenaIndicator3(frame)
 
                 frame.name:SetText("")
                 frame.specNameText:SetText(specName)
-                frame.specNameText:SetTextColor(r, g, b, a)
+                if specID == 270 then
+                    if isFistweaver(frame.unit) then
+                        frame.specNameText:SetText("Fistweaver")
+                    end
+                end
+                frame.specNameText:SetTextColor(r, g, b, 1)
                 frame.specNameText:SetScale(arenaSpecScale)
-                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                if frame.fakeName then
+                    frame.fakeName:SetText("")
+                    frame.specNameText:SetPoint("CENTER", frame.fakeName, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                else
+                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                end
                 break
             end
         end
@@ -329,7 +368,7 @@ function BBP.ArenaIndicator4(frame)
         if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
             local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
             for i, unit in ipairs(enemyUnits) do
-                if UnitIsUnit(frame.unit, unit) then
+                if UnitIsUnit(frame.unit, unit) and UnitIsPlayer(unit) then
                     local r, g, b, a = frame.name:GetTextColor()
                     local arenaIndex = tonumber(string.match(unit, "arena(%d+)"))
                     local specID = GetArenaOpponentSpec(arenaIndex)
@@ -357,13 +396,23 @@ function BBP.ArenaIndicator4(frame)
 
                     frame.name:SetText("")
                     frame.specNameText:SetText(specName)
-                    frame.specNameText:SetTextColor(r, g, b, a)
+                    if specID == 270 then
+                        if isFistweaver(frame.unit) then
+                            frame.specNameText:SetText("Fistweaver")
+                        end
+                    end
+                    frame.specNameText:SetTextColor(r, g, b, 1)
                     frame.specNameText:SetScale(arenaSpecScale)
-                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    if frame.fakeName then
+                        frame.fakeName:SetText("")
+                        frame.specNameText:SetPoint("CENTER", frame.fakeName, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    else
+                        frame.specNameText:SetPoint("BOTTOM", frame.fakeName or frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    end
 
                     frame.arenaNumberText:SetText(i)
                     if enemyClassColorName then
-                        frame.arenaNumberText:SetTextColor(r, g, b, a)
+                        frame.arenaNumberText:SetTextColor(r, g, b, 1)
                     else
                         frame.arenaNumberText:SetTextColor(1, 1, 0)
                     end
@@ -407,13 +456,23 @@ function BBP.ArenaIndicator4(frame)
 
                 frame.name:SetText("")
                 frame.specNameText:SetText(specName)
-                frame.specNameText:SetTextColor(r, g, b, a)
+                if specID == 270 then
+                    if isFistweaver(frame.unit) then
+                        frame.specNameText:SetText("Fistweaver")
+                    end
+                end
+                frame.specNameText:SetTextColor(r, g, b, 1)
                 frame.specNameText:SetScale(arenaSpecScale)
-                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                if frame.fakeName then
+                    frame.fakeName:SetText("")
+                    frame.specNameText:SetPoint("CENTER", frame.fakeName, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                else
+                    frame.specNameText:SetPoint("BOTTOM", frame.fakeName or frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                end
 
                 frame.arenaNumberText:SetText(i)
                 if enemyClassColorName then
-                    frame.arenaNumberText:SetTextColor(r, g, b, a)
+                    frame.arenaNumberText:SetTextColor(r, g, b, 1)
                 else
                     frame.arenaNumberText:SetTextColor(1, 1, 0)
                 end
@@ -442,7 +501,7 @@ function BBP.ArenaIndicator5(frame)
         if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
             local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
             for i, unit in ipairs(enemyUnits) do
-                if UnitIsUnit(frame.unit, unit) then
+                if UnitIsUnit(frame.unit, unit) and UnitIsPlayer(unit) then
                     local r, g, b, a = frame.name:GetTextColor()
                     local arenaIndex = tonumber(string.match(unit, "arena(%d+)"))
                     local specID = GetArenaOpponentSpec(arenaIndex)
@@ -465,9 +524,14 @@ function BBP.ArenaIndicator5(frame)
 
                     frame.name:SetText("")
                     frame.specNameText:SetText(specName .. " " .. i)
-                    frame.specNameText:SetTextColor(r, g, b, a)
+                    frame.specNameText:SetTextColor(r, g, b, 1)
                     frame.specNameText:SetScale(arenaSpecScale)
-                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    if frame.fakeName then
+                        frame.fakeName:SetText("")
+                        frame.specNameText:SetPoint("CENTER", frame.fakeName, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    else
+                        frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    end
                     break
                 end
             end
@@ -497,9 +561,14 @@ function BBP.ArenaIndicator5(frame)
 
                 frame.name:SetText("")
                 frame.specNameText:SetText(specName .. " " .. i)
-                frame.specNameText:SetTextColor(r, g, b, a)
+                frame.specNameText:SetTextColor(r, g, b, 1)
                 frame.specNameText:SetScale(arenaSpecScale)
-                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                if frame.fakeName then
+                    frame.fakeName:SetText("")
+                    frame.specNameText:SetPoint("CENTER", frame.fakeName, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                else
+                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                end
                 break
             end
         end
@@ -535,9 +604,14 @@ function BBP.PartyIndicator1(frame)
                         displayNumber = i - 1
                     end
                     frame.name:SetText("")
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                    if frame.fakeName then
+                        frame.fakeName:SetText("")
+                        frame.arenaNumberText:SetPoint("BOTTOM", frame.fakeName, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                    else
+                        frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                    end
                     frame.arenaNumberText:SetText(displayNumber)
-                    frame.arenaNumberText:SetTextColor(r, g, b, a)
+                    frame.arenaNumberText:SetTextColor(r, g, b, 1)
                     frame.arenaNumberText:SetScale(partyIDScale)
                     break
                 end
@@ -555,9 +629,14 @@ function BBP.PartyIndicator1(frame)
                 end
 
                 frame.name:SetText("")
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                if frame.fakeName then
+                    frame.fakeName:SetText("")
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.fakeName, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                else
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                end
                 frame.arenaNumberText:SetText(i)
-                frame.arenaNumberText:SetTextColor(r, g, b, a)
+                frame.arenaNumberText:SetTextColor(r, g, b, 1)
                 frame.arenaNumberText:SetScale(partyIDScale)
                 break
             end
@@ -592,9 +671,9 @@ function BBP.PartyIndicator2(frame)
                         displayNumber = i - 1
                     end
                     frame.arenaNumberText:SetText(displayNumber)
-                    frame.arenaNumberText:SetTextColor(r, g, b, a)
+                    frame.arenaNumberText:SetTextColor(r, g, b, 1)
                     frame.arenaNumberText:SetScale(partyIDScale)
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.fakeName or frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
                     break
                 end
             end
@@ -611,9 +690,9 @@ function BBP.PartyIndicator2(frame)
                 end
 
                 frame.arenaNumberText:SetText(i)
-                frame.arenaNumberText:SetTextColor(r, g, b, a)
+                frame.arenaNumberText:SetTextColor(r, g, b, 1)
                 frame.arenaNumberText:SetScale(partyIDScale)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.fakeName or frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
                 break
             end
         end
@@ -660,9 +739,14 @@ function BBP.PartyIndicator3(frame)
 
                     frame.name:SetText("")
                     frame.specNameText:SetText(specName)
-                    frame.specNameText:SetTextColor(r, g, b, a)
+                    frame.specNameText:SetTextColor(r, g, b, 1)
                     frame.specNameText:SetScale(partySpecScale)
-                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    if frame.fakeName then
+                        frame.fakeName:SetText("")
+                        frame.specNameText:SetPoint("CENTER", frame.fakeName, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    else
+                        frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    end
                     break
                 end
             end
@@ -696,9 +780,14 @@ function BBP.PartyIndicator3(frame)
 
                 frame.name:SetText("")
                 frame.specNameText:SetText(specName)
-                frame.specNameText:SetTextColor(r, g, b, a)
+                frame.specNameText:SetTextColor(r, g, b, 1)
                 frame.specNameText:SetScale(partySpecScale)
-                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                if frame.fakeName then
+                    frame.fakeName:SetText("")
+                    frame.specNameText:SetPoint("CENTER", frame.fakeName, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                else
+                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                end
                 break
             end
         end
@@ -756,16 +845,21 @@ function BBP.PartyIndicator4(frame)
 
                     frame.name:SetText("")
                     frame.specNameText:SetText(specName)
-                    frame.specNameText:SetTextColor(r, g, b, a)
+                    frame.specNameText:SetTextColor(r, g, b, 1)
                     frame.specNameText:SetScale(partySpecScale)
-                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    if frame.fakeName then
+                        frame.fakeName:SetText("")
+                        frame.specNameText:SetPoint("CENTER", frame.fakeName, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    else
+                        frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    end
 
                     local displayNumber = i
                     if reduceID and i > 1 then
                         displayNumber = i - 1
                     end
                     frame.arenaNumberText:SetText(displayNumber)
-                    frame.arenaNumberText:SetTextColor(r, g, b, a)
+                    frame.arenaNumberText:SetTextColor(r, g, b, 1)
                     frame.arenaNumberText:SetScale(partyIDScale)
                     frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos, arenaIdYPos - 1)
                     break
@@ -806,12 +900,17 @@ function BBP.PartyIndicator4(frame)
 
                 frame.name:SetText("")
                 frame.specNameText:SetText(specName)
-                frame.specNameText:SetTextColor(r, g, b, a)
+                frame.specNameText:SetTextColor(r, g, b, 1)
                 frame.specNameText:SetScale(partySpecScale)
-                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                if frame.fakeName then
+                    frame.fakeName:SetText("")
+                    frame.specNameText:SetPoint("CENTER", frame.fakeName, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                else
+                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                end
 
                 frame.arenaNumberText:SetText(i)
-                frame.arenaNumberText:SetTextColor(r, g, b, a)
+                frame.arenaNumberText:SetTextColor(r, g, b, 1)
                 frame.arenaNumberText:SetScale(partyIDScale)
                 frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos, arenaIdYPos - 1)
                 break
@@ -866,9 +965,14 @@ function BBP.PartyIndicator5(frame)
                         displayNumber = i - 1
                     end
                     frame.specNameText:SetText(specName .. " " .. displayNumber)
-                    frame.specNameText:SetTextColor(r, g, b, a)
+                    frame.specNameText:SetTextColor(r, g, b, 1)
                     frame.specNameText:SetScale(partySpecScale)
-                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    if frame.fakeName then
+                        frame.fakeName:SetText("")
+                        frame.specNameText:SetPoint("CENTER", frame.fakeName, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    else
+                        frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    end
                     break
                 end
             end
@@ -902,9 +1006,14 @@ function BBP.PartyIndicator5(frame)
 
                 frame.name:SetText("")
                 frame.specNameText:SetText(specName .. " " .. i)
-                frame.specNameText:SetTextColor(r, g, b, a)
+                frame.specNameText:SetTextColor(r, g, b, 1)
                 frame.specNameText:SetScale(partySpecScale)
-                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                if frame.fakeName then
+                    frame.fakeName:SetText("")
+                    frame.specNameText:SetPoint("CENTER", frame.fakeName, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                else
+                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                end
                 break
             end
         end
@@ -928,9 +1037,12 @@ function BBP.TestArenaIndicator0(frame)
             end
 
             frame.name:SetText("")
-            frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
+            if frame.fakeName then
+                frame.fakeName:SetText("")
+            end
+            frame.arenaNumberText:SetPoint("BOTTOM", frame.name or frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
             frame.arenaNumberText:SetText("Select a mode to test (enemy)")
-            frame.arenaNumberText:SetTextColor(r, g, b, a)
+            frame.arenaNumberText:SetTextColor(r, g, b, 1)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
             break
         end
@@ -951,10 +1063,15 @@ function BBP.TestArenaIndicator1(frame)
             end
 
             frame.name:SetText("")
-            frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
+            if frame.fakeName then
+                frame.fakeName:SetText("")
+                frame.arenaNumberText:SetPoint("CENTER", frame.fakeName, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
+            else
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
+            end
             frame.arenaNumberText:SetText("1")
             if BetterBlizzPlatesDB.enemyClassColorName then
-                frame.arenaNumberText:SetTextColor(r, g, b, a)
+                frame.arenaNumberText:SetTextColor(r, g, b, 1)
             else
                 frame.arenaNumberText:SetTextColor(1, 1, 0)
             end
@@ -985,12 +1102,12 @@ function BBP.TestArenaIndicator2(frame)
 
             frame.arenaNumberText:SetText("1")
             if BetterBlizzPlatesDB.enemyClassColorName then
-                frame.arenaNumberText:SetTextColor(r, g, b, a)
+                frame.arenaNumberText:SetTextColor(r, g, b, 1)
             else
                 frame.arenaNumberText:SetTextColor(1, 1, 0)
             end
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaIDScale)
-            frame.arenaNumberText:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
+            frame.arenaNumberText:SetPoint("BOTTOM", frame.fakeName or frame.name, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
 
             if idCircle then
                 local i = math.random(1, 3)
@@ -1020,9 +1137,14 @@ function BBP.TestArenaIndicator3(frame)
             else
                 frame.specNameText:SetText("Affliction")
             end
-            frame.specNameText:SetTextColor(r, g, b, a)
+            frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
-            frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            if frame.fakeName then
+                frame.fakeName:SetText("")
+                frame.specNameText:SetPoint("CENTER", frame.fakeName, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            else
+                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            end
             break
         end
     end
@@ -1053,12 +1175,17 @@ function BBP.TestArenaIndicator4(frame)
             else
                 frame.specNameText:SetText("Affliction")
             end
-            frame.specNameText:SetTextColor(r, g, b, a)
+            frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
-            frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            if frame.fakeName then
+                frame.fakeName:SetText("")
+                frame.specNameText:SetPoint("CENTER", frame.fakeName, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            else
+                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            end
             frame.arenaNumberText:SetText("1")
             if BetterBlizzPlatesDB.enemyClassColorName then
-                frame.arenaNumberText:SetTextColor(r, g, b, a)
+                frame.arenaNumberText:SetTextColor(r, g, b, 1)
             else
                 frame.arenaNumberText:SetTextColor(1, 1, 0)
             end
@@ -1093,9 +1220,14 @@ function BBP.TestArenaIndicator5(frame)
             else
                 frame.specNameText:SetText("Affliction" .. " " .. "3")
             end
-            frame.specNameText:SetTextColor(r, g, b, a)
+            frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
-            frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            if frame.fakeName then
+                frame.fakeName:SetText("")
+                frame.specNameText:SetPoint("CENTER", frame.fakeName, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            else
+                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            end
             break
         end
     end
@@ -1114,9 +1246,14 @@ function BBP.TestPartyIndicator0(frame)
             end
 
             frame.name:SetText("")
-            frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
+            if frame.fakeName then
+                frame.fakeName:SetText("")
+                frame.arenaNumberText:SetPoint("CENTER", frame.fakeName, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
+            else
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
+            end
             frame.arenaNumberText:SetText("Select a mode to test (friendly)")
-            frame.arenaNumberText:SetTextColor(r, g, b, a)
+            frame.arenaNumberText:SetTextColor(r, g, b, 1)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.partySpecScale)
             break
         end
@@ -1135,9 +1272,14 @@ function BBP.TestPartyIndicator1(frame)
             end
 
             frame.name:SetText("")
-            frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos)
+            if frame.fakeName then
+                frame.fakeName:SetText("")
+                frame.arenaNumberText:SetPoint("CENTER", frame.fakeName, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos)
+            else
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos)
+            end
             frame.arenaNumberText:SetText("2")
-            frame.arenaNumberText:SetTextColor(r, g, b, a)
+            frame.arenaNumberText:SetTextColor(r, g, b, 1)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.partyIDScale)
             break
         end
@@ -1157,9 +1299,9 @@ function BBP.TestPartyIndicator2(frame)
             end
 
             frame.arenaNumberText:SetText("2")
-            frame.arenaNumberText:SetTextColor(r, g, b, a)
+            frame.arenaNumberText:SetTextColor(r, g, b, 1)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.partyIDScale)
-            frame.arenaNumberText:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos)
+            frame.arenaNumberText:SetPoint("BOTTOM", frame.fakeName or frame.name, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos)
             break
         end
     end
@@ -1183,9 +1325,14 @@ function BBP.TestPartyIndicator3(frame)
             else
                 frame.specNameText:SetText("Affliction")
             end
-            frame.specNameText:SetTextColor(r, g, b, a)
+            frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.partySpecScale)
-            frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            if frame.fakeName then
+                frame.fakeName:SetText("")
+                frame.specNameText:SetPoint("CENTER", frame.fakeName, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            else
+                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            end
             break
         end
     end
@@ -1214,11 +1361,16 @@ function BBP.TestPartyIndicator4(frame)
             else
                 frame.specNameText:SetText("Affliction")
             end
-            frame.specNameText:SetTextColor(r, g, b, a)
+            frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.partySpecScale)
-            frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            if frame.fakeName then
+                frame.fakeName:SetText("")
+                frame.specNameText:SetPoint("CENTER", frame.fakeName, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            else
+                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            end
             frame.arenaNumberText:SetText("2")
-            frame.arenaNumberText:SetTextColor(r, g, b, a)
+            frame.arenaNumberText:SetTextColor(r, g, b, 1)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.partyIDScale)
             frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos - 1)
             break
@@ -1244,9 +1396,14 @@ function BBP.TestPartyIndicator5(frame)
             else
                 frame.specNameText:SetText("Affliction" .. " " .. "3")
             end
-            frame.specNameText:SetTextColor(r, g, b, a)
+            frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.partySpecScale)
-            frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            if frame.fakeName then
+                frame.fakeName:SetText("")
+                frame.specNameText:SetPoint("CENTER", frame.fakeName, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            else
+                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            end
             break
         end
     end
@@ -1271,7 +1428,8 @@ end
 
 --#########################################################################################################
 -- The big consolidated caller
-function BBP.ArenaIndicatorCaller(frame, config)
+function BBP.ArenaIndicatorCaller(frame)
+    local db = BetterBlizzPlatesDB
     -- Arena and party logic
     if IsActiveBattlefieldArena() then
         local unitType
@@ -1282,16 +1440,16 @@ function BBP.ArenaIndicatorCaller(frame, config)
         end
 
         if unitType == "arena" then
-            if not config.arenaIndicatorModeOff then
-                if config.arenaIndicatorModeOne then
+            if not db.arenaIndicatorModeOff then
+                if db.arenaIndicatorModeOne then
                     BBP.ArenaIndicator1(frame)
-                elseif config.arenaIndicatorModeTwo then
+                elseif db.arenaIndicatorModeTwo then
                     BBP.ArenaIndicator2(frame)
-                elseif config.arenaIndicatorModeThree then
+                elseif db.arenaIndicatorModeThree then
                     BBP.ArenaIndicator3(frame)
-                elseif config.arenaIndicatorModeFour then
+                elseif db.arenaIndicatorModeFour then
                     BBP.ArenaIndicator4(frame)
-                elseif config.arenaIndicatorModeFive then
+                elseif db.arenaIndicatorModeFive then
                     BBP.ArenaIndicator5(frame)
                 else
                     BBP.CleanArenaIndicators(frame)
@@ -1299,16 +1457,16 @@ function BBP.ArenaIndicatorCaller(frame, config)
                 return
             end
         elseif unitType == "party" then
-            if not config.partyIndicatorModeOff then
-                if config.partyIndicatorModeOne then
+            if not db.partyIndicatorModeOff then
+                if db.partyIndicatorModeOne then
                     BBP.PartyIndicator1(frame)
-                elseif config.partyIndicatorModeTwo then
+                elseif db.partyIndicatorModeTwo then
                     BBP.PartyIndicator2(frame)
-                elseif config.partyIndicatorModeThree then
+                elseif db.partyIndicatorModeThree then
                     BBP.PartyIndicator3(frame)
-                elseif config.partyIndicatorModeFour then
+                elseif db.partyIndicatorModeFour then
                     BBP.PartyIndicator4(frame)
-                elseif config.partyIndicatorModeFive then
+                elseif db.partyIndicatorModeFive then
                     BBP.PartyIndicator5(frame)
                 else
                     BBP.CleanArenaIndicators(frame)
@@ -1327,41 +1485,41 @@ function BBP.ArenaIndicatorCaller(frame, config)
 
         -- Test modes
         if unitType == "arena" then
-            if config.arenaIndicatorModeOff or
-               (not config.arenaIndicatorModeOne and
-                not config.arenaIndicatorModeTwo and
-                not config.arenaIndicatorModeThree and
-                not config.arenaIndicatorModeFour and
-                not config.arenaIndicatorModeFive) then
+            if db.arenaIndicatorModeOff or
+               (not db.arenaIndicatorModeOne and
+                not db.arenaIndicatorModeTwo and
+                not db.arenaIndicatorModeThree and
+                not db.arenaIndicatorModeFour and
+                not db.arenaIndicatorModeFive) then
                 BBP.TestArenaIndicator0(frame)
-            elseif config.arenaIndicatorModeOne then
+            elseif db.arenaIndicatorModeOne then
                 BBP.TestArenaIndicator1(frame)
-            elseif config.arenaIndicatorModeTwo then
+            elseif db.arenaIndicatorModeTwo then
                 BBP.TestArenaIndicator2(frame)
-            elseif config.arenaIndicatorModeThree then
+            elseif db.arenaIndicatorModeThree then
                 BBP.TestArenaIndicator3(frame)
-            elseif config.arenaIndicatorModeFour then
+            elseif db.arenaIndicatorModeFour then
                 BBP.TestArenaIndicator4(frame)
-            elseif config.arenaIndicatorModeFive then
+            elseif db.arenaIndicatorModeFive then
                 BBP.TestArenaIndicator5(frame)
             end
         elseif unitType == "party" then
-            if config.partyIndicatorModeOff or
-               (not config.partyIndicatorModeOne and
-                not config.partyIndicatorModeTwo and
-                not config.partyIndicatorModeThree and
-                not config.partyIndicatorModeFour and
-                not config.partyIndicatorModeFive) then
+            if db.partyIndicatorModeOff or
+               (not db.partyIndicatorModeOne and
+                not db.partyIndicatorModeTwo and
+                not db.partyIndicatorModeThree and
+                not db.partyIndicatorModeFour and
+                not db.partyIndicatorModeFive) then
                 BBP.TestPartyIndicator0(frame)
-            elseif config.partyIndicatorModeOne then
+            elseif db.partyIndicatorModeOne then
                 BBP.TestPartyIndicator1(frame)
-            elseif config.partyIndicatorModeTwo then
+            elseif db.partyIndicatorModeTwo then
                 BBP.TestPartyIndicator2(frame)
-            elseif config.partyIndicatorModeThree then
+            elseif db.partyIndicatorModeThree then
                 BBP.TestPartyIndicator3(frame)
-            elseif config.partyIndicatorModeFour then
+            elseif db.partyIndicatorModeFour then
                 BBP.TestPartyIndicator4(frame)
-            elseif config.partyIndicatorModeFive then
+            elseif db.partyIndicatorModeFive then
                 BBP.TestPartyIndicator5(frame)
             end
         end
@@ -1374,5 +1532,6 @@ refresh:RegisterEvent("GROUP_ROSTER_UPDATE")
 refresh:SetScript("OnEvent", function(self, event, ...)
     if not InCombatLockdown() then
         BBP.RefreshAllNameplates()
+        BBP.fistweaverFound = nil
     end
 end)

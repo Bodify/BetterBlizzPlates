@@ -7,9 +7,9 @@ BBP = BBP or {}
 ----------------------------------------------------
 
 function BBP.QuestIndicator(frame)
-    if not (frame and frame.unit) then return end
-    if not string.match(frame.unit, "nameplate") then return end
-    if frame:IsForbidden() then return end
+    -- if not frame then return end
+    -- local config = frame.BetterBlizzPlates.config
+    -- local info = frame.BetterBlizzPlates.unitInfo
 
     -- Initialize
     if not frame.questIndicator then
@@ -112,11 +112,8 @@ function BBP.IsQuestUnit(unit, create_watcher)
     for i = 3, TooltipFrame:NumLines() do
         local line = _G["ThreatPlates_TooltipTextLeft" .. i] -- obj
         local text = line:GetText()
-        -- print (i, text)
         local text_r, text_g, text_b = line:GetTextColor()
 
-        -- print ("Line: |" .. text .. "|")
-        -- print ("  => ", text_r, text_g, text_b)
         if text_r > 0.99 and text_g > 0.81 and text_b == 0 then
             -- A line with this color is either the quest title or a player name (if on a group quest, but always after the quest title)
             if quest_title then
@@ -138,11 +135,9 @@ function BBP.IsQuestUnit(unit, create_watcher)
             if string.find(text, "%%") then
                 objective_name, current, goal = string.match(text, "^(.*) %(?(%d+)%%%)?$")
                 objective_type = "area"
-                -- print (unit_name, "=> ", "Area: |" .. text .. "|", objective_name, current, goal)
             else
                 -- Standard x/y /pe quest
                 objective_name, current, goal = QuestObjectiveParser(text)
-                -- print (unit_name, "=> ", "Standard: |" .. text .. "|", objective_name, current, goal, "|")
             end
 
             if objective_name then
@@ -169,7 +164,6 @@ function BBP.IsQuestUnit(unit, create_watcher)
 
                 -- A unit may be target of more than one quest, the quest indicator should be show if at least one quest is not completed.
                 if current and goal then
-                    -- print (current, goal, objective_name)
                     if (current ~= goal) then
                         return true, 1, {
                             current = current,
@@ -191,6 +185,7 @@ end
 local function UpdateAllUnitQuestState()
     for i, namePlate in ipairs(C_NamePlate.GetNamePlates()) do
         local frame = namePlate.UnitFrame
+        if frame:IsForbidden() or frame:IsProtected() or not frame.unit then return end
         BBP.QuestIndicator(frame)
     end
 end

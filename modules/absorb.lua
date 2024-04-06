@@ -4,13 +4,26 @@ BBP = BBP or {}
 
 -- Absorb Indicator
 function BBP.AbsorbIndicator(frame)
-    local unit = frame.displayedUnit
-    local anchorPoint = BetterBlizzPlatesDB["absorbIndicatorAnchor"] or "LEFT"
-    local oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
-    local xPos = BetterBlizzPlatesDB["absorbIndicatorXPos"] or 0
-    local yPos = BetterBlizzPlatesDB["absorbIndicatorYPos"] or 0
-    local enemyOnly = BetterBlizzPlatesDB.absorbIndicatorEnemyOnly and (not UnitIsEnemy("player", unit))
-    local playersOnly = BetterBlizzPlatesDB.absorbIndicatorOnPlayersOnly and (not UnitIsPlayer(unit))
+    --if not frame or frame.unit then return end
+    local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
+
+    if not config.absorbIndicatorInitialized or BBP.needsUpdate then
+        config.absorbIndicatorAnchor = BetterBlizzPlatesDB.absorbIndicatorAnchor or "LEFT"
+        config.absorbIndicatorXPos = BetterBlizzPlatesDB.absorbIndicatorXPos
+        config.absorbIndicatorYPos = BetterBlizzPlatesDB.absorbIndicatorYPos
+        config.absorbIndicatorEnemyOnly = BetterBlizzPlatesDB.absorbIndicatorEnemyOnly
+        config.absorbIndicatorOnPlayersOnly = BetterBlizzPlatesDB.absorbIndicatorOnPlayersOnly
+        config.absorbIndicatorScale = BetterBlizzPlatesDB.absorbIndicatorScale
+        config.absorbIndicatorTestMode = BetterBlizzPlatesDB.absorbIndicatorTestMode
+
+        config.absorbIndicatorInitialized = true
+    end
+
+    local unit = frame.unit
+    local oppositeAnchor = BBP.GetOppositeAnchor(config.absorbIndicatorAnchor)
+    local enemyOnly = config.absorbIndicatorEnemyOnly and (not info.isEnemy or not info.isNeutral)
+    local playersOnly = config.absorbIndicatorOnPlayersOnly and (not info.isPlayer)
 
     -- Initialize
     if not frame.absorbIndicator then
@@ -19,12 +32,12 @@ function BBP.AbsorbIndicator(frame)
     end
 
     frame.absorbIndicator:ClearAllPoints()
-    frame.absorbIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos -2, yPos)
-    frame.absorbIndicator:SetScale(BetterBlizzPlatesDB.absorbIndicatorScale or 1)
+    frame.absorbIndicator:SetPoint(oppositeAnchor, frame.healthBar, config.absorbIndicatorAnchor, config.absorbIndicatorXPos -2, config.absorbIndicatorYPos)
+    frame.absorbIndicator:SetScale(config.absorbIndicatorScale or 1)
     BBP.SetFontBasedOnOption(frame.absorbIndicator, 10, "OUTLINE")
 
     -- Test mode
-    if BetterBlizzPlatesDB.absorbIndicatorTestMode then
+    if config.absorbIndicatorTestMode then
         frame.absorbIndicator:SetText("69k")
         frame.absorbIndicator:Show()
         return
@@ -58,9 +71,9 @@ local absorbEventFrame = CreateFrame("Frame")
 absorbEventFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "UNIT_ABSORB_AMOUNT_CHANGED" then
         local unit = ...
-        local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
-        if nameplate then
-            BBP.AbsorbIndicator(nameplate.UnitFrame)
+        local nameplate, frame = BBP.GetSafeNameplate(unit)
+        if frame then
+            BBP.AbsorbIndicator(frame)
         end
     end
 end)

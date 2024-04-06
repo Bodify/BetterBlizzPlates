@@ -10,5 +10,7 @@
     <Script file="libs\LibOpenRaid\LibOpenRaid.lua"/>
     <Include file="libs\LibDeflate\lib.xml"/>
     <Script file="libs\LibDeflate\LibDeflate.lua"/>
+    <Include file="libs\LibSerialize\lib.xml"/>
+    <Script file="libs\LibSerialize\LibSerialize.lua"/>
 <!--@end-non-debug@-->
 </Ui>
