@@ -253,6 +253,7 @@ local classPadding = {
 local adjusted
 function BBP.TargetResourceUpdater()
     local _, className = UnitClass("player")
+    local _, className = UnitClass("player")
     nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget == 1 or BetterBlizzPlatesDB.nameplateResourceOnTarget == true
     nameplateShowSelf = GetCVarBool("nameplateShowSelf")
     nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
