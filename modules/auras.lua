@@ -975,8 +975,6 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         local spellId = aura.spellId
         local caster = aura.sourceUnit
         local castByPlayer = (caster == "player" or caster == "pet")
-        local caster = aura.sourceUnit
-        local castByPlayer = (caster == "player" or caster == "pet")
 
         shouldShowAura, isImportant, isPandemic, auraColor, onlyMine, isEnlarged, isCompacted = GetAuraDetails(spellName, spellId)
         if onlyPandemicMine and not castByPlayer then
@@ -1057,7 +1055,6 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     end);
     self:Layout();
 end
-
 
 function BBP.ParseAllAuras(self, forceAll, UnitFrame)
     if self.auras == nil then

@@ -5980,12 +5980,6 @@ local function guiNameplateAuras()
     pandemicAuraTexture:SetVertexColor(1,0,0)
     CreateTooltip(pandemicAuraTexture, "Pandemic Aura Checkboxes")
 
-    local onlyMeTexture = contentFrame:CreateTexture(nil, "OVERLAY")
-    onlyMeTexture:SetAtlas("UI-HUD-UnitFrame-Player-Group-FriendOnlineIcon")
-    onlyMeTexture:SetPoint("RIGHT", importantAuraTexture, "LEFT", -11, -2)
-    onlyMeTexture:SetSize(18,20)
-    CreateTooltip(onlyMeTexture, "Only My Aura Checkboxes")
-
     local enableNameplateAuraCustomisation = CreateCheckbox("enableNameplateAuraCustomisation", "Enable Aura Settings", contentFrame)
     enableNameplateAuraCustomisation:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 50, 195)
     enableNameplateAuraCustomisation:HookScript("OnClick", function (self)
@@ -6106,11 +6100,9 @@ local function guiNameplateAuras()
     local friendlyNpBuffFilterLessMinite = CreateCheckbox("friendlyNpBuffFilterLessMinite", "Under one min", friendlyNpBuffEnable)
     friendlyNpBuffFilterLessMinite:SetPoint("TOPLEFT", friendlyNpBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(friendlyNpBuffFilterLessMinite, "Only show buffs under one minute long. (Plus other filters)")
-    CreateTooltip(friendlyNpBuffFilterLessMinite, "Only show buffs under one minute long. (Plus other filters)")
 
     local friendlyNpBuffFilterOnlyMe = CreateCheckbox("friendlyNpBuffFilterOnlyMe", "Only mine", friendlyNpBuffEnable)
     friendlyNpBuffFilterOnlyMe:SetPoint("TOPLEFT", friendlyNpBuffFilterLessMinite, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(friendlyNpBuffFilterOnlyMe, "Only show my buffs. (Plus other filters)")
     CreateTooltip(friendlyNpBuffFilterOnlyMe, "Only show my buffs. (Plus other filters)")
 
     -- Friendly Debuffs
@@ -6376,7 +6368,7 @@ local function guiNameplateAuras()
 
     local nameplateAuraTaller = CreateCheckbox("nameplateAuraTaller", "Taller Auras", enableNameplateAuraCustomisation)
     nameplateAuraTaller:SetPoint("LEFT", nameplateAuraSquare.text, "RIGHT", 9, 0)
-    CreateTooltip(nameplateAuraTaller, "Bit taller aura icons and more of the texture visible.", "ANCHOR_LEFT")
+    CreateTooltip(nameplateAuraTaller, "Bit taller aura icons and more of the texture visible.")
     nameplateAuraTaller:HookScript("OnClick", function (self)
         if self:GetChecked() then
             BetterBlizzPlatesDB.nameplateAuraSquare = false

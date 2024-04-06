@@ -871,8 +871,7 @@ local function NewsUpdateMessage()
 
     DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes:")
     DEFAULT_CHAT_FRAME:AddMessage("   - Fix \"Castbar Quick Hide\" setting.")
-    DEFAULT_CHAT_FRAME:AddMessage("   - Fixed the \"Center auras\" fix... They should now work properly'ish.")
-    DEFAULT_CHAT_FRAME:AddMessage("   - Fix the default personal resource position being a few pixels off on certain classes.")
+    DEFAULT_CHAT_FRAME:AddMessage("   - Fixed the \"Center auras\" fix... They should now work properly.")
 
     DEFAULT_CHAT_FRAME:AddMessage("|A:GarrisonTroops-Health:16:16|a Patreon link: www.patreon.com/bodydev")
 end
@@ -3658,10 +3657,29 @@ Frame:SetScript("OnEvent", function(...)
         BBP.TargetResourceUpdater()
     end
 
-    BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, BetterBlizzPlatesDB.defaultLargeFontSize)
-    BBP.SetFontBasedOnOption(SystemFont_NamePlate, BetterBlizzPlatesDB.defaultFontSize)
-    BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, BetterBlizzPlatesDB.defaultLargeFontSize)
-    BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, BetterBlizzPlatesDB.defaultFontSize)
+    -- local useCustomFont = BetterBlizzPlatesDB.useCustomFont
+    -- if useCustomFont then
+    --     local fontName = BetterBlizzPlatesDB.customFont
+    --     local fontPath = LSM:Fetch(LSM.MediaType.FONT, fontName)
+    --     -- Table of font objects to update
+    --     local fontsToUpdate = {
+    --         SystemFont_LargeNamePlate,
+    --         SystemFont_NamePlate,
+    --         SystemFont_LargeNamePlateFixed,
+    --         SystemFont_NamePlateFixed
+    --     }
+    --     for _, fontObject in ipairs(fontsToUpdate) do
+    --         local fontSize = select(2, fontObject:GetFont())
+    --         fontObject:SetFont(fontPath, fontSize, "THINOUTLINE")
+    --     end
+    -- end
+
+    if not BetterBlizzPlatesDB.skipAdjustingFixedFonts then
+        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, BetterBlizzPlatesDB.defaultLargeFontSize)
+        BBP.SetFontBasedOnOption(SystemFont_NamePlate, BetterBlizzPlatesDB.defaultFontSize)
+        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, BetterBlizzPlatesDB.defaultLargeFontSize)
+        BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, BetterBlizzPlatesDB.defaultFontSize)
+    end
 
     BBP.ApplyNameplateWidth()
 
@@ -3669,8 +3687,6 @@ Frame:SetScript("OnEvent", function(...)
         if BetterBlizzPlatesDB.executeIndicatorScale <= 0 then --had a slider with borked values
             BetterBlizzPlatesDB.executeIndicatorScale = 1     --this will fix it for every user who made the error while bug was live
         end
-
-        --if BetterBlizzPlatesDB.
     end)
 
     SetCVarsOnLogin()
