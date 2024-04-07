@@ -2272,7 +2272,7 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         if totemColor then
             local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
             local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
-            if npcData then
+            if npcData or config.randomTotemColor then
                 if config.totemIndicatorEnemyOnly then
                     if not info.isFriend then
                         if config.totemIndicatorColorHealthBar then
