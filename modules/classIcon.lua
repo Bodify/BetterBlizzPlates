@@ -39,6 +39,8 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         config.classIndicatorFriendlyYPos = BetterBlizzPlatesDB.classIndicatorFriendlyYPos
         config.classIndicatorFriendlyScale = BetterBlizzPlatesDB.classIndicatorFriendlyScale
         config.classIconColorBorder = BetterBlizzPlatesDB.classIconColorBorder
+        config.nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
+        config.hideResourceOnFriend = BetterBlizzPlatesDB.hideResourceOnFriend
 
         config.classIndicatorInitialized = true
     end
@@ -174,7 +176,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     frame.classIndicator:ClearAllPoints()
     if anchorPoint == "TOP" then
         local resourceAnchor = nil
-        if config.nameplateResourceOnTarget == true and not nameplateResourceUnderCastbar and info.isTarget and not (BetterBlizzPlatesDB.hideResourceOnFriend and info.isFriend) then
+        if config.nameplateResourceOnTarget == true and not config.nameplateResourceUnderCastbar and info.isTarget and not (config.hideResourceOnFriend and info.isFriend) then
             resourceAnchor = frame:GetParent().driverFrame.classNamePlateMechanicFrame
         end
         frame.classIndicator:SetPoint(oppositeAnchor, resourceAnchor or frame.fakeName or frame.name, anchorPoint, xPos, yPos)

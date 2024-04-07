@@ -1404,26 +1404,6 @@ function BBP.ToggleNameplateAuras(frame)
 end
 
 --#################################################################################################
-function BBP.HideOrShowNameplateAurasAndTargetHighlight(frame)
-    local db = BetterBlizzPlatesDB
-
-    -- Decide the alpha for BuffFrame
-    local buffFrameAlpha = 1
-    if db.hideNameplateAuras then
-        buffFrameAlpha = 0
-    elseif db.nameplateAuraPlayersOnly then
-        if db.nameplateAuraPlayersOnlyShowTarget and UnitIsUnit(frame.unit, "target") then
-            buffFrameAlpha = 1
-        else
-            buffFrameAlpha = UnitIsPlayer(frame.unit) and 1 or 0
-        end
-    end
-    frame.BuffFrame:SetAlpha(buffFrameAlpha)
-
-    -- Set alpha for selectionHighlight based on hideTargetHighlight
-    frame.selectionHighlight:SetAlpha(db.hideTargetHighlight and 0 or 0.22)
-end
-
 local function ToggleNameplateBuffFrameVisibility(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
@@ -1884,7 +1864,7 @@ function BBP.HideNPCs(frame)
             frame.hideNameOverride = false
             frame.hideCastbarOverride = false
             frame.healthBar:SetAlpha((info.isSelf and 1) or (config.friendlyHideHealthBar and info.isFriend and 0) or 1)
-            frame.selectionHighlight:SetAlpha((config.friendlyHideHealthBar and 0) or (config.hideTargetHighlight and 0) or 0.22)
+            frame.selectionHighlight:SetAlpha(((info.isFriend and config.friendlyHideHealthBar) and 0) or (config.hideTargetHighlight and 0) or 0.22)
             ToggleNameplateBuffFrameVisibility(frame)
             if frame.fakeName then
                 frame.fakeName:SetAlpha(1)
@@ -1963,7 +1943,7 @@ function BBP.HideNPCs(frame)
             frame.hideNameOverride = false
             frame.hideCastbarOverride = false
             frame.healthBar:SetAlpha(1)
-            frame.selectionHighlight:SetAlpha((config.friendlyHideHealthBar and 0) or (config.hideTargetHighlight and 0) or 0.22)
+            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
             ToggleNameplateBuffFrameVisibility(frame)
             if frame.fakeName then
                 frame.fakeName:SetAlpha(1)
@@ -1990,7 +1970,7 @@ function BBP.HideNPCs(frame)
                 frame.hideNameOverride = false
                 frame.hideCastbarOverride = false
                 frame.healthBar:SetAlpha(1)
-                frame.selectionHighlight:SetAlpha((config.friendlyHideHealthBar and 0) or (config.hideTargetHighlight and 0) or 0.22)
+                frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
                 ToggleNameplateBuffFrameVisibility(frame)
                 if frame.fakeName then
                     frame.fakeName:SetAlpha(1)
@@ -2049,7 +2029,7 @@ function BBP.HideNPCs(frame)
             frame.hideNameOverride = false
             frame.hideCastbarOverride = false
             frame.healthBar:SetAlpha(1)
-            frame.selectionHighlight:SetAlpha((config.friendlyHideHealthBar and 0) or (config.hideTargetHighlight and 0) or 0.22)
+            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
             ToggleNameplateBuffFrameVisibility(frame)
             if frame.fakeName then
                 frame.fakeName:SetAlpha(1)
@@ -2084,7 +2064,7 @@ function BBP.HideNPCs(frame)
             frame.hideNameOverride = false
             frame.hideCastbarOverride = false
             frame.healthBar:SetAlpha(1)
-            frame.selectionHighlight:SetAlpha((config.friendlyHideHealthBar and 0) or (config.hideTargetHighlight and 0) or 0.22)
+            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
             ToggleNameplateBuffFrameVisibility(frame)
             if frame.fakeName then
                 frame.fakeName:SetAlpha(1)
@@ -2767,6 +2747,7 @@ local function HideFriendlyHealthbar(frame)
         end
     else
         frame.healthBar:SetAlpha(1)
+        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
         if frame.guildName then
             frame.guildName:SetText("")
         end

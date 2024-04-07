@@ -1386,7 +1386,8 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
                     dataTable[k] = v -- Populate with new data
                 end
             end
-            print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: " .. title .. " imported successfully.")
+            print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: " .. title .. " imported successfully. While still BETA this requires a reload to load in new lists.")
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
         end
     end)
     return frame
@@ -2024,7 +2025,12 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
 
         -- Check if there's a numeric ID within the name and clear the name if found
         if id then
-            name = ""
+            local spellName = GetSpellInfo(id)
+            if spellName then
+                name = spellName
+            else
+                name = ""
+            end
         end
 
         -- Remove unwanted characters from name and comment individually
@@ -2826,7 +2832,7 @@ local function guiGeneralTab()
     addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
     local verNumber = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
-    verNumber:SetText("v" .. BBP.VersionNumber)--SetText("v" .. BetterBlizzPlatesDB.updates)
+    verNumber:SetText("v" .. BBP.VersionNumber .. "b")--SetText("v" .. BetterBlizzPlatesDB.updates)
 
     ----------------------
     -- General:

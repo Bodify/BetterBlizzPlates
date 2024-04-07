@@ -19,7 +19,7 @@ function BBP.PetIndicator(frame)
         config.petIndicatorAnchor = BetterBlizzPlatesDB.petIndicatorAnchor or "CENTER"
         config.petIndicatorXPos = BetterBlizzPlatesDB.petIndicatorpetIndicatorXPos or 0
         config.petIndicatorYPos = BetterBlizzPlatesDB.petIndicatorpetIndicatorYPos or 0
-        config.petIndicatorTestMode = BetterBlizzPlatesDB.petIndicatorpetIndicatorTestMode
+        config.petIndicatorTestMode = BetterBlizzPlatesDB.petIndicatorTestMode
         config.combatIndicator = BetterBlizzPlatesDB.combatIndicator
         config.combatIndicatorAnchor = BetterBlizzPlatesDB.combatIndicatorAnchor
         config.petIndicatorScale = BetterBlizzPlatesDB.petIndicatorScale or 1
@@ -44,7 +44,7 @@ function BBP.PetIndicator(frame)
         return
     end
 
-    local npcID = select(6, strsplit("-", info.GUID or ""))
+    local npcID = select(6, strsplit("-", info.unitGUID or ""))
 
     -- Move Pet Indicator to the left if both Pet Indicator and Combat Indicator are showing with the same anchor so they dont overlap
     if frame.combatIndicator and frame.combatIndicator:IsShown() and combatIndicator and (config.petIndicatorAnchor == combatIndicatorAnchor) then
