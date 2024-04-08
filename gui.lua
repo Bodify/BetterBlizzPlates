@@ -3009,11 +3009,11 @@ local function guiGeneralTab()
         enemyNeutralColorNameButtonIcon:Hide()
     end
 
-    local ShowClassColorInNameplate = CreateCheckbox("ShowClassColorInNameplate", "Class color healthbar", BetterBlizzPlates, true)
+    local ShowClassColorInNameplate = CreateCheckbox("ShowClassColorInNameplate", "Class color healthbar", BetterBlizzPlates, true, BBP.ApplyNameplateWidth)
     ShowClassColorInNameplate:SetPoint("TOPLEFT", enemyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(ShowClassColorInNameplate, "Class Color Healthbar", "Class color enemy healthbars.", nil, nil, "ShowClassColorInNameplate")
     if GetCVar("ShowClassColorInNameplate") == "1" and BetterBlizzPlatesDB.ShowClassColorInNameplate == nil then
-        BetterBlizzPlatesDB.ShowClassColorInNameplate = "1"
+        BetterBlizzPlatesDB.ShowClassColorInNameplate = true
         ShowClassColorInNameplate:SetChecked(true)
     end
 
@@ -3228,11 +3228,11 @@ local function guiGeneralTab()
         friendlyColorNameIcon:Hide()
     end
 
-    local ShowClassColorInFriendlyNameplate = CreateCheckbox("ShowClassColorInFriendlyNameplate", "Class color healthbar", BetterBlizzPlates)
+    local ShowClassColorInFriendlyNameplate = CreateCheckbox("ShowClassColorInFriendlyNameplate", "Class color healthbar", BetterBlizzPlates, true, BBP.ApplyNameplateWidth)
     ShowClassColorInFriendlyNameplate:SetPoint("TOPLEFT", friendlyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(ShowClassColorInFriendlyNameplate, "Class color healthbar", "Class color friendly healthbars.", nil, nil, "ShowClassColorInFriendlyNameplate")
     if GetCVar("ShowClassColorInFriendlyNameplate") == "1" and BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate == nil then
-        BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate = "1"
+        BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate = true
         ShowClassColorInFriendlyNameplate:SetChecked(true)
     end
 
