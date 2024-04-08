@@ -1023,7 +1023,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "bottom" then
                     BetterBlizzPlatesDB.bottom = value
                     -- Nameplate scales
-                elseif element == "nameplateMaxScale" then
+                elseif element == "nameplateMinScale" then
                     if not BBP.checkCombatAndWarn() then
                     local defaultMinScale = 0.8
                     local defaultMaxScale = 1.0
@@ -1266,7 +1266,7 @@ local function CreateTooltip(widget, tooltipText, anchor, cvarName)
     end)
 end
 
-local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarName)
+local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarName, cvarName2)
     widget:SetScript("OnEnter", function(self)
         -- Clear the tooltip before showing new information
         GameTooltip:ClearLines()
@@ -1293,6 +1293,9 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             --GameTooltip:AddLine(" ")
             --GameTooltip:AddLine("Default Value: " .. cvarName, 0.5, 0.5, 0.5) -- grey color for subtext
             GameTooltip:AddDoubleLine("Changes CVar:", cvarName, 0.2, 1, 0.6, 0.2, 1, 0.6)
+            if cvarName2 then
+                GameTooltip:AddDoubleLine(" ", cvarName2, 0.2, 1, 0.6, 0.2, 1, 0.6)
+            end
         end
         GameTooltip:Show()
     end)
@@ -1564,7 +1567,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         text:SetText(displayText)
 
         if listName == "auraWhitelist" then
-            text:SetWidth(210)
+            text:SetWidth(225)
             text:SetWordWrap(false)
             text:SetJustifyH("LEFT")
         end
@@ -1733,7 +1736,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             -- Create Checkbox I (Important)
             local checkBoxI = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
             checkBoxI:SetSize(24, 24)
-            checkBoxI:SetPoint("RIGHT", checkBoxP, "LEFT", -12, 0) -- Positioned next to checkBoxP
+            checkBoxI:SetPoint("RIGHT", checkBoxP, "LEFT", 3, 0) -- Positioned next to checkBoxP
 
             -- Create a texture for the checkbox
             checkBoxI.texture = checkBoxI:CreateTexture(nil, "ARTWORK", nil, 1)
@@ -1741,7 +1744,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             checkBoxI.texture:SetSize(27, 27)
             checkBoxI.texture:SetDesaturated(true)
             checkBoxI.texture:SetPoint("CENTER", checkBoxI, "CENTER", -0.5, 0.5)
-            CreateTooltipTwo(checkBoxI, "Important Glow |A:importantavailablequesticon:22:22|a", "Check for a glow on the aura to highlight it.", nil, "ANCHOR_TOPRIGHT")
+            CreateTooltipTwo(checkBoxI, "Important Glow |A:importantavailablequesticon:22:22|a", "Check for a glow on the aura to highlight it.\nRight-click to change Color.", nil, "ANCHOR_TOPRIGHT")
 
             -- Handler for the I checkbox
             checkBoxI:SetScript("OnClick", function(self)
@@ -1766,12 +1769,6 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             end
 
             SetImportantBoxColor(entryColors.text.r, entryColors.text.g, entryColors.text.b, entryColors.text.a)
-
-            local colorPickerButton = CreateFrame("Button", nil, button, "UIPanelButtonTemplate")
-            colorPickerButton:SetSize(20, 18)
-            colorPickerButton:SetPoint("RIGHT", checkBoxP, "LEFT", 1, 1)
-            colorPickerButton:SetText("C")
-            CreateTooltipTwo(colorPickerButton, "Important Glow Color", nil, nil, "ANCHOR_TOPRIGHT")
 
             -- Function to open the color picker
             local function OpenColorPicker()
@@ -1812,7 +1809,11 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 })
             end
 
-            colorPickerButton:SetScript("OnClick", OpenColorPicker)
+            checkBoxI:HookScript("OnMouseDown", function(self, button)
+                if button == "RightButton" then
+                    OpenColorPicker()
+                end
+            end)
 
             -- Create Checkbox C (Compacted)
             local checkBoxC = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
@@ -2865,20 +2866,20 @@ local function guiGeneralTab()
     hideTargetHighlight:SetPoint("TOPLEFT", hideNameplateAuras, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(hideTargetHighlight, "Hide Target Highlight", "Hide the bright glow on your current target nameplate")
 
-    local nameplateMaxScale = CreateSlider(BetterBlizzPlates, "Nameplate Size", 0.5, 2, 0.01, "nameplateMaxScale")
-    nameplateMaxScale:SetPoint("TOPLEFT", hideTargetHighlight, "BOTTOMLEFT", 12, -10)
-    CreateTooltipTwo(nameplateMaxScale, "Nameplate Size", "General size of all nameplates (except Target nameplate)", nil, nil, "nameplateMaxScale")
+    local nameplateMinScale = CreateSlider(BetterBlizzPlates, "Nameplate Size", 0.5, 2, 0.01, "nameplateMinScale")
+    nameplateMinScale:SetPoint("TOPLEFT", hideTargetHighlight, "BOTTOMLEFT", 12, -10)
+    CreateTooltipTwo(nameplateMinScale, "Nameplate Size", "General size of all nameplates (except Target nameplate)", nil, nil, "nameplateMinScale", "nameplateMaxScale")
 
-    local nameplateMaxScaleResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    nameplateMaxScaleResetButton:SetText("Default")
-    nameplateMaxScaleResetButton:SetWidth(60)
-    nameplateMaxScaleResetButton:SetPoint("LEFT", nameplateMaxScale, "RIGHT", 10, 0)
-    nameplateMaxScaleResetButton:SetScript("OnClick", function()
-        BBP.ResetToDefaultScales(nameplateMaxScale, "nameplateScale")
+    local nameplateMinScaleResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
+    nameplateMinScaleResetButton:SetText("Default")
+    nameplateMinScaleResetButton:SetWidth(60)
+    nameplateMinScaleResetButton:SetPoint("LEFT", nameplateMinScale, "RIGHT", 10, 0)
+    nameplateMinScaleResetButton:SetScript("OnClick", function()
+        BBP.ResetToDefaultScales(nameplateMinScale, "nameplateScale")
     end)
 
     local nameplateSelectedScale = CreateSlider(BetterBlizzPlates, "Target Nameplate Size", 0.5, 3, 0.01, "nameplateSelectedScale")
-    nameplateSelectedScale:SetPoint("TOPLEFT", nameplateMaxScale, "BOTTOMLEFT", 0, -17)
+    nameplateSelectedScale:SetPoint("TOPLEFT", nameplateMinScale, "BOTTOMLEFT", 0, -17)
     CreateTooltipTwo(nameplateSelectedScale, "Target Nameplate Size", "Size of your current target's nameplate", nil, nil, "nameplateSelectedScale")
 
     local nameplateSelectedScaleResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
@@ -3008,15 +3009,23 @@ local function guiGeneralTab()
         enemyNeutralColorNameButtonIcon:Hide()
     end
 
-    local enemyHealthBarColor = CreateCheckbox("enemyHealthBarColor", "Custom nameplate color", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
-    enemyHealthBarColor:SetPoint("TOPLEFT", enemyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local ShowClassColorInNameplate = CreateCheckbox("ShowClassColorInNameplate", "Class color healthbar", BetterBlizzPlates, true)
+    ShowClassColorInNameplate:SetPoint("TOPLEFT", enemyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(ShowClassColorInNameplate, "Class Color Healthbar", "Class color enemy healthbars.", nil, nil, "ShowClassColorInNameplate")
+    if GetCVar("ShowClassColorInNameplate") == "1" and BetterBlizzPlatesDB.ShowClassColorInNameplate == nil then
+        BetterBlizzPlatesDB.ShowClassColorInNameplate = "1"
+        ShowClassColorInNameplate:SetChecked(true)
+    end
+
+    local enemyHealthBarColor = CreateCheckbox("enemyHealthBarColor", "Custom healthbar color", BetterBlizzPlates)
+    enemyHealthBarColor:SetPoint("TOPLEFT", ShowClassColorInNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(enemyHealthBarColor, "Custom Nameplate Color", "Color ALL enemy nameplates a color of your choice.", "Has sub-setting to color NPC's only")
 
-    local alwaysHideEnemyCastbar = CreateCheckbox("alwaysHideEnemyCastbar", "Hide Castbar", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
+    local alwaysHideEnemyCastbar = CreateCheckbox("alwaysHideEnemyCastbar", "Hide castbar", BetterBlizzPlates)
     alwaysHideEnemyCastbar:SetPoint("TOPLEFT", enemyHealthBarColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(alwaysHideEnemyCastbar, "Hide Castbar", "Always hide Enemy castbar.")
 
-    local enemyHealthBarColorNpcOnly = CreateCheckbox("enemyHealthBarColorNpcOnly", "Npc only", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
+    local enemyHealthBarColorNpcOnly = CreateCheckbox("enemyHealthBarColorNpcOnly", "Npc only", BetterBlizzPlates)
     enemyHealthBarColorNpcOnly:SetPoint("LEFT", enemyHealthBarColor.Text, "RIGHT", 0, 0)
     CreateTooltipTwo(enemyHealthBarColorNpcOnly, "Only color NPC's.")
 
@@ -3102,10 +3111,10 @@ local function guiGeneralTab()
     end
 
     local showNameplateCastbarTimer = CreateCheckbox("showNameplateCastbarTimer", "Cast timer next to castbar", BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
-    showNameplateCastbarTimer:SetPoint("TOPLEFT", alwaysHideEnemyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    showNameplateCastbarTimer:SetPoint("LEFT", alwaysHideEnemyCastbar.text, "RIGHT", 0, 0)
 
     local showNameplateTargetText = CreateCheckbox("showNameplateTargetText", "Show target underneath castbar", BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
-    showNameplateTargetText:SetPoint("TOPLEFT", showNameplateCastbarTimer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    showNameplateTargetText:SetPoint("TOPLEFT", alwaysHideEnemyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(showNameplateTargetText, "Nameplate Target Text", "Show the nameplate's current target underneath the castbar while casting")
 
     local enemyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 1.5, 0.01, "enemyNameScale")
@@ -3219,8 +3228,24 @@ local function guiGeneralTab()
         friendlyColorNameIcon:Hide()
     end
 
-    local classColorPersonalNameplate = CreateCheckbox("classColorPersonalNameplate", "Class colored personal nameplate", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
-    classColorPersonalNameplate:SetPoint("TOPLEFT", friendlyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local ShowClassColorInFriendlyNameplate = CreateCheckbox("ShowClassColorInFriendlyNameplate", "Class color healthbar", BetterBlizzPlates)
+    ShowClassColorInFriendlyNameplate:SetPoint("TOPLEFT", friendlyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(ShowClassColorInFriendlyNameplate, "Class color healthbar", "Class color friendly healthbars.", nil, nil, "ShowClassColorInFriendlyNameplate")
+    if GetCVar("ShowClassColorInFriendlyNameplate") == "1" and BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate == nil then
+        BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate = "1"
+        ShowClassColorInFriendlyNameplate:SetChecked(true)
+    end
+
+    local friendlyHealthBarColor = CreateCheckbox("friendlyHealthBarColor", "Custom healthbar color", BetterBlizzPlates)
+    friendlyHealthBarColor:SetPoint("TOPLEFT", ShowClassColorInFriendlyNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(friendlyHealthBarColor, "Custom Healthbar Color", "Color ALL Friendly healthbars a color of your choice.")
+
+    local alwaysHideFriendlyCastbar = CreateCheckbox("alwaysHideFriendlyCastbar", "Hide castbar", BetterBlizzPlates)
+    alwaysHideFriendlyCastbar:SetPoint("TOPLEFT", friendlyHealthBarColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(alwaysHideFriendlyCastbar, "Hide Castbar", "Always hide Friendly castbars.")
+
+    local classColorPersonalNameplate = CreateCheckbox("classColorPersonalNameplate", "Class color personal nameplate", BetterBlizzPlates)
+    classColorPersonalNameplate:SetPoint("TOPLEFT", alwaysHideFriendlyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     classColorPersonalNameplate:HookScript("OnClick", function(self)
         local nameplate, frame = BBP.GetSafeNameplate("player")
         if frame then
@@ -3234,15 +3259,7 @@ local function guiGeneralTab()
         end
     end)
 
-    local friendlyHealthBarColor = CreateCheckbox("friendlyHealthBarColor", "Custom nameplate color", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
-    friendlyHealthBarColor:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(friendlyHealthBarColor, "Custom Nameplate Color", "Color ALL Friendly nameplates a color of your choice.")
-
-    local alwaysHideFriendlyCastbar = CreateCheckbox("alwaysHideFriendlyCastbar", "Hide castbar", BetterBlizzPlates)
-    alwaysHideFriendlyCastbar:SetPoint("TOPLEFT", friendlyHealthBarColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(alwaysHideFriendlyCastbar, "Hide Castbar", "Always hide Friendly castbars.")
-
-    local friendlyNameColor = CreateCheckbox("friendlyNameColor", "Name", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
+    local friendlyNameColor = CreateCheckbox("friendlyNameColor", "Name", BetterBlizzPlates)
     friendlyNameColor:SetPoint("LEFT", friendlyHealthBarColor.Text, "RIGHT", 0, 0)
     friendlyNameColor:HookScript("OnClick", function(self)
         if self:GetChecked(true) then
@@ -3321,14 +3338,14 @@ local function guiGeneralTab()
         friendlyHealthBarColorButton:SetAlpha(0) --default slider creation only does 0.5 alpha
     end
 
-    local friendlyHideHealthBar = CreateCheckbox("friendlyHideHealthBar", "Hide healthbar", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
-    friendlyHideHealthBar:SetPoint("TOPLEFT", alwaysHideFriendlyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local friendlyHideHealthBar = CreateCheckbox("friendlyHideHealthBar", "Hide healthbar", BetterBlizzPlates)
+    friendlyHideHealthBar:SetPoint("LEFT", alwaysHideFriendlyCastbar.text, "RIGHT", 0, 0)
     friendlyHideHealthBar:HookScript("OnClick", function()
         BBP.HideHealthbarInPvEMagicCaller()
     end)
-    CreateTooltipTwo(friendlyHideHealthBar, "Hide Healthbar", "Hide healthbars on Friendly nameplates.", "Castbar and name will still show.\nThis also hides healthbars in PvE, if you don't want that check the setting in Misc.")
+    CreateTooltipTwo(friendlyHideHealthBar, "Hide Healthbar", "Hide healthbars on Friendly nameplates.", "Castbar and name will still show.\nThis also hides healthbars in PvE, if you don't want that behaviour then check the setting in Misc.")
 
-    local friendlyHideHealthBarNpc = CreateCheckbox("friendlyHideHealthBarNpc", "NPC's", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
+    local friendlyHideHealthBarNpc = CreateCheckbox("friendlyHideHealthBarNpc", "NPC's", BetterBlizzPlates)
     friendlyHideHealthBarNpc:SetPoint("LEFT", friendlyHideHealthBar.text, "RIGHT", 0, 0)
     CreateTooltipTwo(friendlyHideHealthBarNpc, "Hide NPC Healthbar", "Hide healthbars on Friendly NPC's", "Castbar and name will still show.")
 
@@ -3347,7 +3364,7 @@ local function guiGeneralTab()
     end
 
     local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Arena Toggle", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
-    toggleFriendlyNameplatesInArena:SetPoint("TOPLEFT", friendlyHideHealthBar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    toggleFriendlyNameplatesInArena:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(toggleFriendlyNameplatesInArena, "Arena Toggle", "Turn on friendly nameplates when you enter arena and off again when you leave.")
 
     local friendlyNameplatesOnlyInDungeons = CreateCheckbox("friendlyNameplatesOnlyInDungeons", "Dungeon/raid Toggle", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
@@ -3581,6 +3598,9 @@ local function guiGeneralTab()
         end
     end)
     CreateTooltipTwo(useCustomTextureForEnemy, "Enemy Texture", "Change Enemy healthbar texture.", nil, "ANCHOR_LEFT")
+    if not useCustomTextureForEnemy:GetChecked() then
+        LibDD:UIDropDownMenu_DisableDropDown(textureDropdown)
+    end
 
     local useCustomTextureForFriendly = CreateCheckbox("useCustomTextureForFriendly", "Friendly", useCustomTexture)
     useCustomTextureForFriendly:SetPoint("LEFT", textureDropdownFriendly, "RIGHT", -15, 1)
@@ -3593,6 +3613,9 @@ local function guiGeneralTab()
         end
     end)
     CreateTooltipTwo(useCustomTextureForFriendly, "Friendly Texture", "Change Friendly healthbar texture.", nil, "ANCHOR_LEFT")
+    if not useCustomTextureForFriendly:GetChecked() then
+        LibDD:UIDropDownMenu_DisableDropDown(textureDropdownFriendly)
+    end
 
     local useCustomTextureForSelf = CreateCheckbox("useCustomTextureForSelf", "Self", useCustomTexture)
     useCustomTextureForSelf:SetPoint("LEFT", textureDropdownSelf, "RIGHT", -15, 1)
@@ -3604,6 +3627,9 @@ local function guiGeneralTab()
         end
     end)
     CreateTooltipTwo(useCustomTextureForSelf, "Personal Texture", "Change Personal resource healthbar texture.", nil, "ANCHOR_LEFT")
+    if not useCustomTextureForSelf:GetChecked() then
+        LibDD:UIDropDownMenu_DisableDropDown(textureDropdownSelf)
+    end
 
     local useCustomTextureForSelfMana = CreateCheckbox("useCustomTextureForSelfMana", "Self Mana", useCustomTexture)
     useCustomTextureForSelfMana:SetPoint("LEFT", textureDropdownSelfMana, "RIGHT", -15, 1)
@@ -3615,6 +3641,9 @@ local function guiGeneralTab()
         end
     end)
     CreateTooltipTwo(useCustomTextureForSelfMana, "Personal Mana/Resource Texture", "Change Personal Resource mana/resource-bar texture", nil, "ANCHOR_LEFT")
+    if not useCustomTextureForSelfMana:GetChecked() then
+        LibDD:UIDropDownMenu_DisableDropDown(textureDropdownSelfMana)
+    end
 
     local function SetClassAndPowerColor()
         -- Retrieve the player's class information
@@ -3653,10 +3682,18 @@ local function guiGeneralTab()
     useCustomTexture:HookScript("OnClick", function(self)
         CheckAndToggleCheckboxes(useCustomTexture)
         if self:GetChecked() then
-            LibDD:UIDropDownMenu_EnableDropDown(textureDropdown)
-            LibDD:UIDropDownMenu_EnableDropDown(textureDropdownFriendly)
-            LibDD:UIDropDownMenu_EnableDropDown(textureDropdownSelf)
-            LibDD:UIDropDownMenu_EnableDropDown(textureDropdownSelfMana)
+            if useCustomTextureForEnemy:GetChecked() then
+                LibDD:UIDropDownMenu_EnableDropDown(textureDropdown)
+            end
+            if useCustomTextureForFriendly:GetChecked() then
+                LibDD:UIDropDownMenu_EnableDropDown(textureDropdownFriendly)
+            end
+            if useCustomTextureForSelf:GetChecked() then
+                LibDD:UIDropDownMenu_EnableDropDown(textureDropdownSelf)
+            end
+            if useCustomTextureForSelfMana:GetChecked() then
+                LibDD:UIDropDownMenu_EnableDropDown(textureDropdownSelfMana)
+            end
         else
             LibDD:UIDropDownMenu_DisableDropDown(textureDropdown)
             LibDD:UIDropDownMenu_DisableDropDown(textureDropdownFriendly)
@@ -5954,7 +5991,7 @@ local function guiNameplateAuras()
 
     local onlyMeTexture = contentFrame:CreateTexture(nil, "OVERLAY")
     onlyMeTexture:SetAtlas("UI-HUD-UnitFrame-Player-Group-FriendOnlineIcon")
-    onlyMeTexture:SetPoint("LEFT", whitelistText, "RIGHT", 68.5, -2)
+    onlyMeTexture:SetPoint("LEFT", whitelistText, "RIGHT", 84, -2)
     onlyMeTexture:SetSize(18,20)
     CreateTooltip(onlyMeTexture, "Only My Aura Checkboxes")
 
@@ -5966,7 +6003,7 @@ local function guiNameplateAuras()
 
     local compactAuraTexture = contentFrame:CreateTexture(nil, "OVERLAY")
     compactAuraTexture:SetAtlas("ui-hud-minimap-zoom-out")
-    compactAuraTexture:SetPoint("LEFT", enlargeAuraTexture, "RIGHT", 4, 0)
+    compactAuraTexture:SetPoint("LEFT", enlargeAuraTexture, "RIGHT", 3, 0)
     compactAuraTexture:SetSize(18,18)
     CreateTooltip(compactAuraTexture, "Compact Aura Checkboxes")
 
@@ -5980,7 +6017,7 @@ local function guiNameplateAuras()
 
     local pandemicAuraTexture = contentFrame:CreateTexture(nil, "OVERLAY")
     pandemicAuraTexture:SetAtlas("elementalstorm-boss-air")
-    pandemicAuraTexture:SetPoint("LEFT", importantAuraTexture, "RIGHT", 15, 1)
+    pandemicAuraTexture:SetPoint("LEFT", importantAuraTexture, "RIGHT", 0, 1)
     pandemicAuraTexture:SetSize(26,26)
     pandemicAuraTexture:SetDesaturated(true)
     pandemicAuraTexture:SetVertexColor(1,0,0)
@@ -6750,7 +6787,7 @@ local function guiMisc()
 
     local skipAdjustingFixedFonts = CreateCheckbox("skipAdjustingFixedFonts", "Skip adjusting nameplate fonts", guiMisc)
     skipAdjustingFixedFonts:SetPoint("TOPLEFT", anonMode, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(skipAdjustingFixedFonts, "Skip adjusting nameplate fonts.\n\n1080p can cause name scaling issues and this setting will fix it.\nIt will however also make you unable to change fonts with this addon\n(you can do it manually in game files still).\n\nNOTE: Still don't fully understand Blizzards code and how this nameplate font thing works\nso check this at own risk and report to me if it's not working as expected.")
+    CreateTooltipTwo(skipAdjustingFixedFonts, "Skip adjusting nameplate fonts", "1080p can cause name scaling issues and this setting will fix it.\nIt will however also make you unable to change fonts with this addon\n(you can do it manually in game files still).", "NOTE: Still don't fully understand Blizzards code and how this nameplate font thing works\nso check this at own risk and report to me if it's not working as expected.")
     skipAdjustingFixedFonts:HookScript("OnClick", function()
         StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end)
@@ -6759,12 +6796,16 @@ local function guiMisc()
     toggleNamesOffDuringPVE:SetPoint("TOPLEFT", skipAdjustingFixedFonts, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(toggleNamesOffDuringPVE, "Toggle friendly player names (on nameplate) off\nduring PvE content and back on again outside.")
 
+    local doNotHideFriendlyHealthbarInPve = CreateCheckbox("doNotHideFriendlyHealthbarInPve", "Don't hide friendly healthbars in PvE", guiMisc)
+    doNotHideFriendlyHealthbarInPve:SetPoint("TOPLEFT", toggleNamesOffDuringPVE, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(doNotHideFriendlyHealthbarInPve, "Don't Hide Friendly Healthbar", "Prevents hiding friendly healthbars in PvE if \"Hide healthbar\" is checked in General settings.")
+
     -- local nameplateResourceText = guiMisc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     -- nameplateResourceText:SetPoint("TOPLEFT", guiMisc, "TOPLEFT", 45, -250)
     -- nameplateResourceText:SetText("Nameplate Resource")
 
     local nameplateSelfWidth = CreateSlider(guiMisc, "Personal Nameplate Width", 50, 200, 1, "nameplateSelfWidth")
-    nameplateSelfWidth:SetPoint("TOPLEFT", toggleNamesOffDuringPVE, "BOTTOMLEFT", 10, -20)
+    nameplateSelfWidth:SetPoint("TOPLEFT", doNotHideFriendlyHealthbarInPve, "BOTTOMLEFT", 10, -20)
 
 
 
@@ -6773,7 +6814,7 @@ local function guiMisc()
 
 
     local changeNameplateBorderColor = CreateCheckbox("changeNameplateBorderColor", "Change Nameplate Border Color", guiMisc)
-    changeNameplateBorderColor:SetPoint("TOPLEFT", toggleNamesOffDuringPVE, "BOTTOMLEFT", 0, -50)
+    changeNameplateBorderColor:SetPoint("TOPLEFT", doNotHideFriendlyHealthbarInPve, "BOTTOMLEFT", 0, -50)
 
     local npBorderTargetColor = CreateCheckbox("npBorderTargetColor", "Target Border", changeNameplateBorderColor)
     npBorderTargetColor:SetPoint("TOPLEFT", changeNameplateBorderColor, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
@@ -6914,17 +6955,16 @@ local function guiImportAndExport()
 
     local totemIndicatorList = CreateImportExportUI(auraWhitelist, "Totem Indicator List", BetterBlizzPlatesDB.totemIndicatorNpcList, 0, -100, "totemIndicatorNpcList")
 
-    local hideNpcList = CreateImportExportUI(totemIndicatorList, "Hide NPC Blacklist", BetterBlizzPlatesDB.hideNPCsList, 0, -100, "hideNPCsList")
+    local fadeOutNPCsList = CreateImportExportUI(totemIndicatorList, "Fade NPC List", BetterBlizzPlatesDB.fadeOutNPCsList, 0, -100, "fadeOutNPCsList")
+    local hideNpcList = CreateImportExportUI(fadeOutNPCsList, "Hide NPC Blacklist", BetterBlizzPlatesDB.hideNPCsList, 210, 0, "hideNPCsList")
     local hideNPCsWhitelist = CreateImportExportUI(hideNpcList, "Hide NPC Whitelist", BetterBlizzPlatesDB.hideNPCsWhitelist, 210, 0, "hideNPCsWhitelist")
 
-    local castEmphasisList = CreateImportExportUI(hideNpcList, "Cast Emphasis List", BetterBlizzPlatesDB.castEmphasisList, 0, -100, "castEmphasisList")
+    local castEmphasisList = CreateImportExportUI(fadeOutNPCsList, "Cast Emphasis List", BetterBlizzPlatesDB.castEmphasisList, 0, -100, "castEmphasisList")
     local hideCastbarList = CreateImportExportUI(castEmphasisList, "Hide Castbar Blacklist", BetterBlizzPlatesDB.hideCastbarList, 210, 0, "hideCastbarList")
     local hideCastbarWhitelist = CreateImportExportUI(hideCastbarList, "Hide Castbar Whitelist", BetterBlizzPlatesDB.hideCastbarWhitelist, 210, 0, "hideCastbarWhitelist")
 
     local colorNpcList = CreateImportExportUI(castEmphasisList, "Color NPC List", BetterBlizzPlatesDB.colorNpcList, 0, -100, "colorNpcList")
-
-
-
+    local auraColorList = CreateImportExportUI(colorNpcList, "Color by Aura List", BetterBlizzPlatesDB.auraColorList, 210, 0, "auraColorList")
 end
 ------------------------------------------------------------
 -- GUI Setup
@@ -6975,3 +7015,26 @@ end
 --     --C_NamePlate.SetNamePlateEnemyPreferredClickInsets (0, 0, 0, 0)
 --     CustomSetInset("enemy", 0, 0, 0, 0)
 -- end)
+
+
+
+
+-- local slider = CreateFrame("Frame", "BBPslidus", UIParent, "MinimalSliderWithSteppersTemplate")
+-- slider:RegisterCallback("OnValueChanged", function()
+--     slider.TopText:SetText("Nameplate Size: " .. slider.Slider:GetValue())
+-- end)
+-- slider.TopText:Show()
+-- slider:Init(2, 1, 5, 4/1)
+-- slider.MinText:SetText("asd")
+-- slider.MinText:Show()
+-- slider.TopText:SetText("Nameplate Size: " .. slider.Slider:GetValue())
+-- slider:SetPoint("CENTER", UIParent)
+
+-- slider.LeftText:SetText("left")
+-- slider.LeftText:Show()
+
+-- slider.RightText:SetText("right")
+-- slider.RightText:Show()
+
+-- slider.MaxText:SetText("Max")
+-- slider.MaxText:Show()

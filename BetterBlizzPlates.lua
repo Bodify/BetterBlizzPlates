@@ -601,6 +601,9 @@ function CVarFetcher()
         BetterBlizzPlatesDB.nameplateOccludedAlphaMult = GetCVar("nameplateOccludedAlphaMult")
         BetterBlizzPlatesDB.nameplateMotion = GetCVar("nameplateMotion")
 
+        BetterBlizzPlatesDB.ShowClassColorInNameplate = GetCVar("ShowClassColorInNameplate")
+        BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate = GetCVar("ShowClassColorInFriendlyNameplate")
+
         BetterBlizzPlatesDB.nameplateShowEnemyGuardians = GetCVar("nameplateShowEnemyGuardians")
         BetterBlizzPlatesDB.nameplateShowEnemyMinions = GetCVar("nameplateShowEnemyMinions")
         BetterBlizzPlatesDB.nameplateShowEnemyMinus = GetCVar("nameplateShowEnemyMinus")
@@ -2116,15 +2119,17 @@ function BBP.ColorNpcHealthbar(frame)
     -- Set the vertex color based on the NPC color values
     if inList and npcHealthbarColor then
         config.npcHealthbarColor = npcHealthbarColor
-        frame.healthBar:SetStatusBarColor(unpack(config.npcHealthbarColor))
+        frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
         local colorNPCName = BetterBlizzPlatesDB.colorNPCName
         if colorNPCName then
-            frame.name:SetVertexColor(unpack(config.npcHealthbarColor))
+            frame.name:SetVertexColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
         end
     else
         config.npcHealthbarColor = nil
     end
 end
+-- frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
+-- frame.name:SetVertexColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
 
 BBP.auraListNeedsUpdate = true
 BBP.spellIdLookup = {}
@@ -2242,7 +2247,7 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
     end
 
     if config.colorNpc and config.npcHealthbarColor then
-        frame.healthBar:SetStatusBarColor(unpack(config.npcHealthbarColor))
+        frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 
     if (config.focusTargetIndicator and config.focusTargetIndicatorColorNameplate and info.isFocus) or config.focusTargetIndicatorTestMode then
@@ -2324,6 +2329,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         config.focusTargetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB
         config.focusTargetIndicator = BetterBlizzPlatesDB.focusTargetIndicator
         config.targetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB
+        config.colorNPC = BetterBlizzPlatesDB.colorNPC
 
         config.updateHealthColorInitialized = true
     end
@@ -2336,7 +2342,8 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
     if info.isSelf then
         if config.classColorPersonalNameplate then
             frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
-        else return end
+        --else return end
+        end
     end
 
 	if ( not unitIsConnected or (unitIsDead and not unitIsPlayer) ) then
@@ -2393,8 +2400,8 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         ColorNameplateByReaction(frame)
     end
 
-    if config.colorNpc and config.npcHealthbarColor then
-        frame.healthBar:SetStatusBarColor(unpack(config.npcHealthbarColor))
+    if config.colorNPC and config.npcHealthbarColor then
+        frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 
     if (config.focusTargetIndicator and config.focusTargetIndicatorColorNameplate and info.isFocus) or config.focusTargetIndicatorTestMode then
@@ -2445,6 +2452,11 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
                     end
                 end
             end
+        end
+    end
+    if info.isSelf then --without this self nameplate reset to green after targeting self, figure out more
+        if config.classColorPersonalNameplate then
+            frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
         end
     end
 end
@@ -2971,7 +2983,7 @@ function BBP.SetupFakeName(frame)
     end
 
     if not frame.fakeName then
-        frame.fakeName = fakeName:CreateFontString(nil, "OVERLAY", "SystemFont_NamePlateFixed")
+        frame.fakeName = fakeName:CreateFontString(nil, "BACKGROUND", "SystemFont_NamePlateFixed")
         frame.fakeName:SetShadowColor(frame.name:GetShadowColor())
         frame.fakeName:GetShadowOffset(frame.name:GetShadowOffset())
     end
@@ -3031,6 +3043,15 @@ local function HandleNamePlateAdded(unit)
         BBP.previousFocusNameplate = frame
     end
 
+    -- if not frame.hokedHp then
+    --     hooksecurefunc(frame.healthBar, "SetHeight", function(self)
+    --         if self.changing or self:IsForbidden() then return end
+    --         self.changing = true
+    --         self:SetHeight(30)
+    --         self.changing = false
+    --     end)
+    --     frame.hokedHp = true
+    -- end
     -- Check and set settings
 
     -- Hide default personal BuffFrame
@@ -3445,7 +3466,7 @@ function BBP.ConsolidatedUpdateName(frame)
 
     -- Color NPC
     if config.colorNpc and config.colorNPCName and config.npcHealthbarColor then
-        frame.name:SetStatusBarColor(unpack(config.npcHealthbarColor))
+        frame.name:SetVertexColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 
     -- Color nameplate and pick random name or hide name during totem tester
@@ -3541,7 +3562,7 @@ local function SetNameplateBehavior()
         end
     else
         if BBP.isInPvE then
-            if BetterBlizzPlatesDB.friendlyHideHealthBar then SetCVar('nameplateShowOnlyNames', 1) end
+            if BetterBlizzPlatesDB.friendlyHideHealthBar and not BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve then SetCVar('nameplateShowOnlyNames', 1) end
             if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then SetCVar("UnitNameFriendlyPlayerName", 0) end
             BBP.ApplyNameplateWidth()
         else
@@ -4225,3 +4246,14 @@ function BBP.ToggleUpdateMessageWindow()
         BBP.UpdateMessageWindow:Show()
     end
 end
+
+-- local x = 0
+-- hooksecurefunc("DefaultCompactNamePlateFrameAnchorInternal", function(frame, setupOptions)
+--     local info = frame.BetterBlizzPlates and frame.BetterBlizzPlates.unitInfo
+--     if not info then return end
+--     if info.isFriend then
+--         frame.healthBar:SetHeight(30)
+--     else
+--         frame.healthBar:SetHeight(70)
+--     end
+-- end)

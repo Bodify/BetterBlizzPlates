@@ -645,8 +645,10 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                         frame.castBar.Text:SetText(string.format("|c%s[%s]|r", colorStr, name))
                         local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
                         local castBarTexture = frame.castBar:GetStatusBarTexture()
-                        if castBarTexture and not useCustomCastbarTexture then
+                        local castHighlighter = BetterBlizzPlatesDB.castBarInterruptHighlighter
+                        if castBarTexture and not useCustomCastbarTexture and castHighlighter then
                             castBarTexture:SetDesaturated(false)
+                            frame.castBar:SetStatusBarColor(1,1,1)
                         end
 
                         local castbarQuickHide = BetterBlizzPlatesDB.castbarQuickHide
@@ -699,7 +701,6 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
             end
         end
         if castbarQuickHide then
-            local nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
             if nameplate.UnitFrame.castBar then
                 nameplate.UnitFrame.castBar:Hide()
             end
