@@ -1029,8 +1029,8 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     local defaultMaxScale = 1.0
                     local ratio = defaultMinScale / defaultMaxScale
                     -- Keep ratio between default values
-                    local newMaxScale = value
-                    local newMinScale = newMaxScale * ratio
+                    local newMinScale = value
+                    local newMaxScale = newMinScale * ratio
                     SetCVar("nameplateMinScale", newMinScale)
                     SetCVar("nameplateMaxScale", newMaxScale)
                     BetterBlizzPlatesDB.nameplateMinScale = newMinScale
@@ -1906,11 +1906,13 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
     end
 
     local function updateNamesInListData()
-        for _, entry in ipairs(listData) do
-            if entry.id and (not entry.name or entry.name == "") then
-                local spellName = GetSpellInfo(entry.id)
-                if spellName then
-                    entry.name = spellName  -- Update the name field with the fetched spell name
+        if not listName == "fadeOutNPCsList" and not listName == "hideNPCsList" and not listName == "hideNPCsWhitelist" and not listName == "colorNpcList" then
+            for _, entry in ipairs(listData) do
+                if entry.id and (not entry.name or entry.name == "") then
+                    local spellName = GetSpellInfo(entry.id)
+                    if spellName then
+                        entry.name = spellName  -- Update the name field with the fetched spell name
+                    end
                 end
             end
         end
@@ -2027,7 +2029,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         -- Check if there's a numeric ID within the name and clear the name if found
         if id then
             local spellName = GetSpellInfo(id)
-            if spellName then
+            if spellName and not listName == "fadeOutNPCsList" and not listName == "hideNPCsList" and not listName == "hideNPCsWhitelist" and not listName == "colorNpcList" then--bodify
                 name = spellName
             else
                 name = ""

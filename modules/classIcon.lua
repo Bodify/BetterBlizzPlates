@@ -55,11 +55,11 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         return
     end
 
-    local anchorPoint = (info.isFriend and config.classIndicatorFriendlyAnchor) or (info.isEnemy and config.classIndicatorAnchor)
+    local anchorPoint = (info.isFriend and config.classIndicatorFriendlyAnchor) or ((info.isEnemy or info.isNeutral) and config.classIndicatorAnchor)
     local oppositeAnchor = BBP.GetOppositeAnchor(anchorPoint)
-    local xPos = (info.isFriend and config.classIndicatorFriendlyXPos) or (info.isEnemy and config.classIndicatorXPos)
-    local yPos = (info.isFriend and config.classIndicatorFriendlyYPos + (anchorPoint == "TOP" and 2 or 0)) or (info.isEnemy and config.classIndicatorYPos + (anchorPoint == "TOP" and 2 or 0))
-    local scale = (info.isFriend and config.classIndicatorFriendlyScale + 0.3) or (info.isEnemy and config.classIndicatorScale + 0.3)
+    local xPos = (info.isFriend and config.classIndicatorFriendlyXPos) or ((info.isEnemy or info.isNeutral) and config.classIndicatorXPos) or 0
+    local yPos = (info.isFriend and config.classIndicatorFriendlyYPos + (anchorPoint == "TOP" and 2 or 0)) or ((info.isEnemy or info.isNeutral) and config.classIndicatorYPos + (anchorPoint == "TOP" and 2 or 0)) or 0
+    local scale = (info.isFriend and config.classIndicatorFriendlyScale + 0.3) or ((info.isEnemy or info.isNeutral) and config.classIndicatorScale + 0.3) or 1
     local inInstance, instanceType = IsInInstance()
 
     -- Initialize Class Icon Frame
@@ -83,7 +83,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         frame.classIndicator.highlightSelect:SetDrawLayer("OVERLAY", 1)
     end
 
-    if (info.isFriend and not config.classIndicatorFriendly) or (info.isEnemy and not config.classIndicatorEnemy) then
+    if (info.isFriend and not config.classIndicatorFriendly) or ((info.isEnemy or info.isNeutral) and not config.classIndicatorEnemy) then
         frame.classIndicator:Hide()
         return
     end
@@ -129,7 +129,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
                 frame.classIndicator.highlightSelect:SetVertexColor(1,0.88,0)
             end
         end
-    elseif info.isEnemy then
+    elseif (info.isEnemy or info.isNeutral) then
         if config.classIconSquareBorder then
             frame.classIndicator.icon:SetSize(20, 20)
             frame.classIndicator.mask:SetAtlas("UI-Frame-IconMask")
@@ -212,7 +212,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
                 if specID then
                     specIcon = select(4, GetSpecializationInfoByID(specID))
                 end
-            elseif info.isEnemy and IsActiveBattlefieldArena() then
+            elseif (info.isEnemy or info.isNeutral) and IsActiveBattlefieldArena() then
                 for i = 1, 3 do
                     local arenaUnit = "arena" .. i
                     if UnitIsUnit(frame.displayedUnit, arenaUnit) then
@@ -223,7 +223,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
                         end
                     end
                 end
-            elseif info.isEnemy then
+            elseif (info.isEnemy or info.isNeutral) then
                 if Details then
                     specID = Details:GetSpecByGUID(info.unitGUID)
                 end
@@ -240,7 +240,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     if specIcon and config.classIndicatorSpecIcon then
         if config.classIndicatorHealer then
             if HealerSpecs[specID] then
-                if not (info.isEnemy and config.classIconSquareBorder) or (info.isFriend or config.classIconSquareBorderFriendly) then
+                if not ((info.isEnemy or info.isNeutral) and config.classIconSquareBorder) or (info.isFriend or config.classIconSquareBorderFriendly) then
                     frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
                     frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87)
                 else
@@ -257,7 +257,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         end
     elseif config.classIndicatorHealer then
         if HealerSpecs[specID] then
-            if not (info.isEnemy and config.classIconSquareBorder) or (info.isFriend or config.classIconSquareBorderFriendly) then
+            if not ((info.isEnemy or info.isNeutral) and config.classIconSquareBorder) or (info.isFriend or config.classIconSquareBorderFriendly) then
                 frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
                 frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87)
             else

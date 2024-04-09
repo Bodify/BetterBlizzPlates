@@ -1670,7 +1670,7 @@ end
 function BBP.ResetToDefaultScales(slider, targetType)
     -- Define default values
     local defaultSettings = {
-        nameplateScale = 1.0,  -- This will be used for nameplateMaxScale
+        nameplateScale = 0.8,  -- This will be used for nameplateMinScale
         nameplateSelected = 1.2,
     }
 
@@ -2232,6 +2232,7 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         config.targetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB
         config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
         config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
+        config.colorNPC = BetterBlizzPlatesDB.colorNPC
 
         config.updateHealthColorInitialized = true
     end
@@ -2239,15 +2240,16 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
     if info.isSelf then
         if config.classColorPersonalNameplate then
             frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
-        else return end
+        end
     end
 
     if config.friendlyHealthBarColor or config.enemyHealthBarColor then
         ColorNameplateByReaction(frame)
     end
 
-    if config.colorNpc and config.npcHealthbarColor then
-        frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
+    if config.colorNPC then--and config.npcHealthbarColor then --bodify need npc check here since it can run before np added
+        --frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
+        BBP.ColorNpcHealthbar(frame)
     end
 
     if (config.focusTargetIndicator and config.focusTargetIndicatorColorNameplate and info.isFocus) or config.focusTargetIndicatorTestMode then
@@ -2260,7 +2262,7 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
     end
 
     if (config.targetIndicator and config.targetIndicatorColorNameplate and info.isTarget) or config.targetIndicatorTestMode then
-        frame.healthBar:SetStatusBarColor(unpack(config.targetIndicatorColorNameplateRGB)) --bodiify mby replcae this one too then, do another if check to make sure color is ther as wel
+        frame.healthBar:SetStatusBarColor(unpack(config.targetIndicatorColorNameplateRGB))
     end
 
     if config.castBarEmphasisHealthbarColor then
@@ -3465,7 +3467,7 @@ function BBP.ConsolidatedUpdateName(frame)
     if config.classIndicator then BBP.ClassIndicator(frame) end --and not info.isSelf then BBP.ClassIndicator(frame) end bodify not sure if this needs to run here
 
     -- Color NPC
-    if config.colorNpc and config.colorNPCName and config.npcHealthbarColor then
+    if config.colorNPC and config.colorNPCName and config.npcHealthbarColor then
         frame.name:SetVertexColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 

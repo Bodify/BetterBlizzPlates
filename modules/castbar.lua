@@ -362,8 +362,9 @@ function BBP.CustomizeCastbar(unitToken)
     end
 
     if castBarRecolorInterrupt then
-        --if not UnitIsFriend(unitToken, "player") then
-            if spellName or spellID then
+        if spellName or spellID then
+            local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
+            if not isFriend then
                 for _, interruptSpellIDx in ipairs(interruptSpellIDs) do
                     local start, duration = GetSpellCooldown(interruptSpellIDx)
                     local cooldownRemaining = start + duration - GetTime()
@@ -397,7 +398,7 @@ function BBP.CustomizeCastbar(unitToken)
                     end
                 end
             end
-        --end
+        end
     end
 end
 
