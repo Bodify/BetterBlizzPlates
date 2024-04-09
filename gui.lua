@@ -2835,7 +2835,7 @@ local function guiGeneralTab()
     addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
     local verNumber = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
-    verNumber:SetText("v" .. BBP.VersionNumber .. "b")--SetText("v" .. BetterBlizzPlatesDB.updates)
+    verNumber:SetText("v" .. BBP.VersionNumber .. "d")--SetText("v" .. BetterBlizzPlatesDB.updates)
 
     ----------------------
     -- General:
