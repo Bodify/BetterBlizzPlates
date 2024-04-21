@@ -110,7 +110,7 @@ local fakeAuras = {
 
 local function isInWhitelist(spellName, spellId)
     for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
-        if (entry.name and spellName and string.lower(entry.name) == string.lower(spellName)) or entry.id == spellId then
+        if entry.id == spellId or (entry.name and not entry.id and spellName and string.lower(entry.name) == string.lower(spellName)) then
             return true
         end
     end
@@ -119,7 +119,7 @@ end
 
 local function isInBlacklist(spellName, spellId)
     for _, entry in pairs(BetterBlizzPlatesDB["auraBlacklist"]) do
-        if (entry.name and spellName and string.lower(entry.name) == string.lower(spellName)) or entry.id == spellId then
+        if entry.id == spellId or (entry.name and not entry.id and spellName and string.lower(entry.name) == string.lower(spellName)) then
             return true
         end
     end
@@ -128,7 +128,7 @@ end
 
 local function GetAuraDetails(spellName, spellId)
     for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
-        if (entry.name and spellName and string.lower(entry.name) == string.lower(spellName)) or entry.id == spellId then
+        if entry.id == spellId or (entry.name and not entry.id and spellName and string.lower(entry.name) == string.lower(spellName)) then
             local isImportant = entry.flags and entry.flags.important or false
             local isPandemic = entry.flags and entry.flags.pandemic or false
             local auraColor = entry.entryColors and entry.entryColors.text or nil
@@ -173,11 +173,15 @@ local function CheckBuffs()
                     end
                     if buff.isEnlarged then
                         importantGlowOffset = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
-                        buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
+                        if buff.ImportantGlow then
+                            buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
+                            buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
+                        end
                     elseif buff.isCompacted then
-                        buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
-                        buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
+                        if buff.ImportantGlow then
+                            buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
+                            buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
+                        end
                     elseif BetterBlizzPlatesDB.nameplateAuraSquare then
                         buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
                         buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
@@ -247,9 +251,45 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local texCoord = nameplateAuraSquare and {0.1, 0.9, 0.1, 0.9} or nameplateAuraTaller and {0.05, 0.95, 0.15, 0.82} or {0.05, 0.95, 0.1, 0.6}
     local compactTexCoord = not compactSquare and texCoord or nameplateAuraSquare and {0.25, 0.75, 0.05, 0.95} or nameplateAuraTaller and {0.3, 0.7, 0.15, 0.82} or {0.3, 0.7, 0.15, 0.80}
     local nameplateAuraScale = BetterBlizzPlatesDB.nameplateAuraScale
+    local sortEnlargedAurasFirst = BetterBlizzPlatesDB.sortEnlargedAurasFirst
 
     local scaledCompactWidth = compactSize * nameplateAuraCompactedScale
     local scaledCompactHeight = auraHeightSetting * nameplateAuraCompactedScale
+
+    local nameplateAuraBuffScale = BetterBlizzPlatesDB.nameplateAuraBuffScale
+    local nameplateAuraDebuffScale = BetterBlizzPlatesDB.nameplateAuraDebuffScale
+    local scaledBuffWidth = 20 * nameplateAuraBuffScale
+    local scaledBuffHeight = auraHeightSetting * nameplateAuraBuffScale
+    local scaledDebuffWidth = 20 * nameplateAuraDebuffScale
+    local scaledDebuffHeight = auraHeightSetting * nameplateAuraDebuffScale
+
+    local function defaultComparator(a, b)
+        return a.auraInstanceID < b.auraInstanceID
+    end
+
+    local function largeSmallAuraComparator(a, b)
+        if a.isEnlarged or b.isEnlarged then
+            if a.isEnlarged and not b.isEnlarged then
+                return true
+            elseif not a.isEnlarged and b.isEnlarged then
+                return false
+            else
+                return defaultComparator(a, b)
+            end
+        end
+
+        if a.isCompacted or b.isCompacted then
+            if a.isCompacted and not b.isCompacted then
+                return false
+            elseif not a.isCompacted and b.isCompacted then
+                return true
+            else
+                return defaultComparator(a, b)
+            end
+        end
+
+        return defaultComparator(a, b)
+    end
 
     -- Separate buffs and debuffs if needed
     local buffs = {}
@@ -290,20 +330,24 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
                 buff:SetSize(scaledCompactWidth, scaledCompactHeight)
                 buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
                 buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-                --if not compactSquare then
-                    buff.Icon:SetTexCoord(unpack(compactTexCoord))
-                -- else
-
-                -- end
+                buff.Icon:SetTexCoord(unpack(compactTexCoord))
                 buffWidth = scaledCompactWidth
                 --buffHeight = 14
                 compactTracker = compactTracker + 1
-            else
-                buff:SetSize(20, auraHeightSetting)
+            elseif buff.isBuff then
+                buff:SetSize(scaledBuffWidth, scaledBuffHeight)
                 buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
                 buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
                 buff.Icon:SetTexCoord(unpack(texCoord))
-                buffWidth = 20
+                buffWidth = scaledBuffWidth
+                --buffHeight = 14
+                compactTracker = 0
+            else--debuff
+                buff:SetSize(scaledDebuffWidth, scaledDebuffHeight)
+                buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
+                buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
+                buff.Icon:SetTexCoord(unpack(texCoord))
+                buffWidth = scaledDebuffWidth
                 --buffHeight = 14
                 compactTracker = 0
             end
@@ -408,13 +452,22 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local lastRow = 0
     if BetterBlizzPlatesDB.separateAuraBuffRow then
         if #debuffs > 0 then
+            if sortEnlargedAurasFirst then
+                table.sort(debuffs, largeSmallAuraComparator)
+            end
             rowWidths = CalculateRowWidths(debuffs)
             lastRow = LayoutAuras(debuffs, 0)
         end
 
+        if sortEnlargedAurasFirst then
+            table.sort(buffs, largeSmallAuraComparator)
+        end
         rowWidths = CalculateRowWidths(buffs)
         LayoutAuras(buffs, lastRow + (#debuffs > 0 and 1 or 0))
     else
+        if sortEnlargedAurasFirst then
+            table.sort(buffs, largeSmallAuraComparator)
+        end
         rowWidths = CalculateRowWidths(buffs)
         lastRow = LayoutAuras(buffs, 0)
     end
@@ -423,33 +476,6 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
     totalChildrenHeight = (lastRow + 1) * (maxRowHeight + verticalSpacing)
 
     return totalChildrenWidth, totalChildrenHeight, hasExpandableChild
-end
-
-local auraSizeChanged = false
-local function SetAuraDimensions(buff)
-    -- local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
-    -- local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
-
-    -- if nameplateAuraSquare then
-    --     auraSizeChanged = true
-    --     buff:SetSize(20, 20)
-    --     buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-    --     buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-    --     buff.Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-    -- elseif nameplateAuraTaller then
-    --     auraSizeChanged = true
-    --     buff:SetSize(20, 15.5)
-    --     buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-    --     buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-    --     buff.Icon:SetTexCoord(0.05, 0.95, 0.15, 0.82)
-    -- else
-    --     if auraSizeChanged then
-    --         buff:SetSize(20, 14)
-    --         buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-    --         buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-    --         buff.Icon:SetTexCoord(0.05, 0.95, 0.1, 0.6)
-    --     end
-    -- end
 end
 
 local function SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit, aura)
@@ -992,9 +1018,6 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         else
             buff.isCompacted = false
         end
-
-        -- Set aura dimensions
-        SetAuraDimensions(buff);
 
         -- Blue buff border setting
         SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit, aura);

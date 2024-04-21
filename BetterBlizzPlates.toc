@@ -13,6 +13,7 @@ modules\castbar.lua
 modules\totem.lua
 modules\arenaid.lua
 modules\execute.lua
+modules\healthNumbers.lua
 modules\target.lua
 modules\healer.lua
 modules\absorb.lua

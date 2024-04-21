@@ -79,16 +79,17 @@ function BBP.CombatIndicator(frame)
     end
 
     -- Add some offset if both Pet Indicator and Combat Indicator has the same anchor and shows at the same time
+    local petOffset = 0
     if frame.petIndicator and frame.petIndicator:IsShown() and petAndCombatTest and (config.petIndicatorAnchor == config.combatIndicatorAnchor) then
-        config.combatIndicatorXPos = config.combatIndicatorXPos + 10  -- Add some offset
+        petOffset = 5
     end
 
     -- Tiny adjustment to position depending on texture
     local yPosAdjustment = config.combatIndicatorSap and 0 or 1
     if frame.combatIndicatorSap then
-        frame.combatIndicatorSap:SetPoint("CENTER", frame.healthBar, config.combatIndicatorAnchor, config.combatIndicatorXPos, config.combatIndicatorYPos + yPosAdjustment)
+        frame.combatIndicatorSap:SetPoint("CENTER", frame.healthBar, config.combatIndicatorAnchor, config.combatIndicatorXPos+petOffset, config.combatIndicatorYPos + yPosAdjustment)
     end
-    frame.combatIndicator:SetPoint("CENTER", frame.healthBar, config.combatIndicatorAnchor, config.combatIndicatorXPos, config.combatIndicatorYPos + yPosAdjustment)
+    frame.combatIndicator:SetPoint("CENTER", frame.healthBar, config.combatIndicatorAnchor, config.combatIndicatorXPos+petOffset, config.combatIndicatorYPos + yPosAdjustment)
 
     -- Target is not in combat so return
     if notInCombat then

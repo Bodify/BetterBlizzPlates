@@ -237,12 +237,13 @@ function BBP.CustomizeCastbar(unitToken)
         end
     end
 
-    local function ApplyCastBarEmphasisSettings(castBar, castEmphasis)
+    local function ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
         local castBarEmphasisColor = BetterBlizzPlatesDB.castBarEmphasisColor
         local castBarEmphasisText = BetterBlizzPlatesDB.castBarEmphasisText
         local castBarEmphasisIcon = BetterBlizzPlatesDB.castBarEmphasisIcon
         local castBarEmphasisHeight = BetterBlizzPlatesDB.castBarEmphasisHeight
         local castBarEmphasisSpark = BetterBlizzPlatesDB.castBarEmphasisSpark
+        --local castBarEmphasisTexture = BetterBlizzPlatesDB.castBarEmphasisTexture
         local castBarEmphasisHealthbarColor = BetterBlizzPlatesDB.castBarEmphasisHealthbarColor
         local castBarEmphasisTextScale = BetterBlizzPlatesDB.castBarEmphasisTextScale
         local castBarEmphasisIconScale = BetterBlizzPlatesDB.castBarEmphasisIconScale
@@ -281,6 +282,12 @@ function BBP.CustomizeCastbar(unitToken)
                 nameplate.UnitFrame.healthBar:SetStatusBarColor(castEmphasis.entryColors.text.r, castEmphasis.entryColors.text.g, castEmphasis.entryColors.text.b)
             end
         end
+
+        -- if castBarEmphasisTexture then
+        --     local textureName = BetterBlizzPlatesDB.customCastbarTexture
+        --     local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
+        --     castBarTexture:SetTexture(texturePath)
+        -- end
     end
 
     local enableCastbarEmphasis = BetterBlizzPlatesDB.enableCastbarEmphasis
@@ -351,7 +358,7 @@ function BBP.CustomizeCastbar(unitToken)
                 for _, castEmphasis in ipairs(castEmphasisList) do
                     if (castEmphasis.name and spellName and strlower(castEmphasis.name) == strlower(spellName)) or
                        (castEmphasis.id and spellID and castEmphasis.id == spellID) then
-                        ApplyCastBarEmphasisSettings(castBar, castEmphasis)
+                        ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
                         nameplate.UnitFrame.emphasizedCast = castEmphasis
                     else
                         nameplate.UnitFrame.emphasizedCast = nil

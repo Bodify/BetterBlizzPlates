@@ -34,8 +34,16 @@ function BBP.PetIndicator(frame)
         frame.petIndicator:SetSize(12, 12)
     end
 
+    local combatIndicator = frame.combatIndicatorSap or frame.combatIndicator
+
+    -- Move Pet Indicator to the left if both Pet Indicator and Combat Indicator are showing with the same anchor so they dont overlap
+    local combatOffset = 0
+    if combatIndicator and not UnitAffectingCombat(frame.unit) and (config.petIndicatorAnchor == config.combatIndicatorAnchor) then
+        combatOffset = 5
+    end
+
     -- Set position and scale dynamically
-    frame.petIndicator:SetPoint("CENTER", frame.healthBar, config.petIndicatorAnchor, config.petIndicatorXPos, config.petIndicatorYPos)
+    frame.petIndicator:SetPoint("CENTER", frame.healthBar, config.petIndicatorAnchor, config.petIndicatorXPos-combatOffset, config.petIndicatorYPos)
     frame.petIndicator:SetScale(config.petIndicatorScale)
 
     -- Test mode
@@ -45,11 +53,6 @@ function BBP.PetIndicator(frame)
     end
 
     local npcID = select(6, strsplit("-", info.unitGUID or ""))
-
-    -- Move Pet Indicator to the left if both Pet Indicator and Combat Indicator are showing with the same anchor so they dont overlap
-    if frame.combatIndicator and frame.combatIndicator:IsShown() and combatIndicator and (config.petIndicatorAnchor == combatIndicatorAnchor) then
-        config.petIndicatorXPos = config.petIndicatorXPos - 10
-    end
 
     -- Demo lock pet
     if npcID == "17252" then

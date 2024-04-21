@@ -12,7 +12,7 @@ LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlate
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.4.8"
+local addonUpdates = "1.4.9"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -68,6 +68,13 @@ local defaultSettings = {
     hideNpcMurlocScale = 1,
     hideNpcMurlocYPos = 0,
     partyPointerWidth = 36,
+    changeHealthbarHeight = false,
+    hpHeightEnemy = 4 * tonumber(GetCVar("NamePlateVerticalScale")),
+    hpHeightFriendly = 4 * tonumber(GetCVar("NamePlateVerticalScale")),
+    healthNumbersAnchor = "CENTER",
+    healthNumbersXPos = 0,
+    healthNumbersYPos = 0,
+    healthNumbersScale = 1,
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -348,6 +355,9 @@ local defaultSettings = {
     nameplateAuraCompactedScale = 1,
     nameplateAuraEnlargedSquare = true,
     nameplateAuraCompactedSquare = true,
+    nameplateAuraBuffScale = 1,
+    nameplateAuraDebuffScale = 1,
+    sortEnlargedAurasFirst = true,
 
     personalNpBuffEnable = true,
     personalNpBuffFilterAll = false,
@@ -557,6 +567,11 @@ local function InitializeSavedVariables()
         BetterBlizzPlatesDB.healerIndicatorEnemyYPos = BetterBlizzPlatesDB.healerIndicatorYPos
         BetterBlizzPlatesDB.healerIndicatorEnemyAnchor = BetterBlizzPlatesDB.healerIndicatorAnchor
         BetterBlizzPlatesDB.healerIndicatorEnemyScale = BetterBlizzPlatesDB.healerIndicatorScale
+    end
+
+    if BetterBlizzPlatesDB.friendlyHealthBarColorPlayer then
+        BetterBlizzPlatesDB.friendlyHealthBarColorPlayer = BetterBlizzPlatesDB.friendlyHealthBarColor
+        BetterBlizzPlatesDB.friendlyHealthBarColorNpc = BetterBlizzPlatesDB.friendlyHealthBarColor
     end
 
     if not BetterBlizzPlatesDB.nameplateAuraRowFriendlyAmount then
@@ -1021,6 +1036,7 @@ local function TurnOffTestModes()
     db.testAllEnabledFeatures = false
     db.nameplateAuraTestMode = false
     db.partyPointerTestMode = false
+    db.healthNumbersTestMode = false
 end
 
 -- Extracts NPC ID from GUID
@@ -1229,14 +1245,19 @@ local function ColorNameplateByReaction(frame)
     local info = frame.BetterBlizzPlates.unitInfo
     if info.isSelf then return end
 
-    if not config.friendlyHealthBarColorRGB or BBP.needsUpdate then
+    if not config.friendlyHealthBarColorInitalized or BBP.needsUpdate then
         config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB
+        config.friendlyHealthBarColorPlayer = BetterBlizzPlatesDB.friendlyHealthBarColorPlayer
+        config.friendlyHealthBarColorNpc = BetterBlizzPlatesDB.friendlyHealthBarColorNpc
+
+        config.friendlyHealthBarColorInitalized = true
     end
 
     if info.isFriend and config.friendlyHealthBarColor then
         -- Friendly NPC
-        config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
-        frame.healthBar:SetStatusBarColor(unpack(config.friendlyHealthBarColorRGB))
+        if (info.isPlayer and config.friendlyHealthBarColorPlayer) or (info.isNpc and config.friendlyHealthBarColorNpc) then
+            frame.healthBar:SetStatusBarColor(unpack(config.friendlyHealthBarColorRGB))
+        end
     elseif not info.isFriend and config.enemyHealthBarColor then
         -- Handling enemy health bars
         if not (config.enemyHealthBarColorNpcOnly and info.isPlayer) then
@@ -1252,6 +1273,28 @@ local function ColorNameplateByReaction(frame)
         end
     end
 end
+
+-- local function ChangeHealthbarHeight(frame)
+--     local config = frame.BetterBlizzPlates.config
+--     local info = frame.BetterBlizzPlates.unitInfo
+
+--     if not config.hpHeightEnemy or BBP.needsUpdate then
+--         config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
+--         config.hpHeightFriendly = BetterBlizzPlatesDB.hpHeightFriendly
+--     end
+
+--     local healthBar = frame.healthBar
+
+--     if info.isFriend then
+--         if info.isSelf then
+--             healthBar:SetScale(1)
+--         else
+--             healthBar:SetScale(config.hpHeightFriendly)
+--         end
+--     else
+--         healthBar:SetScale(config.hpHeightEnemy)
+--     end
+-- end
 
 --#################################################################################################
 function BBP.SetFontBasedOnOption(namePlateObj, specifiedSize, forcedOutline)
@@ -1476,6 +1519,7 @@ function BBP.ClassColorAndScaleNames(frame)
     else
         scale = enemyScale or 1
     end
+    frame.name:SetIgnoreParentScale(true)
     frame.name:SetScale(scale)
     if frame.fakeName then
         frame.fakeName:SetScale(scale)
@@ -1767,6 +1811,10 @@ function BBP.ResetToDefaultValue(slider, element)
             BetterBlizzPlatesDB.nameplateResourceXPos = 0
         elseif element == "nameplateResourceYPos" then
             BetterBlizzPlatesDB.nameplateResourceYPos = 0
+        elseif element == "hpHeightFriendly" then
+            BetterBlizzPlatesDB.hpHeightFriendly = 4 * tonumber(GetCVar("NamePlateVerticalScale"))
+        elseif element == "hpHeightEnemy" then
+            BetterBlizzPlatesDB.hpHeightEnemy = 4 * tonumber(GetCVar("NamePlateVerticalScale"))
         end
         slider:SetValue(BetterBlizzPlatesDB[element])
     end
@@ -1861,7 +1909,7 @@ function BBP.HideNPCs(frame)
     end
 
     -- Skip if the unit is a player
-    if info.isPlayer or info.isFriend then
+    if info.isPlayer then --or info.isFriend then
         if frame.murlocMode then
             frame.murlocMode:Hide()
             frame.hideNameOverride = false
@@ -1876,6 +1924,15 @@ function BBP.HideNPCs(frame)
             end
         end
         return
+    end
+
+    if info.isFriend then
+        local hideNpcHpBar = BetterBlizzPlatesDB.friendlyHideHealthBarNpc
+        if config.friendlyHideHealthBar and hideNpcHpBar then
+            frame.healthBar:SetAlpha(0)
+            frame.selectionHighlight:SetAlpha(0)
+            return
+        end
     end
 
     local unitGUID = UnitGUID(frame.displayedUnit)
@@ -2439,7 +2496,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
                     if config.totemIndicatorColorName then
                         frame.name:SetVertexColor(unpack(totemColor))
                         if frame.fakeName then
-                            frame.name:SetVertexColor(unpack(totemColor))
+                            frame.fakeName:SetVertexColor(unpack(totemColor))
                         end
                     end
                 end
@@ -2450,7 +2507,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
                 if config.totemIndicatorColorName then
                     frame.name:SetVertexColor(unpack(totemColor))
                     if frame.fakeName then
-                        frame.name:SetVertexColor(unpack(totemColor))
+                        frame.fakeName:SetVertexColor(unpack(totemColor))
                     end
                 end
             end
@@ -2531,7 +2588,7 @@ function BBP.ApplyRaidmarkerChanges(frame)
             config.raidmarkInitialized = true
         end
 
-        if anchorPoint == "TOP" then
+        if config.raidmarkIndicatorAnchor == "TOP" then
             frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.fakeName or frame.name, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos)
         else
@@ -2723,6 +2780,7 @@ local function HideFriendlyHealthbar(frame)
                 frame.selectionHighlight:SetAlpha(0)
             else
                 frame.healthBar:SetAlpha(1)
+                frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
             end
         else
             frame.healthBar:SetAlpha(0)
@@ -2803,6 +2861,7 @@ local function HandleNamePlateRemoved(unit)
     if not frame then return end
 
     frame:SetScale(1)
+    frame.name:SetAlpha(1)
     if frame.healthBar then
         frame.healthBar:SetAlpha(1)
     end
@@ -2917,7 +2976,6 @@ end
 --#################################################################################################
 --#################################################################################################
 --#################################################################################################
-local fakeName = CreateFrame("Frame")
 local function InitializeNameplateSettings(frame)
     if not frame.BetterBlizzPlates then
         --frame.BetterBlizzPlates = CreateFrame("Frame")
@@ -2965,8 +3023,14 @@ local function InitializeNameplateSettings(frame)
             useFakeName = BetterBlizzPlatesDB.useFakeName,
             hideEnemyNameText = BetterBlizzPlatesDB.hideEnemyNameText,
             hideFriendlyNameText = BetterBlizzPlatesDB.hideFriendlyNameText,
-            anonModeOn = BetterBlizzPlatesDB.anonModeOn
+            anonModeOn = BetterBlizzPlatesDB.anonModeOn,
+            changeHealthbarHeight = BetterBlizzPlatesDB.changeHealthbarHeight,
+            healthNumbers = BetterBlizzPlatesDB.healthNumbers or BetterBlizzPlatesDB.healthNumbersTestMode,
         }
+        if frame.BetterBlizzPlates.config.changeHealthbarHeight then
+            frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
+            frame.BetterBlizzPlates.config.hpHeightFriendly = BetterBlizzPlatesDB.hpHeightFriendly
+        end
     end
     return frame.BetterBlizzPlates.config
 end
@@ -2985,9 +3049,10 @@ function BBP.SetupFakeName(frame)
     end
 
     if not frame.fakeName then
-        frame.fakeName = fakeName:CreateFontString(nil, "BACKGROUND", "SystemFont_NamePlateFixed")
+        frame.fakeName = frame:CreateFontString(nil, "BACKGROUND", "SystemFont_NamePlateFixed")
         frame.fakeName:SetShadowColor(frame.name:GetShadowColor())
         frame.fakeName:GetShadowOffset(frame.name:GetShadowOffset())
+        frame.fakeName:SetIgnoreParentScale(true)
     end
 
     if not config.fakeNameXPos or BBP.needsUpdate then
@@ -3009,7 +3074,7 @@ function BBP.SetupFakeName(frame)
     end
     frame.fakeName:SetText(frame.name:GetText() or UnitName(frame.unit))
     frame.fakeName:SetShown(frame.name:IsShown())
-    local r, g, b = frame.name:GetVertexColor()
+    local r, g, b, a = frame.name:GetVertexColor()
     frame.fakeName:SetVertexColor(r, g, b, a)
     frame.name:SetAlpha(0)
 end
@@ -3072,6 +3137,9 @@ local function HandleNamePlateAdded(unit)
         end
     end--and auraModuleIsOn then BBP.HidePersonalBuffFrame() end
 
+    -- --HealthBar Height
+    -- if config.changeHealthbarHeight then ChangeHealthbarHeight(frame) end
+
     -- Apply custom healthbar texture
     if config.useCustomTextureForBars or BBP.needsUpdate then BBP.ApplyCustomTextureToNameplate(frame) end
 
@@ -3106,6 +3174,8 @@ local function HandleNamePlateAdded(unit)
 
     -- Show Execute Indicator
     if config.executeIndicator then BBP.ExecuteIndicator(frame) end
+
+    if config.healthNumbers then BBP.HealthNumbers(frame) end
 
     -- Handle nameplate aura and target highlight visibility
     ToggleNameplateBuffFrameVisibility(frame)
@@ -3153,12 +3223,16 @@ local function HandleNamePlateAdded(unit)
     -- Friend Indicator
     if config.friendIndicator then FriendIndicator(frame) end
 
+    -- Name repositioning
+    if config.useFakeName then BBP.SetupFakeName(frame) end
+
     -- Hide name
     if (config.hideFriendlyNameText and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
         frame.name:SetAlpha(0)
+        if frame.fakeName then
+            frame.fakeName:SetAlpha(0)
+        end
     end
-
-    if config.useFakeName then BBP.SetupFakeName(frame) end
 end
 
 
@@ -3221,6 +3295,14 @@ function BBP.RefreshAllNameplates()
 
         if BetterBlizzPlatesDB.focusTargetIndicator then
             BBP.FocusTargetIndicator(frame)
+        end
+
+        if BetterBlizzPlatesDB.healthNumbers then
+            BBP.HealthNumbers(frame)
+        else
+            if frame.healthNumbers then
+                frame.healthNumbers:SetText("")
+            end
         end
 
         if not BetterBlizzPlatesDB.useFakeName then
@@ -3519,15 +3601,21 @@ function BBP.ConsolidatedUpdateName(frame)
         frame.name:SetVertexColor(unpack(config.targetIndicatorColorNameplateRGB))
     end
 
+    if config.useFakeName then BBP.SetupFakeName(frame) end
+
     if (config.hideFriendlyNameText and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
         frame.name:SetAlpha(0)
+        if frame.fakeName then
+            frame.fakeName:SetAlpha(0)
+        end
     end
 
     if frame.hideNameOverride then
         frame.name:SetAlpha(0)
+        if frame.fakeName then
+            frame.fakeName:SetAlpha(0)
+        end
     end
-
-    if config.useFakeName then BBP.SetupFakeName(frame) end
 end
 -- Use the consolidated function to hook into CompactUnitFrame_UpdateName
 hooksecurefunc("CompactUnitFrame_UpdateName", BBP.ConsolidatedUpdateName)
@@ -3610,19 +3698,18 @@ local function HideHealthbarInPvEMagic()
             'GetNamePlateTypeFromUnit',
             function(_, unit)
                 if BBP.isInPvE then
-                    -- local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
-                    -- if not isFriend then
+                    local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
+                    if not isFriend then
                         setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
                         setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
-                    -- else
-                    --     setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
-                    --     if hideFriendlyCastbar then
-                    --         setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
-                    --     else
-                    --         setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
-                    --     end
-                    --end
-                    --return
+                    else
+                        setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
+                        if hideFriendlyCastbar then
+                            setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
+                        else
+                            setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
+                        end
+                    end
                 end
                 -- if not UnitIsPlayer(unit) then
                 --     setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
@@ -3683,6 +3770,10 @@ Frame:SetScript("OnEvent", function(...)
         BBP.SetFontBasedOnOption(SystemFont_NamePlate, BetterBlizzPlatesDB.defaultFontSize)
         BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, BetterBlizzPlatesDB.defaultLargeFontSize)
         BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, BetterBlizzPlatesDB.defaultFontSize)
+    end
+
+    if BetterBlizzPlatesDB.changeHealthbarHeight then
+        BBP.HookHealthbarHeight()
     end
 
     BBP.ApplyNameplateWidth()
@@ -3770,6 +3861,7 @@ local function TurnOnEnabledFeaturesOnLogin()
     BBP.ToggleCombatIndicator()
     BBP.ToggleExecuteIndicator()
     BBP:RegisterTargetCastingEvents()
+    BBP.ToggleHealthNumbers()
 end
 
 -- Event registration for PLAYER_LOGIN
@@ -4165,7 +4257,7 @@ function BBP.CreateUpdateMessageWindow()
 
     -- Example of how to use the scrolling message frame
     BBP.UpdateMessageWindow = CreateFrame("Frame", "BBPUpdate", UIParent, "PortraitFrameTemplate")
-    BBP.UpdateMessageWindow:SetSize(450,390)
+    BBP.UpdateMessageWindow:SetSize(450,300)
     BBP.UpdateMessageWindow.Bg:SetDesaturated(true)
     BBP.UpdateMessageWindow.Bg:SetVertexColor(0.5,0.5,0.5, 0.98)
     local screenHeight = UIParent:GetHeight() -- Get the screen height
@@ -4205,7 +4297,7 @@ function BBP.CreateUpdateMessageWindow()
     -- Create a mask texture object
     local maskTexture = BBP.UpdateMessageWindow:CreateMaskTexture()
     maskTexture:SetAtlas("Azerite-CenterBG-ChannelGlowBar-FillingMask")
-    maskTexture:SetSize(445, 300) -- Match the size of the textureTest or your needs
+    maskTexture:SetSize(645, 300) -- Match the size of the textureTest or your needs
     --maskTexture:SetAllPoints(test.textureTest) -- Ensure mask is centered on the texture
     maskTexture:SetPoint("CENTER", BBP.UpdateMessageWindow.textureTest, "CENTER", 0, 50)
 
@@ -4214,34 +4306,26 @@ function BBP.CreateUpdateMessageWindow()
 
     -- Adding messages
     scrollingMessageFrame:AddMessage("QuestNormal", "New Stuff:", nil, 5, -3, 3, "GameFontNormalMed2", 16)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Large update, many changes", "(If you run into bugs please report them. Check Misc for Discord link.)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Magnusz profile", "(www.twitch.tv/magnusz)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Import & Export (BETA)", "(Import & Export)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Party pointer, put marker on friendly plates", "(General)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Name reposition", "(Advanced Settings)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Hide Nameplate Aura tooltip", "(General)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Personal resource texture change", "(General)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Murloc icon instead of hidden nameplates", "(Hide NPC)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "\"Don't raise auras for resource\"", "(Nameplate Auras)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Friendly max auras per row setting", "(Nameplate Auras)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Enlarged & Compacted aura settings", "(Nameplate Auras)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Totem Indicator No Color Name and HP", "(Advanced Settings)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Totem Indicator Hide Healthbar", "(Totem Indicator List)", 14)
+    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Sort Enlarged & Compacted Auras", "(Nameplate Auras)", 2)
+    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Health Numbers", "(General)", 2)
+    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Friendly Healthbar Color Player/NPC option toggles", "(General)", 2)
+    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Separate nameplate height for enemy/friendly", "(Misc)", 2)
+    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Hide Friendly Healthbar Keybind Toggle", "(Blizzard Keybindings)", 14)
 
     scrollingMessageFrame:AddMessage("Professions-Crafting-Orders-Icon", "Bugfixes and Tweaks:", nil, 5, -4, 2, "GameFontNormalMed2", 16)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "You can now search in lists while typing", nil, 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Sorted lists alphabetically", nil, 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Fix personal Nameplate Aura filtering issues", nil, 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Fixed a Blizzard bug:\nIf Nameplate Resource CVar is on then nameplate auras get pushed up 18 pixels by default but this used to happen even on specs that don't have a nameplate resource. This is fixed now.", nil, 14)
+    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Bugfix for some 1080p users that made nameplate names scale with target scale", nil, 2)
+    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Fixed reposition name setting making name overlap ui elements.", nil, 2)
+    -- scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Fix personal Nameplate Aura filtering issues", nil, 2)
+    -- scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Fixed a Blizzard bug:\nIf Nameplate Resource CVar is on then nameplate auras get pushed up 18 pixels by default but this used to happen even on specs that don't have a nameplate resource. This is fixed now.", nil, 14)
 
-    scrollingMessageFrame:AddMessage("GarrisonTroops-Health", "Note from Developer:", nil, 5, 3, 0, "GameFontNormalMed2", 12)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Thank you for all the love. Thanks to all users and especially beta testers and Patreon supporters.\nVery motivating thank you!<3", nil, 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "If you run into any bugs please report them!", nil, 2)
+    -- scrollingMessageFrame:AddMessage("GarrisonTroops-Health", "Note from Developer:", nil, 5, 3, 0, "GameFontNormalMed2", 12)
+    -- scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Thank you for all the love. Thanks to all users and especially beta testers and Patreon supporters.\nVery motivating thank you!<3", nil, 2)
+    -- scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "If you run into any bugs please report them!", nil, 2)
 end
 
 function BBP.ToggleUpdateMessageWindow()
     if not BBP.UpdateMessageWindow then
-        BBP.CreateUpdateMessageWindow() -- This will create and show the window if it doesn't exist
+        BBP.CreateUpdateMessageWindow()
     elseif BBP.UpdateMessageWindow:IsShown() then
         BBP.UpdateMessageWindow:Hide()
     else
@@ -4249,13 +4333,21 @@ function BBP.ToggleUpdateMessageWindow()
     end
 end
 
--- local x = 0
--- hooksecurefunc("DefaultCompactNamePlateFrameAnchorInternal", function(frame, setupOptions)
---     local info = frame.BetterBlizzPlates and frame.BetterBlizzPlates.unitInfo
---     if not info then return end
---     if info.isFriend then
---         frame.healthBar:SetHeight(30)
---     else
---         frame.healthBar:SetHeight(70)
---     end
--- end)
+local hookedHpHeight
+function BBP.HookHealthbarHeight()
+    if not hookedHpHeight then
+        hooksecurefunc("DefaultCompactNamePlateFrameAnchorInternal", function(frame)
+            if frame:IsForbidden() or frame:IsProtected() then return end
+            local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config
+            if not config then return end
+            if not frame.unit then return end
+            if UnitCanAttack(frame.unit, "player") then
+                frame.healthBar:SetHeight(config.hpHeightEnemy or 11)
+            else
+                frame.healthBar:SetHeight(config.hpHeightFriendly or 11)
+            end
+        end)
+
+        hookedHpHeight = true
+    end
+end
