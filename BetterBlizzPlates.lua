@@ -10,9 +10,10 @@ LSM:Register("statusbar", "Dragonflight (BBP)", [[Interface\Addons\BetterBlizzPl
 LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPlates\media\focusTexture]])
 LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlates\media\targetTexture]])
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
+LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.4.9b"
+local addonUpdates = "1.4.9c"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -75,6 +76,9 @@ local defaultSettings = {
     healthNumbersXPos = 0,
     healthNumbersYPos = 0,
     healthNumbersScale = 1,
+    fakeNameAnchor = "BOTTOM",
+    fakeNameAnchorRelative = "TOP",
+    fakeNameScaleWithParent = false,
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -277,6 +281,8 @@ local defaultSettings = {
     -- Font and texture
     customFontSize = 12,
     useCustomFont = false,
+    enableCustomFontOutline = true,
+    customFontOutline = "THINOUTLINE",
     useCustomTextureForBars = false,
     -- Castbar
     enableCastbarCustomization = false,
@@ -861,22 +867,15 @@ local function SendUpdateMessage()
         C_Timer.After(7, function()
             --bbp news
             --PlaySoundFile(567439) --quest complete sfx
-            BBP.CreateUpdateMessageWindow()
-            -- DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-            -- DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Stuff:")
-            -- DEFAULT_CHAT_FRAME:AddMessage("   - Big cleaning behind the scenes.")
-            -- DEFAULT_CHAT_FRAME:AddMessage("   - Magnusz profile (www.twitch.tv/magnusz)")
-            -- DEFAULT_CHAT_FRAME:AddMessage("   - Party pointer, put marker on friendly plates (General).")
-            -- DEFAULT_CHAT_FRAME:AddMessage("   - Name reposition (Advanced Settings).")
-            -- DEFAULT_CHAT_FRAME:AddMessage("   - Personal resource texture change (General).")
-            -- DEFAULT_CHAT_FRAME:AddMessage("   - \"Don't raise auras for resource\" (Nameplate Auras).")
-            -- DEFAULT_CHAT_FRAME:AddMessage("   - Friendly max auras per row setting (Nameplate Auras).")
-            -- DEFAULT_CHAT_FRAME:AddMessage("   - Enlarged & Compacted aura settings (Nameplate Auras).")
-            -- DEFAULT_CHAT_FRAME:AddMessage("   - Hide aura tooltip (General).")
+            --BBP.CreateUpdateMessageWindow()
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Stuff:")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Nameplate Font Outline setting. (General)")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Name Reposition Anchor settings.")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Name Reposition Scale with NP setting.")
 
-            -- DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
-            -- DEFAULT_CHAT_FRAME:AddMessage("   - More a tweak than a fix: If nameplate resource is on aura's get pushed up 18 pixels by default. This even happens on specs that don't have a nameplate resource if the setting is still on. I've taken the liberty to fix this for Blizzard (with Nameplate Aura module on).")
-            -- DEFAULT_CHAT_FRAME:AddMessage("   - Sorted lists alphabetically")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Name Reposition now shows on top of healthbar.")
         end)
     end
 end
@@ -3050,10 +3049,9 @@ function BBP.SetupFakeName(frame)
     end
 
     if not frame.fakeName then
-        frame.fakeName = frame:CreateFontString(nil, "BACKGROUND", "SystemFont_NamePlateFixed")
+        frame.fakeName = frame.healthBar:CreateFontString(nil, "OVERLAY", "SystemFont_NamePlateFixed")
         frame.fakeName:SetShadowColor(frame.name:GetShadowColor())
         frame.fakeName:GetShadowOffset(frame.name:GetShadowOffset())
-        frame.fakeName:SetIgnoreParentScale(true)
     end
 
     if not config.fakeNameXPos or BBP.needsUpdate then
@@ -3061,23 +3059,41 @@ function BBP.SetupFakeName(frame)
         config.fakeNameYPos = BetterBlizzPlatesDB.fakeNameYPos
         config.fakeNameFriendlyXPos = BetterBlizzPlatesDB.fakeNameFriendlyXPos
         config.fakeNameFriendlyYPos = BetterBlizzPlatesDB.fakeNameFriendlyYPos
-        frame.fakeName:SetFont(frame.name:GetFont())
         config.useFakeNameAnchorBottom = BetterBlizzPlatesDB.useFakeNameAnchorBottom
-        config.fakeNameAnchor = config.useFakeNameAnchorBottom and frame or frame.name
-        config.fakeNameAnchorPoint = config.useFakeNameAnchorBottom and "BOTTOM" or "CENTER"
+        config.fakeNameAnchor = BetterBlizzPlatesDB.fakeNameAnchor
+        config.fakeNameAnchorRelative = BetterBlizzPlatesDB.fakeNameAnchorRelative
+        config.fakeNameScaleWithParent = BetterBlizzPlatesDB.fakeNameScaleWithParent
     end
+
+    if config.fakeNameScaleWithParent then
+        frame.fakeName:SetIgnoreParentScale(false)
+    else
+        frame.fakeName:SetIgnoreParentScale(true)
+    end
+
     frame.fakeName:ClearAllPoints()
     if info.isFriend then
-        local extraOffset = config.useFakeNameAnchorBottom and 27 or 0
-        frame.fakeName:SetPoint("BOTTOM", config.fakeNameAnchor, "BOTTOM", config.fakeNameFriendlyXPos, config.fakeNameFriendlyYPos + extraOffset)
+        if config.useFakeNameAnchorBottom then
+            frame.fakeName:SetPoint("BOTTOM", frame, "BOTTOM", config.fakeNameFriendlyXPos, config.fakeNameFriendlyYPos + 27)
+        else
+            frame.fakeName:SetPoint(config.fakeNameAnchor, frame.healthBar, config.fakeNameAnchorRelative, config.fakeNameFriendlyXPos, config.fakeNameFriendlyYPos + 4)
+        end
     else
-        frame.fakeName:SetPoint("CENTER", frame.name, "CENTER", config.fakeNameXPos, config.fakeNameYPos)
+        frame.fakeName:SetPoint(config.fakeNameAnchor, frame.healthBar, config.fakeNameAnchorRelative, config.fakeNameXPos, config.fakeNameYPos + 4)
     end
+    frame.fakeName:SetFont(frame.name:GetFont())
     frame.fakeName:SetText(frame.name:GetText() or UnitName(frame.unit))
     frame.fakeName:SetShown(frame.name:IsShown())
     frame.fakeName:SetScale(frame.name:GetScale())
     local r, g, b, a = frame.name:GetVertexColor()
     frame.fakeName:SetVertexColor(r, g, b, 1)
+    --  Temp solution, figure out how to show on top of healthbar while keeping frame alpha and not healthbar alpha if possible
+    if frame.healthBar:GetAlpha() == 0 then
+        frame.fakeName:SetIgnoreParentAlpha(true)
+    else
+        frame.fakeName:SetIgnoreParentAlpha(false)
+    end
+    --
     frame.name:SetAlpha(0)
 end
 
@@ -3255,7 +3271,8 @@ end)
 --#################################################################################################
 --Update all nameplates
 function BBP.RefreshAllNameplates()
-    if BetterBlizzPlatesDB.wasOnLoadingScreen then return end
+    local db = BetterBlizzPlatesDB
+    if db.wasOnLoadingScreen then return end
     -- local useCustomFont = BetterBlizzPlatesDB.useCustomFont
     -- if useCustomFont then
     --     local fontName = BetterBlizzPlatesDB.customFont
@@ -3272,11 +3289,11 @@ function BBP.RefreshAllNameplates()
     --         fontObject:SetFont(fontPath, fontSize, "THINOUTLINE")
     --     end
     -- end
-    if not BetterBlizzPlatesDB.skipAdjustingFixedFonts then
-        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, BetterBlizzPlatesDB.defaultLargeFontSize)
-        BBP.SetFontBasedOnOption(SystemFont_NamePlate, BetterBlizzPlatesDB.defaultFontSize)
-        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, BetterBlizzPlatesDB.defaultLargeFontSize)
-        BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, BetterBlizzPlatesDB.defaultFontSize)
+    if not db.skipAdjustingFixedFonts then
+        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
+        BBP.SetFontBasedOnOption(SystemFont_NamePlate, db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
+        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
+        BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
     end
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = nameplate.UnitFrame
@@ -3732,13 +3749,14 @@ local Frame = CreateFrame("Frame")
 Frame:RegisterEvent("PLAYER_LOGIN")
 --Frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 Frame:SetScript("OnEvent", function(...)
+    local db = BetterBlizzPlatesDB
 
     CheckForUpdate()
 
     _, playerClass = UnitClass("player")
     playerClassColor = RAID_CLASS_COLORS[playerClass]
 
-    if BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
+    if db.enableNameplateAuraCustomisation then
         BBP.RunAuraModule()
     end
 
@@ -3746,7 +3764,7 @@ Frame:SetScript("OnEvent", function(...)
         --BBP.HookDefaultCompactNamePlateFrameAnchorInternal()
     --end
 
-    if BetterBlizzPlatesDB.nameplateResourceOnTarget or GetCVarBool("nameplateShowSelf") then
+    if db.nameplateResourceOnTarget or GetCVarBool("nameplateShowSelf") then
         BBP.TargetResourceUpdater()
     end
 
@@ -3767,22 +3785,24 @@ Frame:SetScript("OnEvent", function(...)
     --     end
     -- end
 
-    if not BetterBlizzPlatesDB.skipAdjustingFixedFonts then
-        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, BetterBlizzPlatesDB.defaultLargeFontSize)
-        BBP.SetFontBasedOnOption(SystemFont_NamePlate, BetterBlizzPlatesDB.defaultFontSize)
-        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, BetterBlizzPlatesDB.defaultLargeFontSize)
-        BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, BetterBlizzPlatesDB.defaultFontSize)
-    end
+    C_Timer.After(1, function()
+        if not db.skipAdjustingFixedFonts then
+            BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
+            BBP.SetFontBasedOnOption(SystemFont_NamePlate, db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
+            BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
+            BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
+        end
+    end)
 
-    if BetterBlizzPlatesDB.changeHealthbarHeight then
+    if db.changeHealthbarHeight then
         BBP.HookHealthbarHeight()
     end
 
     BBP.ApplyNameplateWidth()
 
     C_Timer.After(1, function()
-        if BetterBlizzPlatesDB.executeIndicatorScale <= 0 then --had a slider with borked values
-            BetterBlizzPlatesDB.executeIndicatorScale = 1     --this will fix it for every user who made the error while bug was live
+        if db.executeIndicatorScale <= 0 then --had a slider with borked values
+            db.executeIndicatorScale = 1     --this will fix it for every user who made the error while bug was live
         end
     end)
 
@@ -3790,9 +3810,9 @@ Frame:SetScript("OnEvent", function(...)
     BBP.InitializeInterruptSpellID() --possibly not needed, talent events seem to always run on login?
 
     -- Re-open options when clicking reload button
-    if BetterBlizzPlatesDB.reopenOptions then
+    if db.reopenOptions then
         InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
-        BetterBlizzPlatesDB.reopenOptions = false
+        db.reopenOptions = false
     end
     BBP.CreateUnitAuraEventFrame()
 
@@ -4259,7 +4279,7 @@ function BBP.CreateUpdateMessageWindow()
 
     -- Example of how to use the scrolling message frame
     BBP.UpdateMessageWindow = CreateFrame("Frame", "BBPUpdate", UIParent, "PortraitFrameTemplate")
-    BBP.UpdateMessageWindow:SetSize(450,260)
+    BBP.UpdateMessageWindow:SetSize(450,300)
     BBP.UpdateMessageWindow.Bg:SetDesaturated(true)
     BBP.UpdateMessageWindow.Bg:SetVertexColor(0.5,0.5,0.5, 0.98)
     local screenHeight = UIParent:GetHeight() -- Get the screen height

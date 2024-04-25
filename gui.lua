@@ -1315,12 +1315,41 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
     end)
 end
 
+local function RefreshTooltip(widget, title, mainText, subText, anchor, cvarName, cvarName2)
+    GameTooltip:ClearLines()
+    if anchor then
+        GameTooltip:SetOwner(widget, anchor)
+    else
+        GameTooltip:SetOwner(widget, "ANCHOR_RIGHT")
+    end
+    -- Set the bold title
+    GameTooltip:AddLine(title)
+    --GameTooltip:AddLine(" ") -- Adding an empty line as a separator
+    -- Set the main text
+    GameTooltip:AddLine(mainText, 1, 1, 1, true) -- true for wrap text
+    -- Set the subtext
+    if subText then
+        GameTooltip:AddLine("____________________________", 0.8, 0.8, 0.8, true)
+        GameTooltip:AddLine(subText, 0.8, 0.80, 0.80, true)
+    end
+    -- Add CVar information if provided
+    if cvarName then
+        --GameTooltip:AddLine(" ")
+        --GameTooltip:AddLine("Default Value: " .. cvarName, 0.5, 0.5, 0.5) -- grey color for subtext
+        GameTooltip:AddDoubleLine("Changes CVar:", cvarName, 0.2, 1, 0.6, 0.2, 1, 0.6)
+        if cvarName2 then
+            GameTooltip:AddDoubleLine(" ", cvarName2, 0.2, 1, 0.6, 0.2, 1, 0.6)
+        end
+    end
+    GameTooltip:Show()
+end
+
 local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableName)
     -- Frame to hold all import/export elements
     local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     frame:SetSize(210, 65) -- Adjust size as needed
     frame:SetPoint("TOPLEFT", parent, "TOPLEFT", posX, posY)
-    
+
     -- Setting the backdrop
     frame:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground", -- More subtle background
@@ -3590,6 +3619,23 @@ local function guiGeneralTab()
         { anchorFrame = useCustomFont, x = 5, y = -21, label = "Font" }
     )
 
+    local enableCustomFontOutline = CreateCheckbox("enableCustomFontOutline", "Outline", useCustomFont)
+    enableCustomFontOutline:SetPoint("LEFT", fontDropdown, "RIGHT", -15, 1)
+    CreateTooltipTwo(enableCustomFontOutline, "Font Outline", "Enable font outline.\n|cff32f795Right-click to swap between thin outline and thick outline.")
+    enableCustomFontOutline:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            local currentOutline = BetterBlizzPlatesDB["customFontOutline"]
+            if currentOutline == "THINOUTLINE" then
+                BetterBlizzPlatesDB["customFontOutline"] = "THICKOUTLINE"
+                RefreshTooltip(enableCustomFontOutline, "Font Outline", "Enable font outline.\n|cff32f795Right-click to swap between thin outline and thick outline.\nCurrent: Thick Outline")
+            else
+                BetterBlizzPlatesDB["customFontOutline"] = "THINOUTLINE"
+                RefreshTooltip(enableCustomFontOutline, "Font Outline", "Enable font outline.\n|cff32f795Right-click to swap between thin outline and thick outline.\nCurrent: Thin Outline")
+            end
+            BBP.RefreshAllNameplates()
+        end
+    end)
+
     local textureDropdown = CreateTextureDropdown(
         "textureDropdown",
         useCustomTexture,
@@ -3720,9 +3766,11 @@ local function guiGeneralTab()
 
     useCustomFont:HookScript("OnClick", function(self)
         if self:GetChecked() then
+            EnableElement(enableCustomFontOutline)
             LibDD:UIDropDownMenu_EnableDropDown(fontDropdown)
         else
             LibDD:UIDropDownMenu_DisableDropDown(fontDropdown)
+            DisableElement(enableCustomFontOutline)
         end
     end)
 
@@ -4936,18 +4984,6 @@ local function guiPositionAndScale()
     nameIcon:SetVertexColor(1,1,0.1)
 
     local useFakeName = CreateCheckbox("useFakeName", "Enable Name Reposition", contentFrame)
-    useFakeName:HookScript("OnClick", function(self)
-        if self:GetChecked() then
-            if BetterBlizzPlates.arenaSpecAnchor == "TOP" then
-                BetterBlizzPlates.arenaSpecAnchor = "CENTER"
-            end
-        else
-            if BetterBlizzPlates.arenaSpecAnchor == "CENTER" then
-                BetterBlizzPlates.arenaSpecAnchor = "TOP"
-            end
-        end
-        LibDD:UIDropDownMenu_SetText(BBP.arenaSpecAnchorDropdown, BetterBlizzPlatesDB["arenaSpecAnchor"])
-    end)
 
     local fakeNameXPos = CreateSlider(useFakeName, "|cffFF0000Enemy x offset|r", -50, 50, 1, "fakeNameXPos", "X")
     fakeNameXPos:SetPoint("TOP", anchorSubFakeName, "BOTTOM", 0, -15)
@@ -4961,20 +4997,69 @@ local function guiPositionAndScale()
     local fakeNameFriendlyYPos = CreateSlider(useFakeName, "|cff0CC2FFFriendly y offset|r", -50, 50, 1, "fakeNameFriendlyYPos", "Y")
     fakeNameFriendlyYPos:SetPoint("TOP", fakeNameFriendlyXPos, "BOTTOM", 0, -15)
 
+    local fakeNameAnchorDropdown = CreateAnchorDropdown(
+        "partyPointerDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "fakeNameAnchor",
+        function(arg1) 
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = fakeNameFriendlyYPos, x = -16, y = -33, label = "Name Anchor Point" }
+    )
+    CreateTooltipTwo(fakeNameAnchorDropdown, "Name Anchor Point", "Which side of the name should be the anchor point.")
+
+    local fakeNameAnchorRelativeDropdown = CreateAnchorDropdown(
+        "arenaSpecAnchorDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "fakeNameAnchorRelative",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = fakeNameAnchorDropdown, x = 0, y = -41, label = "Healthbar Anchor Point" }
+    )
+    CreateTooltipTwo(fakeNameAnchorRelativeDropdown, "Healthbar Anchor Point", "Which side of the healthbar the name should get anchored to.")
+
+    useFakeName:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            LibDD:UIDropDownMenu_EnableDropDown(fakeNameAnchorDropdown)
+            LibDD:UIDropDownMenu_EnableDropDown(fakeNameAnchorRelativeDropdown)
+            if BetterBlizzPlates.arenaSpecAnchor == "TOP" then
+                BetterBlizzPlates.arenaSpecAnchor = "CENTER"
+            end
+        else
+            LibDD:UIDropDownMenu_DisableDropDown(fakeNameAnchorDropdown)
+            LibDD:UIDropDownMenu_DisableDropDown(fakeNameAnchorRelativeDropdown)
+            if BetterBlizzPlates.arenaSpecAnchor == "CENTER" then
+                BetterBlizzPlates.arenaSpecAnchor = "TOP"
+            end
+        end
+        LibDD:UIDropDownMenu_SetText(BBP.arenaSpecAnchorDropdown, BetterBlizzPlatesDB["arenaSpecAnchor"])
+    end)
+
+    if not BetterBlizzPlatesDB.useFakeName then
+        LibDD:UIDropDownMenu_DisableDropDown(fakeNameAnchorDropdown)
+        LibDD:UIDropDownMenu_DisableDropDown(fakeNameAnchorRelativeDropdown)
+    end
+
     --local useFakeName = CreateCheckbox("useFakeName", "Enable Name Reposition", contentFrame) --moved up
-    useFakeName:SetPoint("TOPLEFT", fakeNameFriendlyYPos, "BOTTOMLEFT", 0, pixelsOnFirstBox)
+    useFakeName:SetPoint("TOPLEFT", fakeNameAnchorRelativeDropdown, "BOTTOMLEFT", 16, 8)
     useFakeName:HookScript("OnClick", function()
         CheckAndToggleCheckboxes(useFakeName)
     end)
     CreateTooltip(useFakeName, "Enables name repositioning by using a \"fake name\" and hiding the real one.")
     CreateTooltip(nameIcon, "Enables name repositioning by using a \"fake name\" and hiding the real one.")
 
-    local useFakeNameAnchorBottom = CreateCheckbox("useFakeNameAnchorBottom", "Anchor friend bottom", useFakeName)
+    local useFakeNameAnchorBottom = CreateCheckbox("useFakeNameAnchorBottom", "Anchor friend", useFakeName)
     useFakeNameAnchorBottom:SetPoint("TOPLEFT", useFakeName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(useFakeNameAnchorBottom, "Anchor the name of friendly nameplates to the bottom of healthbar\ninstead of on top so name no longer shifts up when targeted.")
+    CreateTooltipTwo(useFakeNameAnchorBottom, "Anchor Friendly Name to Bottom", "Anchor the name of friendly nameplates to the bottom of healthbar\ninstead of on top so name no longer shifts up when targeted. This will override the other anchor settings.")
 
+    local fakeNameScaleWithParent = CreateCheckbox("fakeNameScaleWithParent", "Scale", useFakeName)
+    fakeNameScaleWithParent:SetPoint("LEFT", useFakeNameAnchorBottom.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(fakeNameScaleWithParent, "Scale with Nameplate", "Scale the Name with the nameplate.\nBy default this is off.")
 
-        ----------------------
+    ----------------------
     -- Health Numbers
     ----------------------
     local anchorSubHealthNumbers = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
