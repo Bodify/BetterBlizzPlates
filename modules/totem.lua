@@ -49,8 +49,11 @@ function BBP.CreateTotemComponents(frame, size)
     frame.totemIndicator:SetScale(config.totemIndicatorScale or 1)
     if config.totemIndicatorHideNameAndShiftIconDown then
         frame.totemIndicator:SetPoint("BOTTOM", frame.healthBar, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos + 4)
+    elseif config.nameplateResourceOnTarget and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
+        local resourceFrame = frame:GetParent().driverFrame.classNamePlateMechanicFrame
+        frame.totemIndicator:SetPoint("BOTTOM", resourceFrame or frame.fakeName or frame.name, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     else
-        frame.totemIndicator:SetPoint("BOTTOM", frame.fakeName or frame.name, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos + 0)
+        frame.totemIndicator:SetPoint("BOTTOM", frame.fakeName or frame.name, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     end
 end
 
@@ -336,6 +339,9 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         if frame.fakeName then
             frame.fakeName:SetText("")
         end
+    elseif config.nameplateResourceOnTarget and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
+        local resourceFrame = frame:GetParent().driverFrame.classNamePlateMechanicFrame
+        frame.totemIndicator:SetPoint("BOTTOM", resourceFrame or frame.fakeName or frame.name, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     else
         frame.totemIndicator:SetPoint("BOTTOM", totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     end

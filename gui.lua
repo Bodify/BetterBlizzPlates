@@ -47,7 +47,6 @@ local function ImportProfile(encodedString, expectedDataType)
     return importTable.data, nil
 end
 
-
 local function deepMergeTables(destination, source)
     for k, v in pairs(source) do
         if type(v) == "table" then
@@ -1185,10 +1184,10 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "darkModeNameplateColor" then
                     BetterBlizzPlatesDB.darkModeNameplateColor = value
                     BBP.DarkModeNameplateResources()
-                elseif element == "castBarInterruptHighlighterStartPercentage" then
-                    BetterBlizzPlatesDB.castBarInterruptHighlighterStartPercentage = value
-                elseif element == "castBarInterruptHighlighterEndPercentage" then
-                    BetterBlizzPlatesDB.castBarInterruptHighlighterEndPercentage = value
+                elseif element == "castBarInterruptHighlighterStartTime" then
+                    BetterBlizzPlatesDB.castBarInterruptHighlighterStartTime = value
+                elseif element == "castBarInterruptHighlighterEndTime" then
+                    BetterBlizzPlatesDB.castBarInterruptHighlighterEndTime = value
                 -- Nameplate Widths
                 elseif element == "nameplateFriendlyWidth" then
                     if not BBP.checkCombatAndWarn() then
@@ -1756,7 +1755,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             checkBoxI.texture:SetSize(27, 27)
             checkBoxI.texture:SetDesaturated(true)
             checkBoxI.texture:SetPoint("CENTER", checkBoxI, "CENTER", -0.5, 0.5)
-            CreateTooltipTwo(checkBoxI, "Important Glow |A:importantavailablequesticon:22:22|a", "Check for a glow on the aura to highlight it.\nRight-click to change Color.", nil, "ANCHOR_TOPRIGHT")
+            CreateTooltipTwo(checkBoxI, "Important Glow |A:importantavailablequesticon:22:22|a", "Check for a glow on the aura to highlight it.\n|cff32f795Right-click to change Color.|r", nil, "ANCHOR_TOPRIGHT")
 
             -- Handler for the I checkbox
             checkBoxI:SetScript("OnClick", function(self)
@@ -2821,6 +2820,23 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         addOrUpdateEntry(editBox:GetText())
     end)
 end
+
+local function CreateTitle(parent)
+    local mainGuiAnchor = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    mainGuiAnchor:SetPoint("TOPLEFT", 15, -15)
+    mainGuiAnchor:SetText(" ")
+
+    local addonNameText = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    addonNameText:SetPoint("TOPLEFT", mainGuiAnchor, "TOPLEFT", -20, 47)
+    addonNameText:SetText("BetterBlizzPlates")
+    local addonNameIcon = parent:CreateTexture(nil, "ARTWORK")
+    addonNameIcon:SetAtlas("gmchat-icon-blizz")
+    addonNameIcon:SetSize(22, 22)
+    addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
+    local verNumber = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
+    verNumber:SetText("v" .. BBP.VersionNumber)
+end
 ------------------------------------------------------------
 -- GUI Panels
 ------------------------------------------------------------
@@ -2831,6 +2847,7 @@ local function guiGeneralTab()
     local mainGuiAnchor = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     mainGuiAnchor:SetPoint("TOPLEFT", 15, -15)
     mainGuiAnchor:SetText(" ")
+    CreateTitle(BetterBlizzPlates)
 
     local bgImg = BetterBlizzPlates:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")
@@ -2838,17 +2855,6 @@ local function guiGeneralTab()
     bgImg:SetSize(680, 610)
     bgImg:SetAlpha(0.4)
     bgImg:SetVertexColor(0,0,0)
-
-    local addonNameText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    addonNameText:SetPoint("TOPLEFT", mainGuiAnchor, "TOPLEFT", -20, 47)
-    addonNameText:SetText("BetterBlizzPlates")
-    local addonNameIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
-    addonNameIcon:SetAtlas("gmchat-icon-blizz")
-    addonNameIcon:SetSize(22, 22)
-    addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
-    local verNumber = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
-    verNumber:SetText("v" .. BBP.VersionNumber)--SetText("v" .. BetterBlizzPlatesDB.updates)
 
     ----------------------
     -- General:
@@ -3869,6 +3875,7 @@ local function guiPositionAndScale()
     BetterBlizzPlatesSubPanel.name = "Advanced Settings"
     BetterBlizzPlatesSubPanel.parent = BetterBlizzPlates.name
     InterfaceOptions_AddCategory(BetterBlizzPlatesSubPanel)
+    CreateTitle(BetterBlizzPlatesSubPanel)
 
     local bgImg = BetterBlizzPlatesSubPanel:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")
@@ -4907,6 +4914,10 @@ local function guiPositionAndScale()
     partyPointerHealer:SetPoint("LEFT", partyPointerClassColor.text, "RIGHT", 0, 0)
     CreateTooltip(partyPointerHealer, "Show a cross on top of the pointer on healers\n(Requires addon Details and might not always show in world but fine in bgs and arena).")
 
+    local partyPointerHealerReplace = CreateCheckbox("partyPointerHealerReplace", "Replace", contentFrame)
+    partyPointerHealerReplace:SetPoint("TOPLEFT", partyPointerHealer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(partyPointerHealerReplace, "Replace Party Pointer with Healer Icon", "Replace the party pointer with healer icon instead of showing on the top.")
+
     ----------------------
     -- Fake Name Reposition
     ----------------------
@@ -5062,6 +5073,7 @@ local function guiCastbar()
     guiCastbar.name = "Castbar"
     guiCastbar.parent = BetterBlizzPlates.name
     InterfaceOptions_AddCategory(guiCastbar)
+    CreateTitle(guiCastbar)
 
     local bgImg = guiCastbar:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")
@@ -5434,10 +5446,17 @@ local function guiCastbar()
 
     local castBarInterruptHighlighter = CreateCheckbox("castBarInterruptHighlighter", "Castbar Edge Highlight", enableCastbarCustomization)
     castBarInterruptHighlighter:SetPoint("TOPLEFT", castBarInterruptHighlighterText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
-    CreateTooltip(castBarInterruptHighlighter, "Color the start and end of the castbar differently.\nSet the percentile of cast to color down below.")
+    CreateTooltipTwo(castBarInterruptHighlighter, "Castbar Highlight", "Color the start and end of the castbar differently.\nSet the time in seconds when to color the castbar below.")
+    castBarInterruptHighlighter:HookScript("OnClick", function(self)
+        BBP.ToggleSpellCastEventRegistration()
+        if not self:GetChecked() then
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        end
+    end)
 
     local castBarInterruptHighlighterColorDontInterrupt = CreateCheckbox("castBarInterruptHighlighterColorDontInterrupt", "Re-color between portion", castBarInterruptHighlighter)
     castBarInterruptHighlighterColorDontInterrupt:SetPoint("TOPLEFT", castBarInterruptHighlighter, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+    CreateTooltipTwo(castBarInterruptHighlighterColorDontInterrupt, "Color Inbetween", "Color the middle section between start and finish as well. Pick a color.")
 
     local castBarInterruptHighlighterDontInterruptRGB = CreateFrame("Button", nil, castBarInterruptHighlighterColorDontInterrupt, "UIPanelButtonTemplate")
     castBarInterruptHighlighterDontInterruptRGB:SetText("Color")
@@ -5453,17 +5472,17 @@ local function guiCastbar()
         OpenColorPicker("castBarInterruptHighlighterDontInterruptRGB", castBarInterruptHighlighterDontInterruptRGBIcon)
     end)
 
-    local castBarInterruptHighlighterStartPercentage = CreateSlider(castBarInterruptHighlighter, "Start Percentile", 0, 50, 1, "castBarInterruptHighlighterStartPercentage", "Height")
-    castBarInterruptHighlighterStartPercentage:SetPoint("TOPLEFT", castBarInterruptHighlighterColorDontInterrupt, "BOTTOMLEFT", 10, -6)
-    CreateTooltip(castBarInterruptHighlighterStartPercentage, "At what percentage of the cast you should stop coloring the castbar, up to 50% of the cast.")
+    local castBarInterruptHighlighterStartTime = CreateSlider(castBarInterruptHighlighter, "Start Seconds", 0, 2, 0.01, "castBarInterruptHighlighterStartTime", "Height")
+    castBarInterruptHighlighterStartTime:SetPoint("TOPLEFT", castBarInterruptHighlighterColorDontInterrupt, "BOTTOMLEFT", 10, -6)
+    CreateTooltip(castBarInterruptHighlighterStartTime, "How many seconds of the start of the cast you want to color the castbar.")
 
-    local castBarInterruptHighlighterEndPercentage = CreateSlider(castBarInterruptHighlighter, "End Percentile", 50, 100, 1, "castBarInterruptHighlighterEndPercentage", "Height")
-    castBarInterruptHighlighterEndPercentage:SetPoint("TOPLEFT", castBarInterruptHighlighterStartPercentage, "BOTTOMLEFT", 0, -10)
-    CreateTooltip(castBarInterruptHighlighterEndPercentage, "At what percentage of the cast you should start colering the end of the castbar, from end of cast down to 50% of cast.")
+    local castBarInterruptHighlighterEndTime = CreateSlider(castBarInterruptHighlighter, "End Seconds", 0, 2, 0.01, "castBarInterruptHighlighterEndTime", "Height")
+    castBarInterruptHighlighterEndTime:SetPoint("TOPLEFT", castBarInterruptHighlighterStartTime, "BOTTOMLEFT", 0, -10)
+    CreateTooltip(castBarInterruptHighlighterEndTime, "How many seconds of the end of the cast you want to color the castbar.")
 
     local castBarInterruptHighlighterInterruptRGB = CreateFrame("Button", nil, castBarInterruptHighlighter, "UIPanelButtonTemplate")
     castBarInterruptHighlighterInterruptRGB:SetText("Color")
-    castBarInterruptHighlighterInterruptRGB:SetPoint("LEFT", castBarInterruptHighlighterEndPercentage, "RIGHT", 0, 15)
+    castBarInterruptHighlighterInterruptRGB:SetPoint("LEFT", castBarInterruptHighlighterEndTime, "RIGHT", 0, 15)
     castBarInterruptHighlighterInterruptRGB:SetSize(50, 20)
     CreateTooltip(castBarInterruptHighlighterInterruptRGB, "Castbar edge color")
     local castBarInterruptHighlighterInterruptRGBIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
@@ -5660,6 +5679,7 @@ local function guiHideCastbar()
     guiHideCastbar.name = "Hide Castbar"
     guiHideCastbar.parent = BetterBlizzPlates.name
     InterfaceOptions_AddCategory(guiHideCastbar)
+    CreateTitle(guiHideCastbar)
 
     local bgImg = guiHideCastbar:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")
@@ -5762,6 +5782,7 @@ local function guiFadeNPC()
     guiFadeNpc.name = "Fade NPC"
     guiFadeNpc.parent = BetterBlizzPlates.name
     InterfaceOptions_AddCategory(guiFadeNpc)
+    CreateTitle(guiFadeNpc)
 
     local bgImg = guiFadeNpc:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")
@@ -5843,6 +5864,7 @@ local function guiHideNPC()
     guiHideNpc.name = "Hide NPC"
     guiHideNpc.parent = BetterBlizzPlates.name
     InterfaceOptions_AddCategory(guiHideNpc)
+    CreateTitle(guiHideNpc)
 
     local bgImg = guiHideNpc:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")
@@ -5955,6 +5977,7 @@ local function guiColorNPC()
     guiColorNpc.name = "Color NPC"
     guiColorNpc.parent = BetterBlizzPlates.name
     InterfaceOptions_AddCategory(guiColorNpc)
+    CreateTitle(guiColorNpc)
 
     local bgImg = guiColorNpc:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")
@@ -6020,6 +6043,7 @@ local function guiAuraColor()
     guiAuraColor.name = "Color by Aura"
     guiAuraColor.parent = BetterBlizzPlates.name
     InterfaceOptions_AddCategory(guiAuraColor)
+    CreateTitle(guiAuraColor)
 
     local bgImg = guiAuraColor:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")
@@ -6082,6 +6106,7 @@ local function guiNameplateAuras()
     guiNameplateAuras.name = "Nameplate Auras"
     guiNameplateAuras.parent = BetterBlizzPlates.name
     InterfaceOptions_AddCategory(guiNameplateAuras)
+    CreateTitle(guiNameplateAuras)
 
     local bgImg = guiNameplateAuras:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")
@@ -6412,9 +6437,27 @@ local function guiNameplateAuras()
     nameplateAuraEnlargedSquare:SetPoint("RIGHT", enlargedAuraIcon, "LEFT", -60, 1)
     CreateTooltipTwo(nameplateAuraEnlargedSquare, "Square Enlarged Aura", "Square the Enlarged Aura.", nil)
 
-    local sortEnlargedAurasFirst = CreateCheckbox("sortEnlargedAurasFirst", "Sort Enlarged & Compacted Auras", enableNameplateAuraCustomisation)
-    sortEnlargedAurasFirst:SetPoint("BOTTOMLEFT", nameplateAuraEnlargedSquare, "TOPLEFT", 0, 5)
-    CreateTooltipTwo(sortEnlargedAurasFirst, "Sort Enlarged & Compacted Auras", "Sorts the nameplate auras to put Enlarged auras first and compacted last.", nil)
+    local sortCompactedAurasFirst = CreateCheckbox("sortCompactedAurasFirst", "Sort Compacted Auras First", enableNameplateAuraCustomisation)
+    sortCompactedAurasFirst:SetPoint("BOTTOMLEFT", nameplateAuraEnlargedSquare, "TOPLEFT", 0, 5)
+    CreateTooltipTwo(sortCompactedAurasFirst, "Sort Compacted Auras First", "Sorts the nameplate auras to put Compacted auras first and Enlarged auras last.")
+
+    local sortEnlargedAurasFirst = CreateCheckbox("sortEnlargedAurasFirst", "Sort Enlarged Auras First", enableNameplateAuraCustomisation)
+    sortEnlargedAurasFirst:SetPoint("BOTTOMLEFT", sortCompactedAurasFirst, "TOPLEFT", 0, 0)
+    CreateTooltipTwo(sortEnlargedAurasFirst, "Sort Enlarged Auras First", "Sorts the nameplate auras to put Enlarged auras first and Compacted auras last.")
+
+    sortEnlargedAurasFirst:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            sortCompactedAurasFirst:SetChecked(false)
+            BetterBlizzPlatesDB.sortCompactedAurasFirst = false
+        end
+    end)
+
+    sortCompactedAurasFirst:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            sortEnlargedAurasFirst:SetChecked(false)
+            BetterBlizzPlatesDB.sortEnlargedAurasFirst = false
+        end
+    end)
 
     local nameplateAuraCompactedScale = CreateSlider(enableNameplateAuraCustomisation, "Compacted Aura Size", 0.4, 1, 0.01, "nameplateAuraCompactedScale")
     nameplateAuraCompactedScale:SetPoint("TOPLEFT", nameplateAuraEnlargedScale, "BOTTOMLEFT", 0, -17)
@@ -6655,6 +6698,7 @@ local function guiCVarControl()
     guiCVarControl.name = "CVar Control"
     guiCVarControl.parent = BetterBlizzPlates.name
     InterfaceOptions_AddCategory(guiCVarControl)
+    CreateTitle(guiCVarControl)
 
     local bgImg = guiCVarControl:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")
@@ -6880,6 +6924,7 @@ local function guiTotemList()
     guiTotemList.name = "Totem Indicator List"
     guiTotemList.parent = BetterBlizzPlates.name
     InterfaceOptions_AddCategory(guiTotemList)
+    CreateTitle(guiTotemList)
 
     local bgImg = guiTotemList:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")
@@ -6907,6 +6952,7 @@ local function guiMisc()
     guiMisc.name = "Misc"--"|A:GarrMission_CurrencyIcon-Material:19:19|a Misc"
     guiMisc.parent = BetterBlizzPlates.name
     InterfaceOptions_AddCategory(guiMisc)
+    CreateTitle(guiMisc)
 
     local bgImg = guiMisc:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")
@@ -7135,6 +7181,7 @@ local function guiImportAndExport()
     guiImportAndExport.name = "Import & Export"--"|A:GarrMission_CurrencyIcon-Material:19:19|a Misc"
     guiImportAndExport.parent = BetterBlizzPlates.name
     InterfaceOptions_AddCategory(guiImportAndExport)
+    CreateTitle(guiImportAndExport)
 
     local bgImg = guiImportAndExport:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")

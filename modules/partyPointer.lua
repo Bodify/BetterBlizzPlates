@@ -45,6 +45,7 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         config.partyPointerHealerScale = BetterBlizzPlatesDB.partyPointerHealerScale
         config.partyPointerHideRaidmarker = BetterBlizzPlatesDB.partyPointerHideRaidmarker
         config.partyPointerWidth = BetterBlizzPlatesDB.partyPointerWidth
+        config.partyPointerHealerReplace = BetterBlizzPlatesDB.partyPointerHealerReplace
 
         config.partyPointerInitialized = true
     end
@@ -104,6 +105,11 @@ function BBP.PartyPointer(frame, fetchedSpecID)
     if config.partyPointerTestMode then
         frame.partyPointer.healerIcon:Show()
         frame.partyPointer:Show()
+        if config.partyPointerHealerReplace then
+            frame.partyPointer.healerIcon:ClearAllPoints()
+            frame.partyPointer.healerIcon:SetPoint("CENTER", frame.partyPointer.icon, "CENTER", 0, 0)
+            frame.partyPointer.icon:Hide()
+        end
         return
     end
 
@@ -116,8 +122,16 @@ function BBP.PartyPointer(frame, fetchedSpecID)
     if config.partyPointerHealer then
         if HealerSpecs[specID] then
             frame.partyPointer.healerIcon:Show()
+            if config.partyPointerHealerReplace then
+                frame.partyPointer.healerIcon:ClearAllPoints()
+                frame.partyPointer.healerIcon:SetPoint("CENTER", frame.partyPointer.icon, "CENTER", 0, 0)
+                frame.partyPointer.icon:Hide()
+            end
         else
             frame.partyPointer.healerIcon:Hide()
+            if config.partyPointerHealerReplace then
+                frame.partyPointer.icon:Show()
+            end
         end
     else
         frame.partyPointer.healerIcon:Hide()

@@ -12,7 +12,7 @@ LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlate
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.4.9"
+local addonUpdates = "1.4.9b"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -512,14 +512,15 @@ local defaultSettings = {
         {name = "Shadowfury"},
         {name = "Haymaker"},
         {name = "Lightning Lasso"},
+        {name = "Song of Chi-Ji"},
     },
 
     castBarInterruptHighlighter = false,
     castBarInterruptHighlighterColorDontInterrupt = false,
     castBarInterruptHighlighterInterruptRGB = {0, 1, 0},
     castBarInterruptHighlighterDontInterruptRGB = {0, 0, 0},
-    castBarInterruptHighlighterStartPercentage = 15,
-    castBarInterruptHighlighterEndPercentage = 80,
+    castBarInterruptHighlighterStartTime = 0.8,
+    castBarInterruptHighlighterEndTime = 0.6,
 
     nameplateResourceXPos = 0,
     nameplateResourceYPos = 0,
@@ -569,7 +570,7 @@ local function InitializeSavedVariables()
         BetterBlizzPlatesDB.healerIndicatorEnemyScale = BetterBlizzPlatesDB.healerIndicatorScale
     end
 
-    if BetterBlizzPlatesDB.friendlyHealthBarColorPlayer then
+    if BetterBlizzPlatesDB.friendlyHealthBarColorPlayer == nil then
         BetterBlizzPlatesDB.friendlyHealthBarColorPlayer = BetterBlizzPlatesDB.friendlyHealthBarColor
         BetterBlizzPlatesDB.friendlyHealthBarColorNpc = BetterBlizzPlatesDB.friendlyHealthBarColor
     end
@@ -3074,8 +3075,9 @@ function BBP.SetupFakeName(frame)
     end
     frame.fakeName:SetText(frame.name:GetText() or UnitName(frame.unit))
     frame.fakeName:SetShown(frame.name:IsShown())
+    frame.fakeName:SetScale(frame.name:GetScale())
     local r, g, b, a = frame.name:GetVertexColor()
-    frame.fakeName:SetVertexColor(r, g, b, a)
+    frame.fakeName:SetVertexColor(r, g, b, 1)
     frame.name:SetAlpha(0)
 end
 
@@ -3320,13 +3322,13 @@ function BBP.RefreshAllNameplates()
         BBP.ClassColorAndScaleNames(frame)
 
         if frame.TargetText then
-            BBP.SetFontBasedOnOption(nameplate.TargetText, 12)
+            BBP.SetFontBasedOnOption(frame.TargetText, 12)
         end
         if frame.absorbIndicator then
-            BBP.SetFontBasedOnOption(nameplate.UnitFrame.absorbIndicator, 10)
+            BBP.SetFontBasedOnOption(frame.absorbIndicator, 10)
         end
         if frame.CastTimer then
-            BBP.SetFontBasedOnOption(nameplate.UnitFrame.CastTimer, 11)
+            BBP.SetFontBasedOnOption(frame.CastTimer, 11)
         end
         if frame.executeIndicator then
             BBP.SetFontBasedOnOption(frame.executeIndicator, 10, "THICKOUTLINE")
@@ -4257,7 +4259,7 @@ function BBP.CreateUpdateMessageWindow()
 
     -- Example of how to use the scrolling message frame
     BBP.UpdateMessageWindow = CreateFrame("Frame", "BBPUpdate", UIParent, "PortraitFrameTemplate")
-    BBP.UpdateMessageWindow:SetSize(450,300)
+    BBP.UpdateMessageWindow:SetSize(450,260)
     BBP.UpdateMessageWindow.Bg:SetDesaturated(true)
     BBP.UpdateMessageWindow.Bg:SetVertexColor(0.5,0.5,0.5, 0.98)
     local screenHeight = UIParent:GetHeight() -- Get the screen height
@@ -4306,15 +4308,14 @@ function BBP.CreateUpdateMessageWindow()
 
     -- Adding messages
     scrollingMessageFrame:AddMessage("QuestNormal", "New Stuff:", nil, 5, -3, 3, "GameFontNormalMed2", 16)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Sort Enlarged & Compacted Auras", "(Nameplate Auras)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Health Numbers", "(General)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Friendly Healthbar Color Player/NPC option toggles", "(General)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Separate nameplate height for enemy/friendly", "(Misc)", 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Hide Friendly Healthbar Keybind Toggle", "(Blizzard Keybindings)", 14)
+    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Sort Enlarged & Compacted Auras (reversed ver)", "(Nameplate Auras)", 2)
+    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Castbar Edge Highlighter now uses seconds instead of percentages", "(Castbar)", 2)
+    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Party pointer healer icon replace setting", "(Advanced Settings)", 14)
 
     scrollingMessageFrame:AddMessage("Professions-Crafting-Orders-Icon", "Bugfixes and Tweaks:", nil, 5, -4, 2, "GameFontNormalMed2", 16)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Bugfix for some 1080p users that made nameplate names scale with target scale", nil, 2)
-    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Fixed reposition name setting making name overlap ui elements.", nil, 2)
+    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Fixed some npc casts not triggering castbar customization", nil, 2)
+    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Totem indicator icon now moves on top of np resource (if enabled) when targeting a totem", nil, 2)
+    scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Fixed Friendly NP color player/npc toggle resetting on reload", nil, 2)
     -- scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Fix personal Nameplate Aura filtering issues", nil, 2)
     -- scrollingMessageFrame:AddMessage("Professions-Icon-Quality-Tier5-Inv", "Fixed a Blizzard bug:\nIf Nameplate Resource CVar is on then nameplate auras get pushed up 18 pixels by default but this used to happen even on specs that don't have a nameplate resource. This is fixed now.", nil, 14)
 
@@ -4351,3 +4352,45 @@ function BBP.HookHealthbarHeight()
         hookedHpHeight = true
     end
 end
+
+-- local spellbar = CreateFrame("StatusBar", "PlayerBBPSpellbar", UIParent, "SmallCastingBarFrameTemplate")
+-- spellbar:SetScale(1)
+
+-- spellbar:SetUnit("player", true, true)
+-- spellbar.Text:ClearAllPoints()
+-- spellbar.Text:SetPoint("CENTER", spellbar, "BOTTOM", 0, -5.5)
+-- spellbar.Text:SetFontObject("SystemFont_Shadow_Med1_Outline")
+-- spellbar.Icon:ClearAllPoints()
+-- spellbar.Icon:SetPoint("RIGHT", spellbar, "LEFT", -4, -5)
+-- spellbar.Icon:SetSize(22,22)
+-- spellbar.Icon:SetScale(BetterBlizzFramesDB.partyCastBarIconScale)
+-- spellbar.BorderShield:ClearAllPoints()
+-- spellbar.BorderShield:SetPoint("RIGHT", spellbar, "LEFT", -1, -7)
+-- spellbar.BorderShield:SetSize(29,33)
+-- spellbar.BorderShield:SetScale(BetterBlizzFramesDB.partyCastBarIconScale)
+-- spellbar:SetScale(1)
+-- spellbar:SetWidth(130)
+-- spellbar:SetHeight(8)
+
+-- spellbar.Timer = spellbar:CreateFontString(nil, "OVERLAY", "SystemFont_Shadow_Med1_Outline")
+-- spellbar.Timer:SetPoint("LEFT", spellbar, "RIGHT", 3, 0)
+-- spellbar.Timer:SetTextColor(1, 1, 1, 1)
+
+-- spellbar.FakeTimer = spellbar:CreateFontString(nil, "OVERLAY", "SystemFont_Shadow_Med1_Outline")
+-- spellbar.FakeTimer:SetPoint("LEFT", spellbar, "RIGHT", 3, 0)
+-- spellbar.FakeTimer:SetTextColor(1, 1, 1, 1)
+-- spellbar.FakeTimer:SetText("1.8")
+-- spellbar.FakeTimer:Hide()
+
+-- Mixin(spellbar, SmoothStatusBarMixin)
+-- spellbar:SetMinMaxSmoothedValue(0, 100)
+
+-- function temp()
+--     --local nameplate, frame = BBP.GetSafeNameplate("player")
+--     local frame = ClassNameplateManaBarFrame
+--     if frame then
+--         spellbar:SetParent(frame)
+--         spellbar:ClearAllPoints()
+--         spellbar:SetPoint("TOP", frame, "BOTTOM",0, -2)
+--     end
+-- end

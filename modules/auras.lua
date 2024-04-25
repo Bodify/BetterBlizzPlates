@@ -252,6 +252,7 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local compactTexCoord = not compactSquare and texCoord or nameplateAuraSquare and {0.25, 0.75, 0.05, 0.95} or nameplateAuraTaller and {0.3, 0.7, 0.15, 0.82} or {0.3, 0.7, 0.15, 0.80}
     local nameplateAuraScale = BetterBlizzPlatesDB.nameplateAuraScale
     local sortEnlargedAurasFirst = BetterBlizzPlatesDB.sortEnlargedAurasFirst
+    local sortCompactedAurasFirst = BetterBlizzPlatesDB.sortCompactedAurasFirst
 
     local scaledCompactWidth = compactSize * nameplateAuraCompactedScale
     local scaledCompactHeight = auraHeightSetting * nameplateAuraCompactedScale
@@ -290,6 +291,31 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
 
         return defaultComparator(a, b)
     end
+
+    local function smallLargeAuraComparator(a, b)
+        if a.isCompacted or b.isCompacted then
+            if a.isCompacted and not b.isCompacted then
+                return true
+            elseif not a.isCompacted and b.isCompacted then
+                return false
+            else
+                return defaultComparator(a, b)
+            end
+        end
+
+        if a.isEnlarged or b.isEnlarged then
+            if a.isEnlarged and not b.isEnlarged then
+                return false
+            elseif not a.isEnlarged and b.isEnlarged then
+                return true
+            else
+                return defaultComparator(a, b)
+            end
+        end
+
+        return defaultComparator(a, b)
+    end
+
 
     -- Separate buffs and debuffs if needed
     local buffs = {}
@@ -455,6 +481,9 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
             if sortEnlargedAurasFirst then
                 table.sort(debuffs, largeSmallAuraComparator)
             end
+            if sortCompactedAurasFirst then
+                table.sort(debuffs, smallLargeAuraComparator)
+            end
             rowWidths = CalculateRowWidths(debuffs)
             lastRow = LayoutAuras(debuffs, 0)
         end
@@ -462,11 +491,17 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
         if sortEnlargedAurasFirst then
             table.sort(buffs, largeSmallAuraComparator)
         end
+        if sortCompactedAurasFirst then
+            table.sort(buffs, smallLargeAuraComparator)
+        end
         rowWidths = CalculateRowWidths(buffs)
         LayoutAuras(buffs, lastRow + (#debuffs > 0 and 1 or 0))
     else
         if sortEnlargedAurasFirst then
             table.sort(buffs, largeSmallAuraComparator)
+        end
+        if sortCompactedAurasFirst then
+            table.sort(buffs, smallLargeAuraComparator)
         end
         rowWidths = CalculateRowWidths(buffs)
         lastRow = LayoutAuras(buffs, 0)

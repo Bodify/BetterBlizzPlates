@@ -3083,7 +3083,7 @@ function BBP.NahjProfile()
 	db.nameplateFriendlyWidth = 60
 	db.nameplateShowEnemyTotems = "1"
 	db.raidmarkIndicatorAnchor = "TOP"
-	db.castBarInterruptHighlighterStartPercentage = 15
+	db.castBarInterruptHighlighterStartTime = 15
 	db.petIndicatorScale = 1
 	db.personalNpdeBuffFilterAll = false
 	db.nameplateAurasNoNameYPos = 0
@@ -3141,7 +3141,7 @@ function BBP.NahjProfile()
 	db.castBarEmphasisIconScale = 2
 	db.fadeOutNPC = true
 	db.nameplateShowEnemyMinions = "1"
-	db.castBarInterruptHighlighterEndPercentage = 85
+	db.castBarInterruptHighlighterEndTime = 85
 	db.nameplateSelfWidth = 154
 	db.raidmarkIndicator = false
 	db.petIndicatorAnchor = "CENTER"
@@ -3202,7 +3202,7 @@ function BBP.NahjProfile()
 	db.removeRealmNames = true
 	db.largeNameplates = true
 	db.nameplateResourceOnTarget = "0"
-	db.castBarInterruptHighlighterEndPercentageHeight = 85
+	db.castBarInterruptHighlighterEndTimeHeight = 85
 	db.castBarDelayedInterruptColor = {
 		0, -- [1]
 		1, -- [2]
@@ -3291,7 +3291,7 @@ function BBP.NahjProfile()
 	db.friendlyNpdeBuffFilterBlizzard = false
 	db.arenaIndicatorModeOne = false
 	db.partyIndicatorModeTwo = true
-	db.castBarInterruptHighlighterStartPercentageHeight = 15
+	db.castBarInterruptHighlighterStartTimeHeight = 15
 	db.maxAurasOnNameplate = 12
 	db.friendlyNameplatesOnlyInArena = true
 	db.hideNPCWhitelistOn = false
@@ -3390,7 +3390,7 @@ function BBP.MagnuszProfile()
 	db.nameplateAurasYPos = 6
 	db.castBarEmphasisColor = false
 	db.castBarTextScaleScale = 1
-	db.castBarInterruptHighlighterEndPercentage = 80
+	db.castBarInterruptHighlighterEndTime = 80
 	db.nameplateShowFriendlyTotems = "0"
 	db.customFontSize = 12
 	db.nameplateAurasCenteredAnchor = false
@@ -3504,7 +3504,7 @@ function BBP.MagnuszProfile()
 	db.otherNpBuffPurgeGlow = false
 	db.nameplateDefaultEnemyWidth = 110
 	db.castBarHeightHeight = 18.79999923706055
-	db.castBarInterruptHighlighterStartPercentage = 15
+	db.castBarInterruptHighlighterStartTime = 15
 	db.personalNpdeBuffFilterAll = false
 	db.targetIndicatorAnchor = "TOP"
 	db.absorbIndicatorYPosYPos = 0
