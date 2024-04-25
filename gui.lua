@@ -3443,8 +3443,12 @@ local function guiGeneralTab()
     toggleFriendlyNameplatesInArena:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(toggleFriendlyNameplatesInArena, "Arena Toggle", "Turn on friendly nameplates when you enter arena and off again when you leave.")
 
+    local friendlyNameplatesOnlyInBgs = CreateCheckbox("friendlyNameplatesOnlyInBgs", "BG Toggle", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    friendlyNameplatesOnlyInBgs:SetPoint("LEFT", toggleFriendlyNameplatesInArena.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(friendlyNameplatesOnlyInBgs, "Battleground Toggle", "Turn on friendly nameplates when you enter battlegrounds and off again when you leave.")
+
     local friendlyNameplatesOnlyInDungeons = CreateCheckbox("friendlyNameplatesOnlyInDungeons", "Dungeon/raid Toggle", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
-    friendlyNameplatesOnlyInDungeons:SetPoint("LEFT", toggleFriendlyNameplatesInArena.text, "RIGHT", 0, 0)
+    friendlyNameplatesOnlyInDungeons:SetPoint("LEFT", friendlyNameplatesOnlyInBgs.text, "RIGHT", 0, 0)
     CreateTooltipTwo(friendlyNameplatesOnlyInDungeons, "Dungeon/Raid Toggle", "Turn on friendly nameplates when you enter dungeons/raids and off again when you leave.")
 
     local friendlyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 3, 0.01, "friendlyNameScale")
@@ -3621,16 +3625,16 @@ local function guiGeneralTab()
 
     local enableCustomFontOutline = CreateCheckbox("enableCustomFontOutline", "Outline", useCustomFont)
     enableCustomFontOutline:SetPoint("LEFT", fontDropdown, "RIGHT", -15, 1)
-    CreateTooltipTwo(enableCustomFontOutline, "Font Outline", "Enable font outline.\n|cff32f795Right-click to swap between thin outline and thick outline.")
+    CreateTooltipTwo(enableCustomFontOutline, "Font Outline", "Enable font outline.\n|cff32f795Right-click to swap between thick and thin outline.")
     enableCustomFontOutline:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
             local currentOutline = BetterBlizzPlatesDB["customFontOutline"]
             if currentOutline == "THINOUTLINE" then
                 BetterBlizzPlatesDB["customFontOutline"] = "THICKOUTLINE"
-                RefreshTooltip(enableCustomFontOutline, "Font Outline", "Enable font outline.\n|cff32f795Right-click to swap between thin outline and thick outline.\nCurrent: Thick Outline")
+                RefreshTooltip(enableCustomFontOutline, "Font Outline", "Enable font outline.\n|cff32f795Right-click to swap between thick and thin outline.\nCurrent: Thick Outline")
             else
                 BetterBlizzPlatesDB["customFontOutline"] = "THINOUTLINE"
-                RefreshTooltip(enableCustomFontOutline, "Font Outline", "Enable font outline.\n|cff32f795Right-click to swap between thin outline and thick outline.\nCurrent: Thin Outline")
+                RefreshTooltip(enableCustomFontOutline, "Font Outline", "Enable font outline.\n|cff32f795Right-click to swap between thick and thin outline.\nCurrent: Thin Outline")
             end
             BBP.RefreshAllNameplates()
         end

@@ -47,13 +47,28 @@ function BBP.CreateTotemComponents(frame, size)
     end
     frame.totemIndicator:SetSize(size, size)
     frame.totemIndicator:SetScale(config.totemIndicatorScale or 1)
+    local totemIndicatorSwappingAnchor
     if config.totemIndicatorHideNameAndShiftIconDown then
-        frame.totemIndicator:SetPoint("BOTTOM", frame.healthBar, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos + 4)
-    elseif config.nameplateResourceOnTarget and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
-        local resourceFrame = frame:GetParent().driverFrame.classNamePlateMechanicFrame
-        frame.totemIndicator:SetPoint("BOTTOM", resourceFrame or frame.fakeName or frame.name, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
+        totemIndicatorSwappingAnchor = frame.healthBar
     else
-        frame.totemIndicator:SetPoint("BOTTOM", frame.fakeName or frame.name, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
+        if config.totemIndicatorAnchor == "TOP" then
+            if frame.fakeName then
+                totemIndicatorSwappingAnchor = frame.fakeName
+            else
+                totemIndicatorSwappingAnchor = frame.name
+            end
+        else
+            totemIndicatorSwappingAnchor = frame.healthBar
+        end
+    end
+    frame.totemIndicator:ClearAllPoints()
+    if config.totemIndicatorHideNameAndShiftIconDown then
+        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), frame.healthBar, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos + 4)
+    elseif config.nameplateResourceOnTarget == 1 and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
+        local resourceFrame = frame:GetParent().driverFrame.classNamePlateMechanicFrame
+        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), resourceFrame or (config.totemIndicatorHideNameAndShiftIconDown and frame.healthBar) or totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
+    else
+        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), (config.totemIndicatorHideNameAndShiftIconDown and frame.healthBar) or totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     end
 end
 
@@ -214,7 +229,21 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
 
     local guid = info.unitGUID
     local npcID = BBP.GetNPCIDFromGUID(guid) --mby need fresh guid
-    local totemIndicatorSwappingAnchor = config.totemIndicatorHideNameAndShiftIconDown and frame.healthBar or frame.fakeName or frame.name
+    local totemIndicatorSwappingAnchor
+    if config.totemIndicatorHideNameAndShiftIconDown then
+        totemIndicatorSwappingAnchor = frame.healthBar
+    else
+        if config.totemIndicatorAnchor == "TOP" then
+            if frame.fakeName then
+                totemIndicatorSwappingAnchor = frame.fakeName
+            else
+                totemIndicatorSwappingAnchor = frame.name
+            end
+        else
+            totemIndicatorSwappingAnchor = frame.healthBar
+        end
+    end
+
     local yPosAdjustment = config.totemIndicatorHideNameAndShiftIconDown and config.totemIndicatorYPos + 4 or config.totemIndicatorYPos
     local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
     local size = npcData and npcData.size or 30
@@ -333,16 +362,17 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         end
     end
 
+    frame.totemIndicator:ClearAllPoints()
     if config.totemIndicatorHideNameAndShiftIconDown then
-        frame.totemIndicator:SetPoint("BOTTOM", totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, yPosAdjustment)
+        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, yPosAdjustment)
         frame.name:SetText("")
         if frame.fakeName then
             frame.fakeName:SetText("")
         end
-    elseif config.nameplateResourceOnTarget and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
+    elseif config.nameplateResourceOnTarget == 1  and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
         local resourceFrame = frame:GetParent().driverFrame.classNamePlateMechanicFrame
-        frame.totemIndicator:SetPoint("BOTTOM", resourceFrame or frame.fakeName or frame.name, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
+        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), resourceFrame or totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     else
-        frame.totemIndicator:SetPoint("BOTTOM", totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
+        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     end
 end

@@ -866,6 +866,16 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
             end
         end
 
+        if BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
+            C_Timer.After(0.6, function()
+                if frame and frame.unit then
+                    if UnitIsUnit(frame.unit, "target") then
+                        BBP.UpdateNamplateResourcePositionForCasting(nameplate)
+                    end
+                end
+            end)
+        end
+
         if hideCastbar then
             BBP.HideCastbar(frame, self.unit)
         end

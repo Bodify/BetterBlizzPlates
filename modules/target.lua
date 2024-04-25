@@ -229,11 +229,12 @@ function BBP.UpdateNamplateResourcePositionForCasting(nameplate, bypass)
         local isCasting = UnitCastingInfo("target") or UnitChannelInfo("target")
 
         -- Adjust position based on casting state and setting
+        nameplate.driverFrame.classNamePlateMechanicFrame:ClearAllPoints()
         if bypass then
             PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset - 10)
         elseif isCasting then
             PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.UnitFrame.castBar, "BOTTOM", xPos, yOffset - 10)
-        elseif not isCasting then
+        else
             if not nameplate.UnitFrame.castBar:IsShown() then
                 PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset - 10)
             else
@@ -423,6 +424,7 @@ end
 function BBP.FadeAllButTargetNameplates()
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = namePlate.UnitFrame
+        local config = frame.BetterBlizzPlates.config or BBP.InitializeNameplateSettings
         if UnitExists("target") and not UnitIsPlayer(frame.unit) then
             if not UnitIsUnit(frame.unit, "target") and not UnitIsUnit(frame.unit, "player") then
                 frame:SetAlpha(config.fadeOutNPCsAlpha)

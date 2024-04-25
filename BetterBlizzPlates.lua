@@ -876,6 +876,9 @@ local function SendUpdateMessage()
 
             DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
             DEFAULT_CHAT_FRAME:AddMessage("   - Name Reposition now shows on top of healthbar.")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Fix FadeNPC not un-fading if targeted.")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Fix typo in \"Fade all but target\" setting causing lua error.")
+            DEFAULT_CHAT_FRAME:AddMessage("   - Fix nameplate resource anchor under not always updating (?).")
         end)
     end
 end
@@ -1331,11 +1334,14 @@ local function ShouldShowFriendlyNameplates()
     local instanceType = select(2, IsInInstance())
     local showInArena = instanceType == "arena" and BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena
     local showInDungeon = (instanceType == "party" or instanceType == "raid" or instanceType == "scenario") and BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons
+    local showInBg = instanceType == "pvp" and BetterBlizzPlatesDB.friendlyNameplatesOnlyInBgs
 
     if instanceType == "arena" then
         return showInArena
     elseif instanceType == "party" or instanceType == "raid" or instanceType == "scenario" then
         return showInDungeon
+    elseif instanceType == "pvp" then
+        return showInBg
     else
         -- Outside of dungeons and arenas
         return not BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons and not BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena
@@ -1878,7 +1884,7 @@ function BBP.FadeOutNPCs(frame)
     end
 
     -- Check if the unit is the current target
-    if isTarget then
+    if info.isTarget then
         frame:SetAlpha(1)
     elseif inList then
         frame:SetAlpha(config.fadeOutNPCsAlpha)
@@ -2762,7 +2768,7 @@ local function HookNameplateCastbarHide(frame)
             if UnitIsUnit(frame.unit, "target") then
                 BBP.UpdateNamplateResourcePositionForCasting(nameplate, true)
             end
-        end)
+        end)--probably remove, stays for now bodify
         frame.castBar.hideHooked = true
     end
 end
