@@ -1,6 +1,3 @@
--- Setting up the database
-BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
-BBP = BBP or {}
 local LSM = LibStub("LibSharedMedia-3.0")
 
 BBP.previousTargetNameplate = nil
@@ -220,6 +217,18 @@ local notifiedUser
 local nameplateResourceUnderCastbar
 local nameplateResourceUnderCastbarEventFrame
 
+local classResourceYOffsets = {
+    PALADIN = 4,
+    DEATHKNIGHT = -3,
+    MAGE = -4,
+    MONK = -4,
+    DRUID = -4,
+    ROGUE = -4,
+    WARLOCK = 2,
+    EVOKER = -1,
+}
+local playerClass = select(2, UnitClass("player"))
+
 -- Function to update the position based on casting state and settings
 function BBP.UpdateNamplateResourcePositionForCasting(nameplate, bypass)
     if nameplate and nameplate.UnitFrame and nameplate.driverFrame and nameplate.driverFrame.classNamePlateMechanicFrame then
@@ -228,22 +237,23 @@ function BBP.UpdateNamplateResourcePositionForCasting(nameplate, bypass)
         local xPos = BetterBlizzPlatesDB.nameplateResourceXPos or 0
         local isCasting = UnitCastingInfo("target") or UnitChannelInfo("target")
 
+        local classOffset = classResourceYOffsets[playerClass] or 0
+
         -- Adjust position based on casting state and setting
         nameplate.driverFrame.classNamePlateMechanicFrame:ClearAllPoints()
         if bypass then
-            PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset - 10)
+            PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset + classOffset)
         elseif isCasting then
-            PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.UnitFrame.castBar, "BOTTOM", xPos, yOffset - 10)
+            PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.UnitFrame.castBar, "BOTTOM", xPos, yOffset + classOffset)
         else
             if not nameplate.UnitFrame.castBar:IsShown() then
-                PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset - 10)
+                PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset + classOffset)
             else
-                PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.UnitFrame.castBar, "BOTTOM", xPos, yOffset - 10)
+                PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.UnitFrame.castBar, "BOTTOM", xPos, yOffset + classOffset)
             end
         end
     end
 end
-
 
 local classPadding = {
     ["MONK"] = -8,
@@ -254,7 +264,7 @@ local classPadding = {
 local adjusted
 function BBP.TargetResourceUpdater()
     local _, className = UnitClass("player")
-    nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget == 1 or BetterBlizzPlatesDB.nameplateResourceOnTarget == true
+    nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true
     nameplateShowSelf = GetCVarBool("nameplateShowSelf")
     nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
 
@@ -362,7 +372,7 @@ end
 -- Function to handle event registration and updates
 function BBP.RegisterTargetCastingEvents()
     nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
-    nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget == 1 or BetterBlizzPlatesDB.nameplateResourceOnTarget == true
+    nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget == "1"
 
     if not nameplateResourceUnderCastbarEventFrame then
         nameplateResourceUnderCastbarEventFrame = CreateFrame("Frame")
@@ -496,6 +506,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             end
 
             BBP.ToggleNameplateAuras(frame)
+            BBP.TargetNameplateAuraSize(frame)
         end
 
         BBP.previousTargetNameplate = nil
@@ -515,6 +526,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
         --if not info.isSelf then
 
             BBP.ToggleNameplateAuras(frame)
+            BBP.TargetNameplateAuraSize(frame)
             if config.targetIndicator then BBP.TargetIndicator(frame) end
             if config.partyPointer then BBP.PartyPointer(frame) end
 

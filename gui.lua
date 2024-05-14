@@ -114,7 +114,7 @@ StaticPopupDialogs["BBP_CONFIRM_MAGNUSZ_PROFILE"] = {
 }
 
 StaticPopupDialogs["BBP_CONFIRM_NAHJ_PROFILE"] = {
-    text = "This action will modify all settings to Nahj's profile and reload the UI.\n\nYour existing blacklists and whitelists will be retained, with Nahj's additional entries.\n\nAre you sure you want to continue?",
+    text = "This action will modify all settings to Nahj's profile and reload the UI.\n\nYour existing blacklists and whitelists will be retained, with Nahj's additional entries.\n\n|cff32f795NOTE: Nahj has nameplate debuffs turned off. To enable them go to Nameplate Auras after setting profile and check Show DEBUFFS.|r\n\nAre you sure you want to continue?",
     button1 = "Yes",
     button2 = "No",
     OnAccept = function()
@@ -220,7 +220,7 @@ local function OpenColorPicker(colorType, icon)
     })
 end
 
-function CreateColorBox(parent, colorVar, labelText)
+local function CreateColorBox(parent, colorVar, labelText)
     local frame = CreateFrame("Frame", nil, parent)
     frame:SetSize(55, 20) -- Adjust size as needed
     frame:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
@@ -261,17 +261,6 @@ function CreateColorBox(parent, colorVar, labelText)
     end
 
     return frame
-end
-
-local function CreateBorderBox(anchor)
-    local contentFrame = anchor:GetParent()
-    local texture = contentFrame:CreateTexture(nil, "BACKGROUND")
-    texture:SetAtlas("UI-Frame-Neutral-PortraitWiderDisable")
-    texture:SetDesaturated(true)
-    texture:SetRotation(math.rad(90))
-    texture:SetSize(295, 163)
-    texture:SetPoint("CENTER", anchor, "CENTER", 0, -95)
-    return texture
 end
 
 local function CreateBorderBox(anchor)
@@ -626,18 +615,28 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
 
     SetSliderValue()
 
-    if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
-        slider:Disable()
-        slider:SetAlpha(0.5)
-    else
-        if parent:GetObjectType() == "CheckButton" and parent:IsEnabled() then
-            slider:Enable()
-            slider:SetAlpha(1)
-        elseif parent:GetObjectType() ~= "CheckButton" then
-            slider:Enable()
-            slider:SetAlpha(1)
+    local function SetSliderState()
+        if not BBP.variablesLoaded then
+            C_Timer.After(0.5, function()
+                SetSliderState()
+            end)
+        else
+            if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
+                slider:Disable()
+                slider:SetAlpha(0.5)
+            else
+                if parent:GetObjectType() == "CheckButton" and parent:IsEnabled() then
+                    slider:Enable()
+                    slider:SetAlpha(1)
+                elseif parent:GetObjectType() ~= "CheckButton" then
+                    slider:Enable()
+                    slider:SetAlpha(1)
+                end
+            end
         end
     end
+    SetSliderState()
+
 
     -- Create Input Box on Right Click
     local editBox = CreateFrame("EditBox", nil, slider, "InputBoxTemplate")
@@ -1023,6 +1022,29 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "defaultNpAuraCdSize" then
                     BetterBlizzPlatesDB.defaultNpAuraCdSize = value
                     BBP.RefreshBuffFrame()
+                elseif element == "targetNameplateAuraScale" then
+                    BetterBlizzPlatesDB.targetNameplateAuraScale = value
+                    BBP.RefreshBuffFrame()
+                    local nameplate, frame = BBP.GetSafeNameplate("target")
+                    if frame then
+                        BBP.TargetNameplateAuraSize(frame)
+                    end
+                elseif element == "nameplateBorderSize" then
+                    BetterBlizzPlatesDB.nameplateBorderSize = value
+                    BBP.HookNameplateBorderSize()
+                    for _, np in pairs(C_NamePlate.GetNamePlates()) do
+                        local frame = np.UnitFrame
+                        if frame then
+                            frame.healthBar.border:UpdateSizes()
+                        end
+                    end
+                elseif element == "nameplateTargetBorderSize" then
+                    BetterBlizzPlatesDB.nameplateTargetBorderSize = value
+                    BBP.HookNameplateBorderSize()
+                    local np, frame = BBP.GetSafeNameplate("target")
+                    if frame then
+                        frame.healthBar.border:UpdateSizes()
+                    end
                 elseif element == "totemIndicatorDefaultCooldownTextSize" then
                     BetterBlizzPlatesDB.totemIndicatorDefaultCooldownTextSize = value
                 elseif element == "left" then
@@ -1246,6 +1268,14 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
 
     editBox:SetScript("OnEnterPressed", HandleEditBoxInput)
     slider:SetScript("OnValueChanged", SliderOnValueChanged)
+    slider:SetScript("OnMouseWheel", function(slider, delta)
+        local currentVal = slider:GetValue()
+        if delta > 0 then
+            slider:SetValue(currentVal + stepValue)
+        else
+            slider:SetValue(currentVal - stepValue)
+        end
+    end)
 
     return slider
 end
@@ -1436,88 +1466,121 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
     return frame
 end
 
-local combatCheck = CreateFrame("Frame")
+
+-- local function CVarCB(checkbox, dbKey)
+--     -- Set the checkbox state based on the database value
+--     checkbox:SetChecked(BetterBlizzPlatesDB[dbKey] == "1")
+
+--     -- Assign the OnClick handler
+--     checkbox:SetScript("OnClick", function(self)
+--         BetterBlizzPlatesDB[dbKey] = self:GetChecked() and "1" or "0"
+--     end)
+-- end
+
+-- Ensures a single combatCheck frame is created and reused
+local combatCheck = combatCheck or CreateFrame("Frame")
+
+function BBP.RunAfterCombat(func)
+    if UnitAffectingCombat("player") or InCombatLockdown() then
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: You cannot change CVar's in combat. Waiting for combat to end...")
+        combatCheck:RegisterEvent("PLAYER_REGEN_ENABLED")
+        combatCheck:SetScript("OnEvent", function(self, event)
+            if event == "PLAYER_REGEN_ENABLED" then
+                func()
+                self:UnregisterEvent(event)
+                self:SetScript("OnEvent", nil)
+            end
+        end)
+    else
+        func()
+    end
+end
+
+local function LateUpdateCheckboxState(checkBox, option)
+    local value = BetterBlizzPlatesDB[option]
+    local isChecked = value == "1" or value == 1 or value == true
+    checkBox:SetChecked(isChecked)
+end
+
 local function CreateCheckbox(option, label, parent, cvar, extraFunc)
     local checkBox = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
     checkBox.Text:SetText(label)
+    checkBox.option = option
+    if cvar then
+        checkBox.cvar = true
+    end
 
-    local function UpdateOption(value)
-        if option == 'friendlyNameplateClickthrough' and BBP.checkCombatAndWarn() then
-            return
-        end
-
-        BetterBlizzPlatesDB[option] = value
-
-        if cvar then
-            if value == "0" or value == 0 then
-                value = false
-            elseif value == "1" or value == 1 then
-                value = true
-            end
-            if BetterBlizzPlatesDB[option] ~= nil and not BetterBlizzPlatesDB.wasOnLoadingScreen then
-                local function setCVar()
-                    if InCombatLockdown() then
-                        if not combatCheck.registered then
-                            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: This is a CVar setting and needs to be set outside of combat. Will automatically retry once combat has ended.")
-                            combatCheck:RegisterEvent("PLAYER_REGEN_ENABLED")
-                            combatCheck:SetScript("OnEvent", function(self, event)
-                                if event == "PLAYER_REGEN_ENABLED" then
-                                    SetCVar(option, BetterBlizzPlatesDB[option])
-                                    self:UnregisterEvent(event)
-                                end
-                            end)
-                        end
-                    else
-                        SetCVar(option, BetterBlizzPlatesDB[option])
-                    end
-                end
-                setCVar()
-            end
-        end
-        checkBox:SetChecked(value)
-
-        local grandparent = parent:GetParent()
-
-        if parent:GetObjectType() == "CheckButton" and (parent:GetChecked() == false or (grandparent:GetObjectType() == "CheckButton" and grandparent:GetChecked() == false)) then
-            checkBox:Disable()
-            checkBox:SetAlpha(0.5)
+    local function UpdateCheckboxState()
+        if cvar and not BBP.variablesLoaded then
+            C_Timer.After(0.1, function() UpdateCheckboxState() end)
         else
-            checkBox:Enable()
-            checkBox:SetAlpha(1)
+            if BetterBlizzPlatesDB[option] == "1" or BetterBlizzPlatesDB[option] == 1 or BetterBlizzPlatesDB[option] == true then
+                BetterBlizzPlatesDB[option] = "1"
+                checkBox:SetChecked(true)
+            else
+                BetterBlizzPlatesDB[option] = "0"
+                checkBox:SetChecked(false)
+            end
+            local isChecked = checkBox:GetChecked()
+            local newValue = isChecked and "1" or "0"
+            if cvar then
+                -- if not BetterBlizzPlatesDB.wasOnLoadingScreen then
+                --     BBP.RunAfterCombat(function()
+                --         SetCVar(option, newValue)
+                --     end)
+                -- end
+                BetterBlizzPlatesDB[option] = newValue
+            else
+                BetterBlizzPlatesDB[option] = isChecked
+            end
+        end
+    end
+
+    UpdateCheckboxState()
+
+    local function UpdateCheckboxStateDependingOnParent()
+        if (cvar or parent.cvar) and not BBP.variablesLoaded then
+            C_Timer.After(0.5, function() UpdateCheckboxStateDependingOnParent() end)
+        else
+            local grandparent = parent:GetParent()
+            if parent:GetObjectType() == "CheckButton" and (parent:GetChecked() == false or (grandparent:GetObjectType() == "CheckButton" and grandparent:GetChecked() == false)) then
+                checkBox:Disable()
+                checkBox:SetAlpha(0.5)
+            else
+                checkBox:Enable()
+                checkBox:SetAlpha(1)
+            end
+        end
+    end
+    UpdateCheckboxStateDependingOnParent()
+
+
+    checkBox:SetScript("OnClick", function(self)
+        local isChecked = self:GetChecked()
+        local newValue = isChecked
+        if cvar then
+            newValue = isChecked and "1" or "0"
+            BBP.RunAfterCombat(function()
+                SetCVar(option, newValue)
+                BetterBlizzPlatesDB[option] = newValue
+            end)
+        else
+            BetterBlizzPlatesDB[option] = isChecked
         end
 
-        if extraFunc and not BetterBlizzPlatesDB.wasOnLoadingScreen then
-            extraFunc(option, value)
+        if extraFunc then
+            extraFunc(option, newValue)
         end
 
         if not BetterBlizzPlatesDB.wasOnLoadingScreen then
             BBP.needsUpdate = true
             BBP.RefreshAllNameplates()
         end
-        --print("Checkbox option '" .. option .. "' changed to:", value)
-    end
-
-    local function PeriodicCheck()
-        if BetterBlizzPlatesDB[option] ~= nil then
-            UpdateOption(BetterBlizzPlatesDB[option])
-        else
-            -- Handle the nil case if necessary, or set a default value
-            C_Timer.After(1, PeriodicCheck) -- Recursively call this function every second
-        end
-    end
-
-    UpdateOption(BetterBlizzPlatesDB[option])
-
-    if cvar then
-        PeriodicCheck()
-    end
-
-    checkBox:HookScript("OnClick", function(_, _, _)
-        UpdateOption(checkBox:GetChecked())
     end)
 
     return checkBox
 end
+
 local selectedLineIndex = nil
 local selectedNpcData = nil
 local function CreateList(subPanel, listName, listData, refreshFunc, enableColorPicker, extraBoxes, prioSlider, width, height, colorText, pos)
@@ -3414,29 +3477,29 @@ local function guiGeneralTab()
         friendlyHealthBarColorButton:Disable()
     end
 
-    local friendlyHideHealthBar = CreateCheckbox("friendlyHideHealthBar", "Hide healthbar", BetterBlizzPlates)
-    friendlyHideHealthBar:SetPoint("LEFT", alwaysHideFriendlyCastbar.text, "RIGHT", 0, 0)
-    friendlyHideHealthBar:HookScript("OnClick", function()
+    BBP.friendlyHideHealthBar = CreateCheckbox("friendlyHideHealthBar", "Hide healthbar", BetterBlizzPlates, nil, nil, true)
+    BBP.friendlyHideHealthBar:SetPoint("LEFT", alwaysHideFriendlyCastbar.text, "RIGHT", 0, 0)
+    BBP.friendlyHideHealthBar:HookScript("OnClick", function()
         BBP.HideHealthbarInPvEMagicCaller()
     end)
-    CreateTooltipTwo(friendlyHideHealthBar, "Hide Healthbar", "Hide healthbars on Friendly nameplates.", "Castbar and name will still show.\nThis also hides healthbars in PvE, if you don't want that behaviour then check the setting in Misc.")
+    CreateTooltipTwo(BBP.friendlyHideHealthBar, "Hide Healthbar", "Hide healthbars on Friendly nameplates.", "Castbar and name will still show.\nThis also hides healthbars in PvE, if you don't want that behaviour then check the setting in Misc.")
 
-    local friendlyHideHealthBarNpc = CreateCheckbox("friendlyHideHealthBarNpc", "NPC's", BetterBlizzPlates)
-    friendlyHideHealthBarNpc:SetPoint("LEFT", friendlyHideHealthBar.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(friendlyHideHealthBarNpc, "Hide NPC Healthbar", "Hide healthbars on Friendly NPC's", "Castbar and name will still show.")
+    BBP.friendlyHideHealthBarNpc = CreateCheckbox("friendlyHideHealthBarNpc", "NPC's", BetterBlizzPlates, nil, nil, true)
+    BBP.friendlyHideHealthBarNpc:SetPoint("LEFT", BBP.friendlyHideHealthBar.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(BBP.friendlyHideHealthBarNpc, "Hide NPC Healthbar", "Hide healthbars on Friendly NPC's", "Castbar and name will still show.")
 
-    friendlyHideHealthBar:HookScript("OnClick", function(self)
+    BBP.friendlyHideHealthBar:HookScript("OnClick", function(self)
         if self:GetChecked() then
-            friendlyHideHealthBarNpc:Enable()
-            friendlyHideHealthBarNpc:SetAlpha(1)
+            BBP.friendlyHideHealthBarNpc:Enable()
+            BBP.friendlyHideHealthBarNpc:SetAlpha(1)
         else
-            friendlyHideHealthBarNpc:Disable()
-            friendlyHideHealthBarNpc:SetAlpha(0)
+            BBP.friendlyHideHealthBarNpc:Disable()
+            BBP.friendlyHideHealthBarNpc:SetAlpha(0)
         end
     end)
     if not BetterBlizzPlatesDB.friendlyHideHealthBar then
-        friendlyHideHealthBarNpc:SetAlpha(0)
-        friendlyHideHealthBarNpc:Disable()
+        BBP.friendlyHideHealthBarNpc:SetAlpha(0)
+        BBP.friendlyHideHealthBarNpc:Disable()
     end
 
     local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Arena Toggle", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
@@ -3492,6 +3555,15 @@ local function guiGeneralTab()
     absorbsIcon:SetAtlas("ParagonReputation_Glow")
     absorbsIcon:SetSize(22, 22)
     absorbsIcon:SetPoint("RIGHT", absorbIndicator, "LEFT", 2, 0)
+
+    local overShields = CreateCheckbox("overShields", "Overshields", BetterBlizzPlates, nil, BBP.HookOverShields)
+    overShields:SetPoint("LEFT", absorbIndicator.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(overShields, "Show Overshields |A:ParagonReputation_Glow:18:18|a", "Shows absorb texture even on full hp targets. The texture will go backwards onto the hp bar for however much over-absorb there is.", "No test-mode available yet, soonTM.")
+    overShields:HookScript("OnClick", function(self)
+        if not self:GetChecked() then
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        end
+    end)
 
     local classIndicator = CreateCheckbox("classIndicator", "Class indicator", BetterBlizzPlates)
     classIndicator:SetPoint("TOPLEFT", absorbIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -3609,7 +3681,7 @@ local function guiGeneralTab()
     CreateTooltipTwo(useCustomFont, "Custom Font", "Change the nameplate font.", "If you want to completely skip nameplate font adjustment there is a setting in the Misc section for that")
 
     local useCustomTexture = CreateCheckbox("useCustomTextureForBars", "Change the nameplate texture", BetterBlizzPlates)
-    useCustomTexture:SetPoint("TOPLEFT", useCustomFont, "BOTTOMLEFT", 0, -20)
+    useCustomTexture:SetPoint("TOPLEFT", useCustomFont, "BOTTOMLEFT", 0, -26)
     CreateTooltipTwo(useCustomTexture, "Custom Texture", "Change the nameplate texture.")
 
     local fontDropdown = CreateFontDropdown(
@@ -3698,6 +3770,10 @@ local function guiGeneralTab()
     if not useCustomTextureForEnemy:GetChecked() then
         LibDD:UIDropDownMenu_DisableDropDown(textureDropdown)
     end
+
+    local useCustomTextureForExtraBars = CreateCheckbox("useCustomTextureForExtraBars", "Overbars", BetterBlizzPlates)
+    useCustomTextureForExtraBars:SetPoint("BOTTOMLEFT", useCustomTextureForEnemy, "TOPLEFT", 0, -3)
+    CreateTooltipTwo(useCustomTextureForExtraBars, "Change Overbars Texture", "Also change the texture for nameplate absorbs & overhealing etc.")
 
     local useCustomTextureForFriendly = CreateCheckbox("useCustomTextureForFriendly", "Friendly", useCustomTexture)
     useCustomTextureForFriendly:SetPoint("LEFT", textureDropdownFriendly, "RIGHT", -15, 1)
@@ -4962,6 +5038,10 @@ local function guiPositionAndScale()
     partyPointerClassColor:SetPoint("TOPLEFT", partyPointerArenaOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(partyPointerClassColor, "Class color pointer.")
 
+    local partyPointerTargetIndicator = CreateCheckbox("partyPointerTargetIndicator", "Target", contentFrame)
+    partyPointerTargetIndicator:SetPoint("TOPLEFT", partyPointerClassColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(partyPointerTargetIndicator, "Target Indicator", "Replace the texture for your current target that adds an exclamation mark.")
+
     local partyPointerHealer = CreateCheckbox("partyPointerHealer", "Healer", contentFrame)
     partyPointerHealer:SetPoint("LEFT", partyPointerClassColor.text, "RIGHT", 0, 0)
     CreateTooltip(partyPointerHealer, "Show a cross on top of the pointer on healers\n(Requires addon Details and might not always show in world but fine in bgs and arena).")
@@ -5127,6 +5207,10 @@ local function guiPositionAndScale()
     local healthNumbersCurrentFull = CreateCheckbox("healthNumbersCurrentFull", "Cur/Max", contentFrame)
     healthNumbersCurrentFull:SetPoint("TOPLEFT", healthNumbersNotOnFullHp, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersCurrentFull, "Current / Max", "Show current health and max health.\nFor example 69k/420k")
+
+    local healthNumbersCombined = CreateCheckbox("healthNumbersCombined", "HP/Percent", contentFrame)
+    healthNumbersCombined:SetPoint("TOPLEFT", healthNumbersCurrentFull, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(healthNumbersCombined, "Health - Percent", "Shows health & percent. For example 20m / 100%")
 
     local healthNumbersOnlyInCombat = CreateCheckbox("healthNumbersOnlyInCombat", "Combat", contentFrame)
     healthNumbersOnlyInCombat:SetPoint("TOPLEFT", healthNumbersUseMillions, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -5888,7 +5972,7 @@ local function guiFadeNPC()
     how2usefade:SetPoint("TOP", guiFadeNpc, "BOTTOMLEFT", 180, 155)
     how2usefade:SetText("Add name or npcID. Case-insensitive.\n \n \nAdd a comment to the entry with slash\nfor example 1337/comment or xuen/monk tiger\n \nType a name or npcID already in list to delete it")
 
-    local fadeOutNPCsAlpha = CreateSlider(guiFadeNpc, "Alpha value", 0, 1, 0.05, "fadeOutNPCsAlpha", "Alpha")
+    local fadeOutNPCsAlpha = CreateSlider(guiFadeNpc, "Alpha value", 0, 1, 0.01, "fadeOutNPCsAlpha", "Alpha")
     fadeOutNPCsAlpha:SetPoint("TOPRIGHT", guiFadeNpc, "TOPRIGHT", -90, -90)
 
     -- made an oopsie here after changing some stuff TODO: fix later
@@ -5998,7 +6082,7 @@ local function guiHideNPC()
     murlocTexture:SetSize(17,17)
     CreateTooltip(murlocTexture, "Murloc Icon Checkboxes")
 
-    local hideNpcMurlocScale = CreateSlider(hideNPC, "Murloc Size", 0.7, 2.2, 0.05, "hideNpcMurlocScale")
+    local hideNpcMurlocScale = CreateSlider(hideNPC, "Murloc Size", 0.7, 2.2, 0.01, "hideNpcMurlocScale")
     hideNpcMurlocScale:SetPoint("TOPRIGHT", guiHideNpc, "TOPRIGHT", -90, -300)
 
     local hideNpcMurlocYPos = CreateSlider(hideNPC, "Murloc Y Position", -50, 50, 1, "hideNpcMurlocYPos", "Y")
@@ -6454,7 +6538,7 @@ local function guiNameplateAuras()
 
     local personalNpBuffFilterWatchList = CreateCheckbox("personalNpBuffFilterWatchList", "Whitelist", personalNpBuffEnable)
     personalNpBuffFilterWatchList:SetPoint("TOPLEFT", personalNpBuffFilterBlacklist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(personalNpBuffFilterWatchList, "Whitelist", "Only show whitelisted buffs.\n(Plus other filters)", "You can have spells whitelisted to add settings such as \"Only Mine\" and \"Important\" etc without needing to enable the whitelist filter here.\n\nOnly check this if you only want whitelisted auras here or the addition of them.\n(Plus other filters)", "ANCHOR_LEFT")
+    CreateTooltipTwo(personalNpBuffFilterWatchList, "Whitelist", "Only show whitelisted buffs.\n(Plus other filters)", "You can have spells whitelisted to add settings such as \"Only Mine\" and \"Important\" etc without needing to enable the whitelist filter here.\n\nOnly check this if you only want whitelisted auras here or the addition of them.\n(Plus other filters)", "ANCHOR_LEFT")
 
     local personalNpBuffFilterBlizzard = CreateCheckbox("personalNpBuffFilterBlizzard", "Blizzard Default Filter", personalNpBuffEnable)
     personalNpBuffFilterBlizzard:SetPoint("TOPLEFT", personalNpBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -6746,6 +6830,21 @@ local function guiNameplateAuras()
         end
     end)
 
+    local targetNameplateAuraScaleEnabled = CreateCheckbox("targetNameplateAuraScaleEnabled", "", enableNameplateAuraCustomisation)
+
+    local targetNameplateAuraScale = CreateSlider(targetNameplateAuraScaleEnabled, "Target Aura Size", 0.5, 1.8, 0.01, "targetNameplateAuraScale")
+    targetNameplateAuraScale:SetPoint("TOP", defaultNpAuraCdSize,  "BOTTOM", 0, -17)
+    CreateTooltipTwo(targetNameplateAuraScale, "Target Aura Size", "The aura size on your current target.\nYou might have to adjust the y offset as well.", nil, "ANCHOR_LEFT")
+    targetNameplateAuraScaleEnabled:SetPoint("LEFT", targetNameplateAuraScale, "RIGHT", 5, 0)
+    CreateTooltipTwo(targetNameplateAuraScaleEnabled, "Enable Target Aura Size", "Change the size of your current targets auras. You might have to adjust the y offset as well with this setting.", "If you want auras to be the same size as non-targets use the same size as \"Nameplate Size\" in the general tab. By default it is 0.8", "ANCHOR_LEFT")
+    targetNameplateAuraScaleEnabled:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            EnableElement(targetNameplateAuraScale)
+        else
+            DisableElement(targetNameplateAuraScale)
+        end
+    end)
+
     local imintoodeep1 = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     imintoodeep1:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -95, -80)
     imintoodeep1:SetText("Scroll down for more settings")
@@ -6883,7 +6982,7 @@ local function guiCVarControl()
         CheckAndToggleCheckboxes(darkModeNameplateResource)
     end)
 
-    local disableCVarForceOnLogin = CreateCheckbox("disableCVarForceOnLogin", "Disable all CVar forcing", guiCVarControl, true)
+    local disableCVarForceOnLogin = CreateCheckbox("disableCVarForceOnLogin", "Disable all CVar forcing", guiCVarControl)
     disableCVarForceOnLogin:SetPoint("BOTTOM", guiCVarControl, "BOTTOM", -80, 60)
     CreateTooltipTwo(disableCVarForceOnLogin, "Disable all CVar Forcing", "Disables all forcing of CVar's on login (Not recommended)", "(Sliders adjusting CVar values will still change CVars.)")
 
@@ -6926,7 +7025,7 @@ local function guiCVarControl()
 
     local nameplateShowEnemyMinions = CreateCheckbox("nameplateShowEnemyMinions", "Show Enemy Minions", guiCVarControl, true)
     nameplateShowEnemyMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", -127, -20)
-    CreateTooltipTwo(nameplateShowEnemyMinions, "Show Enemy Minion Nameplates", "This CVar is a group that turns on/off all types of minion NPC's (Pets/Guardian/Totem/Minus)", nil, nil, "nameplateShowEnemyMinions")
+    CreateTooltipTwo(nameplateShowEnemyMinions, "Show Enemy Minion Nameplates", "Minions are stuff like extra BM hunter pets but Observer is also a minion", nil, nil, "nameplateShowEnemyMinions")
 
     local nameplateShowEnemyGuardians = CreateCheckbox("nameplateShowEnemyGuardians", "Show Enemy Guardians", guiCVarControl, true)
     nameplateShowEnemyGuardians:SetPoint("TOP", nameplateShowEnemyMinions, "BOTTOM", 0, pixelsBetweenBoxes)
@@ -6946,7 +7045,7 @@ local function guiCVarControl()
 
     local nameplateShowFriendlyMinions = CreateCheckbox("nameplateShowFriendlyMinions", "Show Friendly Minions", guiCVarControl, true)
     nameplateShowFriendlyMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", 25, -20)
-    CreateTooltipTwo(nameplateShowFriendlyMinions, "Show Friendly Minion Nameplates", "This CVar is a group that turns on/off all types of minion NPC's (Pets/Guardian/Totem)", nil, nil, "nameplateShowFriendlyMinions")
+    CreateTooltipTwo(nameplateShowFriendlyMinions, "Show Friendly Minion Nameplates", "Minions are stuff like extra BM hunter pets but Observer is also a minion", nil, nil, "nameplateShowFriendlyMinions")
 
     local nameplateShowFriendlyGuardians = CreateCheckbox("nameplateShowFriendlyGuardians", "Show Friendly Guardians", guiCVarControl, true)
     nameplateShowFriendlyGuardians:SetPoint("TOP", nameplateShowFriendlyMinions, "BOTTOM", 0, pixelsBetweenBoxes)
@@ -6961,44 +7060,32 @@ local function guiCVarControl()
     CreateTooltipTwo(nameplateShowFriendlyTotems, "Show Friendly Totem Nameplate", "Totems are totem.. and Psyfiend", nil, nil, "nameplateShowFriendlyTotems")
 
     nameplateShowEnemyMinions:HookScript("OnClick", function(self)
-        if self:GetChecked() then
-            nameplateShowEnemyGuardians:SetChecked(true)
-            nameplateShowEnemyTotems:SetChecked(true)
-            nameplateShowEnemyPets:SetChecked(true)
-            nameplateShowEnemyMinus:SetChecked(true)
-            BetterBlizzPlatesDB.nameplateShowEnemyGuardians = "1"
-            BetterBlizzPlatesDB.nameplateShowEnemyTotems = "1"
-            BetterBlizzPlatesDB.nameplateShowEnemyPets = "1"
-            BetterBlizzPlatesDB.nameplateShowEnemyMinus = "1"
-        else
-            nameplateShowEnemyGuardians:SetChecked(false)
-            nameplateShowEnemyTotems:SetChecked(false)
-            nameplateShowEnemyPets:SetChecked(false)
-            nameplateShowEnemyMinus:SetChecked(false)
-            BetterBlizzPlatesDB.nameplateShowEnemyGuardians = "0"
-            BetterBlizzPlatesDB.nameplateShowEnemyTotems = "0"
-            BetterBlizzPlatesDB.nameplateShowEnemyPets = "0"
-            BetterBlizzPlatesDB.nameplateShowEnemyMinus = "0"
+        if not InCombatLockdown() then
+            SetCVar("nameplateShowEnemyGuardians", BetterBlizzPlatesDB.nameplateShowEnemyGuardians)
+            SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
+            SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
         end
     end)
 
     nameplateShowFriendlyMinions:HookScript("OnClick", function(self)
-        if self:GetChecked() then
-            nameplateShowFriendlyGuardians:SetChecked(true)
-            nameplateShowFriendlyTotems:SetChecked(true)
-            nameplateShowFriendlyPets:SetChecked(true)
-            BetterBlizzPlatesDB.nameplateShowFriendlyGuardians = "1"
-            BetterBlizzPlatesDB.nameplateShowFriendlyTotems = "1"
-            BetterBlizzPlatesDB.nameplateShowFriendlyPets = "1"
-        else
-            nameplateShowFriendlyGuardians:SetChecked(false)
-            nameplateShowFriendlyTotems:SetChecked(false)
-            nameplateShowFriendlyPets:SetChecked(false)
-            BetterBlizzPlatesDB.nameplateShowFriendlyGuardians = "0"
-            BetterBlizzPlatesDB.nameplateShowFriendlyTotems = "0"
-            BetterBlizzPlatesDB.nameplateShowFriendlyPets = "0"
+        if not InCombatLockdown() then
+            SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
+            SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
+            SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
         end
     end)
+
+    -- Re-check checkboxes late cuz its all a mess and needs to be done and at this point more bandaid is all the effort i will put in until TWW maybe
+    if not BetterBlizzPlatesDB.hasSaved then
+        C_Timer.After(3, function()
+            local children = {guiCVarControl:GetChildren()}
+            for _, child in ipairs(children) do
+                if child:IsObjectType("CheckButton") and child.option then
+                    LateUpdateCheckboxState(child, child.option)
+                end
+            end
+        end)
+    end
 
     --local moreBlizzSettingsText = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     --moreBlizzSettingsText:SetPoint("BOTTOM", guiCVarControl, "BOTTOM", 0, 10)
@@ -7131,28 +7218,54 @@ local function guiMisc()
     local changeHealthbarHeight = CreateCheckbox("changeHealthbarHeight", "Separate Friendly/Enemy Nameplate Height", guiMisc)
     changeHealthbarHeight:SetPoint("TOPLEFT", doNotHideFriendlyHealthbarInPve, "BOTTOMLEFT", 0, -50)
     CreateTooltipTwo(changeHealthbarHeight, "Separate Nameplate Heights", "Change the height of nameplates individually depending if enemy or friendly.", "This setting runs a lot and I am unsure just how much of a performance impact it has. Use at own risk.")
-    changeHealthbarHeight:HookScript("OnClick", function(self)
-        if self:GetChecked() then
-            BBP.HookHealthbarHeight()
-        else
-            StaticPopup_Show("BBP_CONFIRM_RELOAD")
-        end
-    end)
 
-    local hpHeightEnemy = CreateSlider(guiMisc, "Enemy Height", 1, 35, 0.1, "hpHeightEnemy")
+
+    local hpHeightEnemy = CreateSlider(changeHealthbarHeight, "Enemy Height", 1, 35, 0.1, "hpHeightEnemy")
     hpHeightEnemy:SetPoint("TOPLEFT", changeHealthbarHeight, "BOTTOMLEFT", 10, -10)
     CreateTooltipTwo(hpHeightEnemy, "Enemy Height", "Change the height for enemy nameplates.")
     local hpHeightEnemyReset = CreateResetButton(hpHeightEnemy, "hpHeightEnemy", guiMisc)
     CreateTooltipTwo(hpHeightEnemyReset, "Reset to default", "Default is 4 * NamePlateVerticalScale")
 
-    local hpHeightFriendly = CreateSlider(guiMisc, "Friendly Height", 1, 35, 0.1, "hpHeightFriendly")
+    local hpHeightFriendly = CreateSlider(changeHealthbarHeight, "Friendly Height", 1, 35, 0.1, "hpHeightFriendly")
     hpHeightFriendly:SetPoint("TOPLEFT", hpHeightEnemy, "BOTTOMLEFT", 0, -17)
     CreateTooltipTwo(hpHeightFriendly, "Friendly Height", "The height for friendly nameplates.")
     local hpHeightFriendlyReset = CreateResetButton(hpHeightFriendly, "hpHeightFriendly", guiMisc)
     CreateTooltipTwo(hpHeightFriendlyReset, "Reset to default", "Default is 4 * NamePlateVerticalScale")
 
+    changeHealthbarHeight:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            BBP.HookHealthbarHeight()
+            EnableElement(hpHeightEnemy)
+            EnableElement(hpHeightFriendly)
+        else
+            DisableElement(hpHeightEnemy)
+            DisableElement(hpHeightFriendly)
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        end
+    end)
+
+    local changeNameplateBorderSize = CreateCheckbox("changeNameplateBorderSize", "Change Nameplate Border Size", guiMisc)
+    changeNameplateBorderSize:SetPoint("TOPLEFT", hpHeightFriendly, "BOTTOMLEFT", -10, -4)
+    local nameplateBorderSize = CreateSlider(changeNameplateBorderSize, "Nameplate Border Size", 1, 10, 1, "nameplateBorderSize")
+    nameplateBorderSize:SetPoint("TOPLEFT", changeNameplateBorderSize, "BOTTOMLEFT", 10, -10)
+    local nameplateTargetBorderSize = CreateSlider(changeNameplateBorderSize, "Target Border Size", 1, 10, 1, "nameplateTargetBorderSize")
+    nameplateTargetBorderSize:SetPoint("LEFT", nameplateBorderSize, "RIGHT", 10, 0)
+    CreateTooltipTwo(nameplateBorderSize, "Nameplate Border Size", "The size of nameplate borders.")
+    changeNameplateBorderSize:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            BBP.HookNameplateBorderSize()
+            EnableElement(nameplateBorderSize)
+            EnableElement(nameplateTargetBorderSize)
+        else
+            DisableElement(nameplateBorderSize)
+            DisableElement(nameplateTargetBorderSize)
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        end
+    end)
+
+
     local changeNameplateBorderColor = CreateCheckbox("changeNameplateBorderColor", "Change Nameplate Border Color", guiMisc)
-    changeNameplateBorderColor:SetPoint("TOPLEFT", hpHeightFriendly, "BOTTOMLEFT", -10, -14)
+    changeNameplateBorderColor:SetPoint("TOPLEFT", nameplateBorderSize, "BOTTOMLEFT", -10, -4)
 
     local npBorderTargetColor = CreateCheckbox("npBorderTargetColor", "Target Border", changeNameplateBorderColor)
     npBorderTargetColor:SetPoint("TOPLEFT", changeNameplateBorderColor, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
