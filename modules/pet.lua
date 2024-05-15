@@ -1,7 +1,3 @@
--- Setting up the database
-BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
-BBP = BBP or {}
-
 -- Main pet buff spell id's
 local petValidSpellIDs = {
     [264662] = true,
