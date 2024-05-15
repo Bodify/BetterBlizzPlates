@@ -247,6 +247,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local texCoord = nameplateAuraSquare and {0.1, 0.9, 0.1, 0.9} or nameplateAuraTaller and {0.05, 0.95, 0.15, 0.82} or {0.05, 0.95, 0.1, 0.6}
     local compactTexCoord = not compactSquare and texCoord or nameplateAuraSquare and {0.25, 0.75, 0.05, 0.95} or nameplateAuraTaller and {0.3, 0.7, 0.15, 0.82} or {0.3, 0.7, 0.15, 0.80}
     local nameplateAuraScale = BetterBlizzPlatesDB.nameplateAuraScale
+    local nameplateAuraCountScale = BetterBlizzPlatesDB.nameplateAuraCountScale
     local sortEnlargedAurasFirst = BetterBlizzPlatesDB.sortEnlargedAurasFirst
     local sortCompactedAurasFirst = BetterBlizzPlatesDB.sortCompactedAurasFirst
 
@@ -335,6 +336,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
         local compactTracker = 0
         for index, buff in ipairs(auras) do
             buff:SetScale(nameplateAuraScale)
+            buff.CountFrame:SetScale(nameplateAuraCountScale)
             local buffWidth
             if buff.isEnlarged then
                 buff:SetSize(sizeMultiplier, auraSizeScaled)

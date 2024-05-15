@@ -721,7 +721,7 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
         local showNameplateTargetText = BetterBlizzPlatesDB.showNameplateTargetText
         local showNameplateCastbarTimer = BetterBlizzPlatesDB.showNameplateCastbarTimer
 
-        if frame.hideCastbarOverride then
+        if frame.hideCastbarOverride or BBP.hideFriendlyCastbar then
             frame.castBar:Hide()
             return
         end
@@ -840,21 +840,25 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
             end
 
             if event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_INTERRUPTED" or event == "UNIT_SPELLCAST_EMPOWER_STOP" then
-                if enableCastbarCustomization then
-                    ResetCastbarAfterFadeout(frame, unitID)
-                    if event =="UNIT_SPELLCAST_INTERRUPTED" then
-                        local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
-                        local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
-                        if (castBarRecolor or useCustomCastbarTexture) and frame.castBar then
-                            frame.castBar:SetStatusBarColor(1,0,0)
-                        end
-                        if BetterBlizzPlatesDB.castBarInterruptHighlighter then
-                            frame.castBar:SetStatusBarColor(1,1,1)
-                        end
+                local castbarQuickHide = BetterBlizzPlatesDB.castbarQuickHide
+                ResetCastbarAfterFadeout(frame, unitID)
+                if event =="UNIT_SPELLCAST_INTERRUPTED" then
+                    local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
+                    local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
+                    if (castBarRecolor or useCustomCastbarTexture) and frame.castBar then
+                        frame.castBar:SetStatusBarColor(1,0,0)
                     end
-                    if castbarQuickHide then
-                        if frame.castBar then
-                            frame.castBar:Hide()
+                    if BetterBlizzPlatesDB.castBarInterruptHighlighter then
+                        frame.castBar:SetStatusBarColor(1,1,1)
+                    end
+                end
+                if castbarQuickHide then
+                    if frame.castBar then
+                        frame.castBar:Hide()
+                        if BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
+                            if UnitIsUnit(self.unit, "target") then
+                                BBP.UpdateNamplateResourcePositionForCasting(nameplate, true)
+                            end
                         end
                     end
                 end

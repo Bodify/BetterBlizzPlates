@@ -231,6 +231,7 @@ local playerClass = select(2, UnitClass("player"))
 
 -- Function to update the position based on casting state and settings
 function BBP.UpdateNamplateResourcePositionForCasting(nameplate, bypass)
+    if not GetCVarBool("nameplateResourceOnTarget") then return end
     if nameplate and nameplate.UnitFrame and nameplate.driverFrame and nameplate.driverFrame.classNamePlateMechanicFrame then
         if nameplate.driverFrame.classNamePlateMechanicFrame:IsForbidden() then return end
         local yOffset = BetterBlizzPlatesDB.nameplateResourceYPos

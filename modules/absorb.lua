@@ -106,6 +106,7 @@ function BBP.CompactUnitFrame_UpdateAll(frame)
 
         absorbOverlay:SetParent(healthBar);
         absorbOverlay:ClearAllPoints(); -- we'll be attaching the overlay on heal prediction update.
+        absorbOverlay:SetDrawLayer("OVERLAY")
 
         local absorbGlow = frame.overAbsorbGlow;
         if absorbGlow and not absorbGlow:IsForbidden() then
@@ -125,10 +126,11 @@ function BBP.CompactUnitFrame_UpdateAll(frame)
                 newAbsorbGlow:SetParent(absorbGlow:GetParent())
                 newAbsorbGlow:SetWidth(absorbGlow:GetWidth())
                 newAbsorbGlow:SetHeight(healthBar:GetHeight()+4)
-                absorbGlow:SetAlpha(0);
 
-                absorbGlow.replaced = true
+                absorbGlow.replaced = newAbsorbGlow
             end
+            absorbGlow:SetAlpha(0);
+            absorbGlow.replaced:SetAlpha((healthBar:GetAlpha() == 0 and 0) or (absorbGlow:IsShown() and ABSORB_GLOW_ALPHA or 0))
         end
     end
 end
@@ -175,9 +177,14 @@ function BBP.CompactUnitFrame_UpdateHealPrediction(frame)
             absorbOverlay:SetWidth(barSize);
             absorbOverlay:SetTexCoord(0, barSize / absorbOverlay.tileSize, 0, totalHeight / absorbOverlay.tileSize);
             absorbOverlay:Show();
-            absorbOverlay:SetDrawLayer("OVERLAY")
-
             -- frame.overAbsorbGlow:Show();	--uncomment this if you want to ALWAYS show the glow to the left of the shield overlay
+        end
+
+        local absorbGlow = frame.overAbsorbGlow
+        if absorbGlow.replaced then
+            absorbGlow:SetAlpha(0);
+            absorbGlow.replaced:SetAlpha((healthBar:GetAlpha() == 0 and 0) or (absorbGlow:IsShown() and ABSORB_GLOW_ALPHA or 0))
+            absorbOverlay:SetDrawLayer("OVERLAY")
         end
     end
 end

@@ -43,6 +43,7 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         config.partyPointerWidth = BetterBlizzPlatesDB.partyPointerWidth
         config.partyPointerHealerReplace = BetterBlizzPlatesDB.partyPointerHealerReplace
         config.partyPointerTargetIndicator = BetterBlizzPlatesDB.partyPointerTargetIndicator
+        config.partyPointerHideAll = BetterBlizzPlatesDB.partyPointerHideAll
 
         config.partyPointerInitialized = true
     end
@@ -170,5 +171,30 @@ function BBP.PartyPointer(frame, fetchedSpecID)
     frame.partyPointer:Show()
     if config.partyPointerHideRaidmarker then
         frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(0)
+    end
+
+    if config.partyPointerHideAll then
+        frame.healthBar:SetAlpha(0)
+        frame.selectionHighlight:SetAlpha(0)
+        frame.hideNameOverride = true
+        frame.name:SetAlpha(0)
+        if frame.cleanName then
+            frame.cleanName:SetAlpha(0)
+        end
+        BBP.hideFriendlyCastbar = true
+        frame.ppChange = true
+    elseif frame.ppChange then
+        frame.healthBar:SetAlpha(1)
+        frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
+        frame.hideNameOverride = nil
+        if not config.hideFriendlyNameText then
+            if frame.cleanName then
+                frame.cleanName:SetAlpha(1)
+            else
+                frame.name:SetAlpha(1)
+            end
+        end
+        BBP.hideFriendlyCastbar = nil
+        frame.ppChange = nil
     end
 end

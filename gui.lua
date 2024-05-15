@@ -1029,20 +1029,23 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     if frame then
                         BBP.TargetNameplateAuraSize(frame)
                     end
+                elseif element == "nameplateAuraCountScale" then
+                    BetterBlizzPlatesDB.nameplateAuraCountScale = value
+                    BBP.RefreshBuffFrame()
                 elseif element == "nameplateBorderSize" then
                     BetterBlizzPlatesDB.nameplateBorderSize = value
-                    BBP.HookNameplateBorderSize()
                     for _, np in pairs(C_NamePlate.GetNamePlates()) do
                         local frame = np.UnitFrame
                         if frame then
+                            frame.BetterBlizzPlates.config.nameplateBorderSize = value
                             frame.healthBar.border:UpdateSizes()
                         end
                     end
                 elseif element == "nameplateTargetBorderSize" then
                     BetterBlizzPlatesDB.nameplateTargetBorderSize = value
-                    BBP.HookNameplateBorderSize()
                     local np, frame = BBP.GetSafeNameplate("target")
                     if frame then
+                        frame.BetterBlizzPlates.config.nameplateTargetBorderSize = value
                         frame.healthBar.border:UpdateSizes()
                     end
                 elseif element == "totemIndicatorDefaultCooldownTextSize" then
@@ -1269,11 +1272,13 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
     editBox:SetScript("OnEnterPressed", HandleEditBoxInput)
     slider:SetScript("OnValueChanged", SliderOnValueChanged)
     slider:SetScript("OnMouseWheel", function(slider, delta)
-        local currentVal = slider:GetValue()
-        if delta > 0 then
-            slider:SetValue(currentVal + stepValue)
-        else
-            slider:SetValue(currentVal - stepValue)
+        if IsShiftKeyDown() then
+            local currentVal = slider:GetValue()
+            if delta > 0 then
+                slider:SetValue(currentVal + stepValue)
+            else
+                slider:SetValue(currentVal - stepValue)
+            end
         end
     end)
 
@@ -1643,6 +1648,15 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         listName == "castEmphasisList" or
         listName == "hideCastbarWhitelist" then
             addIcon = true
+            if npc.id then
+                button:SetScript("OnEnter", function(self)
+                    GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+                    GameTooltip:SetSpellByID(npc.id)
+                end)
+                button:SetScript("OnLeave", function(self)
+                    GameTooltip:Hide()
+                end)
+            end
         end
 
         if addIcon then
@@ -5028,19 +5042,19 @@ local function guiPositionAndScale()
 
     local partyPointerArenaOnly = CreateCheckbox("partyPointerArenaOnly", "Arena only", contentFrame)
     partyPointerArenaOnly:SetPoint("TOPLEFT", partyPointerTestMode, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(partyPointerArenaOnly, "Show in Arena only.")
+    CreateTooltip(partyPointerArenaOnly, "Show in Arena only")
 
     local partyPointerBgOnly = CreateCheckbox("partyPointerBgOnly", "BG only", contentFrame)
     partyPointerBgOnly:SetPoint("LEFT", partyPointerArenaOnly.text, "RIGHT", 0, 0)
-    CreateTooltip(partyPointerBgOnly, "Show in Battlegrounds only.")
+    CreateTooltip(partyPointerBgOnly, "Show in Battlegrounds only")
 
     local partyPointerClassColor = CreateCheckbox("partyPointerClassColor", "Class color", contentFrame)
     partyPointerClassColor:SetPoint("TOPLEFT", partyPointerArenaOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(partyPointerClassColor, "Class color pointer.")
+    CreateTooltip(partyPointerClassColor, "Class color pointer")
 
     local partyPointerTargetIndicator = CreateCheckbox("partyPointerTargetIndicator", "Target", contentFrame)
     partyPointerTargetIndicator:SetPoint("TOPLEFT", partyPointerClassColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(partyPointerTargetIndicator, "Target Indicator", "Replace the texture for your current target that adds an exclamation mark.")
+    CreateTooltipTwo(partyPointerTargetIndicator, "Target Indicator", "Replace the texture for your current target with one that has an exclamation mark on it.")
 
     local partyPointerHealer = CreateCheckbox("partyPointerHealer", "Healer", contentFrame)
     partyPointerHealer:SetPoint("LEFT", partyPointerClassColor.text, "RIGHT", 0, 0)
@@ -5049,6 +5063,10 @@ local function guiPositionAndScale()
     local partyPointerHealerReplace = CreateCheckbox("partyPointerHealerReplace", "Replace", contentFrame)
     partyPointerHealerReplace:SetPoint("TOPLEFT", partyPointerHealer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(partyPointerHealerReplace, "Replace Party Pointer with Healer Icon", "Replace the party pointer with healer icon instead of showing on the top.")
+
+    local partyPointerHideAll = CreateCheckbox("partyPointerHideAll", "Hide all", contentFrame)
+    partyPointerHideAll:SetPoint("TOPLEFT", partyPointerTargetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(partyPointerHideAll, "Hide All", "Hide everything except the Party Pointer for friendly nameplates that have the Party Pointer on them. Hides healthbar, castbar & name.")
 
     ----------------------
     -- Fake Name Reposition
@@ -6599,6 +6617,10 @@ local function guiNameplateAuras()
     nameplateAuraDebuffScale:SetPoint("TOPLEFT", nameplateAuraBuffScale, "BOTTOMLEFT", 0, -17)
     CreateTooltipTwo(nameplateAuraDebuffScale, "Debuff Size", "Size of nameplate Debuffs.", "Will not be applied to auras marked Enlarged or Compacted")
 
+    local nameplateAuraCountScale = CreateSlider(enableNameplateAuraCustomisation, "Aura Stack Size", 0.7, 2, 0.01, "nameplateAuraCountScale")
+    nameplateAuraCountScale:SetPoint("TOPLEFT", nameplateAuraDebuffScale, "BOTTOMLEFT", 0, -17)
+    CreateTooltipTwo(nameplateAuraCountScale, "Aura Stack Size", "Size of the stack/count/charges number on auras.")
+
     local nameplateAuraEnlargedScale = CreateSlider(enableNameplateAuraCustomisation, "Enlarged Aura Size", 1, 2, 0.01, "nameplateAuraEnlargedScale")
     nameplateAuraEnlargedScale:SetPoint("TOPLEFT", nameplateAuraScale, "BOTTOMLEFT", -170, -17)
     local enlargedAuraIcon = contentFrame:CreateTexture(nil, "ARTWORK")
@@ -7023,8 +7045,12 @@ local function guiCVarControl()
     setCVarAcrossAllCharacters:SetPoint("TOP", nameplateCVarText, "BOTTOM", -100, 0)
     CreateTooltipTwo(setCVarAcrossAllCharacters, "Force CVars", "By default you have to set them on each character separately.")
 
+    local nameplateShowAll = CreateCheckbox("nameplateShowAll", "Always show nameplates (if not targeted)", guiCVarControl, true)
+    nameplateShowAll:SetPoint("TOP", setCVarAcrossAllCharacters, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(nameplateShowAll, "Always show nameplates", "Always show nameplates (if not targeted)", nil, nil, "nameplateShowAll")
+
     local nameplateShowEnemyMinions = CreateCheckbox("nameplateShowEnemyMinions", "Show Enemy Minions", guiCVarControl, true)
-    nameplateShowEnemyMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", -127, -20)
+    nameplateShowEnemyMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", -127, -40)
     CreateTooltipTwo(nameplateShowEnemyMinions, "Show Enemy Minion Nameplates", "Minions are stuff like extra BM hunter pets but Observer is also a minion", nil, nil, "nameplateShowEnemyMinions")
 
     local nameplateShowEnemyGuardians = CreateCheckbox("nameplateShowEnemyGuardians", "Show Enemy Guardians", guiCVarControl, true)
@@ -7044,48 +7070,149 @@ local function guiCVarControl()
     CreateTooltipTwo(nameplateShowEnemyTotems, "Show Enemy Totem Nameplates", "Totems are totems.. and Psyfiend", nil, nil, "nameplateShowEnemyTotems")
 
     local nameplateShowFriendlyMinions = CreateCheckbox("nameplateShowFriendlyMinions", "Show Friendly Minions", guiCVarControl, true)
-    nameplateShowFriendlyMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", 25, -20)
+    nameplateShowFriendlyMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", 25, -40)
     CreateTooltipTwo(nameplateShowFriendlyMinions, "Show Friendly Minion Nameplates", "Minions are stuff like extra BM hunter pets but Observer is also a minion", nil, nil, "nameplateShowFriendlyMinions")
 
     local nameplateShowFriendlyGuardians = CreateCheckbox("nameplateShowFriendlyGuardians", "Show Friendly Guardians", guiCVarControl, true)
     nameplateShowFriendlyGuardians:SetPoint("TOP", nameplateShowFriendlyMinions, "BOTTOM", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateShowFriendlyGuardians, "Show Friendly Guardian Nameplates", "Guardians are usually \"semi controllable\" larger summoned pets, like Earth Elemental/Infernal.", nil, nil, "nameplateShowFriendlyGuardians")
 
+    local nameplateShowFriendlyNPCs = CreateCheckbox("nameplateShowFriendlyNPCs", "Show Friendly NPCs", guiCVarControl, true)
+    nameplateShowFriendlyNPCs:SetPoint("TOP", nameplateShowFriendlyGuardians, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(nameplateShowFriendlyNPCs, "Show Friendly NPC Nameplates", "Always show friendly NPC nameplates", nil, nil, "nameplateShowFriendlyNPCs")
+
     local nameplateShowFriendlyPets = CreateCheckbox("nameplateShowFriendlyPets", "Show Friendly Pets", guiCVarControl, true)
-    nameplateShowFriendlyPets:SetPoint("TOP", nameplateShowFriendlyGuardians, "BOTTOM", 0, pixelsBetweenBoxes)
+    nameplateShowFriendlyPets:SetPoint("TOP", nameplateShowFriendlyNPCs, "BOTTOM", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateShowFriendlyPets, "Show Friendly Pets Nameplates", "Pets are the main controllable pets like Hunter Pet, Warlock Pet etc.", nil, nil, "nameplateShowFriendlyPets")
 
     local nameplateShowFriendlyTotems = CreateCheckbox("nameplateShowFriendlyTotems", "Show Friendly Totems", guiCVarControl, true)
     nameplateShowFriendlyTotems:SetPoint("TOP", nameplateShowFriendlyPets, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateShowFriendlyTotems, "Show Friendly Totem Nameplate", "Totems are totem.. and Psyfiend", nil, nil, "nameplateShowFriendlyTotems")
+    CreateTooltipTwo(nameplateShowFriendlyTotems, "Show Friendly Totem Nameplates", "Totems are totem... and Psyfiend", nil, nil, "nameplateShowFriendlyTotems")
 
-    nameplateShowEnemyMinions:HookScript("OnClick", function(self)
-        if not InCombatLockdown() then
-            SetCVar("nameplateShowEnemyGuardians", BetterBlizzPlatesDB.nameplateShowEnemyGuardians)
-            SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
-            SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
+    local function ChangeCVarCheckboxBehaviour(checkbox, cvarName, changeDB)
+        checkbox:SetScript("OnClick", function(self)
+            local value = self:GetChecked() and "1" or "0"
+            if changeDB then
+                BetterBlizzPlatesDB[cvarName] = value
+            end
+            BBP.RunAfterCombat(function()
+                SetCVar(cvarName, value)
+                if cvarName == "nameplateShowEnemyMinions" then
+                    if changeDB then
+                        SetCVar("nameplateShowEnemyGuardians", BetterBlizzPlatesDB.nameplateShowEnemyGuardians)
+                        SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
+                        SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
+                        SetCVar("nameplateShowEnemyPets", BetterBlizzPlatesDB.nameplateShowEnemyPets)
+                    end
+                elseif cvarName == "nameplateShowFriendlyMinions" then
+                    if changeDB then
+                        SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
+                        SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
+                        SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
+                    end
+                end
+            end)
+        end)
+    end
+
+    local function ChangeMinionCheckboxes(changeDB)
+        ChangeCVarCheckboxBehaviour(nameplateShowEnemyMinions, "nameplateShowEnemyMinions", changeDB)
+        ChangeCVarCheckboxBehaviour(nameplateShowEnemyGuardians, "nameplateShowEnemyGuardians", changeDB)
+        ChangeCVarCheckboxBehaviour(nameplateShowEnemyMinus, "nameplateShowEnemyMinus", changeDB)
+        ChangeCVarCheckboxBehaviour(nameplateShowEnemyPets, "nameplateShowEnemyPets", changeDB)
+        ChangeCVarCheckboxBehaviour(nameplateShowEnemyTotems, "nameplateShowEnemyTotems", changeDB)
+        ChangeCVarCheckboxBehaviour(nameplateShowFriendlyMinions, "nameplateShowFriendlyMinions", changeDB)
+        ChangeCVarCheckboxBehaviour(nameplateShowFriendlyGuardians, "nameplateShowFriendlyGuardians", changeDB)
+        ChangeCVarCheckboxBehaviour(nameplateShowFriendlyPets, "nameplateShowFriendlyPets", changeDB)
+        ChangeCVarCheckboxBehaviour(nameplateShowFriendlyTotems, "nameplateShowFriendlyTotems", changeDB)
+
+        if changeDB then
+            nameplateShowEnemyMinions:SetChecked(BetterBlizzPlatesDB["nameplateShowEnemyMinions"]=="1")
+            nameplateShowEnemyGuardians:SetChecked(BetterBlizzPlatesDB["nameplateShowEnemyGuardians"]=="1")
+            nameplateShowEnemyMinus:SetChecked(BetterBlizzPlatesDB["nameplateShowEnemyMinus"]=="1")
+            nameplateShowEnemyPets:SetChecked(BetterBlizzPlatesDB["nameplateShowEnemyPets"]=="1")
+            nameplateShowEnemyTotems:SetChecked(BetterBlizzPlatesDB["nameplateShowEnemyTotems"]=="1")
+            nameplateShowFriendlyMinions:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyMinions"]=="1")
+            nameplateShowFriendlyGuardians:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyGuardians"]=="1")
+            nameplateShowFriendlyPets:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyPets"]=="1")
+            nameplateShowFriendlyTotems:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyTotems"]=="1")
+        else
+            nameplateShowEnemyMinions:SetChecked(GetCVar("nameplateShowEnemyMinions")=="1")
+            nameplateShowEnemyGuardians:SetChecked(GetCVar("nameplateShowEnemyGuardians")=="1")
+            nameplateShowEnemyMinus:SetChecked(GetCVar("nameplateShowEnemyMinus")=="1")
+            nameplateShowEnemyPets:SetChecked(GetCVar("nameplateShowEnemyPets")=="1")
+            nameplateShowEnemyTotems:SetChecked(GetCVar("nameplateShowEnemyTotems")=="1")
+            nameplateShowFriendlyMinions:SetChecked(GetCVar("nameplateShowFriendlyMinions")=="1")
+            nameplateShowFriendlyGuardians:SetChecked(GetCVar("nameplateShowFriendlyGuardians")=="1")
+            nameplateShowFriendlyPets:SetChecked(GetCVar("nameplateShowFriendlyPets")=="1")
+            nameplateShowFriendlyTotems:SetChecked(GetCVar("nameplateShowFriendlyTotems")=="1")
+        end
+    end
+
+
+    setCVarAcrossAllCharacters:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            ChangeMinionCheckboxes(true)
+        else
+            ChangeMinionCheckboxes(false)
         end
     end)
 
-    nameplateShowFriendlyMinions:HookScript("OnClick", function(self)
-        if not InCombatLockdown() then
-            SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
-            SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
-            SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
-        end
-    end)
+    local cbCVars = {}
+    cbCVars["nameplateShowEnemyMinions"] = nameplateShowEnemyMinions
+    cbCVars["nameplateShowEnemyGuardians"] = nameplateShowEnemyGuardians
+    cbCVars["nameplateShowEnemyMinus"] = nameplateShowEnemyMinus
+    cbCVars["nameplateShowEnemyPets"] = nameplateShowEnemyPets
+    cbCVars["nameplateShowEnemyTotems"] = nameplateShowEnemyTotems
+    cbCVars["nameplateShowFriendlyMinions"] = nameplateShowFriendlyMinions
+    cbCVars["nameplateShowFriendlyGuardians"] = nameplateShowFriendlyGuardians
+    cbCVars["nameplateShowFriendlyPets"] = nameplateShowFriendlyPets
+    cbCVars["nameplateShowFriendlyTotems"] = nameplateShowFriendlyTotems
+    cbCVars["nameplateResourceOnTarget"] = nameplateResourceOnTarget
+
+    local sliderCVars = {}
+    sliderCVars["nameplateMotion"] = nameplateMotion
+    sliderCVars["nameplateOverlapH"] = nameplateOverlapH
+    sliderCVars["nameplateOverlapV"] = nameplateOverlapV
+    sliderCVars["nameplateMotionSpeed"] = nameplateMotionSpeed
+    sliderCVars["nameplateMinAlpha"] = nameplateMinAlpha
+    sliderCVars["nameplateMinAlphaDistance"] = nameplateMinAlphaDistance
+    sliderCVars["nameplateMaxAlpha"] = nameplateMaxAlpha
+    sliderCVars["nameplateMaxAlphaDistance"] = nameplateMaxAlphaDistance
+    sliderCVars["nameplateOccludedAlphaMult"] = nameplateOccludedAlphaMult
 
     -- Re-check checkboxes late cuz its all a mess and needs to be done and at this point more bandaid is all the effort i will put in until TWW maybe
     if not BetterBlizzPlatesDB.hasSaved then
         C_Timer.After(3, function()
-            local children = {guiCVarControl:GetChildren()}
-            for _, child in ipairs(children) do
-                if child:IsObjectType("CheckButton") and child.option then
-                    LateUpdateCheckboxState(child, child.option)
-                end
+            if BetterBlizzPlatesDB.setCVarAcrossAllCharacters then
+                ChangeMinionCheckboxes(true)
+            else
+                ChangeMinionCheckboxes(false)
             end
+            -- local children = {guiCVarControl:GetChildren()}
+            -- for _, child in ipairs(children) do
+            --     if child:IsObjectType("CheckButton") and child.option then
+            --         LateUpdateCheckboxState(child, child.option)
+            --     end
+            -- end
         end)
     end
+
+    C_Timer.After(3.1, function()
+        local cvarListener = CreateFrame("Frame")
+        cvarListener:RegisterEvent("CVAR_UPDATE")
+        cvarListener:SetScript("OnEvent", function(self, event, cvarName, cvarValue)
+            local checkedState = cvarValue == "1" or false
+            if cbCVars[cvarName] then
+                BetterBlizzPlatesDB[cvarName] = cvarValue
+                cbCVars[cvarName]:SetChecked(checkedState)
+            elseif sliderCVars[cvarName] then
+                BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+                sliderCVars[cvarName]:SetValue(tonumber(cvarValue))
+            end
+        end)
+    end)
+
 
     --local moreBlizzSettingsText = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     --moreBlizzSettingsText:SetPoint("BOTTOM", guiCVarControl, "BOTTOM", 0, 10)
@@ -7253,7 +7380,6 @@ local function guiMisc()
     CreateTooltipTwo(nameplateBorderSize, "Nameplate Border Size", "The size of nameplate borders.")
     changeNameplateBorderSize:HookScript("OnClick", function(self)
         if self:GetChecked() then
-            BBP.HookNameplateBorderSize()
             EnableElement(nameplateBorderSize)
             EnableElement(nameplateTargetBorderSize)
         else
