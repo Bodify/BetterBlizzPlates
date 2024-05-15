@@ -3054,6 +3054,10 @@ local function guiGeneralTab()
     enemyColorName:SetPoint("LEFT", enemyClassColorName.text, "RIGHT", 0, 0)
     CreateTooltipTwo(enemyColorName, "Color Name", "Pick one color for all enemy names", "If class color name is also enabled this setting will only color the name of npcs")
 
+    local enemyColorThreat = CreateCheckbox("enemyColorThreat", "Color Threat in PvE", BetterBlizzPlates)
+    enemyColorThreat:SetPoint("TOPLEFT", enemyColorName.text, "BOTTOMLEFT", 0, 0)
+    CreateTooltipTwo(enemyColorThreat, "Color by threat in instanced PvE", "For Tank: Red(no aggro)>Orange>Green(aggro). For Healer/DPS: Green(no aggro)>Orange>Red(aggro).")
+
     local function UpdateColorSquare(icon, r, g, b)
         if r and g and b then
             icon:SetVertexColor(r, g, b)
