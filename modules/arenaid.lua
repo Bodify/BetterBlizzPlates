@@ -1,3 +1,6 @@
+BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
+BBP = BBP or {}
+
 -- Table with spec IDs
 local specIDToName = {
     -- Death Knight
@@ -988,7 +991,6 @@ function BBP.PartyIndicator5(frame)
                     frame.specNameText:SetTextColor(r, g, b, 1)
                     frame.specNameText:SetScale(partySpecScale)
                     if frame.fakeName then
-                        frame.specNameText:ClearAllPoints()
                         frame.fakeName:SetText("")
                         frame.specNameText:SetPoint("CENTER", frame.fakeName, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
                     else

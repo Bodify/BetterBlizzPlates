@@ -1,3 +1,6 @@
+BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
+BBP = BBP or {}
+
 local UnitAffectingCombat = UnitAffectingCombat
 -- Combat Indicator
 function BBP.CombatIndicator(frame)

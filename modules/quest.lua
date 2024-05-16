@@ -1,3 +1,7 @@
+-- Setting up the database
+BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
+BBP = BBP or {}
+
 ----------------------------------------------------
 ---- Quest Function Copied From TPTP(Threat Plates)
 ----------------------------------------------------

@@ -1,4 +1,8 @@
-local activeCooldowns = {}
+-- Setting up the database
+BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
+BBP = BBP or {}
+
+BBP.activeCooldowns = BBP.activeCooldowns or {}
 
 function BBP.ResetNameplateTestAttributes()
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
@@ -60,7 +64,7 @@ function BBP.CreateTotemComponents(frame, size)
     frame.totemIndicator:ClearAllPoints()
     if config.totemIndicatorHideNameAndShiftIconDown then
         frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), frame.healthBar, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos + 4)
-    elseif config.nameplateResourceOnTarget == "1" and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
+    elseif config.nameplateResourceOnTarget == 1 and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
         local resourceFrame = frame:GetParent().driverFrame.classNamePlateMechanicFrame
         frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), resourceFrame or (config.totemIndicatorHideNameAndShiftIconDown and frame.healthBar) or totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     else
@@ -89,7 +93,7 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
                 frame.customCooldown:SetPoint('BOTTOMRIGHT', frame.totemIndicator, 'BOTTOMRIGHT', -1, 1)
             end
 
-            local existingCooldown = activeCooldowns[guid]
+            local existingCooldown = BBP.activeCooldowns[guid]
             if existingCooldown then
                 -- Update the cooldown with the remaining time
                 local currentTime = GetTime()
@@ -101,14 +105,14 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
                     -- Cooldown has expired
                     frame.customIcon:Hide()
                     if frame.glowTexture then frame.glowTexture:Hide() end
-                    activeCooldowns[guid] = nil
+                    BBP.activeCooldowns[guid] = nil
                 end
             else
                 -- Set new cooldown
                 local startTime = GetTime()
                 frame.customCooldown:SetCooldown(startTime, duration)
                 frame.customCooldown:SetReverse(true)
-                activeCooldowns[guid] = { startTime = startTime, duration = duration }
+                BBP.activeCooldowns[guid] = { startTime = startTime, duration = duration }
             end
 
             -- Configure cooldown swipe and edge
@@ -365,7 +369,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         if frame.fakeName then
             frame.fakeName:SetText("")
         end
-    elseif config.nameplateResourceOnTarget == "1"  and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
+    elseif config.nameplateResourceOnTarget == 1  and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
         local resourceFrame = frame:GetParent().driverFrame.classNamePlateMechanicFrame
         frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), resourceFrame or totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     else
