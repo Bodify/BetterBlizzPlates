@@ -1,7 +1,3 @@
--- Setting up the database
-BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
-BBP = BBP or {}
-
 ----------------------------------------------------
 ---- Aura Function Copied From RSPlates and edited by me
 ----------------------------------------------------
@@ -14,7 +10,7 @@ end
 local fakeAuras = {
     -- 6 Fake Debuffs
     {
-        auraInstanceID = "777",
+        auraInstanceID = 777,
         spellId = 201,
         icon = "interface/icons/spell_shadow_shadowwordpain",
         duration = 30,
@@ -22,7 +18,7 @@ local fakeAuras = {
         applications = 1,
     },
     {
-        auraInstanceID = "778",
+        auraInstanceID = 778,
         spellId = 202,
         icon = "interface/icons/spell_shadow_curseofsargeras",
         duration = 18,
@@ -30,7 +26,7 @@ local fakeAuras = {
         applications = 18,
     },
     {
-        auraInstanceID = "779",
+        auraInstanceID = 779,
         spellId = 203,
         icon = "interface/icons/spell_frost_frostnova",
         duration = 10,
@@ -38,7 +34,7 @@ local fakeAuras = {
         applications = 1,
     },
     {
-        auraInstanceID = "780",
+        auraInstanceID = 780,
         spellId = 204,
         icon = 132092,
         duration = 22,
@@ -46,7 +42,7 @@ local fakeAuras = {
         isHarmful = true,
     },
     {
-        auraInstanceID = "781",
+        auraInstanceID = 781,
         spellId = 205,
         icon = 135978,
         duration = 24,
@@ -54,7 +50,7 @@ local fakeAuras = {
         applications = 1,
     },
     {
-        auraInstanceID = "782",
+        auraInstanceID = 782,
         spellId = 206,
         icon = "interface/icons/spell_shadow_plaguecloud",
         duration = 16,
@@ -63,7 +59,7 @@ local fakeAuras = {
     },
     -- 5 Fake Buffs
     {
-        auraInstanceID = "666",
+        auraInstanceID = 666,
         spellId = 101,
         icon = "interface/icons/spell_nature_regeneration",
         duration = 20,
@@ -72,7 +68,7 @@ local fakeAuras = {
         isStealable = true,
     },
     {
-        auraInstanceID = "667",
+        auraInstanceID = 667,
         spellId = 102,
         icon = 132341,
         duration = 0,
@@ -81,7 +77,7 @@ local fakeAuras = {
         applications = 1,
     },
     {
-        auraInstanceID = "668",
+        auraInstanceID = 668,
         spellId = 103,
         icon = "interface/icons/spell_holy_flashheal",
         duration = 25,
@@ -89,7 +85,7 @@ local fakeAuras = {
         applications = 2,
     },
     {
-        auraInstanceID = "669",
+        auraInstanceID = 669,
         spellId = 104,
         icon = 132144,
         duration = 0,
@@ -98,7 +94,7 @@ local fakeAuras = {
         applications = 1,
     },
     {
-        auraInstanceID = "670",
+        auraInstanceID = 670,
         spellId = 105,
         icon = 135939,
         duration = 15,
@@ -219,7 +215,7 @@ local function StartCheckBuffsTimer()
     end
 end
 
-function CustomBuffLayoutChildren(container, children, isEnemyUnit)
+function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     -- Obtain the health bar details
     local healthBar = container:GetParent().healthBar
     local healthBarWidth = healthBar:GetWidth()
@@ -251,6 +247,7 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local texCoord = nameplateAuraSquare and {0.1, 0.9, 0.1, 0.9} or nameplateAuraTaller and {0.05, 0.95, 0.15, 0.82} or {0.05, 0.95, 0.1, 0.6}
     local compactTexCoord = not compactSquare and texCoord or nameplateAuraSquare and {0.25, 0.75, 0.05, 0.95} or nameplateAuraTaller and {0.3, 0.7, 0.15, 0.82} or {0.3, 0.7, 0.15, 0.80}
     local nameplateAuraScale = BetterBlizzPlatesDB.nameplateAuraScale
+    local nameplateAuraCountScale = BetterBlizzPlatesDB.nameplateAuraCountScale
     local sortEnlargedAurasFirst = BetterBlizzPlatesDB.sortEnlargedAurasFirst
     local sortCompactedAurasFirst = BetterBlizzPlatesDB.sortCompactedAurasFirst
 
@@ -339,6 +336,7 @@ function CustomBuffLayoutChildren(container, children, isEnemyUnit)
         local compactTracker = 0
         for index, buff in ipairs(auras) do
             buff:SetScale(nameplateAuraScale)
+            buff.CountFrame:SetScale(nameplateAuraCountScale)
             local buffWidth
             if buff.isEnlarged then
                 buff:SetSize(sizeMultiplier, auraSizeScaled)
@@ -562,11 +560,11 @@ local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
                     end
                     if buff.isEnlarged then
                         importantGlowOffset = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
-                        buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
+                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
+                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
                     elseif buff.isCompacted then
-                        buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
-                        buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
+                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
+                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
                     elseif nameplateAuraSquare then
                         buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10)
                         buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10)
@@ -1222,7 +1220,11 @@ end
 
 function BBP.HideNameplateAuraTooltip()
     if BetterBlizzPlatesDB.hideNameplateAuraTooltip and not BBP.hookedNameplateAuraTooltip then
-        hooksecurefunc(NameplateBuffButtonTemplateMixin, "OnEnter", function(self) self:EnableMouse(false) end)
+        hooksecurefunc(NameplateBuffButtonTemplateMixin, "OnEnter", function(self)
+            if not self:IsProtected() or self:IsForbidden() then
+                self:EnableMouse(false)
+            end
+        end)
         BBP.hookedNameplateAuraTooltip = true
     end
 end

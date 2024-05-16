@@ -1,7 +1,3 @@
--- Setting up the database
-BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
-BBP = BBP or {}
-
 -- Healer spec id's
 local HealerSpecs = {
     [105]  = true,  --> druid resto
@@ -46,6 +42,8 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         config.partyPointerHideRaidmarker = BetterBlizzPlatesDB.partyPointerHideRaidmarker
         config.partyPointerWidth = BetterBlizzPlatesDB.partyPointerWidth
         config.partyPointerHealerReplace = BetterBlizzPlatesDB.partyPointerHealerReplace
+        config.partyPointerTargetIndicator = BetterBlizzPlatesDB.partyPointerTargetIndicator
+        config.partyPointerHideAll = BetterBlizzPlatesDB.partyPointerHideAll
 
         config.partyPointerInitialized = true
     end
@@ -81,16 +79,42 @@ function BBP.PartyPointer(frame, fetchedSpecID)
 
     -- Visibility checks
     if ((config.partyPointerArenaOnly and not BBP.isInArena) or (config.partyPointerBgOnly and not BBP.isInBg)) and not config.partyPointerTestMode then
-        frame.partyPointer:Hide()
-        return
+        if not ((config.partyPointerArenaOnly and config.partyPointerBgOnly) and (BBP.isInArena or BBP.isInBg)) then
+            frame.partyPointer:Hide()
+            if config.partyPointerHideRaidmarker then
+                if not config.hideRaidmarkIndicator then
+                    frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
+                end
+            end
+            return
+        end
     end
 
     if config.partyPointerAnchor == "TOP" and ShouldShowName(frame) then
         local resourceAnchor = nil
-        if config.nameplateResourceOnTarget == true and not config.nameplateResourceUnderCastbar and info.isTarget and not (BetterBlizzPlatesDB.hideResourceOnFriend and info.isFriend) then
+        if config.nameplateResourceOnTarget == "1" and not config.nameplateResourceUnderCastbar and info.isTarget and not (BetterBlizzPlatesDB.hideResourceOnFriend and info.isFriend) then
             resourceAnchor = frame:GetParent().driverFrame.classNamePlateMechanicFrame
         end
-        frame.partyPointer:SetPoint("BOTTOM", resourceAnchor or frame.fakeName or frame.name, config.partyPointerAnchor, config.partyPointerXPos, config.partyPointerYPos -5)
+
+        local arenaPoint = nil
+        if BBP.isInArena or BetterBlizzPlatesDB.arenaIndicatorTestMode then
+            local db = BetterBlizzPlatesDB
+            if db.partyIndicatorModeOne then
+                arenaPoint = frame.arenaNumberText
+            elseif db.partyIndicatorModeTwo then
+                arenaPoint = frame.arenaNumberText
+            elseif db.partyIndicatorModeThree then
+                arenaPoint = frame.specNameText
+            elseif db.partyIndicatorModeFour then
+                arenaPoint = frame.arenaNumberText
+            elseif db.partyIndicatorModeFive then
+                arenaPoint = frame.specNameText
+            end
+        end
+
+        local anhcorPoint = resourceAnchor or arenaPoint or frame.fakeName or frame.name
+
+        frame.partyPointer:SetPoint("BOTTOM", anhcorPoint, config.partyPointerAnchor, config.partyPointerXPos, config.partyPointerYPos -5)
     else
         frame.partyPointer:SetPoint("BOTTOM", frame.healthBar, config.partyPointerAnchor, config.partyPointerXPos, config.partyPointerYPos)
     end
@@ -100,6 +124,14 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         frame.partyPointer.icon:SetVertexColor(classColor.r, classColor.g, classColor.b)
     else
         frame.partyPointer.icon:SetVertexColor(0.04, 0.76, 1)
+    end
+
+    if config.partyPointerTargetIndicator then
+        if info.isTarget then
+            frame.partyPointer.icon:SetAtlas("UI-QuestPoiImportant-QuestBang")
+        else
+            frame.partyPointer.icon:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
+        end
     end
 
     if config.partyPointerTestMode then
@@ -139,9 +171,30 @@ function BBP.PartyPointer(frame, fetchedSpecID)
     frame.partyPointer:Show()
     if config.partyPointerHideRaidmarker then
         frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(0)
-        config.partyPointerRaidmarkerHidden = true
-    elseif config.partyPointerRaidmarkerHidden then
-        frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
-        config.partyPointerRaidmarkerHidden = nil
+    end
+
+    if config.partyPointerHideAll then
+        frame.healthBar:SetAlpha(0)
+        frame.selectionHighlight:SetAlpha(0)
+        frame.hideNameOverride = true
+        frame.name:SetAlpha(0)
+        if frame.cleanName then
+            frame.cleanName:SetAlpha(0)
+        end
+        BBP.hideFriendlyCastbar = true
+        frame.ppChange = true
+    elseif frame.ppChange then
+        frame.healthBar:SetAlpha(1)
+        frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
+        frame.hideNameOverride = nil
+        if not config.hideFriendlyNameText then
+            if frame.cleanName then
+                frame.cleanName:SetAlpha(1)
+            else
+                frame.name:SetAlpha(1)
+            end
+        end
+        BBP.hideFriendlyCastbar = nil
+        frame.ppChange = nil
     end
 end

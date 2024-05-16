@@ -1,7 +1,3 @@
--- Setting up the database
-BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
-BBP = BBP or {}
-
 local nahjAuraWhitelist = {
     {
         ["flags"] = {
@@ -3664,7 +3660,6 @@ function BBP.MagnuszProfile()
 	db.targetIndicatorXPosXPos = 0
 	db.anonMode = false
 	db.friendlyNpdeBuffFilterOnlyMe = false
-	db.nameplateResourceOnTarget = true
 	db.castBarEmphasisIconScaleScale = 2
 	db.friendlyNpBuffEmphasisedBorder = false
 	db.nameplateShowFriendlyMinions = "0"

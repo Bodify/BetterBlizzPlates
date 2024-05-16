@@ -1,7 +1,3 @@
--- Setting up the database
-BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
-BBP = BBP or {}
-
 -- Update the Execute Indicator
 function BBP.ExecuteIndicator(frame)
     local config = frame.BetterBlizzPlates.config
