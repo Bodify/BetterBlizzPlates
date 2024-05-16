@@ -1,3 +1,7 @@
+-- Setting up the database
+BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
+BBP = BBP or {}
+
 -- Helper function to format health numbers
 local function FormatHealthValue(health, useMillions, showDecimal)
     local formatString
@@ -36,7 +40,6 @@ function BBP.HealthNumbers(frame)
         config.healthNumbersOnlyInCombat = BetterBlizzPlatesDB.healthNumbersOnlyInCombat
         config.healthNumbersUseMillions = BetterBlizzPlatesDB.healthNumbersUseMillions
         config.healthNumbersCurrentFull = BetterBlizzPlatesDB.healthNumbersCurrentFull
-        config.healthNumbersCombined = BetterBlizzPlatesDB.healthNumbersCombined
 
         config.healthNumbersInitialized = true
     end
@@ -72,12 +75,7 @@ function BBP.HealthNumbers(frame)
 
     -- Determine the appropriate health text based on configuration
     local healthText = ""
-    if config.healthNumbersCombined then
-        -- New setting: show both the numeric value and percentage
-        local numericHealth = FormatHealthValue(health, config.healthNumbersUseMillions, config.healthNumbersShowDecimal)
-        local percentHealth = string.format("%.0f%%", (health / maxHealth) * 100)
-        healthText = numericHealth .. " - " .. percentHealth
-    elseif config.healthNumbersCurrentFull then
+    if config.healthNumbersCurrentFull then
         if config.healthNumbersPercentage then
             -- Format both current and max health as percentages
             local currentHealthPercentage = string.format(config.healthNumbersShowDecimal and "%.1f%%" or "%.0f%%", (health / maxHealth) * 100)

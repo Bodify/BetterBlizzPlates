@@ -1,3 +1,7 @@
+-- Setting up the database
+BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
+BBP = BBP or {}
+
 -- Healer spec id's
 local HealerSpecs = {
     [105]  = true,  --> druid resto
@@ -172,7 +176,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     frame.classIndicator:ClearAllPoints()
     if anchorPoint == "TOP" then
         local resourceAnchor = nil
-        if config.nameplateResourceOnTarget == "1" and not config.nameplateResourceUnderCastbar and info.isTarget and not (config.hideResourceOnFriend and info.isFriend) then
+        if config.nameplateResourceOnTarget == true and not config.nameplateResourceUnderCastbar and info.isTarget and not (config.hideResourceOnFriend and info.isFriend) then
             resourceAnchor = frame:GetParent().driverFrame.classNamePlateMechanicFrame
         end
         frame.classIndicator:SetPoint(oppositeAnchor, resourceAnchor or frame.fakeName or frame.name, anchorPoint, xPos, yPos)
@@ -193,11 +197,6 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     local coords = CLASS_ICON_TCOORDS[info.class]
     if not coords then
         frame.classIndicator:Hide()
-        if config.classIndicatorHideRaidMarker then
-            if not config.hideRaidmarkIndicator then
-                frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
-            end
-        end
         return
     end
 
@@ -286,6 +285,10 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     -- Show the class icon frame
     if config.classIndicatorHideRaidMarker then
         frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(0)
+        config.classIndicatorHiddenRaidmarker = true
+    elseif config.classIndicatorHiddenRaidmarker then
+        frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
+        config.classIndicatorHiddenRaidmarker = nil
     end
     frame.classIndicator:Show()
 end

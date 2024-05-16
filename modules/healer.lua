@@ -1,3 +1,7 @@
+-- Setting up the database
+BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
+BBP = BBP or {}
+
 -- Healer spec id's
 local HealerSpecs = {
     [105]  = true,  --> druid resto

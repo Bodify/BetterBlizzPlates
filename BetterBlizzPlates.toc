@@ -1,4 +1,4 @@
-## Interface: 100207
+## Interface: 100206
 ## Title: Better|cff00c0ffBlizz|rPlates
 ## Notes: Standard Blizzard nameplates with more features and easy settings
 ## SavedVariables: BetterBlizzPlatesDB
@@ -7,8 +7,6 @@
 ## Author: Bodify
 
 embeds.xml
-
-init.lua
 
 modules\combat.lua
 modules\castbar.lua
