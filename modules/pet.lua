@@ -6,10 +6,16 @@ local petValidSpellIDs = {
     [284301] = true,
 }
 
+local shadowRealm = CreateFrame("Frame")
+shadowRealm:Hide()
+local shadows = {}
+
 -- Pet Indicator
 function BBP.PetIndicator(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
+
+    local nameplate = frame:GetParent()
 
     if not config.petIndicatorInitialized or BBP.needsUpdate then
         config.petIndicatorAnchor = BetterBlizzPlatesDB.petIndicatorAnchor or "CENTER"
@@ -18,6 +24,7 @@ function BBP.PetIndicator(frame)
         config.petIndicatorTestMode = BetterBlizzPlatesDB.petIndicatorTestMode
         config.combatIndicator = BetterBlizzPlatesDB.combatIndicator
         config.combatIndicatorAnchor = BetterBlizzPlatesDB.combatIndicatorAnchor
+        config.petIndicatorOnlyShowMainPet = BetterBlizzPlatesDB.petIndicatorOnlyShowMainPet
         config.petIndicatorScale = BetterBlizzPlatesDB.petIndicatorScale or 1
 
         config.petIndicatorInitialized = true
@@ -28,6 +35,11 @@ function BBP.PetIndicator(frame)
         frame.petIndicator = frame.healthBar:CreateTexture(nil, "OVERLAY")
         frame.petIndicator:SetAtlas("newplayerchat-chaticon-newcomer")
         frame.petIndicator:SetSize(12, 12)
+    end
+
+    if shadows[nameplate] then
+        nameplate:SetParent(shadows[nameplate])
+        shadows[nameplate] = nil
     end
 
     local combatIndicator = frame.combatIndicatorSap or frame.combatIndicator
@@ -62,6 +74,11 @@ function BBP.PetIndicator(frame)
             if petValidSpellIDs[spellID] then
                 frame.petIndicator:Show()
                 return
+            elseif config.petIndicatorOnlyShowMainPet then
+                if not UnitIsUnit(frame.unit, "target") then
+                    shadows[nameplate] = nameplate
+                    nameplate:SetParent(shadowRealm)
+                end
             end
         end
     end

@@ -169,14 +169,14 @@ local function CheckBuffs()
                     end
                     if buff.isEnlarged then
                         importantGlowOffset = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        if buff.ImportantGlow then
-                            buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
-                            buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
+                        if buff.PandemicGlow then
+                            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
+                            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
                         end
                     elseif buff.isCompacted then
-                        if buff.ImportantGlow then
-                            buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
-                            buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
+                        if buff.PandemicGlow then
+                            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
+                            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
                         end
                     elseif BetterBlizzPlatesDB.nameplateAuraSquare then
                         buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);

@@ -76,6 +76,7 @@ local defaultSettings = {
     fakeNameScaleWithParent = false,
     nameplateBorderSize = 1,
     nameplateTargetBorderSize = 3,
+    setCVarAcrossAllCharacters = true,
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,

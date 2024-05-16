@@ -506,6 +506,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
 
+            if config.petIndicatorOnlyShowMainPet then
+                BBP.PetIndicator(frame)
+            end
+
             BBP.ToggleNameplateAuras(frame)
             BBP.TargetNameplateAuraSize(frame)
         end
@@ -551,6 +555,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             if (config.classIndicator and (config.classIndicatorHighlight or config.classIndicatorHighlightColor)) then BBP.ClassIndicatorTargetHighlight(frame) end
 
             if config.showCastbarIfTarget then BBP.HideCastbar(frame, frame.unit) end
+
+            if config.petIndicatorOnlyShowMainPet then
+                BBP.PetIndicator(frame)
+            end
 
         end
         BBP.previousTargetNameplate = frame
