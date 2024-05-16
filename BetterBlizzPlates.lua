@@ -76,7 +76,6 @@ local defaultSettings = {
     fakeNameScaleWithParent = false,
     nameplateBorderSize = 1,
     nameplateTargetBorderSize = 3,
-    setCVarAcrossAllCharacters = true,
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -2196,7 +2195,49 @@ function BBP.HideNPCs(frame)
     end
 end
 
+local ThreatColorsForTanks = {
+    fullAggro = {0.0, 1.0, 0.0}, -- green
+    noAggro = {1.0, 0.0, 0.0} -- red
+}
 
+function BBP.ColorThreatForTank(frame)
+    if not frame or not frame.unit then return end
+
+    local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
+    local r, g, b = unpack(ThreatColorsForTanks.noAggro)
+
+    if ( isTanking and threatStatus ) then
+        if ( threatStatus >= 3 ) then
+            r, g, b = unpack(ThreatColorsForTanks.fullAggro)
+        else
+            -- targets me, but losing aggro
+            r, g, b = GetThreatStatusColor(threatStatus)
+        end
+    end
+
+    frame.healthBar:SetStatusBarColor(r, g, b)
+end
+
+local ThreatColorsForHealerOrDps = {
+    fullAggro = {1.0, 0.0, 0.0}, -- red
+    noAggro = {0.0, 1.0, 0.0} -- green
+}
+
+function BBP.ColorThreatForHealerOrDps(frame)
+    if not frame or not frame.unit then return end
+
+    local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
+    local r, g, b = unpack(ThreatColorsForHealerOrDps.noAggro)
+
+    if ( isTanking ) then
+        r, g, b = unpack(ThreatColorsForHealerOrDps.fullAggro)
+    elseif ( threatStatus and threatStatus > 0 ) then
+        -- about to pull aggro
+        r, g, b = GetThreatStatusColor(threatStatus)
+    end
+
+    frame.healthBar:SetStatusBarColor(r, g, b)
+end
 
 
 
@@ -2366,6 +2407,14 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
 
     if config.friendlyHealthBarColor or config.enemyHealthBarColor then
         ColorNameplateByReaction(frame)
+    end
+
+    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) then
+        if ( BBP.isRoleTank ) then
+            BBP.ColorThreatForTank(frame)
+        else
+            BBP.ColorThreatForHealerOrDps(frame)
+        end
     end
 
     if config.colorNPC then--and config.npcHealthbarColor then --bodify need npc check here since it can run before np added
@@ -3833,6 +3882,18 @@ local function UpdateInstanceStatus()
     BBP.isInBg = inInstance and (instanceType == "pvp")
     BBP.isInPvP = BBP.isInBg or BBP.isInArena
 end
+
+-- Function to update the current class role
+local function UpdateClassRoleStatus(self, event)
+    local specIndex = GetSpecialization()
+    local role = specIndex and GetSpecializationRole(specIndex)
+    BBP.isRoleTank = role == "TANK"
+end
+
+local ClassRoleChecker = CreateFrame("Frame")
+ClassRoleChecker:RegisterEvent("PLAYER_ENTERING_WORLD")
+ClassRoleChecker:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+ClassRoleChecker:SetScript("OnEvent", UpdateClassRoleStatus)
 
 -- Function to set the nameplate behavior
 local InstanceChecker = CreateFrame("Frame")
