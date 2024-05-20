@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.4.9h"
+local addonUpdates = "1.4.9i"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -885,12 +885,10 @@ local function SendUpdateMessage()
                 --BBP.CreateUpdateMessageWindow()
                 DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
                 DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Stuff:")
-                DEFAULT_CHAT_FRAME:AddMessage("   - Aura Stack Size slider (Nameplate Auras)")
-                DEFAULT_CHAT_FRAME:AddMessage("   - Added nameplateShowAll & nameplateShowFriendlyNPCs CVars to CVar Control")
-                DEFAULT_CHAT_FRAME:AddMessage("   - Spell info tooltips on ID entries to lists")
+                DEFAULT_CHAT_FRAME:AddMessage("   - Simple threat color for PvE. Credit to @sod (General)")
 
-                DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
-                DEFAULT_CHAT_FRAME:AddMessage("   - Read curseforge changelog for bugfix list.")
+                -- DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
+                -- DEFAULT_CHAT_FRAME:AddMessage("   - Read curseforge changelog for bugfix list.")
             end)
         else
             BetterBlizzPlatesDB.scStart = nil

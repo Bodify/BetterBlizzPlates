@@ -1652,6 +1652,8 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 button:SetScript("OnEnter", function(self)
                     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
                     GameTooltip:SetSpellByID(npc.id)
+                    GameTooltip:AddLine("Spell ID: " .. npc.id, 1, 1, 1)
+                    GameTooltip:Show()
                 end)
                 button:SetScript("OnLeave", function(self)
                     GameTooltip:Hide()
@@ -1673,10 +1675,10 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         end
 
         if npc.name and npc.name ~= "" then
-            displayText = displayText .. (displayText ~= "" and " - " or "") .. npc.name
+            displayText = npc.name .. (displayText ~= "" and " - " or "") .. displayText
         end
         if npc.comment and npc.comment ~= "" then
-            displayText = displayText .. (displayText ~= "" and " - " or "") .. npc.comment
+            displayText = npc.comment .. (displayText ~= "" and " - " or "") .. displayText
         end
 
         local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -3056,7 +3058,7 @@ local function guiGeneralTab()
 
     local enemyColorThreat = CreateCheckbox("enemyColorThreat", "Color Threat in PvE", BetterBlizzPlates)
     enemyColorThreat:SetPoint("TOPLEFT", enemyColorName.text, "BOTTOMLEFT", 0, 0)
-    CreateTooltipTwo(enemyColorThreat, "Color by threat in instanced PvE", "For Tank: Red(no aggro)>Orange>Green(aggro).\nFor Healer/DPS: Green(no aggro)>Orange>Red(aggro).")
+    CreateTooltipTwo(enemyColorThreat, "Color by threat in instanced PvE", "For Tank:\nRed(no aggro)>Orange>Green(aggro)\n\nFor Healer/DPS:\nGreen(no aggro)>Orange>Red(aggro)")
 
     local function UpdateColorSquare(icon, r, g, b)
         if r and g and b then
@@ -7186,7 +7188,7 @@ local function guiCVarControl()
     sliderCVars["nameplateOccludedAlphaMult"] = nameplateOccludedAlphaMult
 
     -- Re-check checkboxes late cuz its all a mess and needs to be done and at this point more bandaid is all the effort i will put in until TWW maybe
-    if not BetterBlizzPlatesDB.hasSaved then
+    --if not BetterBlizzPlatesDB.hasSaved then
         C_Timer.After(3, function()
             if BetterBlizzPlatesDB.setCVarAcrossAllCharacters then
                 ChangeMinionCheckboxes(true)
@@ -7200,7 +7202,7 @@ local function guiCVarControl()
             --     end
             -- end
         end)
-    end
+    --end
 
     C_Timer.After(3.1, function()
         local cvarListener = CreateFrame("Frame")

@@ -38,6 +38,7 @@ function BBP.CreateTotemComponents(frame, size)
 
         frame.customIcon = frame.totemIndicator:CreateTexture(nil, "OVERLAY")
         frame.customIcon:SetAllPoints(frame.totemIndicator)
+        --frame.totemIndicator:SetParent(frame)
 
         frame.animationGroup = BBP.SetupUnifiedAnimation(frame.totemIndicator)
     end
@@ -296,6 +297,9 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         else
             if frame.animationGroup then
                 frame.animationGroup:Stop()
+            end
+            if frame.glowTexture then
+                frame.glowTexture:Hide()
             end
         end
         if config.totemIndicatorHideHealthBar then
