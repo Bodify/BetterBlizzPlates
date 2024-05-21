@@ -884,11 +884,11 @@ local function SendUpdateMessage()
                 --PlaySoundFile(567439) --quest complete sfx
                 --BBP.CreateUpdateMessageWindow()
                 DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-                DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Stuff:")
-                DEFAULT_CHAT_FRAME:AddMessage("   - Simple threat color for PvE. Credit to @sod (General)")
+                -- DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Stuff:")
+                -- DEFAULT_CHAT_FRAME:AddMessage("   - Simple threat color for PvE. Credit to @sod (General)")
 
-                -- DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
-                -- DEFAULT_CHAT_FRAME:AddMessage("   - Read curseforge changelog for bugfix list.")
+                DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
+                DEFAULT_CHAT_FRAME:AddMessage("   - Fix enemy castbars being hidden with party pointer \"hide all\" setting.")
             end)
         else
             BetterBlizzPlatesDB.scStart = nil
