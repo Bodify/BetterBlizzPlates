@@ -167,27 +167,67 @@ local function CheckBuffs()
                     if buff.Cooldown and buff.Cooldown:IsVisible() then
                         buff.PandemicGlow:SetParent(buff.Cooldown)
                     end
-                    if buff.isEnlarged then
-                        importantGlowOffset = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        if buff.PandemicGlow then
-                            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
-                            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
-                        end
-                    elseif buff.isCompacted then
-                        if buff.PandemicGlow then
-                            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
-                            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
-                        end
-                    elseif BetterBlizzPlatesDB.nameplateAuraSquare then
-                        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
-                        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
-                    elseif BetterBlizzPlatesDB.nameplateAuraTaller then
-                        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10.5, 8);
-                        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10.5, -8);
+                end
+                if buff.isEnlarged then
+                    if BetterBlizzPlatesDB.nameplateAuraEnlargedSquare then
+                        local ten = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
+                        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
                     else
-                        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10.5, 7.5);
-                        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10.5, -7.5);
+                        if BetterBlizzPlatesDB.nameplateAuraSquare then
+                            local ten = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten);
+                            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten);
+                        elseif BetterBlizzPlatesDB.nameplateAuraTaller then
+                            local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            local eight = 8 * etterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight);
+                            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight);
+                        else
+                            local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            local sevenfive = 7.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, sevenfive);
+                            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -sevenfive);
+                        end
                     end
+                elseif buff.isCompacted then
+                    if BetterBlizzPlatesDB.nameplateAuraCompactedSquare then
+                        local scale = BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                        local fourfive = 4.5 * scale
+                        local fivefive = 5.5 * scale
+                        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -fourfive, fivefive)
+                        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", fourfive, -fivefive)
+                    else
+                        if BetterBlizzPlatesDB.nameplateAuraSquare then
+                            local ten = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten);
+                            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten);
+                        elseif BetterBlizzPlatesDB.nameplateAuraTaller then
+                            local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            local eight = 8 * etterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight);
+                            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight);
+                        else
+                            local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            local sevenfive = 7.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, sevenfive);
+                            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -sevenfive);
+                        end
+                    end
+                elseif BetterBlizzPlatesDB.nameplateAuraSquare then
+                    local ten = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                    buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten);
+                    buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten);
+                elseif BetterBlizzPlatesDB.nameplateAuraTaller then
+                    local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                    local eight = 8 * etterBlizzPlatesDB.nameplateAuraEnlargedScale
+                    buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight);
+                    buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight);
+                else
+                    local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                    local sevenfive = 7.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                    buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, sevenfive);
+                    buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -sevenfive);
                 end
                 buff.isPandemicActive = true
                 buff.PandemicGlow:Show();

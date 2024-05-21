@@ -721,14 +721,14 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
         local showNameplateTargetText = BetterBlizzPlatesDB.showNameplateTargetText
         local showNameplateCastbarTimer = BetterBlizzPlatesDB.showNameplateCastbarTimer
 
-        if frame.hideCastbarOverride or BBP.hideFriendlyCastbar then
+        if frame.hideCastbarOverride then
             frame.castBar:Hide()
             return
         end
 
-        if alwaysHideFriendlyCastbar or alwaysHideEnemyCastbar then
+        if alwaysHideFriendlyCastbar or alwaysHideEnemyCastbar or BBP.hideFriendlyCastbar then
             local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(self.unit)
-            if (alwaysHideFriendlyCastbar and isFriend) or (alwaysHideEnemyCastbar and not isFriend) then
+            if ((alwaysHideFriendlyCastbar or BBP.hideFriendlyCastbar) and isFriend) or (alwaysHideEnemyCastbar and not isFriend) then
                 frame.castBar:Hide()
                 return
             end
