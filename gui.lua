@@ -1,5 +1,3 @@
-BetterBlizzPlatesDB = BetterBlizzPlatesDB or {}
-BBP = BBP or {}
 local LSM = LibStub("LibSharedMedia-3.0")
 local LibDD = LibStub:GetLibrary("LibUIDropDownMenu-4.0")
 
@@ -1061,10 +1059,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     -- Nameplate scales
                 elseif element == "nameplateMinScale" then
                     if not BBP.checkCombatAndWarn() then
-                    local defaultMinScale = 0.8
-                    local defaultMaxScale = 1.0
-                    local ratio = defaultMinScale / defaultMaxScale
-                    -- Keep ratio between default values
+                    local ratio = 1.25
                     local newMinScale = value
                     local newMaxScale = newMinScale * ratio
                     SetCVar("nameplateMinScale", newMinScale)
@@ -7215,6 +7210,8 @@ local function guiCVarControl()
             elseif sliderCVars[cvarName] then
                 BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
                 sliderCVars[cvarName]:SetValue(tonumber(cvarValue))
+            else
+                BetterBlizzPlatesDB[cvarName] = cvarValue
             end
         end)
     end)
