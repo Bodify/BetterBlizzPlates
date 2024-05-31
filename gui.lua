@@ -178,6 +178,7 @@ local function OpenColorPicker(colorType, icon)
     -- Initialize color with default RGBA if not present
     BetterBlizzPlatesDB[colorType] = BetterBlizzPlatesDB[colorType] or {1, 1, 1, 1}
     local r, g, b, a = unpack(BetterBlizzPlatesDB[colorType])
+    BBP.needsUpdate = true
 
     local function updateColors()
         BetterBlizzPlatesDB[colorType] = {r, g, b, a}
@@ -1749,6 +1750,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
 
             -- Function to open the color picker
             local function OpenColorPicker()
+                BBP.needsUpdate = true
                 local colorData = entryColors.text or {}
                 local r, g, b = colorData.r or 1, colorData.g or 1, colorData.b or 1
                 local a = colorData.a or 1 -- Default alpha to 1 if not present
@@ -1886,6 +1888,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
 
             -- Function to open the color picker
             local function OpenColorPicker()
+                BBP.needsUpdate = true
                 local colorData = entryColors.text or {}
                 local r, g, b = colorData.r or 1, colorData.g or 1, colorData.b or 1
                 local a = colorData.a or 1 -- Default alpha to 1 if not present
@@ -3067,6 +3070,7 @@ local function guiGeneralTab()
     UpdateColorSquare(enemyColorNameIcon, unpack(BetterBlizzPlatesDB.enemyColorNameRGB or {1, 1, 1}))
 
     local function OpenColorPicker(colorType, icon)
+        BBP.needsUpdate = true
         local r, g, b = unpack(BetterBlizzPlatesDB[colorType] or {1, 1, 1})
 
         ColorPickerFrame:SetupColorPickerAndShow({
@@ -3162,6 +3166,7 @@ local function guiGeneralTab()
     CreateTooltipTwo(enemyHealthBarColorNpcOnly, "Only color NPC's.")
 
     local function OpenColorPicker(colorType, icon)
+        BBP.needsUpdate = true
         local r, g, b = unpack(BetterBlizzPlatesDB[colorType] or {1, 1, 1})
 
         ColorPickerFrame:SetupColorPickerAndShow({
@@ -3318,6 +3323,7 @@ local function guiGeneralTab()
     UpdateColorSquare(friendlyColorNameIcon, unpack(BetterBlizzPlatesDB.friendlyColorNameRGB or {1, 1, 1}))
 
     local function OpenColorPicker2()
+        BBP.needsUpdate = true
         local r, g, b = unpack(BetterBlizzPlatesDB.friendlyColorNameRGB or {1, 1, 1})
         ColorPickerFrame:SetupColorPickerAndShow({
             r = r, g = g, b = b, hasOpacity = false,
@@ -3423,6 +3429,7 @@ local function guiGeneralTab()
     end
 
     local function OpenColorPicker(colorType, icon)
+        BBP.needsUpdate = true
         local r, g, b = unpack(BetterBlizzPlatesDB[colorType] or {1, 1, 1})
         UpdateColorSquare(icon, r, g, b)
 
@@ -4394,6 +4401,7 @@ local function guiPositionAndScale()
     end
 
     local function OpenColorPicker()
+        BBP.needsUpdate = true
         local r, g, b = unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB or {1, 1, 1})
 
         ColorPickerFrame:SetupColorPickerAndShow({
@@ -4645,6 +4653,7 @@ local function guiPositionAndScale()
     end
 
     local function OpenColorPicker()
+        BBP.needsUpdate = true
         local r, g, b = unpack(BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB or {1, 1, 1})
 
         ColorPickerFrame:SetupColorPickerAndShow({
@@ -5360,6 +5369,7 @@ local function guiCastbar()
     end
 
     local function OpenColorPicker(colorType, icon)
+        BBP.needsUpdate = true
         -- Ensure originalColorData has four elements, defaulting alpha (a) to 1 if not present
         local originalColorData = BetterBlizzPlatesDB[colorType] or {1, 1, 1, 1}
         if #originalColorData == 3 then
@@ -7287,6 +7297,7 @@ local function guiMisc()
     CreateTooltip(guildNameColor, "Change guild name color to a custom one instead of class colors.")
 
     local function OpenColorPicker()
+        BBP.needsUpdate = true
         local r, g, b = unpack(BetterBlizzPlatesDB.guildNameColorRGB or {1, 1, 1})
 
         ColorPickerFrame:SetupColorPickerAndShow({
