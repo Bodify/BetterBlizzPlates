@@ -889,6 +889,7 @@ local function SendUpdateMessage()
 
                 DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
                 DEFAULT_CHAT_FRAME:AddMessage("   - Fix aura color module not working on buffs.")
+                DEFAULT_CHAT_FRAME:AddMessage("   - Fix class icon module causing a lua error sometimes.")
             end)
         else
             BetterBlizzPlatesDB.scStart = nil
