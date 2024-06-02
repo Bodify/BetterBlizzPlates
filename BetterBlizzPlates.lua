@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.4.9j"
+local addonUpdates = "1.4.9k"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -888,7 +888,7 @@ local function SendUpdateMessage()
                 -- DEFAULT_CHAT_FRAME:AddMessage("   - Simple threat color for PvE. Credit to @sod (General)")
 
                 DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
-                DEFAULT_CHAT_FRAME:AddMessage("   - Fix enemy castbars being hidden with party pointer \"hide all\" setting.")
+                DEFAULT_CHAT_FRAME:AddMessage("   - Fix aura color module not working on buffs.")
             end)
         else
             BetterBlizzPlatesDB.scStart = nil
@@ -2336,7 +2336,8 @@ function BBP.AuraColor(frame)
         return highestPriority >= 10
     end
 
-    AuraUtil.ForEachAura(frame.unit, "HELPFUL|HARMFUL", nil, ProcessAura)
+    AuraUtil.ForEachAura(frame.unit, "HELPFUL", nil, ProcessAura)
+    AuraUtil.ForEachAura(frame.unit, "HARMFUL", nil, ProcessAura)
 
     -- Set the vertex color based on the highest priority aura color
     if auraColor then
