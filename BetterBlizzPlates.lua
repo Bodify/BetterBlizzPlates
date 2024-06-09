@@ -2428,7 +2428,8 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
     end
 
     if config.auraColor and config.auraColorRGB then
-        frame.healthBar:SetStatusBarColor(config.auraColorRGB.r, config.auraColorRGB.g, config.auraColorRGB.b)
+        BBP.AuraColor(frame)
+        --frame.healthBar:SetStatusBarColor(config.auraColorRGB.r, config.auraColorRGB.g, config.auraColorRGB.b)
     end
 
     if (config.targetIndicator and config.targetIndicatorColorNameplate and info.isTarget) or config.targetIndicatorTestMode then
@@ -2581,7 +2582,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         --BBP.FocusTargetIndicator(frame)
     end
 
-    if config.auraColor and config.auraColorRGB then
+    if config.auraColor and config.auraColorRGB then --bodify
         frame.healthBar:SetStatusBarColor(config.auraColorRGB.r, config.auraColorRGB.g, config.auraColorRGB.b)
     end
 
@@ -3321,7 +3322,7 @@ local function GetNameplateHookTable(frame)
 
     return frame.BetterBlizzPlates.hooks
 end
-
+local cc = 0
 -- What to do on a new nameplate
 local function HandleNamePlateAdded(unit)
     local nameplate, frame = BBP.GetSafeNameplate(unit)
@@ -3347,16 +3348,39 @@ local function HandleNamePlateAdded(unit)
     BBP.CustomizeClassificationFrame(frame)
     --print(frame.ClassificationFrame:GetFrameStrata(), frame.ClassificationFrame:GetFrameLevel())
 
-    -- if not frame.hokedHp then
+    -- if not frame.hookedHp then
     --     hooksecurefunc(frame.healthBar, "SetHeight", function(self)
     --         if self.changing or self:IsForbidden() then return end
     --         self.changing = true
     --         self:SetHeight(30)
     --         self.changing = false
     --     end)
-    --     frame.hokedHp = true
+    --     frame.hookedHp = true
     -- end
     -- Check and set settings
+
+    -- frame.healthBar:ClearPoint("RIGHT")
+    -- frame.healthBar:ClearPoint("LEFT")
+    -- frame.healthBar:SetPoint("RIGHT", frame, "CENTER", 20,0)
+    -- frame.healthBar:SetPoint("LEFT", frame, "CENTER", -20, 0)
+
+    -- if not frame.hoks then
+    --     hooksecurefunc(frame.healthBar, "SetPoint", function(self)
+    --         if self.changing then return end
+    --         cc = cc + 1
+    --         print(cc)
+    --         self.changing = true
+    --         frame.healthBar:ClearPoint("RIGHT")
+    --         frame.healthBar:ClearPoint("LEFT")
+    --         frame.healthBar:SetPoint("RIGHT", frame, "CENTER", 20,0)
+    --         frame.healthBar:SetPoint("LEFT", frame, "CENTER", -20, 0)
+    --         print()
+
+    --         self.changing = false
+    --     end)
+
+    --     frame.hoks = true
+    -- end
 
     -- Hide default personal BuffFrame
     if config.enableNameplateAuraCustomisation then

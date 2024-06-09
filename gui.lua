@@ -2646,7 +2646,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
                 end
             end)
 
-            npcEditFrame.hideIconCheckbox:SetScript("OnClick", function(self)
+            npcEditFrame.hideHpCheckbox:SetScript("OnClick", function(self)
                 updateHideHpFlag(npcId, self:GetChecked())
                 local npcData = npcList[npcId]
                 if self:GetChecked() then
