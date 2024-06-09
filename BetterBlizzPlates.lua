@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.4.9k"
+local addonUpdates = "1.5.0"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -884,12 +884,12 @@ local function SendUpdateMessage()
                 --PlaySoundFile(567439) --quest complete sfx
                 --BBP.CreateUpdateMessageWindow()
                 DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-                -- DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Stuff:")
-                -- DEFAULT_CHAT_FRAME:AddMessage("   - Simple threat color for PvE. Credit to @sod (General)")
+                DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Stuff:")
+                DEFAULT_CHAT_FRAME:AddMessage("   - Cataclysm Beta version of BetterBlizzPlates is out! Same addon, just install on Cataclysm.")
 
-                DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
-                DEFAULT_CHAT_FRAME:AddMessage("   - Fix aura color module not working on buffs.")
-                DEFAULT_CHAT_FRAME:AddMessage("   - Fix class icon module causing a lua error sometimes.")
+                -- DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
+                -- DEFAULT_CHAT_FRAME:AddMessage("   - Fix aura color module not working on buffs.")
+                -- DEFAULT_CHAT_FRAME:AddMessage("   - Fix class icon module causing a lua error sometimes.")
             end)
         else
             BetterBlizzPlatesDB.scStart = nil
