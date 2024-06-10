@@ -1,0 +1,30 @@
+## Interface: 40400
+## Title: Better|cff00c0ffBlizz|rPlates
+## Notes: Standard Blizzard nameplates with more features and easy settings
+## SavedVariables: BetterBlizzPlatesDB
+## OptionalDeps: LibSharedMedia-3.0
+## IconAtlas: gmchat-icon-blizz
+## Author: Bodify
+
+embeds.xml
+
+init.lua
+
+temp_cata\modules\combat.lua
+temp_cata\modules\castbar.lua
+temp_cata\modules\totem.lua
+temp_cata\modules\arenaid.lua
+temp_cata\modules\execute.lua
+temp_cata\modules\healthNumbers.lua
+temp_cata\modules\target.lua
+temp_cata\modules\healer.lua
+temp_cata\modules\absorb.lua
+temp_cata\modules\classIcon.lua
+temp_cata\modules\partyPointer.lua
+temp_cata\modules\pet.lua
+temp_cata\modules\quest.lua
+temp_cata\modules\auras.lua
+temp_cata\modules\nahjProfile.lua
+
+temp_cata\gui.lua
+temp_cata\BetterBlizzPlates.lua

@@ -15,12 +15,12 @@ function BBP.SetupUnifiedAnimation(frameWithAnimations)
 
     local grow = animationGroup:CreateAnimation("Scale")
     grow:SetOrder(1)
-    grow:SetScale(1.1, 1.1)
+    grow:SetScale(1.07, 1.07)
     grow:SetDuration(0.5)
 
     local shrink = animationGroup:CreateAnimation("Scale")
     shrink:SetOrder(2)
-    shrink:SetScale(0.9091, 0.9091)
+    shrink:SetScale(1 / 1.07, 1 / 1.07)
     shrink:SetDuration(0.5)
 
     animationGroup:SetLooping("REPEAT")
@@ -31,18 +31,37 @@ end
 -- Function to create the necessary components for the totem indicator
 function BBP.CreateTotemComponents(frame, size)
     local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo
     if not frame.totemIndicator then
         frame.totemIndicator = CreateFrame("Frame", nil, frame)
         frame.totemIndicator:SetSize(30, 30)
         frame.totemIndicator:SetScale(config.totemIndicatorScale or 1)
+        frame.totemIndicator:SetIgnoreParentAlpha(true)
 
         frame.customIcon = frame.totemIndicator:CreateTexture(nil, "OVERLAY")
         frame.customIcon:SetAllPoints(frame.totemIndicator)
-        --frame.totemIndicator:SetParent(frame)
+
+        -- if true and not frame.friendlyIndicator then
+        --     if not frame.glowFrame then
+                frame.glowFrame = CreateFrame("Frame", nil, frame.totemIndicator)
+                frame.glowFrame:SetAllPoints(frame.totemIndicator)
+                frame.glowFrame:SetFrameStrata("MEDIUM")
+            --end
+            frame.friendlyIndicator = frame.glowFrame:CreateTexture(nil, "OVERLAY", nil, 7)
+            frame.friendlyIndicator:SetAtlas("Garr_LevelUpgradeArrow", true)
+            frame.friendlyIndicator:SetSize(22,27)
+            frame.friendlyIndicator:SetPoint("CENTER", frame.totemIndicator, "BOTTOM", 0, 0)
+            -- frame.friendlyIndicator:SetDesaturated(true)
+            -- frame.friendlyIndicator:SetVertexColor(1,0,0)
+        --end
 
         frame.animationGroup = BBP.SetupUnifiedAnimation(frame.totemIndicator)
     end
-    frame.totemIndicator:SetSize(size, size)
+    if info.isFriend then
+        frame.totemIndicator:SetSize(22, 22)
+    else
+        frame.totemIndicator:SetSize(size, size)
+    end
     frame.totemIndicator:SetScale(config.totemIndicatorScale or 1)
     local totemIndicatorSwappingAnchor
     if config.totemIndicatorHideNameAndShiftIconDown then
@@ -61,9 +80,9 @@ function BBP.CreateTotemComponents(frame, size)
     frame.totemIndicator:ClearAllPoints()
     if config.totemIndicatorHideNameAndShiftIconDown then
         frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), frame.healthBar, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos + 4)
-    elseif config.nameplateResourceOnTarget == "1" and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
-        local resourceFrame = frame:GetParent().driverFrame.classNamePlateMechanicFrame
-        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), resourceFrame or (config.totemIndicatorHideNameAndShiftIconDown and frame.healthBar) or totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
+    -- elseif config.nameplateResourceOnTarget == "1" and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
+    --     local resourceFrame = frame:GetParent().driverFrame.classNamePlateMechanicFrame
+    --     frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), resourceFrame or (config.totemIndicatorHideNameAndShiftIconDown and frame.healthBar) or totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     else
         frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), (config.totemIndicatorHideNameAndShiftIconDown and frame.healthBar) or totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     end
@@ -72,6 +91,7 @@ end
 -- Function to apply totem icons and other attributes
 function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hideIcon, guid)
     local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo
     BBP.CreateTotemComponents(frame, size)
 
     -- Only apply the following if hideIcon is false
@@ -101,6 +121,7 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
                 else
                     -- Cooldown has expired
                     frame.customIcon:Hide()
+                    if frame.friendlyIndicator then frame.friendlyIndicator:Hide() end
                     if frame.glowTexture then frame.glowTexture:Hide() end
                     activeCooldowns[guid] = nil
                 end
@@ -121,23 +142,38 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
 
         -- Apply glow effect if color is provided
         if color then
-            local offsetMultiplier = 0.41
+            local offsetMultiplier = 1.15--0.41
             local widthOffset = size * offsetMultiplier
             local heightOffset = size * offsetMultiplier
 
+            -- if not frame.glowTexture then
+            --     frame.glowTexture = frame.totemIndicator:CreateTexture(nil, "OVERLAY")
+            --     --frame.glowTexture:SetBlendMode("ADD")
+            --     frame.glowTexture:SetTexture(BBP.squareGreenGlow)
+            --     frame.glowTexture:SetDesaturated(true)
+            -- end
+
+            if not frame.glowFrame then
+                frame.glowFrame = CreateFrame("Frame", nil, frame.totemIndicator)
+                frame.glowFrame:SetAllPoints(frame.totemIndicator)
+                frame.glowFrame:SetFrameStrata("MEDIUM")
+            end
+
+            -- Ensure the glowTexture is on top of other elements
             if not frame.glowTexture then
-                frame.glowTexture = frame.totemIndicator:CreateTexture(nil, "OVERLAY")
-                frame.glowTexture:SetBlendMode("ADD")
-                frame.glowTexture:SetAtlas("clickcast-highlight-spellbook")
+                frame.glowTexture = frame.glowFrame:CreateTexture(nil, "OVERLAY")
+                frame.glowTexture:SetTexture(BBP.squareGreenGlow)
                 frame.glowTexture:SetDesaturated(true)
             end
 
             frame.glowTexture:SetPoint('TOPLEFT', frame.totemIndicator, 'TOPLEFT', -widthOffset, heightOffset)
             frame.glowTexture:SetPoint('BOTTOMRIGHT', frame.totemIndicator, 'BOTTOMRIGHT', widthOffset, -heightOffset)
             frame.glowTexture:SetVertexColor(unpack(color))
-            frame.glowTexture:Show()
 
-            frame.animationGroup:Play()
+            if not info.isFriend then
+                frame.glowTexture:Show()
+                frame.animationGroup:Play()
+            end
         end
 
         -- Set cooldown text scale
@@ -150,12 +186,29 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
                     cdText:SetScale(config.totemIndicatorDefaultCooldownTextSize)
                 end
             end
+
+            if info.isFriend then
+                if BetterBlizzPlatesDB.enemyTotemArrow == false then
+                    frame.friendlyIndicator:SetDesaturated(false)
+                    frame.friendlyIndicator:SetVertexColor(1,1,1)
+                end
+                frame.friendlyIndicator:Show()
+            else
+                if BetterBlizzPlatesDB.enemyTotemArrow then
+                    frame.friendlyIndicator:SetDesaturated(true)
+                    frame.friendlyIndicator:SetVertexColor(1,0,0)
+                    frame.friendlyIndicator:Show()
+                else
+                    frame.friendlyIndicator:Hide()
+                end
+            end
         --end
     else
         -- If hideIcon is true, ensure icon, cooldown, and glow are not displayed
         if frame.customIcon then frame.customIcon:Hide() end
         if frame.customCooldown then frame.customCooldown:Hide() end
         if frame.glowTexture then frame.glowTexture:Hide() end
+        if frame.friendlyIndicator then frame.friendlyIndicator:Hide() end
     end
 end
 
@@ -224,8 +277,9 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
     end
 
 
-    local guid = info.unitGUID
-    local npcID = BBP.GetNPCIDFromGUID(guid) --mby need fresh guid
+    local guid = UnitGUID(frame.unit)
+    local npcID = tonumber(guid and guid:match("-(%d+)-%x+$"))
+
     local totemIndicatorSwappingAnchor
     if config.totemIndicatorHideNameAndShiftIconDown then
         totemIndicatorSwappingAnchor = frame.healthBar
@@ -276,30 +330,35 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         end
 
         if config.totemIsImportant then
-            -- Apply glow effect
-            if not frame.glowTexture then
-                frame.glowTexture = frame.totemIndicator:CreateTexture(nil, "OVERLAY")
-                frame.glowTexture:SetBlendMode("ADD")
-                frame.glowTexture:SetAtlas("clickcast-highlight-spellbook")
-                frame.glowTexture:SetDesaturated(true)
+            if not info.isFriend then
+                -- Apply glow effect
+                if not frame.glowFrame then
+                    frame.glowFrame = CreateFrame("Frame", nil, frame.totemIndicator)
+                    frame.glowFrame:SetAllPoints(frame.totemIndicator)
+                    frame.glowFrame:SetFrameStrata("MEDIUM")
+                end
+
+                -- Ensure the glowTexture is on top of other elements
+                if not frame.glowTexture then
+                    frame.glowTexture = frame.glowFrame:CreateTexture(nil, "OVERLAY")
+                    frame.glowTexture:SetTexture(BBP.squareGreenGlow)
+                    frame.glowTexture:SetDesaturated(true)
+                end
+
+                local offsetMultiplier = 1.15
+                local widthOffset = config.randomTotemSize * offsetMultiplier
+                local heightOffset = config.randomTotemSize * offsetMultiplier
+
+                frame.glowTexture:SetPoint('TOPLEFT', frame.totemIndicator, 'TOPLEFT', -widthOffset, heightOffset)
+                frame.glowTexture:SetPoint('BOTTOMRIGHT', frame.totemIndicator, 'BOTTOMRIGHT', widthOffset, -heightOffset)
+
+                frame.glowTexture:SetVertexColor(unpack(config.randomTotemColor))
+                frame.glowTexture:Show()
+                frame.animationGroup:Play()
             end
-
-            local offsetMultiplier = 0.41
-            local widthOffset = config.randomTotemSize * offsetMultiplier
-            local heightOffset = config.randomTotemSize * offsetMultiplier
-
-            frame.glowTexture:SetPoint('TOPLEFT', frame.totemIndicator, 'TOPLEFT', -widthOffset, heightOffset)
-            frame.glowTexture:SetPoint('BOTTOMRIGHT', frame.totemIndicator, 'BOTTOMRIGHT', widthOffset, -heightOffset)
-
-            frame.glowTexture:SetVertexColor(unpack(config.randomTotemColor))
-            frame.glowTexture:Show()
-            frame.animationGroup:Play()
         else
             if frame.animationGroup then
                 frame.animationGroup:Stop()
-            end
-            if frame.glowTexture then
-                frame.glowTexture:Hide()
             end
         end
         if config.totemIndicatorHideHealthBar then
@@ -320,6 +379,19 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             return
         end
 
+        -- if true then
+        --     frame.healthBar:ClearPoint("RIGHT")
+        --     frame.healthBar:ClearPoint("LEFT")
+        --     frame.healthBar:SetPoint("RIGHT", frame, "CENTER", 20,0)
+        --     frame.healthBar:SetPoint("LEFT", frame, "CENTER", -20, 0)
+        --     if BetterBlizzPlatesDB.classicNameplates then
+        --         local width = info.isFriend and BetterBlizzPlatesDB.nameplateFriendlyWidth or BetterBlizzPlatesDB.nameplateEnemyWidth
+        --         -- frame.BetterBlizzPlates.bbpBorder.left:ClearAllPoints()
+        --         -- frame.BetterBlizzPlates.bbpBorder.left:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", -24, 1)
+        --         frame.BetterBlizzPlates.bbpBorder.center:SetWidth(width-75)
+        --     end
+        -- end
+
         if npcData.color then
             config.totemColorRGB = npcData.color
 
@@ -336,7 +408,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             config.totemColorRGB = nil
         end
 
-        if npcData.important then
+        if npcData.important and not info.isFriend then
             BBP.ApplyTotemAttributes(frame, npcData.icon, npcData.duration, npcData.color, npcData.size, npcData.hideIcon, guid)
         else
             BBP.ApplyTotemAttributes(frame, npcData.icon, npcData.duration, nil, npcData.size, npcData.hideIcon, guid)
@@ -344,15 +416,25 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
                 frame.animationGroup:Stop()
             end
         end
-        if config.totemIndicatorHideHealthBar or npcData.hideHp then
-            if not info.isTarget then
+        if config.totemIndicatorHideHealthBar or npcData.hideHp or npcData.iconOnly then
+            frame.LevelFrame:Hide()
+            if npcData.iconOnly then
                 frame.healthBar:SetAlpha(0)
                 frame.selectionHighlight:SetAlpha(0)
             else
-                frame.healthBar:SetAlpha(1)
-                if not config.hideTargetHighlight then
-                    frame.selectionHighlight:SetAlpha(0.22)
+                if not info.isTarget then
+                    frame.healthBar:SetAlpha(0)
+                    frame.selectionHighlight:SetAlpha(0)
+                else
+                    frame.healthBar:SetAlpha(1)
+                    if not config.hideTargetHighlight then
+                        frame.selectionHighlight:SetAlpha(0.22)
+                    end
                 end
+            end
+        else
+            if BetterBlizzPlatesDB.classicNameplates then
+                frame.LevelFrame:Show()
             end
         end
     else
@@ -363,15 +445,24 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
     end
 
     frame.totemIndicator:ClearAllPoints()
-    if config.totemIndicatorHideNameAndShiftIconDown then
-        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, yPosAdjustment)
-        frame.name:SetText("")
-        if frame.fakeName then
-            frame.fakeName:SetText("")
+    local iconOnlyMode = (npcData and npcData.iconOnly)
+    if config.totemIndicatorHideNameAndShiftIconDown or iconOnlyMode then
+        if iconOnlyMode then
+            frame.totemIndicator:SetPoint("CENTER", frame, "CENTER", config.totemIndicatorXPos, config.totemIndicatorYPos)
+            frame.name:SetText("")
+            if frame.fakeName then
+                frame.fakeName:SetText("")
+            end
+        else
+            frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, yPosAdjustment)
+            frame.name:SetText("")
+            if frame.fakeName then
+                frame.fakeName:SetText("")
+            end
         end
-    elseif config.nameplateResourceOnTarget == "1"  and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
-        local resourceFrame = frame:GetParent().driverFrame.classNamePlateMechanicFrame
-        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), resourceFrame or totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
+    -- elseif config.nameplateResourceOnTarget == "1"  and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
+    --     local resourceFrame = frame:GetParent().driverFrame.classNamePlateMechanicFrame
+    --     frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), resourceFrame or totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     else
         frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     end

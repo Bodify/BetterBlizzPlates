@@ -94,18 +94,18 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
             -- Configure for square or circle border and apply mask
         if config.classIconSquareBorderFriendly then
             frame.classIndicator.icon:SetSize(20, 20)
-            frame.classIndicator.mask:SetAtlas("UI-Frame-IconMask")
+            frame.classIndicator.mask:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UIFrameIconMask")
             frame.classIndicator.mask:SetSize(20, 20)
             frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
-            frame.classIndicator.border:SetAtlas("UI-HUD-ActionBar-IconFrame-AddRow")
-            frame.classIndicator.border:SetSize(23, 23)
+            frame.classIndicator.border:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-HUD-ActionBar-IconFrame-AddRow-Light")
+            frame.classIndicator.border:SetSize(29, 29)
             frame.classIndicator.border:ClearAllPoints()
             frame.classIndicator.border:SetPoint("CENTER", frame.classIndicator.icon, 1.5, -1.5)
             ------
             ------
             if frame.classIndicator.highlightSelect then
-                frame.classIndicator.highlightSelect:SetSize(36,36)
-                frame.classIndicator.highlightSelect:SetAtlas("newplayertutorial-drag-slotblue")
+                frame.classIndicator.highlightSelect:SetSize(64,64)
+                frame.classIndicator.highlightSelect:SetTexture(BBP.squareBlueGlow)
                 frame.classIndicator.highlightSelect:SetDesaturated(true)
                 frame.classIndicator.highlightSelect:SetVertexColor(1,0.88,0)
             end
@@ -114,7 +114,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
             frame.classIndicator.mask:SetTexture("Interface/Masks/CircleMaskScalable")
             frame.classIndicator.mask:SetSize(24, 24)
             frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
-            frame.classIndicator.border:SetAtlas("ui-frame-genericplayerchoice-portrait-border")
+            frame.classIndicator.border:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\ui-frame-genericplayerchoice-portrait-border")
             frame.classIndicator.border:SetAllPoints(frame.classIndicator)
             ------
             ------
@@ -128,18 +128,18 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     elseif (info.isEnemy or info.isNeutral) then
         if config.classIconSquareBorder then
             frame.classIndicator.icon:SetSize(20, 20)
-            frame.classIndicator.mask:SetAtlas("UI-Frame-IconMask")
+            frame.classIndicator.mask:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UIFrameIconMask")
             frame.classIndicator.mask:SetSize(20, 20)
             frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
-            frame.classIndicator.border:SetAtlas("UI-HUD-ActionBar-IconFrame-AddRow")
-            frame.classIndicator.border:SetSize(23, 23)
+            frame.classIndicator.border:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-HUD-ActionBar-IconFrame-AddRow-Light")
+            frame.classIndicator.border:SetSize(29, 29)
             frame.classIndicator.border:ClearAllPoints()
             frame.classIndicator.border:SetPoint("CENTER", frame.classIndicator.icon, 1.5, -1.5)
             ------
             ------
             if frame.classIndicator.highlightSelect then
-                frame.classIndicator.highlightSelect:SetSize(36,36)
-                frame.classIndicator.highlightSelect:SetAtlas("newplayertutorial-drag-slotblue")
+                frame.classIndicator.highlightSelect:SetSize(64,64)
+                frame.classIndicator.highlightSelect:SetTexture(BBP.squareBlueGlow)
                 frame.classIndicator.highlightSelect:SetDesaturated(true)
                 frame.classIndicator.highlightSelect:SetVertexColor(1,0.88,0)
             end
@@ -148,7 +148,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
             frame.classIndicator.mask:SetTexture("Interface/Masks/CircleMaskScalable")
             frame.classIndicator.mask:SetSize(24, 24)
             frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
-            frame.classIndicator.border:SetAtlas("ui-frame-genericplayerchoice-portrait-border")
+            frame.classIndicator.border:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\ui-frame-genericplayerchoice-portrait-border")
             frame.classIndicator.border:SetAllPoints(frame.classIndicator)
             ------
             ------
@@ -294,13 +294,11 @@ function BBP.ClassIndicatorTargetHighlight(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
     if config.classIndicatorHighlight or config.classIndicatorHighlightColor then
-        if frame.classIndicator and frame.classIndicator.highlightSelect then
-            frame.classIndicator.highlightSelect:Show()
-            if info.class and config.classIndicatorHighlightColor then
-                local classColor = RAID_CLASS_COLORS[info.class]
-                frame.classIndicator.highlightSelect:SetDesaturated(true)
-                frame.classIndicator.highlightSelect:SetVertexColor(classColor.r, classColor.g, classColor.b)
-            end
+        frame.classIndicator.highlightSelect:Show()
+        if info.class and config.classIndicatorHighlightColor then
+            local classColor = RAID_CLASS_COLORS[info.class]
+            frame.classIndicator.highlightSelect:SetDesaturated(true)
+            frame.classIndicator.highlightSelect:SetVertexColor(classColor.r, classColor.g, classColor.b)
         end
     end
 end
