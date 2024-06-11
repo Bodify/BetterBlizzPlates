@@ -78,7 +78,7 @@ local function ResetCastbarAfterFadeout(frame, unitToken)
 
         local borderShieldSize = showCastBarIconWhenNoninterruptible and (castBarIconScale + 0.3) or castBarIconScale
 
-        --castBar:SetHeight(castBarHeight)
+        castBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or (BetterBlizzPlatesDB.classicNameplates and 12 or 16))
         castBar.Icon:SetScale(castBarIconScale)
         castBar.Spark:SetSize(4, castBarHeight + 5)
         castBar.castText:SetScale(castBarTextScale)
@@ -132,6 +132,8 @@ function BBP.CustomizeCastbar(frame, unitToken)
             castBarTexture:SetDesaturated(false)
         end
     end
+
+    castBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or (BetterBlizzPlatesDB.classicNameplates and 12 or 16))
 
     --castBar:SetStatusBarColor(1, 1, 1)
 
@@ -229,7 +231,7 @@ function BBP.CustomizeCastbar(frame, unitToken)
     BBP.SetFontBasedOnOption(frame.CastBar.castText, BetterBlizzPlatesDB.classicNameplates and 8 or 10, "THINOUTLINE")
     --BBP.UpdateCastBarText(frame.CastBar)
 
-    BBP.SetFontBasedOnOption(castBar.castText, 12, "OUTLINE")
+    --BBP.SetFontBasedOnOption(castBar.castText, 12, "OUTLINE")
 
     if hideCastbarText then
         local text = castBar.castText:GetText()
@@ -298,7 +300,7 @@ function BBP.CustomizeCastbar(frame, unitToken)
         end
 
         if castBarEmphasisHeight then
-            --castBar:SetHeight(castBarEmphasisHeightValue)
+            castBar:SetHeight(castBarEmphasisHeightValue)
             if not castBarEmphasisSpark then
                 castBar.Spark:SetSize(4, castBarEmphasisHeightValue + 22)
             end
@@ -779,7 +781,7 @@ hooksecurefunc("CastingBarFrame_OnEvent", function(self, event, ...)
             spellName, _, _, _, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
         end
 
-        if frame.CastBar.castText then
+        if frame.CastBar.castText and spellName then
             frame.CastBar.castText:SetText(spellName)
         end
 
@@ -872,70 +874,73 @@ hooksecurefunc("CastingBarFrame_OnEvent", function(self, event, ...)
             --     end
             -- end
 
-            if not self.hooked then
-                local castbar = self
-                local borderShield = self.BorderShield
+            -- if not self.hooked then
+            --     local castbar = self
+            --     local borderShield = self.BorderShield
 
-                if self.Icon then
-                    if BetterBlizzPlatesDB.classicNameplates then
-                        hooksecurefunc(self.Icon, "SetPoint", function(self)
-                            if self.changing or self:IsForbidden() then return end
-                            self.changing = true
-                            self:ClearAllPoints()
-                            self:SetPoint("RIGHT", castbar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos-3, BetterBlizzPlatesDB.castBarIconYPos+1)
-                            --borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
-                            self.changing = false
-                        end)
-                    else
-                        hooksecurefunc(self.Icon, "SetPoint", function(self)
-                            if self.changing or self:IsForbidden() then return end
-                            self.changing = true
-                            self:ClearAllPoints()
-                            self:SetPoint("CENTER", castbar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
-                            --borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
-                            self.changing = false
-                        end)
-                    end
-                end
-                self.hooked = true
-            end
-
-            if event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_INTERRUPTED" then
-                local castbarQuickHide = BetterBlizzPlatesDB.castbarQuickHide
-                ResetCastbarAfterFadeout(frame, unitID)
-                if event =="UNIT_SPELLCAST_INTERRUPTED" then
-                    frame.CastBar.interruptedColor = true
-                    local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
-                    local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
-                    if (castBarRecolor or useCustomCastbarTexture) and frame.CastBar then
-                        frame.CastBar:SetStatusBarColor(1,0,0)
-                    end
-                    -- if BetterBlizzPlatesDB.castBarInterruptHighlighter then
-                    --     frame.CastBar:SetStatusBarColor(1,1,1)
-                    -- end
-                    if frame.CastBar.castText then
-                        frame.CastBar.castText:SetText("Interrupted")
-                    end
-                end
-                if castbarQuickHide then
-                    if frame.CastBar then
-                        frame.CastBar:Hide()
-                        -- if BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
-                        --     if UnitIsUnit(self.unit, "target") then
-                        --         BBP.UpdateNamplateResourcePositionForCasting(nameplate, true)
-                        --     end
-                        -- end
-                    end
-                end
-            else
-                frame.CastBar.interruptedColor = false
-            end
+            --     if self.Icon then
+            --         if BetterBlizzPlatesDB.classicNameplates then
+            --             hooksecurefunc(self.Icon, "SetPoint", function(self)
+            --                 if self.changing or self:IsForbidden() then return end
+            --                 self.changing = true
+            --                 self:ClearAllPoints()
+            --                 self:SetPoint("RIGHT", castbar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos-3, BetterBlizzPlatesDB.castBarIconYPos+1)
+            --                 --borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
+            --                 self.changing = false
+            --             end)
+            --         else
+            --             hooksecurefunc(self.Icon, "SetPoint", function(self)
+            --                 if self.changing or self:IsForbidden() then return end
+            --                 self.changing = true
+            --                 self:ClearAllPoints()
+            --                 self:SetPoint("CENTER", castbar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
+            --                 --borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
+            --                 self.changing = false
+            --             end)
+            --         end
+            --     end
+            --     self.hooked = true
+            -- end
         end
 
-        if event =="UNIT_SPELLCAST_INTERRUPTED" then
+        if event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_INTERRUPTED" then
+            local castbarQuickHide = BetterBlizzPlatesDB.castbarQuickHide
+            ResetCastbarAfterFadeout(frame, unitID)
+            if event =="UNIT_SPELLCAST_INTERRUPTED" then
+                frame.CastBar.interruptedColor = true
+                local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
+                local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
+                if (castBarRecolor or useCustomCastbarTexture) and frame.CastBar then
+                    frame.CastBar:SetStatusBarColor(1,0,0)
+                end
+                -- if BetterBlizzPlatesDB.castBarInterruptHighlighter then
+                --     frame.CastBar:SetStatusBarColor(1,1,1)
+                -- end
+                if frame.CastBar.castText then
+                    frame.CastBar.castText:SetText("Interrupted")
+                end
+            end
             frame.CastBar.interruptedColor = true
-            if frame.CastBar.castText then
-                frame.CastBar.castText:SetText("Interrupted")
+            local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
+            local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
+            if (castBarRecolor or useCustomCastbarTexture) and frame.CastBar then
+                frame.CastBar:SetStatusBarColor(1,0,0)
+            end
+            -- if BetterBlizzPlatesDB.castBarInterruptHighlighter then
+            --     frame.CastBar:SetStatusBarColor(1,1,1)
+            -- end
+            -- if frame.CastBar.castText then
+            --     frame.CastBar.castText:SetText("Interrupted")
+            -- end
+            if castbarQuickHide then
+                if frame.CastBar then
+                    frame.CastBar:Hide()
+                    -- if BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
+                    --     if UnitIsUnit(self.unit, "target") then
+                    --         BBP.UpdateNamplateResourcePositionForCasting(nameplate, true)
+                    --     end
+                    -- end
+                end
             end
         else
             frame.CastBar.interruptedColor = false

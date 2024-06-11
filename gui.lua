@@ -7181,9 +7181,9 @@ local function guiCVarControl()
     cbCVars["nameplateShowFriendlyPets"] = nameplateShowFriendlyPets
     cbCVars["nameplateShowFriendlyTotems"] = nameplateShowFriendlyTotems
     cbCVars["nameplateResourceOnTarget"] = nameplateResourceOnTarget
+    cbCVars["nameplateMotion"] = nameplateMotion
 
     local sliderCVars = {}
-    sliderCVars["nameplateMotion"] = nameplateMotion
     sliderCVars["nameplateOverlapH"] = nameplateOverlapH
     sliderCVars["nameplateOverlapV"] = nameplateOverlapV
     sliderCVars["nameplateMotionSpeed"] = nameplateMotionSpeed

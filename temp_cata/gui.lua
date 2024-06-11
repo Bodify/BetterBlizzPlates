@@ -3019,6 +3019,8 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
     addButton:SetScript("OnClick", function()
         addOrUpdateEntry(editBox:GetText())
     end)
+
+    return scrollFrame
 end
 
 local function CreateTitle(parent)
@@ -3035,7 +3037,7 @@ local function CreateTitle(parent)
     addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
     local verNumber = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
-    verNumber:SetText("CATA BETA v0.0.2")--("v" .. BBP.VersionNumber)
+    verNumber:SetText("CATA BETA v0.0.3")--("v" .. BBP.VersionNumber)
 end
 ------------------------------------------------------------
 -- GUI Panels
@@ -4432,12 +4434,12 @@ local function guiPositionAndScale()
     totemIcon2:SetSize(34, 34)
     totemIcon2:SetPoint("BOTTOM", anchorSubTotem, "TOP", 0, 0)
 
-    local totemIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.01, "totemIndicatorScale")
-    totemIndicatorScale:SetPoint("TOP", anchorSubTotem, "BOTTOM", 0, -15)
-    CreateTooltip(totemIndicatorScale, "This changes the scale of ALL icons.\n\nYou can adjust individual sizes in the \"Totem Indicator List\" tab.", "ANCHOR_LEFT")
+    BBP.totemIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.01, "totemIndicatorScale")
+    BBP.totemIndicatorScale:SetPoint("TOP", anchorSubTotem, "BOTTOM", 0, -15)
+    CreateTooltip(BBP.totemIndicatorScale, "This changes the scale of ALL icons.\n\nYou can adjust individual sizes in the \"Totem Indicator List\" tab.", "ANCHOR_LEFT")
 
     local totemIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "totemIndicatorXPos", "X")
-    totemIndicatorXPos:SetPoint("TOP", totemIndicatorScale, "BOTTOM", 0, -15)
+    totemIndicatorXPos:SetPoint("TOP", BBP.totemIndicatorScale, "BOTTOM", 0, -15)
 
     local totemIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "totemIndicatorYPos", "Y")
     totemIndicatorYPos:SetPoint("TOP", totemIndicatorXPos, "BOTTOM", 0, -15)
@@ -7346,9 +7348,9 @@ local function guiCVarControl()
     cbCVars["nameplateShowFriendlyPets"] = nameplateShowFriendlyPets
     cbCVars["nameplateShowFriendlyTotems"] = nameplateShowFriendlyTotems
     cbCVars["nameplateResourceOnTarget"] = nameplateResourceOnTarget
+    cbCVars["nameplateMotion"] = nameplateMotion
 
     local sliderCVars = {}
-    sliderCVars["nameplateMotion"] = nameplateMotion
     sliderCVars["nameplateOverlapH"] = nameplateOverlapH
     sliderCVars["nameplateOverlapV"] = nameplateOverlapV
     sliderCVars["nameplateMotionSpeed"] = nameplateMotionSpeed
@@ -7386,6 +7388,7 @@ local function guiCVarControl()
                     cbCVars[cvarName]:SetChecked(checkedState)
                 elseif sliderCVars[cvarName] then
                     BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+                    print(cvarName, cvarValue)
                     sliderCVars[cvarName]:SetValue(tonumber(cvarValue))
                 end
             end
@@ -7426,7 +7429,15 @@ local function guiTotemList()
     totemListTip:SetPoint("TOP", guiTotemList, "TOP", 0, 8)
     totemListTip:SetText("(Adjust general size of ALL icons in the Advanced Settings tab)")
 
-    CreateNpcList(totemListFrame, BetterBlizzPlatesDB.totemIndicatorNpcList, BBP.RefreshAllNameplates, 630, 560)
+    local totemList = CreateNpcList(totemListFrame, BetterBlizzPlatesDB.totemIndicatorNpcList, BBP.RefreshAllNameplates, 630, 490)
+
+    local totemIndicatorScale = CreateSlider(guiTotemList, "General scale of all totem icons", 0.5, 3, 0.01, "totemIndicatorScale")
+    totemIndicatorScale:SetPoint("TOP", totemList, "BOTTOM", 0, -45)
+    totemIndicatorScale:HookScript("OnValueChanged", function(self)
+        local val = self:GetValue()
+        BBP.totemIndicatorScale:SetValue(val)
+    end)
+    totemIndicatorScale:SetScale(1.2)
 end
 
 local function guiMisc()

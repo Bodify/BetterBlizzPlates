@@ -2598,7 +2598,7 @@ local function CreateBetterClassicCastbarBorders(frame)
         local border = CreateFrame("Frame", nil, frame.CastBar)
         local left = border:CreateTexture(nil, "OVERLAY")
         left:SetTexture(textureLeft)
-        left:SetPoint("BOTTOMLEFT", frame.CastBar, "BOTTOMLEFT", -22, yPos)
+        left:SetPoint("BOTTOMLEFT", frame.CastBar, "BOTTOMLEFT", -21, yPos)
         border.left = left
 
         local center = border:CreateTexture(nil, "OVERLAY")
@@ -2659,33 +2659,47 @@ local function CreateBetterClassicCastbarBorders(frame)
         frame.CastBar.Icon:SetDrawLayer("OVERLAY", 7) -- Ensure the icon is on top
     end
 
-    local function UpdateCastBarIconSize(self)
-        local spellName, spellID, notInterruptible, endTime
-        local _
+    -- local function UpdateCastBarIconSize(self)
+    --     local spellName, spellID, notInterruptible, endTime
+    --     local _
 
-        if UnitCastingInfo(self.unit) then
-            spellName, _, _, _, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(self.unit)
-        elseif UnitChannelInfo(self.unit) then
-            spellName, _, _, _, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
-        end
-        if notInterruptible then
-            self.Icon:ClearAllPoints()
-            self.Icon:SetPoint("CENTER", frame.CastBar, "LEFT", -10.5, 1)
-            --self.Icon:SetSize(11, 11)
-            self.Icon:SetDrawLayer("OVERLAY", 7)
-        end
-    end
-    if not frame.bbpClassicCastbarHook then
-        frame.CastBar:HookScript("OnUpdate", function()
-            UpdateCastBarIconSize(frame.CastBar)
+    --     if UnitCastingInfo(self.unit) then
+    --         spellName, _, _, _, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(self.unit)
+    --     elseif UnitChannelInfo(self.unit) then
+    --         spellName, _, _, _, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
+    --     end
+    --     if notInterruptible then
+    --         self.Icon:ClearAllPoints()
+    --         self.Icon:SetPoint("CENTER", frame.CastBar, "LEFT", -10.5, 1)
+    --         --self.Icon:SetSize(11, 11)
+    --         self.Icon:SetDrawLayer("OVERLAY", 7)
+    --     end
+    -- end
+    -- if not frame.bbpClassicCastbarHook then
+    --     frame.CastBar:HookScript("OnUpdate", function()
+    --         UpdateCastBarIconSize(frame.CastBar)
+    --     end)
+    --     frame.bbpClassicCastbarHook = true
+    -- end
+
+    frame.CastBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or 11)
+
+    if not frame.CastBar.eventsHooked then
+        frame.CastBar:HookScript("OnShow", UpdateBorders)
+        frame.CastBar:HookScript("OnHide", UpdateBorders)
+        frame.CastBar.BorderShield:HookScript("OnShow", UpdateBorders)
+        frame.CastBar.BorderShield:HookScript("OnHide", UpdateBorders)
+        frame.CastBar.eventsHooked = true
+
+        hooksecurefunc(frame.CastBar.Icon, "SetPoint", function(self)
+            if self.changing or self:IsForbidden() then return end
+            self.changing = true
+            self:ClearAllPoints()
+            self:SetPoint("RIGHT", frame.CastBar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos-2, BetterBlizzPlatesDB.castBarIconYPos+1)
+            --borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
+            self.changing = false
         end)
-        frame.bbpClassicCastbarHook = true
     end
-
-    frame.CastBar:HookScript("OnShow", UpdateBorders)
-    frame.CastBar:HookScript("OnHide", UpdateBorders)
-    frame.CastBar.BorderShield:HookScript("OnShow", UpdateBorders)
-    frame.CastBar.BorderShield:HookScript("OnHide", UpdateBorders)
 
     -- Set the initial visibility
     UpdateBorders()
@@ -2696,8 +2710,8 @@ local function CreateBetterClassicCastbarBorders(frame)
         frame.CastBar:SetPoint("TOP", frame, "BOTTOM", 0, -5)
     else
         frame.CastBar:ClearAllPoints()
-        frame.CastBar:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 22, -5)
-        frame.CastBar:SetWidth(width - 26)
+        frame.CastBar:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 21, -5)
+        frame.CastBar:SetWidth(width - 25)
     end
 end
 
@@ -2902,9 +2916,18 @@ local function CreateBetterRetailCastbar(frame)
 
     if not frame.bbpRetailCastbarHook then
         frame.CastBar:HookScript("OnUpdate", function()
-            UpdateCastBarIconSize(frame.CastBar)
+            --UpdateCastBarIconSize(frame.CastBar)
             UpdateCastBarTextures(frame.CastBar)
             UpdateSpark()
+        end)
+
+        hooksecurefunc(frame.CastBar.Icon, "SetPoint", function(self)
+            if self.changing or self:IsForbidden() then return end
+            self.changing = true
+            self:ClearAllPoints()
+            self:SetPoint("CENTER", frame.CastBar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
+            --borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
+            self.changing = false
         end)
         frame.bbpRetailCastbarHook = true
     end
