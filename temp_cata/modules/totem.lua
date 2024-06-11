@@ -6,6 +6,8 @@ function BBP.ResetNameplateTestAttributes()
         local config = frame.BetterBlizzPlates.config
         config.randomTotemIcon = nil
         config.totemIsImportant = nil
+        config.randomTotemIconOnly = nil
+        config.randomTotemHideHp = nil
     end
 end
 
@@ -237,7 +239,7 @@ function BBP.GetRandomTotemAttributes()
 
     if selectedKey then
         local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[selectedKey]
-        return npcData.icon, npcData.color, npcData.important, npcData.name, npcData.size, npcData.hideIcon
+        return npcData.icon, npcData.color, npcData.important, npcData.name, npcData.size, npcData.hideIcon, npcData.iconOnly, npcData.hideHp
     else
         -- Return a dummy set of attributes
         return "Interface\\Icons\\inv_misc_questionmark", -- Dummy icon
@@ -314,7 +316,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
 
         -- Fetch and store random attributes on the frame if they don't exist
         if not config.randomTotemIcon or not config.randomTotemColor or config.totemIsImportant == nil or not config.randomTotemName or not config.randomTotemSize or config.randomHideTotemIcon == nil then
-            config.randomTotemIcon, config.randomTotemColor, config.totemIsImportant, config.randomTotemName, config.randomTotemSize, config.randomHideTotemIcon = BBP.GetRandomTotemAttributes()
+            config.randomTotemIcon, config.randomTotemColor, config.totemIsImportant, config.randomTotemName, config.randomTotemSize, config.randomHideTotemIcon, config.randomTotemIconOnly, config.randomTotemHideHp = BBP.GetRandomTotemAttributes()
         end
 
         BBP.ApplyTotemAttributes(frame, config.randomTotemIcon, nil, nil, config.randomTotemSize, config.randomHideTotemIcon, guid)
@@ -357,11 +359,15 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
                 frame.animationGroup:Play()
             end
         else
+            if frame.glowTexture then
+                frame.glowTexture:Hide()
+            end
             if frame.animationGroup then
                 frame.animationGroup:Stop()
             end
         end
-        if config.totemIndicatorHideHealthBar then
+
+        if config.totemIndicatorHideHealthBar or config.randomTotemHideHp or config.randomTotemIconOnly then
             if not info.isTarget then
                 frame.healthBar:SetAlpha(0)
                 frame.selectionHighlight:SetAlpha(0)
@@ -417,7 +423,6 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
         end
         if config.totemIndicatorHideHealthBar or npcData.hideHp or npcData.iconOnly then
-            frame.LevelFrame:Hide()
             if npcData.iconOnly then
                 frame.healthBar:SetAlpha(0)
                 frame.selectionHighlight:SetAlpha(0)
@@ -432,10 +437,6 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
                     end
                 end
             end
-        else
-            if BetterBlizzPlatesDB.classicNameplates then
-                frame.LevelFrame:Show()
-            end
         end
     else
         config.totemColorRGB = nil
@@ -445,7 +446,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
     end
 
     frame.totemIndicator:ClearAllPoints()
-    local iconOnlyMode = (npcData and npcData.iconOnly)
+    local iconOnlyMode = (npcData and npcData.iconOnly or config.randomTotemIconOnly)
     if config.totemIndicatorHideNameAndShiftIconDown or iconOnlyMode then
         if iconOnlyMode then
             frame.totemIndicator:SetPoint("CENTER", frame, "CENTER", config.totemIndicatorXPos, config.totemIndicatorYPos)

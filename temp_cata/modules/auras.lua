@@ -105,6 +105,10 @@ local fakeAuras = {
 }
 
 local spellsCata = {
+    [20549] = true, -- War Stomp
+    [28730] = true, -- Arcane Torrent (Mana)
+    [25046] = true, -- Arcane Torrent (Energy)
+    [50613] = true, -- Arcane Torrent (Runic Power)
     -- Warlock
     [172] = true, -- Corruption
     [18223] = true, -- Curse of Exhaustion
@@ -123,6 +127,16 @@ local spellsCata = {
     [80240] = true, -- Bane of Havoc
     [85421] = true, -- Burning Embers
     [30283] = true, -- Shadowfury
+    [24259] = true, -- Spell Lock Silence
+    [6358] = true, -- Seduction
+    [710] = true, -- Banish
+    [6789] = true, -- Death Coil
+    [32752] = true, -- Summoning Disorientation
+    [19482] = true, -- Doom Guard Stun
+    [30153] = true, -- Felguard Stun
+    [60995] = true, -- Demon Charge (Metamorphosis)
+    [22703] = true, -- Inferno Effect
+    [43523] = true, -- Unstable Affliction
 
     -- Priest
     [87178] = true, -- Mind Spike
@@ -130,6 +144,11 @@ local spellsCata = {
     [34914] = true, -- Vampiric Touch
     [15487] = true, -- Silence
     [589] = true, -- Shadow Word: Pain
+    [64044] = true, -- Psychic Horror (Horrify)
+    [64058] = true, -- Psychic Horror (Disarm)
+    [8122] = true, -- Psychic Scream
+    [9484] = true, -- Shackle Undead
+    [605] = true, -- Mind Control
 
     --Druid
     [339] = true, -- Entangling Roots
@@ -149,7 +168,8 @@ local spellsCata = {
     [33876] = true, -- Mangle (Cat)
     [58180] = true, -- Infected Wounds
     [77758] = true, -- Thrash
-
+    [2637] = true, -- Hibernate
+    [9005] = true, -- Pounce Stun
 
     -- Mage
     [44614] = true, -- Frostfire Bolt
@@ -169,11 +189,20 @@ local spellsCata = {
     [31661] = true, -- Dragon's Breath
     [55021] = true, -- Counterspell
     [12355] = true, -- Impact
+    [118] = true, -- Polymorph
+    [28271] = true, -- Polymorph
+    [28272] = true, -- Polymorph
+    [71319] = true, -- Polymorph
+    [61305] = true, -- Polymorph
+    [61721] = true, -- Polymorph
+    [64346] = true, -- Fiery Payback (Fire Mage Disarm)
+    [82691] = true, -- Ring of Frost
+    [18469] = true, -- Improved Counterspell
 
     -- Rogue
     [1776] = true, -- Gouge
     [1943] = true, -- Rupture
-    [16511] = true, -- Hemorrhage
+    [89775] = true, -- Hemorrhage Glyph Bleed
     [88611] = true, -- Smoke Bomb
     [408] = true, -- Kidney Shot
     [91021] = true, -- Find Weakness
@@ -183,6 +212,9 @@ local spellsCata = {
     [26679] = true, -- Deadly Throw
     [8647] = true, -- Expose Armor
     [6770] = true, -- Sap
+    [51722] = true, -- Dismantle
+    [18425] = true, -- Improved Kick
+    [2094] = true, -- Blind
 
     -- Hunter
     [82654] = true, -- Widow Venom
@@ -196,12 +228,19 @@ local spellsCata = {
     [3355] = true, -- Freezing Trap
     [13812] = true, -- Explosive Trap
     [13810] = true, -- Ice Trap
+    [1513] = true, -- Scare Beast
+    [19386] = true, --Wyvern Sting
+    [34490] = true, -- Silencing Shot
+    [24394] = true, -- Intimidation
 
     -- Shaman
     [8050] = true, -- Flame Shock
     [8056] = true, -- Frost Shock
     [8042] = true, -- Earth Shock
     [3600] = true, -- Earth Bind
+    [58861] = true, -- Bash (Spirit Wolf)
+    [39796] = true, -- Stoneclaw Totem
+    [51514] = true,  -- Hex
 
     -- Warrior
     [94009] = true, -- Rend
@@ -210,10 +249,23 @@ local spellsCata = {
     [7922] = true, -- Charge
     [85388] = true, -- Throwdown
     [6343] = true, -- Thunderclap
+    [46968] = true,  -- Shockwave
+    [18498] = true, -- Improved Shield Bash
+    [20253] = true, -- Intercept Stun
+    [20615] = true, -- Intercept Stun
+    [12809] = true, -- Concussion Blow
+    [5246] = true, -- Intimidating Shout
+    [20511] = true, -- Intimidation Shout
+    [12294] = true, -- Mortal Strike
+    [413763] = true, -- Deep Wounds
 
     -- Paladin
     [853] = true, -- Hammer of Justice
     [31803] = true, -- Censure
+    [63529] = true, -- Silenced - Shield of the Templar
+    [20170] = true, -- Seal of Justice stun
+    [10326] = true, -- Turn Evil
+    [20066] = true, -- Repentance
 
     -- Death Knight
     [55078] = true, -- Blood Plague
@@ -222,8 +274,88 @@ local spellsCata = {
     [73975] = true, -- Necrotic Strike
     [47476] = true, -- Strangulate
     [45524] = true, -- Chains of Ice
+    [47481] = true,  -- Gnaw
+    [49203] = true, -- Hungering Cold
     -- [7922] = true, -- Charge
-    -- [7922] = true, -- Charge
+    -- [7922] = true, -- Charge+
+}
+
+local spellsForAllCata = {
+    [20549] = true, -- War Stomp
+    [28730] = true, -- Arcane Torrent (Mana)
+    [25046] = true, -- Arcane Torrent (Energy)
+    [50613] = true, -- Arcane Torrent (Runic Power)
+    [47476] = true,  -- Strangulate
+    [47481] = true,  -- Gnaw
+    [49203] = true, -- Hungering Cold
+    [64044] = true, -- Psychic Horror (Horrify)
+    [64058] = true, -- Psychic Horror (Disarm)
+    [605] = true, -- Mind Control
+    [8122] = true, -- Psychic Scream
+    [15487] = true, -- Silence
+    [9484] = true, -- Shackle Undead
+    [60995] = true, -- Demon Charge (Metamorphosis)
+    [24259] = true, -- Spell Lock Silence
+    [6358] = true, -- Seduction
+    [5782] = true, -- Fear
+    [5484] = true, -- Howl of Terror
+    [710] = true, -- Banish
+    [6789] = true, -- Death Coil
+    [22703] = true, -- Inferno Effect
+    [30283] = true, -- Shadowfury
+    [43523] = true, -- Unstable Affliction
+    [32752] = true, -- Summoning Disorientation
+    [19482] = true, -- Doom Guard Stun
+    [30153] = true, -- Felguard Stun
+    [51514] = true,  -- Hex
+    [58861] = true, -- Bash (Spirit Wolf)
+    [39796] = true, -- Stoneclaw Totem
+    [63529] = true,
+    [853] = true,
+    [20066] = true, -- Repentance
+    [20170] = true,-- Seal of Justice stun
+    [10326] = true, -- Turn Evil
+    [1513] = true, -- Scare Beast
+    [3355] = true, -- Freezing Trap
+    [19386] = true, --Wyvern Sting
+    [19503] = true, -- Scatter Shot
+    [34490] = true, -- Silencing Shot
+    [24394] = true, -- Intimidation
+    [22570] = true, -- Maim
+    [2637] = true, -- Hibernate
+    [9005] = true, -- Pounce Stun
+    [5211] = true, -- Bash
+    [33786] = true, -- Cyclone
+    [44572] = true, -- Deep Freeze
+    [55021] = true, -- Improved Counterspell
+    [64346] = true, -- Fiery Payback (Fire Mage Disarm)
+    [82691] = true, -- Ring of Frost
+    [18469] = true, -- Improved Counterspell
+    [118] = true, -- Polymorph
+    [28271] = true, -- Polymorph
+    [28272] = true, -- Polymorph
+    [71319] = true, -- Polymorph
+    [61305] = true, -- Polymorph
+    [61721] = true, -- Polymorph
+    [12355] = true, -- Impact Stun
+    [31661] = true, -- Dragon's Breath
+    [51722] = true, -- Dismantle
+    [18425] = true, -- Improved Kick
+    [1833] = true, -- Cheap Shot
+    [408] = true, -- Kidney Shot
+    [6770] = true, -- Sap
+    [2094] = true, -- Blind
+    [1776] = true, -- Gouge
+    [1330] = true, -- Garrote Silence
+    [46968] = true,  -- Shockwave
+    [85388] = true, -- Throwdown
+    [18498] = true, -- Improved Shield Bash
+    [20253] = true, -- Intercept Stun
+    [20615] = true, -- Intercept Stun
+    [12809] = true, -- Concussion Blow
+    [7922] = true, -- Charge Stun
+    [5246] = true, -- Intimidating Shout
+    [20511] = true, -- Intimidating Shout
 }
 
 local function isInWhitelist(spellName, spellId)
@@ -819,6 +951,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
     local lessThanOneMin = duration < 61 or duration == 0 or expirationTime == 0
 
     local BlizzardShouldShowCata = spellsCata[spellId] and castByPlayer
+    local BlizzardShouldShowCC = spellsForAllCata[spellId]
 
     -- PLAYER
     if UnitIsUnit(unit, "player") then
@@ -952,7 +1085,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
                     if not auraWhitelisted then return false end
                 end
                 -- Filter to show only Blizzard recommended auras
-                if not BlizzardShouldShowCata and filterBlizzard and not auraWhitelisted then
+                if not BlizzardShouldShowCata and filterBlizzard and not auraWhitelisted and not BlizzardShouldShowCC then
                     if filterLessMinite and lessThanOneMin then return true end
                     if filterOnlyMe then return true end
                     return false
@@ -1022,7 +1155,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
                     if not auraWhitelisted then return false end
                 end
                 -- Filter to show only Blizzard recommended auras
-                if not BlizzardShouldShowCata and filterBlizzard and not auraWhitelisted then
+                if not BlizzardShouldShowCata and filterBlizzard and not auraWhitelisted and not BlizzardShouldShowCC then
                     if filterLessMinite and lessThanOneMin then return true end
                     if filterOnlyMe then return true end
                     return false
@@ -1810,7 +1943,7 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
         if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
             frame.BuffFrame:SetPoint("BOTTOM", frame, "TOP", 0, -10+BetterBlizzPlatesDB.nameplateAurasYPos)
         else
-            frame.BuffFrame:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", 0, -10+BetterBlizzPlatesDB.nameplateAurasYPos)
+            frame.BuffFrame:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", -1, -10+BetterBlizzPlatesDB.nameplateAurasYPos)
         end
     --end
 

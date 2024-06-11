@@ -294,11 +294,13 @@ function BBP.ClassIndicatorTargetHighlight(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
     if config.classIndicatorHighlight or config.classIndicatorHighlightColor then
-        frame.classIndicator.highlightSelect:Show()
-        if info.class and config.classIndicatorHighlightColor then
-            local classColor = RAID_CLASS_COLORS[info.class]
-            frame.classIndicator.highlightSelect:SetDesaturated(true)
-            frame.classIndicator.highlightSelect:SetVertexColor(classColor.r, classColor.g, classColor.b)
+        if frame.classIndicator and frame.classIndicator.highlightSelect then
+            frame.classIndicator.highlightSelect:Show()
+            if info.class and config.classIndicatorHighlightColor then
+                local classColor = RAID_CLASS_COLORS[info.class]
+                frame.classIndicator.highlightSelect:SetDesaturated(true)
+                frame.classIndicator.highlightSelect:SetVertexColor(classColor.r, classColor.g, classColor.b)
+            end
         end
     end
 end

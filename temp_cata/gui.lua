@@ -258,7 +258,8 @@ local function CreateColorBox(parent, colorVar, labelText)
     local colorTexture = borderFrame:CreateTexture(nil, "OVERLAY")
     colorTexture:SetSize(15, 15) -- Adjust size as needed
     colorTexture:SetPoint("CENTER", borderFrame, "CENTER", 0, 0)
-    colorTexture:SetColorTexture(unpack(BetterBlizzPlatesDB[colorVar] or {1, 1, 1}))
+    colorTexture:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UIFrameIconMask")
+    colorTexture:SetVertexColor(unpack(BetterBlizzPlatesDB[colorVar] or {1, 1, 1}))
 
     -- Label text for the color box
     local text = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
@@ -268,6 +269,7 @@ local function CreateColorBox(parent, colorVar, labelText)
     -- Make the frame clickable and open a color picker on click
     frame:SetScript("OnMouseDown", function()
         if frame:GetAlpha() == 1 then
+            BBP.needsUpdate = true
             OpenColorPicker(colorVar, colorTexture)
         end
     end)
@@ -3033,7 +3035,7 @@ local function CreateTitle(parent)
     addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
     local verNumber = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
-    verNumber:SetText("CATA BETA v0.0.1")--("v" .. BBP.VersionNumber)
+    verNumber:SetText("CATA BETA v0.0.2")--("v" .. BBP.VersionNumber)
 end
 ------------------------------------------------------------
 -- GUI Panels
@@ -7569,6 +7571,15 @@ local function guiMisc()
 
     local changeNameplateBorderColor = CreateCheckbox("changeNameplateBorderColor", "Change Nameplate Border Color", guiMisc)
     changeNameplateBorderColor:SetPoint("TOPLEFT", nameplateBorderSize, "BOTTOMLEFT", -10, -4)
+
+    local npBorderDesaturate = CreateCheckbox("npBorderDesaturate", "Desaturate", guiMisc)
+    npBorderDesaturate:SetPoint("LEFT", changeNameplateBorderColor.Text, "RIGHT", 0, 0)
+    CreateTooltipTwo(npBorderDesaturate, "Desaturate Border", "Desaturate/Grayscale the Classic Border.")
+    npBorderDesaturate:HookScript("OnClick", function(self)
+        if not self:GetChecked() then
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        end
+    end)
 
     local npBorderTargetColor = CreateCheckbox("npBorderTargetColor", "Target Border", changeNameplateBorderColor)
     npBorderTargetColor:SetPoint("TOPLEFT", changeNameplateBorderColor, "BOTTOMLEFT", 15, pixelsBetweenBoxes)

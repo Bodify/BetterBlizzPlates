@@ -79,6 +79,7 @@ local defaultSettings = {
     nameplateBorderSize = 1,
     nameplateTargetBorderSize = 3,
     separateAuraBuffRow = true,
+    npBorderDesaturate = true,
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -238,32 +239,32 @@ local defaultSettings = {
     showTotemIndicatorCooldownSwipe = true,
     totemIndicatorNpcList = {
         -- Important
-        [3527] =    { name = "Healing Stream Totem", icon = GetSpellTexture(5394),              hideIcon = false, size = 38, duration = nil, color = {0, 1, 0.78},          important = true, iconOnly = true },
-        [5925] =    { name = "Grounding Totem", icon = GetSpellTexture(8177),                   hideIcon = false, size = 38, duration = 30,  color = {1, 0, 1},             important = true, iconOnly = true },
-        [53006] =   { name = "Spirit Link Totem", icon = GetSpellTexture(98008),                hideIcon = false, size = 38, duration = 6,   color = {0, 1, 0.78},          important = true, iconOnly = true },
-        [5913] =    { name = "Tremor Totem", icon = GetSpellTexture(8143),                      hideIcon = false, size = 34, duration = 8.4, color = {0.49, 0.9, 0.08},     important = true, iconOnly = true },
-        [27829] =   { name = "Ebon Gargoyle", icon = GetSpellTexture(49206),                    hideIcon = false, size = 38, duration = 30,  color = {1, 0.69, 0},          important = true },
+        [3527] =    { name = "Healing Stream Totem", icon = GetSpellTexture(5394),              hideIcon = false, size = 31, duration = nil, color = {0, 1, 0.78},          important = true },
+        [5925] =    { name = "Grounding Totem", icon = GetSpellTexture(8177),                   hideIcon = false, size = 31, duration = 30,  color = {1, 0, 1},             important = true },
+        [53006] =   { name = "Spirit Link Totem", icon = GetSpellTexture(98008),                hideIcon = false, size = 31, duration = 6,   color = {0, 1, 0.78},          important = true },
+        [5913] =    { name = "Tremor Totem", icon = GetSpellTexture(8143),                      hideIcon = false, size = 31, duration = 8.4, color = {0.49, 0.9, 0.08},     important = true, iconOnly = true },
+        [27829] =   { name = "Ebon Gargoyle", icon = GetSpellTexture(49206),                    hideIcon = false, size = 31, duration = 30,  color = {1, 0.69, 0},          important = true },
+        [10467] =   { name = "Mana Tide Totem", icon = GetSpellTexture(16191),                  hideIcon = false, size = 25, duration = 16.8,color = {0.08, 0.82, 0.78},    important = true },
         -- Normal
-        [10467] =   { name = "Mana Tide Totem", icon = GetSpellTexture(16191),                  hideIcon = false, size = 30, duration = 16.8,color = {0.08, 0.82, 0.78},    important = false, iconOnly = true },
-        [19668] =   { name = "Shadowfiend", icon = GetSpellTexture(34433),                      hideIcon = false, size = 30, duration = 15,  color = {0.43, 0.20, 1},       important = false, iconOnly = false },
-        [15430] =   { name = "Earth Elemental Totem", icon = GetSpellTexture(2062),             hideIcon = false, size = 30, duration = nil, color = {0.78, 0.51, 0.39},    important = false, iconOnly = true },
-        [15439] =   { name = "Fire Elemental Totem", icon = GetSpellTexture(2894),              hideIcon = false, size = 30, duration = nil, color = {1, 0.23, 0},          important = false, iconOnly = true },
-        [15438] =   { name = "Greater Fire Elemental", icon = GetSpellTexture(2894),            hideIcon = false, size = 30, duration = nil, color = {1, 0.23, 0},          important = false, iconOnly = false },
-        [15352] =   { name = "Greater Earth Elemental", icon = GetSpellTexture(2062),           hideIcon = false, size = 30, duration = nil, color = {0.78, 0.51, 0.39},    important = false, iconOnly = false },
-        [2630] =    { name = "Earthbind Totem", icon = GetSpellTexture(2484),                   hideIcon = false, size = 30, duration = nil, color = {0.78, 0.51, 0.39},    important = false, iconOnly = true },
-        [3579] =    { name = "Stoneclaw Totem", icon = GetSpellTexture(5730),                   hideIcon = false, size = 30, duration = 21,  color = {0.78, 0.51, 0.39},    important = false, iconOnly = true },
-        [510] =     { name = "Water Elemental", icon = GetSpellTexture(31687),                  hideIcon = true,  size = 30, duration = nil, color = {0.25, 1, 0.83},       important = false, iconOnly = false },
+        [19668] =   { name = "Shadowfiend", icon = GetSpellTexture(34433),                      hideIcon = false, size = 25, duration = 15,  color = {0.43, 0.20, 1},       important = false },
+        [3579] =    { name = "Stoneclaw Totem", icon = GetSpellTexture(5730),                   hideIcon = false, size = 27, duration = 21,  color = {0.78, 0.51, 0.39},    important = false },
+        [15430] =   { name = "Earth Elemental Totem", icon = GetSpellTexture(2062),             hideIcon = false, size = 25, duration = nil, color = {0.78, 0.51, 0.39},    important = false, iconOnly = true },
+        [15439] =   { name = "Fire Elemental Totem", icon = GetSpellTexture(2894),              hideIcon = false, size = 25, duration = nil, color = {1, 0.23, 0},          important = false, iconOnly = true },
+        [15438] =   { name = "Greater Fire Elemental", icon = GetSpellTexture(2894),            hideIcon = false, size = 25, duration = nil, color = {1, 0.23, 0},          important = false },
+        [15352] =   { name = "Greater Earth Elemental", icon = GetSpellTexture(2062),           hideIcon = false, size = 25, duration = nil, color = {0.78, 0.51, 0.39},    important = false },
+        [2630] =    { name = "Earthbind Totem", icon = GetSpellTexture(2484),                   hideIcon = false, size = 25, duration = nil, color = {0.78, 0.51, 0.39},    important = false, iconOnly = true },
+        [510] =     { name = "Water Elemental", icon = GetSpellTexture(31687),                  hideIcon = true,  size = 25, duration = nil, color = {0.25, 1, 0.83},       important = false },
         -- Un-important
-        [3573] =    { name = "Mana Spring Totem", icon = GetSpellTexture(5675),                 hideIcon = false, size = 24, duration = nil, color = {0.70, 0.98, 1},       important = false, iconOnly = true },
-        [47069] =   { name = "Tranquil Mind", icon = GetSpellTexture(87718),                    hideIcon = false, size = 24, duration = nil, color = {0.70, 0.98, 1},       important = false, iconOnly = true },
-        [6112] =    { name = "Windfury Totem", icon = GetSpellTexture(8512),                    hideIcon = false, size = 24, duration = nil, color = {0.70, 0.98, 1},       important = false, iconOnly = true },
-        [15447] =   { name = "Wrath of Air", icon = GetSpellTexture(3738),                      hideIcon = false, size = 24, duration = nil, color = {0.70, 0.98, 1},       important = false, iconOnly = true },
-        [5874] =    { name = "Strength of Earth", icon = GetSpellTexture(8075),                 hideIcon = false, size = 24, duration = nil, color = {0.78, 0.51, 0.39},    important = false, iconOnly = true},
-        [5929] =    { name = "Magma Totem", icon = GetSpellTexture(8190),                       hideIcon = false, size = 24, duration = nil, color = {1, 0.23, 0},          important = false, iconOnly = true },
-        [2523] =    { name = "Searing Totem", icon = GetSpellTexture(3599),                     hideIcon = false, size = 24, duration = nil, color = {1, 0.23, 0},          important = false, iconOnly = true },
-        [5950] =    { name = "Flametongue Totem", icon = GetSpellTexture(8227),                 hideIcon = false, size = 24, duration = nil, color = {1, 0.23, 0},          important = false, iconOnly = true },
-        [5873] =    { name = "Stoneskin Totem", icon = GetSpellTexture(8071),                   hideIcon = false, size = 24, duration = nil, color = {0.78, 0.51, 0.39},    important = false, iconOnly = true },
-        [5927] =    { name = "Elemental Resistance Totem", icon = GetSpellTexture(8184),        hideIcon = false, size = 24, duration = nil, color = {0.08, 0.82, 0.78},    important = false, iconOnly = true },
+        [3573] =    { name = "Mana Spring Totem", icon = GetSpellTexture(5675),                 hideIcon = false, size = 21, duration = nil, color = {0.70, 0.98, 1},       important = false, iconOnly = true },
+        [47069] =   { name = "Tranquil Mind", icon = GetSpellTexture(87718),                    hideIcon = false, size = 21, duration = nil, color = {0.70, 0.98, 1},       important = false, iconOnly = true },
+        [6112] =    { name = "Windfury Totem", icon = GetSpellTexture(8512),                    hideIcon = false, size = 21, duration = nil, color = {0.70, 0.98, 1},       important = false, iconOnly = true },
+        [15447] =   { name = "Wrath of Air", icon = GetSpellTexture(3738),                      hideIcon = false, size = 21, duration = nil, color = {0.70, 0.98, 1},       important = false, iconOnly = true },
+        [5874] =    { name = "Strength of Earth", icon = GetSpellTexture(8075),                 hideIcon = false, size = 21, duration = nil, color = {0.78, 0.51, 0.39},    important = false, iconOnly = true},
+        [5929] =    { name = "Magma Totem", icon = GetSpellTexture(8190),                       hideIcon = false, size = 21, duration = nil, color = {1, 0.23, 0},          important = false, iconOnly = true },
+        [2523] =    { name = "Searing Totem", icon = GetSpellTexture(3599),                     hideIcon = false, size = 21, duration = nil, color = {1, 0.23, 0},          important = false, iconOnly = true },
+        [5950] =    { name = "Flametongue Totem", icon = GetSpellTexture(8227),                 hideIcon = false, size = 21, duration = nil, color = {1, 0.23, 0},          important = false, iconOnly = true },
+        [5873] =    { name = "Stoneskin Totem", icon = GetSpellTexture(8071),                   hideIcon = false, size = 21, duration = nil, color = {0.78, 0.51, 0.39},    important = false, iconOnly = true },
+        [5927] =    { name = "Elemental Resistance Totem", icon = GetSpellTexture(8184),        hideIcon = false, size = 21, duration = nil, color = {0.08, 0.82, 0.78},    important = false, iconOnly = true },
     },
 
     --hideHp
@@ -2414,7 +2415,7 @@ function BBP.AuraColor(frame)
     local function ProcessAura(filter)
         for index = 1, 40 do
             local name, icon, count, dispelType, duration, expirationTime, source, isStealable, 
-                  nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, castByPlayer, nameplateShowAll, timeMod = UnitAura(frame.unit, index, filter)
+                  nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, castByPlayer, nameplateShowAll, timeMod = AuraUtil.UnpackAuraData(frame.unit, index, filter)
             
             if not name then break end
 
@@ -2464,6 +2465,38 @@ function BBP.CreateUnitAuraEventFrame()
     UnitAuraEventFrame:RegisterEvent("UNIT_AURA")
 end
 
+-- if not frame.BetterBlizzPlates.bbpBorder then
+--     frame.healthBar.border:Hide()
+--     frame.BetterBlizzPlates.bbpBorder = CreateFrame("Frame", nil, frame)
+--     local border = frame.BetterBlizzPlates.bbpBorder
+
+--     local left = border:CreateTexture(nil, "OVERLAY")
+--     left:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderLeft")
+--     left:SetPoint("BOTTOMLEFT", frame.healthBar, "BOTTOMLEFT", -28, -3.5)
+--     border.left = left
+
+--     local center = border:CreateTexture(nil, "OVERLAY")
+--     center:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderCenter")
+--     center:SetPoint("LEFT", left, "RIGHT", 0, 0)
+--     border.center = center
+
+--     local right = border:CreateTexture(nil, "OVERLAY")
+--     right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRight")
+--     right:SetPoint("LEFT", center, "RIGHT", 0, 0)
+--     border.right = right
+
+--     border:SetParent(frame.healthBar)
+
+--     function border:SetBorderColor(r, g, b, a)
+--         self.left:SetDesaturated(true)
+--         self.center:SetDesaturated(true)
+--         self.right:SetDesaturated(true)
+--         self.left:SetVertexColor(r, g, b, a)
+--         self.center:SetVertexColor(r, g, b, a)
+--         self.right:SetVertexColor(r, g, b, a)
+--     end
+-- end
+
 local function CreateBetterClassicHealthbarBorder(frame)
     local info = frame.BetterBlizzPlates.unitInfo
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
@@ -2491,9 +2524,11 @@ local function CreateBetterClassicHealthbarBorder(frame)
         border:SetParent(frame.healthBar)
 
         function border:SetBorderColor(r, g, b, a)
-            self.left:SetDesaturated(true)
-            self.center:SetDesaturated(true)
-            self.right:SetDesaturated(true)
+            if BetterBlizzPlatesDB.npBorderDesaturate then
+                self.left:SetDesaturated(true)
+                self.center:SetDesaturated(true)
+                self.right:SetDesaturated(true)
+            end
             self.left:SetVertexColor(r, g, b, a)
             self.center:SetVertexColor(r, g, b, a)
             self.right:SetVertexColor(r, g, b, a)
@@ -2935,45 +2970,35 @@ local function SetupBorderOnFrame(frame)
     frame.borders = {borderTop, borderBottom, borderLeft, borderRight}
 
     -- Initial border thickness
+    local borderThickness = 1
+    local minPixels = 1
 
-    -- -- Position borders with initial thickness
-    -- borderTop:SetPoint("TOPLEFT", frame, "TOPLEFT", -borderThickness, borderThickness)
-    -- borderTop:SetPoint("TOPRIGHT", frame, "TOPRIGHT", borderThickness, borderThickness)
-    
-    -- borderBottom:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", -borderThickness, -borderThickness)
-    -- borderBottom:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", borderThickness, -borderThickness)
-    
-    -- borderLeft:SetPoint("TOPLEFT", frame, "TOPLEFT", -borderThickness, borderThickness)
-    -- borderLeft:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", -borderThickness, -borderThickness)
-    
-    -- borderRight:SetPoint("TOPRIGHT", frame, "TOPRIGHT", borderThickness, borderThickness)
-    -- borderRight:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", borderThickness, -borderThickness)
-
+    -- Define the SizeBorders function to use PixelUtil
     local function SizeBorders(borderThickness)
-        borderTop:SetHeight(borderThickness)
-        borderBottom:SetHeight(borderThickness)
-        borderLeft:SetWidth(borderThickness)
-        borderRight:SetWidth(borderThickness)
+        PixelUtil.SetHeight(borderTop, borderThickness, minPixels)
+        PixelUtil.SetHeight(borderBottom, borderThickness, minPixels)
+        PixelUtil.SetWidth(borderLeft, borderThickness, minPixels)
+        PixelUtil.SetWidth(borderRight, borderThickness, minPixels)
 
         -- Adjust border positions to grow outward
         borderTop:ClearAllPoints()
-        borderTop:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", 0, 0)
-        borderTop:SetPoint("BOTTOMRIGHT", frame, "TOPRIGHT", 0, 0)
+        PixelUtil.SetPoint(borderTop, "BOTTOMLEFT", frame, "TOPLEFT", 0, 0)
+        PixelUtil.SetPoint(borderTop, "BOTTOMRIGHT", frame, "TOPRIGHT", 0, 0)
 
         borderBottom:ClearAllPoints()
-        borderBottom:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 0, 0)
-        borderBottom:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+        PixelUtil.SetPoint(borderBottom, "TOPLEFT", frame, "BOTTOMLEFT", 0, 0)
+        PixelUtil.SetPoint(borderBottom, "TOPRIGHT", frame, "BOTTOMRIGHT", 0, 0)
 
         borderLeft:ClearAllPoints()
-        borderLeft:SetPoint("TOPLEFT", frame, "TOPLEFT", -borderThickness, borderThickness)
-        borderLeft:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", -borderThickness, -borderThickness)
+        PixelUtil.SetPoint(borderLeft, "TOPLEFT", frame, "TOPLEFT", -borderThickness, borderThickness)
+        PixelUtil.SetPoint(borderLeft, "BOTTOMLEFT", frame, "BOTTOMLEFT", -borderThickness, -borderThickness)
 
         borderRight:ClearAllPoints()
-        borderRight:SetPoint("TOPRIGHT", frame, "TOPRIGHT", borderThickness, borderThickness)
-        borderRight:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", borderThickness, -borderThickness)
+        PixelUtil.SetPoint(borderRight, "TOPRIGHT", frame, "TOPRIGHT", borderThickness, borderThickness)
+        PixelUtil.SetPoint(borderRight, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", borderThickness, -borderThickness)
     end
 
-    SizeBorders(1)
+    SizeBorders(borderThickness)
 
     -- Define method to set border color
     function frame:SetBorderColor(r, g, b, a)
@@ -3605,7 +3630,7 @@ function BBP.ColorNameplateBorder(frame)
             end
         end
 
-        if not config.npBorderFriendFoeColor and not config.npBorderClassColor then
+        if not config.npBorderFriendFoeColor and not config.npBorderClassColor and config.npBorderTargetColor then
             border:SetBorderColor(unpack(config.npBorderNonTargetColorRGB))
         end
     end
@@ -3944,6 +3969,8 @@ local function HandleNamePlateAdded(unit)
     if not info then return end
     local hooks = GetNameplateHookTable(frame)
 
+    BBP.RangeIndicator(frame)
+
     if info.isTarget then
         BBP.previousTargetNameplate = frame
     end
@@ -3987,6 +4014,7 @@ local function HandleNamePlateAdded(unit)
         CreateBetterClassicHealthbarBorder(frame)
         CreateBetterClassicCastbarBorders(frame)
 
+        frame.LevelFrame:SetParent(frame.healthBar)
         if config.hideLevelFrame then
             frame.LevelFrame:Hide()
         end
@@ -4190,6 +4218,14 @@ function BBP.RefreshAllNameplates()
         --local config = InitializeNameplateSettings(frame)
         local info = GetNameplateUnitInfo(frame)
         if not info then return end
+
+        if BetterBlizzPlatesDB.hideLevelFrame then
+            frame.LevelFrame:Hide()
+        else
+            if BetterBlizzPlatesDB.classicNameplates then
+                frame.LevelFrame:Show()
+            end
+        end
 
         CreateBetterCastbarText(frame)
 
@@ -4481,7 +4517,7 @@ function BBP.ConsolidatedUpdateName(frame)
     if config.totemIndicatorTest then
         if config.totemIndicatorColorName then
             frame.name:SetVertexColor(unpack(frame.randomColor))
-            if config.totemIndicatorHideNameAndShiftIconDown then
+            if config.totemIndicatorHideNameAndShiftIconDown or config.randomTotemIconOnly then
                 frame.name:SetText("")
             else
                 frame.name:SetText(frame.randomName)
@@ -4671,6 +4707,7 @@ local function HideHealthbarInPvEMagic()
                             else
                                 setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
                             end
+                            setNil(DefaultCompactNamePlateFrameSetUpOptions, 'showLevel')
                         else
                             setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
                             setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
@@ -4927,6 +4964,7 @@ local function NamePlateCastBarTestMode(frame)
         local uninterruptibleChance = 0.25 -- 25% chance of being uninterruptible
         local channeledChance = 0.25 -- 25% chance of being channeled
         local isChanneled = false -- Flag to indicate channeled cast
+        local classic = BetterBlizzPlatesDB.classicNameplates
 
         castBar:SetMinMaxValues(minValue, maxValue)
         castBar:SetValue(currentValue)
@@ -5019,7 +5057,7 @@ local function NamePlateCastBarTestMode(frame)
                             castBarTexture:SetDesaturated(false)
                             castBar:SetStatusBarColor(1,1,1,1)
                         end
-                        castBar.Text:SetText("Frostbolt")
+                        castBar.castText:SetText("Frostbolt")
                         castBar.Icon:Show()
                         castBar.Icon:SetTexture(GetSpellTexture(116))
                         if useCustomCastbarTexture or castBarRecolor then
@@ -5053,15 +5091,18 @@ local function NamePlateCastBarTestMode(frame)
                                 castBar:SetStatusBarTexture("ui-castingbar-uninterruptable")
                                 local castBarTexture = castBar:GetStatusBarTexture()
                                 castBarTexture:SetDesaturated(false)
-                                castBar:SetStatusBarColor(1,1,1,1)
+                                castBar:SetStatusBarColor(0.6,0.6,0.6,1)
                             end
-                            castBar.Text:SetText("Shattering Throw")
+                            castBar.castText:SetText("Shattering Throw")
                             if showCastBarIconWhenNoninterruptible then
                                 castBar.Icon:SetTexture(GetSpellTexture(64382))
                                 castBar.BorderShield:SetDrawLayer("OVERLAY", 1)
-                                castBar.Icon:SetDrawLayer("OVERLAY", 2)
+                                castBar.Icon:SetDrawLayer("OVERLAY", 7)
                             else
-                                castBar.Icon:Hide()
+                                --castBar.Icon:Hide()
+                                castBar.Icon:SetTexture(GetSpellTexture(64382))
+                                castBar.BorderShield:SetDrawLayer("OVERLAY", 1)
+                                castBar.Icon:SetDrawLayer("OVERLAY", 7)
                             end
                             if useCustomCastbarTexture or castBarRecolor then
                                 local castBarTexture = castBar:GetStatusBarTexture()
@@ -5075,12 +5116,16 @@ local function NamePlateCastBarTestMode(frame)
                             else
                                 castBar:SetStatusBarTexture("ui-castingbar-filling-channel")
                                 local castBarTexture = castBar:GetStatusBarTexture()
-                                castBarTexture:SetDesaturated(false)
-                                castBar:SetStatusBarColor(1,1,1,1)
+                                if classic then
+                                    castBar:SetStatusBarColor(0,1,0,1)
+                                else
+                                    castBarTexture:SetDesaturated(false)
+                                    castBar:SetStatusBarColor(1,1,1,1)
+                                end
                             end
-                            castBar.Text:SetText("Soothing Mist")
+                            castBar.castText:SetText("Penance")
                             castBar.Icon:Show()
-                            castBar.Icon:SetTexture(GetSpellTexture(115175))
+                            castBar.Icon:SetTexture(GetSpellTexture(47540))
                             if useCustomCastbarTexture or castBarRecolor then
                                 local castBarTexture = castBar:GetStatusBarTexture()
                                 castBarTexture:SetDesaturated(true)
@@ -5096,9 +5141,10 @@ local function NamePlateCastBarTestMode(frame)
                                 castBarTexture:SetDesaturated(false)
                                 castBar:SetStatusBarColor(1,1,1,1)
                             end
-                            castBar.Text:SetText("Frostbolt")
+                            castBar.castText:SetText("Frostbolt")
                             castBar.Icon:Show()
                             castBar.Icon:SetTexture(GetSpellTexture(116))
+                            castBar:SetStatusBarColor(1,0.7,0)
                             if useCustomCastbarTexture or castBarRecolor then
                                 local castBarTexture = castBar:GetStatusBarTexture()
                                 castBarTexture:SetDesaturated(true)

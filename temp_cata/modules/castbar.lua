@@ -92,9 +92,9 @@ local function ResetCastbarAfterFadeout(frame, unitToken)
         if (castBarRecolor or useCustomCastbarTexture) and frame.CastBar then
             frame.CastBar:SetStatusBarColor(1,0,0)
         end
-        if BetterBlizzPlatesDB.castBarInterruptHighlighter then
-            frame.CastBar:SetStatusBarColor(1,1,1)
-        end
+        -- if BetterBlizzPlatesDB.castBarInterruptHighlighter then
+        --     frame.CastBar:SetStatusBarColor(1,1,1)
+        -- end
 
         if castBarEmphasisHealthbarColor then
             if not frame or frame:IsForbidden() then return end
@@ -256,16 +256,16 @@ function BBP.CustomizeCastbar(frame, unitToken)
     castBar.Spark:SetSize(4, castBarHeight) --4 width, 5 height original
     castBar.castText:SetScale(castBarTextScale)
 
-    if showCastBarIconWhenNoninterruptible and notInterruptible then
+    if notInterruptible then
         --castBar.BorderShield:SetDrawLayer("OVERLAY", 1)
         castBar.Icon:Show()
-        castBar.Icon:SetDrawLayer("OVERLAY", 2)
-    else
-        if not notInterruptible then
-            castBar.Icon:Show() --attempt to fix icon randomly not showing (blizz bug)
-        else
-            castBar.Icon:Hide()
-        end
+        castBar.Icon:SetDrawLayer("OVERLAY", 7)
+    -- else
+    --     if not notInterruptible then
+    --         castBar.Icon:Show() --attempt to fix icon randomly not showing (blizz bug)
+    --     else
+    --         castBar.Icon:Hide()
+    --     end
     end
 
     local function ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
@@ -379,7 +379,7 @@ function BBP.CustomizeCastbar(frame, unitToken)
                                 if castBarTexture then
                                     castBarTexture:SetDesaturated(false)
                                 end
-                                castBar:SetStatusBarColor(1, 1, 1)
+                                --castBar:SetStatusBarColor(1, 1, 1)
                             else
                                 if casting then
                                     castBar:SetStatusBarColor(unpack(castBarCastColor))
@@ -724,7 +724,7 @@ function BBP.ToggleSpellCastEventRegistration()
                                 if castBarTexture then
                                     castBarTexture:SetDesaturated(false)
                                 end
-                                castBar:SetStatusBarColor(1, 1, 1) -- Default color
+                                --castBar:SetStatusBarColor(1, 1, 1) -- Default color
                             end
                         end
                     end
@@ -733,7 +733,7 @@ function BBP.ToggleSpellCastEventRegistration()
                         if castBarTexture then
                             castBarTexture:SetDesaturated(false)
                         end
-                        castBar:SetStatusBarColor(1, 1, 1) -- Reset to default color if interrupted
+                        --castBar:SetStatusBarColor(1, 1, 1) -- Reset to default color if interrupted
                     end
                 end
             end
@@ -910,9 +910,9 @@ hooksecurefunc("CastingBarFrame_OnEvent", function(self, event, ...)
                     if (castBarRecolor or useCustomCastbarTexture) and frame.CastBar then
                         frame.CastBar:SetStatusBarColor(1,0,0)
                     end
-                    if BetterBlizzPlatesDB.castBarInterruptHighlighter then
-                        frame.CastBar:SetStatusBarColor(1,1,1)
-                    end
+                    -- if BetterBlizzPlatesDB.castBarInterruptHighlighter then
+                    --     frame.CastBar:SetStatusBarColor(1,1,1)
+                    -- end
                     if frame.CastBar.castText then
                         frame.CastBar.castText:SetText("Interrupted")
                     end

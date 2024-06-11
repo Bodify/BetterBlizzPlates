@@ -22,6 +22,7 @@ temp_cata\modules\absorb.lua
 temp_cata\modules\classIcon.lua
 temp_cata\modules\partyPointer.lua
 temp_cata\modules\pet.lua
+temp_cata\modules\range.lua
 temp_cata\modules\quest.lua
 temp_cata\modules\auras.lua
 temp_cata\modules\nahjProfile.lua

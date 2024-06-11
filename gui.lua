@@ -247,6 +247,7 @@ local function CreateColorBox(parent, colorVar, labelText)
     -- Make the frame clickable and open a color picker on click
     frame:SetScript("OnMouseDown", function()
         if frame:GetAlpha() == 1 then
+            BBP.needsUpdate = true
             OpenColorPicker(colorVar, colorTexture)
         end
     end)
