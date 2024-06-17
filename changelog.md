@@ -1,3 +1,9 @@
+# 1.5.1b:
+### Cata:
+### Bugfixes:
+- **Nameplate Auras:** Fix "Separate Buff Row" to properly move the buffs up/down if no debuffs are shown.
+- **Castbar:** Fix castbar resetting to white on classic plates
+
 # 1.5.1
 ## Retail & Cata
 ### New Stuff

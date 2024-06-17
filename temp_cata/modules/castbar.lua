@@ -135,8 +135,10 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     castBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or (BetterBlizzPlatesDB.classicNameplates and 12 or 16))
 
-    if event == "UNIT_SPELLCAST_CHANNEL_START" or event == "UNIT_SPELLCAST_START" then
-        castBar:SetStatusBarColor(1, 1, 1)
+    if not BetterBlizzPlatesDB.classicNameplates then
+        if event == "UNIT_SPELLCAST_CHANNEL_START" or event == "UNIT_SPELLCAST_START" then
+            castBar:SetStatusBarColor(1, 1, 1)
+        end
     end
 
     local spellName, spellID, notInterruptible, endTime

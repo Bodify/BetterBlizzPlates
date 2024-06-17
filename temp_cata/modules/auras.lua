@@ -1717,10 +1717,12 @@ function CustomBuffLayoutChildren3(container, children, isEnemyUnit)
     local debuffs = {}
     if BetterBlizzPlatesDB.separateAuraBuffRow then
         for _, buff in ipairs(children) do
-            if buff.isBuff then
-                table.insert(buffs, buff)
-            else
-                table.insert(debuffs, buff)
+            if buff:IsShown() then
+                if buff.isBuff then
+                    table.insert(buffs, buff)
+                else
+                    table.insert(debuffs, buff)
+                end
             end
         end
     else
