@@ -1,3 +1,14 @@
+# 1.5.1c:
+### Retail:
+### Bugfixes:
+- **Resource Frame:** Fix typo in the update function for positioning of resource underneath castbar.
+### Cata:
+### Bugfixes & Tweaks:
+**Castbars:**
+- Fix classic border positioning on custom height castbars.
+- Changed classic default castbar height to 10.
+- Fix castbars being white/desaturated with certain settings.
+
 # 1.5.1b:
 ### Cata:
 ### Bugfixes:

@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.5.1"
+local addonUpdates = "1.5.1c"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -978,12 +978,13 @@ local function SendUpdateMessage()
                 --bbp news
                 --PlaySoundFile(567439) --quest complete sfx
                 --BBP.CreateUpdateMessageWindow()
-                StaticPopup_Show("BBP_UPDATE_NOTIF")
-                DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-                DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Stuff:")
-                DEFAULT_CHAT_FRAME:AddMessage("   - Totem Indicator width settings for individual npcs!")
-                DEFAULT_CHAT_FRAME:AddMessage("   - Hide Level Frame Setting: Now completely hides the level frame on classic nameplates and extends the health bar.")
-                DEFAULT_CHAT_FRAME:AddMessage("   - Nameplate Auras: Added stack number like on retail.")
+                --StaticPopup_Show("BBP_UPDATE_NOTIF")
+                --DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
+                DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates Cata Beta 0.0.6:")
+                DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a Tweaks:")
+                DEFAULT_CHAT_FRAME:AddMessage("   - Tweaked castbar stuff again. Might require tweaks on your settings if smth looks off.")
+                -- DEFAULT_CHAT_FRAME:AddMessage("   - Hide Level Frame Setting: Now completely hides the level frame on classic nameplates and extends the health bar.")
+                -- DEFAULT_CHAT_FRAME:AddMessage("   - Nameplate Auras: Added stack number like on retail.")
 
                 -- DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
                 -- DEFAULT_CHAT_FRAME:AddMessage("   - Read curseforge changelog for bugfix list.")
@@ -2652,12 +2653,14 @@ local function CreateBetterClassicCastbarBorders(frame)
 
         local center = border:CreateTexture(nil, "OVERLAY")
         center:SetTexture(textureCenter)
-        center:SetPoint("LEFT", left, "RIGHT", 0, 0)
+        center:SetPoint("TOPLEFT", left, "TOPRIGHT", 0, 0)
+        center:SetPoint("BOTTOMLEFT", left, "BOTTOMRIGHT", 0, 0)
         border.center = center
 
         local right = border:CreateTexture(nil, "OVERLAY")
         right:SetTexture(textureRight)
-        right:SetPoint("LEFT", center, "RIGHT", 0, 0)
+        right:SetPoint("TOPLEFT", center, "TOPRIGHT", 0, 0)
+        right:SetPoint("BOTTOMLEFT", center, "BOTTOMRIGHT", 0, 0)
         border.right = right
 
         border:Hide()
@@ -2710,6 +2713,17 @@ local function CreateBetterClassicCastbarBorders(frame)
             frame.CastBar.Icon:SetParent(frame.CastBar.bbpCastBorder)
         end
         frame.CastBar.Icon:SetDrawLayer("OVERLAY", 7) -- Ensure the icon is on top
+
+        local height = frame.CastBar:GetHeight()
+        local bottomOffset = -((5/11) * height - 1.09)
+        local topOffset = (1.97 * height)-- - 1
+        frame.CastBar.bbpCastBorder.left:ClearAllPoints()
+        frame.CastBar.bbpCastBorder.left:SetPoint("TOPLEFT", frame.CastBar, "TOPLEFT", -21, topOffset)
+        frame.CastBar.bbpCastBorder.left:SetPoint("BOTTOMLEFT", frame.CastBar, "BOTTOMLEFT", -21, bottomOffset)
+
+        frame.CastBar.bbpCastUninterruptibleBorder.left:ClearAllPoints()
+        frame.CastBar.bbpCastUninterruptibleBorder.left:SetPoint("TOPLEFT", frame.CastBar, "TOPLEFT", -21, topOffset-(height*0.85))
+        frame.CastBar.bbpCastUninterruptibleBorder.left:SetPoint("BOTTOMLEFT", frame.CastBar, "BOTTOMLEFT", -21, bottomOffset-(height*0.85))
     end
 
     -- local function UpdateCastBarIconSize(self)
@@ -2738,6 +2752,7 @@ local function CreateBetterClassicCastbarBorders(frame)
     frame.CastBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or 10)
 
     if not frame.CastBar.eventsHooked then
+        frame.CastBar.UpdateBorders = UpdateBorders
         frame.CastBar:HookScript("OnShow", UpdateBorders)
         frame.CastBar:HookScript("OnHide", UpdateBorders)
         frame.CastBar.BorderShield:HookScript("OnShow", UpdateBorders)

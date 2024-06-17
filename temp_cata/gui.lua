@@ -159,7 +159,7 @@ StaticPopupDialogs["BBP_TOTEMLIST_RESET"] = {
 }
 
 StaticPopupDialogs["BBP_UPDATE_NOTIF"] = {
-    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.0.5:\n\nTweaked a lot of settings. Castbars especially.\nYou might have to re-do your custom castbar height if it looks wrong.\n\nAs always please report bugs so I can fix.",
+    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.0.6:\n\nTweaked a lot of settings. Castbars especially.\nYou might have to re-do your custom castbar height if it looks wrong.\n\nAs always please report bugs so I can fix.",
     button1 = "OK",
     timeout = 0,
     whileDead = true,
@@ -814,6 +814,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         -- Cast bar height
                         elseif element == "castBarHeight" then
                             frame.CastBar:SetHeight(value)
+                            frame.CastBar.UpdateBorders()
                         elseif element == "castBarTextScale" then
                             frame.CastBar.Text:SetScale(value)
                         -- Cast bar emphasis icon pos and scale
@@ -3199,7 +3200,7 @@ local function CreateTitle(parent)
     addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
     local verNumber = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
-    verNumber:SetText("CATA BETA v0.0.5")--("v" .. BBP.VersionNumber)
+    verNumber:SetText("CATA BETA v0.0.6")--("v" .. BBP.VersionNumber)
 end
 ------------------------------------------------------------
 -- GUI Panels
