@@ -1941,9 +1941,10 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
         --frame.BuffFrame:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", 0, -10+BetterBlizzPlatesDB.nameplateAurasYPos)
         frame.BuffFrame:ClearAllPoints()
         if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
-            frame.BuffFrame:SetPoint("BOTTOM", frame, "TOP", 0, -10+BetterBlizzPlatesDB.nameplateAurasYPos)
+            frame.BuffFrame:SetPoint("BOTTOM", frame.healthBar, "TOP", 0, 10+BetterBlizzPlatesDB.nameplateAurasYPos)
         else
-            frame.BuffFrame:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", -1, -10+BetterBlizzPlatesDB.nameplateAurasYPos)
+            --frame.BuffFrame:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", -1, -10+BetterBlizzPlatesDB.nameplateAurasYPos)
+            frame.BuffFrame:SetPoint("BOTTOMLEFT", frame.healthBar, "TOPLEFT", -1, 10+BetterBlizzPlatesDB.nameplateAurasYPos)
         end
     --end
 

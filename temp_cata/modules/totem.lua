@@ -437,6 +437,13 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
                     end
                 end
             end
+        else
+            if npcData.widthOn and npcData.hpWidth then
+                frame.healthBar:ClearPoint("RIGHT")
+                frame.healthBar:ClearPoint("LEFT")
+                frame.healthBar:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth, 0)
+                frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth,0)
+            end
         end
     else
         config.totemColorRGB = nil

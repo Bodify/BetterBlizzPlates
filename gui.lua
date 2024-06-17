@@ -124,6 +124,20 @@ StaticPopupDialogs["BBP_CONFIRM_NAHJ_PROFILE"] = {
     hideOnEscape = true,
 }
 
+StaticPopupDialogs["BBP_TOTEMLIST_RESET"] = {
+    text = "This will delete the entire totem list and reset it back to its default state.\nA reload will be neccesary.\n\nAre you sure you want to continue?",
+    button1 = "Yes",
+    button2 = "No",
+    OnAccept = function()
+        BBP.ResetTotemList()
+        BetterBlizzPlatesDB.reopenOptions = true
+        ReloadUI()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+}
+
 
 
 ------------------------------------------------------------
@@ -2015,6 +2029,24 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 BBP.auraListNeedsUpdate = true
             end)
 
+            -- Create Checkbox Only Mine
+            local checkBoxOnlyMine = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
+            checkBoxOnlyMine:SetSize(24, 24)
+            checkBoxOnlyMine:SetPoint("RIGHT", prioritySlider, "LEFT", -16, 0)
+            CreateTooltipTwo(checkBoxOnlyMine, "Only My Aura |A:UI-HUD-UnitFrame-Player-Group-FriendOnlineIcon:22:22|a", "Only color my aura.", nil, "ANCHOR_TOPRIGHT")
+
+            -- Handler for the E checkbox
+            checkBoxOnlyMine:SetScript("OnClick", function(self)
+                npc.onlyMine = self:GetChecked()
+                BBP.auraListNeedsUpdate = true
+                BBP.RefreshAllNameplates()
+            end)
+
+            -- Initialize state from npc flags
+            if npc.onlyMine then
+                checkBoxOnlyMine:SetChecked(true)
+            end
+
             button.prioritySlider = prioritySlider
         end
 
@@ -2307,6 +2339,17 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         local npcData = npcList[npcId]
         if npcData then
             npcData.hideHp = hideHpFlag
+        end
+
+        refreshFunc()
+    end
+
+    local function updateIconOnlyFlag(npcId, iconOnlyFlag)
+        if not npcId then return end
+
+        local npcData = npcList[npcId]
+        if npcData then
+            npcData.iconOnly = iconOnlyFlag
         end
 
         refreshFunc()
@@ -2716,7 +2759,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         -- Creation of the hideIconCheckbox
         local hideIconCheckboxButton = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
         hideIconCheckboxButton:SetSize(24, 24)
-        hideIconCheckboxButton:SetPoint("RIGHT", button, "RIGHT", -20, 0)
+        hideIconCheckboxButton:SetPoint("RIGHT", button, "RIGHT", -15, 0)
         hideIconCheckboxButton:SetScript("OnClick", function(self)
             updateHideIconFlag(npcId, self:GetChecked())
             if self:GetChecked() then
@@ -2735,7 +2778,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
 
         local importantCheckBox = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
         importantCheckBox:SetSize(24, 24)
-        importantCheckBox:SetPoint("RIGHT", button, "RIGHT", -70, 0)
+        importantCheckBox:SetPoint("RIGHT", button, "RIGHT", -55, 0)
         importantCheckBox:SetScript("OnClick", function(self)
             updateImportantFlag(npcId, self:GetChecked())
         end)
@@ -2750,7 +2793,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         -- Creation of the hideIconCheckbox
         local hideHealthBarCheckBox = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
         hideHealthBarCheckBox:SetSize(24, 24)
-        hideHealthBarCheckBox:SetPoint("RIGHT", button, "RIGHT", -45, 0)
+        hideHealthBarCheckBox:SetPoint("RIGHT", button, "RIGHT", -35, 0)
         hideHealthBarCheckBox:SetScript("OnClick", function(self)
             updateHideHpFlag(npcId, self:GetChecked())
             BBP.RefreshAllNameplates()
@@ -2762,6 +2805,22 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         end
 
         button.hideHealthBarCheckBox = hideHealthBarCheckBox
+
+        -- Creation of the hideIconCheckbox
+        local iconOnlyCheckBox = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
+        iconOnlyCheckBox:SetSize(24, 24)
+        iconOnlyCheckBox:SetPoint("RIGHT", button, "RIGHT", -75, 0)
+        iconOnlyCheckBox:SetScript("OnClick", function(self)
+            updateIconOnlyFlag(npcId, self:GetChecked())
+            BBP.RefreshAllNameplates()
+        end)
+        CreateTooltipTwo(iconOnlyCheckBox, "Icon Only Mode")
+
+        if npcData.iconOnly then
+            iconOnlyCheckBox:SetChecked(true)
+        end
+
+        button.iconOnlyCheckBox = iconOnlyCheckBox
 
         return button
     end
@@ -2815,6 +2874,9 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
     local function getSortedNpcList()
         local sortableNpcList = {}
         for npcId, npcData in pairs(npcList) do
+            if npcData.duration == 0 then
+                npcData.duration = nil
+            end
             table.insert(sortableNpcList, {npcId = npcId, npcData = npcData})
         end
 
@@ -2893,7 +2955,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         -- Create or update the npc entry
         local npcData = {
             name = name,  -- Name from input, or default if not provided
-            icon = spellId and GetSpellTexture(spellId) or nil,  -- Get icon if spellId is provided
+            icon = spellId and GetSpellTexture(spellId) or 533422,  -- Get icon if spellId is provided
             hideIcon = false,
             size = 30,  -- Default size
             duration = nil,  -- Ensure duration is set to nil
@@ -2926,6 +2988,8 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
     addButton:SetScript("OnClick", function()
         addOrUpdateEntry(editBox:GetText())
     end)
+
+    return scrollFrame
 end
 
 local function CreateTitle(parent)
@@ -4292,12 +4356,12 @@ local function guiPositionAndScale()
     totemIcon2:SetSize(34, 34)
     totemIcon2:SetPoint("BOTTOM", anchorSubTotem, "TOP", 0, 0)
 
-    local totemIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.01, "totemIndicatorScale")
-    totemIndicatorScale:SetPoint("TOP", anchorSubTotem, "BOTTOM", 0, -15)
-    CreateTooltip(totemIndicatorScale, "This changes the scale of ALL icons.\n\nYou can adjust individual sizes in the \"Totem Indicator List\" tab.", "ANCHOR_LEFT")
+    BBP.totemIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.01, "totemIndicatorScale")
+    BBP.totemIndicatorScale:SetPoint("TOP", anchorSubTotem, "BOTTOM", 0, -15)
+    CreateTooltip( BBP.totemIndicatorScale, "This changes the scale of ALL icons.\n\nYou can adjust individual sizes in the \"Totem Indicator List\" tab.", "ANCHOR_LEFT")
 
     local totemIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "totemIndicatorXPos", "X")
-    totemIndicatorXPos:SetPoint("TOP", totemIndicatorScale, "BOTTOM", 0, -15)
+    totemIndicatorXPos:SetPoint("TOP",  BBP.totemIndicatorScale, "BOTTOM", 0, -15)
 
     local totemIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "totemIndicatorYPos", "Y")
     totemIndicatorYPos:SetPoint("TOP", totemIndicatorXPos, "BOTTOM", 0, -15)
@@ -5245,6 +5309,9 @@ local function guiPositionAndScale()
     healthNumbersOnlyInCombat:SetPoint("TOPLEFT", healthNumbersUseMillions, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersOnlyInCombat, "Only in Combat", "Only show health values on nameplates in combat")
 
+    local healthNumbersSwapped = CreateCheckbox("healthNumbersSwapped", "Swap Numbers", contentFrame)
+    healthNumbersSwapped:SetPoint("TOPLEFT", healthNumbersOnlyInCombat, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(healthNumbersSwapped, "Swap Number", "Swap the numbers to be percent first. 100% - 200k")
 
 
 
@@ -6258,15 +6325,16 @@ local function guiAuraColor()
     local listFrame = CreateFrame("Frame", nil, guiAuraColor)
     listFrame:SetAllPoints(guiAuraColor)
 
-    CreateList(listFrame, "auraColorList", BetterBlizzPlatesDB.auraColorList, BBP.RefreshAllNameplates, true, false, true, 390)
+    local auraColorList = CreateList(listFrame, "auraColorList", BetterBlizzPlatesDB.auraColorList, BBP.RefreshAllNameplates, true, false, true, 440)
+    auraColorList:SetPoint("TOPLEFT", -5, -10)
 
     local listExplanationText = guiAuraColor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     listExplanationText:SetPoint("TOP", guiAuraColor, "BOTTOMLEFT", 180, 155)
     listExplanationText:SetText("Add name or spell ID. Case-insensitive.\n\nType a name or spell ID already in list to delete it")
 
     local auraColorExplanationText = guiAuraColor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    auraColorExplanationText:SetPoint("TOP", guiAuraColor, "TOP", 190, -127)
-    auraColorExplanationText:SetText("Color nameplates\ndepending on their auras.\n \nAdd a name/spellID\nand select a color")
+    auraColorExplanationText:SetPoint("TOP", guiAuraColor, "TOP", 220, -127)
+    auraColorExplanationText:SetText("Color nameplates\ndepending on their auras.\n \nAdd a name/spellID\nand select a color.\n\nCheck the \"Only mine\"\ncheckbox to only\ncolor own auras.")
 
     local auraColor = CreateCheckbox("auraColor", "Enable Color by Aura", guiAuraColor, nil, BBP.CreateUnitAuraEventFrame)
     auraColor:SetPoint("TOPLEFT", auraColorExplanationText, "BOTTOMLEFT", 10, -15)
@@ -6978,8 +7046,12 @@ local function guiCVarControl()
     nameplateResourceOnTarget:SetPoint("TOPLEFT", comboPointsText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
     CreateTooltipTwo(nameplateResourceOnTarget, "Nameplate Resource", "Show combo points, warlock shards, arcane charges etc on nameplates.", nil, nil, "nameplateResourceOnTarget")
 
+    local changeResourceStrata = CreateCheckbox("changeResourceStrata", "Increase resource layer level", guiCVarControl, nil, BBP.ChangeStrataOfResourceFrame)
+    changeResourceStrata:SetPoint("TOP", nameplateResourceOnTarget, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(changeResourceStrata, "Increase resource layer level", "Increases the frame strata of the resource frame making it show on top of nameplate instead of under (z-axis)")
+
     local nameplateResourceUnderCastbar = CreateCheckbox("nameplateResourceUnderCastbar", "Anchor resource underneath healthbar/castbar", nameplateResourceOnTarget, nil, BBP.RegisterTargetCastingEvents)
-    nameplateResourceUnderCastbar:SetPoint("TOP", nameplateResourceOnTarget, "BOTTOM", 0, pixelsBetweenBoxes)
+    nameplateResourceUnderCastbar:SetPoint("TOP", changeResourceStrata, "BOTTOM", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateResourceUnderCastbar, "Anchor Resource Under", "Anchor nameplate combo points etc underneath the healthbar and underneath the castbar during casts.")
     nameplateResourceOnTarget:HookScript("OnClick", function()
         CheckAndToggleCheckboxes(nameplateResourceOnTarget)
@@ -7257,11 +7329,28 @@ local function guiTotemList()
     totemListFrame:SetSize(322, 390)
     totemListFrame:SetPoint("TOPLEFT", -5, 3)
 
-    local totemListTip = guiTotemList:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    totemListTip:SetPoint("TOP", guiTotemList, "TOP", 0, 8)
-    totemListTip:SetText("(Adjust general size of ALL icons in the Advanced Settings tab)")
+    -- local totemListTip = guiTotemList:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    -- totemListTip:SetPoint("TOP", guiTotemList, "TOP", 0, 8)
+    -- totemListTip:SetText("(Adjust general size of ALL icons in the Advanced Settings tab)")
 
-    CreateNpcList(totemListFrame, BetterBlizzPlatesDB.totemIndicatorNpcList, BBP.RefreshAllNameplates, 630, 560)
+    local totemList = CreateNpcList(totemListFrame, BetterBlizzPlatesDB.totemIndicatorNpcList, BBP.RefreshAllNameplates, 630, 490)
+
+    local totemIndicatorScale = CreateSlider(guiTotemList, "General scale of all totem icons", 0.5, 3, 0.01, "totemIndicatorScale")
+    totemIndicatorScale:SetPoint("TOP", totemList, "BOTTOM", 0, -45)
+    totemIndicatorScale:HookScript("OnValueChanged", function(self)
+        local val = self:GetValue()
+        BBP.totemIndicatorScale:SetValue(val)
+    end)
+    totemIndicatorScale:SetScale(1.2)
+
+    local resetTotemListButton = CreateFrame("Button", nil, guiTotemList, "UIPanelButtonTemplate")
+    resetTotemListButton:SetText("Reset Totem List")
+    resetTotemListButton:SetWidth(120)
+    resetTotemListButton:SetPoint("BOTTOMLEFT", guiTotemList, "BOTTOMLEFT", 10, 20)
+    resetTotemListButton:SetScript("OnClick", function()
+        StaticPopup_Show("BBP_TOTEMLIST_RESET")
+    end)
+    CreateTooltipTwo(resetTotemListButton, "Reset Totem List", "Reset totem list back to its default state", nil, "ANCHOR_TOP")
 end
 
 local function guiMisc()

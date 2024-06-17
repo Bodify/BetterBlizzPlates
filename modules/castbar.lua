@@ -87,14 +87,14 @@ local function ResetCastbarAfterFadeout(frame, unitToken)
             castBar.BorderShield:Hide()
         end
 
-        local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
-        local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
-        if (castBarRecolor or useCustomCastbarTexture) and frame.castBar then
-            frame.castBar:SetStatusBarColor(1,0,0)
-        end
-        if BetterBlizzPlatesDB.castBarInterruptHighlighter then
-            frame.castBar:SetStatusBarColor(1,1,1)
-        end
+        -- local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
+        -- local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
+        -- if (castBarRecolor or useCustomCastbarTexture) and frame.castBar then
+        --     frame.castBar:SetStatusBarColor(1,0,0)
+        -- end
+        -- if BetterBlizzPlatesDB.castBarInterruptHighlighter then
+        --     frame.castBar:SetStatusBarColor(1,1,1)
+        -- end
 
         if castBarEmphasisHealthbarColor then
             if not frame or frame:IsForbidden() then return end
@@ -104,7 +104,7 @@ local function ResetCastbarAfterFadeout(frame, unitToken)
 end
 
 -- Cast emphasis
-function BBP.CustomizeCastbar(frame, unitToken)
+function BBP.CustomizeCastbar(frame, unitToken, event)
     local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
     if not enableCastbarCustomization then return end
     if unitToken == "player" then return end
@@ -133,7 +133,9 @@ function BBP.CustomizeCastbar(frame, unitToken)
         end
     end
 
-    castBar:SetStatusBarColor(1, 1, 1)
+    if event == "UNIT_SPELLCAST_CHANNEL_START" or event == "UNIT_SPELLCAST_START" then
+        castBar:SetStatusBarColor(1, 1, 1)
+    end
 
     local spellName, spellID, notInterruptible, endTime
     local casting, channeling
@@ -744,7 +746,7 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
 
         if enableCastbarCustomization then
 
-            BBP.CustomizeCastbar(frame, self.unit)
+            BBP.CustomizeCastbar(frame, self.unit, event)
 
             if useCustomCastbarTexture and not useCustomCastbarTextureHooked then
                 if not self.hooked then
@@ -779,11 +781,9 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
                     end)
 
                     if self.Flash then
-                        hooksecurefunc(self.Flash, "SetAtlas", function(self)
-                            if self.changing or self:IsForbidden() then return end
-                            self.changing = true
-                            self:SetAtlas(nil)
-                            self.changing = false
+                        self.Flash:HookScript("OnShow", function(self)
+                            if self:IsForbidden() then return end
+                            self:SetAlpha(0)
                         end)
                     end
                     local castbar = self

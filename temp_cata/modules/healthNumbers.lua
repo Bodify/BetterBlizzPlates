@@ -37,6 +37,7 @@ function BBP.HealthNumbers(frame)
         config.healthNumbersUseMillions = BetterBlizzPlatesDB.healthNumbersUseMillions
         config.healthNumbersCurrentFull = BetterBlizzPlatesDB.healthNumbersCurrentFull
         config.healthNumbersCombined = BetterBlizzPlatesDB.healthNumbersCombined
+        config.healthNumbersSwapped = BetterBlizzPlatesDB.healthNumbersSwapped
 
         config.healthNumbersInitialized = true
     end
@@ -76,24 +77,35 @@ function BBP.HealthNumbers(frame)
         -- New setting: show both the numeric value and percentage
         local numericHealth = FormatHealthValue(health, config.healthNumbersUseMillions, config.healthNumbersShowDecimal)
         local percentHealth = string.format("%.0f%%", (health / maxHealth) * 100)
-        healthText = numericHealth .. " - " .. percentHealth
+        if config.healthNumbersSwapped then
+            healthText = percentHealth .. " - " .. numericHealth
+        else
+            healthText = numericHealth .. " - " .. percentHealth
+        end
     elseif config.healthNumbersCurrentFull then
         if config.healthNumbersPercentage then
             -- Format both current and max health as percentages
             local currentHealthPercentage = string.format(config.healthNumbersShowDecimal and "%.1f%%" or "%.0f%%", (health / maxHealth) * 100)
             local maxHealthPercentage = "100%"
-            healthText = currentHealthPercentage .. " / " .. maxHealthPercentage
-            if config.healthNumbersPercentSymbol then
-                healthText = currentHealthPercentage .. " / " .. maxHealthPercentage
+            if config.healthNumbersSwapped then
+                healthText = maxHealthPercentage .. " / " .. currentHealthPercentage
             else
+                healthText = currentHealthPercentage .. " / " .. maxHealthPercentage
+            end
+            if not config.healthNumbersPercentSymbol then
                 -- Remove percentage symbol if not needed
-                healthText = string.format(config.healthNumbersShowDecimal and "%.1f" or "%.0f", (health / maxHealth) * 100) .. " / 100"
+                currentHealthPercentage = string.format(config.healthNumbersShowDecimal and "%.1f" or "%.0f", (health / maxHealth) * 100)
+                healthText = currentHealthPercentage .. " / 100"
             end
         else
             -- Default to showing raw numbers
             local currentHealthFormatted = FormatHealthValue(health, config.healthNumbersUseMillions, config.healthNumbersShowDecimal)
             local maxHealthFormatted = FormatHealthValue(maxHealth, config.healthNumbersUseMillions, config.healthNumbersShowDecimal)
-            healthText = currentHealthFormatted .. " / " .. maxHealthFormatted
+            if config.healthNumbersSwapped then
+                healthText = maxHealthFormatted .. " / " .. currentHealthFormatted
+            else
+                healthText = currentHealthFormatted .. " / " .. maxHealthFormatted
+            end
         end
     elseif config.healthNumbersPercentage then
         -- Format the percentage based on whether decimals are shown or not
@@ -140,7 +152,11 @@ function BBP.HealthNumbers(frame)
                 currentHealthFormatted = FormatHealthValue(testCurrentHealth, config.healthNumbersUseMillions, config.healthNumbersShowDecimal)
                 maxHealthFormatted = FormatHealthValue(testMaxHealth, config.healthNumbersUseMillions, config.healthNumbersShowDecimal)
             end
-            healthText = currentHealthFormatted .. " / " .. maxHealthFormatted
+            if config.healthNumbersSwapped then
+                healthText = maxHealthFormatted .. " / " .. currentHealthFormatted
+            else
+                healthText = currentHealthFormatted .. " / " .. maxHealthFormatted
+            end
         elseif config.healthNumbersPercentage then
             -- Only current health as a percentage of max
             healthText = string.format(config.healthNumbersShowDecimal and "%.1f" or "%.0f", (testCurrentHealth / testMaxHealth) * 100)

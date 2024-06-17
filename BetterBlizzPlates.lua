@@ -8,8 +8,8 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.5.0"
-local sendUpdate = true
+local addonUpdates = "1.5.1"
+local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
@@ -594,6 +594,11 @@ local function InitializeSavedVariables()
             BetterBlizzPlatesDB[key] = defaultValue
         end
     end
+end
+
+function BBP.ResetTotemList()
+    BetterBlizzPlatesDB.totemIndicatorNpcList = {}
+    BetterBlizzPlatesDB.totemIndicatorNpcList = defaultSettings.totemIndicatorNpcList
 end
 
 local function CVarFetcher()
@@ -1274,6 +1279,25 @@ function BBP.ApplyCustomTextureToNameplate(frame)
         frame.healthBar:SetStatusBarTexture(defaultTex)
         textureExtraBars(frame, defaultTex)
     end
+end
+
+--#################################################
+function BBP.ChangeStrataOfResourceFrame()
+    local playerClass = select(2, UnitClass("player"))
+    -- Table holding references to class-specific resource frames
+    local resourceFrames = {
+        ["WARLOCK"] = ClassNameplateBarWarlockFrame,
+        ["DEATHKNIGHT"] = DeathKnightResourceOverlayFrame,
+        ["PALADIN"] = ClassNameplateBarPaladinFrame,
+        ["MONK"] = ClassNameplateBarWindwalkerMonkFrame,
+        ["ROGUE"] = ClassNameplateBarRogueFrame,
+        ["MAGE"] = ClassNameplateBarMageFrame,
+        ["DRUID"] = ClassNameplateBarFeralDruidFrame,
+    }
+    local resourceFrame = resourceFrames[playerClass]
+    if not resourceFrame or resourceFrame:IsForbidden() then return end
+
+    resourceFrame:SetFrameStrata("MEDIUM")
 end
 
 --###############################################
@@ -2299,11 +2323,11 @@ function BBP.UpdateAuraLookupTables()
     -- Populate new lookup tables
     for _, npc in ipairs(BetterBlizzPlatesDB.auraColorList) do
         if npc.id then
-            BBP.spellIdLookup[npc.id] = {priority = npc.priority, color = npc.entryColors.text}
+            BBP.spellIdLookup[npc.id] = {priority = npc.priority, color = npc.entryColors.text, onlyMine = npc.onlyMine}
         end
         if npc.name then
             local lowerCaseName = strlower(npc.name)
-            BBP.auraNameLookup[lowerCaseName] = {priority = npc.priority, color = npc.entryColors.text}
+            BBP.auraNameLookup[lowerCaseName] = {priority = npc.priority, color = npc.entryColors.text, onlyMine = npc.onlyMine}
         end
     end
 
@@ -2327,8 +2351,12 @@ function BBP.AuraColor(frame)
             spellInfo = BBP.auraNameLookup[strlower(name)]
         end
         if spellInfo and spellInfo.priority > highestPriority then
-            highestPriority = spellInfo.priority
-            auraColor = spellInfo.color
+            if spellInfo.onlyMine and source ~= "player" then
+                config.auraColorRGB = nil
+            else
+                highestPriority = spellInfo.priority
+                auraColor = spellInfo.color
+            end
         end
         return highestPriority >= 10
     end
@@ -3566,6 +3594,10 @@ function BBP.RefreshAllNameplates()
             end
         end
 
+        if BetterBlizzPlatesDB.auraColor then
+            BBP.AuraColor(frame)
+        end
+
         if not BetterBlizzPlatesDB.useFakeName then
             if frame.fakeName then
                 frame.fakeName:SetAlpha(0)
@@ -4089,6 +4121,10 @@ Frame:SetScript("OnEvent", function(...)
     C_Timer.After(1, function()
         if db.executeIndicatorScale <= 0 then --had a slider with borked values
             db.executeIndicatorScale = 1     --this will fix it for every user who made the error while bug was live
+        end
+
+        if db.changeResourceStrata then
+            BBP.ChangeStrataOfResourceFrame()
         end
     end)
 

@@ -1,11 +1,25 @@
 local activeCooldowns = {}
 
+local playerClass = select(2, UnitClass("player"))
+
+local resourceFrames = {
+    ["WARLOCK"] = ClassNameplateBarWarlockFrame,
+    ["DEATHKNIGHT"] = DeathKnightResourceOverlayFrame,
+    ["PALADIN"] = ClassNameplateBarPaladinFrame,
+    ["MONK"] = ClassNameplateBarWindwalkerMonkFrame,
+    ["ROGUE"] = ClassNameplateBarRogueFrame,
+    ["MAGE"] = ClassNameplateBarMageFrame,
+    ["DRUID"] = ClassNameplateBarFeralDruidFrame,
+}
+
 function BBP.ResetNameplateTestAttributes()
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = nameplate.UnitFrame
         local config = frame.BetterBlizzPlates.config
         config.randomTotemIcon = nil
         config.totemIsImportant = nil
+        config.randomTotemIconOnly = nil
+        config.randomTotemHideHp = nil
     end
 end
 
@@ -184,7 +198,7 @@ function BBP.GetRandomTotemAttributes()
 
     if selectedKey then
         local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[selectedKey]
-        return npcData.icon, npcData.color, npcData.important, npcData.name, npcData.size, npcData.hideIcon
+        return npcData.icon, npcData.color, npcData.important, npcData.name, npcData.size, npcData.hideIcon, npcData.iconOnly, npcData.hideHp
     else
         -- Return a dummy set of attributes
         return "Interface\\Icons\\inv_misc_questionmark", -- Dummy icon
@@ -260,7 +274,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
 
         -- Fetch and store random attributes on the frame if they don't exist
         if not config.randomTotemIcon or not config.randomTotemColor or config.totemIsImportant == nil or not config.randomTotemName or not config.randomTotemSize or config.randomHideTotemIcon == nil then
-            config.randomTotemIcon, config.randomTotemColor, config.totemIsImportant, config.randomTotemName, config.randomTotemSize, config.randomHideTotemIcon = BBP.GetRandomTotemAttributes()
+            config.randomTotemIcon, config.randomTotemColor, config.totemIsImportant, config.randomTotemName, config.randomTotemSize, config.randomHideTotemIcon, config.randomTotemIconOnly, config.randomTotemHideHp = BBP.GetRandomTotemAttributes()
         end
 
         BBP.ApplyTotemAttributes(frame, config.randomTotemIcon, nil, nil, config.randomTotemSize, config.randomHideTotemIcon, guid)
@@ -302,7 +316,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
                 frame.glowTexture:Hide()
             end
         end
-        if config.totemIndicatorHideHealthBar then
+        if config.totemIndicatorHideHealthBar or config.randomTotemHideHp or config.randomTotemIconOnly then
             if not info.isTarget then
                 frame.healthBar:SetAlpha(0)
                 frame.selectionHighlight:SetAlpha(0)
@@ -344,16 +358,28 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
                 frame.animationGroup:Stop()
             end
         end
-        if config.totemIndicatorHideHealthBar or npcData.hideHp then
-            if not info.isTarget then
+        if config.totemIndicatorHideHealthBar or npcData.hideHp or npcData.iconOnly then
+            if npcData.iconOnly then
                 frame.healthBar:SetAlpha(0)
                 frame.selectionHighlight:SetAlpha(0)
             else
-                frame.healthBar:SetAlpha(1)
-                if not config.hideTargetHighlight then
-                    frame.selectionHighlight:SetAlpha(0.22)
+                if not info.isTarget then
+                    frame.healthBar:SetAlpha(0)
+                    frame.selectionHighlight:SetAlpha(0)
+                else
+                    frame.healthBar:SetAlpha(1)
+                    if not config.hideTargetHighlight then
+                        frame.selectionHighlight:SetAlpha(0.22)
+                    end
                 end
             end
+        -- else
+        --     if npcData.widthOn and npcData.hpWidth then
+        --         frame.healthBar:ClearPoint("RIGHT")
+        --         frame.healthBar:ClearPoint("LEFT")
+        --         frame.healthBar:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth, 0)
+        --         frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth,0)
+        --     end
         end
     else
         config.totemColorRGB = nil
@@ -363,14 +389,24 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
     end
 
     frame.totemIndicator:ClearAllPoints()
-    if config.totemIndicatorHideNameAndShiftIconDown then
-        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, yPosAdjustment)
-        frame.name:SetText("")
-        if frame.fakeName then
-            frame.fakeName:SetText("")
+    local iconOnlyMode = (npcData and npcData.iconOnly or config.randomTotemIconOnly)
+    if config.totemIndicatorHideNameAndShiftIconDown or iconOnlyMode then
+        if iconOnlyMode then
+            frame.totemIndicator:SetPoint("CENTER", frame, "CENTER", config.totemIndicatorXPos, config.totemIndicatorYPos)
+            frame.name:SetText("")
+            if frame.fakeName then
+                frame.fakeName:SetText("")
+            end
+        else
+            frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, yPosAdjustment)
+            frame.name:SetText("")
+            if frame.fakeName then
+                frame.fakeName:SetText("")
+            end
         end
     elseif config.nameplateResourceOnTarget == "1"  and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
-        local resourceFrame = frame:GetParent().driverFrame.classNamePlateMechanicFrame
+        local resourceFrame = resourceFrames[playerClass]
+        if not resourceFrame or resourceFrame:IsForbidden() then return end
         frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), resourceFrame or totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     else
         frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
