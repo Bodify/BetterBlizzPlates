@@ -857,7 +857,7 @@ local function ResetNameplates()
     BetterBlizzPlatesDB.nameplateShowFriendlyTotems = "0"
 
     BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = big and 10.8 or 4
-    BetterBlizzPlatesDB.castBarHeight = 16--big and 18.8 or 8
+    BetterBlizzPlatesDB.castBarHeight = BetterBlizzPlatesDB.classicNameplates and 10 or 16--big and 18.8 or 8
     BetterBlizzPlatesDB.largeNameplates = big and true or false
 
     SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
@@ -1923,8 +1923,8 @@ end
 
 function BBP.ResetToDefaultHeight(slider)
     if BetterBlizzPlatesDB.classicNameplates then
-        slider:SetValue(11)
-        BetterBlizzPlatesDB.castBarHeight = 11
+        slider:SetValue(10)
+        BetterBlizzPlatesDB.castBarHeight = 10
     else
         slider:SetValue(16)
         BetterBlizzPlatesDB.castBarHeight = 16
@@ -2644,6 +2644,7 @@ local function CreateBetterClassicCastbarBorders(frame)
     -- Helper function to create borders
     local function CreateBorder(frame, textureLeft, textureCenter, textureRight, yPos)
         local border = CreateFrame("Frame", nil, frame.CastBar)
+        border:SetFrameStrata("HIGH")
         local left = border:CreateTexture(nil, "OVERLAY")
         left:SetTexture(textureLeft)
         left:SetPoint("BOTTOMLEFT", frame.CastBar, "BOTTOMLEFT", -21, yPos)
@@ -2675,7 +2676,7 @@ local function CreateBetterClassicCastbarBorders(frame)
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderLeft",
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderCenter",
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderRight",
-            -2
+            -3
         )
         frame.CastBar.Icon:SetParent(frame.CastBar)
         frame.CastBar.Icon:SetDrawLayer("OVERLAY", 7)
@@ -2690,7 +2691,7 @@ local function CreateBetterClassicCastbarBorders(frame)
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleLeft",
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleCenter",
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleRight",
-            -10
+            -11
         )
     end
     frame.CastBar.bbpCastUninterruptibleBorder.center:SetWidth(width - 40 + levelFrameAdjustment)
@@ -2734,7 +2735,7 @@ local function CreateBetterClassicCastbarBorders(frame)
     --     frame.bbpClassicCastbarHook = true
     -- end
 
-    frame.CastBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or 11)
+    frame.CastBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or 10)
 
     if not frame.CastBar.eventsHooked then
         frame.CastBar:HookScript("OnShow", UpdateBorders)
@@ -2747,7 +2748,7 @@ local function CreateBetterClassicCastbarBorders(frame)
             if self.changing or self:IsForbidden() then return end
             self.changing = true
             self:ClearAllPoints()
-            self:SetPoint("RIGHT", frame.CastBar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos-2, BetterBlizzPlatesDB.castBarIconYPos+1)
+            self:SetPoint("RIGHT", frame.CastBar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos-2, BetterBlizzPlatesDB.castBarIconYPos)
             --borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
             self.changing = false
         end)
@@ -2815,7 +2816,7 @@ local function CreateBetterCastbarText(frame)
         frame.CastBar.castText = frame.CastBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.CastBar.castText:SetText("")
         frame.CastBar.castText:SetDrawLayer("OVERLAY", 7)
-        frame.CastBar.castText:SetPoint("CENTER", frame.CastBar, "CENTER", 0, BetterBlizzPlatesDB.classicNameplates and 1.5 or 0)
+        frame.CastBar.castText:SetPoint("CENTER", frame.CastBar, "CENTER", 0, BetterBlizzPlatesDB.classicNameplates and 0.5 or 0)
         BBP.SetFontBasedOnOption(frame.CastBar.castText, BetterBlizzPlatesDB.classicNameplates and 8 or 10, "THINOUTLINE")
         frame.CastBar.castText:SetTextColor(1, 1, 1)
         frame.CastBar.castText:SetJustifyH("CENTER") -- Horizontal alignment
@@ -2937,7 +2938,7 @@ local function CreateBetterRetailCastbar(frame)
         end
 
         if not self.noInterruptColor and not self.delayedInterruptColor then
-            self:SetStatusBarColor(1,1,1)
+            --self:SetStatusBarColor(1,1,1)
             local spellName, spellID, notInterruptible, endTime
             local _
             local channel = false

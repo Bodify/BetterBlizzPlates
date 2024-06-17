@@ -78,7 +78,7 @@ local function ResetCastbarAfterFadeout(frame, unitToken)
 
         --local borderShieldSize = showCastBarIconWhenNoninterruptible and (castBarIconScale + 0.3) or castBarIconScale
 
-        castBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or (BetterBlizzPlatesDB.classicNameplates and 12 or 16))
+        castBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or (BetterBlizzPlatesDB.classicNameplates and 10 or 16))
         castBar.Icon:SetScale(castBarIconScale)
         castBar.Spark:SetSize(4, castBarHeight + 5)
         castBar.castText:SetScale(castBarTextScale)
@@ -133,13 +133,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
     end
 
-    castBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or (BetterBlizzPlatesDB.classicNameplates and 12 or 16))
-
-    if not BetterBlizzPlatesDB.classicNameplates then
-        if event == "UNIT_SPELLCAST_CHANNEL_START" or event == "UNIT_SPELLCAST_START" then
-            castBar:SetStatusBarColor(1, 1, 1)
-        end
-    end
+    castBar:SetHeight(castBarHeight)
 
     local spellName, spellID, notInterruptible, endTime
     local casting, channeling
@@ -212,7 +206,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         frame.CastBar.castText = frame.CastBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.CastBar.castText:SetText("")
         frame.CastBar.castText:SetDrawLayer("OVERLAY", 7)
-        frame.CastBar.castText:SetPoint("CENTER", frame.CastBar, "CENTER", 0, BetterBlizzPlatesDB.classicNameplates and 1 or 0)
+        frame.CastBar.castText:SetPoint("CENTER", frame.CastBar, "CENTER", 0, BetterBlizzPlatesDB.classicNameplates and 0.5 or 0)
         BBP.SetFontBasedOnOption(frame.CastBar.castText, BetterBlizzPlatesDB.classicNameplates and 8 or 10, "THINOUTLINE")
         frame.CastBar.castText:SetTextColor(1, 1, 1)
         frame.CastBar.castText:SetJustifyH("CENTER") -- Horizontal alignment
@@ -619,13 +613,13 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                     end
                     frame.CastBar.interruptedBy = true
                     frame.CastBar.castText:SetText(string.format("|c%s[%s]|r", colorStr, name))
-                    local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
-                    local castBarTexture = frame.CastBar:GetStatusBarTexture()
-                    local castHighlighter = BetterBlizzPlatesDB.castBarInterruptHighlighter
-                    if castBarTexture and not useCustomCastbarTexture and castHighlighter then
-                        castBarTexture:SetDesaturated(false)
-                        frame.CastBar:SetStatusBarColor(1,1,1)
-                    end
+                    -- local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
+                    -- local castBarTexture = frame.CastBar:GetStatusBarTexture()
+                    -- local castHighlighter = BetterBlizzPlatesDB.castBarInterruptHighlighter
+                    -- if castBarTexture and not useCustomCastbarTexture and castHighlighter and not BetterBlizzPlatesDB.classicNameplates then
+                    --     castBarTexture:SetDesaturated(false)
+                    --     frame.CastBar:SetStatusBarColor(1,1,1)
+                    -- end
 
                     local castbarQuickHide = BetterBlizzPlatesDB.castbarQuickHide
                     if castbarQuickHide then
@@ -783,6 +777,10 @@ hooksecurefunc("CastingBarFrame_OnEvent", function(self, event, ...)
             spellName, _, _, _, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(self.unit)
         elseif UnitChannelInfo(self.unit) then
             spellName, _, _, _, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
+        end
+
+        if not BetterBlizzPlatesDB.classicNameplates then
+            frame.CastBar:SetStatusBarColor(1, 1, 1)
         end
 
         if frame.CastBar.castText and spellName then

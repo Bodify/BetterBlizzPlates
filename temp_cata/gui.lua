@@ -3264,9 +3264,11 @@ local function guiGeneralTab()
         if self:GetChecked() then
             BetterBlizzPlatesDB.nameplateEnemyWidth = 128
             BetterBlizzPlatesDB.nameplateFriendlyWidth = 128
+            BetterBlizzPlatesDB.castBarHeight = 10
         else
             BetterBlizzPlatesDB.nameplateEnemyWidth = 110
             BetterBlizzPlatesDB.nameplateFriendlyWidth = 110
+            BetterBlizzPlatesDB.castBarHeight = 16
         end
         if not InCombatLockdown() then
             C_NamePlate.SetNamePlateFriendlySize(BetterBlizzPlatesDB.nameplateFriendlyWidth, 32)--friendlyHeight)
@@ -5665,8 +5667,8 @@ local function guiCastbar()
     enableCastbarCustomization:HookScript("OnClick", function(self)
         if self:GetChecked() then
             local classic = BetterBlizzPlatesDB.classicNameplates
-            castBarHeight:SetValue(classic and 11 or 16)
-            BetterBlizzPlatesDB.castBarHeight = classic and 11 or 16
+            castBarHeight:SetValue(classic and 10 or 16)
+            BetterBlizzPlatesDB.castBarHeight = classic and 10 or 16
         end
     end)
 
