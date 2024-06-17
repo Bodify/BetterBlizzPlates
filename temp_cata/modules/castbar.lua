@@ -633,7 +633,7 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                         frame.CastBar:Show()
 
                         if nameplateResourceUnderCastbar then
-                            BBP.UpdateNamplateResourcePositionForCasting(nameplate)
+                            BBP.UpdateNameplateResourcePositionForCasting(nameplate)
                         end
 
                         C_Timer.After(0.5, function()
@@ -943,7 +943,7 @@ hooksecurefunc("CastingBarFrame_OnEvent", function(self, event, ...)
                     frame.CastBar:Hide()
                     -- if BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
                     --     if UnitIsUnit(self.unit, "target") then
-                    --         BBP.UpdateNamplateResourcePositionForCasting(nameplate, true)
+                    --         BBP.UpdateNameplateResourcePositionForCasting(nameplate, true)
                     --     end
                     -- end
                 end
@@ -963,7 +963,7 @@ hooksecurefunc("CastingBarFrame_OnEvent", function(self, event, ...)
         --     C_Timer.After(0.6, function()
         --         if frame and frame.unit then
         --             if UnitIsUnit(frame.unit, "target") then
-        --                 BBP.UpdateNamplateResourcePositionForCasting(nameplate)
+        --                 BBP.UpdateNameplateResourcePositionForCasting(nameplate)
         --             end
         --         end
         --     end)

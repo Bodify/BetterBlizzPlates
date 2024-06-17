@@ -3768,13 +3768,13 @@ local function HookNameplateCastbarHide(frame)
     -- if not frame.CastBar.hideHooked then
     --     -- hooksecurefunc(frame.CastBar, "Hide", function(self)
     --     --     if UnitIsUnit(frame.unit, "target") then
-    --     --         BBP.UpdateNamplateResourcePositionForCasting(nameplate, true)
+    --     --         BBP.UpdateNameplateResourcePositionForCasting(nameplate, true)
     --     --     end
     --     -- end)--probably remove, stays for now bodify
     --     frame.CastBar:HookScript("OnHide", function()
     --         if not frame.unit then return end
     --         if UnitIsUnit(frame.unit, "target") then
-    --             BBP.UpdateNamplateResourcePositionForCasting(nameplate, true)
+    --             BBP.UpdateNameplateResourcePositionForCasting(nameplate, true)
     --         end
     --     end)
     --     frame.CastBar.hideHooked = true
