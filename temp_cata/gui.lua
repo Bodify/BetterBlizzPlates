@@ -166,6 +166,20 @@ StaticPopupDialogs["BBP_UPDATE_NOTIF"] = {
     hideOnEscape = true,
 }
 
+StaticPopupDialogs["BBP_RETAILORCLASSIC"] = {
+    text = "Welcome to Better|cff00c0ffBlizz|rPlates\n\nWould you like to keep the retail nameplate look or reload and switch to classic nameplates?",
+    button1 = "Keep Retail",
+    button2 = "Switch to Classic",
+    OnCancel = function()
+        BetterBlizzPlatesDB.classicNameplates = true
+        BetterBlizzPlatesDB.nameplateEnemyWidth = 128
+        BetterBlizzPlatesDB.nameplateFriendlyWidth = 128
+        ReloadUI()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+}
 
 ------------------------------------------------------------
 -- GUI Creation Functions

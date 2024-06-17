@@ -779,6 +779,7 @@ local function FetchAndSaveValuesOnFirstLogin()
             if not C_AddOns.IsAddOnLoaded("SkillCapped") then
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates first run. Thank you for trying out my AddOn. Access settings with /bbp")
             end
+            StaticPopup_Show("BBP_RETAILORCLASSIC")
             BetterBlizzPlatesDB.hasSaved = true
         end)
     else
