@@ -159,8 +159,8 @@ StaticPopupDialogs["BBP_TOTEMLIST_RESET"] = {
 }
 
 StaticPopupDialogs["BBP_UPDATE_NOTIF"] = {
-    text = "Tweaked a lof things with castbars.\nYou might have to re-do your custom castbar height if it looks wrong.",
-    button1 = "Yes",
+    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.0.5:\n\nTweaked a lot of settings. Castbars especially.\nYou might have to re-do your custom castbar height if it looks wrong.\n\nAs always please report bugs so I can fix.",
+    button1 = "OK",
     timeout = 0,
     whileDead = true,
     hideOnEscape = true,

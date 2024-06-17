@@ -9,6 +9,7 @@
 ### New Stuff
 - **Totem Indicator:** Width settings for individual npcs!
 - **Hide Level Frame Setting:** Now completely hides the level frame on classic nameplates and extends the health bar.
+- **Nameplate Auras:** Added stack number like on retail.
 ### Bugfixes
 - **Castbar Settings:** "Show who interrupted" setting now working in Cata.
 - **Classic Nameplates:** Lot of tweaks.

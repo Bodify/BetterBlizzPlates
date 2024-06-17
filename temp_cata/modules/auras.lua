@@ -1974,6 +1974,12 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
             aura.Cooldown = CreateFrame("Cooldown", nil, aura, "CooldownFrameTemplate")
             aura.Cooldown:SetAllPoints(true)
 
+            -- Create FontString for aura stacks
+            aura.CountFrame = CreateFrame("Frame", nil, aura)
+            aura.CountFrame.Count = aura.CountFrame:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+            aura.CountFrame.Count:SetPoint("CENTER", aura, "BOTTOMRIGHT", -1, 4)
+            aura.CountFrame.Count:SetFont("fonts/arialn.ttf", 11, "THINOUTLINE")
+
             frame.BuffFrame.auras[auraIndex] = aura
         end
 
@@ -1993,6 +1999,15 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
             aura.Cooldown:SetReverse(true)
         else
             aura.Cooldown:Hide()
+        end
+
+        -- Update aura stacks
+        if auraInfo.count and auraInfo.count > 1 then
+            aura.CountFrame.Count:SetText(auraInfo.count)
+            aura.CountFrame.Count:Show()
+            aura.CountFrame:SetScale(BetterBlizzPlatesDB.nameplateAuraCountScale)
+        else
+            aura.CountFrame.Count:Hide()
         end
     end
 
