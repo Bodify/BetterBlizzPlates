@@ -186,19 +186,19 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 castBar.Background:SetDesaturated(true)
                 castBar.Background:SetTexture(bgTexture)
                 castBar.Background:SetVertexColor(unpack(bgColor))
-                end
             end
-            if not castBarRecolor then
-                castBarTexture:SetDesaturated(true)
-                if notInterruptible then
-                    castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
-                elseif casting then
-                    if not frame.emphasizedCast then
-                        castBar:SetStatusBarColor(unpack(castBarCastColor))
-                elseif channeling then
-                    if not frame.emphasizedCast then
-                        castBar:SetStatusBarColor(unpack(castBarChanneledColor))
-                    end
+        end
+        if not castBarRecolor then
+            castBarTexture:SetDesaturated(true)
+            if notInterruptible then
+                castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
+            elseif casting then
+                if not frame.emphasizedCast then
+                    castBar:SetStatusBarColor(unpack(castBarCastColor))
+                end
+            elseif channeling then
+                if not frame.emphasizedCast then
+                    castBar:SetStatusBarColor(unpack(castBarChanneledColor))
                 end
             end
         end

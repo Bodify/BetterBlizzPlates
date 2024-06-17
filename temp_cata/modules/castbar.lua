@@ -179,26 +179,26 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         castBar:SetStatusBarTexture(texturePath)
         if castBarTexture then
             castBarTexture:SetDesaturated(true)
-            -- if changeBgTexture then
-            --     local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
-            --     castBar.Background:SetDesaturated(true)
-            --     castBar.Background:SetTexture(bgTexture)
-            --     castBar.Background:SetVertexColor(unpack(bgColor))
-            --     end
+            if changeBgTexture and castBar.Background then
+                local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
+                castBar.Background:SetDesaturated(true)
+                castBar.Background:SetTexture(bgTexture)
+                castBar.Background:SetVertexColor(unpack(bgColor))
             end
-            --if not castBarRecolor then
-                castBarTexture:SetDesaturated(true)
-                if notInterruptible then
-                    castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
-                elseif casting then
-                    if not frame.emphasizedCast then
-                        castBar:SetStatusBarColor(unpack(castBarCastColor))
-                elseif channeling then
-                    if not frame.emphasizedCast then
-                        castBar:SetStatusBarColor(unpack(castBarChanneledColor))
-                    end
+        end
+        if not castBarRecolor then
+            castBarTexture:SetDesaturated(true)
+            if notInterruptible then
+                castBar:SetStatusBarColor(0.4,0.4,0.4)
+            elseif casting then
+                if not frame.emphasizedCast then
+                    castBar:SetStatusBarColor(1, 0.84, 0.20)
                 end
-            --end
+            elseif channeling then
+                if not frame.emphasizedCast then
+                    castBar:SetStatusBarColor(0.48, 1, 0.29)
+                end
+            end
         end
     end
 
@@ -779,10 +779,6 @@ hooksecurefunc("CastingBarFrame_OnEvent", function(self, event, ...)
             spellName, _, _, _, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
         end
 
-        if not BetterBlizzPlatesDB.classicNameplates then
-            frame.CastBar:SetStatusBarColor(1, 1, 1)
-        end
-
         if frame.CastBar.castText and spellName then
             frame.CastBar.castText:SetText(spellName)
         end
@@ -853,6 +849,66 @@ hooksecurefunc("CastingBarFrame_OnEvent", function(self, event, ...)
                     self.hooked = true
                 end
                 useCustomCastbarTextureHooked = true
+            elseif not useCustomCastbarTexture then
+                if not BetterBlizzPlatesDB.classicNameplates and self.bbpBorderShield then
+                    frame.CastBar:SetStatusBarColor(1,1,1)
+                    local texture
+                    if self.notInterruptible then
+                        texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Uninterruptable"
+                        self.bbpBorderShield:Show()
+                    elseif self.channeling then
+                        texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
+                        self.bbpBorderShield:Hide()
+                    elseif self.interruptedColor then
+                        texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted"
+                        self.bbpBorderShield:Hide()
+                    else
+                        texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
+                        self.bbpBorderShield:Hide()
+                    end
+            
+                    if not self.noInterruptColor and not self.delayedInterruptColor then
+                        --self:SetStatusBarColor(1,1,1)
+                        local spellName, spellID, notInterruptible, endTime
+                        local _
+                        local channel = false
+            
+                        if UnitCastingInfo(self.unit) then
+                            spellName, _, _, _, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(self.unit)
+                        elseif UnitChannelInfo(self.unit) then
+                            spellName, _, _, _, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
+                            channel = true
+                        end
+            
+                        if spellName then
+                            self.castText:SetText(spellName)
+                            if not self.notInterruptible then
+                                if channel then
+                                    texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
+                                else
+                                    texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
+                                end
+                            end
+                        elseif not self.interruptedColor then
+                            --self.castText:SetText("")
+                            if not self.notInterruptible then
+                                if channel then
+                                    texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
+                                else
+                                    texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
+                                end
+                            end
+                        end
+                    end
+            
+                    if self.castText:GetText() == "Interrupted" then
+                        texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted"
+                    end
+            
+                    self:SetStatusBarTexture(texture)
+                    --self:SetTexture(texture)
+                    self:GetStatusBarTexture():SetDrawLayer("BORDER", 0)  -- Ensure the filling is between frame and background
+                end
             end
 
             -- if BetterBlizzPlatesDB.normalCastbarForEmpoweredCasts then
@@ -902,6 +958,66 @@ hooksecurefunc("CastingBarFrame_OnEvent", function(self, event, ...)
             --     end
             --     self.hooked = true
             -- end
+        else
+            if not BetterBlizzPlatesDB.classicNameplates and self.bbpBorderShield then
+                frame.CastBar:SetStatusBarColor(1,1,1)
+                local texture
+                if self.notInterruptible then
+                    texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Uninterruptable"
+                    self.bbpBorderShield:Show()
+                elseif self.channeling then
+                    texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
+                    self.bbpBorderShield:Hide()
+                elseif self.interruptedColor then
+                    texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted"
+                    self.bbpBorderShield:Hide()
+                else
+                    texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
+                    self.bbpBorderShield:Hide()
+                end
+
+                if not self.noInterruptColor and not self.delayedInterruptColor then
+                    --self:SetStatusBarColor(1,1,1)
+                    local spellName, spellID, notInterruptible, endTime
+                    local _
+                    local channel = false
+
+                    if UnitCastingInfo(self.unit) then
+                        spellName, _, _, _, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(self.unit)
+                    elseif UnitChannelInfo(self.unit) then
+                        spellName, _, _, _, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
+                        channel = true
+                    end
+
+                    if spellName then
+                        self.castText:SetText(spellName)
+                        if not self.notInterruptible then
+                            if channel then
+                                texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
+                            else
+                                texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
+                            end
+                        end
+                    elseif not self.interruptedColor then
+                        --self.castText:SetText("")
+                        if not self.notInterruptible then
+                            if channel then
+                                texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
+                            else
+                                texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
+                            end
+                        end
+                    end
+                end
+
+                if self.castText:GetText() == "Interrupted" then
+                    texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted"
+                end
+
+                self:SetStatusBarTexture(texture)
+                --self:SetTexture(texture)
+                self:GetStatusBarTexture():SetDrawLayer("BORDER", 0)  -- Ensure the filling is between frame and background
+            end
         end
 
         --local interruptedCastbar = false
@@ -924,12 +1040,13 @@ hooksecurefunc("CastingBarFrame_OnEvent", function(self, event, ...)
                     frame.CastBar.castText:SetText("Interrupted")
                 end
             end
+            --frame.CastBar:SetStatusBarColor(0,0,1)
             --frame.CastBar.interruptedColor = true
-            local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
-            local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
-            if (castBarRecolor or useCustomCastbarTexture) and frame.CastBar then
-                frame.CastBar:SetStatusBarColor(1,0,0)
-            end
+            -- local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
+            -- local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
+            -- if (castBarRecolor or useCustomCastbarTexture) and frame.CastBar then
+            --     frame.CastBar:SetStatusBarColor(1,0,0)
+            -- end
             -- if BetterBlizzPlatesDB.castBarInterruptHighlighter then
             --     frame.CastBar:SetStatusBarColor(1,1,1)
             -- end
@@ -982,7 +1099,7 @@ hooksecurefunc("CastingBarFrame_FinishSpell", function(self, event, ...)
         local nameplate, frame = BBP.GetSafeNameplate(self.unit)
         if not frame then return end
         frame.CastBar.interruptedColor = false
-        if not BetterBlizzPlatesDB.classicNameplates then
+        if not BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.useCustomCastbarTexture then
             frame.CastBar:SetStatusBarTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard")
         end
     end

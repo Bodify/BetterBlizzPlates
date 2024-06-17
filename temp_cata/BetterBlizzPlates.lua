@@ -2763,7 +2763,7 @@ local function CreateBetterClassicCastbarBorders(frame)
         frame.CastBar:SetPoint("TOP", frame, "BOTTOM", 0, -5)
     else
         frame.CastBar:ClearAllPoints()
-        frame.CastBar:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 17, -5)
+        frame.CastBar:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 17, -8)
         frame.CastBar:SetWidth(width - 25 + levelFrameAdjustment)
     end
 end
@@ -2922,62 +2922,62 @@ local function CreateBetterRetailCastbar(frame)
 
     -- Update the filling texture based on cast type
     local function UpdateCastBarTextures(self)
-        local texture
-        if self.notInterruptible then
-            texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Uninterruptable"
-            self.bbpBorderShield:Show()
-        elseif self.channeling then
-            texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
-            self.bbpBorderShield:Hide()
-        elseif self.interruptedColor then
-            texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted"
-            self.bbpBorderShield:Hide()
-        else
-            texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
-            self.bbpBorderShield:Hide()
-        end
+        -- local texture
+        -- if self.notInterruptible then
+        --     texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Uninterruptable"
+        --     self.bbpBorderShield:Show()
+        -- elseif self.channeling then
+        --     texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
+        --     self.bbpBorderShield:Hide()
+        -- elseif self.interruptedColor then
+        --     texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted"
+        --     self.bbpBorderShield:Hide()
+        -- else
+        --     texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
+        --     self.bbpBorderShield:Hide()
+        -- end
 
-        if not self.noInterruptColor and not self.delayedInterruptColor then
-            --self:SetStatusBarColor(1,1,1)
-            local spellName, spellID, notInterruptible, endTime
-            local _
-            local channel = false
+        -- if not self.noInterruptColor and not self.delayedInterruptColor then
+        --     --self:SetStatusBarColor(1,1,1)
+        --     local spellName, spellID, notInterruptible, endTime
+        --     local _
+        --     local channel = false
 
-            if UnitCastingInfo(self.unit) then
-                spellName, _, _, _, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(self.unit)
-            elseif UnitChannelInfo(self.unit) then
-                spellName, _, _, _, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
-                channel = true
-            end
+        --     if UnitCastingInfo(self.unit) then
+        --         spellName, _, _, _, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(self.unit)
+        --     elseif UnitChannelInfo(self.unit) then
+        --         spellName, _, _, _, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
+        --         channel = true
+        --     end
 
-            if spellName then
-                self.castText:SetText(spellName)
-                if not self.notInterruptible then
-                    if channel then
-                        texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
-                    else
-                        texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
-                    end
-                end
-            elseif not self.interruptedColor then
-                --self.castText:SetText("")
-                if not self.notInterruptible then
-                    if channel then
-                        texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
-                    else
-                        texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
-                    end
-                end
-            end
-        end
+        --     if spellName then
+        --         self.castText:SetText(spellName)
+        --         if not self.notInterruptible then
+        --             if channel then
+        --                 texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
+        --             else
+        --                 texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
+        --             end
+        --         end
+        --     elseif not self.interruptedColor then
+        --         --self.castText:SetText("")
+        --         if not self.notInterruptible then
+        --             if channel then
+        --                 texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
+        --             else
+        --                 texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
+        --             end
+        --         end
+        --     end
+        -- end
 
-        if self.castText:GetText() == "Interrupted" then
-            texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted"
-        end
+        -- if self.castText:GetText() == "Interrupted" then
+        --     texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted"
+        -- end
 
-        self:SetStatusBarTexture(texture)
-        --self:SetTexture(texture)
-        self:GetStatusBarTexture():SetDrawLayer("BORDER", 0)  -- Ensure the filling is between frame and background
+        -- self:SetStatusBarTexture(texture)
+        -- --self:SetTexture(texture)
+        -- self:GetStatusBarTexture():SetDrawLayer("BORDER", 0)  -- Ensure the filling is between frame and background
     end
 
     -- if not frame.CastBar.castText then

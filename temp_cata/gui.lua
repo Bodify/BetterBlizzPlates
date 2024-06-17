@@ -174,6 +174,7 @@ StaticPopupDialogs["BBP_RETAILORCLASSIC"] = {
         BetterBlizzPlatesDB.classicNameplates = true
         BetterBlizzPlatesDB.nameplateEnemyWidth = 128
         BetterBlizzPlatesDB.nameplateFriendlyWidth = 128
+        BetterBlizzPlatesDB.castBarHeight = 10
         ReloadUI()
     end,
     timeout = 0,
@@ -3300,7 +3301,7 @@ local function guiGeneralTab()
 
     local smallPetsInPvP = CreateCheckbox("smallPetsInPvP", "Small Pets", BetterBlizzPlates)
     smallPetsInPvP:SetPoint("LEFT", hideTargetHighlight.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(smallPetsInPvP, "Small Pets in PvP", "Enable to make all npcs in arena have tiny healthbars.")
+    CreateTooltipTwo(smallPetsInPvP, "Small Pets in PvP", "Enable to make all npcs in arena have smaller healthbars.")
 
     local nameplateMinScale = CreateSlider(BetterBlizzPlates, "Nameplate Size", 0.5, 2, 0.01, "nameplateMinScale")
     nameplateMinScale:SetPoint("TOPLEFT", hideTargetHighlight, "BOTTOMLEFT", 12, -10)
