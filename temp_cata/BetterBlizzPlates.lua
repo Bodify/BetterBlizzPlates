@@ -1560,8 +1560,10 @@ local function SetCVarsOnLogin()
         SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
         SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
         SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
-        SetCVar("nameplateSelectedAlpha", BetterBlizzPlatesDB.nameplateSelectedAlpha)
-        SetCVar("nameplateNotSelectedAlpha", BetterBlizzPlatesDB.nameplateNotSelectedAlpha)
+        if BetterBlizzPlatesDB.nameplateSelectedAlpha then
+            SetCVar("nameplateSelectedAlpha", BetterBlizzPlatesDB.nameplateSelectedAlpha)
+            SetCVar("nameplateNotSelectedAlpha", BetterBlizzPlatesDB.nameplateNotSelectedAlpha)
+        end
 
         if BetterBlizzPlatesDB.nameplateMotion then
             SetCVar("nameplateMotion", BetterBlizzPlatesDB.nameplateMotion)
