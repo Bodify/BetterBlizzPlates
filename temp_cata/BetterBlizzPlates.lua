@@ -131,6 +131,8 @@ local defaultSettings = {
     arenaSpecYPos = 0,
     arenaIdAnchor = "TOP",
     arenaSpecAnchor = "TOP",
+    arenaIndicatorIDColor = false,
+    arenaIndicatorIDColorRGB = {1, 0.819607, 0, 1},
     -- Absorb Indicator
     absorbIndicatorTestMode = false,
     absorbIndicator = false,
@@ -724,6 +726,9 @@ local function CVarFetcher()
         BetterBlizzPlatesDB.nameplateMaxAlpha = GetCVar("nameplateMaxAlpha")
         BetterBlizzPlatesDB.nameplateMaxAlphaDistance = GetCVar("nameplateMaxAlphaDistance")
         BetterBlizzPlatesDB.nameplateOccludedAlphaMult = GetCVar("nameplateOccludedAlphaMult")
+        BetterBlizzPlatesDB.nameplateSelectedAlpha = GetCVar("nameplateSelectedAlpha")
+        BetterBlizzPlatesDB.nameplateNotSelectedAlpha = GetCVar("nameplateNotSelectedAlpha")
+
         BetterBlizzPlatesDB.nameplateMotion = GetCVar("nameplateMotion")
 
         BetterBlizzPlatesDB.ShowClassColorInNameplate = GetCVar("ShowClassColorInNameplate")
@@ -761,7 +766,7 @@ end
 local function FetchAndSaveValuesOnFirstLogin()
     if BBP.variablesLoaded then
         -- collect some cvars added at a later time
-        if not BetterBlizzPlatesDB.nameplateMinAlpha or not BetterBlizzPlatesDB.nameplateShowFriendlyMinions or not BetterBlizzPlatesDB.nameplateSelfWidth or not BetterBlizzPlatesDB.nameplateResourceOnTarget then
+        if not BetterBlizzPlatesDB.nameplateMinAlpha or not BetterBlizzPlatesDB.nameplateShowFriendlyMinions or not BetterBlizzPlatesDB.nameplateSelectedAlpha then
             CVarFetcher()
         end
 
@@ -844,6 +849,9 @@ local function ResetNameplates()
     BetterBlizzPlatesDB.nameplateMaxAlpha = 1.0
     BetterBlizzPlatesDB.nameplateMaxAlphaDistance = 40
     BetterBlizzPlatesDB.nameplateOccludedAlphaMult = 0.4
+    BetterBlizzPlatesDB.nameplateShowAll = "1"
+    BetterBlizzPlatesDB.nameplateSelectedAlpha = "1"
+    BetterBlizzPlatesDB.nameplateNotSelectedAlpha = "0.5"
 
     BetterBlizzPlatesDB.nameplateShowEnemyGuardians = "1"
     BetterBlizzPlatesDB.nameplateShowEnemyMinions = "1"
@@ -856,8 +864,8 @@ local function ResetNameplates()
     BetterBlizzPlatesDB.nameplateShowFriendlyPets = "0"
     BetterBlizzPlatesDB.nameplateShowFriendlyTotems = "0"
 
-    BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = big and 10.8 or 4
-    BetterBlizzPlatesDB.castBarHeight = BetterBlizzPlatesDB.classicNameplates and 10 or 16--big and 18.8 or 8
+    BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 11
+    BetterBlizzPlatesDB.castBarHeight = classic and 10 or 16--big and 18.8 or 8
     BetterBlizzPlatesDB.largeNameplates = big and true or false
 
     SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
@@ -889,6 +897,7 @@ local function ResetNameplates()
     SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
     SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
     SetCVar('nameplateShowOnlyNames', "0")
+    SetCVar("nameplateShowAll", "1")
 
     ReloadUI()
 end
@@ -1551,6 +1560,9 @@ local function SetCVarsOnLogin()
         SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
         SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
         SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
+        SetCVar("nameplateSelectedAlpha", BetterBlizzPlatesDB.nameplateSelectedAlpha)
+        SetCVar("nameplateNotSelectedAlpha", BetterBlizzPlatesDB.nameplateNotSelectedAlpha)
+
         if BetterBlizzPlatesDB.nameplateMotion then
             SetCVar("nameplateMotion", BetterBlizzPlatesDB.nameplateMotion)
         end
@@ -1983,6 +1995,14 @@ function BBP.ResetToDefaultValue(slider, element)
             BetterBlizzPlatesDB.nameplateOccludedAlphaMult = default
             SetCVar("nameplateOccludedAlphaMult", default)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateOccludedAlphaMult set to "..default)
+        elseif element == "nameplateSelectedAlpha" then
+            BetterBlizzPlatesDB.nameplateSelectedAlpha = default
+            SetCVar("nameplateOccludedAlphaMult", default)
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateSelectedAlpha set to "..default)
+        elseif element == "nameplateNotSelectedAlpha" then
+            BetterBlizzPlatesDB.nameplateNotSelectedAlpha = default
+            SetCVar("nameplateNotSelectedAlpha", default)
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateNotSelectedAlpha set to "..default)
         elseif element == "nameplateResourceScale" then
             BetterBlizzPlatesDB.nameplateResourceScale = 0.7
         elseif element == "nameplateResourceXPos" then
@@ -2937,62 +2957,67 @@ local function CreateBetterRetailCastbar(frame)
 
     -- Update the filling texture based on cast type
     local function UpdateCastBarTextures(self)
-        -- local texture
-        -- if self.notInterruptible then
-        --     texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Uninterruptable"
-        --     self.bbpBorderShield:Show()
-        -- elseif self.channeling then
-        --     texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
-        --     self.bbpBorderShield:Hide()
-        -- elseif self.interruptedColor then
-        --     texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted"
-        --     self.bbpBorderShield:Hide()
-        -- else
-        --     texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
-        --     self.bbpBorderShield:Hide()
-        -- end
+        local texture
+        if self.notInterruptible then
+            texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Uninterruptable"
+            self.bbpBorderShield:Show()
+        elseif self.channeling then
+            texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
+            self.bbpBorderShield:Hide()
+        elseif self.interruptedColor then
+            texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted"
+            self.bbpBorderShield:Hide()
+        else
+            texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
+            self.bbpBorderShield:Hide()
+        end
 
-        -- if not self.noInterruptColor and not self.delayedInterruptColor then
-        --     --self:SetStatusBarColor(1,1,1)
-        --     local spellName, spellID, notInterruptible, endTime
-        --     local _
-        --     local channel = false
+        if not self.noInterruptColor and not self.delayedInterruptColor then
+            --self:SetStatusBarColor(1,1,1)
+            local spellName, spellID, notInterruptible, endTime
+            local _
+            local channel = false
 
-        --     if UnitCastingInfo(self.unit) then
-        --         spellName, _, _, _, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(self.unit)
-        --     elseif UnitChannelInfo(self.unit) then
-        --         spellName, _, _, _, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
-        --         channel = true
-        --     end
+            if UnitCastingInfo(self.unit) then
+                spellName, _, _, _, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(self.unit)
+            elseif UnitChannelInfo(self.unit) then
+                spellName, _, _, _, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
+                channel = true
+            end
 
-        --     if spellName then
-        --         self.castText:SetText(spellName)
-        --         if not self.notInterruptible then
-        --             if channel then
-        --                 texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
-        --             else
-        --                 texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
-        --             end
-        --         end
-        --     elseif not self.interruptedColor then
-        --         --self.castText:SetText("")
-        --         if not self.notInterruptible then
-        --             if channel then
-        --                 texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
-        --             else
-        --                 texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
-        --             end
-        --         end
-        --     end
-        -- end
+            if spellName then
+                self.castText:SetText(spellName)
+                if not self.notInterruptible then
+                    if channel then
+                        texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
+                    else
+                        texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
+                    end
+                end
+            elseif not self.interruptedColor then
+                --self.castText:SetText("")
+                if not self.notInterruptible then
+                    if channel then
+                        texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
+                    else
+                        texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
+                    end
+                end
+            end
+        end
 
-        -- if self.castText:GetText() == "Interrupted" then
-        --     texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted"
-        -- end
+        if self.castText:GetText() == "Interrupted" then
+            texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted"
+        end
 
-        -- self:SetStatusBarTexture(texture)
-        -- --self:SetTexture(texture)
-        -- self:GetStatusBarTexture():SetDrawLayer("BORDER", 0)  -- Ensure the filling is between frame and background
+        self:SetStatusBarTexture(texture)
+        --self:SetTexture(texture)
+        self:GetStatusBarTexture():SetDrawLayer("BORDER", 0)  -- Ensure the filling is between frame and background
+    end
+
+    if not BetterBlizzPlatesDB.useCustomCastbarTexture and not BetterBlizzPlatesDB.castBarRecolor then
+        frame.CastBar:SetStatusBarColor(1,1,1)
+        UpdateCastBarTextures(frame.CastBar)
     end
 
     -- if not frame.CastBar.castText then
@@ -3052,7 +3077,7 @@ local function CreateBetterRetailCastbar(frame)
     if not frame.bbpRetailCastbarHook then
         frame.CastBar:HookScript("OnUpdate", function(self)
             --UpdateCastBarIconSize(frame.CastBar)
-            UpdateCastBarTextures(self)
+            --UpdateCastBarTextures(self)
             UpdateSpark()
         end)
 
@@ -4247,7 +4272,7 @@ local function HandleNamePlateAdded(unit)
     if config.partyPointer then BBP.PartyPointer(frame) end
 
     -- Castbar customization
-    if config.enableCastbarCustomization then BBP.CustomizeCastbar(unit) end
+    if config.enableCastbarCustomization then BBP.CustomizeCastbar(frame, frame.unit) end
 
     -- Show Quest Indicator
     if config.questIndicator then BBP.QuestIndicator(frame) end
@@ -5181,9 +5206,9 @@ end)
 
 local function OnVariablesLoaded(self, event)
     if event == "VARIABLES_LOADED" then
-        if not BetterBlizzPlatesDB.nameplateShowFriendlyNPCs then
-            BetterBlizzPlatesDB.nameplateShowFriendlyNPCs = GetCVar("nameplateShowFriendlyNPCs")
-            BetterBlizzPlatesDB.nameplateShowAll = GetCVar("nameplateShowAll")
+        if not BetterBlizzPlatesDB.nameplateSelectedAlpha then
+            BetterBlizzPlatesDB.nameplateSelectedAlpha = GetCVar("nameplateSelectedAlpha")
+            BetterBlizzPlatesDB.nameplateNotSelectedAlpha = GetCVar("nameplateNotSelectedAlpha")
         end
         BBP.variablesLoaded = true
     elseif event == "TRAIT_CONFIG_UPDATED" or event == "PLAYER_TALENT_UPDATE" then

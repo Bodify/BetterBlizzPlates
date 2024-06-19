@@ -1,3 +1,15 @@
+# 1.5.2
+### Cataclysm
+#### New Stuff
+- **CVars:** Added `nameplateTargetAlpha` and `nameplateNonTargetAlpha` cvars to the CVar Control section.
+
+#### Bugfixes & Tweaks
+**Castbars:**
+- Fixed castbar changes intended for one nameplate applying to multiple nameplates.
+- Fixed emphasis colors.
+**Nameplate Auras:**
+- If "Default CD" is not checked, it will now not display CD numbers.
+
 # 1.5.1c:
 ### Retail:
 ### Bugfixes:

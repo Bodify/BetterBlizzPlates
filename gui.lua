@@ -7287,14 +7287,14 @@ local function guiCVarControl()
         cvarListener:RegisterEvent("CVAR_UPDATE")
         cvarListener:SetScript("OnEvent", function(self, event, cvarName, cvarValue)
             local checkedState = cvarValue == "1" or false
-            if cbCVars[cvarName] then
-                BetterBlizzPlatesDB[cvarName] = cvarValue
-                cbCVars[cvarName]:SetChecked(checkedState)
-            elseif sliderCVars[cvarName] then
-                BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
-                sliderCVars[cvarName]:SetValue(tonumber(cvarValue))
-            else
-                BetterBlizzPlatesDB[cvarName] = cvarValue
+            if cvarValue then
+                if cbCVars[cvarName] then
+                    BetterBlizzPlatesDB[cvarName] = cvarValue
+                    cbCVars[cvarName]:SetChecked(checkedState)
+                elseif sliderCVars[cvarName] then
+                    BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+                    sliderCVars[cvarName]:SetValue(tonumber(cvarValue))
+                end
             end
         end)
     end)

@@ -1571,50 +1571,7 @@ local function SetupBorderOnFrame(frame)
     end
 end
 
-
-
-function CustomBuffLayoutChildren2(container)
-    -- Settings and constants (simplify or adapt these based on your configuration settings)
-    local horizontalSpacing = 5
-    local verticalSpacing = -6 + 5
-    local maxBuffsPerRow = 1
-    local auraSize = 20
-    local containerWidth = container:GetWidth()
-    local rowWidth = 0
-    local numRows = 0
-
-    -- Sort and prepare the auras (assuming children are already filtered and sorted if needed)
-    table.sort(container.auras, function(a, b)
-        if not a.spellId or not b.spellId then
-            print("Error: Missing spellId in one of the auras", a.spellId, b.spellId)
-            return a < b
-        end
-        return a.spellId < b.spellId -- Simple sort by expiration time
-    end)
-
-    -- Layout calculation
-    local currentX = 0
-    local currentY = 0
-
-    for i, aura in ipairs(container.auras) do
-        if currentX + 1 > maxBuffsPerRow then  -- Check if the next aura will exceed the row width
-            currentX = 0  -- Reset to start of next row
-            currentY = currentY + (auraSize + verticalSpacing)  -- Move down to the next row
-            numRows = numRows + 1
-        end
-
-        -- Set the aura frame position
-        aura:ClearAllPoints()
-        aura:SetPoint("TOPLEFT", container, "TOPLEFT", currentX, currentY)
-
-        -- Update position for next aura
-        currentX = currentX + auraSize + horizontalSpacing
-    end
-end
-
-
-
-function CustomBuffLayoutChildren3(container, children, isEnemyUnit)
+function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
     -- Obtain the health bar details
     local healthBar = container:GetParent().healthBar
     local healthBarWidth = healthBar:GetWidth()
@@ -2035,6 +1992,8 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
                     cdText:SetScale(BetterBlizzPlatesDB.defaultNpAuraCdSize)
                 end
             end
+        else
+            aura.Cooldown:SetHideCountdownNumbers(true)
         end
     end
 
@@ -2088,7 +2047,5 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
     ProcessAuras("HELPFUL", isEnemyUnit)
     ProcessAuras("HARMFUL", isEnemyUnit)
 
-    CustomBuffLayoutChildren3(frame.BuffFrame, children, isEnemyUnit)
-
-    --CustomBuffLayoutChildren2(frame.BuffFrame)
+    CustomBuffLayoutChildrenCata(frame.BuffFrame, children, isEnemyUnit)
 end

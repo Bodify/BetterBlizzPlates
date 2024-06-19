@@ -1198,6 +1198,16 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         SetCVar("nameplateOccludedAlphaMult", value)
                         BetterBlizzPlatesDB.nameplateOccludedAlphaMult = value
                     end
+                elseif element == "nameplateSelectedAlpha" then
+                    if not BBP.checkCombatAndWarn() then
+                        SetCVar("nameplateSelectedAlpha", value)
+                        BetterBlizzPlatesDB.nameplateSelectedAlpha = value
+                    end
+                elseif element == "nameplateNotSelectedAlpha" then
+                    if not BBP.checkCombatAndWarn() then
+                        SetCVar("nameplateNotSelectedAlpha", value)
+                        BetterBlizzPlatesDB.nameplateNotSelectedAlpha = value
+                    end
                     -- Friendly name scale
                 elseif element == "friendlyNameScale" then
                     if not BetterBlizzPlatesDB.arenaIndicatorTestMode then
@@ -5186,6 +5196,35 @@ local function guiPositionAndScale()
     local arenaIndicatorTestMode2 = CreateCheckbox("arenaIndicatorTestMode", "Test", contentFrame)
     arenaIndicatorTestMode2:SetPoint("TOPLEFT", arenaSpecAnchorDropdown, "BOTTOMLEFT", 16, 8)
 
+    -- BBP.arenaIndicatorIDColor = CreateCheckbox("arenaIndicatorIDColor", "ID", contentFrame)
+    -- BBP.arenaIndicatorIDColor:SetPoint("LEFT", arenaIndicatorTestMode2.Text, "RIGHT", 0, 0)
+
+    -- local function OpenColorPicker()
+    --     local r, g, b = unpack(BetterBlizzPlatesDB.arenaIndicatorIDColorRGB or {1, 1, 1})
+
+    --     ColorPickerFrame:SetupColorPickerAndShow({
+    --         r = r, g = g, b = b,
+    --         swatchFunc = function()
+    --             local r, g, b = ColorPickerFrame:GetColorRGB()
+    --             BetterBlizzPlatesDB.arenaIndicatorIDColorRGB = { r, g, b }
+    --             BBP.RefreshAllNameplates()
+    --             BBP.arenaIndicatorIDColor.Text:SetTextColor(unpack(BetterBlizzPlatesDB.arenaIndicatorIDColorRGB))
+    --         end,
+    --         cancelFunc = function(previousValues)
+    --             local r, g, b = previousValues.r, previousValues.g, previousValues.b
+    --             BetterBlizzPlatesDB.arenaIndicatorIDColorRGB = { r, g, b }
+    --             BBP.RefreshAllNameplates()
+    --             BBP.arenaIndicatorIDColor.Text:SetTextColor(unpack(BetterBlizzPlatesDB.arenaIndicatorIDColorRGB))
+    --         end,
+    --     })
+    -- end
+
+    -- BBP.idColorButton = CreateFrame("Button", nil, contentFrame, "UIPanelButtonTemplate")
+    -- BBP.idColorButton:SetText("Color")
+    -- BBP.idColorButton:SetPoint("LEFT", BBP.arenaIndicatorIDColor.text, "RIGHT", -1, 0)
+    -- BBP.idColorButton:SetSize(43, 18)
+    -- BBP.idColorButton:SetScript("OnClick", OpenColorPicker)
+
     local showCircleOnArenaID = CreateCheckbox("showCircleOnArenaID", "Show Circle on ID", contentFrame)
     showCircleOnArenaID:SetPoint("TOPLEFT", arenaIndicatorTestMode2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(showCircleOnArenaID, "Show a colored circle on each ID, red green and blue\n\n(Needs some finetuning still)")
@@ -7397,8 +7436,18 @@ local function guiCVarControl()
     CreateTooltipTwo(nameplateOccludedAlphaMult, "Occluded Alpha", "The alpha value of nameplates that are not in line of sight.", nil, nil, "nameplateOccludedAlphaMult")
     CreateResetButton(nameplateOccludedAlphaMult, "nameplateOccludedAlphaMult", guiCVarControl)
 
+    local nameplateSelectedAlpha = CreateSlider(guiCVarControl, "Target Alpha", 0, 1, 0.01, "nameplateSelectedAlpha")
+    nameplateSelectedAlpha:SetPoint("TOPLEFT", nameplateOccludedAlphaMult, "BOTTOMLEFT", 0, -17)
+    CreateTooltipTwo(nameplateSelectedAlpha, "Target Alpha", "The alpha value of the nameplate you are targeting.", nil, nil, "nameplateSelectedAlpha")
+    CreateResetButton(nameplateSelectedAlpha, "nameplateSelectedAlpha", guiCVarControl)
+
+    local nameplateNotSelectedAlpha = CreateSlider(guiCVarControl, "Non-Target Alpha", 0, 1, 0.01, "nameplateNotSelectedAlpha")
+    nameplateNotSelectedAlpha:SetPoint("TOPLEFT", nameplateSelectedAlpha, "BOTTOMLEFT", 0, -17)
+    CreateTooltipTwo(nameplateNotSelectedAlpha, "Non-Target Alpha", "The alpha value of nameplates that is not your target.", nil, nil, "nameplateNotSelectedAlpha")
+    CreateResetButton(nameplateNotSelectedAlpha, "nameplateNotSelectedAlpha", guiCVarControl)
+
     local nameplateCVarText = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    nameplateCVarText:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 400, -270)
+    nameplateCVarText:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 400, -310)
     nameplateCVarText:SetText("Nameplate Visibility CVars")
 
     local setCVarAcrossAllCharacters = CreateCheckbox("setCVarAcrossAllCharacters", "Force these CVars across all characters", guiCVarControl)
@@ -7540,6 +7589,8 @@ local function guiCVarControl()
     sliderCVars["nameplateMaxAlpha"] = nameplateMaxAlpha
     sliderCVars["nameplateMaxAlphaDistance"] = nameplateMaxAlphaDistance
     sliderCVars["nameplateOccludedAlphaMult"] = nameplateOccludedAlphaMult
+    sliderCVars["nameplateSelectedAlpha"] = nameplateSelectedAlpha
+    sliderCVars["nameplateNotSelectedAlpha"] = nameplateNotSelectedAlpha
 
     -- Re-check checkboxes late cuz its all a mess and needs to be done and at this point more bandaid is all the effort i will put in until TWW maybe
     if not BetterBlizzPlatesDB.hasSaved then
@@ -7569,7 +7620,6 @@ local function guiCVarControl()
                     cbCVars[cvarName]:SetChecked(checkedState)
                 elseif sliderCVars[cvarName] then
                     BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
-                    print(cvarName, cvarValue)
                     sliderCVars[cvarName]:SetValue(tonumber(cvarValue))
                 end
             end
