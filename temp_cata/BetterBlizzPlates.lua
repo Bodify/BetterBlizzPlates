@@ -63,6 +63,8 @@ local defaultSettings = {
     fakeNameFriendlyXPos = 0,
     fakeNameFriendlyYPos = 0,
     guildNameColorRGB = {0, 1, 0},
+    npcTitleColorRGB = {1, 0.85, 0},
+    npcTitleScale = 1,
     hideNpcMurlocScale = 1,
     hideNpcMurlocYPos = 0,
     partyPointerWidth = 36,
@@ -616,6 +618,7 @@ local function InitializeNameplateSettings(frame)
             nameplateTargetBorderSize = BetterBlizzPlatesDB.nameplateTargetBorderSize,
             hideLevelFrame = BetterBlizzPlatesDB.hideLevelFrame,
             classicNameplates = BetterBlizzPlatesDB.classicNameplates,
+            showNpcTitle = BetterBlizzPlatesDB.showNpcTitle,
         }
         if frame.BetterBlizzPlates.config.changeHealthbarHeight then
             frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
@@ -713,7 +716,7 @@ local function CVarFetcher()
         BetterBlizzPlatesDB.nameplateHorizontalScale = GetCVar("NamePlateHorizontalScale")
         BetterBlizzPlatesDB.NamePlateVerticalScale = GetCVar("NamePlateVerticalScale")
         BetterBlizzPlatesDB.nameplateMinScale = GetCVar("nameplateMinScale")
-        BetterBlizzPlatesDB.nameplateMaxScale = GetCVar("nameplateMaxScale")
+        BetterBlizzPlatesDB.nameplateMaxScale = BetterBlizzPlatesDB.nameplateMinScale--GetCVar("nameplateMaxScale")
         BetterBlizzPlatesDB.nameplateSelectedScale = GetCVar("nameplateSelectedScale")
         BetterBlizzPlatesDB.NamePlateClassificationScale = GetCVar("NamePlateClassificationScale")
         BetterBlizzPlatesDB.nameplateGlobalScale = GetCVar("nameplateGlobalScale")
@@ -1231,7 +1234,7 @@ function BBP.ApplyNameplateWidth()
                 C_NamePlate.SetNamePlateSelfSize(BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight)
             end
 
-            local friendlyWidthAdjustment = (BBP.isInPvE and BetterBlizzPlatesDB.classicNameplates) and 128 or BetterBlizzPlatesDB.nameplateFriendlyWidth
+            local friendlyWidthAdjustment = BBP.isInPvE and 128 or BetterBlizzPlatesDB.nameplateFriendlyWidth
             C_NamePlate.SetNamePlateFriendlySize(friendlyWidthAdjustment, friendlyHeight)--friendlyHeight)
             C_NamePlate.SetNamePlateEnemySize(BetterBlizzPlatesDB.nameplateEnemyWidth, 32)--BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeEnemyHeight or BetterBlizzPlatesDB.nameplateDefaultEnemyHeight)
         end
@@ -1905,7 +1908,7 @@ end
 function BBP.ResetToDefaultScales(slider, targetType)
     -- Define default values
     local defaultSettings = {
-        nameplateScale = 1,  -- This will be used for nameplateMinScale
+        nameplateScale = 1,
         nameplateSelected = 1.2,
     }
 
@@ -2462,6 +2465,13 @@ function BBP.AuraColor(frame)
     BBP.UpdateAuraLookupTables()
 
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
+    if BetterBlizzPlatesDB.auraColorPvEOnly and BBP.isInPvP then
+        if config.auraColorRGB then
+            config.auraColorRGB = nil
+            BBP.CompactUnitFrame_UpdateHealthColor(frame)
+        end
+        return
+    end
     local highestPriority = 0
     local auraColor = nil
 
@@ -4121,6 +4131,63 @@ local function GetNameplateHookTable(frame)
     return frame.BetterBlizzPlates.hooks
 end
 
+local hiddenTooltip = CreateFrame("GameTooltip", "HiddenTooltip", nil, "GameTooltipTemplate")
+hiddenTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+
+local function GetNPCTitle(unit)
+    hiddenTooltip:SetUnit(unit)
+    local title = nil
+    local levelFound = false
+    local levelPattern = "^" .. TOOLTIP_UNIT_LEVEL:gsub("%%s", ".+")
+
+    for i = 2, hiddenTooltip:NumLines() do
+        local text = _G["HiddenTooltipTextLeft" .. i]:GetText()
+        if text then
+            if text:find(levelPattern) then
+                levelFound = true
+                break
+            else
+                title = text
+            end
+        end
+    end
+    return levelFound and title or nil
+end
+
+local function NameplateNPCTitle(frame)
+    if not frame.npcTitle then
+        -- Create a FontString on the nameplate
+        frame.npcTitle = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        frame.npcTitle:SetPoint("TOP", frame.name, "BOTTOM", 0, -2)
+        frame.npcTitle:SetIgnoreParentScale(true)
+        BBP.SetFontBasedOnOption(frame.npcTitle, 10, (BetterBlizzPlatesDB.useCustomFont and BetterBlizzPlatesDB.enableCustomFontOutline) and BetterBlizzPlatesDB.customFontOutline or "")
+    end
+
+    local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo
+
+    -- Check if the unit is an NPC
+    if info.isPlayer or not info.isFriend or UnitIsOtherPlayersPet(frame.unit) then
+        frame.npcTitle:Hide()
+    else
+        local title = GetNPCTitle(frame.unit)
+        frame.npcTitle:SetText(title)
+        frame.npcTitle:ClearAllPoints()
+        if config.friendlyHideHealthBar then
+            frame.npcTitle:SetPoint("TOP", frame.name, "BOTTOM", 0, -2)
+        else
+            frame.npcTitle:SetPoint("TOP", frame.healthBar, "BOTTOM", 0, -2)
+        end
+        if BetterBlizzPlatesDB.npcTitleColor then
+            frame.npcTitle:SetTextColor(unpack(BetterBlizzPlatesDB.npcTitleColorRGB))
+        else
+            frame.npcTitle:SetTextColor(1, 0.85, 0)
+        end
+        frame.npcTitle:SetScale(BetterBlizzPlatesDB.npcTitleScale)
+        frame.npcTitle:Show()
+    end
+end
+
 -- What to do on a new nameplate
 local function HandleNamePlateAdded(unit)
     local nameplate, frame = BBP.GetSafeNameplate(unit)
@@ -4249,6 +4316,8 @@ local function HandleNamePlateAdded(unit)
         BBP.ProcessAurasForNameplate(frame, frame.unit)
     end
 
+    BBF.ColorCastbar(frame)
+
     -- --HealthBar Height
     -- if config.changeHealthbarHeight then ChangeHealthbarHeight(frame) end
 
@@ -4341,6 +4410,8 @@ local function HandleNamePlateAdded(unit)
 
     -- Name repositioning
     if config.useFakeName then BBP.SetupFakeName(frame) end
+
+    if config.showNpcTitle then NameplateNPCTitle(frame) end
 
     -- Hide name
     if ((config.hideFriendlyNameText or config.partyPointerHideAll) and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then

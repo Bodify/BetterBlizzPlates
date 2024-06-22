@@ -1913,7 +1913,6 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
         aura.isActive = false
     end
 
-    local index = 1
     local MAX_AURAS = BetterBlizzPlatesDB.maxAurasOnNameplate
     local iconWidth = 20
     local iconHeight = 14
@@ -1999,7 +1998,7 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
 
     --local shouldShowAura, isImportant, isPandemic, auraColor, onlyMine, isEnlarged, isCompacted
 
-    local function ProcessAuras(auraType, isEnemyUnit)
+    local function ProcessAuras(auraType, isEnemyUnit, index)
         for i = 1, MAX_AURAS do
             local name, icon, count, debuffType, duration, expirationTime, sourceUnit, isStealable, _, spellId, canApplyAura, isBossDebuff, castByPlayer, nameplateShowAll, timeMod = UnitAura(unitID, i, auraType)
             if not name then break end
@@ -2032,20 +2031,25 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
             if ShouldShowBuff(unitID, auraInfo) then
                 UpdateAuraIcon(index, auraInfo)
                 SetAuraGlows(index, isImportant, auraColor, isEnemyUnit)
-
                 index = index + 1
+                if index > MAX_AURAS then break end
             end
         end
+        return index
     end
 
     local children = frame.BuffFrame.auras
-    --local isEnemyUnit = UnitIsEnemy(frame.unit, "player")
     local isFriend, isEnemy, isNeutral = BBP.GetUnitReaction(frame.unit)
     local isEnemyUnit = not isFriend and not UnitIsPlayer(frame.unit)
-    --print(frame.name:GetText(), isEnemyUnit)
 
-    ProcessAuras("HELPFUL", isEnemyUnit)
-    ProcessAuras("HARMFUL", isEnemyUnit)
+    if BetterBlizzPlatesDB.separateBuffRow then
+        ProcessAuras("HARMFUL", isEnemyUnit, 1)
+        ProcessAuras("HELPFUL", isEnemyUnit, 1)
+    else
+        local index = 1
+        index = ProcessAuras("HARMFUL", isEnemyUnit, index)
+        ProcessAuras("HELPFUL", isEnemyUnit, index)
+    end
 
     CustomBuffLayoutChildrenCata(frame.BuffFrame, children, isEnemyUnit)
 end

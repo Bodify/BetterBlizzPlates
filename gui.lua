@@ -1075,13 +1075,10 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     -- Nameplate scales
                 elseif element == "nameplateMinScale" then
                     if not BBP.checkCombatAndWarn() then
-                    local ratio = 1.25
-                    local newMinScale = value
-                    local newMaxScale = newMinScale * ratio
-                    SetCVar("nameplateMinScale", newMinScale)
-                    SetCVar("nameplateMaxScale", newMaxScale)
-                    BetterBlizzPlatesDB.nameplateMinScale = newMinScale
-                    BetterBlizzPlatesDB.nameplateMaxScale = newMaxScale
+                        SetCVar("nameplateMinScale", value)
+                        SetCVar("nameplateMaxScale", value)
+                        BetterBlizzPlatesDB.nameplateMinScale = value
+                        BetterBlizzPlatesDB.nameplateMaxScale = value
                     end
                 -- Nameplate selected scale
                 elseif element == "nameplateSelectedScale" then
@@ -1207,6 +1204,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BBP.RefreshAllNameplatesLightVer()
                 elseif element == "guildNameScale" then
                     BetterBlizzPlatesDB.guildNameScale = value
+                    BBP.RefreshAllNameplates()
+                elseif element == "npcTitleScale" then
+                    BetterBlizzPlatesDB.npcTitleScale = value
                     BBP.RefreshAllNameplates()
                 elseif element == "nameplateResourceScale" then
                     BetterBlizzPlatesDB.nameplateResourceScale = value
@@ -6340,6 +6340,9 @@ local function guiAuraColor()
     auraColor:SetPoint("TOPLEFT", auraColorExplanationText, "BOTTOMLEFT", 10, -15)
     CreateTooltip(auraColor, "Chose nameplate color depending on the aura on them")
 
+    local auraColorPvEOnly = CreateCheckbox("auraColorPvEOnly", "Enable in PvE only", auraColor)
+    auraColorPvEOnly:SetPoint("TOPLEFT", auraColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
     local reloadUiButton = CreateFrame("Button", nil, guiAuraColor, "UIPanelButtonTemplate")
     reloadUiButton:SetText("Reload UI")
     reloadUiButton:SetWidth(85)
@@ -7412,8 +7415,45 @@ local function guiMisc()
     guildNameColorButton:SetSize(45, 20)
     guildNameColorButton:SetScript("OnClick", OpenColorPicker)
 
+    local showNpcTitle = CreateCheckbox("showNpcTitle", "Show NPC Titles on Friendly NPCs", guiMisc)
+    showNpcTitle:SetPoint("TOPLEFT", guildNameColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(showNpcTitle, "Show NPC Titles under name/healthbar. (\"Innkeeper\" etc.)")
+
+    local npcTitleScale = CreateSlider(guiMisc, "NPC Title Size", 0.2, 2, 0.01, "npcTitleScale")
+    npcTitleScale:SetPoint("LEFT", showNpcTitle.Text, "RIGHT", 25, 0)
+
+    local npcTitleColor = CreateCheckbox("npcTitleColor", "Custom NPC Title Color", guiMisc)
+    npcTitleColor:SetPoint("TOPLEFT", showNpcTitle, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(npcTitleColor, "Change the NPC Title Color.")
+
+    local function OpenColorPicker()
+        BBP.needsUpdate = true
+        local r, g, b = unpack(BetterBlizzPlatesDB.npcTitleColorRGB or {1, 1, 1})
+
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b,
+            hasOpacity = false,
+            swatchFunc = function()
+                local r, g, b = ColorPickerFrame:GetColorRGB()
+                BetterBlizzPlatesDB.npcTitleColorRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+            end,
+            cancelFunc = function(previousValues)
+                local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                BetterBlizzPlatesDB.npcTitleColorRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+            end,
+        })
+    end
+
+    local npcTitleColorButton = CreateFrame("Button", nil, guiMisc, "UIPanelButtonTemplate")
+    npcTitleColorButton:SetText("Color")
+    npcTitleColorButton:SetPoint("LEFT", npcTitleColor.text, "RIGHT", -1, 0)
+    npcTitleColorButton:SetSize(45, 20)
+    npcTitleColorButton:SetScript("OnClick", OpenColorPicker)
+
     local friendIndicator = CreateCheckbox("friendIndicator", "Friend/Guildie Indicator", guiMisc)
-    friendIndicator:SetPoint("TOPLEFT", guildNameColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    friendIndicator:SetPoint("TOPLEFT", npcTitleColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(friendIndicator, "Places a little icon to the left of a friend/guildies name")
 
     local anonMode = CreateCheckbox("anonMode", "Anon Mode", guiMisc)
@@ -7476,7 +7516,7 @@ local function guiMisc()
     end)
 
     local changeNameplateBorderSize = CreateCheckbox("changeNameplateBorderSize", "Change Nameplate Border Size", guiMisc)
-    changeNameplateBorderSize:SetPoint("TOPLEFT", hpHeightFriendly, "BOTTOMLEFT", -10, -4)
+    changeNameplateBorderSize:SetPoint("TOPLEFT", showGuildNames, "BOTTOMLEFT", 350, -4)
     local nameplateBorderSize = CreateSlider(changeNameplateBorderSize, "Nameplate Border Size", 1, 10, 1, "nameplateBorderSize")
     nameplateBorderSize:SetPoint("TOPLEFT", changeNameplateBorderSize, "BOTTOMLEFT", 10, -10)
     local nameplateTargetBorderSize = CreateSlider(changeNameplateBorderSize, "Target Border Size", 1, 10, 1, "nameplateTargetBorderSize")
@@ -7572,40 +7612,6 @@ local function guiMisc()
     nameplateSelfWidthResetButton:SetScript("OnClick", function()
         BBP.ResetToDefaultWidth(nameplateSelfWidth, false)
     end)
-
-    local discordLinkEditBox = CreateFrame("EditBox", nil, guiMisc, "InputBoxTemplate")
-    discordLinkEditBox:SetPoint("TOPLEFT", settingsText, "BOTTOMLEFT", 210, -540)
-    discordLinkEditBox:SetSize(180, 20)
-    discordLinkEditBox:SetAutoFocus(false)
-    discordLinkEditBox:SetFontObject("ChatFontNormal")
-    discordLinkEditBox:SetText("https://discord.gg/cjqVaEMm25")
-    discordLinkEditBox:SetCursorPosition(0) -- Places cursor at start of the text
-    discordLinkEditBox:ClearFocus() -- Removes focus from the EditBox
-    discordLinkEditBox:SetScript("OnEscapePressed", function(self)
-        self:ClearFocus() -- Allows user to press escape to unfocus the EditBox
-    end)
-
-    -- Make the EditBox text selectable and readonly
-    discordLinkEditBox:SetScript("OnTextChanged", function(self)
-        self:SetText("https://discord.gg/cjqVaEMm25")
-    end)
-    --discordLinkEditBox:HighlightText() -- Highlights the text for easy copying
-    discordLinkEditBox:SetScript("OnCursorChanged", function() end) -- Prevents cursor changes
-    discordLinkEditBox:SetScript("OnEditFocusGained", function(self) self:HighlightText() end) -- Re-highlights text when focused
-    discordLinkEditBox:SetScript("OnMouseUp", function(self)
-        if not self:IsMouseOver() then
-            self:ClearFocus()
-        end
-    end)
-
-    local discordText = guiMisc:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    discordText:SetPoint("BOTTOM", discordLinkEditBox, "TOP", 18, 8)
-    discordText:SetText("Join the Discord for info\nand help with BBP/BBF")
-
-    local joinDiscord = guiMisc:CreateTexture(nil, "ARTWORK")
-    joinDiscord:SetAtlas("token-choice-bnet")
-    joinDiscord:SetSize(68, 68)
-    joinDiscord:SetPoint("RIGHT", discordText, "LEFT", 5, 1)
 end
 
 local function guiImportAndExport()

@@ -159,7 +159,7 @@ StaticPopupDialogs["BBP_TOTEMLIST_RESET"] = {
 }
 
 StaticPopupDialogs["BBP_UPDATE_NOTIF"] = {
-    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.0.6:\n\nTweaked a lot of settings. Castbars especially.\nYou might have to re-do your custom castbar height if it looks wrong.\n\nAs always please report bugs so I can fix.",
+    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.0.7:\n\nTweaked a lot of settings. Castbars especially.\nYou might have to re-do your custom castbar height if it looks wrong.\n\nAs always please report bugs so I can fix.",
     button1 = "OK",
     timeout = 0,
     whileDead = true,
@@ -1115,16 +1115,10 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     -- Nameplate scales
                 elseif element == "nameplateMinScale" then
                     if not BBP.checkCombatAndWarn() then
-                    local defaultMinScale = 0.8
-                    local defaultMaxScale = 1.0
-                    local ratio = defaultMinScale / defaultMaxScale
-                    -- Keep ratio between default values
-                    local newMinScale = value
-                    local newMaxScale = newMinScale * ratio
-                    SetCVar("nameplateMinScale", newMinScale)
-                    SetCVar("nameplateMaxScale", newMaxScale)
-                    BetterBlizzPlatesDB.nameplateMinScale = newMinScale
-                    BetterBlizzPlatesDB.nameplateMaxScale = newMaxScale
+                        SetCVar("nameplateMinScale", value)
+                        SetCVar("nameplateMaxScale", value)
+                        BetterBlizzPlatesDB.nameplateMinScale = value
+                        BetterBlizzPlatesDB.nameplateMaxScale = value
                     end
                 -- Nameplate selected scale
                 elseif element == "nameplateSelectedScale" then
@@ -1260,6 +1254,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BBP.RefreshAllNameplatesLightVer()
                 elseif element == "guildNameScale" then
                     BetterBlizzPlatesDB.guildNameScale = value
+                    BBP.RefreshAllNameplates()
+                elseif element == "npcTitleScale" then
+                    BetterBlizzPlatesDB.npcTitleScale = value
                     BBP.RefreshAllNameplates()
                 elseif element == "nameplateResourceScale" then
                     BetterBlizzPlatesDB.nameplateResourceScale = value
@@ -3210,7 +3207,7 @@ local function CreateTitle(parent)
     addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
     local verNumber = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
-    verNumber:SetText("CATA BETA v0.0.6")--("v" .. BBP.VersionNumber)
+    verNumber:SetText("CATA BETA v0.0.7")--("v" .. BBP.VersionNumber)
 end
 ------------------------------------------------------------
 -- GUI Panels
@@ -6638,6 +6635,9 @@ local function guiAuraColor()
     auraColor:SetPoint("TOPLEFT", auraColorExplanationText, "BOTTOMLEFT", 30, -15)
     CreateTooltip(auraColor, "Chose nameplate color depending on the aura on them")
 
+    local auraColorPvEOnly = CreateCheckbox("auraColorPvEOnly", "Enable in PvE only", auraColor)
+    auraColorPvEOnly:SetPoint("TOPLEFT", auraColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
     local reloadUiButton = CreateFrame("Button", nil, guiAuraColor, "UIPanelButtonTemplate")
     reloadUiButton:SetText("Reload UI")
     reloadUiButton:SetWidth(85)
@@ -7738,8 +7738,45 @@ local function guiMisc()
     guildNameColorButton:SetSize(45, 20)
     guildNameColorButton:SetScript("OnClick", OpenColorPicker)
 
+    local showNpcTitle = CreateCheckbox("showNpcTitle", "Show NPC Titles on Friendly NPCs", guiMisc)
+    showNpcTitle:SetPoint("TOPLEFT", guildNameColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(showNpcTitle, "Show NPC Titles under name/healthbar. (\"Innkeeper\" etc.)")
+
+    local npcTitleScale = CreateSlider(guiMisc, "NPC Title Size", 0.2, 2, 0.01, "npcTitleScale")
+    npcTitleScale:SetPoint("LEFT", showNpcTitle.Text, "RIGHT", 25, 0)
+
+    local npcTitleColor = CreateCheckbox("npcTitleColor", "Custom NPC Title Color", guiMisc)
+    npcTitleColor:SetPoint("TOPLEFT", showNpcTitle, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(npcTitleColor, "Change the NPC Title Color.")
+
+    local function OpenColorPicker()
+        BBP.needsUpdate = true
+        local r, g, b = unpack(BetterBlizzPlatesDB.npcTitleColorRGB or {1, 1, 1})
+
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b,
+            hasOpacity = false,
+            swatchFunc = function()
+                local r, g, b = ColorPickerFrame:GetColorRGB()
+                BetterBlizzPlatesDB.npcTitleColorRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+            end,
+            cancelFunc = function(previousValues)
+                local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                BetterBlizzPlatesDB.npcTitleColorRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+            end,
+        })
+    end
+
+    local npcTitleColorButton = CreateFrame("Button", nil, guiMisc, "UIPanelButtonTemplate")
+    npcTitleColorButton:SetText("Color")
+    npcTitleColorButton:SetPoint("LEFT", npcTitleColor.text, "RIGHT", -1, 0)
+    npcTitleColorButton:SetSize(45, 20)
+    npcTitleColorButton:SetScript("OnClick", OpenColorPicker)
+
     local friendIndicator = CreateCheckbox("friendIndicator", "Friend/Guildie Indicator", guiMisc)
-    friendIndicator:SetPoint("TOPLEFT", guildNameColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    friendIndicator:SetPoint("TOPLEFT", npcTitleColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(friendIndicator, "Places a little icon to the left of a friend/guildies name")
 
     local anonMode = CreateCheckbox("anonMode", "Anon Mode", guiMisc)
@@ -7802,7 +7839,7 @@ local function guiMisc()
     end)
 
     local changeNameplateBorderSize = CreateCheckbox("changeNameplateBorderSize", "Change Nameplate Border Size", guiMisc)
-    changeNameplateBorderSize:SetPoint("TOPLEFT", hpHeightFriendly, "BOTTOMLEFT", -10, -4)
+    changeNameplateBorderSize:SetPoint("TOPLEFT", showGuildNames, "BOTTOMLEFT", 340, -50)
     local nameplateBorderSize = CreateSlider(changeNameplateBorderSize, "Nameplate Border Size", 1, 10, 1, "nameplateBorderSize")
     nameplateBorderSize:SetPoint("TOPLEFT", changeNameplateBorderSize, "BOTTOMLEFT", 10, -10)
     local nameplateTargetBorderSize = CreateSlider(changeNameplateBorderSize, "Target Border Size", 1, 10, 1, "nameplateTargetBorderSize")

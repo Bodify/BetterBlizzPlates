@@ -463,8 +463,19 @@ function BBP.HideCastbar(frame, unitToken)
             end
         end
         if hideCastbar then
+            frame.CastBar.hideThis = true
+            if not frame.hookedHideCastbar then
+                hooksecurefunc(frame.CastBar, "Show", function()
+                    if frame.CastBar.hideThis and not frame.CastBar:IsProtected() then
+                        frame.CastBar:Hide()
+                    end
+                end)
+                frame.hookedHideCastbar = true
+            end
             castBar:Hide()
             return
+        else
+            frame.CastBar.hideThis = false
         end
     end
 
@@ -484,8 +495,18 @@ function BBP.HideCastbar(frame, unitToken)
 
         -- Show the castBar only if the NPC is in the whitelist and is currently casting
         if inWhitelist and isCasting then
+            frame.CastBar.hideThis = false
             castBar:Show()
         else
+            frame.CastBar.hideThis = true
+            if not frame.hookedHideCastbar then
+                hooksecurefunc(frame.CastBar, "Show", function()
+                    if frame.CastBar.hideThis and not frame.CastBar:IsProtected() then
+                        frame.CastBar:Hide()
+                    end
+                end)
+                frame.hookedHideCastbar = true
+            end
             castBar:Hide()
         end
     else
@@ -505,8 +526,18 @@ function BBP.HideCastbar(frame, unitToken)
 
         -- Check if the unit is currently casting and is not in the blacklist
         if isCasting and not inList then
+            frame.CastBar.hideThis = false
             castBar:Show()
         else
+            frame.CastBar.hideThis = true
+            if not frame.hookedHideCastbar then
+                hooksecurefunc(frame.CastBar, "Show", function()
+                    if frame.CastBar.hideThis and not frame.CastBar:IsProtected() then
+                        frame.CastBar:Hide()
+                    end
+                end)
+                frame.hookedHideCastbar = true
+            end
             castBar:Hide()
         end
         if config.hideNpcCastbar then
@@ -1111,7 +1142,66 @@ end
 --     end
 -- end)
 
-
+function BBF.ColorCastbar(frame)
+    local castBarCastColor = BetterBlizzPlatesDB.castBarCastColor
+    local castBarNonInterruptibleColor = BetterBlizzPlatesDB.castBarNoninterruptibleColor
+    local castBarChanneledColor = BetterBlizzPlatesDB.castBarChanneledColor
+    local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
+    local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
+    local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
+    local classic = BetterBlizzPlatesDB.classicNameplates
+    local castBar = frame.CastBar
+    local castBarTexture = castBar:GetStatusBarTexture()
+    if frame.CastBar.emphasizedCast then
+        castBar:SetStatusBarColor(frame.CastBar.emphasizedCast.entryColors.text.r, frame.CastBar.emphasizedCast.entryColors.text.g, frame.CastBar.emphasizedCast.entryColors.text.b)
+        return
+    end
+    if not classic then
+        castBar:SetStatusBarColor(1,1,1)
+    end
+    if castBar.notInterruptible then
+        if enableCastbarCustomization then
+            if castBarRecolor then
+                castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
+            elseif useCustomCastbarTexture then
+                castBar:SetStatusBarColor(0.4,0.4,0.4)
+            end
+        end
+    elseif castBar.channeling then
+        if enableCastbarCustomization then
+            if castBarRecolor then
+                castBar:SetStatusBarColor(unpack(castBarChanneledColor))
+            elseif useCustomCastbarTexture then
+                if not frame.emphasizedCast then
+                    castBar:SetStatusBarColor(0.48, 1, 0.29)
+                end
+            end
+        end
+    elseif castBar.interruptedColor then
+        if enableCastbarCustomization then
+            if useCustomCastbarTexture then
+                castBar:SetStatusBarColor(1,0,0)
+            else
+                if castBarRecolor then
+                    if castBarTexture then
+                        castBarTexture:SetDesaturated(false)
+                    end
+                    castBar:SetStatusBarColor(1,1,1)
+                end
+            end
+        end
+    else
+        if enableCastbarCustomization then
+            if castBarRecolor then
+                castBar:SetStatusBarColor(unpack(castBarCastColor))
+            elseif useCustomCastbarTexture then
+                if not frame.emphasizedCast then
+                    castBar:SetStatusBarColor(1, 0.84, 0.20)
+                end
+            end
+        end
+    end
+end
 
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("UNIT_SPELLCAST_START")
@@ -1138,6 +1228,15 @@ frame:SetScript("OnEvent", function(self, event, unit, ...)
         local classic = BetterBlizzPlatesDB.classicNameplates
 
         if frame.hideCastbarOverride then
+            frame.CastBar.hideThis = true
+            if not frame.hookedHideCastbar then
+                hooksecurefunc(frame.CastBar, "Show", function()
+                    if frame.CastBar.hideThis then
+                        frame.CastBar:Hide()
+                    end
+                end)
+                frame.hookedHideCastbar = true
+            end
             frame.CastBar:Hide()
             return
         end
@@ -1145,10 +1244,21 @@ frame:SetScript("OnEvent", function(self, event, unit, ...)
         if alwaysHideFriendlyCastbar or alwaysHideEnemyCastbar or BBP.hideFriendlyCastbar then
             local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(frame.unit)
             if ((alwaysHideFriendlyCastbar or BBP.hideFriendlyCastbar) and isFriend) or (alwaysHideEnemyCastbar and not isFriend) then
+                frame.CastBar.hideThis = true
+                if not frame.hookedHideCastbar then
+                    hooksecurefunc(frame.CastBar, "Show", function()
+                        if frame.CastBar.hideThis and not frame.CastBar:IsProtected() then
+                            frame.CastBar:Hide()
+                        end
+                    end)
+                    frame.hookedHideCastbar = true
+                end
                 frame.CastBar:Hide()
                 return
             end
         end
+
+        frame.CastBar.hideThis = false
 
         local spellName, spellID, notInterruptible, endTime
         local _
@@ -1472,72 +1582,15 @@ frame:SetScript("OnEvent", function(self, event, unit, ...)
         --     end)
         -- end
         if not frame.CastBar.hookedCastColor then
-            local function ColorCastbar(frame)
-                local castBarCastColor = BetterBlizzPlatesDB.castBarCastColor
-                local castBarNonInterruptibleColor = BetterBlizzPlatesDB.castBarNoninterruptibleColor
-                local castBarChanneledColor = BetterBlizzPlatesDB.castBarChanneledColor
-                local castBar = frame.CastBar
-                local castBarTexture = castBar:GetStatusBarTexture()
-                if frame.CastBar.emphasizedCast then
-                    castBar:SetStatusBarColor(frame.CastBar.emphasizedCast.entryColors.text.r, frame.CastBar.emphasizedCast.entryColors.text.g, frame.CastBar.emphasizedCast.entryColors.text.b)
-                    return
-                end
-                if not classic then
-                    castBar:SetStatusBarColor(1,1,1)
-                end
-                if castBar.notInterruptible then
-                    if enableCastbarCustomization then
-                        if castBarRecolor then
-                            castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
-                        elseif useCustomCastbarTexture then
-                            castBar:SetStatusBarColor(0.4,0.4,0.4)
-                        end
-                    end
-                elseif castBar.channeling then
-                    if enableCastbarCustomization then
-                        if castBarRecolor then
-                            castBar:SetStatusBarColor(unpack(castBarChanneledColor))
-                        elseif useCustomCastbarTexture then
-                            if not frame.emphasizedCast then
-                                castBar:SetStatusBarColor(0.48, 1, 0.29)
-                            end
-                        end
-                    end
-                elseif castBar.interruptedColor then
-                    if enableCastbarCustomization then
-                        if useCustomCastbarTexture then
-                            castBar:SetStatusBarColor(1,0,0)
-                        else
-                            if castBarRecolor then
-                                if castBarTexture then
-                                    castBarTexture:SetDesaturated(false)
-                                end
-                                castBar:SetStatusBarColor(1,1,1)
-                            end
-                        end
-                    end
-                else
-                    if enableCastbarCustomization then
-                        if castBarRecolor then
-                            castBar:SetStatusBarColor(unpack(castBarCastColor))
-                        elseif useCustomCastbarTexture then
-                            if not frame.emphasizedCast then
-                                castBar:SetStatusBarColor(1, 0.84, 0.20)
-                            end
-                        end
-                    end
-                end
-            end
-
             hooksecurefunc(frame.CastBar, "SetStatusBarColor", function(self, texture)
                 if self.changing or not self.unit or self:IsForbidden() then return end
                 self.changing = true
 
-                ColorCastbar(frame)
+                BBF.ColorCastbar(frame)
 
                 self.changing = false
             end)
-            ColorCastbar(frame)
+            BBF.ColorCastbar(frame)
             frame.CastBar.hookedCastColor = true
         end
 

@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.5.1c"
+local addonUpdates = "1.5.3"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -61,6 +61,8 @@ local defaultSettings = {
     fakeNameFriendlyXPos = 0,
     fakeNameFriendlyYPos = 0,
     guildNameColorRGB = {0, 1, 0},
+    npcTitleColorRGB = {1, 0.85, 0},
+    npcTitleScale = 1,
     hideNpcMurlocScale = 1,
     hideNpcMurlocYPos = 0,
     partyPointerWidth = 36,
@@ -2341,6 +2343,13 @@ function BBP.AuraColor(frame)
     BBP.UpdateAuraLookupTables()
 
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
+    if BetterBlizzPlatesDB.auraColorPvEOnly and BBP.isInPvP then
+        if config.auraColorRGB then
+            config.auraColorRGB = nil
+            BBP.CompactUnitFrame_UpdateHealthColor(frame)
+        end
+        return
+    end
     local highestPriority = 0
     local auraColor = nil
 
@@ -3258,6 +3267,7 @@ local function InitializeNameplateSettings(frame)
             changeNameplateBorderSize = BetterBlizzPlatesDB.changeNameplateBorderSize,
             nameplateBorderSize = BetterBlizzPlatesDB.nameplateBorderSize,
             nameplateTargetBorderSize = BetterBlizzPlatesDB.nameplateTargetBorderSize,
+            showNpcTitle = BetterBlizzPlatesDB.showNpcTitle,
         }
         if frame.BetterBlizzPlates.config.changeHealthbarHeight then
             frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
@@ -3346,7 +3356,64 @@ local function GetNameplateHookTable(frame)
 
     return frame.BetterBlizzPlates.hooks
 end
-local cc = 0
+
+local hiddenTooltip = CreateFrame("GameTooltip", "HiddenTooltip", nil, "GameTooltipTemplate")
+hiddenTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+
+local function GetNPCTitle(unit)
+    hiddenTooltip:SetUnit(unit)
+    local title = nil
+    local levelFound = false
+    local levelPattern = "^" .. TOOLTIP_UNIT_LEVEL:gsub("%%s", ".+")
+
+    for i = 2, hiddenTooltip:NumLines() do
+        local text = _G["HiddenTooltipTextLeft" .. i]:GetText()
+        if text then
+            if text:find(levelPattern) then
+                levelFound = true
+                break
+            else
+                title = text
+            end
+        end
+    end
+    return levelFound and title or nil
+end
+
+local function NameplateNPCTitle(frame)
+    if not frame.npcTitle then
+        -- Create a FontString on the nameplate
+        frame.npcTitle = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        frame.npcTitle:SetPoint("TOP", frame.name, "BOTTOM", 0, -2)
+        frame.npcTitle:SetIgnoreParentScale(true)
+        BBP.SetFontBasedOnOption(frame.npcTitle, 10, (BetterBlizzPlatesDB.useCustomFont and BetterBlizzPlatesDB.enableCustomFontOutline) and BetterBlizzPlatesDB.customFontOutline or "")
+    end
+
+    local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo
+
+    -- Check if the unit is an NPC
+    if info.isPlayer or not info.isFriend or UnitIsOtherPlayersPet(frame.unit) then
+        frame.npcTitle:Hide()
+    else
+        local title = GetNPCTitle(frame.unit)
+        frame.npcTitle:SetText(title)
+        frame.npcTitle:ClearAllPoints()
+        if config.friendlyHideHealthBar then
+            frame.npcTitle:SetPoint("TOP", frame.name, "BOTTOM", 0, -2)
+        else
+            frame.npcTitle:SetPoint("TOP", frame.healthBar, "BOTTOM", 0, -2)
+        end
+        if BetterBlizzPlatesDB.npcTitleColor then
+            frame.npcTitle:SetTextColor(unpack(BetterBlizzPlatesDB.npcTitleColorRGB))
+        else
+            frame.npcTitle:SetTextColor(1, 0.85, 0)
+        end
+        frame.npcTitle:SetScale(BetterBlizzPlatesDB.npcTitleScale)
+        frame.npcTitle:Show()
+    end
+end
+
 -- What to do on a new nameplate
 local function HandleNamePlateAdded(unit)
     local nameplate, frame = BBP.GetSafeNameplate(unit)
@@ -3513,6 +3580,8 @@ local function HandleNamePlateAdded(unit)
 
     -- Name repositioning
     if config.useFakeName then BBP.SetupFakeName(frame) end
+
+    if config.showNpcTitle then NameplateNPCTitle(frame) end
 
     -- Hide name
     if ((config.hideFriendlyNameText or config.partyPointerHideAll) and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then

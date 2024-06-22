@@ -1,3 +1,22 @@
+# 1.5.3
+
+## Retail & Cata
+### New stuff:
+- Aura color in PvE only setting.
+- NPC Title text on nameplate setting (Misc section)
+
+### Change:
+- I've made the `Nameplate Scale` slider have same value for both min and max scale. This will make the nameplate always have the same size compared to the default slight shrink/grow depending on distance.
+
+## Cataclysm
+### Bugfixes:
+- Nameplate width in PvE now forced to be the default width so the border doesnt look all messed up (Not allowed to change anything else by Blizzard)
+- Hide Castbar settings should now properly hide all castbars
+
+## Retail
+### Bugfixes:
+- Fix some minor Resource Frame on nameplate positioning bugs (Reminder that once this frame attaches to a friendly nameplate in PvE it becomes forbidden and I am unable to move it because of restrictions until a reload)
+
 # 1.5.2
 ### Cataclysm
 #### New Stuff

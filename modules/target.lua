@@ -274,6 +274,7 @@ local classPadding = {
 }
 
 local adjusted
+local msgPrinted
 function BBP.TargetResourceUpdater()
     local _, className = UnitClass("player")
     nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true
@@ -281,13 +282,21 @@ function BBP.TargetResourceUpdater()
     nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
 
     local resourceFrame = resourceFrames[playerClass]
-    if not resourceFrame or resourceFrame:IsForbidden() then return end
+    if not resourceFrame or resourceFrame:IsForbidden() then
+        if resourceFrame:IsForbidden() then
+            if not msgPrinted then
+                DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Nameplate resource frame is forbidden after it attaches to a friendly nameplate in PvE and becomes not allowed to be repositioned in PvE content. In order to restore functionality /reload ui outside of instance.")
+                msgPrinted = true
+            end
+        end
+        return
+    end
 
-    if nameplateResourceOnTarget and not nameplateShowSelf then
+    if nameplateResourceOnTarget then
         local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
-        local inInstance, instanceType = IsInInstance()
-        if not (inInstance and (instanceType == "raid" or instanceType == "party" or instanceType == "scenario")) then
-            if nameplateForTarget and nameplateForTarget.driverFrame then
+        --local inInstance, instanceType = IsInInstance()
+        --if not (inInstance and (instanceType == "raid" or instanceType == "party" or instanceType == "scenario")) then
+            if nameplateForTarget then
                 local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
                 resourceFrame:SetScale(nameplateResourceScale)
 
@@ -307,7 +316,7 @@ function BBP.TargetResourceUpdater()
                     PixelUtil.SetPoint(resourceFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
                 end
             end
-        end
+        --end
     elseif nameplateShowSelf then
         local nameplatePlayer = C_NamePlate.GetNamePlateForUnit("player")
         if nameplatePlayer and nameplatePlayer.driverFrame then
@@ -329,7 +338,7 @@ function BBP.TargetResourceUpdater()
             if self.classNamePlateMechanicFrame then --after entering an instance classNamePlateMechanicFrame becomes, and stays forbidden even when you leave the instance. not sure if there is a workaround.
                 if self.classNamePlateMechanicFrame:IsForbidden() then
                     if not notifiedUser and nameplateResourceOnTarget then
-                        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Nameplate resource frame (combo points etc) is not allowed to be repositioned in PvE content. In order to restore functionality /reload ui outside of instance.")
+                        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Nameplate resource frame is forbidden after it attaches to a friendly nameplate in PvE and becomes not allowed to be repositioned in PvE content. In order to restore functionality /reload ui outside of instance.")
                         notifiedUser = true
                     end
                     return
@@ -337,6 +346,7 @@ function BBP.TargetResourceUpdater()
                 if nameplateResourceOnTarget then
                     local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
                     if nameplateForTarget then--and nameplateForTarget.driverFrame then
+                        if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
                         resourceFrame:SetParent(nameplateForTarget)
                         resourceFrame:ClearAllPoints();
                         if nameplateResourceUnderCastbar then
