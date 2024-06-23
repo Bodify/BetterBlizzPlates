@@ -1,5 +1,14 @@
-# 1.5.3
+# 1.5.3b
+## Retail
+## Cataclysm
+### Bugfix:
+- Fix BBF -> BBP typo
 
+## Retail
+### Bugfix:
+- Fix missing evoker nameplate resource for adjusting position etc.
+
+# 1.5.3
 ## Retail & Cata
 ### New stuff:
 - Aura color in PvE only setting.
