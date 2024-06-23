@@ -1,5 +1,4 @@
 # 1.5.3b
-## Retail
 ## Cataclysm
 ### Bugfix:
 - Fix BBF -> BBP typo
@@ -21,7 +20,6 @@
 ### Bugfixes:
 - Nameplate width in PvE now forced to be the default width so the border doesnt look all messed up (Not allowed to change anything else by Blizzard)
 - Hide Castbar settings should now properly hide all castbars
-- Fix BBF -> BBP typo
 
 ## Retail
 ### Bugfixes:

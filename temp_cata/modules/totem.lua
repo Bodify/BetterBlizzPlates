@@ -439,10 +439,25 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
         else
             if npcData.widthOn and npcData.hpWidth then
+                frame.healthBar.totemChanged = true
                 frame.healthBar:ClearPoint("RIGHT")
                 frame.healthBar:ClearPoint("LEFT")
                 frame.healthBar:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth, 0)
                 frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth,0)
+            else
+                if frame.healthBar.totemChanged then
+                    frame.healthBar:ClearPoint("RIGHT")
+                    frame.healthBar:ClearPoint("LEFT")
+                    if BetterBlizzPlatesDB.classicNameplates then
+                        local xPos = BetterBlizzPlatesDB.hideLevelFrame and -4 or -21
+                        frame.healthBar:SetPoint("LEFT", frame, "LEFT", 4, 0)
+                        frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", xPos,0)
+                    else
+                        frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", 0,0)
+                        frame.healthBar:SetPoint("LEFT", frame, "LEFT", 0, 0)
+                    end
+                    frame.healthBar.totemChanged = nil
+                end
             end
         end
     else
