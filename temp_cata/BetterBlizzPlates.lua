@@ -4158,7 +4158,6 @@ local function NameplateNPCTitle(frame)
     if not frame.npcTitle then
         -- Create a FontString on the nameplate
         frame.npcTitle = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        frame.npcTitle:SetPoint("TOP", frame.name, "BOTTOM", 0, -2)
         frame.npcTitle:SetIgnoreParentScale(true)
         BBP.SetFontBasedOnOption(frame.npcTitle, 10, (BetterBlizzPlatesDB.useCustomFont and BetterBlizzPlatesDB.enableCustomFontOutline) and BetterBlizzPlatesDB.customFontOutline or "")
     end
@@ -4316,7 +4315,7 @@ local function HandleNamePlateAdded(unit)
         BBP.ProcessAurasForNameplate(frame, frame.unit)
     end
 
-    BBF.ColorCastbar(frame)
+    BBP.ColorCastbar(frame)
 
     -- --HealthBar Height
     -- if config.changeHealthbarHeight then ChangeHealthbarHeight(frame) end

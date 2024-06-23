@@ -1142,7 +1142,7 @@ end
 --     end
 -- end)
 
-function BBF.ColorCastbar(frame)
+function BBP.ColorCastbar(frame)
     local castBarCastColor = BetterBlizzPlatesDB.castBarCastColor
     local castBarNonInterruptibleColor = BetterBlizzPlatesDB.castBarNoninterruptibleColor
     local castBarChanneledColor = BetterBlizzPlatesDB.castBarChanneledColor
@@ -1586,11 +1586,11 @@ frame:SetScript("OnEvent", function(self, event, unit, ...)
                 if self.changing or not self.unit or self:IsForbidden() then return end
                 self.changing = true
 
-                BBF.ColorCastbar(frame)
+                BBP.ColorCastbar(frame)
 
                 self.changing = false
             end)
-            BBF.ColorCastbar(frame)
+            BBP.ColorCastbar(frame)
             frame.CastBar.hookedCastColor = true
         end
 

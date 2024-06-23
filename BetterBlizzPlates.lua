@@ -3384,7 +3384,6 @@ local function NameplateNPCTitle(frame)
     if not frame.npcTitle then
         -- Create a FontString on the nameplate
         frame.npcTitle = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        frame.npcTitle:SetPoint("TOP", frame.name, "BOTTOM", 0, -2)
         frame.npcTitle:SetIgnoreParentScale(true)
         BBP.SetFontBasedOnOption(frame.npcTitle, 10, (BetterBlizzPlatesDB.useCustomFont and BetterBlizzPlatesDB.enableCustomFontOutline) and BetterBlizzPlatesDB.customFontOutline or "")
     end
@@ -3400,7 +3399,7 @@ local function NameplateNPCTitle(frame)
         frame.npcTitle:SetText(title)
         frame.npcTitle:ClearAllPoints()
         if config.friendlyHideHealthBar then
-            frame.npcTitle:SetPoint("TOP", frame.name, "BOTTOM", 0, -2)
+            frame.npcTitle:SetPoint("TOP", frame.fakeName or frame.name, "BOTTOM", 0, -2)
         else
             frame.npcTitle:SetPoint("TOP", frame.healthBar, "BOTTOM", 0, -2)
         end
