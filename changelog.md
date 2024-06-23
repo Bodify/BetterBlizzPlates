@@ -12,10 +12,12 @@
 ### Bugfixes:
 - Nameplate width in PvE now forced to be the default width so the border doesnt look all messed up (Not allowed to change anything else by Blizzard)
 - Hide Castbar settings should now properly hide all castbars
+- Fix BBF -> BBP typo
 
 ## Retail
 ### Bugfixes:
 - Fix some minor Resource Frame on nameplate positioning bugs (Reminder that once this frame attaches to a friendly nameplate in PvE it becomes forbidden and I am unable to move it because of restrictions until a reload)
+- Fix missing evoker nameplate resource for adjusting position etc.
 
 # 1.5.2
 ### Cataclysm

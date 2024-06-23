@@ -238,7 +238,9 @@ local resourceFrames = {
     ["ROGUE"] = ClassNameplateBarRogueFrame,
     ["MAGE"] = ClassNameplateBarMageFrame,
     ["DRUID"] = ClassNameplateBarFeralDruidFrame,
+    ["EVOKER"] = ClassNameplateBarDracthyrFrame,
 }
+
 function BBP.UpdateNameplateResourcePositionForCasting(nameplate, bypass)
     if not GetCVarBool("nameplateResourceOnTarget") then return end
     if nameplate and nameplate.UnitFrame and nameplate.driverFrame then
@@ -282,12 +284,11 @@ function BBP.TargetResourceUpdater()
     nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
 
     local resourceFrame = resourceFrames[playerClass]
-    if not resourceFrame or resourceFrame:IsForbidden() then
-        if resourceFrame:IsForbidden() then
-            if not msgPrinted then
-                DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Nameplate resource frame is forbidden after it attaches to a friendly nameplate in PvE and becomes not allowed to be repositioned in PvE content. In order to restore functionality /reload ui outside of instance.")
-                msgPrinted = true
-            end
+    if not resourceFrame then return end
+    if resourceFrame:IsForbidden() then
+        if not msgPrinted then
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Nameplate resource frame is forbidden after it attaches to a friendly nameplate in PvE and becomes not allowed to be repositioned in PvE content. In order to restore functionality /reload ui outside of instance.")
+            msgPrinted = true
         end
         return
     end
