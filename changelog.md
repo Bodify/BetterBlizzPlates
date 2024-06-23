@@ -1,6 +1,11 @@
 # 1.5.3b
 ## Cataclysm
 ### Bugfix:
+- Fix Totem Indicator Width not properly resetting after changing.
+
+# 1.5.3b
+## Cataclysm
+### Bugfix:
 - Fix BBF -> BBP typo
 
 ## Retail
