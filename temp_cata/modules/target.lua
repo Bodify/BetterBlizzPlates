@@ -271,106 +271,106 @@ local classPadding = {
 
 local adjusted
 function BBP.TargetResourceUpdater()
-    local _, className = UnitClass("player")
-    nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true
-    nameplateShowSelf = GetCVarBool("nameplateShowSelf")
-    nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
+    -- local _, className = UnitClass("player")
+    -- nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true
+    -- nameplateShowSelf = GetCVarBool("nameplateShowSelf")
+    -- nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
 
-    if nameplateResourceOnTarget and not nameplateShowSelf then
-        local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
-        local inInstance, instanceType = IsInInstance()
-        if not (inInstance and (instanceType == "raid" or instanceType == "party" or instanceType == "scenario")) then
-            if nameplateForTarget and nameplateForTarget.driverFrame then
-                local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
-                nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
+    -- if nameplateResourceOnTarget and not nameplateShowSelf then
+    --     local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
+    --     local inInstance, instanceType = IsInInstance()
+    --     if not (inInstance and (instanceType == "raid" or instanceType == "party" or instanceType == "scenario")) then
+    --         if nameplateForTarget and nameplateForTarget.driverFrame then
+    --             local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
+    --             nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
 
-                if BetterBlizzPlatesDB.hideResourceOnFriend then
-                    if not UnitCanAttack(nameplateForTarget.UnitFrame.unit, "player") then
-                        nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetAlpha(0)
-                    else
-                        nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetAlpha(1)
-                    end
-                end
+    --             if BetterBlizzPlatesDB.hideResourceOnFriend then
+    --                 if not UnitCanAttack(nameplateForTarget.UnitFrame.unit, "player") then
+    --                     nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetAlpha(0)
+    --                 else
+    --                     nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetAlpha(1)
+    --                 end
+    --             end
 
-                nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetParent(nameplateForTarget)
-                nameplateForTarget.driverFrame.classNamePlateMechanicFrame:ClearAllPoints();
-                if nameplateResourceUnderCastbar then
-                    BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
-                else
-                    PixelUtil.SetPoint(nameplateForTarget.driverFrame.classNamePlateMechanicFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
-                end
-            end
-        end
-    elseif nameplateShowSelf then
-        local nameplatePlayer = C_NamePlate.GetNamePlateForUnit("player")
-        if nameplatePlayer and nameplatePlayer.driverFrame then
-            local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
-            nameplatePlayer.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
+    --             nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetParent(nameplateForTarget)
+    --             nameplateForTarget.driverFrame.classNamePlateMechanicFrame:ClearAllPoints();
+    --             if nameplateResourceUnderCastbar then
+    --                 BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
+    --             else
+    --                 PixelUtil.SetPoint(nameplateForTarget.driverFrame.classNamePlateMechanicFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
+    --             end
+    --         end
+    --     end
+    -- elseif nameplateShowSelf then
+    --     local nameplatePlayer = C_NamePlate.GetNamePlateForUnit("player")
+    --     if nameplatePlayer and nameplatePlayer.driverFrame then
+    --         local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
+    --         nameplatePlayer.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
 
-            nameplatePlayer.driverFrame.classNamePlateMechanicFrame:SetParent(nameplatePlayer)
-            nameplatePlayer.driverFrame.classNamePlateMechanicFrame:ClearAllPoints();
-            local padding = nameplatePlayer.driverFrame.classNamePlateMechanicFrame.paddingOverride or 0
-            PixelUtil.SetPoint(nameplatePlayer.driverFrame.classNamePlateMechanicFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
-        end
-    end
+    --         nameplatePlayer.driverFrame.classNamePlateMechanicFrame:SetParent(nameplatePlayer)
+    --         nameplatePlayer.driverFrame.classNamePlateMechanicFrame:ClearAllPoints();
+    --         local padding = nameplatePlayer.driverFrame.classNamePlateMechanicFrame.paddingOverride or 0
+    --         PixelUtil.SetPoint(nameplatePlayer.driverFrame.classNamePlateMechanicFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
+    --     end
+    -- end
 
 
-    -- hook
+    -- -- hook
 
-    if not nameplateResourceHooked and (nameplateShowSelf or nameplateResourceOnTarget) then
-        hooksecurefunc(NamePlateDriverFrame, "SetupClassNameplateBars", function(self)
-            if self.classNamePlateMechanicFrame then --after entering an instance classNamePlateMechanicFrame becomes, and stays forbidden even when you leave the instance. not sure if there is a workaround.
-                if self.classNamePlateMechanicFrame:IsForbidden() then
-                    if not notifiedUser and nameplateResourceOnTarget then
-                        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Nameplate resource frame (combo points etc) is not allowed to be repositioned in PvE content. In order to restore functionality /reload ui outside of instance.")
-                        notifiedUser = true
-                    end
-                    return
-                end
-                if nameplateResourceOnTarget then
-                    local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
-                    if nameplateForTarget then--and nameplateForTarget.driverFrame then
-                        nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetParent(nameplateForTarget)
-                        nameplateForTarget.driverFrame.classNamePlateMechanicFrame:ClearAllPoints();
-                        if nameplateResourceUnderCastbar then
-                            BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
-                        else
-                            PixelUtil.SetPoint(nameplateForTarget.driverFrame.classNamePlateMechanicFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
-                        end
-                        --nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetPoint()
-                        local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
-                        nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
+    -- if not nameplateResourceHooked and (nameplateShowSelf or nameplateResourceOnTarget) then
+    --     hooksecurefunc(NamePlateDriverFrame, "SetupClassNameplateBars", function(self)
+    --         if self.classNamePlateMechanicFrame then --after entering an instance classNamePlateMechanicFrame becomes, and stays forbidden even when you leave the instance. not sure if there is a workaround.
+    --             if self.classNamePlateMechanicFrame:IsForbidden() then
+    --                 if not notifiedUser and nameplateResourceOnTarget then
+    --                     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Nameplate resource frame (combo points etc) is not allowed to be repositioned in PvE content. In order to restore functionality /reload ui outside of instance.")
+    --                     notifiedUser = true
+    --                 end
+    --                 return
+    --             end
+    --             if nameplateResourceOnTarget then
+    --                 local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
+    --                 if nameplateForTarget then--and nameplateForTarget.driverFrame then
+    --                     nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetParent(nameplateForTarget)
+    --                     nameplateForTarget.driverFrame.classNamePlateMechanicFrame:ClearAllPoints();
+    --                     if nameplateResourceUnderCastbar then
+    --                         BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
+    --                     else
+    --                         PixelUtil.SetPoint(nameplateForTarget.driverFrame.classNamePlateMechanicFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
+    --                     end
+    --                     --nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetPoint()
+    --                     local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
+    --                     nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
 
-                        if BetterBlizzPlatesDB.hideResourceOnFriend then
-                            local info = nameplateForTarget.UnitFrame.BetterBlizzPlates.unitInfo
-                            if info.isFriend then
-                                nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetAlpha(0)
-                                adjusted = true
-                            else
-                                nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetAlpha(1)
-                            end
-                        elseif adjusted then
-                            nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetAlpha(1)
-                            adjusted = nil
-                        end
-                    end
-                else
-                    local nameplatePlayer = C_NamePlate.GetNamePlateForUnit("player")
-                    if nameplatePlayer and nameplatePlayer.driverFrame then
-                        nameplatePlayer.driverFrame.classNamePlateMechanicFrame:SetParent(nameplatePlayer)
-                        nameplatePlayer.driverFrame.classNamePlateMechanicFrame:ClearAllPoints();
+    --                     if BetterBlizzPlatesDB.hideResourceOnFriend then
+    --                         local info = nameplateForTarget.UnitFrame.BetterBlizzPlates.unitInfo
+    --                         if info.isFriend then
+    --                             nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetAlpha(0)
+    --                             adjusted = true
+    --                         else
+    --                             nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetAlpha(1)
+    --                         end
+    --                     elseif adjusted then
+    --                         nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetAlpha(1)
+    --                         adjusted = nil
+    --                     end
+    --                 end
+    --             else
+    --                 local nameplatePlayer = C_NamePlate.GetNamePlateForUnit("player")
+    --                 if nameplatePlayer and nameplatePlayer.driverFrame then
+    --                     nameplatePlayer.driverFrame.classNamePlateMechanicFrame:SetParent(nameplatePlayer)
+    --                     nameplatePlayer.driverFrame.classNamePlateMechanicFrame:ClearAllPoints();
 
-                        local padding = nameplatePlayer.driverFrame.classNamePlateMechanicFrame.paddingOverride or classPadding[className] or 0
-                        PixelUtil.SetPoint(nameplatePlayer.driverFrame.classNamePlateMechanicFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
+    --                     local padding = nameplatePlayer.driverFrame.classNamePlateMechanicFrame.paddingOverride or classPadding[className] or 0
+    --                     PixelUtil.SetPoint(nameplatePlayer.driverFrame.classNamePlateMechanicFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
 
-                        local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
-                        nameplatePlayer.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
-                    end
-                end
-            end
-        end)
-        nameplateResourceHooked = true
-    end
+    --                     local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
+    --                     nameplatePlayer.driverFrame.classNamePlateMechanicFrame:SetScale(nameplateResourceScale)
+    --                 end
+    --             end
+    --         end
+    --     end)
+    --     nameplateResourceHooked = true
+    -- end
 end
 
 
@@ -379,39 +379,39 @@ end
 
 -- Function to handle event registration and updates
 function BBP.RegisterTargetCastingEvents()
-    nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
-    nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget == "1"
+    -- nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
+    -- nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget == "1"
 
-    if not nameplateResourceUnderCastbarEventFrame then
-        nameplateResourceUnderCastbarEventFrame = CreateFrame("Frame")
-    end
+    -- if not nameplateResourceUnderCastbarEventFrame then
+    --     nameplateResourceUnderCastbarEventFrame = CreateFrame("Frame")
+    -- end
 
-    -- Always unregister all events first to ensure a clean state
-    nameplateResourceUnderCastbarEventFrame:UnregisterAllEvents()
+    -- -- Always unregister all events first to ensure a clean state
+    -- nameplateResourceUnderCastbarEventFrame:UnregisterAllEvents()
 
-    if nameplateResourceUnderCastbar and nameplateResourceOnTarget then
-        -- Register events if both conditions are met
-        nameplateResourceUnderCastbarEventFrame:RegisterUnitEvent("UNIT_SPELLCAST_START", "target")
-        nameplateResourceUnderCastbarEventFrame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "target")
-        nameplateResourceUnderCastbarEventFrame:RegisterUnitEvent("UNIT_SPELLCAST_EMPOWER_START", "target")
-        nameplateResourceUnderCastbarEventFrame:SetScript("OnEvent", function(_, event, unit)
-            local nameplate = C_NamePlate.GetNamePlateForUnit("target")
-            if nameplate then
-                BBP.UpdateNameplateResourcePositionForCasting(nameplate)
-            end
-        end)
-    end
+    -- if nameplateResourceUnderCastbar and nameplateResourceOnTarget then
+    --     -- Register events if both conditions are met
+    --     nameplateResourceUnderCastbarEventFrame:RegisterUnitEvent("UNIT_SPELLCAST_START", "target")
+    --     nameplateResourceUnderCastbarEventFrame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "target")
+    --     nameplateResourceUnderCastbarEventFrame:RegisterUnitEvent("UNIT_SPELLCAST_EMPOWER_START", "target")
+    --     nameplateResourceUnderCastbarEventFrame:SetScript("OnEvent", function(_, event, unit)
+    --         local nameplate = C_NamePlate.GetNamePlateForUnit("target")
+    --         if nameplate then
+    --             BBP.UpdateNameplateResourcePositionForCasting(nameplate)
+    --         end
+    --     end)
+    -- end
 
-    local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
-    if nameplateForTarget then
-        nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetParent(nameplateForTarget)
-        nameplateForTarget.driverFrame.classNamePlateMechanicFrame:ClearAllPoints()
-        if nameplateResourceUnderCastbar then
-            BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
-        else
-            PixelUtil.SetPoint(nameplateForTarget.driverFrame.classNamePlateMechanicFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos)
-        end
-    end
+    -- local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
+    -- if nameplateForTarget then
+    --     nameplateForTarget.driverFrame.classNamePlateMechanicFrame:SetParent(nameplateForTarget)
+    --     nameplateForTarget.driverFrame.classNamePlateMechanicFrame:ClearAllPoints()
+    --     if nameplateResourceUnderCastbar then
+    --         BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
+    --     else
+    --         PixelUtil.SetPoint(nameplateForTarget.driverFrame.classNamePlateMechanicFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos)
+    --     end
+    -- end
 end
 
 

@@ -75,20 +75,9 @@ function BBP.PetIndicator(frame)
         return
     end
     -- All hunter pets have same NPC id, check for it.
-    if npcID == "165189" or cataHunterPets[npcID] then
+    if UnitIsOtherPlayersPet(frame.unit) or UnitIsUnit("pet", frame.unit) then
         frame.petIndicator:Show()
-        -- for i = 1, 6 do -- Only loop through the first 5 buffs
-        --     local _, _, _, _, _, _, _, _, _, spellID = UnitAura(frame.displayedUnit, i, "HELPFUL")
-        --     if petValidSpellIDs[spellID] then
-        --         frame.petIndicator:Show()
-        --         return
-        --     elseif config.petIndicatorOnlyShowMainPet then
-        --         if not UnitIsUnit(frame.unit, "target") then
-        --             shadows[nameplate] = nameplate
-        --             nameplate:SetParent(shadowRealm)
-        --         end
-        --     end
-        -- end
+        return
     end
 
     -- If the conditions aren't met, hide the texture if it exists

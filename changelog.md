@@ -1,3 +1,12 @@
+# 1.5.3c:
+## Cata
+### Bugfix:
+- Updated Pet Indicator to now mark all player controlled pets and own pet if friendly pet nameplates are on.
+
+## Retail
+### Tweak:
+- Castbars should not reset back to white after being re-colored if ClassicFrames is on to allow the classic castbars to look normal.
+
 # 1.5.3b
 ## Cataclysm
 ### Bugfix:

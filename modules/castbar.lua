@@ -36,6 +36,7 @@ local UnitReaction = UnitReaction
 local useCustomCastbarTextureHooked = false
 local castIconHooked = false
 local useCustomCastbarTextureBigHook
+local classicFrames
 
 local interruptSpellIDs = {}
 function BBP.InitializeInterruptSpellID()
@@ -134,7 +135,9 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     end
 
     if event == "UNIT_SPELLCAST_CHANNEL_START" or event == "UNIT_SPELLCAST_START" then
-        castBar:SetStatusBarColor(1, 1, 1)
+        if not classicFrames then
+            castBar:SetStatusBarColor(1,1,1)
+        end
     end
 
     local spellName, spellID, notInterruptible, endTime
@@ -350,7 +353,9 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                                 if castBarTexture then
                                     castBarTexture:SetDesaturated(false)
                                 end
-                                castBar:SetStatusBarColor(1, 1, 1)
+                                if not classicFrames then
+                                    castBar:SetStatusBarColor(1,1,1)
+                                end
                             else
                                 if casting then
                                     castBar:SetStatusBarColor(unpack(castBarCastColor))
@@ -585,7 +590,9 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                     local castHighlighter = BetterBlizzPlatesDB.castBarInterruptHighlighter
                     if castBarTexture and not useCustomCastbarTexture and castHighlighter then
                         castBarTexture:SetDesaturated(false)
-                        frame.castBar:SetStatusBarColor(1,1,1)
+                        if not classicFrames then
+                            castBar:SetStatusBarColor(1,1,1)
+                        end
                     end
 
                     local castbarQuickHide = BetterBlizzPlatesDB.castbarQuickHide
@@ -615,6 +622,7 @@ end)
 local interruptCombatLog
 local castbarOnUpdateHooked
 function BBP.ToggleSpellCastEventRegistration()
+    classicFrames = C_AddOns.IsAddOnLoaded("ClassicFrames")
     if not BetterBlizzPlatesDB.castbarEventsOn then
         if BetterBlizzPlatesDB.showNameplateCastbarTimer or BetterBlizzPlatesDB.showNameplateTargetText or BetterBlizzPlatesDB.enableCastbarCustomization or BetterBlizzPlatesDB.hideCastbar then
             if BetterBlizzPlatesDB.interruptedByIndicator and not interruptCombatLog then
@@ -690,7 +698,9 @@ function BBP.ToggleSpellCastEventRegistration()
                                 if castBarTexture then
                                     castBarTexture:SetDesaturated(false)
                                 end
-                                castBar:SetStatusBarColor(1, 1, 1) -- Default color
+                                if not classicFrames then
+                                    castBar:SetStatusBarColor(1,1,1)
+                                end
                             end
                         end
                     end
@@ -699,7 +709,9 @@ function BBP.ToggleSpellCastEventRegistration()
                         if castBarTexture then
                             castBarTexture:SetDesaturated(false)
                         end
-                        castBar:SetStatusBarColor(1, 1, 1) -- Reset to default color if interrupted
+                        if not classicFrames then
+                            castBar:SetStatusBarColor(1,1,1)
+                        end
                     end
                 end
             end
@@ -849,7 +861,9 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
                         frame.castBar:SetStatusBarColor(1,0,0)
                     end
                     if BetterBlizzPlatesDB.castBarInterruptHighlighter then
-                        frame.castBar:SetStatusBarColor(1,1,1)
+                        if not classicFrames then
+                            castBar:SetStatusBarColor(1,1,1)
+                        end
                     end
                 end
                 if castbarQuickHide then

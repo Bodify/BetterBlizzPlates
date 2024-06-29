@@ -678,7 +678,7 @@ local function FetchAndSaveValuesOnFirstLogin()
 
         if BetterBlizzPlatesDB.hasSaved then
             if BetterBlizzPlatesDB.sendResetMessage then
-                DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates has been reset. If you are having any issues feel free to join the Discord. You'll find the link in the Misc section /bbp")
+                DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates has been reset. If you are having any issues feel free to join the Discord. You'll find the link in the Support section /bbp")
                 BetterBlizzPlatesDB.sendResetMessage = nil
             end
             return
