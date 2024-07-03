@@ -24,6 +24,10 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         if frame.partyPointer then
             frame.partyPointer:Hide()
         end
+        if frame.ppChange then
+            frame.hideNameOverride = nil
+            frame.ppChange = nil
+        end
         return
     end
 

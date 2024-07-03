@@ -486,12 +486,16 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.ColorNameplateBorder(frame)
             else
                 if not BetterBlizzPlatesDB.classicNameplates then
-                    frame.healthBar:SetBorderColor(0,0,0,1)
+                    if frame.healthBar.SetBorderColor then
+                        frame.healthBar:SetBorderColor(0,0,0,1)
+                    end
                 end
             end
 
             if BetterBlizzPlatesDB.changeNameplateBorderSize then
-                frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateBorderSize)
+                if frame.healthBar.SetBorderSize then
+                    frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateBorderSize)
+                end
             end
 
             -- info.isTarget = false
@@ -516,7 +520,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                     BBP.UnfadeAllNameplates()
                 end
             end
-            if config.hideNPC then BBP.HideNPCs(frame) end
+            if config.hideNPC then BBP.HideNPCs(frame, BBP.previousTargetNameplate:GetParent()) end
             if config.totemIndicator then
                 --if config.totemIndicatorHideHealthBar then BBP.ApplyTotemIconsAndColorNameplate(frame) end
                 BBP.ApplyTotemIconsAndColorNameplate(frame)
@@ -555,7 +559,9 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.ColorNameplateBorder(frame)
             else
                 if not BetterBlizzPlatesDB.classicNameplates then
-                    frame.healthBar:SetBorderColor(1,1,1,1)
+                    if frame.healthBar.SetBorderColor then
+                        frame.healthBar:SetBorderColor(1,1,1,1)
+                    end
                 end
             end
             BBP.ToggleNameplateAuras(frame)
@@ -570,7 +576,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
 
-            if config.hideNPC then BBP.HideNPCs(frame) end
+            if config.hideNPC then BBP.HideNPCs(frame, targetNameplate) end
 
             if config.totemIndicator then
                 --if config.totemIndicatorHideHealthBar then BBP.ApplyTotemIconsAndColorNameplate(frame) end
@@ -589,7 +595,9 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             end
 
             if BetterBlizzPlatesDB.changeNameplateBorderSize then
-                frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateTargetBorderSize)
+                if frame.healthBar.SetBorderSize then
+                    frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateTargetBorderSize)
+                end
             end
         end
         BBP.previousTargetNameplate = frame
@@ -635,3 +643,4 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
 end)
 
 
+BBP.tempComboPointWA = "!WA:2!TZ3c4TT119BygxhZK0iPKyVO42WQu7iLyjBsAlhjxxx(uI2uK0GuwwoXJeKaIarGaWaG6HxB)VOLM5(VBDlAzj7rFQ0LTMM2UY02T(911T5TU9TSUTt16646E7TLTUU1TQ9(9o3la4djslBhfn3Vy99riGlU4I79C(D(Do3h4YCQUmYFOb8EWb82vPU47I)c37Y55kmnVUQwivzv9J7YLRuUoWahsRRcQkM6QYYc8HeLK51fuEuTDnbNUSAHPzfmulRxqyypPf505n06oSaNP4juKkkAw)MSLvem0Upw1ILfcOWhwVSeF97gsTuEvpPuLumn0UNu6scgMnvW8QZ6jPEEYn5K54LuQF3rvLNhF0zf016mdNErbZuYCM4lPGOQ(LYRQZlOh0UHP1rqzPZFESE6jJQQSPKgRrbozbxlzQwygbDdjvLB(9d5TEkXLS(Fe(IcADM(CL50f8eTSSSNjeLmfwsxOiM)mZRjWwuxTSMD2tlDEHTXYjRjY5QIvswcugggx6ZLCQPmemz0N35eUcMyXymiRHjNUP78tjPizi6oi(pt3lyQlvSiwZ6EV62N(elXlKV8utrEX6JgjEQOJhpOjPwWvwNZ3cgAcYYX4nCFjJY5fMrqXmnMBP5QKnuG0zYMota2mblJfEEnzU5f0zv4kjy4MLM18JkWjBkw7rtPlGpkB6urIhFXYk2vb3v4OIxQglFOijYeH9IwnvRw1owMRSjMHKA02M7f5uKkXroFq4UJErbodH0MioQOP42bpbvuvewMhR9KCKL0w0nequhVXcKSsAPG)GL4KuIc(Wha8dheoemi()UxDk9iXRDxjWMKgbg4GtcXzYfuwLJpAEtuHRyUt2sLraG7GO4QWoHJ4MTGmNHb5SGgOgKCsLP0XYbRO4d7AfRMCussKku(0HyJejXkOeqqxHt(uwWNNXwLhtbfdUw0qqEkQucgyjuMYsHmgUZJnUPKk6EjsJuYsgvrszkvDlPKBFO9rLjtDUYPvIFGzkEWUk8H8CHJSiNEH4uP2JVtW1WSPvll7LE0h9OFWnCl5NLROASWlo4u(8kh5edEC4aUHDnj0VVmjtTIHQU5OZNxxIpdxEzHbHeIWyIqCr4UOa0f0vNnTgxbbx(kRlRTBrttnJH3)(jf6asQ7VwPUFFdcFhO20nCpUHUDd7U79cVHNaEJW9IAJ3e0JB4(G3m8aWdc3VBOxOpypWEH95Usbv5YLuSEf51rB5Ygp(TcHHbqtgPIk4)ni3BBGxcuHQzrfSJ6(WRjLUxtk7KrhnLi4ugDBJ6dbrCdHCbrDddffgMOCH3c94rPhFRKJADu2WM3iLG(4OfIiS1A0G51qZFup(q5Tqu5LkPHYYflIIYjK4nfVf4wDTubbcCGGp6jol86f16Obyd9G29mHa30bqWUXWRHVc68I8ZJ2JsfOmkWDSnwzPssM3YIgMcAbukklCVbjQqSzENUGBh64siccBTkMrrEev98SbchB80bXhF2LgnjBSZKmrMaXH9VJ8gcLqPrEVdCGb8Di42qEo0ubUjDlttbr4yUG3wL0rIhjuMOSbglYcKMgTPWggIvXRw05mnoX5gBcVlGcQ4K6L4stH8HHK0lilKdc(mWiUHrDJyitkmM5chlpMv9SZZy9)5yqTtfo(hTm2E4hJBUTc7Izfe2lqAVk81884QIbXotyoZY6yvldmEtGneUGSGgCMeod8(MmbNcDsP1ruDPZ75KL54j2SEYKjFbK2p78PUPdmWb9UIPv5nHoN2yQ8cA3zO4bglvMKbJhi0jceoCSmXovKLO8WuznJfKWU6IvyjfrOtD7Izr0(rHNuqSbJhjr4fnKr9a568XsKow4iWcADA7MS)OsYYupKujpr5fRsVZE4H6DMKEpDWX16G481siyrHUnijKITqDbsnPMKYw1UZ6T(G1EqXgtoAnHQiS73lAB(YODYEigLxsJ4TmRkYYYHqMU75TE0fXMzwAY5GEzPEtjMUS0K6URdSi9ecX8TJw2e1FwIhKCuJ6739Y1ECswYrjbqtDEjJhTSc6EBgbFCkZJbsGna1szSCIexTOuHEC7wRtoAwStMi)EHTSakzPQaKOl4ZCjnD1I6cggPPMEpWU3YwV2PhEyKmO7DcEwg5JRl0ZlkqIyP)8uSRG4Q18CZjUabIr8UF3W3jKnFjjDDvDr4SWnryy7hgag5b2lBbrHcthfEdU6rvRR3YcZWPlriAHNKDgo5YcD5vVGiNsrb0Jo8SAD5GpIusZCEkazbSXQrKKWc7f(W2LeQJGLGNeE2U8cFKMFswboERNeEoyHvQ3KSmMOKxR6GwN1n5STX02viI)VKifbgvq)0iYSCCjdL06SEP6K)7Pn5VFe(siwItiBjukqayONGcWOEyZfeJ4rWcYmJGOeYCmUKOfNCLgsu0HGEV5nKiib9jcWgpzOtuJVMDwcT79PlPqy5feVij(hwhQNkQyyKkwxO1vDQWSXsCQiSPJyXmmNfZaH0QGAjncgt8chdkZaZqOQGzjeuWCulqy(wsebNNW)aFxWBhEh2L27e()bF3mWJHKfWcW3d84W7cEc8SV3gm(pVOV5gCQIHND(yW7MASd))TEnVNTcFFIW3)QnBH3lXsf(bqlu4hK6y9jrltyrIfj8d5ykcpLJ5h8ddpn8mObg8J8cBb(rPgsWp2gJTd8JdVV(H3Vi8beHpi1Ca(qR2sOg2TR3In01Nf0f(jia1wHTDYWpjjdWpvlXUWhfEEcMe(yWlqWzJ1eod(45GpHB4tAdOGF66Wi4tbvQHDGx8(GpTi8zyGpl8Za)S1qbWNBts9hT3jvkxA8zInX0Vwr97F9u)(Vgu)j2Wv)7fC9sxe7RGkpTxRE8UsJx4ju4gVPVgVPpYnJQRAy68KnEXQUPVgVj5jxECfrsFzTYTwhnD5QVVVMVp55jX(tXrNfEiyxpmQhoPDm9Rb2EfgRobXqq4pmn852h4CdrjtXc3QlmYxipuaX)DHXWsqf7FhuTMtyNBJyDrvBQx7WXyv0h64cro50E9DAVKGHTdXNee6oRGU4kieH0jwJCOn3fgyjjmwzRii29wwLfhALJ42LlOQkZRoRs6zL0Sc7mi5HYb7(1JsSVknWhDuGNZXQuRtssffue0LkKwuD2KyM7vRt6GG4XAuqOQiIjkraJYAu4gKuiUwUPNBjd8FbKNLBEdIAW2kMy8wZW1MUHOpgMAgEHU1EJKOrZspy19XSAznLkjyFfJ2DVMmyyFc4FXA3RN9OP5PDfvjv(SKykZDj6nR1P2GbgptsT7GMi2HFvsNxlq7muWa4LRyvusZjy1dPht7n3U3GSqrUcZNDk0ysx8I0mqc9sAQ5Xi9TcjJe4rWejter7n1Usb9FxqI0FpxGhDm8osww2QdyN2E4wwI(y1dREr7Ibd05TR1LvZJoEtopqtjoPDIw1WzW3fgAN4Y0RMf73pPNflmH9jlxROPdvtYXZepgw77WsCvFauqCN1voLUDwSEL1h7O6LhniuT(ANyWUlKznfX4zqsc(5BbiqZ(ewYJW)YlxuwD2O6cNRSGsbA)LWojsfIKBCreLpISDLrCbssK20Y5lBAQQyheiTiYGbVnTcggLRkKlDAslw05PPs9lsUmS9a(yLZAkiYfwdYXDfKCUi9ztthNo6PXLWYVtA(cAnqDW7Zpm0ttJXurygscRI(hDl8jf1UdsgKkQGX(sgGimWz5sIuxdvchjqMrprIyJmAM60AO3nKo7IoKcKXbmNLx9V0cojsC7TTvMwa7DozKKmzjnjrcJhse1iNlXb1XCf88QQLyAIk8ZR1fwVczxEy3FyjwAKOeEr)A3PZ7HG(dlzq6kbFoK5RyK(M0C2thy8ehK4jB2xbE1hb9g8HheDgdlvrYGYCrzSEwxw(JrYYNdEjKsf(1Yb78T76cJqcq6LWKXGKiJT0OFHVYwi)DemsPrp2Z3n5VJT2tWiOYrDf9LYvLz7IRk4PHE6QmBT1kUQmUSutvzUP6AN3jlT37orATItFeT7DUtCxvzCNZoUlcQ(WhI41VvrC9RJVNTLJg4fLSh(nQXYd)MKOU(TAMdhaxWx(sguUBhT3QiU34J6Apeq5htBWyKHzAkSJupsaEEvfJhP2Gk9i0EVtpDmbEjUhXkvYr)uVZiUedwlV2oRpoungGJTE2jMOpNiSZrFRFtQ(9PQfHl65TWiXlioAOrsnbjeqIFC0qGGdjyB0xkbA)ZHi(Qm7ih8I7PTHZPD4MAljBQTy1cS7YPXJynqtztxsv1uKa7RBGTtDE1Su6c4ZUCGezIfI0xXjILocgoqvMxhQCVzMlmaf22kx)O63gBEfR(3g8LHLVkCvd)2mWxb1N)oOVw4RMd(DHQWVh81GF)hd(deH)q8b(JG)y4pb9Db)PWLyG)mRQ4FoAC8xWaVmd8xkc)vWxh(RHVb83G5(VLb(MwX393D3WF)8W3cw5LH)bhQB4Fe(NeH)z4Fb(xDb)BmW)UvP9F4c(pzG)R7c(VfH)hu5SLoRYWytGEvAaArpsnASifjIzckGAD3ogqIEOj(VVafHqP7O2QXQCOdm0GJXk07XhtEdKBRkZT2gkTDV11qPXS5sLvL52C4XQY863eOUqSBvMBFtIUQkthxbmp(AbZdtdmojM0FWZfEAXy(Z0EgNF(RagNQm3rZChUHpBvM76vnEIB5g8eBe8e)cRHNy(zZ4D6joEOjcKEtHN4ZVLxZXtClxNWt04aPSo8erleQWXlfxD(rJ1EEIFXRd5jUTBWtSrWtCX1WtCMb9fi5XhDMahi2McpXUEnhnXTD9hnX6forHjkji8OAsbNtO90e)sxhstS9BqtSrqt8lVgAcE2roNFt1ZNmE4nfAIqVMJMy7)FjnXUQtt00uRSo8e8hEmtot2u9EWt3EEIV41H8e74g8eBe8e)kRHN4WsJywwS3tNi6eBk8eQVMJNyhxhYtSEXtOCWZCE)f0o8bpFY2Zt8RUXWtCe4eKfa6z8fkLx8Np8NF83bXFhQ20aBVQpHtcSNQkZ9Jp5EXF7b)1h(RxNf8jK(AF(HpLlycRfVjCA83KVIw0MWzySNP51BHAcpsJlmt68DtuG5iRatGZAHxAp9Z8KPFw4wGPUxOyT1mjicsWJctV6jL(1bkIotkTM1IE0h)efyJozWahEAqxemQVihrZPx9wPipFdRuKeh3yeJXgV4iN3OTRuKpXvYkfzhTzLI0GUEpqVADK2KtPGW(JQQxA)e7a6SEtMSq6JgKC2oHp12PRGRcICKfWozk3WsMwwphPCQYmajpvz2Vi99H0lhLLn5iJhbZxvM(jts(DswITEc5ucsgMsfmQT6vYBTybHNr74trxeHQk9AV8Z7ZTh8pDbZY6kESt7H9EwpCk8ECYZd77SEu1RDx)NTp3ck8VkrK0xlwlmVUl7AHXEv8bVq7wlmoz45VYxlmOXDJlgMzGpUyRwjm4X9YgMD8yHrfXbY5SGy6BZF9q1ikVuYtn(yAZFQZXQUzGYRYSpkkeZvJq11fdJsSAa4QmERHwRY4dEMQm(VUbG5RnaSJU61A3vfaBVxPaSQmh86j0LUzYWtmtK5cfDUBGU2aqx(xp0L)Rf019)TPORzFOjoDFjoN20NV0nqxBaORdUEORdETGU69BtrxpKxLjdFi9WXsBCd01ga66qRh66qxlOR(24rx29YBy2K6594LE0h9O)M6JN1k9LDWQmdH9R7i4VHVrF7wtF72(A7BxFNmIzQZLMnX5MDtSVDA7YADDQQN3OFzYhay)OoT)GfBWKN9KNOV4hx9KN4rh5Y(XbCHUwK8nVq)aE7EP6FN0eBFuBU4TBBKtxAXHKvveme1XUTrw9J5SyfS4kCikSiiqCXYL4mlikyyT0KHLPOccq5v)pSa)TWIE7TZIop5lHwGhEwglJ2QmhTUz9(2ItxQ8fir480VmlJhWz42cdpRRg72vEdto8(n8jwDNTstD1qkmuJKcp3LOF)tzXEPM16Jo(t9P9wJIGUiqZ2CoYv)ZzO(xXq(uSXIKUHvP6l6Ft3)erkxhToOwE1tvO88bvgDDqRvzow3vzEBRgEwLjaYAf8YJiRYe66xyifnD5HGvzIuLjABrFvzgPENYQYm6vdmB4MGzvzI1m0QkZXBjsQkZjUocfXvCUetMw0ycTtEdu0RmuK)Rju0rE1ffnm1RSRHxU(g2HhVEA8kFnDLFp1IYbbEyuouV2Ot6x5X0GQ4RzLljwisqjeKUPtqny0ny8rxMGAI203ifQ(jGbmuOgIPHe7cgjZD4IgmdgVdjih0YadWHesdg9YQIO5MPHazhsdjsXyvkkPF6Yc5NI)0dwlOWKOMlb(lvTGcTcXrx8ch12WgRpVh0KXEMgrBnBHUTbE9jUbd93YpfxEd0RizVcH85ANJ(vLxpDR0i2EOr3I3brFq0fR5luCnMCeH6SO7xlcgD63tVapXM5MD4uA046Oi0MYq8oSKRxZk1pqohduKMQrRsRXJ9zRhtWoXUZO9GKGUYkOmZawBbmdNwW0EnQ3BpKjlQFVhOFzYN(vp9bp3swdKDbuOmyZ9gHwU5LLuMM8nDuV8FGRKYNNtFAsXxL5uec2lzqxu8PS)iieHhlN1S19z(wug3l7S(HM6hzWpsh5(0DK7P6ih1SwpvG4bchlrDmmLQMqC)XwUX6Gh4JUCtTzkbccCjy1pNiLAjbH47yBdEXJ6y2IDdY3wxKxnRLWrKyfJgji5rSkjsDs((cpw6qNCwBEeQ2fXSVBxxty2QmSuiAvM0BaWYQmzUUar67QcrEGHQJiritlqI(QYmXvhkelZvHcRYmzdipMRjKxvMZ0kq3fB8v6G5CAvTaZLKI5CTAmxvMZ2eyRCMdx44NZNYGPh6gGT2d28F1r)5D9aB(VQbByzUzd2SFL1i482wWwQRmWw8scbY37SdLuBU1c2EqD1YMOZab4Bajx0hppF)d5nzgA0puGNMhEjdYE2vM2)X(2H9wScMJX145mfGEVuZFzUWxZUk2TDTCUB6lwt43WgsezYzJX75OEuKKDlRwGt2tOSKboGE395HEFd6u4E02Dh3UDM6wpoVIHdyIDZwmJAdVQETMqxRxIz90BUGhyebZAxevLUbn1BpwzVNglHYo18glkYCd3W1dO4usKIjJ60ck0sqAkp9A9895Xu0orYFKV55gWMwBxt92J1EFwp7RXYEFECs2QwjOW34ewBv8KzJUvINuXdmze2SzcWosKmzdnAGeJejSTaIwhALkICJ2iyBZRjrGXIKfFxzIKD8eXYKnq4W4RXULxtsOOA2UxkrEwxrxtpSp7MxFTq8Dzu9x2wNTaZruEf2IyJmwYt1I2u7EnoVNwP3BNzX6uLIMKnymuWMi76lUPcOlF2UQFlTse0Y3ZQZyBEtwmk2qF62d4(8mWad0OTNiIlKXEVzHjFyAMoBnzV9DxLi2ovQMPHcCvMnTrr8oT0eyMrY2AlospKzDG0hqIxwNoa2JBR90qdT3vlTY2xlf)7RncR9ToA39TU6fIFVi1wBlRwEA3SxFHpzzTGHu8HX2jgHrflha0nrrYiAAw2WjjrjEbyf7Go0UNw6mXEJHyfNT(dAmhUQfZXqNQb3RhTHo7A5a9dEBKOiwUPnqbxqNbjFs2qgT7z1BMG1CYTFVvAO601CyFu1T3)hcgps0mA3x7D91WM(aDaJywWzNya(6epVYSKT8UduRFZ7y5M2lh29wCg0dR4Nw1(l5Hx)DCsYIeo(KN5KbcFMYHyXGf1EW2xBx7EZqLvVppSu9DmJh)wPR6qsiGpuxZCtVJ)3)"

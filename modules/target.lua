@@ -522,7 +522,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                     BBP.UnfadeAllNameplates()
                 end
             end
-            if config.hideNPC then BBP.HideNPCs(frame) end
+            if config.hideNPC then BBP.HideNPCs(frame, BBP.previousTargetNameplate:GetParent()) end
             if config.totemIndicator then
                 --if config.totemIndicatorHideHealthBar then BBP.ApplyTotemIconsAndColorNameplate(frame) end
                 BBP.ApplyTotemIconsAndColorNameplate(frame)
@@ -569,7 +569,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
 
-            if config.hideNPC then BBP.HideNPCs(frame) end
+            if config.hideNPC then BBP.HideNPCs(frame, targetNameplate) end
 
             if config.totemIndicator then
                 --if config.totemIndicatorHideHealthBar then BBP.ApplyTotemIconsAndColorNameplate(frame) end

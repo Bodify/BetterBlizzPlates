@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.5.3c"
+local addonUpdates = "1.5.4"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -1971,7 +1971,13 @@ end
 
 --##################################################################################################
 -- Hide npcs from list
-function BBP.HideNPCs(frame)
+-- Initialize shadow realm frame and shadows table
+local shadowRealm = CreateFrame("Frame")
+shadowRealm:Hide()
+local shadows = {}
+
+-- Hide NPCs from list
+function BBP.HideNPCs(frame, nameplate)
     if not frame or not frame.displayedUnit then return end
 
     local config = frame.BetterBlizzPlates.config
@@ -1979,9 +1985,10 @@ function BBP.HideNPCs(frame)
 
     frame:Show()
 
-    local hideNPCArenaOnly = BetterBlizzPlatesDB.hideNPCArenaOnly
-    local hideNPCWhitelistOn = BetterBlizzPlatesDB.hideNPCWhitelistOn
-    local hideNPCPetsOnly = BetterBlizzPlatesDB.hideNPCPetsOnly
+    local db = BetterBlizzPlatesDB
+    local hideNPCArenaOnly = db.hideNPCArenaOnly
+    local hideNPCWhitelistOn = db.hideNPCWhitelistOn
+    local hideNPCPetsOnly = db.hideNPCPetsOnly
     local inBg = UnitInBattleground("player")
     local isPet = (UnitGUID(frame.displayedUnit) and select(6, strsplit("-", UnitGUID(frame.displayedUnit))) == "Pet")
 
@@ -1990,30 +1997,14 @@ function BBP.HideNPCs(frame)
     end
 
     -- Skip if the unit is a player
-    if info.isPlayer then --or info.isFriend then
-        if frame.murlocMode then
-            frame.murlocMode:Hide()
-            frame.hideNameOverride = false
-            frame.hideCastbarOverride = false
-            frame.healthBar:SetAlpha((info.isSelf and 1) or (config.friendlyHideHealthBar and info.isFriend and 0) or 1)
-            frame.selectionHighlight:SetAlpha(((info.isFriend and config.friendlyHideHealthBar) and 0) or (config.hideTargetHighlight and 0) or 0.22)
-            ToggleNameplateBuffFrameVisibility(frame)
-            if frame.fakeName then
-                frame.fakeName:SetAlpha(1)
-            else
-                frame.name:SetAlpha(1)
-            end
-        end
+    if info.isPlayer then
+        BBP.ResetFrame(frame, config, info)
         return
     end
 
-    if info.isFriend then
-        local hideNpcHpBar = BetterBlizzPlatesDB.friendlyHideHealthBarNpc
-        if config.friendlyHideHealthBar and hideNpcHpBar then
-            frame.healthBar:SetAlpha(0)
-            frame.selectionHighlight:SetAlpha(0)
-            return
-        end
+    if info.isFriend and config.friendlyHideHealthBar and db.friendlyHideHealthBarNpc then
+        BBP.HideNameplate(nameplate)
+        return
     end
 
     local unitGUID = UnitGUID(frame.displayedUnit)
@@ -2021,13 +2012,57 @@ function BBP.HideNPCs(frame)
 
     local npcID = select(6, strsplit("-", unitGUID))
     local npcName = UnitName(frame.displayedUnit)
-
-    -- Convert npcName to lowercase for case-insensitive comparison
     local lowerCaseNpcName = strlower(npcName)
 
-    --##########################################################
+    -- Initialize murlocMode if not present
+    BBP.InitMurlocMode(frame, config, db)
 
+    local listToCheck = hideNPCWhitelistOn and db.hideNPCsWhitelist or db.hideNPCsList
+    local inList, showMurloc = BBP.CheckNPCList(listToCheck, npcID, lowerCaseNpcName)
 
+    -- Determine if the frame should be shown based on the list check or if it's the current target
+    if UnitIsUnit(frame.displayedUnit, "target") then
+        BBP.ShowFrame(frame, nameplate, config)
+    elseif hideNPCWhitelistOn then
+        if inList then
+            if showMurloc then
+                BBP.ShowMurloc(frame, nameplate)
+            else
+                BBP.ShowFrame(frame, nameplate, config)
+            end
+        else
+            BBP.HideNameplate(nameplate)
+        end
+    elseif inList or (hideNPCPetsOnly and isPet) then
+        if showMurloc then
+            BBP.ShowMurloc(frame, nameplate)
+        else
+            BBP.HideNameplate(nameplate)
+        end
+    else
+        BBP.ShowFrame(frame, nameplate, config)
+    end
+end
+
+-- Resets the frame to default display settings
+function BBP.ResetFrame(frame, config, info)
+    if frame.murlocMode then
+        frame.murlocMode:Hide()
+        frame.hideNameOverride = false
+        frame.hideCastbarOverride = false
+        frame.healthBar:SetAlpha((info.isSelf and 1) or (config.friendlyHideHealthBar and info.isFriend and 0) or 1)
+        frame.selectionHighlight:SetAlpha(((info.isFriend and config.friendlyHideHealthBar) and 0) or (config.hideTargetHighlight and 0) or 0.22)
+        ToggleNameplateBuffFrameVisibility(frame)
+        if frame.fakeName then
+            frame.fakeName:SetAlpha(1)
+        else
+            frame.name:SetAlpha(1)
+        end
+    end
+end
+
+-- Initializes the murlocMode texture on the frame
+function BBP.InitMurlocMode(frame, config, db)
     if not frame.murlocMode then
         frame.murlocMode = frame:CreateTexture(nil, "OVERLAY")
         frame.murlocMode:SetAtlas("newplayerchat-chaticon-newcomer")
@@ -2036,182 +2071,86 @@ function BBP.HideNPCs(frame)
     end
 
     if not config.hideNpcMurlocYPos or BBP.needsUpdate then
-        config.hideNpcMurlocYPos = BetterBlizzPlatesDB.hideNpcMurlocYPos or 0
-        config.hideNpcMurlocScale = BetterBlizzPlatesDB.hideNpcMurlocScale
+        config.hideNpcMurlocYPos = db.hideNpcMurlocYPos or 0
+        config.hideNpcMurlocScale = db.hideNpcMurlocScale
 
         frame.murlocMode:SetPoint("CENTER", frame, "CENTER", 0, config.hideNpcMurlocYPos)
         frame.murlocMode:SetScale(config.hideNpcMurlocScale)
     end
+end
 
-    -- Set position and scale dynamically
-    -- if frame.murlocMode then
-    --     frame.healthBar:SetAlpha(0)
-    --     frame.selectionHighlight:SetAlpha(0)
-    --     frame.name:Hide()
-    --     if frame.fakeName then
-    --         frame.fakeName:Hide()
-    --     end
-    -- end
-
-    --#######################################################
-
-    if hideNPCWhitelistOn then
-        -- Check if the NPC is in the whitelist by ID or name (case-insensitive)
-        local inWhitelist = false
-        local showMurloc = false
-        local hideNPCsWhitelist = BetterBlizzPlatesDB.hideNPCsWhitelist
-        for _, npc in ipairs(hideNPCsWhitelist) do
-            if npc.id == tonumber(npcID) or (npc.id and npc.id == tonumber(npcID)) then
-                inWhitelist = true
-                if npc.flags.murloc then
-                    showMurloc = true
-                end
-                break
-            elseif npc.name == tostring(npcName) or strlower(npc.name) == lowerCaseNpcName then
-                inWhitelist = true
-                if npc.flags.murloc then
-                    showMurloc = true
-                end
-                break
+-- Checks if an NPC is in the provided list
+function BBP.CheckNPCList(list, npcID, lowerCaseNpcName)
+    local inList = false
+    local showMurloc = false
+    for _, npc in ipairs(list) do
+        if npc.id == tonumber(npcID) or strlower(npc.name) == lowerCaseNpcName then
+            inList = true
+            if npc.flags and npc.flags.murloc then
+                showMurloc = true
             end
+            break
         end
+    end
+    return inList, showMurloc
+end
 
-        -- Show the frame only if the NPC is in the whitelist or is the current target
-        if UnitIsUnit(frame.displayedUnit, "target") then
-            frame:Show()
-            frame.hideCastInfo = false
-            frame.murlocMode:Hide()
-            frame.hideNameOverride = false
-            frame.hideCastbarOverride = false
-            frame.healthBar:SetAlpha(1)
-            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
-            ToggleNameplateBuffFrameVisibility(frame)
-            if frame.fakeName then
-                frame.fakeName:SetAlpha(1)
-            else
-                frame.name:SetAlpha(1)
-            end
-        elseif inWhitelist then
-            if showMurloc then
-                frame.healthBar:SetAlpha(0)
-                frame.selectionHighlight:SetAlpha(0)
-                frame.BuffFrame:SetAlpha(0)
-                if frame.fakeName then
-                    frame.fakeName:SetAlpha(0)
-                else
-                    frame.name:SetAlpha(0)
-                end
-                frame.murlocMode:Show()
-                frame.hideNameOverride = true
-                frame.hideCastbarOverride = true
-            else
-                frame:Show()
-                frame.hideCastInfo = false
-                frame.murlocMode:Hide()
-                frame.hideNameOverride = false
-                frame.hideCastbarOverride = false
-                frame.healthBar:SetAlpha(1)
-                frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
-                ToggleNameplateBuffFrameVisibility(frame)
-                if frame.fakeName then
-                    frame.fakeName:SetAlpha(1)
-                else
-                    frame.name:SetAlpha(1)
-                end
-            end
-        else
-            --frame:Hide()
-            if showMurloc then
-                frame.healthBar:SetAlpha(0)
-                frame.selectionHighlight:SetAlpha(0)
-                frame.BuffFrame:SetAlpha(0)
-                if frame.fakeName then
-                    frame.fakeName:SetAlpha(0)
-                else
-                    frame.name:SetAlpha(0)
-                end
-                frame.murlocMode:Show()
-                frame.hideNameOverride = true
-                frame.hideCastbarOverride = true
-            else
-                frame:Hide()
-                frame.murlocMode:Hide()
-                frame.hideNameOverride = false
-                frame.hideCastbarOverride = false
-            end
-            frame.hideCastInfo = true
-        end
+-- Shows the frame with default settings
+function BBP.ShowFrame(frame, nameplate, config)
+    if shadows[nameplate] then
+        nameplate:SetParent(shadows[nameplate])
+        shadows[nameplate] = nil
+    end
+    frame:Show()
+    frame.hideCastInfo = false
+    frame.murlocMode:Hide()
+    frame.hideNameOverride = false
+    frame.hideCastbarOverride = false
+    frame.healthBar:SetAlpha(1)
+    frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
+    ToggleNameplateBuffFrameVisibility(frame)
+    if frame.fakeName then
+        frame.fakeName:SetAlpha(1)
     else
-        -- Check if the NPC is in the blacklist by ID or name (case-insensitive)
-        local inList = false
-        local showMurloc = false
-        local hideNPCsList = BetterBlizzPlatesDB.hideNPCsList
-        for _, npc in ipairs(hideNPCsList) do
-            if npc.id == tonumber(npcID) or (npc.id and npc.id == tonumber(npcID)) then
-                inList = true
-                if npc.flags.murloc then
-                    showMurloc = true
-                end
-                break
-            elseif npc.name == tostring(npcName) or strlower(npc.name) == lowerCaseNpcName then
-                inList = true
-                if npc.flags.murloc then
-                    showMurloc = true
-                end
-                break
-            end
-        end
+        frame.name:SetAlpha(1)
+    end
+end
 
-        -- Check if the unit is the current target and show accordingly
-        if UnitIsUnit(frame.displayedUnit, "target") then
-            frame:Show()
-            frame.hideCastInfo = false
-            frame.murlocMode:Hide()
-            frame.hideNameOverride = false
-            frame.hideCastbarOverride = false
-            frame.healthBar:SetAlpha(1)
-            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
-            ToggleNameplateBuffFrameVisibility(frame)
-            if frame.fakeName then
-                frame.fakeName:SetAlpha(1)
-            else
-                frame.name:SetAlpha(1)
-            end
-        elseif inList or (hideNPCPetsOnly and isPet) then
-            --frame:Hide()
-            if showMurloc then
-                frame.healthBar:SetAlpha(0)
-                frame.selectionHighlight:SetAlpha(0)
-                frame.BuffFrame:SetAlpha(0)
-                if frame.fakeName then
-                    frame.fakeName:SetAlpha(0)
-                else
-                    frame.name:SetAlpha(0)
-                end
-                frame.murlocMode:Show()
-                frame.hideNameOverride = true
-                frame.hideCastbarOverride = true
-            else
-                frame:Hide()
-                frame.murlocMode:Hide()
-                frame.hideNameOverride = false
-                frame.hideCastbarOverride = false
-            end
-            frame.hideCastInfo = true
-        else
-            frame:Show()
-            frame.hideCastInfo = false
-            frame.murlocMode:Hide()
-            frame.hideNameOverride = false
-            frame.hideCastbarOverride = false
-            frame.healthBar:SetAlpha(1)
-            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
-            ToggleNameplateBuffFrameVisibility(frame)
-            if frame.fakeName then
-                frame.fakeName:SetAlpha(1)
-            else
-                frame.name:SetAlpha(1)
-            end
+-- Shows the murlocMode on the frame
+function BBP.ShowMurloc(frame, nameplate)
+    if shadows[nameplate] then
+        nameplate:SetParent(shadows[nameplate])
+        shadows[nameplate] = nil
+    end
+    frame.healthBar:SetAlpha(0)
+    frame.selectionHighlight:SetAlpha(0)
+    frame.BuffFrame:SetAlpha(0)
+    if frame.fakeName then
+        frame.fakeName:SetAlpha(0)
+    else
+        frame.name:SetAlpha(0)
+    end
+    frame.murlocMode:Show()
+    frame.hideNameOverride = true
+    frame.hideCastbarOverride = true
+end
+
+-- Hides the nameplate by setting its parent to shadowRealm
+function BBP.HideNameplate(nameplate)
+    if not shadows[nameplate] then
+        shadows[nameplate] = nameplate:GetParent()
+    end
+    nameplate:SetParent(shadowRealm)
+end
+
+local function ShowLastNameOnlyNpc(frame)
+    local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
+    if info.isNpc then
+        local name = info.name
+        local lastName = name:match("([^%s%-]+)$")  -- Matches the last word after a space or dash
+        frame.name:SetText(lastName)
+        if frame.fakeName then
+            frame.fakeName:SetText(lastName)
         end
     end
 end
@@ -3542,7 +3481,7 @@ local function HandleNamePlateAdded(unit)
     if config.fadeOutNPC then BBP.FadeOutNPCs(frame) end
 
     -- Hide NPCs from list if enabled
-    if config.hideNPC then BBP.HideNPCs(frame) end
+    if config.hideNPC then BBP.HideNPCs(frame, nameplate) end
 
     -- Color NPC
     if config.colorNPC then BBP.ColorNpcHealthbar(frame) end
@@ -3581,6 +3520,8 @@ local function HandleNamePlateAdded(unit)
     if config.useFakeName then BBP.SetupFakeName(frame) end
 
     if config.showNpcTitle then NameplateNPCTitle(frame) end
+
+    if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
 
     -- Hide name
     if ((config.hideFriendlyNameText or config.partyPointerHideAll) and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
@@ -3811,7 +3752,7 @@ function BBP.RefreshAllNameplates()
         -- end
 
         if BetterBlizzPlatesDB.hideNPC then
-            BBP.HideNPCs(frame)
+            BBP.HideNPCs(frame, nameplate)
         end
 
         if BetterBlizzPlatesDB.totemIndicator then
@@ -3880,6 +3821,7 @@ function BBP.ConsolidatedUpdateName(frame)
         config.totemIndicator = BetterBlizzPlatesDB.totemIndicator
         config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
         config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
+        config.showLastNameNpc = BetterBlizzPlatesDB.showLastNameNpc
 
         config.updateNameInitialized = true
     end
@@ -3965,6 +3907,8 @@ function BBP.ConsolidatedUpdateName(frame)
 
     if config.useFakeName then BBP.SetupFakeName(frame) end
 
+    if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
+
     if (config.hideFriendlyNameText and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
         frame.name:SetAlpha(0)
         if frame.fakeName then
@@ -3976,6 +3920,13 @@ function BBP.ConsolidatedUpdateName(frame)
         frame.name:SetAlpha(0)
         if frame.fakeName then
             frame.fakeName:SetAlpha(0)
+        end
+    else
+        if frame.partyPointer and config.partyPointerHideAll and frame.partyPointer:IsShown() then
+            frame.name:SetAlpha(0)
+            if frame.fakeName then
+                frame.fakeName:SetAlpha(0)
+            end
         end
     end
 end
@@ -4026,11 +3977,16 @@ local function SetNameplateBehavior()
         end
     else
         if BBP.isInPvE then
-            if BetterBlizzPlatesDB.friendlyHideHealthBar and not BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve then SetCVar('nameplateShowOnlyNames', 1) end
+            if BetterBlizzPlatesDB.friendlyHideHealthBar and not BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve then
+                SetCVar('nameplateShowOnlyNames', 1)
+            else
+                SetCVar('nameplateShowOnlyNames', 0)
+            end
             if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then SetCVar("UnitNameFriendlyPlayerName", 0) end
             BBP.ApplyNameplateWidth()
         else
-            if BetterBlizzPlatesDB.friendlyHideHealthBar then SetCVar('nameplateShowOnlyNames', 0) end
+            --if BetterBlizzPlatesDB.friendlyHideHealthBar then SetCVar('nameplateShowOnlyNames', 0) end
+            SetCVar('nameplateShowOnlyNames', 0)
             if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then SetCVar("UnitNameFriendlyPlayerName", 1) end
             BBP.ApplyNameplateWidth()
         end
@@ -4038,8 +3994,9 @@ local function SetNameplateBehavior()
 end
 
 -- Event handler function
+local hideFriendlyCastbar
 local function CheckIfInInstance(self, event, ...)
-    -- --hideFriendlyCastbar = BetterBlizzPlatesDB.hideFriendlyCastbar
+    hideFriendlyCastbar = BetterBlizzPlatesDB.alwaysHideFriendlyCastbar
     -- UpdateInstanceStatus()
     -- SetNameplateBehavior()
     if event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then

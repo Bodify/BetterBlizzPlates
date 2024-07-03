@@ -1,11 +1,26 @@
-# 1.5.3c:
+# BetterBlizzPlates 1.5.4:
+## Cata & Retail
+### New stuff:
+- Updated the Hide NPC module to now make hidden nameplates unclickable.
+- Added a "Only show last name on NPCs" setting. (Misc)
+### Bugfixes & Tweaks:
+- Fix "Hide healthbar" setting getting stuck on always hiding nameplates if toggled off during instance and possibly other scenarios.
+
 ## Cata
-### Bugfix:
+### New stuff:
+- Clickable Height setting slider in Misc section
+### Bugfixes:
+- Fixed the spec icon setting for class icons to now also rely on Details since blizzard functio is not in cata.
+- Fixed an oversight making the Nameplate Height slider not affect Retail Nameplates
 - Updated Pet Indicator to now mark all player controlled pets and own pet if friendly pet nameplates are on.
+- Fixed some wrong castbar & border functions being called between classic vs retail nameplates causing errors with some specific settings.
+- Hopefully fixed nameplate border not accurately displaying uninterruptible status if an aura mastery buff falls for example.
 
 ## Retail
-### Tweak:
+### Bugfixes & Tweaks:
+- Made the square class icon border brighter for a better visual on color.
 - Castbars should not reset back to white after being re-colored if ClassicFrames is on to allow the classic castbars to look normal.
+- Fixed names not showing consistently if partypointer+hideall+fakename was being used
 
 # 1.5.3b
 ## Cataclysm

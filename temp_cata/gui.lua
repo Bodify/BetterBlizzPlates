@@ -159,7 +159,7 @@ StaticPopupDialogs["BBP_TOTEMLIST_RESET"] = {
 }
 
 StaticPopupDialogs["BBP_UPDATE_NOTIF"] = {
-    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.0.7:\n\nTweaked a lot of settings. Castbars especially.\nYou might have to re-do your custom castbar height if it looks wrong.\n\nAs always please report bugs so I can fix.",
+    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.0.8:\n\nFixed Retail-look Nameplate Height Slider. You might have to re-adjust/reset it back to 1.",
     button1 = "OK",
     timeout = 0,
     whileDead = true,
@@ -737,6 +737,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
                     if namePlate.UnitFrame then
                         local frame = namePlate.UnitFrame
+                        local nameplate = namePlate
                         if frame:IsForbidden() or frame:IsProtected() then return end
                         -- Absorb Indicator Pos and Scale
                         if element == "absorbIndicatorXPos" or element == "absorbIndicatorYPos" or element == "absorbIndicatorScale" then
@@ -763,7 +764,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         elseif element == "partyPointerXPos" or element == "partyPointerYPos" or element == "partyPointerScale"  or element == "partyPointerHealerScale" or element == "partyPointerWidth" then
                             BBP.PartyPointer(frame)
                         elseif element == "hideNpcMurlocScale" or element == "hideNpcMurlocYPos" then
-                            BBP.HideNPCs(frame)
+                            BBP.HideNPCs(frame, nameplate)
                         elseif element == "nameplateAuraEnlargedScale" or element == "nameplateAuraCompactedScale" or element == "nameplateAuraBuffScale" or element == "nameplateAuraDebuffScale" then
                             BBP.RefUnitAuraTotally(frame)
                         -- Fake name
@@ -814,13 +815,23 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         -- Cast bar height
                         elseif element == "castBarHeight" then
                             frame.CastBar:SetHeight(value)
-                            frame.CastBar.UpdateBorders()
+                            if BetterBlizzPlatesDB.classicNameplates then
+                                frame.CastBar.UpdateBorders()
+                            end
                         elseif element == "castBarTextScale" then
                             frame.CastBar.Text:SetScale(value)
                         -- Cast bar emphasis icon pos and scale
                         elseif element == "castBarEmphasisIconXPos" or element == "castBarEmphasisIconYPos" then
                             if axis then
                                 frame.CastBar.Icon:SetPoint("CENTER", frame.CastBar, "LEFT", xPos, yPos)
+                            end
+                        elseif element == "nameplateGeneralHeight" then
+                            if not frame.greenScreened then
+                                BBP.greenScreen(namePlate)
+                                frame.greenScreened = true
+                            end
+                            if not BBP.checkCombatAndWarn() then
+                                BBP.ApplyNameplateWidth()
                             end
                         -- Target Text for Cast Timer Pos and Scale
                         elseif element == "targetText" then
@@ -882,6 +893,12 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "hpHeightFriendly" then
                     BetterBlizzPlatesDB.hpHeightFriendly = value
                     BBP.RefreshAllNameplates()
+                elseif element == "nameplateGeneralHeight" then
+                    BetterBlizzPlatesDB.nameplateGeneralHeight = value
+                    BBP.RefreshAllNameplates()
+                    if not BBP.checkCombatAndWarn() then
+                        BBP.ApplyNameplateWidth()
+                    end
                 elseif element == "healthNumbersScale" then
                     BetterBlizzPlatesDB.healthNumbersScale = value
                 elseif element == "healthNumbersXPos" then
@@ -3207,7 +3224,7 @@ local function CreateTitle(parent)
     addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
     local verNumber = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
-    verNumber:SetText("CATA BETA v0.0.7")--("v" .. BBP.VersionNumber)
+    verNumber:SetText("CATA BETA v0.0.8")--("v" .. BBP.VersionNumber)
 end
 ------------------------------------------------------------
 -- GUI Panels
@@ -6445,7 +6462,7 @@ local function guiHideNPC()
 
     local hideNpcExplanationText = guiHideNpc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     hideNpcExplanationText:SetPoint("TOP", guiHideNpc, "TOP", 172, -127)
-    hideNpcExplanationText:SetText("This hides nameplates.\n \nYou will still be able to click them\neven though you can't see them.")
+    hideNpcExplanationText:SetText("This hides nameplates.\n \nThe nameplates also become\nunclickable.")
 
     local hideNPC = CreateCheckbox("hideNPC", "Enable Hide NPC", guiHideNpc, nil, BBP.hideNPC)
     hideNPC:SetPoint("TOPLEFT", hideNpcExplanationText, "BOTTOMLEFT", 25, -15)
@@ -7353,8 +7370,22 @@ local function guiCVarControl()
     comboPointIcon:SetSize(16, 16)
     comboPointIcon:SetPoint("RIGHT", comboPointsText, "LEFT", -3, 0)
 
+    local tempResourceWA = CreateFrame("Button", nil, guiCVarControl, "UIPanelButtonTemplate")
+    tempResourceWA:SetText("Import WeakAura")
+    tempResourceWA:SetWidth(150)
+    tempResourceWA:SetPoint("TOPLEFT", comboPointsText, "BOTTOMLEFT", 0, -10)
+    tempResourceWA:SetScript("OnClick", function()
+        if WeakAuras then
+            WeakAuras.Import(BBP.tempComboPointWA)
+        else
+            print("WeakAuras not enabled.")
+        end
+    end)
+    CreateTooltipTwo(tempResourceWA, "Import Resource WeakAura", "Import temporary weakaura for resource on nameplate (all classes)")
+
+
     local nameplateResourceOnTarget = CreateCheckbox("nameplateResourceOnTarget", "Show resource on nameplate", guiCVarControl, true, BBP.TargetResourceUpdater)
-    nameplateResourceOnTarget:SetPoint("TOPLEFT", comboPointsText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
+    nameplateResourceOnTarget:SetPoint("TOPLEFT", comboPointsText, "BOTTOMLEFT", -4, pixelsOnFirstBox-45)
     CreateTooltipTwo(nameplateResourceOnTarget, "Nameplate Resource", "Show combo points, warlock shards, arcane charges etc on nameplates.", nil, nil, "nameplateResourceOnTarget")
     notWorking(nameplateResourceOnTarget)
 
@@ -7798,6 +7829,10 @@ local function guiMisc()
     doNotHideFriendlyHealthbarInPve:SetPoint("TOPLEFT", toggleNamesOffDuringPVE, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(doNotHideFriendlyHealthbarInPve, "Don't Hide Friendly Healthbar", "Prevents hiding friendly healthbars in PvE if \"Hide healthbar\" is checked in General settings.")
 
+    local showLastNameNpc = CreateCheckbox("showLastNameNpc", "Only show last name of NPCs", guiMisc)
+    showLastNameNpc:SetPoint("TOPLEFT", doNotHideFriendlyHealthbarInPve, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(showLastNameNpc, "Only show last name of NPCs", "Hides the first names/words of npc names and only shows the last part.")
+
     -- local nameplateResourceText = guiMisc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     -- nameplateResourceText:SetPoint("TOPLEFT", guiMisc, "TOPLEFT", 45, -250)
     -- nameplateResourceText:SetText("Nameplate Resource")
@@ -7838,11 +7873,18 @@ local function guiMisc()
         end
     end)
 
+    local nameplateGeneralHeight = CreateSlider(guiMisc, "Clickable Height", 1, 70, 1, "nameplateGeneralHeight")
+    nameplateGeneralHeight:SetPoint("TOPLEFT", hpHeightFriendly, "BOTTOMLEFT", 0, -37)
+    CreateTooltipTwo(nameplateGeneralHeight, "Clickable Height", "Adjust the clickable area of nameplates.")
+
+    local nameplateGeneralHeightReset = CreateResetButton(nameplateGeneralHeight, "nameplateGeneralHeight", guiMisc)
+    CreateTooltipTwo(nameplateGeneralHeightReset, "Reset to default", "Default is 32")
+
     local changeNameplateBorderSize = CreateCheckbox("changeNameplateBorderSize", "Change Nameplate Border Size", guiMisc)
     changeNameplateBorderSize:SetPoint("TOPLEFT", showGuildNames, "BOTTOMLEFT", 340, -50)
-    local nameplateBorderSize = CreateSlider(changeNameplateBorderSize, "Nameplate Border Size", 1, 10, 1, "nameplateBorderSize")
+    local nameplateBorderSize = CreateSlider(changeNameplateBorderSize, "Nameplate Border Size", 1, 10, 0.5, "nameplateBorderSize")
     nameplateBorderSize:SetPoint("TOPLEFT", changeNameplateBorderSize, "BOTTOMLEFT", 10, -10)
-    local nameplateTargetBorderSize = CreateSlider(changeNameplateBorderSize, "Target Border Size", 1, 10, 1, "nameplateTargetBorderSize")
+    local nameplateTargetBorderSize = CreateSlider(changeNameplateBorderSize, "Target Border Size", 1, 10, 0.5, "nameplateTargetBorderSize")
     nameplateTargetBorderSize:SetPoint("LEFT", nameplateBorderSize, "RIGHT", 10, 0)
     CreateTooltipTwo(nameplateBorderSize, "Nameplate Border Size", "The size of nameplate borders.")
     changeNameplateBorderSize:HookScript("OnClick", function(self)

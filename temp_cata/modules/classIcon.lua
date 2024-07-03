@@ -9,6 +9,63 @@ local HealerSpecs = {
     [1468] = true,  --> preservation evoker  
 }
 
+local specIcons = {
+    -- Death Knight
+    [250] = "Interface\\Icons\\Spell_Deathknight_BloodPresence",        -- Blood
+    [251] = "Interface\\Icons\\Spell_Deathknight_FrostPresence",        -- Frost
+    [252] = "Interface\\Icons\\Spell_Deathknight_UnholyPresence",       -- Unholy
+
+    -- Druid
+    [102] = "Interface\\Icons\\Spell_Nature_StarFall",                  -- Balance
+    [103] = "Interface\\Icons\\Ability_Druid_CatForm",                  -- Feral Combat
+    [104] = "Interface\\Icons\\Ability_Racial_BearForm",                -- Guardian
+    [105] = "Interface\\Icons\\Spell_Nature_HealingTouch",              -- Restoration
+
+    -- Hunter
+    [253] = "Interface\\Icons\\Ability_Hunter_BeastMastery",             -- Beast Mastery
+    [254] = "Interface\\Icons\\Ability_Hunter_FocusedAim",              -- Marksmanship
+    [255] = "Interface\\Icons\\Ability_Hunter_Survival",                -- Survival
+
+    -- Mage
+    [62]  = "Interface\\Icons\\Spell_Holy_MagicalSentry",               -- Arcane
+    [63]  = "Interface\\Icons\\Spell_Fire_FireBolt02",                  -- Fire
+    [64]  = "Interface\\Icons\\Spell_Frost_FrostBolt02",                -- Frost
+
+    -- Paladin
+    [65]  = "Interface\\Icons\\Spell_Holy_HolyBolt",                    -- Holy
+    [66]  = "Interface\\Icons\\Spell_Holy_DevotionAura",                -- Protection
+    [70]  = "Interface\\Icons\\Spell_Holy_AuraOfLight",                 -- Retribution
+
+    -- Priest
+    [256] = "Interface\\Icons\\Spell_Holy_PowerWordShield",             -- Discipline
+    [257] = "Interface\\Icons\\Spell_Holy_GuardianSpirit",              -- Holy
+    [258] = "Interface\\Icons\\Spell_Shadow_ShadowWordPain",            -- Shadow
+
+    -- Rogue
+    [259] = "Interface\\Icons\\Ability_Rogue_DeadlyBrew",               -- Assassination
+    [260] = "Interface\\Icons\\Ability_BackStab",                       -- Combat
+    [261] = "Interface\\Icons\\Ability_Stealth",                        -- Subtlety
+
+    -- Shaman
+    [262] = "Interface\\Icons\\Spell_Nature_Lightning",                 -- Elemental
+    [263] = "Interface\\Icons\\Spell_Shadow_DeathScream",               -- Enhancement
+    [264] = "Interface\\Icons\\Spell_Nature_MagicImmunity",             -- Restoration
+
+    -- Warlock
+    [265] = "Interface\\Icons\\Spell_Shadow_DeathCoil",                 -- Affliction
+    [266] = "Interface\\Icons\\Spell_Shadow_Metamorphosis",             -- Demonology
+    [267] = "Interface\\Icons\\Spell_Shadow_RainOfFire",                -- Destruction
+
+    -- Warrior
+    [71]  = "Interface\\Icons\\Ability_Warrior_SavageBlow",             -- Arms
+    [72]  = "Interface\\Icons\\Ability_Warrior_Incite",                 -- Fury
+    [73]  = "Interface\\Icons\\Ability_Warrior_DefensiveStance",        -- Protection
+}
+
+local function GetSpecIconByID(specID)
+    return specIcons[specID]
+end
+
 -- Class Indicator
 function BBP.ClassIndicator(frame, fetchedSpecID)
     local config = frame.BetterBlizzPlates.config
@@ -211,15 +268,15 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
                     specID = Details:GetSpecByGUID(info.unitGUID)
                 end
                 if specID then
-                    specIcon = select(4, GetSpecializationInfoByID(specID))
+                    specIcon = GetSpecIconByID(specID)
                 end
             elseif (info.isEnemy or info.isNeutral) and IsActiveBattlefieldArena() then
                 for i = 1, 3 do
                     local arenaUnit = "arena" .. i
                     if UnitIsUnit(frame.displayedUnit, arenaUnit) then
-                        specID = GetArenaOpponentSpec(i)
+                        specID = Details and Details:GetSpecByGUID(info.unitGUID)
                         if specID then
-                            specIcon = select(4, GetSpecializationInfoByID(specID))
+                            specIcon = GetSpecIconByID(specID)
                             break
                         end
                     end
@@ -229,11 +286,11 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
                     specID = Details:GetSpecByGUID(info.unitGUID)
                 end
                 if specID then
-                    specIcon = select(4, GetSpecializationInfoByID(specID))
+                    specIcon = GetSpecIconByID(specID)
                 end
             end
         else
-            specIcon = select(4, GetSpecializationInfoByID(specID))
+            specIcon = GetSpecIconByID(specID)
         end
     end
 

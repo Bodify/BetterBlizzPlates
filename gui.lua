@@ -693,6 +693,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
                     if namePlate.UnitFrame then
                         local frame = namePlate.UnitFrame
+                        local nameplate = namePlate
                         if frame:IsForbidden() or frame:IsProtected() then return end
                         -- Absorb Indicator Pos and Scale
                         if element == "absorbIndicatorXPos" or element == "absorbIndicatorYPos" or element == "absorbIndicatorScale" then
@@ -719,7 +720,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         elseif element == "partyPointerXPos" or element == "partyPointerYPos" or element == "partyPointerScale"  or element == "partyPointerHealerScale" or element == "partyPointerWidth" then
                             BBP.PartyPointer(frame)
                         elseif element == "hideNpcMurlocScale" or element == "hideNpcMurlocYPos" then
-                            BBP.HideNPCs(frame)
+                            BBP.HideNPCs(frame, nameplate)
                         elseif element == "nameplateAuraEnlargedScale" or element == "nameplateAuraCompactedScale" or element == "nameplateAuraBuffScale" or element == "nameplateAuraDebuffScale" then
                             BBP.RefUnitAuraTotally(frame)
                         -- Fake name
@@ -6149,7 +6150,7 @@ local function guiHideNPC()
 
     local hideNpcExplanationText = guiHideNpc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     hideNpcExplanationText:SetPoint("TOP", guiHideNpc, "TOP", 172, -127)
-    hideNpcExplanationText:SetText("This hides nameplates.\n \nYou will still be able to click them\neven though you can't see them.")
+    hideNpcExplanationText:SetText("This hides nameplates.\n \nThe nameplates also become\nunclickable.")
 
     local hideNPC = CreateCheckbox("hideNPC", "Enable Hide NPC", guiHideNpc, nil, BBP.hideNPC)
     hideNPC:SetPoint("TOPLEFT", hideNpcExplanationText, "BOTTOMLEFT", 25, -15)
@@ -7475,19 +7476,25 @@ local function guiMisc()
     doNotHideFriendlyHealthbarInPve:SetPoint("TOPLEFT", toggleNamesOffDuringPVE, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(doNotHideFriendlyHealthbarInPve, "Don't Hide Friendly Healthbar", "Prevents hiding friendly healthbars in PvE if \"Hide healthbar\" is checked in General settings.")
 
+    local showLastNameNpc = CreateCheckbox("showLastNameNpc", "Only show last name of NPCs", guiMisc)
+    showLastNameNpc:SetPoint("TOPLEFT", doNotHideFriendlyHealthbarInPve, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(showLastNameNpc, "Only show last name of NPCs", "Hides the first names/words of npc names and only shows the last part.")
+
+    
+
     -- local nameplateResourceText = guiMisc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     -- nameplateResourceText:SetPoint("TOPLEFT", guiMisc, "TOPLEFT", 45, -250)
     -- nameplateResourceText:SetText("Nameplate Resource")
 
     local nameplateSelfWidth = CreateSlider(guiMisc, "Personal Nameplate Width", 50, 200, 1, "nameplateSelfWidth")
-    nameplateSelfWidth:SetPoint("TOPLEFT", doNotHideFriendlyHealthbarInPve, "BOTTOMLEFT", 10, -20)
+    nameplateSelfWidth:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 10, -20)
 
 
 
 
 
     local changeHealthbarHeight = CreateCheckbox("changeHealthbarHeight", "Separate Friendly/Enemy Nameplate Height", guiMisc)
-    changeHealthbarHeight:SetPoint("TOPLEFT", doNotHideFriendlyHealthbarInPve, "BOTTOMLEFT", 0, -50)
+    changeHealthbarHeight:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -50)
     CreateTooltipTwo(changeHealthbarHeight, "Separate Nameplate Heights", "Change the height of nameplates individually depending if enemy or friendly.", "This setting runs a lot and I am unsure just how much of a performance impact it has. Use at own risk.")
 
 
@@ -7516,7 +7523,7 @@ local function guiMisc()
     end)
 
     local changeNameplateBorderSize = CreateCheckbox("changeNameplateBorderSize", "Change Nameplate Border Size", guiMisc)
-    changeNameplateBorderSize:SetPoint("TOPLEFT", showGuildNames, "BOTTOMLEFT", 350, -4)
+    changeNameplateBorderSize:SetPoint("TOPLEFT", showGuildNames, "BOTTOMLEFT", 310, -65)
     local nameplateBorderSize = CreateSlider(changeNameplateBorderSize, "Nameplate Border Size", 1, 10, 1, "nameplateBorderSize")
     nameplateBorderSize:SetPoint("TOPLEFT", changeNameplateBorderSize, "BOTTOMLEFT", 10, -10)
     local nameplateTargetBorderSize = CreateSlider(changeNameplateBorderSize, "Target Border Size", 1, 10, 1, "nameplateTargetBorderSize")
