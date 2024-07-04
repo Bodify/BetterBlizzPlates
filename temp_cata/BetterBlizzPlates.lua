@@ -2108,7 +2108,7 @@ function BBP.HideNPCs(frame, nameplate)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
-    frame:Show()
+    BBP.ShowFrame(frame, nameplate, config)
 
     local db = BetterBlizzPlatesDB
     local hideNPCArenaOnly = db.hideNPCArenaOnly
@@ -2127,9 +2127,13 @@ function BBP.HideNPCs(frame, nameplate)
         return
     end
 
-    if info.isFriend and config.friendlyHideHealthBar and db.friendlyHideHealthBarNpc then
-        BBP.HideNameplate(nameplate)
-        return
+    if info.isFriend then
+        local hideNpcHpBar = BetterBlizzPlatesDB.friendlyHideHealthBarNpc
+        if config.friendlyHideHealthBar and hideNpcHpBar then
+            frame.healthBar:SetAlpha(0)
+            frame.selectionHighlight:SetAlpha(0)
+            return
+        end
     end
 
     local unitGUID = UnitGUID(frame.displayedUnit)
@@ -2226,19 +2230,12 @@ function BBP.ShowFrame(frame, nameplate, config)
         nameplate:SetParent(shadows[nameplate])
         shadows[nameplate] = nil
     end
-    frame:Show()
     frame.hideCastInfo = false
-    frame.murlocMode:Hide()
+    if frame.murlocMode then
+        frame.murlocMode:Hide()
+    end
     frame.hideNameOverride = false
     frame.hideCastbarOverride = false
-    frame.healthBar:SetAlpha(1)
-    frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
-    ToggleNameplateBuffFrameVisibility(frame)
-    if frame.fakeName then
-        frame.fakeName:SetAlpha(1)
-    else
-        frame.name:SetAlpha(1)
-    end
 end
 
 -- Shows the murlocMode on the frame
@@ -2264,8 +2261,8 @@ end
 function BBP.HideNameplate(nameplate)
     if not shadows[nameplate] then
         shadows[nameplate] = nameplate:GetParent()
+        nameplate:SetParent(shadowRealm)
     end
-    nameplate:SetParent(shadowRealm)
 end
 
 local function ShowLastNameOnlyNpc(frame)
