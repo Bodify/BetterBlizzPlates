@@ -2027,6 +2027,8 @@ function BBP.HideNPCs(frame, nameplate)
     -- Determine if the frame should be shown based on the list check or if it's the current target
     if UnitIsUnit(frame.displayedUnit, "target") then
         BBP.ShowFrame(frame, nameplate, config)
+        frame.healthBar:SetAlpha(config.friendlyHideHealthBar and info.isFriend and 0 or 1)
+        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
     elseif hideNPCWhitelistOn then
         if inList then
             if showMurloc then
@@ -3274,7 +3276,7 @@ function BBP.SetupFakeName(frame)
     frame.fakeName:SetShown(frame.name:IsShown())
     frame.fakeName:SetScale(frame.name:GetScale())
     local r, g, b, a = frame.name:GetVertexColor()
-    frame.fakeName:SetVertexColor(r, g, b, 1)
+    frame.fakeName:SetVertexColor(r, g, b, frame.hideNameOverride and 0 or 1)
     --  Temp solution, figure out how to show on top of healthbar while keeping frame alpha and not healthbar alpha if possible
     if frame.healthBar:GetAlpha() == 0 then
         frame.fakeName:SetIgnoreParentAlpha(true)
