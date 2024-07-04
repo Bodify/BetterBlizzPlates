@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.5.4b:
+## Cata & Retail
+### Bugfix:
+- Fix Hide NPC returning early before properly resetting nameplate
+
 # BetterBlizzPlates 1.5.4:
 ## Cata & Retail
 ### New stuff:
@@ -5,6 +10,7 @@
 - Added a "Only show last name on NPCs" setting. (Misc)
 ### Bugfixes & Tweaks:
 - Fix "Hide healthbar" setting getting stuck on always hiding nameplates if toggled off during instance and possibly other scenarios.
+- Fix some "Hide castbar" bugs.
 
 ## Cata
 ### New stuff:
