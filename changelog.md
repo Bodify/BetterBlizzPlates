@@ -2,6 +2,7 @@
 ## Cata & Retail
 ### Bugfix:
 - Fix Hide NPC returning early before properly resetting nameplate
+- Fix Hide NPC "murloc mode" showing names on Retail with "fake name" turned on.
 
 # BetterBlizzPlates 1.5.4:
 ## Cata & Retail
