@@ -111,6 +111,7 @@ local spellsCata = {
     [50613] = true, -- Arcane Torrent (Runic Power)
     -- Warlock
     [172] = true, -- Corruption
+    [87389] = true, -- Corruption (Seed of Corruption version)
     [18223] = true, -- Curse of Exhaustion
     [1490] = true, -- Curse of the Elements
     [702] = true, -- Curse of Exhaustion
@@ -155,6 +156,7 @@ local spellsCata = {
     [33786] = true, -- Cyclone
     [5570] = true, -- Insect Swarm
     [8921] = true, -- Moonfire
+    [93402] = true, -- Sunfire
     [91565] = true, -- Faerie Fire
     [50259] = true, -- Dazed (Feral Charge)
     [9007] = true, -- Pounce Bleed

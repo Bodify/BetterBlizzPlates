@@ -159,7 +159,7 @@ StaticPopupDialogs["BBP_TOTEMLIST_RESET"] = {
 }
 
 StaticPopupDialogs["BBP_UPDATE_NOTIF"] = {
-    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.0.8:\n\nFixed Retail-look Nameplate Height Slider. You might have to re-adjust/reset it back to 1.",
+    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.0.9:\n\nFixed Retail-look Nameplate Height Slider. You might have to re-adjust/reset it back to 1.",
     button1 = "OK",
     timeout = 0,
     whileDead = true,
@@ -3224,7 +3224,7 @@ local function CreateTitle(parent)
     addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
     local verNumber = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
-    verNumber:SetText("CATA BETA v0.0.8b")--("v" .. BBP.VersionNumber)
+    verNumber:SetText("CATA BETA v0.0.9")--("v" .. BBP.VersionNumber)
 end
 ------------------------------------------------------------
 -- GUI Panels
@@ -4677,6 +4677,10 @@ local function guiPositionAndScale()
     totemIndicatorColorName:SetPoint("TOPLEFT", showTotemIndicatorCooldownSwipe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(totemIndicatorColorName, "Color name text")
 
+    local totemIndicatorShieldBorder = CreateCheckbox("totemIndicatorShieldBorder", "Shield", contentFrame, nil, BBP.ToggleTotemIndicatorShieldBorder)
+    totemIndicatorShieldBorder:SetPoint("LEFT", totemIndicatorColorName.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(totemIndicatorShieldBorder, "Shield", "Show a shield icon on totems that have Stoneclaw Totem shield on them")
+
     local totemIndicatorColorHealthBar = CreateCheckbox("totemIndicatorColorHealthBar", "Color HP", contentFrame)
     totemIndicatorColorHealthBar:SetPoint("LEFT", showTotemIndicatorCooldownSwipe.text, "RIGHT", 0, 0)
     CreateTooltip(totemIndicatorColorHealthBar, "Color healthbar")
@@ -5496,6 +5500,22 @@ local function guiPositionAndScale()
         { anchorFrame = fakeNameAnchorDropdown, x = 0, y = -41, label = "Healthbar Anchor Point" }
     )
     CreateTooltipTwo(fakeNameAnchorRelativeDropdown, "Healthbar Anchor Point", "Which side of the healthbar the name should get anchored to.")
+
+    local resetNameSettings = CreateFrame("Button", nil, contentFrame, "UIPanelButtonTemplate")
+    resetNameSettings:SetText("Reset")
+    resetNameSettings:SetWidth(80)
+    resetNameSettings:SetPoint("TOP", fakeNameAnchorRelativeDropdown, "BOTTOM", 0, -5)
+    resetNameSettings:SetScript("OnClick", function()
+        local db = BetterBlizzPlatesDB
+        db.fakeNameXPos = 0
+        db.fakeNameYPos = 0
+        db.fakeNameFriendlyXPos = 0
+        db.fakeNameFriendlyYPos = 0
+        db.fakeNameAnchor = "BOTTOM"
+        db.fakeNameAnchorRelative = "CENTER"
+        BBP.RefreshAllNameplates()
+    end)
+    CreateTooltipTwo(resetNameSettings, "Reset Name Position Settings")
 
     -- useFakeName:HookScript("OnClick", function(self)
     --     if self:GetChecked() then

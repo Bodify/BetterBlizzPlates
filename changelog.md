@@ -1,3 +1,12 @@
+# BetterBlizzPlates 1.5.4c:
+## Cata
+## New stuff:
+- Added setting for totem indicator to show a shield icon on totems shielded by stoneclaw totem.
+
+### Tweaks:
+- Add missing Sunfire and Corruption (seed of corruption version) spellid to default aura list.
+- Changed the default name anchor from TOP to CENTER. Forgot to change this after a recent tweak.
+
 # BetterBlizzPlates 1.5.4b:
 ## Cata & Retail
 ### Bugfix:

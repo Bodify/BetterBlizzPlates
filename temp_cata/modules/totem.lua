@@ -125,6 +125,7 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
                     frame.customIcon:Hide()
                     if frame.friendlyIndicator then frame.friendlyIndicator:Hide() end
                     if frame.glowTexture then frame.glowTexture:Hide() end
+                    if frame.shieldTexture then frame.shieldTexture:Hide() end
                     activeCooldowns[guid] = nil
                 end
             else
@@ -143,10 +144,28 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
         end
 
         -- Apply glow effect if color is provided
+        local offsetMultiplier = 1.15--0.41
+        local widthOffset = size * offsetMultiplier
+        local heightOffset = size * offsetMultiplier
+
+        if BetterBlizzPlatesDB.totemIndicatorShieldBorder then
+            if not frame.shieldFrame then
+                frame.shieldFrame = CreateFrame("Frame", nil, frame.glowFrame)
+                frame.shieldFrame:SetAllPoints(frame.glowFrame)
+                frame.shieldFrame:SetFrameStrata("HIGH")
+                frame.shieldTexture = frame.shieldFrame:CreateTexture(nil, "OVERLAY", nil, 7)
+                --frame.shieldTexture:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\shield-border.tga")
+                frame.shieldTexture:SetAtlas("nameplates-InterruptShield")
+                frame.shieldTexture:SetSize(14,16)
+                --frame.shieldTexture:SetAllPoints(frame.customIcon)
+            end
+            --frame.shieldTexture:SetPoint('TOPLEFT', frame.totemIndicator, 'TOPLEFT', -widthOffset, heightOffset)
+            --frame.shieldTexture:SetPoint('BOTTOMRIGHT', frame.totemIndicator, 'BOTTOMRIGHT', widthOffset, -heightOffset)
+            frame.shieldTexture:SetPoint("CENTER", frame.totemIndicator, "TOP", 0, -2)
+            BBP.OnUnitAura(frame.unit)
+        end
+
         if color then
-            local offsetMultiplier = 1.15--0.41
-            local widthOffset = size * offsetMultiplier
-            local heightOffset = size * offsetMultiplier
 
             -- if not frame.glowTexture then
             --     frame.glowTexture = frame.totemIndicator:CreateTexture(nil, "OVERLAY")
@@ -163,7 +182,7 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
 
             -- Ensure the glowTexture is on top of other elements
             if not frame.glowTexture then
-                frame.glowTexture = frame.glowFrame:CreateTexture(nil, "OVERLAY")
+                frame.glowTexture = frame.glowFrame:CreateTexture(nil, "OVERLAY", nil, 1)  -- Specify sublevel to ensure correct layering
                 frame.glowTexture:SetTexture(BBP.squareGreenGlow)
                 frame.glowTexture:SetDesaturated(true)
             end
@@ -210,6 +229,7 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
         if frame.customIcon then frame.customIcon:Hide() end
         if frame.customCooldown then frame.customCooldown:Hide() end
         if frame.glowTexture then frame.glowTexture:Hide() end
+        if frame.shieldTexture then frame.shieldTexture:Hide() end
         if frame.friendlyIndicator then frame.friendlyIndicator:Hide() end
     end
 end
@@ -488,5 +508,64 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
     --     frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), resourceFrame or totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     else
         frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
+    end
+end
+
+local shieldAuraEvent
+function BBP.ToggleTotemIndicatorShieldBorder()
+    if BetterBlizzPlatesDB.totemIndicatorShieldBorder then
+        if not shieldAuraEvent then
+            shieldAuraEvent = CreateFrame("Frame")
+            shieldAuraEvent:RegisterEvent("UNIT_AURA")
+            shieldAuraEvent:SetScript("OnEvent", function(self, event, unit)
+                if event == "UNIT_AURA" then
+                    BBP.OnUnitAura(unit)
+                end
+            end)
+        end
+        if not shieldAuraEvent:IsEventRegistered("UNIT_AURA") then
+            shieldAuraEvent:RegisterEvent("UNIT_AURA")
+        end
+    elseif shieldAuraEvent then
+        shieldAuraEvent:UnregisterAllEvents()
+    end
+end
+
+function BBP.OnUnitAura(unit)
+    local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
+    if nameplate and nameplate.UnitFrame then
+        local frame = nameplate.UnitFrame
+        local guid = UnitGUID(frame.unit)
+        local npcID = tonumber(guid and guid:match("-(%d+)-%x+$"))
+        if BetterBlizzPlatesDB.totemIndicatorNpcList[npcID] then
+            local hasAura = false
+            for i = 1, 40 do
+                local name, _, _, _, _, _, _, _, _, spellId = UnitBuff(unit, i)
+                if not name then break end
+                if spellId == 55277 then
+                    hasAura = true
+                    break
+                end
+            end
+
+            if hasAura then
+                BBP.ShowShieldBorder(frame)
+            else
+                BBP.HideShieldBorder(frame)
+            end
+        end
+    end
+end
+
+function BBP.ShowShieldBorder(frame)
+    if not frame.shieldFrame then
+        BBP.ApplyTotemIconsAndColorNameplate(frame)
+    end
+    frame.shieldTexture:Show()
+end
+
+function BBP.HideShieldBorder(frame)
+    if frame.shieldTexture then
+        frame.shieldTexture:Hide()
     end
 end

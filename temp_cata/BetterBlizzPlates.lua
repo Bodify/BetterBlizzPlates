@@ -76,7 +76,7 @@ local defaultSettings = {
     healthNumbersYPos = 0,
     healthNumbersScale = 1,
     fakeNameAnchor = "BOTTOM",
-    fakeNameAnchorRelative = "TOP",
+    fakeNameAnchorRelative = "CENTER",
     fakeNameScaleWithParent = false,
     nameplateBorderSize = 1,
     nameplateTargetBorderSize = 3,
@@ -3928,6 +3928,9 @@ local function HandleNamePlateRemoved(unit)
     if frame.glowTexture then
         frame.glowTexture:Hide()
     end
+    if frame.shieldTexture then
+        frame.shieldTexture:Hide()
+    end
     if frame.animationGroup then
         frame.animationGroup:Stop()
     end
@@ -5108,6 +5111,7 @@ Frame:SetScript("OnEvent", function(...)
     end
 
     BBP.HookOverShields()
+    BBP.ToggleTotemIndicatorShieldBorder()
 
     BBP.ApplyNameplateWidth()
 
