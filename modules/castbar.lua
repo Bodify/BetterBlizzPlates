@@ -591,7 +591,7 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                     if castBarTexture and not useCustomCastbarTexture and castHighlighter then
                         castBarTexture:SetDesaturated(false)
                         if not classicFrames then
-                            castBar:SetStatusBarColor(1,1,1)
+                            frame.castBar:SetStatusBarColor(1,1,1)
                         end
                     end
 
@@ -862,7 +862,7 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
                     end
                     if BetterBlizzPlatesDB.castBarInterruptHighlighter then
                         if not classicFrames then
-                            castBar:SetStatusBarColor(1,1,1)
+                            frame.castBar:SetStatusBarColor(1,1,1)
                         end
                     end
                 end
