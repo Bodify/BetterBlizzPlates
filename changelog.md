@@ -12,8 +12,8 @@
 - Totem Indicator: Different visual presets for `Shield` setting.
 - Nameplate Auras: `Show Tooltip` setting.
 ### Bugfixes:
-- Fixed `Center auras`. 
-- Fixed issue with aura size not resetting after Enlarged/Compacted being set.
+- Fixed Nameplate Auras: `Center auras`. 
+- Fixed issue with nameplate aura size not resetting after Enlarged/Compacted being set.
 
 ## Retail
 ### Bugfixes:
