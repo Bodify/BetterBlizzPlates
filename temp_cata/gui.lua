@@ -4702,6 +4702,8 @@ local function guiPositionAndScale()
     CreateTooltipTwo(totemIndicatorShieldBorder, "Shield", "Show a shield icon/border on totems that have Stoneclaw Totem shield on them.\nNote: Borders will be gray in gameplay")
     totemIndicatorShieldBorder:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
+            totemIndicatorShieldBorder:SetChecked(true)
+            BetterBlizzPlatesDB.totemIndicatorShieldBorder = true
             BetterBlizzPlatesDB["totemIndicatorShieldType"] = BetterBlizzPlatesDB["totemIndicatorShieldType"] % 5 + 1
             BBP.totemIndicatorShieldTest = true
             C_Timer.After(3, function()
