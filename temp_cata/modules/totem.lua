@@ -31,7 +31,7 @@ function BBP.SetupUnifiedAnimation(frameWithAnimations)
 end
 
 local function CreateTotemFrame(frame)
-    local config = frame.BetterBlizzPlates.config
+    local config = frame.BetterBlizzPlates.config or BBP.InitializeNameplateSettings(frame)
     if not frame.totemIndicator then
         frame.totemIndicator = CreateFrame("Frame", nil, frame)
         frame.totemIndicator:SetSize(30, 30)
