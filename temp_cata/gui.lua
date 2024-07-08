@@ -159,7 +159,7 @@ StaticPopupDialogs["BBP_TOTEMLIST_RESET"] = {
 }
 
 StaticPopupDialogs["BBP_UPDATE_NOTIF"] = {
-    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.1.0:\n\nFixed Retail-look Nameplate Height Slider. You might have to re-adjust/reset it back to 1.",
+    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.1.0b:\n\nFixed Retail-look Nameplate Height Slider. You might have to re-adjust/reset it back to 1.",
     button1 = "OK",
     timeout = 0,
     whileDead = true,
@@ -3244,7 +3244,7 @@ local function CreateTitle(parent)
     addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
     local verNumber = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
-    verNumber:SetText("CATA BETA v0.1.0")--("v" .. BBP.VersionNumber)
+    verNumber:SetText("CATA BETA v0.1.0b")--("v" .. BBP.VersionNumber)
 end
 ------------------------------------------------------------
 -- GUI Panels
