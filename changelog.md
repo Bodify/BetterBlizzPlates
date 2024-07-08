@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.5.5b:
+## Cata
+### Bugfix:
+- Fix nil error on totem indicator shield border
+
 # BetterBlizzPlates 1.5.5:
 ## Retail & Cata
 ### New stuff:
