@@ -498,6 +498,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
 
+            if config.healthNumbersTargetOnly then
+                BBP.HealthNumbers(frame)
+            end
+
             -- info.isTarget = false
             -- info.wasTarget = true
 
@@ -574,6 +578,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 if config.fadeAllButTarget then
                     BBP.FadeAllButTargetNameplates()
                 end
+            end
+
+            if config.healthNumbersTargetOnly then
+                BBP.HealthNumbers(frame)
             end
 
             if config.hideNPC then BBP.HideNPCs(frame, targetNameplate) end

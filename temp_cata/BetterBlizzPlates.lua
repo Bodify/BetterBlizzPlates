@@ -245,6 +245,7 @@ local defaultSettings = {
     totemIndicatorEnemyOnly = false,
     totemIndicatorDefaultCooldownTextSize = 0.85,
     showTotemIndicatorCooldownSwipe = true,
+    totemIndicatorShieldType = 1,
     totemIndicatorNpcList = {
         -- Important
         [3527] =    { name = "Healing Stream Totem", icon = GetSpellTexture(5394),       hideIcon = false, size = 31, duration = nil, color = {0, 1, 0.78},       important = true, widthOn = true, hpWidth = -25 },
@@ -2671,6 +2672,11 @@ local function CreateBetterClassicCastbarBorders(frame)
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleRight",
             -11
         )
+        if BetterBlizzPlatesDB.hideCastbarBorderShield then
+            frame.CastBar.bbpCastUninterruptibleBorder.left:SetAlpha(0)
+            frame.CastBar.bbpCastUninterruptibleBorder.right:SetAlpha(0)
+            frame.CastBar.bbpCastUninterruptibleBorder.center:SetAlpha(0)
+        end
     end
     frame.CastBar.bbpCastUninterruptibleBorder.center:SetWidth(width - 40 + levelFrameAdjustment)
 
@@ -2897,7 +2903,9 @@ local function CreateBetterRetailCastbar(frame)
     if not frame.CastBar.bbpBorderShield then
         frame.CastBar.BorderShield:SetAlpha(0)
         frame.CastBar.bbpBorderShield = frame.CastBar:CreateTexture(nil, "BORDER")
-        frame.CastBar.bbpBorderShield:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Shield")
+        if not BetterBlizzPlatesDB.hideCastbarBorderShield then
+            frame.CastBar.bbpBorderShield:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Shield")
+        end
         frame.CastBar.bbpBorderShield:SetSize(31,31)
         frame.CastBar.bbpBorderShield:SetPoint("CENTER", frame.CastBar.Icon, "CENTER", 0, -1)
         frame.CastBar.bbpBorderShield:SetDrawLayer("BORDER", 1)

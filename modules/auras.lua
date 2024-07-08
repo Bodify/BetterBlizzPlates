@@ -160,13 +160,10 @@ local function CheckBuffs()
                 buff.isPandemicActive = false
             elseif remainingDuration <= 5.1 then
                 if not buff.PandemicGlow then
-                    buff.PandemicGlow = buff:CreateTexture(nil, "ARTWORK");
+                    buff.PandemicGlow = buff.GlowFrame:CreateTexture(nil, "ARTWORK");
                     buff.PandemicGlow:SetAtlas("newplayertutorial-drag-slotgreen");
                     buff.PandemicGlow:SetDesaturated(true)
                     buff.PandemicGlow:SetVertexColor(1, 0, 0)
-                    if buff.Cooldown and buff.Cooldown:IsVisible() then
-                        buff.PandemicGlow:SetParent(buff.Cooldown)
-                    end
                 end
                 if buff.isEnlarged then
                     if BetterBlizzPlatesDB.nameplateAuraEnlargedSquare then
@@ -557,10 +554,7 @@ local function SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit, aura)
         if not isPlayerUnit and isEnemyUnit then
             if aura.isHelpful then
                 if not buff.buffBorder then
-                    buff.buffBorder = buff:CreateTexture(nil, "ARTWORK");
-                    if buff.Cooldown and buff.Cooldown:IsVisible() then
-                        buff.buffBorder:SetParent(buff.Cooldown)
-                    end
+                    buff.buffBorder = buff.GlowFrame:CreateTexture(nil, "ARTWORK");
                     buff.buffBorder:SetAllPoints()
                     buff.buffBorder:SetAtlas("communities-create-avatar-border-hover");
                 end
@@ -593,28 +587,25 @@ local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
         if not isPlayerUnit and isEnemyUnit then
             if aura.isHelpful and aura.isStealable then
                 if not buff.buffBorderPurge then
-                    buff.buffBorderPurge = buff:CreateTexture(nil, "ARTWORK")
+                    buff.buffBorderPurge = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
                     buff.buffBorderPurge:SetAtlas("newplayertutorial-drag-slotblue")
-                    if buff.Cooldown and buff.Cooldown:IsVisible() then
-                        buff.buffBorderPurge:SetParent(buff.Cooldown)
-                    end
-                    if buff.isEnlarged then
-                        importantGlowOffset = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
-                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
-                    elseif buff.isCompacted then
-                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
-                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
-                    elseif nameplateAuraSquare then
-                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10)
-                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10)
-                    elseif nameplateAuraTaller then
-                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 6.5)
-                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -6.5)
-                    else
-                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 6)
-                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -6)
-                    end
+                end
+                if buff.isEnlarged then
+                    importantGlowOffset = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
+                elseif buff.isCompacted then
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
+                elseif nameplateAuraSquare then
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10)
+                elseif nameplateAuraTaller then
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 6.5)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -6.5)
+                else
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 6)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -6)
                 end
                 buff.buffBorderPurge:Show()
                 buff.Border:Hide()
@@ -655,14 +646,9 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
     if isImportant then
         if not isPlayerUnit then
             if not buff.ImportantGlow then
-                buff.ImportantGlow = buff:CreateTexture(nil, "ARTWORK")
+                buff.ImportantGlow = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
                 buff.ImportantGlow:SetAtlas("newplayertutorial-drag-slotgreen")
                 buff.ImportantGlow:SetDesaturated(true)
-            end
-            if buff.Cooldown and buff.duration ~= 0 then
-                buff.ImportantGlow:SetParent(buff.Cooldown)
-            else
-                buff.ImportantGlow:SetParent(buff)
             end
             if buff.isEnlarged then
                 importantGlowOffset = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
@@ -1090,6 +1076,12 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             buff.isCompacted = true
         else
             buff.isCompacted = false
+        end
+
+        if not buff.GlowFrame then
+            buff.CountFrame:SetFrameStrata("DIALOG")
+            buff.GlowFrame = CreateFrame("Frame", nil, buff)
+            buff.GlowFrame:SetFrameStrata("HIGH")
         end
 
         -- Blue buff border setting

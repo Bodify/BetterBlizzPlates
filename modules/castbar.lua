@@ -127,6 +127,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     local castBarChanneledColor = BetterBlizzPlatesDB.castBarChanneledColor
     local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
     local hideCastbarText = BetterBlizzPlatesDB.hideCastbarText
+    local hideCastbarBorderShield = BetterBlizzPlatesDB.hideCastbarBorderShield
 
     if not castBarRecolor then
         if castBarTexture then
@@ -221,7 +222,9 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
     end
 
-    if castBarDragonflightShield then
+    if hideCastbarBorderShield then
+        castBar.BorderShield:SetTexture(nil)
+    elseif castBarDragonflightShield then
         castBar.BorderShield:SetTexture(nil)
         castBar.BorderShield:SetAtlas("ui-castingbar-shield")
     else

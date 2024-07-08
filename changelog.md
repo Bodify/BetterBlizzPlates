@@ -1,6 +1,28 @@
+# BetterBlizzPlates 1.5.5:
+## Retail & Cata
+### New stuff:
+- Health Numbers: `Target Only` setting.
+- Totem Indicator: `No animation` setting.
+- Castbar customization: `Hide Castbar Shield` setting.
+### Bugfixes:
+- Fix aura purge border sometimes not being visible/positioned correctly.
+
+## Cata
+### New stuff:
+- Totem Indicator: Different visual presets for `Shield` setting.
+- Nameplate Auras: `Show Tooltip` setting.
+### Bugfixes:
+- Fixed `Center auras`. 
+- Fixed issue with aura size not resetting after Enlarged/Compacted being set.
+
+## Retail
+### Bugfixes:
+- Fix typo in castbar settings copypasted a few places causing lua errors.
+
+
 # BetterBlizzPlates 1.5.4c:
 ## Cata
-## New stuff:
+### New stuff:
 - Added setting for totem indicator to show a shield icon on totems shielded by stoneclaw totem.
 
 ### Tweaks:

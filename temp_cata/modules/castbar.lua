@@ -243,6 +243,10 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
     end
 
+    if hideCastbarBorderShield then
+        castBar.BorderShield:SetTexture(nil)
+    end
+
     -- if castBarDragonflightShield then
     --     castBar.BorderShield:SetTexture(nil)
     --     castBar.BorderShield:SetAtlas("ui-castingbar-shield")

@@ -815,37 +815,36 @@ local function SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit)
     end
 end
 
-local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
+local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit)
     local otherNpBuffPurgeGlow = BetterBlizzPlatesDB.otherNpBuffPurgeGlow
     local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
     local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
 
     if otherNpBuffPurgeGlow then
         if not isPlayerUnit and isEnemyUnit then
-            if aura.isHelpful and aura.isStealable then
+            if buff.isHelpful and buff.isStealable then
                 if not buff.buffBorderPurge then
-                    buff.buffBorderPurge = buff:CreateTexture(nil, "ARTWORK")
-                    buff.buffBorderPurge:SetAtlas("newplayertutorial-drag-slotblue")
-                    if buff.Cooldown and buff.Cooldown:IsVisible() then
-                        buff.buffBorderPurge:SetParent(buff.Cooldown)
-                    end
-                    if buff.isEnlarged then
-                        importantGlowOffset = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
-                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
-                    elseif buff.isCompacted then
-                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
-                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
-                    elseif nameplateAuraSquare then
-                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10)
-                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10)
-                    elseif nameplateAuraTaller then
-                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 6.5)
-                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -6.5)
-                    else
-                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 6)
-                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -6)
-                    end
+                    buff.buffBorderPurge = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
+                    buff.buffBorderPurge:SetTexture(BBP.squareBlueGlow)
+                end
+                if buff.isEnlarged then
+                    importantGlowOffset = 22 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
+                elseif buff.isCompacted then
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -11, 15.5)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 11, -15.5)
+                elseif nameplateAuraSquare then
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -22, 22)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 22, -22)
+                elseif nameplateAuraTaller then
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -22, 17.5)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 22, -17.5)
+                else
+                    -- buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -9.5, 7)
+                    -- buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 9.5, -7)
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -22, 15.5)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 22, -15.5)
                 end
                 buff.buffBorderPurge:Show()
                 buff.Border:Hide()
@@ -886,17 +885,12 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
     if isImportant then
         if not isPlayerUnit then
             if not buff.ImportantGlow then
-                buff.ImportantGlow = buff:CreateTexture(nil, "ARTWORK")
+                buff.ImportantGlow = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
                 buff.ImportantGlow:SetTexture(BBP.squareGreenGlow)
                 buff.ImportantGlow:SetDesaturated(true)
             end
-            if buff.Cooldown and buff.duration ~= 0 then
-                buff.ImportantGlow:SetParent(buff.Cooldown)
-            else
-                buff.ImportantGlow:SetParent(buff)
-            end
             if buff.isEnlarged then
-                importantGlowOffset = 21 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                importantGlowOffset = 22 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
                 buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
                 buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
             elseif buff.isCompacted then
@@ -1109,7 +1103,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             local auraWhitelisted = filterWhitelist and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"]
             local filterPurgeable = BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] and isPurgeable
-            local anyFilter = filterLessMinite or filterPurgeable
+            local anyFilter = filterLessMinite or BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"]
 
             if filterAllOverride then return true end
             if onlyMine and not castByPlayer then return false end
@@ -1121,7 +1115,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
                 if auraWhitelisted then return true end
                 -- Filter to hide long duration auras
                 if filterPurgeable then return true end
-                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                if moreThanOneMin and filterLessMinite or BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] and not isPurgeable then if not auraWhitelisted then return false end end
                 -- If none of the specific sub-filter conditions are met, show the aura
                 return true
             end
@@ -1730,21 +1724,21 @@ function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
                     buffWidth = scaledDebuffWidth
                     compactTracker = 0
                 end
-    
+
                 local extraOffset = 0
                 if compactSquare and compactTracker == 2 and buff.isCompacted then
                     extraOffset = horizontalSpacing
                     maxBuffsPerRowAdjusted = maxBuffsPerRowAdjusted + 1
                     compactTracker = 0
                 end
-    
+
                 -- Apply scale
                 local buffScale = buff:GetScale()
                 buffWidth = buffWidth * buffScale
-    
+
                 local rowIndex = math.floor((index - 1) / maxBuffsPerRowAdjusted) + 1
                 widths[rowIndex] = (widths[rowIndex] or 0) + buffWidth - extraOffset
-    
+
                 if index % maxBuffsPerRowAdjusted ~= 1 then
                     widths[rowIndex] = widths[rowIndex] + horizontalSpacing
                 end
@@ -1765,11 +1759,10 @@ function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
         local xPos = BetterBlizzPlatesDB.nameplateAurasXPos
         local compactTracker = 0
         local visibleIndex = 0
-    
+
         for index, buff in ipairs(auras) do
             if buff:IsShown() then
                 visibleIndex = visibleIndex + 1
-                --print(buff:GetParent():GetParent().name:GetText(), index)
                 local buffWidth, buffHeight = buff:GetSize()
                 if buff.isEnlarged then
                     compactTracker = 0
@@ -1778,12 +1771,12 @@ function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
                 else
                     compactTracker = 0
                 end
-    
+
                 local buffScale = buff:GetScale()
-    
+
                 -- Update the maximum row height
                 maxRowHeight = math.max(maxRowHeight, buffHeight)
-    
+
                 -- Determine if it's the start of a new row
                 if visibleIndex % maxBuffsPerRowAdjusted == 1 then
                     local rowIndex = math.floor((visibleIndex - 1) / maxBuffsPerRowAdjusted) + 1
@@ -1792,7 +1785,7 @@ function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
                     else
                         compactTracker = 0
                     end
-    
+
                     if nameplateCenterAllRows then
                         horizontalOffset = (healthBarWidth - (rowWidths[rowIndex] or 0)) / 2
                     elseif nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
@@ -1805,22 +1798,22 @@ function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
                     else
                         horizontalOffset = 0  -- or any other default starting offset
                     end
-    
+
                     if visibleIndex > 1 then
                         currentRow = currentRow + 1  -- Move to the next row
                     end
                 end
-    
+
                 -- Position the buff on the nameplate
                 buff:ClearAllPoints()
                 local verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
-    
+
                 local extraOffset = 0
                 if compactSquare and compactTracker == 2 and buff.isCompacted then
                     extraOffset = BetterBlizzPlatesDB.nameplateAuraWidthGap
                     compactTracker = 0
                 end
-    
+
                 if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
                     buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset / buffScale) + (xPos - extraOffset / buffScale), verticalOffset - 13)
                 else
@@ -1829,7 +1822,7 @@ function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
                 horizontalOffset = horizontalOffset + ((buffWidth) * buffScale) + horizontalSpacing - extraOffset
             end
         end
-    
+
         return currentRow
     end
 
@@ -1939,10 +1932,31 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
             aura.CountFrame.Count = aura.CountFrame:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
             aura.CountFrame.Count:SetPoint("CENTER", aura, "BOTTOMRIGHT", -1, 4)
             aura.CountFrame.Count:SetFont("fonts/arialn.ttf", 11, "THINOUTLINE")
+            aura.CountFrame:SetFrameStrata("DIALOG")
+
+            aura.GlowFrame = CreateFrame("Frame", nil, aura)
+            aura.GlowFrame:SetFrameStrata("HIGH")
 
             frame.BuffFrame.auras[auraIndex] = aura
-        end
 
+            if BetterBlizzPlatesDB.nameplateAuraTooltip then
+                aura:SetScript("OnEnter", function(self)
+                    GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+                    GameTooltip:SetUnitAura(unitID, aura.auraInstanceID, aura.isHelpful and "HELPFUL" or "HARMFUL")
+                    GameTooltip:AddLine("Spell ID: " .. aura.spellId, 1, 1, 1)
+                    GameTooltip:Show()
+                    aura:SetScript("OnUpdate", function(self)
+                        GameTooltip:SetUnitAura(unitID, aura.auraInstanceID, aura.isHelpful and "HELPFUL" or "HARMFUL")
+                        GameTooltip:AddLine("Spell ID: " .. aura.spellId, 1, 1, 1)
+                    end)
+                end)
+                aura:SetScript("OnLeave", function(self)
+                    GameTooltip:Hide()
+                    aura:SetScript("OnUpdate", nil)
+                end)
+            end
+        end
+        aura:SetSize(iconWidth, iconHeight)
         aura.isActive = true
         for key, value in pairs(auraInfo) do
             aura[key] = value
@@ -1977,6 +1991,8 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
         SetImportantGlow(aura, isPlayerUnit, isImportant, auraColor)
 
         SetBlueBuffBorder(aura, isPlayerUnit, isEnemyUnit)
+
+        SetPurgeGlow(aura, isPlayerUnit, isEnemyUnit)
 
         if hideNpAuraSwipe then
             if aura.Cooldown then
@@ -2025,8 +2041,8 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
                 isHelpful = auraType == "HELPFUL",
                 isBuff = auraType == "HELPFUL",
                 isHarmful = auraType == "HARMFUL",
-                isEnlarged = isEnlarged,
-                isCompacted = isCompacted,
+                isEnlarged = isEnlarged or false,
+                isCompacted = isCompacted or false,
                 auraInstanceID = i,
             }
 
@@ -2041,8 +2057,8 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
     end
 
     local children = frame.BuffFrame.auras
-    local isFriend, isEnemy, isNeutral = BBP.GetUnitReaction(frame.unit)
-    local isEnemyUnit = not isFriend and not UnitIsPlayer(frame.unit)
+    --local isFriend, isEnemy, isNeutral = BBP.GetUnitReaction(frame.unit)
+    local isEnemyUnit = UnitCanAttack(frame.unit, "player")--not isFriend and not UnitIsPlayer(frame.unit)
 
     if BetterBlizzPlatesDB.separateBuffRow then
         ProcessAuras("HARMFUL", isEnemyUnit, 1)

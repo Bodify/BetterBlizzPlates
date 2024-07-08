@@ -159,7 +159,7 @@ StaticPopupDialogs["BBP_TOTEMLIST_RESET"] = {
 }
 
 StaticPopupDialogs["BBP_UPDATE_NOTIF"] = {
-    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.0.9:\n\nFixed Retail-look Nameplate Height Slider. You might have to re-adjust/reset it back to 1.",
+    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.1.0:\n\nFixed Retail-look Nameplate Height Slider. You might have to re-adjust/reset it back to 1.",
     button1 = "OK",
     timeout = 0,
     whileDead = true,
@@ -1420,6 +1420,26 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             if cvarName2 then
                 GameTooltip:AddDoubleLine(" ", cvarName2, 0.2, 1, 0.6, 0.2, 1, 0.6)
             end
+        end
+        -- Add the current border type
+        if title == "Shield" then
+            local currentBorder = BetterBlizzPlatesDB["totemIndicatorShieldType"]
+            local borderTypes = {
+                "1:|A:nameplates-InterruptShield:24:20|a",
+                "2:|A:transmog-frame-selected:24:24|a",
+                "3:|A:ShipMission_ShipFollower-EquipmentFrame:22:22|a",
+                "4:|A:GarrMission_EncounterAbilityBorder-Lg:29:29|a",
+                "5:|A:Garr_Specialization_IconBorder:24:24|a"
+            }
+            local tooltipText = "|cff32f795Right-click to change border type.|r\n\nBorder types:\n"
+            for i, border in ipairs(borderTypes) do
+                if i == currentBorder then
+                    tooltipText = tooltipText .. border .. " |A:ParagonReputation_Checkmark:15:15|a\n"
+                else
+                    tooltipText = tooltipText .. border .. "\n"
+                end
+            end
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
         GameTooltip:Show()
     end)
@@ -3224,7 +3244,7 @@ local function CreateTitle(parent)
     addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
     local verNumber = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
-    verNumber:SetText("CATA BETA v0.0.9")--("v" .. BBP.VersionNumber)
+    verNumber:SetText("CATA BETA v0.1.0")--("v" .. BBP.VersionNumber)
 end
 ------------------------------------------------------------
 -- GUI Panels
@@ -4679,15 +4699,32 @@ local function guiPositionAndScale()
 
     local totemIndicatorShieldBorder = CreateCheckbox("totemIndicatorShieldBorder", "Shield", contentFrame, nil, BBP.ToggleTotemIndicatorShieldBorder)
     totemIndicatorShieldBorder:SetPoint("LEFT", totemIndicatorColorName.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(totemIndicatorShieldBorder, "Shield", "Show a shield icon on totems that have Stoneclaw Totem shield on them")
+    CreateTooltipTwo(totemIndicatorShieldBorder, "Shield", "Show a shield icon/border on totems that have Stoneclaw Totem shield on them.\nNote: Borders will be gray in gameplay")
+    totemIndicatorShieldBorder:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            BetterBlizzPlatesDB["totemIndicatorShieldType"] = BetterBlizzPlatesDB["totemIndicatorShieldType"] % 5 + 1
+            BBP.totemIndicatorShieldTest = true
+            C_Timer.After(3, function()
+                BBP.totemIndicatorShieldTest = nil
+            end)
+            BBP.RefreshAllNameplates()
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+        end
+    end)
 
     local totemIndicatorColorHealthBar = CreateCheckbox("totemIndicatorColorHealthBar", "Color HP", contentFrame)
     totemIndicatorColorHealthBar:SetPoint("LEFT", showTotemIndicatorCooldownSwipe.text, "RIGHT", 0, 0)
     CreateTooltip(totemIndicatorColorHealthBar, "Color healthbar")
 
-    local totemIndicatorDefaultCooldownTextSize = CreateSlider(contentFrame, "Default CD Size", 0.3, 2, 0.01, "totemIndicatorDefaultCooldownTextSize")
-    totemIndicatorDefaultCooldownTextSize:SetPoint("TOP", totemIndicatorHideNameAndShiftIconDown, "BOTTOM", 58, -48)
+    local totemIndicatorDefaultCooldownTextSize = CreateSlider(contentFrame, "Default CD Size", 0.3, 2, 0.01, "totemIndicatorDefaultCooldownTextSize", nil, 95)
+    totemIndicatorDefaultCooldownTextSize:SetPoint("TOP", totemIndicatorHideNameAndShiftIconDown, "BOTTOM", 40, -48)
     CreateTooltip(totemIndicatorDefaultCooldownTextSize, "Size of the default Blizz CD text.\n\nWill not work with OmniCC.")
+
+    local totemIndicatorNoAnimation = CreateCheckbox("totemIndicatorNoAnimation", "Anim", contentFrame)
+    totemIndicatorNoAnimation:SetPoint("LEFT", totemIndicatorDefaultCooldownTextSize, "RIGHT", 0, 3)
+    CreateTooltipTwo(totemIndicatorNoAnimation, "No Animation", "Stops the pulsing animation on important npcs")
 
     ----------------------
     -- Target indicator
@@ -4698,11 +4735,11 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubTarget)
 
-    local targetIndicator2 = contentFrame:CreateTexture(nil, "ARTWORK")
-    targetIndicator2:SetTexture(BBP.targetIndicatorIconReplacement)
-    targetIndicator2:SetRotation(math.rad(180))
-    targetIndicator2:SetSize(48, 32)
-    targetIndicator2:SetPoint("BOTTOM", anchorSubTarget, "TOP", -1, 2)
+    anchorSubTarget.icon = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubTarget.icon:SetTexture(BBP.targetIndicatorIconReplacement)
+    anchorSubTarget.icon:SetRotation(math.rad(180))
+    anchorSubTarget.icon:SetSize(48, 32)
+    anchorSubTarget.icon:SetPoint("BOTTOM", anchorSubTarget, "TOP", -1, 2)
 
     local targetIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "targetIndicatorScale")
     targetIndicatorScale:SetPoint("TOP", anchorSubTarget, "BOTTOM", 0, -15)
@@ -5564,10 +5601,10 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubHealthNumbers)
 
-    local healthNumbersIcon = contentFrame:CreateTexture(nil, "ARTWORK")
-    healthNumbersIcon:SetTexture(BBP.healthNumbersIconReplacement)
-    healthNumbersIcon:SetSize(44, 44)
-    healthNumbersIcon:SetPoint("BOTTOM", anchorSubHealthNumbers, "TOP", 0, -5)
+    anchorSubHealthNumbers.icon = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubHealthNumbers.icon:SetTexture(BBP.healthNumbersIconReplacement)
+    anchorSubHealthNumbers.icon:SetSize(44, 44)
+    anchorSubHealthNumbers.icon:SetPoint("BOTTOM", anchorSubHealthNumbers, "TOP", 0, -5)
 
     local healthNumbersScale = CreateSlider(contentFrame, "Size", 0.5, 2.5, 0.01, "healthNumbersScale")
     healthNumbersScale:SetPoint("TOP", anchorSubHealthNumbers, "BOTTOM", 0, -15)
@@ -5628,10 +5665,13 @@ local function guiPositionAndScale()
     healthNumbersOnlyInCombat:SetPoint("TOPLEFT", healthNumbersUseMillions, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersOnlyInCombat, "Only in Combat", "Only show health values on nameplates in combat")
 
-    local healthNumbersSwapped = CreateCheckbox("healthNumbersSwapped", "Swap Numbers", contentFrame)
+    local healthNumbersSwapped = CreateCheckbox("healthNumbersSwapped", "Swap", contentFrame)
     healthNumbersSwapped:SetPoint("TOPLEFT", healthNumbersOnlyInCombat, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersSwapped, "Swap Number", "Swap the numbers to be percent first. 100% - 200k")
 
+    local healthNumbersTargetOnly = CreateCheckbox("healthNumbersTargetOnly", "Target", contentFrame)
+    healthNumbersTargetOnly:SetPoint("TOPLEFT", healthNumbersCombined, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(healthNumbersTargetOnly, "Show on Target only", "Only show the health values on current target")
 
 
 
@@ -5705,6 +5745,10 @@ local function guiCastbar()
     local castbarQuickHide = CreateCheckbox("castbarQuickHide", "Castbar Quick Hide", enableCastbarCustomization)
     castbarQuickHide:SetPoint("TOPLEFT", enableCastbarCustomization, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(castbarQuickHide, "Hide the castbar instantly when a cast is finished/interrupted\n\nIf \"Show who interrupted\" is turned on the castbar will\nnot be immediately hidden under those circumstances.")
+
+    local hideCastbarBorderShield = CreateCheckbox("hideCastbarBorderShield", "Hide Castbar Shield", enableCastbarCustomization)
+    hideCastbarBorderShield:SetPoint("LEFT", castbarQuickHide.text, "RIGHT", -1, 0)
+    CreateTooltipTwo(hideCastbarBorderShield, "Hide Castbar Shield", "Hide the castbar shield/border on uninterruptible casts")
 
     local showCastBarIconWhenNoninterruptible = CreateCheckbox("showCastBarIconWhenNoninterruptible", "Show Cast Icon on Non-Interruptable", enableCastbarCustomization)
     showCastBarIconWhenNoninterruptible:SetPoint("TOPLEFT", castbarQuickHide, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -7233,6 +7277,11 @@ local function guiNameplateAuras()
             BBP.RefreshAllNameplates()
         end
     end)
+
+    local nameplateAuraTooltip = CreateCheckbox("nameplateAuraTooltip", "Tooltip", enableNameplateAuraCustomisation)
+    nameplateAuraTooltip:SetPoint("BOTTOMLEFT", nameplateAuraTaller, "TOPLEFT", 0, 0)
+    CreateTooltipTwo(nameplateAuraTooltip, "Show Tooltip", "Show tooltip on nameplate auras.")
+    nameplateAuraTooltip:HookScript("OnClick", function() StaticPopup_Show("BBP_CONFIRM_RELOAD")end)
 
     local separateAuraBuffRow = CreateCheckbox("separateAuraBuffRow", "Separate Buff Row", enableNameplateAuraCustomisation)
     separateAuraBuffRow:SetPoint("TOPLEFT", nameplateAuraTaller, "BOTTOMLEFT", 0, pixelsBetweenBoxes)

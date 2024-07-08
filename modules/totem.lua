@@ -151,7 +151,9 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
             frame.glowTexture:SetVertexColor(unpack(color))
             frame.glowTexture:Show()
 
-            frame.animationGroup:Play()
+            if not BetterBlizzPlatesDB.totemIndicatorNoAnimation then
+                frame.animationGroup:Play()
+            end
         end
 
         -- Set cooldown text scale
@@ -307,7 +309,9 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
 
             frame.glowTexture:SetVertexColor(unpack(config.randomTotemColor))
             frame.glowTexture:Show()
-            frame.animationGroup:Play()
+            if not BetterBlizzPlatesDB.totemIndicatorNoAnimation then
+                frame.animationGroup:Play()
+            end
         else
             if frame.animationGroup then
                 frame.animationGroup:Stop()

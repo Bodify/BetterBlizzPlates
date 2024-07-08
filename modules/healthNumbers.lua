@@ -38,11 +38,20 @@ function BBP.HealthNumbers(frame)
         config.healthNumbersCurrentFull = BetterBlizzPlatesDB.healthNumbersCurrentFull
         config.healthNumbersCombined = BetterBlizzPlatesDB.healthNumbersCombined
         config.healthNumbersSwapped = BetterBlizzPlatesDB.healthNumbersSwapped
+        config.healthNumbersTargetOnly = BetterBlizzPlatesDB.healthNumbersTargetOnly
 
         config.healthNumbersInitialized = true
     end
 
     local unit = frame.unit
+
+    -- Hide health numbers if not the current target and the setting is enabled
+    if config.healthNumbersTargetOnly and not UnitIsUnit(unit, "target") then
+        if frame.healthNumbers then
+            frame.healthNumbers:Hide()
+        end
+        return
+    end
 
     -- Hide health numbers based on combat setting
     if config.healthNumbersOnlyInCombat and not UnitAffectingCombat(unit) then

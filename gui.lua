@@ -4410,9 +4410,13 @@ local function guiPositionAndScale()
     totemIndicatorColorHealthBar:SetPoint("LEFT", showTotemIndicatorCooldownSwipe.text, "RIGHT", 0, 0)
     CreateTooltip(totemIndicatorColorHealthBar, "Color healthbar")
 
-    local totemIndicatorDefaultCooldownTextSize = CreateSlider(contentFrame, "Default CD Size", 0.3, 2, 0.01, "totemIndicatorDefaultCooldownTextSize")
-    totemIndicatorDefaultCooldownTextSize:SetPoint("TOP", totemIndicatorHideNameAndShiftIconDown, "BOTTOM", 58, -48)
+    local totemIndicatorDefaultCooldownTextSize = CreateSlider(contentFrame, "Default CD Size", 0.3, 2, 0.01, "totemIndicatorDefaultCooldownTextSize", nil, 95)
+    totemIndicatorDefaultCooldownTextSize:SetPoint("TOP", totemIndicatorHideNameAndShiftIconDown, "BOTTOM", 40, -48)
     CreateTooltip(totemIndicatorDefaultCooldownTextSize, "Size of the default Blizz CD text.\n\nWill not work with OmniCC.")
+
+    local totemIndicatorNoAnimation = CreateCheckbox("totemIndicatorNoAnimation", "Anim", contentFrame)
+    totemIndicatorNoAnimation:SetPoint("LEFT", totemIndicatorDefaultCooldownTextSize, "RIGHT", 0, 3)
+    CreateTooltipTwo(totemIndicatorNoAnimation, "No Animation", "Stops the pulsing animation on important npcs")
 
     ----------------------
     -- Target indicator
@@ -4423,11 +4427,11 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubTarget)
 
-    local targetIndicator2 = contentFrame:CreateTexture(nil, "ARTWORK")
-    targetIndicator2:SetAtlas("Navigation-Tracked-Arrow")
-    targetIndicator2:SetRotation(math.rad(180))
-    targetIndicator2:SetSize(48, 32)
-    targetIndicator2:SetPoint("BOTTOM", anchorSubTarget, "TOP", -1, 2)
+    anchorSubTarget.icon = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubTarget.icon:SetAtlas("Navigation-Tracked-Arrow")
+    anchorSubTarget.icon:SetRotation(math.rad(180))
+    anchorSubTarget.icon:SetSize(48, 32)
+    anchorSubTarget.icon:SetPoint("BOTTOM", anchorSubTarget, "TOP", -1, 2)
 
     local targetIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "targetIndicatorScale")
     targetIndicatorScale:SetPoint("TOP", anchorSubTarget, "BOTTOM", 0, -15)
@@ -5310,11 +5314,13 @@ local function guiPositionAndScale()
     healthNumbersOnlyInCombat:SetPoint("TOPLEFT", healthNumbersUseMillions, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersOnlyInCombat, "Only in Combat", "Only show health values on nameplates in combat")
 
-    local healthNumbersSwapped = CreateCheckbox("healthNumbersSwapped", "Swap Numbers", contentFrame)
+    local healthNumbersSwapped = CreateCheckbox("healthNumbersSwapped", "Swap", contentFrame)
     healthNumbersSwapped:SetPoint("TOPLEFT", healthNumbersOnlyInCombat, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersSwapped, "Swap Number", "Swap the numbers to be percent first. 100% - 200k")
 
-
+    local healthNumbersTargetOnly = CreateCheckbox("healthNumbersTargetOnly", "Target", contentFrame)
+    healthNumbersTargetOnly:SetPoint("TOPLEFT", healthNumbersCombined, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(healthNumbersTargetOnly, "Show on Target only", "Only show the health values on current target")
 
 
 
@@ -5385,6 +5391,10 @@ local function guiCastbar()
     local castbarQuickHide = CreateCheckbox("castbarQuickHide", "Castbar Quick Hide", enableCastbarCustomization)
     castbarQuickHide:SetPoint("TOPLEFT", enableCastbarCustomization, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(castbarQuickHide, "Hide the castbar instantly when a cast is finished/interrupted\n\nIf \"Show who interrupted\" is turned on the castbar will\nnot be immediately hidden under those circumstances.")
+
+    local hideCastbarBorderShield = CreateCheckbox("hideCastbarBorderShield", "Hide Castbar Shield", enableCastbarCustomization)
+    hideCastbarBorderShield:SetPoint("LEFT", castbarQuickHide.text, "RIGHT", -1, 0)
+    CreateTooltipTwo(hideCastbarBorderShield, "Hide Castbar Shield", "Hide the castbar shield on uninterruptible casts")
 
     local showCastBarIconWhenNoninterruptible = CreateCheckbox("showCastBarIconWhenNoninterruptible", "Show Cast Icon on Non-Interruptable", enableCastbarCustomization)
     showCastBarIconWhenNoninterruptible:SetPoint("TOPLEFT", castbarQuickHide, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
