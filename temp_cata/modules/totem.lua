@@ -30,10 +30,8 @@ function BBP.SetupUnifiedAnimation(frameWithAnimations)
     return animationGroup
 end
 
--- Function to create the necessary components for the totem indicator
-function BBP.CreateTotemComponents(frame, size)
+local function CreateTotemFrame(frame)
     local config = frame.BetterBlizzPlates.config
-    local info = frame.BetterBlizzPlates.unitInfo
     if not frame.totemIndicator then
         frame.totemIndicator = CreateFrame("Frame", nil, frame)
         frame.totemIndicator:SetSize(30, 30)
@@ -43,22 +41,24 @@ function BBP.CreateTotemComponents(frame, size)
         frame.customIcon = frame.totemIndicator:CreateTexture(nil, "OVERLAY")
         frame.customIcon:SetAllPoints(frame.totemIndicator)
 
-        -- if true and not frame.friendlyIndicator then
-        --     if not frame.glowFrame then
-                frame.glowFrame = CreateFrame("Frame", nil, frame.totemIndicator)
-                frame.glowFrame:SetAllPoints(frame.totemIndicator)
-                frame.glowFrame:SetFrameStrata("MEDIUM")
-            --end
-            frame.friendlyIndicator = frame.glowFrame:CreateTexture(nil, "OVERLAY", nil, 7)
-            frame.friendlyIndicator:SetAtlas("Garr_LevelUpgradeArrow", true)
-            frame.friendlyIndicator:SetSize(22,27)
-            frame.friendlyIndicator:SetPoint("CENTER", frame.totemIndicator, "BOTTOM", 0, 0)
-            -- frame.friendlyIndicator:SetDesaturated(true)
-            -- frame.friendlyIndicator:SetVertexColor(1,0,0)
-        --end
+        frame.glowFrame = CreateFrame("Frame", nil, frame.totemIndicator)
+        frame.glowFrame:SetAllPoints(frame.totemIndicator)
+        frame.glowFrame:SetFrameStrata("MEDIUM")
+
+        frame.friendlyIndicator = frame.glowFrame:CreateTexture(nil, "OVERLAY", nil, 7)
+        frame.friendlyIndicator:SetAtlas("Garr_LevelUpgradeArrow", true)
+        frame.friendlyIndicator:SetSize(22,27)
+        frame.friendlyIndicator:SetPoint("CENTER", frame.totemIndicator, "BOTTOM", 0, 0)
 
         frame.animationGroup = BBP.SetupUnifiedAnimation(frame.totemIndicator)
     end
+end
+
+-- Function to create the necessary components for the totem indicator
+function BBP.CreateTotemComponents(frame, size)
+    local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo
+    CreateTotemFrame(frame)
     if info.isFriend then
         frame.totemIndicator:SetSize(22, 22)
     else
@@ -598,7 +598,11 @@ end
 
 function BBP.ShowShieldBorder(frame)
     if not frame.shieldFrame then
-        BBP.ApplyTotemIconsAndColorNameplate(frame)
+        CreateTotemFrame(frame)
+        frame.shieldFrame = CreateFrame("Frame", nil, frame.glowFrame)
+        frame.shieldFrame:SetAllPoints(frame.glowFrame)
+        frame.shieldFrame:SetFrameStrata("HIGH")
+        frame.shieldTexture = frame.shieldFrame:CreateTexture(nil, "OVERLAY", nil, 7)
     end
     frame.shieldTexture:Show()
 end
