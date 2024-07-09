@@ -18,6 +18,7 @@ function BBP.CombatIndicator(frame)
         config.petIndicatorTestMode = BetterBlizzPlatesDB.petIndicatorTestMode
         config.petIndicator = BetterBlizzPlatesDB.petIndicator
         config.petIndicatorAnchor = BetterBlizzPlatesDB.petIndicatorAnchor
+        config.combatIndicatorAssumePalaCombat = BetterBlizzPlatesDB.combatIndicatorAssumePalaCombat
 
         config.combatIndicatorInitialized = true
     end
@@ -25,6 +26,17 @@ function BBP.CombatIndicator(frame)
     local unit = frame.displayedUnit
     local notInCombat = not UnitAffectingCombat(unit)
     local petAndCombatTest = config.combatIndicatorTestMode or config.petIndicatorTestMode or config.petIndicator
+
+    if config.combatIndicatorAssumePalaCombat then
+        for i = 1, 40 do
+            local name, _, _, _, _, _, _, _, _, spellId = UnitBuff(unit, i)
+            if not name then break end
+            if spellId == 86698 then -- Guardian of the Ancient Kings (UnitAffectingCombat returns false even tho unit is on combat if guardian is in combat)
+                notInCombat = false
+                break
+            end
+        end
+    end
 
     -- Initialize
     -- Create food texture

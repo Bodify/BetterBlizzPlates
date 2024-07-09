@@ -1,9 +1,9 @@
-# BetterBlizzPlates 1.5.5c:
+# BetterBlizzPlates 1.5.5d:
 ## Cata
-### Bugfix:
-- Totem Indicator: Fix Shield Border displaying on totems with "Hide Icon" enabled.
+### New Stuff:
+- Combat Indicator: `Assume Pala Combat` setting. (Combat status while Guardian is out is bugged, crude workaround)
 
-# BetterBlizzPlates 1.5.5b:
+# BetterBlizzPlates 1.5.5c:
 ## Cata
 ### Bugfix:
 - Totem Indicator: Fix Shield Border displaying on totems with "Hide Icon" enabled.

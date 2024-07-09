@@ -3244,7 +3244,7 @@ local function CreateTitle(parent)
     addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
     local verNumber = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
-    verNumber:SetText("CATA BETA v0.1.0b")--("v" .. BBP.VersionNumber)
+    verNumber:SetText("CATA BETA v0.1.0d")--("v" .. BBP.VersionNumber)
 end
 ------------------------------------------------------------
 -- GUI Panels
@@ -4500,15 +4500,15 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubOutOfCombat)
 
-    local combatIconSub = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubOutOfCombat.icon = contentFrame:CreateTexture(nil, "ARTWORK")
     if BetterBlizzPlatesDB.combatIndicatorSap then
-        combatIconSub:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\ABILITY_SAP")
-        combatIconSub:SetSize(38, 38)
-        combatIconSub:SetPoint("BOTTOM", anchorSubOutOfCombat, "TOP", 0, 0)
+        anchorSubOutOfCombat.icon:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\ABILITY_SAP")
+        anchorSubOutOfCombat.icon:SetSize(38, 38)
+        anchorSubOutOfCombat.icon:SetPoint("BOTTOM", anchorSubOutOfCombat, "TOP", 0, 0)
     else
-        combatIconSub:SetAtlas("food")
-        combatIconSub:SetSize(40, 40)
-        combatIconSub:SetPoint("BOTTOM", anchorSubOutOfCombat, "TOP", -1, 0)
+        anchorSubOutOfCombat.icon:SetAtlas("food")
+        anchorSubOutOfCombat.icon:SetSize(40, 40)
+        anchorSubOutOfCombat.icon:SetPoint("BOTTOM", anchorSubOutOfCombat, "TOP", -1, 0)
     end
 
     local combatIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "combatIndicatorScale")
@@ -4553,6 +4553,10 @@ local function guiPositionAndScale()
 
     local combatIndicatorPlayersOnly = CreateCheckbox("combatIndicatorPlayersOnly", "On players only", contentFrame)
     combatIndicatorPlayersOnly:SetPoint("TOPLEFT", combatIndicatorSap, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+    local combatIndicatorAssumePalaCombat = CreateCheckbox("combatIndicatorAssumePalaCombat", "Assume Pala Combat", contentFrame)
+    combatIndicatorAssumePalaCombat:SetPoint("TOPLEFT", combatIndicatorPlayersOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(combatIndicatorAssumePalaCombat, "Assume Paladin Combat", "This setting makes it so if paladins have the \"Guardian of Ancient Kings\" pet up it assumes they are in combat.", "The API for combat status doesnt work and returns false even though they are in combat with this pet up. This is a very crude workaround that might not always be accurate.")
 
     ----------------------
     -- Hunter pet icon
