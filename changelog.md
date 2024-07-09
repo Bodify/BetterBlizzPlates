@@ -1,6 +1,11 @@
 # BetterBlizzPlates 1.5.5b:
 ## Cata
 ### Bugfix:
+- Totem Indicator: Fix Shield Border displaying on totems with "Hide Icon" enabled.
+
+# BetterBlizzPlates 1.5.5b:
+## Cata
+### Bugfix:
 - Fix nil error on totem indicator shield border
 
 # BetterBlizzPlates 1.5.5:

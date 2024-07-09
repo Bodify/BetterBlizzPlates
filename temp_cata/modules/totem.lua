@@ -574,7 +574,8 @@ function BBP.OnUnitAura(unit)
         local frame = nameplate.UnitFrame
         local guid = UnitGUID(frame.unit)
         local npcID = tonumber(guid and guid:match("-(%d+)-%x+$"))
-        if BetterBlizzPlatesDB.totemIndicatorNpcList[npcID] then
+        local entry = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
+        if entry then
             local hasAura = false
             for i = 1, 40 do
                 local name, _, _, _, _, _, _, _, _, spellId = UnitBuff(unit, i)
@@ -586,7 +587,9 @@ function BBP.OnUnitAura(unit)
             end
 
             if hasAura then
-                BBP.ShowShieldBorder(frame)
+                if not entry.hideIcon then
+                    BBP.ShowShieldBorder(frame)
+                end
             else
                 BBP.HideShieldBorder(frame)
             end
