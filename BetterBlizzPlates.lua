@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.5.5d"
+local addonUpdates = "1.5.5e"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -1337,27 +1337,17 @@ local function ColorNameplateByReaction(frame)
     end
 end
 
--- local function ChangeHealthbarHeight(frame)
---     local config = frame.BetterBlizzPlates.config
---     local info = frame.BetterBlizzPlates.unitInfo
-
---     if not config.hpHeightEnemy or BBP.needsUpdate then
---         config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
---         config.hpHeightFriendly = BetterBlizzPlatesDB.hpHeightFriendly
---     end
-
---     local healthBar = frame.healthBar
-
---     if info.isFriend then
---         if info.isSelf then
---             healthBar:SetScale(1)
---         else
---             healthBar:SetScale(config.hpHeightFriendly)
---         end
---     else
---         healthBar:SetScale(config.hpHeightEnemy)
---     end
--- end
+local function AdjustHealthBarHeight(frame)
+    if frame:IsForbidden() or frame:IsProtected() then return end
+    local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config
+    if not config then return end
+    if not frame.unit then return end
+    if UnitCanAttack(frame.unit, "player") then
+        frame.healthBar:SetHeight(config.hpHeightEnemy or 11)
+    elseif not UnitIsUnit(frame.unit, "player") then
+        frame.healthBar:SetHeight(config.hpHeightFriendly or 11)
+    end
+end
 
 --#################################################################################################
 function BBP.SetFontBasedOnOption(namePlateObj, specifiedSize, forcedOutline)
@@ -3427,7 +3417,7 @@ local function HandleNamePlateAdded(unit)
     end--and auraModuleIsOn then BBP.HidePersonalBuffFrame() end
 
     -- --HealthBar Height
-    -- if config.changeHealthbarHeight then ChangeHealthbarHeight(frame) end
+    if config.changeHealthbarHeight then AdjustHealthBarHeight(frame) end
 
     if config.changeNameplateBorderSize then ChangeHealthbarBorderSize(frame) end
 
@@ -4712,15 +4702,7 @@ local hookedHpHeight
 function BBP.HookHealthbarHeight()
     if not hookedHpHeight then
         hooksecurefunc("DefaultCompactNamePlateFrameAnchorInternal", function(frame)
-            if frame:IsForbidden() or frame:IsProtected() then return end
-            local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config
-            if not config then return end
-            if not frame.unit then return end
-            if UnitCanAttack(frame.unit, "player") then
-                frame.healthBar:SetHeight(config.hpHeightEnemy or 11)
-            else
-                frame.healthBar:SetHeight(config.hpHeightFriendly or 11)
-            end
+            AdjustHealthBarHeight(frame)
         end)
 
         hookedHpHeight = true

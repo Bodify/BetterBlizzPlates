@@ -290,6 +290,11 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
     local guid = UnitGUID(frame.unit)
     local npcID = tonumber(guid and guid:match("-(%d+)-%x+$"))
 
+    if frame.bdChanged and frame.BigDebuffs then
+        frame.bdChanged = false
+        frame.BigDebuffs:SetAlpha(1)
+    end
+
     local totemIndicatorSwappingAnchor
     if config.totemIndicatorHideNameAndShiftIconDown then
         totemIndicatorSwappingAnchor = frame.healthBar
@@ -439,6 +444,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
         end
         if config.totemIndicatorHideHealthBar or npcData.hideHp or npcData.iconOnly then
+            if frame.BigDebuffs then
+                frame.BigDebuffs:SetAlpha(0)
+                frame.bdChanged = true
+            end
             if npcData.iconOnly then
                 frame.healthBar:SetAlpha(0)
                 frame.selectionHighlight:SetAlpha(0)

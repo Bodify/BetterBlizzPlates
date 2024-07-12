@@ -1,3 +1,12 @@
+# BetterBlizzPlates 1.5.5e:
+## Retail
+### Bugfix:
+- The "Change Healthbar Height" setting in Misc will now properly update height on all nameplates and not affect personal resource.
+
+## Cata
+### Tweak:
+- Totem Indicator: Hide BigDebuffs Icon on nameplate if hide healthbar/icon only mode is selected for the npc
+
 # BetterBlizzPlates 1.5.5d:
 ## Cata
 ### New Stuff:
