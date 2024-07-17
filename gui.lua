@@ -184,7 +184,7 @@ end
 
 local function UpdateColorSquare(icon, r, g, b, a)
     if r and g and b then
-        icon:SetVertexColor(r, g, b, a)
+        icon:SetColorTexture(r, g, b, a)
     end
 end
 
@@ -4583,16 +4583,20 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubRaidmark)
 
-    local raidmarkIcon = contentFrame:CreateTexture(nil, "ARTWORK")
-    raidmarkIcon:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcon_3")
-    raidmarkIcon:SetSize(32, 32)
-    raidmarkIcon:SetPoint("BOTTOM", anchorSubRaidmark, "TOP", 0, 3)
+    anchorSubRaidmark.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubRaidmark.t:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcon_3")
+    anchorSubRaidmark.t:SetSize(32, 32)
+    anchorSubRaidmark.t:SetPoint("BOTTOM", anchorSubRaidmark, "TOP", 0, 3)
 
     BBP.raidmarkIndicator2 = CreateCheckbox("raidmarkIndicator", "Move raidmarker", contentFrame, nil, BBP.ChangeRaidmarker)
     CreateTooltip(BBP.raidmarkIndicator2, "Enable this to move raidmarker on nameplates")
 
     local hideRaidmarkIndicator = CreateCheckbox("hideRaidmarkIndicator", "Hide raidmarker", contentFrame)
     hideRaidmarkIndicator:SetPoint("TOPLEFT", BBP.raidmarkIndicator2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+    anchorSubRaidmark.box3 = CreateCheckbox("raidmarkerPvPOnly", "Only move in PvP", contentFrame)
+    anchorSubRaidmark.box3:SetPoint("TOPLEFT", hideRaidmarkIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubRaidmark.box3, "Only move in PvP", "Will only move the raidmarker in PvP and stay in default location elsewhere.")
     --CreateTooltip(hideRaidmarkIndicator, "Hide all raidmarkers on nameplates\n\n(Class Indicator and Party Pointer has their own setting\nto only hide on those specific nameplates where those icons show)")
     CreateTooltipTwo(hideRaidmarkIndicator, "Hide Raidmarker", "Hide all raidmarkers on nameplates", "Class Indicator and Party Pointer has their own setting to only hide on those specific nameplates where those icons show", anchor, cvarName)
     --(widget, title, mainText, subText, anchor, cvarName)
@@ -4644,10 +4648,10 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubquest)
 
-    local questIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
-    questIcon2:SetAtlas("smallquestbang")
-    questIcon2:SetSize(44, 44)
-    questIcon2:SetPoint("BOTTOM", anchorSubquest, "TOP", 0, -3)
+    anchorSubquest.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubquest.t:SetAtlas("smallquestbang")
+    anchorSubquest.t:SetSize(44, 44)
+    anchorSubquest.t:SetPoint("BOTTOM", anchorSubquest, "TOP", 0, -3)
 
     local questIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "questIndicatorScale")
     questIndicatorScale:SetPoint("TOP", anchorSubquest, "BOTTOM", 0, -15)
@@ -4681,10 +4685,10 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubFocus)
 
-    local focusIcon = contentFrame:CreateTexture(nil, "ARTWORK")
-    focusIcon:SetAtlas("Waypoint-MapPin-Untracked")
-    focusIcon:SetSize(40, 40)
-    focusIcon:SetPoint("BOTTOM", anchorSubFocus, "TOP", 0, -2)
+    anchorSubFocus.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubFocus.t:SetAtlas("Waypoint-MapPin-Untracked")
+    anchorSubFocus.t:SetSize(40, 40)
+    anchorSubFocus.t:SetPoint("BOTTOM", anchorSubFocus, "TOP", 0, -2)
 
     local focusTargetIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.01, "focusTargetIndicatorScale")
     focusTargetIndicatorScale:SetPoint("TOP", anchorSubFocus, "BOTTOM", 0, -15)
@@ -4822,10 +4826,10 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubExecute)
 
-    local executeIcon = contentFrame:CreateTexture(nil, "ARTWORK")
-    executeIcon:SetAtlas("islands-azeriteboss")
-    executeIcon:SetSize(56, 60)
-    executeIcon:SetPoint("BOTTOM", anchorSubExecute, "TOP", 0, -10)
+    anchorSubExecute.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubExecute.t:SetAtlas("islands-azeriteboss")
+    anchorSubExecute.t:SetSize(56, 60)
+    anchorSubExecute.t:SetPoint("BOTTOM", anchorSubExecute, "TOP", 0, -10)
 
     local executeIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 2.5, 0.01, "executeIndicatorScale")
     executeIndicatorScale:SetPoint("TOP", anchorSubExecute, "BOTTOM", 0, -15)
@@ -4902,10 +4906,10 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubArena)
 
-    local arenaIndicator = contentFrame:CreateTexture(nil, "ARTWORK")
-    arenaIndicator:SetAtlas("questbonusobjective")
-    arenaIndicator:SetSize(32, 32)
-    arenaIndicator:SetPoint("BOTTOM", anchorSubArena, "TOP", 0, 3)
+    anchorSubArena.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubArena.t:SetAtlas("questbonusobjective")
+    anchorSubArena.t:SetSize(32, 32)
+    anchorSubArena.t:SetPoint("BOTTOM", anchorSubArena, "TOP", 0, 3)
 
     local arenaIndicatorXPos = CreateSlider(contentFrame, "ID x offset", -50, 50, 1, "arenaIdXPos", "X")
     arenaIndicatorXPos:SetPoint("TOP", anchorSubArena, "BOTTOM", 0, -15)
@@ -4958,10 +4962,10 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubClassIcon)
 
-    local classIconIcon = contentFrame:CreateTexture(nil, "ARTWORK")
-    classIconIcon:SetAtlas("groupfinder-icon-class-mage")
-    classIconIcon:SetSize(33, 33)
-    classIconIcon:SetPoint("BOTTOM", anchorSubClassIcon, "TOP", 0, 1.5)
+    anchorSubClassIcon.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubClassIcon.t:SetAtlas("groupfinder-icon-class-mage")
+    anchorSubClassIcon.t:SetSize(33, 33)
+    anchorSubClassIcon.t:SetPoint("BOTTOM", anchorSubClassIcon, "TOP", 0, 1.5)
     --classIconIcon:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875)
 
     local classIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "classIndicatorFriendlyScale", false, 72)
@@ -5079,13 +5083,13 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubPointerIndicator)
 
-    local pointerIconSub = contentFrame:CreateTexture(nil, "ARTWORK")
-    pointerIconSub:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
-    pointerIconSub:SetSize(25, 30)
-    pointerIconSub:SetPoint("BOTTOM", anchorSubPointerIndicator, "TOP", -1, 5)
-    pointerIconSub:SetDesaturated(true)
-    pointerIconSub:SetVertexColor(0.04, 0.76, 1)
-    CreateTooltip(pointerIconSub, "Show a class colored pointer above\nfriendly player nameplates.")
+    anchorSubPointerIndicator.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubPointerIndicator.t:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
+    anchorSubPointerIndicator.t:SetSize(25, 30)
+    anchorSubPointerIndicator.t:SetPoint("BOTTOM", anchorSubPointerIndicator, "TOP", -1, 5)
+    anchorSubPointerIndicator.t:SetDesaturated(true)
+    anchorSubPointerIndicator.t:SetVertexColor(0.04, 0.76, 1)
+    CreateTooltip(anchorSubPointerIndicator.t, "Show a class colored pointer above\nfriendly player nameplates.")
 
     local partyPointerScale = CreateSlider(contentFrame, "Size", 0.5, 2.2, 0.01, "partyPointerScale", false, 72)
     partyPointerScale:SetPoint("TOP", anchorSubPointerIndicator, "BOTTOM", -36, -15)
@@ -5157,13 +5161,13 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubFakeName)
 
-    local nameIcon = contentFrame:CreateTexture(nil, "ARTWORK")
-    nameIcon:SetAtlas("MiniMap-PositionArrows")
-    nameIcon:SetSize(32, 44)
-    nameIcon:SetPoint("BOTTOM", anchorSubFakeName, "TOP", 0, -3)
-    nameIcon:SetRotation(math.pi / 2)
-    nameIcon:SetDesaturated(true)
-    nameIcon:SetVertexColor(1,1,0.1)
+    anchorSubFakeName.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubFakeName.t:SetAtlas("MiniMap-PositionArrows")
+    anchorSubFakeName.t:SetSize(32, 44)
+    anchorSubFakeName.t:SetPoint("BOTTOM", anchorSubFakeName, "TOP", 0, -3)
+    anchorSubFakeName.t:SetRotation(math.pi / 2)
+    anchorSubFakeName.t:SetDesaturated(true)
+    anchorSubFakeName.t:SetVertexColor(1,1,0.1)
 
     local useFakeName = CreateCheckbox("useFakeName", "Enable Name Reposition", contentFrame)
 
@@ -5231,7 +5235,7 @@ local function guiPositionAndScale()
         CheckAndToggleCheckboxes(useFakeName)
     end)
     CreateTooltip(useFakeName, "Enables name repositioning by using a \"fake name\" and hiding the real one.")
-    CreateTooltip(nameIcon, "Enables name repositioning by using a \"fake name\" and hiding the real one.")
+    CreateTooltip(anchorSubFakeName.t, "Enables name repositioning by using a \"fake name\" and hiding the real one.")
 
     local useFakeNameAnchorBottom = CreateCheckbox("useFakeNameAnchorBottom", "Anchor friend", useFakeName)
     useFakeNameAnchorBottom:SetPoint("TOPLEFT", useFakeName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -5250,10 +5254,10 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubHealthNumbers)
 
-    local healthNumbersIcon = contentFrame:CreateTexture(nil, "ARTWORK")
-    healthNumbersIcon:SetAtlas("ui_adv_health")
-    healthNumbersIcon:SetSize(44, 44)
-    healthNumbersIcon:SetPoint("BOTTOM", anchorSubHealthNumbers, "TOP", 0, -5)
+    anchorSubHealthNumbers.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubHealthNumbers.t:SetAtlas("ui_adv_health")
+    anchorSubHealthNumbers.t:SetSize(44, 44)
+    anchorSubHealthNumbers.t:SetPoint("BOTTOM", anchorSubHealthNumbers, "TOP", 0, -5)
 
     local healthNumbersScale = CreateSlider(contentFrame, "Size", 0.5, 2.5, 0.01, "healthNumbersScale")
     healthNumbersScale:SetPoint("TOP", anchorSubHealthNumbers, "BOTTOM", 0, -15)
@@ -5323,8 +5327,31 @@ local function guiPositionAndScale()
     CreateTooltipTwo(healthNumbersTargetOnly, "Show on Target only", "Only show the health values on current target")
 
 
+    ----------------------
+    -- Threat Colors
+    ----------------------
+    local anchorThreatColor = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorThreatColor:SetPoint("CENTER", mainGuiAnchor2, "CENTER", fourthLineX, fourthLineY)
+    anchorThreatColor:SetText("Threat Colors")
 
+    CreateBorderBox(anchorThreatColor)
 
+    anchorThreatColor.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorThreatColor.t:SetAtlas("Raid")
+    anchorThreatColor.t:SetSize(30, 30)
+    anchorThreatColor.t:SetPoint("BOTTOM", anchorThreatColor, "TOP", 0, 2)
+
+    local tankFullAggroColorRGB = CreateColorBox(contentFrame, "tankFullAggroColorRGB", "Tank: Full Aggro")
+    tankFullAggroColorRGB:SetPoint("TOPLEFT", anchorThreatColor, "BOTTOMLEFT", -28, -5)
+
+    local tankNoAggroColorRGB = CreateColorBox(contentFrame, "tankNoAggroColorRGB", "Tank: No Aggro")
+    tankNoAggroColorRGB:SetPoint("TOPLEFT", tankFullAggroColorRGB, "BOTTOMLEFT", 0, -2)
+
+    local dpsOrHealFullAggroColorRGB = CreateColorBox(contentFrame, "dpsOrHealFullAggroColorRGB", "DPS/Heal: Full Aggro")
+    dpsOrHealFullAggroColorRGB:SetPoint("TOPLEFT", tankNoAggroColorRGB, "BOTTOMLEFT", 0, -8)
+
+    local dpsOrHealNoAggroColorRGB = CreateColorBox(contentFrame, "dpsOrHealNoAggroColorRGB", "DPS/Heal: No Aggro")
+    dpsOrHealNoAggroColorRGB:SetPoint("TOPLEFT", dpsOrHealFullAggroColorRGB, "BOTTOMLEFT", 0, -2)
 
 
 
@@ -5339,6 +5366,10 @@ local function guiPositionAndScale()
         BetterBlizzPlatesDB.reopenOptions = true
         ReloadUI()
     end)
+
+    local rightclickText = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    rightclickText:SetPoint("RIGHT", reloadUiButton2, "LEFT", -105, 0)
+    rightclickText:SetText("|A:smallquestbang:16:16|aTip:  Right-click sliders to enter a specific value")
 end
 
 local function guiCastbar()

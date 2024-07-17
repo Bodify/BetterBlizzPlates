@@ -974,15 +974,15 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             else
                 if auraWhitelisted then return true end
                 -- Filter to hide long duration auras
-                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                if moreThanOneMin and filterLessMinite then return false end
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
                     if filterBlizzard then return BlizzardShouldShow end
-                    if not auraWhitelisted then return false end
+                    return false
                 end
                 -- Filter to show only Blizzard recommended auras
-                if not BlizzardShouldShow and filterBlizzard and not auraWhitelisted then
+                if not BlizzardShouldShow and filterBlizzard then
                     if filterLessMinite and lessThanOneMin then return true end
                     if filterOnlyMe then return true end
                     return false
@@ -1039,12 +1039,12 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             else
                 if auraWhitelisted then return true end
                 -- Filter to hide long duration auras
-                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                if moreThanOneMin and filterLessMinite then return false end
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
-                    if filterBlizzard then return BlizzardShouldShowCata end
-                    if not auraWhitelisted then return false end
+                    if filterBlizzard then return BlizzardShouldShow end
+                    return false
                 end
                 -- If none of the specific sub-filter conditions are met, show the aura
                 return true
@@ -1073,15 +1073,15 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             else
                 if auraWhitelisted then return true end
                 -- Filter to hide long duration auras
-                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                if moreThanOneMin and filterLessMinite then return false end
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
-                    if filterBlizzard then return BlizzardShouldShowCata end
-                    if not auraWhitelisted then return false end
+                    if filterBlizzard then return BlizzardShouldShow end
+                    return false
                 end
                 -- Filter to show only Blizzard recommended auras
-                if not BlizzardShouldShowCata and filterBlizzard and not auraWhitelisted and not BlizzardShouldShowCC then
+                if not BlizzardShouldShow and filterBlizzard then
                     if filterLessMinite and lessThanOneMin then return true end
                     if filterOnlyMe then return true end
                     return false
@@ -1102,7 +1102,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             local filterWhitelist = BetterBlizzPlatesDB["otherNpBuffFilterWatchList"]
             local auraWhitelisted = filterWhitelist and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"]
-            local filterPurgeable = BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] and isPurgeable
+            local filterPurgeable = BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"]
             local anyFilter = filterLessMinite or BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"]
 
             if filterAllOverride then return true end
@@ -1114,8 +1114,8 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             else
                 if auraWhitelisted then return true end
                 -- Filter to hide long duration auras
-                if filterPurgeable then return true end
-                if moreThanOneMin and filterLessMinite or BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] and not isPurgeable then if not auraWhitelisted then return false end end
+                if filterPurgeable and not isPurgeable then return false end
+                if moreThanOneMin and filterLessMinite then return false end
                 -- If none of the specific sub-filter conditions are met, show the aura
                 return true
             end
@@ -1143,15 +1143,15 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             else
                 if auraWhitelisted then return true end
                 -- Filter to hide long duration auras
-                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                if moreThanOneMin and filterLessMinite then return false end
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
-                    if filterBlizzard then return BlizzardShouldShowCata end
-                    if not auraWhitelisted then return false end
+                    if filterBlizzard then return BlizzardShouldShow end
+                    return false
                 end
                 -- Filter to show only Blizzard recommended auras
-                if not BlizzardShouldShowCata and filterBlizzard and not auraWhitelisted and not BlizzardShouldShowCC then
+                if not BlizzardShouldShow and filterBlizzard then
                     if filterLessMinite and lessThanOneMin then return true end
                     if filterOnlyMe then return true end
                     return false

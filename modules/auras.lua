@@ -584,6 +584,7 @@ local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
     local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
 
     if otherNpBuffPurgeGlow then
+        buff.Icon:SetScale(0.5)
         if not isPlayerUnit and isEnemyUnit then
             if aura.isHelpful and aura.isStealable then
                 if not buff.buffBorderPurge then
@@ -617,6 +618,7 @@ local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
             end
         end
     else
+        buff.Icon:SetScale(1)
         if buff.buffBorderPurge then
             buff.buffBorderPurge:Hide()
             buff.Border:Show()
@@ -644,6 +646,7 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
     local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
 
     if isImportant then
+        buff.Icon:SetScale(0.5)
         if not isPlayerUnit then
             if not buff.ImportantGlow then
                 buff.ImportantGlow = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
@@ -664,8 +667,8 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
                 buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 7.5)
                 buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -7.5)
             else
-                buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -9.5, 7)
-                buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 9.5, -7)
+                buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -9, 6)
+                buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 9, -6)
             end
             -- If extra glow for purge
             if buff.buffBorderPurge then
@@ -685,6 +688,7 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
             end
         end
     else
+        buff.Icon:SetScale(1)
         if buff.ImportantGlow then
             buff.ImportantGlow:Hide()
             buff.Border:Show()
@@ -730,15 +734,15 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             else
                 if auraWhitelisted then return true end
                 -- Filter to hide long duration auras
-                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                if moreThanOneMin and filterLessMinite then return false end
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
                     if filterBlizzard then return BlizzardShouldShow end
-                    if not auraWhitelisted then return false end
+                    return false
                 end
                 -- Filter to show only Blizzard recommended auras
-                if not BlizzardShouldShow and filterBlizzard and not auraWhitelisted then
+                if not BlizzardShouldShow and filterBlizzard then
                     if filterLessMinite and lessThanOneMin then return true end
                     if filterOnlyMe then return true end
                     return false
@@ -795,12 +799,12 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             else
                 if auraWhitelisted then return true end
                 -- Filter to hide long duration auras
-                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                if moreThanOneMin and filterLessMinite then return false end
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
                     if filterBlizzard then return BlizzardShouldShow end
-                    if not auraWhitelisted then return false end
+                    return false
                 end
                 -- If none of the specific sub-filter conditions are met, show the aura
                 return true
@@ -829,15 +833,15 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             else
                 if auraWhitelisted then return true end
                 -- Filter to hide long duration auras
-                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                if moreThanOneMin and filterLessMinite then return false end
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
                     if filterBlizzard then return BlizzardShouldShow end
-                    if not auraWhitelisted then return false end
+                    return false
                 end
                 -- Filter to show only Blizzard recommended auras
-                if not BlizzardShouldShow and filterBlizzard and not auraWhitelisted then
+                if not BlizzardShouldShow and filterBlizzard then
                     if filterLessMinite and lessThanOneMin then return true end
                     if filterOnlyMe then return true end
                     return false
@@ -858,7 +862,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             local filterWhitelist = BetterBlizzPlatesDB["otherNpBuffFilterWatchList"]
             local auraWhitelisted = filterWhitelist and isInWhitelist
             local filterLessMinite = BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"]
-            local filterPurgeable = BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"] and isPurgeable
+            local filterPurgeable = BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"]
             local anyFilter = filterLessMinite or filterPurgeable
 
             if filterAllOverride then return true end
@@ -870,8 +874,8 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             else
                 if auraWhitelisted then return true end
                 -- Filter to hide long duration auras
-                if filterPurgeable then return true end
-                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                if filterPurgeable and not isPurgeable then return false end
+                if moreThanOneMin and filterLessMinite then return false end
                 -- If none of the specific sub-filter conditions are met, show the aura
                 return true
             end
@@ -899,15 +903,15 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             else
                 if auraWhitelisted then return true end
                 -- Filter to hide long duration auras
-                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
+                if moreThanOneMin and filterLessMinite then return false end
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
                     if filterBlizzard then return BlizzardShouldShow end
-                    if not auraWhitelisted then return false end
+                    return false
                 end
                 -- Filter to show only Blizzard recommended auras
-                if not BlizzardShouldShow and filterBlizzard and not auraWhitelisted then
+                if not BlizzardShouldShow and filterBlizzard then
                     if filterLessMinite and lessThanOneMin then return true end
                     if filterOnlyMe then return true end
                     return false

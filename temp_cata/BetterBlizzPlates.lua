@@ -83,6 +83,10 @@ local defaultSettings = {
     separateAuraBuffRow = true,
     npBorderDesaturate = true,
     nameplateGeneralHeight = 32,
+    tankFullAggroColorRGB = {0, 1, 0, 1},
+    tankNoAggroColorRGB = {1, 0, 0, 1},
+    dpsOrHealFullAggroColorRGB = {1, 0, 0, 1},
+    dpsOrHealNoAggroColorRGB = {0, 1, 0, 1},
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -2281,20 +2285,15 @@ local function ShowLastNameOnlyNpc(frame)
 end
 
 
-local ThreatColorsForTanks = {
-    fullAggro = {0.0, 1.0, 0.0}, -- green
-    noAggro = {1.0, 0.0, 0.0} -- red
-}
-
 function BBP.ColorThreatForTank(frame)
     if not frame or not frame.unit then return end
 
     local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
-    local r, g, b = unpack(ThreatColorsForTanks.noAggro)
+    local r, g, b = unpack(BetterBlizzPlatesDB.tankNoAggroColorRGB)
 
     if ( isTanking and threatStatus ) then
         if ( threatStatus >= 3 ) then
-            r, g, b = unpack(ThreatColorsForTanks.fullAggro)
+            r, g, b = unpack(BetterBlizzPlatesDB.tankFullAggroColorRGB)
         else
             -- targets me, but losing aggro
             r, g, b = GetThreatStatusColor(threatStatus)
@@ -2304,19 +2303,14 @@ function BBP.ColorThreatForTank(frame)
     frame.healthBar:SetStatusBarColor(r, g, b)
 end
 
-local ThreatColorsForHealerOrDps = {
-    fullAggro = {1.0, 0.0, 0.0}, -- red
-    noAggro = {0.0, 1.0, 0.0} -- green
-}
-
 function BBP.ColorThreatForHealerOrDps(frame)
     if not frame or not frame.unit then return end
 
     local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
-    local r, g, b = unpack(ThreatColorsForHealerOrDps.noAggro)
+    local r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
 
     if ( isTanking ) then
-        r, g, b = unpack(ThreatColorsForHealerOrDps.fullAggro)
+        r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB)
     elseif ( threatStatus and threatStatus > 0 ) then
         -- about to pull aggro
         r, g, b = GetThreatStatusColor(threatStatus)
@@ -3379,6 +3373,14 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         ColorNameplateByReaction(frame)
     end
 
+    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) then
+        if ( BBP.isRoleTank ) then
+            BBP.ColorThreatForTank(frame)
+        else
+            BBP.ColorThreatForHealerOrDps(frame)
+        end
+    end
+
     if config.colorNPC and config.npcHealthbarColor then
         frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
@@ -3664,18 +3666,28 @@ function BBP.ApplyRaidmarkerChanges(frame)
             config.raidmarkInitialized = true
         end
 
-        if config.raidmarkIndicatorAnchor == "TOP" then
-            frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
-            frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.fakeName or frame.name, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos)
+        local shouldMove = not BetterBlizzPlatesDB.raidmarkerPvPOnly or BBP.isInPvP
+
+        if shouldMove then
+            if config.raidmarkIndicatorAnchor == "TOP" then
+                frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
+                frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.fakeName or frame.name, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos)
+            else
+                local hiddenHealthbarOffset = (config.friendlyHideHealthBar and config.raidmarkIndicatorAnchor == "BOTTOM" and frame.healthBar:GetAlpha() == 0) and frame.healthBar:GetHeight() + 10 or 0
+                frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
+                frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.healthBar, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos + hiddenHealthbarOffset)
+            end
+            frame.RaidTargetFrame.RaidTargetIcon:SetScale(config.raidmarkIndicatorScale or 1)
+            frame.RaidTargetFrame.RaidTargetIcon:SetSize(22, 22)
+            frame.RaidTargetFrame:SetFrameLevel(frame:GetFrameLevel() - 1)
         else
-            local hiddenHealthbarOffset = (config.friendlyHideHealthBar and config.raidmarkIndicatorAnchor == "BOTTOM" and frame.healthBar:GetAlpha() == 0) and frame.healthBar:GetHeight()+10 or 0
             frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
-            frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.healthBar, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos + hiddenHealthbarOffset)
+            frame.RaidTargetFrame.RaidTargetIcon:SetScale(1)
+            frame.RaidTargetFrame.RaidTargetIcon:SetSize(22, 22)
+            frame.RaidTargetFrame.RaidTargetIcon:SetPoint("RIGHT", frame.healthBar, "LEFT", -15, 0)
         end
-        frame.RaidTargetFrame.RaidTargetIcon:SetScale(config.raidmarkIndicatorScale or 1)
-        frame.RaidTargetFrame.RaidTargetIcon:SetSize(22, 22)
-        frame.RaidTargetFrame:SetFrameLevel(frame:GetFrameLevel() - 1)
     elseif BBP.needsUpdate then
+        frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
         frame.RaidTargetFrame.RaidTargetIcon:SetScale(1)
         frame.RaidTargetFrame.RaidTargetIcon:SetSize(22, 22)
         frame.RaidTargetFrame.RaidTargetIcon:SetPoint("RIGHT", frame.healthBar, "LEFT", -15, 0)
@@ -4378,6 +4390,12 @@ local function HandleNamePlateAdded(unit)
 
     if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
 
+    local alwaysHideFriendlyCastbar = BetterBlizzPlatesDB.alwaysHideFriendlyCastbar
+    local alwaysHideEnemyCastbar = BetterBlizzPlatesDB.alwaysHideEnemyCastbar
+    if (info.isFriend and alwaysHideFriendlyCastbar) or (not info.isFriend and alwaysHideEnemyCastbar) then
+        frame.CastBar:Hide()
+    end
+
     -- Hide name
     if ((config.hideFriendlyNameText or config.partyPointerHideAll) and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
         frame.name:SetAlpha(0)
@@ -4901,16 +4919,57 @@ local function UpdateInstanceStatus()
 end
 
 -- Function to update the current class role
--- local function UpdateClassRoleStatus(self, event)
---     local specIndex = GetSpecialization()
---     local role = specIndex and GetSpecializationRole(specIndex)
---     BBP.isRoleTank = role == "TANK"
--- end
+local function UpdateClassRoleStatus(self, event)
+    local _, class = UnitClass("player")
+    local isTank = false
 
--- local ClassRoleChecker = CreateFrame("Frame")
--- ClassRoleChecker:RegisterEvent("PLAYER_ENTERING_WORLD")
--- ClassRoleChecker:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
--- ClassRoleChecker:SetScript("OnEvent", UpdateClassRoleStatus) bodifycata
+    -- Check the player's talent tree to infer if they are a tank
+    local spec1, _, _, _, pointsSpent1 = GetTalentTabInfo(1)
+    local spec2, _, _, _, pointsSpent2 = GetTalentTabInfo(2)
+    local spec3, _, _, _, pointsSpent3 = GetTalentTabInfo(3)
+
+    if class == "WARRIOR" then
+        if pointsSpent3 > pointsSpent1 and pointsSpent3 > pointsSpent2 then
+            isTank = true
+        end
+    elseif class == "PALADIN" then
+        if pointsSpent2 > pointsSpent1 and pointsSpent2 > pointsSpent3 then
+            isTank = true
+        end
+    elseif class == "DRUID" then
+        if pointsSpent2 > pointsSpent1 and pointsSpent2 > pointsSpent3 then
+            isTank = true
+        end
+    elseif class == "DEATHKNIGHT" then
+        if pointsSpent1 > pointsSpent2 and pointsSpent1 > pointsSpent3 then
+            isTank = true
+        end
+    end
+
+    BBP.isRoleTank = isTank
+end
+
+local ClassRoleChecker = CreateFrame("Frame")
+ClassRoleChecker:RegisterEvent("PLAYER_ENTERING_WORLD")
+ClassRoleChecker:RegisterEvent("PLAYER_TALENT_UPDATE")
+ClassRoleChecker:SetScript("OnEvent", UpdateClassRoleStatus)
+
+local function ThreatSituationUpdate(self, event)
+    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) then
+        for _, nameplate in pairs(C_NamePlate.GetNamePlates(issecure())) do
+            local frame = nameplate.UnitFrame
+            if ( BBP.isRoleTank ) then
+                BBP.ColorThreatForTank(frame)
+            else
+                BBP.ColorThreatForHealerOrDps(frame)
+            end
+        end
+    end
+end
+
+local ThreatSitUpdate = CreateFrame("Frame")
+ThreatSitUpdate:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE")
+ThreatSitUpdate:SetScript("OnEvent", ThreatSituationUpdate)
 
 -- Function to set the nameplate behavior
 local InstanceChecker = CreateFrame("Frame")

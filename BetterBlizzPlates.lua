@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.5.5e"
+local addonUpdates = "1.5.6"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -78,6 +78,10 @@ local defaultSettings = {
     fakeNameScaleWithParent = false,
     nameplateBorderSize = 1,
     nameplateTargetBorderSize = 3,
+    tankFullAggroColorRGB = {0, 1, 0, 1},
+    tankNoAggroColorRGB = {1, 0, 0, 1},
+    dpsOrHealFullAggroColorRGB = {1, 0, 0, 1},
+    dpsOrHealNoAggroColorRGB = {0, 1, 0, 1},
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -2144,20 +2148,15 @@ local function ShowLastNameOnlyNpc(frame)
     end
 end
 
-local ThreatColorsForTanks = {
-    fullAggro = {0.0, 1.0, 0.0}, -- green
-    noAggro = {1.0, 0.0, 0.0} -- red
-}
-
 function BBP.ColorThreatForTank(frame)
     if not frame or not frame.unit then return end
 
     local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
-    local r, g, b = unpack(ThreatColorsForTanks.noAggro)
+    local r, g, b = unpack(BetterBlizzPlatesDB.tankNoAggroColorRGB)
 
     if ( isTanking and threatStatus ) then
         if ( threatStatus >= 3 ) then
-            r, g, b = unpack(ThreatColorsForTanks.fullAggro)
+            r, g, b = unpack(BetterBlizzPlatesDB.tankFullAggroColorRGB)
         else
             -- targets me, but losing aggro
             r, g, b = GetThreatStatusColor(threatStatus)
@@ -2167,19 +2166,14 @@ function BBP.ColorThreatForTank(frame)
     frame.healthBar:SetStatusBarColor(r, g, b)
 end
 
-local ThreatColorsForHealerOrDps = {
-    fullAggro = {1.0, 0.0, 0.0}, -- red
-    noAggro = {0.0, 1.0, 0.0} -- green
-}
-
 function BBP.ColorThreatForHealerOrDps(frame)
     if not frame or not frame.unit then return end
 
     local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
-    local r, g, b = unpack(ThreatColorsForHealerOrDps.noAggro)
+    local r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
 
     if ( isTanking ) then
-        r, g, b = unpack(ThreatColorsForHealerOrDps.fullAggro)
+        r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB)
     elseif ( threatStatus and threatStatus > 0 ) then
         -- about to pull aggro
         r, g, b = GetThreatStatusColor(threatStatus)
@@ -2538,6 +2532,14 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 
+    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) then
+        if ( BBP.isRoleTank ) then
+            BBP.ColorThreatForTank(frame)
+        else
+            BBP.ColorThreatForHealerOrDps(frame)
+        end
+    end
+
     if (config.focusTargetIndicator and config.focusTargetIndicatorColorNameplate and info.isFocus) or config.focusTargetIndicatorTestMode then
         frame.healthBar:SetStatusBarColor(unpack(config.focusTargetIndicatorColorNameplateRGB))
         --BBP.FocusTargetIndicator(frame)
@@ -2666,18 +2668,28 @@ function BBP.ApplyRaidmarkerChanges(frame)
             config.raidmarkInitialized = true
         end
 
-        if config.raidmarkIndicatorAnchor == "TOP" then
-            frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
-            frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.fakeName or frame.name, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos)
+        local shouldMove = not BetterBlizzPlatesDB.raidmarkerPvPOnly or BBP.isInPvP
+
+        if shouldMove then
+            if config.raidmarkIndicatorAnchor == "TOP" then
+                frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
+                frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.fakeName or frame.name, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos)
+            else
+                local hiddenHealthbarOffset = (config.friendlyHideHealthBar and config.raidmarkIndicatorAnchor == "BOTTOM" and frame.healthBar:GetAlpha() == 0) and frame.healthBar:GetHeight() + 10 or 0
+                frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
+                frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.healthBar, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos + hiddenHealthbarOffset)
+            end
+            frame.RaidTargetFrame.RaidTargetIcon:SetScale(config.raidmarkIndicatorScale or 1)
+            frame.RaidTargetFrame.RaidTargetIcon:SetSize(22, 22)
+            frame.RaidTargetFrame:SetFrameLevel(frame:GetFrameLevel() - 1)
         else
-            local hiddenHealthbarOffset = (config.friendlyHideHealthBar and config.raidmarkIndicatorAnchor == "BOTTOM" and frame.healthBar:GetAlpha() == 0) and frame.healthBar:GetHeight()+10 or 0
             frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
-            frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.healthBar, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos + hiddenHealthbarOffset)
+            frame.RaidTargetFrame.RaidTargetIcon:SetScale(1)
+            frame.RaidTargetFrame.RaidTargetIcon:SetSize(22, 22)
+            frame.RaidTargetFrame.RaidTargetIcon:SetPoint("RIGHT", frame.healthBar, "LEFT", -15, 0)
         end
-        frame.RaidTargetFrame.RaidTargetIcon:SetScale(config.raidmarkIndicatorScale or 1)
-        frame.RaidTargetFrame.RaidTargetIcon:SetSize(22, 22)
-        frame.RaidTargetFrame:SetFrameLevel(frame:GetFrameLevel() - 1)
     elseif BBP.needsUpdate then
+        frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
         frame.RaidTargetFrame.RaidTargetIcon:SetScale(1)
         frame.RaidTargetFrame.RaidTargetIcon:SetSize(22, 22)
         frame.RaidTargetFrame.RaidTargetIcon:SetPoint("RIGHT", frame.healthBar, "LEFT", -15, 0)
@@ -3954,6 +3966,23 @@ local ClassRoleChecker = CreateFrame("Frame")
 ClassRoleChecker:RegisterEvent("PLAYER_ENTERING_WORLD")
 ClassRoleChecker:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 ClassRoleChecker:SetScript("OnEvent", UpdateClassRoleStatus)
+
+local function ThreatSituationUpdate(self, event)
+    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) then
+        for _, nameplate in pairs(C_NamePlate.GetNamePlates(issecure())) do
+            local frame = nameplate.UnitFrame
+            if ( BBP.isRoleTank ) then
+                BBP.ColorThreatForTank(frame)
+            else
+                BBP.ColorThreatForHealerOrDps(frame)
+            end
+        end
+    end
+end
+
+local ThreatSitUpdate = CreateFrame("Frame")
+ThreatSitUpdate:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE")
+ThreatSitUpdate:SetScript("OnEvent", ThreatSituationUpdate)
 
 -- Function to set the nameplate behavior
 local InstanceChecker = CreateFrame("Frame")

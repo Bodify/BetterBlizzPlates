@@ -1,3 +1,22 @@
+# BetterBlizzPlates 1.5.6:
+## Retail & Cata
+### New stuff:
+- Raidmarker: "Move only in PvP" setting. (Advanced Settings)
+- Threat Color: Can now change colors in "Advanced Settings"
+### Tweaks:
+- Adjusted the Threat Colors slightly with a few more updates
+### Bugfix:
+- Fix issue with nameplate aura filter "Purgeable" causing it to always show all buffs and not just purgeable like intended.
+
+## Cata
+### Bugfix:
+- Fixed "Threat Color in PvE" setting. Not tested much, need feedback as I don't PvE.
+- Fix "Always hide castbar" setting sometimes showing castbar in certain scenarious (?)
+
+## Retail
+### Tweak:
+- Minor tweak to aura glow positioning
+
 # BetterBlizzPlates 1.5.5e:
 ## Retail
 ### Bugfix:

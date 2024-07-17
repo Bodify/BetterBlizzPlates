@@ -159,7 +159,7 @@ StaticPopupDialogs["BBP_TOTEMLIST_RESET"] = {
 }
 
 StaticPopupDialogs["BBP_UPDATE_NOTIF"] = {
-    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.1.0e:\n\nFixed Retail-look Nameplate Height Slider. You might have to re-adjust/reset it back to 1.",
+    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.1.1:\n\nFixed Retail-look Nameplate Height Slider. You might have to re-adjust/reset it back to 1.",
     button1 = "OK",
     timeout = 0,
     whileDead = true,
@@ -3244,7 +3244,7 @@ local function CreateTitle(parent)
     addonNameIcon:SetPoint("LEFT", addonNameText, "RIGHT", -2, -1)
     local verNumber = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     verNumber:SetPoint("LEFT", addonNameText, "RIGHT", 25, 0)
-    verNumber:SetText("CATA BETA v0.1.0e")--("v" .. BBP.VersionNumber)
+    verNumber:SetText("CATA BETA v0.1.1")--("v" .. BBP.VersionNumber)
 end
 ------------------------------------------------------------
 -- GUI Panels
@@ -4567,10 +4567,10 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubPet)
 
-    local petIndicator2 = contentFrame:CreateTexture(nil, "ARTWORK")
-    petIndicator2:SetAtlas("newplayerchat-chaticon-newcomer")
-    petIndicator2:SetSize(36, 36)
-    petIndicator2:SetPoint("BOTTOM", anchorSubPet, "TOP", 0, 0)
+    anchorSubPet.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubPet.t:SetAtlas("newplayerchat-chaticon-newcomer")
+    anchorSubPet.t:SetSize(36, 36)
+    anchorSubPet.t:SetPoint("BOTTOM", anchorSubPet, "TOP", 0, 0)
 
     local petIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "petIndicatorScale")
     petIndicatorScale:SetPoint("TOP", anchorSubPet, "BOTTOM", 0, -15)
@@ -4604,10 +4604,10 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubAbsorb)
 
-    local absorbIndicator2 = contentFrame:CreateTexture(nil, "ARTWORK")
-    absorbIndicator2:SetAtlas("ParagonReputation_Glow")
-    absorbIndicator2:SetSize(51, 51)
-    absorbIndicator2:SetPoint("BOTTOM", anchorSubAbsorb, "TOP", -1, -10)
+    anchorSubAbsorb.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubAbsorb.t:SetAtlas("ParagonReputation_Glow")
+    anchorSubAbsorb.t:SetSize(51, 51)
+    anchorSubAbsorb.t:SetPoint("BOTTOM", anchorSubAbsorb, "TOP", -1, -10)
 
     local absorbIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "absorbIndicatorScale")
     absorbIndicatorScale:SetPoint("TOP", anchorSubAbsorb, "BOTTOM", 0, -15)
@@ -4896,16 +4896,20 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubRaidmark)
 
-    local raidmarkIcon = contentFrame:CreateTexture(nil, "ARTWORK")
-    raidmarkIcon:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcon_3")
-    raidmarkIcon:SetSize(32, 32)
-    raidmarkIcon:SetPoint("BOTTOM", anchorSubRaidmark, "TOP", 0, 3)
+    anchorSubRaidmark.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubRaidmark.t:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcon_3")
+    anchorSubRaidmark.t:SetSize(32, 32)
+    anchorSubRaidmark.t:SetPoint("BOTTOM", anchorSubRaidmark, "TOP", 0, 3)
 
     BBP.raidmarkIndicator2 = CreateCheckbox("raidmarkIndicator", "Move raidmarker", contentFrame, nil, BBP.ChangeRaidmarker)
     CreateTooltip(BBP.raidmarkIndicator2, "Enable this to move raidmarker on nameplates")
 
     local hideRaidmarkIndicator = CreateCheckbox("hideRaidmarkIndicator", "Hide raidmarker", contentFrame)
     hideRaidmarkIndicator:SetPoint("TOPLEFT", BBP.raidmarkIndicator2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+    anchorSubRaidmark.box3 = CreateCheckbox("raidmarkerPvPOnly", "Only move in PvP", contentFrame)
+    anchorSubRaidmark.box3:SetPoint("TOPLEFT", hideRaidmarkIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubRaidmark.box3, "Only move in PvP", "Will only move the raidmarker in PvP and stay in default location elsewhere.")
     --CreateTooltip(hideRaidmarkIndicator, "Hide all raidmarkers on nameplates\n\n(Class Indicator and Party Pointer has their own setting\nto only hide on those specific nameplates where those icons show)")
     CreateTooltipTwo(hideRaidmarkIndicator, "Hide Raidmarker", "Hide all raidmarkers on nameplates", "Class Indicator and Party Pointer has their own setting to only hide on those specific nameplates where those icons show", anchor, cvarName)
     --(widget, title, mainText, subText, anchor, cvarName)
@@ -5214,10 +5218,10 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubArena)
 
-    local arenaIndicator = contentFrame:CreateTexture(nil, "ARTWORK")
-    arenaIndicator:SetAtlas("questbonusobjective")
-    arenaIndicator:SetSize(32, 32)
-    arenaIndicator:SetPoint("BOTTOM", anchorSubArena, "TOP", 0, 3)
+    anchorSubArena.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubArena.t:SetAtlas("questbonusobjective")
+    anchorSubArena.t:SetSize(32, 32)
+    anchorSubArena.t:SetPoint("BOTTOM", anchorSubArena, "TOP", 0, 3)
 
     local arenaIndicatorXPos = CreateSlider(contentFrame, "ID x offset", -50, 50, 1, "arenaIdXPos", "X")
     arenaIndicatorXPos:SetPoint("TOP", anchorSubArena, "BOTTOM", 0, -15)
@@ -5299,11 +5303,11 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubClassIcon)
 
-    local classIconIcon = contentFrame:CreateTexture(nil, "ARTWORK")
-    classIconIcon:SetAtlas("groupfinder-icon-class-mage")
-    classIconIcon:SetSize(33, 33)
-    classIconIcon:SetPoint("BOTTOM", anchorSubClassIcon, "TOP", 0, 1.5)
-    --classIconIcon:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875)
+    anchorSubClassIcon.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubClassIcon.t:SetAtlas("groupfinder-icon-class-mage")
+    anchorSubClassIcon.t:SetSize(33, 33)
+    anchorSubClassIcon.t:SetPoint("BOTTOM", anchorSubClassIcon, "TOP", 0, 1.5)
+    --anchorSubClassIcon.t:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875)
 
     local classIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "classIndicatorFriendlyScale", false, 72)
     classIndicatorScale:SetPoint("TOP", anchorSubClassIcon, "BOTTOM", 36, -15)
@@ -5420,13 +5424,13 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubPointerIndicator)
 
-    local pointerIconSub = contentFrame:CreateTexture(nil, "ARTWORK")
-    pointerIconSub:SetTexture(BBP.partyPointerIconReplacement)
-    pointerIconSub:SetSize(28, 29)
-    pointerIconSub:SetPoint("BOTTOM", anchorSubPointerIndicator, "TOP", -1, 5)
-    pointerIconSub:SetDesaturated(true)
-    pointerIconSub:SetVertexColor(0.04, 0.76, 1)
-    CreateTooltip(pointerIconSub, "Show a class colored pointer above\nfriendly player nameplates.")
+    anchorSubPointerIndicator.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubPointerIndicator.t:SetTexture(BBP.partyPointerIconReplacement)
+    anchorSubPointerIndicator.t:SetSize(28, 29)
+    anchorSubPointerIndicator.t:SetPoint("BOTTOM", anchorSubPointerIndicator, "TOP", -1, 5)
+    anchorSubPointerIndicator.t:SetDesaturated(true)
+    anchorSubPointerIndicator.t:SetVertexColor(0.04, 0.76, 1)
+    CreateTooltip(anchorSubPointerIndicator.t, "Show a class colored pointer above\nfriendly player nameplates.")
 
     local partyPointerScale = CreateSlider(contentFrame, "Size", 0.5, 2.2, 0.01, "partyPointerScale", false, 72)
     partyPointerScale:SetPoint("TOP", anchorSubPointerIndicator, "BOTTOM", -36, -15)
@@ -5498,13 +5502,13 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubFakeName)
 
-    local nameIcon = contentFrame:CreateTexture(nil, "ARTWORK")
-    nameIcon:SetAtlas("MiniMap-PositionArrows")
-    nameIcon:SetSize(32, 44)
-    nameIcon:SetPoint("BOTTOM", anchorSubFakeName, "TOP", 0, -3)
-    nameIcon:SetRotation(math.pi / 2)
-    nameIcon:SetDesaturated(true)
-    nameIcon:SetVertexColor(1,1,0.1)
+    anchorSubFakeName.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubFakeName.t:SetAtlas("MiniMap-PositionArrows")
+    anchorSubFakeName.t:SetSize(32, 44)
+    anchorSubFakeName.t:SetPoint("BOTTOM", anchorSubFakeName, "TOP", 0, -3)
+    anchorSubFakeName.t:SetRotation(math.pi / 2)
+    anchorSubFakeName.t:SetDesaturated(true)
+    anchorSubFakeName.t:SetVertexColor(1,1,0.1)
 
     local useFakeName = CreateCheckbox("useFakeNameCATA", "Enable Name Reposition", contentFrame)
 
@@ -5680,15 +5684,31 @@ local function guiPositionAndScale()
     CreateTooltipTwo(healthNumbersTargetOnly, "Show on Target only", "Only show the health values on current target")
 
 
+    ----------------------
+    -- Threat Colors
+    ----------------------
+    local anchorThreatColor = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorThreatColor:SetPoint("CENTER", mainGuiAnchor2, "CENTER", fourthLineX, fourthLineY)
+    anchorThreatColor:SetText("Threat Colors")
 
+    CreateBorderBox(anchorThreatColor)
 
-    local rightclickText = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    rightclickText:SetPoint("CENTER", mainGuiAnchor2, "CENTER", fourthLineX, fourthLineY-100)
-    rightclickText:SetText("Right-click Sliders\nto enter\na specific value")
+    anchorThreatColor.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorThreatColor.t:SetAtlas("Raid")
+    anchorThreatColor.t:SetSize(30, 30)
+    anchorThreatColor.t:SetPoint("BOTTOM", anchorThreatColor, "TOP", 0, 2)
 
+    local tankFullAggroColorRGB = CreateColorBox(contentFrame, "tankFullAggroColorRGB", "Tank: Full Aggro")
+    tankFullAggroColorRGB:SetPoint("TOPLEFT", anchorThreatColor, "BOTTOMLEFT", -28, -5)
 
+    local tankNoAggroColorRGB = CreateColorBox(contentFrame, "tankNoAggroColorRGB", "Tank: No Aggro")
+    tankNoAggroColorRGB:SetPoint("TOPLEFT", tankFullAggroColorRGB, "BOTTOMLEFT", 0, -2)
 
+    local dpsOrHealFullAggroColorRGB = CreateColorBox(contentFrame, "dpsOrHealFullAggroColorRGB", "DPS/Heal: Full Aggro")
+    dpsOrHealFullAggroColorRGB:SetPoint("TOPLEFT", tankNoAggroColorRGB, "BOTTOMLEFT", 0, -8)
 
+    local dpsOrHealNoAggroColorRGB = CreateColorBox(contentFrame, "dpsOrHealNoAggroColorRGB", "DPS/Heal: No Aggro")
+    dpsOrHealNoAggroColorRGB:SetPoint("TOPLEFT", dpsOrHealFullAggroColorRGB, "BOTTOMLEFT", 0, -2)
     ----
 
     local reloadUiButton2 = CreateFrame("Button", nil, BetterBlizzPlatesSubPanel, "UIPanelButtonTemplate")
@@ -5699,6 +5719,10 @@ local function guiPositionAndScale()
         BetterBlizzPlatesDB.reopenOptions = true
         ReloadUI()
     end)
+
+    local rightclickText = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    rightclickText:SetPoint("RIGHT", reloadUiButton2, "LEFT", -105, 0)
+    rightclickText:SetText("|A:smallquestbang:16:16|aTip:  Right-click sliders to enter a specific value")
 end
 
 local function guiCastbar()
