@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.5.6b:
+## Cata
+### Bugfix:
+- Fix nameplate auras after a copypaste naming mistake from retail.
+
 # BetterBlizzPlates 1.5.6:
 ## Retail & Cata
 ### New stuff:
