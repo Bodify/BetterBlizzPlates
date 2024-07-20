@@ -1039,11 +1039,10 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             else
                 if auraWhitelisted then return true end
                 -- Filter to hide long duration auras
-                if moreThanOneMin and filterLessMinite then return false end
+                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
-                    if filterBlizzard then return BlizzardShouldShow end
                     return false
                 end
                 -- If none of the specific sub-filter conditions are met, show the aura
@@ -1147,11 +1146,11 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
-                    if filterBlizzard then return BlizzardShouldShow end
+                    if filterBlizzard then return BlizzardShouldShowCata end
                     return false
                 end
                 -- Filter to show only Blizzard recommended auras
-                if not BlizzardShouldShow and filterBlizzard then
+                if not BlizzardShouldShowCata and filterBlizzard and not BlizzardShouldShowCC then
                     if filterLessMinite and lessThanOneMin then return true end
                     if filterOnlyMe then return true end
                     return false
