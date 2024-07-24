@@ -1,3 +1,7 @@
+# BetterBlizzPlates 1.5.7
+## The War Within
+- Update to support TWW.
+
 # BetterBlizzPlates 1.5.6b:
 ## Cata
 ### Bugfix:

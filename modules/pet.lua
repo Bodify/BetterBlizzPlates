@@ -70,7 +70,7 @@ function BBP.PetIndicator(frame)
     -- All hunter pets have same NPC id, check for it.
     if npcID == "165189" then
         for i = 1, 6 do -- Only loop through the first 5 buffs
-            local _, _, _, _, _, _, _, _, _, spellID = UnitAura(frame.displayedUnit, i, "HELPFUL")
+            local _, _, _, _, _, _, _, _, _, spellID = BBP.TWWUnitAura(frame.displayedUnit, i, "HELPFUL")
             if petValidSpellIDs[spellID] then
                 frame.petIndicator:Show()
                 return

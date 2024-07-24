@@ -1,4 +1,4 @@
-## Interface: 100207
+## Interface: 110002
 ## Title: Better|cff00c0ffBlizz|rPlates
 ## Notes: Standard Blizzard nameplates with more features and easy settings
 ## SavedVariables: BetterBlizzPlatesDB
@@ -9,6 +9,7 @@
 embeds.xml
 
 init.lua
+temp_tww.lua
 
 modules\combat.lua
 modules\castbar.lua

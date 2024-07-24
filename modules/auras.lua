@@ -3,7 +3,7 @@
 ----------------------------------------------------
 
 local function FetchSpellName(spellId)
-    local spellName, _, _ = GetSpellInfo(spellId)
+    local spellName, _, _ = BBP.TWWGetSpellInfo(spellId)
     return spellName
 end
 

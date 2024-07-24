@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.5.6b"
+local addonUpdates = "1.5.7"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -240,40 +240,40 @@ local defaultSettings = {
     totemIndicatorDefaultCooldownTextSize = 0.85,
     showTotemIndicatorCooldownSwipe = true,
     totemIndicatorNpcList = {
-        [59764] =   { name = "Healing Tide Totem", icon = GetSpellTexture(108280),              hideIcon = false, size = 30, duration = 10, color = {0, 1, 0.39}, important = true },
-        [5925] =    { name = "Grounding Totem", icon = GetSpellTexture(204336),                 hideIcon = false, size = 30, duration = 3,  color = {1, 0, 1}, important = true },
-        [53006] =   { name = "Spirit Link Totem", icon = GetSpellTexture(98008),                hideIcon = false, size = 30, duration = 6,  color = {0, 1, 0.78}, important = true },
-        [5913] =    { name = "Tremor Totem", icon = GetSpellTexture(8143),                      hideIcon = false, size = 30, duration = 13, color = {0.49, 0.9, 0.08}, important = true },
-        [104818] =  { name = "Ancestral Protection Totem", icon = GetSpellTexture(207399),      hideIcon = false, size = 30, duration = 33, color = {0, 1, 0.78}, important = true },
-        [119052] =  { name = "War Banner", icon = GetSpellTexture(236320),                      hideIcon = false, size = 30, duration = 15, color = {1, 0, 1}, important = true },
-        [61245] =   { name = "Capacitor Totem", icon = GetSpellTexture(192058),                 hideIcon = false, size = 30, duration = 2,  color = {1, 0.69, 0}, important = true },
-        [105451] =  { name = "Counterstrike Totem", icon = GetSpellTexture(204331),             hideIcon = false, size = 30, duration = 15, color = {1, 0.27, 0.59}, important = true },
-        [179193] =  { name = "Fel Obelisk", icon = GetSpellTexture(353601),                     hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
-        [101398] =  { name = "Psyfiend", icon = GetSpellTexture(199824),                        hideIcon = false, size = 35, duration = 12, color = {0.49, 0, 1}, important = true },
-        [100943] =  { name = "Earthen Wall Totem", icon = GetSpellTexture(198838),              hideIcon = false, size = 30, duration = 18, color = {0.78, 0.49, 0.35}, important = true },
-        [107100] =  { name = "Observer", icon = GetSpellTexture(112869),                        hideIcon = false, size = 30, duration = 20, color = {1, 0.69, 0}, important = true },
-        [135002] =  { name = "Tyrant", icon = GetSpellTexture(265187),                          hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
-        [114565] =  { name = "Guardian of the Forgotten Queen", icon = GetSpellTexture(228049), hideIcon = false, size = 30, duration = 10, color = {1, 0, 1}, important = true },
-        [107024] =  { name = "Fel Lord", icon = GetSpellTexture(212459),                        hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
+        [59764] =   { name = "Healing Tide Totem", icon = C_Spell.GetSpellTexture(108280),              hideIcon = false, size = 30, duration = 10, color = {0, 1, 0.39}, important = true },
+        [5925] =    { name = "Grounding Totem", icon = C_Spell.GetSpellTexture(204336),                 hideIcon = false, size = 30, duration = 3,  color = {1, 0, 1}, important = true },
+        [53006] =   { name = "Spirit Link Totem", icon = C_Spell.GetSpellTexture(98008),                hideIcon = false, size = 30, duration = 6,  color = {0, 1, 0.78}, important = true },
+        [5913] =    { name = "Tremor Totem", icon = C_Spell.GetSpellTexture(8143),                      hideIcon = false, size = 30, duration = 13, color = {0.49, 0.9, 0.08}, important = true },
+        [104818] =  { name = "Ancestral Protection Totem", icon = C_Spell.GetSpellTexture(207399),      hideIcon = false, size = 30, duration = 33, color = {0, 1, 0.78}, important = true },
+        [119052] =  { name = "War Banner", icon = C_Spell.GetSpellTexture(236320),                      hideIcon = false, size = 30, duration = 15, color = {1, 0, 1}, important = true },
+        [61245] =   { name = "Capacitor Totem", icon = C_Spell.GetSpellTexture(192058),                 hideIcon = false, size = 30, duration = 2,  color = {1, 0.69, 0}, important = true },
+        [105451] =  { name = "Counterstrike Totem", icon = C_Spell.GetSpellTexture(204331),             hideIcon = false, size = 30, duration = 15, color = {1, 0.27, 0.59}, important = true },
+        [179193] =  { name = "Fel Obelisk", icon = C_Spell.GetSpellTexture(353601),                     hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
+        [101398] =  { name = "Psyfiend", icon = C_Spell.GetSpellTexture(199824),                        hideIcon = false, size = 35, duration = 12, color = {0.49, 0, 1}, important = true },
+        [100943] =  { name = "Earthen Wall Totem", icon = C_Spell.GetSpellTexture(198838),              hideIcon = false, size = 30, duration = 18, color = {0.78, 0.49, 0.35}, important = true },
+        [107100] =  { name = "Observer", icon = C_Spell.GetSpellTexture(112869),                        hideIcon = false, size = 30, duration = 20, color = {1, 0.69, 0}, important = true },
+        [135002] =  { name = "Tyrant", icon = C_Spell.GetSpellTexture(265187),                          hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
+        [114565] =  { name = "Guardian of the Forgotten Queen", icon = C_Spell.GetSpellTexture(228049), hideIcon = false, size = 30, duration = 10, color = {1, 0, 1}, important = true },
+        [107024] =  { name = "Fel Lord", icon = C_Spell.GetSpellTexture(212459),                        hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
         -- Less important
-        [89] =      { name = "Infernal", icon = GetSpellTexture(1122),                          hideIcon = false, size = 24, duration = 30, color = {1, 0.69, 0}, important = false },
-        [196111] =  { name = "Pit Lord", icon = GetSpellTexture(138789),                        hideIcon = false, size = 24, duration = 10, color = {1, 0.69, 0}, important = false },
-        [3527] =    { name = "Healing Stream Totem", icon = GetSpellTexture(5394),              hideIcon = false, size = 24, duration = 18, color = {0, 1, 0.78}, important = false },
-        [78001] =   { name = "Cloudburst Totem", icon = GetSpellTexture(157153),                hideIcon = false, size = 24, duration = 15, color = {0, 1, 0.39}, important = false },
-        [10467] =   { name = "Mana Tide Totem", icon = GetSpellTexture(16191),                  hideIcon = false, size = 24, duration = 8,  color = {0.08, 0.82, 0.78}, important = false },
-        [97285] =   { name = "Wind Rush Totem", icon = GetSpellTexture(192077),                 hideIcon = false, size = 24, duration = 18, color = {0.08, 0.82, 0.78}, important = false },
-        [60561] =   { name = "Earthgrab Totem", icon = GetSpellTexture(51485),                  hideIcon = false, size = 24, duration = 30, color = {0.75, 0.31, 0.10}, important = false },
-        [2630] =    { name = "Earthbind Totem", icon = GetSpellTexture(2484),                   hideIcon = false, size = 24, duration = 30, color = {0.78, 0.51, 0.39}, important = false },
-        [105427] =  { name = "Skyfury Totem", icon = GetSpellTexture(204330),                   hideIcon = false, size = 24, duration = 15, color = {1, 0.27, 0.59}, important = false },
-        [97369] =   { name = "Liquid Magma Totem", icon = GetSpellTexture(192222),              hideIcon = false, size = 24, duration = 6,  color = {1, 0.69, 0}, important = false },
-        [6112] =    { name = "Windfury Totem", icon = GetSpellTexture(8512),                    hideIcon = false, size = 24, duration = nil,color = {0.08, 0.82, 0.78}, important = false },
-        [62982] =   { name = "Mindbender", icon = GetSpellTexture(123040),                      hideIcon = false, size = 24, duration = 15, color = {1, 0.69, 0}, important = false },
-        [179867] =  { name = "Static Field Totem", icon = GetSpellTexture(355580),              hideIcon = false, size = 24, duration = 6,  color = {0, 1, 0.78}, important = false },
-        [194117] =  { name = "Stoneskin Totem", icon = GetSpellTexture(383017),                 hideIcon = false, size = 24, duration = 15, color = {0.78, 0.49, 0.35}, important = false },
-        [5923] =    { name = "Poison Cleansing Totem", icon = GetSpellTexture(383013),          hideIcon = false, size = 24, duration = 9,  color = {0.49, 0.9, 0.08}, important = false },
-        [194118] =  { name = "Tranquil Air Totem", icon = GetSpellTexture(383019),              hideIcon = false, size = 24, duration = 20, color = {0, 1, 0.78}, important = false },
-        [65282] =   { name = "Void Tendril", icon = GetSpellTexture(108920),                    hideIcon = false, size = 24, duration = 6,  color = {0.33, 0.35, 1}, important = false },
-        [185800] =  { name = "Past Self", icon = GetSpellTexture(371869),                       hideIcon = false, size = 24, duration = 8,  color = {0.36, 0.56, 0.52}, important = false }
+        [89] =      { name = "Infernal", icon = C_Spell.GetSpellTexture(1122),                          hideIcon = false, size = 24, duration = 30, color = {1, 0.69, 0}, important = false },
+        [196111] =  { name = "Pit Lord", icon = C_Spell.GetSpellTexture(138789),                        hideIcon = false, size = 24, duration = 10, color = {1, 0.69, 0}, important = false },
+        [3527] =    { name = "Healing Stream Totem", icon = C_Spell.GetSpellTexture(5394),              hideIcon = false, size = 24, duration = 18, color = {0, 1, 0.78}, important = false },
+        [78001] =   { name = "Cloudburst Totem", icon = C_Spell.GetSpellTexture(157153),                hideIcon = false, size = 24, duration = 15, color = {0, 1, 0.39}, important = false },
+        [10467] =   { name = "Mana Tide Totem", icon = C_Spell.GetSpellTexture(16191),                  hideIcon = false, size = 24, duration = 8,  color = {0.08, 0.82, 0.78}, important = false },
+        [97285] =   { name = "Wind Rush Totem", icon = C_Spell.GetSpellTexture(192077),                 hideIcon = false, size = 24, duration = 18, color = {0.08, 0.82, 0.78}, important = false },
+        [60561] =   { name = "Earthgrab Totem", icon = C_Spell.GetSpellTexture(51485),                  hideIcon = false, size = 24, duration = 30, color = {0.75, 0.31, 0.10}, important = false },
+        [2630] =    { name = "Earthbind Totem", icon = C_Spell.GetSpellTexture(2484),                   hideIcon = false, size = 24, duration = 30, color = {0.78, 0.51, 0.39}, important = false },
+        [105427] =  { name = "Skyfury Totem", icon = C_Spell.GetSpellTexture(204330),                   hideIcon = false, size = 24, duration = 15, color = {1, 0.27, 0.59}, important = false },
+        [97369] =   { name = "Liquid Magma Totem", icon = C_Spell.GetSpellTexture(192222),              hideIcon = false, size = 24, duration = 6,  color = {1, 0.69, 0}, important = false },
+        [6112] =    { name = "Windfury Totem", icon = C_Spell.GetSpellTexture(8512),                    hideIcon = false, size = 24, duration = nil,color = {0.08, 0.82, 0.78}, important = false },
+        [62982] =   { name = "Mindbender", icon = C_Spell.GetSpellTexture(123040),                      hideIcon = false, size = 24, duration = 15, color = {1, 0.69, 0}, important = false },
+        [179867] =  { name = "Static Field Totem", icon = C_Spell.GetSpellTexture(355580),              hideIcon = false, size = 24, duration = 6,  color = {0, 1, 0.78}, important = false },
+        [194117] =  { name = "Stoneskin Totem", icon = C_Spell.GetSpellTexture(383017),                 hideIcon = false, size = 24, duration = 15, color = {0.78, 0.49, 0.35}, important = false },
+        [5923] =    { name = "Poison Cleansing Totem", icon = C_Spell.GetSpellTexture(383013),          hideIcon = false, size = 24, duration = 9,  color = {0.49, 0.9, 0.08}, important = false },
+        [194118] =  { name = "Tranquil Air Totem", icon = C_Spell.GetSpellTexture(383019),              hideIcon = false, size = 24, duration = 20, color = {0, 1, 0.78}, important = false },
+        [65282] =   { name = "Void Tendril", icon = C_Spell.GetSpellTexture(108920),                    hideIcon = false, size = 24, duration = 6,  color = {0.33, 0.35, 1}, important = false },
+        [185800] =  { name = "Past Self", icon = C_Spell.GetSpellTexture(371869),                       hideIcon = false, size = 24, duration = 8,  color = {0.36, 0.56, 0.52}, important = false }
     },
     -- Quest Indicator
     questIndicator = false,
@@ -1557,7 +1557,7 @@ function BBP.ClickthroughNameplateAuras(pool, namePlateFrameBase)
         end)
     end
 end
-hooksecurefunc(NamePlateDriverFrame.pools:GetPool("NamePlateUnitFrameTemplate"),"resetterFunc",BBP.ClickthroughNameplateAuras)
+--hooksecurefunc(NamePlateDriverFrame.pools:GetPool("NamePlateUnitFrameTemplate"),"resetterFunc",BBP.ClickthroughNameplateAuras) --tww change
 --hooksecurefunc(NamePlateDriverFrame.pools:GetPool("ForbiddenNamePlateUnitFrameTemplate"),"resetterFunc",BBP.ClickthroughNameplateAuras)
 
 --#################################################################################################
@@ -2649,9 +2649,9 @@ function BBP.OnUnitUpdate(unitId, unitInfo, allUnitsInfo)
     end
 end
 --registering the callback:
-local openRaidLib = LibStub:GetLibrary("LibOpenRaid-1.0")
-openRaidLib.RegisterCallback(BBP, "UnitInfoUpdate", "OnUnitUpdate")
-
+-- local openRaidLib = LibStub:GetLibrary("LibOpenRaid-1.0")
+-- openRaidLib.RegisterCallback(BBP, "UnitInfoUpdate", "OnUnitUpdate")
+-- tww change
 
 
 --################################################################################################
@@ -4215,7 +4215,8 @@ SlashCmdList["BBP"] = function(msg)
     elseif command == "fixnameplates" then
         StaticPopup_Show("CONFIRM_FIX_NAMEPLATES_BBP")
     else
-        InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
+        --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
+        Settings.OpenToCategory(BBP.category.ID)
     end
 end
 
@@ -4437,7 +4438,7 @@ local function NamePlateCastBarTestMode(frame)
                         end
                         castBar.Text:SetText("Frostbolt")
                         castBar.Icon:Show()
-                        castBar.Icon:SetTexture(GetSpellTexture(116))
+                        castBar.Icon:SetTexture(C_Spell.GetSpellTexture(116))
                         if useCustomCastbarTexture or castBarRecolor then
                             local castBarTexture = castBar:GetStatusBarTexture()
                             castBarTexture:SetDesaturated(true)
@@ -4473,7 +4474,7 @@ local function NamePlateCastBarTestMode(frame)
                             end
                             castBar.Text:SetText("Shattering Throw")
                             if showCastBarIconWhenNoninterruptible then
-                                castBar.Icon:SetTexture(GetSpellTexture(64382))
+                                castBar.Icon:SetTexture(C_Spell.GetSpellTexture(64382))
                                 castBar.BorderShield:SetDrawLayer("OVERLAY", 1)
                                 castBar.Icon:SetDrawLayer("OVERLAY", 2)
                             else
@@ -4496,7 +4497,7 @@ local function NamePlateCastBarTestMode(frame)
                             end
                             castBar.Text:SetText("Soothing Mist")
                             castBar.Icon:Show()
-                            castBar.Icon:SetTexture(GetSpellTexture(115175))
+                            castBar.Icon:SetTexture(C_Spell.GetSpellTexture(115175))
                             if useCustomCastbarTexture or castBarRecolor then
                                 local castBarTexture = castBar:GetStatusBarTexture()
                                 castBarTexture:SetDesaturated(true)
@@ -4514,7 +4515,7 @@ local function NamePlateCastBarTestMode(frame)
                             end
                             castBar.Text:SetText("Frostbolt")
                             castBar.Icon:Show()
-                            castBar.Icon:SetTexture(GetSpellTexture(116))
+                            castBar.Icon:SetTexture(C_Spell.GetSpellTexture(116))
                             if useCustomCastbarTexture or castBarRecolor then
                                 local castBarTexture = castBar:GetStatusBarTexture()
                                 castBarTexture:SetDesaturated(true)
