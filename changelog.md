@@ -1,3 +1,7 @@
+# BetterBlizzPlates 1.5.7b
+## The War Within't (Prepatch)
+- Fix issues with nameplate healthbars and their borders from a TWW change I missed.
+
 # BetterBlizzPlates 1.5.7
 ## The War Within
 - Update to support TWW.
