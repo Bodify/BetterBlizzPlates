@@ -1999,7 +1999,7 @@ function BBP.HideNPCs(frame, nameplate)
     if info.isFriend then
         local hideNpcHpBar = BetterBlizzPlatesDB.friendlyHideHealthBarNpc
         if config.friendlyHideHealthBar and hideNpcHpBar then
-            frame.healthBar:SetAlpha(0)
+            frame.HealthBarsContainer:SetAlpha(0)
             frame.selectionHighlight:SetAlpha(0)
             return
         end
@@ -2021,7 +2021,7 @@ function BBP.HideNPCs(frame, nameplate)
     -- Determine if the frame should be shown based on the list check or if it's the current target
     if UnitIsUnit(frame.displayedUnit, "target") then
         BBP.ShowFrame(frame, nameplate, config)
-        frame.healthBar:SetAlpha(config.friendlyHideHealthBar and info.isFriend and 0 or 1)
+        frame.HealthBarsContainer:SetAlpha(config.friendlyHideHealthBar and info.isFriend and 0 or 1)
         frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
     elseif hideNPCWhitelistOn then
         if inList then
@@ -2050,7 +2050,7 @@ function BBP.ResetFrame(frame, config, info)
         frame.murlocMode:Hide()
         frame.hideNameOverride = false
         frame.hideCastbarOverride = false
-        frame.healthBar:SetAlpha((info.isSelf and 1) or (config.friendlyHideHealthBar and info.isFriend and 0) or 1)
+        frame.HealthBarsContainer:SetAlpha((info.isSelf and 1) or (config.friendlyHideHealthBar and info.isFriend and 0) or 1)
         frame.selectionHighlight:SetAlpha(((info.isFriend and config.friendlyHideHealthBar) and 0) or (config.hideTargetHighlight and 0) or 0.22)
         ToggleNameplateBuffFrameVisibility(frame)
         if frame.fakeName then
@@ -2115,7 +2115,7 @@ function BBP.ShowMurloc(frame, nameplate)
         nameplate:SetParent(shadows[nameplate])
         shadows[nameplate] = nil
     end
-    frame.healthBar:SetAlpha(0)
+    frame.HealthBarsContainer:SetAlpha(0)
     frame.selectionHighlight:SetAlpha(0)
     frame.BuffFrame:SetAlpha(0)
     if frame.fakeName then
@@ -2838,7 +2838,7 @@ end
 
 local function ChangeHealthbarBorderSize(frame)
     if not frame.borderHooked then
-        hooksecurefunc(frame.healthBar.border, "UpdateSizes", function(self)
+        hooksecurefunc(frame.HealthBarsContainer.border, "UpdateSizes", function(self)
             if self:IsProtected() or self:IsForbidden() then return end
             if not frame.unit then return end
             local config = frame.BetterBlizzPlates.config
@@ -2876,7 +2876,7 @@ local function ChangeHealthbarBorderSize(frame)
         frame.borderHooked = true
 
         if UnitIsUnit(frame.unit, "player") then return end
-        local self = frame.healthBar.border
+        local self = frame.HealthBarsContainer.border
         local config = frame.BetterBlizzPlates.config
         local borderSize = config.nameplateBorderSize
         local minPixels = self.borderSizeMinPixels or 2;
@@ -2912,11 +2912,11 @@ end
 
 local function HookNameplateBorder(frame)
     if not frame.BetterBlizzPlates.hooks.nameplateBorderColor then
-        hooksecurefunc(frame.healthBar.border, "SetVertexColor", function(self)
+        hooksecurefunc(frame.HealthBarsContainer.border, "SetVertexColor", function(self)
             ColorNameplateBorder(self, frame)
         end)
         frame.BetterBlizzPlates.hooks.nameplateBorderColor = true
-        ColorNameplateBorder(frame.healthBar.border, frame)
+        ColorNameplateBorder(frame.HealthBarsContainer.border, frame)
     end
 end
 
@@ -2947,14 +2947,14 @@ local function HideFriendlyHealthbar(frame)
             if not info.isPlayer then
                 local hideNpcHpBar = BetterBlizzPlatesDB.friendlyHideHealthBarNpc
                 if hideNpcHpBar then
-                    frame.healthBar:SetAlpha(0)
+                    frame.HealthBarsContainer:SetAlpha(0)
                     frame.selectionHighlight:SetAlpha(0)
                 else
-                    frame.healthBar:SetAlpha(1)
+                    frame.HealthBarsContainer:SetAlpha(1)
                     frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
                 end
             else
-                frame.healthBar:SetAlpha(0)
+                frame.HealthBarsContainer:SetAlpha(0)
                 frame.selectionHighlight:SetAlpha(0)
                 if config.showGuildNames then
                     if not config.guildNameInitialized then
@@ -2989,14 +2989,14 @@ local function HideFriendlyHealthbar(frame)
                 end
             end
         else
-            frame.healthBar:SetAlpha(1)
+            frame.HealthBarsContainer:SetAlpha(1)
             frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
             if frame.guildName then
                 frame.guildName:SetText("")
             end
         end
     else
-        frame.healthBar:SetAlpha(1)
+        frame.HealthBarsContainer:SetAlpha(1)
         frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
         if frame.guildName then
             frame.guildName:SetText("")
@@ -3040,8 +3040,8 @@ local function HandleNamePlateRemoved(unit)
 
     frame:SetScale(1)
     frame.name:SetAlpha(1)
-    if frame.healthBar then
-        frame.healthBar:SetAlpha(1)
+    if frame.HealthBarsContainer then
+        frame.HealthBarsContainer:SetAlpha(1)
     end
     local hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
     if not hideTargetHighlight then
@@ -3697,7 +3697,7 @@ function BBP.RefreshAllNameplates()
         if not BetterBlizzPlatesDB.friendlyHideHealthBar then
             if frame.healthBar then
                 if not hideHealthBar and not BetterBlizzPlatesDB.totemIndicatorTestMode then
-                    frame.healthBar:SetAlpha(1)
+                    frame.HealthBarsContainer:SetAlpha(1)
                 end
             end
         end
@@ -3708,11 +3708,11 @@ function BBP.RefreshAllNameplates()
         end
         if BetterBlizzPlatesDB.totemIndicatorTestMode then
             if hideHealthBar then
-                frame.healthBar:SetAlpha(0)
+                frame.HealthBarsContainer:SetAlpha(0)
                 frame.selectionHighlight:SetAlpha(0)
             else
                 local hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
-                frame.healthBar:SetAlpha(1)
+                frame.HealthBarsContainer:SetAlpha(1)
                 if not hideTargetHighlight then
                     frame.selectionHighlight:SetAlpha(0.22)
                 end

@@ -178,7 +178,7 @@ function BBP.PartyPointer(frame, fetchedSpecID)
     end
 
     if config.partyPointerHideAll then
-        frame.healthBar:SetAlpha(0)
+        frame.HealthBarsContainer:SetAlpha(0)
         frame.selectionHighlight:SetAlpha(0)
         frame.hideNameOverride = true
         frame.name:SetAlpha(0)
@@ -188,7 +188,7 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         BBP.hideFriendlyCastbar = true
         frame.ppChange = true
     elseif frame.ppChange then
-        frame.healthBar:SetAlpha(1)
+        frame.HealthBarsContainer:SetAlpha(1)
         frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
         frame.hideNameOverride = nil
         if not config.hideFriendlyNameText then

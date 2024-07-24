@@ -322,10 +322,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         end
         if config.totemIndicatorHideHealthBar or config.randomTotemHideHp or config.randomTotemIconOnly then
             if not info.isTarget then
-                frame.healthBar:SetAlpha(0)
+                frame.HealthBarsContainer:SetAlpha(0)
                 frame.selectionHighlight:SetAlpha(0)
             else
-                frame.healthBar:SetAlpha(1)
+                frame.HealthBarsContainer:SetAlpha(1)
                 if not config.hideTargetHighlight then
                     frame.selectionHighlight:SetAlpha(0.22)
                 end
@@ -364,14 +364,14 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         end
         if config.totemIndicatorHideHealthBar or npcData.hideHp or npcData.iconOnly then
             if npcData.iconOnly then
-                frame.healthBar:SetAlpha(0)
+                frame.HealthBarsContainer:SetAlpha(0)
                 frame.selectionHighlight:SetAlpha(0)
             else
                 if not info.isTarget then
-                    frame.healthBar:SetAlpha(0)
+                    frame.HealthBarsContainer:SetAlpha(0)
                     frame.selectionHighlight:SetAlpha(0)
                 else
-                    frame.healthBar:SetAlpha(1)
+                    frame.HealthBarsContainer:SetAlpha(1)
                     if not config.hideTargetHighlight then
                         frame.selectionHighlight:SetAlpha(0.22)
                     end
