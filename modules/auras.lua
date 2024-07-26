@@ -177,7 +177,7 @@ local function CheckBuffs()
                             buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten);
                         elseif BetterBlizzPlatesDB.nameplateAuraTaller then
                             local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                            local eight = 8 * etterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            local eight = 8 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
                             buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight);
                             buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight);
                         else
@@ -201,7 +201,7 @@ local function CheckBuffs()
                             buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten);
                         elseif BetterBlizzPlatesDB.nameplateAuraTaller then
                             local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                            local eight = 8 * etterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            local eight = 8 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
                             buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight);
                             buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight);
                         else
@@ -217,7 +217,7 @@ local function CheckBuffs()
                     buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten);
                 elseif BetterBlizzPlatesDB.nameplateAuraTaller then
                     local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                    local eight = 8 * etterBlizzPlatesDB.nameplateAuraEnlargedScale
+                    local eight = 8 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
                     buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight);
                     buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight);
                 else

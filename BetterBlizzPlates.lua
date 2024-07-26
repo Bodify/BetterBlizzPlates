@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.5.7b"
+local addonUpdates = "1.5.7c"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -1347,9 +1347,9 @@ local function AdjustHealthBarHeight(frame)
     if not config then return end
     if not frame.unit then return end
     if UnitCanAttack(frame.unit, "player") then
-        frame.healthBar:SetHeight(config.hpHeightEnemy or 11)
+        frame.HealthBarsContainer:SetHeight(config.hpHeightEnemy or 11)
     elseif not UnitIsUnit(frame.unit, "player") then
-        frame.healthBar:SetHeight(config.hpHeightFriendly or 11)
+        frame.HealthBarsContainer:SetHeight(config.hpHeightFriendly or 11)
     end
 end
 
@@ -2602,7 +2602,49 @@ end
 
 
 
+local function ShowFriendlyGuildName(frame, unit)
+    local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo
+    if config.showGuildNames and info.isFriend then
+        if not config.guildNameInitialized then
+            config.guildNameColor = BetterBlizzPlatesDB.guildNameColor
+            config.guildNameColorRGB = BetterBlizzPlatesDB.guildNameColorRGB
+            config.guildNameScale = BetterBlizzPlatesDB.guildNameScale
 
+            config.guildNameInitialized = true
+        end
+        if not frame.guildName then
+            frame.guildName = frame:CreateFontString(nil, "BACKGROUND", "SystemFont_NamePlateFixed")
+            local font, size, outline = frame.name:GetFont()
+            frame.guildName:SetFont(font, 9, outline)
+            frame.guildName:SetIgnoreParentScale(true)
+        end
+
+        local guildName, guildRankName, guildRankIndex = GetGuildInfo(unit)
+        if guildName then
+            local font, size, outline = frame.name:GetFont()
+            frame.guildName:SetFont(font, 9, outline)
+            frame.guildName:SetText("<"..guildName..">")
+            if config.guildNameColor then
+                frame.guildName:SetTextColor(unpack(config.guildNameColorRGB))
+            else
+                local name = frame.fakeName or frame.name
+                frame.guildName:SetTextColor(name:GetTextColor())
+            end
+            frame.guildName:ClearAllPoints()
+            if frame.HealthBarsContainer:GetAlpha() == 0 then
+                frame.guildName:SetPoint("TOP", frame.fakeName or frame.name, "BOTTOM", 0, 0)
+            else
+                frame.guildName:SetPoint("TOP", frame.healthBar, "BOTTOM", 0, -3)
+            end
+            frame.guildName:SetScale(config.guildNameScale or 1)
+        else
+            frame.guildName:SetText("")
+        end
+    elseif frame.guildName then
+        frame.guildName:SetText("")
+    end
+end
 
 
 function BBP.OnUnitUpdate(unitId, unitInfo, allUnitsInfo)
@@ -2620,37 +2662,14 @@ function BBP.OnUnitUpdate(unitId, unitInfo, allUnitsInfo)
                 BBP.PartyPointer(frame)
             end
         end
-        if config.showGuildNames and config.friendlyHideHealthBar then
-            if not config.guildNameColor then
-                config.guildNameColor = BetterBlizzPlatesDB.guildNameColor
-                config.guildNameColorRGB = BetterBlizzPlatesDB.guildNameColorRGB
-                config.guildNameScale = BetterBlizzPlatesDB.guildNameScale
-            end
-            if not frame.guildName then
-                frame.guildName = frame:CreateFontString(nil, "BACKGROUND")
-                local font, size, outline = frame.name:GetFont()
-                frame.guildName:SetFont(font, 14, outline)
-            end
-
-            local guildName, guildRankName, guildRankIndex = GetGuildInfo(unitId)
-            if guildName then
-                frame.guildName:SetText("<"..guildName..">")
-                if config.guildNameColor then
-                    frame.guildName:SetTextColor(unpack(config.guildNameColorRGB))
-                else
-                    frame.guildName:SetTextColor(frame.name:GetTextColor())
-                end
-                frame.guildName:SetPoint("TOP", frame.fakeName or frame.name, "BOTTOM", 0, 0)
-                frame.guildName:SetScale(config.guildNameScale or 1)
-            else
-                frame.guildName:SetText("")
-            end
+        if config.showGuildNames then
+            ShowFriendlyGuildName(frame, unitId)
         end
     end
 end
 --registering the callback:
--- local openRaidLib = LibStub:GetLibrary("LibOpenRaid-1.0")
--- openRaidLib.RegisterCallback(BBP, "UnitInfoUpdate", "OnUnitUpdate")
+local openRaidLib = LibStub:GetLibrary("LibOpenRaid-1.0")
+openRaidLib.RegisterCallback(BBP, "UnitInfoUpdate", "OnUnitUpdate")
 -- tww change
 
 
@@ -2675,7 +2694,7 @@ function BBP.ApplyRaidmarkerChanges(frame)
                 frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
                 frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.fakeName or frame.name, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos)
             else
-                local hiddenHealthbarOffset = (config.friendlyHideHealthBar and config.raidmarkIndicatorAnchor == "BOTTOM" and frame.healthBar:GetAlpha() == 0) and frame.healthBar:GetHeight() + 10 or 0
+                local hiddenHealthbarOffset = (config.friendlyHideHealthBar and config.raidmarkIndicatorAnchor == "BOTTOM" and frame.HealthBarsContainer:GetAlpha() == 0) and frame.HealthBarsContainer:GetHeight() + 10 or 0
                 frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
                 frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.healthBar, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos + hiddenHealthbarOffset)
             end
@@ -2937,7 +2956,6 @@ local function HookNameplateCastbarHide(frame)
     end
 end
 
-local guildName = CreateFrame("Frame")
 local function HideFriendlyHealthbar(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
@@ -2956,37 +2974,6 @@ local function HideFriendlyHealthbar(frame)
             else
                 frame.HealthBarsContainer:SetAlpha(0)
                 frame.selectionHighlight:SetAlpha(0)
-                if config.showGuildNames then
-                    if not config.guildNameInitialized then
-                        config.guildNameColor = BetterBlizzPlatesDB.guildNameColor
-                        config.guildNameColorRGB = BetterBlizzPlatesDB.guildNameColorRGB
-                        config.guildNameScale = BetterBlizzPlatesDB.guildNameScale
-
-                        config.guildNameInitialized = true
-                    end
-                    if not frame.guildName then
-                        frame.guildName = guildName:CreateFontString(nil, "BACKGROUND", "SystemFont_NamePlateFixed")
-                        local font, size, outline = frame.name:GetFont()
-                        frame.guildName:SetFont(font, 9, outline)
-                    end
-
-                    local guildName, guildRankName, guildRankIndex = GetGuildInfo(frame.unit)
-                    if guildName then
-                        local font, size, outline = frame.name:GetFont()
-                        frame.guildName:SetFont(font, 9, outline)
-                        frame.guildName:SetText("<"..guildName..">")
-                        if config.guildNameColor then
-                            frame.guildName:SetTextColor(unpack(config.guildNameColorRGB))
-                        else
-                            local name = frame.fakeName or frame.name
-                            frame.guildName:SetTextColor(name:GetTextColor())
-                        end
-                        frame.guildName:SetPoint("TOP", frame.fakeName or frame.name, "BOTTOM", 0, 0)
-                        frame.guildName:SetScale(config.guildNameScale or 1)
-                    else
-                        frame.guildName:SetText("")
-                    end
-                end
             end
         else
             frame.HealthBarsContainer:SetAlpha(1)
@@ -3280,7 +3267,7 @@ function BBP.SetupFakeName(frame)
     local r, g, b, a = frame.name:GetVertexColor()
     frame.fakeName:SetVertexColor(r, g, b, frame.hideNameOverride and 0 or 1)
     --  Temp solution, figure out how to show on top of healthbar while keeping frame alpha and not healthbar alpha if possible
-    if frame.healthBar:GetAlpha() == 0 then
+    if frame.HealthBarsContainer:GetAlpha() == 0 then
         frame.fakeName:SetIgnoreParentAlpha(true)
     else
         frame.fakeName:SetIgnoreParentAlpha(false)
@@ -3524,6 +3511,8 @@ local function HandleNamePlateAdded(unit)
 
     if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
 
+    if config.showGuildNames then ShowFriendlyGuildName(frame, frame.unit) end
+
     -- Hide name
     if ((config.hideFriendlyNameText or config.partyPointerHideAll) and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
         frame.name:SetAlpha(0)
@@ -3641,20 +3630,8 @@ function BBP.RefreshAllNameplates()
             BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
         end
         if frame.guildName then
-            if BetterBlizzPlatesDB.showGuildNames and BetterBlizzPlatesDB.friendlyHideHealthBar then
-                local guildName, guildRankName, guildRankIndex = GetGuildInfo(nameplate.UnitFrame.unit)
-                if guildName then
-                    frame.guildName:SetText("<"..guildName..">")
-                    if BetterBlizzPlatesDB.guildNameColor then
-                        frame.guildName:SetTextColor(unpack(BetterBlizzPlatesDB.guildNameColorRGB))
-                    else
-                        frame.guildName:SetTextColor(frame.name:GetTextColor())
-                    end
-                    frame.guildName:SetPoint("TOP", frame.fakeName or frame.name, "BOTTOM", 0, 0)
-                    frame.guildName:SetScale(BetterBlizzPlatesDB.guildNameScale or 1)
-                else
-                    frame.guildName:SetText("")
-                end
+            if BetterBlizzPlatesDB.showGuildNames then
+                ShowFriendlyGuildName(frame, frame.unit)
             else
                 frame.guildName:SetText("")
             end
@@ -4176,7 +4153,8 @@ Frame:SetScript("OnEvent", function(...)
 
     -- Re-open options when clicking reload button
     if db.reopenOptions then
-        InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
+        --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
+        Settings.OpenToCategory(BBP.category.ID)
         db.reopenOptions = false
     end
     BBP.CreateUnitAuraEventFrame()

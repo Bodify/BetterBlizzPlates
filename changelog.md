@@ -1,3 +1,13 @@
+# BetterBlizzPlates 1.5.7c
+## The War Within't (Prepatch)
+### Tweaks:
+- Updated "Show Guild Name" (Misc) to work without "Hide healthbar" setting on. Shows underneath healthbar.
+### Bugfixes:
+- Fix typo in nameplate aura glow settings causing lua errors.
+- Fix an old function name that opened settings (InterfaceOptionsFrame_OpenToCategory) to its new name in TWW.
+- Fix the healthbar height adjuster in Misc.
+- Update OpenRaid lib and enabled it again (used to more accurately fetch and update party specs for class icon)
+
 # BetterBlizzPlates 1.5.7b
 ## The War Within't (Prepatch)
 - Fix issues with nameplate healthbars and their borders from a TWW change I missed.
