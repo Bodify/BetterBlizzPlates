@@ -1,3 +1,15 @@
+# BetterBlizzPlates 1.5.8
+## The War Within & Cata
+### New stuff:
+- Change nameplate healthbar background color (Misc)
+### Bugfix:
+- Fix Guild/Friend indicator appearing on personal nameplate.
+
+## The War Within
+### Tweak:
+- Fixed Blizzards fuckup with target highlight on nameplate healthbar. Now only displays on current health like it used to instead of also on the missing health (made background color look weird).
+
+
 # BetterBlizzPlates 1.5.7c
 ## The War Within't (Prepatch)
 ### Tweaks:

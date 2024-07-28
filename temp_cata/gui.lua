@@ -8077,6 +8077,21 @@ local function guiMisc()
         CheckAndToggleCheckboxes(npBorderClassColor)
     end)
 
+    local changeNpHpBgColor = CreateCheckbox("changeNpHpBgColor", "Change Nameplate Background Color", guiMisc)
+    changeNpHpBgColor:SetPoint("TOPLEFT", npBorderNpcColorRGB, "BOTTOMLEFT", -15, 0)
+    CreateTooltipTwo(changeNpHpBgColor, "Nameplate Background Color", "Change the nameplate background color.", "This color is being layered underneath a transparent black layer (i think?) so the color will not be 100% accurate. This is just meant as a setting mostly to darken the background.")
+
+    local npBgColorRGB = CreateColorBox(changeNpHpBgColor, "npBgColorRGB", "Background Color")
+    npBgColorRGB:SetPoint("TOPLEFT", changeNpHpBgColor, "BOTTOMLEFT", 15, 0)
+
+    changeNpHpBgColor:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            npBgColorRGB:SetAlpha(1)
+        else
+            npBgColorRGB:SetAlpha(0.5)
+        end
+    end)
+
 
     local nameplateSelfWidthResetButton = CreateFrame("Button", nil, guiMisc, "UIPanelButtonTemplate")
     nameplateSelfWidthResetButton:SetText("Default")

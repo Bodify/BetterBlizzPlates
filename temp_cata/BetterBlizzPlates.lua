@@ -87,6 +87,7 @@ local defaultSettings = {
     tankNoAggroColorRGB = {1, 0, 0, 1},
     dpsOrHealFullAggroColorRGB = {1, 0, 0, 1},
     dpsOrHealNoAggroColorRGB = {0, 1, 0, 1},
+    npBgColorRGB = {1, 1, 1, 1},
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -4183,6 +4184,10 @@ local function HandleNamePlateAdded(unit)
     local hooks = GetNameplateHookTable(frame)
 
     BBP.RangeIndicator(frame)
+
+    if BetterBlizzPlatesDB.changeNpHpBgColor then
+        frame.healthBar.background:SetVertexColor(unpack(BetterBlizzPlatesDB.npBgColorRGB))
+    end
 
     if info.isTarget then
         BBP.previousTargetNameplate = frame

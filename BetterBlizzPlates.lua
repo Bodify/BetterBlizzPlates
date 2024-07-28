@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.5.7c"
+local addonUpdates = "1.5.8"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -82,6 +82,7 @@ local defaultSettings = {
     tankNoAggroColorRGB = {1, 0, 0, 1},
     dpsOrHealFullAggroColorRGB = {1, 0, 0, 1},
     dpsOrHealNoAggroColorRGB = {0, 1, 0, 1},
+    npBgColorRGB = {1, 1, 1, 1},
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -1545,6 +1546,8 @@ end
 local function ToggleTargetNameplateHighlight(frame)
     local config = frame.BetterBlizzPlates.config
     frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
+    frame.selectionHighlight:SetAllPoints(frame.healthBar.barTexture)
+    frame.selectionHighlight:SetParent(frame.healthBar)
 end
 
 --#################################################################################################
@@ -2992,6 +2995,7 @@ local function HideFriendlyHealthbar(frame)
 end
 
 local function FriendIndicator(frame)
+    local info = frame.BetterBlizzPlates.unitInfo
     local isFriend = isFriendlistFriend(frame.unit)
     local isBnetFriend = isUnitBNetFriend(frame.unit)
     local isGuildmate = isUnitGuildmate(frame.unit)
@@ -3003,7 +3007,9 @@ local function FriendIndicator(frame)
         frame.friendIndicator:SetPoint("RIGHT", frame.fakeName or frame.name, "LEFT", 0, 0)
     end
 
-    if isFriend or isBnetFriend then
+    if info.isSelf then
+        frame.friendIndicator:Hide()
+    elseif isFriend or isBnetFriend then
         frame.friendIndicator:SetDesaturated(false)
         frame.friendIndicator:SetVertexColor(1, 1, 1)
         frame.friendIndicator:Show()
@@ -3415,6 +3421,10 @@ local function HandleNamePlateAdded(unit)
         end
     end--and auraModuleIsOn then BBP.HidePersonalBuffFrame() end
 
+    if BetterBlizzPlatesDB.changeNpHpBgColor then
+        frame.HealthBarsContainer.background:SetVertexColor(unpack(BetterBlizzPlatesDB.npBgColorRGB))
+    end
+
     -- --HealthBar Height
     if config.changeHealthbarHeight then AdjustHealthBarHeight(frame) end
 
@@ -3579,6 +3589,10 @@ function BBP.RefreshAllNameplates()
 
         if BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
             BBP.RefUnitAuraTotally(unitFrame)
+        end
+
+        if BetterBlizzPlatesDB.changeNpHpBgColor then
+            frame.HealthBarsContainer.background:SetVertexColor(unpack(BetterBlizzPlatesDB.npBgColorRGB))
         end
 
         if BetterBlizzPlatesDB.focusTargetIndicator then
