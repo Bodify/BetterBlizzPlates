@@ -1,3 +1,18 @@
+# BetterBlizzPlates 1.5.8b
+## The War Within & Cata
+### New stuff:
+- Custom Nameplate Font Size setting in Misc (This works in PvE for name size)
+### Bugfix:
+- Fix issues with healthbar color when "Custom healthbar color" was checked.
+
+## The War Within
+### Tweak:
+- Improvements to nameplate updates after solo shuffle rounds to fix friendly/enemy difference issues.
+
+## Cata
+### Bugfix:
+- Fix issue with nameplate auras not showing when the unit has maaany auras.
+
 # BetterBlizzPlates 1.5.8
 ## The War Within & Cata
 ### New stuff:

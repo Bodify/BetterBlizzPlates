@@ -1291,6 +1291,10 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BetterBlizzPlatesDB.castBarInterruptHighlighterStartTime = value
                 elseif element == "castBarInterruptHighlighterEndTime" then
                     BetterBlizzPlatesDB.castBarInterruptHighlighterEndTime = value
+                elseif element == "customFontSize" then
+                    BetterBlizzPlatesDB.customFontSize = value
+                    print(value)
+                    BBP.RefreshAllNameplates()
                 -- Nameplate Widths
                 elseif element == "nameplateFriendlyWidth" then
                     if not BBP.checkCombatAndWarn() then
@@ -7832,9 +7836,9 @@ local function guiMisc()
     miscSettingsIcon:SetSize(22, 22)
     miscSettingsIcon:SetPoint("RIGHT", settingsText, "LEFT", -3, -1)
 
-    local showGuildNames = CreateCheckbox("showGuildNames", "Show Guild Names on Friendly Nameplates*", guiMisc)
+    local showGuildNames = CreateCheckbox("showGuildNames", "Show Guild Names on Friendly Nameplates", guiMisc)
     showGuildNames:SetPoint("TOPLEFT", settingsText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
-    CreateTooltip(showGuildNames, "*Only works when \"Hide healthbar\" setting on friendly nameplates is on.\n\n(Will add some extra settings for this soon,\ndisable in arena/bg etc,\nplease shoot me a message if you have other suggestions too)")
+    --CreateTooltip(showGuildNames, "*Only works when \"Hide healthbar\" setting on friendly nameplates is on.\n\n(Will add some extra settings for this soon,\ndisable in arena/bg etc,\nplease shoot me a message if you have other suggestions too)")
 
     local guildNameScale = CreateSlider(guiMisc, "Guild Name Size", 0.2, 2, 0.01, "guildNameScale")
     guildNameScale:SetPoint("LEFT", showGuildNames.Text, "RIGHT", 5, 0)
@@ -7975,6 +7979,22 @@ local function guiMisc()
     local nameplateGeneralHeight = CreateSlider(guiMisc, "Clickable Height", 1, 70, 1, "nameplateGeneralHeight")
     nameplateGeneralHeight:SetPoint("TOPLEFT", hpHeightFriendly, "BOTTOMLEFT", 0, -37)
     CreateTooltipTwo(nameplateGeneralHeight, "Clickable Height", "Adjust the clickable area of nameplates.")
+
+
+    local customFontSizeEnabled = CreateCheckbox("customFontSizeEnabled", "Enable Custom Nameplate Font Size", guiMisc)
+    customFontSizeEnabled:SetPoint("TOPLEFT", changeHealthbarHeight, "BOTTOMLEFT", 0, -120)
+    CreateTooltipTwo(customFontSizeEnabled, "Custom Nameplate Font Size", "Change the font size on nameplates", "This setting will work in PvE for friendly name size while the font size settings on the general page adjust the scale (not allowed in PvE).\nUse this setting as a baseline for friendly name size and finetune with scale on general page for non-pve content.")
+
+    local customFontSize = CreateSlider(customFontSizeEnabled, "Font Size", 2, 32, 1, "customFontSize")
+    customFontSize:SetPoint("TOPLEFT", customFontSizeEnabled, "BOTTOMLEFT", 10, -10)
+
+    customFontSizeEnabled:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            EnableElement(customFontSize)
+        else
+            DisableElement(customFontSize)
+        end
+    end)
 
     local nameplateGeneralHeightReset = CreateResetButton(nameplateGeneralHeight, "nameplateGeneralHeight", guiMisc)
     CreateTooltipTwo(nameplateGeneralHeightReset, "Reset to default", "Default is 32")

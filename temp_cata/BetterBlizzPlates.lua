@@ -291,6 +291,7 @@ local defaultSettings = {
     questIndicatorAnchor = "LEFT",
     questIndicatorTestMode = false,
     -- Font and texture
+    customFontSizeEnabled = false,
     customFontSize = 12,
     useCustomFont = false,
     enableCustomFontOutline = true,
@@ -1410,9 +1411,12 @@ local function ColorNameplateByReaction(frame)
     if info.isSelf then return end
 
     if not config.friendlyHealthBarColorInitalized or BBP.needsUpdate then
+        config.friendlyHealthBarColor = BetterBlizzPlatesDB.friendlyHealthBarColor
         config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB
         config.friendlyHealthBarColorPlayer = BetterBlizzPlatesDB.friendlyHealthBarColorPlayer
         config.friendlyHealthBarColorNpc = BetterBlizzPlatesDB.friendlyHealthBarColorNpc
+        config.enemyHealthBarColor = BetterBlizzPlatesDB.enemyHealthBarColor
+        config.enemyHealthBarColorNpcOnly = BetterBlizzPlatesDB.enemyHealthBarColorNpcOnly
 
         config.friendlyHealthBarColorInitalized = true
     end
@@ -1424,7 +1428,7 @@ local function ColorNameplateByReaction(frame)
         end
     elseif not info.isFriend and config.enemyHealthBarColor then
         -- Handling enemy health bars
-        if not (config.enemyHealthBarColorNpcOnly and info.isPlayer) then
+        if (not config.enemyHealthBarColorNpcOnly) or (config.enemyHealthBarColorNpcOnly and not info.isPlayer) then
             if info.isNeutral then
                 -- Neutral NPC
                 config.enemyNeutralHealthBarColorRGB = BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 0, 0}
@@ -4459,10 +4463,10 @@ function BBP.RefreshAllNameplates()
     --     end
     -- end
     if not db.skipAdjustingFixedFonts then
-        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
-        BBP.SetFontBasedOnOption(SystemFont_NamePlate, db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
-        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
-        BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
+        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
+        BBP.SetFontBasedOnOption(SystemFont_NamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
+        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
+        BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
     end
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = nameplate.UnitFrame
@@ -5171,10 +5175,10 @@ Frame:SetScript("OnEvent", function(...)
 
     C_Timer.After(1, function()
         if not db.skipAdjustingFixedFonts then
-            BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
-            BBP.SetFontBasedOnOption(SystemFont_NamePlate, db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
-            BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
-            BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
+            BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
+            BBP.SetFontBasedOnOption(SystemFont_NamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
+            BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
+            BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
         end
     end)
 

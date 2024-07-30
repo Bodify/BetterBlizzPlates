@@ -2016,7 +2016,7 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
     --local shouldShowAura, isImportant, isPandemic, auraColor, onlyMine, isEnlarged, isCompacted
 
     local function ProcessAuras(auraType, isEnemyUnit, index)
-        for i = 1, MAX_AURAS do
+        for i = 1, 120 do
             local name, icon, count, debuffType, duration, expirationTime, sourceUnit, isStealable, _, spellId, canApplyAura, isBossDebuff, castByPlayer, nameplateShowAll, timeMod = UnitAura(unitID, i, auraType)
             if not name then break end
 

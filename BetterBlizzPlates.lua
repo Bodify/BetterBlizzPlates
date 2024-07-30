@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.5.8"
+local addonUpdates = "1.5.8b"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -284,6 +284,7 @@ local defaultSettings = {
     questIndicatorAnchor = "LEFT",
     questIndicatorTestMode = false,
     -- Font and texture
+    customFontSizeEnabled = false,
     customFontSize = 12,
     useCustomFont = false,
     enableCustomFontOutline = true,
@@ -1311,12 +1312,14 @@ end
 local function ColorNameplateByReaction(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
-    if info.isSelf then return end
 
     if not config.friendlyHealthBarColorInitalized or BBP.needsUpdate then
+        config.friendlyHealthBarColor = BetterBlizzPlatesDB.friendlyHealthBarColor
         config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB
         config.friendlyHealthBarColorPlayer = BetterBlizzPlatesDB.friendlyHealthBarColorPlayer
         config.friendlyHealthBarColorNpc = BetterBlizzPlatesDB.friendlyHealthBarColorNpc
+        config.enemyHealthBarColor = BetterBlizzPlatesDB.enemyHealthBarColor
+        config.enemyHealthBarColorNpcOnly = BetterBlizzPlatesDB.enemyHealthBarColorNpcOnly
 
         config.friendlyHealthBarColorInitalized = true
     end
@@ -1325,20 +1328,25 @@ local function ColorNameplateByReaction(frame)
         -- Friendly NPC
         if (info.isPlayer and config.friendlyHealthBarColorPlayer) or (info.isNpc and config.friendlyHealthBarColorNpc) then
             frame.healthBar:SetStatusBarColor(unpack(config.friendlyHealthBarColorRGB))
+            frame.needsRecolor = true
         end
     elseif not info.isFriend and config.enemyHealthBarColor then
         -- Handling enemy health bars
-        if not (config.enemyHealthBarColorNpcOnly and info.isPlayer) then
+        if (not config.enemyHealthBarColorNpcOnly) or (config.enemyHealthBarColorNpcOnly and not info.isPlayer) then
             if info.isNeutral then
                 -- Neutral NPC
                 config.enemyNeutralHealthBarColorRGB = BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 0, 0}
                 frame.healthBar:SetStatusBarColor(unpack(config.enemyNeutralHealthBarColorRGB))
+                frame.needsRecolor = true
             else
                 -- Hostile NPC
                 config.enemyHealthBarColorRGB = BetterBlizzPlatesDB.enemyHealthBarColorRGB or {1, 0, 0}
                 frame.healthBar:SetStatusBarColor(unpack(config.enemyHealthBarColorRGB))
+                frame.needsRecolor = true
             end
         end
+    elseif frame.needsRecolor then
+        BBP.CompactUnitFrame_UpdateHealthColor(frame, true)
     end
 end
 
@@ -2528,7 +2536,9 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 	end
 
     if config.friendlyHealthBarColor or config.enemyHealthBarColor then
-        ColorNameplateByReaction(frame)
+        if not exitLoop then
+            ColorNameplateByReaction(frame)
+        end
     end
 
     if config.colorNPC and config.npcHealthbarColor then
@@ -3569,10 +3579,10 @@ function BBP.RefreshAllNameplates()
     --     end
     -- end
     if not db.skipAdjustingFixedFonts then
-        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
-        BBP.SetFontBasedOnOption(SystemFont_NamePlate, db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
-        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
-        BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
+        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
+        BBP.SetFontBasedOnOption(SystemFont_NamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
+        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
+        BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
     end
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = nameplate.UnitFrame
@@ -3584,6 +3594,7 @@ function BBP.RefreshAllNameplates()
         --local config = InitializeNameplateSettings(frame)
         local info = GetNameplateUnitInfo(frame)
         if not info then return end
+        nameplate:OnSizeChanged()
 
         local hideHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
 
@@ -4137,10 +4148,10 @@ Frame:SetScript("OnEvent", function(...)
 
     C_Timer.After(1, function()
         if not db.skipAdjustingFixedFonts then
-            BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
-            BBP.SetFontBasedOnOption(SystemFont_NamePlate, db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
-            BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
-            BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
+            BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
+            BBP.SetFontBasedOnOption(SystemFont_NamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
+            BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
+            BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
         end
     end)
 
@@ -4228,6 +4239,35 @@ frame:SetScript("OnEvent", function(self, event, cvarName)
         end
     end
 end)
+
+local ShuffleNpWidthUpdate = CreateFrame("Frame")
+ShuffleNpWidthUpdate.eventRegistered = false
+
+local function UpdateNpWidthShuffle(self, event, ...)
+    if event == "ARENA_OPPONENT_UPDATE" or event == "GROUP_ROSTER_UPDATE" then
+        local name = AuraUtil.FindAuraByName("Arena Preparation", "player", "HELPFUL")
+        if not name then return end
+
+        if UnitAffectingCombat("player") then
+            if not ShuffleNpWidthUpdate.eventRegistered then
+                ShuffleNpWidthUpdate:RegisterEvent("PLAYER_REGEN_ENABLED")
+                ShuffleNpWidthUpdate.eventRegistered = true
+            end
+        else
+            BBP.ApplyNameplateWidth()
+            BBP.RefreshAllNameplates()
+        end
+
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        ShuffleNpWidthUpdate:UnregisterEvent("PLAYER_REGEN_ENABLED")
+        ShuffleNpWidthUpdate.eventRegistered = false
+        BBP.ApplyNameplateWidth()
+        BBP.RefreshAllNameplates()
+    end
+end
+ShuffleNpWidthUpdate:SetScript("OnEvent", UpdateNpWidthShuffle)
+ShuffleNpWidthUpdate:RegisterEvent("ARENA_OPPONENT_UPDATE")
+ShuffleNpWidthUpdate:RegisterEvent("GROUP_ROSTER_UPDATE")
 
 local function TurnOnEnabledFeaturesOnLogin()
     if BetterBlizzPlatesDB.raidmarkIndicator then
