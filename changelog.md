@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.5.8c
+## The War Within
+### Bugfix:
+- Comment out a function call meant to update name positioning on nameplate but was causing ripple effect issues in some cases.
+
 # BetterBlizzPlates 1.5.8b
 ## The War Within & Cata
 ### New stuff:
