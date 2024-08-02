@@ -69,6 +69,7 @@ local defaultSettings = {
     changeHealthbarHeight = false,
     hpHeightEnemy = 4 * tonumber(GetCVar("NamePlateVerticalScale")),
     hpHeightFriendly = 4 * tonumber(GetCVar("NamePlateVerticalScale")),
+    healthNumbers = false,
     healthNumbersAnchor = "CENTER",
     healthNumbersXPos = 0,
     healthNumbersYPos = 0,
@@ -3594,7 +3595,7 @@ function BBP.RefreshAllNameplates()
         --local config = InitializeNameplateSettings(frame)
         local info = GetNameplateUnitInfo(frame)
         if not info then return end
-        nameplate:OnSizeChanged()
+        --nameplate:OnSizeChanged()
 
         local hideHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
 
