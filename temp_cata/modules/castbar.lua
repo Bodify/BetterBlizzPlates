@@ -332,29 +332,6 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     local castBarNoInterruptColor = BetterBlizzPlatesDB.castBarNoInterruptColor
     local castBarDelayedInterruptColor = BetterBlizzPlatesDB.castBarDelayedInterruptColor
 
-    if enableCastbarEmphasis then
-        if spellName or spellID then
-            local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
-            if not isFriend then
-                if castBarEmphasisOnlyInterruptable and notInterruptible then
-                    -- Skip emphasizing non-kickable casts when configured to do so
-                    return
-                end
-
-                for _, castEmphasis in ipairs(castEmphasisList) do
-                    if (castEmphasis.name and spellName and strlower(castEmphasis.name) == strlower(spellName)) or
-                       (castEmphasis.id and spellID and castEmphasis.id == spellID) then
-                        ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
-                        frame.emphasizedCast = castEmphasis
-                        frame.CastBar.emphasizedCast = castEmphasis
-                    else
-                        frame.emphasizedCast = nil
-                    end
-                end
-            end
-        end
-    end
-
     if castBarRecolorInterrupt then
         if spellName or spellID then
             local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
@@ -393,6 +370,29 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                                 end
                             end
                         end
+                    end
+                end
+            end
+        end
+    end
+
+    if enableCastbarEmphasis then
+        if spellName or spellID then
+            local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
+            if not isFriend then
+                if castBarEmphasisOnlyInterruptable and notInterruptible then
+                    -- Skip emphasizing non-kickable casts when configured to do so
+                    return
+                end
+
+                for _, castEmphasis in ipairs(castEmphasisList) do
+                    if (castEmphasis.name and spellName and strlower(castEmphasis.name) == strlower(spellName)) or
+                       (castEmphasis.id and spellID and castEmphasis.id == spellID) then
+                        ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
+                        frame.emphasizedCast = castEmphasis
+                        frame.CastBar.emphasizedCast = castEmphasis
+                    else
+                        frame.emphasizedCast = nil
                     end
                 end
             end

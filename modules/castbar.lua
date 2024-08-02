@@ -79,28 +79,28 @@ local function ResetCastbarAfterFadeout(frame, unitToken)
 
         local borderShieldSize = showCastBarIconWhenNoninterruptible and (castBarIconScale + 0.3) or castBarIconScale
 
-        castBar:SetHeight(castBarHeight)
-        castBar.Icon:SetScale(castBarIconScale)
-        castBar.Spark:SetSize(4, castBarHeight + 5)
-        castBar.Text:SetScale(castBarTextScale)
-        castBar.BorderShield:SetScale(borderShieldSize)
-        if (not castBar.casting and not castBar.channeling and not castBar.reverseChanneling) then
-            castBar.BorderShield:Hide()
-        end
-
-        -- local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
-        -- local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
-        -- if (castBarRecolor or useCustomCastbarTexture) and frame.castBar then
-        --     frame.castBar:SetStatusBarColor(1,0,0)
-        -- end
-        -- if BetterBlizzPlatesDB.castBarInterruptHighlighter then
-        --     frame.castBar:SetStatusBarColor(1,1,1)
+        -- castBar:SetHeight(castBarHeight)
+        -- castBar.Icon:SetScale(castBarIconScale)
+        -- castBar.Spark:SetSize(4, castBarHeight + 5)
+        -- castBar.Text:SetScale(castBarTextScale)
+        -- castBar.BorderShield:SetScale(borderShieldSize)
+        -- if (not castBar.casting and not castBar.channeling and not castBar.reverseChanneling) then
+        --     castBar.BorderShield:Hide()
         -- end
 
-        if castBarEmphasisHealthbarColor then
-            if not frame or frame:IsForbidden() then return end
-            BBP.CompactUnitFrame_UpdateHealthColor(frame)
-        end
+        -- -- local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
+        -- -- local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
+        -- -- if (castBarRecolor or useCustomCastbarTexture) and frame.castBar then
+        -- --     frame.castBar:SetStatusBarColor(1,0,0)
+        -- -- end
+        -- -- if BetterBlizzPlatesDB.castBarInterruptHighlighter then
+        -- --     frame.castBar:SetStatusBarColor(1,1,1)
+        -- -- end
+
+        -- if castBarEmphasisHealthbarColor then
+        --     if not frame or frame:IsForbidden() then return end
+        --     BBP.CompactUnitFrame_UpdateHealthColor(frame)
+        -- end
     end)
 end
 
@@ -145,6 +145,16 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     local casting, channeling
     local castStart, castDuration
     local _
+
+    if frame.castbarEmphasisActive then
+        BBP.CompactUnitFrame_UpdateHealthColor(frame)
+        castBar:SetHeight(castBarHeight)
+        castBar.Icon:SetScale(castBarIconScale)
+        castBar.Spark:SetSize(4, castBarHeight + 5)
+        castBar.Text:SetScale(castBarTextScale)
+        castBar.BorderShield:SetScale(borderShieldSize)
+        frame.castbarEmphasisActive = false
+    end
 
     if UnitCastingInfo(unitToken) then
         casting = true
@@ -242,7 +252,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         castBar.Icon:Show()
         castBar.Icon:SetDrawLayer("OVERLAY", 2)
     else
-        if not notInterruptible then
+        if (casting or channeling) and not notInterruptible then
             castBar.Icon:Show() --attempt to fix icon randomly not showing (blizz bug)
         else
             castBar.Icon:Hide()
@@ -261,6 +271,8 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         local castBarEmphasisIconScale = BetterBlizzPlatesDB.castBarEmphasisIconScale
         local castBarEmphasisHeightValue = BetterBlizzPlatesDB.castBarEmphasisHeightValue
         local castBarEmphasisSparkHeight = BetterBlizzPlatesDB.castBarEmphasisSparkHeight
+
+        frame.castbarEmphasisActive = true
 
         if castBarEmphasisColor and castEmphasis.entryColors then
             if castBarTexture then
@@ -309,28 +321,6 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     local castBarNoInterruptColor = BetterBlizzPlatesDB.castBarNoInterruptColor
     local castBarDelayedInterruptColor = BetterBlizzPlatesDB.castBarDelayedInterruptColor
 
-    if enableCastbarEmphasis then
-        if spellName or spellID then
-            local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
-            if not isFriend then
-                if castBarEmphasisOnlyInterruptable and notInterruptible then
-                    -- Skip emphasizing non-kickable casts when configured to do so
-                    return
-                end
-
-                for _, castEmphasis in ipairs(castEmphasisList) do
-                    if (castEmphasis.name and spellName and strlower(castEmphasis.name) == strlower(spellName)) or
-                       (castEmphasis.id and spellID and castEmphasis.id == spellID) then
-                        ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
-                        frame.emphasizedCast = castEmphasis
-                    else
-                        frame.emphasizedCast = nil
-                    end
-                end
-            end
-        end
-    end
-
     if castBarRecolorInterrupt then
         if spellName or spellID then
             local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
@@ -367,6 +357,28 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                                 end
                             end
                         end
+                    end
+                end
+            end
+        end
+    end
+
+    if enableCastbarEmphasis then
+        if spellName or spellID then
+            local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
+            if not isFriend then
+                if castBarEmphasisOnlyInterruptable and notInterruptible then
+                    -- Skip emphasizing non-kickable casts when configured to do so
+                    return
+                end
+
+                for _, castEmphasis in ipairs(castEmphasisList) do
+                    if (castEmphasis.name and spellName and strlower(castEmphasis.name) == strlower(spellName)) or
+                       (castEmphasis.id and spellID and castEmphasis.id == spellID) then
+                        ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
+                        frame.emphasizedCast = castEmphasis
+                    else
+                        frame.emphasizedCast = nil
                     end
                 end
             end

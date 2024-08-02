@@ -282,6 +282,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         config.totemIndicatorDefaultCooldownTextSize = BetterBlizzPlatesDB.totemIndicatorDefaultCooldownTextSize
         config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
         config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
+        config.totemIndicatorHideAuras = BetterBlizzPlatesDB.totemIndicatorHideAuras
 
         config.totemIndicatorInitialized = true
     end
@@ -344,6 +345,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
         end
 
+        if config.totemIndicatorHideAuras then
+            frame.BuffFrame:SetAlpha(0)
+        end
+
         if config.totemIsImportant then
             if not info.isFriend then
                 -- Apply glow effect
@@ -404,6 +409,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         config.randomTotemColor = nil
         if config.totemIndicatorEnemyOnly and info.isFriend then
             return
+        end
+
+        if config.totemIndicatorHideAuras then
+            frame.BuffFrame:SetAlpha(0)
         end
 
         -- if true then

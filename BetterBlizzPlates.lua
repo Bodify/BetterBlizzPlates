@@ -241,8 +241,10 @@ local defaultSettings = {
     totemIndicatorEnemyOnly = true,
     totemIndicatorDefaultCooldownTextSize = 0.85,
     showTotemIndicatorCooldownSwipe = true,
+    totemIndicatorHideAuras = true,
     totemIndicatorNpcList = {
         [59764] =   { name = "Healing Tide Totem", icon = C_Spell.GetSpellTexture(108280),              hideIcon = false, size = 30, duration = 10, color = {0, 1, 0.39}, important = true },
+        [59712] =   { name = "Stone Bulwark Totem", icon = C_Spell.GetSpellTexture(108270),             hideIcon = false, size = 30, duration = 30, color = {0.98, 0.75, 0.17}, important = true },
         [5925] =    { name = "Grounding Totem", icon = C_Spell.GetSpellTexture(204336),                 hideIcon = false, size = 30, duration = 3,  color = {1, 0, 1}, important = true },
         [53006] =   { name = "Spirit Link Totem", icon = C_Spell.GetSpellTexture(98008),                hideIcon = false, size = 30, duration = 6,  color = {0, 1, 0.78}, important = true },
         [5913] =    { name = "Tremor Totem", icon = C_Spell.GetSpellTexture(8143),                      hideIcon = false, size = 30, duration = 13, color = {0.49, 0.9, 0.08}, important = true },
@@ -250,7 +252,6 @@ local defaultSettings = {
         [119052] =  { name = "War Banner", icon = C_Spell.GetSpellTexture(236320),                      hideIcon = false, size = 30, duration = 15, color = {1, 0, 1}, important = true },
         [61245] =   { name = "Capacitor Totem", icon = C_Spell.GetSpellTexture(192058),                 hideIcon = false, size = 30, duration = 2,  color = {1, 0.69, 0}, important = true },
         [105451] =  { name = "Counterstrike Totem", icon = C_Spell.GetSpellTexture(204331),             hideIcon = false, size = 30, duration = 15, color = {1, 0.27, 0.59}, important = true },
-        [179193] =  { name = "Fel Obelisk", icon = C_Spell.GetSpellTexture(353601),                     hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
         [101398] =  { name = "Psyfiend", icon = C_Spell.GetSpellTexture(199824),                        hideIcon = false, size = 35, duration = 12, color = {0.49, 0, 1}, important = true },
         [100943] =  { name = "Earthen Wall Totem", icon = C_Spell.GetSpellTexture(198838),              hideIcon = false, size = 30, duration = 18, color = {0.78, 0.49, 0.35}, important = true },
         [107100] =  { name = "Observer", icon = C_Spell.GetSpellTexture(112869),                        hideIcon = false, size = 30, duration = 20, color = {1, 0.69, 0}, important = true },
@@ -266,9 +267,8 @@ local defaultSettings = {
         [97285] =   { name = "Wind Rush Totem", icon = C_Spell.GetSpellTexture(192077),                 hideIcon = false, size = 24, duration = 18, color = {0.08, 0.82, 0.78}, important = false },
         [60561] =   { name = "Earthgrab Totem", icon = C_Spell.GetSpellTexture(51485),                  hideIcon = false, size = 24, duration = 30, color = {0.75, 0.31, 0.10}, important = false },
         [2630] =    { name = "Earthbind Totem", icon = C_Spell.GetSpellTexture(2484),                   hideIcon = false, size = 24, duration = 30, color = {0.78, 0.51, 0.39}, important = false },
-        [105427] =  { name = "Skyfury Totem", icon = C_Spell.GetSpellTexture(204330),                   hideIcon = false, size = 24, duration = 15, color = {1, 0.27, 0.59}, important = false },
+        [105427] =  { name = "Totem of Wrath", icon = C_Spell.GetSpellTexture(204330),                  hideIcon = false, size = 24, duration = 15, color = {1, 0.27, 0.59}, important = false },
         [97369] =   { name = "Liquid Magma Totem", icon = C_Spell.GetSpellTexture(192222),              hideIcon = false, size = 24, duration = 6,  color = {1, 0.69, 0}, important = false },
-        [6112] =    { name = "Windfury Totem", icon = C_Spell.GetSpellTexture(8512),                    hideIcon = false, size = 24, duration = nil,color = {0.08, 0.82, 0.78}, important = false },
         [62982] =   { name = "Mindbender", icon = C_Spell.GetSpellTexture(123040),                      hideIcon = false, size = 24, duration = 15, color = {1, 0.69, 0}, important = false },
         [179867] =  { name = "Static Field Totem", icon = C_Spell.GetSpellTexture(355580),              hideIcon = false, size = 24, duration = 6,  color = {0, 1, 0.78}, important = false },
         [194117] =  { name = "Stoneskin Totem", icon = C_Spell.GetSpellTexture(383017),                 hideIcon = false, size = 24, duration = 15, color = {0.78, 0.49, 0.35}, important = false },
@@ -1187,6 +1187,69 @@ local function anonMode(frame, info)
     if info.isPlayer and not info.isSelf then
         frame.name:SetText(UnitClass(frame.unit))
     end
+end
+
+local function InitializeNameplateSettings(frame)
+    if not frame.BetterBlizzPlates then
+        --frame.BetterBlizzPlates = CreateFrame("Frame")
+        --frame.BetterBlizzPlates:SetAllPoints(frame)
+        frame.BetterBlizzPlates = {}
+    end
+    if not frame.BetterBlizzPlates.config or BBP.needsUpdate then
+        frame.BetterBlizzPlates.config = {
+            enableNameplateAuraCustomisation = BetterBlizzPlatesDB.enableNameplateAuraCustomisation,
+            enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization,
+            questIndicator = BetterBlizzPlatesDB.questIndicatorTestMode or BetterBlizzPlatesDB.questIndicator,
+            targetIndicator = BetterBlizzPlatesDB.targetIndicator,
+            absorbIndicator = BetterBlizzPlatesDB.absorbIndicatorTestMode or BetterBlizzPlatesDB.absorbIndicator,
+            totemIndicator = BetterBlizzPlatesDB.totemIndicator,
+            arenaIndicators = not BetterBlizzPlatesDB.arenaIndicatorModeOff or not BetterBlizzPlatesDB.partyIndicatorModeOff or BetterBlizzPlatesDB.arenaIndicatorTestMode,
+            executeIndicator = BetterBlizzPlatesDB.executeIndicator or BetterBlizzPlatesDB.executeIndicatorTestMode,
+            fadeOutNPC = BetterBlizzPlatesDB.fadeOutNPC,
+            hideNPC = BetterBlizzPlatesDB.hideNPC,
+            colorNPC = BetterBlizzPlatesDB.colorNPC,
+            friendlyHealthBarColor = BetterBlizzPlatesDB.friendlyHealthBarColor,
+            enemyHealthBarColor = BetterBlizzPlatesDB.enemyHealthBarColor,
+            petIndicator = BetterBlizzPlatesDB.petIndicator or BetterBlizzPlatesDB.petIndicatorTestMode,
+            raidmarkIndicator = BetterBlizzPlatesDB.raidmarkIndicator,
+            hideRaidmarkIndicator = BetterBlizzPlatesDB.hideRaidmarkIndicator,
+            healerIndicator = BetterBlizzPlatesDB.healerIndicatorTestMode or BetterBlizzPlatesDB.healerIndicator,
+            combatIndicator = BetterBlizzPlatesDB.combatIndicator,
+            useCustomTextureForBars = BetterBlizzPlatesDB.useCustomTextureForBars,
+            focusTargetIndicator = BetterBlizzPlatesDB.focusTargetIndicator or BetterBlizzPlatesDB.focusTargetIndicatorTestMode,
+            friendlyHideHealthBar = BetterBlizzPlatesDB.friendlyHideHealthBar,
+            friendlyHideHealthBarNpc = BetterBlizzPlatesDB.friendlyHideHealthBar and BetterBlizzPlatesDB.friendlyHideHealthBar,
+            classIndicator = BetterBlizzPlatesDB.classIndicator,
+            auraColor = BetterBlizzPlatesDB.auraColor,
+            friendIndicator = BetterBlizzPlatesDB.friendIndicator,
+            changeNameplateBorderColor = BetterBlizzPlatesDB.changeNameplateBorderColor,
+            --hideResourceOnFriend = BetterBlizzPlatesDB.hideResourceOnFriend,
+            nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar,
+            nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget,
+            nameplateResourceDoNotRaiseAuras = BetterBlizzPlatesDB.nameplateResourceDoNotRaiseAuras,
+            showGuildNames = BetterBlizzPlatesDB.showGuildNames,
+            hideNameplateAuras = BetterBlizzPlatesDB.hideNameplateAuras,
+            nameplateAuraPlayersOnly = BetterBlizzPlatesDB.nameplateAuraPlayersOnly,
+            nameplateAuraPlayersOnlyShowTarget = BetterBlizzPlatesDB.nameplateAuraPlayersOnlyShowTarget,
+            hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight,
+            partyPointer = BetterBlizzPlatesDB.partyPointer or BetterBlizzPlatesDB.partyPointerTestMode,
+            useFakeName = BetterBlizzPlatesDB.useFakeName,
+            hideEnemyNameText = BetterBlizzPlatesDB.hideEnemyNameText,
+            hideFriendlyNameText = BetterBlizzPlatesDB.hideFriendlyNameText,
+            anonModeOn = BetterBlizzPlatesDB.anonModeOn,
+            changeHealthbarHeight = BetterBlizzPlatesDB.changeHealthbarHeight,
+            healthNumbers = BetterBlizzPlatesDB.healthNumbers or BetterBlizzPlatesDB.healthNumbersTestMode,
+            changeNameplateBorderSize = BetterBlizzPlatesDB.changeNameplateBorderSize,
+            nameplateBorderSize = BetterBlizzPlatesDB.nameplateBorderSize,
+            nameplateTargetBorderSize = BetterBlizzPlatesDB.nameplateTargetBorderSize,
+            showNpcTitle = BetterBlizzPlatesDB.showNpcTitle,
+        }
+        if frame.BetterBlizzPlates.config.changeHealthbarHeight then
+            frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
+            frame.BetterBlizzPlates.config.hpHeightFriendly = BetterBlizzPlatesDB.hpHeightFriendly
+        end
+    end
+    return frame.BetterBlizzPlates.config
 end
 
 --#################################################################################################
@@ -2376,7 +2439,7 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         ColorNameplateByReaction(frame)
     end
 
-    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) then
+    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) and not info.isSelf then
         if ( BBP.isRoleTank ) then
             BBP.ColorThreatForTank(frame)
         else
@@ -2546,7 +2609,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 
-    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) then
+    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) and not info.isSelf then
         if ( BBP.isRoleTank ) then
             BBP.ColorThreatForTank(frame)
         else
@@ -3158,68 +3221,6 @@ end
 --#################################################################################################
 --#################################################################################################
 --#################################################################################################
-local function InitializeNameplateSettings(frame)
-    if not frame.BetterBlizzPlates then
-        --frame.BetterBlizzPlates = CreateFrame("Frame")
-        --frame.BetterBlizzPlates:SetAllPoints(frame)
-        frame.BetterBlizzPlates = {}
-    end
-    if not frame.BetterBlizzPlates.config or BBP.needsUpdate then
-        frame.BetterBlizzPlates.config = {
-            enableNameplateAuraCustomisation = BetterBlizzPlatesDB.enableNameplateAuraCustomisation,
-            enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization,
-            questIndicator = BetterBlizzPlatesDB.questIndicatorTestMode or BetterBlizzPlatesDB.questIndicator,
-            targetIndicator = BetterBlizzPlatesDB.targetIndicator,
-            absorbIndicator = BetterBlizzPlatesDB.absorbIndicatorTestMode or BetterBlizzPlatesDB.absorbIndicator,
-            totemIndicator = BetterBlizzPlatesDB.totemIndicator,
-            arenaIndicators = not BetterBlizzPlatesDB.arenaIndicatorModeOff or not BetterBlizzPlatesDB.partyIndicatorModeOff or BetterBlizzPlatesDB.arenaIndicatorTestMode,
-            executeIndicator = BetterBlizzPlatesDB.executeIndicator or BetterBlizzPlatesDB.executeIndicatorTestMode,
-            fadeOutNPC = BetterBlizzPlatesDB.fadeOutNPC,
-            hideNPC = BetterBlizzPlatesDB.hideNPC,
-            colorNPC = BetterBlizzPlatesDB.colorNPC,
-            friendlyHealthBarColor = BetterBlizzPlatesDB.friendlyHealthBarColor,
-            enemyHealthBarColor = BetterBlizzPlatesDB.enemyHealthBarColor,
-            petIndicator = BetterBlizzPlatesDB.petIndicator or BetterBlizzPlatesDB.petIndicatorTestMode,
-            raidmarkIndicator = BetterBlizzPlatesDB.raidmarkIndicator,
-            hideRaidmarkIndicator = BetterBlizzPlatesDB.hideRaidmarkIndicator,
-            healerIndicator = BetterBlizzPlatesDB.healerIndicatorTestMode or BetterBlizzPlatesDB.healerIndicator,
-            combatIndicator = BetterBlizzPlatesDB.combatIndicator,
-            useCustomTextureForBars = BetterBlizzPlatesDB.useCustomTextureForBars,
-            focusTargetIndicator = BetterBlizzPlatesDB.focusTargetIndicator or BetterBlizzPlatesDB.focusTargetIndicatorTestMode,
-            friendlyHideHealthBar = BetterBlizzPlatesDB.friendlyHideHealthBar,
-            friendlyHideHealthBarNpc = BetterBlizzPlatesDB.friendlyHideHealthBar and BetterBlizzPlatesDB.friendlyHideHealthBar,
-            classIndicator = BetterBlizzPlatesDB.classIndicator,
-            auraColor = BetterBlizzPlatesDB.auraColor,
-            friendIndicator = BetterBlizzPlatesDB.friendIndicator,
-            changeNameplateBorderColor = BetterBlizzPlatesDB.changeNameplateBorderColor,
-            --hideResourceOnFriend = BetterBlizzPlatesDB.hideResourceOnFriend,
-            nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar,
-            nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget,
-            nameplateResourceDoNotRaiseAuras = BetterBlizzPlatesDB.nameplateResourceDoNotRaiseAuras,
-            showGuildNames = BetterBlizzPlatesDB.showGuildNames,
-            hideNameplateAuras = BetterBlizzPlatesDB.hideNameplateAuras,
-            nameplateAuraPlayersOnly = BetterBlizzPlatesDB.nameplateAuraPlayersOnly,
-            nameplateAuraPlayersOnlyShowTarget = BetterBlizzPlatesDB.nameplateAuraPlayersOnlyShowTarget,
-            hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight,
-            partyPointer = BetterBlizzPlatesDB.partyPointer or BetterBlizzPlatesDB.partyPointerTestMode,
-            useFakeName = BetterBlizzPlatesDB.useFakeName,
-            hideEnemyNameText = BetterBlizzPlatesDB.hideEnemyNameText,
-            hideFriendlyNameText = BetterBlizzPlatesDB.hideFriendlyNameText,
-            anonModeOn = BetterBlizzPlatesDB.anonModeOn,
-            changeHealthbarHeight = BetterBlizzPlatesDB.changeHealthbarHeight,
-            healthNumbers = BetterBlizzPlatesDB.healthNumbers or BetterBlizzPlatesDB.healthNumbersTestMode,
-            changeNameplateBorderSize = BetterBlizzPlatesDB.changeNameplateBorderSize,
-            nameplateBorderSize = BetterBlizzPlatesDB.nameplateBorderSize,
-            nameplateTargetBorderSize = BetterBlizzPlatesDB.nameplateTargetBorderSize,
-            showNpcTitle = BetterBlizzPlatesDB.showNpcTitle,
-        }
-        if frame.BetterBlizzPlates.config.changeHealthbarHeight then
-            frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
-            frame.BetterBlizzPlates.config.hpHeightFriendly = BetterBlizzPlatesDB.hpHeightFriendly
-        end
-    end
-    return frame.BetterBlizzPlates.config
-end
 
 BBP.InitializeNameplateSettings = InitializeNameplateSettings
 
@@ -3974,6 +3975,9 @@ local function ThreatSituationUpdate(self, event)
     if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) then
         for _, nameplate in pairs(C_NamePlate.GetNamePlates(issecure())) do
             local frame = nameplate.UnitFrame
+            if UnitIsUnit(frame.unit, "player") then return end
+            local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
+            if config.totemColorRGB then return end
             if ( BBP.isRoleTank ) then
                 BBP.ColorThreatForTank(frame)
             else
@@ -4303,6 +4307,19 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 FetchAndSaveValuesOnFirstLogin()
 
                 BetterBlizzPlatesDB.firstSaveComplete = true
+            end
+
+            -- update totem indicator list
+            if not BetterBlizzPlatesDB.totemListUpdateTWW1 then
+                if not BetterBlizzPlatesDB.totemIndicatorNpcList[59712] then
+                    BetterBlizzPlatesDB.totemIndicatorNpcList[59712] = defaultSettings.totemIndicatorNpcList[59712]
+                end
+                if BetterBlizzPlatesDB.totemIndicatorNpcList[105427].name == "Skyfury Totem" then
+                    BetterBlizzPlatesDB.totemIndicatorNpcList[105427].name = "Totem of Wrath"
+                end
+                BetterBlizzPlatesDB.totemIndicatorNpcList[179193] = nil --fel obelisk removed
+                BetterBlizzPlatesDB.totemIndicatorNpcList[6112] = nil --windfury totem removed
+                BetterBlizzPlatesDB.totemListUpdateTWW1 = true
             end
 
             if not BetterBlizzPlatesDB.auraWhitelistColorsUpdated then

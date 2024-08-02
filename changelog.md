@@ -1,3 +1,16 @@
+# BetterBlizzPlates 1.5.9
+## The War Within & Cata
+### New stuff:
+- Totem Indicator: Hide auras on totems setting (on by default, can turn off in advanced settings)
+### Bugfix:
+- Castbar Emphasis was jank. Fixed now.
+
+## The War Within
+### Tweak:
+- Totem Indicator: Added Stone Bulwark Totem. Removed Fel Obelisk & Windfury Totem. If you have input on new pvp pets/npcs in TWW let me know @bodify
+### Bugfix:
+- Fix Threat Color coloring personal nameplate
+
 # BetterBlizzPlates 1.5.8c
 ## The War Within
 ### Bugfix:

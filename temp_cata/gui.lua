@@ -4705,8 +4705,24 @@ local function guiPositionAndScale()
     totemIndicatorColorName:SetPoint("TOPLEFT", showTotemIndicatorCooldownSwipe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(totemIndicatorColorName, "Color name text")
 
+    local totemIndicatorHideAuras = CreateCheckbox("totemIndicatorHideAuras", "Hide auras", contentFrame)
+    totemIndicatorHideAuras:SetPoint("LEFT", totemIndicatorColorName.text, "RIGHT", 0, 0)
+    CreateTooltip(totemIndicatorHideAuras, "Hide Auras on totem nameplates")
+
+    local totemIndicatorColorHealthBar = CreateCheckbox("totemIndicatorColorHealthBar", "Color HP", contentFrame)
+    totemIndicatorColorHealthBar:SetPoint("LEFT", showTotemIndicatorCooldownSwipe.text, "RIGHT", 0, 0)
+    CreateTooltip(totemIndicatorColorHealthBar, "Color healthbar")
+
+    local totemIndicatorDefaultCooldownTextSize = CreateSlider(contentFrame, "Default CD Size", 0.3, 2, 0.01, "totemIndicatorDefaultCooldownTextSize", nil, 95)
+    totemIndicatorDefaultCooldownTextSize:SetPoint("TOP", totemIndicatorHideNameAndShiftIconDown, "BOTTOM", 40, -48)
+    CreateTooltip(totemIndicatorDefaultCooldownTextSize, "Size of the default Blizz CD text.\n\nWill not work with OmniCC.")
+
+    local totemIndicatorNoAnimation = CreateCheckbox("totemIndicatorNoAnimation", "Anim", contentFrame)
+    totemIndicatorNoAnimation:SetPoint("LEFT", totemIndicatorDefaultCooldownTextSize, "RIGHT", 0, 3)
+    CreateTooltipTwo(totemIndicatorNoAnimation, "No Animation", "Stops the pulsing animation on important npcs")
+
     local totemIndicatorShieldBorder = CreateCheckbox("totemIndicatorShieldBorder", "Shield", contentFrame, nil, BBP.ToggleTotemIndicatorShieldBorder)
-    totemIndicatorShieldBorder:SetPoint("LEFT", totemIndicatorColorName.text, "RIGHT", 0, 0)
+    totemIndicatorShieldBorder:SetPoint("TOPLEFT", totemIndicatorNoAnimation, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(totemIndicatorShieldBorder, "Shield", "Show a shield icon/border on totems that have Stoneclaw Totem shield on them.\nNote: Borders will be gray in gameplay")
     totemIndicatorShieldBorder:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
@@ -4723,18 +4739,6 @@ local function guiPositionAndScale()
             end
         end
     end)
-
-    local totemIndicatorColorHealthBar = CreateCheckbox("totemIndicatorColorHealthBar", "Color HP", contentFrame)
-    totemIndicatorColorHealthBar:SetPoint("LEFT", showTotemIndicatorCooldownSwipe.text, "RIGHT", 0, 0)
-    CreateTooltip(totemIndicatorColorHealthBar, "Color healthbar")
-
-    local totemIndicatorDefaultCooldownTextSize = CreateSlider(contentFrame, "Default CD Size", 0.3, 2, 0.01, "totemIndicatorDefaultCooldownTextSize", nil, 95)
-    totemIndicatorDefaultCooldownTextSize:SetPoint("TOP", totemIndicatorHideNameAndShiftIconDown, "BOTTOM", 40, -48)
-    CreateTooltip(totemIndicatorDefaultCooldownTextSize, "Size of the default Blizz CD text.\n\nWill not work with OmniCC.")
-
-    local totemIndicatorNoAnimation = CreateCheckbox("totemIndicatorNoAnimation", "Anim", contentFrame)
-    totemIndicatorNoAnimation:SetPoint("LEFT", totemIndicatorDefaultCooldownTextSize, "RIGHT", 0, 3)
-    CreateTooltipTwo(totemIndicatorNoAnimation, "No Animation", "Stops the pulsing animation on important npcs")
 
     ----------------------
     -- Target indicator

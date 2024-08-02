@@ -4411,6 +4411,10 @@ local function guiPositionAndScale()
     totemIndicatorColorName:SetPoint("TOPLEFT", showTotemIndicatorCooldownSwipe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(totemIndicatorColorName, "Color name text")
 
+    local totemIndicatorHideAuras = CreateCheckbox("totemIndicatorHideAuras", "Hide auras", contentFrame)
+    totemIndicatorHideAuras:SetPoint("LEFT", totemIndicatorColorName.text, "RIGHT", 0, 0)
+    CreateTooltip(totemIndicatorHideAuras, "Hide Auras on totem nameplates")
+
     local totemIndicatorColorHealthBar = CreateCheckbox("totemIndicatorColorHealthBar", "Color HP", contentFrame)
     totemIndicatorColorHealthBar:SetPoint("LEFT", showTotemIndicatorCooldownSwipe.text, "RIGHT", 0, 0)
     CreateTooltip(totemIndicatorColorHealthBar, "Color healthbar")
