@@ -4299,6 +4299,10 @@ local function HandleNamePlateAdded(unit)
 
     if config.enableNameplateAuraCustomisation then
         BBP.ProcessAurasForNameplate(frame, frame.unit)
+        if frame.BuffFrame and frame.BuffFrameHidden then
+            frame.BuffFrame:SetAlpha(1)
+            frame.BuffFrameHidden = false
+        end
     end
 
     BBP.ColorCastbar(frame)

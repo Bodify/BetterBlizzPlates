@@ -413,6 +413,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
 
         if frame.BuffFrame and config.totemIndicatorHideAuras then
             frame.BuffFrame:SetAlpha(0)
+            frame.BuffFrameHidden = true
         end
 
         -- if true then
