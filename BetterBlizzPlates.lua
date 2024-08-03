@@ -969,7 +969,7 @@ function BBP.GetUnitReaction(unit)
 ]]
 
 
-    local reaction = UnitReaction("player", unit)
+    local reaction = UnitReaction(unit, "player")
 
     local isEnemy = false
     local isFriend = false
@@ -1005,7 +1005,7 @@ local function GetNameplateUnitInfo(frame, unit)
     info.isNpc = not info.isPlayer
     info.unitGUID = UnitGUID(unit)
     info.class = info.isPlayer and UnitClassBase(unit) or nil
-    info.reaction = UnitReaction("player", unit)
+    info.reaction = UnitReaction(unit, "player")
     info.isEnemy = (info.reaction and info.reaction < 4) and not info.isSelf
     info.isNeutral = (info.reaction and info.reaction == 4) and not info.isSelf
     info.isFriend = (info.reaction and info.reaction >= 5) and not info.isSelf
@@ -3416,6 +3416,11 @@ local function HandleNamePlateAdded(unit)
 
     --     frame.hoks = true
     -- end
+
+    local showNameplateTargetText = BetterBlizzPlatesDB.showNameplateTargetText
+    if showNameplateTargetText then
+        BBP.UpdateNameplateTargetText(frame, frame.unit)
+    end
 
     -- Hide default personal BuffFrame
     if config.enableNameplateAuraCustomisation then

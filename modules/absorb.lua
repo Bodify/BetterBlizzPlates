@@ -130,7 +130,7 @@ function BBP.CompactUnitFrame_UpdateAll(frame)
                 absorbGlow.replaced = newAbsorbGlow
             end
             absorbGlow:SetAlpha(0);
-            absorbGlow.replaced:SetAlpha((healthBar:GetAlpha() == 0 and 0) or (absorbGlow:IsShown() and ABSORB_GLOW_ALPHA or 0))
+            absorbGlow.replaced:SetAlpha((frame.HealthBarsContainer:GetAlpha() == 0 and 0) or (absorbGlow:IsShown() and ABSORB_GLOW_ALPHA or 0))
         end
     end
 end

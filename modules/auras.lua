@@ -586,7 +586,7 @@ local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
     if otherNpBuffPurgeGlow then
         buff.Icon:SetScale(0.5)
         if not isPlayerUnit and isEnemyUnit then
-            if aura.isHelpful and aura.isStealable then
+            if aura.isHelpful and aura.isStealable or (aura.auraType == "Magic" and aura.isHelpful) then
                 if not buff.buffBorderPurge then
                     buff.buffBorderPurge = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
                     buff.buffBorderPurge:SetAtlas("newplayertutorial-drag-slotblue")
@@ -703,7 +703,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
     local duration = aura.duration
     local expirationTime = aura.expirationTime
     local caster = aura.sourceUnit
-    local isPurgeable = aura.isStealable
+    local isPurgeable = aura.isStealable or (aura.auraType == "Magic" and aura.isHelpful)
     local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
     local castByPlayer = (caster == "player" or caster == "pet")
     local moreThanOneMin = (duration > 60 or duration == 0 or expirationTime == 0)
@@ -1217,7 +1217,7 @@ function BBP:UpdateAnchor()
     local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
 
     local isTarget = frame.unit and UnitIsUnit(frame.unit, "target")
-    local isFriend = info and info.isFriend --frame.unit and UnitReaction(frame.unit, "player") > 4
+    local isFriend = frame.unit and UnitReaction(frame.unit, "player") >= 5
 
     local shouldNotOffset = config.nameplateResourceDoNotRaiseAuras or config.nameplateResourceUnderCastbar or not BBP.PlayerSpecHasResource()
     local targetYOffset = self:GetBaseYOffset() + (isTarget and not shouldNotOffset and self:GetTargetYOffset() or 0.0)

@@ -516,6 +516,8 @@ function BBP.UpdateNameplateTargetText(frame, unit)
 
     local isCasting = UnitCastingInfo(unit) or UnitChannelInfo(unit)
 
+    frame.TargetText:SetText("")
+
     if isCasting and UnitExists(unit.."target") and frame.healthBar:IsShown() and not frame.hideCastInfo then
         local targetOfTarget = unit.."target"
         local name = UnitName(targetOfTarget)

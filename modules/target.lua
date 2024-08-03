@@ -500,7 +500,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             local info = frame.BetterBlizzPlates.unitInfo
             frame.BetterBlizzPlates.unitInfo = BBP.GetNameplateUnitInfo(frame)
 
-            if config.healthNumbersTargetOnly then
+            if config.healthNumbers and config.healthNumbersTargetOnly then
                 BBP.HealthNumbers(frame)
             end
 
@@ -573,7 +573,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
 
-            if config.healthNumbersTargetOnly then
+            if config.healthNumbers and config.healthNumbersTargetOnly then
                 BBP.HealthNumbers(frame)
             end
 

@@ -1,3 +1,13 @@
+# BetterBlizzPlates 1.5.9b
+## The War Within
+### Bugfix:
+- Fix overshields glow texture appearing on hidden healthbars due to new change in TWW.
+- Fix things coloring things based on reaction sometimes causing enemies to show as neutral.
+
+## Cata
+### Bugfix:
+- Fix lua errors from totem indicator after adding the "Hide Auras on Totems". These auras only exist optionally on cata and was causing errors if turned off.
+
 # BetterBlizzPlates 1.5.9
 ## The War Within & Cata
 ### New stuff:

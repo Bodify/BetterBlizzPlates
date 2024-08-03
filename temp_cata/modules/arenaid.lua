@@ -1074,7 +1074,7 @@ end
 -- If no mode selected
 function BBP.TestArenaIndicator0(frame)
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if not UnitIsFriend("player", frame.unit) and (UnitReaction("player", frame.unit) or 0) < 5 then
+        if not UnitIsFriend("player", frame.unit) and (UnitReaction(frame.unit, "player") or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.arenaNumberText then
@@ -1100,7 +1100,7 @@ function BBP.TestArenaIndicator1(frame)
     local idCircle = BetterBlizzPlatesDB.showCircleOnArenaID
     local idCircleOffset = idCircle and 1 or 0
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if not UnitIsFriend("player", frame.unit) and (UnitReaction("player", frame.unit) or 0) < 5 then
+        if not UnitIsFriend("player", frame.unit) and (UnitReaction(frame.unit, "player") or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.arenaNumberText then
@@ -1140,7 +1140,7 @@ function BBP.TestArenaIndicator2(frame)
     local idCircle = BetterBlizzPlatesDB.showCircleOnArenaID
     local idCircleOffset = idCircle and 1 or 0
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if not UnitIsFriend("player", frame.unit) and (UnitReaction("player", frame.unit) or 0) < 5 then
+        if not UnitIsFriend("player", frame.unit) and (UnitReaction(frame.unit, "player") or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.arenaNumberText then
@@ -1171,7 +1171,7 @@ end
 -- Mode 3: Replace name with Spec
 function BBP.TestArenaIndicator3(frame)
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if not UnitIsFriend("player", frame.unit) and (UnitReaction("player", frame.unit) or 0) < 5 then
+        if not UnitIsFriend("player", frame.unit) and (UnitReaction(frame.unit, "player") or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.specNameText then
@@ -1205,7 +1205,7 @@ function BBP.TestArenaIndicator4(frame)
     local idCircle = BetterBlizzPlatesDB.showCircleOnArenaID
     local idCircleOffset = idCircle and 1 or 0
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if not UnitIsFriend("player", frame.unit) and (UnitReaction("player", frame.unit) or 0) < 5 then
+        if not UnitIsFriend("player", frame.unit) and (UnitReaction(frame.unit, "player") or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.specNameText then
@@ -1257,7 +1257,7 @@ end
 -- Mode 5: Put ID and Spec on same line instead of name
 function BBP.TestArenaIndicator5(frame)
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if not UnitIsFriend("player", frame.unit) and (UnitReaction("player", frame.unit) or 0) < 5 then
+        if not UnitIsFriend("player", frame.unit) and (UnitReaction(frame.unit, "player") or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
 
             if not frame.specNameText then
@@ -1537,7 +1537,7 @@ function BBP.ArenaIndicatorCaller(frame)
     end
     if BetterBlizzPlatesDB.arenaIndicatorTestMode then
         local unitType
-        if UnitIsEnemy("player", frame.unit) or (UnitReaction("player", frame.unit) or 0) < 5 then
+        if UnitIsEnemy("player", frame.unit) or (UnitReaction(frame.unit, "player") or 0) < 5 then
             unitType = "arena"
         elseif not UnitIsUnit("player", frame.unit) then
             unitType = "party"

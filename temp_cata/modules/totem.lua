@@ -345,7 +345,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
         end
 
-        if config.totemIndicatorHideAuras then
+        if frame.BuffFrame and config.totemIndicatorHideAuras then
             frame.BuffFrame:SetAlpha(0)
         end
 
@@ -411,7 +411,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             return
         end
 
-        if config.totemIndicatorHideAuras then
+        if frame.BuffFrame and config.totemIndicatorHideAuras then
             frame.BuffFrame:SetAlpha(0)
         end
 
