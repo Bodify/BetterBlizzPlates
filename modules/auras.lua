@@ -1217,7 +1217,8 @@ function BBP:UpdateAnchor()
     local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
 
     local isTarget = frame.unit and UnitIsUnit(frame.unit, "target")
-    local isFriend = frame.unit and UnitReaction(frame.unit, "player") >= 5
+    local reaction = frame.unit and UnitReaction(frame.unit, "player")
+    local isFriend = reaction and reaction >= 5
 
     local shouldNotOffset = config.nameplateResourceDoNotRaiseAuras or config.nameplateResourceUnderCastbar or not BBP.PlayerSpecHasResource()
     local targetYOffset = self:GetBaseYOffset() + (isTarget and not shouldNotOffset and self:GetTargetYOffset() or 0.0)

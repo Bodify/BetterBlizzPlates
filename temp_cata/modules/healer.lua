@@ -80,8 +80,15 @@ function BBP.HealerIndicator(frame)
     end
 
     if (config.healerIndicatorArenaOnly and not BBP.isInArena) or (config.healerIndicatorBgOnly and not BBP.isInBg) then
-        frame.healerIndicator:Hide()
-        return
+        if config.healerIndicatorArenaOnly and config.healerIndicatorBgOnly then
+            if not BBP.isInPvP then
+                frame.healerIndicator:Hide()
+                return
+            end
+        else
+            frame.healerIndicator:Hide()
+            return
+        end
     end
 
     -- Get spec by guid from details

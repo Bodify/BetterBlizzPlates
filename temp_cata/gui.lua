@@ -1293,7 +1293,6 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BetterBlizzPlatesDB.castBarInterruptHighlighterEndTime = value
                 elseif element == "customFontSize" then
                     BetterBlizzPlatesDB.customFontSize = value
-                    print(value)
                     BBP.RefreshAllNameplates()
                 -- Nameplate Widths
                 elseif element == "nameplateFriendlyWidth" then

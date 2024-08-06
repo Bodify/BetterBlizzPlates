@@ -1,3 +1,17 @@
+# BetterBlizzPlates 1.5.9c
+## The War Within
+### New stuff:
+- Non-Target Nameplate Alpha setting in CVar Control. (This is a CVar on cata but not on retail)
+### Tweak:
+- Split friendly nameplate "Clickthrough" setting into two settings: One for clickthrough itself and other one for nonstackable. This change is because the nonstackable setting can cause issues and better left optional.
+### Bugfix:
+- Fix a lua error from nameplate auras occouring in some rare cases.
+- Fix an issue for people who had deleted Skyfury Totem from their totem list causing the attempted update to its totem name to fail and make settings fail to load.
+
+## The War Within & Cata
+### Bugfix:
+- Fix healer indicator always being hidden when both "Arena Only" and "BG Only" was set. Now shows correctly in both.
+
 # BetterBlizzPlates 1.5.9b
 ## The War Within
 ### Bugfix:

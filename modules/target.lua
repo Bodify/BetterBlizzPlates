@@ -467,10 +467,14 @@ function BBP.FadeAllButTargetNameplates()
             if not UnitIsUnit(frame.unit, "target") and not UnitIsUnit(frame.unit, "player") then
                 frame:SetAlpha(config.fadeOutNPCsAlpha)
             else
-                frame:SetAlpha(1)
+                if not config.enableNpNonTargetAlpha then
+                    frame:SetAlpha(1)
+                end
             end
         else
-            frame:SetAlpha(1)
+            if not config.enableNpNonTargetAlpha then
+                frame:SetAlpha(1)
+            end
         end
     end
 end
@@ -478,14 +482,19 @@ end
 function BBP.UnfadeAllNameplates()
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = namePlate.UnitFrame
-        frame:SetAlpha(1)
+        local config = frame.BetterBlizzPlates.config or BBP.InitializeNameplateSettings
+        if not config.enableNpNonTargetAlpha then
+            frame:SetAlpha(1)
+        end
     end
 end
 
-
-
-
-
+local function NameplateTargetAlphaAllNps()
+    for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = namePlate.UnitFrame
+        BBP.NameplateTargetAlpha(frame)
+    end
+end
 
 local PlayerTargetChanged = CreateFrame("Frame")
 PlayerTargetChanged:RegisterEvent("PLAYER_TARGET_CHANGED")
@@ -520,6 +529,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             end
             if config.focusTargetIndicator then BBP.FocusTargetIndicator(frame) end
             if config.partyPointer then BBP.PartyPointer(frame) end
+            if config.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
             if config.fadeOutNPC then
                 BBP.FadeOutNPCs(frame)
                 if config.fadeAllButTarget then
@@ -566,6 +576,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             if config.targetIndicator then BBP.TargetIndicator(frame) end
             if config.partyPointer then BBP.PartyPointer(frame) end
 
+            if config.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
             if config.fadeOutNPC then
                 BBP.FadeOutNPCs(frame)
                 if config.fadeAllButTarget then

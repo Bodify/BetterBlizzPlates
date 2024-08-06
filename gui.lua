@@ -1228,6 +1228,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "customFontSize" then
                     BetterBlizzPlatesDB.customFontSize = value
                     BBP.RefreshAllNameplates()
+                elseif element == "nameplateNonTargetAlpha" then
+                    BetterBlizzPlatesDB.nameplateNonTargetAlpha = value
+                    BBP.RefreshAllNameplates()
                 -- Nameplate Widths
                 elseif element == "nameplateFriendlyWidth" then
                     if not BBP.checkCombatAndWarn() then
@@ -3123,10 +3126,6 @@ local function guiGeneralTab()
     enemyColorName:SetPoint("LEFT", enemyClassColorName.text, "RIGHT", 0, 0)
     CreateTooltipTwo(enemyColorName, "Color Name", "Pick one color for all enemy names", "If class color name is also enabled this setting will only color the name of npcs")
 
-    local enemyColorThreat = CreateCheckbox("enemyColorThreat", "Color Threat in PvE", BetterBlizzPlates)
-    enemyColorThreat:SetPoint("TOPLEFT", enemyColorName.text, "BOTTOMLEFT", 0, 0)
-    CreateTooltipTwo(enemyColorThreat, "Color by threat in instanced PvE", "For Tank:\nRed(no aggro)>Orange>Green(aggro)\n\nFor Healer/DPS:\nGreen(no aggro)>Orange>Red(aggro)")
-
     local function UpdateColorSquare(icon, r, g, b)
         if r and g and b then
             icon:SetVertexColor(r, g, b)
@@ -3221,6 +3220,10 @@ local function guiGeneralTab()
         BetterBlizzPlatesDB.ShowClassColorInNameplate = true
         ShowClassColorInNameplate:SetChecked(true)
     end
+
+    local enemyColorThreat = CreateCheckbox("enemyColorThreat", "Color Threat in PvE", BetterBlizzPlates)
+    enemyColorThreat:SetPoint("LEFT", ShowClassColorInNameplate.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(enemyColorThreat, "Color by threat in instanced PvE", "Color options in Advanced Settings section. Default Red & Green.")
 
     local enemyHealthBarColor = CreateCheckbox("enemyHealthBarColor", "Custom healthbar color", BetterBlizzPlates)
     enemyHealthBarColor:SetPoint("TOPLEFT", ShowClassColorInNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -3376,7 +3379,11 @@ local function guiGeneralTab()
 
     local friendlyNameplateClickthrough = CreateCheckbox("friendlyNameplateClickthrough", "Clickthrough", BetterBlizzPlates, nil, BBP.ApplyNameplateWidth)
     friendlyNameplateClickthrough:SetPoint("TOPLEFT", friendlyNameplatesText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
-    CreateTooltipTwo(friendlyNameplateClickthrough, "Clickthrough Nameplate", "Make friendly nameplates clickthrough and make them overlap.",  "Overlaps even with stacking nameplates setting. For other addons relying on healthbar height (usually stuff anchored on top) this setting will push the anchor point lower so you'll have to adjust for that on friendly plates.")
+    CreateTooltipTwo(friendlyNameplateClickthrough, "Clickthrough Nameplate", "Make friendly nameplates clickthrough")
+
+    local friendlyNameplateNonstackable = CreateCheckbox("friendlyNameplateNonstackable", "Non-Stackable", BetterBlizzPlates, nil, BBP.ApplyNameplateWidth)
+    friendlyNameplateNonstackable:SetPoint("LEFT", friendlyNameplateClickthrough.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(friendlyNameplateNonstackable, "Non-Stackable", "Makes the friendly nameplates non-stackable even with \"Stacking Nameplates\" on.", "CAUTION: This setting can make nameplate auras appear lower than they should be when a unit changes between enemy/friendly (Duel/MC) due to a Blizzard bug.\nQuickly hiding and unhiding UI with Alt+Z will fix any nameplate issue.")
 
     local friendlyClassColorName = CreateCheckbox("friendlyClassColorName", "Class color name", BetterBlizzPlates)
     friendlyClassColorName:SetPoint("TOPLEFT", friendlyNameplateClickthrough, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -7190,6 +7197,25 @@ local function guiCVarControl()
     nameplateOccludedAlphaMult:SetPoint("TOPLEFT", nameplateMaxAlphaDistance, "BOTTOMLEFT", 0, -17)
     CreateTooltipTwo(nameplateOccludedAlphaMult, "Occluded Alpha", "The alpha value of nameplates that are not in line of sight.", nil, nil, "nameplateOccludedAlphaMult")
     CreateResetButton(nameplateOccludedAlphaMult, "nameplateOccludedAlphaMult", guiCVarControl)
+
+    local enableNpNonTargetAlpha = CreateCheckbox("enableNpNonTargetAlpha", "Enable", guiCVarControl)
+    CreateTooltipTwo(enableNpNonTargetAlpha, "Enable Non-Target Alpha")
+
+    local enableNpNonTargetAlphaTargetOnly = CreateCheckbox("enableNpNonTargetAlphaTargetOnly", "Require Target", enableNpNonTargetAlpha)
+    CreateTooltipTwo(enableNpNonTargetAlphaTargetOnly, "Only fade out other nameplates when you have a target")
+    enableNpNonTargetAlphaTargetOnly:SetPoint("TOPLEFT", enableNpNonTargetAlpha, "BOTTOMLEFT", 0, 6)
+
+    local nameplateNonTargetAlpha = CreateSlider(enableNpNonTargetAlpha, "Non-Target Alpha", 0, 1, 0.01, "nameplateNonTargetAlpha")
+    nameplateNonTargetAlpha:SetPoint("TOPLEFT", nameplateOccludedAlphaMult, "BOTTOMLEFT", 0, -17)
+
+    enableNpNonTargetAlpha:SetPoint("LEFT", nameplateNonTargetAlpha, "RIGHT", 5, 8)
+    enableNpNonTargetAlpha:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            CheckAndToggleCheckboxes(enableNpNonTargetAlpha)
+        else
+            CheckAndToggleCheckboxes(enableNpNonTargetAlpha)
+        end
+    end)
 
     local nameplateCVarText = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     nameplateCVarText:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 400, -270)

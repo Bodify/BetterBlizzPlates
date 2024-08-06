@@ -436,6 +436,8 @@ local defaultSettings = {
     nameplateDefaultLargeEnemyWidth = 154,
     nameplateDefaultEnemyHeight = 45,
     nameplateDefaultLargeEnemyHeight = 64.125,
+    nameplateNonTargetAlpha = 0.5,
+    enableNpNonTargetAlphaTargetOnly = true,
 
     -- Fade out NPCs
     fadeOutNPCsAlpha = 0.2,
@@ -1118,7 +1120,7 @@ function BBP.ApplyNameplateWidth()
         if BetterBlizzPlatesDB.nameplateEnemyHeight and BetterBlizzPlatesDB.nameplateFriendlyHeight then
             local friendlyWidth = BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeFriendlyWidth or BetterBlizzPlatesDB.nameplateDefaultFriendlyWidth
             local enemyWidth = BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeEnemyWidth or BetterBlizzPlatesDB.nameplateDefaultEnemyWidth
-            local friendlyHeight = BetterBlizzPlatesDB.friendlyNameplateClickthrough and 1 or (BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeFriendlyHeight or BetterBlizzPlatesDB.nameplateDefaultFriendlyHeight)
+            local friendlyHeight = BetterBlizzPlatesDB.friendlyNameplateNonstackable and 1 or (BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeFriendlyHeight or BetterBlizzPlatesDB.nameplateDefaultFriendlyHeight)
 
             if BetterBlizzPlatesDB.NamePlateVerticalScale then
                 SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
@@ -1243,6 +1245,7 @@ local function InitializeNameplateSettings(frame)
             nameplateBorderSize = BetterBlizzPlatesDB.nameplateBorderSize,
             nameplateTargetBorderSize = BetterBlizzPlatesDB.nameplateTargetBorderSize,
             showNpcTitle = BetterBlizzPlatesDB.showNpcTitle,
+            enableNpNonTargetAlpha = BetterBlizzPlatesDB.enableNpNonTargetAlpha,
         }
         if frame.BetterBlizzPlates.config.changeHealthbarHeight then
             frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
@@ -1981,7 +1984,9 @@ end
 --##################################################################################################
 -- Fade out npcs from list
 function BBP.FadeOutNPCs(frame)
-    frame:SetAlpha(1)
+    if not BetterBlizzPlatesDB.enableNpNonTargetAlpha then
+        frame:SetAlpha(1)
+    end
     -- Skip if the unit is a player
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
@@ -2692,15 +2697,22 @@ local function ShowFriendlyGuildName(frame, unit)
         end
         if not frame.guildName then
             frame.guildName = frame:CreateFontString(nil, "BACKGROUND", "SystemFont_NamePlateFixed")
-            local font, size, outline = frame.name:GetFont()
-            frame.guildName:SetFont(font, 9, outline)
+            local db = BetterBlizzPlatesDB
+            if db.useCustomFont then
+                BBP.SetFontBasedOnOption(frame.guildName, 9, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")
+            else
+                local font, size, outline = frame.name:GetFont()
+                frame.guildName:SetFont(font, 9, outline)
+            end
             frame.guildName:SetIgnoreParentScale(true)
         end
 
         local guildName, guildRankName, guildRankIndex = GetGuildInfo(unit)
         if guildName then
-            local font, size, outline = frame.name:GetFont()
-            frame.guildName:SetFont(font, 9, outline)
+            if BBP.needsUpdate then
+                local font, size, outline = frame.name:GetFont()
+                frame.guildName:SetFont(font, 9, outline)
+            end
             frame.guildName:SetText("<"..guildName..">")
             if config.guildNameColor then
                 frame.guildName:SetTextColor(unpack(config.guildNameColorRGB))
@@ -2720,6 +2732,36 @@ local function ShowFriendlyGuildName(frame, unit)
         end
     elseif frame.guildName then
         frame.guildName:SetText("")
+    end
+end
+
+
+function BBP.NameplateTargetAlpha(frame)
+    local config = frame.BetterBlizzPlates.config
+
+    if not config.npTargetAlphaInit or BBP.needsUpdate then
+        config.enableNpNonTargetAlphaTargetOnly = BetterBlizzPlatesDB.enableNpNonTargetAlphaTargetOnly
+        config.nameplateNonTargetAlpha = BetterBlizzPlatesDB.nameplateNonTargetAlpha
+
+        config.npTargetAlphaInit = true
+    end
+
+    if config.enableNpNonTargetAlphaTargetOnly then
+        if UnitExists("target") then
+            if UnitIsUnit(frame.unit, "target") then
+                frame:SetAlpha(1)
+            else
+                frame:SetAlpha(config.nameplateNonTargetAlpha)
+            end
+        else
+            frame:SetAlpha(1)
+        end
+    else
+        if UnitIsUnit(frame.unit, "target") then
+            frame:SetAlpha(1)
+        else
+            frame:SetAlpha(config.nameplateNonTargetAlpha)
+        end
     end
 end
 
@@ -3422,6 +3464,8 @@ local function HandleNamePlateAdded(unit)
         BBP.UpdateNameplateTargetText(frame, frame.unit)
     end
 
+    if config.enableNpNonTargetAlpha then BBP.NameplateTargetAlpha(frame) end
+
     -- Hide default personal BuffFrame
     if config.enableNameplateAuraCustomisation then
         frame.BuffFrame.UpdateAnchor = BBP.UpdateAnchor;
@@ -3700,8 +3744,13 @@ function BBP.RefreshAllNameplates()
         BBP.CompactUnitFrame_UpdateHealthColor(frame)
         BBP.ConsolidatedUpdateName(frame)
         HandleNamePlateAdded(frame.unit)
+        if BetterBlizzPlatesDB.enableNpNonTargetAlpha then
+            BBP.NameplateTargetAlpha(frame)
+        end
         if not BetterBlizzPlatesDB.fadeOutNPC then
-            frame:SetAlpha(1)
+            if not BetterBlizzPlatesDB.enableNpNonTargetAlpha then
+                frame:SetAlpha(1)
+            end
         end
         if not BetterBlizzPlatesDB.friendlyHideHealthBar then
             if frame.healthBar then
@@ -4319,7 +4368,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 if not BetterBlizzPlatesDB.totemIndicatorNpcList[59712] then
                     BetterBlizzPlatesDB.totemIndicatorNpcList[59712] = defaultSettings.totemIndicatorNpcList[59712]
                 end
-                if BetterBlizzPlatesDB.totemIndicatorNpcList[105427].name == "Skyfury Totem" then
+                if BetterBlizzPlatesDB.totemIndicatorNpcList[105427] then
                     BetterBlizzPlatesDB.totemIndicatorNpcList[105427].name = "Totem of Wrath"
                 end
                 BetterBlizzPlatesDB.totemIndicatorNpcList[179193] = nil --fel obelisk removed
