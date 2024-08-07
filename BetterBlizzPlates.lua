@@ -1246,6 +1246,7 @@ local function InitializeNameplateSettings(frame)
             nameplateTargetBorderSize = BetterBlizzPlatesDB.nameplateTargetBorderSize,
             showNpcTitle = BetterBlizzPlatesDB.showNpcTitle,
             enableNpNonTargetAlpha = BetterBlizzPlatesDB.enableNpNonTargetAlpha,
+            targetHighlightFix = BetterBlizzPlatesDB.targetHighlightFix,
         }
         if frame.BetterBlizzPlates.config.changeHealthbarHeight then
             frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
@@ -1621,8 +1622,10 @@ end
 local function ToggleTargetNameplateHighlight(frame)
     local config = frame.BetterBlizzPlates.config
     frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
-    frame.selectionHighlight:SetAllPoints(frame.healthBar.barTexture)
-    frame.selectionHighlight:SetParent(frame.healthBar)
+    if config.targetHighlightFix then
+        frame.selectionHighlight:SetAllPoints(frame.healthBar.barTexture)
+        frame.selectionHighlight:SetParent(frame.healthBar)
+    end
 end
 
 --#################################################################################################

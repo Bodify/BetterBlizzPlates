@@ -1224,7 +1224,7 @@ function BBP:UpdateAnchor()
     local targetYOffset = self:GetBaseYOffset() + (isTarget and not shouldNotOffset and self:GetTargetYOffset() or 0.0)
 
     if not config.buffAnchorInitalized or BBP.needsUpdate then
-        config.friendlyNameplateClickthrough = BetterBlizzPlatesDB.friendlyNameplateClickthrough
+        config.friendlyNameplateNonstackable = BetterBlizzPlatesDB.friendlyNameplateNonstackable
         config.nameplateAurasYPos = BetterBlizzPlatesDB.nameplateAurasYPos
         config.nameplateAurasNoNameYPos = BetterBlizzPlatesDB.nameplateAurasNoNameYPos
         config.nameplateAuraScale = BetterBlizzPlatesDB.nameplateAuraScale
@@ -1233,7 +1233,7 @@ function BBP:UpdateAnchor()
     end
 
     if frame.unit and ShouldShowName(frame) then
-        if config.friendlyNameplateClickthrough and isFriend then
+        if config.friendlyNameplateNonstackable and isFriend then
             self:SetPoint("BOTTOM", frame, "TOP", 0, -3 + targetYOffset + config.nameplateAurasYPos + 63)
         else
             self:SetPoint("BOTTOM", frame, "TOP", 0, -3 + targetYOffset + config.nameplateAurasYPos)

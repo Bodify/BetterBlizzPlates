@@ -1,3 +1,10 @@
+# BetterBlizzPlates 1.5.9d
+## The War Within
+### New:
+- Made the the TWW Target Highlight fix optional, setting in Misc.
+### Bugfix:
+- Fixed friendly auras being positioned too high with clickthrough friendly nameplate setting on. This was due to splitting the clickthrough setting into two different ones and this logic should rely on the new separated setting instead and not clickthrough.
+
 # BetterBlizzPlates 1.5.9c
 ## The War Within
 ### New stuff:
