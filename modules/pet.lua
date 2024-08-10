@@ -42,7 +42,7 @@ function BBP.PetIndicator(frame)
         shadows[nameplate] = nil
     end
 
-    local combatIndicator = frame.combatIndicatorSap or frame.combatIndicator
+    local combatIndicator = (frame.combatIndicatorSap or frame.combatIndicator) and not config.combatIndicatorPlayersOnly
 
     -- Move Pet Indicator to the left if both Pet Indicator and Combat Indicator are showing with the same anchor so they dont overlap
     local combatOffset = 0

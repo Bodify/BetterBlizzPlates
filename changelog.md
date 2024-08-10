@@ -1,3 +1,9 @@
+# BetterBlizzPlates 1.5.9e
+## The War Within
+### Bugfix:
+- Fix Party Pointer setting "Hide All" unintentionally hiding name on new nameplates popping up when party pointer was not supposed to show (and not hide name).
+- Fix overshield glow fix.. Hopefully maybe potentially the glow wont show in unintended cases now.
+
 # BetterBlizzPlates 1.5.9d
 ## The War Within
 ### New:

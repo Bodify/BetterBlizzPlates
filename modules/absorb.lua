@@ -121,7 +121,7 @@ function BBP.CompactUnitFrame_UpdateAll(frame)
                 newAbsorbGlow:SetPoint("TOPLEFT", absorbOverlay, "TOPLEFT", ABSORB_GLOW_OFFSET, 2);
                 newAbsorbGlow:SetPoint("BOTTOMLEFT", absorbOverlay, "BOTTOMLEFT", ABSORB_GLOW_OFFSET, -2);
                 --newAbsorbGlow:SetIgnoreParentAlpha(true)
-                newAbsorbGlow:SetAlpha(ABSORB_GLOW_ALPHA)
+                --newAbsorbGlow:SetAlpha(ABSORB_GLOW_ALPHA)
                 newAbsorbGlow:SetBlendMode(absorbGlow:GetBlendMode())
                 newAbsorbGlow:SetParent(absorbGlow:GetParent())
                 newAbsorbGlow:SetWidth(absorbGlow:GetWidth())
@@ -130,7 +130,7 @@ function BBP.CompactUnitFrame_UpdateAll(frame)
                 absorbGlow.replaced = newAbsorbGlow
             end
             absorbGlow:SetAlpha(0);
-            --absorbGlow.replaced:SetAlpha((frame.HealthBarsContainer:GetAlpha() == 0 and 0) or (frame:GetAlpha() == 0 and 0) or (absorbGlow:IsShown() and ABSORB_GLOW_ALPHA or 0))
+            absorbGlow.replaced:SetAlpha((frame.HealthBarsContainer:GetAlpha() == 0 and 0) or (frame:GetAlpha() == 0 and 0) or (absorbGlow:IsShown() and ABSORB_GLOW_ALPHA or 0))
         end
     end
 end
@@ -183,7 +183,7 @@ function BBP.CompactUnitFrame_UpdateHealPrediction(frame)
         local absorbGlow = frame.overAbsorbGlow
         if absorbGlow.replaced then
             absorbGlow:SetAlpha(0);
-            --absorbGlow.replaced:SetAlpha((frame.HealthBarsContainer:GetAlpha() == 0 and 0) or (frame:GetAlpha() == 0 and 0) or (absorbGlow:IsShown() and ABSORB_GLOW_ALPHA or 0))
+            absorbGlow.replaced:SetAlpha((frame.HealthBarsContainer:GetAlpha() == 0 and 0) or (frame:GetAlpha() == 0 and 0) or (absorbGlow:IsShown() and ABSORB_GLOW_ALPHA or 0))
             absorbOverlay:SetDrawLayer("OVERLAY")
         end
     end
