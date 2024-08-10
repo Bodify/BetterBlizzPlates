@@ -4411,7 +4411,7 @@ local function HandleNamePlateAdded(unit)
     end
 
     -- Hide name
-    if ((config.hideFriendlyNameText or config.partyPointerHideAll) and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
+    if ((config.hideFriendlyNameText or (config.partyPointerHideAll and frame.partyPointer and frame.partyPointer:IsShown())) and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
         frame.name:SetAlpha(0)
         if frame.fakeName then
             frame.fakeName:SetAlpha(0)
