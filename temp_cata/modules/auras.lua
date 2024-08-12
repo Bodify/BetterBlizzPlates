@@ -416,34 +416,32 @@ local function CheckBuffs()
                 buff.isPandemicActive = false
             elseif remainingDuration <= 5.1 then
                 if not buff.PandemicGlow then
-                    buff.PandemicGlow = buff:CreateTexture(nil, "ARTWORK");
-                    buff.PandemicGlow:SetTexture(BBP.ImportantIcon);
+                    buff.PandemicGlow = buff.GlowFrame:CreateTexture(nil, "ARTWORK");
+                    buff.PandemicGlow:SetTexture(BBP.squareGreenGlow);
                     buff.PandemicGlow:SetDesaturated(true)
                     buff.PandemicGlow:SetVertexColor(1, 0, 0)
-                    if buff.Cooldown and buff.Cooldown:IsVisible() then
-                        buff.PandemicGlow:SetParent(buff.Cooldown)
-                    end
-                    if buff.isEnlarged then
-                        importantGlowOffset = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        if buff.PandemicGlow then
-                            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
-                            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
-                        end
-                    elseif buff.isCompacted then
-                        if buff.PandemicGlow then
-                            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
-                            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
-                        end
-                    elseif BetterBlizzPlatesDB.nameplateAuraSquare then
-                        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10);
-                        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10);
-                    elseif BetterBlizzPlatesDB.nameplateAuraTaller then
-                        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10.5, 8);
-                        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10.5, -8);
-                    else
-                        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -10.5, 7.5);
-                        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10.5, -7.5);
-                    end
+                end
+                -- if buff.Cooldown and buff.Cooldown:IsVisible() then
+                --     buff.PandemicGlow:SetParent(buff.Cooldown)
+                -- else
+                --     buff.PandemicGlow:SetParent(buff)
+                -- end
+                if buff.isEnlarged then
+                    importantGlowOffset = 22 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                    buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
+                    buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
+                elseif buff.isCompacted then
+                    buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -11, 15.5)
+                    buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 11, -15.5)
+                elseif BetterBlizzPlatesDB.nameplateAuraSquare then
+                    buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -22, 22);
+                    buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 22, -22);
+                elseif BetterBlizzPlatesDB.nameplateAuraTaller then
+                    buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -22, 17.5);
+                    buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 22, -17.5);
+                else
+                    buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -22.5, 15.5);
+                    buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 22.5, -15.5);
                 end
                 buff.isPandemicActive = true
                 buff.PandemicGlow:Show();
@@ -864,17 +862,17 @@ local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit)
 end
 
 
-local function SetPandemicGlow(buff, aura, isPandemic)
-    if aura.duration and buff and aura.expirationTime and isPandemic then
-        buff.isPandemic = true
-        buff.expirationTime = aura.expirationTime;
-        trackedBuffs[aura.auraInstanceID] = buff;
+local function SetPandemicGlow(aura, isPandemic)
+    if aura.duration and aura.expirationTime and isPandemic then
+        aura.isPandemic = true
+        aura.expirationTime = aura.expirationTime;
+        trackedBuffs[aura.auraInstanceID] = aura;
         StartCheckBuffsTimer();
     else
-        if buff.PandemicGlow then
-            buff.PandemicGlow:Hide()
+        if aura.PandemicGlow then
+            aura.PandemicGlow:Hide()
         end
-        buff.isPandemic = false
+        aura.isPandemic = false
     end
 end
 
@@ -1984,7 +1982,7 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
         end
     end
 
-    local function SetAuraGlows(auraIndex, isImportant, auraColor, isEnemyUnit)
+    local function SetAuraGlows(auraIndex, isImportant, auraColor, isEnemyUnit, isPandemic)
         local aura = frame.BuffFrame.auras[auraIndex]
 
         SetImportantGlow(aura, isPlayerUnit, isImportant, auraColor)
@@ -1992,6 +1990,8 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
         SetBlueBuffBorder(aura, isPlayerUnit, isEnemyUnit)
 
         SetPurgeGlow(aura, isPlayerUnit, isEnemyUnit)
+
+        SetPandemicGlow(aura, isPandemic)
 
         if hideNpAuraSwipe then
             if aura.Cooldown then
@@ -2047,7 +2047,7 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
 
             if ShouldShowBuff(unitID, auraInfo) then
                 UpdateAuraIcon(index, auraInfo)
-                SetAuraGlows(index, isImportant, auraColor, isEnemyUnit)
+                SetAuraGlows(index, isImportant, auraColor, isEnemyUnit, isPandemic)
                 index = index + 1
                 if index > MAX_AURAS then break end
             end

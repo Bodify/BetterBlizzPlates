@@ -3151,6 +3151,7 @@ local function HandleNamePlateRemoved(unit)
     if not frame then return end
 
     frame:SetScale(1)
+    frame:SetAlpha(1)
     frame.name:SetAlpha(1)
     if frame.HealthBarsContainer then
         frame.HealthBarsContainer:SetAlpha(1)

@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.5.9f
+## Cata
+### Bugfix:
+- Fixed aura Pandemic Glow setting. Completely forgot to add it to the cata version oops.
+
 # BetterBlizzPlates 1.5.9e
 ## The War Within
 ### Bugfix:
