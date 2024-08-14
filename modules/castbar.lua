@@ -326,7 +326,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
             local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
             if not isFriend then
                 for _, interruptSpellIDx in ipairs(interruptSpellIDs) do
-                    local start, duration = GetSpellCooldown(interruptSpellIDx)
+                    local start, duration = BBP.TWWGetSpellCooldown(interruptSpellIDx)
                     local cooldownRemaining = start + duration - GetTime()
                     local castRemaining = (endTime/1000) - GetTime()
 
