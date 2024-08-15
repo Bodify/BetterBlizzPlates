@@ -1,3 +1,16 @@
+# BetterBlizzPlates 1.6.0
+## The War Within
+### New stuff:
+- Blitz Indicator: Show flag/orb on top of nameplates in battlegrounds.
+- Hide Temp HP Loss setting (General)
+- Recolor Temp HP setting (Misc)
+### Bugfix:
+- Fix deprecated API call for castbar interrupt recolor
+
+## The War Within & Cata
+### New stuff:
+- Hide NPC: "Hide Neutral NPCs" setting, hides all non-target neutral npcs that are out of combat.
+
 # BetterBlizzPlates 1.5.9f
 ## Cata
 ### Bugfix:

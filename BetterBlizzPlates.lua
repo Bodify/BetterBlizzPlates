@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.5.9f"
+local addonUpdates = "1.6.0"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -111,6 +111,14 @@ local defaultSettings = {
     npBorderNeutralColorRGB = {1, 1, 0, 1},
     npBorderNpcColorRGB = {0, 0, 0, 1},
     npBorderNonTargetColorRGB = {0, 0, 0, 1},
+    -- Bg Indicator
+    bgIndicatorAnchor = "BOTTOM",
+    bgIndicatorScale = 1,
+    bgIndicatorXPos = 0,
+    bgIndicatorYPos = 0,
+    bgIndicatorEnemyOnly = true,
+    bgIndicatorShowOrbs = true,
+    bgIndicatorShowFlags = true,
     -- Arena Indicator
     arenaIndicatorTestMode = false,
     arenaIDScale = 1,
@@ -1066,6 +1074,7 @@ local function TurnOffTestModes()
     db.nameplateAuraTestMode = false
     db.partyPointerTestMode = false
     db.healthNumbersTestMode = false
+    db.bgIndicatorTestMode = false
 end
 
 -- Extracts NPC ID from GUID
@@ -1247,6 +1256,7 @@ local function InitializeNameplateSettings(frame)
             showNpcTitle = BetterBlizzPlatesDB.showNpcTitle,
             enableNpNonTargetAlpha = BetterBlizzPlatesDB.enableNpNonTargetAlpha,
             targetHighlightFix = BetterBlizzPlatesDB.targetHighlightFix,
+            bgIndicator = BetterBlizzPlatesDB.bgIndicator or BetterBlizzPlatesDB.bgIndicatorTestMode,
         }
         if frame.BetterBlizzPlates.config.changeHealthbarHeight then
             frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
@@ -1815,6 +1825,7 @@ function BBP.TestAllEnabledFeatures(option, value)
         "totemIndicator",
         "questIndicator",
         "partyPointer",
+        "bgIndicator",
     }
 
     -- Iterate over all features and update their test modes
@@ -2068,6 +2079,7 @@ function BBP.HideNPCs(frame, nameplate)
     local hideNPCPetsOnly = db.hideNPCPetsOnly
     local inBg = UnitInBattleground("player")
     local isPet = (UnitGUID(frame.displayedUnit) and select(6, strsplit("-", UnitGUID(frame.displayedUnit))) == "Pet")
+    local hideAllNeutral = db.hideNPCAllNeutral and info.isNeutral and not UnitAffectingCombat(frame.unit)
 
     if hideNPCArenaOnly and not inBg then
         return
@@ -2079,8 +2091,13 @@ function BBP.HideNPCs(frame, nameplate)
         return
     end
 
+    if hideAllNeutral and not UnitIsUnit(frame.displayedUnit, "target") then
+        BBP.HideNameplate(nameplate)
+        return
+    end
+
     if info.isFriend then
-        local hideNpcHpBar = BetterBlizzPlatesDB.friendlyHideHealthBarNpc
+        local hideNpcHpBar = db.friendlyHideHealthBarNpc
         if config.friendlyHideHealthBar and hideNpcHpBar then
             frame.HealthBarsContainer:SetAlpha(0)
             frame.selectionHighlight:SetAlpha(0)
@@ -2394,12 +2411,17 @@ local function UnitAuraColorEvent(self, event, ...)
     if unit:find("nameplate") then
         local nameplate, frame = BBP.GetSafeNameplate(unit)
         if not frame then return end
-        BBP.AuraColor(frame)
+        if BetterBlizzPlatesDB.auraColor then
+            BBP.AuraColor(frame)
+        end
+        if BetterBlizzPlatesDB.bgIndicator then
+            BBP.BgIndicator(frame)
+        end
     end
 end
 
 function BBP.CreateUnitAuraEventFrame()
-    if not BetterBlizzPlatesDB.auraColor or UnitAuraEventFrame then
+    if UnitAuraEventFrame then
         return
     end
     UnitAuraEventFrame = CreateFrame("Frame")
@@ -2924,7 +2946,6 @@ end
 
 local function ColorNameplateBorder(self, frame)
     if self.changing or self:IsForbidden() then return end
-    self.changing = true
 
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
@@ -2946,6 +2967,8 @@ local function ColorNameplateBorder(self, frame)
 
         config.nameplateBorderInitialized = true
     end
+
+    self.changing = true
 
     if info.isTarget and config.npBorderTargetColor then
         self:SetVertexColor(unpack(config.npBorderTargetColorRGB))
@@ -3262,6 +3285,10 @@ local function HandleNamePlateRemoved(unit)
         frame.fakeName:SetText("")
     end
 
+    if frame.bgIndicator then
+        frame.bgIndicator:Hide()
+    end
+
 end
 
 --#################################################################################################
@@ -3466,6 +3493,18 @@ local function HandleNamePlateAdded(unit)
     local showNameplateTargetText = BetterBlizzPlatesDB.showNameplateTargetText
     if showNameplateTargetText then
         BBP.UpdateNameplateTargetText(frame, frame.unit)
+    end
+
+
+    if config.bgIndicator then BBP.BgIndicator(frame) end
+
+    if BetterBlizzPlatesDB.hideTempHpLoss then
+        local tempHp = frame.HealthBarsContainer.TempMaxHealthLoss.TempMaxHealthLossTexture
+        tempHp:SetAlpha(0)
+    elseif BetterBlizzPlatesDB.recolorTempHpLoss then
+        local tempHp = frame.HealthBarsContainer.TempMaxHealthLoss.TempMaxHealthLossTexture
+        tempHp:SetVertexColor(1,0,0)
+        tempHp:SetBlendMode("ADD")
     end
 
     if config.enableNpNonTargetAlpha then BBP.NameplateTargetAlpha(frame) end

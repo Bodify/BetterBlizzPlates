@@ -23,6 +23,7 @@ modules\absorb.lua
 modules\classIcon.lua
 modules\partyPointer.lua
 modules\pet.lua
+modules\bgIndicator.lua
 modules\quest.lua
 modules\auras.lua
 modules\nahjProfile.lua

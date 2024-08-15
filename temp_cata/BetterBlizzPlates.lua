@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.5.9f"
+local addonUpdates = "1.6.0"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -2127,6 +2127,7 @@ function BBP.HideNPCs(frame, nameplate)
     local hideNPCPetsOnly = db.hideNPCPetsOnly
     local inBg = UnitInBattleground("player")
     local isPet = (UnitGUID(frame.displayedUnit) and select(6, strsplit("-", UnitGUID(frame.displayedUnit))) == "Pet")
+    local hideAllNeutral = db.hideNPCAllNeutral and info.isNeutral and UnitAffectingCombat(frame.unit)
 
     if hideNPCArenaOnly and not inBg then
         return
@@ -2138,8 +2139,13 @@ function BBP.HideNPCs(frame, nameplate)
         return
     end
 
+    if hideAllNeutral and not UnitIsUnit(frame.displayedUnit, "target") then
+        BBP.HideNameplate(nameplate)
+        return
+    end
+
     if info.isFriend then
-        local hideNpcHpBar = BetterBlizzPlatesDB.friendlyHideHealthBarNpc
+        local hideNpcHpBar = db.friendlyHideHealthBarNpc
         if config.friendlyHideHealthBar and hideNpcHpBar then
             frame.healthBar:SetAlpha(0)
             frame.selectionHighlight:SetAlpha(0)
