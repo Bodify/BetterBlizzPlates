@@ -10,6 +10,8 @@
     <Script file="libs\LibOpenRaid\LibOpenRaid.lua"/>
     <Include file="libs\LibDeflate\lib.xml"/>
     <Script file="libs\LibDeflate\LibDeflate.lua"/>
+    <Include file="libs\AceSerializer-3.0\AceSerializer-3.0.xml"/>
+    <Script file="libs\AceSerializer-3.0\AceSerializer-3.0.lua"/>
     <Include file="libs\LibSerialize\lib.xml"/>
     <Script file="libs\LibSerialize\LibSerialize.lua"/>
 <!--@end-non-debug@-->

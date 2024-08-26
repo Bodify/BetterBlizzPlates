@@ -26,7 +26,8 @@ modules\pet.lua
 modules\bgIndicator.lua
 modules\quest.lua
 modules\auras.lua
-modules\nahjProfile.lua
+modules\profiles.lua
+modules\importConvert.lua
 
 gui.lua
 BetterBlizzPlates.lua

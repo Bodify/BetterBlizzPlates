@@ -34,8 +34,6 @@ local UnitName = UnitName
 local UnitReaction = UnitReaction
 
 local useCustomCastbarTextureHooked = false
-local castIconHooked = false
-local useCustomCastbarTextureBigHook
 local classicFrames
 
 local interruptSpellIDs = {}
@@ -153,6 +151,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         castBar.Spark:SetSize(4, castBarHeight + 5)
         castBar.Text:SetScale(castBarTextScale)
         castBar.BorderShield:SetScale(borderShieldSize)
+        frame:GetParent():SetParent(WorldFrame)
         frame.castbarEmphasisActive = false
     end
 
@@ -377,6 +376,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                        (castEmphasis.id and spellID and castEmphasis.id == spellID) then
                         ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
                         frame.emphasizedCast = castEmphasis
+                        frame:GetParent():SetParent(BBP.OverlayFrame)
                     else
                         frame.emphasizedCast = nil
                     end

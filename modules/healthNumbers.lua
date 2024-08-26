@@ -39,11 +39,24 @@ function BBP.HealthNumbers(frame)
         config.healthNumbersCombined = BetterBlizzPlatesDB.healthNumbersCombined
         config.healthNumbersSwapped = BetterBlizzPlatesDB.healthNumbersSwapped
         config.healthNumbersTargetOnly = BetterBlizzPlatesDB.healthNumbersTargetOnly
+        config.healthNumbersPlayers = BetterBlizzPlatesDB.healthNumbersPlayers
+        config.healthNumbersNpcs = BetterBlizzPlatesDB.healthNumbersNpcs
 
         config.healthNumbersInitialized = true
     end
 
     local unit = frame.unit
+
+    local isPlayer = UnitIsPlayer(unit)
+    local hideHealthNumbers = (config.healthNumbersNpcs and not config.healthNumbersPlayers and isPlayer) or
+                             (config.healthNumbersPlayers and not config.healthNumbersNpcs and not isPlayer)
+
+    if hideHealthNumbers then
+        if frame.healthNumbers then
+            frame.healthNumbers:Hide()
+        end
+        return
+    end
 
     -- Hide health numbers if not the current target and the setting is enabled
     if config.healthNumbersTargetOnly and not UnitIsUnit(unit, "target") then

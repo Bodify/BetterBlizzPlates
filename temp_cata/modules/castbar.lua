@@ -140,6 +140,11 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     local castStart, castDuration
     local _
 
+    if frame.castbarEmphasisActive then
+        frame:GetParent():SetParent(WorldFrame)
+        frame.castbarEmphasisActive = false
+    end
+
     if UnitCastingInfo(unitToken) then
         casting = true
         spellName, _, _, castStart, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(unitToken)
@@ -285,6 +290,8 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         local castBarEmphasisHeightValue = BetterBlizzPlatesDB.castBarEmphasisHeightValue
         local castBarEmphasisSparkHeight = BetterBlizzPlatesDB.castBarEmphasisSparkHeight
 
+        frame.castbarEmphasisActive = true
+
         if castBarEmphasisColor and castEmphasis.entryColors then
             if castBarTexture then
                 castBarTexture:SetDesaturated(true)
@@ -391,6 +398,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                         ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
                         frame.emphasizedCast = castEmphasis
                         frame.CastBar.emphasizedCast = castEmphasis
+                        frame:GetParent():SetParent(BBP.OverlayFrame)
                     else
                         frame.emphasizedCast = nil
                     end

@@ -1,3 +1,22 @@
+# BetterBlizzPlates 1.6.1
+## The War Within & Cata
+### New stuff:
+- Plater NPC Color & Cast Color now importable in the Import/Export section.
+- Health Numbers: Added "Players" & "NPCs" settings.
+- Threat Color: "Only color during combat" (now on by default) and "Always on" settings.
+- Fade NPC: "Whitelist mode" and "Only in PvP" settings.
+
+## The War Within
+### Tweak:
+- Totem Indicator: Added priest hero talent "Shadow" npc that re-fears after 4 sec.
+- "Set CVars across all characters" now on by default on fresh installs.
+- Added Monk Stagger Personal Resource Bar to re-texturing if self mana is checked, might add separate setting for this in the future.
+- Hide NPC with whitelist mode on should now be inactive during Brawl: Comp Stomp.
+- Cast emphasis should now layer the casting nameplate on top of the others so it is more visible.
+- Added Shadow, Past Self and Stone Bulwark Totem to HideNPC Whitelist.
+### Bugfix:
+- Fix Color NPC not having priority over "Custom healthbar color" on new nameplates.
+
 # BetterBlizzPlates 1.6.0
 ## The War Within
 ### New stuff:

@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.0"
+local addonUpdates = "1.6.1"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -26,11 +26,13 @@ local IsInInstance = IsInInstance
 local IsActiveBattlefieldArena = IsActiveBattlefieldArena
 
 BBP.variablesLoaded = false
+BBP.OverlayFrame = CreateFrame("Frame")
 
 local defaultSettings = {
     version = addonVersion,
     updates = "empty",
     wasOnLoadingScreen = true,
+    setCVarAcrossAllCharacters = true,
     -- General
     removeRealmNames = true,
     hideNameplateAuras = false,
@@ -69,6 +71,9 @@ local defaultSettings = {
     changeHealthbarHeight = false,
     hpHeightEnemy = 4 * tonumber(GetCVar("NamePlateVerticalScale")),
     hpHeightFriendly = 4 * tonumber(GetCVar("NamePlateVerticalScale")),
+    --health numbers
+    healthNumbersPlayers = true,
+    healthNumbersNpcs = true,
     healthNumbers = false,
     healthNumbersAnchor = "CENTER",
     healthNumbersXPos = 0,
@@ -261,6 +266,7 @@ local defaultSettings = {
         [61245] =   { name = "Capacitor Totem", icon = C_Spell.GetSpellTexture(192058),                 hideIcon = false, size = 30, duration = 2,  color = {1, 0.69, 0}, important = true },
         [105451] =  { name = "Counterstrike Totem", icon = C_Spell.GetSpellTexture(204331),             hideIcon = false, size = 30, duration = 15, color = {1, 0.27, 0.59}, important = true },
         [101398] =  { name = "Psyfiend", icon = C_Spell.GetSpellTexture(199824),                        hideIcon = false, size = 35, duration = 12, color = {0.49, 0, 1}, important = true },
+        [225672] =  { name = "Shadow", icon = C_Spell.GetSpellTexture(8122),                            hideIcon = false, size = 35, duration = 4,  color = {0.49, 0, 1}, important = true },
         [100943] =  { name = "Earthen Wall Totem", icon = C_Spell.GetSpellTexture(198838),              hideIcon = false, size = 30, duration = 18, color = {0.78, 0.49, 0.35}, important = true },
         [107100] =  { name = "Observer", icon = C_Spell.GetSpellTexture(112869),                        hideIcon = false, size = 30, duration = 20, color = {1, 0.69, 0}, important = true },
         [135002] =  { name = "Tyrant", icon = C_Spell.GetSpellTexture(265187),                          hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
@@ -482,7 +488,6 @@ local defaultSettings = {
         {name = "War Banner", id = 119052, comment = ""},
         {name = "Capacitor Totem", id = 61245, comment = ""},
         {name = "Counterstrike Totem", id = 105451, comment = ""},
-        {name = "Fel Obelisk (Warlock)", id = 179193, comment = ""},
         {name = "Psyfiend (Spriest)", id = 101398, comment = ""},
         {name = "Earthen Wall Totem", id = 100943, comment = ""},
         {name = "Observer (Warlock)", id = 107100, comment = ""},
@@ -494,9 +499,8 @@ local defaultSettings = {
         {name = "Wind Rush Totem", id = 97285, comment = ""},
         {name = "Earthgrab Totem", id = 60561, comment = ""},
         {name = "Earthbind Totem", id = 2630, comment = ""},
-        {name = "Skyfury Totem", id = 105427, comment = ""},
+        {name = "Totem of Wrath", id = 105427, comment = ""},
         {name = "Liquid Magma Totem", id = 97369, comment = ""},
-        {name = "Windfury Totem", id = 6112, comment = ""},
         {name = "Mindbender", id = 62982, comment = ""},
         {name = "Static Field Totem", id = 179867, comment = ""},
         {name = "Stoneskin Totem", id = 194117, comment = ""},
@@ -506,6 +510,43 @@ local defaultSettings = {
         {name = "Felhunter (Warlock)", id = 417, comment = ""},
         {name = "Succubus (Warlock)", id = 1863, comment = ""},
         {name = "Infernal (Warlock)", id = 89, comment = ""},
+        {name = "Stone Bulwark Totem", id = 59712, comment = ""},
+        {name = "Shadow (Priest Re-Fear)", id = 225672, comment = ""},
+    },
+    fadeOutNPCsWhitelist = {
+        {name = "Hunter Pet (they all have same ID)", id = 165189, comment = ""},
+        {name = "Healing Tide Totem", id = 59764, comment = ""},
+        {name = "Grounding Totem", id = 5925, comment = ""},
+        {name = "Spirit Link Totem", id = 53006, comment = ""},
+        {name = "Tremor Totem", id = 5913, comment = ""},
+        {name = "Ancestral Protection Totem", id = 104818, comment = ""},
+        {name = "War Banner", id = 119052, comment = ""},
+        {name = "Capacitor Totem", id = 61245, comment = ""},
+        {name = "Counterstrike Totem", id = 105451, comment = ""},
+        {name = "Psyfiend (Spriest)", id = 101398, comment = ""},
+        {name = "Earthen Wall Totem", id = 100943, comment = ""},
+        {name = "Observer (Warlock)", id = 107100, comment = ""},
+        {name = "Tyrant (Warlock)", id = 135002, comment = ""},
+        {name = "Guardian Queen (prot pala)", id = 114565, comment = ""},
+        {name = "Healing Stream Totem", id = 3527, comment = ""},
+        {name = "Cloudburst Totem", id = 78001, comment = ""},
+        {name = "Mana Tide Totem", id = 10467, comment = ""},
+        {name = "Wind Rush Totem", id = 97285, comment = ""},
+        {name = "Earthgrab Totem", id = 60561, comment = ""},
+        {name = "Earthbind Totem", id = 2630, comment = ""},
+        {name = "Totem of Wrath", id = 105427, comment = ""},
+        {name = "Liquid Magma Totem", id = 97369, comment = ""},
+        {name = "Mindbender", id = 62982, comment = ""},
+        {name = "Static Field Totem", id = 179867, comment = ""},
+        {name = "Stoneskin Totem", id = 194117, comment = ""},
+        {name = "Poison Cleansing Totem", id = 5923, comment = ""},
+        {name = "Tranquil Air Totem", id = 194118, comment = ""},
+        {name = "Felguard (Demo Pet)", id = 17252, comment = ""},
+        {name = "Felhunter (Warlock)", id = 417, comment = ""},
+        {name = "Succubus (Warlock)", id = 1863, comment = ""},
+        {name = "Infernal (Warlock)", id = 89, comment = ""},
+        {name = "Stone Bulwark Totem", id = 59712, comment = ""},
+        {name = "Shadow (Priest Re-Fear)", id = 225672, comment = ""},
     },
 
     hideCastbarList = {},
@@ -1325,6 +1366,9 @@ function BBP.ApplyCustomTextureToNameplate(frame)
             end
             if config.useCustomTextureForSelfMana then
                 ClassNameplateManaBarFrame:SetStatusBarTexture(config.customTextureSelfMana)
+                if ClassNameplateBrewmasterBarFrame then
+                    ClassNameplateBrewmasterBarFrame:SetStatusBarTexture(config.customTextureSelfMana)
+                end
             elseif BBP.needsUpdate then
                 ClassNameplateManaBarFrame:SetStatusBarTexture(defaultTex)
             end
@@ -1998,25 +2042,32 @@ end
 --##################################################################################################
 -- Fade out npcs from list
 function BBP.FadeOutNPCs(frame)
-    if not BetterBlizzPlatesDB.enableNpNonTargetAlpha then
+    local db = BetterBlizzPlatesDB
+    if not db.enableNpNonTargetAlpha then
         frame:SetAlpha(1)
     end
-    -- Skip if the unit is a player
+
+    -- Initialize config and info if not already done
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
     if not info then return end
 
-    if info.isPlayer then return end
-    if not info.unitGUID then return end
+    -- Skip if the unit is a player or doesn't have a valid GUID
+    if info.isPlayer or not info.unitGUID then return end
+
+    if db.fadeNPCPvPOnly and not BBP.isInPvP then
+        return
+    end
 
     local npcID = select(6, strsplit("-", info.unitGUID))
     local npcName = info.name
 
     if not config.fadeAllButTarget or BBP.needsUpdate then
-        config.fadeOutNPCsAlpha = BetterBlizzPlatesDB.fadeOutNPCsAlpha
-        config.fadeAllButTarget = BetterBlizzPlatesDB.fadeAllButTarget
+        config.fadeOutNPCsAlpha = db.fadeOutNPCsAlpha
+        config.fadeAllButTarget = db.fadeAllButTarget
     end
 
+    -- Handle fade out logic when target exists and fadeAllButTarget is enabled
     if config.fadeAllButTarget then
         if UnitExists("target") then
             if not info.isTarget and not info.isPlayer then
@@ -2030,13 +2081,16 @@ function BBP.FadeOutNPCs(frame)
         return
     end
 
-    -- Convert npcName to lowercase for case insensitive comparison
+    -- Convert npcName to lowercase for case-insensitive comparison
     local lowerCaseNpcName = strlower(npcName)
+
+    -- Get the whitelist mode flag and appropriate NPC list
+    local fadeOutNPCWhitelistOn = db.fadeOutNPCWhitelistOn
+    local npcListToCheck = fadeOutNPCWhitelistOn and db.fadeOutNPCsWhitelist or db.fadeOutNPCsList
 
     -- Check if the NPC is in the list by ID or name (case insensitive)
     local inList = false
-    local fadeOutNPCsList = BetterBlizzPlatesDB.fadeOutNPCsList
-    for _, npc in ipairs(fadeOutNPCsList) do
+    for _, npc in ipairs(npcListToCheck) do
         if npc.id == tonumber(npcID) or (npc.id and npc.id == tonumber(npcID)) then
             inList = true
             break
@@ -2049,10 +2103,20 @@ function BBP.FadeOutNPCs(frame)
     -- Check if the unit is the current target
     if info.isTarget then
         frame:SetAlpha(1)
-    elseif inList then
-        frame:SetAlpha(config.fadeOutNPCsAlpha)
+    elseif fadeOutNPCWhitelistOn then
+        -- If whitelist mode is on, fade out if not in the whitelist
+        if inList then
+            frame:SetAlpha(1)
+        else
+            frame:SetAlpha(config.fadeOutNPCsAlpha)
+        end
     else
-        frame:SetAlpha(1)
+        -- If not in whitelist mode, fade out if in the list
+        if inList then
+            frame:SetAlpha(config.fadeOutNPCsAlpha)
+        else
+            frame:SetAlpha(1)
+        end
     end
 end
 
@@ -2077,13 +2141,15 @@ function BBP.HideNPCs(frame, nameplate)
     local hideNPCArenaOnly = db.hideNPCArenaOnly
     local hideNPCWhitelistOn = db.hideNPCWhitelistOn
     local hideNPCPetsOnly = db.hideNPCPetsOnly
-    local inBg = UnitInBattleground("player")
+    local inBg = BBP.isInPvP
     local isPet = (UnitGUID(frame.displayedUnit) and select(6, strsplit("-", UnitGUID(frame.displayedUnit))) == "Pet")
     local hideAllNeutral = db.hideNPCAllNeutral and info.isNeutral and not UnitAffectingCombat(frame.unit)
 
     if hideNPCArenaOnly and not inBg then
         return
     end
+
+    if BBP.IsInCompStomp then return end
 
     -- Skip if the unit is a player
     if info.isPlayer then
@@ -2248,41 +2314,39 @@ local function ShowLastNameOnlyNpc(frame)
     end
 end
 
-function BBP.ColorThreatForTank(frame)
+function BBP.ColorThreat(frame)
     if not frame or not frame.unit then return end
 
-    local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
-    local r, g, b = unpack(BetterBlizzPlatesDB.tankNoAggroColorRGB)
+    local combatOnly = BetterBlizzPlatesDB.enemyColorThreatCombatOnly and not UnitAffectingCombat(frame.unit)
+    if combatOnly then return end
 
-    if ( isTanking and threatStatus ) then
-        if ( threatStatus >= 3 ) then
-            r, g, b = unpack(BetterBlizzPlatesDB.tankFullAggroColorRGB)
-        else
-            -- targets me, but losing aggro
+    local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
+    local r, g, b
+
+    if BBP.isRoleTank then
+        r, g, b = unpack(BetterBlizzPlatesDB.tankNoAggroColorRGB)
+
+        if ( isTanking and threatStatus ) then
+            if ( threatStatus >= 3 ) then
+                r, g, b = unpack(BetterBlizzPlatesDB.tankFullAggroColorRGB)
+            else
+                -- targets me, but losing aggro
+                r, g, b = GetThreatStatusColor(threatStatus)
+            end
+        end
+    else
+        r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
+
+        if ( isTanking ) then
+            r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB)
+        elseif ( threatStatus and threatStatus > 0 ) then
+            -- about to pull aggro
             r, g, b = GetThreatStatusColor(threatStatus)
         end
     end
 
     frame.healthBar:SetStatusBarColor(r, g, b)
 end
-
-function BBP.ColorThreatForHealerOrDps(frame)
-    if not frame or not frame.unit then return end
-
-    local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
-    local r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
-
-    if ( isTanking ) then
-        r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB)
-    elseif ( threatStatus and threatStatus > 0 ) then
-        -- about to pull aggro
-        r, g, b = GetThreatStatusColor(threatStatus)
-    end
-
-    frame.healthBar:SetStatusBarColor(r, g, b)
-end
-
-
 
 --################################################################################################
 -- Color NPCs
@@ -2469,12 +2533,8 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         ColorNameplateByReaction(frame)
     end
 
-    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) and not info.isSelf then
-        if ( BBP.isRoleTank ) then
-            BBP.ColorThreatForTank(frame)
-        else
-            BBP.ColorThreatForHealerOrDps(frame)
-        end
+    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) and not info.isSelf then
+        BBP.ColorThreat(frame)
     end
 
     if config.colorNPC then--and config.npcHealthbarColor then --bodify need npc check here since it can run before np added
@@ -2639,12 +2699,8 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 
-    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) and not info.isSelf then
-        if ( BBP.isRoleTank ) then
-            BBP.ColorThreatForTank(frame)
-        else
-            BBP.ColorThreatForHealerOrDps(frame)
-        end
+    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) and not info.isSelf then
+        BBP.ColorThreat(frame)
     end
 
     if (config.focusTargetIndicator and config.focusTargetIndicatorColorNameplate and info.isFocus) or config.focusTargetIndicatorTestMode then
@@ -3585,11 +3641,11 @@ local function HandleNamePlateAdded(unit)
     -- Hide NPCs from list if enabled
     if config.hideNPC then BBP.HideNPCs(frame, nameplate) end
 
-    -- Color NPC
-    if config.colorNPC then BBP.ColorNpcHealthbar(frame) end
-
     -- Color healthbar by reaction
     if config.friendlyHealthBarColor or config.enemyHealthBarColor then ColorNameplateByReaction(frame) end --isSelf skip
+
+    -- Color NPC
+    if config.colorNPC then BBP.ColorNpcHealthbar(frame) end
 
     -- Show main hunter/lock pet icon
     if config.petIndicator then BBP.PetIndicator(frame) end
@@ -4047,6 +4103,16 @@ local function setTrue(table, member)
     )
 end
 
+local function IsInBrawlCompStomp()
+    if C_PvP.IsInBrawl() then
+        local brawlInfo = C_PvP.GetActiveBrawlInfo()
+        if brawlInfo and (brawlInfo.name and brawlInfo.name == "Brawl: Comp Stomp") then
+            return true
+        end
+    end
+    return false
+end
+
 -- Function to update the instance status
 local function UpdateInstanceStatus()
     local inInstance, instanceType = IsInInstance()
@@ -4054,6 +4120,7 @@ local function UpdateInstanceStatus()
     BBP.isInArena = inInstance and (instanceType == "arena")
     BBP.isInBg = inInstance and (instanceType == "pvp")
     BBP.isInPvP = BBP.isInBg or BBP.isInArena
+    BBP.IsInCompStomp = IsInBrawlCompStomp()
 end
 
 -- Function to update the current class role
@@ -4069,17 +4136,13 @@ ClassRoleChecker:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 ClassRoleChecker:SetScript("OnEvent", UpdateClassRoleStatus)
 
 local function ThreatSituationUpdate(self, event)
-    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) then
+    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
         for _, nameplate in pairs(C_NamePlate.GetNamePlates(issecure())) do
             local frame = nameplate.UnitFrame
             if UnitIsUnit(frame.unit, "player") then return end
             local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
             if config.totemColorRGB then return end
-            if ( BBP.isRoleTank ) then
-                BBP.ColorThreatForTank(frame)
-            else
-                BBP.ColorThreatForHealerOrDps(frame)
-            end
+            BBP.ColorThreat(frame)
         end
     end
 end
@@ -4417,6 +4480,35 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 BetterBlizzPlatesDB.totemIndicatorNpcList[179193] = nil --fel obelisk removed
                 BetterBlizzPlatesDB.totemIndicatorNpcList[6112] = nil --windfury totem removed
                 BetterBlizzPlatesDB.totemListUpdateTWW1 = true
+            end
+
+            if not BetterBlizzPlatesDB.totemListUpdateTWW2 then
+                if not BetterBlizzPlatesDB.totemIndicatorNpcList[225672] then
+                    BetterBlizzPlatesDB.totemIndicatorNpcList[225672] = defaultSettings.totemIndicatorNpcList[225672]
+                end
+                local entriesToCheck = {
+                    {name = "Shadow (Priest Re-Fear)", id = 225672, comment = ""},
+                    {name = "Stone Bulwark Totem", id = 59712, comment = ""},
+                    {name = "Past Self (Evoker)", id = 185800, comment = ""}
+                }
+
+                for _, newEntry in ipairs(entriesToCheck) do
+                    local entryExists = false
+
+                    -- Check if the entry exists in hideNPCsWhitelist
+                    for _, existingEntry in ipairs(BetterBlizzPlatesDB.hideNPCsWhitelist) do
+                        if existingEntry.id == newEntry.id then
+                            entryExists = true
+                            break
+                        end
+                    end
+
+                    -- If the entry does not exist, add it to the list
+                    if not entryExists then
+                        table.insert(BetterBlizzPlatesDB.hideNPCsWhitelist, newEntry)
+                    end
+                end
+                BetterBlizzPlatesDB.totemListUpdateTWW2 = true
             end
 
             if not BetterBlizzPlatesDB.auraWhitelistColorsUpdated then

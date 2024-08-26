@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.0"
+local addonUpdates = "1.6.1"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -26,6 +26,7 @@ local IsInInstance = IsInInstance
 local IsActiveBattlefieldArena = IsActiveBattlefieldArena
 
 BBP.variablesLoaded = false
+BBP.OverlayFrame = CreateFrame("Frame")
 
 local defaultSettings = {
     version = addonVersion,
@@ -71,6 +72,8 @@ local defaultSettings = {
     changeHealthbarHeight = false,
     hpHeightEnemy = 9,--4 * tonumber(GetCVar("NamePlateVerticalScale")),
     hpHeightFriendly = 9,--4 * tonumber(GetCVar("NamePlateVerticalScale")),
+    healthNumbersPlayers = true,
+    healthNumbersNpcs = true,
     healthNumbersAnchor = "CENTER",
     healthNumbersXPos = 0,
     healthNumbersYPos = 0,
@@ -471,6 +474,34 @@ local defaultSettings = {
         {name = "Wild Imp (Warlock)", id = 143622, comment = ""},
     },
     hideNPCsWhitelist = {
+        {name = "Healing Stream Totem", id = 3527, comment = ""},
+        {name = "Grounding Totem", id = 5925, comment = ""},
+        {name = "Spirit Link Totem", id = 53006, comment = ""},
+        {name = "Tremor Totem", id = 5913, comment = ""},
+        {name = "Ebon Gargoyle", id = 27829, comment = ""},
+        {name = "Mana Tide Totem", id = 10467, comment = ""},
+        {name = "Shadowfiend", id = 19668, comment = ""},
+        {name = "Earth Elemental Totem", id = 15430, comment = ""},
+        {name = "Fire Elemental Totem", id = 15439, comment = ""},
+        {name = "Greater Fire Elemental", id = 15438, comment = ""},
+        {name = "Greater Earth Elemental", id = 15352, comment = ""},
+        {name = "Earthbind Totem", id = 2630, comment = ""},
+        {name = "Stoneclaw Totem", id = 3579, comment = ""},
+        {name = "Mana Spring Totem", id = 3573, comment = ""},
+        {name = "Tranquil Mind", id = 47069, comment = ""},
+        {name = "Windfury Totem", id = 6112, comment = ""},
+        {name = "Wrath of Air", id = 15447, comment = ""},
+        {name = "Strength of Earth", id = 5874, comment = ""},
+        {name = "Magma Totem", id = 5929, comment = ""},
+        {name = "Searing Totem", id = 2523, comment = ""},
+        {name = "Flametongue Totem", id = 5950, comment = ""},
+        {name = "Stoneskin Totem", id = 5873, comment = ""},
+        {name = "Elemental Resistance Totem", id = 5927, comment = ""},
+        {name = "Water Elemental", id = 510, comment = ""},
+        {name = "Death Knight Pet", id = 26125, comment = ""},
+    },
+
+    fadeOutNPCsWhitelist = {
         {name = "Healing Stream Totem", id = 3527, comment = ""},
         {name = "Grounding Totem", id = 5925, comment = ""},
         {name = "Spirit Link Totem", id = 53006, comment = ""},
@@ -2125,7 +2156,7 @@ function BBP.HideNPCs(frame, nameplate)
     local hideNPCArenaOnly = db.hideNPCArenaOnly
     local hideNPCWhitelistOn = db.hideNPCWhitelistOn
     local hideNPCPetsOnly = db.hideNPCPetsOnly
-    local inBg = UnitInBattleground("player")
+    local inBg = BBP.isInPvP
     local isPet = (UnitGUID(frame.displayedUnit) and select(6, strsplit("-", UnitGUID(frame.displayedUnit))) == "Pet")
     local hideAllNeutral = db.hideNPCAllNeutral and info.isNeutral and UnitAffectingCombat(frame.unit)
 
@@ -2296,41 +2327,40 @@ local function ShowLastNameOnlyNpc(frame)
     end
 end
 
-
-function BBP.ColorThreatForTank(frame)
+function BBP.ColorThreat(frame)
     if not frame or not frame.unit then return end
 
-    local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
-    local r, g, b = unpack(BetterBlizzPlatesDB.tankNoAggroColorRGB)
+    local combatOnly = BetterBlizzPlatesDB.enemyColorThreatCombatOnly and not UnitAffectingCombat(frame.unit)
+    if combatOnly then return end
+    if UnitIsPlayer(frame.unit) then return end
 
-    if ( isTanking and threatStatus ) then
-        if ( threatStatus >= 3 ) then
-            r, g, b = unpack(BetterBlizzPlatesDB.tankFullAggroColorRGB)
-        else
-            -- targets me, but losing aggro
+    local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
+    local r, g, b
+
+    if BBP.isRoleTank then
+        r, g, b = unpack(BetterBlizzPlatesDB.tankNoAggroColorRGB)
+
+        if ( isTanking and threatStatus ) then
+            if ( threatStatus >= 3 ) then
+                r, g, b = unpack(BetterBlizzPlatesDB.tankFullAggroColorRGB)
+            else
+                -- targets me, but losing aggro
+                r, g, b = GetThreatStatusColor(threatStatus)
+            end
+        end
+    else
+        r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
+
+        if ( isTanking ) then
+            r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB)
+        elseif ( threatStatus and threatStatus > 0 ) then
+            -- about to pull aggro
             r, g, b = GetThreatStatusColor(threatStatus)
         end
     end
 
     frame.healthBar:SetStatusBarColor(r, g, b)
 end
-
-function BBP.ColorThreatForHealerOrDps(frame)
-    if not frame or not frame.unit then return end
-
-    local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
-    local r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
-
-    if ( isTanking ) then
-        r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB)
-    elseif ( threatStatus and threatStatus > 0 ) then
-        -- about to pull aggro
-        r, g, b = GetThreatStatusColor(threatStatus)
-    end
-
-    frame.healthBar:SetStatusBarColor(r, g, b)
-end
-
 
 
 --################################################################################################
@@ -3228,12 +3258,8 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         ColorNameplateByReaction(frame)
     end
 
-    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) then
-        if ( BBP.isRoleTank ) then
-            BBP.ColorThreatForTank(frame)
-        else
-            BBP.ColorThreatForHealerOrDps(frame)
-        end
+    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
+        BBP.ColorThreat(frame)
     end
 
     if config.colorNPC then--and config.npcHealthbarColor then --bodify need npc check here since it can run before np added
@@ -3385,12 +3411,8 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         ColorNameplateByReaction(frame)
     end
 
-    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) then
-        if ( BBP.isRoleTank ) then
-            BBP.ColorThreatForTank(frame)
-        else
-            BBP.ColorThreatForHealerOrDps(frame)
-        end
+    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
+        BBP.ColorThreat(frame)
     end
 
     if config.colorNPC and config.npcHealthbarColor then
@@ -4370,11 +4392,11 @@ local function HandleNamePlateAdded(unit)
     -- Hide NPCs from list if enabled
     if config.hideNPC then BBP.HideNPCs(frame, nameplate) end
 
-    -- Color NPC
-    if config.colorNPC then BBP.ColorNpcHealthbar(frame) end
-
     -- Color healthbar by reaction
     if config.friendlyHealthBarColor or config.enemyHealthBarColor then ColorNameplateByReaction(frame) end --isSelf skip
+
+    -- Color NPC
+    if config.colorNPC then BBP.ColorNpcHealthbar(frame) end
 
     -- Show main hunter/lock pet icon
     if config.petIndicator then BBP.PetIndicator(frame) end
@@ -4975,14 +4997,10 @@ ClassRoleChecker:RegisterEvent("PLAYER_TALENT_UPDATE")
 ClassRoleChecker:SetScript("OnEvent", UpdateClassRoleStatus)
 
 local function ThreatSituationUpdate(self, event)
-    if ( BBP.isInPvE and BetterBlizzPlatesDB.enemyColorThreat ) then
+    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
         for _, nameplate in pairs(C_NamePlate.GetNamePlates(issecure())) do
             local frame = nameplate.UnitFrame
-            if ( BBP.isRoleTank ) then
-                BBP.ColorThreatForTank(frame)
-            else
-                BBP.ColorThreatForHealerOrDps(frame)
-            end
+            BBP.ColorThreat(frame)
         end
     end
 end

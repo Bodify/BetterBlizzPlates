@@ -11,6 +11,8 @@ local npcEditFrame = nil
 
 local LibDeflate = LibStub("LibDeflate")
 local LibSerialize = LibStub("LibSerialize")
+local LibAceSerializer = LibStub("AceSerializer-3.0")
+local titleText = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\n"
 
 local function ExportProfile(profileTable, dataType)
     -- Include a dataType in the table being serialized
@@ -24,25 +26,63 @@ local function ExportProfile(profileTable, dataType)
     return "!BBP" .. encoded .. "!BBP"
 end
 
-local function ImportProfile(encodedString, expectedDataType)
-    if encodedString:sub(1, 4) == "!BBP" and encodedString:sub(-4) == "!BBP" then
-        encodedString = encodedString:sub(5, -5) -- Remove both prefix and suffix
-    else
-        return nil, "Invalid format: Prefix or suffix not found."
+local function ImportOtherProfile(encodedString, expectedDataType)
+    -- Decode the data
+    local compressed = LibDeflate:DecodeForPrint(encodedString)
+    if not compressed then
+        return nil, "Error decoding the data."
     end
 
-    local compressed = LibDeflate:DecodeForPrint(encodedString)
+    -- Decompress the data
     local serialized, decompressMsg = LibDeflate:DecompressDeflate(compressed)
     if not serialized then
         return nil, "Error decompressing: " .. tostring(decompressMsg)
     end
 
-    local success, importTable = LibSerialize:Deserialize(serialized)
-    if not success or importTable.dataType ~= expectedDataType then
-        return nil, "Error deserializing or data type mismatch"
+    -- Deserialize the data using LibAceSerializer
+    local success, importTable = LibAceSerializer:Deserialize(serialized)
+    if not success then
+        return nil, "Error deserializing the data."
     end
 
-    return importTable.data, nil
+    -- Store the imported data in the DB
+    if expectedDataType == "colorNpcList" then
+        BBP.MergeNpcColorToBBP(importTable)
+    elseif expectedDataType == "castEmphasisList" then
+        BBP.MergeCastColorToBBP(importTable)
+    end
+    return true, nil
+end
+
+function BBP.ImportProfile(encodedString, expectedDataType)
+    -- Check if the string starts and ends with !BBP
+    if encodedString:sub(1, 4) == "!BBP" and encodedString:sub(-4) == "!BBP" then
+        encodedString = encodedString:sub(5, -5) -- Remove both prefix and suffix
+
+        -- Proceed with the usual import process for your native format
+        local compressed = LibDeflate:DecodeForPrint(encodedString)
+        local serialized, decompressMsg = LibDeflate:DecompressDeflate(compressed)
+        if not serialized then
+            return nil, "Error decompressing: " .. tostring(decompressMsg)
+        end
+
+        local success, importTable = LibSerialize:Deserialize(serialized)
+        if not success or importTable.dataType ~= expectedDataType then
+            return nil, "Error deserializing or data type mismatch"
+        end
+
+        return importTable.data, nil
+    else
+        -- If no !BBP, assume it's an other import and try to process it
+        local success, importTable = ImportOtherProfile(encodedString, expectedDataType)
+
+        -- Check if the import was successful and the expected data type is 'colorNpcList'
+        if success and (expectedDataType == "colorNpcList" or expectedDataType == "castEmphasisList") then
+            return nil, nil, true
+        else
+            return nil, "Invalid format or the imported data does not match the expected type."
+        end
+    end
 end
 
 local function deepMergeTables(destination, source)
@@ -86,7 +126,7 @@ local modesParty = {
     ["Off"] = "partyIndicatorModeOff",
 }
 StaticPopupDialogs["BBP_CONFIRM_RELOAD"] = {
-    text = "This requires a reload. Reload now?",
+    text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nThis requires a reload. Reload now?",
     button1 = "Yes",
     button2 = "No",
     OnAccept = function()
@@ -98,13 +138,39 @@ StaticPopupDialogs["BBP_CONFIRM_RELOAD"] = {
     hideOnEscape = true,
 }
 
+StaticPopupDialogs["BBP_CONFIRM_WIPE_NPCCOLOR"] = {
+    text = titleText.."This will delete the entire npc color list and reload.\n\nAre you sure?",
+    button1 = "Yes",
+    button2 = "No",
+    OnAccept = function()
+        BetterBlizzPlatesDB.colorNpcList = {}
+        BetterBlizzPlatesDB.reopenOptions = true
+        ReloadUI()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+}
+
+StaticPopupDialogs["BBP_CONFIRM_WIPE_CASTEMPHASIS"] = {
+    text = titleText.."This will delete the entire cast list and reload.\n\nAre you sure?",
+    button1 = "Yes",
+    button2 = "No",
+    OnAccept = function()
+        BetterBlizzPlatesDB.castEmphasisList = {}
+        ReloadUI()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+}
+
 StaticPopupDialogs["BBP_CONFIRM_MAGNUSZ_PROFILE"] = {
-    text = "This action will modify all settings to Magnusz's profile and reload the UI.\n\nYour existing blacklists and whitelists will be retained, with Magnusz's additional entries.\n\nAre you sure you want to continue?",
+    text = titleText.."This action will delete all settings and apply Magnusz's profile and reload the UI.\n\nAre you sure you want to continue?",
     button1 = "Yes",
     button2 = "No",
     OnAccept = function()
         BBP.MagnuszProfile()
-        ReloadUI()
     end,
     timeout = 0,
     whileDead = true,
@@ -112,12 +178,11 @@ StaticPopupDialogs["BBP_CONFIRM_MAGNUSZ_PROFILE"] = {
 }
 
 StaticPopupDialogs["BBP_CONFIRM_NAHJ_PROFILE"] = {
-    text = "This action will modify all settings to Nahj's profile and reload the UI.\n\nYour existing blacklists and whitelists will be retained, with Nahj's additional entries.\n\n|cff32f795NOTE: Nahj has nameplate debuffs turned off. To enable them go to Nameplate Auras after setting profile and check Show DEBUFFS.|r\n\nAre you sure you want to continue?",
+    text = titleText.."This action will delete all settings and apply Nahj's profile and reload the UI.\n\n|cff32f795NOTE: Nahj only shows his own auras on nameplates and has them hidden on npcs.\n\nTo enable more default settings go to Nameplate Auras after setting profile and check \"Blizzard Default Filter\" under Show DEBUFFS on Enemy Nameplates and uncheck \"Hide auras on NPCs\".|r\n\nAre you sure you want to continue?",
     button1 = "Yes",
     button2 = "No",
     OnAccept = function()
         BBP.NahjProfile()
-        ReloadUI()
     end,
     timeout = 0,
     whileDead = true,
@@ -125,7 +190,7 @@ StaticPopupDialogs["BBP_CONFIRM_NAHJ_PROFILE"] = {
 }
 
 StaticPopupDialogs["BBP_TOTEMLIST_RESET"] = {
-    text = "This will delete the entire totem list and reset it back to its default state.\nA reload will be neccesary.\n\nAre you sure you want to continue?",
+    text = titleText.."This will delete the entire totem list and reset it back to its default state.\nA reload will be neccesary.\n\nAre you sure you want to continue?",
     button1 = "Yes",
     button2 = "No",
     OnAccept = function()
@@ -1424,6 +1489,12 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
     titleText:SetPoint("BOTTOM", frame, "TOP", 0, 0)
     titleText:SetText(title)
 
+    if title == "Cast Emphasis List" then
+        CreateTooltipTwo(titleText, "Supports Plater cast color import as well.")
+    elseif title == "Color NPC List" then
+        CreateTooltipTwo(titleText, "Supports Plater NPC Color import as well.")
+    end
+
     -- Export EditBox
     local exportBox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
     exportBox:SetSize(100, 20)
@@ -1475,21 +1546,25 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
 
     importBtn:SetScript("OnClick", function()
         local importString = importBox:GetText()
-        local profileData, errorMessage = ImportProfile(importString, tableName)
+        local profileData, errorMessage, bypass = BBP.ImportProfile(importString, tableName)
         if errorMessage then
             print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Error importing " .. title .. ":", errorMessage)
         else
-            if keepOldCheckbox and keepOldCheckbox:GetChecked() then
-                -- Perform a deep merge if "Keep Old" is checked
-                deepMergeTables(dataTable, profileData)
+            if bypass then
+                -- bypass
             else
-                -- Replace existing data with imported data
-                --for k in pairs(dataTable) do dataTable[k] = nil end -- Clear current table
-                for k, v in pairs(profileData) do
-                    dataTable[k] = v -- Populate with new data
+                if keepOldCheckbox and keepOldCheckbox:GetChecked() then
+                    -- Perform a deep merge if "Keep Old" is checked
+                    deepMergeTables(dataTable, profileData)
+                else
+                    -- Replace existing data with imported data
+                    for k in pairs(dataTable) do dataTable[k] = nil end -- Clear current table
+                    for k, v in pairs(profileData) do
+                        dataTable[k] = v -- Populate with new data
+                    end
                 end
+                print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: " .. title .. " imported successfully. While still BETA this requires a reload to load in new lists.")
             end
-            print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: " .. title .. " imported successfully. While still BETA this requires a reload to load in new lists.")
             StaticPopup_Show("BBP_CONFIRM_RELOAD")
         end
     end)
@@ -1704,6 +1779,9 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         end
         if npc.comment and npc.comment ~= "" then
             displayText = npc.comment .. (displayText ~= "" and " - " or "") .. displayText
+        end
+        if (npc.name and npc.name ~= "") and (npc.comment and npc.comment ~= "") then
+            displayText = npc.name .. " ("..npc.id..")"
         end
 
         local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -3232,9 +3310,9 @@ local function guiGeneralTab()
         ShowClassColorInNameplate:SetChecked(true)
     end
 
-    local enemyColorThreat = CreateCheckbox("enemyColorThreat", "Color Threat in PvE", BetterBlizzPlates)
+    local enemyColorThreat = CreateCheckbox("enemyColorThreat", "Color Threat", BetterBlizzPlates)
     enemyColorThreat:SetPoint("LEFT", ShowClassColorInNameplate.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(enemyColorThreat, "Color by threat in instanced PvE", "Color options in Advanced Settings section. Default Red & Green.")
+    CreateTooltipTwo(enemyColorThreat, "Color by threat in instanced PvE", "Color options and more settings in Advanced Settings section. Default Red & Green.")
 
     local enemyHealthBarColor = CreateCheckbox("enemyHealthBarColor", "Custom healthbar color", BetterBlizzPlates)
     enemyHealthBarColor:SetPoint("TOPLEFT", ShowClassColorInNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -4004,8 +4082,8 @@ local function guiGeneralTab()
     arenaSettingsText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, 30)
     arenaSettingsText:SetText("Arena nameplates")
     local arenaSettingsIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
-    arenaSettingsIcon:SetAtlas("questbonusobjective")
-    arenaSettingsIcon:SetSize(24, 24)
+    arenaSettingsIcon:SetAtlas("pvptalents-warmode-swords")
+    arenaSettingsIcon:SetSize(20, 20)
     arenaSettingsIcon:SetPoint("RIGHT", arenaSettingsText, "LEFT", -3, 0)
     CreateTooltipTwo(arenaSettingsText, "Arena ID/Spec Name", "Replace names in arena to their arena ID or their specialization", nil, "ANCHOR_LEFT")
 
@@ -4945,8 +5023,8 @@ local function guiPositionAndScale()
     CreateBorderBox(anchorSubArena)
 
     anchorSubArena.t = contentFrame:CreateTexture(nil, "ARTWORK")
-    anchorSubArena.t:SetAtlas("questbonusobjective")
-    anchorSubArena.t:SetSize(32, 32)
+    anchorSubArena.t:SetAtlas("pvptalents-warmode-swords")
+    anchorSubArena.t:SetSize(30, 30)
     anchorSubArena.t:SetPoint("BOTTOM", anchorSubArena, "TOP", 0, 3)
 
     local arenaIndicatorXPos = CreateSlider(contentFrame, "ID x offset", -50, 50, 1, "arenaIdXPos", "X")
@@ -5364,6 +5442,13 @@ local function guiPositionAndScale()
     healthNumbersTargetOnly:SetPoint("TOPLEFT", healthNumbersCombined, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersTargetOnly, "Show on Target only", "Only show the health values on current target")
 
+    anchorSubHealthNumbers.healthNumbersPlayers = CreateCheckbox("healthNumbersPlayers", "Players", contentFrame)
+    anchorSubHealthNumbers.healthNumbersPlayers:SetPoint("TOPLEFT", healthNumbersSwapped, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersPlayers, "Players", "Enable health numbers on players")
+
+    anchorSubHealthNumbers.healthNumbersNpcs = CreateCheckbox("healthNumbersNpcs", "NPCs", contentFrame)
+    anchorSubHealthNumbers.healthNumbersNpcs:SetPoint("TOPLEFT", healthNumbersTargetOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersNpcs, "NPCs", "Enable health numbers on NPCs")
 
     ----------------------
     -- Threat Colors
@@ -5391,6 +5476,13 @@ local function guiPositionAndScale()
     local dpsOrHealNoAggroColorRGB = CreateColorBox(contentFrame, "dpsOrHealNoAggroColorRGB", "DPS/Heal: No Aggro")
     dpsOrHealNoAggroColorRGB:SetPoint("TOPLEFT", dpsOrHealFullAggroColorRGB, "BOTTOMLEFT", 0, -2)
 
+    anchorThreatColor.threatColorAlwaysOn = CreateCheckbox("threatColorAlwaysOn", "Always on", contentFrame)
+    anchorThreatColor.threatColorAlwaysOn:SetPoint("TOPLEFT", dpsOrHealNoAggroColorRGB, "BOTTOMLEFT", 0, 0)
+    CreateTooltipTwo(anchorThreatColor.threatColorAlwaysOn, "Always on", "Always color threat, even outside of PvE content.")
+
+    anchorThreatColor.enemyColorThreatCombatOnly = CreateCheckbox("enemyColorThreatCombatOnly", "Combat only", contentFrame)
+    anchorThreatColor.enemyColorThreatCombatOnly:SetPoint("TOPLEFT", anchorThreatColor.threatColorAlwaysOn, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorThreatColor.enemyColorThreatCombatOnly, "Combat only", "Only apply coloring when unit is in combat")
 
 
     ----------------------
@@ -6186,7 +6278,6 @@ local function guiFadeNPC()
     local guiFadeNpc = CreateFrame("Frame")
     guiFadeNpc.name = "Fade NPC"
     guiFadeNpc.parent = BetterBlizzPlates.name
-    --InterfaceOptions_AddCategory(guiFadeNpc)
     local guiFadeNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiFadeNpc, guiFadeNpc.name, guiFadeNpc.name)
     guiFadeNpcCategory.ID = guiFadeNpc.name;
     CreateTitle(guiFadeNpc)
@@ -6200,7 +6291,21 @@ local function guiFadeNPC()
 
     local listFrame = CreateFrame("Frame", nil, guiFadeNpc)
     listFrame:SetAllPoints(guiFadeNpc)
-    CreateList(listFrame, "fadeOutNPCsList", BetterBlizzPlatesDB.fadeOutNPCsList, BBP.RefreshAllNameplates, false)
+
+    local fadeOutNPCListFrame = CreateFrame("Frame", nil, listFrame)
+    fadeOutNPCListFrame:SetSize(322, 390)
+    fadeOutNPCListFrame:SetPoint("TOPLEFT", 0, 0)
+
+    local fadeOutNPCWhitelistFrame = CreateFrame("Frame", nil, listFrame)
+    fadeOutNPCWhitelistFrame:SetSize(322, 390)
+    fadeOutNPCWhitelistFrame:SetPoint("TOPLEFT", 0, 0)
+
+    local whitelistOnText = fadeOutNPCWhitelistFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    whitelistOnText:SetPoint("BOTTOM", fadeOutNPCWhitelistFrame, "TOP", 0, -5)
+    whitelistOnText:SetText("Whitelist ON")
+
+    CreateList(fadeOutNPCListFrame, "fadeOutNPCsList", BetterBlizzPlatesDB.fadeOutNPCsList, BBP.RefreshAllNameplates, false)
+    CreateList(fadeOutNPCWhitelistFrame, "fadeOutNPCsWhitelist", BetterBlizzPlatesDB.fadeOutNPCsWhitelist, BBP.RefreshAllNameplates, false)
 
     local how2usefade = guiFadeNpc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     how2usefade:SetPoint("TOP", guiFadeNpc, "BOTTOMLEFT", 180, 155)
@@ -6209,46 +6314,59 @@ local function guiFadeNPC()
     local fadeOutNPCsAlpha = CreateSlider(guiFadeNpc, "Alpha value", 0, 1, 0.01, "fadeOutNPCsAlpha", "Alpha")
     fadeOutNPCsAlpha:SetPoint("TOPRIGHT", guiFadeNpc, "TOPRIGHT", -90, -90)
 
-    -- made an oopsie here after changing some stuff TODO: fix later
-
-    -- Restore default entries
-    --local restoreDefaultsButton = CreateFrame("Button", nil, guiFadeNpc, "UIPanelButtonTemplate")
-    --restoreDefaultsButton:SetSize(150, 30)
-    --restoreDefaultsButton:SetPoint("BOTTOM", fadeOutNPCsAlpha, "TOP", 0, 30)
-    --restoreDefaultsButton:SetText("Restore Default Entries")
-    --restoreDefaultsButton:SetScript("OnClick", function()
-    --    local defaultFadeOutNPCsList = BBP.GetDefaultFadeOutNPCsList()
-    --    for _, defaultNPC in ipairs(defaultFadeOutNPCsList) do
-    --        local isFound = false
-    --        for _, userNPC in ipairs(BetterBlizzPlatesDB.fadeOutNPCsList) do
-    --            if defaultNPC.id == userNPC.id then
-    --                isFound = true
-    --                break
-    --            end
-    --        end
-    --        if not isFound then
-    --            addOrUpdateEntry(defaultNPC.id, defaultNPC.name, defaultNPC.comment)
-    --        end
-    --    end
-    --end)
-
     local noteFade = guiFadeNpc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     noteFade:SetPoint("TOP", fadeOutNPCsAlpha, "BOTTOM", 0, -20)
     noteFade:SetText("This makes nameplates transparent.\n \nYou will still be able to click them\neven though you can't see them.")
 
     local fadeOutNPC = CreateCheckbox("fadeOutNPC", "Enable Fade NPC", guiFadeNpc)
     fadeOutNPC:SetPoint("TOPLEFT", noteFade, "BOTTOMLEFT", 20, -15)
+    fadeOutNPC:HookScript("OnClick", function(self)
+        if not self:GetChecked() then
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        end
+    end)
 
     local fadeAllButTarget = CreateCheckbox("fadeAllButTarget", "Fade All Except Target", fadeOutNPC)
     fadeAllButTarget:SetPoint("TOPLEFT", fadeOutNPC, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(fadeAllButTarget, "Fade out all other nameplates when you have a target.\nDisregards the fade list")
 
+    local fadeNPCPvPOnly = CreateCheckbox("fadeNPCPvPOnly", "Only fade NPCs in PvP", fadeOutNPC)
+    fadeNPCPvPOnly:SetPoint("TOPLEFT", fadeAllButTarget, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(fadeNPCPvPOnly, "Only fade nameplates in Arena and BGs")
+
+    local fadeOutNPCWhitelistOn = CreateCheckbox("fadeOutNPCWhitelistOn", "Whitelist Mode", fadeOutNPC)
+    fadeOutNPCWhitelistOn:SetPoint("TOPLEFT", fadeNPCPvPOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    fadeOutNPCWhitelistOn:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            fadeOutNPCListFrame:Hide()
+            fadeOutNPCWhitelistFrame:Show()
+        else
+            fadeOutNPCListFrame:Show()
+            fadeOutNPCWhitelistFrame:Hide()
+        end
+    end)
+    CreateTooltipTwo(fadeOutNPCWhitelistOn, "Whitelist Mode", "Swaps out the blacklist with a whitelist and fades out ALL nameplates except the ones in the whitelist.")
+
     local function TogglePanel()
         if BBP.variablesLoaded then
             if BetterBlizzPlatesDB.fadeOutNPC then
                 listFrame:SetAlpha(1)
+                if BetterBlizzPlatesDB.fadeOutNPCWhitelistOn then
+                    fadeOutNPCListFrame:Hide()
+                    fadeOutNPCWhitelistFrame:Show()
+                else
+                    fadeOutNPCListFrame:Show()
+                    fadeOutNPCWhitelistFrame:Hide()
+                end
             else
                 listFrame:SetAlpha(0.5)
+                if BetterBlizzPlatesDB.fadeOutNPCWhitelistOn then
+                    fadeOutNPCListFrame:Hide()
+                    fadeOutNPCWhitelistFrame:Show()
+                else
+                    fadeOutNPCListFrame:Show()
+                    fadeOutNPCWhitelistFrame:Hide()
+                end
             end
         else
             C_Timer.After(1, function()
@@ -6293,6 +6411,11 @@ local function guiHideNPC()
     local hideNPC = CreateCheckbox("hideNPC", "Enable Hide NPC", guiHideNpc, nil, BBP.hideNPC)
     hideNPC:SetPoint("TOPLEFT", hideNpcExplanationText, "BOTTOMLEFT", 25, -15)
     CreateTooltip(hideNPC, "Hide NPC's from the blacklist\nOr only show the ones in whitelist with whitelist mode.")
+    hideNPC:HookScript("OnClick", function(self)
+        if not self:GetChecked() then
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        end
+    end)
 
     local listFrame = CreateFrame("Frame", nil, guiHideNpc)
     listFrame:SetAllPoints(guiHideNpc)
@@ -6306,7 +6429,7 @@ local function guiHideNPC()
     hideNPCWhitelistFrame:SetPoint("TOPLEFT", 0, 0)
 
     local whitelistOnText = hideNPCWhitelistFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    whitelistOnText:SetPoint("BOTTOM", hideNPCWhitelistFrame, "TOP", 0, 0)
+    whitelistOnText:SetPoint("BOTTOM", hideNPCWhitelistFrame, "TOP", 0, -5)
     whitelistOnText:SetText("Whitelist ON")
 
     CreateList(hideNPCListFrame, "hideNPCsList", BetterBlizzPlatesDB.hideNPCsList, BBP.RefreshAllNameplates, false)
@@ -6337,7 +6460,7 @@ local function guiHideNPC()
     end)
     CreateTooltip(hideNPCWhitelistOn, "Hides ALL NPC's except the ones in the whitelist")
 
-    local hideNPCArenaOnly = CreateCheckbox("hideNPCArenaOnly", "Only hide NPCs in arena", hideNPC)
+    local hideNPCArenaOnly = CreateCheckbox("hideNPCArenaOnly", "Only hide NPCs in PvP", hideNPC)
     hideNPCArenaOnly:SetPoint("TOPLEFT", hideNPCWhitelistOn, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
     local hideNPCPetsOnly = CreateCheckbox("hideNPCPetsOnly", "Hide Player Pets", hideNPC)
@@ -6404,22 +6527,32 @@ local function guiColorNPC()
     local listFrame = CreateFrame("Frame", nil, guiColorNpc)
     listFrame:SetAllPoints(guiColorNpc)
 
-    CreateList(listFrame, "colorNpcList", BetterBlizzPlatesDB.colorNpcList, BBP.RefreshAllNameplates, true)
+    local colorList = CreateList(listFrame, "colorNpcList", BetterBlizzPlatesDB.colorNpcList, BBP.RefreshAllNameplates, true, false, false, 400)
+    colorList:SetPoint("TOPLEFT", -5, -10)
 
     local listExplanationText = guiColorNpc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     listExplanationText:SetPoint("TOP", guiColorNpc, "BOTTOMLEFT", 180, 155)
     listExplanationText:SetText("Add name or npcID. Case-insensitive.\n \n \nAdd a comment to the entry with slash\nfor example 1337/comment or xuen/monk tiger\n \nType a name or npcID already in list to delete it")
 
     local colorNpcExplanationText = guiColorNpc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    colorNpcExplanationText:SetPoint("TOP", guiColorNpc, "TOP", 172, -127)
+    colorNpcExplanationText:SetPoint("TOP", guiColorNpc, "TOP", 197, -127)
     colorNpcExplanationText:SetText("This colors specific nameplates.\n \nAdd a name/npc ID and select a color")
 
     local colorNPC = CreateCheckbox("colorNPC", "Enable NPC Color", guiColorNpc, nil, BBP.colorNPC)
-    colorNPC:SetPoint("TOPLEFT", colorNpcExplanationText, "BOTTOMLEFT", 25, -15)
+    colorNPC:SetPoint("TOPLEFT", colorNpcExplanationText, "BOTTOMLEFT", 56, -15)
     CreateTooltip(colorNPC, "Color NPC's from the list a color of your choice.\nClick color button after adding the NPC to the list to chose color.")
 
     local colorNPCName = CreateCheckbox("colorNPCName", "Also color name text", colorNPC, nil, BBP.colorNPC)
     colorNPCName:SetPoint("TOPLEFT", colorNPC, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+    local wipeColorNpcList = CreateFrame("Button", nil, guiColorNpc, "UIPanelButtonTemplate")
+    wipeColorNpcList:SetText("Delete All")
+    wipeColorNpcList:SetWidth(85)
+    wipeColorNpcList:SetPoint("TOP", listExplanationText, "BOTTOM", 0, -10)
+    wipeColorNpcList:SetScript("OnClick", function()
+        StaticPopup_Show("BBP_CONFIRM_WIPE_NPCCOLOR")
+    end)
+    CreateTooltipTwo(wipeColorNpcList, "Delete All", "Deletes all entries in the color npc list")
 
     local reloadUiButton = CreateFrame("Button", nil, guiColorNpc, "UIPanelButtonTemplate")
     reloadUiButton:SetText("Reload UI")
@@ -7849,12 +7982,12 @@ local function guiImportAndExport()
     bgImg:SetVertexColor(0,0,0)
 
     local text = guiImportAndExport:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
-    text:SetText("BETA")
+    text:SetText("")
     text:SetPoint("TOP", guiImportAndExport, "TOPRIGHT", -220, 0)
 
     local text2 = guiImportAndExport:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    text2:SetText("Please backup your settings just in case.\nWTF\\Account\\ACCOUNT_NAME\\SavedVariables\n\nWhile this is beta any export codes\nwill be temporary until non-beta.")
-    text2:SetPoint("TOP", text, "BOTTOM", 0, 0)
+    text2:SetText("Color NPC & Cast Emphasis now supports\nPlater NPC Color & Plater Cast Color import.")
+    text2:SetPoint("TOP", text, "BOTTOM", 0, -30)
 
     local fullProfile = CreateImportExportUI(guiImportAndExport, "Full Profile", BetterBlizzPlatesDB, 20, -20, "fullProfile")
 

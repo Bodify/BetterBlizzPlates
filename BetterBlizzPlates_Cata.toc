@@ -26,6 +26,7 @@ temp_cata\modules\range.lua
 temp_cata\modules\quest.lua
 temp_cata\modules\auras.lua
 temp_cata\modules\nahjProfile.lua
+modules\importConvert.lua
 
 temp_cata\gui.lua
 temp_cata\BetterBlizzPlates.lua
