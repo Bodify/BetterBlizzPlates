@@ -1869,6 +1869,13 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         if npc.comment and npc.comment ~= "" then
             displayText = npc.comment .. (displayText ~= "" and " - " or "") .. displayText
         end
+        if (npc.name and npc.name ~= "") and (npc.comment and npc.comment ~= "") then
+            if (npc.id and npc.id ~= "") then
+                displayText = npc.name .. " (" .. npc.id .. ")"
+            else
+                displayText = npc.name
+            end
+        end
 
         local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         text:SetPoint("LEFT", button, "LEFT", addIcon and 25 or 5, 0)

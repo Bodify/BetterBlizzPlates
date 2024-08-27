@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.6.1b
+## The War Within & Cata
+### Bugfix:
+- Fix gui lists causing lua error if entry in lists didnt have an id
+
 # BetterBlizzPlates 1.6.1
 ## The War Within & Cata
 ### New stuff:
