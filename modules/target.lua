@@ -528,7 +528,6 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.TargetIndicator(frame)
             end
             if config.focusTargetIndicator then BBP.FocusTargetIndicator(frame) end
-            if config.partyPointer then BBP.PartyPointer(frame) end
             if config.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
             if config.fadeOutNPC then
                 BBP.FadeOutNPCs(frame)
@@ -537,6 +536,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
             if config.hideNPC then BBP.HideNPCs(frame, BBP.previousTargetNameplate:GetParent()) end
+            if config.partyPointer then BBP.PartyPointer(frame) end
             if config.totemIndicator then
                 --if config.totemIndicatorHideHealthBar then BBP.ApplyTotemIconsAndColorNameplate(frame) end
                 BBP.ApplyTotemIconsAndColorNameplate(frame)
@@ -544,6 +544,13 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             if (config.classIndicator and (config.classIndicatorHighlight or config.classIndicatorHighlightColor)) then
                 if frame.classIndicator and frame.classIndicator.highlightSelect then
                     frame.classIndicator.highlightSelect:Hide()
+                end
+            end
+
+            if BetterBlizzPlatesDB.friendlyHideHealthBar then
+                if showOnTarget and (info.isPlayer and info.isFriend) then
+                    frame.HealthBarsContainer:SetAlpha(0)
+                    frame.selectionHighlight:SetAlpha(0)
                 end
             end
 
@@ -563,7 +570,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
         local config = frame.BetterBlizzPlates.config
         --local info = frame.BetterBlizzPlates.unitInfo
         frame.BetterBlizzPlates.unitInfo = BBP.GetNameplateUnitInfo(frame)
-        --local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
+        local info = frame.BetterBlizzPlates.unitInfo
         --if not info then return end
 
         -- info.isTarget = true
@@ -574,7 +581,6 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             BBP.ToggleNameplateAuras(frame)
             BBP.TargetNameplateAuraSize(frame)
             if config.targetIndicator then BBP.TargetIndicator(frame) end
-            if config.partyPointer then BBP.PartyPointer(frame) end
 
             if config.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
             if config.fadeOutNPC then
@@ -588,7 +594,34 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.HealthNumbers(frame)
             end
 
+
+            local alwaysHideFriendlyCastbar = BetterBlizzPlatesDB.alwaysHideFriendlyCastbar
+            local alwaysHideEnemyCastbar = BetterBlizzPlatesDB.alwaysHideEnemyCastbar
+            if alwaysHideFriendlyCastbar or alwaysHideEnemyCastbar or BBP.hideFriendlyCastbar then
+                local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction("target")
+                if ((alwaysHideFriendlyCastbar or BBP.hideFriendlyCastbar) and isFriend) or (alwaysHideEnemyCastbar and not isFriend) then
+                    local alwaysHideFriendlyCastbarShowTarget = BetterBlizzPlatesDB.alwaysHideFriendlyCastbarShowTarget
+                    local alwaysHideEnemyCastbarShowTarget = BetterBlizzPlatesDB.alwaysHideEnemyCastbarShowTarget
+                    if (alwaysHideFriendlyCastbarShowTarget and isFriend) or (alwaysHideEnemyCastbarShowTarget and not isFriend) then
+                        if UnitCastingInfo("target") or UnitChannelInfo("target") then
+                            frame.castBar:Show()
+                        end
+                    end
+                end
+            end
+
+
+
             if config.hideNPC then BBP.HideNPCs(frame, targetNameplate) end
+            if config.partyPointer then BBP.PartyPointer(frame) end
+
+            if BetterBlizzPlatesDB.friendlyHideHealthBar then
+                local showOnTarget = BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget
+                if showOnTarget and (info.isPlayer and info.isFriend) then
+                    frame.HealthBarsContainer:SetAlpha(1)
+                    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
+                end
+            end
 
             if config.totemIndicator then
                 --if config.totemIndicatorHideHealthBar then BBP.ApplyTotemIconsAndColorNameplate(frame) end

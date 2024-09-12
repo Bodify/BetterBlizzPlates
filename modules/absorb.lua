@@ -53,11 +53,15 @@ function BBP.AbsorbIndicator(frame)
 
     -- Check absorb amount and hide if less than 1k
     local absorb = UnitGetTotalAbsorbs(unit) or 0
-    if absorb > 1000 then
+    if absorb >= 1000000 then
+        local displayValue = string.format("%.1fm", absorb / 1000000)
+        frame.absorbIndicator:SetText(displayValue)
+        frame.absorbIndicator:Show()
+    elseif absorb >= 1000 then
         local displayValue = math.floor(absorb / 1000) .. "k"
         frame.absorbIndicator:SetText(displayValue)
         frame.absorbIndicator:Show()
-    elseif frame.absorbIndicator then
+    else
         frame.absorbIndicator:Hide()
     end
 end
@@ -65,12 +69,10 @@ end
 -- Event listener for Absorb Indicator
 local absorbEventFrame = CreateFrame("Frame")
 absorbEventFrame:SetScript("OnEvent", function(self, event, ...)
-    if event == "UNIT_ABSORB_AMOUNT_CHANGED" then
-        local unit = ...
-        local nameplate, frame = BBP.GetSafeNameplate(unit)
-        if frame then
-            BBP.AbsorbIndicator(frame)
-        end
+    local unit = ...
+    local nameplate, frame = BBP.GetSafeNameplate(unit)
+    if frame then
+        BBP.AbsorbIndicator(frame)
     end
 end)
 
@@ -157,6 +159,35 @@ function BBP.CompactUnitFrame_UpdateHealPrediction(frame)
             return
         end
 
+        absorbOverlay:SetParent(healthBar);
+        absorbOverlay:ClearAllPoints(); -- we'll be attaching the overlay on heal prediction update.
+        absorbOverlay:SetDrawLayer("OVERLAY")
+
+        local absorbGlow = frame.overAbsorbGlow;
+        if absorbGlow and not absorbGlow:IsForbidden() then
+            -- absorbGlow:ClearAllPoints();
+            -- absorbGlow:SetPoint("TOPLEFT", absorbOverlay, "TOPLEFT", ABSORB_GLOW_OFFSET, 0);
+            -- absorbGlow:SetPoint("BOTTOMLEFT", absorbOverlay, "BOTTOMLEFT", ABSORB_GLOW_OFFSET, 0);
+            -- absorbGlow:SetDrawLayer("OVERLAY")
+
+            if not absorbGlow.replaced then
+                local newAbsorbGlow = frame:CreateTexture(nil, "OVERLAY")
+                newAbsorbGlow:SetTexture(absorbGlow:GetTexture())
+                newAbsorbGlow:SetPoint("TOPLEFT", absorbOverlay, "TOPLEFT", ABSORB_GLOW_OFFSET, 2);
+                newAbsorbGlow:SetPoint("BOTTOMLEFT", absorbOverlay, "BOTTOMLEFT", ABSORB_GLOW_OFFSET, -2);
+                --newAbsorbGlow:SetIgnoreParentAlpha(true)
+                --newAbsorbGlow:SetAlpha(ABSORB_GLOW_ALPHA)
+                newAbsorbGlow:SetBlendMode(absorbGlow:GetBlendMode())
+                newAbsorbGlow:SetParent(absorbGlow:GetParent())
+                newAbsorbGlow:SetWidth(absorbGlow:GetWidth())
+                newAbsorbGlow:SetHeight(healthBar:GetHeight()+4)
+
+                absorbGlow.replaced = newAbsorbGlow
+            end
+            absorbGlow:SetAlpha(0);
+            absorbGlow.replaced:SetAlpha((frame.HealthBarsContainer:GetAlpha() == 0 and 0) or (frame:GetAlpha() == 0 and 0) or (absorbGlow:IsShown() and ABSORB_GLOW_ALPHA or 0))
+        end
+
         local totalAbsorb = UnitGetTotalAbsorbs(frame.displayedUnit) or 0;
         if totalAbsorb > maxHealth then
             totalAbsorb = maxHealth;
@@ -194,13 +225,13 @@ function BBP.HookOverShields()
         return
     end
 
-    hooksecurefunc("CompactUnitFrame_UpdateAll", BBP.CompactUnitFrame_UpdateAll)
+    --hooksecurefunc("CompactUnitFrame_UpdateAll", BBP.CompactUnitFrame_UpdateAll)
     hooksecurefunc("CompactUnitFrame_UpdateHealPrediction", BBP.CompactUnitFrame_UpdateHealPrediction)
 
     for _, np in pairs(C_NamePlate.GetNamePlates()) do
         local frame = np.UnitFrame
         if frame then
-            BBP.CompactUnitFrame_UpdateAll(frame)
+            --BBP.CompactUnitFrame_UpdateAll(frame)
             BBP.CompactUnitFrame_UpdateHealPrediction(frame)
         end
     end

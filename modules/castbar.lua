@@ -40,7 +40,7 @@ local interruptSpellIDs = {}
 function BBP.InitializeInterruptSpellID()
     interruptSpellIDs = {}
     for spellID in pairs(interruptList) do
-        if IsSpellKnownOrOverridesKnown(spellID) then
+        if IsSpellKnownOrOverridesKnown(spellID) or (UnitExists("pet") and IsSpellKnownOrOverridesKnown(spellID, true)) then
             table.insert(interruptSpellIDs, spellID)
         end
     end
@@ -53,7 +53,7 @@ local function OnEvent(self, event, unit, _, spellID)
         BBP.InitializeInterruptSpellID()
     end
 end
-recheckInterruptListener:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+recheckInterruptListener:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
 recheckInterruptListener:SetScript("OnEvent", OnEvent)
 
 -- Castbar has a fade out animation after UNIT_SPELLCAST_STOP has triggered, reset castbar settings after this fadeout
@@ -198,7 +198,11 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
                 castBar.Background:SetDesaturated(true)
                 castBar.Background:SetTexture(bgTexture)
-                castBar.Background:SetVertexColor(unpack(bgColor))
+                if notInterruptible then
+                    castBar.Background:SetVertexColor(1,0,0,1)
+                else
+                    castBar.Background:SetVertexColor(unpack(bgColor))
+                end
             end
         end
         if not castBarRecolor then
@@ -532,7 +536,8 @@ function BBP.UpdateNameplateTargetText(frame, unit)
         else
             frame.TargetText:SetPoint("CENTER", frame, "BOTTOM", 0, 0)  -- Set anchor point for friendly
         end
-        BBP.SetFontBasedOnOption(frame.TargetText, useCustomFont and 11 or 12)
+        local npTextSize = BetterBlizzPlatesDB.npTargetTextSize
+        BBP.SetFontBasedOnOption(frame.TargetText, (useCustomFont and (npTextSize or 11)) or (npTextSize or 12))
     else
         frame.TargetText:SetText("")
     end
@@ -544,7 +549,8 @@ function BBP.UpdateCastTimer(frame, unit)
         frame.CastTimer = frame.CastTimerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         --nameplate.CastTimer:SetPoint("LEFT", nameplate, "BOTTOMRIGHT", -10, 15)
         frame.CastTimer:SetPoint("LEFT", frame.castBar, "RIGHT", 5, 0)
-        BBP.SetFontBasedOnOption(frame.CastTimer, 12, "OUTLINE")
+        local npTextSize = BetterBlizzPlatesDB.npTargetTextSize
+        BBP.SetFontBasedOnOption(frame.CastTimer, npTextSize or 12, "OUTLINE")
         frame.CastTimer:SetTextColor(1, 1, 1)
     end
 
@@ -667,6 +673,7 @@ function BBP.ToggleSpellCastEventRegistration()
     if BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarInterruptHighlighter and not castbarOnUpdateHooked then
         hooksecurefunc(CastingBarMixin, "OnUpdate", function(self, event, ...)
             if self.unit and self.unit:find("nameplate") then
+                if self:IsProtected() then return end
                 local spellName, spellID, notInterruptible, endTime
                 local castStart, castDuration
                 local _
@@ -760,8 +767,14 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
         if alwaysHideFriendlyCastbar or alwaysHideEnemyCastbar or BBP.hideFriendlyCastbar then
             local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(self.unit)
             if ((alwaysHideFriendlyCastbar or BBP.hideFriendlyCastbar) and isFriend) or (alwaysHideEnemyCastbar and not isFriend) then
-                frame.castBar:Hide()
-                return
+                local alwaysHideFriendlyCastbarShowTarget = BetterBlizzPlatesDB.alwaysHideFriendlyCastbarShowTarget
+                local alwaysHideEnemyCastbarShowTarget = BetterBlizzPlatesDB.alwaysHideEnemyCastbarShowTarget
+                if (alwaysHideFriendlyCastbarShowTarget and isFriend and UnitIsUnit("target", self.unit)) or (alwaysHideEnemyCastbarShowTarget and not isFriend and UnitIsUnit("target", self.unit)) then
+                    -- go thruugh
+                else
+                    frame.castBar:Hide()
+                    return
+                end
             end
         end
 

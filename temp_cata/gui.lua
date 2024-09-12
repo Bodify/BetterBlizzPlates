@@ -1171,27 +1171,27 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     -- Nameplate scales
                 elseif element == "nameplateMinScale" then
                     if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateMinScale", value)
-                        SetCVar("nameplateMaxScale", value)
+                        C_CVar.SetCVar("nameplateMinScale", value)
+                        C_CVar.SetCVar("nameplateMaxScale", value)
                         BetterBlizzPlatesDB.nameplateMinScale = value
                         BetterBlizzPlatesDB.nameplateMaxScale = value
                     end
                 -- Nameplate selected scale
                 elseif element == "nameplateSelectedScale" then
                     if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateSelectedScale", value)
+                        C_CVar.SetCVar("nameplateSelectedScale", value)
                         BetterBlizzPlatesDB.nameplateSelectedScale = value
                     end
                 -- Nameplate Height cvar
                 elseif element == "NamePlateVerticalScale" then
                     if not BBP.checkCombatAndWarn() then
-                        SetCVar("NamePlateVerticalScale", value)
+                        C_CVar.SetCVar("NamePlateVerticalScale", value)
                         BetterBlizzPlatesDB.NamePlateVerticalScale = value
                         local verticalScale = tonumber(BetterBlizzPlatesDB.NamePlateVerticalScale)
                         if verticalScale and verticalScale >= 2 then
-                            SetCVar("NamePlateHorizontalScale", 1.4)
+                            C_CVar.SetCVar("NamePlateHorizontalScale", 1.4)
                         else
-                            SetCVar("NamePlateHorizontalScale", 1)
+                            C_CVar.SetCVar("NamePlateHorizontalScale", 1)
                         end
                         if frame.CastBar then
                             if not BetterBlizzPlatesDB.enableCastbarCustomization then
@@ -1208,54 +1208,54 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 -- Nameplate Horizontal Overlap
                 elseif element == "nameplateOverlapH" then
                     if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateOverlapH", value)
+                        C_CVar.SetCVar("nameplateOverlapH", value)
                         BetterBlizzPlatesDB.nameplateOverlapH = value
                     end
                 -- Nameplate Vertical Overlap
                 elseif element == "nameplateOverlapV" then
                     if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateOverlapV", value)
+                        C_CVar.SetCVar("nameplateOverlapV", value)
                         BetterBlizzPlatesDB.nameplateOverlapV = value
                     end
                 -- Nameplate Motion Speed
                 elseif element == "nameplateMotionSpeed" then
                     if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateMotionSpeed", value)
+                        C_CVar.SetCVar("nameplateMotionSpeed", value)
                         BetterBlizzPlatesDB.nameplateMotionSpeed = value
                     end
                 elseif element == "nameplateMinAlpha" then
                     if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateMinAlpha", value)
+                        C_CVar.SetCVar("nameplateMinAlpha", value)
                         BetterBlizzPlatesDB.nameplateMinAlpha = value
                     end
                 elseif element == "nameplateMinAlphaDistance" then
                     if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateMinAlphaDistance", value)
+                        C_CVar.SetCVar("nameplateMinAlphaDistance", value)
                         BetterBlizzPlatesDB.nameplateMinAlphaDistance = value
                     end
                 elseif element == "nameplateMaxAlpha" then
                     if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateMaxAlpha", value)
+                        C_CVar.SetCVar("nameplateMaxAlpha", value)
                         BetterBlizzPlatesDB.nameplateMaxAlpha = value
                     end
                 elseif element == "nameplateMaxAlphaDistance" then
                     if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateMaxAlphaDistance", value)
+                        C_CVar.SetCVar("nameplateMaxAlphaDistance", value)
                         BetterBlizzPlatesDB.nameplateMaxAlphaDistance = value
                     end
                 elseif element == "nameplateOccludedAlphaMult" then
                     if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateOccludedAlphaMult", value)
+                        C_CVar.SetCVar("nameplateOccludedAlphaMult", value)
                         BetterBlizzPlatesDB.nameplateOccludedAlphaMult = value
                     end
                 elseif element == "nameplateSelectedAlpha" then
                     if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateSelectedAlpha", value)
+                        C_CVar.SetCVar("nameplateSelectedAlpha", value)
                         BetterBlizzPlatesDB.nameplateSelectedAlpha = value
                     end
                 elseif element == "nameplateNotSelectedAlpha" then
                     if not BBP.checkCombatAndWarn() then
-                        SetCVar("nameplateNotSelectedAlpha", value)
+                        C_CVar.SetCVar("nameplateNotSelectedAlpha", value)
                         BetterBlizzPlatesDB.nameplateNotSelectedAlpha = value
                     end
                     -- Friendly name scale
@@ -1720,7 +1720,7 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
             if cvar then
                 -- if not BetterBlizzPlatesDB.wasOnLoadingScreen then
                 --     BBP.RunAfterCombat(function()
-                --         SetCVar(option, newValue)
+                --         C_CVar.SetCVar(option, newValue)
                 --     end)
                 -- end
                 BetterBlizzPlatesDB[option] = newValue
@@ -1755,7 +1755,7 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
         if cvar then
             newValue = isChecked and "1" or "0"
             BBP.RunAfterCombat(function()
-                SetCVar(option, newValue)
+                C_CVar.SetCVar(option, newValue)
                 BetterBlizzPlatesDB[option] = newValue
             end)
         else
@@ -4075,7 +4075,7 @@ local function guiGeneralTab()
             else
                 if self:GetChecked() and GetCVar("nameplateShowEnemyTotems") ~= "1" then
                     BetterBlizzPlatesDB.nameplateShowEnemyTotems = 1
-                    SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
+                    C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
                     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"CVar Control\" section of the addon.")
                 end
             end
@@ -7739,19 +7739,19 @@ local function guiCVarControl()
                 BetterBlizzPlatesDB[cvarName] = value
             end
             BBP.RunAfterCombat(function()
-                SetCVar(cvarName, value)
+                C_CVar.SetCVar(cvarName, value)
                 if cvarName == "nameplateShowEnemyMinions" then
                     if changeDB then
-                        SetCVar("nameplateShowEnemyGuardians", BetterBlizzPlatesDB.nameplateShowEnemyGuardians)
-                        SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
-                        SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
-                        SetCVar("nameplateShowEnemyPets", BetterBlizzPlatesDB.nameplateShowEnemyPets)
+                        C_CVar.SetCVar("nameplateShowEnemyGuardians", BetterBlizzPlatesDB.nameplateShowEnemyGuardians)
+                        C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
+                        C_CVar.SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
+                        C_CVar.SetCVar("nameplateShowEnemyPets", BetterBlizzPlatesDB.nameplateShowEnemyPets)
                     end
                 elseif cvarName == "nameplateShowFriendlyMinions" then
                     if changeDB then
-                        SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
-                        SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
-                        SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
+                        C_CVar.SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
+                        C_CVar.SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
+                        C_CVar.SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
                     end
                 end
             end)

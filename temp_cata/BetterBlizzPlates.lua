@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.1b"
+local addonUpdates = "1.6.2"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -912,36 +912,36 @@ local function ResetNameplates()
     BetterBlizzPlatesDB.castBarHeight = classic and 10 or 16--big and 18.8 or 8
     BetterBlizzPlatesDB.largeNameplates = big and true or false
 
-    SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
-    SetCVar("nameplateOverlapV", BetterBlizzPlatesDB.nameplateOverlapV)
-    SetCVar("nameplateMotion", BetterBlizzPlatesDB.nameplateMotion)
-    SetCVar("nameplateMotionSpeed", BetterBlizzPlatesDB.nameplateMotionSpeed)
-    SetCVar("nameplateHorizontalScale", BetterBlizzPlatesDB.nameplateHorizontalScale)
-    SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
-    SetCVar("nameplateMinScale", BetterBlizzPlatesDB.nameplateMinScale)
-    SetCVar("nameplateMaxScale", BetterBlizzPlatesDB.nameplateMaxScale)
-    SetCVar("nameplateSelectedScale", BetterBlizzPlatesDB.nameplateSelectedScale)
-    SetCVar("NamePlateClassificationScale", BetterBlizzPlatesDB.NamePlateClassificationScale)
-    SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
-    SetCVar("nameplateLargerScale", BetterBlizzPlatesDB.nameplateLargerScale)
-    SetCVar("nameplatePlayerLargerScale", BetterBlizzPlatesDB.nameplatePlayerLargerScale)
-    SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
-    SetCVar("nameplateMinAlpha", BetterBlizzPlatesDB.nameplateMinAlpha)
-    SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
-    SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
-    SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
-    SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
-    SetCVar("nameplateShowEnemyMinions", BetterBlizzPlatesDB.nameplateShowEnemyMinions)
-    SetCVar("nameplateShowEnemyGuardians", BetterBlizzPlatesDB.nameplateShowEnemyGuardians)
-    SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
-    SetCVar("nameplateShowEnemyPets", BetterBlizzPlatesDB.nameplateShowEnemyPets)
-    SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
-    SetCVar("nameplateShowFriendlyMinions", BetterBlizzPlatesDB.nameplateShowFriendlyMinions)
-    SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
-    SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
-    SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
-    SetCVar('nameplateShowOnlyNames', "0")
-    SetCVar("nameplateShowAll", "1")
+    C_CVar.SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
+    C_CVar.SetCVar("nameplateOverlapV", BetterBlizzPlatesDB.nameplateOverlapV)
+    C_CVar.SetCVar("nameplateMotion", BetterBlizzPlatesDB.nameplateMotion)
+    C_CVar.SetCVar("nameplateMotionSpeed", BetterBlizzPlatesDB.nameplateMotionSpeed)
+    C_CVar.SetCVar("nameplateHorizontalScale", BetterBlizzPlatesDB.nameplateHorizontalScale)
+    C_CVar.SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
+    C_CVar.SetCVar("nameplateMinScale", BetterBlizzPlatesDB.nameplateMinScale)
+    C_CVar.SetCVar("nameplateMaxScale", BetterBlizzPlatesDB.nameplateMaxScale)
+    C_CVar.SetCVar("nameplateSelectedScale", BetterBlizzPlatesDB.nameplateSelectedScale)
+    C_CVar.SetCVar("NamePlateClassificationScale", BetterBlizzPlatesDB.NamePlateClassificationScale)
+    C_CVar.SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
+    C_CVar.SetCVar("nameplateLargerScale", BetterBlizzPlatesDB.nameplateLargerScale)
+    C_CVar.SetCVar("nameplatePlayerLargerScale", BetterBlizzPlatesDB.nameplatePlayerLargerScale)
+    C_CVar.SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
+    C_CVar.SetCVar("nameplateMinAlpha", BetterBlizzPlatesDB.nameplateMinAlpha)
+    C_CVar.SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
+    C_CVar.SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
+    C_CVar.SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
+    C_CVar.SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
+    C_CVar.SetCVar("nameplateShowEnemyMinions", BetterBlizzPlatesDB.nameplateShowEnemyMinions)
+    C_CVar.SetCVar("nameplateShowEnemyGuardians", BetterBlizzPlatesDB.nameplateShowEnemyGuardians)
+    C_CVar.SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
+    C_CVar.SetCVar("nameplateShowEnemyPets", BetterBlizzPlatesDB.nameplateShowEnemyPets)
+    C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
+    C_CVar.SetCVar("nameplateShowFriendlyMinions", BetterBlizzPlatesDB.nameplateShowFriendlyMinions)
+    C_CVar.SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
+    C_CVar.SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
+    C_CVar.SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
+    C_CVar.SetCVar('nameplateShowOnlyNames', "0")
+    C_CVar.SetCVar("nameplateShowAll", "1")
 
     ReloadUI()
 end
@@ -1264,7 +1264,7 @@ function BBP.ApplyNameplateWidth()
             local friendlyHeight = BetterBlizzPlatesDB.friendlyNameplateClickthrough and 1 or generalHeight--(BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeFriendlyHeight or BetterBlizzPlatesDB.nameplateDefaultFriendlyHeight)
 
             if BetterBlizzPlatesDB.NamePlateVerticalScale then
-                SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
+                C_CVar.SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
             end
 
             if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
@@ -1548,7 +1548,7 @@ end
 local function ApplyCVarChange()
     local shouldShow = ShouldShowFriendlyNameplates() and "1" or "0"
     if GetCVar("nameplateShowFriends") ~= shouldShow then
-        SetCVar("nameplateShowFriends", shouldShow)
+        C_CVar.SetCVar("nameplateShowFriends", shouldShow)
     end
     if inCombatEventRegistered then
         friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_REGEN_ENABLED")
@@ -1594,57 +1594,57 @@ end
 -- Set CVars that keep changing
 local function SetCVarsOnLogin()
     if BetterBlizzPlatesDB.hasSaved and not BetterBlizzPlatesDB.disableCVarForceOnLogin then
-        SetCVar("nameplateMaxDistance", 41)
-        SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
-        SetCVar("nameplateOverlapV", BetterBlizzPlatesDB.nameplateOverlapV)
-        SetCVar("nameplateMotionSpeed", BetterBlizzPlatesDB.nameplateMotionSpeed)
-        SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
-        SetCVar("nameplateSelectedScale", BetterBlizzPlatesDB.nameplateSelectedScale)
-        SetCVar("nameplateMinScale", BetterBlizzPlatesDB.nameplateMinScale)
-        SetCVar("nameplateMaxScale", BetterBlizzPlatesDB.nameplateMaxScale)
-        SetCVar("nameplateMinAlpha", BetterBlizzPlatesDB.nameplateMinAlpha)
-        SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
-        SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
-        SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
-        SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
-        SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
-        SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
+        C_CVar.SetCVar("nameplateMaxDistance", 41)
+        C_CVar.SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
+        C_CVar.SetCVar("nameplateOverlapV", BetterBlizzPlatesDB.nameplateOverlapV)
+        C_CVar.SetCVar("nameplateMotionSpeed", BetterBlizzPlatesDB.nameplateMotionSpeed)
+        C_CVar.SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
+        C_CVar.SetCVar("nameplateSelectedScale", BetterBlizzPlatesDB.nameplateSelectedScale)
+        C_CVar.SetCVar("nameplateMinScale", BetterBlizzPlatesDB.nameplateMinScale)
+        C_CVar.SetCVar("nameplateMaxScale", BetterBlizzPlatesDB.nameplateMaxScale)
+        C_CVar.SetCVar("nameplateMinAlpha", BetterBlizzPlatesDB.nameplateMinAlpha)
+        C_CVar.SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
+        C_CVar.SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
+        C_CVar.SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
+        C_CVar.SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
+        C_CVar.SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
+        C_CVar.SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
         if BetterBlizzPlatesDB.nameplateSelectedAlpha then
-            SetCVar("nameplateSelectedAlpha", BetterBlizzPlatesDB.nameplateSelectedAlpha)
-            SetCVar("nameplateNotSelectedAlpha", BetterBlizzPlatesDB.nameplateNotSelectedAlpha)
+            C_CVar.SetCVar("nameplateSelectedAlpha", BetterBlizzPlatesDB.nameplateSelectedAlpha)
+            C_CVar.SetCVar("nameplateNotSelectedAlpha", BetterBlizzPlatesDB.nameplateNotSelectedAlpha)
         end
 
         if BetterBlizzPlatesDB.nameplateMotion then
-            SetCVar("nameplateMotion", BetterBlizzPlatesDB.nameplateMotion)
+            C_CVar.SetCVar("nameplateMotion", BetterBlizzPlatesDB.nameplateMotion)
         end
 
         if BetterBlizzPlatesDB.NamePlateVerticalScale then
             local verticalScale = tonumber(BetterBlizzPlatesDB.NamePlateVerticalScale)
             if verticalScale and verticalScale >= 2 then
-                SetCVar("NamePlateHorizontalScale", 1.4)
+                C_CVar.SetCVar("NamePlateHorizontalScale", 1.4)
             else
-                SetCVar("NamePlateHorizontalScale", 1)
+                C_CVar.SetCVar("NamePlateHorizontalScale", 1)
             end
         end
 
         if BetterBlizzPlatesDB.setCVarAcrossAllCharacters then
             if BetterBlizzPlatesDB.nameplateShowAll then
-                SetCVar("nameplateShowAll", BetterBlizzPlatesDB.nameplateShowAll)
+                C_CVar.SetCVar("nameplateShowAll", BetterBlizzPlatesDB.nameplateShowAll)
             end
 
-            SetCVar("nameplateShowEnemyMinions", BetterBlizzPlatesDB.nameplateShowEnemyMinions)
-            SetCVar("nameplateShowEnemyGuardians", BetterBlizzPlatesDB.nameplateShowEnemyGuardians)
-            SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
-            SetCVar("nameplateShowEnemyPets", BetterBlizzPlatesDB.nameplateShowEnemyPets)
-            SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
+            C_CVar.SetCVar("nameplateShowEnemyMinions", BetterBlizzPlatesDB.nameplateShowEnemyMinions)
+            C_CVar.SetCVar("nameplateShowEnemyGuardians", BetterBlizzPlatesDB.nameplateShowEnemyGuardians)
+            C_CVar.SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
+            C_CVar.SetCVar("nameplateShowEnemyPets", BetterBlizzPlatesDB.nameplateShowEnemyPets)
+            C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
 
-            SetCVar("nameplateShowFriendlyMinions", BetterBlizzPlatesDB.nameplateShowFriendlyMinions)
-            SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
+            C_CVar.SetCVar("nameplateShowFriendlyMinions", BetterBlizzPlatesDB.nameplateShowFriendlyMinions)
+            C_CVar.SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
             if BetterBlizzPlatesDB.nameplateShowFriendlyNPCs then
-                SetCVar("nameplateShowFriendlyNPCs", BetterBlizzPlatesDB.nameplateShowFriendlyNPCs)
+                C_CVar.SetCVar("nameplateShowFriendlyNPCs", BetterBlizzPlatesDB.nameplateShowFriendlyNPCs)
             end
-            SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
-            SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
+            C_CVar.SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
+            C_CVar.SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
         end
 
         ToggleFriendlyPlates()
@@ -1967,15 +1967,15 @@ function BBP.ResetToDefaultScales(slider, targetType)
             BetterBlizzPlatesDB.nameplateMinScale = defaultMinScale
             BetterBlizzPlatesDB.nameplateMaxScale = defaultMaxScale
             BetterBlizzPlatesDB.nameplateGlobalScale = defaultGlobalScale
-            SetCVar("nameplateMinScale", defaultMinScale)
-            SetCVar("nameplateMaxScale", defaultMaxScale)
-            SetCVar("nameplateGlobalScale", defaultGlobalScale)
+            C_CVar.SetCVar("nameplateMinScale", defaultMinScale)
+            C_CVar.SetCVar("nameplateMaxScale", defaultMaxScale)
+            C_CVar.SetCVar("nameplateGlobalScale", defaultGlobalScale)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMinScale set to " .. defaultMinScale)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMaxScale set to " .. defaultMaxScale)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateGlobalScale set to 1")
         elseif targetType == "nameplateSelected" then
             BetterBlizzPlatesDB.nameplateSelectedScale = defaultSettings[targetType]
-            SetCVar("nameplateSelectedScale", defaultSettings[targetType])
+            C_CVar.SetCVar("nameplateSelectedScale", defaultSettings[targetType])
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateSelectedScale set to " .. defaultSettings[targetType])
         end
     end
@@ -2013,43 +2013,43 @@ function BBP.ResetToDefaultValue(slider, element)
         local default = C_CVar.GetCVarDefault(element)
         if element == "nameplateOverlapH" then
             BetterBlizzPlatesDB.nameplateOverlapH = default
-            SetCVar("nameplateOverlapH", default)
+            C_CVar.SetCVar("nameplateOverlapH", default)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateOverlapH set to "..default)
         elseif element == "nameplateOverlapV" then
             BetterBlizzPlatesDB.nameplateOverlapV = default
-            SetCVar("nameplateOverlapV", default)
+            C_CVar.SetCVar("nameplateOverlapV", default)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateOverlapV set to "..default)
         elseif element == "nameplateMotionSpeed" then
             BetterBlizzPlatesDB.nameplateMotionSpeed = default
-            SetCVar("nameplateMotionSpeed", default)
+            C_CVar.SetCVar("nameplateMotionSpeed", default)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMotionSpeed set to "..default)
         elseif element == "nameplateMinAlpha" then
             BetterBlizzPlatesDB.nameplateMinAlpha = default
-            SetCVar("nameplateMinAlpha", 1)--default)
+            C_CVar.SetCVar("nameplateMinAlpha", 1)--default)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMinAlpha set to "..default)
         elseif element == "nameplateMinAlphaDistance" then
             BetterBlizzPlatesDB.nameplateMinAlphaDistance = default
-            SetCVar("nameplateMinAlphaDistance", default)
+            C_CVar.SetCVar("nameplateMinAlphaDistance", default)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMinAlphaDistance set to "..default)
         elseif element == "nameplateMaxAlpha" then
             BetterBlizzPlatesDB.nameplateMaxAlpha = default
-            SetCVar("nameplateMaxAlpha", default)
+            C_CVar.SetCVar("nameplateMaxAlpha", default)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMotionSpeed set to "..default)
         elseif element == "nameplateMaxAlphaDistance" then
             BetterBlizzPlatesDB.nameplateMaxAlphaDistance = default
-            SetCVar("nameplateMaxAlphaDistance", default)
+            C_CVar.SetCVar("nameplateMaxAlphaDistance", default)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMaxAlphaDistance set to "..default)
         elseif element == "nameplateOccludedAlphaMult" then
             BetterBlizzPlatesDB.nameplateOccludedAlphaMult = default
-            SetCVar("nameplateOccludedAlphaMult", default)
+            C_CVar.SetCVar("nameplateOccludedAlphaMult", default)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateOccludedAlphaMult set to "..default)
         elseif element == "nameplateSelectedAlpha" then
             BetterBlizzPlatesDB.nameplateSelectedAlpha = default
-            SetCVar("nameplateOccludedAlphaMult", default)
+            C_CVar.SetCVar("nameplateOccludedAlphaMult", default)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateSelectedAlpha set to "..default)
         elseif element == "nameplateNotSelectedAlpha" then
             BetterBlizzPlatesDB.nameplateNotSelectedAlpha = default
-            SetCVar("nameplateNotSelectedAlpha", default)
+            C_CVar.SetCVar("nameplateNotSelectedAlpha", default)
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateNotSelectedAlpha set to "..default)
         elseif element == "nameplateResourceScale" then
             BetterBlizzPlatesDB.nameplateResourceScale = 0.7
@@ -2072,7 +2072,7 @@ function BBP.ToggleAndPrintCVAR(cvarName)
     local currentValue = GetCVar(cvarName)
     local newValue = (currentValue == "1") and "0" or "1"
 
-    SetCVar(cvarName, newValue)
+    C_CVar.SetCVar(cvarName, newValue)
     print(string.format("%s set to %s", cvarName, newValue))
 end
 
@@ -5021,16 +5021,16 @@ local function SetNameplateBehavior()
     else
         if BBP.isInPvE then
             if BetterBlizzPlatesDB.friendlyHideHealthBar and not BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve then
-                SetCVar('nameplateShowOnlyNames', 1)
+                C_CVar.SetCVar('nameplateShowOnlyNames', 1)
             else
-                SetCVar('nameplateShowOnlyNames', 0)
+                C_CVar.SetCVar('nameplateShowOnlyNames', 0)
             end
-            if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then SetCVar("UnitNameFriendlyPlayerName", 0) end
+            if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then C_CVar.SetCVar("UnitNameFriendlyPlayerName", 0) end
             BBP.ApplyNameplateWidth()
         else
-            --if BetterBlizzPlatesDB.friendlyHideHealthBar then SetCVar('nameplateShowOnlyNames', 0) end
-            SetCVar('nameplateShowOnlyNames', 0)
-            if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then SetCVar("UnitNameFriendlyPlayerName", 1) end
+            --if BetterBlizzPlatesDB.friendlyHideHealthBar then C_CVar.SetCVar('nameplateShowOnlyNames', 0) end
+            C_CVar.SetCVar('nameplateShowOnlyNames', 0)
+            if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then C_CVar.SetCVar("UnitNameFriendlyPlayerName", 1) end
             BBP.ApplyNameplateWidth()
         end
     end

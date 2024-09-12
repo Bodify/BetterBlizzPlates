@@ -104,6 +104,134 @@ local fakeAuras = {
     },
 }
 
+local smokeIDs = {
+    [212182] = true,
+    [359053] = true,
+}
+
+local uas = {
+    [342938] = true,
+    [316099] = true,
+}
+
+
+BBP.smokeBombCast = 0
+local smokeTracker
+BBP.ActiveSmokeCheck = CreateFrame("Frame")
+
+local function AddSmokeTimer(frame)
+    local unit = frame.unit
+    if frame.BigDebuffs then
+        if not frame.BigDebuffs.CooldownSB then
+            local cooldownFrame = CreateFrame("Cooldown", nil, frame.BigDebuffs, "CooldownFrameTemplate")
+            cooldownFrame:SetAllPoints(frame.BigDebuffs.icon)
+            cooldownFrame:SetDrawEdge(false)
+            cooldownFrame:SetDrawSwipe(true)
+            cooldownFrame:SetReverse(true)
+            frame.BigDebuffs.CooldownSB = cooldownFrame
+        end
+        frame.BigDebuffs.CooldownSB:SetCooldown(BBP.smokeBombCast, 5)
+        frame.BigDebuffs.CooldownSB:SetScript("OnUpdate", function(self, elapsed)
+            local texture = frame.BigDebuffs.icon:GetTexture()
+            if texture ~= 458733 then
+                self:SetCooldown(0, 0)
+                self:SetScript("OnUpdate", nil)
+            end
+        end)
+    end
+    if C_AddOns.IsAddOnLoaded("OmniAuras") then
+        if unit and string.find(unit, "nameplate") then
+            local nameplateUnit = unit:sub(1, 1):upper() .. unit:sub(2, 4):lower() .. unit:sub(5, 5):upper() .. unit:sub(6):lower()
+            local oaFrame = _G[nameplateUnit.."Icon"]
+            if oaFrame then
+                if not oaFrame.CooldownSB then
+                    local cooldownFrame = CreateFrame("Cooldown", nil, oaFrame:GetParent(), "CooldownFrameTemplate")
+                    cooldownFrame:SetAllPoints(oaFrame)
+                    cooldownFrame:SetDrawEdge(false)
+                    cooldownFrame:SetDrawSwipe(true)
+                    cooldownFrame:SetReverse(true)
+                    oaFrame.CooldownSB = cooldownFrame
+                end
+                oaFrame.CooldownSB:SetCooldown(BBP.smokeBombCast, 5)
+                oaFrame.CooldownSB:SetScript("OnUpdate", function(self, elapsed)
+                    local texture = oaFrame:GetTexture()
+                    if texture ~= 458733 then
+                        self:SetCooldown(0, 0)
+                        self:SetScript("OnUpdate", nil)
+                    end
+                end)
+            end
+        end
+    end
+end
+
+function BBP.CheckNameplateForSmoke(unit, frame)
+    if not unit then return end
+    if not string.find(unit, "nameplate") then
+        local np
+        np, frame = BBP.GetSafeNameplate(unit)
+        if not frame then return end
+    end
+
+    if frame and frame.unit then
+        for i = 1, 40 do
+            local _, _, _, _, _, _, _, _, _, spellID = BBP.TWWUnitAura(frame.unit, i, "HARMFUL")
+
+            if spellID then
+                if spellID == 212183 then
+                    AddSmokeTimer(frame)
+                    break
+                end
+            else
+                break
+            end
+        end
+    end
+end
+
+function BBP.CheckAllNameplatesForSmoke()
+    for _, nameplate in ipairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        if frame and frame.unit then
+            BBP.CheckNameplateForSmoke(frame.unit, frame)
+        end
+    end
+end
+
+BBP.ActiveSmokeCheck:SetScript("OnEvent", function(self, event, unit)
+    BBP.CheckNameplateForSmoke(unit)
+end)
+
+local function SmokeBombCheck()
+    local _, subEvent, _, _, _, _, _, _, _, _, _, spellID = CombatLogGetCurrentEventInfo()
+    if subEvent == "SPELL_CAST_SUCCESS" and smokeIDs[spellID] then
+        if smokeTracker then
+            smokeTracker:Cancel()
+        end
+        BBP.smokeBombCast = GetTime()
+
+        if BBF and BBF.ActiveSmokeCheck then
+            BBF.smokeBombCast = BBP.smokeBombCast
+            BBF.ActiveSmokeCheck:RegisterUnitEvent("UNIT_AURA", "player")
+        end
+        BBP.ActiveSmokeCheck:RegisterEvent("UNIT_AURA")
+
+        C_Timer.After(0.1, function()
+            BBP.CheckAllNameplatesForSmoke()
+            if BBF then
+                BBF.CheckDebuffsForSmoke()
+            end
+        end)
+        smokeTracker = C_Timer.NewTimer(5, function()
+            BBP.smokeBombCast = 0
+            if BBF then
+                BBF.smokeBombCast =0
+            end
+            BBP.ActiveSmokeCheck:UnregisterAllEvents()
+        end)
+    end
+end
+
 local function isInWhitelist(spellName, spellId)
     for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
         if entry.id == spellId or (entry.name and not entry.id and spellName and string.lower(entry.name) == string.lower(spellName)) then
@@ -158,7 +286,7 @@ local function CheckBuffs()
                     buff.PandemicGlow:Hide();
                 end
                 buff.isPandemicActive = false
-            elseif remainingDuration <= 5.1 then
+            elseif remainingDuration <= ((buff.spellID == 980 and IsPlayerSpell(453034) and 10) or (uas[buff.spellID] and IsPlayerSpell(459376) and 8) or 5.1) then
                 if not buff.PandemicGlow then
                     buff.PandemicGlow = buff.GlowFrame:CreateTexture(nil, "ARTWORK");
                     buff.PandemicGlow:SetAtlas("newplayertutorial-drag-slotgreen");
@@ -616,6 +744,11 @@ local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
                     buff.Border:Show()
                 end
             end
+        else
+            if buff.buffBorderPurge then
+                buff.buffBorderPurge:Hide()
+                buff.Border:Show()
+            end
         end
     else
         buff.Icon:SetScale(1)
@@ -712,7 +845,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
     -- PLAYER
     if UnitIsUnit(unit, "player") then
         -- Buffs
-        if BetterBlizzPlatesDB["personalNpBuffEnable"] then
+        if BetterBlizzPlatesDB["personalNpBuffEnable"] and aura.isHelpful then
             local isInBlacklist = BetterBlizzPlatesDB["personalNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
             if isInBlacklist then return false end
 
@@ -1085,7 +1218,19 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         if not buff.GlowFrame then
             buff.CountFrame:SetFrameStrata("DIALOG")
             buff.GlowFrame = CreateFrame("Frame", nil, buff)
-            buff.GlowFrame:SetFrameStrata("HIGH")
+            buff.GlowFrame:SetFrameStrata("MEDIUM")
+        end
+
+        if aura.spellId == 212183 then
+            if not buff.CooldownSB then
+                local cooldownFrame = CreateFrame("Cooldown", nil, buff, "CooldownFrameTemplate")
+                cooldownFrame:SetAllPoints(buff.Icon)
+                cooldownFrame:SetDrawEdge(false)
+                cooldownFrame:SetDrawSwipe(true)
+                cooldownFrame:SetReverse(true)
+                buff.CooldownSB = cooldownFrame
+            end
+            buff.CooldownSB:SetCooldown(BBP.smokeBombCast, 5)
         end
 
         -- Blue buff border setting
@@ -1263,5 +1408,13 @@ function BBP.HideNameplateAuraTooltip()
             end
         end)
         BBP.hookedNameplateAuraTooltip = true
+    end
+end
+
+function BBP.SmokeCheckBootup()
+    if not BBP.smokeBombDetector and not (BBF and BBF.smokeBombDetector) then
+        BBP.smokeBombDetector = CreateFrame("Frame")
+        BBP.smokeBombDetector:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+        BBP.smokeBombDetector:SetScript("OnEvent", SmokeBombCheck)
     end
 end

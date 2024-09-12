@@ -49,6 +49,7 @@ function BBP.CreateTotemComponents(frame, size)
         frame.totemIndicator = CreateFrame("Frame", nil, frame)
         frame.totemIndicator:SetSize(30, 30)
         frame.totemIndicator:SetScale(config.totemIndicatorScale or 1)
+        frame.totemIndicator:SetFrameStrata("HIGH")
 
         frame.customIcon = frame.totemIndicator:CreateTexture(nil, "OVERLAY")
         frame.customIcon:SetAllPoints(frame.totemIndicator)
@@ -63,11 +64,7 @@ function BBP.CreateTotemComponents(frame, size)
         totemIndicatorSwappingAnchor = frame.healthBar
     else
         if config.totemIndicatorAnchor == "TOP" then
-            if frame.fakeName then
-                totemIndicatorSwappingAnchor = frame.fakeName
-            else
-                totemIndicatorSwappingAnchor = frame.name
-            end
+            totemIndicatorSwappingAnchor = frame.name
         else
             totemIndicatorSwappingAnchor = frame.healthBar
         end
@@ -212,6 +209,7 @@ function BBP.GetRandomTotemAttributes()
     end
 end
 
+local cc = 0
 -- Apply totem icons and color nameplate
 function BBP.ApplyTotemIconsAndColorNameplate(frame)
     local config = frame.BetterBlizzPlates.config
@@ -236,6 +234,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
         config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
         config.totemIndicatorHideAuras = BetterBlizzPlatesDB.totemIndicatorHideAuras
+        config.totemIndicatorWidthEnabled = BetterBlizzPlatesDB.totemIndicatorWidthEnabled
 
         config.totemIndicatorInitialized = true
     end
@@ -248,11 +247,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         totemIndicatorSwappingAnchor = frame.healthBar
     else
         if config.totemIndicatorAnchor == "TOP" then
-            if frame.fakeName then
-                totemIndicatorSwappingAnchor = frame.fakeName
-            else
-                totemIndicatorSwappingAnchor = frame.name
-            end
+            totemIndicatorSwappingAnchor = frame.name
         else
             totemIndicatorSwappingAnchor = frame.healthBar
         end
@@ -287,9 +282,6 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
 
         if config.totemIndicatorHideNameAndShiftIconDown then
             frame.name:SetText("")
-            if frame.fakeName then
-                frame.fakeName:SetText("")
-            end
         end
 
         if config.totemIndicatorHideAuras then
@@ -355,9 +347,6 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
             if config.totemIndicatorColorName then
                 frame.name:SetVertexColor(unpack(npcData.color))
-                if frame.fakeName then
-                    frame.name:SetVertexColor(unpack(npcData.color))
-                end
             end
         else
             config.totemColorRGB = nil
@@ -386,13 +375,28 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
                     end
                 end
             end
-        -- else
-        --     if npcData.widthOn and npcData.hpWidth then
-        --         frame.healthBar:ClearPoint("RIGHT")
-        --         frame.healthBar:ClearPoint("LEFT")
-        --         frame.healthBar:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth, 0)
-        --         frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth,0)
-        --     end
+        elseif config.totemIndicatorWidthEnabled then
+            if npcData.widthOn and npcData.hpWidth then
+                if not frame.hoks then
+                    hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
+                        if self:IsProtected() or not frame.unit then return end
+                        local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
+                        local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
+
+                        if npcData and npcData.widthOn and npcData.hpWidth then
+                            frame.HealthBarsContainer:ClearPoint("RIGHT")
+                            frame.HealthBarsContainer:ClearPoint("LEFT")
+                            frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth+12, 0)
+                            frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth-12,0)
+                        end
+                    end)
+                    frame.HealthBarsContainer:ClearPoint("RIGHT")
+                    frame.HealthBarsContainer:ClearPoint("LEFT")
+                    frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth+12, 0)
+                    frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth-12,0)
+                    frame.hoks = true
+                end
+            end
         end
     else
         config.totemColorRGB = nil
@@ -407,15 +411,9 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         if iconOnlyMode then
             frame.totemIndicator:SetPoint("CENTER", frame, "CENTER", config.totemIndicatorXPos, config.totemIndicatorYPos)
             frame.name:SetText("")
-            if frame.fakeName then
-                frame.fakeName:SetText("")
-            end
         else
             frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, yPosAdjustment)
             frame.name:SetText("")
-            if frame.fakeName then
-                frame.fakeName:SetText("")
-            end
         end
     elseif config.nameplateResourceOnTarget == "1"  and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
         local resourceFrame = resourceFrames[playerClass]

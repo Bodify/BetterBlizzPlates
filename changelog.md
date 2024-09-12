@@ -1,3 +1,34 @@
+# BetterBlizzPlates 1.6.2
+## The War Within
+### Important Change:
+- Changed default values for cvars: nameplateMinScale and nameplateMaxScale. They are originally 0.8 and 1, I've put them both to 0.85.
+You can change of course this value but they will now be linked and have the same value.
+This makes nameplates always keep the same size instead of scaling up and down tiny amounts depending on range.
+The reason I've done this is because it opens up a lot of possibilities to do things I couldnt normally do due to cpu usage concerns, and probably even makes wow run a little lighter alltogether.
+You might notice your non-target nameplates have changed (very minimal) in size and to re-adjust just go to /bbp -> Nameplate Size
+### New stuff:
+- Totem Indicator can now change the width of nameplate healthbars, made possible by the important change above.
+- Name Reposition has been changed to no longer create a fake name but instead move the original one, should make it less prone to bugs, made possible by the important change above.
+- Added cooldown timer on Smoke Bomb debuff. This also supports nameplate icons for BigDebuffs and OmniAuras.
+- Subsettings for "Hide castbar" on Enemy & Friendly nameplates: "Show on Target". Right-Click the "Hide castbar" setting to toggle on/off.
+- Subsettings for "Hide healthbar" on Enemy & Friendly nameplates: "Show on Target". Right-Click the "Hide healthbar" setting to toggle on/off.
+- Show Druid Berserk Overcharge as blue on nameplate combo points.
+### Tweak:
+- Nahj profile update
+- Pandemic timer for Agony and Unstable Affliction is now 10s and 8s instead of the regular 5s if the talents are learned.
+- "Hide auras on totems" from Totem Indicator is now off by default instead. Could be confusing for dot classes.
+- I've added a variable that controls size for nameplate target text and cast timer. Atm no GUI yet, default value is 11, you can change this size by writing /run BetterBlizzPlatesDB.npTargetTextSize = 11
+- I've also added a variable that controls font outline for health numbers, also without GUI, to change it do /run BetterBlizzPlatesDB.healthNumbersFontOutline = "OUTLINE"    (or "THICKOUTLINE", or nil)
+- Absorb Indicator now says millions instead of thousands. 7300k -> 7.3m
+- Added Voidwrath (priest npc), Shadowfiend and Surge Totem to Totem Indicator and Hide/Fade Whitelists.
+- General performance tweaks.
+### Bugfix:
+- Fix an issue with the "Hide castbar" setting for friendly nameplates potentially getting stuck.
+- Fix missing buff check for personal nameplate auras causing whitelisted debuffs to go through filter even with debuffs turned off.
+- Reworked how Name Reposition works and fixed issues with it in combination with Arena Names + Party Pointer.
+- Fix threat color coloring friendly units (since no check was needed before the always on setting)
+- Fix "Castbar Edge Highlight" erroring in PvE content.
+
 # BetterBlizzPlates 1.6.1b
 ## The War Within & Cata
 ### Bugfix:

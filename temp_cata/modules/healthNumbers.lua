@@ -1,3 +1,5 @@
+local LSM = LibStub("LibSharedMedia-3.0")
+
 -- Helper function to format health numbers
 local function FormatHealthValue(health, useMillions, showDecimal)
     local formatString
@@ -147,6 +149,16 @@ function BBP.HealthNumbers(frame)
         BBP.SetFontBasedOnOption(frame.healthNumbers, 9, "THICKOUTLINE")
         frame.healthNumbers:SetTextColor(1, 1, 1)
         frame.healthNumbers:SetJustifyH("CENTER")
+    end
+
+    if BBP.needsUpdate then
+        --BBP.SetFontBasedOnOption(frame.healthNumbers, 9, "THICKOUTLINE")
+        local db = BetterBlizzPlatesDB
+        local fontName = db.healthNumbersFont
+        local fontPath = LSM:Fetch(LSM.MediaType.FONT, fontName)
+        local fontSize = db.healthNumbersFontSize
+        local fontOutline = db.healthNumbersFontOutline
+        frame.healthNumbers:SetFont(fontPath, fontSize, fontOutline)
     end
 
     frame.healthNumbers:ClearAllPoints()

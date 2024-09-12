@@ -116,7 +116,7 @@ function BBP.PartyPointer(frame, fetchedSpecID)
             end
         end
 
-        local anhcorPoint = resourceAnchor or arenaPoint or frame.fakeName or frame.name
+        local anhcorPoint = resourceAnchor or arenaPoint or frame.name
 
         frame.partyPointer:SetPoint("BOTTOM", anhcorPoint, config.partyPointerAnchor, config.partyPointerXPos, config.partyPointerYPos -5)
     else
@@ -182,9 +182,6 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         frame.selectionHighlight:SetAlpha(0)
         frame.hideNameOverride = true
         frame.name:SetAlpha(0)
-        if frame.cleanName then
-            frame.cleanName:SetAlpha(0)
-        end
         BBP.hideFriendlyCastbar = true
         frame.ppChange = true
     elseif frame.ppChange then
@@ -192,11 +189,7 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
         frame.hideNameOverride = nil
         if not config.hideFriendlyNameText then
-            if frame.cleanName then
-                frame.cleanName:SetAlpha(1)
-            else
-                frame.name:SetAlpha(1)
-            end
+            frame.name:SetAlpha(1)
         end
         BBP.hideFriendlyCastbar = nil
         frame.ppChange = nil

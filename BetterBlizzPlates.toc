@@ -29,5 +29,7 @@ modules\auras.lua
 modules\profiles.lua
 modules\importConvert.lua
 
+modules\druid\overcharges.lua
+
 gui.lua
 BetterBlizzPlates.lua
