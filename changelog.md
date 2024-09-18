@@ -1,9 +1,10 @@
 # BetterBlizzPlates 1.6.3b
 ## The War Within
 ### Tweak:
+- Reposition Name now has a "Raise Strata" setting that is on by default.
 - Make it so "Small Pets in PvP" only reduces the width of npcs that are not in the Totem Indicator if that feature is enabled. This was the intended behaviour but was only active if "Totem Width" setting was on.
 ### Bugfix:
-- Fix Reposition Name no longer overlapping healthbar like intended.
+- Fix Reposition Name no longer overlapping healthbar like intended by introducing new setting.
 - Fix refresh of nameplates putting cast timer text back to default value instead of `BetterBlizzPlatesDB.npTargetTextSize`, this will get gui settings in a future patch.
 - Updated castbar test mode to respect the new customizeable target text + cast timer text size.
 - Fix issue with aura cooldown frame showing above aura glows.

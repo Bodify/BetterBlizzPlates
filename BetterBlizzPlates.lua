@@ -62,6 +62,10 @@ local defaultSettings = {
     fakeNameYPos = 0,
     fakeNameFriendlyXPos = 0,
     fakeNameFriendlyYPos = 0,
+    fakeNameAnchor = "BOTTOM",
+    fakeNameAnchorRelative = "TOP",
+    fakeNameScaleWithParent = false,
+    fakeNameRaiseStrata = true,
     guildNameColorRGB = {0, 1, 0},
     npcTitleColorRGB = {1, 0.85, 0},
     npcTitleScale = 1,
@@ -81,9 +85,6 @@ local defaultSettings = {
     healthNumbersYPos = 0,
     healthNumbersScale = 1,
     healthNumbersFontOutline = "THICKOUTLINE",
-    fakeNameAnchor = "BOTTOM",
-    fakeNameAnchorRelative = "TOP",
-    fakeNameScaleWithParent = false,
     nameplateBorderSize = 1,
     nameplateTargetBorderSize = 3,
     tankFullAggroColorRGB = {0, 1, 0, 1},
@@ -965,6 +966,7 @@ local function SendUpdateMessage()
                 DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
                 DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a Removed:")
                 DEFAULT_CHAT_FRAME:AddMessage("   - Removed Fade NPC's \"Fade all but Target\" setting, use whitelist mode instead.")
+                BetterBlizzPlatesDB.fadeAllButTarget = nil
                 end
                 -- DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
                 -- DEFAULT_CHAT_FRAME:AddMessage("   - Fix aura color module not working on buffs.")
@@ -3490,6 +3492,7 @@ function BBP.RepositionName(frame)
         config.fakeNameAnchor = BetterBlizzPlatesDB.fakeNameAnchor
         config.fakeNameAnchorRelative = BetterBlizzPlatesDB.fakeNameAnchorRelative
         config.fakeNameScaleWithParent = BetterBlizzPlatesDB.fakeNameScaleWithParent
+        config.fakeNameRaiseStrata = BetterBlizzPlatesDB.fakeNameRaiseStrata
     end
     local function RepositionName(frame)
         if frame.name:IsProtected() then return end
@@ -3518,8 +3521,10 @@ function BBP.RepositionName(frame)
     end
     RepositionName(frame)
 
-    frame.name:SetParent(frame)
-    frame.name:SetDrawLayer("OVERLAY")
+    if config.fakeNameRaiseStrata then
+        frame.name:SetParent(frame.bbpOverlay)
+        --frame.name:SetDrawLayer("OVERLAY", 7)
+    end
 end
 
 local function GetNameplateHookTable(frame)

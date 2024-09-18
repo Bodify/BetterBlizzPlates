@@ -6337,6 +6337,10 @@ local function guiPositionAndScale()
     fakeNameScaleWithParent:SetPoint("LEFT", useFakeNameAnchorBottom.text, "RIGHT", 0, 0)
     CreateTooltipTwo(fakeNameScaleWithParent, "Scale with Nameplate", "Scale the Name with the nameplate.\nBy default this is off.")
 
+    local fakeNameRaiseStrata = CreateCheckbox("fakeNameRaiseStrata", "Raise Strata", useFakeName)
+    fakeNameRaiseStrata:SetPoint("TOPLEFT", useFakeNameAnchorBottom, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(fakeNameRaiseStrata, "Raise Strata", "Raise the frame strata of name so it overlaps healthbar.")
+
     ----------------------
     -- Health Numbers
     ----------------------
