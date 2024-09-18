@@ -264,6 +264,11 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
+    if frame.bbfBigDebuffsAlpha and frame.BigDebuffs then
+        frame.bbfBigDebuffsAlpha = false
+        frame.BigDebuffs:SetAlpha(1)
+    end
+
     if info.isSelf then return end
 
     if not config.totemIndicatorInitialized or BBP.needsUpdate then
@@ -290,13 +295,8 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
 
     local guid = UnitGUID(frame.unit)
     local npcID = tonumber(guid and guid:match("-(%d+)-%x+$"))
-
-    if frame.bdChanged and frame.BigDebuffs then
-        frame.bdChanged = false
-        frame.BigDebuffs:SetAlpha(1)
-    end
-
     local totemIndicatorSwappingAnchor
+
     if config.totemIndicatorHideNameAndShiftIconDown then
         totemIndicatorSwappingAnchor = frame.healthBar
     else
@@ -456,7 +456,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         if config.totemIndicatorHideHealthBar or npcData.hideHp or npcData.iconOnly then
             if frame.BigDebuffs then
                 frame.BigDebuffs:SetAlpha(0)
-                frame.bdChanged = true
+                frame.bbfBigDebuffsAlpha = true
             end
             if npcData.iconOnly then
                 frame.healthBar:SetAlpha(0)

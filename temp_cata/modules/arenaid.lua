@@ -1595,3 +1595,41 @@ refresh:SetScript("OnEvent", function(self, event, ...)
         BBP.fistweaverFound = nil
     end
 end)
+
+function BBP.BattlegroundSpecNames(frame)
+    if not Details then return end
+    if not BBP.isInBg then return end
+    if not UnitIsEnemy(frame.unit, "player") then return end
+    local db = BetterBlizzPlatesDB
+    local shortArenaSpecName = db.shortArenaSpecName
+    local arenaSpecScale = db.arenaSpecScale
+    local arenaSpecAnchor = db.arenaSpecAnchor
+    local arenaSpecXPos = db.arenaSpecXPos
+    local arenaSpecYPos = db.arenaSpecYPos
+
+    local specID
+    local unitGUID = UnitGUID(frame.unit)
+    specID = Details:GetSpecByGUID(unitGUID)
+    local specName = specID and specIDToName[specID]
+
+    if shortArenaSpecName and specID then
+        specName = specIDToNameShort[specID]
+    end
+    local r, g, b, a = frame.name:GetTextColor()
+
+    if not specName then
+        specName = UnitName(frame.unit)
+    end
+
+    if not frame.specNameText then
+        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
+        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
+        frame.specNameText:SetIgnoreParentScale(true)
+    end
+
+    frame.name:SetText("")
+    frame.specNameText:SetText(specName)
+    frame.specNameText:SetTextColor(r, g, b, 1)
+    frame.specNameText:SetScale(arenaSpecScale)
+    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+end

@@ -143,7 +143,7 @@ function BBP.HealthNumbers(frame)
 
     -- Initialize or update the health numbers display
     if not frame.healthNumbers then
-        frame.healthNumbers = frame.healthBar:CreateFontString(nil, "OVERLAY")
+        frame.healthNumbers = frame.bbpOverlay:CreateFontString(nil, "OVERLAY")
         BBP.SetFontBasedOnOption(frame.healthNumbers, 9, BetterBlizzPlatesDB.healthNumbersFontOutline)
         frame.healthNumbers:SetTextColor(1, 1, 1)
         frame.healthNumbers:SetJustifyH("CENTER")

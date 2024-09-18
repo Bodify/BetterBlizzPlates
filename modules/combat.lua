@@ -29,13 +29,13 @@ function BBP.CombatIndicator(frame)
     -- Initialize
     -- Create food texture
     if not frame.combatIndicator then
-        frame.combatIndicator = frame.healthBar:CreateTexture(nil, "OVERLAY")
+        frame.combatIndicator = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
         frame.combatIndicator:SetSize(18, 18)
         frame.combatIndicator:SetAtlas("food")
     end
     -- Create sap texture (create this anyway to make sliders happier)
     if not frame.combatIndicatorSap then
-        frame.combatIndicatorSap = frame.healthBar:CreateTexture(nil, "OVERLAY")
+        frame.combatIndicatorSap = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
         frame.combatIndicatorSap:SetSize(18, 16)
         frame.combatIndicatorSap:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\ABILITY_SAP")
     end

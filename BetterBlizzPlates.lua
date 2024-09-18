@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.2"
+local addonUpdates = "1.6.3"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -26,7 +26,7 @@ local IsInInstance = IsInInstance
 local IsActiveBattlefieldArena = IsActiveBattlefieldArena
 
 BBP.variablesLoaded = false
-BBP.OverlayFrame = CreateFrame("Frame")
+BBP.OverlayFrame = CreateFrame("Frame", nil, WorldFrame)
 
 local defaultSettings = {
     version = addonVersion,
@@ -136,6 +136,7 @@ local defaultSettings = {
     arenaIndicatorModeThree = false,
     arenaIndicatorModeFour = false,
     arenaIndicatorModeFive = false,
+    arenaIndicatorBg = true,
     partyIDScale = 1,
     partySpecScale = 1,
     partyIndicatorModeOff = false,
@@ -294,7 +295,7 @@ local defaultSettings = {
         [194118] =  { name = "Tranquil Air Totem", icon = C_Spell.GetSpellTexture(383019),              hideIcon = false, size = 24, duration = 20, color = {0, 1, 0.78}, important = false },
         [225409] =  { name = "Surging Totem", icon = C_Spell.GetSpellTexture(444995),                   hideIcon = false, size = 24, duration = 24, color = {1, 0.36, 0}, important = false },
         [65282] =   { name = "Void Tendril", icon = C_Spell.GetSpellTexture(108920),                    hideIcon = false, size = 24, duration = 6,  color = {0.33, 0.35, 1}, important = false },
-        [185800] =  { name = "Past Self", icon = C_Spell.GetSpellTexture(371869),                       hideIcon = false, size = 24, duration = 8,  color = {0.36, 0.56, 0.52}, important = false }
+        [185800] =  { name = "Past Self", icon = C_Spell.GetSpellTexture(371869),                       hideIcon = false, size = 24, duration = 8,  color = {1, 0, 0}, important = false }
     },
     -- Quest Indicator
     questIndicator = false,
@@ -392,7 +393,12 @@ local defaultSettings = {
     nameplateAuraBuffScale = 1,
     nameplateAuraDebuffScale = 1,
     sortEnlargedAurasFirst = true,
-
+    npAuraDiseaseRGB = {1,0.53,0.14},
+    npAuraOtherRGB = {0,0,0},
+    npAuraCurseRGB = {0.47,0,0.78},
+    npAuraBuffsRGB = {0,0.67,1},
+    npAuraPoisonRGB = {0,0.52,0.031},
+    npAuraMagicRGB = {0.13,0.44,1},
     personalNpBuffEnable = true,
     personalNpBuffFilterAll = false,
     personalNpBuffFilterBlizzard = true,
@@ -955,10 +961,11 @@ local function SendUpdateMessage()
                 --bbp news
                 --PlaySoundFile(567439) --quest complete sfx
                 --BBP.CreateUpdateMessageWindow()
+                if BetterBlizzPlatesDB.fadeAllButTarget then
                 DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-                DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New Stuff:")
-                DEFAULT_CHAT_FRAME:AddMessage("   - Big update with a lot of changes. You might (probably wont) notice that your non-target nameplates have changed in size ever so slightly. You can re-adjust this if youd like. Read changelog for more info.")
-
+                DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a Removed:")
+                DEFAULT_CHAT_FRAME:AddMessage("   - Removed Fade NPC's \"Fade all but Target\" setting, use whitelist mode instead.")
+                end
                 -- DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
                 -- DEFAULT_CHAT_FRAME:AddMessage("   - Fix aura color module not working on buffs.")
                 -- DEFAULT_CHAT_FRAME:AddMessage("   - Fix class icon module causing a lua error sometimes.")
@@ -1310,6 +1317,9 @@ local function InitializeNameplateSettings(frame)
             enableNpNonTargetAlpha = BetterBlizzPlatesDB.enableNpNonTargetAlpha,
             targetHighlightFix = BetterBlizzPlatesDB.targetHighlightFix,
             bgIndicator = BetterBlizzPlatesDB.bgIndicator or BetterBlizzPlatesDB.bgIndicatorTestMode,
+            arenaIndicatorBg = BetterBlizzPlatesDB.arenaIndicatorBg,
+            classicNameplates = BetterBlizzPlatesDB.classicNameplates,
+            hideLevelFrame = BetterBlizzPlatesDB.hideLevelFrame,
         }
         if frame.BetterBlizzPlates.config.changeHealthbarHeight then
             frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
@@ -1439,7 +1449,7 @@ function BBP.ChangeStrataOfResourceFrame()
     local resourceFrame = resourceFrames[playerClass]
     if not resourceFrame or resourceFrame:IsForbidden() then return end
 
-    resourceFrame:SetFrameStrata("MEDIUM")
+    resourceFrame:SetFrameStrata("HIGH")
 end
 
 --###############################################
@@ -2071,14 +2081,13 @@ function BBP.FadeOutNPCs(frame)
     local db = BetterBlizzPlatesDB
     if not db.enableNpNonTargetAlpha then
         frame:SetAlpha(1)
+        frame.fadedNpc = nil
     end
 
-    -- Initialize config and info if not already done
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
     if not info then return end
 
-    -- Skip if the unit is a player or doesn't have a valid GUID
     if info.isPlayer or not info.unitGUID then return end
 
     if db.fadeNPCPvPOnly and not BBP.isInPvP then
@@ -2088,24 +2097,27 @@ function BBP.FadeOutNPCs(frame)
     local npcID = select(6, strsplit("-", info.unitGUID))
     local npcName = info.name
 
-    if not config.fadeAllButTarget or BBP.needsUpdate then
+    if not config.fadeOutNPCsAlpha or BBP.needsUpdate then
         config.fadeOutNPCsAlpha = db.fadeOutNPCsAlpha
-        config.fadeAllButTarget = db.fadeAllButTarget
+        --config.fadeAllButTarget = db.fadeAllButTarget
     end
 
     -- Handle fade out logic when target exists and fadeAllButTarget is enabled
-    if config.fadeAllButTarget then
-        if UnitExists("target") then
-            if not info.isTarget and not info.isPlayer then
-                frame:SetAlpha(config.fadeOutNPCsAlpha)
-            else
-                frame:SetAlpha(1)
-            end
-        else
-            frame:SetAlpha(1)
-        end
-        return
-    end
+    -- if config.fadeAllButTarget then
+    --     if UnitExists("target") then
+    --         if not info.isTarget and not info.isPlayer then
+    --             frame:SetAlpha(config.fadeOutNPCsAlpha)
+    --             frame.fadedNpc = true
+    --         else
+    --             frame:SetAlpha(1)
+    --             frame.fadedNpc = nil
+    --         end
+    --     else
+    --         frame:SetAlpha(1)
+    --         frame.fadedNpc = nil
+    --     end
+    --     return
+    -- end
 
     -- Convert npcName to lowercase for case-insensitive comparison
     local lowerCaseNpcName = strlower(npcName)
@@ -2129,20 +2141,84 @@ function BBP.FadeOutNPCs(frame)
     -- Check if the unit is the current target
     if info.isTarget then
         frame:SetAlpha(1)
+        frame.fadedNpc = nil
     elseif fadeOutNPCWhitelistOn then
         -- If whitelist mode is on, fade out if not in the whitelist
         if inList then
             frame:SetAlpha(1)
+            frame.fadedNpc = nil
         else
             frame:SetAlpha(config.fadeOutNPCsAlpha)
+            frame.fadedNpc = true
         end
     else
         -- If not in whitelist mode, fade out if in the list
         if inList then
             frame:SetAlpha(config.fadeOutNPCsAlpha)
+            frame.fadedNpc = true
         else
             frame:SetAlpha(1)
+            frame.fadedNpc = nil
         end
+    end
+end
+
+local function SmallPetsInPvP(frame)
+    if not BetterBlizzPlatesDB.smallPetsInPvP then return end
+    if UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP and not UnitIsPlayer(frame.unit)) then
+        if not frame.bbpWidthHook then
+            hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
+                if self:IsProtected() or not frame.unit then return end
+                if UnitIsPlayer(frame.unit) then return end
+
+                local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
+                local db = BetterBlizzPlatesDB
+                local npcData = db.totemIndicatorNpcList[npcID]
+
+                if db.totemIndicator and npcData then
+                    if npcData.widthOn and npcData.hpWidth then
+                        frame.HealthBarsContainer:ClearPoint("RIGHT")
+                        frame.HealthBarsContainer:ClearPoint("LEFT")
+                        frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth+12, 0)
+                        frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth-12,0)
+
+                        frame.castBar:ClearPoint("RIGHT")
+                        frame.castBar:ClearPoint("LEFT")
+                        frame.castBar:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth+12, 0)
+                        frame.castBar:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth-12,0)
+                    end
+                    if BetterBlizzPlatesDB.classicNameplates then
+                        BBP.AdjustClassicBorderWidth(frame)
+                    end
+                elseif db.smallPetsInPvP and (UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP) then
+                    frame.HealthBarsContainer:ClearPoint("RIGHT")
+                    frame.HealthBarsContainer:ClearPoint("LEFT")
+                    frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", 50, 0)
+                    frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", -50,0)
+
+                    frame.castBar:ClearPoint("RIGHT")
+                    frame.castBar:ClearPoint("LEFT")
+                    frame.castBar:SetPoint("LEFT", frame, "LEFT", 50, 0)
+                    frame.castBar:SetPoint("RIGHT", frame, "RIGHT", -50,0)
+                    if BetterBlizzPlatesDB.classicNameplates then
+                        BBP.AdjustClassicBorderWidth(frame)
+                    end
+                end
+            end)
+            frame.bbpWidthHook = true
+        end
+        frame.HealthBarsContainer:ClearPoint("RIGHT")
+        frame.HealthBarsContainer:ClearPoint("LEFT")
+        frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", 50, 0)
+        frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", -50,0)
+
+        frame.castBar:ClearPoint("RIGHT")
+        frame.castBar:ClearPoint("LEFT")
+        frame.castBar:SetPoint("LEFT", frame, "LEFT", 50, 0)
+        frame.castBar:SetPoint("RIGHT", frame, "RIGHT", -50,0)
+        -- if BetterBlizzPlatesDB.classicNameplates then
+        --     BBP.AdjustClassicBorderWidth(frame)
+        -- end
     end
 end
 
@@ -2161,6 +2237,7 @@ function BBP.HideNPCs(frame, nameplate)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
+    nameplate:SetParent(BBP.OverlayFrame)
     BBP.ShowFrame(frame, nameplate, config)
 
     local db = BetterBlizzPlatesDB
@@ -2824,6 +2901,10 @@ end
 function BBP.NameplateTargetAlpha(frame)
     local config = frame.BetterBlizzPlates.config
 
+    if frame.fadedNpc then
+        return
+    end
+
     if not config.npTargetAlphaInit or BBP.needsUpdate then
         config.enableNpNonTargetAlphaTargetOnly = BetterBlizzPlatesDB.enableNpNonTargetAlphaTargetOnly
         config.nameplateNonTargetAlpha = BetterBlizzPlatesDB.nameplateNonTargetAlpha
@@ -2948,6 +3029,8 @@ end
 local auraModuleIsOn = false
 function BBP.RunAuraModule()
     auraModuleIsOn = true
+
+    BBP.UpdateAuraTypeColors()
 
     function BBP.HidePersonalBuffFrame()
         if (PersonalFriendlyBuffFrame ~= nil) then
@@ -3162,7 +3245,7 @@ local function HookNameplateCastbarHide(frame)
         frame.castBar:HookScript("OnHide", function()
             if not frame.unit then return end
             if UnitIsUnit(frame.unit, "target") then
-                BBP.UpdateNameplateResourcePositionForCasting(nameplate, true)
+                BBP.UpdateNameplateResourcePositionForCasting(frame:GetParent(), true)
             end
         end)
         frame.castBar.hideHooked = true
@@ -3391,11 +3474,12 @@ function BBP.RepositionName(frame)
     end
     local function RepositionName(frame)
         if frame.name:IsProtected() then return end
+        if not frame.unit then return end
         if frame.name.changing then return end
         frame.name.changing = true
         local db = BetterBlizzPlatesDB
         frame.name:ClearPoint("BOTTOM")
-        if info.isFriend then
+        if UnitIsFriend(frame.unit, "player") then
             if db.useFakeNameAnchorBottom then
                 frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 27)
             else
@@ -3415,10 +3499,10 @@ function BBP.RepositionName(frame)
     end
     RepositionName(frame)
 
-    if frame.HealthBarsContainer:GetAlpha() == 0 then
+    if not info.isFriend then
         frame.name:SetParent(frame)
     else
-        frame.name:SetParent(frame.HealthBarsContainer.healthBar)
+        frame.name:SetParent(frame)
         frame.name:SetDrawLayer("OVERLAY")
     end
 end
@@ -3486,7 +3570,118 @@ local function NameplateNPCTitle(frame)
         frame.npcTitle:Show()
     end
 end
-local cc = 0
+
+local function CreateBetterClassicHealthbarBorder(frame)
+    local info = frame.BetterBlizzPlates.unitInfo
+    local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
+
+    if not frame.BetterBlizzPlates.bbpBorder then
+        frame.HealthBarsContainer.border:Hide()
+        frame.BetterBlizzPlates.bbpBorder = CreateFrame("Frame", nil, frame)
+        local border = frame.BetterBlizzPlates.bbpBorder
+
+        local left = border:CreateTexture(nil, "OVERLAY", nil, -1)
+        left:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderLeft")
+        left:SetPoint("BOTTOMLEFT", frame.healthBar, "BOTTOMLEFT", -28, -3)
+        left:SetPoint("TOPLEFT", frame.healthBar, "TOPLEFT", -28, 17)
+        border.left = left
+
+        local center = border:CreateTexture(nil, "OVERLAY", nil, -1)
+        center:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderCenter")
+        center:SetPoint("BOTTOMLEFT", left, "BOTTOMRIGHT", 0, 0)
+        center:SetPoint("TOPLEFT", left, "TOPRIGHT", 0, 0)
+        border.center = center
+
+        local right = border:CreateTexture(nil, "OVERLAY", nil, -1)
+        right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRight")
+        right:SetPoint("BOTTOMLEFT", center, "BOTTOMRIGHT", 0, 0)
+        right:SetPoint("TOPLEFT", center, "TOPRIGHT", 0, 0)
+        border.right = right
+
+        border:SetParent(frame.healthBar)
+
+        function border:SetBorderColor(r, g, b, a)
+            if BetterBlizzPlatesDB.npBorderDesaturate then
+                self.left:SetDesaturated(true)
+                self.center:SetDesaturated(true)
+                self.right:SetDesaturated(true)
+            end
+            self.left:SetVertexColor(r, g, b, a)
+            self.center:SetVertexColor(r, g, b, a)
+            self.right:SetVertexColor(r, g, b, a)
+        end
+
+        --if not config.hideLevelFrame then
+            frame.LevelFrame = CreateFrame("Frame", nil, frame.bbpOverlay)
+            frame.LevelFrame.text = frame.LevelFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            frame.LevelFrame.text:SetFont("Fonts\\FRIZQT__.TTF", 12)
+            frame.LevelFrame.text:SetPoint("CENTER", right, "RIGHT", -12, -8)
+            frame.LevelFrame.skull = frame.LevelFrame:CreateTexture(nil, "OVERLAY")
+            frame.LevelFrame.skull:SetTexture("Interface\\TargetingFrame\\UI-TargetingFrame-Skull")
+            frame.LevelFrame.skull:SetPoint("CENTER", right, "RIGHT", -11.5, -7.5)
+            frame.LevelFrame.skull:SetSize(16,16)
+        --end
+    end
+
+    if info.isSelf then
+        frame.BetterBlizzPlates.bbpBorder:Hide()
+        frame.HealthBarsContainer.border:Show()
+        frame.selfBorderHidden = true
+        return
+    elseif frame.selfBorderHidden then
+        frame.selfBorderHidden = nil
+        frame.BetterBlizzPlates.bbpBorder:Show()
+        frame.HealthBarsContainer.border:Hide()
+    end
+
+    if BBP.needsUpdate then
+        frame.BetterBlizzPlates.bbpBorder:Show()
+        frame.HealthBarsContainer.border:Hide()
+    end
+
+    if frame.LevelFrame then
+        local unitLevel = UnitLevel(frame.unit)
+        frame.LevelFrame.text:SetText(unitLevel ~= -1 and unitLevel or "")
+        if unitLevel == -1 then
+            frame.LevelFrame.skull:Show()
+        else
+            frame.LevelFrame.skull:Hide()
+        end
+    end
+
+    local height = frame.healthBar:GetHeight()
+    local bottomOffset = -((0.455) * height - 1.09)
+    local topOffset = (2 * height) - 1
+
+    if config.hideLevelFrame and not frame.BetterBlizzPlates.bbpBorder.changed then
+        frame.BetterBlizzPlates.bbpBorder.right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRightNoLevel")
+        frame.BetterBlizzPlates.bbpBorder.changed = true
+        frame.LevelFrame:Hide()
+    elseif frame.BetterBlizzPlates.bbpBorder.changed and not BetterBlizzPlatesDB.hideLevelFrame then
+        frame.BetterBlizzPlates.bbpBorder.right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRight")
+        frame.BetterBlizzPlates.bbpBorder.changed = nil
+        frame.LevelFrame:Show()
+        frame.LevelFrame:SetAlpha(1)
+    end
+
+    frame.BetterBlizzPlates.bbpBorder.left:ClearAllPoints()
+    frame.BetterBlizzPlates.bbpBorder.left:SetPoint("BOTTOMLEFT", frame.healthBar, "BOTTOMLEFT", -28, bottomOffset)
+    frame.BetterBlizzPlates.bbpBorder.left:SetPoint("TOPLEFT", frame.healthBar, "TOPLEFT", -28, topOffset)
+
+    --local width = info.isFriend and BetterBlizzPlatesDB.nameplateFriendlyWidth or BetterBlizzPlatesDB.nameplateEnemyWidth
+    -- local width = frame.healthBar:GetWidth() + 25
+    -- frame.BetterBlizzPlates.bbpBorder.center:SetWidth(width - 40)
+end
+
+function BBP.AdjustClassicBorderWidth(frame)
+    if not frame.BetterBlizzPlates.bbpBorder then
+        CreateBetterClassicHealthbarBorder(frame)
+    end
+    local width = frame.HealthBarsContainer:GetWidth() + 25
+    local extraWidth = BetterBlizzPlatesDB.hideLevelFrame and 6.5 or 0
+    frame.BetterBlizzPlates.bbpBorder.center:SetWidth((width - 40)+extraWidth)
+end
+
 -- What to do on a new nameplate
 local function HandleNamePlateAdded(unit)
     local nameplate, frame = BBP.GetSafeNameplate(unit)
@@ -3496,6 +3691,7 @@ local function HandleNamePlateAdded(unit)
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
 
+    --print(frame:GetFrameLevel(), nameplate:GetFrameLevel())
     -- Get settings and unitInfo
     local config = InitializeNameplateSettings(frame)
     local info = GetNameplateUnitInfo(frame, unit)
@@ -3504,6 +3700,9 @@ local function HandleNamePlateAdded(unit)
 
     if info.isTarget then
         BBP.previousTargetNameplate = frame
+    end
+    if not frame.bbpOverlay then
+        frame.bbpOverlay = CreateFrame("Frame", nil, frame.HealthBarsContainer.healthBar)
     end
 
     -- local alwaysHideFriendlyCastbar = BetterBlizzPlatesDB.alwaysHideFriendlyCastbar
@@ -3579,8 +3778,6 @@ local function HandleNamePlateAdded(unit)
         tempHp:SetBlendMode("ADD")
     end
 
-    if config.enableNpNonTargetAlpha then BBP.NameplateTargetAlpha(frame) end
-
     -- Hide default personal BuffFrame
     if config.enableNameplateAuraCustomisation then
         frame.BuffFrame.UpdateAnchor = BBP.UpdateAnchor;
@@ -3618,6 +3815,10 @@ local function HandleNamePlateAdded(unit)
     -- Anon mode
     if config.anonModeOn then anonMode(frame, info) end
 
+    if config.arenaIndicatorBg then
+        BBP.BattlegroundSpecNames(frame)
+    end
+
     -- Show Arena ID/Spec
     if config.arenaIndicators then BBP.ArenaIndicatorCaller(frame) end
 
@@ -3652,6 +3853,8 @@ local function HandleNamePlateAdded(unit)
     -- Fade out NPCs from list if enabled
     if config.fadeOutNPC then BBP.FadeOutNPCs(frame) end
 
+    if config.enableNpNonTargetAlpha then BBP.NameplateTargetAlpha(frame) end
+
     -- Hide NPCs from list if enabled
     if config.hideNPC then BBP.HideNPCs(frame, nameplate) end
 
@@ -3681,6 +3884,7 @@ local function HandleNamePlateAdded(unit)
     -- Show Focus Target Indicator
     if config.focusTargetIndicator then BBP.FocusTargetIndicator(frame) end
 
+    SmallPetsInPvP(frame)
     -- Show totem icons
     if config.totemIndicator then BBP.ApplyTotemIconsAndColorNameplate(frame, unit) end
 
@@ -3698,6 +3902,16 @@ local function HandleNamePlateAdded(unit)
     if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
 
     if config.showGuildNames then ShowFriendlyGuildName(frame, frame.unit) end
+
+    if config.classicNameplates then
+        CreateBetterClassicHealthbarBorder(frame)
+        BBP.AdjustClassicBorderWidth(frame)
+        frame.classicNameplatesOn = true
+    elseif frame.classicNameplatesOn then
+        frame.BetterBlizzPlates.bbpBorder:Hide()
+        frame.HealthBarsContainer.border:Show()
+        frame.classicNameplatesOn = nil
+    end
 
     -- Hide name
     if ((config.hideFriendlyNameText or (config.partyPointerHideAll and frame.partyPointer and frame.partyPointer:IsShown())) and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
@@ -3905,6 +4119,10 @@ function BBP.RefreshAllNameplates()
             BBP.ApplyTotemIconsAndColorNameplate(frame)
         end
 
+        if BetterBlizzPlatesDB.classicNameplates then
+            CreateBetterClassicHealthbarBorder(frame)
+        end
+
         if BetterBlizzPlatesDB.partyPointer then
             BBP.PartyPointer(frame)
         else
@@ -3968,8 +4186,13 @@ function BBP.ConsolidatedUpdateName(frame)
         config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
         config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
         config.showLastNameNpc = BetterBlizzPlatesDB.showLastNameNpc
+        config.arenaIndicatorBg = BetterBlizzPlatesDB.arenaIndicatorBg
 
         config.updateNameInitialized = true
+    end
+
+    if not frame.bbpOverlay then
+        frame.bbpOverlay = CreateFrame("Frame", nil, frame.healthBar)
     end
 
     if info.isSelf then return end
@@ -4001,6 +4224,10 @@ function BBP.ConsolidatedUpdateName(frame)
 
     -- Use arena numbers
     if config.arenaIndicators then BBP.ArenaIndicatorCaller(frame) end
+
+    if config.arenaIndicatorBg then
+        BBP.BattlegroundSpecNames(frame)
+    end
 
     -- Handle absorb indicator and reset absorb text if it exists
     if config.absorbIndicator then BBP.AbsorbIndicator(frame) end
@@ -4225,7 +4452,10 @@ local function HideHealthbarInPvEMagic()
                         setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
                     else
                         if isPlayer then
-                            setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
+                            local skipHide = BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve
+                            if not skipHide then
+                                setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
+                            end
                             if hideFriendlyCastbar then
                                 setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
                             else
@@ -4366,7 +4596,11 @@ SlashCmdList["BBP"] = function(msg)
         StaticPopup_Show("CONFIRM_FIX_NAMEPLATES_BBP")
     else
         --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
-        Settings.OpenToCategory(BBP.category.ID)
+        if not BetterBlizzPlates.guiLoaded then
+            BBP.LoadGUI()
+        else
+            Settings.OpenToCategory(BBP.category.ID)
+        end
     end
 end
 
@@ -4541,8 +4775,41 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 db.totemListUpdateTWW3 = true
             end
 
+            if not db.totemListUpdateTWW4 then
+                local entriesToCheck = {
+                    {name = "Monk Image (Red)", id = 69791, comment = ""},
+                    {name = "Monk Image (Green)", id = 69792, comment = ""},
+                }
 
+                for _, newEntry in ipairs(entriesToCheck) do
+                    local entryExists = false
+                    local entryExistsFade = false
 
+                    -- Check if the entry exists in hideNPCsWhitelist
+                    for _, existingEntry in ipairs(db.hideNPCsWhitelist) do
+                        if existingEntry.id == newEntry.id then
+                            entryExists = true
+                            break
+                        end
+                    end
+
+                    for _, existingEntry in ipairs(db.fadeOutNPCsWhitelist) do
+                        if existingEntry.id == newEntry.id then
+                            entryExistsFade = true
+                            break
+                        end
+                    end
+
+                    -- If the entry does not exist, add it to the list
+                    if not entryExists then
+                        table.insert(db.hideNPCsWhitelist, newEntry)
+                    end
+                    if not entryExistsFade then
+                        table.insert(db.fadeOutNPCsWhitelist, newEntry)
+                    end
+                end
+                db.totemListUpdateTWW4 = true
+            end
 
             if not db.auraWhitelistColorsUpdated then
                 UpdateAuraColorsToGreen() --update default yellow text to green for new color featur

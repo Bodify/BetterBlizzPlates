@@ -19,8 +19,8 @@ function BBP.PetIndicator(frame)
 
     if not config.petIndicatorInitialized or BBP.needsUpdate then
         config.petIndicatorAnchor = BetterBlizzPlatesDB.petIndicatorAnchor or "CENTER"
-        config.petIndicatorXPos = BetterBlizzPlatesDB.petIndicatorpetIndicatorXPos or 0
-        config.petIndicatorYPos = BetterBlizzPlatesDB.petIndicatorpetIndicatorYPos or 0
+        config.petIndicatorXPos = BetterBlizzPlatesDB.petIndicatorXPos or 0
+        config.petIndicatorYPos = BetterBlizzPlatesDB.petIndicatorYPos or 0
         config.petIndicatorTestMode = BetterBlizzPlatesDB.petIndicatorTestMode
         config.combatIndicator = BetterBlizzPlatesDB.combatIndicator
         config.combatIndicatorAnchor = BetterBlizzPlatesDB.combatIndicatorAnchor
@@ -32,7 +32,7 @@ function BBP.PetIndicator(frame)
 
     -- Initialize
     if not frame.petIndicator then
-        frame.petIndicator = frame.healthBar:CreateTexture(nil, "OVERLAY")
+        frame.petIndicator = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
         frame.petIndicator:SetAtlas("newplayerchat-chaticon-newcomer")
         frame.petIndicator:SetSize(12, 12)
     end

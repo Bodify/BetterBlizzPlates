@@ -218,7 +218,7 @@ local function SmokeBombCheck()
 
         C_Timer.After(0.1, function()
             BBP.CheckAllNameplatesForSmoke()
-            if BBF then
+            if BBF and BBF.CheckDebuffsForSmoke then
                 BBF.CheckDebuffsForSmoke()
             end
         end)
@@ -676,33 +676,27 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     return totalChildrenWidth, totalChildrenHeight, hasExpandableChild
 end
 
-local function SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit, aura)
-    local otherNpBuffBlueBorder = BetterBlizzPlatesDB.otherNpBuffBlueBorder
-    if otherNpBuffBlueBorder then
-        if not isPlayerUnit and isEnemyUnit then
-            if aura.isHelpful then
-                if not buff.buffBorder then
-                    buff.buffBorder = buff.GlowFrame:CreateTexture(nil, "ARTWORK");
-                    buff.buffBorder:SetAllPoints()
-                    buff.buffBorder:SetAtlas("communities-create-avatar-border-hover");
-                end
-                buff.buffBorder:Show();
-                buff.Border:Hide()
-            else
-                if buff.buffBorder then
-                    buff.buffBorder:Hide();
-                    buff.Border:Show()
-                end
-            end
-            if not aura.isBuff then
-                buff.Border:Show()
-            end
-        end
+local cachedDebuffColors
+function BBP.UpdateAuraTypeColors()
+    local db = BetterBlizzPlatesDB
+    cachedDebuffColors = {
+        Magic = db.npAuraMagicRGB,
+        Poison = db.npAuraPoisonRGB,
+        Curse = db.npAuraCurseRGB,
+        Disease = db.npAuraDiseaseRGB,
+    }
+end
+
+local function SetAuraBorderColorByType(buff, aura, db)
+    if not db.npColorAuraBorder then return end
+
+    local debuffColors = cachedDebuffColors
+
+    if aura.isHelpful then
+        buff.Border:SetColorTexture(unpack(db.npAuraBuffsRGB))
     else
-        if buff.buffBorder then
-            buff.buffBorder:Hide()
-            buff.Border:Show()
-        end
+        local color = debuffColors[aura.dispelName] or db.npAuraOtherRGB
+        buff.Border:SetColorTexture(unpack(color))
     end
 end
 
@@ -714,7 +708,7 @@ local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
     if otherNpBuffPurgeGlow then
         buff.Icon:SetScale(0.5)
         if not isPlayerUnit and isEnemyUnit then
-            if aura.isHelpful and aura.isStealable or (aura.auraType == "Magic" and aura.isHelpful) then
+            if aura.isHelpful and aura.isStealable or (aura.dispelName == "Magic" and aura.isHelpful) then
                 if not buff.buffBorderPurge then
                     buff.buffBorderPurge = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
                     buff.buffBorderPurge:SetAtlas("newplayertutorial-drag-slotblue")
@@ -836,7 +830,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
     local duration = aura.duration
     local expirationTime = aura.expirationTime
     local caster = aura.sourceUnit
-    local isPurgeable = aura.isStealable or (aura.auraType == "Magic" and aura.isHelpful)
+    local isPurgeable = aura.isStealable or (aura.dispelName == "Magic" and aura.isHelpful)
     local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
     local castByPlayer = (caster == "player" or caster == "pet")
     local moreThanOneMin = (duration > 60 or duration == 0 or expirationTime == 0)
@@ -1171,16 +1165,17 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         return;
     end
 
+    local db = BetterBlizzPlatesDB
     local buffIndex = 1;
-    local BBPMaxAuraNum = BetterBlizzPlatesDB.maxAurasOnNameplate
+    local BBPMaxAuraNum = db.maxAurasOnNameplate
     local isPlayerUnit = UnitIsUnit("player", self.unit)
     local isEnemyUnit, isFriend, isNeutral = BBP.GetUnitReaction(self.unit)
     isEnemyUnit = isEnemyUnit or isNeutral
     self.isEnemyUnit = isEnemyUnit
     local shouldShowAura, isImportant, isPandemic, auraColor, onlyMine, isEnlarged, isCompacted
-    local onlyPandemicMine = BetterBlizzPlatesDB.onlyPandemicAuraMine
-    local showDefaultCooldownNumbersOnNpAuras = BetterBlizzPlatesDB.showDefaultCooldownNumbersOnNpAuras
-    local hideNpAuraSwipe = BetterBlizzPlatesDB.hideNpAuraSwipe
+    local onlyPandemicMine = db.onlyPandemicAuraMine
+    local showDefaultCooldownNumbersOnNpAuras = db.showDefaultCooldownNumbersOnNpAuras
+    local hideNpAuraSwipe = db.hideNpAuraSwipe
 
     self.auras:Iterate(function(auraInstanceID, aura)
         if buffIndex > BBPMaxAuraNum then return true end
@@ -1230,11 +1225,13 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
                 cooldownFrame:SetReverse(true)
                 buff.CooldownSB = cooldownFrame
             end
+            buff.CooldownSB:Show()
             buff.CooldownSB:SetCooldown(BBP.smokeBombCast, 5)
+        elseif buff.CooldownSB then
+            buff.CooldownSB:Hide()
         end
 
-        -- Blue buff border setting
-        SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit, aura);
+        SetAuraBorderColorByType(buff, aura, db)
 
         -- Pandemic Glow
         SetPandemicGlow(buff, aura, isPandemic)

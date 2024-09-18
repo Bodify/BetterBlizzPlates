@@ -9,7 +9,7 @@ function BBP.QuestIndicator(frame)
 
     -- Initialize
     if not frame.questIndicator then
-        frame.questIndicator = frame.healthBar:CreateTexture(nil, "OVERLAY")
+        frame.questIndicator = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
         frame.questIndicator:SetAtlas("smallquestbang")
         frame.questIndicator:SetSize(22, 22)
     end

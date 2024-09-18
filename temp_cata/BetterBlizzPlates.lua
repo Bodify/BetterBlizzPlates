@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.2"
+local addonUpdates = "1.6.3"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -78,6 +78,7 @@ local defaultSettings = {
     healthNumbersXPos = 0,
     healthNumbersYPos = 0,
     healthNumbersScale = 1,
+    healthNumbersFontOutline = "THICKOUTLINE",
     fakeNameAnchor = "BOTTOM",
     fakeNameAnchorRelative = "CENTER",
     fakeNameScaleWithParent = false,
@@ -144,6 +145,7 @@ local defaultSettings = {
     arenaSpecAnchor = "TOP",
     arenaIndicatorIDColor = false,
     arenaIndicatorIDColorRGB = {1, 0.819607, 0, 1},
+    arenaIndicatorBg = true,
     -- Absorb Indicator
     absorbIndicatorTestMode = false,
     absorbIndicator = false,
@@ -4352,6 +4354,10 @@ local function HandleNamePlateAdded(unit)
     -- Anon mode
     if config.anonModeOn then anonMode(frame, info) end
 
+    if config.arenaIndicatorBg then
+        BBP.BattlegroundSpecNames(frame)
+    end
+
     -- Show Arena ID/Spec
     if config.arenaIndicators then BBP.ArenaIndicatorCaller(frame) end
 
@@ -4824,6 +4830,7 @@ function BBP.ConsolidatedUpdateName(frame)
         config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
         config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
         config.showLastNameNpc = BetterBlizzPlatesDB.showLastNameNpc
+        config.arenaIndicatorBg = BetterBlizzPlatesDB.arenaIndicatorBg
 
         config.updateNameInitialized = true
     end
@@ -4841,6 +4848,10 @@ function BBP.ConsolidatedUpdateName(frame)
 
     -- Use arena numbers
     if config.arenaIndicators then BBP.ArenaIndicatorCaller(frame) end
+
+    if config.arenaIndicatorBg then
+        BBP.BattlegroundSpecNames(frame)
+    end
 
     -- Handle absorb indicator and reset absorb text if it exists
     if config.absorbIndicator then BBP.AbsorbIndicator(frame) end

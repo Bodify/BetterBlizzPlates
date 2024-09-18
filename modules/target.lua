@@ -35,7 +35,7 @@ function BBP.TargetIndicator(frame)
 
     -- Initialize
     if not frame.targetIndicator then
-        frame.targetIndicator = frame.healthBar:CreateTexture(nil, "OVERLAY")
+        frame.targetIndicator = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
         frame.targetIndicator:SetSize(14, 9)
         frame.targetIndicator:SetAtlas("Navigation-Tracked-Arrow")
         frame.targetIndicator:Hide()
@@ -144,7 +144,7 @@ function BBP.FocusTargetIndicator(frame)
 
     -- Initialize
     if not frame.focusTargetIndicator then
-        frame.focusTargetIndicator = frame.healthBar:CreateTexture(nil, "OVERLAY")
+        frame.focusTargetIndicator = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
         frame.focusTargetIndicator:SetSize(20, 20)
         frame.focusTargetIndicator:SetAtlas("Waypoint-MapPin-Untracked")
         frame.focusTargetIndicator:Hide()
@@ -246,6 +246,7 @@ function BBP.UpdateNameplateResourcePositionForCasting(nameplate, bypass)
     if nameplate and nameplate.UnitFrame and nameplate.driverFrame then
         local resourceFrame = resourceFrames[playerClass]
         if not resourceFrame or resourceFrame:IsForbidden() then return end
+        if UnitIsUnit(nameplate.UnitFrame.unit, "player") then return end
 
         local yOffset = BetterBlizzPlatesDB.nameplateResourceYPos
         local xPos = BetterBlizzPlatesDB.nameplateResourceXPos or 0
@@ -287,7 +288,7 @@ function BBP.TargetResourceUpdater()
     if not resourceFrame then return end
     if resourceFrame:IsForbidden() then
         if not msgPrinted then
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Nameplate resource frame is forbidden after it attaches to a friendly nameplate in PvE and becomes not allowed to be repositioned in PvE content. In order to restore functionality /reload ui outside of instance.")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Nameplate Resource Frame has become restricted after it attached to a friendly nameplate in PvE and can not be repositioned until a reload. In order to avoid this do not target friendly players or turn off friendly nameplates during PvE.")
             msgPrinted = true
         end
         return
@@ -298,6 +299,7 @@ function BBP.TargetResourceUpdater()
         --local inInstance, instanceType = IsInInstance()
         --if not (inInstance and (instanceType == "raid" or instanceType == "party" or instanceType == "scenario")) then
             if nameplateForTarget then
+                if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
                 local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
                 resourceFrame:SetScale(nameplateResourceScale)
 
@@ -309,7 +311,9 @@ function BBP.TargetResourceUpdater()
                     end
                 end
 
-                resourceFrame:SetParent(nameplateForTarget)
+                if BetterBlizzPlatesDB.changeResourceStrata then
+                    resourceFrame:SetFrameStrata("HIGH")
+                end
                 resourceFrame:ClearAllPoints();
                 if nameplateResourceUnderCastbar then
                     BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
@@ -324,7 +328,9 @@ function BBP.TargetResourceUpdater()
             local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
             resourceFrame:SetScale(nameplateResourceScale)
 
-            resourceFrame:SetParent(nameplatePlayer)
+            if BetterBlizzPlatesDB.changeResourceStrata then
+                resourceFrame:SetFrameStrata("HIGH")
+            end
             resourceFrame:ClearAllPoints();
             local padding = resourceFrame.paddingOverride or 0
             PixelUtil.SetPoint(resourceFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
@@ -339,7 +345,7 @@ function BBP.TargetResourceUpdater()
             if self.classNamePlateMechanicFrame then --after entering an instance classNamePlateMechanicFrame becomes, and stays forbidden even when you leave the instance. not sure if there is a workaround.
                 if self.classNamePlateMechanicFrame:IsForbidden() then
                     if not notifiedUser and nameplateResourceOnTarget then
-                        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Nameplate resource frame is forbidden after it attaches to a friendly nameplate in PvE and becomes not allowed to be repositioned in PvE content. In order to restore functionality /reload ui outside of instance.")
+                        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Nameplate Resource Frame has become restricted after it attached to a friendly nameplate in PvE and can not be repositioned until a reload. In order to avoid this do not target friendly players or turn off friendly nameplates during PvE.")
                         notifiedUser = true
                     end
                     return
@@ -348,7 +354,9 @@ function BBP.TargetResourceUpdater()
                     local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
                     if nameplateForTarget then--and nameplateForTarget.driverFrame then
                         if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
-                        resourceFrame:SetParent(nameplateForTarget)
+                        if BetterBlizzPlatesDB.changeResourceStrata then
+                            resourceFrame:SetFrameStrata("HIGH")
+                        end
                         resourceFrame:ClearAllPoints();
                         if nameplateResourceUnderCastbar then
                             BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
@@ -375,7 +383,9 @@ function BBP.TargetResourceUpdater()
                 else
                     local nameplatePlayer = C_NamePlate.GetNamePlateForUnit("player")
                     if nameplatePlayer and nameplatePlayer.driverFrame then
-                        resourceFrame:SetParent(nameplatePlayer)
+                        if BetterBlizzPlatesDB.changeResourceStrata then
+                            resourceFrame:SetFrameStrata("HIGH")
+                        end
                         resourceFrame:ClearAllPoints();
 
                         local padding = resourceFrame.paddingOverride or classPadding[className] or 0
@@ -412,6 +422,7 @@ function BBP.RegisterTargetCastingEvents()
         nameplateResourceUnderCastbarEventFrame:RegisterUnitEvent("UNIT_SPELLCAST_START", "target")
         nameplateResourceUnderCastbarEventFrame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "target")
         nameplateResourceUnderCastbarEventFrame:RegisterUnitEvent("UNIT_SPELLCAST_EMPOWER_START", "target")
+        nameplateResourceUnderCastbarEventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
         nameplateResourceUnderCastbarEventFrame:SetScript("OnEvent", function(_, event, unit)
             local nameplate = C_NamePlate.GetNamePlateForUnit("target")
             if nameplate then
@@ -524,17 +535,25 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.CompactUnitFrame_UpdateHealthColor(frame)
             end
 
+            if BetterBlizzPlatesDB.friendlyHideHealthBar then
+                local showOnTarget = BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget
+                if showOnTarget and (info.isPlayer and info.isFriend) then
+                    frame.HealthBarsContainer:SetAlpha(0)
+                    frame.selectionHighlight:SetAlpha(0)
+                end
+            end
+
             if config.targetIndicator then
                 BBP.TargetIndicator(frame)
             end
             if config.focusTargetIndicator then BBP.FocusTargetIndicator(frame) end
-            if config.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
             if config.fadeOutNPC then
                 BBP.FadeOutNPCs(frame)
                 if config.fadeAllButTarget then
                     BBP.UnfadeAllNameplates()
                 end
             end
+            if config.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
             if config.hideNPC then BBP.HideNPCs(frame, BBP.previousTargetNameplate:GetParent()) end
             if config.partyPointer then BBP.PartyPointer(frame) end
             if config.totemIndicator then
@@ -582,13 +601,13 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             BBP.TargetNameplateAuraSize(frame)
             if config.targetIndicator then BBP.TargetIndicator(frame) end
 
-            if config.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
             if config.fadeOutNPC then
                 BBP.FadeOutNPCs(frame)
                 if config.fadeAllButTarget then
                     BBP.FadeAllButTargetNameplates()
                 end
             end
+            if config.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
 
             if config.healthNumbers and config.healthNumbersTargetOnly then
                 BBP.HealthNumbers(frame)

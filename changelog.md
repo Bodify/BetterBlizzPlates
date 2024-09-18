@@ -1,3 +1,25 @@
+# BetterBlizzPlates 1.6.3
+## The War Within
+### New stuff:
+- Small Pets in PvP setting. (Totem Indicator plates will stay full size, unless specified otherwise)
+- Classic Nameplates look (Only healthbar for now, might do castbar later. You can use customize castbar and select on texture if youd like.)
+- Nameplate Auras: Color aura border by type setting.
+- Arena Nameplates (spec name / id) now also has a setting to show spec names in Battlegrounds.
+- New misc setting: Skip GUI, minmax setting that doesnt load GUI into the game until needed.
+### Tweak:
+- Added Monk Images (Storm, Earth & Fire) to Hide NPC & Fade NPC whitelists.
+- Removed "Fade all but target" setting from Fade NPC. It doesnt make sense anymore after adding whitelist mode.
+- Made Totem Indicator hide BigDebuffs icon on Totems on Retail as well when healthbar is hidden.
+- Changed default color on Evoker "Past Self" NPC in Totem Indicator, original color was too close to evoker themself causing some confusion. This change will only be active for new users.
+### Bugfix:
+- Fix issue with Hide NPC causing Target nameplate to sometimes appear behind other nameplates.
+- Fix issue with reposition name sometimes not repositioning.
+- Fix issues with Fade NPC in combination with Fade Non-Target Nameplates
+- Fix issue with "Hide healthbar" & "Show on Target" setting not hiding previous target nameplate again.
+- Fix "Skip hiding friendly nameplates in PvE" setting not working.
+- Fix issue with Smoke Bomb debuff on nameplates multiplying its cooldown frame across other auras.
+- Fix Healer Indicator Anchor selections in Advanced Settings being backwards for enemy & friendly.
+
 # BetterBlizzPlates 1.6.2
 ## The War Within
 ### Important Change:

@@ -35,7 +35,7 @@ function BBP.ExecuteIndicator(frame)
 
     -- Initialize
     if not frame.executeIndicator then
-        frame.executeIndicator = frame.healthBar:CreateFontString(nil, "OVERLAY")
+        frame.executeIndicator = frame.bbpOverlay:CreateFontString(nil, "OVERLAY")
         BBP.SetFontBasedOnOption(frame.executeIndicator, 10, "THICKOUTLINE")
         frame.executeIndicator:SetTextColor(1, 1, 1)
         frame.executeIndicator:SetJustifyH("CENTER")

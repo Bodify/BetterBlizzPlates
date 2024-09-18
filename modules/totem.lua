@@ -215,6 +215,11 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
+    if frame.bbfBigDebuffsAlpha and frame.BigDebuffs then
+        frame.bbfBigDebuffsAlpha = false
+        frame.BigDebuffs:SetAlpha(1)
+    end
+
     if info.isSelf then return end
 
     if not config.totemIndicatorInitialized or BBP.needsUpdate then
@@ -243,6 +248,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
     local guid = info.unitGUID
     local npcID = BBP.GetNPCIDFromGUID(guid) --mby need fresh guid
     local totemIndicatorSwappingAnchor
+
     if config.totemIndicatorHideNameAndShiftIconDown then
         totemIndicatorSwappingAnchor = frame.healthBar
     else
@@ -361,6 +367,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
         end
         if config.totemIndicatorHideHealthBar or npcData.hideHp or npcData.iconOnly then
+            if frame.BigDebuffs then
+                frame.BigDebuffs:SetAlpha(0)
+                frame.bbfBigDebuffsAlpha = true
+            end
             if npcData.iconOnly then
                 frame.HealthBarsContainer:SetAlpha(0)
                 frame.selectionHighlight:SetAlpha(0)
@@ -377,24 +387,58 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
         elseif config.totemIndicatorWidthEnabled then
             if npcData.widthOn and npcData.hpWidth then
-                if not frame.hoks then
+                if not frame.bbpWidthHook then
                     hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
                         if self:IsProtected() or not frame.unit then return end
-                        local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
-                        local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
+                        if UnitIsPlayer(frame.unit) then return end
 
-                        if npcData and npcData.widthOn and npcData.hpWidth then
+                        local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
+                        local db = BetterBlizzPlatesDB
+                        local npcData = db.totemIndicatorNpcList[npcID]
+
+                        if db.totemIndicator and npcData then
+                            if npcData.widthOn and npcData.hpWidth then
+                                frame.HealthBarsContainer:ClearPoint("RIGHT")
+                                frame.HealthBarsContainer:ClearPoint("LEFT")
+                                frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth+12, 0)
+                                frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth-12,0)
+
+                                frame.castBar:ClearPoint("RIGHT")
+                                frame.castBar:ClearPoint("LEFT")
+                                frame.castBar:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth+12, 0)
+                                frame.castBar:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth-12,0)
+                            end
+                            if BetterBlizzPlatesDB.classicNameplates then
+                                BBP.AdjustClassicBorderWidth(frame)
+                            end
+                        elseif db.smallPetsInPvP and (UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP) then
                             frame.HealthBarsContainer:ClearPoint("RIGHT")
                             frame.HealthBarsContainer:ClearPoint("LEFT")
-                            frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth+12, 0)
-                            frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth-12,0)
+                            frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", 50, 0)
+                            frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", -50,0)
+
+                            frame.castBar:ClearPoint("RIGHT")
+                            frame.castBar:ClearPoint("LEFT")
+                            frame.castBar:SetPoint("LEFT", frame, "LEFT", 50, 0)
+                            frame.castBar:SetPoint("RIGHT", frame, "RIGHT", -50,0)
+                            if BetterBlizzPlatesDB.classicNameplates then
+                                BBP.AdjustClassicBorderWidth(frame)
+                            end
                         end
                     end)
                     frame.HealthBarsContainer:ClearPoint("RIGHT")
                     frame.HealthBarsContainer:ClearPoint("LEFT")
                     frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth+12, 0)
                     frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth-12,0)
-                    frame.hoks = true
+
+                    frame.castBar:ClearPoint("RIGHT")
+                    frame.castBar:ClearPoint("LEFT")
+                    frame.castBar:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth+12, 0)
+                    frame.castBar:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth-12,0)
+                    -- if BetterBlizzPlatesDB.classicNameplates then
+                    --     BBP.AdjustClassicBorderWidth(frame)
+                    -- end
+                    frame.bbpWidthHook = true
                 end
             end
         end

@@ -42,7 +42,7 @@ function BBP.HealerIndicator(frame)
 
     -- Initialize
     if not frame.healerIndicator then
-        frame.healerIndicator = frame.healthBar:CreateTexture(nil, "OVERLAY")
+        frame.healerIndicator = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
         frame.healerIndicator:SetAtlas("greencross")
         frame.healerIndicator:SetSize(12, 12)
         frame.healerIndicator:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875) -- Theres a few ugly white pixels around this texture, this gets rid of them
@@ -56,6 +56,7 @@ function BBP.HealerIndicator(frame)
     end
 
     -- Set position and scale dynamically
+    frame.healerIndicator:ClearAllPoints()
     frame.healerIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
     frame.healerIndicator:SetScale(scale)
 

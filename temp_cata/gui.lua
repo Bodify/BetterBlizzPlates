@@ -4343,8 +4343,12 @@ local function guiGeneralTab()
     shortArenaSpecName:SetPoint("LEFT", arenaSettingsText, "RIGHT", 5, 0)
     CreateTooltipTwo(shortArenaSpecName, "Short Spec Names", "Enable to use abbreviated specialization names. For instance, \"Assassination\" will be displayed as \"Assa\".", nil, "ANCHOR_LEFT")
 
+    local arenaIndicatorBg = CreateCheckbox("arenaIndicatorBg", "BG", BetterBlizzPlates)
+    arenaIndicatorBg:SetPoint("LEFT", shortArenaSpecName.Text, "RIGHT", 5, 0)
+    CreateTooltipTwo(arenaIndicatorBg, "Battleground Spec Names", "Show spec names on enemy nameplates in Battlegrounds", "Requires Details addon", "ANCHOR_LEFT")
+
     local arenaIndicatorTestMode = CreateCheckbox("arenaIndicatorTestMode", "Test", BetterBlizzPlates)
-    arenaIndicatorTestMode:SetPoint("LEFT", shortArenaSpecName.Text, "RIGHT", 5, 0)
+    arenaIndicatorTestMode:SetPoint("LEFT", arenaIndicatorBg.Text, "RIGHT", 5, 0)
     CreateTooltipTwo(arenaIndicatorTestMode, "Test Arena ID/Spec", "Test the selected Arena Nameplates mode.", nil, "ANCHOR_LEFT")
 
     local arenaIDScale = CreateSlider(BetterBlizzPlates, "Arena ID Size", 0.5, 4, 0.01, "arenaIDScale")
@@ -4508,7 +4512,7 @@ local function guiPositionAndScale()
         "healerIndicatorDropdown",
         contentFrame,
         "Select Anchor Point",
-        "healerIndicatorAnchor",
+        "healerIndicatorEnemyAnchor",
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
@@ -4522,7 +4526,7 @@ local function guiPositionAndScale()
         "healerIndicatorDropdown2",
         contentFrame,
         "Select Anchor Point",
-        "healerIndicatorEnemyAnchor",
+        "healerIndicatorAnchor",
         function(arg1)
             BBP.RefreshAllNameplates()
         end,

@@ -112,6 +112,11 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     if not castBar then return end
     if castBar:IsForbidden() then return end
 
+    -- if frame.ogParent then
+    --     frame:SetParent(frame.ogParent)
+    --     frame.ogParent = nil
+    -- end
+
     local showCastBarIconWhenNoninterruptible = BetterBlizzPlatesDB.showCastBarIconWhenNoninterruptible
     local castBarIconScale = BetterBlizzPlatesDB.castBarIconScale
     local borderShieldSize = showCastBarIconWhenNoninterruptible and (castBarIconScale + 0.3) or castBarIconScale
@@ -380,7 +385,8 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                        (castEmphasis.id and spellID and castEmphasis.id == spellID) then
                         ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
                         frame.emphasizedCast = castEmphasis
-                        frame:GetParent():SetParent(BBP.OverlayFrame)
+                        -- frame:GetParent():SetParent(BBP.OverlayFrame)
+                        -- frame.ogParent = frame:GetParent():GetParent()
                     else
                         frame.emphasizedCast = nil
                     end
@@ -631,6 +637,9 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                             if not UnitCastingInfo(destUnit) and not UnitChannelInfo(destUnit) then
                                 if frame and frame.castBar then
                                     frame.castBar:PlayFadeAnim()
+                                    if nameplateResourceUnderCastbar then
+                                        BBP.UpdateNameplateResourcePositionForCasting(nameplate)
+                                    end
                                 end
                             end
                         end)
