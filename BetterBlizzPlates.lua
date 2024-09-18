@@ -3522,8 +3522,7 @@ function BBP.RepositionName(frame)
     RepositionName(frame)
 
     if config.fakeNameRaiseStrata then
-        frame.name:SetParent(frame.bbpOverlay)
-        --frame.name:SetDrawLayer("OVERLAY", 7)
+        frame.name:SetParent(frame.HealthBarsContainer:GetAlpha() == 0 and frame or frame.bbpOverlay)
     end
 end
 
