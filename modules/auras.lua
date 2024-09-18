@@ -1214,6 +1214,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             buff.CountFrame:SetFrameStrata("DIALOG")
             buff.GlowFrame = CreateFrame("Frame", nil, buff)
             buff.GlowFrame:SetFrameStrata("MEDIUM")
+            buff.GlowFrame:SetFrameLevel(1000)
         end
 
         if aura.spellId == 212183 then

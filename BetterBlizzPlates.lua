@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.3"
+local addonUpdates = "1.6.3b"
 local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -1320,6 +1320,7 @@ local function InitializeNameplateSettings(frame)
             arenaIndicatorBg = BetterBlizzPlatesDB.arenaIndicatorBg,
             classicNameplates = BetterBlizzPlatesDB.classicNameplates,
             hideLevelFrame = BetterBlizzPlatesDB.hideLevelFrame,
+            smallPetsInPvP = BetterBlizzPlatesDB.smallPetsInPvP,
         }
         if frame.BetterBlizzPlates.config.changeHealthbarHeight then
             frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
@@ -2163,62 +2164,80 @@ function BBP.FadeOutNPCs(frame)
     end
 end
 
+local function SetBarWidth(frame, width, useOffsets)
+    frame.HealthBarsContainer:ClearPoint("RIGHT")
+    frame.HealthBarsContainer:ClearPoint("LEFT")
+    frame.castBar:ClearPoint("RIGHT")
+    frame.castBar:ClearPoint("LEFT")
+
+    if useOffsets then
+        -- Use the +12 and -12 offset for npcData
+        frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", -width + 12, 0)
+        frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", width - 12, 0)
+
+        frame.castBar:SetPoint("LEFT", frame, "LEFT", -width + 12, 0)
+        frame.castBar:SetPoint("RIGHT", frame, "RIGHT", width - 12, 0)
+    else
+        -- Default behavior without offsets
+        frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", 50, 0)
+        frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", -50, 0)
+
+        frame.castBar:SetPoint("LEFT", frame, "LEFT", 50, 0)
+        frame.castBar:SetPoint("RIGHT", frame, "RIGHT", -50, 0)
+    end
+end
+
 local function SmallPetsInPvP(frame)
-    if not BetterBlizzPlatesDB.smallPetsInPvP then return end
+    local config = frame.BetterBlizzPlates.config
+    if not config.smallPetsInPvP then return end
+
     if UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP and not UnitIsPlayer(frame.unit)) then
         if not frame.bbpWidthHook then
             hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
                 if self:IsProtected() or not frame.unit then return end
                 if UnitIsPlayer(frame.unit) then return end
-
-                local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
                 local db = BetterBlizzPlatesDB
-                local npcData = db.totemIndicatorNpcList[npcID]
 
-                if db.totemIndicator and npcData then
-                    if npcData.widthOn and npcData.hpWidth then
-                        frame.HealthBarsContainer:ClearPoint("RIGHT")
-                        frame.HealthBarsContainer:ClearPoint("LEFT")
-                        frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth+12, 0)
-                        frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth-12,0)
+                if db.totemIndicator then
+                    local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
+                    local npcData = db.totemIndicatorNpcList[npcID]
 
-                        frame.castBar:ClearPoint("RIGHT")
-                        frame.castBar:ClearPoint("LEFT")
-                        frame.castBar:SetPoint("LEFT", frame, "LEFT", -npcData.hpWidth+12, 0)
-                        frame.castBar:SetPoint("RIGHT", frame, "RIGHT", npcData.hpWidth-12,0)
+                    if npcData then
+                        if db.totemIndicatorWidthEnabled then
+                            if npcData.widthOn and npcData.hpWidth then
+                                SetBarWidth(frame, npcData.hpWidth, true)
+                            end
+                        end
+                    elseif UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP then
+                        SetBarWidth(frame, 50, false)
                     end
-                    if BetterBlizzPlatesDB.classicNameplates then
-                        BBP.AdjustClassicBorderWidth(frame)
-                    end
-                elseif db.smallPetsInPvP and (UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP) then
-                    frame.HealthBarsContainer:ClearPoint("RIGHT")
-                    frame.HealthBarsContainer:ClearPoint("LEFT")
-                    frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", 50, 0)
-                    frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", -50,0)
-
-                    frame.castBar:ClearPoint("RIGHT")
-                    frame.castBar:ClearPoint("LEFT")
-                    frame.castBar:SetPoint("LEFT", frame, "LEFT", 50, 0)
-                    frame.castBar:SetPoint("RIGHT", frame, "RIGHT", -50,0)
-                    if BetterBlizzPlatesDB.classicNameplates then
+                elseif UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP then
+                    SetBarWidth(frame, 50, false)
+                    if db.classicNameplates then
                         BBP.AdjustClassicBorderWidth(frame)
                     end
                 end
             end)
             frame.bbpWidthHook = true
         end
-        frame.HealthBarsContainer:ClearPoint("RIGHT")
-        frame.HealthBarsContainer:ClearPoint("LEFT")
-        frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", 50, 0)
-        frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", -50,0)
 
-        frame.castBar:ClearPoint("RIGHT")
-        frame.castBar:ClearPoint("LEFT")
-        frame.castBar:SetPoint("LEFT", frame, "LEFT", 50, 0)
-        frame.castBar:SetPoint("RIGHT", frame, "RIGHT", -50,0)
-        -- if BetterBlizzPlatesDB.classicNameplates then
-        --     BBP.AdjustClassicBorderWidth(frame)
-        -- end
+        if config.totemIndicator then
+            local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
+            local db = BetterBlizzPlatesDB
+            local npcData = db.totemIndicatorNpcList[npcID]
+
+            if npcData then
+                if config.totemIndicatorWidthEnabled then
+                    if npcData.widthOn and npcData.hpWidth then
+                        SetBarWidth(frame, npcData.hpWidth, true)
+                    end
+                end
+            else
+                SetBarWidth(frame, 50, false)
+            end
+        else
+            SetBarWidth(frame, 50, false)
+        end
     end
 end
 
@@ -3499,12 +3518,8 @@ function BBP.RepositionName(frame)
     end
     RepositionName(frame)
 
-    if not info.isFriend then
-        frame.name:SetParent(frame)
-    else
-        frame.name:SetParent(frame)
-        frame.name:SetDrawLayer("OVERLAY")
-    end
+    frame.name:SetParent(frame)
+    frame.name:SetDrawLayer("OVERLAY")
 end
 
 local function GetNameplateHookTable(frame)
@@ -4012,7 +4027,7 @@ function BBP.RefreshAllNameplates()
             BBP.SetFontBasedOnOption(frame.absorbIndicator, 10)
         end
         if frame.CastTimer then
-            BBP.SetFontBasedOnOption(frame.CastTimer, 11)
+            BBP.SetFontBasedOnOption(frame.CastTimer, BetterBlizzPlatesDB.npTargetTextSize or 11)
         end
         if frame.executeIndicator then
             BBP.SetFontBasedOnOption(frame.executeIndicator, 10, "THICKOUTLINE")
@@ -4493,6 +4508,8 @@ Frame:SetScript("OnEvent", function(...)
     _, playerClass = UnitClass("player")
     playerClassColor = RAID_CLASS_COLORS[playerClass]
 
+    BBP.ToggleSpellCastEventRegistration()
+
     if db.enableNameplateAuraCustomisation then
         BBP.RunAuraModule()
         BBP.SmokeCheckBootup()
@@ -4594,6 +4611,8 @@ SlashCmdList["BBP"] = function(msg)
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     elseif command == "fixnameplates" then
         StaticPopup_Show("CONFIRM_FIX_NAMEPLATES_BBP")
+    elseif command == "ver" or command == "version" then
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates Version "..addonUpdates)
     else
         --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
         if not BetterBlizzPlates.guiLoaded then
@@ -4655,7 +4674,7 @@ local function TurnOnEnabledFeaturesOnLogin()
         BBP.ChangeRaidmarker()
     end
 
-    BBP.ToggleSpellCastEventRegistration()
+    --BBP.ToggleSpellCastEventRegistration()
     BBP.ApplyNameplateWidth()
     BBP.ToggleFriendlyNameplatesAuto()
     BBP.ToggleAbsorbIndicator()
@@ -4943,7 +4962,7 @@ local function NamePlateCastBarTestMode(frame)
                         frame.dummyTimer:SetTextColor(1, 1, 1)
                         frame.dummyTimer:SetText("1.5")
                     end
-                    BBP.SetFontBasedOnOption(frame.dummyTimer, 12, "OUTLINE")
+                    BBP.SetFontBasedOnOption(frame.dummyTimer, BetterBlizzPlatesDB.npTargetTextSize or 12, "OUTLINE")
                     frame.dummyTimer:Show()
                 else
                     if frame.dummyTimer then
@@ -4969,7 +4988,7 @@ local function NamePlateCastBarTestMode(frame)
                     end
 
                     local useCustomFont = BetterBlizzPlatesDB.useCustomFont
-                    BBP.SetFontBasedOnOption(frame.dummyNameText, useCustomFont and 11 or 12)
+                    BBP.SetFontBasedOnOption(frame.dummyNameText, (useCustomFont and BetterBlizzPlatesDB.npTargetTextSize or 11) or (BetterBlizzPlatesDB.npTargetTextSize or 12))
                     frame.dummyNameText:Show()
                 else
                     if frame.dummyNameText then
