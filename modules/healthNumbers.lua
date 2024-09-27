@@ -195,21 +195,24 @@ function BBP.HealthNumbers(frame)
     frame.healthNumbers:Show()
 end
 
--- Event listening for Health Numbers
-local healthEventFrame = CreateFrame("Frame")
-healthEventFrame:SetScript("OnEvent", function(self, event, unit)
-    local nameplate, frame = BBP.GetSafeNameplate(unit)
-    if frame then
-        BBP.HealthNumbers(frame)
-    end
-end)
 
+local healthEventFrame
 -- Toggle event listening on/off for Health Numbers if not enabled
 function BBP.ToggleHealthNumbers()
     if BetterBlizzPlatesDB.healthNumbers then
+        if not healthEventFrame then
+            healthEventFrame = CreateFrame("Frame")
+            healthEventFrame:SetScript("OnEvent", function(self, event, unit)
+                local nameplate, frame = BBP.GetSafeNameplate(unit)
+                if not frame then return end
+                BBP.HealthNumbers(frame)
+            end)
+        end
         healthEventFrame:RegisterEvent("UNIT_HEALTH")
     else
-        healthEventFrame:UnregisterEvent("UNIT_HEALTH")
+        if healthEventFrame then
+            healthEventFrame:UnregisterEvent("UNIT_HEALTH")
+        end
     end
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         BBP.HealthNumbers(nameplate.UnitFrame)

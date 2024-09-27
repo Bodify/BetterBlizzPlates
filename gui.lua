@@ -67,8 +67,20 @@ function BBP.ImportProfile(encodedString, expectedDataType)
         end
 
         local success, importTable = LibSerialize:Deserialize(serialized)
-        if not success or importTable.dataType ~= expectedDataType then
-            return nil, "Error deserializing or data type mismatch"
+        if not success then
+            return nil, "Error deserializing the data."
+        end
+
+        -- If it's a full profile, extract the relevant portion based on expectedDataType
+        if importTable.dataType == "fullProfile" then
+            if importTable.data[expectedDataType] then
+                -- Extract the relevant part and return it
+                return importTable.data[expectedDataType], nil
+            else
+                return importTable.data, nil
+            end
+        elseif importTable.dataType ~= expectedDataType then
+            return nil, "Data type mismatch"
         end
 
         return importTable.data, nil
@@ -84,6 +96,7 @@ function BBP.ImportProfile(encodedString, expectedDataType)
         end
     end
 end
+
 
 local function deepMergeTables(destination, source)
     for k, v in pairs(source) do
@@ -4077,6 +4090,11 @@ local function guiGeneralTab()
     local hideNameplateAuras = CreateCheckbox("hideNameplateAuras", "Hide nameplate auras", BetterBlizzPlates)
     hideNameplateAuras:SetPoint("TOPLEFT", removeRealmNames, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(hideNameplateAuras, "Hide Nameplate Auras", "Hide all Nameplate Auras.")
+    hideNameplateAuras:HookScript("OnClick", function (self)
+        if not self:GetChecked() then
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        end
+    end)
 
     local hideNameplateAuraTooltip = CreateCheckbox("hideNameplateAuraTooltip", "Hide aura tooltip", BetterBlizzPlates)
     hideNameplateAuraTooltip:SetPoint("LEFT", hideNameplateAuras.text, "RIGHT", 0, 0)
@@ -8585,6 +8603,7 @@ local function guiCVarControl()
     cbCVars["nameplateShowFriendlyTotems"] = nameplateShowFriendlyTotems
     cbCVars["nameplateResourceOnTarget"] = nameplateResourceOnTarget
     cbCVars["nameplateMotion"] = nameplateMotion
+    cbCVars["nameplateShowAll"] = nameplateShowAll
 
     local sliderCVars = {}
     sliderCVars["nameplateOverlapH"] = nameplateOverlapH

@@ -312,7 +312,7 @@ function BBP.TargetResourceUpdater()
                 end
 
                 if BetterBlizzPlatesDB.changeResourceStrata then
-                    resourceFrame:SetFrameStrata("HIGH")
+                    resourceFrame:SetFrameStrata("DIALOG")
                 end
                 resourceFrame:ClearAllPoints();
                 if nameplateResourceUnderCastbar then
@@ -329,7 +329,7 @@ function BBP.TargetResourceUpdater()
             resourceFrame:SetScale(nameplateResourceScale)
 
             if BetterBlizzPlatesDB.changeResourceStrata then
-                resourceFrame:SetFrameStrata("HIGH")
+                resourceFrame:SetFrameStrata("DIALOG")
             end
             resourceFrame:ClearAllPoints();
             local padding = resourceFrame.paddingOverride or 0
@@ -355,7 +355,7 @@ function BBP.TargetResourceUpdater()
                     if nameplateForTarget then--and nameplateForTarget.driverFrame then
                         if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
                         if BetterBlizzPlatesDB.changeResourceStrata then
-                            resourceFrame:SetFrameStrata("HIGH")
+                            resourceFrame:SetFrameStrata("DIALOG")
                         end
                         resourceFrame:ClearAllPoints();
                         if nameplateResourceUnderCastbar then
@@ -384,7 +384,7 @@ function BBP.TargetResourceUpdater()
                     local nameplatePlayer = C_NamePlate.GetNamePlateForUnit("player")
                     if nameplatePlayer and nameplatePlayer.driverFrame then
                         if BetterBlizzPlatesDB.changeResourceStrata then
-                            resourceFrame:SetFrameStrata("HIGH")
+                            resourceFrame:SetFrameStrata("DIALOG")
                         end
                         resourceFrame:ClearAllPoints();
 
@@ -535,6 +535,12 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.CompactUnitFrame_UpdateHealthColor(frame)
             end
 
+            if config.classicNameplates then
+                if config.changeNameplateBorderColor then
+                    BBP.ColorNameplateBorder(frame)
+                end
+            end
+
             if BetterBlizzPlatesDB.friendlyHideHealthBar then
                 local showOnTarget = BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget
                 if showOnTarget and (info.isPlayer and info.isFriend) then
@@ -600,6 +606,12 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             BBP.ToggleNameplateAuras(frame)
             BBP.TargetNameplateAuraSize(frame)
             if config.targetIndicator then BBP.TargetIndicator(frame) end
+
+            if config.classicNameplates then
+                if config.changeNameplateBorderColor then
+                    BBP.ColorNameplateBorder(frame)
+                end
+            end
 
             if config.fadeOutNPC then
                 BBP.FadeOutNPCs(frame)

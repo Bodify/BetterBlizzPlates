@@ -1,3 +1,19 @@
+# BetterBlizzPlates 1.6.3c
+## The War Within
+### Tweak:
+- The "Interrupt CD Color" for castbars will now also display a spark on the castbar exactly where your interrupt becomes ready instead of just displaying a different color for casts where your interrupt will be ready.
+- "Full Profile" export strings can now be imported in the other import windows and will then only import that specific portion of the full profile.
+- Changed the color of Priests Re-Fear Shadow NPC to a more pinkish less threathening color (Was too similar to Psyfiend).
+- Updated Nahj profile.
+- Added missing `nameplateShowAll` CVar to CVar listener (If changed elsewhere will also change in BBP settings).
+### Bugfix:
+- Fixed Reposition Name not positioning name properly in a duel with a friend.
+- Fixed "Color by Aura" accidentally checking both name and id when id was added.
+- Fixed Druid Blue ComboPoints not getting activated if Druid was not in catform during login/reload.
+- Fixed "Hide nameplate auras" on general page not working immediately
+### Known issue:
+- Nameplate resource can attach to wrong nameplates (with attach under nameplate setting?)
+
 # BetterBlizzPlates 1.6.3b
 ## The War Within
 ### Tweak:

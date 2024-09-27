@@ -8,8 +8,8 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.3b"
-local sendUpdate = true
+local addonUpdates = "1.6.3c"
+local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
@@ -270,7 +270,7 @@ local defaultSettings = {
         [61245] =   { name = "Capacitor Totem", icon = C_Spell.GetSpellTexture(192058),                 hideIcon = false, size = 30, duration = 2,  color = {1, 0.69, 0}, important = true },
         [105451] =  { name = "Counterstrike Totem", icon = C_Spell.GetSpellTexture(204331),             hideIcon = false, size = 30, duration = 15, color = {1, 0.27, 0.59}, important = true },
         [101398] =  { name = "Psyfiend", icon = C_Spell.GetSpellTexture(199824),                        hideIcon = false, size = 35, duration = 12, color = {0.49, 0, 1}, important = true },
-        [225672] =  { name = "Shadow", icon = C_Spell.GetSpellTexture(8122),                            hideIcon = false, size = 35, duration = 4,  color = {0.49, 0, 1}, important = true },
+        [225672] =  { name = "Shadow", icon = C_Spell.GetSpellTexture(8122),                            hideIcon = false, size = 35, duration = 4,  color = {0.78, 0.48, 1}, important = true },
         [100943] =  { name = "Earthen Wall Totem", icon = C_Spell.GetSpellTexture(198838),              hideIcon = false, size = 30, duration = 18, color = {0.78, 0.49, 0.35}, important = true },
         [107100] =  { name = "Observer", icon = C_Spell.GetSpellTexture(112869),                        hideIcon = false, size = 30, duration = 20, color = {1, 0.69, 0}, important = true },
         [135002] =  { name = "Tyrant", icon = C_Spell.GetSpellTexture(265187),                          hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
@@ -1687,7 +1687,17 @@ local function ToggleNameplateBuffFrameVisibility(frame)
 
     local buffFrameAlpha = 1
     if config.hideNameplateAuras then
-        buffFrameAlpha = 0
+        if not frame.bbpHookedBuffFrameAlpha then
+            hooksecurefunc(frame.BuffFrame, "SetAlpha", function(self)
+                if self.changing or frame:IsProtected() then return end
+                self.changing = true
+                self:SetAlpha(0)
+                self.changing = false
+            end)
+            frame.bbpHookedBuffFrameAlpha = true
+            frame.BuffFrame:SetAlpha(0)
+        end
+        return
     elseif config.nameplateAuraPlayersOnly then
         if config.nameplateAuraPlayersOnlyShowTarget and info.isTarget then
             buffFrameAlpha = 1
@@ -2526,9 +2536,10 @@ function BBP.UpdateAuraLookupTables()
     -- Populate new lookup tables
     for _, npc in ipairs(BetterBlizzPlatesDB.auraColorList) do
         if npc.id then
+            -- If the aura has an ID, add it to spellIdLookup and skip the name
             BBP.spellIdLookup[npc.id] = {priority = npc.priority, color = npc.entryColors.text, onlyMine = npc.onlyMine}
-        end
-        if npc.name then
+        elseif npc.name then
+            -- Only add to auraNameLookup if no ID is present
             local lowerCaseName = strlower(npc.name)
             BBP.auraNameLookup[lowerCaseName] = {priority = npc.priority, color = npc.entryColors.text, onlyMine = npc.onlyMine}
         end
@@ -2554,13 +2565,18 @@ function BBP.AuraColor(frame)
     local highestPriority = 0
     local auraColor = nil
 
-    local function ProcessAura(name, icon, count, dispelType, duration, expirationTime, source, isStealable, 
-                               nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, castByPlayer, nameplateShowAll, timeMod)
+    local function ProcessAura(name, icon, count, dispelType, duration, expirationTime, source, isStealable, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, castByPlayer, nameplateShowAll, timeMod)
+        -- Check by spellId first
         local spellInfo = BBP.spellIdLookup[spellId]
+
+        -- If no spellId is found, fall back to checking by name
         if not spellInfo and name then
             spellInfo = BBP.auraNameLookup[strlower(name)]
         end
+
+        -- If we found a valid spellInfo and it has a higher priority, apply the color
         if spellInfo and spellInfo.priority > highestPriority then
+            -- Check if onlyMine is set, and ensure the aura was cast by the player if required
             if spellInfo.onlyMine and source ~= "player" then
                 config.auraColorRGB = nil
             else
@@ -2568,6 +2584,7 @@ function BBP.AuraColor(frame)
                 auraColor = spellInfo.color
             end
         end
+
         return highestPriority >= 10
     end
 
@@ -3172,6 +3189,59 @@ local function ColorNameplateBorder(self, frame)
     self.changing = false
 end
 
+function BBP.ColorNameplateBorder(frame)
+    local border = frame.BetterBlizzPlates.bbpBorder
+    border:SetBorderColor(1,1,1)
+    local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
+    local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
+    if not info then return end
+
+    if info.isSelf then return end
+
+    if not config.nameplateBorderInitialized or BBP.needsUpdate then
+        config.npBorderTargetColor = BetterBlizzPlatesDB.npBorderTargetColor
+        config.npBorderFriendFoeColor = BetterBlizzPlatesDB.npBorderFriendFoeColor
+        config.npBorderClassColor = BetterBlizzPlatesDB.npBorderClassColor
+
+        config.npBorderTargetColorRGB = BetterBlizzPlatesDB.npBorderTargetColorRGB
+        config.npBorderEnemyColorRGB = BetterBlizzPlatesDB.npBorderEnemyColorRGB
+        config.npBorderFriendlyColorRGB = BetterBlizzPlatesDB.npBorderFriendlyColorRGB
+        config.npBorderNeutralColorRGB = BetterBlizzPlatesDB.npBorderNeutralColorRGB
+        config.npBorderNpcColorRGB = BetterBlizzPlatesDB.npBorderNpcColorRGB
+        config.npBorderNonTargetColorRGB = BetterBlizzPlatesDB.npBorderNonTargetColorRGB
+
+        config.nameplateBorderInitialized = true
+    end
+
+    if info.isTarget and config.npBorderTargetColor then
+        border:SetBorderColor(unpack(config.npBorderTargetColorRGB))
+    else
+        --non target
+        if config.npBorderFriendFoeColor then
+            if info.isEnemy then
+                border:SetBorderColor(unpack(config.npBorderEnemyColorRGB))
+            elseif info.isNeutral then
+                border:SetBorderColor(unpack(config.npBorderNeutralColorRGB))
+            elseif info.isFriend then
+                border:SetBorderColor(unpack(config.npBorderFriendlyColorRGB))
+            end
+        end
+
+        if config.npBorderClassColor then
+            if info.isPlayer then
+                local classColor = RAID_CLASS_COLORS[info.class]
+                border:SetBorderColor(classColor.r, classColor.g, classColor.b)
+            else
+                border:SetBorderColor(unpack(config.npBorderNpcColorRGB))
+            end
+        end
+
+        if not config.npBorderFriendFoeColor and not config.npBorderClassColor and config.npBorderTargetColor then
+            border:SetBorderColor(unpack(config.npBorderNonTargetColorRGB))
+        end
+    end
+end
+
 local function ChangeHealthbarBorderSize(frame)
     if not frame.borderHooked then
         hooksecurefunc(frame.HealthBarsContainer.border, "UpdateSizes", function(self)
@@ -3501,7 +3571,7 @@ function BBP.RepositionName(frame)
         frame.name.changing = true
         local db = BetterBlizzPlatesDB
         frame.name:ClearPoint("BOTTOM")
-        if UnitIsFriend(frame.unit, "player") then
+        if not UnitCanAttack(frame.unit, "player") then
             if db.useFakeNameAnchorBottom then
                 frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 27)
             else
@@ -3828,9 +3898,6 @@ local function HandleNamePlateAdded(unit)
     -- Hook castbar hide function for resource
     if config.nameplateResourceUnderCastbar then HookNameplateCastbarHide(frame) end
 
-    -- Hook nameplate border color
-    if config.changeNameplateBorderColor then HookNameplateBorder(frame) end
-
     -- Anon mode
     if config.anonModeOn then anonMode(frame, info) end
 
@@ -3930,6 +3997,15 @@ local function HandleNamePlateAdded(unit)
         frame.BetterBlizzPlates.bbpBorder:Hide()
         frame.HealthBarsContainer.border:Show()
         frame.classicNameplatesOn = nil
+    end
+
+    -- Hook nameplate border color
+    if config.changeNameplateBorderColor then
+        if not config.classicNameplates then
+            HookNameplateBorder(frame)
+        else
+            BBP.ColorNameplateBorder(frame)
+        end
     end
 
     -- Hide name

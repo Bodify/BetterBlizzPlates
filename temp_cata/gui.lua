@@ -73,7 +73,7 @@ local function ImportOtherProfile(encodedString, expectedDataType)
     return true, nil
 end
 
-local function ImportProfile(encodedString, expectedDataType)
+function BBP.ImportProfile(encodedString, expectedDataType)
     -- Check if the string starts and ends with !BBP
     if encodedString:sub(1, 4) == "!BBP" and encodedString:sub(-4) == "!BBP" then
         encodedString = encodedString:sub(5, -5) -- Remove both prefix and suffix
@@ -86,8 +86,20 @@ local function ImportProfile(encodedString, expectedDataType)
         end
 
         local success, importTable = LibSerialize:Deserialize(serialized)
-        if not success or importTable.dataType ~= expectedDataType then
-            return nil, "Error deserializing or data type mismatch"
+        if not success then
+            return nil, "Error deserializing the data."
+        end
+
+        -- If it's a full profile, extract the relevant portion based on expectedDataType
+        if importTable.dataType == "fullProfile" then
+            if importTable.data[expectedDataType] then
+                -- Extract the relevant part and return it
+                return importTable.data[expectedDataType], nil
+            else
+                return importTable.data, nil
+            end
+        elseif importTable.dataType ~= expectedDataType then
+            return nil, "Data type mismatch"
         end
 
         return importTable.data, nil

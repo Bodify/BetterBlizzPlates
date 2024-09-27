@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.3b"
+local addonUpdates = "1.6.3c"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -5280,6 +5280,8 @@ SlashCmdList["BBP"] = function(msg)
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     elseif command == "fixnameplates" then
         StaticPopup_Show("CONFIRM_FIX_NAMEPLATES_BBP")
+    elseif command == "ver" or command == "version" then
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates Version "..addonUpdates)
     else
         InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
     end
