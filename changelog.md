@@ -1,4 +1,4 @@
-# BetterBlizzPlates 1.6.3d
+# BetterBlizzPlates 1.6.4
 ## The War Within
 ### New stuff:
 - Mmarkers profile
@@ -8,6 +8,8 @@
 ### Bugfix:
 - Fix the Interrupt CD Color spark positioning on channeled casts.
 - Fix "Castbar Edge Highlight" causing lua errors in PvE.
+- Fix druid blue berserk combos sometimes not activating.
+- Potential fix for combopoints jumping to wrong nameplate due to a mix of settings. Requires more testing, pls report if this is still an issue.
 
 # BetterBlizzPlates 1.6.3c
 ## The War Within

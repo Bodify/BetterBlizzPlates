@@ -115,7 +115,6 @@ local uas = {
 }
 
 
-BBP.smokeBombCast = 0
 local smokeTracker
 BBP.ActiveSmokeCheck = CreateFrame("Frame")
 
@@ -1418,7 +1417,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
                 buff.CooldownSB = cooldownFrame
             end
             buff.CooldownSB:Show()
-            buff.CooldownSB:SetCooldown(BBP.smokeBombCast, 5)
+            buff.CooldownSB:SetCooldown(BBP.smokeBombCast or 0, 5)
         elseif buff.CooldownSB then
             buff.CooldownSB:Hide()
         end

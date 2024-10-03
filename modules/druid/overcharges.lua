@@ -9,34 +9,26 @@ function BBP.DruidBlueComboPoints()
         if comboPointFrame.blueOverchargePoints then return end
         local comboPoints = {}
 
-        -- Gather all visible combo points
         local comboPointsChecked = 0
         for i = 1, comboPointFrame:GetNumChildren() do
             local child = select(i, comboPointFrame:GetChildren())
-            local point, relativeTo, relativePoint, x, y = child:GetPoint()
-            if x then
+            if child:IsShown() then
                 comboPointsChecked = comboPointsChecked + 1
-                table.insert(comboPoints, {child = child, x = x})
+                table.insert(comboPoints, child)
             end
         end
 
-        -- Sort the combo points by x-coordinate (leftmost to rightmost)
-        table.sort(comboPoints, function(a, b) return a.x < b.x end)
-
-        -- Apply textures to the first three combo points
         for i = 1, 3 do
             if comboPoints[i] then
-                local comboPoint = comboPoints[i].child
+                local comboPoint = comboPoints[i]
                 comboPointFrame["ComboPoint"..i] = comboPoint
-
-                --comboPoint.Point_Icon:SetAtlas("UF-DruidCP-Icon") -- Default Druid combo point icon
 
                 -- Create the overlayActive texture and reference it as ChargedFrameActive
                 local overlayActive = comboPoint:CreateTexture(nil, "OVERLAY")
                 overlayActive:SetAtlas("UF-RogueCP-BG-Anima")
                 overlayActive:SetSize(20, 20)
                 overlayActive:SetPoint("CENTER", comboPoint, "CENTER")
-                comboPoint.ChargedFrameActive = overlayActive  -- Reference it for future use
+                comboPoint.ChargedFrameActive = overlayActive
 
                 -- Initially hide the active overlay
                 overlayActive:Hide()
@@ -120,9 +112,8 @@ function BBP.DruidBlueComboPoints()
     if currentForm ~= 1 then
         local formWatch = CreateFrame("Frame")
         local function OnFormChanged()
-            local currentForm = GetShapeshiftFormID()
-            if currentForm == 1 then
-                CreateChargedPoints(druid)
+            CreateChargedPoints(druidNp)
+            if druidNp.blueOverchargePoints then
                 formWatch:UnregisterAllEvents()
             end
         end

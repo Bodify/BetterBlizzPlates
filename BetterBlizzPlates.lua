@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.3d"
+local addonUpdates = "1.6.4"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -4171,6 +4171,48 @@ local function HandleNamePlateAdded(unit)
     if ((config.hideFriendlyNameText or (config.partyPointerHideAll and frame.partyPointer and frame.partyPointer:IsShown())) and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
         frame.name:SetAlpha(0)
     end
+
+    -- if not frame.moTexture then
+    --     frame.moTexture = frame:CreateTexture("BACKGROUND")
+    --     frame.moTexture:SetAtlas("AdventureMap-textlabelglow")
+    --     frame.moTexture:SetPoint("CENTER", frame.HealthBarsContainer, "CENTER",0,0)
+    --     frame.moTexture:SetDesaturated(true)
+    --     nameplate:HookScript("OnEnter", function(self)
+    --         frame.moTexture:SetVertexColor(1, 1, 1)
+    --     end)
+
+    --     nameplate:HookScript("OnLeave", function(self)
+    --         frame.moTexture:SetVertexColor(0, 0, 0)
+    --     end)
+    -- end
+    -- frame.moTexture:SetVertexColor(0,0,0,1)
+    -- frame.moTexture:SetSize(frame.HealthBarsContainer:GetWidth()+20, frame.HealthBarsContainer:GetHeight()+20)
+    -- if frame.HealthBarsContainer:GetAlpha() == 0 then
+    --     frame.moTexture:SetVertexColor(0,0,0,0)
+    -- end
+
+    -- if not frame.moTexture then
+    --     frame.moTexture = frame.HealthBarsContainer:CreateTexture(nil, "BACKGROUND")
+    --     frame.moTexture:SetAtlas("BattleBar-SwapPetFrame-Highlight")
+    --     frame.moTexture:SetPoint("CENTER", frame.HealthBarsContainer, "CENTER", 0, 0)
+    --     frame.moTexture:SetAlpha(0)
+    
+    --     nameplate:HookScript("OnEnter", function(self)
+    --         frame.moTexture:SetAlpha(1)
+    --     end)
+    
+    --     nameplate:HookScript("OnLeave", function(self)
+    --         frame.moTexture:SetAlpha(0)
+    --     end)
+    -- end
+    
+    -- frame.moTexture:SetSize(frame.HealthBarsContainer:GetWidth() + 6, frame.HealthBarsContainer:GetHeight() + 5)
+    -- if frame.HealthBarsContainer:GetAlpha() == 0 then
+    --     frame.moTexture:SetAlpha(0)
+    -- end
+
+
+
 end
 
 

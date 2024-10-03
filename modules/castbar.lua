@@ -687,7 +687,7 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                         local nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" and BetterBlizzPlatesDB.nameplateResourceUnderCastbar
                         frame.castBar:Show()
 
-                        if nameplateResourceUnderCastbar then
+                        if nameplateResourceUnderCastbar and UnitIsUnit(destUnit, "target") then
                             BBP.UpdateNameplateResourcePositionForCasting(nameplate)
                         end
 
@@ -695,7 +695,7 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                             if not UnitCastingInfo(destUnit) and not UnitChannelInfo(destUnit) then
                                 if frame and frame.castBar then
                                     frame.castBar:PlayFadeAnim()
-                                    if nameplateResourceUnderCastbar then
+                                    if nameplateResourceUnderCastbar and UnitIsUnit(destUnit, "target") then
                                         BBP.UpdateNameplateResourcePositionForCasting(nameplate)
                                     end
                                 end
@@ -950,7 +950,7 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
 
             if event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_INTERRUPTED" or event == "UNIT_SPELLCAST_EMPOWER_STOP" then
                 local castbarQuickHide = BetterBlizzPlatesDB.castbarQuickHide
-                ResetCastbarAfterFadeout(frame, unitID)
+                --ResetCastbarAfterFadeout(frame, unitID)
                 if event =="UNIT_SPELLCAST_INTERRUPTED" then
                     local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
                     local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
