@@ -48,6 +48,7 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         config.partyPointerHealerReplace = BetterBlizzPlatesDB.partyPointerHealerReplace
         config.partyPointerTargetIndicator = BetterBlizzPlatesDB.partyPointerTargetIndicator
         config.partyPointerHideAll = BetterBlizzPlatesDB.partyPointerHideAll
+        config.partyPointerHealerOnly = BetterBlizzPlatesDB.partyPointerHealerOnly
 
         config.partyPointerInitialized = true
     end
@@ -57,7 +58,6 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         frame.partyPointer = CreateFrame("Frame", nil, frame)
         frame.partyPointer:SetFrameLevel(0)
         frame.partyPointer:SetSize(24, 24)
-        --frame.partyPointer:SetScale(scale)
         frame.partyPointer.icon = frame.partyPointer:CreateTexture(nil, "BACKGROUND")
         frame.partyPointer.icon:SetPoint("CENTER", frame.partyPointer)
         frame.partyPointer.icon:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
@@ -116,9 +116,9 @@ function BBP.PartyPointer(frame, fetchedSpecID)
             end
         end
 
-        local anhcorPoint = resourceAnchor or arenaPoint or frame.name
+        local anchorPoint = resourceAnchor or arenaPoint or frame.name
 
-        frame.partyPointer:SetPoint("BOTTOM", anhcorPoint, config.partyPointerAnchor, config.partyPointerXPos, config.partyPointerYPos -5)
+        frame.partyPointer:SetPoint("BOTTOM", anchorPoint, config.partyPointerAnchor, config.partyPointerXPos, config.partyPointerYPos -5)
     else
         frame.partyPointer:SetPoint("BOTTOM", frame.healthBar, config.partyPointerAnchor, config.partyPointerXPos, config.partyPointerYPos)
     end
@@ -138,21 +138,18 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         end
     end
 
-    if config.partyPointerTestMode then
-        frame.partyPointer.healerIcon:Show()
-        frame.partyPointer:Show()
-        if config.partyPointerHealerReplace then
-            frame.partyPointer.healerIcon:ClearAllPoints()
-            frame.partyPointer.healerIcon:SetPoint("CENTER", frame.partyPointer.icon, "CENTER", 0, 0)
-            frame.partyPointer.icon:Hide()
-        end
-        return
-    end
-
+    -- Check for Healer Only Mode
     local specID = fetchedSpecID
     local Details = Details
     if not specID and Details then
         specID = Details:GetSpecByGUID(info.unitGUID)
+    end
+
+    if config.partyPointerHealerOnly then
+        if not HealerSpecs[specID] then
+            frame.partyPointer:Hide()
+            return
+        end
     end
 
     if config.partyPointerHealer then

@@ -178,24 +178,14 @@ StaticPopupDialogs["BBP_CONFIRM_WIPE_CASTEMPHASIS"] = {
     hideOnEscape = true,
 }
 
-StaticPopupDialogs["BBP_CONFIRM_MAGNUSZ_PROFILE"] = {
-    text = titleText.."This action will delete all settings and apply Magnusz's profile and reload the UI.\n\nAre you sure you want to continue?",
+StaticPopupDialogs["BBP_CONFIRM_PROFILE"] = {
+    text = "",
     button1 = "Yes",
     button2 = "No",
-    OnAccept = function()
-        BBP.MagnuszProfile()
-    end,
-    timeout = 0,
-    whileDead = true,
-    hideOnEscape = true,
-}
-
-StaticPopupDialogs["BBP_CONFIRM_NAHJ_PROFILE"] = {
-    text = titleText.."This action will delete all settings and apply Nahj's profile and reload the UI.\n\n|cff32f795NOTE: Nahj only shows his own auras on nameplates and has them hidden on npcs.\n\nTo enable more default settings go to Nameplate Auras after setting profile and check \"Blizzard Default Filter\" under Show DEBUFFS on Enemy Nameplates and uncheck \"Hide auras on NPCs\".|r\n\nAre you sure you want to continue?",
-    button1 = "Yes",
-    button2 = "No",
-    OnAccept = function()
-        BBP.NahjProfile()
+    OnAccept = function(self)
+        if self.data and self.data.func then
+            self.data.func()
+        end
     end,
     timeout = 0,
     whileDead = true,
@@ -5149,28 +5139,47 @@ local function guiGeneralTab()
         ReloadUI()
     end)
 
+    -- Function to show the confirmation popup with dynamic profile information
+    local function ShowProfileConfirmation(profileName, profileFunction, additionalNote)
+        local noteText = additionalNote or ""
+        local confirmationText = titleText .. "This action will delete all settings and apply " .. profileName .. "'s profile and reload the UI.\n\n" .. noteText .. "Are you sure you want to continue?"
+        StaticPopupDialogs["BBP_CONFIRM_PROFILE"].text = confirmationText
+        StaticPopup_Show("BBP_CONFIRM_PROFILE", nil, nil, { func = profileFunction })
+    end
+
+    -- Create the buttons and hook them to show the confirmation popup
     local nahjProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     nahjProfileButton:SetText("Nahj Profile")
-    nahjProfileButton:SetWidth(100)
+    nahjProfileButton:SetWidth(120)
     nahjProfileButton:SetPoint("RIGHT", reloadUiButton, "LEFT", -50, 0)
     nahjProfileButton:SetScript("OnClick", function()
-        StaticPopup_Show("BBP_CONFIRM_NAHJ_PROFILE")
+        ShowProfileConfirmation("Nahj", BBP.NahjProfile, "|cff32f795NOTE: Nahj only shows his own auras on nameplates and has them hidden on NPCs.\n\nTo enable more default settings go to Nameplate Auras after setting profile and check \"Blizzard Default Filter\" under Show DEBUFFS on Enemy Nameplates and uncheck \"Hide auras on NPCs\".|r\n\n")
     end)
     CreateTooltipTwo(nahjProfileButton, "Nahj Profile", "Enable all of Nahj's profile settings.", "www.twitch.tv/nahj", "ANCHOR_TOP")
+
+    local mmarkersProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
+    mmarkersProfileButton:SetText("Mmarkers Profile")
+    mmarkersProfileButton:SetWidth(120)
+    mmarkersProfileButton:SetPoint("RIGHT", nahjProfileButton, "LEFT", -5, 0)
+    mmarkersProfileButton:SetScript("OnClick", function()
+        ShowProfileConfirmation("Mmarkers", BBP.MmarkersProfile)
+    end)
+    CreateTooltipTwo(mmarkersProfileButton, "Mmarkers Profile", "Enable all of Mmarkers' profile settings.", "www.twitch.tv/mmarkers", "ANCHOR_TOP")
 
     local magnuszProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     magnuszProfileButton:SetText("Magnusz Profile")
     magnuszProfileButton:SetWidth(120)
-    magnuszProfileButton:SetPoint("RIGHT", nahjProfileButton, "LEFT", -5, 0)
+    magnuszProfileButton:SetPoint("RIGHT", mmarkersProfileButton, "LEFT", -5, 0)
     magnuszProfileButton:SetScript("OnClick", function()
-        StaticPopup_Show("BBP_CONFIRM_MAGNUSZ_PROFILE")
+        ShowProfileConfirmation("Magnusz", BBP.MagnuszProfile)
     end)
     CreateTooltipTwo(magnuszProfileButton, "Magnusz Profile", "Enable all of Magnusz's profile settings.", "www.twitch.tv/magnusz", "ANCHOR_TOP")
+
 
     local resetBBPButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     resetBBPButton:SetText("Reset BetterBlizzPlates")
     resetBBPButton:SetWidth(165)
-    resetBBPButton:SetPoint("RIGHT", nahjProfileButton, "LEFT", -180, 0)
+    resetBBPButton:SetPoint("RIGHT", magnuszProfileButton, "LEFT", -50, 0)
     resetBBPButton:SetScript("OnClick", function()
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     end)
@@ -5707,6 +5716,12 @@ local function guiPositionAndScale()
     anchorSubRaidmark.box3 = CreateCheckbox("raidmarkerPvPOnly", "Only move in PvP", contentFrame)
     anchorSubRaidmark.box3:SetPoint("TOPLEFT", hideRaidmarkIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubRaidmark.box3, "Only move in PvP", "Will only move the raidmarker in PvP and stay in default location elsewhere.")
+
+    anchorSubRaidmark.box4 = CreateCheckbox("raidmarkIndicatorRaiseStrata", "Raise Strata", contentFrame)
+    anchorSubRaidmark.box4:SetPoint("TOPLEFT", anchorSubRaidmark.box3, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubRaidmark.box4, "Raise Strata", "Raise strata of Raidmark to it appears above healthbar.")
+
+
     --CreateTooltip(hideRaidmarkIndicator, "Hide all raidmarkers on nameplates\n\n(Class Indicator and Party Pointer has their own setting\nto only hide on those specific nameplates where those icons show)")
     CreateTooltipTwo(hideRaidmarkIndicator, "Hide Raidmarker", "Hide all raidmarkers on nameplates", "Class Indicator and Party Pointer has their own setting to only hide on those specific nameplates where those icons show", anchor, cvarName)
     --(widget, title, mainText, subText, anchor, cvarName)
@@ -6257,6 +6272,10 @@ local function guiPositionAndScale()
     local partyPointerHealerReplace = CreateCheckbox("partyPointerHealerReplace", "Replace", contentFrame)
     partyPointerHealerReplace:SetPoint("TOPLEFT", partyPointerHealer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(partyPointerHealerReplace, "Replace Party Pointer with Healer Icon", "Replace the party pointer with healer icon instead of showing on the top.")
+
+    anchorSubPointerIndicator.partyPointerHealerOnly = CreateCheckbox("partyPointerHealerOnly", "Heal Only", contentFrame)
+    anchorSubPointerIndicator.partyPointerHealerOnly:SetPoint("TOPLEFT", partyPointerHealerReplace, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubPointerIndicator.partyPointerHealerOnly, "Healer Only", "Only show Party Pointer for healers.")
 
     local partyPointerHideAll = CreateCheckbox("partyPointerHideAll", "Hide all", contentFrame)
     partyPointerHideAll:SetPoint("TOPLEFT", partyPointerTargetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)

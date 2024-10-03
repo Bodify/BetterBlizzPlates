@@ -8,7 +8,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.3c"
+local addonUpdates = "1.6.3d"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -3015,6 +3015,7 @@ function BBP.ApplyRaidmarkerChanges(frame)
             config.raidmarkIndicatorXPos = BetterBlizzPlatesDB.raidmarkIndicatorXPos
             config.raidmarkIndicatorYPos = BetterBlizzPlatesDB.raidmarkIndicatorYPos
             config.raidmarkIndicatorScale = BetterBlizzPlatesDB.raidmarkIndicatorScale
+            config.raidmarkIndicatorRaiseStrata = BetterBlizzPlatesDB.raidmarkIndicatorRaiseStrata
             config.raidmarkInitialized = true
         end
 
@@ -3037,6 +3038,10 @@ function BBP.ApplyRaidmarkerChanges(frame)
             frame.RaidTargetFrame.RaidTargetIcon:SetScale(1)
             frame.RaidTargetFrame.RaidTargetIcon:SetSize(22, 22)
             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("RIGHT", frame.healthBar, "LEFT", -15, 0)
+        end
+
+        if config.raidmarkIndicatorRaiseStrata then
+            frame.RaidTargetFrame:SetFrameStrata("HIGH")
         end
     elseif BBP.needsUpdate then
         frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
@@ -3660,6 +3665,158 @@ local function NameplateNPCTitle(frame)
     end
 end
 
+local function CreateBetterClassicCastbarBorders(frame)
+    local info = frame.BetterBlizzPlates.unitInfo
+    --local width = info.isFriend and BetterBlizzPlatesDB.nameplateFriendlyWidth or BetterBlizzPlatesDB.nameplateEnemyWidth
+    local width = frame.healthBar:GetWidth() + 25
+    local levelFrameAdjustment = BetterBlizzPlatesDB.hideLevelFrame and -17 or 0
+
+    -- Helper function to create borders
+    local function CreateBorder(frame, textureLeft, textureCenter, textureRight, yPos)
+        local border = CreateFrame("Frame", nil, frame.castBar)
+        border:SetFrameStrata("HIGH")
+        local left = border:CreateTexture(nil, "OVERLAY")
+        left:SetTexture(textureLeft)
+        left:SetPoint("BOTTOMLEFT", frame.castBar, "BOTTOMLEFT", -21, yPos)
+        border.left = left
+
+        local center = border:CreateTexture(nil, "OVERLAY")
+        center:SetTexture(textureCenter)
+        center:SetPoint("TOPLEFT", left, "TOPRIGHT", 0, 0)
+        center:SetPoint("BOTTOMLEFT", left, "BOTTOMRIGHT", 0, 0)
+        border.center = center
+
+        local right = border:CreateTexture(nil, "OVERLAY")
+        right:SetTexture(textureRight)
+        right:SetPoint("TOPLEFT", center, "TOPRIGHT", 0, 0)
+        right:SetPoint("BOTTOMLEFT", center, "BOTTOMRIGHT", 0, 0)
+        border.right = right
+
+        border:Hide()
+        return border
+    end
+
+    if frame.BigDebuffs then
+        frame.BigDebuffs:SetFrameStrata("HIGH")
+    end
+
+    -- Interruptible
+    if not frame.castBar.bbpCastBorder then
+        --frame.castBar.Border:SetAlpha(0)
+        frame.castBar.bbpCastBorder = CreateBorder(
+            frame,
+            "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderLeft",
+            "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderCenter",
+            "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderRight",
+            -3
+        )
+        frame.castBar.Icon:SetParent(frame.castBar)
+        frame.castBar.Icon:SetDrawLayer("OVERLAY", 7)
+    end
+    frame.castBar.bbpCastBorder.center:SetWidth(width - 24 + levelFrameAdjustment)
+
+    -- Uninterruptible
+    if not frame.castBar.bbpCastUninterruptibleBorder then
+        --frame.castBar.BorderShield:SetAlpha(0)
+        frame.castBar.bbpCastUninterruptibleBorder = CreateBorder(
+            frame,
+            "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleLeft",
+            "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleCenter",
+            "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleRight",
+            -11
+        )
+        if BetterBlizzPlatesDB.hideCastbarBorderShield then
+            frame.castBar.bbpCastUninterruptibleBorder.left:SetAlpha(0)
+            frame.castBar.bbpCastUninterruptibleBorder.right:SetAlpha(0)
+            frame.castBar.bbpCastUninterruptibleBorder.center:SetAlpha(0)
+        end
+    end
+    frame.castBar.bbpCastUninterruptibleBorder.center:SetWidth(width + 40 + levelFrameAdjustment)
+
+    -- Update border visibility
+    local function UpdateBorders()
+        --frame.castBar.Border:SetAlpha(0)
+        --frame.castBar.BorderShield:SetAlpha(0)
+        if frame.castBar.BorderShield:IsShown() then
+            frame.castBar.bbpCastUninterruptibleBorder:Show()
+            frame.castBar.bbpCastBorder:Hide()
+            frame.castBar.Icon:SetParent(frame.castBar.bbpCastUninterruptibleBorder)
+        else
+            frame.castBar.bbpCastUninterruptibleBorder:Hide()
+            frame.castBar.bbpCastBorder:Show()
+            frame.castBar.Icon:SetParent(frame.castBar.bbpCastBorder)
+        end
+        frame.castBar.Icon:SetDrawLayer("OVERLAY", 7) -- Ensure the icon is on top
+
+        local height = frame.castBar:GetHeight()
+        local bottomOffset = -((5/11) * height - 1.09)
+        local topOffset = (1.97 * height)-- - 1
+        frame.castBar.bbpCastBorder.left:ClearAllPoints()
+        frame.castBar.bbpCastBorder.left:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -21, topOffset)
+        frame.castBar.bbpCastBorder.left:SetPoint("BOTTOMLEFT", frame.castBar, "BOTTOMLEFT", -21, bottomOffset)
+
+        frame.castBar.bbpCastUninterruptibleBorder.left:ClearAllPoints()
+        frame.castBar.bbpCastUninterruptibleBorder.left:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -21, topOffset-(height*0.85))
+        frame.castBar.bbpCastUninterruptibleBorder.left:SetPoint("BOTTOMLEFT", frame.castBar, "BOTTOMLEFT", -21, bottomOffset-(height*0.85))
+    end
+
+    -- local function UpdateCastBarIconSize(self)
+    --     local spellName, spellID, notInterruptible, endTime
+    --     local _
+
+    --     if UnitCastingInfo(self.unit) then
+    --         spellName, _, _, _, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(self.unit)
+    --     elseif UnitChannelInfo(self.unit) then
+    --         spellName, _, _, _, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
+    --     end
+    --     if notInterruptible then
+    --         self.Icon:ClearAllPoints()
+    --         self.Icon:SetPoint("CENTER", frame.castBar, "LEFT", -10.5, 1)
+    --         --self.Icon:SetSize(11, 11)
+    --         self.Icon:SetDrawLayer("OVERLAY", 7)
+    --     end
+    -- end
+    -- if not frame.bbpClassicCastbarHook then
+    --     frame.castBar:HookScript("OnUpdate", function()
+    --         UpdateCastBarIconSize(frame.castBar)
+    --     end)
+    --     frame.bbpClassicCastbarHook = true
+    -- end
+
+    frame.castBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or 10)
+
+    if not frame.castBar.eventsHooked then
+        frame.castBar.UpdateBorders = UpdateBorders
+        frame.castBar:HookScript("OnShow", UpdateBorders)
+        frame.castBar:HookScript("OnHide", UpdateBorders)
+        frame.castBar.BorderShield:HookScript("OnShow", UpdateBorders)
+        frame.castBar.BorderShield:HookScript("OnHide", UpdateBorders)
+        frame.castBar.eventsHooked = true
+
+        hooksecurefunc(frame.castBar.Icon, "SetPoint", function(self)
+            if self.changing or self:IsForbidden() then return end
+            self.changing = true
+            self:ClearAllPoints()
+            self:SetPoint("RIGHT", frame.castBar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos-2, BetterBlizzPlatesDB.castBarIconYPos)
+            --borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
+            self.changing = false
+        end)
+    end
+
+    -- Set the initial visibility
+    UpdateBorders()
+
+    -- Adjust cast bar position
+    -- if centerCastbar then
+    --     frame.castBar:ClearAllPoints()
+    --     frame.castBar:SetPoint("TOP", frame, "BOTTOM", 0, -5)
+    -- else
+    --     frame.castBar:ClearAllPoints()
+    --     frame.castBar:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 17, -8)
+    --     frame.castBar:SetWidth(width - 25 + levelFrameAdjustment)
+    -- end
+end
+
 local function CreateBetterClassicHealthbarBorder(frame)
     local info = frame.BetterBlizzPlates.unitInfo
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
@@ -3760,6 +3917,8 @@ local function CreateBetterClassicHealthbarBorder(frame)
     --local width = info.isFriend and BetterBlizzPlatesDB.nameplateFriendlyWidth or BetterBlizzPlatesDB.nameplateEnemyWidth
     -- local width = frame.healthBar:GetWidth() + 25
     -- frame.BetterBlizzPlates.bbpBorder.center:SetWidth(width - 40)
+
+    --CreateBetterClassicCastbarBorders(frame)
 end
 
 function BBP.AdjustClassicBorderWidth(frame)

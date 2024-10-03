@@ -2,6 +2,7 @@ function BBP.DruidBlueComboPoints()
     if not BetterBlizzPlatesDB.druidOverstacks then return end
     if select(2, UnitClass("player")) ~= "DRUID" then return end
     local druidNp = _G.ClassNameplateBarFeralDruidFrame
+    local msgPrinted
 
     local function CreateChargedPoints(comboPointFrame)
         if not comboPointFrame then return end
@@ -51,6 +52,15 @@ function BBP.DruidBlueComboPoints()
 
     -- Function to handle updating combo points based on aura
     local function UpdateComboPoints(self)
+        if self:IsForbidden() then
+            if not msgPrinted then
+                C_Timer.After(1, function()
+                    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Due to Nameplate Resource being forbidden Overcharge blue combopoints cannot be updated until a reload.")
+                end)
+                msgPrinted = true
+            end
+            return
+        end
         local aura = C_UnitAuras.GetPlayerAuraBySpellID(405189)
 
         if not aura then

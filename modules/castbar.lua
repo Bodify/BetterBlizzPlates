@@ -336,9 +336,9 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 for _, interruptSpellIDx in ipairs(interruptSpellIDs) do
                     local start, duration = BBP.TWWGetSpellCooldown(interruptSpellIDx)
                     local cooldownRemaining = start + duration - GetTime()
-                    local castRemaining = (endTime/1000) - GetTime()
+                    local castRemaining = (endTime / 1000) - GetTime()
                     local totalCastTime = (endTime / 1000) - (castStart / 1000)
-
+    
                     if not notInterruptible then
                         if cooldownRemaining > 0 and cooldownRemaining > castRemaining then
                             if castBarTexture then
@@ -352,20 +352,27 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                             castBar:SetStatusBarColor(unpack(castBarDelayedInterruptColor))
 
                             if cooldownRemaining < castRemaining then
-
                                 if not castBar.spark then
                                     castBar.spark = castBar:CreateTexture(nil, "OVERLAY")
                                     castBar.spark:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
                                     castBar.spark:SetSize(16, 52)
                                     castBar.spark:SetBlendMode("ADD")
-                                    castBar.spark:SetVertexColor(0,1,0)
+                                    castBar.spark:SetVertexColor(0, 1, 0)
                                 end
 
-                                -- Calculate the position of the spark (interrupt percentage)
+                                -- Calculate the interrupt percentage
                                 local interruptPercent = (totalCastTime - castRemaining + cooldownRemaining) / totalCastTime
 
-                                -- Adjust the spark position based on the percentage of the cast bar
-                                local sparkPosition = interruptPercent * castBar:GetWidth()
+                                -- Adjust the spark position based on the percentage, reverse if channeling
+                                local sparkPosition
+                                if channeling then
+                                    -- Channeling: reverse the direction, starting from the right
+                                    sparkPosition = (1 - interruptPercent) * castBar:GetWidth()
+                                else
+                                    -- Casting: normal direction, from left to right
+                                    sparkPosition = interruptPercent * castBar:GetWidth()
+                                end
+
                                 castBar.spark:SetPoint("CENTER", castBar, "LEFT", sparkPosition, -2)
                                 castBar.spark:Show()
 
@@ -733,7 +740,7 @@ function BBP.ToggleSpellCastEventRegistration()
     if BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarInterruptHighlighter and not castbarOnUpdateHooked then
         hooksecurefunc(CastingBarMixin, "OnUpdate", function(self, event, ...)
             if self.unit and self.unit:find("nameplate") then
-                if self:IsProtected() then return end
+                if self:IsForbidden() then return end
                 local spellName, spellID, notInterruptible, endTime
                 local castStart, castDuration
                 local _

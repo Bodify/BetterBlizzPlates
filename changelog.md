@@ -1,3 +1,14 @@
+# BetterBlizzPlates 1.6.3d
+## The War Within
+### New stuff:
+- Mmarkers profile
+- Party Pointer "Healer only" setting
+### Tweak:
+- Pandemic Glow for auras that have a pandemic effect is now properly glowing when 30% of their duration is left instead of a flat 5 sec like it was before. For non-pandemic auras the default timer is still 5sec. For UA and Agony if their refresh talents are picked the Pandemic Glow will first be orange when it enters that range and then turn red when it also enters the 30% window.
+### Bugfix:
+- Fix the Interrupt CD Color spark positioning on channeled casts.
+- Fix "Castbar Edge Highlight" causing lua errors in PvE.
+
 # BetterBlizzPlates 1.6.3c
 ## The War Within
 ### Tweak:
