@@ -7,42 +7,44 @@ function BBP.DruidBlueComboPoints()
     local function CreateChargedPoints(comboPointFrame)
         if not comboPointFrame then return end
         if comboPointFrame.blueOverchargePoints then return end
-        local comboPoints = {}
 
-        local comboPointsChecked = 0
+        local comboPoints = {}
+        local visibleComboPoints = 0
+
         for i = 1, comboPointFrame:GetNumChildren() do
             local child = select(i, comboPointFrame:GetChildren())
+
             if child:IsShown() then
-                comboPointsChecked = comboPointsChecked + 1
+                visibleComboPoints = visibleComboPoints + 1
                 table.insert(comboPoints, child)
             end
         end
+
+        table.sort(comboPoints, function(a, b)
+            return (a.layoutIndex or 0) < (b.layoutIndex or 0)
+        end)
 
         for i = 1, 3 do
             if comboPoints[i] then
                 local comboPoint = comboPoints[i]
                 comboPointFrame["ComboPoint"..i] = comboPoint
 
-                -- Create the overlayActive texture and reference it as ChargedFrameActive
                 local overlayActive = comboPoint:CreateTexture(nil, "OVERLAY")
                 overlayActive:SetAtlas("UF-RogueCP-BG-Anima")
                 overlayActive:SetSize(20, 20)
                 overlayActive:SetPoint("CENTER", comboPoint, "CENTER")
                 comboPoint.ChargedFrameActive = overlayActive
-
-                -- Initially hide the active overlay
                 overlayActive:Hide()
             end
         end
 
-        if comboPointsChecked == 5 then
+        if visibleComboPoints == 5 then
             comboPointFrame.blueOverchargePoints = true
         end
     end
 
     CreateChargedPoints(druidNp)
 
-    -- Function to handle updating combo points based on aura
     local function UpdateComboPoints(self)
         if self:IsForbidden() then
             if not msgPrinted then
@@ -60,8 +62,7 @@ function BBP.DruidBlueComboPoints()
                 for i = 1, 3 do
                     local comboPoint = self["ComboPoint"..i]
                     if comboPoint then
-                        -- Revert to default combo point and hide the overlay
-                        comboPoint.Point_Icon:SetAtlas("UF-DruidCP-Icon")  -- Default Druid combo point
+                        comboPoint.Point_Icon:SetAtlas("UF-DruidCP-Icon")
                         comboPoint.Point_Deplete:SetDesaturated(false)
                         comboPoint.Point_Deplete:SetVertexColor(1, 1, 1)
                         comboPoint.Smoke:SetDesaturated(false)
@@ -70,7 +71,7 @@ function BBP.DruidBlueComboPoints()
                         comboPoint.FB_Slash:SetVertexColor(1, 1, 1)
 
                         if comboPoint.ChargedFrameActive then
-                            comboPoint.ChargedFrameActive:Hide()  -- Hide active overlay
+                            comboPoint.ChargedFrameActive:Hide()
                         end
                     end
                 end
@@ -94,20 +95,19 @@ function BBP.DruidBlueComboPoints()
                     comboPoint.FB_Slash:SetVertexColor(0, 0, 1)
                     comboPoint.ChargedFrameActive:Show()  -- Show active overlay
                 else  -- Revert to default combo point and hide the overlay for stacks > i
-                    comboPoint.Point_Icon:SetAtlas("UF-DruidCP-Icon")  -- Default Druid combo point
+                    comboPoint.Point_Icon:SetAtlas("UF-DruidCP-Icon")
                     comboPoint.Point_Deplete:SetDesaturated(false)
                     comboPoint.Point_Deplete:SetVertexColor(1, 1, 1)
                     comboPoint.Smoke:SetDesaturated(false)
                     comboPoint.Smoke:SetVertexColor(1, 1, 1)
                     comboPoint.FB_Slash:SetDesaturated(false)
                     comboPoint.FB_Slash:SetVertexColor(1, 1, 1)
-                    comboPoint.ChargedFrameActive:Hide()  -- Hide active overlay
+                    comboPoint.ChargedFrameActive:Hide()
                 end
             end
         end
     end
 
-    -- Create a frame to listen to form changes
     local currentForm = GetShapeshiftFormID()
     if currentForm ~= 1 then
         local formWatch = CreateFrame("Frame")

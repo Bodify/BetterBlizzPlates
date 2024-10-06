@@ -1,3 +1,17 @@
+# BetterBlizzPlates 1.6.5
+## The War Within
+### New stuff:
+- General: Hide elite dragon icon (Under Enemy Nameplates)
+- Misc: Adjust Personal Resource Bar Vertical Position
+- Misc: Hide Personal Resource Bar Manabar
+- Misc: Hide Personal Resource Bar Extrabar (Stagger/Ebon)
+- Castbars: "Always on Top" setting that forces all nameplate castbars to be ontop of other nameplates so they are never covered.
+### Tweak:
+- Castbar Emphasis now makes the castbar appear on top of everything else so you dont miss a cast thats been emphasized.
+### Bugfix:
+- Fix Personal Resource Bar sometimes not picking up special auras like Frenzy that are not shown elsewhere with Nameplate Aura settings on.
+- Fix Druid Blue Combos sometimes not being in order
+
 # BetterBlizzPlates 1.6.4
 ## The War Within
 ### New stuff:

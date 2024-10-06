@@ -1388,6 +1388,10 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             isPandemic = false
         end
 
+        if buff.Cooldown._occ_display then
+            buff.Cooldown._occ_display:SetFrameStrata("HIGH")
+        end
+
         if isEnlarged then
             buff.isEnlarged = true
         else
@@ -1501,7 +1505,11 @@ function BBP.ParseAllAuras(self, forceAll, UnitFrame)
     local batchCount = nil;
     local usePackedAura = true;
     AuraUtil.ForEachAura(self.unit, "HARMFUL", batchCount, HandleAura, usePackedAura);
-    AuraUtil.ForEachAura(self.unit, "HELPFUL", batchCount, HandleAura, usePackedAura);
+    if UnitIsUnit(self.unit, "player") then
+        AuraUtil.ForEachAura(self.unit, "HELPFUL|INCLUDE_NAME_PLATE_ONLY", batchCount, HandleAura, usePackedAura);
+    else
+        AuraUtil.ForEachAura(self.unit, "HELPFUL", batchCount, HandleAura, usePackedAura);
+    end
 
     -- Injecting fake auras for testing
     local isTestModeEnabled = BetterBlizzPlatesDB.nameplateAuraTestMode

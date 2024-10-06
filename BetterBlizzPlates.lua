@@ -4,11 +4,12 @@ local LSM = LibStub("LibSharedMedia-3.0")
 LSM:Register("statusbar", "Dragonflight (BBP)", [[Interface\Addons\BetterBlizzPlates\media\DragonflightTexture]])
 LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPlates\media\focusTexture]])
 LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlates\media\targetTexture]])
+LSM:Register("statusbar", "Smooth", [[Interface\Addons\BetterBlizzPlates\media\smooth]])
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.4"
+local addonUpdates = "1.6.5"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -76,6 +77,7 @@ local defaultSettings = {
     hpHeightEnemy = 4 * tonumber(GetCVar("NamePlateVerticalScale")),
     hpHeightFriendly = 4 * tonumber(GetCVar("NamePlateVerticalScale")),
     druidOverstacks = true,
+    personalBarPosition = 0.5,
     --health numbers
     healthNumbersPlayers = true,
     healthNumbersNpcs = true,
@@ -1323,6 +1325,7 @@ local function InitializeNameplateSettings(frame)
             classicNameplates = BetterBlizzPlatesDB.classicNameplates,
             hideLevelFrame = BetterBlizzPlatesDB.hideLevelFrame,
             smallPetsInPvP = BetterBlizzPlatesDB.smallPetsInPvP,
+            hideEliteDragon = BetterBlizzPlatesDB.smallPetsInPvP,
         }
         if frame.BetterBlizzPlates.config.changeHealthbarHeight then
             frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
@@ -1634,6 +1637,11 @@ local function SetCVarsOnLogin()
             end
         end
 
+        if BetterBlizzPlatesDB.adjustPersonalBarPosition and BetterBlizzPlatesDB.nameplateSelfTopInset then
+            C_CVar.SetCVar("nameplateSelfTopInset", BetterBlizzPlatesDB.nameplateSelfTopInset)
+            C_CVar.SetCVar("nameplateSelfBottomInset", BetterBlizzPlatesDB.nameplateSelfBottomInset)
+        end
+
         if BetterBlizzPlatesDB.setCVarAcrossAllCharacters then
             if BetterBlizzPlatesDB.nameplateShowAll then
                 C_CVar.SetCVar("nameplateShowAll", BetterBlizzPlatesDB.nameplateShowAll)
@@ -1729,6 +1737,27 @@ function BBP.ClickthroughNameplateAuras(pool, namePlateFrameBase)
 end
 --hooksecurefunc(NamePlateDriverFrame.pools:GetPool("NamePlateUnitFrameTemplate"),"resetterFunc",BBP.ClickthroughNameplateAuras) --tww change
 --hooksecurefunc(NamePlateDriverFrame.pools:GetPool("ForbiddenNamePlateUnitFrameTemplate"),"resetterFunc",BBP.ClickthroughNameplateAuras)
+
+function BBP.PersonalBarSettings()
+    local db = BetterBlizzPlatesDB
+    local function SetFrameAlpha(frame, shouldHide, hiddenVar)
+        if frame then
+            if shouldHide then
+                frame:SetAlpha(0)
+                BBP[hiddenVar] = true
+            elseif BBP[hiddenVar] then
+                frame:SetAlpha(1)
+                BBP[hiddenVar] = nil
+            end
+        end
+    end
+    -- Handle Mana Bar
+    SetFrameAlpha(ClassNameplateManaBarFrame, db.hidePersonalBarManaFrame, "ClassNameplateManaBarFrameHidden")
+
+    -- Handle Extra Frames (Ebon Might and Brewmaster)
+    SetFrameAlpha(ClassNameplateEbonMightBarFrame, db.hidePersonalBarExtraFrame, "ClassNameplateEbonMightBarFrameHidden")
+    SetFrameAlpha(ClassNameplateBrewmasterBarFrame, db.hidePersonalBarExtraFrame, "ClassNameplateBrewmasterBarFrameHidden")
+end
 
 --#################################################################################################
 -- Class color and scale names 
@@ -2075,6 +2104,9 @@ function BBP.ResetToDefaultValue(slider, element)
             BetterBlizzPlatesDB.hpHeightFriendly = 4 * tonumber(GetCVar("NamePlateVerticalScale"))
         elseif element == "hpHeightEnemy" then
             BetterBlizzPlatesDB.hpHeightEnemy = 4 * tonumber(GetCVar("NamePlateVerticalScale"))
+        elseif element == "personalBarPosition" then
+            C_CVar.SetCVar("nameplateSelfTopInset", C_CVar.GetCVarDefault("nameplateSelfTopInset"))
+            C_CVar.SetCVar("nameplateSelfBottomInset", C_CVar.GetCVarDefault("nameplateSelfBottomInset"))
         end
         slider:SetValue(BetterBlizzPlatesDB[element])
     end
@@ -3247,6 +3279,17 @@ function BBP.ColorNameplateBorder(frame)
     end
 end
 
+function BBP.SetPersonalResourceBarPosition(sliderValue)
+    local total = 0.94
+    local bottomInset = sliderValue
+    local topInset = total - sliderValue
+
+    BetterBlizzPlatesDB.nameplateSelfTopInset = topInset
+    BetterBlizzPlatesDB.nameplateSelfBottomInset = bottomInset
+    C_CVar.SetCVar("nameplateSelfTopInset", topInset)
+    C_CVar.SetCVar("nameplateSelfBottomInset", bottomInset)
+end
+
 local function ChangeHealthbarBorderSize(frame)
     if not frame.borderHooked then
         hooksecurefunc(frame.HealthBarsContainer.border, "UpdateSizes", function(self)
@@ -3549,9 +3592,17 @@ end
 BBP.InitializeNameplateSettings = InitializeNameplateSettings
 
 function BBP.CustomizeClassificationFrame(frame)
+    local config = frame.BetterBlizzPlates.config
     --TODO:
     --frame.ClassificationFrame:SetScale()
     frame.ClassificationFrame:SetFrameStrata("LOW")
+
+    if config.hideEliteDragon then
+        local atlas = frame.ClassificationFrame.classificationIndicator:GetAtlas()
+        if atlas and atlas == "nameplates-icon-elite-gold" then
+            frame.ClassificationFrame.classificationIndicator:SetAtlas(nil)
+        end
+    end
 end
 
 function BBP.RepositionName(frame)
@@ -4790,6 +4841,7 @@ Frame:SetScript("OnEvent", function(...)
     playerClassColor = RAID_CLASS_COLORS[playerClass]
 
     BBP.ToggleSpellCastEventRegistration()
+    BBP.PersonalBarSettings()
 
     if db.enableNameplateAuraCustomisation then
         BBP.RunAuraModule()

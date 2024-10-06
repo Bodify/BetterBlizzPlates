@@ -267,6 +267,12 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
     end
 
+    if castBar.oldParent then
+        castBar:SetParent(castBar.oldParent)
+        castBar:SetFrameStrata("MEDIUM")
+        castBar.oldParent = nil
+    end
+
     local function ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
         local castBarEmphasisColor = BetterBlizzPlatesDB.castBarEmphasisColor
         local castBarEmphasisText = BetterBlizzPlatesDB.castBarEmphasisText
@@ -281,6 +287,12 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         local castBarEmphasisSparkHeight = BetterBlizzPlatesDB.castBarEmphasisSparkHeight
 
         frame.castbarEmphasisActive = true
+
+        if not castBar.oldParent then
+            castBar.oldParent = castBar:GetParent()
+            castBar:SetParent(BBP.OverlayFrame)
+            castBar:SetFrameStrata("HIGH")
+        end
 
         if castBarEmphasisColor and castEmphasis.entryColors then
             if castBarTexture then
@@ -818,13 +830,14 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
         local nameplate, frame = BBP.GetSafeNameplate(self.unit)
         if not frame then return end
         if self.unit == "player" then return end
-        local alwaysHideFriendlyCastbar = BetterBlizzPlatesDB.alwaysHideFriendlyCastbar
-        local alwaysHideEnemyCastbar = BetterBlizzPlatesDB.alwaysHideEnemyCastbar
-        local hideCastbar = BetterBlizzPlatesDB.hideCastbar
-        local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
-        local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
-        local showNameplateTargetText = BetterBlizzPlatesDB.showNameplateTargetText
-        local showNameplateCastbarTimer = BetterBlizzPlatesDB.showNameplateCastbarTimer
+        local db = BetterBlizzPlatesDB
+        local alwaysHideFriendlyCastbar = db.alwaysHideFriendlyCastbar
+        local alwaysHideEnemyCastbar = db.alwaysHideEnemyCastbar
+        local hideCastbar = db.hideCastbar
+        local enableCastbarCustomization = db.enableCastbarCustomization
+        local useCustomCastbarTexture = db.useCustomCastbarTexture
+        local showNameplateTargetText = db.showNameplateTargetText
+        local showNameplateCastbarTimer = db.showNameplateCastbarTimer
 
         if frame.hideCastbarOverride then
             frame.castBar:Hide()
@@ -834,8 +847,8 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
         if alwaysHideFriendlyCastbar or alwaysHideEnemyCastbar or BBP.hideFriendlyCastbar then
             local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(self.unit)
             if ((alwaysHideFriendlyCastbar or BBP.hideFriendlyCastbar) and isFriend) or (alwaysHideEnemyCastbar and not isFriend) then
-                local alwaysHideFriendlyCastbarShowTarget = BetterBlizzPlatesDB.alwaysHideFriendlyCastbarShowTarget
-                local alwaysHideEnemyCastbarShowTarget = BetterBlizzPlatesDB.alwaysHideEnemyCastbarShowTarget
+                local alwaysHideFriendlyCastbarShowTarget = db.alwaysHideFriendlyCastbarShowTarget
+                local alwaysHideEnemyCastbarShowTarget = db.alwaysHideEnemyCastbarShowTarget
                 if (alwaysHideFriendlyCastbarShowTarget and isFriend and UnitIsUnit("target", self.unit)) or (alwaysHideEnemyCastbarShowTarget and not isFriend and UnitIsUnit("target", self.unit)) then
                     -- go thruugh
                 else
@@ -855,38 +868,56 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
 
         if enableCastbarCustomization then
 
+            if db.castbarAlwaysOnTop then
+                frame.castBar:SetParent(BBP.OverlayFrame)
+                frame.castBar:SetFrameStrata("HIGH")
+            end
+
             BBP.CustomizeCastbar(frame, self.unit, event)
 
             if useCustomCastbarTexture and not useCustomCastbarTextureHooked then
                 if not self.hooked then
                     hooksecurefunc(self, "SetStatusBarTexture", function(self, texture)
-                        if self.changing or not self.unit or self:IsForbidden() then return end
-
+                        if self.changing or self:IsForbidden() then return end
+                        self.changing = true
                         local textureName = BetterBlizzPlatesDB.customCastbarTexture
                         local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
                         local nonInterruptibleTextureName = BetterBlizzPlatesDB.customCastbarNonInterruptibleTexture
                         local nonInterruptibleTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, nonInterruptibleTextureName)
-                        self.changing = true
 
                         if self.barType then
                             if self.barType == "uninterruptable" then
                                 self:SetStatusBarTexture(nonInterruptibleTexturePath)
-                                self.OldTextureWas = nonInterruptibleTexturePath
-                            else
-                                --if self.barType == "standard" then
-                                    self:SetStatusBarTexture(texturePath)
-                                    self.OldTextureWas = texturePath
-                                --end
-                            end
-                        else
-                            if self.OldTextureWas then --the castbar sometimes does a flash of the casting texture that was so this has to be re-set here to not flash an old/changed texture
-                                self:SetStatusBarTexture(self.OldTextureWas)
                             else
                                 self:SetStatusBarTexture(texturePath)
                             end
+                        else
+                            self:SetStatusBarTexture(texturePath)
                         end
 
                         self.changing = false
+                    end)
+
+                    self:HookScript("OnEvent", function()
+                        if self:IsForbidden() then return end
+                        --self.changing = true
+                        local textureName = BetterBlizzPlatesDB.customCastbarTexture
+                        local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
+                        local nonInterruptibleTextureName = BetterBlizzPlatesDB.customCastbarNonInterruptibleTexture
+                        local nonInterruptibleTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, nonInterruptibleTextureName)
+
+                        if self.barType then
+                            if self.barType == "uninterruptable" then
+                                self:SetStatusBarTexture(nonInterruptibleTexturePath)
+                            else
+                                self:SetStatusBarTexture(texturePath)
+                            end
+                        else
+                            self:SetStatusBarTexture(texturePath)
+                        end
+
+                        --self.changing = false
+                    --end)
                     end)
 
                     if self.Flash then

@@ -1054,6 +1054,11 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         end
                     C_NamePlate.SetNamePlateFriendlySize(value, heightValue)
                     end
+                elseif element == "personalBarPosition" then
+                    if not BBP.checkCombatAndWarn() then
+                        BBP.SetPersonalResourceBarPosition(value)
+                        BetterBlizzPlatesDB.personalBarPosition = value
+                    end
                 elseif element == "nameplateEnemyWidth" then
                     if not BBP.checkCombatAndWarn() then
                         BetterBlizzPlatesDB.nameplateEnemyWidth = value
@@ -4378,6 +4383,10 @@ local function guiGeneralTab()
     showNameplateTargetText:SetPoint("TOPLEFT", alwaysHideEnemyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(showNameplateTargetText, "Nameplate Target Text", "Show the nameplate's current target underneath the castbar while casting")
 
+    local hideEliteDragon = CreateCheckbox("hideEliteDragon", "Hide elite icon", BetterBlizzPlates)
+    hideEliteDragon:SetPoint("LEFT", alwaysHideEnemyCastbar.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(hideEliteDragon, "Hide Elite Icon", "Hide the elite dragon icon on nameplates")
+
     local enemyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 1.5, 0.01, "enemyNameScale")
     enemyNameScale:SetPoint("TOPLEFT", showNameplateTargetText, "BOTTOMLEFT", 12, -10)
     CreateTooltipTwo(enemyNameScale, "Name Size", "Change Name size on Enemy nameplates", "While adjusting this setting names can get 20% larger/smaller due to Blizzard scaling issues. Reload between adjustments to make sure the size is what you want.")
@@ -6465,6 +6474,10 @@ local function guiPositionAndScale()
     anchorSubHealthNumbers.healthNumbersPlayers:SetPoint("TOPLEFT", healthNumbersSwapped, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersPlayers, "Players", "Enable health numbers on players")
 
+    anchorSubHealthNumbers.healthNumbersHideSelf = CreateCheckbox("healthNumbersHideSelf", "Hide self", contentFrame)
+    anchorSubHealthNumbers.healthNumbersHideSelf:SetPoint("TOPLEFT", anchorSubHealthNumbers.healthNumbersPlayers, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersHideSelf, "Hide Self", "Hide the health numbers on personal resource bar")
+
     anchorSubHealthNumbers.healthNumbersNpcs = CreateCheckbox("healthNumbersNpcs", "NPCs", contentFrame)
     anchorSubHealthNumbers.healthNumbersNpcs:SetPoint("TOPLEFT", healthNumbersTargetOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersNpcs, "NPCs", "Enable health numbers on NPCs")
@@ -6620,6 +6633,10 @@ local function guiCastbar()
 
     local enableCastbarCustomization = CreateCheckbox("enableCastbarCustomization", "Enable castbar customization", guiCastbar, nil, BBP.ToggleSpellCastEventRegistration)
     enableCastbarCustomization:SetPoint("TOPLEFT", castbarSettingsText, "BOTTOMLEFT", -10, pixelsOnFirstBox)
+
+    local castbarAlwaysOnTop = CreateCheckbox("castbarAlwaysOnTop", "Always on Top", enableCastbarCustomization)
+    castbarAlwaysOnTop:SetPoint("LEFT", enableCastbarCustomization.text, "RIGHT", -1, 0)
+    CreateTooltipTwo(castbarAlwaysOnTop, "Always on Top", "Ensures castbar will always be displayed on top of other elements and not covered behind other nameplates.\n\n(This setting may see tweaks)")
 
     local castbarQuickHide = CreateCheckbox("castbarQuickHide", "Castbar Quick Hide", enableCastbarCustomization)
     castbarQuickHide:SetPoint("TOPLEFT", enableCastbarCustomization, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -6915,7 +6932,7 @@ local function guiCastbar()
             listFrame:SetAlpha(0.5)
         end
     end)
-    CreateTooltip(enableCastbarEmphasis, "Customize castbar for spells in the list")
+    CreateTooltipTwo(enableCastbarEmphasis, "Castbar Emphasis", "Enable to adjust how the castbar looks for specific spells from the list. Will also ensure the castbar is not being covered by other nameplates during cast.")
 
     local castBarEmphasisOnlyInterruptable = CreateCheckbox("castBarEmphasisOnlyInterruptable", "Interruptable cast only", enableCastbarEmphasis)
     castBarEmphasisOnlyInterruptable:SetPoint("LEFT", enableCastbarEmphasis.text, "RIGHT", 0, 0)
@@ -8440,8 +8457,9 @@ local function guiCVarControl()
     end)
 
     local disableCVarForceOnLogin = CreateCheckbox("disableCVarForceOnLogin", "Disable all CVar forcing", guiCVarControl)
-    disableCVarForceOnLogin:SetPoint("BOTTOM", guiCVarControl, "BOTTOM", -80, 60)
+    disableCVarForceOnLogin:SetPoint("BOTTOM", guiCVarControl, "BOTTOM", 40, 60)
     CreateTooltipTwo(disableCVarForceOnLogin, "Disable all CVar Forcing", "Disables all forcing of CVar's on login (Not recommended)", "(Sliders adjusting CVar values will still change CVars.)")
+    disableCVarForceOnLogin:SetScale(1.2)
 
     local nameplateAlphaText = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     nameplateAlphaText:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 400, -35)
@@ -8772,8 +8790,8 @@ local function guiMisc()
 
 
     local skipGUI = CreateCheckbox("skipGUI", "Skip GUI", guiMisc)
-    skipGUI:SetPoint("BOTTOMLEFT", bgImg, "BOTTOMLEFT", 0, 0)
-    CreateTooltipTwo(skipGUI, "Skip GUI", "Skip creating the BBP Settings GUI on login/reload.\nFrees a little memory, makes reload a little faster.")
+    skipGUI:SetPoint("BOTTOMRIGHT", bgImg, "BOTTOMRIGHT", -60, 0)
+    CreateTooltipTwo(skipGUI, "Skip GUI", "Skip creating the BBP Settings GUI on login/reload.\n\nIt will be created when typing /bbp\n\nFrees a little memory, makes reload a little faster.")
     skipGUI:SetScale(1.3)
 
     local guildNameColor = CreateCheckbox("guildNameColor", "Custom Guild Name Color", guiMisc)
@@ -8891,12 +8909,26 @@ local function guiMisc()
     local nameplateSelfWidth = CreateSlider(guiMisc, "Personal Nameplate Width", 50, 200, 1, "nameplateSelfWidth")
     nameplateSelfWidth:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 10, -20)
 
+    local adjustPersonalBarPosition = CreateCheckbox("adjustPersonalBarPosition", "Adjust Personal Bar Vertical Position", guiMisc)
+    adjustPersonalBarPosition:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -40)
+    CreateTooltipTwo(adjustPersonalBarPosition, "Adjust Personal Bar Vertical Position", "Adjust the vertical position of the personal resource bar. This setting will make it relatively static as well.", "", nil, "nameplateSelfTopInset", "nameplateSelfBottomInset")
 
 
+    local personalBarPosition = CreateSlider(adjustPersonalBarPosition, "Personal Bar Position", 0, 0.99, 0.01, "personalBarPosition")
+    personalBarPosition:SetPoint("TOPLEFT", adjustPersonalBarPosition, "BOTTOMLEFT", 10, -10)
+    CreateTooltipTwo(personalBarPosition, "Personal Bar Position", "Adjust the vertical position of the personal bar.", nil, nil, "nameplateSelfTopInset", "nameplateSelfBottomInset")
+    local hpHeightEnemyReset = CreateResetButton(personalBarPosition, "personalBarPosition", guiMisc)
 
+    local hidePersonalBarManaFrame = CreateCheckbox("hidePersonalBarManaFrame", "Hide Personal Manabar", guiMisc, nil, BBP.PersonalBarSettings)
+    hidePersonalBarManaFrame:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -100)
+    CreateTooltipTwo(hidePersonalBarManaFrame, "Hide Personal Manabar", "Hide the manabar on personal resource.")
+
+    local hidePersonalBarExtraFrame = CreateCheckbox("hidePersonalBarExtraFrame", "Hide Extra Personal Bar", guiMisc, nil, BBP.PersonalBarSettings)
+    hidePersonalBarExtraFrame:SetPoint("LEFT", hidePersonalBarManaFrame.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(hidePersonalBarExtraFrame, "Hide Extra Personal Bar", "Hide the extra bar on personal resource for Ebon/Stagger.")
 
     local changeHealthbarHeight = CreateCheckbox("changeHealthbarHeight", "Separate Friendly/Enemy Nameplate Height", guiMisc)
-    changeHealthbarHeight:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -50)
+    changeHealthbarHeight:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -125)
     CreateTooltipTwo(changeHealthbarHeight, "Separate Nameplate Heights", "Change the height of nameplates individually depending if enemy or friendly.", "This setting runs a lot and I am unsure just how much of a performance impact it has. Use at own risk.")
 
 
