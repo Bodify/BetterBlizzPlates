@@ -277,86 +277,88 @@ end
 local pandemicSpells = {
     -- Death Knight
         -- Blood
-        [55078] = true, -- Blood Plague
+        [55078] = 24,  -- Blood Plague
         -- Frost
-        [55095] = true, -- Frost Fever
+        [55095] = 24,  -- Frost Fever
         -- Unholy
-        [191587] = true, -- Virulent Plague
+        [191587] = 21, -- Virulent Plague
 
     -- Demon Hunter
         -- Havoc
-        [390181] = true, -- Soulscar
+        [390181] = 6,  -- Soulscar
 
     -- Druid
         -- Feral
-        [1079] = true, -- Rip
-        [155722] = true, -- Rake
-        [106830] = true, -- Thrash
-        [155625] = true, -- Moonfire
+        [1079] = 8,   -- Rip
+        [155722] = 15, -- Rake
+        [106830] = 15, -- Thrash
+        [155625] = 14, -- Moonfire
         -- Balance
-        [164815] = true, -- Sunfire
-        [202347] = true, -- Stellar Flare
+        [164815] = 12, -- Sunfire
+        [202347] = 24, -- Stellar Flare
         -- Resto
-        [774] = true, -- Rejuvenation
-        [33763] = true, -- Lifebloom
-        [8936] = true, -- Regrowth
+        [774] = 12,    -- Rejuvenation
+        [33763] = 15,  -- Lifebloom
+        [8936] = 6,    -- Regrowth
 
     -- Evoker
         -- Preservation
-        [355941] = true, -- Dream Breath
+        [355941] = 8, -- Dream Breath
         -- Augmentation
-        [395152] = true, -- Ebon Might
+        [395152] = 10, -- Ebon Might
 
     -- Hunter
         -- Survival
-        [259491] = true, -- Serpent Sting
+        [259491] = 12, -- Serpent Sting
         -- Marksman
-        [271788] = true, -- Serpent Sting (Aimed Shot)
+        [271788] = 18, -- Serpent Sting (Aimed Shot)
 
     -- Monk
         -- Brewmaster
-        [116847] = true, -- Rushing Jade Wind
+        [116847] = 6,  -- Rushing Jade Wind
         -- Mistweaver
-        [119611] = true, -- Renewing Mist
-        [124682] = true, -- Enveloping Mist
+        [119611] = 20, -- Renewing Mist
+        [124682] = 6,  -- Enveloping Mist
 
     -- Priest
-        [139] = true, -- Renew
-        [589] = true, -- Shadow Word: Pain
+        [139] = 15,    -- Renew
+        [589] = 16,    -- Shadow Word: Pain
         -- Discipline
-        [204213] = true, -- Purge the Wicked
+        [204213] = 20, -- Purge the Wicked
         -- Shadow
-        [34914] = true, -- Vampiric Touch
-        [335467] = true, -- Devouring Plague
+        [34914] = 21,  -- Vampiric Touch
+        [335467] = 6,  -- Devouring Plague
 
     -- Rogue
-        [1943] = true, -- Rupture
-        [315496] = true, -- Slice and Dice
+        [1943] = 8,   -- Rupture
+        [315496] = 12, -- Slice and Dice
         -- Assassination
-        [703] = true, -- Garrote
-        [121411] = true, -- Crimson Tempest
+        [703] = 18,    -- Garrote
+        [121411] = 6, -- Crimson Tempest
 
     -- Shaman
-        [188389] = true, -- Flame Shock
+        [188389] = 18, -- Flame Shock
         -- Restoration
-        [382024] = true, -- Earthliving Weapon
-        [61295] = true, -- Riptide
+        [382024] = 12, -- Earthliving Weapon
+        [61295] = 18,  -- Riptide
 
     -- Warlock
-            [445474] = true, -- Wither
-            -- Destruction
-            [157736] = true, -- Immolate
-            -- Demonology
-            [460553] = true, -- Doom
-            -- Affliction
-            [146739] = true, -- Corruption
-            [980] = true, -- Agony
-            [316099] = true, -- Unstable Affliction
+        [445474] = 16, -- Wither
+        -- Destruction
+        [157736] = 18, -- Immolate
+        -- Demonology
+        [460553] = 20, -- Doom
+        -- Affliction
+        [146739] = 14, -- Corruption
+        [980] = 18,    -- Agony
+        [316099] = 21, -- Unstable Affliction
+
     -- Warrior
-        [388539] = true, -- Rend
+        [388539] = 15, -- Rend
         -- Arms
-        [262115] = true, -- Deep Wounds
+        [262115] = 12, -- Deep Wounds
 }
+
 
 local nonPandemic = 5
 local defaultPandemic = 0.3
@@ -364,15 +366,19 @@ local uaPandemic = 8
 local agonyPandemic = 10
 
 local function GetPandemicThresholds(buff)
+    local minBaseDuration = pandemicSpells[buff.spellID] or buff.duration
+    local baseDuration = math.max(buff.duration, minBaseDuration)  -- Ensure the duration doesn't go below the min base duration
+
+    -- Specific pandemic logic for Agony with talent
     if buff.spellID == 980 and IsPlayerSpell(453034) then
-        -- Agony with talent
-        return agonyPandemic, buff.duration * defaultPandemic
+        -- For Agony with talent, return special threshold
+        return agonyPandemic, baseDuration * defaultPandemic
     elseif buff.spellID == 316099 and IsPlayerSpell(459376) then
         -- Unstable Affliction with talent
-        return uaPandemic, buff.duration * defaultPandemic
+        return uaPandemic, baseDuration * defaultPandemic
     elseif pandemicSpells[buff.spellID] then
-        -- Use 30% of the full duration for Pandemic spells
-        return nil, buff.duration * defaultPandemic
+        -- Use 30% of the greater value (dynamic or minimum) for Pandemic spells
+        return nil, baseDuration * defaultPandemic
     else
         -- Default non-pandemic (5 seconds)
         return nil, nonPandemic
@@ -1575,9 +1581,9 @@ function BBP:UpdateAnchor()
 
     if frame.unit and ShouldShowName(frame) then
         if config.friendlyNameplateNonstackable and isFriend then
-            self:SetPoint("BOTTOM", frame, "TOP", 0, -3 + targetYOffset + config.nameplateAurasYPos + 63)
+            self:SetPoint("BOTTOM", frame.healthBar, "TOP", 0, 24.5 + targetYOffset + config.nameplateAurasYPos + 63)
         else
-            self:SetPoint("BOTTOM", frame, "TOP", 0, -3 + targetYOffset + config.nameplateAurasYPos)
+            self:SetPoint("BOTTOM", frame.healthBar, "TOP", 0, 24.5 + targetYOffset + config.nameplateAurasYPos)
         end
     else
         local additionalYOffset = 15 * (config.nameplateAuraScale - 1)

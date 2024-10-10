@@ -350,7 +350,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                     local cooldownRemaining = start + duration - GetTime()
                     local castRemaining = (endTime / 1000) - GetTime()
                     local totalCastTime = (endTime / 1000) - (castStart / 1000)
-    
+
                     if not notInterruptible then
                         if cooldownRemaining > 0 and cooldownRemaining > castRemaining then
                             if castBarTexture then
@@ -607,6 +607,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
 
         frame.TargetText:SetText(name)
         frame.TargetText:SetTextColor(color.r, color.g, color.b)
+        frame.TargetText:ClearAllPoints()
         if UnitCanAttack("player", unit) then
             frame.TargetText:SetPoint("RIGHT", frame, "BOTTOMRIGHT", -11, 0)  -- Set anchor point for enemy
         else

@@ -4,11 +4,12 @@ local LSM = LibStub("LibSharedMedia-3.0")
 LSM:Register("statusbar", "Dragonflight (BBP)", [[Interface\Addons\BetterBlizzPlates\media\DragonflightTexture]])
 LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPlates\media\focusTexture]])
 LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlates\media\targetTexture]])
+LSM:Register("statusbar", "Smooth", [[Interface\Addons\BetterBlizzPlates\media\smooth]])
 LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.5"
+local addonUpdates = "1.6.6"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -5144,7 +5145,10 @@ local function HideHealthbarInPvEMagic()
                         setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
                     else
                         if isPlayer then
-                            setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
+                            local skipHide = BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve
+                            if not skipHide then
+                                setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
+                            end
                             if hideFriendlyCastbar then
                                 setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
                             else

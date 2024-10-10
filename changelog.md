@@ -1,3 +1,25 @@
+# BetterBlizzPlates 1.6.6
+## The War Within
+### New stuff:
+- Search feature! Top right SearchBox that normally searches Blizzard settings has now been hijacked and will search BetterBlizzPlates settings instead if you have the BBP settings open. (WIP)
+- Health Numbers: Class Color setting.
+- Execute Indicator: Target only setting.
+- Execute Indicator: Use Texture setting that displays a line instead of text.
+### Tweak:
+- Aura Color: "Only in PvE" setting now also does not color Player nameplates and has a better tooltip description.
+- Nameplate Auras are now anchored to the healthbar (was NamePlate.UnitFrame) with Nameplate Auras settings enabled. This makes it so when increasing castbar height with Castbar Emphasis the auras follow properly.
+- Tweak Pandemic Timers to never go below base duration (Rot and Decay refresh caused wrong timings)
+### Bugfix:
+- Fix Hide elite icon setting overlapping other setting in the GUI
+- Fix elite icon popping back up even with the hide setting on.
+- Fixed nameplate color going back and forth between target/aura color with both features enabled. Always prioritizes target/focus color over aura color now as intended.
+- Fix issues with classic nameplates border not aligning properly around the healthbar.
+- Fix GUI slider for Castbar Emphasis Spark Height accidentally adjusting Emphasis Text Size instead.
+## Cataclysm
+### Bugfix:
+- Fix Misc setting "Do not hide friendly healthbars in PvE" not working.
+- Fix GUI slider for Castbar Emphasis Spark Height accidentally adjusting Emphasis Text Size instead.
+
 # BetterBlizzPlates 1.6.5
 ## The War Within
 ### New stuff:

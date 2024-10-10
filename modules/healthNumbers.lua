@@ -10,7 +10,7 @@ local function FormatHealthValue(health, useMillions, showDecimal)
             return string.format(formatString, health / 1000)  -- Format as thousands, not millions
         end
     elseif health >= 1000 then
-        formatString = showDecimal and "%.1fk" or "%.0fk"  -- Correct this to show decimals
+        formatString = showDecimal and "%.1fk" or "%.0fk"
         return string.format(formatString, health / 1000)
     else
         return tostring(health)
@@ -42,6 +42,7 @@ function BBP.HealthNumbers(frame)
         config.healthNumbersPlayers = BetterBlizzPlatesDB.healthNumbersPlayers
         config.healthNumbersNpcs = BetterBlizzPlatesDB.healthNumbersNpcs
         config.healthNumbersHideSelf = BetterBlizzPlatesDB.healthNumbersHideSelf
+        config.healthNumbersClassColor = BetterBlizzPlatesDB.healthNumbersClassColor
 
         config.healthNumbersInitialized = true
     end
@@ -148,6 +149,16 @@ function BBP.HealthNumbers(frame)
         BBP.SetFontBasedOnOption(frame.healthNumbers, 9, BetterBlizzPlatesDB.healthNumbersFontOutline)
         frame.healthNumbers:SetTextColor(1, 1, 1)
         frame.healthNumbers:SetJustifyH("CENTER")
+    end
+
+    if config.healthNumbersClassColor then
+        if isPlayer then
+            local _, class = UnitClass(unit)
+            local classColor = RAID_CLASS_COLORS[class]
+            frame.healthNumbers:SetTextColor(classColor.r, classColor.g, classColor.b)
+        else
+            frame.healthNumbers:SetTextColor(1, 1, 1)
+        end
     end
 
     frame.healthNumbers:ClearAllPoints()
