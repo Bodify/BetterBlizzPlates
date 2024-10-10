@@ -8730,9 +8730,9 @@ local function guiCVarControl()
     nameplateResourceOnTarget:SetPoint("TOPLEFT", comboPointsText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
     CreateTooltipTwo(nameplateResourceOnTarget, "Nameplate Resource", "Show combo points, warlock shards, arcane charges etc on nameplates.", nil, nil, "nameplateResourceOnTarget")
 
-    local hideNameplateResource = CreateCheckbox("hideNameplateResource", "Hide resource on Personal Bar", guiCVarControl, nil, BBP.HideResourceFrames)
-    hideNameplateResource:SetPoint("TOPLEFT", nameplateResourceOnTarget, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(hideNameplateResource, "Hide resource on Personal Bar", "Hide Resource/Power under Personal Resource Bar. Rogue combopoints, Warlock shards etc.\n\n|cff32f795Right-click for class specific options.|r")
+    local hideResourceFrame = CreateCheckbox("hideResourceFrame", "Hide resource on Personal Bar", guiCVarControl, nil, BBP.HideResourceFrames)
+    hideResourceFrame:SetPoint("TOPLEFT", nameplateResourceOnTarget, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(hideResourceFrame, "Hide resource on Personal Bar", "Hide Resource/Power under Personal Resource Bar. Rogue combopoints, Warlock shards etc.\n\n|cff32f795Right-click for class specific options.|r")
 
     local classOptionsFrame
     local function OpenClassSpecificWindow()
@@ -8803,14 +8803,14 @@ local function guiCVarControl()
         end
     end
 
-    hideNameplateResource:SetScript("OnMouseDown", function(self, button)
+    hideResourceFrame:SetScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
             OpenClassSpecificWindow()
         end
     end)
 
     local druidOverstacks = CreateCheckbox("druidOverstacks", "Druid: Color Berserk Overstack Combo Points Blue", guiCVarControl)
-    druidOverstacks:SetPoint("TOPLEFT", hideNameplateResource, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    druidOverstacks:SetPoint("TOPLEFT", hideResourceFrame, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(druidOverstacks, "Druid: Color Berserk Overstack Combo Points Blue", "Color the Druid Berserk Overstack Combo Points blue similar to Rogue's Echoing Reprimand.")
 
     local changeResourceStrata = CreateCheckbox("changeResourceStrata", "Increase resource layer level", guiCVarControl, nil, BBP.ChangeStrataOfResourceFrame)
