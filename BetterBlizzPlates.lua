@@ -9,7 +9,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.6"
+local addonUpdates = "1.6.6b"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -1058,6 +1058,13 @@ local function isFriend(unit)
     end
 end
 
+local function isEnemy(unit)
+    local reaction = UnitReaction(unit, "player")
+    if reaction and reaction <= 4 then
+        return true
+    end
+end
+
 local function GetNameplateUnitInfo(frame, unit)
     local unit = unit or frame.unit or frame.displayedUnit
     if not unit then return end
@@ -1498,11 +1505,11 @@ local function ColorNameplateByReaction(frame)
 end
 
 local function AdjustHealthBarHeight(frame)
-    if frame:IsForbidden() or frame:IsProtected() then return end
+    if frame:IsForbidden() then return end
+    if not frame.unit then return end
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config
     if not config then return end
-    if not frame.unit then return end
-    if isFriend(frame.unit) then
+    if isEnemy(frame.unit) then
         frame.HealthBarsContainer:SetHeight(config.hpHeightEnemy or 11)
     elseif not UnitIsUnit(frame.unit, "player") then
         frame.HealthBarsContainer:SetHeight(config.hpHeightFriendly or 11)
@@ -1694,7 +1701,7 @@ local function ToggleNameplateBuffFrameVisibility(frame)
     if config.hideNameplateAuras then
         if not frame.bbpHookedBuffFrameAlpha then
             hooksecurefunc(frame.BuffFrame, "SetAlpha", function(self)
-                if self.changing or frame:IsProtected() then return end
+                if frame:IsForbidden() or self.changing then return end
                 self.changing = true
                 self:SetAlpha(0)
                 self.changing = false
@@ -2257,8 +2264,7 @@ local function SmallPetsInPvP(frame)
     if UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP and not UnitIsPlayer(frame.unit)) then
         if not frame.bbpWidthHook then
             hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
-                if self:IsProtected() or not frame.unit then return end
-                if UnitIsPlayer(frame.unit) then return end
+                if self:IsForbidden() or not frame.unit or UnitIsPlayer(frame.unit) then return end
                 local db = BetterBlizzPlatesDB
 
                 if db.totemIndicator then
@@ -3315,7 +3321,7 @@ end
 local function ChangeHealthbarBorderSize(frame)
     if not frame.borderHooked then
         hooksecurefunc(frame.HealthBarsContainer.border, "UpdateSizes", function(self)
-            if self:IsProtected() or self:IsForbidden() then return end
+            if frame:IsForbidden() then return end
             if not frame.unit then return end
             local config = frame.BetterBlizzPlates.config
             if not config then return end
@@ -3650,9 +3656,7 @@ function BBP.RepositionName(frame)
         config.fakeNameRaiseStrata = BetterBlizzPlatesDB.fakeNameRaiseStrata
     end
     local function RepositionName(frame)
-        if frame.name:IsProtected() then return end
-        if not frame.unit then return end
-        if frame.name.changing then return end
+        if frame:IsForbidden() or not frame.unit or frame.name.changing then return end
         frame.name.changing = true
         local db = BetterBlizzPlatesDB
         frame.name:ClearPoint("BOTTOM")
@@ -4358,7 +4362,7 @@ function BBP.RefreshAllNameplates()
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = nameplate.UnitFrame
         local unitFrame = nameplate.UnitFrame
-        if not frame or frame:IsForbidden() or frame:IsProtected() then return end
+        if not frame or frame:IsForbidden() then return end
         local unitToken = frame.unit
         if not frame.unit then return end
 
@@ -4549,14 +4553,10 @@ end
 --#################################################################################################
 -- Nameplate updater etc
 function BBP.ConsolidatedUpdateName(frame)
-    if not frame or frame:IsForbidden() or frame:IsProtected() then return end
-    local removeRealmName = BetterBlizzPlatesDB.removeRealmNames
-    if removeRealmName then
-        BBP.RemoveRealmName(frame)
-    end
-
+    if not frame or frame:IsForbidden() or not frame.unit then return end
     -- Further processing only for nameplate units
-    if not frame.unit or not frame.unit:find("nameplate") then return end
+    if not frame.unit:find("nameplate") then return end
+
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     --local info = GetNameplateUnitInfo(frame) --frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
     frame.BetterBlizzPlates.unitInfo = BBP.GetNameplateUnitInfo(frame)
@@ -4581,8 +4581,13 @@ function BBP.ConsolidatedUpdateName(frame)
         config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
         config.showLastNameNpc = BetterBlizzPlatesDB.showLastNameNpc
         config.arenaIndicatorBg = BetterBlizzPlatesDB.arenaIndicatorBg
+        config.removeRealmNames = BetterBlizzPlatesDB.removeRealmNames
 
         config.updateNameInitialized = true
+    end
+
+    if config.removeRealmNames then
+        BBP.RemoveRealmName(frame)
     end
 
     if not frame.bbpOverlay then

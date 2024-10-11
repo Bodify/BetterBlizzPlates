@@ -1,3 +1,10 @@
+# BetterBlizzPlates 1.6.6b
+## The War Within
+### Tweak:
+- "Remove realm names" setting is no longer affecting raidframes (Old code that never got changed)
+### Bugfix:
+- Fix Misc setting "Separate Friendly/Enemy Nameplate Height" being backwards due to a change from last update. Oops.
+
 # BetterBlizzPlates 1.6.6
 ## The War Within
 ### New stuff:
