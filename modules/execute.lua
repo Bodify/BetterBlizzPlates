@@ -126,6 +126,15 @@ function BBP.ExecuteIndicator(frame)
         if frame.executeIndicatorTexture then
             frame.executeIndicatorTexture:Hide()
         end
+        frame.executeIndicator:ClearAllPoints()
+        if config.executeIndicatorAnchor == "LEFT" then
+            frame.executeIndicator:SetPoint(config.executeIndicatorAnchor, frame.healthBar, config.executeIndicatorAnchor, config.executeIndicatorXPos + 24, config.executeIndicatorYPos + -0.5)
+        elseif config.executeIndicatorAnchor == "RIGHT" then
+            frame.executeIndicator:SetPoint(config.executeIndicatorAnchor, frame.healthBar, config.executeIndicatorAnchor, config.executeIndicatorXPos, config.executeIndicatorYPos + -0.5)
+        else
+            frame.executeIndicator:SetPoint(oppositeAnchor, frame.healthBar, config.executeIndicatorAnchor, config.executeIndicatorXPos, config.executeIndicatorYPos + -0.5)
+        end
+        frame.executeIndicator:SetScale(config.executeIndicatorScale or 1)
         local text = config.executeIndicatorShowDecimal and string.format("%.1f", healthPercentage) or string.format("%d", healthPercentage)
         if config.executeIndicatorPercentSymbol then
             text = text .. "%"

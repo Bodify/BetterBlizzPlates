@@ -152,13 +152,14 @@ function BBP.HealthNumbers(frame)
     end
 
     if config.healthNumbersClassColor then
-        if isPlayer then
-            local _, class = UnitClass(unit)
-            local classColor = RAID_CLASS_COLORS[class]
-            frame.healthNumbers:SetTextColor(classColor.r, classColor.g, classColor.b)
-        else
-            frame.healthNumbers:SetTextColor(1, 1, 1)
-        end
+        -- if isPlayer then
+        --     local _, class = UnitClass(unit)
+        --     local classColor = RAID_CLASS_COLORS[class]
+        --     frame.healthNumbers:SetTextColor(classColor.r, classColor.g, classColor.b)
+        -- else
+        --     frame.healthNumbers:SetTextColor(1, 1, 1)
+        -- end
+        frame.healthNumbers:SetTextColor(frame.healthBar:GetStatusBarColor())
     end
 
     frame.healthNumbers:ClearAllPoints()

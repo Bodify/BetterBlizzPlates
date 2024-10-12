@@ -2,6 +2,7 @@
 
 local LSM = LibStub("LibSharedMedia-3.0")
 LSM:Register("statusbar", "Dragonflight (BBP)", [[Interface\Addons\BetterBlizzPlates\media\DragonflightTexture]])
+LSM:Register("statusbar", "Dragonflight HD (BBP)", [[Interface\Addons\BetterBlizzPlates\media\DragonflightTextureHD]])
 LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPlates\media\focusTexture]])
 LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlates\media\targetTexture]])
 LSM:Register("statusbar", "Smooth", [[Interface\Addons\BetterBlizzPlates\media\smooth]])
@@ -1329,7 +1330,7 @@ local function InitializeNameplateSettings(frame)
             classicNameplates = BetterBlizzPlatesDB.classicNameplates,
             hideLevelFrame = BetterBlizzPlatesDB.hideLevelFrame,
             smallPetsInPvP = BetterBlizzPlatesDB.smallPetsInPvP,
-            hideEliteDragon = BetterBlizzPlatesDB.smallPetsInPvP,
+            hideEliteDragon = BetterBlizzPlatesDB.hideEliteDragon,
         }
         if frame.BetterBlizzPlates.config.changeHealthbarHeight then
             frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
@@ -4680,6 +4681,14 @@ function BBP.ConsolidatedUpdateName(frame)
                     end
                 end
             end
+        end
+    end
+
+    if frame.isBBPTotem then
+        if config.totemIndicatorColorName or config.totemIndicatorHideNameAndShiftIconDown then
+            frame.name:SetText("")
+        elseif frame.BBPTotemColor then
+            frame.name:SetVertexColor(unpack(frame.BBPTotemColor))
         end
     end
 

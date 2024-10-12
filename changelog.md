@@ -1,3 +1,13 @@
+# BetterBlizzPlates 1.6.6c
+## The War Within
+### Tweak:
+- Health Numbers "Class Color" setting will just color the text after the healthbar color instead for all nameplates.
+- Added a more "HD" version of the Dragonflight texture.
+- Changed old "Shattered" texture to a more HD version.
+### Bugfix:
+- Fix elite dragon being hidden if Small Pets in PvP was enabled (Forgot to rename the copypaste d'oh)
+- Fix Execute Indicator text version not showing after 1.6.6 update. Oops.
+
 # BetterBlizzPlates 1.6.6b
 ## The War Within
 ### Tweak:
