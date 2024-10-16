@@ -1,3 +1,15 @@
+# BetterBlizzPlates 1.6.6d
+## The War Within
+### Tweak:
+- Search: Searching "cvar" now shows all checkboxes/sliders affecting CVar values. Search is still WIP and will receive many more changes over time.
+- Normal Evoker Castbar: Now also changes the spark to be identical to default.
+### Bugfix:
+- Fix Classic Nameplates setting having a little gap between border and health on the right side when level is not hidden.
+- Fix Totem Indicator width setting accidentally applying the "Small Pets in PvP" setting for non-totems even when that was off.
+## Cataclysm
+### Bugfix:
+- Fix profile Import functionality being broken since renaming of the function ages ago >_<
+
 # BetterBlizzPlates 1.6.6c
 ## The War Within
 ### Tweak:

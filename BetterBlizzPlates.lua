@@ -10,7 +10,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.6c"
+local addonUpdates = "1.6.6d"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -1388,7 +1388,7 @@ function BBP.ApplyCustomTextureToNameplate(frame)
 
     if not info then return end
 
-    if info.isSelf then
+    if UnitIsUnit(frame.unit, "player") then
         if (config.useCustomTextureForSelf or config.useCustomTextureForSelfMana) then
             if config.useCustomTextureForSelf then
                 frame.healthBar:SetStatusBarTexture(config.customTextureSelf)
@@ -2278,7 +2278,7 @@ local function SmallPetsInPvP(frame)
                                 SetBarWidth(frame, npcData.hpWidth, true)
                             end
                         end
-                    elseif UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP then
+                    elseif db.smallPetsInPvP and (UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP) then
                         SetBarWidth(frame, 50, false)
                     end
                 elseif UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP then
@@ -3948,7 +3948,7 @@ local function CreateBetterClassicHealthbarBorder(frame)
             frame.LevelFrame = CreateFrame("Frame", nil, frame.bbpOverlay)
             frame.LevelFrame.text = frame.LevelFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             frame.LevelFrame.text:SetFont("Fonts\\FRIZQT__.TTF", 12)
-            frame.LevelFrame.text:SetPoint("CENTER", right, "RIGHT", -12, -8)
+            frame.LevelFrame.text:SetPoint("CENTER", right, "RIGHT", -11.5, -8.5)
             frame.LevelFrame.skull = frame.LevelFrame:CreateTexture(nil, "OVERLAY")
             frame.LevelFrame.skull:SetTexture("Interface\\TargetingFrame\\UI-TargetingFrame-Skull")
             frame.LevelFrame.skull:SetPoint("CENTER", right, "RIGHT", -11.5, -7.5)
@@ -3985,12 +3985,13 @@ local function CreateBetterClassicHealthbarBorder(frame)
     local height = frame.healthBar:GetHeight()
     local bottomOffset = -((0.455) * height - 1.09)
     local topOffset = (2 * height) - 1
+    local rightXOffset = config.hideLevelFrame and 27.9 or 20.9
 
     if config.hideLevelFrame and not frame.BetterBlizzPlates.bbpBorder.changed then
         frame.BetterBlizzPlates.bbpBorder.right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRightNoLevel")
         frame.BetterBlizzPlates.bbpBorder.changed = true
         frame.LevelFrame:Hide()
-    elseif frame.BetterBlizzPlates.bbpBorder.changed and not BetterBlizzPlatesDB.hideLevelFrame then
+    elseif frame.BetterBlizzPlates.bbpBorder.changed and not config.hideLevelFrame then
         frame.BetterBlizzPlates.bbpBorder.right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRight")
         frame.BetterBlizzPlates.bbpBorder.changed = nil
         frame.LevelFrame:Show()
@@ -4002,8 +4003,9 @@ local function CreateBetterClassicHealthbarBorder(frame)
     frame.BetterBlizzPlates.bbpBorder.left:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPLEFT", -28, topOffset)
 
     frame.BetterBlizzPlates.bbpBorder.right:ClearAllPoints()
-    frame.BetterBlizzPlates.bbpBorder.right:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 27.9, bottomOffset)
-    frame.BetterBlizzPlates.bbpBorder.right:SetPoint("TOPRIGHT", frame.HealthBarsContainer, "TOPRIGHT", 27.9, topOffset)
+    frame.BetterBlizzPlates.bbpBorder.right:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", rightXOffset, bottomOffset)
+    frame.BetterBlizzPlates.bbpBorder.right:SetPoint("TOPRIGHT", frame.HealthBarsContainer, "TOPRIGHT", rightXOffset, topOffset)
+
 
     --local width = info.isFriend and BetterBlizzPlatesDB.nameplateFriendlyWidth or BetterBlizzPlatesDB.nameplateEnemyWidth
     -- local width = frame.healthBar:GetWidth() + 25
@@ -4011,27 +4013,30 @@ local function CreateBetterClassicHealthbarBorder(frame)
 
     --CreateBetterClassicCastbarBorders(frame)
 end
+
 function BBP.greenScreen(frame)
-    -- Ensure that the frame is valid
     if not frame then return end
     if frame.texture then return end
 
-    -- Create a texture on the specified frame
     local texture = frame:CreateTexture(nil, "BACKGROUND")
-    texture:SetAllPoints()  -- Make the texture fill the entire frame
+    texture:SetAllPoints()
+    local text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    text:SetPoint("BOTTOMRIGHT", texture, "TOPLEFT", 0, 0)
+    text:SetText("Clickable Area")
 
     -- Generate random RGB values
     local r = math.random()
     local g = math.random()
     local b = math.random()
 
-    -- Set the color and transparency (alpha) of the texture
-    texture:SetColorTexture(r, g, b, 0.5)  -- 50% transparency
+    texture:SetColorTexture(r, g, b, 0.5)
+    text:SetTextColor(r,g,b,0.5)
 
     frame.greenScreen = texture
 
-    return texture  -- Return the texture for further manipulation if necessary
+    return texture
 end
+
 -- What to do on a new nameplate
 local function HandleNamePlateAdded(unit)
     local nameplate, frame = BBP.GetSafeNameplate(unit)
@@ -5377,7 +5382,12 @@ local function NamePlateCastBarTestMode(frame)
                         if color then -- Check if color is not nil
                             frame.dummyNameText:SetText(GetUnitName("player"))
                             frame.dummyNameText:SetTextColor(color.r, color.g, color.b)
-                            frame.dummyNameText:SetPoint("RIGHT", frame, "BOTTOMRIGHT", -11, 0)
+                            frame.dummyNameText:ClearAllPoints()
+                            if UnitCanAttack("player", frame.unit) then
+                                frame.dummyNameText:SetPoint("RIGHT", frame.castBar, "BOTTOMRIGHT", -11, 0)  -- Set anchor point for enemy
+                            else
+                                frame.dummyNameText:SetPoint("CENTER", frame.castBar, "BOTTOM", 0, 0)  -- Set anchor point for friendly
+                            end
                         else -- Fallback color in case something goes wrong
                             frame.dummyNameText:SetTextColor(1, 1, 1) -- Set to white or any default color
                         end

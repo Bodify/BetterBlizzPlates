@@ -1646,7 +1646,7 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
 
     importBtn:SetScript("OnClick", function()
         local importString = importBox:GetText()
-        local profileData, errorMessage = ImportProfile(importString, tableName)
+        local profileData, errorMessage = BBP.ImportProfile(importString, tableName)
         if errorMessage then
             print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Error importing " .. title .. ":", errorMessage)
         else

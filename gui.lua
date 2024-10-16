@@ -4161,7 +4161,7 @@ local function CreateSearchFrame()
             local tooltipTitle = string.lower(data.checkbox.tooltipTitle or "")
             local tooltipMainText = string.lower(data.checkbox.tooltipMainText or "")
             local tooltipSubText = string.lower(data.checkbox.tooltipSubText or "")
-            local tooltipCVarName = string.lower(data.checkbox.tooltipCVarName or "")
+            local tooltipCVarName = string.lower(data.checkbox.tooltipCVarName and data.checkbox.tooltipCVarName.." CVar" or "")
 
             -- Check if all query words are found in any of the searchable fields
             if matchesQuery(label) or matchesQuery(tooltipTitle) or matchesQuery(tooltipMainText) or matchesQuery(tooltipSubText) or matchesQuery(tooltipCVarName) then
@@ -4216,7 +4216,7 @@ local function CreateSearchFrame()
             local tooltipTitle = string.lower(data.slider.tooltipTitle or "")
             local tooltipMainText = string.lower(data.slider.tooltipMainText or "")
             local tooltipSubText = string.lower(data.slider.tooltipSubText or "")
-            local tooltipCVarName = string.lower(data.slider.tooltipCVarName or "")
+            local tooltipCVarName = string.lower(data.slider.tooltipCVarName and data.slider.tooltipCVarName.." CVar" or "")
 
             -- Check if all query words are found in any of the searchable fields
             if matchesQuery(label) or matchesQuery(tooltipTitle) or matchesQuery(tooltipMainText) or matchesQuery(tooltipSubText) or matchesQuery(tooltipCVarName) then
@@ -4545,24 +4545,24 @@ local function guiGeneralTab()
     enemyColorName:HookScript("OnClick", function(self)
         if self:GetChecked() then
             enemyNeutralColorNameButton:Enable()
-            enemyNeutralColorNameButton:SetAlpha(1)
+            enemyNeutralColorNameButton:Show()
             enemyColorNameButton:Enable()
-            enemyColorNameButton:SetAlpha(1)
+            enemyColorNameButton:Show()
             enemyColorNameButtonIcon:Show()
             enemyNeutralColorNameButtonIcon:Show()
         else
             enemyNeutralColorNameButton:Disable()
-            enemyNeutralColorNameButton:SetAlpha(0)
+            enemyNeutralColorNameButton:Hide()
             enemyColorNameButton:Disable()
-            enemyColorNameButton:SetAlpha(0)
+            enemyColorNameButton:Hide()
             enemyColorNameButtonIcon:Hide()
             enemyNeutralColorNameButtonIcon:Hide()
         end
     end)
     if not BetterBlizzPlatesDB.enemyColorName then
         enemyNeutralColorNameButton:Disable()
-        enemyNeutralColorNameButton:SetAlpha(0)
-        enemyColorNameButton:SetAlpha(0)
+        enemyNeutralColorNameButton:Hide()
+        enemyColorNameButton:Hide()
         enemyColorNameButton:Disable()
         enemyColorNameButtonIcon:Hide()
         enemyNeutralColorNameButtonIcon:Hide()
@@ -4654,30 +4654,30 @@ local function guiGeneralTab()
     enemyHealthBarColor:HookScript("OnClick", function(self)
         if self:GetChecked() then
             enemyHealthBarColorNpcOnly:Enable()
-            enemyHealthBarColorNpcOnly:SetAlpha(1)
+            enemyHealthBarColorNpcOnly:Show()
             enemyNeutralHealthBarColorButton:Enable()
-            enemyNeutralHealthBarColorButton:SetAlpha(1)
+            enemyNeutralHealthBarColorButton:Show()
             enemyHealthBarColorButton:Enable()
-            enemyHealthBarColorButton:SetAlpha(1)
+            enemyHealthBarColorButton:Show()
             enemyHealthBarColorButtonIcon:Show()
             enemyNeutralHealthBarColorButtonIcon:Show()
         else
-            enemyHealthBarColorNpcOnly:SetAlpha(0)
+            enemyHealthBarColorNpcOnly:Hide()
             enemyHealthBarColorNpcOnly:Disable()
             enemyNeutralHealthBarColorButton:Disable()
-            enemyNeutralHealthBarColorButton:SetAlpha(0)
+            enemyNeutralHealthBarColorButton:Hide()
             enemyHealthBarColorButton:Disable()
-            enemyHealthBarColorButton:SetAlpha(0)
+            enemyHealthBarColorButton:Hide()
             enemyHealthBarColorButtonIcon:Hide()
             enemyNeutralHealthBarColorButtonIcon:Hide()
         end
     end)
     if not BetterBlizzPlatesDB.enemyHealthBarColor then
-        enemyHealthBarColorNpcOnly:SetAlpha(0)
+        enemyHealthBarColorNpcOnly:Hide()
         enemyHealthBarColorNpcOnly:Disable()
         enemyNeutralHealthBarColorButton:Disable()
-        enemyNeutralHealthBarColorButton:SetAlpha(0)
-        enemyHealthBarColorButton:SetAlpha(0)
+        enemyNeutralHealthBarColorButton:Hide()
+        enemyHealthBarColorButton:Hide()
         enemyHealthBarColorButton:Disable()
         enemyHealthBarColorButtonIcon:Hide()
         enemyNeutralHealthBarColorButtonIcon:Hide()
@@ -4920,35 +4920,35 @@ local function guiGeneralTab()
     friendlyHealthBarColor:HookScript("OnClick", function(self)
         if self:GetChecked() then
             friendlyHealthBarColorPlayer:Enable()
-            friendlyHealthBarColorPlayer:SetAlpha(1)
+            friendlyHealthBarColorPlayer:Show()
             friendlyHealthBarColorNpc:Enable()
-            friendlyHealthBarColorNpc:SetAlpha(1)
+            friendlyHealthBarColorNpc:Show()
             -- friendlyNameColor:Enable()
-            -- friendlyNameColor:SetAlpha(1)
+            -- friendlyNameColor:Show()
             friendlyHealthBarColorButton:Enable()
-            friendlyHealthBarColorButton:SetAlpha(1)
-            friendlyHealthBarColorButtonIcon:SetAlpha(1)
+            friendlyHealthBarColorButton:Show()
+            friendlyHealthBarColorButtonIcon:Show()
         else
             friendlyHealthBarColorPlayer:Disable()
-            friendlyHealthBarColorPlayer:SetAlpha(0)
+            friendlyHealthBarColorPlayer:Hide()
             friendlyHealthBarColorNpc:Disable()
-            friendlyHealthBarColorNpc:SetAlpha(0)
-            -- friendlyNameColor:SetAlpha(0)
+            friendlyHealthBarColorNpc:Hide()
+            -- friendlyNameColor:Hide()
             -- friendlyNameColor:Disable()
             friendlyHealthBarColorButton:Disable()
-            friendlyHealthBarColorButton:SetAlpha(0)
-            friendlyHealthBarColorButtonIcon:SetAlpha(0)
+            friendlyHealthBarColorButton:Hide()
+            friendlyHealthBarColorButtonIcon:Hide()
         end
     end)
     if not BetterBlizzPlatesDB.friendlyHealthBarColor then
         friendlyHealthBarColorPlayer:Disable()
-        friendlyHealthBarColorPlayer:SetAlpha(0)
+        friendlyHealthBarColorPlayer:Hide()
         friendlyHealthBarColorNpc:Disable()
-        friendlyHealthBarColorNpc:SetAlpha(0)
+        friendlyHealthBarColorNpc:Hide()
         -- friendlyNameColor:Disable()
-        -- friendlyNameColor:SetAlpha(0)
-        friendlyHealthBarColorButtonIcon:SetAlpha(0)
-        friendlyHealthBarColorButton:SetAlpha(0) --default slider creation only does 0.5 alpha
+        -- friendlyNameColor:Hide()
+        friendlyHealthBarColorButtonIcon:Hide()
+        friendlyHealthBarColorButton:Hide() --default slider creation only does 0.5 alpha
         friendlyHealthBarColorButton:Disable()
     end
 
@@ -4976,14 +4976,14 @@ local function guiGeneralTab()
     BBP.friendlyHideHealthBar:HookScript("OnClick", function(self)
         if self:GetChecked() then
             BBP.friendlyHideHealthBarNpc:Enable()
-            BBP.friendlyHideHealthBarNpc:SetAlpha(1)
+            BBP.friendlyHideHealthBarNpc:Show()
         else
             BBP.friendlyHideHealthBarNpc:Disable()
-            BBP.friendlyHideHealthBarNpc:SetAlpha(0)
+            BBP.friendlyHideHealthBarNpc:Hide()
         end
     end)
     if not BetterBlizzPlatesDB.friendlyHideHealthBar then
-        BBP.friendlyHideHealthBarNpc:SetAlpha(0)
+        BBP.friendlyHideHealthBarNpc:Hide()
         BBP.friendlyHideHealthBarNpc:Disable()
     end
 
@@ -9114,6 +9114,7 @@ local function guiTotemList()
 
     local listFrame = CreateFrame("Frame", nil, guiTotemList)
     listFrame:SetAllPoints(guiTotemList)
+    BBP.totemIndicatorListFrame = listFrame
 
     local totemListFrame = CreateFrame("Frame", nil, listFrame)
     totemListFrame:SetSize(322, 390)
@@ -9130,30 +9131,58 @@ local function guiTotemList()
         totemList = CreateNpcList(totemListFrame, BetterBlizzPlatesDB.totemIndicatorNpcList, BBP.RefreshAllNameplates, 630, 490)
     end
 
-    local totemIndicatorScale = CreateSlider(guiTotemList, "General scale of all totem icons", 0.5, 3, 0.01, "totemIndicatorScale")
-    totemIndicatorScale:SetPoint("TOP", totemList, "BOTTOM", -25, -45)
-    totemIndicatorScale:HookScript("OnValueChanged", function(self)
-        local val = self:GetValue()
-        BBP.totemIndicatorScale:SetValue(val)
-    end)
-    totemIndicatorScale:SetScale(1.2)
+    local function CreateTotemListElements()
+        local totemIndicatorScale = CreateSlider(listFrame, "General scale of all totem icons", 0.5, 3, 0.01, "totemIndicatorScale")
+        totemIndicatorScale:SetPoint("TOP", totemList, "BOTTOM", -25, -45)
+        totemIndicatorScale:HookScript("OnValueChanged", function(self)
+            local val = self:GetValue()
+            BBP.totemIndicatorScale:SetValue(val)
+        end)
+        totemIndicatorScale:SetScale(1.2)
+    
+        local totemIndicatorWidthEnabled = CreateCheckbox("totemIndicatorWidthEnabled", "Enable healthbar width settings", listFrame)
+        totemIndicatorWidthEnabled:SetPoint("LEFT", totemIndicatorScale, "RIGHT", 25, 2)
+        totemIndicatorWidthEnabled:HookScript("OnClick", function()
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        end)
+        CreateTooltipTwo(totemIndicatorWidthEnabled,"Enable healthbar width settings", "Enable individual healthbar width settings for npcs in totem list.\nThis setting is currently under testing, enable at own risk.\nRequires a reload.")
+        totemIndicatorWidthEnabled:SetScale(1.1)
+    
+        local resetTotemListButton = CreateFrame("Button", nil, listFrame, "UIPanelButtonTemplate")
+        resetTotemListButton:SetText("Reset Totem List")
+        resetTotemListButton:SetWidth(120)
+        resetTotemListButton:SetPoint("BOTTOMLEFT", listFrame, "BOTTOMLEFT", 10, 20)
+        resetTotemListButton:SetScript("OnClick", function()
+            StaticPopup_Show("BBP_TOTEMLIST_RESET")
+        end)
+        CreateTooltipTwo(resetTotemListButton, "Reset Totem List", "Reset totem list back to its default state", nil, "ANCHOR_TOP")
+    end
 
-    local totemIndicatorWidthEnabled = CreateCheckbox("totemIndicatorWidthEnabled", "Enable healthbar width settings", guiTotemList)
-    totemIndicatorWidthEnabled:SetPoint("LEFT", totemIndicatorScale, "RIGHT", 25, 2)
-    totemIndicatorWidthEnabled:HookScript("OnClick", function()
-        StaticPopup_Show("BBP_CONFIRM_RELOAD")
-    end)
-    CreateTooltipTwo(totemIndicatorWidthEnabled,"Enable healthbar width settings", "Enable individual healthbar width settings for npcs in totem list.\nThis setting is currently under testing, enable at own risk.\nRequires a reload.")
-    totemIndicatorWidthEnabled:SetScale(1.1)
-
-    local resetTotemListButton = CreateFrame("Button", nil, guiTotemList, "UIPanelButtonTemplate")
-    resetTotemListButton:SetText("Reset Totem List")
-    resetTotemListButton:SetWidth(120)
-    resetTotemListButton:SetPoint("BOTTOMLEFT", guiTotemList, "BOTTOMLEFT", 10, 20)
-    resetTotemListButton:SetScript("OnClick", function()
-        StaticPopup_Show("BBP_TOTEMLIST_RESET")
-    end)
-    CreateTooltipTwo(resetTotemListButton, "Reset Totem List", "Reset totem list back to its default state", nil, "ANCHOR_TOP")
+    if not BetterBlizzPlatesDB.totemIndicator then
+        listFrame:SetAlpha(0.5)
+        guiTotemList.totemIndicator = CreateCheckbox("totemIndicator", "Enable Totem Indicator", guiTotemList)
+        guiTotemList.totemIndicator:SetPoint("TOP", totemList, "BOTTOM", -45, -45)
+        guiTotemList.totemIndicator:HookScript("OnClick", function(self)
+            local function setTotemCVar()
+                if InCombatLockdown() then
+                    C_Timer.After(1.5, setTotemCVar)
+                else
+                    if self:GetChecked() and GetCVar("nameplateShowEnemyTotems") ~= "1" then
+                        BetterBlizzPlatesDB.nameplateShowEnemyTotems = 1
+                        C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
+                        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"CVar Control\" section of the addon.")
+                    end
+                end
+            end
+            setTotemCVar()
+            guiTotemList.totemIndicator:Hide()
+            listFrame:SetAlpha(1)
+            CreateTotemListElements()
+        end)
+        CreateTooltipTwo(guiTotemList.totemIndicator, "Totem Indicator |A:teleportationnetwork-ardenweald-32x32:17:17|a", "Show icon on and color important NPC nameplates.")
+    else
+        CreateTotemListElements()
+    end
 end
 
 local function guiMisc()
@@ -9312,11 +9341,14 @@ local function guiMisc()
     adjustPersonalBarPosition:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -40)
     CreateTooltipTwo(adjustPersonalBarPosition, "Adjust Personal Bar Vertical Position", "Adjust the vertical position of the personal resource bar. This setting will make it relatively static as well.", "", nil, "nameplateSelfTopInset", "nameplateSelfBottomInset")
 
-
     local personalBarPosition = CreateSlider(adjustPersonalBarPosition, "Personal Bar Position", 0, 0.99, 0.01, "personalBarPosition")
     personalBarPosition:SetPoint("TOPLEFT", adjustPersonalBarPosition, "BOTTOMLEFT", 10, -10)
     CreateTooltipTwo(personalBarPosition, "Personal Bar Position", "Adjust the vertical position of the personal bar.", nil, nil, "nameplateSelfTopInset", "nameplateSelfBottomInset")
-    local hpHeightEnemyReset = CreateResetButton(personalBarPosition, "personalBarPosition", guiMisc)
+    local personalBarPositionReset = CreateResetButton(personalBarPosition, "personalBarPosition", guiMisc)
+
+    adjustPersonalBarPosition:HookScript("OnClick", function(self)
+        CheckAndToggleCheckboxes(self)
+    end)
 
     local hidePersonalBarManaFrame = CreateCheckbox("hidePersonalBarManaFrame", "Hide Personal Manabar", guiMisc, nil, BBP.PersonalBarSettings)
     hidePersonalBarManaFrame:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -100)

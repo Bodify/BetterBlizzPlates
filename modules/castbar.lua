@@ -609,9 +609,9 @@ function BBP.UpdateNameplateTargetText(frame, unit)
         frame.TargetText:SetTextColor(color.r, color.g, color.b)
         frame.TargetText:ClearAllPoints()
         if UnitCanAttack("player", unit) then
-            frame.TargetText:SetPoint("RIGHT", frame, "BOTTOMRIGHT", -11, 0)  -- Set anchor point for enemy
+            frame.TargetText:SetPoint("TOPRIGHT", frame.castBar, "BOTTOMRIGHT", -4, 0)  -- Set anchor point for enemy
         else
-            frame.TargetText:SetPoint("CENTER", frame, "BOTTOM", 0, 0)  -- Set anchor point for friendly
+            frame.TargetText:SetPoint("TOP", frame.castBar, "BOTTOM", 0, 0)  -- Set anchor point for friendly
         end
         local npTextSize = BetterBlizzPlatesDB.npTargetTextSize
         BBP.SetFontBasedOnOption(frame.TargetText, (useCustomFont and (npTextSize or 11)) or (npTextSize or 12))
@@ -946,21 +946,44 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
 
             if BetterBlizzPlatesDB.normalCastbarForEmpoweredCasts then
                 if ( event == "UNIT_SPELLCAST_EMPOWER_START" ) then
-                    if not self:IsForbidden() then
-                        if self.barType == "empowered" or self.barType == "standard" then
-                            self:SetStatusBarTexture("ui-castingbar-filling-standard")
-                        end
-                        self.ChargeTier1:Hide()
-                        self.ChargeTier2:Hide()
-                        self.ChargeTier3:Hide()
-                        if self.ChargeTier4 then
-                            self.ChargeTier4:Hide()
-                        end
-
-                        -- self.StagePip1:Hide()
-                        -- self.StagePip2:Hide()
-                        -- self.StagePip3:Hide()
+                    if self:IsForbidden() then return end
+                    if self.barType == "empowered" or self.barType == "standard" then
+                        self:SetStatusBarTexture("ui-castingbar-filling-standard")
                     end
+                    self.ChargeTier1:Hide()
+                    self.ChargeTier2:Hide()
+                    self.ChargeTier3:Hide()
+                    if self.ChargeTier4 then
+                        self.ChargeTier4:Hide()
+                    end
+
+                    local function UpdateSparkPosition(castBar)
+                        local progressPercent = castBar.value / castBar.maxValue
+                        local newX = castBar:GetWidth() * progressPercent
+                        castBar.Spark:SetPoint("CENTER", castBar, "LEFT", newX, 0)
+                    end
+
+                    if not self.empoweredFix then
+                        self:HookScript("OnUpdate", function(self)
+                            if self:IsForbidden() then return end
+                            if self.barType == "uninterruptable" then
+                                if self.ChargeTier1 then
+                                    self.Spark:SetAtlas("UI-CastingBar-Pip")
+                                    self.Spark:SetSize(6,16)
+                                    UpdateSparkPosition(self)
+                                end
+                            elseif self.barType == "empowered" then
+                                self.Spark:SetAtlas("UI-CastingBar-Pip")
+                                self.Spark:SetSize(6,16)
+                                UpdateSparkPosition(self)
+                            end
+                        end)
+                        self.empoweredFix = true
+                    end
+
+                    -- self.StagePip1:Hide()
+                    -- self.StagePip2:Hide()
+                    -- self.StagePip3:Hide()
                 end
             end
 

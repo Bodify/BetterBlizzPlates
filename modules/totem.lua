@@ -426,7 +426,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
                                         SetBarWidth(frame, npcData.hpWidth, true)
                                     end
                                 end
-                            elseif UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP then
+                            elseif db.smallPetsInPvP and (UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP) then
                                 SetBarWidth(frame, 50, false)
                             end
                         elseif UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP then
