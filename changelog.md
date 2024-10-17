@@ -18,6 +18,8 @@
 - Fix Classic Nameplates setting having a little gap between border and health on the right side when level is not hidden.
 - Fix Totem Indicator width setting accidentally applying the "Small Pets in PvP" setting for non-totems even when that was off.
 ## Cataclysm
+### Tweak:
+- Update to 4.4.1 Settings API Support
 ### Bugfix:
 - Fix profile Import functionality being broken since renaming of the function ages ago >_<
 
