@@ -525,6 +525,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.HealthNumbers(frame)
             end
 
+            if frame.BBPmouseoverTex and db.keepNpShadowTargetHighlighted then
+                frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, 1)
+            end
+
             -- info.isTarget = false
             -- info.wasTarget = true
 
@@ -623,6 +627,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
 
+            if frame.BBPmouseoverTex and db.keepNpShadowTargetHighlighted then
+                frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+            end
+
             BBP.ToggleNameplateAuras(frame)
             BBP.TargetNameplateAuraSize(frame)
             if config.targetIndicator then BBP.TargetIndicator(frame) end
@@ -708,7 +716,7 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
         local config = frame.BetterBlizzPlates.config
         --local info = frame.BetterBlizzPlates.unitInfo
         frame.BetterBlizzPlates.unitInfo = BBP.GetNameplateUnitInfo(frame)
-        local info = frame.BetterBlizzPlates.unitInfo
+        --local info = frame.BetterBlizzPlates.unitInfo
         -- info.isFocus = false
         -- info.wasFocus = true
         if config.focusTargetIndicator then
@@ -727,7 +735,7 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
         -- local info = frame.BetterBlizzPlates.unitInfo
         -- info.isFocus = true
         -- info.wasFocus = nil
-        local info = frame.BetterBlizzPlates.unitInfo
+        --local info = frame.BetterBlizzPlates.unitInfo
         if config.focusTargetIndicator then BBP.FocusTargetIndicator(frame) end
         BBP.previousFocusNameplate = frame
     end

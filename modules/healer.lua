@@ -75,9 +75,20 @@ function BBP.HealerIndicator(frame)
 
     -- Check for Details
     local Details = Details
+    local spec
+
     if not Details or Details.realversion < 134 then
-        frame.healerIndicator:Hide()
-        return
+        if BBP.isInArena and info.isEnemy then
+            for i = 1, 3 do
+                if UnitIsUnit(frame.unit, "arena" .. i) then
+                    spec = GetArenaOpponentSpec(i)
+                    break
+                end
+            end
+        else
+            frame.healerIndicator:Hide()
+            return
+        end
     end
 
     if (config.healerIndicatorArenaOnly and not BBP.isInArena) or (config.healerIndicatorBgOnly and not BBP.isInBg) then
@@ -92,8 +103,16 @@ function BBP.HealerIndicator(frame)
         end
     end
 
-    -- Get spec by guid from details
-    local spec = Details:GetSpecByGUID(info.unitGUID)
+    if BBP.isInArena and info.isEnemy then
+        for i = 1, 3 do
+            if UnitIsUnit(frame.unit, "arena" .. i) then
+                spec = GetArenaOpponentSpec(i)
+                break
+            end
+        end
+    else
+        spec = Details:GetSpecByGUID(info.unitGUID)
+    end
 
     -- Condition check: healerIndicatorEnemyOnly
     if info.isPlayer and HealerSpecs[spec] then

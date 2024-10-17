@@ -77,6 +77,71 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         frame.partyPointer:SetFrameStrata("MEDIUM")
     end
 
+    -- Enhanced Test Mode: Use local test variables
+    if config.partyPointerTestMode then
+        local testIsTarget = math.random(0, 1) == 1
+        local testSpecID = math.random(0, 1) == 1 and 105 or 71
+        frame.partyPointer:Show()
+
+        if HealerSpecs[testSpecID] then
+            frame.partyPointer.healerIcon:Show()
+            if config.partyPointerHealerReplace then
+                frame.partyPointer.healerIcon:ClearAllPoints()
+                frame.partyPointer.healerIcon:SetPoint("CENTER", frame.partyPointer.icon, "CENTER", 0, 0)
+                frame.partyPointer.icon:Hide()
+            else
+               frame.partyPointer.healerIcon:ClearAllPoints()
+               frame.partyPointer.healerIcon:SetPoint("BOTTOM", frame.partyPointer.icon, "TOP", 0, -13)
+               frame.partyPointer.healerIcon:SetSize(45, 45)
+               frame.partyPointer.icon:Show()
+            end
+        else
+            frame.partyPointer.healerIcon:Hide()
+            if config.partyPointerHealerReplace then
+                frame.partyPointer.icon:Show()
+            end
+        end
+
+        frame.partyPointer:SetScale(config.partyPointerScale or 1)
+        frame.partyPointer.icon:SetWidth(config.partyPointerWidth)
+        frame.partyPointer.healerIcon:SetScale(config.partyPointerHealerScale or 1)
+
+        if config.partyPointerAnchor == "TOP" then
+            frame.partyPointer:SetPoint("BOTTOM", frame.name, config.partyPointerAnchor, config.partyPointerXPos, config.partyPointerYPos - 5)
+        else
+            frame.partyPointer:SetPoint("BOTTOM", frame.healthBar, config.partyPointerAnchor, config.partyPointerXPos, config.partyPointerYPos)
+        end
+
+        if config.partyPointerClassColor then
+            local classColor = RAID_CLASS_COLORS[info.class]
+            frame.partyPointer.icon:SetVertexColor(classColor.r, classColor.g, classColor.b)
+        else
+            frame.partyPointer.icon:SetVertexColor(0.04, 0.76, 1)
+        end
+
+        if config.partyPointerTargetIndicator then
+            if testIsTarget then
+                frame.partyPointer.icon:SetAtlas("UI-QuestPoiImportant-QuestBang")
+            else
+                frame.partyPointer.icon:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
+            end
+        else
+            frame.partyPointer.icon:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
+        end
+
+        if config.partyPointerHideRaidmarker then
+            frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(0)
+        end
+
+        if config.partyPointerHealerOnly then
+            if not HealerSpecs[testSpecID] then
+                frame.partyPointer.icon:Hide()
+            end
+        end
+
+        return
+    end
+
     frame.partyPointer:SetScale(config.partyPointerScale or 1)
     frame.partyPointer.icon:SetWidth(config.partyPointerWidth)
     frame.partyPointer.healerIcon:SetScale(config.partyPointerHealerScale or 1)

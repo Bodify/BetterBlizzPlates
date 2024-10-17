@@ -1,3 +1,14 @@
+# BetterBlizzPlates 1.6.7
+## The War Within
+### New Stuff:
+- Misc: Nameplate Shadow & Mouseover Highlight settings. The mouseover detection is not perfect, especially with overlapping nameplates, but until I can figure out a better method it will stay like this.
+### Tweak:
+- Healer Indicator: Added default Blizzard spec info API call for enemy units while in arena. This API is only available for enemy units in arena specifically but is prefered over Details due to it identifying healer immediately.
+- Fixed up Party Pointer test mode.
+### Bugfix:
+- Fix Castbar Emphasis color settings not working properly.
+- Fix Execute Indicator mistake from an earlier patch causing a lua error with certain anchors.
+
 # BetterBlizzPlates 1.6.6d
 ## The War Within
 ### Tweak:

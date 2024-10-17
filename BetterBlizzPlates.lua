@@ -10,7 +10,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.6d"
+local addonUpdates = "1.6.7"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -2941,8 +2941,67 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
     end
 end
 
+local function NameplateShadowAndMouseoverHighlight(frame)
+    local showShadow = BetterBlizzPlatesDB.showNameplateShadow
+    local highlightOnMouseover = BetterBlizzPlatesDB.highlightNpShadowOnMouseover
+    if not showShadow and not highlightOnMouseover then
+        return
+    end
+    local onlyShowHighlight = BetterBlizzPlatesDB.onlyShowHighlightedNpShadow
+    local keepTargetHighlighted = BetterBlizzPlatesDB.keepNpShadowTargetHighlighted
+    local shadowAlpha = onlyShowHighlight and 0 or 1
 
+    if not frame.BBPmouseoverTex then
+        frame.BBPmouseoverFrame = CreateFrame("Frame", nil, frame)
+        frame.BBPmouseoverTex = frame.BBPmouseoverFrame:CreateTexture("BACKGROUND")
+        frame.BBPmouseoverTex:SetAtlas("AdventureMap-textlabelglow")
+        frame.BBPmouseoverTex:SetPoint("CENTER", frame.HealthBarsContainer, "CENTER", 0, 0)
+        frame.BBPmouseoverTex:SetDesaturated(true)
+        frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, showShadow and shadowAlpha or 0)
 
+        frame.BBPmouseoverFrame:SetFrameStrata("BACKGROUND")
+        local width, height = frame.HealthBarsContainer:GetSize()
+        frame.BBPmouseoverFrame:SetSize(width + 6, height + 32)
+        frame.BBPmouseoverFrame:SetPoint("CENTER", frame.HealthBarsContainer, "CENTER", 0, 2)
+
+        if highlightOnMouseover then
+            frame.BBPmouseoverFrame:SetScript("OnEnter", function()
+                frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+            end)
+            frame.BBPmouseoverFrame:SetScript("OnLeave", function()
+                if keepTargetHighlighted and frame.unit and UnitIsUnit("target", frame.unit) then
+                    -- Keep the highlight if this is the current target
+                    frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+                else
+                    -- Revert based on the showShadow setting
+                    if showShadow then
+                        frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
+                    else
+                        frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, 0)
+                    end
+                end
+            end)
+        end
+
+        frame.BBPmouseoverFrame:SetMouseClickEnabled(false)
+    end
+
+    if UnitIsUnit(frame.unit, "player") or frame.HealthBarsContainer:GetAlpha() == 0 then
+        frame.BBPmouseoverFrame:Hide()
+        return
+    end
+
+    local width, height = frame.HealthBarsContainer:GetSize()
+    frame.BBPmouseoverFrame:SetSize(width + 6, height + 32)
+    frame.BBPmouseoverTex:SetSize(width + (width * 0.16), height + 20)
+
+    frame.BBPmouseoverFrame:Show()
+    frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, showShadow and shadowAlpha or 0)
+
+    if keepTargetHighlighted and UnitIsUnit("target", frame.unit) then
+        frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+    end
+end
 
 
 
@@ -4212,7 +4271,7 @@ local function HandleNamePlateAdded(unit)
     -- Hide NPCs from list if enabled
     if config.hideNPC then BBP.HideNPCs(frame, nameplate) end
 
-    if config.partyPointer then BBP.PartyPointer(frame) end
+    if config.partyPointer or config.partyPointerTestMode then BBP.PartyPointer(frame) end
 
     -- Color healthbar by reaction
     if config.friendlyHealthBarColor or config.enemyHealthBarColor then ColorNameplateByReaction(frame) end --isSelf skip
@@ -4280,47 +4339,7 @@ local function HandleNamePlateAdded(unit)
         frame.name:SetAlpha(0)
     end
 
-    -- if not frame.moTexture then
-    --     frame.moTexture = frame:CreateTexture("BACKGROUND")
-    --     frame.moTexture:SetAtlas("AdventureMap-textlabelglow")
-    --     frame.moTexture:SetPoint("CENTER", frame.HealthBarsContainer, "CENTER",0,0)
-    --     frame.moTexture:SetDesaturated(true)
-    --     nameplate:HookScript("OnEnter", function(self)
-    --         frame.moTexture:SetVertexColor(1, 1, 1)
-    --     end)
-
-    --     nameplate:HookScript("OnLeave", function(self)
-    --         frame.moTexture:SetVertexColor(0, 0, 0)
-    --     end)
-    -- end
-    -- frame.moTexture:SetVertexColor(0,0,0,1)
-    -- frame.moTexture:SetSize(frame.HealthBarsContainer:GetWidth()+20, frame.HealthBarsContainer:GetHeight()+20)
-    -- if frame.HealthBarsContainer:GetAlpha() == 0 then
-    --     frame.moTexture:SetVertexColor(0,0,0,0)
-    -- end
-
-    -- if not frame.moTexture then
-    --     frame.moTexture = frame.HealthBarsContainer:CreateTexture(nil, "BACKGROUND")
-    --     frame.moTexture:SetAtlas("BattleBar-SwapPetFrame-Highlight")
-    --     frame.moTexture:SetPoint("CENTER", frame.HealthBarsContainer, "CENTER", 0, 0)
-    --     frame.moTexture:SetAlpha(0)
-    
-    --     nameplate:HookScript("OnEnter", function(self)
-    --         frame.moTexture:SetAlpha(1)
-    --     end)
-    
-    --     nameplate:HookScript("OnLeave", function(self)
-    --         frame.moTexture:SetAlpha(0)
-    --     end)
-    -- end
-    
-    -- frame.moTexture:SetSize(frame.HealthBarsContainer:GetWidth() + 6, frame.HealthBarsContainer:GetHeight() + 5)
-    -- if frame.HealthBarsContainer:GetAlpha() == 0 then
-    --     frame.moTexture:SetAlpha(0)
-    -- end
-
-
-
+    NameplateShadowAndMouseoverHighlight(frame)
 end
 
 
@@ -4527,7 +4546,7 @@ function BBP.RefreshAllNameplates()
             CreateBetterClassicHealthbarBorder(frame)
         end
 
-        if BetterBlizzPlatesDB.partyPointer then
+        if BetterBlizzPlatesDB.partyPointer or BetterBlizzPlatesDB.partyPointerTestMode then
             BBP.PartyPointer(frame)
         else
             if frame.partyPointer then

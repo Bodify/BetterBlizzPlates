@@ -457,9 +457,9 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                         frame.emphasizedCast = castEmphasis
                         -- frame:GetParent():SetParent(BBP.OverlayFrame)
                         -- frame.ogParent = frame:GetParent():GetParent()
-                    else
-                        frame.emphasizedCast = nil
+                        return
                     end
+                    frame.emphasizedCast = nil
                 end
             end
         end
