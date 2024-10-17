@@ -4453,7 +4453,9 @@ local function guiPositionAndScale()
     local BetterBlizzPlatesSubPanel = CreateFrame("Frame")
     BetterBlizzPlatesSubPanel.name = "Advanced Settings"
     BetterBlizzPlatesSubPanel.parent = BetterBlizzPlates.name
-    InterfaceOptions_AddCategory(BetterBlizzPlatesSubPanel)
+    --InterfaceOptions_AddCategory(BetterBlizzPlatesSubPanel)
+    local guiPositionAndScaleCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, BetterBlizzPlatesSubPanel, BetterBlizzPlatesSubPanel.name, BetterBlizzPlatesSubPanel.name)
+    guiPositionAndScaleCategory.ID = BetterBlizzPlatesSubPanel.name;
     CreateTitle(BetterBlizzPlatesSubPanel)
 
     local bgImg = BetterBlizzPlatesSubPanel:CreateTexture(nil, "BACKGROUND")
@@ -5826,7 +5828,9 @@ local function guiCastbar()
     local guiCastbar = CreateFrame("Frame")
     guiCastbar.name = "Castbar"
     guiCastbar.parent = BetterBlizzPlates.name
-    InterfaceOptions_AddCategory(guiCastbar)
+    --InterfaceOptions_AddCategory(guiCastbar)
+    local guiCastbarCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiCastbar, guiCastbar.name, guiCastbar.name)
+    guiCastbarCategory.ID = guiCastbar.name;
     CreateTitle(guiCastbar)
 
     local bgImg = guiCastbar:CreateTexture(nil, "BACKGROUND")
@@ -6449,7 +6453,9 @@ local function guiHideCastbar()
     local guiHideCastbar = CreateFrame("Frame")
     guiHideCastbar.name = "Hide Castbar"
     guiHideCastbar.parent = BetterBlizzPlates.name
-    InterfaceOptions_AddCategory(guiHideCastbar)
+    --InterfaceOptions_AddCategory(guiHideCastbar)
+    local guiHideCastbarCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiHideCastbar, guiHideCastbar.name, guiHideCastbar.name)
+    guiHideCastbarCategory.ID = guiHideCastbar.name;
     CreateTitle(guiHideCastbar)
 
     local bgImg = guiHideCastbar:CreateTexture(nil, "BACKGROUND")
@@ -6552,7 +6558,9 @@ local function guiFadeNPC()
     local guiFadeNpc = CreateFrame("Frame")
     guiFadeNpc.name = "Fade NPC"
     guiFadeNpc.parent = BetterBlizzPlates.name
-    InterfaceOptions_AddCategory(guiFadeNpc)
+    --InterfaceOptions_AddCategory(guiFadeNpc)
+    local guiFadeNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiFadeNpc, guiFadeNpc.name, guiFadeNpc.name)
+    guiFadeNpcCategory.ID = guiFadeNpc.name;
     CreateTitle(guiFadeNpc)
 
     local bgImg = guiFadeNpc:CreateTexture(nil, "BACKGROUND")
@@ -6656,7 +6664,9 @@ local function guiHideNPC()
     local guiHideNpc = CreateFrame("Frame")
     guiHideNpc.name = "Hide NPC"
     guiHideNpc.parent = BetterBlizzPlates.name
-    InterfaceOptions_AddCategory(guiHideNpc)
+    --InterfaceOptions_AddCategory(guiHideNpc)
+    local guiHideNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiHideNpc, guiHideNpc.name, guiHideNpc.name)
+    guiHideNpcCategory.ID = guiHideNpc.name;
     CreateTitle(guiHideNpc)
 
     local bgImg = guiHideNpc:CreateTexture(nil, "BACKGROUND")
@@ -6773,7 +6783,9 @@ local function guiColorNPC()
     local guiColorNpc = CreateFrame("Frame")
     guiColorNpc.name = "Color NPC"
     guiColorNpc.parent = BetterBlizzPlates.name
-    InterfaceOptions_AddCategory(guiColorNpc)
+    --InterfaceOptions_AddCategory(guiColorNpc)
+    local guiColorNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiColorNpc, guiColorNpc.name, guiColorNpc.name)
+    guiColorNpcCategory.ID = guiColorNpc.name;
     CreateTitle(guiColorNpc)
 
     local bgImg = guiColorNpc:CreateTexture(nil, "BACKGROUND")
@@ -6839,7 +6851,9 @@ local function guiAuraColor()
     local guiAuraColor = CreateFrame("Frame")
     guiAuraColor.name = "Color by Aura"
     guiAuraColor.parent = BetterBlizzPlates.name
-    InterfaceOptions_AddCategory(guiAuraColor)
+    --InterfaceOptions_AddCategory(guiAuraColor)
+    local guiAuraColorCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiAuraColor, guiAuraColor.name, guiAuraColor.name)
+    guiAuraColorCategory.ID = guiAuraColor.name;
     CreateTitle(guiAuraColor)
 
     local bgImg = guiAuraColor:CreateTexture(nil, "BACKGROUND")
@@ -6905,7 +6919,9 @@ local function guiNameplateAuras()
     local guiNameplateAuras = CreateFrame("Frame")
     guiNameplateAuras.name = "Nameplate Auras"
     guiNameplateAuras.parent = BetterBlizzPlates.name
-    InterfaceOptions_AddCategory(guiNameplateAuras)
+    --InterfaceOptions_AddCategory(guiNameplateAuras)
+    local guiNameplateAurasCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiNameplateAuras, guiNameplateAuras.name, guiNameplateAuras.name)
+    guiNameplateAurasCategory.ID = guiNameplateAuras.name;
     CreateTitle(guiNameplateAuras)
 
     local bgImg = guiNameplateAuras:CreateTexture(nil, "BACKGROUND")
@@ -7534,7 +7550,9 @@ local function guiCVarControl()
     local guiCVarControl = CreateFrame("Frame")
     guiCVarControl.name = "CVar Control"
     guiCVarControl.parent = BetterBlizzPlates.name
-    InterfaceOptions_AddCategory(guiCVarControl)
+    --InterfaceOptions_AddCategory(guiCVarControl)
+    local guiCVarControlCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiCVarControl, guiCVarControl.name, guiCVarControl.name)
+    guiCVarControlCategory.ID = guiCVarControl.name;
     CreateTitle(guiCVarControl)
 
     local bgImg = guiCVarControl:CreateTexture(nil, "BACKGROUND")
@@ -7889,7 +7907,9 @@ local function guiTotemList()
     local guiTotemList = CreateFrame("Frame")
     guiTotemList.name = "Totem Indicator List"
     guiTotemList.parent = BetterBlizzPlates.name
-    InterfaceOptions_AddCategory(guiTotemList)
+    --InterfaceOptions_AddCategory(guiTotemList)
+    local guiTotemListCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiTotemList, guiTotemList.name, guiTotemList.name)
+    guiTotemListCategory.ID = guiTotemList.name;
     CreateTitle(guiTotemList)
 
     local bgImg = guiTotemList:CreateTexture(nil, "BACKGROUND")
@@ -7934,7 +7954,9 @@ local function guiMisc()
     local guiMisc = CreateFrame("Frame")
     guiMisc.name = "Misc"--"|A:GarrMission_CurrencyIcon-Material:19:19|a Misc"
     guiMisc.parent = BetterBlizzPlates.name
-    InterfaceOptions_AddCategory(guiMisc)
+    --InterfaceOptions_AddCategory(guiMisc)
+    local guiMiscCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiMisc, guiMisc.name, guiMisc.name)
+    guiMiscCategory.ID = guiMisc.name;
     CreateTitle(guiMisc)
 
     local bgImg = guiMisc:CreateTexture(nil, "BACKGROUND")
@@ -8242,7 +8264,10 @@ local function guiSupport()
     local guiSupport = CreateFrame("Frame")
     guiSupport.name = "|A:GarrisonTroops-Health:10:10|a Support"
     guiSupport.parent = BetterBlizzPlates.name
-    InterfaceOptions_AddCategory(guiSupport)
+    --InterfaceOptions_AddCategory(guiSupport)
+    local guiSupportCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiSupport, guiSupport.name, guiSupport.name)
+    guiSupportCategory.ID = guiSupport.name;
+    BBP.category.guiSupportCategory = guiSupportCategory.ID
     CreateTitle(guiSupport)
 
     local bgImg = guiSupport:CreateTexture(nil, "BACKGROUND")
@@ -8355,7 +8380,9 @@ local function guiImportAndExport()
     local guiImportAndExport = CreateFrame("Frame")
     guiImportAndExport.name = "Import & Export"--"|A:GarrMission_CurrencyIcon-Material:19:19|a Misc"
     guiImportAndExport.parent = BetterBlizzPlates.name
-    InterfaceOptions_AddCategory(guiImportAndExport)
+    --InterfaceOptions_AddCategory(guiImportAndExport)
+    local guiImportAndExportCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiImportAndExport, guiImportAndExport.name, guiImportAndExport.name)
+    guiImportAndExportCategory.ID = guiImportAndExport.name;
     CreateTitle(guiImportAndExport)
 
     local bgImg = guiImportAndExport:CreateTexture(nil, "BACKGROUND")
@@ -8398,7 +8425,10 @@ function BBP.InitializeOptions()
     if not BetterBlizzPlates then
         BetterBlizzPlates = CreateFrame("Frame")
         BetterBlizzPlates.name = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates"
-        InterfaceOptions_AddCategory(BetterBlizzPlates)
+        --InterfaceOptions_AddCategory(BetterBlizzPlates)
+        BBP.category = Settings.RegisterCanvasLayoutCategory(BetterBlizzPlates, BetterBlizzPlates.name, BetterBlizzPlates.name)
+        BBP.category.ID = BetterBlizzPlates.name
+        Settings.RegisterAddOnCategory(BBP.category)
 
         guiGeneralTab()
         guiPositionAndScale()

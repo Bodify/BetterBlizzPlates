@@ -5246,7 +5246,8 @@ Frame:SetScript("OnEvent", function(...)
 
     -- Re-open options when clicking reload button
     if db.reopenOptions then
-        InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
+        --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
+        Settings.OpenToCategory(BBP.category.ID)
         db.reopenOptions = false
     end
     BBP.CreateUnitAuraEventFrame()
@@ -5287,7 +5288,8 @@ SlashCmdList["BBP"] = function(msg)
     elseif command == "ver" or command == "version" then
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates Version "..addonUpdates)
     else
-        InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
+        --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
+        Settings.OpenToCategory(BBP.category.ID)
     end
 end
 
