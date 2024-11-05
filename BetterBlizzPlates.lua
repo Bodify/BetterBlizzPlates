@@ -10,7 +10,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.7"
+local addonUpdates = "1.6.8"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -79,6 +79,7 @@ local defaultSettings = {
     hpHeightFriendly = 4 * tonumber(GetCVar("NamePlateVerticalScale")),
     druidOverstacks = true,
     personalBarPosition = 0.5,
+    alwaysShowPurgeTexture = true,
     --health numbers
     healthNumbersPlayers = true,
     healthNumbersNpcs = true,
@@ -1767,6 +1768,7 @@ end
 --#################################################################################################
 -- Class color and scale names 
 function BBP.ClassColorAndScaleNames(frame)
+    if not frame.unit then return end
     local isPlayer = UnitIsPlayer(frame.unit)
     local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(frame.unit)
     local enemyScale = BetterBlizzPlatesDB.enemyNameScale
@@ -2471,6 +2473,7 @@ function BBP.ShowMurloc(frame, nameplate)
     frame.BuffFrame:SetAlpha(0)
     frame.name:SetAlpha(0)
     frame.murlocMode:Show()
+    frame.castBar:Hide()
     frame.hideNameOverride = true
     frame.hideCastbarOverride = true
 end
@@ -2944,65 +2947,108 @@ end
 local function NameplateShadowAndMouseoverHighlight(frame)
     local showShadow = BetterBlizzPlatesDB.showNameplateShadow
     local highlightOnMouseover = BetterBlizzPlatesDB.highlightNpShadowOnMouseover
+
     if not showShadow and not highlightOnMouseover then
         return
     end
+
     local onlyShowHighlight = BetterBlizzPlatesDB.onlyShowHighlightedNpShadow
     local keepTargetHighlighted = BetterBlizzPlatesDB.keepNpShadowTargetHighlighted
-    local shadowAlpha = onlyShowHighlight and 0 or 1
+    local healthVisible = frame.HealthBarsContainer:GetAlpha() ~= 0 and frame.healthBar:IsShown() and frame.healthBar:GetWidth() > 5
+    local shadowAlpha = (not healthVisible and 0) or onlyShowHighlight and 0 or 1
 
+    -- Create the highlight texture directly on the frame if it doesn't exist
     if not frame.BBPmouseoverTex then
-        frame.BBPmouseoverFrame = CreateFrame("Frame", nil, frame)
-        frame.BBPmouseoverTex = frame.BBPmouseoverFrame:CreateTexture("BACKGROUND")
+        frame.BBPmouseoverTex = frame:CreateTexture(nil, "BACKGROUND")
         frame.BBPmouseoverTex:SetAtlas("AdventureMap-textlabelglow")
         frame.BBPmouseoverTex:SetPoint("CENTER", frame.HealthBarsContainer, "CENTER", 0, 0)
         frame.BBPmouseoverTex:SetDesaturated(true)
-        frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, showShadow and shadowAlpha or 0)
 
-        frame.BBPmouseoverFrame:SetFrameStrata("BACKGROUND")
-        local width, height = frame.HealthBarsContainer:GetSize()
-        frame.BBPmouseoverFrame:SetSize(width + 6, height + 32)
-        frame.BBPmouseoverFrame:SetPoint("CENTER", frame.HealthBarsContainer, "CENTER", 0, 2)
+        hooksecurefunc(frame.BBPmouseoverTex, "SetVertexColor", function(self)
+            if frame.unit and UnitIsUnit(frame.unit, "player") then
+                self:SetAlpha(0)
+            end
+        end)
 
-        if highlightOnMouseover then
-            frame.BBPmouseoverFrame:SetScript("OnEnter", function()
-                frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
-            end)
-            frame.BBPmouseoverFrame:SetScript("OnLeave", function()
-                if keepTargetHighlighted and frame.unit and UnitIsUnit("target", frame.unit) then
-                    -- Keep the highlight if this is the current target
-                    frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
-                else
-                    -- Revert based on the showShadow setting
-                    if showShadow then
-                        frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
-                    else
-                        frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, 0)
-                    end
-                end
-            end)
-        end
-
-        frame.BBPmouseoverFrame:SetMouseClickEnabled(false)
-    end
-
-    if UnitIsUnit(frame.unit, "player") or frame.HealthBarsContainer:GetAlpha() == 0 then
-        frame.BBPmouseoverFrame:Hide()
-        return
+        -- frame.healthBar:HookScript("OnHide", function(self)
+        --     if self:IsForbidden() then return end
+        --     if frame.BBPmouseoverTex then
+        --         frame.BBPmouseoverTex:SetAlpha(0)
+        --     end
+        -- end)
     end
 
     local width, height = frame.HealthBarsContainer:GetSize()
-    frame.BBPmouseoverFrame:SetSize(width + 6, height + 32)
-    frame.BBPmouseoverTex:SetSize(width + (width * 0.16), height + 20)
+    frame.BBPmouseoverTex:SetSize(width + (width * 0.17), height + 20)
 
-    frame.BBPmouseoverFrame:Show()
-    frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, showShadow and shadowAlpha or 0)
-
-    if keepTargetHighlighted and UnitIsUnit("target", frame.unit) then
+    if keepTargetHighlighted and UnitIsUnit("target", frame.unit) and healthVisible then
         frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+    else
+        frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
     end
 end
 
+
+local periodicCheckTimer
+local function StartPeriodicCheck()
+    if periodicCheckTimer then return end
+
+    periodicCheckTimer = C_Timer.NewTicker(0.1, function()
+        if not UnitExists("mouseover") then
+            local onlyShowHighlight = BetterBlizzPlatesDB.onlyShowHighlightedNpShadow
+
+            for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+                local frame = nameplate.UnitFrame
+                if frame and frame.BBPmouseoverTex then
+                    local healthVisible = frame.HealthBarsContainer:GetAlpha() ~= 0 and frame.healthBar:IsShown() and frame.healthBar:GetWidth() > 5
+                    local shadowAlpha = (not healthVisible and 0) or onlyShowHighlight and 0 or 1
+                    if BetterBlizzPlatesDB.keepNpShadowTargetHighlighted and UnitIsUnit("target", frame.unit) and healthVisible then
+                        frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+                    else
+                        frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
+                    end
+                end
+            end
+            periodicCheckTimer:Cancel()
+            periodicCheckTimer = nil
+        end
+    end)
+end
+
+local function EnableMouseoverChecker()
+    if BBP.mouseoverChecker then return end
+    if BetterBlizzPlatesDB.showNameplateShadow or BetterBlizzPlatesDB.highlightNpShadowOnMouseover then
+        BBP.mouseoverChecker = true
+        local checkMouseoverFrame = CreateFrame("Frame")
+        checkMouseoverFrame:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
+        checkMouseoverFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+        checkMouseoverFrame:SetScript("OnEvent", function(_, event)
+            local nameplate, moFrame = BBP.GetSafeNameplate("mouseover")
+
+            for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+                local frame = nameplate.UnitFrame
+                if frame and frame.BBPmouseoverTex then
+                    local isMouseover = UnitIsUnit(frame.unit, "mouseover")
+                    local isTarget = UnitIsUnit(frame.unit, "target")
+                    local healthVisible = frame.HealthBarsContainer:GetAlpha() ~= 0 and frame.healthBar:IsShown() and frame.healthBar:GetWidth() > 5
+
+                    if (isMouseover or (isTarget and BetterBlizzPlatesDB.keepNpShadowTargetHighlighted)) and healthVisible then
+                        frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+                    else
+                        local onlyShowHighlight = BetterBlizzPlatesDB.onlyShowHighlightedNpShadow
+                        local shadowAlpha = (not healthVisible and 0) or onlyShowHighlight and 0 or 1
+                        frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
+                    end
+                end
+            end
+
+            -- Start periodic check to detect when the unit no longer exists (event does not trigger when it goes to nil)
+            if moFrame then
+                StartPeriodicCheck()
+            end
+        end)
+    end
+end
 
 
 local function ShowFriendlyGuildName(frame, unit)
@@ -3811,30 +3857,35 @@ end
 
 local function CreateBetterClassicCastbarBorders(frame)
     local info = frame.BetterBlizzPlates.unitInfo
+    local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     --local width = info.isFriend and BetterBlizzPlatesDB.nameplateFriendlyWidth or BetterBlizzPlatesDB.nameplateEnemyWidth
     local width = frame.healthBar:GetWidth() + 25
     local levelFrameAdjustment = BetterBlizzPlatesDB.hideLevelFrame and -17 or 0
 
     -- Helper function to create borders
-    local function CreateBorder(frame, textureLeft, textureCenter, textureRight, yPos)
+    local function CreateBorder(frame, textureLeft, textureCenter, textureRight, yPos, topYPos)
         local border = CreateFrame("Frame", nil, frame.castBar)
         border:SetFrameStrata("HIGH")
         local left = border:CreateTexture(nil, "OVERLAY")
         left:SetTexture(textureLeft)
         left:SetPoint("BOTTOMLEFT", frame.castBar, "BOTTOMLEFT", -21, yPos)
+        left:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -21, topYPos)
         border.left = left
-
-        local center = border:CreateTexture(nil, "OVERLAY")
-        center:SetTexture(textureCenter)
-        center:SetPoint("TOPLEFT", left, "TOPRIGHT", 0, 0)
-        center:SetPoint("BOTTOMLEFT", left, "BOTTOMRIGHT", 0, 0)
-        border.center = center
 
         local right = border:CreateTexture(nil, "OVERLAY")
         right:SetTexture(textureRight)
-        right:SetPoint("TOPLEFT", center, "TOPRIGHT", 0, 0)
-        right:SetPoint("BOTTOMLEFT", center, "BOTTOMRIGHT", 0, 0)
+        right:SetPoint("BOTTOMRIGHT", frame.castBar, "BOTTOMRIGHT", 21, yPos)
+        right:SetPoint("TOPRIGHT", frame.castBar, "TOPRIGHT", 21, topYPos)
         border.right = right
+
+        local center = border:CreateTexture(nil, "OVERLAY")
+        center:SetTexture(textureCenter)
+        center:SetPoint("BOTTOMLEFT", left, "BOTTOMRIGHT", 0, 0)
+        center:SetPoint("TOPLEFT", left, "TOPRIGHT", 0, 0)
+        center:SetPoint("BOTTOMRIGHT", right, "BOTTOMLEFT", 0, 0)
+        center:SetPoint("TOPRIGHT", right, "TOPLEFT", 0, 0)
+        border.center = center
+
 
         border:Hide()
         return border
@@ -3852,12 +3903,13 @@ local function CreateBetterClassicCastbarBorders(frame)
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderLeft",
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderCenter",
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderRight",
-            -3
+            -3,
+            5
         )
         frame.castBar.Icon:SetParent(frame.castBar)
         frame.castBar.Icon:SetDrawLayer("OVERLAY", 7)
     end
-    frame.castBar.bbpCastBorder.center:SetWidth(width - 24 + levelFrameAdjustment)
+    --frame.castBar.bbpCastBorder.center:SetWidth(width - 24 + levelFrameAdjustment)
 
     -- Uninterruptible
     if not frame.castBar.bbpCastUninterruptibleBorder then
@@ -3867,7 +3919,8 @@ local function CreateBetterClassicCastbarBorders(frame)
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleLeft",
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleCenter",
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleRight",
-            -11
+            -11,
+            5
         )
         if BetterBlizzPlatesDB.hideCastbarBorderShield then
             frame.castBar.bbpCastUninterruptibleBorder.left:SetAlpha(0)
@@ -3892,16 +3945,49 @@ local function CreateBetterClassicCastbarBorders(frame)
         end
         frame.castBar.Icon:SetDrawLayer("OVERLAY", 7) -- Ensure the icon is on top
 
+        -- local height = frame.castBar:GetHeight()
+        -- local bottomOffset = -((5/11) * height - 1.09)
+        -- local topOffset = (1.97 * height)-- - 1
+        -- frame.castBar.bbpCastBorder.left:ClearAllPoints()
+        -- frame.castBar.bbpCastBorder.left:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -21, topOffset)
+        -- frame.castBar.bbpCastBorder.left:SetPoint("BOTTOMLEFT", frame.castBar, "BOTTOMLEFT", -21, bottomOffset)
+
+        -- frame.castBar.bbpCastUninterruptibleBorder.left:ClearAllPoints()
+        -- frame.castBar.bbpCastUninterruptibleBorder.left:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -21, topOffset-(height*0.85))
+        -- frame.castBar.bbpCastUninterruptibleBorder.left:SetPoint("BOTTOMLEFT", frame.castBar, "BOTTOMLEFT", -21, bottomOffset-(height*0.85))
+
+
         local height = frame.castBar:GetHeight()
-        local bottomOffset = -((5/11) * height - 1.09)
+        local bottomOffset = -((0.455) * height - 1.09)
+        --local topOffset = (2 * height) - 1
         local topOffset = (1.97 * height)-- - 1
+        local rightXOffset = config.hideLevelFrame and 27.9 or 20.9
+
         frame.castBar.bbpCastBorder.left:ClearAllPoints()
-        frame.castBar.bbpCastBorder.left:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -21, topOffset)
         frame.castBar.bbpCastBorder.left:SetPoint("BOTTOMLEFT", frame.castBar, "BOTTOMLEFT", -21, bottomOffset)
+        frame.castBar.bbpCastBorder.left:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -21, topOffset)
+
+        frame.castBar.bbpCastBorder.right:ClearAllPoints()
+        frame.castBar.bbpCastBorder.right:SetPoint("BOTTOMRIGHT", frame.castBar, "BOTTOMRIGHT", rightXOffset, bottomOffset)
+        frame.castBar.bbpCastBorder.right:SetPoint("TOPRIGHT", frame.castBar, "TOPRIGHT", rightXOffset, topOffset)
 
         frame.castBar.bbpCastUninterruptibleBorder.left:ClearAllPoints()
-        frame.castBar.bbpCastUninterruptibleBorder.left:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -21, topOffset-(height*0.85))
-        frame.castBar.bbpCastUninterruptibleBorder.left:SetPoint("BOTTOMLEFT", frame.castBar, "BOTTOMLEFT", -21, bottomOffset-(height*0.85))
+        frame.castBar.bbpCastUninterruptibleBorder.left:SetPoint("BOTTOMLEFT", frame.castBar, "BOTTOMLEFT", -21, bottomOffset)
+        frame.castBar.bbpCastUninterruptibleBorder.left:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -21, topOffset)
+    
+        frame.castBar.bbpCastUninterruptibleBorder.right:ClearAllPoints()
+        frame.castBar.bbpCastUninterruptibleBorder.right:SetPoint("BOTTOMRIGHT", frame.castBar, "BOTTOMRIGHT", rightXOffset, bottomOffset)
+        frame.castBar.bbpCastUninterruptibleBorder.right:SetPoint("TOPRIGHT", frame.castBar, "TOPRIGHT", rightXOffset, topOffset)
+
+        if not frame.castBar.isClassicStyle then
+            frame.castBar:HookScript("OnEvent", function(self)
+                self.Background:SetTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
+                self.Background:SetVertexColor(0, 0, 0, 0.6)
+                self:SetStatusBarTexture(137012)
+                self:SetStatusBarColor(1, 0.7, 0, 1)
+            end)
+            frame.castBar.isClassicStyle = true
+        end
     end
 
     -- local function UpdateCastBarIconSize(self)
@@ -3927,7 +4013,7 @@ local function CreateBetterClassicCastbarBorders(frame)
     --     frame.bbpClassicCastbarHook = true
     -- end
 
-    frame.castBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or 10)
+    --frame.castBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or 10)
 
     if not frame.castBar.eventsHooked then
         frame.castBar.UpdateBorders = UpdateBorders
@@ -4384,6 +4470,7 @@ function BBP.RefreshAllNameplates()
         BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
         BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
     end
+    BBP.UpdateAuraTypeColors()
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = nameplate.UnitFrame
         local unitFrame = nameplate.UnitFrame
@@ -5102,6 +5189,7 @@ local function TurnOnEnabledFeaturesOnLogin()
     BBP:RegisterTargetCastingEvents()
     BBP.ToggleHealthNumbers()
     BBP.DruidBlueComboPoints()
+    EnableMouseoverChecker()
 end
 
 -- Event registration for PLAYER_LOGIN
@@ -5403,9 +5491,9 @@ local function NamePlateCastBarTestMode(frame)
                             frame.dummyNameText:SetTextColor(color.r, color.g, color.b)
                             frame.dummyNameText:ClearAllPoints()
                             if UnitCanAttack("player", frame.unit) then
-                                frame.dummyNameText:SetPoint("RIGHT", frame.castBar, "BOTTOMRIGHT", -11, 0)  -- Set anchor point for enemy
+                                frame.dummyNameText:SetPoint("TOPRIGHT", frame.castBar, "BOTTOMRIGHT", -4, 0)  -- Set anchor point for enemy
                             else
-                                frame.dummyNameText:SetPoint("CENTER", frame.castBar, "BOTTOM", 0, 0)  -- Set anchor point for friendly
+                                frame.dummyNameText:SetPoint("TOP", frame.castBar, "BOTTOM", 0, 0)  -- Set anchor point for friendly
                             end
                         else -- Fallback color in case something goes wrong
                             frame.dummyNameText:SetTextColor(1, 1, 1) -- Set to white or any default color

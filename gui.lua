@@ -87,6 +87,8 @@ function BBP.ImportProfile(encodedString, expectedDataType)
         end
 
         return importTable.data, nil
+    elseif encodedString:sub(1, 4) == "!BBF" and encodedString:sub(-4) == "!BBF" then
+        return nil, "This is a BetterBlizz|cffff4040Frames|r profile string, not a BetterBlizz|cff40ff40Plates|r one. Two different addons."
     else
         -- If no !BBP, assume it's an other import and try to process it
         local success, importTable = ImportOtherProfile(encodedString, expectedDataType)
@@ -446,153 +448,190 @@ local function CreateModeDropdown(name, parent, defaultText, settingKey, toggleF
     return dropdown
 end
 
-local function CreateFontDropdown(name, parent, defaultText, settingKey, toggleFunc, point)
-    local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
-    LibDD:UIDropDownMenu_SetWidth(dropdown, 135)
-    LibDD:UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
+local function CreateFontDropdown(name, parentFrame, defaultText, settingKey, toggleFunc, point, dropdownWidth, maxVisibleItems)
+    maxVisibleItems = maxVisibleItems or 25  -- Default to 25 visible items if not provided
 
-    dropdown.initialize = function(self, level, menuList)
-        local info = LibDD:UIDropDownMenu_CreateInfo()
+    -- Create container for label and dropdown
+    local container = CreateFrame("Frame", nil, parentFrame)
+    container:SetSize(dropdownWidth or 155, 50)
+
+    -- Create the dropdown button with the new dropdown template
+    local dropdown = CreateFrame("DropdownButton", nil, parentFrame, "WowStyle1DropdownTemplate")
+    dropdown:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", 0, 0)
+    dropdown:SetWidth(dropdownWidth or 155)
+    dropdown:SetDefaultText(BetterBlizzPlatesDB[settingKey])
+    dropdown.Background:SetVertexColor(0.9,0.9,0.9)
+    dropdown.Arrow:SetVertexColor(0.9,0.9,0.9)
+
+    -- Custom font display for the selected font
+    -- dropdown.customFontText = dropdown:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    -- dropdown.customFontText:SetPoint("LEFT", dropdown, "LEFT", 8, 0)
+    -- dropdown.customFontText:SetText(BetterBlizzPlatesDB[settingKey] or defaultText)
+    -- dropdown.customFontText:SetTextColor(1,1,1)
+    -- local initialFont = LSM:Fetch(LSM.MediaType.FONT, BetterBlizzPlatesDB[settingKey] or "")
+    -- if initialFont then
+    --     dropdown.customFontText:SetFont(initialFont, 12)
+    -- end
+
+    -- Initialize a unique font pool for this dropdown
+    dropdown.fontPool = {}
+
+    -- Fetch and sort fonts
+    C_Timer.After(1, function()
         local fonts = LSM:HashTable(LSM.MediaType.FONT)
         local sortedFonts = {}
-
-        -- Extract and sort font names
         for fontName in pairs(fonts) do
             table.insert(sortedFonts, fontName)
         end
         table.sort(sortedFonts)
 
-        -- If level 1, create categories
-        if level == 1 then
-            local categorySize = 12  -- Number of items per category
-            local numFonts = #sortedFonts
+        -- Define the generator function for the dropdown menu
+        local function GeneratorFunction(owner, rootDescription)
+            local itemHeight = 20  -- Each item's height
+            local maxScrollExtent = maxVisibleItems * itemHeight
+            rootDescription:SetScrollMode(maxScrollExtent)
 
-            for i = 1, math.ceil(numFonts / categorySize) do
-                info.hasArrow = true
-                info.notCheckable = true
-                info.checked = nil
-                info.text = "Fonts " .. i
-                info.icon = nil
-                info.menuList = i
-                info.func = nil
-                info.arg1 = nil
-                LibDD:UIDropDownMenu_AddButton(info)
-            end
-        -- If level 2, add items to the selected category
-        elseif level == 2 then
-            local categorySize = 12
-            local startIndex = (menuList - 1) * categorySize + 1
-            local endIndex = startIndex + categorySize - 1
-
-            for i = startIndex, math.min(endIndex, #sortedFonts) do
-                local fontName = sortedFonts[i]
+            for index, fontName in ipairs(sortedFonts) do
                 local fontPath = fonts[fontName]
-                info.hasArrow = nil
-                info.notCheckable = nil
-                info.checked = (BetterBlizzPlatesDB[settingKey] == fontName)
-                info.text = fontName
-                info.arg1 = fontName
-                info.func = function(_, arg1)
-                    BetterBlizzPlatesDB[settingKey] = arg1
-                    LibDD:UIDropDownMenu_SetText(dropdown, arg1)
+
+                -- Create each item as a button with the custom font
+                local button = rootDescription:CreateButton("                                                  ", function()
+                    BetterBlizzPlatesDB[settingKey] = fontName
+                    -- dropdown.customFontText:SetText(fontName)
+                    -- dropdown.customFontText:SetFont(fontPath, 12)
+                    dropdown:SetDefaultText(BetterBlizzPlatesDB[settingKey])
                     BBP.needsUpdate = true
                     toggleFunc(fontPath)
-                    dropdown.Text:SetFont(fontPath, 12)
-                    LibDD:CloseDropDownMenus()
-                end
-                LibDD:UIDropDownMenu_AddButton(info, level)
+                end)
+
+                -- Use the pooled font string for each button
+                button:AddInitializer(function(button)
+                    local fontDisplay = dropdown.fontPool[index]
+                    if not fontDisplay then
+                        fontDisplay = dropdown:CreateFontString(nil, "BACKGROUND")
+                        dropdown.fontPool[index] = fontDisplay
+                    end
+
+                    -- Attach the font display to the button and set the font
+                    fontDisplay:SetParent(button)
+                    fontDisplay:SetPoint("LEFT", button, "LEFT", 5, 0)
+                    fontDisplay:SetFont(fontPath, 12)
+                    fontDisplay:SetText(fontName)
+                    fontDisplay:Show()
+                end)
             end
         end
-    end
 
-    local fontName = BetterBlizzPlatesDB.customFont
-    local fontPath = LSM:Fetch(LSM.MediaType.FONT, fontName)
-    dropdown.Text:SetFont(fontPath, 12)
-    dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
+        -- Hide any unused font strings when the menu is closed
+        hooksecurefunc(dropdown, "OnMenuClosed", function()
+            for _, fontDisplay in pairs(dropdown.fontPool) do
+                fontDisplay:Hide()
+            end
+        end)
 
-    if parent:GetObjectType() == "CheckButton" and not parent:GetChecked() then
-        LibDD:UIDropDownMenu_DisableDropDown(dropdown)
-    else
-        LibDD:UIDropDownMenu_EnableDropDown(dropdown)
-    end
+        -- Set up the dropdown menu with the generator function
+        dropdown:SetupMenu(GeneratorFunction)
+    end)
 
-    return dropdown
+    -- Position the container on the specified anchor point
+    container:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
+
+    return dropdown, container
 end
 
-local function CreateTextureDropdown(name, parent, defaultText, settingKey, toggleFunc, point, dropdownWidth)
-    -- Create the dropdown frame
-    local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
-    LibDD:UIDropDownMenu_SetWidth(dropdown, dropdownWidth or 135)
-    LibDD:UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
+local function CreateTextureDropdown(name, parentFrame, labelText, settingKey, toggleFunc, point, dropdownWidth, maxVisibleItems)
+    maxVisibleItems = maxVisibleItems or 25  -- Default to 25 visible items if not provided
 
-    -- Define the initialize function
-    LibDD:UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
-        local info = LibDD:UIDropDownMenu_CreateInfo()
+    -- Create container for label and dropdown
+    local container = CreateFrame("Frame", nil, parentFrame)
+    container:SetSize(dropdownWidth or 155, 50)
+
+    -- -- Create and position label
+    -- local label = container:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    -- label:SetPoint("BOTTOMLEFT", container, "TOPLEFT", 0, 2)
+    -- label:SetText(labelText)
+
+    -- Create the dropdown button with the new dropdown template
+    local dropdown = CreateFrame("DropdownButton", nil, parentFrame, "WowStyle1DropdownTemplate")
+    dropdown:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", 0, 0)
+    dropdown:SetWidth(dropdownWidth or 155)
+    dropdown:SetDefaultText(BetterBlizzPlatesDB[settingKey] or "Select texture")
+    dropdown.Background:SetVertexColor(0.9,0.9,0.9)
+    dropdown.Arrow:SetVertexColor(0.9,0.9,0.9)
+
+    -- Initialize a unique texture pool for this dropdown
+    dropdown.texturePool = {}
+
+    -- Fetch and sort textures
+    C_Timer.After(1, function()
         local textures = LSM:HashTable(LSM.MediaType.STATUSBAR)
         local sortedTextures = {}
-
-        -- Extract and sort texture names
         for textureName in pairs(textures) do
             table.insert(sortedTextures, textureName)
         end
         table.sort(sortedTextures)
 
-        -- If level 1, create categories
-        if level == 1 then
-            local categorySize = 12  -- Number of items per category
-            local numTextures = #sortedTextures
+        -- Get class colors table
+        local classColors = RAID_CLASS_COLORS
+        local classKeys = {}
+        for class in pairs(classColors) do
+            table.insert(classKeys, class)
+        end
 
-            for i = 1, math.ceil(numTextures / categorySize) do
-                info.hasArrow = true
-                info.notCheckable = true
-                info.checked = nil
-                info.text = "Textures " .. i
-                info.icon = nil
-                info.menuList = i
-                info.func = nil
-                info.arg1 = nil
-                LibDD:UIDropDownMenu_AddButton(info)
-            end
-        -- If level 2, add items to the selected category
-        elseif level == 2 then
-            local categorySize = 12
-            local startIndex = (menuList - 1) * categorySize + 1
-            local endIndex = startIndex + categorySize - 1
+        -- Define the generator function for the dropdown menu
+        local function GeneratorFunction(owner, rootDescription)
+            local itemHeight = 20  -- Each item's height
+            local maxScrollExtent = maxVisibleItems * itemHeight
+            rootDescription:SetScrollMode(maxScrollExtent)
 
-            for i = startIndex, math.min(endIndex, #sortedTextures) do
-                local textureName = sortedTextures[i]
+            for index, textureName in ipairs(sortedTextures) do
                 local texturePath = textures[textureName]
-                info.hasArrow = nil
-                info.notCheckable = nil
-                info.checked = (BetterBlizzPlatesDB[settingKey] == textureName)
-                info.text = textureName
-                info.icon = texturePath
-                info.menuList = nil
-                info.func = function(_, arg1)
-                    BetterBlizzPlatesDB[settingKey] = arg1
-                    LibDD:UIDropDownMenu_SetText(dropdown, arg1)
+
+                -- Create each item as a button with the background texture
+                local button = rootDescription:CreateButton(textureName, function()
+                    BetterBlizzPlatesDB[settingKey] = textureName
+                    dropdown:SetDefaultText(textureName)
                     BBP.needsUpdate = true
                     toggleFunc(texturePath)
-                    LibDD:CloseDropDownMenus()
-                end
-                info.arg1 = textureName
-                LibDD:UIDropDownMenu_AddButton(info, level)
+                end)
+
+                -- Use the pooled texture for the background on each button
+                button:AddInitializer(function(button)
+                    local textureBackground = dropdown.texturePool[index]
+                    if not textureBackground then
+                        textureBackground = dropdown:CreateTexture(nil, "BACKGROUND")
+                        dropdown.texturePool[index] = textureBackground
+                    end
+
+                    -- Attach the background to the button and set the texture
+                    textureBackground:SetParent(button)
+                    textureBackground:SetAllPoints(button)
+                    textureBackground:SetTexture(texturePath)
+
+                    -- Pick a random class color and apply it
+                    local randomClass = classKeys[math.random(#classKeys)]
+                    local color = classColors[randomClass]
+                    textureBackground:SetVertexColor(color.r, color.g, color.b)
+
+                    textureBackground:Show()
+                end)
             end
         end
+
+        hooksecurefunc(dropdown, "OnMenuClosed", function()
+            for _, texture in pairs(dropdown.texturePool) do
+                texture:Hide()
+            end
+        end)
+
+        dropdown:SetupMenu(GeneratorFunction)
     end)
 
-    -- Position the dropdown
-    dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
+    container:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
 
-    -- Enable or disable based on parent's check state
-    if parent:GetObjectType() == "CheckButton" and not parent:GetChecked() then
-        LibDD:UIDropDownMenu_DisableDropDown(dropdown)
-    else
-        LibDD:UIDropDownMenu_EnableDropDown(dropdown)
-    end
-
-    return dropdown
+    return dropdown, container
 end
+
 
 local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggleFunc, point, width, textColor)
     -- Create the dropdown frame using the library's creation function
@@ -767,131 +806,6 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 local xPos = BetterBlizzPlatesDB[element .. "XPos"] or 0
                 local yPos = BetterBlizzPlatesDB[element .. "YPos"] or 0
                 local anchorPoint = BetterBlizzPlatesDB[element .. "Anchor"] or "CENTER"
-
-                for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-                    if namePlate.UnitFrame then
-                        local frame = namePlate.UnitFrame
-                        local nameplate = namePlate
-                        if frame:IsForbidden() or frame:IsProtected() then return end
-                        -- Absorb Indicator Pos and Scale
-                        if element == "absorbIndicatorXPos" or element == "absorbIndicatorYPos" or element == "absorbIndicatorScale" then
-                            BBP.AbsorbIndicator(frame)
-                        -- Combat Indicator Pos and Scale
-                        elseif element == "combatIndicatorXPos" or element == "combatIndicatorYPos" or element == "combatIndicatorScale" then
-                            BBP.CombatIndicator(frame)
-                        -- Healer Indicator Pos and Scale
-                        elseif element == "healerIndicatorXPos" or element == "healerIndicatorYPos" or element == "healerIndicatorScale" or element == "healerIndicatorEnemyXPos" or element == "healerIndicatorEnemyYPos" or element == "healerIndicatorEnemyScale" then
-                            BBP.HealerIndicator(frame)
-                        -- Healer Indicator Pos and Scale
-                        elseif element == "classIndicatorXPos" or element == "classIndicatorYPos" or element == "classIndicatorScale" or element == "classIndicatorFriendlyXPos" or element == "classIndicatorFriendlyYPos" or element == "classIndicatorFriendlyScale" then
-                            BBP.ClassIndicator(frame)
-                        -- Pet Indicator Pos and Scale
-                        elseif element == "petIndicatorXPos" or element == "petIndicatorYPos" or element == "petIndicatorScale" then
-                            BBP.PetIndicator(frame)
-                        -- Quest Indicator Pos and Scale
-                        elseif element == "questIndicatorXPos" or element == "questIndicatorYPos" or element == "questIndicatorScale" then
-                            BBP.QuestIndicator(frame)
-                        -- Execute Indicator Pos and Scale
-                        elseif element == "executeIndicatorXPos" or element == "executeIndicatorYPos" or element == "executeIndicatorScale" then
-                            BBP.ExecuteIndicator(frame)
-                        -- Party Pointer Pos and Scale
-                        elseif element == "partyPointerXPos" or element == "partyPointerYPos" or element == "partyPointerScale"  or element == "partyPointerHealerScale" or element == "partyPointerWidth" then
-                            BBP.PartyPointer(frame)
-                        elseif element == "hideNpcMurlocScale" or element == "hideNpcMurlocYPos" then
-                            BBP.HideNPCs(frame, nameplate)
-                        elseif element == "nameplateAuraEnlargedScale" or element == "nameplateAuraCompactedScale" or element == "nameplateAuraBuffScale" or element == "nameplateAuraDebuffScale" then
-                            BBP.RefUnitAuraTotally(frame)
-                        -- Fake name
-                        elseif element == "fakeNameXPos" or element == "fakeNameYPos" or element == "fakeNameFriendlyXPos" or element == "fakeNameFriendlyYPos" then
-                            BBP.RepositionName(frame)
-                        -- Target Indicator Pos and Scale
-                        elseif element == "targetIndicatorXPos" or element == "targetIndicatorYPos" or element == "targetIndicatorScale" then
-                            BBP.TargetIndicator(frame)
-                        -- Focus Target Indicator Pos and Scale
-                        elseif element == "focusTargetIndicatorXPos" or element == "focusTargetIndicatorYPos" or element == "focusTargetIndicatorScale" then
-                            BBP.FocusTargetIndicator(frame)
-                        elseif element == "healthNumbersScale" or element == "healthNumbersXPos" or element == "healthNumbersYPos" then
-                            BBP.HealthNumbers(frame)
-                        -- Totem Indicator Pos and Scale
-                        elseif element == "totemIndicatorXPos" or element == "totemIndicatorYPos" or element == "totemIndicatorScale" then
-                            if not frame.totemIndicator then
-                                --BBP.CreateTotemComponents(frame, 30)
-                                BBP.ApplyTotemIconsAndColorNameplate(frame, frame.unit)
-                            else
-                                if axis then
-                                    local yPosAdjustment = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown and yPos + 4 or yPos
-                                    if BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown then
-                                        frame.totemIndicator:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 4)
-                                    else
-                                        frame.totemIndicator:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 0)
-                                    end
-                                else
-                                    frame.totemIndicator:SetScale(value)
-                                end
-                            end
-                        -- Cast Timer Pos and Scale
-                        elseif element == "castTimer" then
-                            --not rdy
-                        -- Cast bar icon pos and scale
-                        elseif element == "castBarIconXPos" or element == "castBarIconYPos" then
-                            if axis then
-                                local yOffset = BetterBlizzPlatesDB.castBarDragonflightShield and -2 or 0
-                                frame.castBar.Icon:ClearAllPoints()
-                                frame.castBar.Icon:SetPoint("CENTER", frame.castBar, "LEFT", xPos, yPos)
-                                frame.castBar.BorderShield:ClearAllPoints()
-                                frame.castBar.BorderShield:SetPoint("CENTER", frame.castBar.Icon, "CENTER", 0, 0)
-                            else
-                                BetterBlizzPlatesDB.castBarIconScale = value
-                                frame.castBar.Icon:SetScale(value)
-                                frame.castBar.BorderShield:SetScale(value)
-                            end
-                        -- Cast bar height
-                        elseif element == "castBarHeight" then
-                            frame.castBar:SetHeight(value)
-                        elseif element == "castBarTextScale" then
-                            frame.castBar.Text:SetScale(value)
-                        -- Cast bar emphasis icon pos and scale
-                        elseif element == "castBarEmphasisIconXPos" or element == "castBarEmphasisIconYPos" then
-                            if axis then
-                                frame.castBar.Icon:SetPoint("CENTER", frame.castBar, "LEFT", xPos, yPos)
-                            end
-                        -- Target Text for Cast Timer Pos and Scale
-                        elseif element == "targetText" then
-                        -- Raidmarker Pos and Scale
-                        elseif element == "raidmarkIndicatorXPos" or element == "raidmarkIndicatorYPos" or element == "raidmarkIndicatorScale" then
-                            if BetterBlizzPlatesDB.raidmarkIndicator then
-                                -- if frame.RaidTargetFrame.RaidTargetIcon then
-                                --     if axis then
-                                --         if anchorPoint == "TOP" then
-                                --             frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
-                                --             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.name, anchorPoint, xPos, yPos)
-                                --         else
-                                --             frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
-                                --             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.healthBar, anchorPoint, xPos, yPos)
-                                --         end
-                                --     else
-                                --         frame.RaidTargetFrame.RaidTargetIcon:SetScale(value)
-                                --     end
-                                -- end
-                                BBP.ApplyRaidmarkerChanges(frame)
-                            end
-                        -- Friendly name scale
-                        elseif element == "friendlyNameScale" then
-                            if not BetterBlizzPlatesDB.arenaIndicatorTestMode then
-                                BBP.ClassColorAndScaleNames(frame)
-                            end
-                        -- Enemy name scale
-                        elseif element == "enemyNameScale" then
-                            if not BetterBlizzPlatesDB.arenaIndicatorTestMode then
-                                BBP.ClassColorAndScaleNames(frame)
-                            end
-                        elseif element == "fadeOutNPCsAlpha" then
-                            if axis then
-                                BBP.FadeOutNPCs(frame)
-                            end
-                        end
-                    end
-                end
 
                 --If no nameplates are present still adjust values
                 if element == "NamePlateVerticalScale" then
@@ -1345,6 +1259,131 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "fadeOutNPCsAlpha" then
                     if axis then
                         BetterBlizzPlatesDB.fadeOutNPCsAlpha = value
+                    end
+                end
+
+                for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
+                    if namePlate.UnitFrame then
+                        local frame = namePlate.UnitFrame
+                        local nameplate = namePlate
+                        if frame:IsForbidden() or frame:IsProtected() then return end
+                        -- Absorb Indicator Pos and Scale
+                        if element == "absorbIndicatorXPos" or element == "absorbIndicatorYPos" or element == "absorbIndicatorScale" then
+                            BBP.AbsorbIndicator(frame)
+                        -- Combat Indicator Pos and Scale
+                        elseif element == "combatIndicatorXPos" or element == "combatIndicatorYPos" or element == "combatIndicatorScale" then
+                            BBP.CombatIndicator(frame)
+                        -- Healer Indicator Pos and Scale
+                        elseif element == "healerIndicatorXPos" or element == "healerIndicatorYPos" or element == "healerIndicatorScale" or element == "healerIndicatorEnemyXPos" or element == "healerIndicatorEnemyYPos" or element == "healerIndicatorEnemyScale" then
+                            BBP.HealerIndicator(frame)
+                        -- Healer Indicator Pos and Scale
+                        elseif element == "classIndicatorXPos" or element == "classIndicatorYPos" or element == "classIndicatorScale" or element == "classIndicatorFriendlyXPos" or element == "classIndicatorFriendlyYPos" or element == "classIndicatorFriendlyScale" then
+                            BBP.ClassIndicator(frame)
+                        -- Pet Indicator Pos and Scale
+                        elseif element == "petIndicatorXPos" or element == "petIndicatorYPos" or element == "petIndicatorScale" then
+                            BBP.PetIndicator(frame)
+                        -- Quest Indicator Pos and Scale
+                        elseif element == "questIndicatorXPos" or element == "questIndicatorYPos" or element == "questIndicatorScale" then
+                            BBP.QuestIndicator(frame)
+                        -- Execute Indicator Pos and Scale
+                        elseif element == "executeIndicatorXPos" or element == "executeIndicatorYPos" or element == "executeIndicatorScale" then
+                            BBP.ExecuteIndicator(frame)
+                        -- Party Pointer Pos and Scale
+                        elseif element == "partyPointerXPos" or element == "partyPointerYPos" or element == "partyPointerScale"  or element == "partyPointerHealerScale" or element == "partyPointerWidth" then
+                            BBP.PartyPointer(frame)
+                        elseif element == "hideNpcMurlocScale" or element == "hideNpcMurlocYPos" then
+                            BBP.HideNPCs(frame, nameplate)
+                        elseif element == "nameplateAuraEnlargedScale" or element == "nameplateAuraCompactedScale" or element == "nameplateAuraBuffScale" or element == "nameplateAuraDebuffScale" then
+                            BBP.RefUnitAuraTotally(frame)
+                        -- Fake name
+                        elseif element == "fakeNameXPos" or element == "fakeNameYPos" or element == "fakeNameFriendlyXPos" or element == "fakeNameFriendlyYPos" then
+                            BBP.RepositionName(frame)
+                        -- Target Indicator Pos and Scale
+                        elseif element == "targetIndicatorXPos" or element == "targetIndicatorYPos" or element == "targetIndicatorScale" then
+                            BBP.TargetIndicator(frame)
+                        -- Focus Target Indicator Pos and Scale
+                        elseif element == "focusTargetIndicatorXPos" or element == "focusTargetIndicatorYPos" or element == "focusTargetIndicatorScale" then
+                            BBP.FocusTargetIndicator(frame)
+                        elseif element == "healthNumbersScale" or element == "healthNumbersXPos" or element == "healthNumbersYPos" then
+                            BBP.HealthNumbers(frame)
+                        -- Totem Indicator Pos and Scale
+                        elseif element == "totemIndicatorXPos" or element == "totemIndicatorYPos" or element == "totemIndicatorScale" then
+                            if not frame.totemIndicator then
+                                --BBP.CreateTotemComponents(frame, 30)
+                                BBP.ApplyTotemIconsAndColorNameplate(frame, frame.unit)
+                            else
+                                if axis then
+                                    local yPosAdjustment = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown and yPos + 4 or yPos
+                                    if BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown then
+                                        frame.totemIndicator:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 4)
+                                    else
+                                        frame.totemIndicator:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 0)
+                                    end
+                                else
+                                    frame.totemIndicator:SetScale(value)
+                                end
+                            end
+                        -- Cast Timer Pos and Scale
+                        elseif element == "castTimer" then
+                            --not rdy
+                        -- Cast bar icon pos and scale
+                        elseif element == "castBarIconXPos" or element == "castBarIconYPos" then
+                            if axis then
+                                local yOffset = BetterBlizzPlatesDB.castBarDragonflightShield and -2 or 0
+                                frame.castBar.Icon:ClearAllPoints()
+                                frame.castBar.Icon:SetPoint("CENTER", frame.castBar, "LEFT", xPos, yPos)
+                                frame.castBar.BorderShield:ClearAllPoints()
+                                frame.castBar.BorderShield:SetPoint("CENTER", frame.castBar.Icon, "CENTER", 0, 0)
+                            else
+                                BetterBlizzPlatesDB.castBarIconScale = value
+                                frame.castBar.Icon:SetScale(value)
+                                frame.castBar.BorderShield:SetScale(value)
+                            end
+                        -- Cast bar height
+                        elseif element == "castBarHeight" then
+                            frame.castBar:SetHeight(value)
+                        elseif element == "castBarTextScale" then
+                            frame.castBar.Text:SetScale(value)
+                        -- Cast bar emphasis icon pos and scale
+                        elseif element == "castBarEmphasisIconXPos" or element == "castBarEmphasisIconYPos" then
+                            if axis then
+                                frame.castBar.Icon:SetPoint("CENTER", frame.castBar, "LEFT", xPos, yPos)
+                            end
+                        -- Target Text for Cast Timer Pos and Scale
+                        elseif element == "targetText" then
+                        -- Raidmarker Pos and Scale
+                        elseif element == "raidmarkIndicatorXPos" or element == "raidmarkIndicatorYPos" or element == "raidmarkIndicatorScale" then
+                            if BetterBlizzPlatesDB.raidmarkIndicator then
+                                -- if frame.RaidTargetFrame.RaidTargetIcon then
+                                --     if axis then
+                                --         if anchorPoint == "TOP" then
+                                --             frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
+                                --             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.name, anchorPoint, xPos, yPos)
+                                --         else
+                                --             frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
+                                --             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.healthBar, anchorPoint, xPos, yPos)
+                                --         end
+                                --     else
+                                --         frame.RaidTargetFrame.RaidTargetIcon:SetScale(value)
+                                --     end
+                                -- end
+                                BBP.ApplyRaidmarkerChanges(frame)
+                            end
+                        -- Friendly name scale
+                        elseif element == "friendlyNameScale" then
+                            if not BetterBlizzPlatesDB.arenaIndicatorTestMode then
+                                BBP.ClassColorAndScaleNames(frame)
+                            end
+                        -- Enemy name scale
+                        elseif element == "enemyNameScale" then
+                            if not BetterBlizzPlatesDB.arenaIndicatorTestMode then
+                                BBP.ClassColorAndScaleNames(frame)
+                            end
+                        elseif element == "fadeOutNPCsAlpha" then
+                            if axis then
+                                BBP.FadeOutNPCs(frame)
+                            end
+                        end
                     end
                 end
             end
@@ -5003,9 +5042,13 @@ local function guiGeneralTab()
     friendlyNameScale:SetPoint("TOPLEFT", toggleFriendlyNameplatesInArena, "BOTTOMLEFT", 12, -10)
     CreateTooltipTwo(friendlyNameScale, "Name Size", "Change Name size on Friendly nameplates.", "While adjusting this setting names can get 20% larger/smaller due to Blizzard scaling issues. Reload between adjustments to make sure the size is what you want.")
 
+    local hideNameTooltip = "Hide Name on Friendly nameplates."
+    if BetterBlizzPlatesDB.partyPointerHideAll then
+        hideNameTooltip = "Hide Name on Friendly nameplates.\n\n|cff00c0ffParty Pointer|r: Hide All setting is enabled which affects this setting.\nInfo in Advanced Settings."
+    end
     local hideFriendlyNameText = CreateCheckbox("hideFriendlyNameText", "Hide name", BetterBlizzPlates)
     hideFriendlyNameText:SetPoint("LEFT", friendlyNameScale, "RIGHT", 2, 0)
-    CreateTooltipTwo(hideFriendlyNameText, "Hide Name", "Hide Name on Friendly nameplates")
+    CreateTooltipTwo(hideFriendlyNameText, "Hide Name", hideNameTooltip)
 
     local nameplateFriendlyWidth = CreateSlider(BetterBlizzPlates, "Nameplate Width", 26, 200, 1, "nameplateFriendlyWidth")
     nameplateFriendlyWidth:SetPoint("TOPLEFT", friendlyNameScale, "BOTTOMLEFT", 0, -20)
@@ -5187,11 +5230,11 @@ local function guiGeneralTab()
         function(arg1)
             BBP.RefreshAllNameplates() 
         end,
-        { anchorFrame = useCustomFont, x = 5, y = -21, label = "Font" }
+        { anchorFrame = useCustomFont, x = 20, y = 1, label = "Font" }
     )
 
     local enableCustomFontOutline = CreateCheckbox("enableCustomFontOutline", "Outline", useCustomFont)
-    enableCustomFontOutline:SetPoint("LEFT", fontDropdown, "RIGHT", -15, 1)
+    enableCustomFontOutline:SetPoint("LEFT", fontDropdown, "RIGHT", 0, 0)
     CreateTooltipTwo(enableCustomFontOutline, "Font Outline", "Enable font outline.\n|cff32f795Right-click to swap between thick and thin outline.")
     enableCustomFontOutline:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
@@ -5215,7 +5258,7 @@ local function guiGeneralTab()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = useCustomTexture, x = 5, y = -21, label = "Texture" }
+        { anchorFrame = useCustomTexture, x = 20, y = 1, label = "Texture" }
     )
 
     local textureDropdownFriendly = CreateTextureDropdown(
@@ -5226,7 +5269,7 @@ local function guiGeneralTab()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = useCustomTexture, x = 5, y = -51, label = "Friendly" }
+        { anchorFrame = useCustomTexture, x = 20, y = -27, label = "Friendly" }
     )
 
     local textureDropdownSelf = CreateTextureDropdown(
@@ -5237,7 +5280,7 @@ local function guiGeneralTab()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = useCustomTexture, x = 5, y = -81, label = "Personal" }
+        { anchorFrame = useCustomTexture, x = 20, y = -55, label = "Personal" }
     )
 
     local textureDropdownSelfMana = CreateTextureDropdown(
@@ -5248,69 +5291,69 @@ local function guiGeneralTab()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = useCustomTexture, x = 5, y = -111, label = "Personal Mana" }
+        { anchorFrame = useCustomTexture, x = 20, y = -83, label = "Personal Mana" }
     )
 
     local useCustomTextureForEnemy = CreateCheckbox("useCustomTextureForEnemy", "Enemy", useCustomTexture)
-    useCustomTextureForEnemy:SetPoint("LEFT", textureDropdown, "RIGHT", -15, 1)
+    useCustomTextureForEnemy:SetPoint("LEFT", textureDropdown, "RIGHT", 0, 0)
     useCustomTextureForEnemy.text:SetTextColor(1,0,0)
     useCustomTextureForEnemy:HookScript("OnClick", function(self)
         if self:GetChecked() then
-            LibDD:UIDropDownMenu_EnableDropDown(textureDropdown)
+            textureDropdown:Enable()
         else
-            LibDD:UIDropDownMenu_DisableDropDown(textureDropdown)
+            textureDropdown:Disable()
         end
     end)
     CreateTooltipTwo(useCustomTextureForEnemy, "Enemy Texture", "Change Enemy healthbar texture.", nil, "ANCHOR_LEFT")
-    if not useCustomTextureForEnemy:GetChecked() then
-        LibDD:UIDropDownMenu_DisableDropDown(textureDropdown)
+    if not useCustomTexture:GetChecked() or not useCustomTextureForEnemy:GetChecked() then
+        textureDropdown:Disable()
     end
 
-    local useCustomTextureForExtraBars = CreateCheckbox("useCustomTextureForExtraBars", "Overbars", BetterBlizzPlates)
+    local useCustomTextureForExtraBars = CreateCheckbox("useCustomTextureForExtraBars", "Overbars", useCustomTexture)
     useCustomTextureForExtraBars:SetPoint("BOTTOMLEFT", useCustomTextureForEnemy, "TOPLEFT", 0, -3)
     CreateTooltipTwo(useCustomTextureForExtraBars, "Change Overbars Texture", "Also change the texture for nameplate absorbs & overhealing etc.")
 
     local useCustomTextureForFriendly = CreateCheckbox("useCustomTextureForFriendly", "Friendly", useCustomTexture)
-    useCustomTextureForFriendly:SetPoint("LEFT", textureDropdownFriendly, "RIGHT", -15, 1)
+    useCustomTextureForFriendly:SetPoint("LEFT", textureDropdownFriendly, "RIGHT", 0, 0)
     useCustomTextureForFriendly.text:SetTextColor(0.04, 0.76, 1)
     useCustomTextureForFriendly:HookScript("OnClick", function(self)
         if self:GetChecked() then
-            LibDD:UIDropDownMenu_EnableDropDown(textureDropdownFriendly)
+            textureDropdownFriendly:Enable()
         else
-            LibDD:UIDropDownMenu_DisableDropDown(textureDropdownFriendly)
+            textureDropdownFriendly:Disable()
         end
     end)
     CreateTooltipTwo(useCustomTextureForFriendly, "Friendly Texture", "Change Friendly healthbar texture.", nil, "ANCHOR_LEFT")
-    if not useCustomTextureForFriendly:GetChecked() then
-        LibDD:UIDropDownMenu_DisableDropDown(textureDropdownFriendly)
+    if not useCustomTexture:GetChecked() or not useCustomTextureForFriendly:GetChecked() then
+        textureDropdownFriendly:Disable()
     end
 
     local useCustomTextureForSelf = CreateCheckbox("useCustomTextureForSelf", "Self", useCustomTexture)
-    useCustomTextureForSelf:SetPoint("LEFT", textureDropdownSelf, "RIGHT", -15, 1)
+    useCustomTextureForSelf:SetPoint("LEFT", textureDropdownSelf, "RIGHT", 0, 0)
     useCustomTextureForSelf:HookScript("OnClick", function(self)
         if self:GetChecked() then
-            LibDD:UIDropDownMenu_EnableDropDown(textureDropdownSelf)
+            textureDropdownSelf:Enable()
         else
-            LibDD:UIDropDownMenu_DisableDropDown(textureDropdownSelf)
+            textureDropdownSelf:Disable()
         end
     end)
     CreateTooltipTwo(useCustomTextureForSelf, "Personal Texture", "Change Personal resource healthbar texture.", nil, "ANCHOR_LEFT")
-    if not useCustomTextureForSelf:GetChecked() then
-        LibDD:UIDropDownMenu_DisableDropDown(textureDropdownSelf)
+    if not useCustomTexture:GetChecked() or not useCustomTextureForSelf:GetChecked() then
+        textureDropdownSelf:Disable()
     end
 
     local useCustomTextureForSelfMana = CreateCheckbox("useCustomTextureForSelfMana", "Self Mana", useCustomTexture)
-    useCustomTextureForSelfMana:SetPoint("LEFT", textureDropdownSelfMana, "RIGHT", -15, 1)
+    useCustomTextureForSelfMana:SetPoint("LEFT", textureDropdownSelfMana, "RIGHT", 0, 0)
     useCustomTextureForSelfMana:HookScript("OnClick", function(self)
         if self:GetChecked() then
-            LibDD:UIDropDownMenu_EnableDropDown(textureDropdownSelfMana)
+            textureDropdownSelfMana:Enable()
         else
-            LibDD:UIDropDownMenu_DisableDropDown(textureDropdownSelfMana)
+            textureDropdownSelfMana:Disable()
         end
     end)
     CreateTooltipTwo(useCustomTextureForSelfMana, "Personal Mana/Resource Texture", "Change Personal Resource mana/resource-bar texture", nil, "ANCHOR_LEFT")
-    if not useCustomTextureForSelfMana:GetChecked() then
-        LibDD:UIDropDownMenu_DisableDropDown(textureDropdownSelfMana)
+    if not useCustomTexture:GetChecked() or not useCustomTextureForSelfMana:GetChecked() then
+        textureDropdownSelfMana:Disable()
     end
 
     local function SetClassAndPowerColor()
@@ -5342,33 +5385,43 @@ local function guiGeneralTab()
     useCustomFont:HookScript("OnClick", function(self)
         if self:GetChecked() then
             EnableElement(enableCustomFontOutline)
-            LibDD:UIDropDownMenu_EnableDropDown(fontDropdown)
+            fontDropdown:Enable()
         else
-            LibDD:UIDropDownMenu_DisableDropDown(fontDropdown)
+            fontDropdown:Disable()
             DisableElement(enableCustomFontOutline)
         end
     end)
 
     useCustomTexture:HookScript("OnClick", function(self)
-        CheckAndToggleCheckboxes(useCustomTexture)
+        --CheckAndToggleCheckboxes(useCustomTexture)
         if self:GetChecked() then
+            EnableElement(useCustomTextureForEnemy)
+            EnableElement(useCustomTextureForExtraBars)
+            EnableElement(useCustomTextureForFriendly)
+            EnableElement(useCustomTextureForSelf)
+            EnableElement(useCustomTextureForSelfMana)
             if useCustomTextureForEnemy:GetChecked() then
-                LibDD:UIDropDownMenu_EnableDropDown(textureDropdown)
+                textureDropdown:Enable()
             end
             if useCustomTextureForFriendly:GetChecked() then
-                LibDD:UIDropDownMenu_EnableDropDown(textureDropdownFriendly)
+                textureDropdownFriendly:Enable()
             end
             if useCustomTextureForSelf:GetChecked() then
-                LibDD:UIDropDownMenu_EnableDropDown(textureDropdownSelf)
+                textureDropdownSelf:Enable()
             end
             if useCustomTextureForSelfMana:GetChecked() then
-                LibDD:UIDropDownMenu_EnableDropDown(textureDropdownSelfMana)
+                textureDropdownSelfMana:Enable()
             end
         else
-            LibDD:UIDropDownMenu_DisableDropDown(textureDropdown)
-            LibDD:UIDropDownMenu_DisableDropDown(textureDropdownFriendly)
-            LibDD:UIDropDownMenu_DisableDropDown(textureDropdownSelf)
-            LibDD:UIDropDownMenu_DisableDropDown(textureDropdownSelfMana)
+            DisableElement(useCustomTextureForEnemy)
+            DisableElement(useCustomTextureForExtraBars)
+            DisableElement(useCustomTextureForFriendly)
+            DisableElement(useCustomTextureForSelf)
+            DisableElement(useCustomTextureForSelfMana)
+            textureDropdown:Disable()
+            textureDropdownFriendly:Disable()
+            textureDropdownSelf:Disable()
+            textureDropdownSelfMana:Disable()
         end
     end)
 
@@ -5466,38 +5519,50 @@ local function guiGeneralTab()
     end
 
     -- Create the buttons and hook them to show the confirmation popup
+    local snupyProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
+    snupyProfileButton:SetText("Snupy")
+    snupyProfileButton:SetWidth(80)
+    snupyProfileButton:SetPoint("RIGHT", reloadUiButton, "LEFT", -50, 0)
+    snupyProfileButton:SetScript("OnClick", function()
+        ShowProfileConfirmation("Snupy", BBP.SnupyProfile)
+    end)
+    CreateTooltipTwo(snupyProfileButton, "|A:groupfinder-icon-class-druid:16:16|a |cffff7d0aSnupy Profile|r", "Enable all of Snupy's profile settings.", "www.twitch.tv/snupy", "ANCHOR_TOP")
+
     local nahjProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    nahjProfileButton:SetText("Nahj Profile")
-    nahjProfileButton:SetWidth(120)
-    nahjProfileButton:SetPoint("RIGHT", reloadUiButton, "LEFT", -50, 0)
+    nahjProfileButton:SetText("Nahj")
+    nahjProfileButton:SetWidth(80)
+    nahjProfileButton:SetPoint("RIGHT", snupyProfileButton, "LEFT", -5, 0)
     nahjProfileButton:SetScript("OnClick", function()
         ShowProfileConfirmation("Nahj", BBP.NahjProfile, "|cff32f795NOTE: Nahj only shows his own auras on nameplates and has them hidden on NPCs.\n\nTo enable more default settings go to Nameplate Auras after setting profile and check \"Blizzard Default Filter\" under Show DEBUFFS on Enemy Nameplates and uncheck \"Hide auras on NPCs\".|r\n\n")
     end)
-    CreateTooltipTwo(nahjProfileButton, "Nahj Profile", "Enable all of Nahj's profile settings.", "www.twitch.tv/nahj", "ANCHOR_TOP")
+    CreateTooltipTwo(nahjProfileButton, "|A:groupfinder-icon-class-rogue:16:16|a |cfffff569Nahj Profile|r", "Enable all of Nahj's profile settings.", "www.twitch.tv/nahj", "ANCHOR_TOP")
 
     local mmarkersProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    mmarkersProfileButton:SetText("Mmarkers Profile")
-    mmarkersProfileButton:SetWidth(120)
+    mmarkersProfileButton:SetText("Mmarkers")
+    mmarkersProfileButton:SetWidth(80)
     mmarkersProfileButton:SetPoint("RIGHT", nahjProfileButton, "LEFT", -5, 0)
     mmarkersProfileButton:SetScript("OnClick", function()
         ShowProfileConfirmation("Mmarkers", BBP.MmarkersProfile)
     end)
-    CreateTooltipTwo(mmarkersProfileButton, "Mmarkers Profile", "Enable all of Mmarkers' profile settings.", "www.twitch.tv/mmarkers", "ANCHOR_TOP")
+    CreateTooltipTwo(mmarkersProfileButton, "|A:groupfinder-icon-class-druid:16:16|a |cffff7d0aMmarkers Profile|r", "Enable all of Mmarkers' profile settings.", "www.twitch.tv/mmarkers", "ANCHOR_TOP")
 
     local magnuszProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    magnuszProfileButton:SetText("Magnusz Profile")
-    magnuszProfileButton:SetWidth(120)
+    magnuszProfileButton:SetText("Magnusz")
+    magnuszProfileButton:SetWidth(80)
     magnuszProfileButton:SetPoint("RIGHT", mmarkersProfileButton, "LEFT", -5, 0)
     magnuszProfileButton:SetScript("OnClick", function()
         ShowProfileConfirmation("Magnusz", BBP.MagnuszProfile)
     end)
-    CreateTooltipTwo(magnuszProfileButton, "Magnusz Profile", "Enable all of Magnusz's profile settings.", "www.twitch.tv/magnusz", "ANCHOR_TOP")
+    CreateTooltipTwo(magnuszProfileButton, "|A:groupfinder-icon-class-warrior:16:16|a |cffc79c6eMagnusz Profile|r", "Enable all of Magnusz's profile settings.", "www.twitch.tv/magnusz", "ANCHOR_TOP")
 
+    local profileText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    profileText:SetPoint("RIGHT", magnuszProfileButton, "LEFT", -10, 0)
+    profileText:SetText("Profiles:")
 
     local resetBBPButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     resetBBPButton:SetText("Reset BetterBlizzPlates")
     resetBBPButton:SetWidth(165)
-    resetBBPButton:SetPoint("RIGHT", magnuszProfileButton, "LEFT", -50, 0)
+    resetBBPButton:SetPoint("RIGHT", magnuszProfileButton, "LEFT", -120, 0)
     resetBBPButton:SetScript("OnClick", function()
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     end)
@@ -5998,8 +6063,8 @@ local function guiPositionAndScale()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = targetIndicatorChangeTexture, x = -16, y = -20, label = "Texture" },
-        125
+        { anchorFrame = targetIndicatorChangeTexture, x = 3, y = 3, label = "Texture" },
+        138
     )
 
     targetIndicatorChangeTexture:HookScript("OnClick", function(self)
@@ -6248,8 +6313,8 @@ local function guiPositionAndScale()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = focusTargetIndicatorChangeTexture, x = -16, y = -20, label = "Texture" },
-        125
+        { anchorFrame = focusTargetIndicatorChangeTexture, x = 3, y = 3, label = "Texture" },
+        138
     )
 
     focusTargetIndicatorChangeTexture:HookScript("OnClick", function(self)
@@ -6418,6 +6483,14 @@ local function guiPositionAndScale()
 
     local arenaIndicatorTestMode2 = CreateCheckbox("arenaIndicatorTestMode", "Test", contentFrame)
     arenaIndicatorTestMode2:SetPoint("TOPLEFT", arenaSpecAnchorDropdown, "BOTTOMLEFT", 16, 8)
+
+    anchorSubArena.arenaIdAnchorRaiseStrata = CreateCheckbox("arenaIdAnchorRaiseStrata", "Raise Strata", contentFrame)
+    anchorSubArena.arenaIdAnchorRaiseStrata:SetPoint("LEFT", arenaIndicatorTestMode2.Text, "RIGHT", 0, 0)
+    CreateTooltipTwo(anchorSubArena.arenaIdAnchorRaiseStrata, "Raise Strata for Arena ID", "Raises the strata of the Arena ID/Spec so it shows on top of (z-axis) healthbars etc.")
+    anchorSubArena.arenaIdAnchorRaiseStrata:HookScript("OnClick", function()
+        StaticPopup_Show("BBP_CONFIRM_RELOAD")
+    end)
+
 
     local showCircleOnArenaID = CreateCheckbox("showCircleOnArenaID", "Show Circle on ID", contentFrame)
     showCircleOnArenaID:SetPoint("TOPLEFT", arenaIndicatorTestMode2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -7126,12 +7199,12 @@ local function guiCastbar()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = useCustomCastbarTexture, x = 5, y = -20, label = "CustomCastbar" }
+        { anchorFrame = useCustomCastbarTexture, x = 5, y = 0, label = "CustomCastbar" }
     )
     CreateTooltip(customCastbarTextureDropdown, "Castbar Texture")
 
     local interruptibleLabel = useCustomCastbarTexture:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    interruptibleLabel:SetPoint("LEFT", customCastbarTextureDropdown, "RIGHT", -10, 0)
+    interruptibleLabel:SetPoint("LEFT", customCastbarTextureDropdown, "RIGHT", 6, 0)
     interruptibleLabel:SetText("<- Interruptible")
 
     local customCastbarNonInterruptibleTextureDropdown = CreateTextureDropdown(
@@ -7142,12 +7215,12 @@ local function guiCastbar()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = useCustomCastbarTexture, x = 5, y = -51, label = "CustomBGCastbar" }
+        { anchorFrame = useCustomCastbarTexture, x = 5, y = -31, label = "CustomBGCastbar" }
     )
     CreateTooltip(customCastbarNonInterruptibleTextureDropdown, "Non-Interruptible Texture")
 
     local nonInterruptibleLabel = useCustomCastbarTexture:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    nonInterruptibleLabel:SetPoint("LEFT", customCastbarNonInterruptibleTextureDropdown, "RIGHT", -10, 0)
+    nonInterruptibleLabel:SetPoint("LEFT", customCastbarNonInterruptibleTextureDropdown, "RIGHT", 6, 0)
     nonInterruptibleLabel:SetText("<- Non-Interruptible")
 
     local customCastbarBGTextureDropdown = CreateTextureDropdown(
@@ -7158,12 +7231,18 @@ local function guiCastbar()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = useCustomCastbarTexture, x = 5, y = -82, label = "CustomBGCastbar" }
+        { anchorFrame = useCustomCastbarTexture, x = 5, y = -62, label = "CustomBGCastbar" }
     )
     CreateTooltip(customCastbarBGTextureDropdown, "Background Texture")
 
+    if not useCustomCastbarTexture:GetChecked() then
+        customCastbarTextureDropdown:Disable()
+        customCastbarNonInterruptibleTextureDropdown:Disable()
+        customCastbarBGTextureDropdown:Disable()
+    end
+
     local useCustomCastbarBGTexture = CreateCheckbox("useCustomCastbarBGTexture", "BG", useCustomCastbarTexture)
-    useCustomCastbarBGTexture:SetPoint("LEFT", customCastbarBGTextureDropdown, "RIGHT", -15, 1)
+    useCustomCastbarBGTexture:SetPoint("LEFT", customCastbarBGTextureDropdown, "RIGHT", 2, -2)
     CreateTooltip(useCustomCastbarBGTexture, "Change the background texture as well.")
     useCustomCastbarBGTexture:SetFrameStrata("HIGH")
 
@@ -7183,20 +7262,20 @@ local function guiCastbar()
     useCustomCastbarTexture:HookScript("OnClick", function(self)
         --CheckAndToggleCheckboxes(useCustomCastbarTexture)
         if self:GetChecked() then
-            LibDD:UIDropDownMenu_EnableDropDown(customCastbarTextureDropdown)
-            LibDD:UIDropDownMenu_EnableDropDown(customCastbarNonInterruptibleTextureDropdown)
+            customCastbarTextureDropdown:Enable()
+            customCastbarNonInterruptibleTextureDropdown:Enable()
             useCustomCastbarBGTexture:Enable()
             useCustomCastbarBGTexture:SetAlpha(1)
             if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
                 castBarBackgroundColor:Enable()
                 castBarBackgroundColor:SetAlpha(1)
                 castBarBackgroundColorIcon:SetAlpha(1)
-                LibDD:UIDropDownMenu_EnableDropDown(customCastbarBGTextureDropdown)
+                customCastbarBGTextureDropdown:Enable()
             end
         else
-            LibDD:UIDropDownMenu_DisableDropDown(customCastbarTextureDropdown)
-            LibDD:UIDropDownMenu_DisableDropDown(customCastbarNonInterruptibleTextureDropdown)
-            LibDD:UIDropDownMenu_DisableDropDown(customCastbarBGTextureDropdown)
+            customCastbarTextureDropdown:Disable()
+            customCastbarNonInterruptibleTextureDropdown:Disable()
+            customCastbarBGTextureDropdown:Disable()
             useCustomCastbarBGTexture:Disable()
             useCustomCastbarBGTexture:SetAlpha(0.5)
             if not BetterBlizzPlatesDB.useCustomCastbarBGTexture then
@@ -7465,12 +7544,12 @@ local function guiCastbar()
     useCustomCastbarBGTexture:HookScript("OnClick", function (self)
         --CheckAndToggleCheckboxes(useCustomCastbarBGTexture)
         if self:GetChecked() then
-            LibDD:UIDropDownMenu_EnableDropDown(customCastbarBGTextureDropdown)
+            customCastbarBGTextureDropdown:Enable()
             castBarBackgroundColor:Enable()
             castBarBackgroundColor:SetAlpha(1)
             castBarBackgroundColorIcon:SetAlpha(1)
         else
-            LibDD:UIDropDownMenu_DisableDropDown(customCastbarBGTextureDropdown)
+            customCastbarBGTextureDropdown:Disable()
             castBarBackgroundColor:Disable()
             castBarBackgroundColor:SetAlpha(0)
             castBarBackgroundColorIcon:SetAlpha(0)
@@ -7512,12 +7591,12 @@ local function guiCastbar()
             end
             if BetterBlizzPlatesDB.useCustomCastbarTexture then
                 if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
-                    LibDD:UIDropDownMenu_EnableDropDown(customCastbarBGTextureDropdown)
+                    customCastbarBGTextureDropdown:Enable()
                     castBarBackgroundColor:Enable()
                     castBarBackgroundColor:SetAlpha(1)
                     castBarBackgroundColorIcon:SetAlpha(1)
                 else
-                    LibDD:UIDropDownMenu_DisableDropDown(customCastbarBGTextureDropdown)
+                    customCastbarBGTextureDropdown:Disable()
                     castBarBackgroundColor:Disable()
                     castBarBackgroundColor:SetAlpha(0)
                     castBarBackgroundColorIcon:SetAlpha(0)
@@ -8157,6 +8236,14 @@ local function guiNameplateAuras()
     local otherNpBuffPurgeGlow = CreateCheckbox("otherNpBuffPurgeGlow", "Glow on Purgeable", otherNpBuffEnable)
     otherNpBuffPurgeGlow:SetPoint("TOPLEFT", otherNpBuffFilterPurgeable, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(otherNpBuffPurgeGlow, "Bright blue glow on purgeable/stealable buffs.")
+
+    local alwaysShowPurgeTexture = CreateCheckbox("alwaysShowPurgeTexture", "Always", otherNpBuffPurgeGlow)
+    alwaysShowPurgeTexture:SetPoint("LEFT", otherNpBuffPurgeGlow.Text, "RIGHT", 0, 0)
+    CreateTooltipTwo(alwaysShowPurgeTexture, "Always Show", "Always show the purge texture regardless if you have a purge ability or not.")
+
+    otherNpBuffPurgeGlow:HookScript("OnClick", function(self)
+        CheckAndToggleCheckboxes(self)
+    end)
 
     -- local otherNpBuffBlueBorder = CreateCheckbox("otherNpBuffBlueBorder", "Blue border on buffs", otherNpBuffEnable)
     -- otherNpBuffBlueBorder:SetPoint("TOPLEFT", otherNpBuffPurgeGlow, "BOTTOMLEFT", 0, pixelsBetweenBoxes)

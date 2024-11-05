@@ -16,6 +16,7 @@ local fakeAuras = {
         duration = 30,
         isHarmful = true,
         applications = 1,
+        dispelName = "Magic",
     },
     {
         auraInstanceID = 778,
@@ -24,6 +25,7 @@ local fakeAuras = {
         duration = 18,
         isHarmful = true,
         applications = 18,
+        dispelName = "Curse",
     },
     {
         auraInstanceID = 779,
@@ -32,6 +34,7 @@ local fakeAuras = {
         duration = 10,
         isHarmful = true,
         applications = 1,
+        dispelName = "Magic",
     },
     {
         auraInstanceID = 780,
@@ -40,6 +43,7 @@ local fakeAuras = {
         duration = 22,
         applications = 1,
         isHarmful = true,
+        dispelName = "Physical",
     },
     {
         auraInstanceID = 781,
@@ -48,6 +52,7 @@ local fakeAuras = {
         duration = 24,
         isHarmful = true,
         applications = 1,
+        dispelName = "Magic",
     },
     {
         auraInstanceID = 782,
@@ -56,6 +61,7 @@ local fakeAuras = {
         duration = 16,
         isHarmful = true,
         applications = 3,
+        dispelName = "Disease",
     },
     -- 5 Fake Buffs
     {
@@ -66,6 +72,7 @@ local fakeAuras = {
         isHelpful = true,
         applications = 1,
         isStealable = true,
+        dispelName = "Magic",
     },
     {
         auraInstanceID = 667,
@@ -75,6 +82,7 @@ local fakeAuras = {
         expirationTime = 0,
         isHelpful = true,
         applications = 1,
+        dispelName = "Magic",
     },
     {
         auraInstanceID = 668,
@@ -83,6 +91,7 @@ local fakeAuras = {
         duration = 25,
         isHelpful = true,
         applications = 2,
+        dispelName = "Magic",
     },
     {
         auraInstanceID = 669,
@@ -92,6 +101,7 @@ local fakeAuras = {
         expirationTime = 0,
         isHelpful = true,
         applications = 1,
+        dispelName = "Magic",
     },
     {
         auraInstanceID = 670,
@@ -101,6 +111,7 @@ local fakeAuras = {
         isHelpful = true,
         applications = 1,
         isStealable = true,
+        dispelName = "Magic",
     },
 }
 
@@ -902,9 +913,10 @@ local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
     local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
 
     if otherNpBuffPurgeGlow then
-        buff.Icon:SetScale(0.5)
         if not isPlayerUnit and isEnemyUnit then
-            if aura.isHelpful and aura.isStealable or (aura.dispelName == "Magic" and aura.isHelpful) then
+            local alwaysShowPurgeTexture = BetterBlizzPlatesDB.alwaysShowPurgeTexture
+            if aura.isHelpful and aura.isStealable or (alwaysShowPurgeTexture and aura.dispelName == "Magic" and aura.isHelpful) then
+                buff.Icon:SetScale(0.5)
                 if not buff.buffBorderPurge then
                     buff.buffBorderPurge = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
                     buff.buffBorderPurge:SetAtlas("newplayertutorial-drag-slotblue")
@@ -1605,9 +1617,8 @@ end
 function BBP.HideNameplateAuraTooltip()
     if BetterBlizzPlatesDB.hideNameplateAuraTooltip and not BBP.hookedNameplateAuraTooltip then
         hooksecurefunc(NameplateBuffButtonTemplateMixin, "OnEnter", function(self)
-            if not self:IsProtected() or self:IsForbidden() then
-                self:EnableMouse(false)
-            end
+            if self:IsForbidden() then return end
+            self:EnableMouse(false)
         end)
         BBP.hookedNameplateAuraTooltip = true
     end

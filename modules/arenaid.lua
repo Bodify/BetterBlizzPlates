@@ -76,6 +76,28 @@ local function isFistweaver(unit)
     end
 end
 
+local function createSpexText(frame)
+    if not frame.specNameText then
+        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
+        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
+        frame.specNameText:SetIgnoreParentScale(true)
+        if BetterBlizzPlatesDB.arenaIdAnchorRaiseStrata then
+            frame.specNameText:SetParent(frame.bbpOverlay)
+        end
+    end
+end
+
+local function createIDText(frame)
+    if not frame.arenaNumberText then
+        frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
+        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
+        frame.arenaNumberText:SetIgnoreParentScale(true)
+        if BetterBlizzPlatesDB.arenaIdAnchorRaiseStrata then
+            frame.arenaNumberText:SetParent(frame.bbpOverlay)
+        end
+    end
+end
+
 --there is so much room for improvement here... oh well future me will surely have improved it.
 
 local function addIdCircle(frame, index)
@@ -115,11 +137,7 @@ function BBP.ArenaIndicator1(frame)
                         r, g, b, a = frame.name:GetTextColor()
                     end
 
-                    if not frame.arenaNumberText then
-                        frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                        frame.arenaNumberText:SetIgnoreParentScale(true)
-                    end
+                    createIDText(frame)
 
                     frame.name:SetText("")
                     frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
@@ -147,11 +165,7 @@ function BBP.ArenaIndicator1(frame)
                     r, g, b, a = frame.name:GetTextColor()
                 end
 
-                if not frame.arenaNumberText then
-                    frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                    BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                    frame.arenaNumberText:SetIgnoreParentScale(true)
-                end
+                createIDText(frame)
 
                 frame.name:SetText("")
                 frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
@@ -190,11 +204,7 @@ function BBP.ArenaIndicator2(frame)
                 if UnitIsUnit(frame.unit, unit) and UnitIsPlayer(unit) then
                     local r, g, b, a = frame.name:GetTextColor()
 
-                    if not frame.arenaNumberText then
-                        frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                        frame.arenaNumberText:SetIgnoreParentScale(true)
-                    end
+                    createIDText(frame)
 
                     frame.arenaNumberText:SetText(i)
                     if enemyClassColorName then
@@ -218,11 +228,7 @@ function BBP.ArenaIndicator2(frame)
             if UnitIsUnit(frame.unit, "arena" .. i) then
                 local r, g, b, a = frame.name:GetTextColor()
 
-                if not frame.arenaNumberText then
-                    frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                    BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                    frame.arenaNumberText:SetIgnoreParentScale(true)
-                end
+                createIDText(frame)
 
                 frame.arenaNumberText:SetText(i)
                 if enemyClassColorName then
@@ -271,11 +277,7 @@ function BBP.ArenaIndicator3(frame)
                         specName = className
                     end
 
-                    if not frame.specNameText then
-                        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                        frame.specNameText:SetIgnoreParentScale(true)
-                    end
+                    createSpexText(frame)
 
                     frame.name:SetText("")
                     frame.specNameText:SetText(specName)
@@ -309,11 +311,7 @@ function BBP.ArenaIndicator3(frame)
                     specName = className
                 end
 
-                if not frame.specNameText then
-                    frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                    BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                    frame.specNameText:SetIgnoreParentScale(true)
-                end
+                createSpexText(frame)
 
                 frame.name:SetText("")
                 frame.specNameText:SetText(specName)
@@ -367,17 +365,9 @@ function BBP.ArenaIndicator4(frame)
                         specName = className
                     end
 
-                    if not frame.specNameText then
-                        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                        frame.specNameText:SetIgnoreParentScale(true)
-                    end
+                    createSpexText(frame)
 
-                    if not frame.arenaNumberText then
-                        frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                        frame.arenaNumberText:SetIgnoreParentScale(true)
-                    end
+                    createIDText(frame)
 
                     frame.name:SetText("")
                     frame.specNameText:SetText(specName)
@@ -424,17 +414,9 @@ function BBP.ArenaIndicator4(frame)
                     specName = className
                 end
 
-                if not frame.specNameText then
-                    frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                    BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                    frame.specNameText:SetIgnoreParentScale(true)
-                end
+                createSpexText(frame)
 
-                if not frame.arenaNumberText then
-                    frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                    BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                    frame.arenaNumberText:SetIgnoreParentScale(true)
-                end
+                createIDText(frame)
 
                 frame.name:SetText("")
                 frame.specNameText:SetText(specName)
@@ -494,11 +476,7 @@ function BBP.ArenaIndicator5(frame)
                         specName = className
                     end
 
-                    if not frame.specNameText then
-                        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                        frame.specNameText:SetIgnoreParentScale(true)
-                    end
+                    createSpexText(frame)
 
                     frame.name:SetText("")
                     frame.specNameText:SetText(specName .. " " .. i)
@@ -527,11 +505,7 @@ function BBP.ArenaIndicator5(frame)
                     specName = className
                 end
 
-                if not frame.specNameText then
-                    frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                    BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                    frame.specNameText:SetIgnoreParentScale(true)
-                end
+                createSpexText(frame)
 
                 frame.name:SetText("")
                 frame.specNameText:SetText(specName .. " " .. i)
@@ -563,11 +537,7 @@ function BBP.PartyIndicator1(frame)
                 if UnitIsUnit(frame.unit, unit) then
                     local r, g, b, a = frame.name:GetTextColor()
 
-                    if not frame.arenaNumberText then
-                        frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                        frame.arenaNumberText:SetIgnoreParentScale(true)
-                    end
+                    createIDText(frame)
 
                     local displayNumber = i
                     if reduceID and i > 1 then
@@ -588,11 +558,7 @@ function BBP.PartyIndicator1(frame)
             if UnitIsUnit(frame.unit, "party" .. i) then
                 local r, g, b, a = frame.name:GetTextColor()
 
-                if not frame.arenaNumberText then
-                    frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                    BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                    frame.arenaNumberText:SetIgnoreParentScale(true)
-                end
+                createIDText(frame)
 
                 frame.name:SetText("")
                 frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
@@ -622,11 +588,7 @@ function BBP.PartyIndicator2(frame)
                 if UnitIsUnit(frame.unit, unit) then
                     local r, g, b, a = frame.name:GetTextColor()
 
-                    if not frame.arenaNumberText then
-                        frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                        frame.arenaNumberText:SetIgnoreParentScale(true)
-                    end
+                    createIDText(frame)
 
                     local displayNumber = i
                     if reduceID and i > 1 then
@@ -646,11 +608,7 @@ function BBP.PartyIndicator2(frame)
             if UnitIsUnit(frame.unit, "party" .. i) then
                 local r, g, b, a = frame.name:GetTextColor()
 
-                if not frame.arenaNumberText then
-                    frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                    BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                    frame.arenaNumberText:SetIgnoreParentScale(true)
-                end
+                createIDText(frame)
 
                 frame.arenaNumberText:SetText(i)
                 frame.arenaNumberText:SetTextColor(r, g, b, 1)
@@ -695,11 +653,7 @@ function BBP.PartyIndicator3(frame)
                         specName = className
                     end
 
-                    if not frame.specNameText then
-                        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                        frame.specNameText:SetIgnoreParentScale(true)
-                    end
+                    createSpexText(frame)
 
                     frame.name:SetText("")
                     frame.specNameText:SetText(specName)
@@ -732,11 +686,7 @@ function BBP.PartyIndicator3(frame)
                     specName = className
                 end
 
-                if not frame.specNameText then
-                    frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                    BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                    frame.specNameText:SetIgnoreParentScale(true)
-                end
+                createSpexText(frame)
 
                 frame.name:SetText("")
                 frame.specNameText:SetText(specName)
@@ -788,17 +738,9 @@ function BBP.PartyIndicator4(frame)
                         specName = className
                     end
 
-                    if not frame.specNameText then
-                        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                        frame.specNameText:SetIgnoreParentScale(true)
-                    end
+                    createSpexText(frame)
 
-                    if not frame.arenaNumberText then 
-                        frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                        frame.arenaNumberText:SetIgnoreParentScale(true)
-                    end
+                    createIDText(frame)
 
                     frame.name:SetText("")
                     frame.specNameText:SetText(specName)
@@ -840,17 +782,9 @@ function BBP.PartyIndicator4(frame)
                     specName = className
                 end
 
-                if not frame.specNameText then
-                    frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                    BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                    frame.specNameText:SetIgnoreParentScale(true)
-                end
+                createSpexText(frame)
 
-                if not frame.arenaNumberText then
-                    frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                    BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                    frame.arenaNumberText:SetIgnoreParentScale(true)
-                end
+                createIDText(frame)
 
                 frame.name:SetText("")
                 frame.specNameText:SetText(specName)
@@ -903,11 +837,7 @@ function BBP.PartyIndicator5(frame)
                         specName = className
                     end
 
-                    if not frame.specNameText then
-                        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                        frame.specNameText:SetIgnoreParentScale(true)
-                    end
+                    createSpexText(frame)
 
                     frame.name:SetText("")
                     local displayNumber = i
@@ -944,11 +874,7 @@ function BBP.PartyIndicator5(frame)
                     specName = className
                 end
 
-                if not frame.specNameText then
-                    frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                    BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                    frame.specNameText:SetIgnoreParentScale(true)
-                end
+                createSpexText(frame)
 
                 frame.name:SetText("")
                 frame.specNameText:SetText(specName .. " " .. i)
@@ -972,11 +898,7 @@ function BBP.TestArenaIndicator0(frame)
         if not UnitIsFriend("player", frame.unit) and (UnitReaction(frame.unit, "player") or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
 
-            if not frame.arenaNumberText then
-                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                frame.arenaNumberText:SetIgnoreParentScale(true)
-            end
+            createIDText(frame)
 
             frame.name:SetText("")
             frame.arenaNumberText:SetPoint("BOTTOM", frame.name or frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
@@ -995,12 +917,7 @@ function BBP.TestArenaIndicator1(frame)
         if not UnitIsFriend("player", frame.unit) and (UnitReaction(frame.unit, "player") or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
 
-            if not frame.arenaNumberText then
-                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                frame.arenaNumberText:SetJustifyH("CENTER")
-                frame.arenaNumberText:SetIgnoreParentScale(true)
-            end
+            createIDText(frame)
 
             frame.name:SetText("")
             frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
@@ -1030,11 +947,7 @@ function BBP.TestArenaIndicator2(frame)
         if not UnitIsFriend("player", frame.unit) and (UnitReaction(frame.unit, "player") or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
 
-            if not frame.arenaNumberText then
-                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                frame.arenaNumberText:SetIgnoreParentScale(true)
-            end
+            createIDText(frame)
 
             frame.arenaNumberText:SetText("1")
             if BetterBlizzPlatesDB.enemyClassColorName then
@@ -1061,11 +974,7 @@ function BBP.TestArenaIndicator3(frame)
         if not UnitIsFriend("player", frame.unit) and (UnitReaction(frame.unit, "player") or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
 
-            if not frame.specNameText then
-                frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                frame.specNameText:SetIgnoreParentScale(true)
-            end
+            createSpexText(frame)
 
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
@@ -1090,17 +999,9 @@ function BBP.TestArenaIndicator4(frame)
         if not UnitIsFriend("player", frame.unit) and (UnitReaction(frame.unit, "player") or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
 
-            if not frame.specNameText then
-                frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                frame.specNameText:SetIgnoreParentScale(true)
-            end
+            createSpexText(frame)
 
-            if not frame.arenaNumberText then
-                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                frame.arenaNumberText:SetIgnoreParentScale(true)
-            end
+            createIDText(frame)
 
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
@@ -1137,11 +1038,7 @@ function BBP.TestArenaIndicator5(frame)
         if not UnitIsFriend("player", frame.unit) and (UnitReaction(frame.unit, "player") or 0) < 5 then
             local r, g, b, a = frame.name:GetTextColor()
 
-            if not frame.specNameText then
-                frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                frame.specNameText:SetIgnoreParentScale(true)
-            end
+            createSpexText(frame)
 
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
@@ -1165,11 +1062,7 @@ function BBP.TestPartyIndicator0(frame)
         if UnitIsFriend("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
-            if not frame.arenaNumberText then
-                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                frame.arenaNumberText:SetIgnoreParentScale(true)
-            end
+            createIDText(frame)
 
             frame.name:SetText("")
             frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
@@ -1187,11 +1080,7 @@ function BBP.TestPartyIndicator1(frame)
         if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
-            if not frame.arenaNumberText then
-                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                frame.arenaNumberText:SetIgnoreParentScale(true)
-            end
+            createIDText(frame)
 
             frame.name:SetText("")
             frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos)
@@ -1210,11 +1099,7 @@ function BBP.TestPartyIndicator2(frame)
         if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
-            if not frame.arenaNumberText then
-                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                frame.arenaNumberText:SetIgnoreParentScale(true)
-            end
+            createIDText(frame)
 
             frame.arenaNumberText:SetText("2")
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
@@ -1231,11 +1116,7 @@ function BBP.TestPartyIndicator3(frame)
         if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
-            if not frame.specNameText then
-                frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                frame.specNameText:SetIgnoreParentScale(true)
-            end
+            createSpexText(frame)
 
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
@@ -1258,17 +1139,9 @@ function BBP.TestPartyIndicator4(frame)
         if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
-            if not frame.specNameText then
-                frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                frame.specNameText:SetIgnoreParentScale(true)
-            end
+            createSpexText(frame)
 
-            if not frame.arenaNumberText then
-                frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-                BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
-                frame.arenaNumberText:SetIgnoreParentScale(true)
-            end
+            createIDText(frame)
 
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
@@ -1295,11 +1168,7 @@ function BBP.TestPartyIndicator5(frame)
         if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
-            if not frame.specNameText then
-                frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-                BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-                frame.specNameText:SetIgnoreParentScale(true)
-            end
+            createSpexText(frame)
 
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
@@ -1469,11 +1338,7 @@ function BBP.BattlegroundSpecNames(frame)
         specName = UnitName(frame.unit)
     end
 
-    if not frame.specNameText then
-        frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
-        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-        frame.specNameText:SetIgnoreParentScale(true)
-    end
+    createSpexText(frame)
 
     frame.name:SetText("")
     frame.specNameText:SetText(specName)

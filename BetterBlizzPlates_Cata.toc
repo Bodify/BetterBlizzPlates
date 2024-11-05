@@ -1,4 +1,4 @@
-## Interface: 40400
+## Interface: 40401
 ## Title: Better|cff00c0ffBlizz|rPlates
 ## Notes: Standard Blizzard nameplates with more features and easy settings
 ## SavedVariables: BetterBlizzPlatesDB

@@ -1707,10 +1707,10 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
     local checkBox = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
     checkBox.Text:SetText(label)
     checkBox.text = checkBox.Text
-    checkBox:SetHitRectInsets(0, 0, 0, 0)
+    -- checkBox:SetHitRectInsets(0, 0, 0, 0)
     checkBox.Text:SetFont("Fonts\\FRIZQT__.TTF", 11)
-    local a,b,c,d,e = checkBox.Text:GetPoint()
-    checkBox.Text:SetPoint(a,b,c,d-4,e-1)
+    -- local a,b,c,d,e = checkBox.Text:GetPoint()
+    -- checkBox.Text:SetPoint(a,b,c,d-4,e-1)
     checkBox.option = option
     if cvar then
         checkBox.cvar = true

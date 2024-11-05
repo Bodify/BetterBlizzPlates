@@ -1,3 +1,23 @@
+# BetterBlizzPlates 1.6.8b
+## The War Within
+### Bugfix:
+- Hide NPC: "Murloc Mode" should now properly always hide castbar as well.
+
+# BetterBlizzPlates 1.6.8
+## The War Within
+### New stuff:
+- Snupy profile (www.twitch.tv/snupy)
+- Added a "Always Show" setting for purgeable auras that will show the purge texture regardless if you have a purge ability or not. This is on by default, and have been, but can now be turned off.
+### Tweak:
+- New dropdowns for Texture & Fonts. Will change all dropdowns over time to use the new system.
+### Bugfix:
+- Fixed "Hide nameplate aura tooltip" causing lua error in PvE.
+- Fixed multiple issues with the new Nameplate Shadow/Highlight setting. Blocking mouseover macros, showing on some hidden nameplates, now showing when mouseover character model as well as nameplate.
+- Fix nameplate aura test mode causing lua errors.
+- Fix Execute Indicator causing lua errors on some object nameplates (hopefully, untested).
+### Note:
+- I wanted to push a few more new features but it will have to wait until I have had more time developing and testing them.
+
 # BetterBlizzPlates 1.6.7
 ## The War Within
 ### New Stuff:

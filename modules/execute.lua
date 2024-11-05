@@ -45,6 +45,17 @@ function BBP.ExecuteIndicator(frame)
     local health = UnitHealth(unit)
     local maxHealth = UnitHealthMax(unit)
     local healthPercentage = (health / maxHealth) * 100
+
+    if not healthPercentage or maxHealth == 0 then
+        if frame.executeIndicator then
+            frame.executeIndicator:Hide()
+        end
+        if frame.executeIndicatorTexture then
+            frame.executeIndicatorTexture:Hide()
+        end
+        return
+    end
+
     local oppositeAnchor = BBP.GetOppositeAnchor(config.executeIndicatorAnchor)
 
     -- Initialize the font string and texture for the Execute Indicator
