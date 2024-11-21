@@ -2,6 +2,9 @@
 ## The War Within
 ### Bugfix:
 - Hide NPC: "Murloc Mode" should now properly always hide castbar as well.
+- Added a variable that skips messing with cvars if Plater is also loaded. (BetterBlizzPlatesDB.skipCVarsPlater = true)
+### Note:
+- Been very busy. Hopefully I get some more time now in December to work on stuff.
 
 # BetterBlizzPlates 1.6.8
 ## The War Within

@@ -5233,6 +5233,10 @@ local function guiGeneralTab()
         { anchorFrame = useCustomFont, x = 20, y = 1, label = "Font" }
     )
 
+    if not useCustomFont:GetChecked() then
+        fontDropdown:Disable()
+    end
+
     local enableCustomFontOutline = CreateCheckbox("enableCustomFontOutline", "Outline", useCustomFont)
     enableCustomFontOutline:SetPoint("LEFT", fontDropdown, "RIGHT", 0, 0)
     CreateTooltipTwo(enableCustomFontOutline, "Font Outline", "Enable font outline.\n|cff32f795Right-click to swap between thick and thin outline.")
@@ -9180,6 +9184,7 @@ local function guiCVarControl()
         local cvarListener = CreateFrame("Frame")
         cvarListener:RegisterEvent("CVAR_UPDATE")
         cvarListener:SetScript("OnEvent", function(self, event, cvarName, cvarValue)
+            if (BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater")) then return end
             local checkedState = cvarValue == "1" or false
             if cvarValue then
                 if cbCVars[cvarName] then
