@@ -471,17 +471,17 @@ local function CheckBuffs()
                             end
                         end
                     elseif BetterBlizzPlatesDB.nameplateAuraSquare then
-                        local ten = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                        local ten = 10 * BetterBlizzPlatesDB.nameplateAuraScale
                         buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten);
                         buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten);
                     elseif BetterBlizzPlatesDB.nameplateAuraTaller then
-                        local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        local eight = 8 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                        local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraScale
+                        local eight = 8 * BetterBlizzPlatesDB.nameplateAuraScale
                         buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight);
                         buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight);
                     else
-                        local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        local sevenfive = 7.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                        local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraScale
+                        local sevenfive = 7.5 * BetterBlizzPlatesDB.nameplateAuraScale
                         buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, sevenfive);
                         buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -sevenfive);
                     end
@@ -545,17 +545,17 @@ local function CheckBuffs()
                             end
                         end
                     elseif BetterBlizzPlatesDB.nameplateAuraSquare then
-                        local ten = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                        local ten = 10 * BetterBlizzPlatesDB.nameplateAuraScale
                         buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten);
                         buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten);
                     elseif BetterBlizzPlatesDB.nameplateAuraTaller then
-                        local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        local eight = 8 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                        local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraScale
+                        local eight = 8 * BetterBlizzPlatesDB.nameplateAuraScale
                         buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight);
                         buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight);
                     else
-                        local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        local sevenfive = 7.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                        local tenfive = 10.5 * BetterBlizzPlatesDB.nameplateAuraScale
+                        local sevenfive = 7.5 * BetterBlizzPlatesDB.nameplateAuraScale
                         buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, sevenfive);
                         buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -sevenfive);
                     end
