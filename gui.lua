@@ -1625,7 +1625,7 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
     local exportBtn = CreateFrame("Button", nil, frame, "GameMenuButtonTemplate")
     exportBtn:SetPoint("RIGHT", exportBox, "LEFT", -10, 0)
     exportBtn:SetSize(73, 20)
-    exportBtn:SetText("Export")
+    exportBtn:SetText(L["Export"])
     exportBtn:SetNormalFontObject("GameFontNormal")
     exportBtn:SetHighlightFontObject("GameFontHighlight")
     CreateTooltipTwo(exportBtn, L["Export Data"], L["Create an export string to share your data."])
@@ -1635,7 +1635,7 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
     importBtn:SetPoint("RIGHT", importBox, "LEFT", -10, 0)
     --importBtn:SetSize(title ~= L["Full Profile"] and 52 or 73, 20)
     importBtn:SetSize(73, 20)
-    importBtn:SetText("Import")
+    importBtn:SetText(L["Import"])
     importBtn:SetNormalFontObject("GameFontNormal")
     importBtn:SetHighlightFontObject("GameFontHighlight")
     CreateTooltipTwo(importBtn, L["Import Data"], L["Import an export string.\nWill remove any current data (optional setting coming in non-beta)"])
@@ -2717,7 +2717,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
 
             local sizeLabel, sizeEditBox = CreatePropertyField(npcEditFrame, "Size:", durationLabel, 0, -10, 50, 20)
             npcEditFrame.sizeEditBox = sizeEditBox
-            CreateTooltipTwo(sizeEditBox, "Size", L["Enter new size"])
+            CreateTooltipTwo(sizeEditBox, L["Size"], L["Enter new size"])
 
             local iconLabel, iconEditBox = CreatePropertyField(npcEditFrame, "Icon:", sizeLabel, 0, -10, 50, 20)
             npcEditFrame.iconEditBox = iconEditBox
@@ -3471,7 +3471,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
 
             local sizeLabel, sizeEditBox = CreatePropertyField(npcEditFrame, "Size:", durationLabel, 0, -10, 50, 20)
             npcEditFrame.sizeEditBox = sizeEditBox
-            CreateTooltipTwo(sizeEditBox, "Size", L["Enter new size"])
+            CreateTooltipTwo(sizeEditBox, L["Size"], L["Enter new size"])
 
             local iconLabel, iconEditBox = CreatePropertyField(npcEditFrame, "Icon:", sizeLabel, 0, -10, 50, 20)
             npcEditFrame.iconEditBox = iconEditBox
@@ -4786,13 +4786,13 @@ local function guiGeneralTab()
     friendlyNameplateIcon:SetSize(28, 28)
     friendlyNameplateIcon:SetPoint("RIGHT", friendlyNameplatesText, "LEFT", -3, 0)
 
-    local friendlyNameplateClickthrough = CreateCheckbox("friendlyNameplateClickthrough", "Clickthrough", BetterBlizzPlates, nil, BBP.ApplyNameplateWidth)
+    local friendlyNameplateClickthrough = CreateCheckbox("friendlyNameplateClickthrough", L["Clickthrough"], BetterBlizzPlates, nil, BBP.ApplyNameplateWidth)
     friendlyNameplateClickthrough:SetPoint("TOPLEFT", friendlyNameplatesText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
     CreateTooltipTwo(friendlyNameplateClickthrough, L["Clickthrough Nameplate"], L["Make friendly nameplates clickthrough"])
 
-    local friendlyNameplateNonstackable = CreateCheckbox("friendlyNameplateNonstackable", "Non-Stackable", BetterBlizzPlates, nil, BBP.ApplyNameplateWidth)
+    local friendlyNameplateNonstackable = CreateCheckbox("friendlyNameplateNonstackable", L["Non-Stackable"], BetterBlizzPlates, nil, BBP.ApplyNameplateWidth)
     friendlyNameplateNonstackable:SetPoint("LEFT", friendlyNameplateClickthrough.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(friendlyNameplateNonstackable, "Non-Stackable", L["Makes the friendly nameplates non-stackable even with \"Stacking Nameplates\" on."], L["CAUTION: This setting can make nameplate auras appear lower than they should be when a unit changes between enemy/friendly (Duel/MC) due to a Blizzard bug.\nQuickly hiding and unhiding UI with Alt+Z will fix any nameplate issue."])
+    CreateTooltipTwo(friendlyNameplateNonstackable, L["Non-Stackable"], L["Makes the friendly nameplates non-stackable even with \"Stacking Nameplates\" on."], L["CAUTION: This setting can make nameplate auras appear lower than they should be when a unit changes between enemy/friendly (Duel/MC) due to a Blizzard bug.\nQuickly hiding and unhiding UI with Alt+Z will fix any nameplate issue."])
 
     local friendlyClassColorName = CreateCheckbox("friendlyClassColorName", L["Class color name"], BetterBlizzPlates)
     friendlyClassColorName:SetPoint("TOPLEFT", friendlyNameplateClickthrough, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -5036,9 +5036,9 @@ local function guiGeneralTab()
     friendlyNameplatesOnlyInBgs:SetPoint("LEFT", toggleFriendlyNameplatesInArena.text, "RIGHT", 0, 0)
     CreateTooltipTwo(friendlyNameplatesOnlyInBgs, L["Battleground Toggle"], L["Turn on friendly nameplates when you enter battlegrounds and off again when you leave."])
 
-    local friendlyNameplatesOnlyInDungeons = CreateCheckbox("friendlyNameplatesOnlyInDungeons", "Dungeon/raid Toggle", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    local friendlyNameplatesOnlyInDungeons = CreateCheckbox("friendlyNameplatesOnlyInDungeons", L["Dungeon/raid Toggle"], BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
     friendlyNameplatesOnlyInDungeons:SetPoint("LEFT", friendlyNameplatesOnlyInBgs.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(friendlyNameplatesOnlyInDungeons, "Dungeon/Raid Toggle", L["Turn on friendly nameplates when you enter dungeons/raids and off again when you leave."])
+    CreateTooltipTwo(friendlyNameplatesOnlyInDungeons, L["Dungeon/raid Toggle"], L["Turn on friendly nameplates when you enter dungeons/raids and off again when you leave."])
 
     local friendlyNameScale = CreateSlider(BetterBlizzPlates, L["Name Size"], 0.5, 3, 0.01, "friendlyNameScale")
     friendlyNameScale:SetPoint("TOPLEFT", toggleFriendlyNameplatesInArena, "BOTTOMLEFT", 12, -10)
@@ -5088,7 +5088,7 @@ local function guiGeneralTab()
     absorbsIcon:SetSize(22, 22)
     absorbsIcon:SetPoint("RIGHT", absorbIndicator, "LEFT", 2, 0)
 
-    local overShields = CreateCheckbox("overShields", "Overshields", BetterBlizzPlates, nil, BBP.HookOverShields)
+    local overShields = CreateCheckbox("overShields", L["Overshields"], BetterBlizzPlates, nil, BBP.HookOverShields)
     overShields:SetPoint("LEFT", absorbIndicator.text, "RIGHT", 0, 0)
     CreateTooltipTwo(overShields, L["Show Overshields |A:ParagonReputation_Glow:18:18|a"], L["Shows absorb texture even on full hp targets. The texture will go backwards onto the hp bar for however much over-absorb there is."], L["No test-mode available yet, soonTM."])
     overShields:HookScript("OnClick", function(self)
@@ -5239,7 +5239,7 @@ local function guiGeneralTab()
         fontDropdown:Disable()
     end
 
-    local enableCustomFontOutline = CreateCheckbox("enableCustomFontOutline", "Outline", useCustomFont)
+    local enableCustomFontOutline = CreateCheckbox("enableCustomFontOutline", L["Outline"], useCustomFont)
     enableCustomFontOutline:SetPoint("LEFT", fontDropdown, "RIGHT", 0, 0)
     CreateTooltipTwo(enableCustomFontOutline, L["Font Outline"], L["Enable font outline.\n|cff32f795Right-click to swap between thick and thin outline."])
     enableCustomFontOutline:HookScript("OnMouseDown", function(self, button)
@@ -5275,7 +5275,7 @@ local function guiGeneralTab()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = useCustomTexture, x = 20, y = -27, label = "Friendly" }
+        { anchorFrame = useCustomTexture, x = 20, y = -27, label = L["Friendly"] }
     )
 
     local textureDropdownSelf = CreateTextureDropdown(
@@ -5300,7 +5300,7 @@ local function guiGeneralTab()
         { anchorFrame = useCustomTexture, x = 20, y = -83, label = L["Personal Mana"] }
     )
 
-    local useCustomTextureForEnemy = CreateCheckbox("useCustomTextureForEnemy", "Enemy", useCustomTexture)
+    local useCustomTextureForEnemy = CreateCheckbox("useCustomTextureForEnemy", L["Enemy"], useCustomTexture)
     useCustomTextureForEnemy:SetPoint("LEFT", textureDropdown, "RIGHT", 0, 0)
     useCustomTextureForEnemy.text:SetTextColor(1,0,0)
     useCustomTextureForEnemy:HookScript("OnClick", function(self)
@@ -5315,11 +5315,11 @@ local function guiGeneralTab()
         textureDropdown:Disable()
     end
 
-    local useCustomTextureForExtraBars = CreateCheckbox("useCustomTextureForExtraBars", "Overbars", useCustomTexture)
+    local useCustomTextureForExtraBars = CreateCheckbox("useCustomTextureForExtraBars", L["Overbars"], useCustomTexture)
     useCustomTextureForExtraBars:SetPoint("BOTTOMLEFT", useCustomTextureForEnemy, "TOPLEFT", 0, -3)
     CreateTooltipTwo(useCustomTextureForExtraBars, L["Change Overbars Texture"], L["Also change the texture for nameplate absorbs & overhealing etc."])
 
-    local useCustomTextureForFriendly = CreateCheckbox("useCustomTextureForFriendly", "Friendly", useCustomTexture)
+    local useCustomTextureForFriendly = CreateCheckbox("useCustomTextureForFriendly", L["Friendly"], useCustomTexture)
     useCustomTextureForFriendly:SetPoint("LEFT", textureDropdownFriendly, "RIGHT", 0, 0)
     useCustomTextureForFriendly.text:SetTextColor(0.04, 0.76, 1)
     useCustomTextureForFriendly:HookScript("OnClick", function(self)
@@ -5334,7 +5334,7 @@ local function guiGeneralTab()
         textureDropdownFriendly:Disable()
     end
 
-    local useCustomTextureForSelf = CreateCheckbox("useCustomTextureForSelf", "Self", useCustomTexture)
+    local useCustomTextureForSelf = CreateCheckbox("useCustomTextureForSelf", L["Self"], useCustomTexture)
     useCustomTextureForSelf:SetPoint("LEFT", textureDropdownSelf, "RIGHT", 0, 0)
     useCustomTextureForSelf:HookScript("OnClick", function(self)
         if self:GetChecked() then
@@ -5455,7 +5455,7 @@ local function guiGeneralTab()
         { anchorFrame = arenaSettingsText, x = -90, y = -33, label = "Mode" },
         modes,
         tooltips,
-        "Enemy",
+        L["Enemy"],
         {1, 0, 0, 1}
     )
     CreateTooltipTwo(arenaModeDropdown, L["Arena ID/Spec Name"], L["Replace names in arena to their arena ID or their specialization"], nil, "ANCHOR_LEFT")
@@ -5491,7 +5491,7 @@ local function guiGeneralTab()
         { anchorFrame = arenaSettingsText, x = 70, y = -33, label = "Mode" },
         modesParty,
         tooltipsParty,
-        "Friendly",
+        L["Friendly"],
         {0.04, 0.76, 1, 1}
     )
     CreateTooltipTwo(partyModeDropdown, L["Arena ID/Spec Name"], L["Replace names in arena to their arena ID or their specialization"], nil, "ANCHOR_LEFT")
@@ -5631,12 +5631,12 @@ local function guiPositionAndScale()
     healerCrossIcon2:SetPoint("BOTTOM", anchorSubHeal, "TOP", 0, 3)
     healerCrossIcon2:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875)
 
-    local healerIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "healerIndicatorScale", false, 72)
+    local healerIndicatorScale = CreateSlider(contentFrame, L["Size"], 0.6, 2.5, 0.01, "healerIndicatorScale", false, 72)
     healerIndicatorScale:SetPoint("TOP", anchorSubHeal, "BOTTOM", 36, -15)
     healerIndicatorScale.Text:SetTextColor(0.04, 0.76, 1)
     CreateTooltipTwo(healerIndicatorScale, L["Friendly Scale"])
 
-    local healerIndicatorEnemyScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "healerIndicatorEnemyScale", false, 72)
+    local healerIndicatorEnemyScale = CreateSlider(contentFrame, L["Size"], 0.6, 2.5, 0.01, "healerIndicatorEnemyScale", false, 72)
     healerIndicatorEnemyScale:SetPoint("TOP", anchorSubHeal, "BOTTOM", -36, -15)
     healerIndicatorEnemyScale.Text:SetTextColor(1,0,0)
     CreateTooltipTwo(healerIndicatorEnemyScale, L["Enemy Scale"])
@@ -5669,7 +5669,7 @@ local function guiPositionAndScale()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = healerIndicatorYPos, x = -90, y = -35, label = "Enemy" },
+        { anchorFrame = healerIndicatorYPos, x = -90, y = -35, label = L["Enemy"] },
         55,
         {1, 0, 0, 1}
     )
@@ -5683,7 +5683,7 @@ local function guiPositionAndScale()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = healerIndicatorYPos, x = -16, y = -35, label = "Friendly" },
+        { anchorFrame = healerIndicatorYPos, x = -16, y = -35, label = L["Friendly"] },
         55,
         {0.04, 0.76, 1, 1}
     )
@@ -5724,7 +5724,7 @@ local function guiPositionAndScale()
         combatIconSub:SetPoint("BOTTOM", anchorSubOutOfCombat, "TOP", -1, 0)
     end
 
-    local combatIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "combatIndicatorScale")
+    local combatIndicatorScale = CreateSlider(contentFrame, L["Size"], 0.1, 1.9, 0.01, "combatIndicatorScale")
     combatIndicatorScale:SetPoint("TOP", anchorSubOutOfCombat, "BOTTOM", 0, -15)
 
     local combatIndicatorXPos = CreateSlider(contentFrame, L["x offset"], -50, 50, 1, "combatIndicatorXPos", "X")
@@ -5781,7 +5781,7 @@ local function guiPositionAndScale()
     petIndicator2:SetSize(36, 36)
     petIndicator2:SetPoint("BOTTOM", anchorSubPet, "TOP", 0, 0)
 
-    local petIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "petIndicatorScale")
+    local petIndicatorScale = CreateSlider(contentFrame, L["Size"], 0.1, 1.9, 0.01, "petIndicatorScale")
     petIndicatorScale:SetPoint("TOP", anchorSubPet, "BOTTOM", 0, -15)
 
     local petIndicatorXPos = CreateSlider(contentFrame, L["x offset"], -50, 50, 1, "petIndicatorXPos", "X")
@@ -5818,7 +5818,7 @@ local function guiPositionAndScale()
     absorbIndicator2:SetSize(51, 51)
     absorbIndicator2:SetPoint("BOTTOM", anchorSubAbsorb, "TOP", -1, -10)
 
-    local absorbIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "absorbIndicatorScale")
+    local absorbIndicatorScale = CreateSlider(contentFrame, L["Size"], 0.1, 1.9, 0.01, "absorbIndicatorScale")
     absorbIndicatorScale:SetPoint("TOP", anchorSubAbsorb, "BOTTOM", 0, -15)
 
     local absorbIndicatorXPos = CreateSlider(contentFrame, L["x offset"], -50, 50, 1, "absorbIndicatorXPos", "X")
@@ -5861,7 +5861,7 @@ local function guiPositionAndScale()
     totemIcon2:SetSize(34, 34)
     totemIcon2:SetPoint("BOTTOM", anchorSubTotem, "TOP", 0, 0)
 
-    BBP.totemIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.01, "totemIndicatorScale")
+    BBP.totemIndicatorScale = CreateSlider(contentFrame, L["Size"], 0.5, 3, 0.01, "totemIndicatorScale")
     BBP.totemIndicatorScale:SetPoint("TOP", anchorSubTotem, "BOTTOM", 0, -15)
     CreateTooltip( BBP.totemIndicatorScale, L["This changes the scale of ALL icons.\n\nYou can adjust individual sizes in the \"Totem Indicator List\" tab."], "ANCHOR_LEFT")
 
@@ -5941,7 +5941,7 @@ local function guiPositionAndScale()
     anchorSubTarget.icon:SetSize(48, 32)
     anchorSubTarget.icon:SetPoint("BOTTOM", anchorSubTarget, "TOP", -1, 2)
 
-    local targetIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "targetIndicatorScale")
+    local targetIndicatorScale = CreateSlider(contentFrame, L["Size"], 0.1, 1.9, 0.01, "targetIndicatorScale")
     targetIndicatorScale:SetPoint("TOP", anchorSubTarget, "BOTTOM", 0, -15)
 
     local targetIndicatorXPos = CreateSlider(contentFrame, L["x offset"], -50, 50, 1, "targetIndicatorXPos", "X")
@@ -6114,7 +6114,7 @@ local function guiPositionAndScale()
     --CreateTooltip(hideRaidmarkIndicator, L["Hide all raidmarkers on nameplates\n\n(Class Indicator and Party Pointer has their own setting\nto only hide on those specific nameplates where those icons show)"])
     CreateTooltipTwo(hideRaidmarkIndicator, L["Hide Raidmarker"], L["Hide all raidmarkers on nameplates"], L["Class Indicator and Party Pointer has their own setting to only hide on those specific nameplates where those icons show"], anchor, cvarName)
     --(widget, title, mainText, subText, anchor, cvarName)
-    local raidmarkIndicatorScale = CreateSlider(BBP.raidmarkIndicator2, "Size", 0.6, 2.5, 0.01, "raidmarkIndicatorScale")
+    local raidmarkIndicatorScale = CreateSlider(BBP.raidmarkIndicator2, L["Size"], 0.6, 2.5, 0.01, "raidmarkIndicatorScale")
     raidmarkIndicatorScale:SetPoint("TOP", anchorSubRaidmark, "BOTTOM", 0, -15)
 
     local raidmarkIndicatorXPos = CreateSlider(BBP.raidmarkIndicator2, L["x offset"], -50, 50, 1, "raidmarkIndicatorXPos", "X")
@@ -6167,7 +6167,7 @@ local function guiPositionAndScale()
     anchorSubquest.t:SetSize(44, 44)
     anchorSubquest.t:SetPoint("BOTTOM", anchorSubquest, "TOP", 0, -3)
 
-    local questIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "questIndicatorScale")
+    local questIndicatorScale = CreateSlider(contentFrame, L["Size"], 0.1, 1.9, 0.01, "questIndicatorScale")
     questIndicatorScale:SetPoint("TOP", anchorSubquest, "BOTTOM", 0, -15)
 
     local questIndicatorXPos = CreateSlider(contentFrame, L["x offset"], -50, 50, 1, "questIndicatorXPos", "X")
@@ -6204,7 +6204,7 @@ local function guiPositionAndScale()
     anchorSubFocus.t:SetSize(40, 40)
     anchorSubFocus.t:SetPoint("BOTTOM", anchorSubFocus, "TOP", 0, -2)
 
-    local focusTargetIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.01, "focusTargetIndicatorScale")
+    local focusTargetIndicatorScale = CreateSlider(contentFrame, L["Size"], 0.5, 3, 0.01, "focusTargetIndicatorScale")
     focusTargetIndicatorScale:SetPoint("TOP", anchorSubFocus, "BOTTOM", 0, -15)
 
     local focusTargetIndicatorXPos = CreateSlider(contentFrame, L["x offset"], -50, 50, 1, "focusTargetIndicatorXPos", "X")
@@ -6345,7 +6345,7 @@ local function guiPositionAndScale()
     anchorSubExecute.t:SetSize(56, 60)
     anchorSubExecute.t:SetPoint("BOTTOM", anchorSubExecute, "TOP", 0, -10)
 
-    local executeIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 2.5, 0.01, "executeIndicatorScale")
+    local executeIndicatorScale = CreateSlider(contentFrame, L["Size"], 0.5, 2.5, 0.01, "executeIndicatorScale")
     executeIndicatorScale:SetPoint("TOP", anchorSubExecute, "BOTTOM", 0, -15)
 
     local executeIndicatorXPos = CreateSlider(contentFrame, L["x offset"], -50, 50, 1, "executeIndicatorXPos", "X")
@@ -6372,7 +6372,7 @@ local function guiPositionAndScale()
     executeIndicatorAlwaysOn:SetPoint("TOPLEFT", executeTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(executeIndicatorAlwaysOn, L["Always display health percentage"])
 
-    local executeIndicatorFriendly = CreateCheckbox("executeIndicatorFriendly", "Friendly", contentFrame)
+    local executeIndicatorFriendly = CreateCheckbox("executeIndicatorFriendly", L["Friendly"], contentFrame)
     executeIndicatorFriendly:SetPoint("TOPLEFT", executeIndicatorAlwaysOn, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(executeIndicatorFriendly, L["Show on friendly nameplates"])
 
@@ -6517,7 +6517,7 @@ local function guiPositionAndScale()
     anchorSubClassIcon.t:SetPoint("BOTTOM", anchorSubClassIcon, "TOP", 0, 1.5)
     --classIconIcon:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875)
 
-    local classIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "classIndicatorFriendlyScale", false, 72)
+    local classIndicatorScale = CreateSlider(contentFrame, L["Size"], 0.6, 2.5, 0.01, "classIndicatorFriendlyScale", false, 72)
     classIndicatorScale:SetPoint("TOP", anchorSubClassIcon, "BOTTOM", 36, -15)
     classIndicatorScale.Text:SetTextColor(0.04, 0.76, 1)
     CreateTooltip(classIndicatorScale, L["Friendly Scale"])
@@ -6532,7 +6532,7 @@ local function guiPositionAndScale()
     classIndicatorYPos.Text:SetTextColor(0.04, 0.76, 1)
     CreateTooltip(classIndicatorYPos, L["Friendly Y Offset"])
 
-    local classIndicatorScale2 = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "classIndicatorScale", false, 72)
+    local classIndicatorScale2 = CreateSlider(contentFrame, L["Size"], 0.6, 2.5, 0.01, "classIndicatorScale", false, 72)
     classIndicatorScale2:SetPoint("TOP", anchorSubClassIcon, "BOTTOM", -36, -15)
     classIndicatorScale2.Text:SetTextColor(1,0,0)
     CreateTooltip(classIndicatorScale2, L["Enemy Scale"])
@@ -6555,7 +6555,7 @@ local function guiPositionAndScale()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = classIndicatorYPos, x = -90, y = -35, label = "Enemy" },
+        { anchorFrame = classIndicatorYPos, x = -90, y = -35, label = L["Enemy"] },
         55,
         {1, 0, 0, 1}
     )
@@ -6569,7 +6569,7 @@ local function guiPositionAndScale()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = classIndicatorYPos, x = -16, y = -35, label = "Friendly" },
+        { anchorFrame = classIndicatorYPos, x = -16, y = -35, label = L["Friendly"] },
         55,
         {0.04, 0.76, 1, 1}
     )
@@ -6579,7 +6579,7 @@ local function guiPositionAndScale()
     classIndicatorEnemy:SetPoint("TOPLEFT", classIconDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
     CreateTooltip(classIndicatorEnemy, L["Show class indicator on enemy nameplates"])
 
-    local classIndicatorFriendly = CreateCheckbox("classIndicatorFriendly", "Friendly", contentFrame)
+    local classIndicatorFriendly = CreateCheckbox("classIndicatorFriendly", L["Friendly"], contentFrame)
     classIndicatorFriendly:SetPoint("LEFT", classIndicatorEnemy.text, "RIGHT", -2, 0)
     CreateTooltip(classIndicatorFriendly, L["Show class indicator on friendly nameplates"])
 
@@ -6640,7 +6640,7 @@ local function guiPositionAndScale()
     anchorSubPointerIndicator.t:SetVertexColor(0.04, 0.76, 1)
     CreateTooltip(anchorSubPointerIndicator.t, L["Show a class colored pointer above\nfriendly player nameplates."])
 
-    local partyPointerScale = CreateSlider(contentFrame, "Size", 0.5, 2.2, 0.01, "partyPointerScale", false, 72)
+    local partyPointerScale = CreateSlider(contentFrame, L["Size"], 0.5, 2.2, 0.01, "partyPointerScale", false, 72)
     partyPointerScale:SetPoint("TOP", anchorSubPointerIndicator, "BOTTOM", -36, -15)
 
     local partyPointerWidth = CreateSlider(contentFrame, "Width", 20, 55, 1, "partyPointerWidth", false, 72)
@@ -6816,7 +6816,7 @@ local function guiPositionAndScale()
     anchorSubHealthNumbers.t:SetSize(44, 44)
     anchorSubHealthNumbers.t:SetPoint("BOTTOM", anchorSubHealthNumbers, "TOP", 0, -5)
 
-    local healthNumbersScale = CreateSlider(contentFrame, "Size", 0.5, 2.5, 0.01, "healthNumbersScale")
+    local healthNumbersScale = CreateSlider(contentFrame, L["Size"], 0.5, 2.5, 0.01, "healthNumbersScale")
     healthNumbersScale:SetPoint("TOP", anchorSubHealthNumbers, "BOTTOM", 0, -15)
 
     local healthNumbersXPos = CreateSlider(contentFrame, L["x offset"], -50, 50, 1, "healthNumbersXPos", "X")
@@ -6839,7 +6839,7 @@ local function guiPositionAndScale()
     local healthNumbersTestMode = CreateCheckbox("healthNumbersTestMode", L["Test"], contentFrame)
     healthNumbersTestMode:SetPoint("TOPLEFT", healthNumbersDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
-    local healthNumbersFriendly = CreateCheckbox("healthNumbersFriendly", "Friendly", contentFrame)
+    local healthNumbersFriendly = CreateCheckbox("healthNumbersFriendly", L["Friendly"], contentFrame)
     healthNumbersFriendly:SetPoint("LEFT", healthNumbersTestMode.text, "RIGHT", 20, 0)
     CreateTooltip(healthNumbersFriendly, L["Show on friendly nameplates"])
 
@@ -6948,7 +6948,7 @@ local function guiPositionAndScale()
     anchorSubBlitzIndicator.t:SetSize(29, 29)
     anchorSubBlitzIndicator.t:SetPoint("BOTTOM", anchorSubBlitzIndicator, "TOP", 0, 3)
 
-    anchorSubBlitzIndicator.s1 = CreateSlider(contentFrame, "Size", 0.5, 2, 0.01, "bgIndicatorScale")
+    anchorSubBlitzIndicator.s1 = CreateSlider(contentFrame, L["Size"], 0.5, 2, 0.01, "bgIndicatorScale")
     anchorSubBlitzIndicator.s1:SetPoint("TOP", anchorSubBlitzIndicator, "BOTTOM", 0, -15)
 
     anchorSubBlitzIndicator.s2 = CreateSlider(contentFrame, L["x offset"], -50, 50, 1, "bgIndicatorXPos", "X")
@@ -7007,7 +7007,7 @@ local function guiCastbar()
     -- Castbar Customization
     --------------------------------
     local guiCastbar = CreateFrame("Frame")
-    guiCastbar.name = "Castbar"
+    guiCastbar.name = L["Castbar"]
     guiCastbar.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiCastbar)
     local guiCastbarCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiCastbar, guiCastbar.name, guiCastbar.name)
@@ -7211,7 +7211,7 @@ local function guiCastbar()
 
     local interruptibleLabel = useCustomCastbarTexture:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     interruptibleLabel:SetPoint("LEFT", customCastbarTextureDropdown, "RIGHT", 6, 0)
-    interruptibleLabel:SetText("<- Interruptible")
+    interruptibleLabel:SetText(L["<- Interruptible"])
 
     local customCastbarNonInterruptibleTextureDropdown = CreateTextureDropdown(
         "customCastbarNonInterruptibleTextureDropdown",
@@ -7227,7 +7227,7 @@ local function guiCastbar()
 
     local nonInterruptibleLabel = useCustomCastbarTexture:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     nonInterruptibleLabel:SetPoint("LEFT", customCastbarNonInterruptibleTextureDropdown, "RIGHT", 6, 0)
-    nonInterruptibleLabel:SetText("<- Non-Interruptible")
+    nonInterruptibleLabel:SetText(L["<- Non-Interruptible"])
 
     local customCastbarBGTextureDropdown = CreateTextureDropdown(
         "customCastbarBGTextureDropdown",
@@ -9300,7 +9300,7 @@ end
 
 local function guiMisc()
     local guiMisc = CreateFrame("Frame")
-    guiMisc.name = "Misc"--"|A:GarrMission_CurrencyIcon-Material:19:19|a Misc"
+    guiMisc.name = L["Misc"]--"|A:GarrMission_CurrencyIcon-Material:19:19|a Misc"
     guiMisc.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiMisc)
     local guiMiscCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiMisc, guiMisc.name, guiMisc.name)
@@ -9461,7 +9461,7 @@ local function guiMisc()
     toggleNamesOffDuringPVE:SetPoint("TOPLEFT", skipAdjustingFixedFonts, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(toggleNamesOffDuringPVE, L["Toggle friendly player names (on nameplate) off\nduring PvE content and back on again outside."])
 
-    local doNotHideFriendlyHealthbarInPve = CreateCheckbox("doNotHideFriendlyHealthbarInPve", "Don't hide friendly healthbars in PvE", guiMisc)
+    local doNotHideFriendlyHealthbarInPve = CreateCheckbox("doNotHideFriendlyHealthbarInPve", L["Don't hide friendly healthbars in PvE"], guiMisc)
     doNotHideFriendlyHealthbarInPve:SetPoint("TOPLEFT", toggleNamesOffDuringPVE, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(doNotHideFriendlyHealthbarInPve, "Don't Hide Friendly Healthbar", L["Prevents hiding friendly healthbars in PvE if \"Hide healthbar\" is checked in General settings."])
 
@@ -9902,9 +9902,9 @@ end
 
 -- function CustomSetInset(nameplateType, left, right, top, bottom)
 --     if not InCombatLockdown() then
---         if nameplateType == "friendly" then
+--         if nameplateType == L["Friendly"] then
 --             C_NamePlate.SetNamePlateFriendlyPreferredClickInsets (left or 0, right or 0, top or 0, bottom or 0)
---         elseif nameplateType == "enemy" then
+--         elseif nameplateType == L["Enemy"] then
 --             C_NamePlate.SetNamePlateEnemyPreferredClickInsets (left or 0, right or 0, top or 0, bottom or 0)
 --         elseif nameplateType == "player" then
 --             C_NamePlate.SetNamePlateSelfPreferredClickInsets (left or 0, right or 0, top or 0, bottom or 0)
@@ -9913,13 +9913,13 @@ end
 --         C_Timer.After(1, function() CustomSetInset(nameplateType, left, right, top, bottom) end)
 --     end
 -- end
--- hooksecurefunc(NamePlateDriverFrame.namePlateSetInsetFunctions, "friendly", function()
+-- hooksecurefunc(NamePlateDriverFrame.namePlateSetInsetFunctions, L["Friendly"], function()
 --     --C_NamePlate.SetNamePlateFriendlyPreferredClickInsets (0, 0, 0, 0)
---     CustomSetInset("friendly", 0, 0, 0, 0)
+--     CustomSetInset(L["Friendly"], 0, 0, 0, 0)
 -- end)
--- hooksecurefunc(NamePlateDriverFrame.namePlateSetInsetFunctions, "enemy", function()
+-- hooksecurefunc(NamePlateDriverFrame.namePlateSetInsetFunctions, L["Enemy"], function()
 --     --C_NamePlate.SetNamePlateEnemyPreferredClickInsets (0, 0, 0, 0)
---     CustomSetInset("enemy", 0, 0, 0, 0)
+--     CustomSetInset(L["Enemy"], 0, 0, 0, 0)
 -- end)
 
 
