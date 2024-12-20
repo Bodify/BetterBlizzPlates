@@ -1,7 +1,11 @@
-# BetterBlizzPlates 1.6.8b
+# BetterBlizzPlates 1.6.8c
 ## The War Within
+### New stuff:
+- Aeghis profile (www.twitch.tv/aeghis)
 ### Bugfix:
 - Fix Pandemic Glow Texture Size accidentally scaling with enlarged scale value instead of default scale value when not enlarged.
+### Note:
+- Yet another small update. Rip time.
 
 # BetterBlizzPlates 1.6.8b
 ## The War Within

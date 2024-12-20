@@ -10,7 +10,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.8b"
+local addonUpdates = "1.6.8c"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
