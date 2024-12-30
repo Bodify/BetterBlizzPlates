@@ -14,5 +14,7 @@
     <Script file="libs\AceSerializer-3.0\AceSerializer-3.0.lua"/>
     <Include file="libs\LibSerialize\lib.xml"/>
     <Script file="libs\LibSerialize\LibSerialize.lua"/>
+    <Include file="libs\AceLocale-3.0\AceLocale-3.0.xml"/>
+    <Script file="libs\AceLocale-3.0\AceLocale-3.0.lua"/>
 <!--@end-non-debug@-->
 </Ui>

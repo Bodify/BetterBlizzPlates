@@ -31,5 +31,7 @@ modules\importConvert.lua
 
 modules\druid\overcharges.lua
 
+locales\locales.xml
+
 gui.lua
 BetterBlizzPlates.lua
