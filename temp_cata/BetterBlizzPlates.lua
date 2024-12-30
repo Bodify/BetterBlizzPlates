@@ -9,7 +9,7 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.8c"
+local addonUpdates = "1.6.8d"
 local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
@@ -52,6 +52,7 @@ local defaultSettings = {
     raidmarkIndicatorAnchor = "TOP",
     raidmarkIndicatorXPos = 0,
     raidmarkIndicatorYPos = 0,
+    healthNumbersFontSize = 9,
     customTexture = "Dragonflight (BBP)",
     customTextureFriendly = "Dragonflight (BBP)",
     customTextureSelf = "Solid",

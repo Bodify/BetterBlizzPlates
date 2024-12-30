@@ -1,3 +1,7 @@
+# BetterBlizzPlates 1.6.8d
+## Classic Era/SoD
+- Early Alpha version of BBP for Classic Era/SoD. Please report bugs, very limited testing has been done. Classic Era and Cataclysm will support eachothers import codes 100%. This version will just have the cata totem list, so not very accurate.
+
 # BetterBlizzPlates 1.6.8c
 ## The War Within
 ### New stuff:
