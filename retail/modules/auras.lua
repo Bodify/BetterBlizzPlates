@@ -396,7 +396,7 @@ local function GetPandemicThresholds(buff)
     end
 end
 
-local function SetPandemicGlow(buff, orange)
+local function CreatePandemicGlow(buff, orange)
     local db = BetterBlizzPlatesDB
     local nameplateAuraSquare = db.nameplateAuraSquare
     local nameplateAuraTaller = db.nameplateAuraTaller
@@ -499,6 +499,10 @@ local function SetPandemicGlow(buff, orange)
         buff.PandemicGlow:SetVertexColor(1, 0.25, 0)
     end
 
+    if buff.ImportantGlow then
+        buff.ImportantGlow:Hide()
+    end
+
     buff.Border:Hide()
     buff.PandemicGlow:Show()
 
@@ -523,9 +527,9 @@ local function CheckBuffs()
             else
                 -- Check for the default pandemic threshold (red)
                 if remainingDuration <= defaultPandemicThreshold then
-                    SetPandemicGlow(buff)
+                    CreatePandemicGlow(buff)
                 elseif specialPandemicThreshold and remainingDuration <= specialPandemicThreshold and remainingDuration > defaultPandemicThreshold then
-                    SetPandemicGlow(buff, true)
+                    CreatePandemicGlow(buff, true)
                 else
                     -- Outside the pandemic window, hide the glow
                     if buff.PandemicGlow then
@@ -1030,7 +1034,7 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
     local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
     local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
 
-    if isImportant then
+    if isImportant and not buff.isPandemicActive then
         local buffScale = BetterBlizzPlatesDB.nameplateAuraBuffScale
         local debuffScale = BetterBlizzPlatesDB.nameplateAuraDebuffScale
         if isPlayerUnit then
@@ -1041,8 +1045,7 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
         --if not isPlayerUnit then
             if not buff.ImportantGlow then
                 buff.ImportantGlow = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
-                buff.ImportantGlow:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\newplayertutorial-drag-slotgreen.tga")
-                buff.ImportantGlow:SetScale(2.3)
+                buff.ImportantGlow:SetAtlas("newplayertutorial-drag-slotgreen")
                 buff.ImportantGlow:SetDesaturated(true)
             end
             if buff.isEnlarged then
@@ -1575,8 +1578,8 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         if not buff.GlowFrame then
             buff.CountFrame:SetFrameStrata("DIALOG")
             buff.GlowFrame = CreateFrame("Frame", nil, buff)
-            buff.GlowFrame:SetFrameStrata("MEDIUM")
-            buff.GlowFrame:SetFrameLevel(1000)
+            buff.GlowFrame:SetFrameStrata("HIGH")
+            buff.GlowFrame:SetFrameLevel(9000)
         end
 
         if aura.spellId == 212183 then

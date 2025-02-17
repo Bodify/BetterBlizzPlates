@@ -29,8 +29,8 @@ local IsActiveBattlefieldArena = IsActiveBattlefieldArena
 
 BBP.variablesLoaded = false
 BBP.OverlayFrame = CreateFrame("Frame", nil, WorldFrame)
-BBP.OverlayFrame:SetFrameStrata("DIALOG")
-BBP.OverlayFrame:SetFrameLevel(50000)
+-- BBP.OverlayFrame:SetFrameStrata("DIALOG")
+-- BBP.OverlayFrame:SetFrameLevel(50000)
 
 local defaultSettings = {
     version = addonVersion,

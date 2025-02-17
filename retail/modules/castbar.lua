@@ -616,6 +616,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
     if not frame.TargetText then
         frame.TargetText = BBP.OverlayFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.TargetText:SetJustifyH("CENTER")
+        -- fix me (make it appear above resource when higher strata resource) bodify
     end
 
     local isCasting = UnitCastingInfo(unit) or UnitChannelInfo(unit)
