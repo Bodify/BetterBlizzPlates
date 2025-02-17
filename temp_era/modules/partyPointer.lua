@@ -125,6 +125,10 @@ function BBP.PartyPointer(frame, fetchedSpecID)
 
     if config.partyPointerClassColor then
         local classColor = RAID_CLASS_COLORS[info.class]
+        if info.class == "SHAMAN" then
+            -- Specific color override for Shaman
+            classColor = {r = 0.00, g = 0.44, b = 0.87}
+        end
         frame.partyPointer.icon:SetVertexColor(classColor.r, classColor.g, classColor.b)
     else
         frame.partyPointer.icon:SetVertexColor(0.04, 0.76, 1)

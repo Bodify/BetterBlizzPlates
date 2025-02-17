@@ -31,7 +31,7 @@ function BBP.PetIndicator(frame)
         config.petIndicatorTestMode = BetterBlizzPlatesDB.petIndicatorTestMode
         config.combatIndicator = BetterBlizzPlatesDB.combatIndicator
         config.combatIndicatorAnchor = BetterBlizzPlatesDB.combatIndicatorAnchor
-        config.petIndicatorOnlyShowMainPet = BetterBlizzPlatesDB.petIndicatorOnlyShowMainPet
+        config.petIndicatorHideSecondaryPets = BetterBlizzPlatesDB.petIndicatorHideSecondaryPets
         config.petIndicatorScale = BetterBlizzPlatesDB.petIndicatorScale or 1
 
         config.petIndicatorInitialized = true

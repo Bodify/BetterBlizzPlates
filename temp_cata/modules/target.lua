@@ -535,7 +535,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
 
-            if config.petIndicatorOnlyShowMainPet then
+            if config.petIndicatorHideSecondaryPets then
                 BBP.PetIndicator(frame)
             end
 
@@ -598,7 +598,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
 
             if config.showCastbarIfTarget then BBP.HideCastbar(frame, frame.unit) end
 
-            if config.petIndicatorOnlyShowMainPet then
+            if config.petIndicatorHideSecondaryPets then
                 BBP.PetIndicator(frame)
             end
 

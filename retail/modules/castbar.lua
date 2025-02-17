@@ -104,7 +104,8 @@ end
 
 -- Cast emphasis
 function BBP.CustomizeCastbar(frame, unitToken, event)
-    local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
+    local db = BetterBlizzPlatesDB
+    local enableCastbarCustomization = db.enableCastbarCustomization
     if not enableCastbarCustomization then return end
     if unitToken == "player" then return end
 
@@ -117,20 +118,21 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     --     frame.ogParent = nil
     -- end
 
-    local showCastBarIconWhenNoninterruptible = BetterBlizzPlatesDB.showCastBarIconWhenNoninterruptible
-    local castBarIconScale = BetterBlizzPlatesDB.castBarIconScale
+    local showCastBarIconWhenNoninterruptible = db.showCastBarIconWhenNoninterruptible
+    local castBarIconScale = db.castBarIconScale
     local borderShieldSize = showCastBarIconWhenNoninterruptible and (castBarIconScale + 0.3) or castBarIconScale
     local castBarTexture = castBar:GetStatusBarTexture()
-    local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
-    local castBarDragonflightShield = BetterBlizzPlatesDB.castBarDragonflightShield
-    local castBarHeight = BetterBlizzPlatesDB.castBarHeight
-    local castBarTextScale = BetterBlizzPlatesDB.castBarTextScale
-    local castBarCastColor = BetterBlizzPlatesDB.castBarCastColor
-    local castBarNonInterruptibleColor = BetterBlizzPlatesDB.castBarNoninterruptibleColor
-    local castBarChanneledColor = BetterBlizzPlatesDB.castBarChanneledColor
-    local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
-    local hideCastbarText = BetterBlizzPlatesDB.hideCastbarText
-    local hideCastbarBorderShield = BetterBlizzPlatesDB.hideCastbarBorderShield
+    local castBarRecolor = db.castBarRecolor
+    local castBarDragonflightShield = db.castBarDragonflightShield
+    local castBarHeight = db.castBarHeight
+    local castBarTextScale = db.castBarTextScale
+    local castBarCastColor = db.castBarCastColor
+    local castBarNonInterruptibleColor = db.castBarNoninterruptibleColor
+    local castBarChanneledColor = db.castBarChanneledColor
+    local useCustomCastbarTexture = db.useCustomCastbarTexture
+    local hideCastbarText = db.hideCastbarText
+    local hideCastbarBorderShield = db.hideCastbarBorderShield
+    local hideCastbarIcon = db.hideCastbarIcon
 
     if not castBarRecolor then
         if castBarTexture then
@@ -240,6 +242,23 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
     end
 
+    castBar.Icon:SetAlpha(castBar:GetEffectiveAlpha())
+
+    if db.hideNameDuringCast and (casting or channeling) then
+        if not frame.castHiddenName then
+            frame.castHiddenName = frame.name:GetAlpha()
+        end
+        frame.name:SetAlpha(0)
+        if frame.specNameText then
+            frame.specNameText:SetAlpha(0)
+        end
+    elseif frame.castHiddenName and (not casting and not channeling) then
+        frame.name:SetAlpha(frame.castHiddenName)
+        if frame.specNameText then
+            frame.specNameText:SetAlpha(frame.castHiddenName)
+        end
+    end
+
     if hideCastbarBorderShield then
         castBar.BorderShield:SetTexture(nil)
     elseif castBarDragonflightShield then
@@ -255,16 +274,21 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     castBar.Spark:SetSize(4, castBarHeight) --4 width, 5 height original
     castBar.Text:SetScale(castBarTextScale)
 
-    if showCastBarIconWhenNoninterruptible and notInterruptible then
-        castBar.BorderShield:SetDrawLayer("OVERLAY", 1)
-        castBar.Icon:Show()
-        castBar.Icon:SetDrawLayer("OVERLAY", 2)
-    else
-        if (casting or channeling) and not notInterruptible then
-            castBar.Icon:Show() --attempt to fix icon randomly not showing (blizz bug)
+    if not hideCastbarIcon then
+        if showCastBarIconWhenNoninterruptible and notInterruptible then
+            castBar.BorderShield:SetDrawLayer("OVERLAY", 1)
+            castBar.Icon:Show()
+            castBar.Icon:SetDrawLayer("OVERLAY", 2)
         else
-            castBar.Icon:Hide()
+            if (casting or channeling) and not notInterruptible then
+                castBar.Icon:Show() --attempt to fix icon randomly not showing (blizz bug)
+            elseif not castBar:IsVisible() then
+                castBar.Icon:Hide()
+            end
         end
+    else
+        castBar.Icon:Hide()
+        castBar.Icon:SetAlpha(0)
     end
 
     if castBar.oldParent then
@@ -274,17 +298,17 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     end
 
     local function ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
-        local castBarEmphasisColor = BetterBlizzPlatesDB.castBarEmphasisColor
-        local castBarEmphasisText = BetterBlizzPlatesDB.castBarEmphasisText
-        local castBarEmphasisIcon = BetterBlizzPlatesDB.castBarEmphasisIcon
-        local castBarEmphasisHeight = BetterBlizzPlatesDB.castBarEmphasisHeight
-        local castBarEmphasisSpark = BetterBlizzPlatesDB.castBarEmphasisSpark
-        --local castBarEmphasisTexture = BetterBlizzPlatesDB.castBarEmphasisTexture
-        local castBarEmphasisHealthbarColor = BetterBlizzPlatesDB.castBarEmphasisHealthbarColor
-        local castBarEmphasisTextScale = BetterBlizzPlatesDB.castBarEmphasisTextScale
-        local castBarEmphasisIconScale = BetterBlizzPlatesDB.castBarEmphasisIconScale
-        local castBarEmphasisHeightValue = BetterBlizzPlatesDB.castBarEmphasisHeightValue
-        local castBarEmphasisSparkHeight = BetterBlizzPlatesDB.castBarEmphasisSparkHeight
+        local castBarEmphasisColor = db.castBarEmphasisColor
+        local castBarEmphasisText = db.castBarEmphasisText
+        local castBarEmphasisIcon = db.castBarEmphasisIcon
+        local castBarEmphasisHeight = db.castBarEmphasisHeight
+        local castBarEmphasisSpark = db.castBarEmphasisSpark
+        --local castBarEmphasisTexture = db.castBarEmphasisTexture
+        local castBarEmphasisHealthbarColor = db.castBarEmphasisHealthbarColor
+        local castBarEmphasisTextScale = db.castBarEmphasisTextScale
+        local castBarEmphasisIconScale = db.castBarEmphasisIconScale
+        local castBarEmphasisHeightValue = db.castBarEmphasisHeightValue
+        local castBarEmphasisSparkHeight = db.castBarEmphasisSparkHeight
 
         frame.castbarEmphasisActive = true
 
@@ -328,18 +352,18 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
 
         -- if castBarEmphasisTexture then
-        --     local textureName = BetterBlizzPlatesDB.customCastbarTexture
+        --     local textureName = db.customCastbarTexture
         --     local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
         --     castBarTexture:SetTexture(texturePath)
         -- end
     end
 
-    local enableCastbarEmphasis = BetterBlizzPlatesDB.enableCastbarEmphasis
-    local castBarEmphasisOnlyInterruptable = BetterBlizzPlatesDB.castBarEmphasisOnlyInterruptable
-    local castEmphasisList = BetterBlizzPlatesDB.castEmphasisList
-    local castBarRecolorInterrupt = BetterBlizzPlatesDB.castBarRecolorInterrupt
-    local castBarNoInterruptColor = BetterBlizzPlatesDB.castBarNoInterruptColor
-    local castBarDelayedInterruptColor = BetterBlizzPlatesDB.castBarDelayedInterruptColor
+    local enableCastbarEmphasis = db.enableCastbarEmphasis
+    local castBarEmphasisOnlyInterruptable = db.castBarEmphasisOnlyInterruptable
+    local castEmphasisList = db.castEmphasisList
+    local castBarRecolorInterrupt = db.castBarRecolorInterrupt
+    local castBarNoInterruptColor = db.castBarNoInterruptColor
+    local castBarDelayedInterruptColor = db.castBarDelayedInterruptColor
 
     if castBarRecolorInterrupt then
         if spellName or spellID then
@@ -366,10 +390,10 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                             if cooldownRemaining < castRemaining then
                                 if not castBar.spark then
                                     castBar.spark = castBar:CreateTexture(nil, "OVERLAY")
-                                    castBar.spark:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
-                                    castBar.spark:SetSize(16, 52)
-                                    castBar.spark:SetBlendMode("ADD")
-                                    castBar.spark:SetVertexColor(0, 1, 0)
+                                    castBar.spark:SetColorTexture(0, 1, 0, 1) -- Solid green color with full opacity
+                                    castBar.spark:SetSize(2, castBar:GetHeight())
+                                    --castBar.spark:SetBlendMode("ADD")
+                                    --castBar.spark:SetVertexColor(0, 1, 0)
                                 end
 
                                 -- Calculate the interrupt percentage
@@ -385,7 +409,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                                     sparkPosition = interruptPercent * castBar:GetWidth()
                                 end
 
-                                castBar.spark:SetPoint("CENTER", castBar, "LEFT", sparkPosition, -2)
+                                castBar.spark:SetPoint("CENTER", castBar, "LEFT", sparkPosition)
                                 castBar.spark:Show()
 
                                 -- Schedule the color update for when the interrupt will be ready
@@ -590,7 +614,7 @@ end
 -- Update text and color based on the target
 function BBP.UpdateNameplateTargetText(frame, unit)
     if not frame.TargetText then
-        frame.TargetText = frame.healthBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        frame.TargetText = BBP.OverlayFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.TargetText:SetJustifyH("CENTER")
     end
 

@@ -9,8 +9,8 @@ LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\
 LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
 
 local addonVersion = "1.00" --too afraid to to touch for now
-local addonUpdates = "1.6.8d"
-local sendUpdate = false
+local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
+local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
@@ -34,6 +34,7 @@ local defaultSettings = {
     updates = "empty",
     wasOnLoadingScreen = true,
     setCVarAcrossAllCharacters = true,
+    skipGUI = true,
     -- General
     classicNameplates = false,
     removeRealmNames = true,
@@ -200,6 +201,7 @@ local defaultSettings = {
     classIndicatorAnchor = "TOP",
     classIndicatorFriendlyAnchor = "TOP",
     classIndicatorScale = 1,
+    classIndicatorAlpha = 1,
     classIndicatorFriendlyScale = 1,
     classIndicatorEnemy = false,
     classIndicatorFriendly = true,
@@ -1029,24 +1031,25 @@ end
 -- Update message
 local function SendUpdateMessage()
     if sendUpdate then
+        BetterBlizzPlatesDB.skipGUI = true
         if not BetterBlizzPlatesDB.scStart then
-            C_Timer.After(7, function()
-                --bbp news
-                --PlaySoundFile(567439) --quest complete sfx
-                --BBP.CreateUpdateMessageWindow()
-                if not BetterBlizzPlatesDB.classicNameplates and (BetterBlizzPlatesDB.NamePlateVerticalScale ~= 1 and BetterBlizzPlatesDB.NamePlateVerticalScale ~= "1") then
-                    StaticPopup_Show("BBP_UPDATE_NOTIF")
-                end
-                --DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-                -- DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates Cata Beta 0.0.8:")
-                -- DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a Tweaks:")
-                -- DEFAULT_CHAT_FRAME:AddMessage("   - Tweaked castbar stuff again. Might require tweaks on your settings if smth looks off.")
-                -- DEFAULT_CHAT_FRAME:AddMessage("   - Hide Level Frame Setting: Now completely hides the level frame on classic nameplates and extends the health bar.")
-                -- DEFAULT_CHAT_FRAME:AddMessage("   - Nameplate Auras: Added stack number like on retail.")
+            -- C_Timer.After(7, function()
+            --     --bbp news
+            --     --PlaySoundFile(567439) --quest complete sfx
+            --     --BBP.CreateUpdateMessageWindow()
+            --     if not BetterBlizzPlatesDB.classicNameplates and (BetterBlizzPlatesDB.NamePlateVerticalScale ~= 1 and BetterBlizzPlatesDB.NamePlateVerticalScale ~= "1") then
+            --         StaticPopup_Show("BBP_UPDATE_NOTIF")
+            --     end
+            --     --DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
+            --     -- DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates Cata Beta 0.0.8:")
+            --     -- DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a Tweaks:")
+            --     -- DEFAULT_CHAT_FRAME:AddMessage("   - Tweaked castbar stuff again. Might require tweaks on your settings if smth looks off.")
+            --     -- DEFAULT_CHAT_FRAME:AddMessage("   - Hide Level Frame Setting: Now completely hides the level frame on classic nameplates and extends the health bar.")
+            --     -- DEFAULT_CHAT_FRAME:AddMessage("   - Nameplate Auras: Added stack number like on retail.")
 
-                -- DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
-                -- DEFAULT_CHAT_FRAME:AddMessage("   - Read curseforge changelog for bugfix list.")
-            end)
+            --     -- DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
+            --     -- DEFAULT_CHAT_FRAME:AddMessage("   - Read curseforge changelog for bugfix list.")
+            -- end)
         else
             BetterBlizzPlatesDB.scStart = nil
         end
@@ -1340,12 +1343,12 @@ end
 --#################################################################################################
 -- Set custom healthbar texture
 local function textureExtraBars(frame, setting)
-    local extraBars = BetterBlizzPlatesDB.useCustomTextureForExtraBars
-    if extraBars then
-        frame.otherHealPrediction:SetTexture(setting)
-        frame.myHealPrediction:SetTexture(setting)
-        frame.totalAbsorb:SetTexture(setting)
-    end
+    -- local extraBars = BetterBlizzPlatesDB.useCustomTextureForExtraBars
+    -- if extraBars then
+    --     frame.otherHealPrediction:SetTexture(setting)
+    --     frame.myHealPrediction:SetTexture(setting)
+    --     frame.totalAbsorb:SetTexture(setting)
+    -- end
 end
 
 function BBP.ApplyCustomTextureToNameplate(frame)
@@ -1465,6 +1468,10 @@ local function ColorNameplateByReaction(frame)
     elseif not info.isFriend and config.enemyHealthBarColor then
         -- Handling enemy health bars
         if (not config.enemyHealthBarColorNpcOnly) or (config.enemyHealthBarColorNpcOnly and not info.isPlayer) then
+            if CompactUnitFrame_IsTapDenied(frame) then
+                frame.healthBar:SetStatusBarColor(0.9,0.9,0.9)
+                return
+            end
             if info.isNeutral then
                 -- Neutral NPC
                 config.enemyNeutralHealthBarColorRGB = BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 0, 0}
@@ -2084,6 +2091,7 @@ end
 -- Fade out npcs from list
 function BBP.FadeOutNPCs(frame)
     frame:SetAlpha(1)
+    frame.CastBar:SetAlpha(1)
     -- Skip if the unit is a player
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
@@ -2104,11 +2112,14 @@ function BBP.FadeOutNPCs(frame)
         if UnitExists("target") then
             if not info.isTarget and not info.isPlayer then
                 frame:SetAlpha(config.fadeOutNPCsAlpha)
+                frame.CastBar:SetAlpha(config.fadeOutNPCsAlpha)
             else
                 frame:SetAlpha(1)
+                frame.CastBar:SetAlpha(1)
             end
         else
             frame:SetAlpha(1)
+            frame.CastBar:SetAlpha(1)
         end
         return
     end
@@ -2132,10 +2143,13 @@ function BBP.FadeOutNPCs(frame)
     -- Check if the unit is the current target
     if info.isTarget then
         frame:SetAlpha(1)
+        frame.CastBar:SetAlpha(1)
     elseif inList then
         frame:SetAlpha(config.fadeOutNPCsAlpha)
+        frame.CastBar:SetAlpha(config.fadeOutNPCsAlpha)
     else
         frame:SetAlpha(1)
+        frame.CastBar:SetAlpha(1)
     end
 end
 
@@ -2336,9 +2350,11 @@ function BBP.ColorThreat(frame)
 
     local combatOnly = BetterBlizzPlatesDB.enemyColorThreatCombatOnly and not UnitAffectingCombat(frame.unit)
     if combatOnly then return end
-    if UnitIsPlayer(frame.unit) then return end
+
+    if UnitIsFriend(frame.unit, "player") then return end
 
     local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
+    local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     local r, g, b
 
     if BBP.isRoleTank then
@@ -2353,13 +2369,16 @@ function BBP.ColorThreat(frame)
             end
         end
     else
+        if config.npcHealthbarColor and not isTanking then
+            return
+        end
         r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
 
         if ( isTanking ) then
             r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB)
         elseif ( threatStatus and threatStatus > 0 ) then
             -- about to pull aggro
-            r, g, b = GetThreatStatusColor(threatStatus)
+            --r, g, b = GetThreatStatusColor(threatStatus)
         end
     end
 
@@ -2486,7 +2505,10 @@ function BBP.AuraColor(frame)
         config.auraColorRGB = auraColor
         frame.healthBar:SetStatusBarColor(config.auraColorRGB.r, config.auraColorRGB.g, config.auraColorRGB.b)
     else
-        config.auraColorRGB = nil
+        if config.auraColorRGB then
+            config.auraColorRGB = nil
+            BBP.CompactUnitFrame_UpdateHealthColor(frame)
+        end
     end
 end
 
@@ -2587,6 +2609,10 @@ local function CreateBetterClassicHealthbarBorder(frame)
             self.left:SetVertexColor(r, g, b, a)
             self.center:SetVertexColor(r, g, b, a)
             self.right:SetVertexColor(r, g, b, a)
+        end
+
+        function frame.healthBar:SetBorderSize(size)
+            --
         end
     end
 
@@ -3201,6 +3227,25 @@ local function CreateRetailNameplateLook(frame)
     frame.LevelFrame:Hide()
     frame.LevelFrame:SetAlpha(0)
     SetupBorderOnFrame(frame.healthBar)
+
+    if not frame.classificationIndicator then
+        frame.classificationIndicator = frame:CreateTexture(nil, "OVERLAY")
+        frame.classificationIndicator:SetAtlas("nameplates-icon-elite-gold")
+        frame.classificationIndicator:SetSize(13, 13)
+        frame.classificationIndicator:SetPoint("RIGHT", frame.healthBar, "LEFT", -2, 0)
+        frame.classificationIndicator:Hide()
+    end
+
+    local classification = UnitClassification(frame.unit)
+    if classification == "elite" then
+        frame.classificationIndicator:SetAtlas("nameplates-icon-elite-gold")
+        frame.classificationIndicator:Show()
+    elseif classification == "rareelite" then
+        frame.classificationIndicator:SetAtlas("nameplates-icon-elite-silver")
+        frame.classificationIndicator:Show()
+    else
+        frame.classificationIndicator:Hide()
+    end
 end
 
 local function HideLevelFrameOnClassicNameplate(frame)
@@ -3635,61 +3680,6 @@ end
 
 
 
-
-
-
-
-
-
-function BBP.OnUnitUpdate(unitId, unitInfo, allUnitsInfo)
-    local nameplate, frame = BBP.GetSafeNameplate(unitId)
-    if frame then
-        local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
-        local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
-        if not info then return end
-
-        if (config.classIndicator or config.partyPointer) and not info.isSelf then
-            if config.classIndicator then
-                BBP.ClassIndicator(frame, unitInfo.specId)
-            end
-            if config.partyPointer then
-                BBP.PartyPointer(frame)
-            end
-        end
-        if config.showGuildNames and config.friendlyHideHealthBar then
-            if not config.guildNameColor then
-                config.guildNameColor = BetterBlizzPlatesDB.guildNameColor
-                config.guildNameColorRGB = BetterBlizzPlatesDB.guildNameColorRGB
-                config.guildNameScale = BetterBlizzPlatesDB.guildNameScale
-            end
-            if not frame.guildName then
-                frame.guildName = frame:CreateFontString(nil, "BACKGROUND")
-                local font, size, outline = frame.name:GetFont()
-                frame.guildName:SetFont(font, 14, outline)
-            end
-
-            local guildName, guildRankName, guildRankIndex = GetGuildInfo(unitId)
-            if guildName then
-                frame.guildName:SetText("<"..guildName..">")
-                if config.guildNameColor then
-                    frame.guildName:SetTextColor(unpack(config.guildNameColorRGB))
-                else
-                    frame.guildName:SetTextColor(frame.name:GetTextColor())
-                end
-                frame.guildName:SetPoint("TOP", frame.fakeName or frame.name, "BOTTOM", 0, 0)
-                frame.guildName:SetScale(config.guildNameScale or 1)
-            else
-                frame.guildName:SetText("")
-            end
-        end
-    end
-end
---registering the callback:
--- local openRaidLib = LibStub:GetLibrary("LibOpenRaid-1.0")
--- openRaidLib.RegisterCallback(BBP, "UnitInfoUpdate", "OnUnitUpdate")
-
-
-
 --################################################################################################
 -- Apply raidmarker change
 function BBP.ApplyRaidmarkerChanges(frame)
@@ -3937,6 +3927,56 @@ local function FriendIndicator(frame)
     end
 end
 
+local function ShowFriendlyGuildName(frame, unit)
+    local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo
+    if config.showGuildNames and info.isFriend then
+        if not config.guildNameInitialized then
+            config.guildNameColor = BetterBlizzPlatesDB.guildNameColor
+            config.guildNameColorRGB = BetterBlizzPlatesDB.guildNameColorRGB
+            config.guildNameScale = BetterBlizzPlatesDB.guildNameScale
+
+            config.guildNameInitialized = true
+        end
+        if not frame.guildName then
+            frame.guildName = frame:CreateFontString(nil, "BACKGROUND", "SystemFont_NamePlateFixed")
+            local db = BetterBlizzPlatesDB
+            if db.useCustomFont then
+                BBP.SetFontBasedOnOption(frame.guildName, 9, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")
+            else
+                local font, size, outline = frame.name:GetFont()
+                frame.guildName:SetFont(font, 9, outline)
+            end
+            frame.guildName:SetIgnoreParentScale(true)
+        end
+
+        local guildName, guildRankName, guildRankIndex = GetGuildInfo(unit)
+        if guildName then
+            if BBP.needsUpdate then
+                local font, size, outline = frame.name:GetFont()
+                frame.guildName:SetFont(font, 9, outline)
+            end
+            frame.guildName:SetText("<"..guildName..">")
+            if config.guildNameColor then
+                frame.guildName:SetTextColor(unpack(config.guildNameColorRGB))
+            else
+                frame.guildName:SetTextColor(frame.name:GetTextColor())
+            end
+            frame.guildName:ClearAllPoints()
+            if frame.healthBar:GetAlpha() == 0 then
+                frame.guildName:SetPoint("TOP", frame.name, "BOTTOM", 0, 0)
+            else
+                frame.guildName:SetPoint("TOP", frame.healthBar, "BOTTOM", 0, -3)
+            end
+            frame.guildName:SetScale(config.guildNameScale or 1)
+        else
+            frame.guildName:SetText("")
+        end
+    elseif frame.guildName then
+        frame.guildName:SetText("")
+    end
+end
+
 
 --#################################################################################################
 --#################################################################################################
@@ -4176,7 +4216,7 @@ local function NameplateNPCTitle(frame)
         BBP.SetFontBasedOnOption(frame.npcTitle, 10, (BetterBlizzPlatesDB.useCustomFont and BetterBlizzPlatesDB.enableCustomFontOutline) and BetterBlizzPlatesDB.customFontOutline or "")
     end
 
-    local config = frame.BetterBlizzPlates.config
+    --local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
     -- Check if the unit is an NPC
@@ -4186,7 +4226,7 @@ local function NameplateNPCTitle(frame)
         local title = GetNPCTitle(frame.unit)
         frame.npcTitle:SetText(title)
         frame.npcTitle:ClearAllPoints()
-        if config.friendlyHideHealthBar then
+        if frame.healthBar:GetAlpha() == 0 then
             frame.npcTitle:SetPoint("TOP", frame.name, "BOTTOM", 0, -2)
         else
             frame.npcTitle:SetPoint("TOP", frame.healthBar, "BOTTOM", 0, -2)
@@ -4440,6 +4480,8 @@ local function HandleNamePlateAdded(unit)
 
     if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
 
+    if config.showGuildNames then ShowFriendlyGuildName(frame, frame.unit) end
+
     local alwaysHideFriendlyCastbar = BetterBlizzPlatesDB.alwaysHideFriendlyCastbar
     local alwaysHideEnemyCastbar = BetterBlizzPlatesDB.alwaysHideEnemyCastbar
     if (info.isFriend and alwaysHideFriendlyCastbar) or (not info.isFriend and alwaysHideEnemyCastbar) then
@@ -4599,24 +4641,8 @@ function BBP.RefreshAllNameplates()
         if frame.specNameText then
             BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
         end
-        if frame.guildName then
-            if BetterBlizzPlatesDB.showGuildNames and BetterBlizzPlatesDB.friendlyHideHealthBar then
-                local guildName, guildRankName, guildRankIndex = GetGuildInfo(nameplate.UnitFrame.unit)
-                if guildName then
-                    frame.guildName:SetText("<"..guildName..">")
-                    if BetterBlizzPlatesDB.guildNameColor then
-                        frame.guildName:SetTextColor(unpack(BetterBlizzPlatesDB.guildNameColorRGB))
-                    else
-                        frame.guildName:SetTextColor(frame.name:GetTextColor())
-                    end
-                    frame.guildName:SetPoint("TOP", frame.fakeName or frame.name, "BOTTOM", 0, 0)
-                    frame.guildName:SetScale(BetterBlizzPlatesDB.guildNameScale or 1)
-                else
-                    frame.guildName:SetText("")
-                end
-            else
-                frame.guildName:SetText("")
-            end
+        if BetterBlizzPlatesDB.showGuildNames then
+            ShowFriendlyGuildName(frame, frame.unit)
         end
 
         -- Hide quest indicator after testing
@@ -4776,6 +4802,8 @@ function BBP.RefreshAllNameplates()
                 frame.LevelFrame:SetAlpha(1)
             end
         end
+
+        if BetterBlizzPlatesDB.changeHealthbarHeight then AdjustHealthBarHeight(frame) end
     end
 end
 
@@ -4947,6 +4975,10 @@ function BBP.ConsolidatedUpdateName(frame)
                 frame.fakeName:SetAlpha(0)
             end
         end
+    end
+
+    if frame.castHiddenName then
+        frame.name:SetAlpha(0)
     end
 end
 -- Use the consolidated function to hook into CompactUnitFrame_UpdateName
@@ -5290,7 +5322,11 @@ SlashCmdList["BBP"] = function(msg)
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates Version "..addonUpdates)
     else
         --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
-        Settings.OpenToCategory(BBP.category.ID)
+        if not BetterBlizzPlates.guiLoaded then
+            BBP.LoadGUI()
+        else
+            Settings.OpenToCategory(BBP.category.ID)
+        end
     end
 end
 

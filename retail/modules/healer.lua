@@ -1,14 +1,3 @@
--- Healer spec id's
-local HealerSpecs = {
-    [105]  = true,  --> druid resto
-    [270]  = true,  --> monk mw
-    [65]   = true,  --> paladin holy
-    [256]  = true,  --> priest disc
-    [257]  = true,  --> priest holy
-    [264]  = true,  --> shaman resto
-    [1468] = true,  --> preservation evoker  
-}
-
 -- Healer Indicator
 function BBP.HealerIndicator(frame)
     local config = frame.BetterBlizzPlates.config
@@ -73,24 +62,6 @@ function BBP.HealerIndicator(frame)
         return
     end
 
-    -- Check for Details
-    local Details = Details
-    local spec
-
-    if not Details or Details.realversion < 134 then
-        if BBP.isInArena and info.isEnemy then
-            for i = 1, 3 do
-                if UnitIsUnit(frame.unit, "arena" .. i) then
-                    spec = GetArenaOpponentSpec(i)
-                    break
-                end
-            end
-        else
-            frame.healerIndicator:Hide()
-            return
-        end
-    end
-
     if (config.healerIndicatorArenaOnly and not BBP.isInArena) or (config.healerIndicatorBgOnly and not BBP.isInBg) then
         if config.healerIndicatorArenaOnly and config.healerIndicatorBgOnly then
             if not BBP.isInPvP then
@@ -103,19 +74,8 @@ function BBP.HealerIndicator(frame)
         end
     end
 
-    if BBP.isInArena and info.isEnemy then
-        for i = 1, 3 do
-            if UnitIsUnit(frame.unit, "arena" .. i) then
-                spec = GetArenaOpponentSpec(i)
-                break
-            end
-        end
-    else
-        spec = Details:GetSpecByGUID(info.unitGUID)
-    end
-
     -- Condition check: healerIndicatorEnemyOnly
-    if info.isPlayer and HealerSpecs[spec] then
+    if BBP.IsSpecHealer(frame) then
         if config.healerIndicatorEnemyOnly and not info.isEnemy then
             if frame.healerIndicator then frame.healerIndicator:Hide() end
             return

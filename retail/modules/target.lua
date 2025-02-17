@@ -36,8 +36,14 @@ function BBP.TargetIndicator(frame)
     -- Initialize
     if not frame.targetIndicator then
         frame.targetIndicator = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
-        frame.targetIndicator:SetSize(14, 9)
-        frame.targetIndicator:SetAtlas("Navigation-Tracked-Arrow")
+        if false then
+            frame.targetIndicator:SetAtlas("glues-gameMode-selectArrow")
+            frame.targetIndicator:SetSize(22,14)
+            -- this needs rotations swapped
+        else
+            frame.targetIndicator:SetSize(14, 9)
+            frame.targetIndicator:SetAtlas("Navigation-Tracked-Arrow")
+        end
         frame.targetIndicator:Hide()
         frame.targetIndicator:SetDrawLayer("OVERLAY", 7)
         frame.targetIndicator:SetVertexColor(1,1,1)
@@ -332,7 +338,7 @@ function BBP.TargetResourceUpdater()
                 resourceFrame:SetFrameStrata("DIALOG")
             end
             resourceFrame:ClearAllPoints();
-            local padding = resourceFrame.paddingOverride or 0
+            local padding = resourceFrame.paddingOverride or classPadding[className] or 0
             PixelUtil.SetPoint(resourceFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
         end
     end
@@ -584,7 +590,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
 
-            if config.petIndicatorOnlyShowMainPet then
+            if config.petIndicatorHideSecondaryPets then
                 BBP.PetIndicator(frame)
             end
 
@@ -694,7 +700,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
 
             if config.showCastbarIfTarget then BBP.HideCastbar(frame, frame.unit) end
 
-            if config.petIndicatorOnlyShowMainPet then
+            if config.petIndicatorHideSecondaryPets then
                 BBP.PetIndicator(frame)
             end
 

@@ -1,6 +1,7 @@
-## Interface: 110007
+## Interface: 110100
 ## Title: Better|cff00c0ffBlizz|rPlates
 ## Notes: Standard Blizzard nameplates with more features and easy settings
+## Version: 1.6.9
 ## SavedVariables: BetterBlizzPlatesDB
 ## OptionalDeps: LibSharedMedia-3.0
 ## IconAtlas: gmchat-icon-blizz
@@ -9,27 +10,27 @@
 embeds.xml
 
 init.lua
-temp_tww.lua
+retail\temp_tww.lua
 
-modules\combat.lua
-modules\castbar.lua
-modules\totem.lua
-modules\arenaid.lua
-modules\execute.lua
-modules\healthNumbers.lua
-modules\target.lua
-modules\healer.lua
-modules\absorb.lua
-modules\classIcon.lua
-modules\partyPointer.lua
-modules\pet.lua
-modules\bgIndicator.lua
-modules\quest.lua
-modules\auras.lua
-modules\profiles.lua
-modules\importConvert.lua
+retail\modules\combat.lua
+retail\modules\castbar.lua
+retail\modules\totem.lua
+retail\modules\arenaid.lua
+retail\modules\execute.lua
+retail\modules\healthNumbers.lua
+retail\modules\target.lua
+retail\modules\healer.lua
+retail\modules\absorb.lua
+retail\modules\classIcon.lua
+retail\modules\partyPointer.lua
+retail\modules\pet.lua
+retail\modules\bgIndicator.lua
+retail\modules\quest.lua
+retail\modules\auras.lua
+retail\modules\profiles.lua
+retail\modules\importConvert.lua
 
-modules\druid\overcharges.lua
+retail\modules\druid\overcharges.lua
 
-gui.lua
-BetterBlizzPlates.lua
+retail\gui.lua
+retail\BetterBlizzPlates.lua

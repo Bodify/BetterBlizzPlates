@@ -247,6 +247,10 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     -- Get class icon texture and coordinates
     local classIcon = "Interface/GLUES/CHARACTERCREATE/UI-CHARACTERCREATE-CLASSES"
     local classColor = RAID_CLASS_COLORS[info.class]
+    if info.class == "SHAMAN" then
+        -- Specific color override for Shaman
+        classColor = {r = 0.00, g = 0.44, b = 0.87}
+    end
     local coords = CLASS_ICON_TCOORDS[info.class]
     if not coords then
         frame.classIndicator:Hide()
@@ -355,6 +359,10 @@ function BBP.ClassIndicatorTargetHighlight(frame)
             frame.classIndicator.highlightSelect:Show()
             if info.class and config.classIndicatorHighlightColor then
                 local classColor = RAID_CLASS_COLORS[info.class]
+                if info.class == "SHAMAN" then
+                    -- Specific color override for Shaman
+                    classColor = {r = 0.00, g = 0.44, b = 0.87}
+                end
                 frame.classIndicator.highlightSelect:SetDesaturated(true)
                 frame.classIndicator.highlightSelect:SetVertexColor(classColor.r, classColor.g, classColor.b)
             end

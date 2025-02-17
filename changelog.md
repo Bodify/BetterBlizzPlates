@@ -1,3 +1,45 @@
+# BetterBlizzPlates 1.6.9
+## The War Within, Cata & Era
+### New:
+- Class Indicator Alpha setting.
+- Export/Import section now has a delete button top right on each section when mousing over them that deletes all data in that section.
+### Tweaks
+- Skip GUI setting now also available on Classic versions and is on by default.
+- Search is now available on Classic versions
+- Color Threat will now only override Color NPC if you have aggro.
+- Fade NPC feature now also fades the castbar
+- Castbar Icon now also gets faded when a nameplate is faded, when castbar customization is on.
+- NPC Title setting will now show under healthbar if healthbar is visible
+
+## The War Within
+### New:
+- Pet Indicator & Hide NPC now both have settings to hide secondary pets during arena. These will be enabled by default.
+- You can now adjust Personal Resource Display Aura size separately and chose to disable enlarge/compact/glow on it
+- Hide Castbar Icon setting.
+### Tweak:
+- Class Indicator: New circle border. Also lowered the Strata so it does not appear above auras and added a setting to raise strata
+- New and more reliable healer detection that works without Details. Thanks to RBGDEV for the code.
+- Added a few more common arena npcs to Fade Out & Totem Lists.
+- Level Indicator can now also be shown on the right side of nameplates with default non-classic nameplates. Positonal settings etc might come later.
+- Small Pets in PvP setting slightly changed and width can now be changed.
+- Small Pets setting will no longer reduce healthbar width for comp stomp npcs.
+- Small tweaks to the nameplate shadow/highlight setting.
+### Bugfix:
+- Fix Blitz Indicator. Was not working properly at all due to a couple of mistakes.
+- Fix friendly auras being too high with "Non-Stackable" friendly nameplate setting on due to a change from an earlier patch that had not been accounted for.
+- Fix BG Spec Names option accidentally being run on npcs causing other name settings to not display as intended.
+
+## Classic Era
+### Bugfix:
+- Fixed an issue with the "Castbar: Interrupted by" setting causing shaman interrupts to cause a lua error.
+
+### Note
+- I might have missed some other minor bugfixes in the patch notes, and I might have introduced some new ones. Please keep reporting bugs, however minor.
+
+
+
+
+
 # BetterBlizzPlates 1.6.8d
 ## Classic Era/SoD
 - Early Alpha version of BBP for Classic Era/SoD. Please report bugs, very limited testing has been done. Classic Era and Cataclysm will support eachothers import codes 100%. This version will just have the cata totem list, so not very accurate.

@@ -27,7 +27,8 @@ BBP.CompactIcon = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-HUD
 BBP.TotemIndicatorIcon = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\TeleportationNetwork-Ardenweald-32x32.tga"
 BBP.BarberIcon = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\Barbershop-32x32.tga"
 
-
+local checkBoxList = {}
+local sliderList = {}
 
 local LibDeflate = LibStub("LibDeflate")
 local LibSerialize = LibStub("LibSerialize")
@@ -103,6 +104,8 @@ function BBP.ImportProfile(encodedString, expectedDataType)
         end
 
         return importTable.data, nil
+    elseif encodedString:sub(1, 4) == "!BBF" and encodedString:sub(-4) == "!BBF" then
+        return nil, "This is a BetterBlizz|cffff4040Frames|r profile string, not a BetterBlizz|cff40ff40Plates|r one. Two different addons."
     else
         -- If no !BBP, assume it's an other import and try to process it
         local success, importTable = ImportOtherProfile(encodedString, expectedDataType)
@@ -226,6 +229,7 @@ StaticPopupDialogs["BBP_RETAILORCLASSIC"] = {
         BetterBlizzPlatesDB.nameplateEnemyWidth = 128
         BetterBlizzPlatesDB.nameplateFriendlyWidth = 128
         BetterBlizzPlatesDB.castBarHeight = 10
+        BetterBlizzPlatesDB.hideLevelFrame = false
         ReloadUI()
     end,
     timeout = 0,
@@ -338,7 +342,7 @@ local function CreateColorBox(parent, colorVar, labelText)
     borderFrame:SetPoint("LEFT", frame, "LEFT", 4, 0) -- Adjust to center the border around the color texture
 
     local border = borderFrame:CreateTexture(nil, "OVERLAY", nil, 5)
-    border:SetAtlas("talents-node-square-gray")
+    border:SetAtlas("CommentatorSpellBorder")
     border:SetAllPoints()
 
     -- Create the color texture within the border frame
@@ -682,6 +686,27 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
     slider.Low:SetText(" ")
     slider.High:SetText(" ")
 
+    table.insert(sliderList, {
+        slider = slider,
+        label = label,
+        element = element
+    })
+
+    local category
+    if parent.name then
+        category = parent.name
+    elseif parent:GetParent() and parent:GetParent().name then
+        category = parent:GetParent().name
+    elseif parent:GetParent() and parent:GetParent():GetParent() and parent:GetParent():GetParent().name then
+        category = parent:GetParent():GetParent().name
+    end
+
+    if category == "Better|cff00c0ffBlizz|rPlates |A:gmchat-icon-blizz:16:16|a" then
+        category = "General"
+    end
+
+    slider.searchCategory = category
+
     if width then
         slider:SetWidth(width)
     end
@@ -699,7 +724,11 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
             local nonAxisRangeExtension = 2
             local newMinValue = math.max(newValue - nonAxisRangeExtension, 0.1)  -- Prevent going below 0.1
             local newMaxValue = math.max(newValue + nonAxisRangeExtension, maxValue)
-            slider:SetMinMaxValues(newMinValue, newMaxValue)
+            if element == "classIndicatorAlpha" then
+                slider:SetMinMaxValues(newMinValue, 1)
+            else
+                slider:SetMinMaxValues(newMinValue, newMaxValue)
+            end
         end
     end
 
@@ -1377,8 +1406,11 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
     local function HandleEditBoxInput()
         local inputValue = tonumber(editBox:GetText())
         if inputValue then
-            if (axis ~= "X" and axis ~= "Y") and inputValue <= 0 then
+            if (axis ~= "X" and axis ~= "Y") and (inputValue <= 0 or (element == "classIndicatorAlpha" and inputValue >= 1)) then
                 inputValue = 0.1  -- Set to minimum allowed value for non-axis sliders
+                if element == "classIndicatorAlpha" then
+                    inputValue = 1
+                end
             end
 
             local currentMin, currentMax = slider:GetMinMaxValues()
@@ -1643,6 +1675,43 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
         exportBox:HighlightText()
     end)
 
+    local wipeButton = exportBox:CreateTexture(nil, "OVERLAY")
+    wipeButton:SetSize(14,14)
+    wipeButton:SetPoint("CENTER", exportBox, "TOPRIGHT", 8,6)
+    wipeButton:SetAtlas("transmog-icon-remove")
+    wipeButton:Hide()
+
+    wipeButton:SetScript("OnMouseDown", function(self, button)
+        if button == "RightButton" and IsShiftKeyDown() and IsAltKeyDown() then
+            if title == "Full Profile" then
+                BetterBlizzFramesDB = nil
+            else
+                BetterBlizzFramesDB[tableName] = nil
+            end
+            ReloadUI()
+        end
+    end)
+
+    local function HideWipeButton()
+        if not wipeButton:IsMouseOver() then
+            wipeButton:Hide()
+        end
+    end
+
+    frame:HookScript("OnEnter", function()
+        wipeButton:Show()
+        C_Timer.After(4, HideWipeButton)
+    end)
+    CreateTooltipTwo(wipeButton, "Delete "..title, "Delete all the data in "..title.."\n\nHold Shift+Alt and Right-Click to delete and reload.")
+
+    wipeButton:HookScript("OnEnter", function()
+        wipeButton:Show()
+    end)
+
+    wipeButton:HookScript("OnLeave", function()
+        C_Timer.After(0.5, HideWipeButton)
+    end)
+
 
     importBtn:SetScript("OnClick", function()
         local importString = importBox:GetText()
@@ -1706,6 +1775,7 @@ end
 local function CreateCheckbox(option, label, parent, cvar, extraFunc)
     local checkBox = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
     checkBox.Text:SetText(label)
+    table.insert(checkBoxList, {checkbox = checkBox, label = label})
     checkBox.text = checkBox.Text
     -- checkBox:SetHitRectInsets(0, 0, 0, 0)
     checkBox.Text:SetFont("Fonts\\FRIZQT__.TTF", 11)
@@ -1715,6 +1785,21 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
     if cvar then
         checkBox.cvar = true
     end
+
+    local category
+    if parent.name then
+        category = parent.name
+    elseif parent:GetParent() and parent:GetParent().name then
+        category = parent:GetParent().name
+    elseif parent:GetParent() and parent:GetParent():GetParent() and parent:GetParent():GetParent().name then
+        category = parent:GetParent():GetParent().name
+    end
+
+    if category == "Better|cff00c0ffBlizz|rPlates |A:gmchat-icon-blizz:16:16|a" then
+        category = "General"
+    end
+
+    checkBox.searchCategory = category
 
     local function UpdateCheckboxState()
         if cvar and not BBP.variablesLoaded then
@@ -3314,6 +3399,286 @@ local function CreateTitle(parent)
     verNumber:SetText("v" .. BBP.VersionNumber)
 end
 
+local function CreateSearchFrame()
+    local searchFrame = CreateFrame("Frame", "BBPSearchFrame", UIParent)
+    searchFrame:SetSize(680, 610)
+    searchFrame:SetPoint("CENTER", UIParent, "CENTER")
+    searchFrame:SetFrameStrata("HIGH")
+    searchFrame:Hide()
+
+    local wipText = searchFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    wipText:SetPoint("BOTTOM", searchFrame, "BOTTOM", -10, 10)
+    wipText:SetText("Search is not complete and is WIP.")
+
+    CreateTitle(searchFrame)
+
+    local bgImg = searchFrame:CreateTexture(nil, "BACKGROUND")
+    bgImg:SetAtlas("professions-recipe-background")
+    bgImg:SetPoint("CENTER", searchFrame, "CENTER", -8, 4)
+    bgImg:SetSize(680, 610)
+    bgImg:SetAlpha(0.4)
+    bgImg:SetVertexColor(0, 0, 0)
+
+    -- Title text for "Misc settings"
+    local settingsText = searchFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    settingsText:SetPoint("TOPLEFT", searchFrame, "TOPLEFT", 20, 0)
+    settingsText:SetText("Search results:")
+
+    local searchIcon = searchFrame:CreateTexture(nil, "ARTWORK")
+    searchIcon:SetAtlas("communities-icon-searchmagnifyingglass")
+    searchIcon:SetSize(28, 28)
+    searchIcon:SetPoint("RIGHT", settingsText, "LEFT", -3, -1)
+
+    -- Reference the existing SettingsPanel.SearchBox to copy properties
+    local referenceBox = SettingsPanel.SearchBox
+
+    -- Create the search input field on top of SettingsPanel.SearchBox
+    local searchBox = CreateFrame("EditBox", nil, SettingsPanel, "InputBoxTemplate")
+    searchBox:SetSize(referenceBox:GetWidth() + 1, referenceBox:GetHeight() + 1)
+    searchBox:SetPoint("CENTER", referenceBox, "CENTER")
+    searchBox:SetFrameStrata("HIGH")
+    searchBox:SetAutoFocus(false)
+    searchBox.Left:Hide()
+    searchBox.Right:Hide()
+    searchBox.Middle:Hide()
+    searchBox:SetFontObject(referenceBox:GetFontObject())
+    searchBox:SetTextInsets(16, 8, 0, 0)
+    searchBox:Hide()
+    searchBox:SetScript("OnEnterPressed", function(self)
+        self:ClearFocus()
+    end)
+    CreateTooltipTwo(searchBox, "Search |A:shop-games-magnifyingglass:17:17|a", "You can now search for settings in BetterBlizzPlates. (WIP)", nil, "TOP")
+
+    -- Create the list to display search results, positioned under the title and icon
+    local resultsList = CreateFrame("Frame", nil, searchFrame)
+    resultsList:SetSize(640, 500)
+    resultsList:SetPoint("TOP", settingsText, "BOTTOM", 0, -10)
+
+    -- Search function that clears results or searches for query
+    local checkboxPool = {}
+    local sliderPool = {}
+
+    local function SearchElements(query)
+        -- Clear existing results
+        for _, child in ipairs({resultsList:GetChildren()}) do
+            child:Hide()
+        end
+
+        if query == "" then
+            return
+        end
+
+        -- Convert the query into lowercase and split it into individual words
+        query = string.lower(query)
+        local queryWords = { strsplit(" ", query) }
+
+        local checkboxCount = 0
+        local sliderCount = 0
+        local yOffsetCheckbox = -20  -- Starting position for the first checkbox
+        local yOffsetSlider = -20    -- Starting position for the first slider
+
+        -- Helper function to check if all query words are in the label
+        local function matchesQuery(label)
+            label = string.lower(label)
+            for _, queryWord in ipairs(queryWords) do
+                if not string.find(label, queryWord) then
+                    return false
+                end
+            end
+            return true
+        end
+
+        local function applyRightClickScript(searchCheckbox, originalCheckbox)
+            local originalScript = originalCheckbox:GetScript("OnMouseDown")
+            if originalScript then
+                searchCheckbox:SetScript("OnMouseDown", function(self, button)
+                    if button == "RightButton" then
+                        originalScript(originalCheckbox, button)
+                    end
+                end)
+            end
+        end
+
+        -- Search through checkboxes
+        for _, data in ipairs(checkBoxList) do
+            if checkboxCount >= 20 then break end
+
+            -- Prepare the label and tooltip text
+            local label = string.lower(data.label or "")
+            local tooltipTitle = string.lower(data.checkbox.tooltipTitle or "")
+            local tooltipMainText = string.lower(data.checkbox.tooltipMainText or "")
+            local tooltipSubText = string.lower(data.checkbox.tooltipSubText or "")
+            local tooltipCVarName = string.lower(data.checkbox.tooltipCVarName and data.checkbox.tooltipCVarName.." CVar" or "")
+
+            -- Check if all query words are found in any of the searchable fields
+            if matchesQuery(label) or matchesQuery(tooltipTitle) or matchesQuery(tooltipMainText) or matchesQuery(tooltipSubText) or matchesQuery(tooltipCVarName) then
+                checkboxCount = checkboxCount + 1
+
+                -- Re-use or create a new checkbox from the pool
+                local resultCheckBox = checkboxPool[checkboxCount]
+                if not resultCheckBox then
+                    resultCheckBox = CreateFrame("CheckButton", nil, resultsList, "InterfaceOptionsCheckButtonTemplate")
+                    resultCheckBox:SetSize(24, 24)
+                    checkboxPool[checkboxCount] = resultCheckBox
+                end
+
+                -- Update checkbox properties and position
+                resultCheckBox:ClearAllPoints()
+                resultCheckBox:SetPoint("TOPLEFT", searchIcon, "TOPLEFT", 27, yOffsetCheckbox)
+                resultCheckBox.Text:SetText(data.label)
+                if not data.label or data.label == "" then
+                    resultCheckBox.Text:SetText(data.checkbox.tooltipTitle)
+                end
+                resultCheckBox:SetChecked(data.checkbox:GetChecked())
+
+                -- Link the result checkbox to the main checkbox
+                resultCheckBox:SetScript("OnClick", function()
+                    data.checkbox:Click()
+                end)
+
+                applyRightClickScript(resultCheckBox, data.checkbox)
+
+                -- Reapply tooltip
+                if data.checkbox.tooltipMainText then
+                    CreateTooltipTwo(resultCheckBox, data.checkbox.tooltipTitle, data.checkbox.tooltipMainText, data.checkbox.tooltipSubText, nil, data.checkbox.tooltipCVarName, nil, data.checkbox.searchCategory)
+                elseif data.checkbox.tooltipTitle then
+                    CreateTooltipTwo(resultCheckBox, data.checkbox.tooltipTitle, nil, nil, nil, nil, nil, data.checkbox.searchCategory)
+                else
+                    CreateTooltipTwo(resultCheckBox, "No data yet WIP", nil, nil, nil, nil, nil, data.checkbox.searchCategory)
+                end
+
+                resultCheckBox:Show()
+
+                -- Move down for the next checkbox
+                yOffsetCheckbox = yOffsetCheckbox - 24
+            end
+        end
+
+        -- Search through sliders
+        for _, data in ipairs(sliderList) do
+            if sliderCount >= 13 then break end
+
+            -- Prepare the label and tooltip text
+            local label = string.lower(data.label or "")
+            local tooltipTitle = string.lower(data.slider.tooltipTitle or "")
+            local tooltipMainText = string.lower(data.slider.tooltipMainText or "")
+            local tooltipSubText = string.lower(data.slider.tooltipSubText or "")
+            local tooltipCVarName = string.lower(data.slider.tooltipCVarName and data.slider.tooltipCVarName.." CVar" or "")
+
+            -- Check if all query words are found in any of the searchable fields
+            if matchesQuery(label) or matchesQuery(tooltipTitle) or matchesQuery(tooltipMainText) or matchesQuery(tooltipSubText) or matchesQuery(tooltipCVarName) then
+                sliderCount = sliderCount + 1
+
+                -- Re-use or create a new slider from the slider pool
+                local resultSlider = sliderPool[sliderCount]
+                if not resultSlider then
+                    resultSlider = CreateFrame("Slider", nil, resultsList, "OptionsSliderTemplate")
+                    resultSlider:SetOrientation('HORIZONTAL')
+                    resultSlider:SetValueStep(data.slider:GetValueStep())
+                    resultSlider:SetObeyStepOnDrag(true)
+                    resultSlider.Text = resultSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                    resultSlider.Text:SetTextColor(1, 0.81, 0, 1)
+                    resultSlider.Text:SetPoint("TOP", resultSlider, "BOTTOM", 0, -1)
+                    resultSlider.Low:SetText(" ")
+                    resultSlider.High:SetText(" ")
+                    sliderPool[sliderCount] = resultSlider
+                end
+
+                -- Format the slider text value
+                local function formatSliderValue(value)
+                    return value % 1 == 0 and tostring(math.floor(value)) or string.format("%.2f", value)
+                end
+
+                -- Update slider properties and position
+                resultSlider:ClearAllPoints()
+                resultSlider:SetPoint("TOPLEFT", searchIcon, "TOPLEFT", 277, yOffsetSlider)
+                resultSlider:SetScript("OnValueChanged", nil)
+                resultSlider:SetMinMaxValues(data.slider:GetMinMaxValues())
+                resultSlider:SetValue(data.slider:GetValue())
+                resultSlider.Text:SetText(data.label .. ": " .. formatSliderValue(data.slider:GetValue()))
+
+                resultSlider:SetScript("OnValueChanged", function(self, value)
+                    data.slider:SetValue(value) -- Trigger the original slider's script
+                    resultSlider.Text:SetText(data.label .. ": " .. formatSliderValue(value))
+                end)
+
+                -- Tooltip setup for sliders
+                if data.slider.tooltipMainText then
+                    CreateTooltipTwo(resultSlider, data.slider.tooltipTitle, data.slider.tooltipMainText, data.slider.tooltipSubText, nil, data.slider.tooltipCVarName, nil, data.slider.searchCategory)
+                elseif data.slider.tooltipTitle then
+                    CreateTooltipTwo(resultSlider, data.slider.tooltipTitle, nil, nil, nil, nil, nil, data.slider.searchCategory)
+                else
+                    CreateTooltipTwo(resultSlider, "No data yet WIP", nil, nil, nil, nil, nil, data.slider.searchCategory)
+                end
+
+                -- Show the slider and prepare for the next slider
+                resultSlider:Show()
+                yOffsetSlider = yOffsetSlider - 42
+            end
+        end
+    end
+
+    searchBox:SetScript("OnTextChanged", function(self)
+        local query = self:GetText()
+        if #query > 0 then
+            SettingsPanelSearchIcon:SetVertexColor(1, 1, 1)
+            SettingsPanel.SearchBox.Instructions:SetAlpha(0)
+            searchFrame:Show()
+            if SettingsPanel.currentLayout and SettingsPanel.currentLayout.frame then
+                SettingsPanel.currentLayout.frame:Hide()
+            end
+        else
+            SettingsPanelSearchIcon:SetVertexColor(0.6, 0.6, 0.6)
+            SettingsPanel.SearchBox.Instructions:SetAlpha(1)
+            searchFrame:Hide()
+            if SettingsPanel.currentLayout and SettingsPanel.currentLayout.frame then
+                SettingsPanel.currentLayout.frame:Show()
+            end
+        end
+        if #query >= 1 then
+            SearchElements(query)
+        else
+            SearchElements("")
+        end
+
+        if not searchBox.hookedSettings then
+            SettingsPanel:HookScript("OnHide", function()
+                SettingsPanelSearchIcon:SetVertexColor(0.6, 0.6, 0.6)
+                SettingsPanel.SearchBox.Instructions:SetAlpha(1)
+                searchFrame:Hide()
+                searchBox:Hide()
+                if SettingsPanel.currentLayout and SettingsPanel.currentLayout.frame then
+                    searchBox:SetText("")
+                    SettingsPanel.currentLayout.frame:Hide()
+                end
+            end)
+            searchBox.hookedSettings = true
+        end
+    end)
+
+    hooksecurefunc(SettingsPanel, "DisplayLayout", function()
+        if SettingsPanel.currentLayout.frame and SettingsPanel.currentLayout.frame.name == "Better|cff00c0ffBlizz|rPlates |A:gmchat-icon-blizz:16:16|a" or
+        (SettingsPanel.currentLayout.frame and SettingsPanel.currentLayout.frame.parent == "Better|cff00c0ffBlizz|rPlates |A:gmchat-icon-blizz:16:16|a") then
+            SettingsPanel.SearchBox.Instructions:SetText("Search in BetterBlizzPlates")
+            searchBox:Show()
+            searchBox:SetText("")
+            searchFrame:Hide()
+            searchFrame:ClearAllPoints()
+            searchFrame:SetPoint("TOPLEFT", SettingsPanel.currentLayout.frame, "TOPLEFT")
+            searchFrame:SetPoint("BOTTOMRIGHT", SettingsPanel.currentLayout.frame, "BOTTOMRIGHT")
+            if not SettingsPanel.currentLayout.frame:IsShown() then
+                SettingsPanel.currentLayout.frame:Show()
+            end
+        else
+            if SettingsPanel.SearchBox.Instructions:GetText() == "Search in BetterBlizzPlates" then
+                SettingsPanel.SearchBox.Instructions:SetText("Search")
+            end
+            searchBox:Hide()
+            searchFrame:Hide()
+        end
+    end)
+end
+
 ------------------------------------------------------------
 -- GUI Panels
 ------------------------------------------------------------
@@ -3333,6 +3698,16 @@ local function guiGeneralTab()
     bgImg:SetAlpha(0.4)
     bgImg:SetVertexColor(0,0,0)
 
+    local newSearch = BetterBlizzPlates:CreateTexture(nil, "BACKGROUND")
+    newSearch:SetAtlas("NewCharacter-Horde", true)
+    newSearch:SetPoint("BOTTOM", BetterBlizzPlates, "TOP", -70, 2)
+    CreateTooltipTwo(newSearch, "Search |A:shop-games-magnifyingglass:17:17|a", "You can now search for settings in BetterBlizzPlates. (WIP)")
+
+    local newSearchPoint = BetterBlizzPlates:CreateTexture(nil, "BACKGROUND")
+    newSearchPoint:SetAtlas("auctionhouse-icon-buyallarrow", true)
+    newSearchPoint:SetPoint("LEFT", newSearch, "RIGHT", -25, 0)
+    newSearchPoint:SetRotation(math.pi / 2)
+
     local alpha = BetterBlizzPlates:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
     alpha:SetPoint("CENTER", 0, 0)
     alpha:SetText("BETA")
@@ -3351,6 +3726,13 @@ local function guiGeneralTab()
     BetterBlizzPlates:HookScript("OnHide",function()
         alpha2:Hide()
     end)
+
+    CreateSearchFrame()
+
+    if BetterBlizzPlates.titleText then
+        BetterBlizzPlates.titleText:Hide()
+        BetterBlizzPlates.loadGUI:Hide()
+    end
 
     ----------------------
     -- General:
@@ -3374,15 +3756,24 @@ local function guiGeneralTab()
     local classicNameplates = CreateCheckbox("classicNameplates", "Use Classic Nameplates", BetterBlizzPlates)
     classicNameplates:SetPoint("TOPLEFT", removeRealmNames, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(classicNameplates, "Classic Nameplates", "Use the default classic nameplate look instead of retail look on nameplates.")
+
+    local hideLevelFrame = CreateCheckbox("hideLevelFrame", "Hide Level", BetterBlizzPlates)
+    hideLevelFrame:SetPoint("LEFT", classicNameplates.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(hideLevelFrame, "Hide Level", "Hides the Level on nameplates.\nThis is automatically on with retail-like nameplates.")
+
     classicNameplates:HookScript("OnClick", function(self)
         if self:GetChecked() then
             BetterBlizzPlatesDB.nameplateEnemyWidth = 128
             BetterBlizzPlatesDB.nameplateFriendlyWidth = 128
             BetterBlizzPlatesDB.castBarHeight = 10
+            hideLevelFrame:SetChecked(false)
+            BetterBlizzPlatesDB.hideLevelFrame = false
         else
             BetterBlizzPlatesDB.nameplateEnemyWidth = 110
             BetterBlizzPlatesDB.nameplateFriendlyWidth = 110
             BetterBlizzPlatesDB.castBarHeight = 16
+            hideLevelFrame:SetChecked(true)
+            BetterBlizzPlatesDB.hideLevelFrame = true
         end
         if not InCombatLockdown() then
             C_NamePlate.SetNamePlateFriendlySize(BetterBlizzPlatesDB.nameplateFriendlyWidth, 32)--friendlyHeight)
@@ -3390,10 +3781,6 @@ local function guiGeneralTab()
         end
         StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end)
-
-    local hideLevelFrame = CreateCheckbox("hideLevelFrame", "Hide Level", BetterBlizzPlates)
-    hideLevelFrame:SetPoint("LEFT", classicNameplates.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(hideLevelFrame, "Hide Level", "Hides the Level on nameplates.\nThis is automatically on with retail-like nameplates.")
     -- hideLevelFrame:HookScript("OnClick", function(self)
     --     if not self:GetChecked() then
     --         StaticPopup_Show("BBP_CONFIRM_RELOAD")
@@ -5391,6 +5778,10 @@ local function guiPositionAndScale()
     classIndicatorScale:SetPoint("TOP", anchorSubClassIcon, "BOTTOM", 36, -15)
     classIndicatorScale.Text:SetTextColor(0.04, 0.76, 1)
     CreateTooltip(classIndicatorScale, "Friendly Scale")
+
+    anchorSubHeal.classIndicatorAlpha = CreateSlider(contentFrame, "Alpha", 0.1, 1, 0.01, "classIndicatorAlpha", false, 52)
+    anchorSubHeal.classIndicatorAlpha:SetPoint("LEFT", anchorSubClassIcon.t, "RIGHT", 0, -3)
+    CreateTooltipTwo(anchorSubHeal.classIndicatorAlpha, "Class Indicator Alpha")
 
     local classIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "classIndicatorFriendlyXPos", "X", 72)
     classIndicatorXPos:SetPoint("TOP", classIndicatorScale, "BOTTOM", 0, -15)
@@ -8258,6 +8649,12 @@ local function guiMisc()
     nameplateSelfWidthResetButton:SetScript("OnClick", function()
         BBP.ResetToDefaultWidth(nameplateSelfWidth, false)
     end)
+
+
+    local skipGUI = CreateCheckbox("skipGUI", "Skip GUI", guiMisc)
+    skipGUI:SetPoint("BOTTOMRIGHT", bgImg, "BOTTOMRIGHT", -60, 0)
+    CreateTooltipTwo(skipGUI, "Skip GUI", "Skip creating the BBP Settings GUI on login/reload.\n\nIt will be created when typing /bbp\n\nFrees a little memory, makes reload a little faster.")
+    skipGUI:SetScale(1.3)
 end
 
 local function guiSupport()
@@ -8267,6 +8664,7 @@ local function guiSupport()
     --InterfaceOptions_AddCategory(guiSupport)
     local guiSupportCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiSupport, guiSupport.name, guiSupport.name)
     guiSupportCategory.ID = guiSupport.name;
+    BBP.guiSupport = guiSupport.name
     BBP.category.guiSupportCategory = guiSupportCategory.ID
     CreateTitle(guiSupport)
 
@@ -8424,27 +8822,68 @@ end
 function BBP.InitializeOptions()
     if not BetterBlizzPlates then
         BetterBlizzPlates = CreateFrame("Frame")
-        BetterBlizzPlates.name = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates"
+        BetterBlizzPlates.name = "Better|cff00c0ffBlizz|rPlates |A:gmchat-icon-blizz:16:16|a"
         --InterfaceOptions_AddCategory(BetterBlizzPlates)
         BBP.category = Settings.RegisterCanvasLayoutCategory(BetterBlizzPlates, BetterBlizzPlates.name, BetterBlizzPlates.name)
         BBP.category.ID = BetterBlizzPlates.name
         Settings.RegisterAddOnCategory(BBP.category)
 
-        guiGeneralTab()
-        guiPositionAndScale()
-        guiCastbar()
-        guiHideCastbar()
-        guiFadeNPC()
-        guiHideNPC()
-        guiColorNPC()
-        guiAuraColor()
-        guiNameplateAuras()
-        guiCVarControl()
-        guiMisc()
-        guiImportAndExport()
-        guiTotemList()
-        guiSupport()
+        if not BetterBlizzPlatesDB.skipGUI then
+            guiGeneralTab()
+            guiPositionAndScale()
+            guiCastbar()
+            guiHideCastbar()
+            guiFadeNPC()
+            guiHideNPC()
+            guiColorNPC()
+            guiAuraColor()
+            guiNameplateAuras()
+            guiCVarControl()
+            guiMisc()
+            guiImportAndExport()
+            guiTotemList()
+            guiSupport()
+            BetterBlizzPlates.guiLoaded = true
+        else
+            local titleText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFont_Gigantic")
+            titleText:SetPoint("CENTER", BetterBlizzPlates, "CENTER", -15, 33)
+            titleText:SetText("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates")
+            BetterBlizzPlates.titleText = titleText
+
+            local loadGUI = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
+            loadGUI:SetText("Load Settings")
+            loadGUI:SetWidth(100)
+            loadGUI:SetPoint("CENTER", BetterBlizzPlates, "CENTER", -18, 6)
+            BetterBlizzPlates.loadGUI = loadGUI
+            loadGUI:SetScript("OnClick", function(self)
+                BBP.LoadGUI()
+                titleText:Hide()
+                self:Hide()
+            end)
+        end
     end
+end
+
+function BBP.LoadGUI()
+    if BetterBlizzPlates.guiLoaded then return end
+    guiGeneralTab()
+    guiPositionAndScale()
+    guiCastbar()
+    guiHideCastbar()
+    guiFadeNPC()
+    guiHideNPC()
+    guiColorNPC()
+    guiAuraColor()
+    guiNameplateAuras()
+    guiCVarControl()
+    guiMisc()
+    guiImportAndExport()
+    guiTotemList()
+    guiSupport()
+    BetterBlizzPlates.guiLoaded = true
+
+    Settings.OpenToCategory(BBP.guiSupport)
+    Settings.OpenToCategory(BBP.category.ID)
 end
 
 

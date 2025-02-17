@@ -10,7 +10,7 @@ local HealerSpecs = {
 }
 
 -- Class Indicator
-function BBP.ClassIndicator(frame, fetchedSpecID)
+function BBP.ClassIndicator(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
@@ -37,6 +37,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         config.classIconColorBorder = BetterBlizzPlatesDB.classIconColorBorder
         config.nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
         config.hideResourceOnFriend = BetterBlizzPlatesDB.hideResourceOnFriend
+        config.classIndicatorAlpha = BetterBlizzPlatesDB.classIndicatorAlpha
 
         config.classIndicatorInitialized = true
     end
@@ -67,8 +68,9 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         frame.classIndicator.icon:SetPoint("CENTER", frame.classIndicator)
         frame.classIndicator.mask = frame.classIndicator:CreateMaskTexture()
         frame.classIndicator.border = frame.classIndicator:CreateTexture(nil, "OVERLAY")
-        frame.classIndicator:SetFrameStrata("HIGH")
+        frame.classIndicator:SetFrameStrata(BetterBlizzPlatesDB.classIndicatorFrameStrataHigh and "HIGH" or "LOW")
     end
+    frame.classIndicator:SetAlpha(config.classIndicatorAlpha)
 
     if (config.classIndicatorHighlight or config.classIndicatorHighlightColor) and not frame.classIndicator.highlightSelect then
         frame.classIndicator.highlightSelect = frame.classIndicator:CreateTexture(nil, "OVERLAY")
@@ -114,7 +116,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
             frame.classIndicator.mask:SetTexture("Interface/Masks/CircleMaskScalable")
             frame.classIndicator.mask:SetSize(24, 24)
             frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
-            frame.classIndicator.border:SetAtlas("ui-frame-genericplayerchoice-portrait-border")
+            frame.classIndicator.border:SetAtlas("AutoQuest-badgeborder")
             frame.classIndicator.border:SetAllPoints(frame.classIndicator)
             ------
             ------
@@ -148,7 +150,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
             frame.classIndicator.mask:SetTexture("Interface/Masks/CircleMaskScalable")
             frame.classIndicator.mask:SetSize(24, 24)
             frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
-            frame.classIndicator.border:SetAtlas("ui-frame-genericplayerchoice-portrait-border")
+            frame.classIndicator.border:SetAtlas("AutoQuest-badgeborder")
             frame.classIndicator.border:SetAllPoints(frame.classIndicator)
             ------
             ------
@@ -202,37 +204,9 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
     end
 
     local specIcon
-    local specID = fetchedSpecID
-    local Details = Details
+    local specID = BBP.GetSpecID(frame)
     if config.classIndicatorSpecIcon or config.classIndicatorHealer then
-        if not specID then
-            if info.isFriend and Details then
-                if Details then
-                    specID = Details:GetSpecByGUID(info.unitGUID)
-                end
-                if specID then
-                    specIcon = select(4, GetSpecializationInfoByID(specID))
-                end
-            elseif (info.isEnemy or info.isNeutral) and IsActiveBattlefieldArena() then
-                for i = 1, 3 do
-                    local arenaUnit = "arena" .. i
-                    if UnitIsUnit(frame.displayedUnit, arenaUnit) then
-                        specID = GetArenaOpponentSpec(i)
-                        if specID then
-                            specIcon = select(4, GetSpecializationInfoByID(specID))
-                            break
-                        end
-                    end
-                end
-            elseif (info.isEnemy or info.isNeutral) then
-                if Details then
-                    specID = Details:GetSpecByGUID(info.unitGUID)
-                end
-                if specID then
-                    specIcon = select(4, GetSpecializationInfoByID(specID))
-                end
-            end
-        else
+        if specID then
             specIcon = select(4, GetSpecializationInfoByID(specID))
         end
     end

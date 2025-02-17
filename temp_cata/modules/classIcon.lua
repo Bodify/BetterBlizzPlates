@@ -94,6 +94,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         config.classIconColorBorder = BetterBlizzPlatesDB.classIconColorBorder
         config.nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
         config.hideResourceOnFriend = BetterBlizzPlatesDB.hideResourceOnFriend
+        config.classIndicatorAlpha = BetterBlizzPlatesDB.classIndicatorAlpha
 
         config.classIndicatorInitialized = true
     end
@@ -126,6 +127,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         frame.classIndicator.border = frame.classIndicator:CreateTexture(nil, "OVERLAY")
         frame.classIndicator:SetFrameStrata("HIGH")
     end
+    frame.classIndicator:SetAlpha(config.classIndicatorAlpha)
 
     if (config.classIndicatorHighlight or config.classIndicatorHighlightColor) and not frame.classIndicator.highlightSelect then
         frame.classIndicator.highlightSelect = frame.classIndicator:CreateTexture(nil, "OVERLAY")

@@ -105,7 +105,8 @@ end
 
 -- Cast emphasis
 function BBP.CustomizeCastbar(frame, unitToken, event)
-    local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
+    local db = BetterBlizzPlatesDB
+    local enableCastbarCustomization = db.enableCastbarCustomization
     if not enableCastbarCustomization then return end
     if unitToken == "player" then return end
 
@@ -113,19 +114,19 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     if not castBar then return end
     if castBar:IsForbidden() then return end
 
-    local showCastBarIconWhenNoninterruptible = BetterBlizzPlatesDB.showCastBarIconWhenNoninterruptible
-    local castBarIconScale = BetterBlizzPlatesDB.castBarIconScale
+    local showCastBarIconWhenNoninterruptible = db.showCastBarIconWhenNoninterruptible
+    local castBarIconScale = db.castBarIconScale
     local borderShieldSize = showCastBarIconWhenNoninterruptible and (castBarIconScale + 0.3) or castBarIconScale
     local castBarTexture = castBar:GetStatusBarTexture()
-    local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
-    local castBarDragonflightShield = BetterBlizzPlatesDB.castBarDragonflightShield
-    local castBarHeight = BetterBlizzPlatesDB.castBarHeight
-    local castBarTextScale = BetterBlizzPlatesDB.castBarTextScale
-    local castBarCastColor = BetterBlizzPlatesDB.castBarCastColor
-    local castBarNonInterruptibleColor = BetterBlizzPlatesDB.castBarNoninterruptibleColor
-    local castBarChanneledColor = BetterBlizzPlatesDB.castBarChanneledColor
-    local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
-    local hideCastbarText = BetterBlizzPlatesDB.hideCastbarText
+    local castBarRecolor = db.castBarRecolor
+    local castBarDragonflightShield = db.castBarDragonflightShield
+    local castBarHeight = db.castBarHeight
+    local castBarTextScale = db.castBarTextScale
+    local castBarCastColor = db.castBarCastColor
+    local castBarNonInterruptibleColor = db.castBarNoninterruptibleColor
+    local castBarChanneledColor = db.castBarChanneledColor
+    local useCustomCastbarTexture = db.useCustomCastbarTexture
+    local hideCastbarText = db.hideCastbarText
 
     if not castBarRecolor then
         if castBarTexture then
@@ -176,16 +177,16 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     end
 
     if useCustomCastbarTexture then
-        local textureName = BetterBlizzPlatesDB.customCastbarTexture
+        local textureName = db.customCastbarTexture
         local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
-        local bgTextureName = BetterBlizzPlatesDB.customCastbarBGTexture
+        local bgTextureName = db.customCastbarBGTexture
         local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, bgTextureName)
-        local changeBgTexture = BetterBlizzPlatesDB.useCustomCastbarBGTexture
+        local changeBgTexture = db.useCustomCastbarBGTexture
         castBar:SetStatusBarTexture(texturePath)
         if castBarTexture then
             castBarTexture:SetDesaturated(true)
             if changeBgTexture and castBar.Background then
-                local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
+                local bgColor = db.castBarBackgroundColor
                 castBar.Background:SetDesaturated(true)
                 castBar.Background:SetTexture(bgTexture)
                 castBar.Background:SetVertexColor(unpack(bgColor))
@@ -211,8 +212,8 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         frame.CastBar.castText = frame.CastBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.CastBar.castText:SetText("")
         frame.CastBar.castText:SetDrawLayer("OVERLAY", 7)
-        frame.CastBar.castText:SetPoint("CENTER", frame.CastBar, "CENTER", 0, BetterBlizzPlatesDB.classicNameplates and 0.5 or 0)
-        BBP.SetFontBasedOnOption(frame.CastBar.castText, BetterBlizzPlatesDB.classicNameplates and 8 or 10, "THINOUTLINE")
+        frame.CastBar.castText:SetPoint("CENTER", frame.CastBar, "CENTER", 0, db.classicNameplates and 0.5 or 0)
+        BBP.SetFontBasedOnOption(frame.CastBar.castText, db.classicNameplates and 8 or 10, "THINOUTLINE")
         frame.CastBar.castText:SetTextColor(1, 1, 1)
         frame.CastBar.castText:SetJustifyH("CENTER") -- Horizontal alignment
         frame.CastBar.castText:SetJustifyV("MIDDLE") -- Vertical alignment
@@ -231,7 +232,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     end
     --frame.CastBar.castText:SetWidth(frame.CastBar:GetWidth() - 20)
 
-    BBP.SetFontBasedOnOption(frame.CastBar.castText, BetterBlizzPlatesDB.classicNameplates and 8 or 10, "THINOUTLINE")
+    BBP.SetFontBasedOnOption(frame.CastBar.castText, db.classicNameplates and 8 or 10, "THINOUTLINE")
     --BBP.UpdateCastBarText(frame.CastBar)
 
     --BBP.SetFontBasedOnOption(castBar.castText, 12, "OUTLINE")
@@ -245,6 +246,23 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         else
             -- For all other cases, including when 'text' is nil, hide the text
             castBar.castText:SetAlpha(0)
+        end
+    end
+
+    --castBar.Icon:SetAlpha(castBar:GetEffectiveAlpha()) --seems not accurate on cata/era
+
+    if db.hideNameDuringCast and (casting or channeling) then
+        if not frame.castHiddenName then
+            frame.castHiddenName = frame.name:GetAlpha()
+        end
+        frame.name:SetAlpha(0)
+        if frame.specNameText then
+            frame.specNameText:SetAlpha(0)
+        end
+    elseif frame.castHiddenName and (not casting and not channeling) then
+        frame.name:SetAlpha(frame.castHiddenName)
+        if frame.specNameText then
+            frame.specNameText:SetAlpha(frame.castHiddenName)
         end
     end
 
@@ -278,17 +296,17 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     end
 
     local function ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
-        local castBarEmphasisColor = BetterBlizzPlatesDB.castBarEmphasisColor
-        local castBarEmphasisText = BetterBlizzPlatesDB.castBarEmphasisText
-        local castBarEmphasisIcon = BetterBlizzPlatesDB.castBarEmphasisIcon
-        local castBarEmphasisHeight = BetterBlizzPlatesDB.castBarEmphasisHeight
-        local castBarEmphasisSpark = BetterBlizzPlatesDB.castBarEmphasisSpark
-        --local castBarEmphasisTexture = BetterBlizzPlatesDB.castBarEmphasisTexture
-        local castBarEmphasisHealthbarColor = BetterBlizzPlatesDB.castBarEmphasisHealthbarColor
-        local castBarEmphasisTextScale = BetterBlizzPlatesDB.castBarEmphasisTextScale
-        local castBarEmphasisIconScale = BetterBlizzPlatesDB.castBarEmphasisIconScale
-        local castBarEmphasisHeightValue = BetterBlizzPlatesDB.castBarEmphasisHeightValue
-        local castBarEmphasisSparkHeight = BetterBlizzPlatesDB.castBarEmphasisSparkHeight
+        local castBarEmphasisColor = db.castBarEmphasisColor
+        local castBarEmphasisText = db.castBarEmphasisText
+        local castBarEmphasisIcon = db.castBarEmphasisIcon
+        local castBarEmphasisHeight = db.castBarEmphasisHeight
+        local castBarEmphasisSpark = db.castBarEmphasisSpark
+        --local castBarEmphasisTexture = db.castBarEmphasisTexture
+        local castBarEmphasisHealthbarColor = db.castBarEmphasisHealthbarColor
+        local castBarEmphasisTextScale = db.castBarEmphasisTextScale
+        local castBarEmphasisIconScale = db.castBarEmphasisIconScale
+        local castBarEmphasisHeightValue = db.castBarEmphasisHeightValue
+        local castBarEmphasisSparkHeight = db.castBarEmphasisSparkHeight
 
         frame.castbarEmphasisActive = true
 
@@ -326,18 +344,18 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
 
         -- if castBarEmphasisTexture then
-        --     local textureName = BetterBlizzPlatesDB.customCastbarTexture
+        --     local textureName = db.customCastbarTexture
         --     local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
         --     castBarTexture:SetTexture(texturePath)
         -- end
     end
 
-    local enableCastbarEmphasis = BetterBlizzPlatesDB.enableCastbarEmphasis
-    local castBarEmphasisOnlyInterruptable = BetterBlizzPlatesDB.castBarEmphasisOnlyInterruptable
-    local castEmphasisList = BetterBlizzPlatesDB.castEmphasisList
-    local castBarRecolorInterrupt = BetterBlizzPlatesDB.castBarRecolorInterrupt
-    local castBarNoInterruptColor = BetterBlizzPlatesDB.castBarNoInterruptColor
-    local castBarDelayedInterruptColor = BetterBlizzPlatesDB.castBarDelayedInterruptColor
+    local enableCastbarEmphasis = db.enableCastbarEmphasis
+    local castBarEmphasisOnlyInterruptable = db.castBarEmphasisOnlyInterruptable
+    local castEmphasisList = db.castEmphasisList
+    local castBarRecolorInterrupt = db.castBarRecolorInterrupt
+    local castBarNoInterruptColor = db.castBarNoInterruptColor
+    local castBarDelayedInterruptColor = db.castBarDelayedInterruptColor
 
     if castBarRecolorInterrupt then
         if spellName or spellID then

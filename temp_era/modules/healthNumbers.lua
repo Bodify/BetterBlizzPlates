@@ -146,19 +146,19 @@ function BBP.HealthNumbers(frame)
     -- Initialize or update the health numbers display
     if not frame.healthNumbers then
         frame.healthNumbers = frame.healthBar:CreateFontString(nil, "OVERLAY")
-        BBP.SetFontBasedOnOption(frame.healthNumbers, BetterBlizzPlatesDB.healthNumbersFontSize, "THICKOUTLINE")
+        BBP.SetFontBasedOnOption(frame.healthNumbers, 9, BetterBlizzPlatesDB.healthNumbersFontOutline)
         frame.healthNumbers:SetTextColor(1, 1, 1)
         frame.healthNumbers:SetJustifyH("CENTER")
     end
 
     if BBP.needsUpdate then
-        --BBP.SetFontBasedOnOption(frame.healthNumbers, 9, "THICKOUTLINE")
-        local db = BetterBlizzPlatesDB
-        local fontName = db.healthNumbersFont
-        local fontPath = LSM:Fetch(LSM.MediaType.FONT, fontName)
-        local fontSize = db.healthNumbersFontSize
-        local fontOutline = db.healthNumbersFontOutline
-        frame.healthNumbers:SetFont(fontPath, fontSize, fontOutline)
+        BBP.SetFontBasedOnOption(frame.healthNumbers, 9, BetterBlizzPlatesDB.healthNumbersFontOutline)
+        -- local db = BetterBlizzPlatesDB
+        -- local fontName = db.healthNumbersFont
+        -- local fontPath = LSM:Fetch(LSM.MediaType.FONT, fontName)
+        -- local fontSize = db.healthNumbersFontSize
+        -- local fontOutline = db.healthNumbersFontOutline
+        -- frame.healthNumbers:SetFont(fontPath, fontSize, fontOutline)
     end
 
     frame.healthNumbers:ClearAllPoints()

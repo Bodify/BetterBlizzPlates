@@ -27,11 +27,11 @@ local function SetBarWidth(frame, width, useOffsets)
         frame.castBar:SetPoint("RIGHT", frame, "RIGHT", width - 12, 0)
     else
         -- Default behavior without offsets
-        frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", 50, 0)
-        frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", -50, 0)
+        frame.HealthBarsContainer:SetPoint("LEFT", frame, "CENTER", width, 0)
+        frame.HealthBarsContainer:SetPoint("RIGHT", frame, "CENTER", -width, 0)
 
-        frame.castBar:SetPoint("LEFT", frame, "LEFT", 50, 0)
-        frame.castBar:SetPoint("RIGHT", frame, "RIGHT", -50, 0)
+        frame.castBar:SetPoint("LEFT", frame, "CENTER", width, 0)
+        frame.castBar:SetPoint("RIGHT", frame, "CENTER", -width, 0)
     end
 end
 
@@ -76,6 +76,7 @@ function BBP.CreateTotemComponents(frame, size)
 
         frame.customIcon = frame.totemIndicator:CreateTexture(nil, "OVERLAY")
         frame.customIcon:SetAllPoints(frame.totemIndicator)
+
         --frame.totemIndicator:SetParent(frame)
 
         frame.animationGroup = BBP.SetupUnifiedAnimation(frame.totemIndicator)
@@ -160,10 +161,16 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
             local heightOffset = size * offsetMultiplier
 
             if not frame.glowTexture then
-                frame.glowTexture = frame.totemIndicator:CreateTexture(nil, "OVERLAY")
+                frame.glowTexture = frame.totemIndicator:CreateTexture(nil, "OVERLAY", nil, 7)
                 frame.glowTexture:SetBlendMode("ADD")
                 frame.glowTexture:SetAtlas("clickcast-highlight-spellbook")
                 frame.glowTexture:SetDesaturated(true)
+
+                frame.totemIndicator.Mask = frame.totemIndicator:CreateMaskTexture()
+                frame.totemIndicator.Mask:SetTexture("Interface\\TalentFrame\\talentsmasknodechoiceflyout", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+                frame.totemIndicator.Mask:SetAllPoints(frame.customIcon)
+
+                frame.customIcon:AddMaskTexture(frame.totemIndicator.Mask)
             end
 
             frame.glowTexture:SetPoint('TOPLEFT', frame.totemIndicator, 'TOPLEFT', -widthOffset, heightOffset)
@@ -232,7 +239,6 @@ function BBP.GetRandomTotemAttributes()
     end
 end
 
-local cc = 0
 -- Apply totem icons and color nameplate
 function BBP.ApplyTotemIconsAndColorNameplate(frame)
     local config = frame.BetterBlizzPlates.config
@@ -320,10 +326,16 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         if config.totemIsImportant then
             -- Apply glow effect
             if not frame.glowTexture then
-                frame.glowTexture = frame.totemIndicator:CreateTexture(nil, "OVERLAY")
+                frame.glowTexture = frame.totemIndicator:CreateTexture(nil, "OVERLAY", nil, 7)
                 frame.glowTexture:SetBlendMode("ADD")
                 frame.glowTexture:SetAtlas("clickcast-highlight-spellbook")
                 frame.glowTexture:SetDesaturated(true)
+
+                frame.totemIndicator.Mask = frame.totemIndicator:CreateMaskTexture()
+                frame.totemIndicator.Mask:SetTexture("Interface\\TalentFrame\\talentsmasknodechoiceflyout", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+                frame.totemIndicator.Mask:SetAllPoints(frame.customIcon)
+
+                frame.customIcon:AddMaskTexture(frame.totemIndicator.Mask)
             end
 
             local offsetMultiplier = 0.41
@@ -412,8 +424,8 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             if npcData.widthOn and npcData.hpWidth then
                 if not frame.bbpWidthHook then
                     hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
-                        if self:IsProtected() or not frame.unit then return end
-                        if UnitIsPlayer(frame.unit) then return end
+                        if self:IsForbidden() or not frame.unit or UnitIsPlayer(frame.unit) then return end
+                        if BBP.IsInCompStomp then return end
                         local db = BetterBlizzPlatesDB
 
                         if db.totemIndicator then
@@ -427,10 +439,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
                                     end
                                 end
                             elseif db.smallPetsInPvP and (UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP) then
-                                SetBarWidth(frame, 50, false)
+                                SetBarWidth(frame, db.smallPetsWidth, false)
                             end
                         elseif UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP then
-                            SetBarWidth(frame, 50, false)
+                            SetBarWidth(frame, db.smallPetsWidth, false)
                         end
                     end)
                     frame.bbpWidthHook = true
@@ -442,6 +454,14 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         config.totemColorRGB = nil
         if frame.animationGroup then
             frame.animationGroup:Stop()
+        end
+    end
+
+    if frame.glowTexture then
+        if frame.glowTexture:IsShown() then
+            frame.customIcon:AddMaskTexture(frame.totemIndicator.Mask)
+        else
+            frame.customIcon:RemoveMaskTexture(frame.totemIndicator.Mask)
         end
     end
 

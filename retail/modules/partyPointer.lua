@@ -12,7 +12,7 @@ local HealerSpecs = {
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 
 -- Class Indicator
-function BBP.PartyPointer(frame, fetchedSpecID)
+function BBP.PartyPointer(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
     if not info then return end
@@ -74,7 +74,7 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         frame.partyPointer.healerIcon:SetVertexColor(0,1,0)
         frame.partyPointer.healerIcon:Hide()
 
-        frame.partyPointer:SetFrameStrata("MEDIUM")
+        frame.partyPointer:SetFrameStrata("LOW")
     end
 
     -- Enhanced Test Mode: Use local test variables
@@ -204,11 +204,7 @@ function BBP.PartyPointer(frame, fetchedSpecID)
     end
 
     -- Check for Healer Only Mode
-    local specID = fetchedSpecID
-    local Details = Details
-    if not specID and Details then
-        specID = Details:GetSpecByGUID(info.unitGUID)
-    end
+    local specID = BBP.GetSpecID(frame)
 
     if config.partyPointerHealerOnly then
         if not HealerSpecs[specID] then
