@@ -1375,7 +1375,6 @@ function BBP.ApplyCustomTextureToNameplate(frame)
         config.customTextureSelf = LSM:Fetch(LSM.MediaType.STATUSBAR, customTextureSelf)
         config.customTextureSelfMana = LSM:Fetch(LSM.MediaType.STATUSBAR, customTextureSelfMana)
         frame.healthBar.border:SetFrameStrata("HIGH")
-        frame.LevelFrame:SetFrameStrata("DIALOG")
 
         config.customTextureInitialized = true
     end
@@ -2850,6 +2849,11 @@ local function FixLevelFramePosition(frame)
         frame.LevelFrame.levelText:SetDrawLayer("OVERLAY")
         if not BetterBlizzPlatesDB.classicNameplates then
             BBP.SetFontBasedOnOption(frame.LevelFrame.levelText, 12)
+            frame.LevelFrame.levelText:ClearAllPoints()
+            frame.LevelFrame.levelText:SetPoint("LEFT", frame.healthBar, "RIGHT", 3, -0.5)
+            frame.LevelFrame:SetFrameStrata("LOW")
+        else
+            frame.LevelFrame:SetFrameStrata("DIALOG")
         end
         frame.fixedLevelFrame = true
     end
@@ -3248,10 +3252,14 @@ local function CreateRetailNameplateLook(frame)
     -- frame.LevelFrame.highLevelTexture:SetDrawLayer("OVERLAY")
     -- frame.LevelFrame.levelText:SetDrawLayer("OVERLAY")
 
-    if UnitIsFriend(frame.unit, "player") then
+    if BetterBlizzPlatesDB.hideLevelFrame then
         frame.LevelFrame:Hide()
     else
-        frame.LevelFrame:Show()
+        if UnitIsFriend(frame.unit, "player") then
+            frame.LevelFrame:Hide()
+        else
+            frame.LevelFrame:Show()
+        end
     end
     SetupBorderOnFrame(frame.healthBar)
 
@@ -4261,7 +4269,6 @@ local function HandleNamePlateAdded(unit)
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
     -- if frame.needColorReset then
-        BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
     --     frame.needColorReset = nil
     -- end
 
@@ -4271,6 +4278,8 @@ local function HandleNamePlateAdded(unit)
     local info = GetNameplateUnitInfo(frame, unit)
     if not info then return end
     local hooks = GetNameplateHookTable(frame)
+
+    BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 
     BBP.RangeIndicator(frame)
 

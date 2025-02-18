@@ -168,6 +168,7 @@ function BBP.ClassIndicator(frame)
             BBP.ClassIndicatorTargetHighlight(frame)
         else
             frame.classIndicator.highlightSelect:Hide()
+            frame.classIndicator.border:Show()
         end
     end
 
@@ -270,6 +271,7 @@ function BBP.ClassIndicatorTargetHighlight(frame)
     if config.classIndicatorHighlight or config.classIndicatorHighlightColor then
         if frame.classIndicator and frame.classIndicator.highlightSelect then
             frame.classIndicator.highlightSelect:Show()
+            frame.classIndicator.border:Hide()
             if info.class and config.classIndicatorHighlightColor then
                 local classColor = RAID_CLASS_COLORS[info.class]
                 frame.classIndicator.highlightSelect:SetDesaturated(true)

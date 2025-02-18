@@ -580,6 +580,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             if (config.classIndicator and (config.classIndicatorHighlight or config.classIndicatorHighlightColor)) then
                 if frame.classIndicator and frame.classIndicator.highlightSelect then
                     frame.classIndicator.highlightSelect:Hide()
+                    frame.classIndicator.border:Show()
                 end
             end
 

@@ -1375,7 +1375,6 @@ function BBP.ApplyCustomTextureToNameplate(frame)
         config.customTextureSelf = LSM:Fetch(LSM.MediaType.STATUSBAR, customTextureSelf)
         config.customTextureSelfMana = LSM:Fetch(LSM.MediaType.STATUSBAR, customTextureSelfMana)
         frame.healthBar.border:SetFrameStrata("HIGH")
-        frame.LevelFrame:SetFrameStrata("DIALOG")
 
         config.customTextureInitialized = true
     end
@@ -2838,6 +2837,14 @@ local function FixLevelFramePosition(frame)
         frame.LevelFrame:SetParent(frame.healthBar)
         frame.LevelFrame.highLevelTexture:SetDrawLayer("OVERLAY")
         frame.LevelFrame.levelText:SetDrawLayer("OVERLAY")
+        if not BetterBlizzPlatesDB.classicNameplates then
+            BBP.SetFontBasedOnOption(frame.LevelFrame.levelText, 12)
+            frame.LevelFrame.levelText:ClearAllPoints()
+            frame.LevelFrame.levelText:SetPoint("LEFT", frame.healthBar, "RIGHT", 3, -0.5)
+            frame.LevelFrame:SetFrameStrata("LOW")
+        else
+            frame.LevelFrame:SetFrameStrata("DIALOG")
+        end
         frame.fixedLevelFrame = true
     end
 end
@@ -3224,9 +3231,19 @@ local function CreateRetailNameplateLook(frame)
     frame.healthBar:ClearPoint("LEFT")
     frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", 0,0)
     frame.healthBar:SetPoint("LEFT", frame, "LEFT", 0, 0)
-    frame.LevelFrame:Hide()
-    frame.LevelFrame:SetAlpha(0)
+    -- frame.LevelFrame:Hide()
+    -- frame.LevelFrame:SetAlpha(0)
     SetupBorderOnFrame(frame.healthBar)
+
+    if BetterBlizzPlatesDB.hideLevelFrame then
+        frame.LevelFrame:Hide()
+    else
+        if UnitIsFriend(frame.unit, "player") then
+            frame.LevelFrame:Hide()
+        else
+            frame.LevelFrame:Show()
+        end
+    end
 
     if not frame.classificationIndicator then
         frame.classificationIndicator = frame:CreateTexture(nil, "OVERLAY")
@@ -4249,7 +4266,6 @@ local function HandleNamePlateAdded(unit)
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
     -- if frame.needColorReset then
-        BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
     --     frame.needColorReset = nil
     -- end
 
@@ -4259,6 +4275,8 @@ local function HandleNamePlateAdded(unit)
     local info = GetNameplateUnitInfo(frame, unit)
     if not info then return end
     local hooks = GetNameplateHookTable(frame)
+
+    BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 
     BBP.RangeIndicator(frame)
 
@@ -4317,6 +4335,7 @@ local function HandleNamePlateAdded(unit)
         -- enter retail nameplate
         -- SetNameplateHeight(frame.healthBar, 11)
         -- SetupBorderOnFrame(frame.healthBar)
+        FixLevelFramePosition(frame)
         CreateRetailNameplateLook(frame)
         CreateBetterRetailCastbar(frame)
 
