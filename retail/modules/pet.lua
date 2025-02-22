@@ -11,6 +11,7 @@ shadowRealm:Hide()
 local shadows = {}
 
 local function ShowMurloc(frame, nameplate)
+    frame.isMurloc = true
     frame.HealthBarsContainer:SetAlpha(0)
     frame.selectionHighlight:SetAlpha(0)
     frame.BuffFrame:SetAlpha(0)
@@ -28,16 +29,19 @@ function BBP.PetIndicator(frame)
     local db = BetterBlizzPlatesDB
 
     local nameplate = frame:GetParent()
-
     if shadows[nameplate] then
-        nameplate:SetParent(WorldFrame)
+        nameplate:SetParent(BBP.OverlayFrame)
         shadows[nameplate] = nil
+    end
+    frame.mainPetColor = nil
+    if frame.isMurloc then
         frame.hideCastInfo = false
         if frame.murlocMode then
             frame.murlocMode:Hide()
         end
         frame.hideNameOverride = false
         frame.hideCastbarOverride = false
+        frame.isMurloc = false
     end
 
     if not config.petIndicatorInitialized or BBP.needsUpdate then
@@ -50,6 +54,8 @@ function BBP.PetIndicator(frame)
         config.petIndicatorHideSecondaryPets = db.petIndicatorHideSecondaryPets
         config.petIndicatorScale = db.petIndicatorScale or 1
         config.petIndicatorShowMurloc = db.petIndicatorShowMurloc
+        config.petIndicatorColorHealthbar = db.petIndicatorColorHealthbar
+        config.petIndicatorColorHealthbarRGB = db.petIndicatorColorHealthbarRGB
 
         config.petIndicatorInitialized = true
     end
@@ -123,6 +129,10 @@ function BBP.PetIndicator(frame)
                 end
             end
             if isRealPet then
+                if config.petIndicatorColorHealthbar then
+                    frame.mainPetColor = config.petIndicatorColorHealthbarRGB
+                    frame.healthBar:SetStatusBarColor(unpack(frame.mainPetColor))
+                end
                 frame.petIndicator:Show()
                 return
             else
@@ -149,6 +159,10 @@ function BBP.PetIndicator(frame)
                 end
             end
             if isValidPet then
+                if config.petIndicatorColorHealthbar then
+                    frame.mainPetColor = config.petIndicatorColorHealthbarRGB
+                    frame.healthBar:SetStatusBarColor(unpack(frame.mainPetColor))
+                end
                 frame.petIndicator:Show()
                 return
             elseif config.petIndicatorHideSecondaryPets and info.isEnemy then

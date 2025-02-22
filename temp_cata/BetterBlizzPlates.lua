@@ -2346,11 +2346,11 @@ end
 
 function BBP.ColorThreat(frame)
     if not frame or not frame.unit then return end
+    if UnitIsPlayer(frame.unit) then return end
+    if UnitIsFriend(frame.unit, "player") then return end
 
     local combatOnly = BetterBlizzPlatesDB.enemyColorThreatCombatOnly and not UnitAffectingCombat(frame.unit)
     if combatOnly then return end
-
-    if UnitIsFriend(frame.unit, "player") then return end
 
     local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
@@ -3235,7 +3235,7 @@ local function CreateRetailNameplateLook(frame)
     -- frame.LevelFrame:SetAlpha(0)
     SetupBorderOnFrame(frame.healthBar)
 
-    if BetterBlizzPlatesDB.hideLevelFrame then
+    if BBP.isInPvP or BetterBlizzPlatesDB.hideLevelFrame then
         frame.LevelFrame:Hide()
     else
         if UnitIsFriend(frame.unit, "player") then
@@ -4032,6 +4032,12 @@ local function HandleNamePlateRemoved(unit)
 
     if frame.hideCastInfo then
         frame.hideCastInfo = false
+    end
+    if frame.hideCastbarOverride then
+        frame.hideCastbarOverride = false
+    end
+    if frame.hideNameOverride then
+        frame.hideNameOverride = false
     end
     -- Hide totem icons
     if frame.customIcon then
@@ -4935,28 +4941,34 @@ function BBP.ConsolidatedUpdateName(frame)
     end
 
     -- Ensure totem nameplate color is correct
-    if config.totemIndicator and config.totemIndicatorColorName then
+    if config.totemIndicator then
         local guid = UnitGUID(frame.unit);
         local npcID = tonumber(guid and guid:match("-(%d+)-%x+$"))
-        if BetterBlizzPlatesDB.totemIndicatorNpcList[npcID] and BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color then
+        if BetterBlizzPlatesDB.totemIndicatorNpcList[npcID] then
             if not info.isFriend then
-                if config.totemIndicatorColorHealthBar then
-                    frame.healthBar:SetStatusBarColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
-                end
-                if config.totemIndicatorHideNameAndShiftIconDown or BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].iconOnly then
-                    frame.name:SetText("")
-                else
-                    frame.name:SetVertexColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
-                end
-            else
-                if not config.totemIndicatorEnemyOnly then
+                if BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color then
                     if config.totemIndicatorColorHealthBar then
                         frame.healthBar:SetStatusBarColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
                     end
+                    if config.totemIndicatorColorName then
+                        frame.name:SetVertexColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
+                    end
+                end
+                if config.totemIndicatorHideNameAndShiftIconDown or BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].iconOnly then
+                    frame.name:SetText("")
+                end
+            else
+                if not config.totemIndicatorEnemyOnly then
+                    if BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color then
+                        if config.totemIndicatorColorHealthBar then
+                            frame.healthBar:SetStatusBarColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
+                        end
+                        if config.totemIndicatorColorName then
+                            frame.name:SetVertexColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
+                        end
+                    end
                     if config.totemIndicatorHideNameAndShiftIconDown or BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].iconOnly then
                         frame.name:SetText("")
-                    else
-                        frame.name:SetVertexColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
                     end
                 end
             end

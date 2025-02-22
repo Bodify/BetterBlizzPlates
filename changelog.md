@@ -1,9 +1,39 @@
+# BetterBlizzPlates 1.6.9b
+## The War Within
+### New:
+- Class Indicator now has a lot more settings:
+  - Now shows Battleground Objectives (Flags, Orbs)
+  - Show Tank Icons
+  - Always show on Healers (despite only enemy/friendly setting)
+  - Always show on Tanks (despite only enemy/friendly setting)
+  - Always show on BG Objectives (despite only enemy/friendly setting)
+  - Change Enemy Healer Icon (with 3 modes)
+  - Show Health Percent instead of Name
+  - Reaction Color Border
+- New "Blitz Profile" that is a step up from the "Starter Profile". This is an early basic version meant for new users. It is not complete but I decided to include it for now to make things easier for new users. It will be tuned more in the future.
+- New misc setting to color border of focus target.
+
+### Tweak:
+- Changed order of a few things in Hide NPC feature making sure fully hidden NPCs trumps secondary murloc mode.
+- Hide level frame on friendly nameplates on retail and adjust position slightly and make sure its not shown in pvp with retail nameplates
+- Healer Indicator higher draw layer level
+
+### Bugfix:
+- Fix Nameplate Auras' "Important Glow" sometimes "blinking".
+- Fix an issue with Pet Indicator causing nameplate castbars/names to be stuck hidden
+
+## The War Within, Classic Era & Cataclysm
+### Bugfix:
+- Fix issues with Hide Castbar feature
+- Fix accidental removal of Player check for Threat Color causing some Enemy Player Nameplates to potentially get colored.
+- Fixed Totem Indicators Icon Only mode not hiding name on name updates on retail and did some small tweaks on classic versions.
+
 # BetterBlizzPlates 1.6.9
 ## The War Within, Cata & Era
 ### New:
 - Class Indicator Alpha setting.
 - Export/Import section now has a delete button top right on each section when mousing over them that deletes all data in that section.
-### Tweaks
+### Tweaks:
 - Skip GUI setting now also available on Classic versions and is on by default.
 - Search is now available on Classic versions
 - Color Threat will now only override Color NPC if you have aggro.

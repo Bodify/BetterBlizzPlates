@@ -142,7 +142,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     local _
 
     if frame.castbarEmphasisActive then
-        frame:GetParent():SetParent(WorldFrame)
+        frame:GetParent():SetParent(BBP.OverlayFrame)
         frame.castbarEmphasisActive = false
     end
 
@@ -461,7 +461,7 @@ function BBP.HideCastbar(frame, unitToken)
     end
 
     if config.showCastbarIfTarget and info and info.isTarget then
-        castBar:Show()
+        --castBar:Show()
         return
     end
 
@@ -526,7 +526,7 @@ function BBP.HideCastbar(frame, unitToken)
         -- Show the castBar only if the NPC is in the whitelist and is currently casting
         if inWhitelist and isCasting then
             frame.CastBar.hideThis = false
-            castBar:Show()
+            --castBar:Show()
         else
             frame.CastBar.hideThis = true
             if not frame.hookedHideCastbar then
@@ -557,7 +557,7 @@ function BBP.HideCastbar(frame, unitToken)
         -- Check if the unit is currently casting and is not in the blacklist
         if isCasting and not inList then
             frame.CastBar.hideThis = false
-            castBar:Show()
+            --castBar:Show()
         else
             frame.CastBar.hideThis = true
             if not frame.hookedHideCastbar then

@@ -405,7 +405,7 @@ local function CreatePandemicGlow(buff, orange)
     local nameplateAuraScale = db.nameplateAuraScale
 
     if not buff.PandemicGlow then
-        buff.PandemicGlow = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
+        buff.PandemicGlow = buff.GlowFrame:CreateTexture(nil, "OVERLAY")
         buff.PandemicGlow:SetAtlas("newplayertutorial-drag-slotgreen")
         buff.PandemicGlow:SetDesaturated(true)
     end
@@ -497,10 +497,6 @@ local function CreatePandemicGlow(buff, orange)
         buff.PandemicGlow:SetVertexColor(1, 0, 0)
     else
         buff.PandemicGlow:SetVertexColor(1, 0.25, 0)
-    end
-
-    if buff.ImportantGlow then
-        buff.ImportantGlow:Hide()
     end
 
     buff.Border:Hide()
@@ -1034,7 +1030,7 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
     local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
     local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
 
-    if isImportant and not buff.isPandemicActive then
+    if isImportant then
         local buffScale = BetterBlizzPlatesDB.nameplateAuraBuffScale
         local debuffScale = BetterBlizzPlatesDB.nameplateAuraDebuffScale
         if isPlayerUnit then

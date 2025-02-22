@@ -158,7 +158,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         castBar.Spark:SetSize(4, castBarHeight + 5)
         castBar.Text:SetScale(castBarTextScale)
         castBar.BorderShield:SetScale(borderShieldSize)
-        frame:GetParent():SetParent(WorldFrame)
+        frame:GetParent():SetParent(BBP.OverlayFrame)
         frame.castbarEmphasisActive = false
     end
 
@@ -525,7 +525,7 @@ function BBP.HideCastbar(frame, unitToken)
     end
 
     if config.showCastbarIfTarget and info and info.isTarget then
-        castBar:Show()
+        -- castBar:Show()
         return
     end
 
@@ -578,7 +578,7 @@ function BBP.HideCastbar(frame, unitToken)
 
         -- Show the castBar only if the NPC is in the whitelist and is currently casting
         if inWhitelist and isCasting then
-            castBar:Show()
+            -- castBar:Show()
         else
             castBar:Hide()
         end
@@ -599,7 +599,7 @@ function BBP.HideCastbar(frame, unitToken)
 
         -- Check if the unit is currently casting and is not in the blacklist
         if isCasting and not inList then
-            castBar:Show()
+            -- castBar:Show()
         else
             castBar:Hide()
         end
@@ -623,7 +623,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
 
     frame.TargetText:SetText("")
 
-    if isCasting and UnitExists(unit.."target") and frame.healthBar:IsShown() and not frame.hideCastInfo then
+    if isCasting and UnitExists(unit.."target") and frame.castBar:IsShown() and not frame.hideCastInfo then
         local targetOfTarget = unit.."target"
         local name = UnitName(targetOfTarget)
         local _, class = UnitClass(targetOfTarget)

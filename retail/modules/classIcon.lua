@@ -9,8 +9,54 @@ local HealerSpecs = {
     [1468] = true,  --> preservation evoker  
 }
 
+local TankSpecs = {
+    [250]  = true,  --> Death Knight Blood
+    [581]  = true,  --> Demon Hunter Vengeance
+    [104]  = true,  --> Druid Guardian
+    [268]  = true,  --> Monk Brewmaster
+    [66]   = true,  --> Paladin Protection
+    [73]   = true,  --> Warrior Protection
+}
+
+local icons = {
+    [121177] = 1119887, -- Red orb
+    [121176] = 1119886, -- Green orb
+    [121164] = 1119885,    -- Blue orb
+    [121175] = 1119888,
+    [156621] = 132486,
+    [156618] = 132485, -- Horde Flag
+    [34976] = 132487, -- Netherstorm Flag
+    [434339] = 463896 -- Deephaul Ravine Crystal
+}
+BBP.ClassIndicatorIcons = icons
+
+local function GetAuraIcon(frame, foundID, auraType)
+    -- If `foundID` exists in the table, return its color immediately
+    if foundID and icons[foundID] then
+        return icons[foundID]
+    end
+
+    -- Otherwise, scan buffs/debuffs based on `auraType`
+    for i = 1, 40 do
+        local _, _, _, _, _, _, _, _, _, spellID = BBP.TWWUnitAura(frame.unit, i, auraType or "HARMFUL")
+        if spellID and icons[spellID] then
+            return icons[spellID]
+        end
+    end
+
+    return nil  -- No matching aura found
+end
+
+local bgsWithObjectives = {
+    [489] = true,
+    [566] = true,
+    [2106] = true,
+    [998] = true,
+    [2656] = true
+}
+
 -- Class Indicator
-function BBP.ClassIndicator(frame)
+function BBP.ClassIndicator(frame, foundID)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
@@ -35,12 +81,22 @@ function BBP.ClassIndicator(frame)
         config.classIndicatorFriendlyYPos = BetterBlizzPlatesDB.classIndicatorFriendlyYPos
         config.classIndicatorFriendlyScale = BetterBlizzPlatesDB.classIndicatorFriendlyScale
         config.classIconColorBorder = BetterBlizzPlatesDB.classIconColorBorder
+        config.classIconReactionBorder = BetterBlizzPlatesDB.classIconReactionBorder
         config.nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
         config.hideResourceOnFriend = BetterBlizzPlatesDB.hideResourceOnFriend
         config.classIndicatorAlpha = BetterBlizzPlatesDB.classIndicatorAlpha
+        config.classIconHealthNumbers = BetterBlizzPlatesDB.classIconHealthNumbers
+        config.classIndicatorFrameStrataHigh = BetterBlizzPlatesDB.classIndicatorFrameStrataHigh
+        config.classIconEnemyHealIcon = BetterBlizzPlatesDB.classIconEnemyHealIcon
+        config.classIconAlwaysShowBgObj = BetterBlizzPlatesDB.classIconAlwaysShowBgObj
+        config.classIndicatorTank = BetterBlizzPlatesDB.classIndicatorTank
+        config.classIconAlwaysShowHealer = BetterBlizzPlatesDB.classIconAlwaysShowHealer
+        config.classIconAlwaysShowTank = BetterBlizzPlatesDB.classIconAlwaysShowTank
 
         config.classIndicatorInitialized = true
     end
+
+    frame.classIndicatorHideNumbers = nil
 
     if not info.class then
         if config.classIndicatorHideRaidMarker then
@@ -48,6 +104,7 @@ function BBP.ClassIndicator(frame)
         end
         if frame.classIndicator then
             frame.classIndicator:Hide()
+            frame.classIndicatorHideNumbers = true
         end
         return
     end
@@ -58,6 +115,7 @@ function BBP.ClassIndicator(frame)
     local yPos = (info.isFriend and config.classIndicatorFriendlyYPos + (anchorPoint == "TOP" and 2 or 0)) or ((info.isEnemy or info.isNeutral) and config.classIndicatorYPos + (anchorPoint == "TOP" and 2 or 0)) or 0
     local scale = (info.isFriend and config.classIndicatorFriendlyScale + 0.3) or ((info.isEnemy or info.isNeutral) and config.classIndicatorScale + 0.3) or 1
     local inInstance, instanceType = IsInInstance()
+    local enabledOnThisUnit = (info.isFriend and config.classIndicatorFriendly) or (not info.isFriend and config.classIndicatorEnemy)
 
     -- Initialize Class Icon Frame
     if not frame.classIndicator then
@@ -67,9 +125,10 @@ function BBP.ClassIndicator(frame)
         frame.classIndicator.icon = frame.classIndicator:CreateTexture(nil, "BORDER")
         frame.classIndicator.icon:SetPoint("CENTER", frame.classIndicator)
         frame.classIndicator.mask = frame.classIndicator:CreateMaskTexture()
-        frame.classIndicator.border = frame.classIndicator:CreateTexture(nil, "OVERLAY")
-        frame.classIndicator:SetFrameStrata(BetterBlizzPlatesDB.classIndicatorFrameStrataHigh and "HIGH" or "LOW")
+        frame.classIndicator.icon:AddMaskTexture(frame.classIndicator.mask)
+        frame.classIndicator.border = frame.classIndicator:CreateTexture(nil, "OVERLAY", nil, 7)
     end
+    frame.classIndicator:SetFrameStrata(config.classIndicatorFrameStrataHigh and "HIGH" or "LOW")
     frame.classIndicator:SetAlpha(config.classIndicatorAlpha)
 
     if (config.classIndicatorHighlight or config.classIndicatorHighlightColor) and not frame.classIndicator.highlightSelect then
@@ -78,23 +137,41 @@ function BBP.ClassIndicator(frame)
         frame.classIndicator.highlightSelect:Hide()
         frame.classIndicator.highlightSelect:SetPoint("CENTER", frame.classIndicator, "CENTER", 0,0)
         frame.classIndicator.highlightSelect:SetSize(33, 33)
-        frame.classIndicator.highlightSelect:SetDrawLayer("OVERLAY", 1)
+        frame.classIndicator.highlightSelect:SetDrawLayer("OVERLAY", 7)
     end
 
-    if (info.isFriend and not config.classIndicatorFriendly) or ((info.isEnemy or info.isNeutral) and not config.classIndicatorEnemy) then
+    local flagIcon
+    if BBP.isInBg and (enabledOnThisUnit or config.classIconAlwaysShowBgObj) then
+        local _, _, _, _, _, _, _, instanceMapID = GetInstanceInfo()
+        local isWSGorEOTS = instanceMapID == 489 or instanceMapID == 566 or instanceMapID == 2106
+        if bgsWithObjectives[instanceMapID] then
+            flagIcon = GetAuraIcon(frame, foundID, isWSGorEOTS and "HELPFUL" or "HARMFUL")
+        end
+    end
+
+    local specIcon
+    local specID = BBP.GetSpecID(frame)
+    if config.classIndicatorSpecIcon or config.classIndicatorHealer then
+        if specID then
+            specIcon = select(4, GetSpecializationInfoByID(specID))
+        end
+    end
+
+    local isTank = config.classIndicatorTank and TankSpecs[specID]
+    local alwaysShowTank = config.classIconAlwaysShowTank and TankSpecs[specID]
+
+    local alwaysShowHealer = config.classIconAlwaysShowHealer and HealerSpecs[specID]
+    if not enabledOnThisUnit and (not flagIcon and not alwaysShowHealer and not alwaysShowTank) then
         frame.classIndicator:Hide()
         return
     end
 
-    frame.classIndicator.icon:AddMaskTexture(frame.classIndicator.mask)
-
     frame.classIndicator.icon:SetPoint("CENTER", frame.classIndicator)
     frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
 
-    -- Set position and scale dynamically
-    if info.isFriend then
-            -- Configure for square or circle border and apply mask
-        if config.classIconSquareBorderFriendly then
+    local function SetBorderType()
+        local function Square()
+            if frame.classIndicator.border.square then return end
             frame.classIndicator.icon:SetSize(20, 20)
             frame.classIndicator.mask:SetAtlas("UI-Frame-IconMask")
             frame.classIndicator.mask:SetSize(20, 20)
@@ -103,6 +180,8 @@ function BBP.ClassIndicator(frame)
             frame.classIndicator.border:SetSize(29, 29)
             frame.classIndicator.border:ClearAllPoints()
             frame.classIndicator.border:SetPoint("CENTER", frame.classIndicator.icon, 1.5, -1.5)
+            frame.classIndicator.border.square = true
+            frame.classIndicator.border.circle = false
             ------
             ------
             if frame.classIndicator.highlightSelect then
@@ -111,13 +190,17 @@ function BBP.ClassIndicator(frame)
                 frame.classIndicator.highlightSelect:SetDesaturated(true)
                 frame.classIndicator.highlightSelect:SetVertexColor(1,0.88,0)
             end
-        else
+        end
+        local function Circle()
+            if frame.classIndicator.border.circle then return end
             frame.classIndicator.icon:SetSize(24, 24)
             frame.classIndicator.mask:SetTexture("Interface/Masks/CircleMaskScalable")
             frame.classIndicator.mask:SetSize(24, 24)
             frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
             frame.classIndicator.border:SetAtlas("AutoQuest-badgeborder")
             frame.classIndicator.border:SetAllPoints(frame.classIndicator)
+            frame.classIndicator.border.square = false
+            frame.classIndicator.border.circle = true
             ------
             ------
             if frame.classIndicator.highlightSelect then
@@ -127,41 +210,23 @@ function BBP.ClassIndicator(frame)
                 frame.classIndicator.highlightSelect:SetVertexColor(1,0.88,0)
             end
         end
-    elseif (info.isEnemy or info.isNeutral) then
-        if config.classIconSquareBorder then
-            frame.classIndicator.icon:SetSize(20, 20)
-            frame.classIndicator.mask:SetAtlas("UI-Frame-IconMask")
-            frame.classIndicator.mask:SetSize(20, 20)
-            frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
-            frame.classIndicator.border:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-HUD-ActionBar-IconFrame-AddRow-Light")
-            frame.classIndicator.border:SetSize(29, 29)
-            frame.classIndicator.border:ClearAllPoints()
-            frame.classIndicator.border:SetPoint("CENTER", frame.classIndicator.icon, 1.5, -1.5)
-            ------
-            ------
-            if frame.classIndicator.highlightSelect then
-                frame.classIndicator.highlightSelect:SetSize(36,36)
-                frame.classIndicator.highlightSelect:SetAtlas("newplayertutorial-drag-slotblue")
-                frame.classIndicator.highlightSelect:SetDesaturated(true)
-                frame.classIndicator.highlightSelect:SetVertexColor(1,0.88,0)
+
+        if info.isFriend then
+            if config.classIconSquareBorderFriendly then
+                Square()
+            else
+                Circle()
             end
         else
-            frame.classIndicator.icon:SetSize(24, 24)
-            frame.classIndicator.mask:SetTexture("Interface/Masks/CircleMaskScalable")
-            frame.classIndicator.mask:SetSize(24, 24)
-            frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
-            frame.classIndicator.border:SetAtlas("AutoQuest-badgeborder")
-            frame.classIndicator.border:SetAllPoints(frame.classIndicator)
-            ------
-            ------
-            if frame.classIndicator.highlightSelect then
-                frame.classIndicator.highlightSelect:SetDesaturated(false)
-                frame.classIndicator.highlightSelect:SetSize(33, 33)
-                frame.classIndicator.highlightSelect:SetAtlas("charactercreate-ring-select")
-                frame.classIndicator.highlightSelect:SetVertexColor(1,0.88,0)
+            if config.classIconSquareBorder then
+                Square()
+            else
+                Circle()
             end
         end
     end
+
+    SetBorderType()
 
     if frame.classIndicator.highlightSelect or config.classIndicatorHighlightColor then
         if info.isTarget then
@@ -182,13 +247,16 @@ function BBP.ClassIndicator(frame)
     else
         frame.classIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos)
     end
-    frame.classIndicator:SetScale(scale)
+    frame.classIndicator:SetScale(flagIcon and scale+0.15 or scale)
 
     -- Visibility checks
     if (config.classIconArenaOnly and not (inInstance and instanceType == "arena")) or (config.classIconBgOnly and not (inInstance and instanceType == "pvp")) then
         frame.classIndicator:Hide()
         return
     end
+
+    frame.classIndicator.icon:SetDesaturated(false)
+    frame.classIndicator.icon:SetVertexColor(1,1,1)
 
     -- Get class icon texture and coordinates
     local classIcon = "Interface/GLUES/CHARACTERCREATE/UI-CHARACTERCREATE-CLASSES"
@@ -204,65 +272,112 @@ function BBP.ClassIndicator(frame)
         return
     end
 
-    local specIcon
-    local specID = BBP.GetSpecID(frame)
-    if config.classIndicatorSpecIcon or config.classIndicatorHealer then
-        if specID then
-            specIcon = select(4, GetSpecializationInfoByID(specID))
-        end
-    end
-
-    -- Set class icon texture and coordinates
-    if specIcon and config.classIndicatorSpecIcon then
-        if config.classIndicatorHealer then
-            if HealerSpecs[specID] then
-                if not ((info.isEnemy or info.isNeutral) and config.classIconSquareBorder) or (info.isFriend or config.classIconSquareBorderFriendly) then
-                    frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
-                    frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87)
-                else
-                    frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
-                    frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856)
-                end
-            else
-                frame.classIndicator.icon:SetTexture(specIcon)
-                frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
-            end
-        else
-            frame.classIndicator.icon:SetTexture(specIcon)
-            frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
-        end
-    elseif config.classIndicatorHealer then
-        if HealerSpecs[specID] then
-            if not ((info.isEnemy or info.isNeutral) and config.classIconSquareBorder) or (info.isFriend or config.classIconSquareBorderFriendly) then
-                frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
-                frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87)
-            else
-                frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
-                frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856)
-            end
-        else
-            frame.classIndicator.icon:SetTexture(classIcon)
-            frame.classIndicator.icon:SetTexCoord(unpack(coords))
-        end
-    else
-        frame.classIndicator.icon:SetTexture(classIcon)
-        frame.classIndicator.icon:SetTexCoord(unpack(coords))
-    end
-
     -- Optional class coloring for the border
     if config.classIconColorBorder then
         frame.classIndicator.border:SetDesaturated(true)
         frame.classIndicator.border:SetVertexColor(classColor.r, classColor.g, classColor.b)
+    elseif config.classIconReactionBorder then
+        frame.classIndicator.border:SetDesaturated(true)
+        if info.isFriend then
+            frame.classIndicator.border:SetVertexColor(0, 1, 0)
+        else
+            frame.classIndicator.border:SetVertexColor(1, 0, 0)
+        end
     else
         frame.classIndicator.border:SetDesaturated(false)
-        frame.classIndicator.border:SetVertexColor(1, 1, 1)
+        if frame.classIndicator.border.square then
+            frame.classIndicator.border:SetVertexColor(0.2, 0.2, 0.2)
+        else
+            frame.classIndicator.border:SetVertexColor(1, 1, 1)
+        end
     end
 
     -- Show the class icon frame
     if config.classIndicatorHideRaidMarker then
         frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(0)
     end
+
+    if flagIcon then
+        frame.classIndicator.icon:SetTexture(flagIcon)
+        frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
+    elseif specIcon and config.classIndicatorSpecIcon then
+        if config.classIndicatorHealer and HealerSpecs[specID] then
+            if info.isFriend then
+                if frame.classIndicator.border.square then
+                    frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
+                    frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
+                else
+                    frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
+                    frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87) -- circle
+                end
+            else
+                frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
+                if frame.classIndicator.border.square then
+                    frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
+                else
+                    frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87) -- circle
+                end
+                if BetterBlizzPlatesDB.classIconHealerIconType == 2 then
+                    frame.classIndicator.icon:SetDesaturated(true)
+                    frame.classIndicator.icon:SetVertexColor(1,0,0)
+                elseif BetterBlizzPlatesDB.classIconHealerIconType == 3 then
+                    frame.classIndicator.icon:SetTexture(648207)
+                    frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
+                end
+            end
+        elseif isTank then
+            if frame.classIndicator.border.square then
+                frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
+                frame.classIndicator.icon:SetTexCoord(0.6498, 0.7302, 0.2726, 0.356)
+            else
+                frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
+                frame.classIndicator.icon:SetTexCoord(0.637, 0.745, 0.259, 0.365)
+            end
+        else
+            frame.classIndicator.icon:SetTexture(specIcon)
+            frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
+        end
+    elseif config.classIndicatorHealer and HealerSpecs[specID] then
+            if info.isFriend then
+                if frame.classIndicator.border.square then
+                    frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
+                    frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
+                else
+                    frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
+                    frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87) -- circle
+                end
+            else
+                frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
+                if frame.classIndicator.border.square then
+                    frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
+                else
+                    frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87) -- circle
+                end
+                if BetterBlizzPlatesDB.classIconHealerIconType == 2 then
+                    frame.classIndicator.icon:SetDesaturated(true)
+                    frame.classIndicator.icon:SetVertexColor(1,0,0)
+                elseif BetterBlizzPlatesDB.classIconHealerIconType == 3 then
+                    frame.classIndicator.icon:SetTexture(648207)
+                    frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
+                end
+            end
+    elseif isTank then
+        if frame.classIndicator.border.square then
+            frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
+            frame.classIndicator.icon:SetTexCoord(0.6498, 0.7302, 0.2726, 0.356)
+        else
+            frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
+            frame.classIndicator.icon:SetTexCoord(0.637, 0.745, 0.259, 0.365)
+        end
+    else
+        frame.classIndicator.icon:SetTexture(classIcon)
+        frame.classIndicator.icon:SetTexCoord(unpack(coords))
+    end
+
     frame.classIndicator:Show()
+    if config.classIconHealthNumbers then
+        BBP.UpdateHealthText(frame)
+    end
 end
 
 function BBP.ClassIndicatorTargetHighlight(frame)
@@ -276,7 +391,48 @@ function BBP.ClassIndicatorTargetHighlight(frame)
                 local classColor = RAID_CLASS_COLORS[info.class]
                 frame.classIndicator.highlightSelect:SetDesaturated(true)
                 frame.classIndicator.highlightSelect:SetVertexColor(classColor.r, classColor.g, classColor.b)
+                frame.classIndicator.highlightSelect.classColored = true
+            elseif frame.classIndicator.highlightSelect.classColored then
+                frame.classIndicator.highlightSelect:SetDesaturated(frame.classIndicator.border.square and true or false)
+                frame.classIndicator.highlightSelect:SetVertexColor(1,0.88,0)
+                frame.classIndicator.highlightSelect.classColored = true
             end
         end
     end
+end
+
+function BBP.UpdateHealthText(frame)
+    if not frame.classIndicator then return end
+    if not frame.classIndicator:IsShown() then return end
+    if frame.classIndicatorHideNumbers then return end
+    if not BBP.isInPvP then return end
+
+    local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo
+
+    if (info.isFriend and config.classIndicatorFriendly) or (info.isEnemy and config.classIndicatorEnemy) then
+        local health = UnitHealth(frame.unit)
+        local maxHealth = UnitHealthMax(frame.unit)
+
+        if maxHealth and maxHealth > 0 then
+            local healthPercent = math.floor((health / maxHealth) * 100)
+            if frame.name:GetAlpha() ~= 0 then
+                frame.name:SetText(healthPercent)
+            end
+        end
+    end
+end
+
+function BBP.SetupClassIndicatorHealthText()
+    if BBP.healthTextFrame then return end -- Prevent multiple registrations
+
+    BBP.healthTextFrame = CreateFrame("Frame")
+    BBP.healthTextFrame:RegisterEvent("UNIT_HEALTH")
+    BBP.healthTextFrame:RegisterEvent("UNIT_MAXHEALTH")
+    BBP.healthTextFrame:SetScript("OnEvent", function(_, event, unit)
+        local _, frame = BBP.GetSafeNameplate(unit)
+        if frame then
+            BBP.UpdateHealthText(frame)
+        end
+    end)
 end

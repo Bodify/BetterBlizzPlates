@@ -1297,6 +1297,7 @@ function BBP.BattlegroundSpecNames(frame)
         createSpexText(frame)
 
         frame.name:SetText("")
+        frame.name:SetAlpha(0)
         frame.specNameText:SetText(specName)
         frame.specNameText:SetTextColor(r, g, b, 1)
         frame.specNameText:SetScale(arenaSpecScale)
