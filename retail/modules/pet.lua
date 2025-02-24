@@ -30,7 +30,7 @@ function BBP.PetIndicator(frame)
 
     local nameplate = frame:GetParent()
     if shadows[nameplate] then
-        nameplate:SetParent(BBP.OverlayFrame)
+        nameplate:SetParent(WorldFrame)
         shadows[nameplate] = nil
     end
     frame.mainPetColor = nil

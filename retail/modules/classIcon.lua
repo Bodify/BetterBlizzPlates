@@ -26,7 +26,11 @@ local icons = {
     [156621] = 132486,
     [156618] = 132485, -- Horde Flag
     [34976] = 132487, -- Netherstorm Flag
-    [434339] = 463896 -- Deephaul Ravine Crystal
+    [434339] = 463896, -- Deephaul Ravine Crystal
+    [168506] = 134334, -- Ancient Artifact (Ashran)
+    [231813] = 1567722, -- Green Dunkball (Brawl)
+    [231814] = 1545374, -- Orange Dunkball (Brawl)
+    [231529] = 1567723, -- Purple Dunkball (Brawl)
 }
 BBP.ClassIndicatorIcons = icons
 
@@ -52,11 +56,19 @@ local bgsWithObjectives = {
     [566] = true,
     [2106] = true,
     [998] = true,
-    [2656] = true
+    [2656] = true,
+    [1191] = true, -- Ashran
+    [1105] = true, -- deepwind gorge brawl
+    [2245] = true, -- deepwind gorge other
 }
 
 -- Class Indicator
-function BBP.ClassIndicator(frame, foundID)
+function BBP.ClassIndicator(frame, foundID, fade)
+    -- if fade and frame.classIndicator then
+    --     frame.classIndicator:SetAlpha(0.1)
+    --     return
+    -- end
+
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
@@ -260,6 +272,7 @@ function BBP.ClassIndicator(frame, foundID)
 
     -- Get class icon texture and coordinates
     local classIcon = "Interface/GLUES/CHARACTERCREATE/UI-CHARACTERCREATE-CLASSES"
+    local classAtlas = "classicon-" .. string.lower(info.class)
     local classColor = RAID_CLASS_COLORS[info.class]
     local coords = CLASS_ICON_TCOORDS[info.class]
     if not coords then
@@ -370,8 +383,8 @@ function BBP.ClassIndicator(frame, foundID)
             frame.classIndicator.icon:SetTexCoord(0.637, 0.745, 0.259, 0.365)
         end
     else
-        frame.classIndicator.icon:SetTexture(classIcon)
-        frame.classIndicator.icon:SetTexCoord(unpack(coords))
+        frame.classIndicator.icon:SetAtlas(classAtlas)
+        frame.classIndicator.icon:SetTexCoord(-0.12,1.12,-0.12,1.12)
     end
 
     frame.classIndicator:Show()

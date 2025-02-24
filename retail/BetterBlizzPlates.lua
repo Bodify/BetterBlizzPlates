@@ -12,7 +12,7 @@ LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Pro
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
 local sendUpdate = true
-BBP.VersionNumber = addonUpdates.."b"
+BBP.VersionNumber = addonUpdates.."c"
 local _, playerClass
 local playerClassColor
 
@@ -2675,7 +2675,7 @@ end
 -- Shows the frame with default settings
 function BBP.ShowFrame(frame, nameplate, config)
     if shadows[nameplate] then
-        nameplate:SetParent(BBP.OverlayFrame)
+        nameplate:SetParent(WorldFrame)
         shadows[nameplate] = nil
     end
     frame.hideCastInfo = false
@@ -2689,7 +2689,7 @@ end
 -- Shows the murlocMode on the frame
 function BBP.ShowMurloc(frame, nameplate)
     if shadows[nameplate] then
-        nameplate:SetParent(BBP.OverlayFrame)
+        nameplate:SetParent(WorldFrame)
         shadows[nameplate] = nil
     end
     frame.HealthBarsContainer:SetAlpha(0)
@@ -2963,7 +2963,7 @@ end
 -- can run before a nameplate is fetched so needs updated info
 hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
     if not frame.unit or not frame.unit:find("nameplate") then return end
-    if not BBP.IsLegalNameplateUnit(frame) then return end
+    if frame:IsForbidden() then return end
 
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     --local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
@@ -4059,6 +4059,7 @@ function BBP.RepositionName(frame)
 
     if config.fakeNameRaiseStrata then
         frame.name:SetParent(frame.HealthBarsContainer:GetAlpha() == 0 and frame or frame.bbpOverlay)
+        frame.name:SetDrawLayer("OVERLAY", 7)
     end
 end
 
@@ -4631,7 +4632,7 @@ local function HandleNamePlateAdded(unit)
         frame.bbpOverlay = CreateFrame("Frame", nil, frame.HealthBarsContainer.healthBar)
     end
 
-    nameplate:SetParent(BBP.OverlayFrame)
+    nameplate:SetParent(WorldFrame)
 
     if not frame.classificationFixed then
         frame.ClassificationFrame:SetParent(frame.HealthBarsContainer)
@@ -5404,17 +5405,19 @@ local hookedGetNamePlateTypeFromUnit = false
 
 function BBP.ToggleHideHealthbar()
     BetterBlizzPlatesDB.friendlyHideHealthBar = not BetterBlizzPlatesDB.friendlyHideHealthBar
-    BBP.friendlyHideHealthBar:SetChecked(BetterBlizzPlatesDB.friendlyHideHealthBar)
-    if BBP.friendlyHideHealthBar:GetChecked() then
-        BBP.friendlyHideHealthBarNpc:Enable()
-        BBP.friendlyHideHealthBarNpc:SetAlpha(1)
-    else
-        BBP.friendlyHideHealthBarNpc:Disable()
-        BBP.friendlyHideHealthBarNpc:SetAlpha(0)
-    end
-    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
-        local frame = nameplate.UnitFrame
-        HideFriendlyHealthbar(frame)
+    if BBP.friendlyHideHealthBar then
+        BBP.friendlyHideHealthBar:SetChecked(BetterBlizzPlatesDB.friendlyHideHealthBar)
+        if BBP.friendlyHideHealthBar:GetChecked() then
+            BBP.friendlyHideHealthBarNpc:Enable()
+            BBP.friendlyHideHealthBarNpc:SetAlpha(1)
+        else
+            BBP.friendlyHideHealthBarNpc:Disable()
+            BBP.friendlyHideHealthBarNpc:SetAlpha(0)
+        end
+        for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+            local frame = nameplate.UnitFrame
+            HideFriendlyHealthbar(frame)
+        end
     end
     if BBP.isInPvE then
         if BetterBlizzPlatesDB.friendlyHideHealthBar then--for toggle keybind

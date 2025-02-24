@@ -11,7 +11,7 @@ LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Pro
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
 local sendUpdate = true
-BBP.VersionNumber = addonUpdates
+BBP.VersionNumber = addonUpdates.."c"
 local _, playerClass
 local playerClassColor
 
@@ -5142,17 +5142,19 @@ local hookedGetNamePlateTypeFromUnit = false
 
 function BBP.ToggleHideHealthbar()
     BetterBlizzPlatesDB.friendlyHideHealthBar = not BetterBlizzPlatesDB.friendlyHideHealthBar
-    BBP.friendlyHideHealthBar:SetChecked(BetterBlizzPlatesDB.friendlyHideHealthBar)
-    if BBP.friendlyHideHealthBar:GetChecked() then
-        BBP.friendlyHideHealthBarNpc:Enable()
-        BBP.friendlyHideHealthBarNpc:SetAlpha(1)
-    else
-        BBP.friendlyHideHealthBarNpc:Disable()
-        BBP.friendlyHideHealthBarNpc:SetAlpha(0)
-    end
-    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
-        local frame = nameplate.UnitFrame
-        HideFriendlyHealthbar(frame)
+    if BBP.friendlyHideHealthBar then
+        BBP.friendlyHideHealthBar:SetChecked(BetterBlizzPlatesDB.friendlyHideHealthBar)
+        if BBP.friendlyHideHealthBar:GetChecked() then
+            BBP.friendlyHideHealthBarNpc:Enable()
+            BBP.friendlyHideHealthBarNpc:SetAlpha(1)
+        else
+            BBP.friendlyHideHealthBarNpc:Disable()
+            BBP.friendlyHideHealthBarNpc:SetAlpha(0)
+        end
+        for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+            local frame = nameplate.UnitFrame
+            HideFriendlyHealthbar(frame)
+        end
     end
     if BBP.isInPvE then
         if BetterBlizzPlatesDB.friendlyHideHealthBar then--for toggle keybind

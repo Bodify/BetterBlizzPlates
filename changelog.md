@@ -1,3 +1,14 @@
+# BetterBlizzPlates 1.6.9c
+## The War Within
+### Tweak:
+- Class Icon:
+  - Add Ashran's Ancient Artifact and Brawl: Deepwind Dunk Dunkballs to BG Objectives.
+  - Changed to higher res icons on Retail
+- Revert nameplate change causing some unintended issues for some people.
+### Bugfix:
+- Fix the Classic Nameplate Border showing above name.
+- Fix Toggle Friendly Healthbar Keybind function causing lua error when GUI was not loaded.
+
 # BetterBlizzPlates 1.6.9b
 ## The War Within
 ### New:
