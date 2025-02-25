@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.6.9d
+## The War Within, Classic Era, Cataclysm
+### Bugfix:
+- Fix missing mid-section castbar color in the Castbar Edge Highlight feature when using castbar recolor/retexture.
+
 # BetterBlizzPlates 1.6.9c
 ## The War Within
 ### Tweak:
@@ -281,7 +286,7 @@ You might notice your non-target nameplates have changed (very minimal) in size 
 - I've added a variable that controls size for nameplate target text and cast timer. Atm no GUI yet, default value is 11, you can change this size by writing /run BetterBlizzPlatesDB.npTargetTextSize = 11
 - I've also added a variable that controls font outline for health numbers, also without GUI, to change it do /run BetterBlizzPlatesDB.healthNumbersFontOutline = "OUTLINE"    (or "THICKOUTLINE", or nil)
 - Absorb Indicator now says millions instead of thousands. 7300k -> 7.3m
-- Added Voidwrath (priest npc), Shadowfiend and Surge Totem to Totem Indicator and Hide/Fade Whitelists.
+- Added Voidwraith (priest npc), Shadowfiend and Surge Totem to Totem Indicator and Hide/Fade Whitelists.
 - General performance tweaks.
 ### Bugfix:
 - Fix an issue with the "Hide castbar" setting for friendly nameplates potentially getting stuck.

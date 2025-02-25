@@ -752,10 +752,12 @@ function BBP.ToggleSpellCastEventRegistration()
                 local spellName, spellID, notInterruptible, endTime
                 local castStart, castDuration
                 local _
+                local cast
 
                 if UnitCastingInfo(self.unit) then
                     spellName, _, _, castStart, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(self.unit)
                     castDuration = endTime - castStart
+                    cast = true
                 elseif UnitChannelInfo(self.unit) then
                     spellName, _, _, castStart, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
                     castDuration = endTime - castStart
@@ -772,23 +774,24 @@ function BBP.ToggleSpellCastEventRegistration()
                         local castEndSeconds = endTime / 1000
                         local currentCastTime = currentTime - castStartSeconds
                         local timeRemaining = castEndSeconds - currentTime
+                        local db = BetterBlizzPlatesDB
 
                         -- Convert the start and end times from configuration to seconds for comparison
-                        local highlightStartTime = BetterBlizzPlatesDB.castBarInterruptHighlighterStartTime
-                        local highlightEndTime = BetterBlizzPlatesDB.castBarInterruptHighlighterEndTime
+                        local highlightStartTime = db.castBarInterruptHighlighterStartTime
+                        local highlightEndTime = db.castBarInterruptHighlighterEndTime
 
                         -- Check if the current cast time is within the specified start and end times
                         if currentCastTime <= highlightStartTime or timeRemaining <= highlightEndTime then
                             -- Highlight the cast bar
-                            local color = BetterBlizzPlatesDB.castBarInterruptHighlighterInterruptRGB
+                            local color = db.castBarInterruptHighlighterInterruptRGB
                             if castBarTexture then
                                 castBarTexture:SetDesaturated()
                             end
                             castBar:SetStatusBarColor(unpack(color)) -- Color for highlight (e.g., green)
                         else
-                            local colorDontInterrupt = BetterBlizzPlatesDB.castBarInterruptHighlighterColorDontInterrupt
+                            local colorDontInterrupt = db.castBarInterruptHighlighterColorDontInterrupt
                             if colorDontInterrupt then
-                                local color = BetterBlizzPlatesDB.castBarInterruptHighlighterDontInterruptRGB
+                                local color = db.castBarInterruptHighlighterDontInterruptRGB
                                 if castBarTexture then
                                     castBarTexture:SetDesaturated()
                                 end
@@ -796,6 +799,23 @@ function BBP.ToggleSpellCastEventRegistration()
                             else
                                 if castBarTexture then
                                     castBarTexture:SetDesaturated(false)
+                                end
+                                local castBarRecolor = db.castBarRecolor
+                                local useCustomCastbarTexture = db.useCustomCastbarTexture
+                                if castBarRecolor then
+                                    if cast then
+                                        castBar:SetStatusBarColor(unpack(db.castBarCastColor))
+                                    else
+                                        castBar:SetStatusBarColor(unpack(db.castBarChanneledColor))
+                                    end
+                                elseif useCustomCastbarTexture then
+                                    if cast then
+                                        castBar:SetStatusBarColor(1,0.843,0.2)
+                                    else
+                                        castBar:SetStatusBarColor(0,1,0)
+                                    end
+                                else
+                                    --castBar:SetStatusBarColor(1,1,1)
                                 end
                                 --castBar:SetStatusBarColor(1, 1, 1) -- Default color
                             end
@@ -805,6 +825,14 @@ function BBP.ToggleSpellCastEventRegistration()
                     if interruptedCastbar then
                         if castBarTexture then
                             castBarTexture:SetDesaturated(false)
+                        end
+                        local db = BetterBlizzPlatesDB
+                        local castBarRecolor = db.castBarRecolor
+                        local useCustomCastbarTexture = db.useCustomCastbarTexture
+                        if castBarRecolor or useCustomCastbarTexture then
+                            castBar:SetStatusBarColor(1,0,0)
+                        else
+                            --castBar:SetStatusBarColor(1,1,1)
                         end
                         --castBar:SetStatusBarColor(1, 1, 1) -- Reset to default color if interrupted
                     end

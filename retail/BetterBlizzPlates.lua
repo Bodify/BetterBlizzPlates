@@ -12,7 +12,7 @@ LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Pro
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
 local sendUpdate = true
-BBP.VersionNumber = addonUpdates.."c"
+BBP.VersionNumber = addonUpdates.."d"
 local _, playerClass
 local playerClassColor
 
@@ -221,7 +221,7 @@ local defaultSettings = {
     classIndicatorScale = 1,
     classIndicatorAlpha = 1,
     classIndicatorFriendlyScale = 1,
-    classIndicatorEnemy = true,
+    --classIndicatorEnemy = true,
     classIndicatorFriendly = true,
     classIconColorBorder = true,
     classIndicatorHideRaidMarker = true,
@@ -242,7 +242,7 @@ local defaultSettings = {
     partyPointerAnchor = "TOP",
     partyPointerClassColor = true,
     partyPointerHideRaidmarker = true,
-    partyPointerArenaOnly = true,
+    --partyPointerArenaOnly = true,
     -- Pet Indicator
     petIndicator = false,
     petIndicatorScale = 1,
@@ -293,13 +293,13 @@ local defaultSettings = {
         [53006] =   { name = "Spirit Link Totem", icon = C_Spell.GetSpellTexture(98008),                hideIcon = false, size = 30, duration = 6,  color = {0, 1, 0.78}, important = true },
         [5913] =    { name = "Tremor Totem", icon = C_Spell.GetSpellTexture(8143),                      hideIcon = false, size = 30, duration = 13, color = {0.49, 0.9, 0.08}, important = true },
         [104818] =  { name = "Ancestral Protection Totem", icon = C_Spell.GetSpellTexture(207399),      hideIcon = false, size = 30, duration = 33, color = {0, 1, 0.78}, important = true },
-        [119052] =  { name = "War Banner", icon = C_Spell.GetSpellTexture(236320),                      hideIcon = false, size = 30, duration = 15, color = {1, 0, 1}, important = true },
+        --11.1 removed [119052] =  { name = "War Banner", icon = C_Spell.GetSpellTexture(236320),                      hideIcon = false, size = 30, duration = 15, color = {1, 0, 1}, important = true },
         [61245] =   { name = "Capacitor Totem", icon = C_Spell.GetSpellTexture(192058),                 hideIcon = false, size = 30, duration = 2,  color = {1, 0.69, 0}, important = true },
         [105451] =  { name = "Counterstrike Totem", icon = C_Spell.GetSpellTexture(204331),             hideIcon = false, size = 30, duration = 15, color = {1, 0.27, 0.59}, important = true },
         [101398] =  { name = "Psyfiend", icon = C_Spell.GetSpellTexture(199824),                        hideIcon = false, size = 35, duration = 12, color = {0.49, 0, 1}, important = true },
         [225672] =  { name = "Shadow", icon = C_Spell.GetSpellTexture(8122),                            hideIcon = false, size = 35, duration = 4,  color = {0.78, 0.48, 1}, important = true },
         [100943] =  { name = "Earthen Wall Totem", icon = C_Spell.GetSpellTexture(198838),              hideIcon = false, size = 30, duration = 18, color = {0.78, 0.49, 0.35}, important = true },
-        [107100] =  { name = "Observer", icon = C_Spell.GetSpellTexture(112869),                        hideIcon = false, size = 30, duration = 20, color = {1, 0.69, 0}, important = true },
+        --11.1 removed [107100] =  { name = "Observer", icon = C_Spell.GetSpellTexture(112869),                        hideIcon = false, size = 30, duration = 20, color = {1, 0.69, 0}, important = true },
         [135002] =  { name = "Tyrant", icon = C_Spell.GetSpellTexture(265187),                          hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
         [114565] =  { name = "Guardian of the Forgotten Queen", icon = C_Spell.GetSpellTexture(228049), hideIcon = false, size = 30, duration = 10, color = {1, 0, 1}, important = true },
         [107024] =  { name = "Fel Lord", icon = C_Spell.GetSpellTexture(212459),                        hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
@@ -308,12 +308,12 @@ local defaultSettings = {
         [14466] =   { name = "Horde Battle Standard", icon = 132485,                                    hideIcon = false, size = 24, duration = nil, color = {1, 0, 0}, important = true },
         -- Less important
         --[103673] =  { name = "Darkglare", icon = C_Spell.GetSpellTexture(205180),                       hideIcon = false, size = 24, duration = 20, color = {1, 0, 0}, important = false},
-        [224466] =  { name = "Voidwrath", icon = C_Spell.GetSpellTexture(451234),                       hideIcon = false, size = 24, duration = 15, color = {1, 0.69, 0}, important = false },
+        [224466] =  { name = "Voidwraith", icon = C_Spell.GetSpellTexture(451234),                      hideIcon = false, size = 24, duration = 15, color = {1, 0.69, 0}, important = false },
         [89] =      { name = "Infernal", icon = C_Spell.GetSpellTexture(1122),                          hideIcon = false, size = 24, duration = 30, color = {1, 0.69, 0}, important = false },
         [196111] =  { name = "Pit Lord", icon = C_Spell.GetSpellTexture(138789),                        hideIcon = false, size = 24, duration = 10, color = {1, 0.69, 0}, important = false },
         [3527] =    { name = "Healing Stream Totem", icon = C_Spell.GetSpellTexture(5394),              hideIcon = false, size = 24, duration = 18, color = {0, 1, 0.78}, important = false },
         [78001] =   { name = "Cloudburst Totem", icon = C_Spell.GetSpellTexture(157153),                hideIcon = false, size = 24, duration = 15, color = {0, 1, 0.39}, important = false },
-        [10467] =   { name = "Mana Tide Totem", icon = C_Spell.GetSpellTexture(16191),                  hideIcon = false, size = 24, duration = 8,  color = {0.08, 0.82, 0.78}, important = false },
+        --11.1 removed [10467] =   { name = "Mana Tide Totem", icon = C_Spell.GetSpellTexture(16191),                  hideIcon = false, size = 24, duration = 8,  color = {0.08, 0.82, 0.78}, important = false },
         [97285] =   { name = "Wind Rush Totem", icon = C_Spell.GetSpellTexture(192077),                 hideIcon = false, size = 24, duration = 18, color = {0.08, 0.82, 0.78}, important = false },
         [60561] =   { name = "Earthgrab Totem", icon = C_Spell.GetSpellTexture(51485),                  hideIcon = false, size = 24, duration = 30, color = {0.75, 0.31, 0.10}, important = false },
         [2630] =    { name = "Earthbind Totem", icon = C_Spell.GetSpellTexture(2484),                   hideIcon = false, size = 24, duration = 30, color = {0.78, 0.51, 0.39}, important = false },
@@ -583,7 +583,7 @@ local defaultSettings = {
         {name = "Infernal (Warlock)", id = 89, comment = ""},
         {name = "Stone Bulwark Totem", id = 59712, comment = ""},
         {name = "Shadow (Priest Re-Fear)", id = 225672, comment = ""},
-        {name = "Voidwrath (Priest)", id = 224466, comment = ""},
+        {name = "Voidwraith (Priest)", id = 224466, comment = ""},
         {name = "Shadowfiend", id = 19668, comment = ""},
         {name = "Surging Totem", id = 225409, comment = ""}
     },
@@ -621,7 +621,7 @@ local defaultSettings = {
         {name = "Infernal (Warlock)", id = 89, comment = ""},
         {name = "Stone Bulwark Totem", id = 59712, comment = ""},
         {name = "Shadow (Priest Re-Fear)", id = 225672, comment = ""},
-        {name = "Voidwrath (Priest)", id = 224466, comment = ""},
+        {name = "Voidwraith (Priest)", id = 224466, comment = ""},
         {name = "Shadowfiend", id = 19668, comment = ""},
         {name = "Surging Totem", id = 225409, comment = ""}
     },
@@ -5645,6 +5645,12 @@ local function UpdateNpWidthShuffle(self, event, ...)
         else
             BBP.ApplyNameplateWidth()
             BBP.RefreshAllNameplates()
+            C_Timer.After(1, function()
+                if not UnitAffectingCombat("player") then
+                    BBP.ApplyNameplateWidth()
+                    BBP.RefreshAllNameplates()
+                end
+            end)
         end
 
     elseif event == "PLAYER_REGEN_ENABLED" then
@@ -5790,7 +5796,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     db.totemIndicatorNpcList[225409] = defaultSettings.totemIndicatorNpcList[225409]
                 end
                 local entriesToCheck = {
-                    {name = "Voidwrath (Priest)", id = 224466, comment = ""},
+                    {name = "Voidwraith (Priest)", id = 224466, comment = ""},
                     {name = "Shadowfiend", id = 19668, comment = ""},
                     {name = "Surging Totem", id = 225409, comment = ""}
                 }
@@ -5904,12 +5910,17 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 end
             end
 
-            -- if not db.totemListUpdateTWW6 then
-            --     if not db.totemIndicatorNpcList[103673] then
-            --         db.totemIndicatorNpcList[103673] = defaultSettings.totemIndicatorNpcList[103673]
-            --     end
-            --     db.totemListUpdateTWW6 = true
-            -- end
+            if not db.totemListUpdateTWW6 then
+                local totemIDs = {119052, 107100, 10467}
+
+                for _, id in ipairs(totemIDs) do
+                    if db.totemIndicatorNpcList[id] then
+                        db.totemIndicatorNpcList[id] = nil
+                    end
+                end
+
+                db.totemListUpdateTWW6 = true
+            end
 
             if not db.auraWhitelistColorsUpdated then
                 UpdateAuraColorsToGreen() --update default yellow text to green for new color featur

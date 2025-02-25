@@ -6836,11 +6836,11 @@ local function guiPositionAndScale()
 
     local classIndicatorEnemy = CreateCheckbox("classIndicatorEnemy", "Enemies", contentFrame)
     classIndicatorEnemy:SetPoint("TOPLEFT", classIconDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
-    CreateTooltip(classIndicatorEnemy, "Show class indicator on enemy nameplates")
+    CreateTooltipTwo(classIndicatorEnemy, "Show on Enemy Nameplates", "Show Class Indicator on Enemy Nameplates", "More settings available to for example only show on Enemy Healers.")
 
     local classIndicatorFriendly = CreateCheckbox("classIndicatorFriendly", "Friendly", contentFrame)
     classIndicatorFriendly:SetPoint("LEFT", classIndicatorEnemy.text, "RIGHT", -2, 0)
-    CreateTooltip(classIndicatorFriendly, "Show class indicator on friendly nameplates")
+    CreateTooltipTwo(classIndicatorFriendly, "Show on Friendly Nameplates", "Show Class Indicator on Friendly Nameplates.", "More settings available to for example only show on Friendly Healers.")
 
     local classIconSquareBorder = CreateCheckbox("classIconSquareBorder", "Square", contentFrame)
     classIconSquareBorder:SetPoint("TOPLEFT", classIndicatorEnemy, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
