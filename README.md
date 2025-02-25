@@ -1,98 +1,145 @@
 # BetterBlizzPlates
-**BetterBlizzPlates** is a lightweight addon that enhances the default Blizzard nameplates.
 
-![BetterBlizzPlates](https://i.imgur.com/R1GLOmj.png)
+**BetterBlizzPlates** is an addon that takes the default Blizzard nameplates and enhances them with additional features and allows you to highly customizable them. You can choose to customize everything from scratch (completely default nameplates) or you can import one of the many included profiles.
 
-[GitHub Repo](https://github.com/Bodify/BetterBlizzPlates "GitHub Repo")
+> 🎯 **Compatible with Retail, Classic Era & Cataclysm**
 
-## Features
-- Every setting to customize your Blizzard nameplates is easily available with a GUI. No more scripts!
-- Change nameplate width
-- Change nameplate size
-- Raidmark on top of nameplate
-- Class color names
-- Hide realm names
-- Hide specific nameplates
-- And much more; check screenshots for info
+[![](https://shields.io/badge/discord-5865F2?logo=discord&style=for-the-badge&logoColor=white)](https://discord.gg/cjqVaEMm25) [![](https://shields.io/badge/patreon-red?logo=patreon&style=for-the-badge)](https://www.patreon.com/bodifydev) [![](https://shields.io/badge/paypal-00457C?logo=paypal&style=for-the-badge)](https://www.paypal.com/paypalme/bodifydev) [![](https://shields.io/badge/github-gray?logo=github&style=for-the-badge&logoColor=white)](https://github.com/Bodify/BetterBlizzPlates)
 
-## New Additions
-- New features that don't have screenshots or info yet:
-- Hide NPC whitelist mode
-- Color NPC
-- Quest Indicator
-- Castbar settings and emphasis mode
-- Hide Castbar
-- Nameplate aura settings, filter, buffs, etc.
+***
 
-## Arena Nameplates
-![ArenaPlates](https://i.imgur.com/2hQfPY6.png)
-#
-- Choose between 5 different modes for Arena nameplates:
-- Replace name with Arena ID
-- Arena ID on top of name
-- Replace name with spec
-- Replace name with spec + ID on top
-- Replace name with ID + spec (e.g., 3 Mistweaver)
+# 🚀 Features
 
-## Extra Features
-**Absorb Indicator:**
+All features are off by default so you can ease your way into things but I highly recommend either the Starter Profile for a quick start with all the core minimalistic features enabled or one of the more advanced profiles!
 
-Show absorb amount directly on the nameplate
+***
 
-![AbsorbIndicator](https://i.imgur.com/42DxC2c.png)
+## 🔄 Classic & Retail Nameplate Options
 
-**Combat Indicator:**
+Switch between classic and retail nameplate styles depending on your preference.\\ You can have retail nameplates on classic and classic nameplates on retail!
 
-Show food (or Sap) icon on targets out of combat
+![Nameplate Options](https://github.com/user-attachments/assets/5dd026f7-e2f0-4b46-9726-6d6e063e0ce5)
 
-![CombatIndicator](https://i.imgur.com/Kr4VWHH.png)
+## ⚡ Totem Indicator
 
-**Execute Indicator:**
+Important totems and NPCs get highlighted with a large icon and glow.
 
-Start tracking health percentage when the target drops below 40%
+*   All Totems can be customized individually with settings such as color, size, and an "Icon Only" mode removing healthbar and name.
+*   Fully configured from the get go but you can add your own new NPCs and also import others presets!
 
-![ExecuteIndicator](https://i.imgur.com/OgVAaIT.png)
+![Totem Indicator](https://github.com/user-attachments/assets/6c3cbd81-451e-4b1b-9986-84e7f3e326d5)
 
-**Healer Indicator:**
+## 🛡️ Class/Spec Icon & Party Pointer Marker
 
-Show a cross on healer nameplates
+Easily identify the class and specialization of enemies and allies with clear, customizable icons with Class Indicator. You can also use Party Pointer to locate your teammates effortlessly with a customizable arrow pointer above their nameplates.
 
-![HealerIndicator](https://i.imgur.com/lOgdNQH.png)
+*   Circle or Square Icon, can be separate for friendly/enemy.
+*   Displays Battleground Objectives (Flag/Orb)
+*   Can be configured to show on all friendly but only enemy healer & Battleground Objectives.
+*   Target highlight glow.
+*   Can replace name with health percentage.
 
-**Pet Indicator:**
+![Class/Spec Icon](https://github.com/user-attachments/assets/97c908cd-137e-4f07-a16e-626222012106)
 
-Show a murloc on the main hunter pet
+## ❌ Hide Unwanted Nameplates
 
-![PetIndicator](https://i.imgur.com/6btmVO8.png)
+There are multiple ways to hide unwanted nameplates.
 
-**Target Indicator:**
+*   You can completely hide them, making them unclickable.
+*   Replace them with a small Murloc icon to keep track of how many are active
+*   Fade them out for reduced visibility.
+*   Shorter Pet Nameplates
 
-Show an arrow on your current target
+![Nameplate Filtering](https://github.com/user-attachments/assets/c4f86c5e-1dd0-454d-abcd-fb23bf753f4b)
 
-![TargetIndicator](https://i.imgur.com/W5UU5Xm.png)
+## 🌟 Aura Filtering & Settings
 
-**Totem Indicator:**
+Easily customize aura size, position, and sorting to fit your preferences. You can filter nameplate auras to display only the ones you care about and highlight specific auras with a glow, resize them, or both for better visibility.
 
-Show totem/npc icon above important nameplates.
+*   Adjust aura size, position, and sorting with ease.
+*   Filter nameplate auras to display only the ones you care about.
+*   Highlight specific auras with a glow, resize them, or both.
+*   Add Pandemic Glow to chosen auras to have them highlight in the pandemic window.
 
-![TotemIndicator](https://s11.gifyu.com/images/S4v7O.gif)
+![Aura Filtering](https://github.com/user-attachments/assets/7fd0e49d-e73d-47ea-8e5c-c2c7bb841ca4)![BBPAuras2](https://github.com/user-attachments/assets/5cdc06c1-8396-4828-8ef3-3115b13e8c69)
 
-# Custom Font and Texture
-Default settings
+## 🎨 Nameplate Coloring
 
-![DefaultNameplate](https://i.imgur.com/qlre1p5.png)
+Change the color of nameplates to make them stand out the way you want. You can color specific NPCs by name or ID, adjust nameplate colors based on active auras, and highlight your target or focus with a different color.
 
-Custom font and texture on
+*   **Color by ID/Name**: Assign distinct colors to nameplates based on specific NPC IDs or names.
+*   **Color by Auras**: Change nameplate colors when certain auras are present and set priority of which color is king, making it easier to identify targets with specific buffs/debuffs.
+*   **Color Target/Focus**: Highlight the target and focus nameplates with unique colors for better visual distinction.
+*   Supports Plater imports!
 
-![CustomNameplate](https://i.imgur.com/XlctbT7.png)
+![Nameplate Coloring](https://github.com/user-attachments/assets/f96c045d-26e2-4783-ace3-b87d4382ccaa)
 
-## Configuration
-To open the options panel, type `/bbp`
+## 🛡️ Absorb Indicators
 
-![BetterBlizzPlates Options](https://i.imgur.com/nf963Yg.png)
+Displays shield amounts directly on health bars, showing exactly how much absorb protection a unit has.
 
-![BetterBlizzPlates Settings](https://i.imgur.com/6eGmOkX.png)
+![Absorb Indicator](https://github.com/user-attachments/assets/4d01547d-57aa-415f-a073-d1c1a4acc948)
 
-![BetterBlizzPlates FadeOut](https://i.imgur.com/0Spxwpn.png)
+## 🎨 Fonts & Textures
 
-This is very much a work in progress, and I would appreciate all feedback.- 
+Choose from various font styles and textures to suit your UI aesthetic.\\ Supports SharedMedia so fonts and textures from other addons are available and you can import your own as well.
+
+![Fonts & Textures](https://github.com/user-attachments/assets/f30241c0-c32f-4943-90ea-eefe3989b318)
+
+## 🎛️ Additional Features
+
+BetterBlizzPlates offers a range of extra customization options to fine-tune your nameplates to your needs:
+
+*   **Size Settings**: Customize height and width for nameplates.
+*   **Personal Resource Bar**: Customize width, height, and position for personal resource display.
+*   **Target & Focus Indicators**: Add an icon to Target/Focus Nameplate and/or re-color/re-texture them.
+*   **Combat Indicator**: Show an icon for out-of-combat nameplates for easy view on sap windows.
+*   **Name Formatting**: Hide realm names, display Arena ID or specialization, or shorten NPC names.
+*   **Castbar Customization**: Adjust size, position, and colors, with options to hide certain casts or enlarge imporant ones.
+*   **CVar Settings**: Access important nameplate-related CVars to fine-tune their behavior.
+*   **Tons more:**: A ton of more features are in the addon. Check screenshots for more!
+
+![ArenaID](https://i.imgur.com/2hQfPY6.png)
+
+![Target](https://github.com/user-attachments/assets/ee66ae49-d33a-4872-8a66-61f0e98d2002)![Combat](https://github.com/user-attachments/assets/b1f8f0b1-0fc1-401a-93b0-6639246dea0d)
+
+![Healer](https://github.com/user-attachments/assets/e13f5853-ad0c-4a9a-8266-3bdb9a98fd2f)![Pet](https://github.com/user-attachments/assets/05759eec-d145-42c3-8f86-72f129173358)
+
+## 🌐 Streamers Using BetterBlizzPlates
+
+BetterBlizzPlates is used by several popular streamers in the WoW community, including:
+
+*   [Whaazz](https://www.twitch.tv/whaazz)
+*   [Raiku](https://www.twitch.tv/raiku)
+*   [Mehhx](https://www.twitch.tv/mehhx)
+*   [Chanx](https://www.twitch.tv/chanx)
+*   [Nahj](https://www.twitch.tv/nahj)
+*   [Aeghis](https://www.twitch.tv/aeghis)
+*   [Kalvish](https://www.twitch.tv/kalvish)
+*   [Hydramist](https://www.twitch.tv/hydramist)
+*   [Cdewx](https://www.twitch.tv/cdewx)
+*   [Notmes](https://www.twitch.tv/notmes)
+*   [Trilltko](https://www.twitch.tv/trilltko)
+*   [Magnusz](https://www.twitch.tv/magnusz)
+*   [Hansol](https://www.twitch.tv/hansol)
+*   [Lontartv](https://www.twitch.tv/lontartv)
+*   [Metaphors](https://www.twitch.tv/metaphors)
+*   [Jazggz](https://www.twitch.tv/jazggz)
+*   [Mmarkers](https://www.twitch.tv/mmarkers)
+*   [Trillebartom](https://www.twitch.tv/trillebartom)
+*   [Kasuxoxo](https://www.twitch.tv/kasuxoxo)
+*   [Snupy](https://www.twitch.tv/snupy)
+*   [Lovelesstv](https://www.twitch.tv/lovelesstv)
+*   [Akrololz](https://www.twitch.tv/akrololz)
+*   [Samiyam](https://www.twitch.tv/samiyam)
+*   [Saul](https://www.twitch.tv/saul)
+*   [Pmakewow](https://www.twitch.tv/pmakewow)
+*   [Flop](https://www.twitch.tv/flop)
+*   [Tonyferalmovies](https://www.twitch.tv/tonyferalmovies)
+*   [Swapxy](https://www.twitch.tv/swapxy)
+
+These streamers showcase the addon in action, all with varying degrees of configuration. Some with the bare minimum, others with everything customized.
+
+[![](https://shields.io/badge/discord-5865F2?logo=discord&style=for-the-badge&logoColor=white)](https://discord.gg/cjqVaEMm25) [![](https://shields.io/badge/patreon-red?logo=patreon&style=for-the-badge)](https://www.patreon.com/bodifydev) [![](https://shields.io/badge/paypal-00457C?logo=paypal&style=for-the-badge)](https://www.paypal.com/paypalme/bodifydev) [![](https://shields.io/badge/github-gray?logo=github&style=for-the-badge&logoColor=white)](https://github.com/Bodify/BetterBlizzPlates)
+
+![Settings](https://github.com/user-attachments/assets/d17842b5-cdce-423f-8b26-dcc9df8901f6)
