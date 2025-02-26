@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.6.9e
+## The War Within
+### Bugfix:
+- Fix typo in Castbar Edge Highlight causing errors.
+
 # BetterBlizzPlates 1.6.9d
 ## The War Within, Classic Era, Cataclysm
 ### Bugfix:
