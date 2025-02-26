@@ -6774,7 +6774,6 @@ local function guiPositionAndScale()
     anchorSubClassIcon.t:SetAtlas("groupfinder-icon-class-mage")
     anchorSubClassIcon.t:SetSize(33, 33)
     anchorSubClassIcon.t:SetPoint("BOTTOM", anchorSubClassIcon, "TOP", 0, 1.5)
-    --classIconIcon:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875)
 
     local classIndicatorScale = CreateSlider(contentFrame, "Size", 0.6, 2.5, 0.01, "classIndicatorFriendlyScale", false, 72)
     classIndicatorScale:SetPoint("TOP", anchorSubClassIcon, "BOTTOM", 36, -15)

@@ -659,6 +659,7 @@ local defaultSettings = {
         {name = "Scare Beast"},
         {name = "Lightning Lasso"},
         {name = "Song of Chi-Ji"},
+        {name = "Ring of Fire"},
     },
 
     castBarInterruptHighlighter = false,

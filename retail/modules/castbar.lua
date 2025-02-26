@@ -805,7 +805,7 @@ function BBP.ToggleSpellCastEventRegistration()
                         local currentCastTime = currentTime - castStartSeconds
                         local timeRemaining = castEndSeconds - currentTime
 
-                        local db = BetterBlizzPlates
+                        local db = BetterBlizzPlatesDB
 
                         -- Convert the start and end times from configuration to seconds for comparison
                         local highlightStartTime = db.castBarInterruptHighlighterStartTime
