@@ -106,6 +106,8 @@ local defaultSettings = {
     dpsOrHealNoAggroColorRGB = {0, 1, 0, 1},
     npBgColorRGB = {1, 1, 1, 1},
     smallPetsWidth = 20,
+    enlargeAllImportantBuffs = true,
+    enlargeAllCC = true,
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -5228,8 +5230,8 @@ function BBP.ConsolidatedUpdateName(frame)
     -- -- Handle absorb indicator and reset absorb text if it exists
     -- if config.absorbIndicator then BBP.AbsorbIndicator(frame) end
 
-    -- -- Show out of combat icon
-    -- if config.combatIndicator then BBP.CombatIndicator(frame) end
+    -- Show out of combat icon
+    if config.combatIndicator then BBP.CombatIndicator(frame) end
 
     -- -- Show hunter pet icon
     -- if config.petIndicator then BBP.PetIndicator(frame) end
@@ -5524,7 +5526,7 @@ Frame:SetScript("OnEvent", function(...)
     if db.enableNameplateAuraCustomisation then
         BBP.RunAuraModule()
         BBP.SmokeCheckBootup()
-        BBF.UpdateImportantBuffsAndCCTables()
+        BBP.UpdateImportantBuffsAndCCTables()
     end
 
     --if BetterBlizzPlatesDB.enableCastbarCustomization then

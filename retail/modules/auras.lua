@@ -508,7 +508,7 @@ local ccSilence = {
     [374776] = true,
 }
 
-function BBF.UpdateImportantBuffsAndCCTables()
+function BBP.UpdateImportantBuffsAndCCTables()
     -- Clear the importantBuffs and crowdControl tables before updating
     wipe(importantBuffs)
     wipe(crowdControl)
