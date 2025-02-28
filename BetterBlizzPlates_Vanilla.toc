@@ -26,7 +26,7 @@ temp_era\modules\pet.lua
 temp_era\modules\range.lua
 temp_era\modules\quest.lua
 temp_era\modules\auras.lua
-temp_era\modules\nahjProfile.lua
+temp_era\modules\profiles.lua
 retail\modules\importConvert.lua
 
 temp_era\gui.lua

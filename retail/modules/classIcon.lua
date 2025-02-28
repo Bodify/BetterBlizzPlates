@@ -138,7 +138,7 @@ function BBP.ClassIndicator(frame, foundID, fade)
         frame.classIndicator.icon:SetPoint("CENTER", frame.classIndicator)
         frame.classIndicator.mask = frame.classIndicator:CreateMaskTexture()
         frame.classIndicator.icon:AddMaskTexture(frame.classIndicator.mask)
-        frame.classIndicator.border = frame.classIndicator:CreateTexture(nil, "OVERLAY", nil, 7)
+        frame.classIndicator.border = frame.classIndicator:CreateTexture(nil, "OVERLAY", nil, 6)
     end
     frame.classIndicator:SetFrameStrata(config.classIndicatorFrameStrataHigh and "HIGH" or "LOW")
     frame.classIndicator:SetAlpha(config.classIndicatorAlpha)
@@ -384,7 +384,7 @@ function BBP.ClassIndicator(frame, foundID, fade)
         end
     else
         frame.classIndicator.icon:SetAtlas(classAtlas)
-        frame.classIndicator.icon:SetTexCoord(-0.12,1.12,-0.12,1.12)
+        frame.classIndicator.icon:SetTexCoord(-0.11,1.10,-0.11,1.10)
     end
 
     frame.classIndicator:Show()
@@ -399,7 +399,9 @@ function BBP.ClassIndicatorTargetHighlight(frame)
     if config.classIndicatorHighlight or config.classIndicatorHighlightColor then
         if frame.classIndicator and frame.classIndicator.highlightSelect then
             frame.classIndicator.highlightSelect:Show()
-            frame.classIndicator.border:Hide()
+            C_Timer.After(0.05, function()
+                frame.classIndicator.border:Hide()
+            end)
             if info.class and config.classIndicatorHighlightColor then
                 local classColor = RAID_CLASS_COLORS[info.class]
                 frame.classIndicator.highlightSelect:SetDesaturated(true)

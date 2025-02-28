@@ -1709,9 +1709,9 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
     wipeButton:SetScript("OnMouseDown", function(self, button)
         if button == "RightButton" and IsShiftKeyDown() and IsAltKeyDown() then
             if title == "Full Profile" then
-                BetterBlizzFramesDB = nil
+                BetterBlizzPlatesDB = nil
             else
-                BetterBlizzFramesDB[tableName] = nil
+                BetterBlizzPlatesDB[tableName] = nil
             end
             ReloadUI()
         end
@@ -5757,10 +5757,11 @@ local function guiGeneralTab()
     profileText:SetPoint("RIGHT", aeghisProfileButton, "LEFT", -5, 0)
     profileText:SetText("Profiles:")
 
+    local a,b,c,d,e = SettingsPanel.CloseButton:GetPoint()
     local resetBBPButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     resetBBPButton:SetText("Reset BetterBlizzPlates")
     resetBBPButton:SetWidth(165)
-    resetBBPButton:SetPoint("RIGHT", magnuszProfileButton, "LEFT", -170, 0)
+    resetBBPButton:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT", -d, e)
     resetBBPButton:SetScript("OnClick", function()
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     end)
@@ -8708,6 +8709,15 @@ local function guiNameplateAuras()
     otherNpBuffFilterWatchList:SetPoint("TOPLEFT", otherNpBuffFilterBlacklist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(otherNpBuffFilterWatchList, "Whitelist", "Only show whitelisted buffs.\n(Plus other filters)", "You can have spells whitelisted to add settings such as \"Only Mine\" and \"Important\" etc without needing to enable the whitelist filter here.\n\nOnly check this if you only want whitelisted auras here or the addition of them.\n(Plus other filters)")
 
+    local otherNpBuffFilterImportantBuffs = CreateCheckbox("otherNpBuffFilterImportantBuffs", "PvP Buffs", otherNpBuffEnable)
+    otherNpBuffFilterImportantBuffs:SetPoint("LEFT", otherNpBuffFilterWatchList.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(otherNpBuffFilterImportantBuffs, "Show Important Buffs", "Only show important PvP Buffs. (Plus other filters)\n\n|cff32f795Right-click for categories.|r\n\nBy default these auras are Enlarged.\nThis can be turned off below in settings on the left side.")
+    otherNpBuffFilterImportantBuffs:HookScript("OnClick", function()
+        if not BetterBlizzPlatesDB.enlargeAllImportantBuffs then
+            BBP.enlargeAllImportantBuffs:Click()
+        end
+    end)
+
     local otherNpBuffFilterLessMinite = CreateCheckbox("otherNpBuffFilterLessMinite", "Under one min", otherNpBuffEnable)
     otherNpBuffFilterLessMinite:SetPoint("TOPLEFT", otherNpBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(otherNpBuffFilterLessMinite, "Only show buffs under one minute long. (Plus other filters)")
@@ -8747,6 +8757,15 @@ local function guiNameplateAuras()
     local otherNpdeBuffFilterWatchList = CreateCheckbox("otherNpdeBuffFilterWatchList", "Whitelist", otherNpdeBuffEnable)
     otherNpdeBuffFilterWatchList:SetPoint("TOPLEFT", otherNpdeBuffFilterBlacklist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(otherNpdeBuffFilterWatchList, "Whitelist", "Only show whitelisted buffs.\n(Plus other filters)", "You can have spells whitelisted to add settings such as \"Only Mine\" and \"Important\" etc without needing to enable the whitelist filter here.\n\nOnly check this if you only want whitelisted auras here or the addition of them.\n(Plus other filters)")
+
+    local otherNpdeBuffFilterCC = CreateCheckbox("otherNpdeBuffFilterCC", "PvP CC", otherNpdeBuffEnable)
+    otherNpdeBuffFilterCC:SetPoint("LEFT", otherNpdeBuffFilterWatchList.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(otherNpdeBuffFilterCC, "Show Crowd Control", "Only show crowd control debuffs. (Plus other filters)\n\n|cff32f795Right-click for categories.|r\n\nBy default these auras are Enlarged.\nThis can be turned off below in settings on the left side.")
+    otherNpdeBuffFilterCC:HookScript("OnClick", function()
+        if not BetterBlizzPlatesDB.enlargeAllCC then
+            BBP.enlargeAllCC:Click()
+        end
+    end)
 
     local otherNpdeBuffFilterBlizzard = CreateCheckbox("otherNpdeBuffFilterBlizzard", "Blizzard Default Filter", otherNpdeBuffEnable)
     otherNpdeBuffFilterBlizzard:SetPoint("TOPLEFT", otherNpdeBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -8795,6 +8814,15 @@ local function guiNameplateAuras()
     CreateTooltipTwo(friendlyNpBuffFilterWatchList, "Whitelist", "Only show whitelisted buffs.\n(Plus other filters)", "You can have spells whitelisted to add settings such as \"Only Mine\" and \"Important\" etc without needing to enable the whitelist filter here.\n\nOnly check this if you only want whitelisted auras here or the addition of them.\n(Plus other filters)")
     friendlyNpBuffFilterWatchList:SetPoint("TOPLEFT", friendlyNpBuffFilterBlacklist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
+    local friendlyNpBuffFilterImportantBuffs = CreateCheckbox("friendlyNpBuffFilterImportantBuffs", "PvP Buffs", friendlyNpBuffEnable)
+    friendlyNpBuffFilterImportantBuffs:SetPoint("LEFT", friendlyNpBuffFilterWatchList.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(friendlyNpBuffFilterImportantBuffs, "Show Important Buffs", "Only show important PvP Buffs. (Plus other filters)\n\n|cff32f795Right-click for categories.|r\n\nBy default these auras are Enlarged.\nThis can be turned off below in settings on the left side.")
+    friendlyNpBuffFilterImportantBuffs:HookScript("OnClick", function()
+        if not BetterBlizzPlatesDB.enlargeAllImportantBuffs then
+            BBP.enlargeAllImportantBuffs:Click()
+        end
+    end)
+
     local friendlyNpBuffFilterLessMinite = CreateCheckbox("friendlyNpBuffFilterLessMinite", "Under one min", friendlyNpBuffEnable)
     friendlyNpBuffFilterLessMinite:SetPoint("TOPLEFT", friendlyNpBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(friendlyNpBuffFilterLessMinite, "Only show buffs under one minute long. (Plus other filters)")
@@ -8818,6 +8846,15 @@ local function guiNameplateAuras()
     local friendlyNpdeBuffFilterWatchList = CreateCheckbox("friendlyNpdeBuffFilterWatchList", "Whitelist", friendlyNpdeBuffEnable)
     friendlyNpdeBuffFilterWatchList:SetPoint("TOPLEFT", friendlyNpdeBuffFilterBlacklist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(friendlyNpdeBuffFilterWatchList, "Whitelist", "Only show whitelisted debuffs.\n(Plus other filters)", "You can have spells whitelisted to add settings such as \"Only Mine\" and \"Important\" etc without needing to enable the whitelist filter here.\n\nOnly check this if you only want whitelisted auras here or the addition of them.\n(Plus other filters)")
+
+    local friendlyNpdeBuffFilterCC = CreateCheckbox("friendlyNpdeBuffFilterCC", "PvP CC", friendlyNpdeBuffEnable)
+    friendlyNpdeBuffFilterCC:SetPoint("LEFT", friendlyNpdeBuffFilterWatchList.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(friendlyNpdeBuffFilterCC, "Show Crowd Control", "Only show crowd control debuffs. (Plus other filters)\n\n|cff32f795Right-click for categories.|r\n\nBy default these auras are Enlarged.\nThis can be turned off below in settings on the left side.")
+    friendlyNpdeBuffFilterCC:HookScript("OnClick", function()
+        if not BetterBlizzPlatesDB.enlargeAllCC then
+            BBP.enlargeAllCC:Click()
+        end
+    end)
 
     local friendlyNpdeBuffFilterBlizzard = CreateCheckbox("friendlyNpdeBuffFilterBlizzard", "Blizzard Default Filter", friendlyNpdeBuffEnable)
     friendlyNpdeBuffFilterBlizzard:SetPoint("TOPLEFT", friendlyNpdeBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -8868,6 +8905,15 @@ local function guiNameplateAuras()
     personalNpBuffFilterWatchList:SetPoint("TOPLEFT", personalNpBuffFilterBlacklist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(personalNpBuffFilterWatchList, "Whitelist", "Only show whitelisted buffs.\n(Plus other filters)", "You can have spells whitelisted to add settings such as \"Only Mine\" and \"Important\" etc without needing to enable the whitelist filter here.\n\nOnly check this if you only want whitelisted auras here or the addition of them.\n(Plus other filters)", "ANCHOR_LEFT")
 
+    local personalNpBuffFilterImportantBuffs = CreateCheckbox("personalNpBuffFilterImportantBuffs", "PvP Buffs", personalNpBuffEnable)
+    personalNpBuffFilterImportantBuffs:SetPoint("LEFT", personalNpBuffFilterWatchList.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(personalNpBuffFilterImportantBuffs, "Show Important Buffs", "Only show important PvP Buffs. (Plus other filters)\n\n|cff32f795Right-click for categories.|r\n\nBy default these auras are Enlarged.\nThis can be turned off below in settings on the left side.")
+    personalNpBuffFilterImportantBuffs:HookScript("OnClick", function()
+        if not BetterBlizzPlatesDB.enlargeAllImportantBuffs then
+            BBP.enlargeAllImportantBuffs:Click()
+        end
+    end)
+
     local personalNpBuffFilterBlizzard = CreateCheckbox("personalNpBuffFilterBlizzard", "Blizzard Default Filter", personalNpBuffEnable)
     personalNpBuffFilterBlizzard:SetPoint("TOPLEFT", personalNpBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(personalNpBuffFilterBlizzard, "Only show buffs that are in the Blizzard Default nameplate filter. (Plus other filters)", "ANCHOR_LEFT")
@@ -8895,6 +8941,176 @@ local function guiNameplateAuras()
     local personalNpdeBuffFilterWatchList = CreateCheckbox("personalNpdeBuffFilterWatchList", "Whitelist", personalNpdeBuffEnable)
     personalNpdeBuffFilterWatchList:SetPoint("TOPLEFT", personalNpdeBuffFilterBlacklist, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(personalNpdeBuffFilterWatchList, "Whitelist", "Only show whitelisted debuffs.\n(Plus other filters)", "You can have spells whitelisted to add settings such as \"Only Mine\" and \"Important\" etc without needing to enable the whitelist filter here.\n\nOnly check this if you only want whitelisted auras here or the addition of them.\n(Plus other filters)",  "ANCHOR_LEFT")
+
+    local personalNpdeBuffFilterCC = CreateCheckbox("personalNpdeBuffFilterCC", "PvP CC", personalNpdeBuffEnable)
+    personalNpdeBuffFilterCC:SetPoint("LEFT", personalNpdeBuffFilterWatchList.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(personalNpdeBuffFilterCC, "Show Crowd Control", "Only show crowd control debuffs. (Plus other filters)\n\n|cff32f795Right-click for categories.|r\n\nBy default these auras are Enlarged.\nThis can be turned off below in settings on the left side.")
+    personalNpdeBuffFilterCC:HookScript("OnClick", function()
+        if not BetterBlizzPlatesDB.enlargeAllCC then
+            BBP.enlargeAllCC:Click()
+        end
+    end)
+
+    local ccOptionsFrame
+
+    local function OpenCCSettingsWindow(cb)
+        if not ccOptionsFrame then
+            -- Create a new frame if it doesn't exist
+            ccOptionsFrame = CreateFrame("Frame", nil, UIParent, "BasicFrameTemplateWithInset")
+            ccOptionsFrame:SetSize(170, 130)
+            ccOptionsFrame:SetPoint("CENTER")
+            ccOptionsFrame:SetFrameStrata("HIGH")
+            ccOptionsFrame:SetMovable(true)
+            ccOptionsFrame:EnableMouse(true)
+            ccOptionsFrame:RegisterForDrag("LeftButton")
+            ccOptionsFrame:SetScript("OnDragStart", ccOptionsFrame.StartMoving)
+            ccOptionsFrame:SetScript("OnDragStop", ccOptionsFrame.StopMovingOrSizing)
+    
+            -- Title
+            ccOptionsFrame.title = ccOptionsFrame:CreateFontString(nil, "OVERLAY")
+            ccOptionsFrame.title:SetFontObject("GameFontHighlight")
+            ccOptionsFrame.title:SetPoint("LEFT", ccOptionsFrame.TitleBg, "LEFT", 5, 0)
+            ccOptionsFrame.title:SetText("PvP CC (All units)")
+    
+            -- CC filter options
+            local ccFilters = {
+                { label = "CC Full", var = "importantCCFull" },
+                { label = "CC Disarm", var = "importantCCDisarm" },
+                { label = "CC Root", var = "importantCCRoot" },
+                { label = "CC Silence", var = "importantCCSilence" },
+            }
+    
+            local previousCheckbox
+            for i, ccFilter in ipairs(ccFilters) do
+                local ccCheckbox = CreateFrame("CheckButton", nil, ccOptionsFrame, "UICheckButtonTemplate")
+                ccCheckbox:SetSize(24, 24)
+                ccCheckbox.Text:SetText(ccFilter.label)
+    
+                -- Positioning
+                if i == 1 then
+                    ccCheckbox:SetPoint("TOPLEFT", ccOptionsFrame, "TOPLEFT", 10, -30)
+                else
+                    ccCheckbox:SetPoint("TOPLEFT", previousCheckbox, "BOTTOMLEFT", 0, 3)
+                end
+    
+                -- Set initial state from DB
+                ccCheckbox:SetChecked(BetterBlizzPlatesDB[ccFilter.var])
+    
+                -- Save state when toggled
+                ccCheckbox:SetScript("OnClick", function(self)
+                    BetterBlizzPlatesDB[ccFilter.var] = self:GetChecked() or nil
+                    BBF.UpdateImportantBuffsAndCCTables()
+                end)
+    
+                previousCheckbox = ccCheckbox
+            end
+    
+            ccOptionsFrame:Show()
+        else
+            -- Toggle visibility
+            if ccOptionsFrame:IsShown() then
+                ccOptionsFrame:Hide()
+            else
+                ccOptionsFrame:Show()
+            end
+        end
+        ccOptionsFrame:ClearAllPoints()
+        ccOptionsFrame:SetPoint("RIGHT", cb, "LEFT", 0, 50)
+    end
+
+    local buffOptionsFrame
+    local function OpenBuffSettingsWindow(cb)
+        if not buffOptionsFrame then
+            -- Create a new frame if it doesn't exist
+            buffOptionsFrame = CreateFrame("Frame", nil, UIParent, "BasicFrameTemplateWithInset")
+            buffOptionsFrame:SetSize(180, 110)
+            buffOptionsFrame:SetPoint("CENTER")
+            buffOptionsFrame:SetFrameStrata("HIGH")
+            buffOptionsFrame:SetMovable(true)
+            buffOptionsFrame:EnableMouse(true)
+            buffOptionsFrame:RegisterForDrag("LeftButton")
+            buffOptionsFrame:SetScript("OnDragStart", buffOptionsFrame.StartMoving)
+            buffOptionsFrame:SetScript("OnDragStop", buffOptionsFrame.StopMovingOrSizing)
+
+            -- Title
+            buffOptionsFrame.title = buffOptionsFrame:CreateFontString(nil, "OVERLAY")
+            buffOptionsFrame.title:SetFontObject("GameFontHighlight")
+            buffOptionsFrame.title:SetPoint("LEFT", buffOptionsFrame.TitleBg, "LEFT", 5, 0)
+            buffOptionsFrame.title:SetText("PvP Buffs (All units)")
+
+            -- Buff filter options
+            local buffFilters = {
+                { label = "Important Offensives", var = "importantBuffsOffensives" },
+                { label = "Important Defensives", var = "importantBuffsDefensives" },
+                { label = "Important Mobility", var = "importantBuffsMobility" },
+            }
+
+            local previousCheckbox
+            for i, buffFilter in ipairs(buffFilters) do
+                local buffCheckbox = CreateFrame("CheckButton", nil, buffOptionsFrame, "UICheckButtonTemplate")
+                buffCheckbox:SetSize(24, 24)
+                buffCheckbox.Text:SetText(buffFilter.label)
+
+                -- Positioning
+                if i == 1 then
+                    buffCheckbox:SetPoint("TOPLEFT", buffOptionsFrame, "TOPLEFT", 10, -30)
+                else
+                    buffCheckbox:SetPoint("TOPLEFT", previousCheckbox, "BOTTOMLEFT", 0, 3)
+                end
+
+                -- Set initial state from DB
+                buffCheckbox:SetChecked(BetterBlizzPlatesDB[buffFilter.var])
+
+                -- Save state when toggled
+                buffCheckbox:SetScript("OnClick", function(self)
+                    BetterBlizzPlatesDB[buffFilter.var] = self:GetChecked() or nil
+                    BBF.UpdateImportantBuffsAndCCTables()
+                end)
+
+                previousCheckbox = buffCheckbox
+            end
+
+            buffOptionsFrame:Show()
+        else
+            -- Toggle visibility
+            if buffOptionsFrame:IsShown() then
+                buffOptionsFrame:Hide()
+            else
+                buffOptionsFrame:Show()
+            end
+        end
+        buffOptionsFrame:ClearAllPoints()
+        buffOptionsFrame:SetPoint("RIGHT", cb, "LEFT", 0, 50)
+    end
+
+    local hookCC = {
+        friendlyNpdeBuffFilterCC,
+        otherNpdeBuffFilterCC,
+        personalNpdeBuffFilterCC,
+    }
+    
+    for _, cb in pairs(hookCC) do
+        cb:SetScript("OnMouseDown", function(self, button)
+            if button == "RightButton" then
+                OpenCCSettingsWindow(cb)
+            end
+        end)
+    end
+    
+    local hookBuffs = {
+        otherNpBuffFilterImportantBuffs,
+        friendlyNpBuffFilterImportantBuffs,
+        personalNpBuffFilterImportantBuffs,
+    }
+    
+    for _, cb in pairs(hookBuffs) do
+        cb:SetScript("OnMouseDown", function(self, button)
+            if button == "RightButton" then
+                OpenBuffSettingsWindow(cb)
+            end
+        end)
+    end
+    
 
     local personalNpdeBuffFilterLessMinite = CreateCheckbox("personalNpdeBuffFilterLessMinite", "Under one min", personalNpdeBuffEnable)
     personalNpdeBuffFilterLessMinite:SetPoint("TOPLEFT", personalNpdeBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -8932,7 +9148,7 @@ local function guiNameplateAuras()
     CreateTooltipTwo(nameplateAuraCountScale, "Aura Stack Size", "Size of the stack/count/charges number on auras.")
 
     local nameplateAuraEnlargedScale = CreateSlider(enableNameplateAuraCustomisation, "Enlarged Aura Size", 1, 2, 0.01, "nameplateAuraEnlargedScale")
-    nameplateAuraEnlargedScale:SetPoint("TOPLEFT", nameplateAuraScale, "BOTTOMLEFT", -170, -51)
+    nameplateAuraEnlargedScale:SetPoint("TOPLEFT", nameplateAuraScale, "BOTTOMLEFT", -170, -81)
     local enlargedAuraIcon = contentFrame:CreateTexture(nil, "ARTWORK")
     enlargedAuraIcon:SetAtlas("ui-hud-minimap-zoom-in")
     enlargedAuraIcon:SetSize(18, 18)
@@ -8943,7 +9159,7 @@ local function guiNameplateAuras()
 
 
     local npColorAuraBorder = CreateCheckbox("npColorAuraBorder", "Color Border by Type", enableNameplateAuraCustomisation)
-    npColorAuraBorder:SetPoint("RIGHT", enlargedAuraIcon, "LEFT", -10, 235)
+    npColorAuraBorder:SetPoint("RIGHT", enlargedAuraIcon, "LEFT", -10, 275)
     CreateTooltipTwo(npColorAuraBorder, "Color Border by Type", "Color Border by Type")
 
     local npAuraBuffsRGB = CreateColorBox(npColorAuraBorder, "npAuraBuffsRGB", "Buffs")
@@ -8988,8 +9204,18 @@ local function guiNameplateAuras()
     CreateTooltipTwo(sortCompactedAurasFirst, "Sort Compacted Auras First", "Sorts the nameplate auras to put Compacted auras first and Enlarged auras last.")
 
     local sortEnlargedAurasFirst = CreateCheckbox("sortEnlargedAurasFirst", "Sort Enlarged Auras First", enableNameplateAuraCustomisation)
-    sortEnlargedAurasFirst:SetPoint("BOTTOMLEFT", sortCompactedAurasFirst, "TOPLEFT", 0, 0)
+    sortEnlargedAurasFirst:SetPoint("BOTTOMLEFT", sortCompactedAurasFirst, "TOPLEFT", 0, -4)
     CreateTooltipTwo(sortEnlargedAurasFirst, "Sort Enlarged Auras First", "Sorts the nameplate auras to put Enlarged auras first and Compacted auras last.")
+
+    local enlargeAllImportantBuffs = CreateCheckbox("enlargeAllImportantBuffs", "Enlarge all Important Buffs", enableNameplateAuraCustomisation)
+    enlargeAllImportantBuffs:SetPoint("BOTTOMLEFT", sortEnlargedAurasFirst, "TOPLEFT", 0, -4)
+    CreateTooltipTwo(enlargeAllImportantBuffs, "Enlarge all Important Buffs", "Enlarges all Important PvP Buffs.")
+    BBP.enlargeAllImportantBuffs = enlargeAllImportantBuffs
+
+    local enlargeAllCC = CreateCheckbox("enlargeAllCC", "Enlarge all CC", enableNameplateAuraCustomisation)
+    enlargeAllCC:SetPoint("BOTTOMLEFT", enlargeAllImportantBuffs, "TOPLEFT", 0, -4)
+    CreateTooltipTwo(enlargeAllCC, "Enlarge all PvP CC", "Enlarges all PvP CC.")
+    BBP.enlargeAllCC = enlargeAllCC
 
     sortEnlargedAurasFirst:HookScript("OnClick", function (self)
         if self:GetChecked() then

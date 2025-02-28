@@ -1684,9 +1684,9 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
     wipeButton:SetScript("OnMouseDown", function(self, button)
         if button == "RightButton" and IsShiftKeyDown() and IsAltKeyDown() then
             if title == "Full Profile" then
-                BetterBlizzFramesDB = nil
+                BetterBlizzPlatesDB = nil
             else
-                BetterBlizzFramesDB[tableName] = nil
+                BetterBlizzPlatesDB[tableName] = nil
             end
             ReloadUI()
         end
@@ -4865,30 +4865,29 @@ local function guiGeneralTab()
         ReloadUI()
     end)
 
-    local nahjProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    nahjProfileButton:SetText("Nahj Profile")
-    nahjProfileButton:SetWidth(100)
-    nahjProfileButton:SetPoint("RIGHT", reloadUiButton, "LEFT", -50, 0)
-    nahjProfileButton:SetScript("OnClick", function()
-        StaticPopup_Show("BBP_CONFIRM_NAHJ_PROFILE")
-    end)
-    CreateTooltipTwo(nahjProfileButton, "Nahj Profile", "Enable all of Nahj's profile settings.", "www.twitch.tv/nahj", "ANCHOR_TOP")
-    nahjProfileButton:Hide()
+    -- Function to show the confirmation popup with dynamic profile information
+    local function ShowProfileConfirmation(profileName, profileFunction, additionalNote)
+        local noteText = additionalNote or ""
+        local confirmationText = titleText .. "This action will delete all settings and apply " .. profileName .. "'s profile and reload the UI.\n\n" .. noteText .. "Are you sure you want to continue?"
+        StaticPopupDialogs["BBP_CONFIRM_PROFILE"].text = confirmationText
+        StaticPopup_Show("BBP_CONFIRM_PROFILE", nil, nil, { func = profileFunction })
+    end
 
-    local magnuszProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    magnuszProfileButton:SetText("Magnusz Profile")
-    magnuszProfileButton:SetWidth(120)
-    magnuszProfileButton:SetPoint("RIGHT", nahjProfileButton, "LEFT", -5, 0)
-    magnuszProfileButton:SetScript("OnClick", function()
-        StaticPopup_Show("BBP_CONFIRM_MAGNUSZ_PROFILE")
+    -- Create the buttons and hook them to show the confirmation popup
+    local snupyProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
+    snupyProfileButton:SetText("Snupy")
+    snupyProfileButton:SetWidth(80)
+    snupyProfileButton:SetPoint("RIGHT", reloadUiButton, "LEFT", -25, 0)
+    snupyProfileButton:SetScript("OnClick", function()
+        ShowProfileConfirmation("Snupy", BBP.SnupyProfile)
     end)
-    CreateTooltipTwo(magnuszProfileButton, "Magnusz Profile", "Enable all of Magnusz's profile settings.", "www.twitch.tv/magnusz", "ANCHOR_TOP")
-    magnuszProfileButton:Hide()
+    CreateTooltipTwo(snupyProfileButton, "|A:groupfinder-icon-class-druid:16:16|a |cffff7d0aSnupy Profile|r", "Enable all of Snupy's profile settings.", "www.twitch.tv/snupy", "ANCHOR_TOP")
 
+    local a,b,c,d,e = SettingsPanel.CloseButton:GetPoint()
     local resetBBPButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     resetBBPButton:SetText("Reset BetterBlizzPlates")
     resetBBPButton:SetWidth(165)
-    resetBBPButton:SetPoint("RIGHT", nahjProfileButton, "LEFT", -180, 0)
+    resetBBPButton:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT", -d, e)
     resetBBPButton:SetScript("OnClick", function()
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     end)

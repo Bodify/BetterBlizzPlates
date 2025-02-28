@@ -11,7 +11,7 @@ LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Pro
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
 local sendUpdate = true
-BBP.VersionNumber = addonUpdates.."e"
+BBP.VersionNumber = addonUpdates.."f"
 local _, playerClass
 local playerClassColor
 
@@ -95,6 +95,7 @@ local defaultSettings = {
     dpsOrHealFullAggroColorRGB = {1, 0, 0, 1},
     dpsOrHealNoAggroColorRGB = {0, 1, 0, 1},
     npBgColorRGB = {1, 1, 1, 1},
+    levelFrameFontSize = 12,
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -2848,7 +2849,7 @@ local function FixLevelFramePosition(frame)
         frame.LevelFrame.highLevelTexture:SetDrawLayer("OVERLAY")
         frame.LevelFrame.levelText:SetDrawLayer("OVERLAY")
         if not BetterBlizzPlatesDB.classicNameplates then
-            BBP.SetFontBasedOnOption(frame.LevelFrame.levelText, 12)
+            BBP.SetFontBasedOnOption(frame.LevelFrame.levelText, BetterBlizzPlatesDB.levelFrameFontSize)
             frame.LevelFrame.levelText:ClearAllPoints()
             frame.LevelFrame.levelText:SetPoint("LEFT", frame.healthBar, "RIGHT", 3, -0.5)
             frame.LevelFrame:SetFrameStrata("LOW")
@@ -3920,17 +3921,26 @@ local function FriendIndicator(frame)
         frame.friendIndicator = frame:CreateTexture(nil, "OVERLAY")
         frame.friendIndicator:SetAtlas("groupfinder-icon-friend")
         frame.friendIndicator:SetSize(20, 21)
-        frame.friendIndicator:SetPoint("RIGHT", frame.fakeName or frame.name, "LEFT", 0, 0)
     end
 
     if isFriend or isBnetFriend then
         frame.friendIndicator:SetDesaturated(false)
         frame.friendIndicator:SetVertexColor(1, 1, 1)
         frame.friendIndicator:Show()
+        if BBP.isInArena and frame.specNameText and frame.specNameText ~= "" then
+            frame.friendIndicator:SetPoint("RIGHT", frame.specNameText, "LEFT", 0, 0)
+        else
+            frame.friendIndicator:SetPoint("RIGHT", frame.name, "LEFT", 0, 0)
+        end
     elseif isGuildmate then
         frame.friendIndicator:SetDesaturated(true)
         frame.friendIndicator:SetVertexColor(0, 1, 0)
         frame.friendIndicator:Show()
+        if BBP.isInArena and frame.specNameText and frame.specNameText ~= "" then
+            frame.friendIndicator:SetPoint("RIGHT", frame.specNameText, "LEFT", 0, 0)
+        else
+            frame.friendIndicator:SetPoint("RIGHT", frame.name, "LEFT", 0, 0)
+        end
     else
         frame.friendIndicator:Hide()
     end

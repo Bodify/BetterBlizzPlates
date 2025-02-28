@@ -1,3 +1,20 @@
+# BetterBlizzPlates 1.6.9f
+## The War Within
+### New: 
+- New Nameplate Aura filters to enable all important pvp buffs and all pvp cc and enlarges them by default.
+- Adding Mage Barriers to Whitelist now only Glows/Enlarges if they are specced into Overpowered Barriers. (This can be turned off with /run BetterBlizzPlatesDB.opBarriersOn = false)
+### Tweak:
+- Nameplate Auras: "Separate Buff Row" is now enabled by default. Your settings may have changed due to this.
+### Bugfix:
+- Castbar Shield now also gets faded when castbar/nameplate is faded.
+
+## The War Within, Classic Era & Cataclysm
+### Bugfix:
+- Fixed issue with Nameplate Aura's "Separate Buff Row" setting causing the buffs to go too high with multiple rows of debuffs if the buffs were enlarged/square. Not a perfect fix but better than it was. Wish I was smart.
+- Fixed Friend/Guild Indicator to be anchored to spec name during Arenas if spec names are enabled.
+
+
+
 # BetterBlizzPlates 1.6.9e
 ## The War Within
 ### Bugfix:

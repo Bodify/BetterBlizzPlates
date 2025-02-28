@@ -125,6 +125,464 @@ local uas = {
     [316099] = true,
 }
 
+local opBarriers = {
+    [235313] = true, -- Blazing Barrier
+    [11426] = true, -- Ice Barrier
+    [235450] = true, -- Prismatic Barrier
+}
+
+local importantBuffs = {}
+local importantOffensives = {
+    [1218128] = true,
+    [115192] = true,
+    [357210] = true,
+    [395152] = true,
+    [106951] = true,
+    [10060] = true,
+    [1719] = true,
+    [375986] = true,
+    [395296] = true,
+    [390414] = true,
+    [51271] = true,
+    [359844] = true,
+    [107574] = true,
+    [2825] = true,
+    [384352] = true,
+    [391109] = true,
+    [207289] = true,
+    [191634] = true,
+    [190319] = true,
+    [19574] = true,
+    [114052] = true,
+    [442726] = true,
+    [102543] = true,
+    [433874] = true,
+    [114050] = true,
+    [360952] = true,
+    [186289] = true,
+    [12472] = true,
+    [288613] = true,
+    [121471] = true,
+    [187827] = true,
+    [446035] = true,
+    [394758] = true,
+    [162264] = true,
+    [383269] = true,
+    [205025] = true,
+    [365362] = true,
+    [384631] = true,
+    [50334] = true,
+    [13750] = true,
+    [200851] = true,
+    [31884] = true,
+    [102560] = true,
+    [204361] = true,
+    [227847] = true,
+    [137639] = true,
+    [185422] = true,
+    [454351] = true,
+    [252071] = true,
+    [375087] = true,
+}
+local importantMobility = {
+    [221885] = true,
+    [294133] = true,
+    [254474] = true,
+    [62305] = true,
+    [54216] = true,
+    [48265] = true,
+    [221886] = true,
+    [254471] = true,
+    [221883] = true,
+    [221887] = true,
+    [254472] = true,
+    [444347] = true,
+    [276111] = true,
+    [1044] = true,
+    [212552] = true,
+    [276112] = true,
+    [453804] = true,
+    [387633] = true,
+    [254473] = true,
+    [363608] = true,
+}
+local importantDefensives = {
+    [473909] = true,
+    [1221107] = true,
+    [31224] = true,
+    [118038] = true,
+    [45182] = true,
+    [31230] = true,
+    [125174] = true,
+    [33891] = true,
+    [424655] = true,
+    [408558] = true,
+    [145629] = true,
+    [289655] = true,
+    [202748] = true,
+    [378081] = true,
+    [5277] = true,
+    [122278] = true,
+    [264735] = true,
+    [48707] = true,
+    [378464] = true,
+    [383005] = true,
+    [353319] = true,
+    [974] = true,
+    [48743] = true,
+    [871] = true,
+    [232707] = true,
+    [212800] = true,
+    [61336] = true,
+    [81782] = true,
+    [213610] = true,
+    [6940] = true,
+    [199450] = true,
+    [120954] = true,
+    [385391] = true,
+    [18499] = true,
+    [642] = true,
+    [33206] = true,
+    [210294] = true,
+    [212704] = true,
+    [31850] = true,
+    [305497] = true,
+    [454863] = true,
+    [383648] = true,
+    [132158] = true,
+    [345231] = true,
+    [45438] = true,
+    [108271] = true,
+    [498] = true,
+    [357170] = true,
+    [23920] = true,
+    [212295] = true,
+    [102342] = true,
+    [22842] = true,
+    [374348] = true,
+    [97463] = true,
+    [403876] = true,
+    [184364] = true,
+    [374349] = true,
+    [378078] = true,
+    [48792] = true,
+    [319454] = true,
+    [47585] = true,
+    [47788] = true,
+    [86659] = true,
+    [443609] = true,
+    [147833] = true,
+    [444741] = true,
+    [1219209] = true,
+    [232708] = true,
+    [370889] = true,
+    [116849] = true,
+    [378441] = true,
+    [209584] = true,
+    [53480] = true,
+    [196555] = true,
+    [410358] = true,
+    [1022] = true,
+    [210256] = true,
+    [209426] = true,
+    [414658] = true,
+    [79206] = true,
+    [377362] = true,
+    [122783] = true,
+    [186265] = true,
+    [108416] = true,
+    [104773] = true,
+    [184662] = true,
+    [204018] = true,
+    [8178] = true,
+    [49039] = true,
+    [370960] = true,
+    [201633] = true,
+    [22812] = true,
+    [342246] = true,
+    [113862] = true,
+    [354610] = true,
+    [432180] = true,
+    [248519] = true,
+    [15286] = true,
+    [228050] = true,
+    [202162] = true,
+    [199507] = true,
+    [421453] = true,
+    [232559] = true,
+    [363534] = true,
+    [363916] = true,
+    [409293] = true,
+}
+
+local enlargeAllCCsFilter
+local enlargeAllImportantBuffsFilter
+
+
+local crowdControl = {}
+local ccFull = {
+    [277778] = true,
+    [853] = true,
+    [115268] = true,
+    [221527] = true,
+    [91797] = true,
+    [20066] = true,
+    [115078] = true,
+    [207685] = true,
+    [24394] = true,
+    [385954] = true,
+    [5211] = true,
+    [198909] = true,
+    [211010] = true,
+    [213688] = true,
+    [10326] = true,
+    [211004] = true,
+    [89766] = true,
+    [61780] = true,
+    [22703] = true,
+    [119381] = true,
+    [203337] = true,
+    [31661] = true,
+    [389831] = true,
+    [118905] = true,
+    [9484] = true,
+    [202274] = true,
+    [1098] = true,
+    [130616] = true,
+    [126819] = true,
+    [217832] = true,
+    [118699] = true,
+    [710] = true,
+    [377048] = true,
+    [360806] = true,
+    [61721] = true,
+    [3355] = true,
+    [372245] = true,
+    [107079] = true,
+    [200196] = true,
+    [202244] = true,
+    [199085] = true,
+    [28272] = true,
+    [82691] = true,
+    [108194] = true,
+    [316595] = true,
+    [87204] = true,
+    [211881] = true,
+    [5484] = true,
+    [213691] = true,
+    [277792] = true,
+    [316593] = true,
+    [287254] = true,
+    [105421] = true,
+    [20549] = true,
+    [51514] = true,
+    [77505] = true,
+    [5246] = true,
+    [61305] = true,
+    [2094] = true,
+    [1833] = true,
+    [200166] = true,
+    [385149] = true,
+    [255723] = true,
+    [161353] = true,
+    [197214] = true,
+    [163505] = true,
+    [6358] = true,
+    [33786] = true,
+    [221562] = true,
+    [334693] = true,
+    [200200] = true,
+    [2637] = true,
+    [460392] = true,
+    [261589] = true,
+    [391622] = true,
+    [64044] = true,
+    [205630] = true,
+    [305485] = true,
+    [8122] = true,
+    [6770] = true,
+    [118345] = true,
+    [255941] = true,
+    [309328] = true,
+    [132168] = true,
+    [132169] = true,
+    [179057] = true,
+    [203123] = true,
+    [161354] = true,
+    [161372] = true,
+    [388673] = true,
+    [321395] = true,
+    [605] = true,
+    [196942] = true,
+    [202346] = true,
+    [358861] = true,
+    [269352] = true,
+    [210141] = true,
+    [99] = true,
+    [91800] = true,
+    [213491] = true,
+    [357021] = true,
+    [408] = true,
+    [277784] = true,
+    [211015] = true,
+    [208618] = true,
+    [287712] = true,
+    [383121] = true,
+    [205364] = true,
+    [207167] = true,
+    [277787] = true,
+    [210873] = true,
+    [1776] = true,
+    [28271] = true,
+    [1513] = true,
+    [61025] = true,
+    [161355] = true,
+    [118] = true,
+    [6789] = true,
+    [30283] = true,
+    [117526] = true,
+}
+local ccDisarm = {
+    [236077] = true,
+    [407032] = true,
+    [410201] = true,
+    [209749] = true,
+    [207777] = true,
+    [445134] = true,
+    [236236] = true,
+    [407031] = true,
+    [233759] = true,
+}
+local ccRoot = {
+    [122] = true,
+    [356738] = true,
+    [157997] = true,
+    [376080] = true,
+    [199042] = true,
+    [198121] = true,
+    [323996] = true,
+    [378760] = true,
+    [393456] = true,
+    [105771] = true,
+    [307871] = true,
+    [190925] = true,
+    [233395] = true,
+    [355689] = true,
+    [116706] = true,
+    [228600] = true,
+    [212638] = true,
+    [45334] = true,
+    [247564] = true,
+    [370970] = true,
+    [201787] = true,
+    [324382] = true,
+    [451517] = true,
+    [64695] = true,
+    [356356] = true,
+    [204085] = true,
+    [102359] = true,
+    [386770] = true,
+    [460614] = true,
+    [114404] = true,
+    [235963] = true,
+    [170855] = true,
+    [339] = true,
+    [127797] = true,
+    [285515] = true,
+    [33395] = true,
+    [454787] = true,
+}
+local ccSilence = {
+    [410065] = true,
+    [31935] = true,
+    [47476] = true,
+    [214459] = true,
+    [1330] = true,
+    [356727] = true,
+    [204490] = true,
+    [15487] = true,
+    [196364] = true,
+    [217824] = true,
+    [81261] = true,
+    [392061] = true,
+    [374776] = true,
+}
+
+function BBF.UpdateImportantBuffsAndCCTables()
+    -- Clear the importantBuffs and crowdControl tables before updating
+    wipe(importantBuffs)
+    wipe(crowdControl)
+
+    local db = BetterBlizzPlatesDB
+    local importantBuffsEnabled = db.otherNpBuffFilterImportantBuffs or db.friendlyNpBuffFilterImportantBuffs or db.personalNpBuffFilterImportantBuffs
+    local importantCCEnabled = db.otherNpdeBuffFilterCC or db.friendlyNpdeBuffFilterCC or db.personalNpdeBuffFilterCC
+
+    enlargeAllImportantBuffsFilter = importantBuffsEnabled
+    enlargeAllCCsFilter = importantCCEnabled
+
+    if importantBuffsEnabled then
+        -- Constants (Always included)
+        importantBuffs[156621] = true -- Alliance Flag
+        importantBuffs[434339] = true -- Deephaul Crystal
+        importantBuffs[156618] = true -- Horde Flag
+        importantBuffs[34976] = true -- Netherstorm Flag
+        importantBuffs[121164] = true -- Orb of Power
+        importantBuffs[121175] = true -- Orb of Power
+        importantBuffs[121176] = true -- Orb of Power
+        importantBuffs[121177] = true -- Orb of Power
+        importantBuffs[372048] = true -- Oppressing Roar
+        importantBuffs[212182] = true -- Smoke Bomb
+        importantBuffs[359053] = true -- Smoke Bomb
+
+        -- Add offensives if enabled
+        if BetterBlizzPlatesDB.importantBuffsOffensives then
+            for spellID, value in pairs(importantOffensives) do
+                importantBuffs[spellID] = value
+            end
+        end
+
+        -- Add defensives if enabled
+        if BetterBlizzPlatesDB.importantBuffsDefensives then
+            for spellID, value in pairs(importantDefensives) do
+                importantBuffs[spellID] = value
+            end
+        end
+
+        -- Add mobility if enabled
+        if BetterBlizzPlatesDB.importantBuffsMobility then
+            for spellID, value in pairs(importantMobility) do
+                importantBuffs[spellID] = value
+            end
+        end
+    end
+
+    if importantCCEnabled then
+        -- Add CC categories based on settings
+        if BetterBlizzPlatesDB.importantCCFull then
+            for spellID, value in pairs(ccFull) do
+                crowdControl[spellID] = value
+            end
+        end
+
+        if BetterBlizzPlatesDB.importantCCDisarm then
+            for spellID, value in pairs(ccDisarm) do
+                crowdControl[spellID] = value
+            end
+        end
+
+        if BetterBlizzPlatesDB.importantCCRoot then
+            for spellID, value in pairs(ccRoot) do
+                crowdControl[spellID] = value
+            end
+        end
+
+        if BetterBlizzPlatesDB.importantCCSilence then
+            for spellID, value in pairs(ccSilence) do
+                crowdControl[spellID] = value
+            end
+        end
+    end
+end
 
 local smokeTracker
 BBP.ActiveSmokeCheck = CreateFrame("Frame")
@@ -178,8 +636,7 @@ end
 function BBP.CheckNameplateForSmoke(unit, frame)
     if not unit then return end
     if not string.find(unit, "nameplate") then
-        local np
-        np, frame = BBP.GetSafeNameplate(unit)
+        local np, frame = BBP.GetSafeNameplate(unit)
         if not frame then return end
     end
 
@@ -188,7 +645,7 @@ function BBP.CheckNameplateForSmoke(unit, frame)
             local _, _, _, _, _, _, _, _, _, spellID = BBP.TWWUnitAura(frame.unit, i, "HARMFUL")
 
             if spellID then
-                if spellID == 212183 then
+                if smokeIDs[spellID] then
                     AddSmokeTimer(frame)
                     break
                 end
@@ -820,8 +1277,10 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
         return widths
     end
 
-    -- Function to layout auras
-    local function LayoutAuras(auras, startRow)
+    -- Function to layout auras. ALl of this is scuffed and needs a rework. If one enlarged aura every row gets higher instead of only the row immediately after like intentional.
+    local maxRowHeight = 0
+    local maxDebuffHeight = 0
+    local function LayoutAuras(auras, startRow, isBuffs)
         local currentRow = startRow
         local horizontalOffset = 0
         local firstRowFirstAuraOffset = nil  -- Variable to store the horizontal offset of the first aura in the first row
@@ -875,7 +1334,13 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
 
             -- Position the buff on the nameplate
             buff:ClearAllPoints()
-            local verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
+            local verticalOffset
+            if not isBuffs then
+                maxDebuffHeight = maxRowHeight
+                verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
+            else
+                verticalOffset = -currentRow * (-maxDebuffHeight + (currentRow > 0 and verticalSpacing or 0))
+            end
 
             local extraOffset = 0
             if compactSquare and compactTracker == 2 and buff.isCompacted then
@@ -915,7 +1380,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
             table.sort(buffs, smallLargeAuraComparator)
         end
         rowWidths = isSelf and CalculateRowWidths2(buffs) or CalculateRowWidths(buffs)
-        LayoutAuras(buffs, lastRow + (#debuffs > 0 and 1 or 0))
+        LayoutAuras(buffs, lastRow + (#debuffs > 0 and 1 or 0), true)
     else
         if sortEnlargedAurasFirst then
             table.sort(buffs, largeSmallAuraComparator)
@@ -1166,21 +1631,28 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
     local moreThanOneMin = (duration > 60 or duration == 0 or expirationTime == 0)
     local lessThanOneMin = duration < 61 or duration == 0 or expirationTime == 0
 
+    local db = BetterBlizzPlatesDB
+
+    local showAllCCs = db.showAllCCs and crowdControl[spellId]
+    local showAllImportantBuffs = db.showAllCCs and importantBuffs[spellId]
+
     -- PLAYER
     if UnitIsUnit(unit, "player") then
         -- Buffs
-        if BetterBlizzPlatesDB["personalNpBuffEnable"] and aura.isHelpful then
-            local isInBlacklist = BetterBlizzPlatesDB["personalNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
+        if db["personalNpBuffEnable"] and aura.isHelpful then
+            local isInBlacklist = db["personalNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
             if isInBlacklist then return false end
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
-            local filterWhitelist = BetterBlizzPlatesDB["personalNpBuffFilterWatchList"]
+            local filterWhitelist = db["personalNpBuffFilterWatchList"]
             local auraWhitelisted = filterWhitelist and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["personalNpBuffFilterLessMinite"]
-            local filterOnlyMe = BetterBlizzPlatesDB["personalNpBuffFilterOnlyMe"]
-            local filterBlizzard = BetterBlizzPlatesDB["personalNpBuffFilterBlizzard"]
-            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe
+            local filterLessMinite = db["personalNpBuffFilterLessMinite"]
+            local filterOnlyMe = db["personalNpBuffFilterOnlyMe"]
+            local filterBlizzard = db["personalNpBuffFilterBlizzard"]
+            local filterImportantBuffs = db["personalNpBuffFilterImportantBuffs"]
+
+            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe or filterImportantBuffs
 
             if filterAllOverride then return true end
             if onlyMine and not castByPlayer then return false end
@@ -1195,13 +1667,20 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
+                    if filterImportantBuffs and importantBuffs[spellId] then return true end
                     if filterBlizzard then return BlizzardShouldShow end
                     return false
                 end
                 -- Filter to show only Blizzard recommended auras
                 if not BlizzardShouldShow and filterBlizzard then
+                    if filterImportantBuffs and importantBuffs[spellId] then return true end
                     if filterLessMinite and lessThanOneMin then return true end
-                    if filterOnlyMe then return true end
+                    return false
+                end
+
+                if filterImportantBuffs and not importantBuffs[spellId] then
+                    if filterLessMinite and lessThanOneMin then return true end
+                    if filterBlizzard then return BlizzardShouldShow end
                     return false
                 end
                 -- If none of the specific sub-filter conditions are met, show the aura
@@ -1209,16 +1688,18 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             end
         end
         -- Debuffs
-        if BetterBlizzPlatesDB["personalNpdeBuffEnable"] and aura.isHarmful then
-            local isInBlacklist = BetterBlizzPlatesDB["personalNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
+        if db["personalNpdeBuffEnable"] and aura.isHarmful then
+            local isInBlacklist = db["personalNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
             if isInBlacklist then return end
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
-            local filterWhitelist = BetterBlizzPlatesDB["personalNpdeBuffFilterWatchList"]
+            local filterWhitelist = db["personalNpdeBuffFilterWatchList"]
             local auraWhitelisted = filterWhitelist and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["personalNpdeBuffFilterLessMinite"]
-            local anyFilter = filterLessMinite
+            local filterLessMinite = db["personalNpdeBuffFilterLessMinite"]
+            local filterCC = db["personalNpdeBuffFilterCC"]
+
+            local anyFilter = filterLessMinite or filterCC
 
             if filterAllOverride then return true end
             if onlyMine and not castByPlayer then return false end
@@ -1226,6 +1707,10 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
                 if filterWhitelist and not isInWhitelist then return false end
                 return true
             else
+                if filterCC and not crowdControl[spellId] then
+                    if filterLessMinite and lessThanOneMin then return true end
+                    return false
+                end
                 -- Filter to hide long duration auras
                 if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
                 return true
@@ -1235,17 +1720,19 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
     -- FRIENDLY
     elseif isFriend then
         -- Buffs
-        if BetterBlizzPlatesDB["friendlyNpBuffEnable"] and aura.isHelpful then
-            local isInBlacklist = BetterBlizzPlatesDB["friendlyNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
+        if db["friendlyNpBuffEnable"] and aura.isHelpful then
+            local isInBlacklist = db["friendlyNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
             if isInBlacklist then return end
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
-            local filterWhitelist = BetterBlizzPlatesDB["friendlyNpBuffFilterWatchList"]
+            local filterWhitelist = db["friendlyNpBuffFilterWatchList"]
             local auraWhitelisted = filterWhitelist and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["friendlyNpBuffFilterLessMinite"]
-            local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpBuffFilterOnlyMe"]
-            local anyFilter = filterLessMinite or filterOnlyMe
+            local filterLessMinite = db["friendlyNpBuffFilterLessMinite"]
+            local filterOnlyMe = db["friendlyNpBuffFilterOnlyMe"]
+            local filterImportantBuffs = db["friendlyNpBuffFilterImportantBuffs"]
+
+            local anyFilter = filterLessMinite or filterOnlyMe or filterImportantBuffs
 
             if filterAllOverride then return true end
             if onlyMine and not castByPlayer then return false end
@@ -1260,6 +1747,13 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
+                    if filterImportantBuffs and importantBuffs[spellId] then return true end
+                    if filterBlizzard then return BlizzardShouldShow end
+                    return false
+                end
+
+                if filterImportantBuffs and not importantBuffs[spellId] then
+                    if filterLessMinite and lessThanOneMin then return true end
                     if filterBlizzard then return BlizzardShouldShow end
                     return false
                 end
@@ -1268,18 +1762,20 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             end
         end
         -- Debuffs
-        if BetterBlizzPlatesDB["friendlyNpdeBuffEnable"] and aura.isHarmful then
-            local isInBlacklist = BetterBlizzPlatesDB["friendlyNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
+        if db["friendlyNpdeBuffEnable"] and aura.isHarmful then
+            local isInBlacklist = db["friendlyNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
             if isInBlacklist then return end
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
-            local filterWhitelist = BetterBlizzPlatesDB["friendlyNpdeBuffFilterWatchList"]
+            local filterWhitelist = db["friendlyNpdeBuffFilterWatchList"]
             local auraWhitelisted = filterWhitelist and isInWhitelist
-            local filterBlizzard = BetterBlizzPlatesDB["friendlyNpdeBuffFilterBlizzard"]
-            local filterLessMinite = BetterBlizzPlatesDB["friendlyNpdeBuffFilterLessMinite"]
-            local filterOnlyMe = BetterBlizzPlatesDB["friendlyNpdeBuffFilterOnlyMe"]
-            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe
+            local filterBlizzard = db["friendlyNpdeBuffFilterBlizzard"]
+            local filterLessMinite = db["friendlyNpdeBuffFilterLessMinite"]
+            local filterOnlyMe = db["friendlyNpdeBuffFilterOnlyMe"]
+            local filterCC = db["friendlyNpdeBuffFilterCC"]
+
+            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe or filterCC
 
             if filterAllOverride then return true end
             if onlyMine and not castByPlayer then return false end
@@ -1294,13 +1790,21 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
+                    if filterCC and crowdControl[spellId] then return true end
                     if filterBlizzard then return BlizzardShouldShow end
                     return false
                 end
                 -- Filter to show only Blizzard recommended auras
                 if not BlizzardShouldShow and filterBlizzard then
                     if filterLessMinite and lessThanOneMin then return true end
+                    if filterCC and crowdControl[spellId] then return true end
                     if filterOnlyMe then return true end
+                    return false
+                end
+
+                if filterCC and not crowdControl[spellId] then
+                    if filterLessMinite and lessThanOneMin then return true end
+                    if filterBlizzard then return BlizzardShouldShow end
                     return false
                 end
                 -- If none of the specific sub-filter conditions are met, show the aura
@@ -1310,17 +1814,19 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
     -- ENEMY
     else
         -- Buffs
-        if BetterBlizzPlatesDB["otherNpBuffEnable"] and aura.isHelpful then
-            local isInBlacklist = BetterBlizzPlatesDB["otherNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
+        if db["otherNpBuffEnable"] and aura.isHelpful then
+            local isInBlacklist = db["otherNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
             if isInBlacklist then return end
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
-            local filterWhitelist = BetterBlizzPlatesDB["otherNpBuffFilterWatchList"]
+            local filterWhitelist = db["otherNpBuffFilterWatchList"]
             local auraWhitelisted = filterWhitelist and isInWhitelist
-            local filterLessMinite = BetterBlizzPlatesDB["otherNpBuffFilterLessMinite"]
-            local filterPurgeable = BetterBlizzPlatesDB["otherNpBuffFilterPurgeable"]
-            local anyFilter = filterLessMinite or filterPurgeable
+            local filterLessMinite = db["otherNpBuffFilterLessMinite"]
+            local filterPurgeable = db["otherNpBuffFilterPurgeable"]
+            local filterImportantBuffs = db["otherNpBuffFilterImportantBuffs"]
+
+            local anyFilter = filterLessMinite or filterPurgeable or filterImportantBuffs
 
             if filterAllOverride then return true end
             if onlyMine and not castByPlayer then return false end
@@ -1330,6 +1836,11 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
                 return true
             else
                 if auraWhitelisted then return true end
+
+                if filterImportantBuffs and not importantBuffs[spellId] then
+                    if filterPurgeable and isPurgeable then return true end
+                    return false
+                end
                 -- Filter to hide long duration auras
                 if filterPurgeable and not isPurgeable then return false end
                 if moreThanOneMin and filterLessMinite then return false end
@@ -1338,18 +1849,20 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
             end
         end
         -- Debuffs
-        if BetterBlizzPlatesDB["otherNpdeBuffEnable"] and aura.isHarmful then
-            local isInBlacklist = BetterBlizzPlatesDB["otherNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
+        if db["otherNpdeBuffEnable"] and aura.isHarmful then
+            local isInBlacklist = db["otherNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
             if isInBlacklist then return end
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
-            local filterWhitelist = BetterBlizzPlatesDB["otherNpdeBuffFilterWatchList"]
+            local filterWhitelist = db["otherNpdeBuffFilterWatchList"]
             local auraWhitelisted = filterWhitelist and isInWhitelist
-            local filterBlizzard = BetterBlizzPlatesDB["otherNpdeBuffFilterBlizzard"]
-            local filterLessMinite = BetterBlizzPlatesDB["otherNpdeBuffFilterLessMinite"]
-            local filterOnlyMe = BetterBlizzPlatesDB["otherNpdeBuffFilterOnlyMe"]
-            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe
+            local filterBlizzard = db["otherNpdeBuffFilterBlizzard"]
+            local filterLessMinite = db["otherNpdeBuffFilterLessMinite"]
+            local filterOnlyMe = db["otherNpdeBuffFilterOnlyMe"]
+            local filterCC = db["otherNpdeBuffFilterCC"]
+
+            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe or filterCC
 
             if filterAllOverride then return true end
             if onlyMine and not castByPlayer then return false end
@@ -1364,13 +1877,20 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
+                    if filterCC and crowdControl[spellId] then return true end
                     if filterBlizzard then return BlizzardShouldShow end
                     return false
                 end
                 -- Filter to show only Blizzard recommended auras
                 if not BlizzardShouldShow and filterBlizzard then
+                    if filterCC and crowdControl[spellId] then return true end
                     if filterLessMinite and lessThanOneMin then return true end
-                    if filterOnlyMe then return true end
+                    return false
+                end
+
+                if filterCC and not crowdControl[spellId] then
+                    if filterLessMinite and lessThanOneMin then return true end
+                    if filterBlizzard then return BlizzardShouldShow end
                     return false
                 end
                 -- If none of the specific sub-filter conditions are met, show the aura
@@ -1506,6 +2026,9 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     local onlyPandemicMine = db.onlyPandemicAuraMine
     local showDefaultCooldownNumbersOnNpAuras = db.showDefaultCooldownNumbersOnNpAuras
     local hideNpAuraSwipe = db.hideNpAuraSwipe
+    local enlargeAllImportantBuffs = db.enlargeAllImportantBuffs
+    local enlargeAllCC = db.enlargeAllCC
+    local opBarriersOn = db.opBarriersEnabled
 
     self.auras:Iterate(function(auraInstanceID, aura)
         if buffIndex > BBPMaxAuraNum then return true end
@@ -1530,6 +2053,19 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
         if buff.Cooldown._occ_display then
             buff.Cooldown._occ_display:SetFrameStrata("HIGH")
+        end
+
+        if enlargeAllImportantBuffs and enlargeAllImportantBuffsFilter and importantBuffs[spellId] then
+            isEnlarged = true
+        end
+
+        if enlargeAllCC and enlargeAllCCsFilter and crowdControl[spellId] then
+            isEnlarged = true
+        end
+
+        if opBarriersOn and opBarriers[spellId] and auraData.duration ~= 5 then
+            isImportant = nil
+            isEnlarged = nil
         end
 
         if isPlayerUnit then

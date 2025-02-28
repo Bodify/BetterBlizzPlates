@@ -571,6 +571,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     -- Separate buffs and debuffs if needed
     local buffs = {}
     local debuffs = {}
+    local maxDebuffHeight = 0
     if BetterBlizzPlatesDB.separateAuraBuffRow then
         for _, buff in ipairs(children) do
             if buff.isBuff then
@@ -653,7 +654,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     end
 
     -- Function to layout auras
-    local function LayoutAuras(auras, startRow)
+    local function LayoutAuras(auras, startRow, isBuffs)
         local currentRow = startRow
         local horizontalOffset = 0
         local firstRowFirstAuraOffset = nil  -- Variable to store the horizontal offset of the first aura in the first row
@@ -707,7 +708,13 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
 
             -- Position the buff on the nameplate
             buff:ClearAllPoints()
-            local verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
+            local verticalOffset
+            if not isBuffs then
+                maxDebuffHeight = maxRowHeight
+                verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
+            else
+                verticalOffset = -currentRow * (-maxDebuffHeight + (currentRow > 0 and verticalSpacing or 0))
+            end
 
             local extraOffset = 0
             if compactSquare and compactTracker == 2 and buff.isCompacted then
@@ -747,7 +754,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
             table.sort(buffs, smallLargeAuraComparator)
         end
         rowWidths = CalculateRowWidths(buffs)
-        LayoutAuras(buffs, lastRow + (#debuffs > 0 and 1 or 0))
+        LayoutAuras(buffs, lastRow + (#debuffs > 0 and 1 or 0), true)
     else
         if sortEnlargedAurasFirst then
             table.sort(buffs, largeSmallAuraComparator)

@@ -12,7 +12,7 @@ LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Pro
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
 local sendUpdate = true
-BBP.VersionNumber = addonUpdates.."e"
+BBP.VersionNumber = addonUpdates.."f"
 local _, playerClass
 local playerClassColor
 
@@ -419,6 +419,14 @@ local defaultSettings = {
     nameplateAuraBuffSelfScale = 1,
     nameplateAuraDebuffSelfScale = 1,
     hideDefaultPersonalNameplateAuras = false,
+    separateAuraBuffRow = true,
+    importantCCFull = true,
+    importantCCDisarm = true,
+    importantCCRoot = true,
+    importantCCSilence = true,
+    importantBuffsOffensives = true,
+    importantBuffsDefensives = true,
+    importantBuffsMobility = true,
     defaultNpAuraCdSize = 0.5,
     onlyPandemicAuraMine = true,
     nameplateAuraEnlargedScale = 1,
@@ -2296,6 +2304,7 @@ local secondaryPets = {
     ["228576"] = true, -- Mother of Chaos
     ["217429"] = true, -- Overfiend
     ["225493"] = true, -- Doomguard
+    ["89"] = true, -- Infernal
 
     -- Mage
     --["31216"] = true, -- Mirror Images
@@ -3838,7 +3847,6 @@ local function FriendIndicator(frame)
         frame.friendIndicator = frame:CreateTexture(nil, "OVERLAY")
         frame.friendIndicator:SetAtlas("groupfinder-icon-friend")
         frame.friendIndicator:SetSize(20, 21)
-        frame.friendIndicator:SetPoint("RIGHT", frame.name, "LEFT", 0, 0)
     end
 
     if info.isSelf then
@@ -3847,10 +3855,20 @@ local function FriendIndicator(frame)
         frame.friendIndicator:SetDesaturated(false)
         frame.friendIndicator:SetVertexColor(1, 1, 1)
         frame.friendIndicator:Show()
+        if BBP.isInArena and frame.specNameText and frame.specNameText ~= "" then
+            frame.friendIndicator:SetPoint("RIGHT", frame.specNameText, "LEFT", 0, 0)
+        else
+            frame.friendIndicator:SetPoint("RIGHT", frame.name, "LEFT", 0, 0)
+        end
     elseif isGuildmate then
         frame.friendIndicator:SetDesaturated(true)
         frame.friendIndicator:SetVertexColor(0, 1, 0)
         frame.friendIndicator:Show()
+        if BBP.isInArena and frame.specNameText and frame.specNameText ~= "" then
+            frame.friendIndicator:SetPoint("RIGHT", frame.specNameText, "LEFT", 0, 0)
+        else
+            frame.friendIndicator:SetPoint("RIGHT", frame.name, "LEFT", 0, 0)
+        end
     else
         frame.friendIndicator:Hide()
     end
@@ -4609,6 +4627,8 @@ local function IsSpecHealer(frame)
 end
 BBP.IsSpecHealer = IsSpecHealer
 
+local hf = CreateFrame("Frame")
+hf:Hide()
 
 -- What to do on a new nameplate
 local function HandleNamePlateAdded(unit)
@@ -4619,7 +4639,7 @@ local function HandleNamePlateAdded(unit)
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
 
-    --print(frame:GetFrameLevel(), nameplate:GetFrameLevel())
+    --print("1: ", frame:GetFrameLevel(), nameplate:GetFrameLevel())
     -- Get settings and unitInfo
     local config = InitializeNameplateSettings(frame)
     local info = GetNameplateUnitInfo(frame, unit)
@@ -4633,12 +4653,20 @@ local function HandleNamePlateAdded(unit)
         frame.bbpOverlay = CreateFrame("Frame", nil, frame.HealthBarsContainer.healthBar)
     end
 
-    nameplate:SetParent(WorldFrame)
 
-    if not frame.classificationFixed then
+
+
+
+    if not frame.nameplateTweaksBBP then
         frame.ClassificationFrame:SetParent(frame.HealthBarsContainer)
-        frame.classificationFixed = true
+        frame.castBar.Icon:SetIgnoreParentAlpha(false)
+        frame.castBar.BorderShield:SetIgnoreParentAlpha(false)
+        -- nameplate:SetParent(hf)
+        -- nameplate:SetParent(WorldFrame)
+        frame.nameplateTweaksBBP = true
     end
+
+    --print("2: ", frame:GetFrameLevel(), nameplate:GetFrameLevel())
 
     --BBP.greenScreen(nameplate)
 
@@ -4871,6 +4899,9 @@ local function HandleNamePlateAdded(unit)
     end
 
     NameplateShadowAndMouseoverHighlight(frame)
+
+    --print("3: ", frame:GetFrameLevel(), nameplate:GetFrameLevel())
+    --print("______________________")
 end
 
 
@@ -5493,6 +5524,7 @@ Frame:SetScript("OnEvent", function(...)
     if db.enableNameplateAuraCustomisation then
         BBP.RunAuraModule()
         BBP.SmokeCheckBootup()
+        BBF.UpdateImportantBuffsAndCCTables()
     end
 
     --if BetterBlizzPlatesDB.enableCastbarCustomization then
@@ -5732,6 +5764,10 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a News:")
                     DEFAULT_CHAT_FRAME:AddMessage("   - Many new Class Indicator settings! Check them out and read patch notes for more info.")
                 end)
+            end
+
+            if db.hasSaved and db.separateAuraBuffRow == nil then
+                db.separateAuraBuffRow = false
             end
 
             InitializeSavedVariables()

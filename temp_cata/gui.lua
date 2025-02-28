@@ -1684,9 +1684,9 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
     wipeButton:SetScript("OnMouseDown", function(self, button)
         if button == "RightButton" and IsShiftKeyDown() and IsAltKeyDown() then
             if title == "Full Profile" then
-                BetterBlizzFramesDB = nil
+                BetterBlizzPlatesDB = nil
             else
-                BetterBlizzFramesDB[tableName] = nil
+                BetterBlizzPlatesDB[tableName] = nil
             end
             ReloadUI()
         end
@@ -4814,10 +4814,11 @@ local function guiGeneralTab()
     CreateTooltipTwo(magnuszProfileButton, "Magnusz Profile", "Enable all of Magnusz's profile settings.", "www.twitch.tv/magnusz", "ANCHOR_TOP")
     magnuszProfileButton:Hide()
 
+    local a,b,c,d,e = SettingsPanel.CloseButton:GetPoint()
     local resetBBPButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     resetBBPButton:SetText("Reset BetterBlizzPlates")
     resetBBPButton:SetWidth(165)
-    resetBBPButton:SetPoint("RIGHT", nahjProfileButton, "LEFT", -180, 0)
+    resetBBPButton:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT", -d, e)
     resetBBPButton:SetScript("OnClick", function()
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     end)
