@@ -127,8 +127,8 @@ function BBP.FocusTargetIndicator(frame)
 
     local focusTextureName = BetterBlizzPlatesDB.focusTargetIndicatorTexture
     local focusTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, focusTextureName)
-    local textureName = BetterBlizzPlatesDB.customTexture
-    local customTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
+    -- local textureName = BetterBlizzPlatesDB.customTexture
+    -- local customTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
 
     local changeTexture = BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture
     local colorNp = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate
@@ -146,7 +146,7 @@ function BBP.FocusTargetIndicator(frame)
     local xPos = BetterBlizzPlatesDB.focusTargetIndicatorXPos or 0
     local yPos = BetterBlizzPlatesDB.focusTargetIndicatorYPos or 0
     local dbScale = BetterBlizzPlatesDB.focusTargetIndicatorScale or 1
-    local useCustomTexture = BetterBlizzPlatesDB.useCustomTextureForBars
+    --local useCustomTexture = BetterBlizzPlatesDB.useCustomTextureForBars
 
     -- Initialize
     if not frame.focusTargetIndicator then

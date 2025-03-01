@@ -1,3 +1,17 @@
+# BetterBlizzPlates 1.6.9g
+## The War Within
+### Tweak:
+- Added Intro screens with profile selections for new users for Classic Versions as well.
+- Removed "Skip GUI" as an option, now always active.
+- Fix Target Highlight not being hidden with some specific settings when its supposed to be.
+
+### Bugfix:
+- Fix Class Indicator only showing Deephaul Ravine crystal for a split sec and removing it again.
+- Fix "Reset BetterBlizzPlates" button showing up randomly on screen unintentionally for people without skip GUI enabled due SettingsPanel not being loaded in.
+- Fix some LevelFrame hide/show issues on Classic versions.
+
+
+
 # BetterBlizzPlates 1.6.9f
 ## The War Within
 ### New: 

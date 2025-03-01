@@ -12,9 +12,11 @@ LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Pro
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
 local sendUpdate = true
-BBP.VersionNumber = addonUpdates.."f"
+BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
+BBP.hiddenFrame = CreateFrame("Frame")
+BBP.hiddenFrame:Hide()
 
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 local UnitName = UnitName
@@ -37,7 +39,6 @@ local defaultSettings = {
     updates = "empty",
     wasOnLoadingScreen = true,
     setCVarAcrossAllCharacters = true,
-    skipGUI = true,
     -- General
     removeRealmNames = true,
     hideNameplateAuras = false,
@@ -1041,19 +1042,18 @@ local function SendUpdateMessage()
         if not db.classicNameplates and not db.hideLevelFrame then
             db.hideLevelFrame = true
         end
-        BetterBlizzPlatesDB.skipGUI = true
         if not BetterBlizzPlatesDB.scStart then
             C_Timer.After(7, function()
                 --bbp news
                 --PlaySoundFile(567439) --quest complete sfx
                 --BBP.CreateUpdateMessageWindow()
-                if db.petIndicator or db.hideNPC or db.enableNameplateAuraCustomisation then
-                    BBP.CreateUpdateMessageWindow()
-                end
+                -- if db.petIndicator or db.hideNPC or db.enableNameplateAuraCustomisation then
+                --     BBP.CreateUpdateMessageWindow()
+                -- end
                 -- if BetterBlizzPlatesDB.fadeAllButTarget then
-                -- DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-                -- DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a Removed:")
-                -- DEFAULT_CHAT_FRAME:AddMessage("   - Removed Fade NPC's \"Fade all but Target\" setting, use whitelist mode instead.")
+                DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
+                DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New:")
+                DEFAULT_CHAT_FRAME:AddMessage("   - Nameplate Auras now have \"PvP Buffs\" and \"PvP CC\" filters.")
                 -- BetterBlizzPlatesDB.fadeAllButTarget = nil
                 -- end
                 -- DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
@@ -1842,7 +1842,8 @@ end
 
 local function ToggleTargetNameplateHighlight(frame)
     local config = frame.BetterBlizzPlates.config
-    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
+    local info = frame.BetterBlizzPlates.unitInfo
+    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
     if config.targetHighlightFix then
         frame.selectionHighlight:SetAllPoints(frame.healthBar.barTexture)
         frame.selectionHighlight:SetParent(frame.healthBar)
@@ -2590,7 +2591,7 @@ function BBP.HideNPCs(frame, nameplate)
     if UnitIsUnit(frame.displayedUnit, "target") then
         BBP.ShowFrame(frame, nameplate, config)
         frame.HealthBarsContainer:SetAlpha(config.friendlyHideHealthBar and info.isFriend and 0 or 1)
-        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
+        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
     elseif BBP.isInArena and hideSecondaryPets and mainPets[npcID] and info.isEnemy then
         local isFakePet = true
         for i = 1, 3 do
@@ -2644,7 +2645,7 @@ function BBP.ResetFrame(frame, config, info)
         frame.hideNameOverride = false
         frame.hideCastbarOverride = false
         frame.HealthBarsContainer:SetAlpha((info.isSelf and 1) or (config.friendlyHideHealthBar and info.isFriend and 0) or 1)
-        frame.selectionHighlight:SetAlpha(((info.isFriend and config.friendlyHideHealthBar) and 0) or (config.hideTargetHighlight and 0) or 0.22)
+        frame.selectionHighlight:SetAlpha((((config.hideTargetHighlight and 0) or info.isFriend and config.friendlyHideHealthBar) and 0) or 0.22)
         ToggleNameplateBuffFrameVisibility(frame)
         frame.name:SetAlpha(1)
     end
@@ -3809,13 +3810,13 @@ local function HideFriendlyHealthbar(frame)
                     frame.selectionHighlight:SetAlpha(0)
                 else
                     frame.HealthBarsContainer:SetAlpha(1)
-                    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
+                    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
                 end
             else
                 local showOnTarget = BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget
                 if showOnTarget and UnitIsUnit("target", frame.unit) then
                     frame.HealthBarsContainer:SetAlpha(1)
-                    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
+                    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
                 else
                     frame.HealthBarsContainer:SetAlpha(0)
                     frame.selectionHighlight:SetAlpha(0)
@@ -3823,14 +3824,14 @@ local function HideFriendlyHealthbar(frame)
             end
         else
             frame.HealthBarsContainer:SetAlpha(1)
-            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
+            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
             if frame.guildName then
                 frame.guildName:SetText("")
             end
         end
     else
         frame.HealthBarsContainer:SetAlpha(1)
-        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
+        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
         if frame.guildName then
             frame.guildName:SetText("")
         end

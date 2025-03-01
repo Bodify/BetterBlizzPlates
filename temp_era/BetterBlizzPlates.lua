@@ -10,8 +10,8 @@ LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Pro
 
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
-local sendUpdate = true
-BBP.VersionNumber = addonUpdates.."f"
+local sendUpdate = false
+BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
 
@@ -34,7 +34,6 @@ local defaultSettings = {
     updates = "empty",
     wasOnLoadingScreen = true,
     setCVarAcrossAllCharacters = true,
-    skipGUI = true,
     -- General
     classicNameplates = false,
     removeRealmNames = true,
@@ -816,6 +815,7 @@ end
 
 local function FetchAndSaveValuesOnFirstLogin()
     if BBP.variablesLoaded then
+        BetterBlizzPlatesDB.hasNotOpenedSettings = true
         -- collect some cvars added at a later time
         if not BetterBlizzPlatesDB.nameplateMinAlpha or not BetterBlizzPlatesDB.nameplateShowFriendlyMinions or not BetterBlizzPlatesDB.nameplateSelectedAlpha then
             CVarFetcher()
@@ -835,7 +835,6 @@ local function FetchAndSaveValuesOnFirstLogin()
             if not C_AddOns.IsAddOnLoaded("SkillCapped") then
             DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates first run. Thank you for trying out my AddOn. Access settings with /bbp")
             end
-            StaticPopup_Show("BBP_RETAILORCLASSIC")
             BetterBlizzPlatesDB.hasSaved = true
         end)
     else
@@ -1032,7 +1031,6 @@ end
 -- Update message
 local function SendUpdateMessage()
     if sendUpdate then
-        BetterBlizzPlatesDB.skipGUI = true
         if not BetterBlizzPlatesDB.scStart then
             -- C_Timer.After(7, function()
             --     --bbp news
@@ -1722,7 +1720,8 @@ end
 
 local function ToggleTargetNameplateHighlight(frame)
     local config = frame.BetterBlizzPlates.config
-    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
+    local info = frame.BetterBlizzPlates.unitInfo
+    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
 end
 
 --#################################################################################################
@@ -2227,7 +2226,7 @@ function BBP.HideNPCs(frame, nameplate)
     if UnitIsUnit(frame.displayedUnit, "target") then
         BBP.ShowFrame(frame, nameplate, config)
         frame.healthBar:SetAlpha(config.friendlyHideHealthBar and info.isFriend and 0 or 1)
-        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
+        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
     elseif hideNPCWhitelistOn then
         if inList then
             if showMurloc then
@@ -2851,7 +2850,7 @@ local function FixLevelFramePosition(frame)
         if not BetterBlizzPlatesDB.classicNameplates then
             BBP.SetFontBasedOnOption(frame.LevelFrame.levelText, BetterBlizzPlatesDB.levelFrameFontSize)
             frame.LevelFrame.levelText:ClearAllPoints()
-            frame.LevelFrame.levelText:SetPoint("LEFT", frame.healthBar, "RIGHT", 3, -0.5)
+            frame.LevelFrame.levelText:SetPoint("LEFT", frame.healthBar, "RIGHT", 3, 0)
             frame.LevelFrame:SetFrameStrata("LOW")
         else
             frame.LevelFrame:SetFrameStrata("DIALOG")
@@ -3254,12 +3253,12 @@ local function CreateRetailNameplateLook(frame)
     -- frame.LevelFrame.levelText:SetDrawLayer("OVERLAY")
 
     if BBP.isInPvP or BetterBlizzPlatesDB.hideLevelFrame then
-        frame.LevelFrame:Hide()
+        frame.LevelFrame:SetAlpha(0)
     else
         if UnitIsFriend(frame.unit, "player") then
-            frame.LevelFrame:Hide()
+            frame.LevelFrame:SetAlpha(0)
         else
-            frame.LevelFrame:Show()
+            frame.LevelFrame:SetAlpha(1)
         end
     end
     SetupBorderOnFrame(frame.healthBar)
@@ -3896,7 +3895,7 @@ local function HideFriendlyHealthbar(frame)
                     frame.selectionHighlight:SetAlpha(0)
                 else
                     frame.healthBar:SetAlpha(1)
-                    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
+                    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
                 end
             else
                 frame.healthBar:SetAlpha(0)
@@ -3904,11 +3903,11 @@ local function HideFriendlyHealthbar(frame)
             end
         else
             frame.healthBar:SetAlpha(1)
-            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
+            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
         end
     else
         frame.healthBar:SetAlpha(1)
-        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or 0.22)
+        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
     end
 end
 
@@ -4611,7 +4610,7 @@ function BBP.RefreshAllNameplates()
                     frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", xPos,0)
                     AdjustClassicBorderWidth(frame)
                 end
-                frame.LevelFrame:Show()
+                frame.LevelFrame:SetAlpha(1)
             end
         end
 
@@ -4834,7 +4833,6 @@ function BBP.RefreshAllNameplates()
             if frame.BetterBlizzPlates.bbpBorder.changed and not BetterBlizzPlatesDB.hideLevelFrame then
                 frame.BetterBlizzPlates.bbpBorder.right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRight")
                 frame.BetterBlizzPlates.bbpBorder.changed = nil
-                frame.LevelFrame:Show()
                 frame.LevelFrame:SetAlpha(1)
             end
         end
@@ -5386,6 +5384,11 @@ SlashCmdList["BBP"] = function(msg)
         StaticPopup_Show("CONFIRM_FIX_NAMEPLATES_BBP")
     elseif command == "ver" or command == "version" then
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates Version "..addonUpdates)
+    elseif command == "dump" then
+        local exportVersion = BetterBlizzPlatesDB.exportVersion or "No export version registered"
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: "..exportVersion)
+    elseif command == "intro" then
+        BBP.CreateIntroMessageWindow()
     else
         --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
         if not BetterBlizzPlates.guiLoaded then

@@ -5757,11 +5757,10 @@ local function guiGeneralTab()
     profileText:SetPoint("RIGHT", aeghisProfileButton, "LEFT", -5, 0)
     profileText:SetText("Profiles:")
 
-    local a,b,c,d,e = SettingsPanel.CloseButton:GetPoint()
     local resetBBPButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     resetBBPButton:SetText("Reset BetterBlizzPlates")
     resetBBPButton:SetWidth(165)
-    resetBBPButton:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT", -d, e)
+    resetBBPButton:SetPoint("BOTTOMLEFT", SettingsPanel, "BOTTOMLEFT", 16, 16)
     resetBBPButton:SetScript("OnClick", function()
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     end)
@@ -10054,12 +10053,6 @@ local function guiMisc()
     local guildNameScale = CreateSlider(guiMisc, "Guild Name Size", 0.2, 2, 0.01, "guildNameScale")
     guildNameScale:SetPoint("LEFT", showGuildNames.Text, "RIGHT", 5, 0)
 
-
-    local skipGUI = CreateCheckbox("skipGUI", "Skip GUI", guiMisc)
-    skipGUI:SetPoint("BOTTOMRIGHT", bgImg, "BOTTOMRIGHT", -60, 0)
-    CreateTooltipTwo(skipGUI, "Skip GUI", "Skip creating the BBP Settings GUI on login/reload.\n\nIt will be created when typing /bbp\n\nFrees a little memory, makes reload a little faster.")
-    skipGUI:SetScale(1.3)
-
     local guildNameColor = CreateCheckbox("guildNameColor", "Custom Guild Name Color", guiMisc)
     guildNameColor:SetPoint("TOPLEFT", showGuildNames, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(guildNameColor, "Change guild name color to a custom one instead of class colors.")
@@ -10214,6 +10207,20 @@ local function guiMisc()
 
     adjustPersonalBarPosition:HookScript("OnClick", function(self)
         CheckAndToggleCheckboxes(self)
+        if not self:GetChecked() then
+            if InCombatLockdown() then
+                local frame = CreateFrame("Frame")
+                frame:RegisterEvent("PLAYER_REGEN_ENABLED")
+                frame:SetScript("OnEvent", function()
+                    C_CVar.SetCVar("nameplateSelfTopInset", C_CVar.GetCVarDefault("nameplateSelfTopInset"))
+                    C_CVar.SetCVar("nameplateSelfBottomInset", C_CVar.GetCVarDefault("nameplateSelfBottomInset"))
+                    frame:UnregisterEvent("PLAYER_REGEN_ENABLED")
+                end)
+            else
+                C_CVar.SetCVar("nameplateSelfTopInset", C_CVar.GetCVarDefault("nameplateSelfTopInset"))
+                C_CVar.SetCVar("nameplateSelfBottomInset", C_CVar.GetCVarDefault("nameplateSelfBottomInset"))
+            end
+        end
     end)
 
     local hidePersonalBarManaFrame = CreateCheckbox("hidePersonalBarManaFrame", "Hide Personal Manabar", guiMisc, nil, BBP.PersonalBarSettings)
@@ -10573,39 +10580,21 @@ function BBP.InitializeOptions()
         BBP.category.ID = BetterBlizzPlates.name
         Settings.RegisterAddOnCategory(BBP.category)
 
-        if not BetterBlizzPlatesDB.skipGUI then
-            guiGeneralTab()
-            guiPositionAndScale()
-            guiCastbar()
-            guiHideCastbar()
-            guiFadeNPC()
-            guiHideNPC()
-            guiColorNPC()
-            guiAuraColor()
-            guiNameplateAuras()
-            guiCVarControl()
-            guiMisc()
-            guiImportAndExport()
-            guiTotemList()
-            guiSupport()
-            BetterBlizzPlates.guiLoaded = true
-        else
-            local titleText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFont_Gigantic")
-            titleText:SetPoint("CENTER", BetterBlizzPlates, "CENTER", -15, 33)
-            titleText:SetText("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates")
-            BetterBlizzPlates.titleText = titleText
+        local titleText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFont_Gigantic")
+        titleText:SetPoint("CENTER", BetterBlizzPlates, "CENTER", -15, 33)
+        titleText:SetText("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates")
+        BetterBlizzPlates.titleText = titleText
 
-            local loadGUI = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-            loadGUI:SetText("Load Settings")
-            loadGUI:SetWidth(100)
-            loadGUI:SetPoint("CENTER", BetterBlizzPlates, "CENTER", -18, 6)
-            BetterBlizzPlates.loadGUI = loadGUI
-            loadGUI:SetScript("OnClick", function(self)
-                BBP.LoadGUI()
-                titleText:Hide()
-                self:Hide()
-            end)
-        end
+        local loadGUI = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
+        loadGUI:SetText("Load Settings")
+        loadGUI:SetWidth(100)
+        loadGUI:SetPoint("CENTER", BetterBlizzPlates, "CENTER", -18, 6)
+        BetterBlizzPlates.loadGUI = loadGUI
+        loadGUI:SetScript("OnClick", function(self)
+            BBP.LoadGUI()
+            titleText:Hide()
+            self:Hide()
+        end)
     end
 end
 
@@ -10866,24 +10855,6 @@ function BBP.CreateIntroMessageWindow()
         end
     end)
 
-    -- -- Create exit button
-    -- local exitButton = CreateFrame("Button", nil, BBP.IntroMessageWindow, "GameMenuButtonTemplate")
-    -- exitButton:SetPoint("BOTTOM", BBP.IntroMessageWindow, "BOTTOM", 0, 10)
-    -- exitButton:SetSize(100, 30)
-    -- exitButton:SetText("Exit")
-    -- exitButton:SetNormalFontObject("GameFontNormal")
-    -- exitButton:SetHighlightFontObject("GameFontHighlight")
-    -- exitButton:SetScript("OnClick", function()
-    --     BBP.IntroMessageWindow:Hide()
-    --     if not BetterBlizzPlates.guiLoaded then
-    --         BBP.LoadGUI()
-    --     else
-    --         Settings.OpenToCategory(BBP.category.ID)
-    --     end
-    -- end)
-
-
-
     local function SetFontWithOutline(fontString)
         local font, size = fontString:GetFont()
         fontString:SetFont(font, size, "OUTLINE")
@@ -10900,4 +10871,18 @@ function BBP.CreateIntroMessageWindow()
             SetFontWithOutline(element)
         end
     end
+
+    local function AdjustWindowHeight()
+        local baseHeight = 334
+        local perButtonHeight = 29
+        local buttonCount = -1
+        for _, child in ipairs({BBP.IntroMessageWindow:GetChildren()}) do
+            if child and child:IsObjectType("Button") then
+                buttonCount = buttonCount + 1
+            end
+        end
+        local newHeight = baseHeight + (buttonCount * perButtonHeight)
+        BBP.IntroMessageWindow:SetSize(470, newHeight)
+    end
+    AdjustWindowHeight()
 end
