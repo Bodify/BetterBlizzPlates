@@ -115,6 +115,7 @@ function BBP.ClassIndicator(frame, foundID, fade)
         config.classIndicatorTank = BetterBlizzPlatesDB.classIndicatorTank
         config.classIconAlwaysShowHealer = BetterBlizzPlatesDB.classIconAlwaysShowHealer
         config.classIconAlwaysShowTank = BetterBlizzPlatesDB.classIconAlwaysShowTank
+        config.classIndicatorHideName = BetterBlizzPlatesDB.classIndicatorHideName
 
         config.classIndicatorInitialized = true
     end
@@ -154,6 +155,9 @@ function BBP.ClassIndicator(frame, foundID, fade)
     -- Initialize Class Icon Frame
     if not frame.classIndicator then
         frame.classIndicator = CreateFrame("Frame", nil, frame)
+        frame.classIndicator:HookScript("OnHide", function()
+            frame.classIndicatorHideName = false
+        end)
         frame.classIndicator:SetSize(24, 24)
         --frame.classIndicator:SetScale(scale)
         frame.classIndicator.icon = frame.classIndicator:CreateTexture(nil, "BORDER")
@@ -165,10 +169,7 @@ function BBP.ClassIndicator(frame, foundID, fade)
     frame.classIndicator:SetFrameStrata(config.classIndicatorFrameStrataHigh and "HIGH" or "LOW")
     frame.classIndicator:SetAlpha(config.classIndicatorAlpha)
 
-    if
-        (config.classIndicatorHighlight or config.classIndicatorHighlightColor) and
-            not frame.classIndicator.highlightSelect
-     then
+    if (config.classIndicatorHighlight or config.classIndicatorHighlightColor) and not frame.classIndicator.highlightSelect then
         frame.classIndicator.highlightSelect = frame.classIndicator:CreateTexture(nil, "OVERLAY")
         frame.classIndicator.highlightSelect:SetAtlas("charactercreate-ring-select")
         frame.classIndicator.highlightSelect:Hide()
@@ -428,7 +429,10 @@ function BBP.ClassIndicator(frame, foundID, fade)
     end
 
     frame.classIndicator:Show()
-    if config.classIconHealthNumbers then
+    if config.classIndicatorHideName then
+        frame.classIndicatorHideName = true
+        frame.name:SetText("")
+    elseif config.classIconHealthNumbers then
         BBP.UpdateHealthText(frame)
     end
 end

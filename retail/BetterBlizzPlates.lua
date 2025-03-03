@@ -241,10 +241,11 @@ local defaultSettings = {
     partyPointerXPos = 0,
     partyPointerYPos = 0,
     partyPointerScale = 1,
-    partyPointerHealerScale = 1,
+    partyPointerHealerScale = 1.3,
     partyPointerAnchor = "TOP",
     partyPointerClassColor = true,
     partyPointerHideRaidmarker = true,
+    partyPointerHealerReplace = true,
     --partyPointerArenaOnly = true,
     -- Pet Indicator
     petIndicator = false,
@@ -373,6 +374,18 @@ local defaultSettings = {
     showCastbarIfTarget = false,
     castBarRecolor = false,
     castBarRecolorInterrupt = false,
+    importantCCFullGlow = true,
+    importantCCSilenceGlow = true,
+    importantBuffsOffensivesGlow = true,
+    importantBuffsDefensivesGlow = true,
+    importantBuffsMobilityGlow = true,
+    importantCCFullGlowRGB = {r = 1, g = 0.874, b = 0, a = 1},
+    importantCCDisarmGlowRGB = {r = 1, g = 0.874, b = 0, a = 1},
+    importantCCRootGlowRGB = {r = 1, g = 0.874, b = 0, a = 1},
+    importantCCSilenceGlowRGB = {r = 1, g = 0.874, b = 0, a = 1},
+    importantBuffsOffensivesGlowRGB = {r = 1, g = 0.5, b = 0, a = 1},
+    importantBuffsDefensivesGlowRGB = {r = 1, g = 0.662, b = 0.945, a = 1},
+    importantBuffsMobilityGlowRGB = {r = 0, g = 1, b = 1, a = 1},
     castBarCastColor = {
 		1,
 		0.8431373238563538,
@@ -1748,6 +1761,9 @@ local function SetCVarsOnLogin()
         C_CVar.SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
         C_CVar.SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
         C_CVar.SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
+        C_CVar.SetCVar("ShowClassColorInNameplate", BetterBlizzPlatesDB.ShowClassColorInNameplate)
+        C_CVar.SetCVar("ShowClassColorInFriendlyNameplate", BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate)
+
         if BetterBlizzPlatesDB.nameplateMotion then
             C_CVar.SetCVar("nameplateMotion", BetterBlizzPlatesDB.nameplateMotion)
         end
@@ -2313,14 +2329,16 @@ local secondaryPets = {
     --["31216"] = true, -- Mirror Images
 
     -- Shaman
-    --["29264"] = true, -- Spirit Wolves (Enhancement)
+    ["29264"] = true, -- Spirit Wolves (Enhancement)
+    ["77936"] = true, -- Greater Storm Elemental
+    ["95061"] = true, -- Greater Fire Elemental
 
     -- Druid
     ["54983"] = true, -- Treant
     ["103822"] = true, -- Treant (alternative)
 
     -- -- Priest
-    -- ["62982"] = true, -- Mindbender
+    ["62982"] = true, -- Mindbender
 
     -- Hunter
     ["105419"] = true, -- Dire Basilisk
@@ -4654,6 +4672,8 @@ local function HandleNamePlateAdded(unit)
     end
     if not frame.bbpOverlay then
         frame.bbpOverlay = CreateFrame("Frame", nil, frame.HealthBarsContainer.healthBar)
+        frame.bbpOverlay:SetFrameStrata("DIALOG")
+        frame.bbpOverlay:SetFrameLevel(9000)
     end
 
 
@@ -5192,6 +5212,8 @@ function BBP.ConsolidatedUpdateName(frame)
 
     if not frame.bbpOverlay then
         frame.bbpOverlay = CreateFrame("Frame", nil, frame.healthBar)
+        frame.bbpOverlay:SetFrameStrata("DIALOG")
+        frame.bbpOverlay:SetFrameLevel(9000)
     end
 
     if info.isSelf then return end
@@ -5317,7 +5339,9 @@ function BBP.ConsolidatedUpdateName(frame)
         end
     end
 
-    if config.classIndicator and config.classIconHealthNumbers then
+    if frame.classIndicatorHideName then
+        frame.name:SetText("")
+    elseif config.classIndicator and config.classIconHealthNumbers then
         BBP.UpdateHealthText(frame)
     end
 end
@@ -5449,10 +5473,10 @@ function BBP.ToggleHideHealthbar()
             BBP.friendlyHideHealthBarNpc:Disable()
             BBP.friendlyHideHealthBarNpc:SetAlpha(0)
         end
-        for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
-            local frame = nameplate.UnitFrame
-            HideFriendlyHealthbar(frame)
-        end
+    end
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        HideFriendlyHealthbar(frame)
     end
     if BBP.isInPvE then
         if BetterBlizzPlatesDB.friendlyHideHealthBar then--for toggle keybind

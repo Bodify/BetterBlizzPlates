@@ -7,6 +7,8 @@ local function FetchSpellName(spellId)
     return spellName
 end
 
+local LSM = LibStub("LibSharedMedia-3.0")
+
 local fakeAuras = {
     -- 6 Fake Debuffs
     {
@@ -132,6 +134,23 @@ local opBarriers = {
 }
 
 local importantBuffs = {}
+local importantGeneralBuffs = {
+    [156621] = {r = 0.207, g = 0.662, b = 1, a = 1}, --true, -- Alliance Flag
+    [434339] = {r = 0.207, g = 0.662, b = 1, a = 1}, --true, -- Deephaul Crystal
+    [156618] = {r = 1, g = 0, b = 0, a = 1}, --true, -- Horde Flag
+    [34976] = {r = 0, g = 1, b = 0, a = 1}, --true, -- Netherstorm Flag
+}
+local importantGeneralDebuffs = {
+    [121164] = {r = 0, g = 1, b = 0.94, a = 1}, --true, -- Orb of Power
+    [121175] = {r = 0.095, g = 0.121, b = 1, a = 1}, --true, -- Orb of Power
+    [121176] = {r = 0.553, g = 1, b = 0.16, a = 1}, --true, -- Orb of Power
+    [121177] = {r = 1, g = 0.36, b = 0.03, a = 1}, --true, -- Orb of Power
+    [372048] = {r = 0, g = 1, b = 0, a = 1}, -- Oppressing Roar
+    [212182] = {r = 1, g = 1, b = 1, a = 1}, -- Smoke Bomb
+    [359053] = {r = 1, g = 1, b = 1, a = 1}, -- Smoke Bomb
+    [383005] = {r = 0, g = 1, b = 0, a = 1}, -- Chrono Loop (Debuff)
+}
+
 local importantOffensives = {
     [1218128] = true,
     [115192] = true,
@@ -207,7 +226,7 @@ local importantMobility = {
     [363608] = true,
 }
 local importantDefensives = {
-    [473909] = true,
+    [473909] = {r = 0, g = 1, b = 0, a = 1}, -- tree
     [1221107] = true,
     [31224] = true,
     [118038] = true,
@@ -216,18 +235,17 @@ local importantDefensives = {
     [125174] = true,
     [33891] = true,
     [424655] = true,
-    [408558] = true,
+    [408558] = {r = 0, g = 1, b = 0, a = 1}, -- Phase Shift
     [145629] = true,
-    [289655] = true,
+    [289655] = {r = 0, g = 1, b = 0, a = 1}, -- Sanctified Ground
     [202748] = true,
     [378081] = true,
     [5277] = true,
     [122278] = true,
     [264735] = true,
     [48707] = true,
-    [378464] = true,
-    [383005] = true,
-    [353319] = true,
+    [378464] = {r = 0, g = 1, b = 0, a = 1}, -- Nullifying Shroud
+    [353319] = {r = 0, g = 1, b = 0, a = 1}, -- Peaceweaver
     [974] = true,
     [48743] = true,
     [871] = true,
@@ -235,9 +253,9 @@ local importantDefensives = {
     [212800] = true,
     [61336] = true,
     [81782] = true,
-    [213610] = true,
+    [213610] = {r = 0, g = 1, b = 0, a = 1}, -- Holy Ward
     [6940] = true,
-    [199450] = true,
+    [199450] = {r = 0, g = 1, b = 0, a = 1}, -- Ultimate Sacrifice
     [120954] = true,
     [385391] = true,
     [18499] = true,
@@ -255,8 +273,8 @@ local importantDefensives = {
     [108271] = true,
     [498] = true,
     [357170] = true,
-    [23920] = true,
-    [212295] = true,
+    [23920] = {r = 0, g = 1, b = 0, a = 1}, -- Spell Reflection
+    [212295] = {r = 0, g = 1, b = 0, a = 1}, -- Nether Ward
     [102342] = true,
     [22842] = true,
     [374348] = true,
@@ -264,7 +282,7 @@ local importantDefensives = {
     [403876] = true,
     [184364] = true,
     [374349] = true,
-    [378078] = true,
+    [378078] = {r = 0, g = 1, b = 0, a = 1}, -- Spiritwalker's Aegis
     [48792] = true,
     [319454] = true,
     [47585] = true,
@@ -277,8 +295,8 @@ local importantDefensives = {
     [232708] = true,
     [370889] = true,
     [116849] = true,
-    [378441] = true,
-    [209584] = true,
+    [378441] = {r = 0, g = 1, b = 0, a = 1}, -- Time Stop
+    [209584] = {r = 0, g = 1, b = 0, a = 1}, -- Zen Focus Tea
     [53480] = true,
     [196555] = true,
     [410358] = true,
@@ -287,7 +305,7 @@ local importantDefensives = {
     [209426] = true,
     [414658] = true,
     [79206] = true,
-    [377362] = true,
+    [377362] = {r = 0, g = 1, b = 0, a = 1}, -- precog
     [122783] = true,
     [186265] = true,
     [108416] = true,
@@ -301,9 +319,9 @@ local importantDefensives = {
     [22812] = true,
     [342246] = true,
     [113862] = true,
-    [354610] = true,
+    [354610] = {r = 0, g = 1, b = 0, a = 1}, -- Glimpse
     [432180] = true,
-    [248519] = true,
+    [248519] = {r = 0, g = 1, b = 0, a = 1}, -- Interlope
     [15286] = true,
     [228050] = true,
     [202162] = true,
@@ -508,6 +526,18 @@ local ccSilence = {
     [374776] = true,
 }
 
+
+local importantOffensivesColor = {r = 1, g = 0.5, b = 0, a = 1}
+local importantMobilityColor = {r = 0, g = 1, b = 1, a = 1}
+local importantDefensivesColor = {r = 1, g = 0.662, b = 0.945, a = 1}
+local ccFullColor = {r = 1, g = 0.874, b = 0, a = 1}
+local ccDisarmColor = {r = 1, g = 0.874, b = 0, a = 1}
+local ccRootColor = {r = 1, g = 0.874, b = 0, a = 1}
+local ccSilenceColor = {r = 1, g = 0.874, b = 0, a = 1}
+local importantColor = {r = 0, g = 1, b = 0, a = 1}
+
+
+
 function BBP.UpdateImportantBuffsAndCCTables()
     -- Clear the importantBuffs and crowdControl tables before updating
     wipe(importantBuffs)
@@ -521,68 +551,72 @@ function BBP.UpdateImportantBuffsAndCCTables()
     enlargeAllCCsFilter = importantCCEnabled
 
     if importantBuffsEnabled then
-        -- Constants (Always included)
-        importantBuffs[156621] = true -- Alliance Flag
-        importantBuffs[434339] = true -- Deephaul Crystal
-        importantBuffs[156618] = true -- Horde Flag
-        importantBuffs[34976] = true -- Netherstorm Flag
-        importantBuffs[121164] = true -- Orb of Power
-        importantBuffs[121175] = true -- Orb of Power
-        importantBuffs[121176] = true -- Orb of Power
-        importantBuffs[121177] = true -- Orb of Power
-        importantBuffs[372048] = true -- Oppressing Roar
-        importantBuffs[212182] = true -- Smoke Bomb
-        importantBuffs[359053] = true -- Smoke Bomb
+        local color = db.importantColor or importantColor
+        for spellID, value in pairs (importantGeneralBuffs) do
+            importantBuffs[spellID] = value
+        end
+        for spellID, value in pairs (importantGeneralDebuffs) do
+            crowdControl[spellID] = value
+        end
 
         -- Add offensives if enabled
-        if BetterBlizzPlatesDB.importantBuffsOffensives then
+        if db.importantBuffsOffensives then
+            local color = not db.importantBuffsOffensivesGlow and true or db.importantBuffsOffensivesGlowRGB or importantOffensivesColor
             for spellID, value in pairs(importantOffensives) do
-                importantBuffs[spellID] = value
+                importantBuffs[spellID] = value == true and color or value
             end
         end
 
         -- Add defensives if enabled
-        if BetterBlizzPlatesDB.importantBuffsDefensives then
+        if db.importantBuffsDefensives then
+            local color = not db.importantBuffsDefensivesGlow and true or db.importantBuffsDefensivesGlowRGB or importantDefensivesColor
             for spellID, value in pairs(importantDefensives) do
-                importantBuffs[spellID] = value
+                importantBuffs[spellID] = value == true and color or value
             end
         end
 
         -- Add mobility if enabled
-        if BetterBlizzPlatesDB.importantBuffsMobility then
+        if db.importantBuffsMobility then
+            local color = not db.importantBuffsMobilityGlow and true or db.importantBuffsMobilityGlowRGB or importantMobilityColor
             for spellID, value in pairs(importantMobility) do
-                importantBuffs[spellID] = value
+                importantBuffs[spellID] = value == true and color or value
             end
         end
     end
 
     if importantCCEnabled then
+
         -- Add CC categories based on settings
-        if BetterBlizzPlatesDB.importantCCFull then
+        if db.importantCCFull then
+            local color = not db.importantCCFullGlow and true or db.importantCCFullGlowRGB or ccFullColor
             for spellID, value in pairs(ccFull) do
-                crowdControl[spellID] = value
+                crowdControl[spellID] = value == true and color or value
             end
         end
 
-        if BetterBlizzPlatesDB.importantCCDisarm then
+        if db.importantCCDisarm then
+            local color = not db.importantCCDisarmGlow and true or db.importantCCDisarmGlowRGB or ccDisarmColor
             for spellID, value in pairs(ccDisarm) do
-                crowdControl[spellID] = value
+                crowdControl[spellID] = value == true and color or value
             end
         end
 
-        if BetterBlizzPlatesDB.importantCCRoot then
+        if db.importantCCRoot then
+            local color = not db.importantCCRootGlow and true or db.importantCCRootGlowRGB or ccRootColor
             for spellID, value in pairs(ccRoot) do
-                crowdControl[spellID] = value
+                crowdControl[spellID] = value == true and color or value
             end
         end
 
-        if BetterBlizzPlatesDB.importantCCSilence then
+        if db.importantCCSilence then
+            local color = not db.importantCCSilenceGlow and true or db.importantCCSilenceGlowRGB or ccSilenceColor
             for spellID, value in pairs(ccSilence) do
-                crowdControl[spellID] = value
+                crowdControl[spellID] = value == true and color or value
             end
         end
     end
 end
+
 
 local smokeTracker
 BBP.ActiveSmokeCheck = CreateFrame("Frame")
@@ -1022,36 +1056,38 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     --     container.GreenOverlay = greenOverlay  -- Assign the texture to the container for future reference
     -- end
     -- Define the spacing and row parameters
-    local horizontalSpacing = BetterBlizzPlatesDB.nameplateAuraWidthGap
-    local verticalSpacing = -BetterBlizzPlatesDB.nameplateAuraHeightGap-- + (BetterBlizzPlatesDB.nameplateAuraSquare and 12 or 0) + (BetterBlizzPlatesDB.nameplateAuraTaller and 3 or 0)
-    local maxBuffsPerRow = (isEnemyUnit and BetterBlizzPlatesDB.nameplateAuraRowAmount) or (not isEnemyUnit and BetterBlizzPlatesDB.nameplateAuraRowFriendlyAmount)
+    local db = BetterBlizzPlatesDB
+    local horizontalSpacing = db.nameplateAuraWidthGap
+    local verticalSpacing = -db.nameplateAuraHeightGap-- + (db.nameplateAuraSquare and 12 or 0) + (db.nameplateAuraTaller and 3 or 0)
+    local maxBuffsPerRow = (isEnemyUnit and db.nameplateAuraRowAmount) or (not isEnemyUnit and db.nameplateAuraRowFriendlyAmount)
     local maxRowHeight = 0
     local rowWidths = {}
     local totalChildrenHeight = 0
     local maxBuffsPerRowAdjusted = maxBuffsPerRow
-    local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
-    local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
+    local nameplateAuraSquare = db.nameplateAuraSquare
+    local nameplateAuraTaller = db.nameplateAuraTaller
     local auraHeightSetting = (nameplateAuraSquare and 20) or (nameplateAuraTaller and 15.5) or 14
-    local square = BetterBlizzPlatesDB.nameplateAuraEnlargedSquare
-    local compactSquare = BetterBlizzPlatesDB.nameplateAuraCompactedSquare
+    local square = db.nameplateAuraEnlargedSquare
+    local compactSquare = db.nameplateAuraCompactedSquare
     local auraSize = square and 20 or auraHeightSetting
     local compactSize = compactSquare and 10 or 20
-    local nameplateAuraEnlargedScale = BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-    local nameplateAuraCompactedScale = BetterBlizzPlatesDB.nameplateAuraCompactedScale
+    local nameplateAuraEnlargedScale = db.nameplateAuraEnlargedScale
+    local nameplateAuraCompactedScale = db.nameplateAuraCompactedScale
     local auraSizeScaled = auraSize * nameplateAuraEnlargedScale
     local sizeMultiplier = 20 * nameplateAuraEnlargedScale
     local texCoord = nameplateAuraSquare and {0.1, 0.9, 0.1, 0.9} or nameplateAuraTaller and {0.05, 0.95, 0.15, 0.82} or {0.05, 0.95, 0.1, 0.6}
     local compactTexCoord = not compactSquare and texCoord or nameplateAuraSquare and {0.25, 0.75, 0.05, 0.95} or nameplateAuraTaller and {0.3, 0.7, 0.15, 0.82} or {0.3, 0.7, 0.15, 0.80}
-    local nameplateAuraScale = BetterBlizzPlatesDB.nameplateAuraScale
-    local nameplateAuraCountScale = BetterBlizzPlatesDB.nameplateAuraCountScale
-    local sortEnlargedAurasFirst = BetterBlizzPlatesDB.sortEnlargedAurasFirst
-    local sortCompactedAurasFirst = BetterBlizzPlatesDB.sortCompactedAurasFirst
+    local nameplateAuraScale = db.nameplateAuraScale
+    local nameplateAuraCountScale = db.nameplateAuraCountScale
+    local sortEnlargedAurasFirst = db.sortEnlargedAurasFirst
+    local sortCompactedAurasFirst = db.sortCompactedAurasFirst
+    local sortDurationAuras = db.sortDurationAuras
 
     local scaledCompactWidth = compactSize * nameplateAuraCompactedScale
     local scaledCompactHeight = auraHeightSetting * nameplateAuraCompactedScale
 
-    local nameplateAuraBuffScale = BetterBlizzPlatesDB.nameplateAuraBuffScale
-    local nameplateAuraDebuffScale = BetterBlizzPlatesDB.nameplateAuraDebuffScale
+    local nameplateAuraBuffScale = db.nameplateAuraBuffScale
+    local nameplateAuraDebuffScale = db.nameplateAuraDebuffScale
     local scaledBuffWidth = 20 * nameplateAuraBuffScale
     local scaledBuffHeight = auraHeightSetting * nameplateAuraBuffScale
     local scaledDebuffWidth = 20 * nameplateAuraDebuffScale
@@ -1063,6 +1099,34 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local function defaultComparator(a, b)
         return a.auraInstanceID < b.auraInstanceID
     end
+
+    local function durationComparator(a, b)
+        if a.isEnlarged ~= b.isEnlarged then
+            return a.isEnlarged
+        end
+
+        if a.duration == 0 and b.duration == 0 then
+            return a.auraInstanceID < b.auraInstanceID
+        elseif a.duration == 0 then
+            return false
+        elseif b.duration == 0 then
+            return true
+        end
+
+        local now = GetTime()
+        local timeLeftA = (a.expirationTime or 0) - now
+        local timeLeftB = (b.expirationTime or 0) - now
+
+        if timeLeftA < 0 then timeLeftA = 0 end
+        if timeLeftB < 0 then timeLeftB = 0 end
+
+        if timeLeftA ~= timeLeftB then
+            return timeLeftA < timeLeftB
+        end
+
+        return a.auraInstanceID < b.auraInstanceID
+    end
+
 
     local function largeSmallAuraComparator(a, b)
         if a.isEnlarged or b.isEnlarged then
@@ -1116,7 +1180,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     -- Separate buffs and debuffs if needed
     local buffs = {}
     local debuffs = {}
-    if BetterBlizzPlatesDB.separateAuraBuffRow then
+    if db.separateAuraBuffRow then
         for _, buff in ipairs(children) do
             if buff.isBuff then
                 table.insert(buffs, buff)
@@ -1201,13 +1265,13 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
         local widths = {}
         local compactTracker = 0
 
-        local nameplateAuraSelfScale = BetterBlizzPlatesDB.nameplateAuraSelfScale
+        local nameplateAuraSelfScale = db.nameplateAuraSelfScale
 
-        local npAurasSelfEnlargedEnabled = not BetterBlizzPlatesDB.disableEnlargedAurasOnSelf
-        local npAurasSelfCompactedEnabled = not BetterBlizzPlatesDB.disableCompactedAurasOnSelf
+        local npAurasSelfEnlargedEnabled = not db.disableEnlargedAurasOnSelf
+        local npAurasSelfCompactedEnabled = not db.disableCompactedAurasOnSelf
 
-        local nameplateAuraBuffScale = BetterBlizzPlatesDB.nameplateAuraBuffSelfScale
-        local nameplateAuraDebuffScale = BetterBlizzPlatesDB.nameplateAuraDebuffSelfScale
+        local nameplateAuraBuffScale = db.nameplateAuraBuffSelfScale
+        local nameplateAuraDebuffScale = db.nameplateAuraDebuffSelfScale
         local scaledBuffWidth = 20 * nameplateAuraBuffScale
         local scaledBuffHeight = auraHeightSetting * nameplateAuraBuffScale
         local scaledDebuffWidth = 20 * nameplateAuraDebuffScale
@@ -1284,10 +1348,10 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
         local currentRow = startRow
         local horizontalOffset = 0
         local firstRowFirstAuraOffset = nil  -- Variable to store the horizontal offset of the first aura in the first row
-        local nameplateAurasFriendlyCenteredAnchor = BetterBlizzPlatesDB.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit
-        local nameplateAurasEnemyCenteredAnchor = BetterBlizzPlatesDB.nameplateAurasEnemyCenteredAnchor and isEnemyUnit
-        local nameplateCenterAllRows = BetterBlizzPlatesDB.nameplateCenterAllRows and (nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor)
-        local xPos = BetterBlizzPlatesDB.nameplateAurasXPos
+        local nameplateAurasFriendlyCenteredAnchor = db.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit
+        local nameplateAurasEnemyCenteredAnchor = db.nameplateAurasEnemyCenteredAnchor and isEnemyUnit
+        local nameplateCenterAllRows = db.nameplateCenterAllRows and (nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor)
+        local xPos = db.nameplateAurasXPos
         local compactTracker = 0
 
         for index, buff in ipairs(auras) do
@@ -1361,31 +1425,34 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
 
     -- Layout logic
     local lastRow = 0
-    if BetterBlizzPlatesDB.separateAuraBuffRow then
+    if db.separateAuraBuffRow then
         if #debuffs > 0 then
-            if sortEnlargedAurasFirst then
+            if sortDurationAuras then
+                table.sort(debuffs, durationComparator)
+            elseif sortEnlargedAurasFirst then
                 table.sort(debuffs, largeSmallAuraComparator)
-            end
-            if sortCompactedAurasFirst then
+            elseif sortCompactedAurasFirst then
                 table.sort(debuffs, smallLargeAuraComparator)
             end
             rowWidths = isSelf and CalculateRowWidths2(debuffs) or CalculateRowWidths(debuffs)
             lastRow = LayoutAuras(debuffs, 0)
         end
 
-        if sortEnlargedAurasFirst then
+        if sortDurationAuras then
+            table.sort(buffs, durationComparator)
+        elseif sortEnlargedAurasFirst then
             table.sort(buffs, largeSmallAuraComparator)
-        end
-        if sortCompactedAurasFirst then
+        elseif sortCompactedAurasFirst then
             table.sort(buffs, smallLargeAuraComparator)
         end
         rowWidths = isSelf and CalculateRowWidths2(buffs) or CalculateRowWidths(buffs)
         LayoutAuras(buffs, lastRow + (#debuffs > 0 and 1 or 0), true)
     else
-        if sortEnlargedAurasFirst then
+        if sortDurationAuras then
+            table.sort(buffs, durationComparator)
+        elseif sortEnlargedAurasFirst then
             table.sort(buffs, largeSmallAuraComparator)
-        end
-        if sortCompactedAurasFirst then
+        elseif sortCompactedAurasFirst then
             table.sort(buffs, smallLargeAuraComparator)
         end
         rowWidths = isSelf and CalculateRowWidths2(buffs) or CalculateRowWidths(buffs)
@@ -2029,6 +2096,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     local enlargeAllImportantBuffs = db.enlargeAllImportantBuffs
     local enlargeAllCC = db.enlargeAllCC
     local opBarriersOn = db.opBarriersEnabled
+    local npAuraStackFontEnabled = db.npAuraStackFontEnabled
 
     self.auras:Iterate(function(auraInstanceID, aura)
         if buffIndex > BBPMaxAuraNum then return true end
@@ -2038,10 +2106,11 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         buff.layoutIndex = buffIndex;
         buff.spellID = aura.spellId;
         buff.duration = aura.duration;
+        buff.expirationTime = aura.expirationTime
 
         buff.Icon:SetTexture(aura.icon);
 
-        local spellName = FetchSpellName(aura.spellId)
+        local spellName = aura.name--FetchSpellName(aura.spellId)
         local spellId = aura.spellId
         local caster = aura.sourceUnit
         local castByPlayer = (caster == "player" or caster == "pet")
@@ -2055,12 +2124,26 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             buff.Cooldown._occ_display:SetFrameStrata("HIGH")
         end
 
-        if enlargeAllImportantBuffs and enlargeAllImportantBuffsFilter and importantBuffs[spellId] then
-            isEnlarged = true
+        local isImportantBuff = importantBuffs[spellId]
+        if isImportantBuff then
+            if enlargeAllImportantBuffs and enlargeAllImportantBuffsFilter then
+                isEnlarged = true
+            end
+            if isImportantBuff ~= true and not isImportant then
+                isImportant = true
+                auraColor = isImportantBuff
+            end
         end
 
-        if enlargeAllCC and enlargeAllCCsFilter and crowdControl[spellId] then
-            isEnlarged = true
+        local isCC = crowdControl[spellId]
+        if isCC then
+            if enlargeAllCC and enlargeAllCCsFilter then
+                isEnlarged = true
+            end
+            if isCC ~= true and not isImportant then
+                isImportant = true
+                auraColor = isCC
+            end
         end
 
         if opBarriersOn and opBarriers[spellId] and auraData.duration ~= 5 then
@@ -2112,6 +2195,11 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             buff.GlowFrame = CreateFrame("Frame", nil, buff)
             buff.GlowFrame:SetFrameStrata("HIGH")
             buff.GlowFrame:SetFrameLevel(9000)
+
+            if npAuraStackFontEnabled then
+                local npAuraStackFontPath = LSM:Fetch(LSM.MediaType.FONT, BetterBlizzPlatesDB.npAuraStackFont)
+                buff.CountFrame.Count:SetFont(npAuraStackFontPath, 12, "OUTLINE")
+            end
         end
 
         if aura.spellId == 212183 then

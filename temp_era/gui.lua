@@ -4483,7 +4483,7 @@ local function guiGeneralTab()
 
     local healerIndicator = CreateCheckbox("healerIndicator", "Healer indicator", BetterBlizzPlates)
     healerIndicator:SetPoint("TOPLEFT", executeIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(healerIndicator, "Healer Indicator |A:greencross:21:21|a", "Show a cross on healers. Requires Details to work.")
+    CreateTooltipTwo(healerIndicator, "Healer Indicator |A:greencross:21:21|a", "Show a cross on healers. Requires Details to work.", "Note: Party Pointer and Class Indicator both have their own Healer Icon settings. This is a separate icon entirely.")
     local healerCrossIcon = healerIndicator:CreateTexture(nil, "ARTWORK")
     healerCrossIcon:SetAtlas("greencross")
     healerCrossIcon:SetSize(21, 21)
@@ -7737,6 +7737,11 @@ local function guiNameplateAuras()
     sortEnlargedAurasFirst:SetPoint("BOTTOMLEFT", sortCompactedAurasFirst, "TOPLEFT", 0, 0)
     CreateTooltipTwo(sortEnlargedAurasFirst, "Sort Enlarged Auras First", "Sorts the nameplate auras to put Enlarged auras first and Compacted auras last.")
 
+    local sortDurationAuras = CreateCheckbox("sortDurationAuras", "Sort Auras by Duration", enableNameplateAuraCustomisation)
+    sortDurationAuras:SetPoint("BOTTOMLEFT", sortEnlargedAurasFirst, "TOPLEFT", 0, -4)
+    CreateTooltipTwo(sortDurationAuras, "Sort Auras by Duration", "Sorts the nameplate auras with the shortest duration first. Enlarged Auras will still appear first but also sorted by duration (I want feedback here if you have).")
+
+
     sortEnlargedAurasFirst:HookScript("OnClick", function (self)
         if self:GetChecked() then
             sortCompactedAurasFirst:SetChecked(false)
@@ -8991,7 +8996,7 @@ function BBP.CreateIntroMessageWindow()
 
     local description1 = BBP.IntroMessageWindow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     description1:SetPoint("TOP", welcomeText, "BOTTOM", 0, -10)
-    description1:SetText("Thank you for trying out my addon!\n\nBelow you can pick a profile to start with or you can exit and customize everything by yourself.\n\nIf you just want a quick start with only the essentials I highly recommend the Starter Profile.")
+    description1:SetText("Thank you for trying out my addon!\n\nBelow you can pick a profile to start with or you can exit and customize everything by yourself.\n\nIf you just want a quick start with only the essentials I highly recommend the minimal Starter Profile.")
     description1:SetJustifyH("CENTER")
     description1:SetWidth(410)
 

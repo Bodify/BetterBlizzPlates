@@ -504,6 +504,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local nameplateAuraCountScale = BetterBlizzPlatesDB.nameplateAuraCountScale
     local sortEnlargedAurasFirst = BetterBlizzPlatesDB.sortEnlargedAurasFirst
     local sortCompactedAurasFirst = BetterBlizzPlatesDB.sortCompactedAurasFirst
+    local sortDurationAuras = BetterBlizzPlatesDB.sortDurationAuras
 
     local scaledCompactWidth = compactSize * nameplateAuraCompactedScale
     local scaledCompactHeight = auraHeightSetting * nameplateAuraCompactedScale
@@ -516,6 +517,33 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local scaledDebuffHeight = auraHeightSetting * nameplateAuraDebuffScale
 
     local function defaultComparator(a, b)
+        return a.auraInstanceID < b.auraInstanceID
+    end
+
+    local function durationComparator(a, b)
+        if a.isEnlarged ~= b.isEnlarged then
+            return a.isEnlarged
+        end
+
+        if a.duration == 0 and b.duration == 0 then
+            return a.auraInstanceID < b.auraInstanceID
+        elseif a.duration == 0 then
+            return false
+        elseif b.duration == 0 then
+            return true
+        end
+
+        local now = GetTime()
+        local timeLeftA = (a.expirationTime or 0) - now
+        local timeLeftB = (b.expirationTime or 0) - now
+
+        if timeLeftA < 0 then timeLeftA = 0 end
+        if timeLeftB < 0 then timeLeftB = 0 end
+
+        if timeLeftA ~= timeLeftB then
+            return timeLeftA < timeLeftB
+        end
+
         return a.auraInstanceID < b.auraInstanceID
     end
 
@@ -571,7 +599,6 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     -- Separate buffs and debuffs if needed
     local buffs = {}
     local debuffs = {}
-    local maxDebuffHeight = 0
     if BetterBlizzPlatesDB.separateAuraBuffRow then
         for _, buff in ipairs(children) do
             if buff.isBuff then
@@ -654,7 +681,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     end
 
     -- Function to layout auras
-    local function LayoutAuras(auras, startRow, isBuffs)
+    local function LayoutAuras(auras, startRow)
         local currentRow = startRow
         local horizontalOffset = 0
         local firstRowFirstAuraOffset = nil  -- Variable to store the horizontal offset of the first aura in the first row
@@ -708,13 +735,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
 
             -- Position the buff on the nameplate
             buff:ClearAllPoints()
-            local verticalOffset
-            if not isBuffs then
-                maxDebuffHeight = maxRowHeight
-                verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
-            else
-                verticalOffset = -currentRow * (-maxDebuffHeight + (currentRow > 0 and verticalSpacing or 0))
-            end
+            local verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
 
             local extraOffset = 0
             if compactSquare and compactTracker == 2 and buff.isCompacted then
@@ -737,29 +758,32 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local lastRow = 0
     if BetterBlizzPlatesDB.separateAuraBuffRow then
         if #debuffs > 0 then
-            if sortEnlargedAurasFirst then
+            if sortDurationAuras then
+                table.sort(debuffs, durationComparator)
+            elseif sortEnlargedAurasFirst then
                 table.sort(debuffs, largeSmallAuraComparator)
-            end
-            if sortCompactedAurasFirst then
+            elseif sortCompactedAurasFirst then
                 table.sort(debuffs, smallLargeAuraComparator)
             end
             rowWidths = CalculateRowWidths(debuffs)
             lastRow = LayoutAuras(debuffs, 0)
         end
 
-        if sortEnlargedAurasFirst then
+        if sortDurationAuras then
+            table.sort(buffs, durationComparator)
+        elseif sortEnlargedAurasFirst then
             table.sort(buffs, largeSmallAuraComparator)
-        end
-        if sortCompactedAurasFirst then
+        elseif sortCompactedAurasFirst then
             table.sort(buffs, smallLargeAuraComparator)
         end
         rowWidths = CalculateRowWidths(buffs)
-        LayoutAuras(buffs, lastRow + (#debuffs > 0 and 1 or 0), true)
+        LayoutAuras(buffs, lastRow + (#debuffs > 0 and 1 or 0))
     else
-        if sortEnlargedAurasFirst then
+        if sortDurationAuras then
+            table.sort(buffs, durationComparator)
+        elseif sortEnlargedAurasFirst then
             table.sort(buffs, largeSmallAuraComparator)
-        end
-        if sortCompactedAurasFirst then
+        elseif sortCompactedAurasFirst then
             table.sort(buffs, smallLargeAuraComparator)
         end
         rowWidths = CalculateRowWidths(buffs)
@@ -1301,10 +1325,11 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         buff.layoutIndex = buffIndex;
         buff.spellID = aura.spellId;
         buff.duration = aura.duration;
+        buff.expirationTime = aura.expirationTime
 
         buff.Icon:SetTexture(aura.icon);
 
-        local spellName = FetchSpellName(aura.spellId)
+        local spellName = aura.name--FetchSpellName(aura.spellId)
         local spellId = aura.spellId
         local caster = aura.sourceUnit
         local castByPlayer = (caster == "player" or caster == "pet")
@@ -1571,7 +1596,7 @@ local function SetupBorderOnFrame(frame)
     end
 end
 
-function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
+local function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
     -- Obtain the health bar details
     local healthBar = container:GetParent().healthBar
     local healthBarWidth = healthBar:GetWidth()
@@ -1582,41 +1607,70 @@ function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
     --     container.GreenOverlay = greenOverlay  -- Assign the texture to the container for future reference
     -- end
     -- Define the spacing and row parameters
-    local horizontalSpacing = BetterBlizzPlatesDB.nameplateAuraWidthGap
-    local verticalSpacing = -BetterBlizzPlatesDB.nameplateAuraHeightGap-- + (BetterBlizzPlatesDB.nameplateAuraSquare and 12 or 0) + (BetterBlizzPlatesDB.nameplateAuraTaller and 3 or 0)
-    local maxBuffsPerRow = (isEnemyUnit and BetterBlizzPlatesDB.nameplateAuraRowAmount) or (not isEnemyUnit and BetterBlizzPlatesDB.nameplateAuraRowFriendlyAmount)
+    local db = BetterBlizzPlatesDB
+    local horizontalSpacing = db.nameplateAuraWidthGap
+    local verticalSpacing = -db.nameplateAuraHeightGap-- + (db.nameplateAuraSquare and 12 or 0) + (db.nameplateAuraTaller and 3 or 0)
+    local maxBuffsPerRow = (isEnemyUnit and db.nameplateAuraRowAmount) or (not isEnemyUnit and db.nameplateAuraRowFriendlyAmount)
     local maxRowHeight = 0
     local rowWidths = {}
     local totalChildrenHeight = 0
     local maxBuffsPerRowAdjusted = maxBuffsPerRow
-    local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
-    local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
+    local nameplateAuraSquare = db.nameplateAuraSquare
+    local nameplateAuraTaller = db.nameplateAuraTaller
     local auraHeightSetting = (nameplateAuraSquare and 20) or (nameplateAuraTaller and 15.5) or 14
-    local square = BetterBlizzPlatesDB.nameplateAuraEnlargedSquare
-    local compactSquare = BetterBlizzPlatesDB.nameplateAuraCompactedSquare
+    local square = db.nameplateAuraEnlargedSquare
+    local compactSquare = db.nameplateAuraCompactedSquare
     local auraSize = square and 20 or auraHeightSetting
     local compactSize = compactSquare and 10 or 20
-    local nameplateAuraEnlargedScale = BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-    local nameplateAuraCompactedScale = BetterBlizzPlatesDB.nameplateAuraCompactedScale
+    local nameplateAuraEnlargedScale = db.nameplateAuraEnlargedScale
+    local nameplateAuraCompactedScale = db.nameplateAuraCompactedScale
     local auraSizeScaled = auraSize * nameplateAuraEnlargedScale
     local sizeMultiplier = 20 * nameplateAuraEnlargedScale
     local texCoord = nameplateAuraSquare and {0.1, 0.9, 0.1, 0.9} or nameplateAuraTaller and {0.05, 0.95, 0.15, 0.82} or {0.05, 0.95, 0.1, 0.6}
     local compactTexCoord = not compactSquare and texCoord or nameplateAuraSquare and {0.25, 0.75, 0.05, 0.95} or nameplateAuraTaller and {0.3, 0.7, 0.15, 0.82} or {0.3, 0.7, 0.15, 0.80}
-    local nameplateAuraScale = BetterBlizzPlatesDB.nameplateAuraScale
-    local sortEnlargedAurasFirst = BetterBlizzPlatesDB.sortEnlargedAurasFirst
-    local sortCompactedAurasFirst = BetterBlizzPlatesDB.sortCompactedAurasFirst
+    local nameplateAuraScale = db.nameplateAuraScale
+    local sortEnlargedAurasFirst = db.sortEnlargedAurasFirst
+    local sortCompactedAurasFirst = db.sortCompactedAurasFirst
+    local sortDurationAuras = db.sortDurationAuras
 
     local scaledCompactWidth = compactSize * nameplateAuraCompactedScale
     local scaledCompactHeight = auraHeightSetting * nameplateAuraCompactedScale
 
-    local nameplateAuraBuffScale = BetterBlizzPlatesDB.nameplateAuraBuffScale
-    local nameplateAuraDebuffScale = BetterBlizzPlatesDB.nameplateAuraDebuffScale
+    local nameplateAuraBuffScale = db.nameplateAuraBuffScale
+    local nameplateAuraDebuffScale = db.nameplateAuraDebuffScale
     local scaledBuffWidth = 20 * nameplateAuraBuffScale
     local scaledBuffHeight = auraHeightSetting * nameplateAuraBuffScale
     local scaledDebuffWidth = 20 * nameplateAuraDebuffScale
     local scaledDebuffHeight = auraHeightSetting * nameplateAuraDebuffScale
 
     local function defaultComparator(a, b)
+        return a.auraInstanceID < b.auraInstanceID
+    end
+
+    local function durationComparator(a, b)
+        if a.isEnlarged ~= b.isEnlarged then
+            return a.isEnlarged
+        end
+
+        if a.duration == 0 and b.duration == 0 then
+            return a.auraInstanceID < b.auraInstanceID
+        elseif a.duration == 0 then
+            return false
+        elseif b.duration == 0 then
+            return true
+        end
+
+        local now = GetTime()
+        local timeLeftA = (a.expirationTime or 0) - now
+        local timeLeftB = (b.expirationTime or 0) - now
+
+        if timeLeftA < 0 then timeLeftA = 0 end
+        if timeLeftB < 0 then timeLeftB = 0 end
+
+        if timeLeftA ~= timeLeftB then
+            return timeLeftA < timeLeftB
+        end
+
         return a.auraInstanceID < b.auraInstanceID
     end
 
@@ -1672,7 +1726,8 @@ function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
     -- Separate buffs and debuffs if needed
     local buffs = {}
     local debuffs = {}
-    if BetterBlizzPlatesDB.separateAuraBuffRow then
+    local maxDebuffHeight = 0
+    if db.separateAuraBuffRow then
         for _, buff in ipairs(children) do
             if buff:IsShown() then
                 if buff.isBuff then
@@ -1752,15 +1807,15 @@ function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
     end
 
     -- Function to layout auras
-    local function LayoutAuras(auras, startRow)
+    local function LayoutAuras(auras, startRow, isBuffs)
         local rowWidths = CalculateRowWidths(auras)
         local currentRow = startRow
         local horizontalOffset = 0
         local firstRowFirstAuraOffset = nil  -- Variable to store the horizontal offset of the first aura in the first row
-        local nameplateAurasFriendlyCenteredAnchor = BetterBlizzPlatesDB.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit
-        local nameplateAurasEnemyCenteredAnchor = BetterBlizzPlatesDB.nameplateAurasEnemyCenteredAnchor and isEnemyUnit
-        local nameplateCenterAllRows = BetterBlizzPlatesDB.nameplateCenterAllRows and (nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor)
-        local xPos = BetterBlizzPlatesDB.nameplateAurasXPos
+        local nameplateAurasFriendlyCenteredAnchor = db.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit
+        local nameplateAurasEnemyCenteredAnchor = db.nameplateAurasEnemyCenteredAnchor and isEnemyUnit
+        local nameplateCenterAllRows = db.nameplateCenterAllRows and (nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor)
+        local xPos = db.nameplateAurasXPos
         local compactTracker = 0
         local visibleIndex = 0
 
@@ -1810,7 +1865,13 @@ function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
 
                 -- Position the buff on the nameplate
                 buff:ClearAllPoints()
-                local verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
+                local verticalOffset
+                if not isBuffs then
+                    maxDebuffHeight = maxRowHeight
+                    verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
+                else
+                    verticalOffset = -currentRow * (-maxDebuffHeight + (currentRow > 0 and verticalSpacing or 0))
+                end
 
                 local extraOffset = 0
                 if compactSquare and compactTracker == 2 and buff.isCompacted then
@@ -1832,34 +1893,37 @@ function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
 
     -- Layout logic
     local lastRow = 0
-    if BetterBlizzPlatesDB.separateAuraBuffRow then
+    if db.separateAuraBuffRow then
         if #debuffs > 0 then
-            if sortEnlargedAurasFirst then
+            if sortDurationAuras then
+                table.sort(debuffs, durationComparator)
+            elseif sortEnlargedAurasFirst then
                 table.sort(debuffs, largeSmallAuraComparator)
-            end
-            if sortCompactedAurasFirst then
+            elseif sortCompactedAurasFirst then
                 table.sort(debuffs, smallLargeAuraComparator)
             end
-            rowWidths = CalculateRowWidths(debuffs)
+            rowWidths = isSelf and CalculateRowWidths2(debuffs) or CalculateRowWidths(debuffs)
             lastRow = LayoutAuras(debuffs, 0)
         end
 
-        if sortEnlargedAurasFirst then
+        if sortDurationAuras then
+            table.sort(buffs, durationComparator)
+        elseif sortEnlargedAurasFirst then
             table.sort(buffs, largeSmallAuraComparator)
-        end
-        if sortCompactedAurasFirst then
+        elseif sortCompactedAurasFirst then
             table.sort(buffs, smallLargeAuraComparator)
         end
-        rowWidths = CalculateRowWidths(buffs)
-        LayoutAuras(buffs, lastRow + (#debuffs > 0 and 1 or 0))
+        rowWidths = isSelf and CalculateRowWidths2(buffs) or CalculateRowWidths(buffs)
+        LayoutAuras(buffs, lastRow + (#debuffs > 0 and 1 or 0), true)
     else
-        if sortEnlargedAurasFirst then
+        if sortDurationAuras then
+            table.sort(buffs, durationComparator)
+        elseif sortEnlargedAurasFirst then
             table.sort(buffs, largeSmallAuraComparator)
-        end
-        if sortCompactedAurasFirst then
+        elseif sortCompactedAurasFirst then
             table.sort(buffs, smallLargeAuraComparator)
         end
-        rowWidths = CalculateRowWidths(buffs)
+        rowWidths = isSelf and CalculateRowWidths2(buffs) or CalculateRowWidths(buffs)
         lastRow = LayoutAuras(buffs, 0)
     end
 
@@ -1935,7 +1999,12 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
             aura.CountFrame = CreateFrame("Frame", nil, aura)
             aura.CountFrame.Count = aura.CountFrame:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
             aura.CountFrame.Count:SetPoint("CENTER", aura, "BOTTOMRIGHT", -1, 4)
-            aura.CountFrame.Count:SetFont("fonts/arialn.ttf", 11, "THINOUTLINE")
+            if BetterBlizzPlatesDB.npAuraStackFontEnabled then
+                local npAuraStackFontPath = LSM:Fetch(LSM.MediaType.FONT, BetterBlizzPlatesDB.npAuraStackFont)
+                buff.CountFrame.Count:SetFont(npAuraStackFontPath, 11, "OUTLINE")
+            else
+                aura.CountFrame.Count:SetFont("fonts/arialn.ttf", 11, "THINOUTLINE")
+            end
             aura.CountFrame:SetFrameStrata("DIALOG")
 
             aura.GlowFrame = CreateFrame("Frame", nil, aura)

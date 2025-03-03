@@ -214,11 +214,12 @@ local defaultSettings = {
     partyPointerXPos = 0,
     partyPointerYPos = 0,
     partyPointerScale = 1,
-    partyPointerHealerScale = 1,
+    partyPointerHealerScale = 1.3,
     partyPointerAnchor = "TOP",
     partyPointerClassColor = true,
     partyPointerHideRaidmarker = true,
     partyPointerArenaOnly = true,
+    partyPointerHealerReplace = true,
     -- Pet Indicator
     petIndicator = false,
     petIndicatorScale = 1,
@@ -1618,6 +1619,8 @@ local function SetCVarsOnLogin()
         C_CVar.SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
         C_CVar.SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
         C_CVar.SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
+        C_CVar.SetCVar("ShowClassColorInNameplate", BetterBlizzPlatesDB.ShowClassColorInNameplate)
+        C_CVar.SetCVar("ShowClassColorInFriendlyNameplate", BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate)
         if BetterBlizzPlatesDB.nameplateSelectedAlpha then
             C_CVar.SetCVar("nameplateSelectedAlpha", BetterBlizzPlatesDB.nameplateSelectedAlpha)
             C_CVar.SetCVar("nameplateNotSelectedAlpha", BetterBlizzPlatesDB.nameplateNotSelectedAlpha)
@@ -5157,10 +5160,10 @@ function BBP.ToggleHideHealthbar()
             BBP.friendlyHideHealthBarNpc:Disable()
             BBP.friendlyHideHealthBarNpc:SetAlpha(0)
         end
-        for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
-            local frame = nameplate.UnitFrame
-            HideFriendlyHealthbar(frame)
-        end
+    end
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        HideFriendlyHealthbar(frame)
     end
     if BBP.isInPvE then
         if BetterBlizzPlatesDB.friendlyHideHealthBar then--for toggle keybind

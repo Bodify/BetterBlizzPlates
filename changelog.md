@@ -1,14 +1,32 @@
+# BetterBlizzPlates 1.6.9h
+## The War Within, Classic Era/SoD & Catalcysm
+### New:
+- Nameplate Auras: Sort Auras by Duration setting.
+### Tweak:
+- Added missing Nameplate Class Color CVar forcing on login.
+### Bugfix
+- Fix Hide Healthbar Toggle Keybind (BBP) not working.
+
+## The War Within
+### New:
+- PvP CC & Buffs can now have Important Glow on them as categories you can color them by category. Right-Click the PvP CC/PvP Buffs filter checkbox to open settings to customize.
+- Class Indicator: Hide Name setting. (Only hides name on units with a class indicator.)
+### Tweak:
+- Magnusz profile update
+
+
+
 # BetterBlizzPlates 1.6.9g
 ## The War Within
 ### Tweak:
 - Added Intro screens with profile selections for new users for Classic Versions as well.
 - Removed "Skip GUI" as an option, now always active.
-- Fix Target Highlight not being hidden with some specific settings when its supposed to be.
 
 ### Bugfix:
 - Fix Class Indicator only showing Deephaul Ravine crystal for a split sec and removing it again.
 - Fix "Reset BetterBlizzPlates" button showing up randomly on screen unintentionally for people without skip GUI enabled due SettingsPanel not being loaded in.
 - Fix some LevelFrame hide/show issues on Classic versions.
+- Fix Target Highlight not being hidden with some specific settings when its supposed to be.
 
 
 

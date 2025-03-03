@@ -158,6 +158,26 @@ StaticPopupDialogs["BBP_CONFIRM_RELOAD"] = {
     hideOnEscape = true,
 }
 
+StaticPopupDialogs["BBP_NP_AURA_ENABLE"] = {
+    text = titleText.."You've enabled Nameplate Aura filters.\nThis requires a reload.\n\nDo you want to enable PvP filters showing all Important CC and Buffs larger and with a glow on them?",
+    button1 = "Yes",
+    button2 = "No",
+    OnAccept = function()
+        local db = BetterBlizzPlatesDB
+        db.otherNpBuffFilterImportantBuffs = true
+        db.otherNpdeBuffFilterCC = true
+        db.friendlyNpBuffFilterImportantBuffs = true
+        db.friendlyNpdeBuffFilterCC = true
+        StaticPopup_Show("BBF_CONFIRM_RELOAD")
+    end,
+    OnCancel = function()
+        StaticPopup_Show("BBF_CONFIRM_RELOAD")
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+}
+
 StaticPopupDialogs["BBP_CONFIRM_WIPE_NPCCOLOR"] = {
     text = titleText.."This will delete the entire npc color list and reload.\n\nAre you sure?",
     button1 = "Yes",
@@ -5295,7 +5315,7 @@ local function guiGeneralTab()
 
     local healerIndicator = CreateCheckbox("healerIndicator", "Healer indicator", BetterBlizzPlates)
     healerIndicator:SetPoint("TOPLEFT", executeIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(healerIndicator, "Healer Indicator |A:greencross:21:21|a", "Show a cross on healers.")
+    CreateTooltipTwo(healerIndicator, "Healer Indicator |A:greencross:21:21|a", "Show a cross on healers.", "Note: Party Pointer and Class Indicator both have their own Healer Icon settings. This is a separate icon entirely.")
     local healerCrossIcon = healerIndicator:CreateTexture(nil, "ARTWORK")
     healerCrossIcon:SetAtlas("greencross")
     healerCrossIcon:SetSize(21, 21)
@@ -5303,6 +5323,13 @@ local function guiGeneralTab()
 
     local partyPointer = CreateCheckbox("partyPointer", "Party pointer", BetterBlizzPlates)
     partyPointer:SetPoint("TOPLEFT", healerIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    partyPointer:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            if BetterBlizzPlatesDB.partyPointerArenaOnly then
+                print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Party Pointer is set to only show during Arena. You can change this in the Advanced Settings section.")
+            end
+        end
+    end)
     CreateTooltipTwo(partyPointer, "Party Pointer |A:UI-QuestPoiImportant-QuestNumber-SuperTracked:21:16|a", "Show a class colored pointer above friendly player nameplates.", "Hides default raidmarkers. Only shows in Arena by default or during testing. Can show extra + sign on healers in settings.")
     local partyPointerIcon = partyPointer:CreateTexture(nil, "ARTWORK")
     partyPointerIcon:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
@@ -6868,9 +6895,9 @@ local function guiPositionAndScale()
     CreateTooltip(anchorSubClassIcon.extendedSettingsButton, "Open more settings for Class Indicator")
 
     -- Extended Settings Frame
-    anchorSubClassIcon.extendedSettings = CreateFrame("Frame", nil, contentFrame, "DefaultPanelFlatTemplate")
+    anchorSubClassIcon.extendedSettings = CreateFrame("Frame", nil, BetterBlizzPlatesSubPanel, "DefaultPanelFlatTemplate")
     -- anchorSubClassIcon.extendedSettings:SetAllPoints(anchorSubClassIcon.border)
-    anchorSubClassIcon.extendedSettings:SetSize(anchorSubClassIcon.border:GetHeight()+40, 355)
+    anchorSubClassIcon.extendedSettings:SetSize(anchorSubClassIcon.border:GetHeight()+40, 375)
     anchorSubClassIcon.extendedSettings:SetPoint("BOTTOMRIGHT", anchorSubClassIcon.border, "BOTTOMLEFT", 87, -115)
     anchorSubClassIcon.extendedSettings:SetFrameStrata("HIGH")
     anchorSubClassIcon.extendedSettings:SetIgnoreParentAlpha(true)
@@ -6891,8 +6918,8 @@ local function guiPositionAndScale()
     anchorSubClassIcon.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
 
     anchorSubClassIcon.extendedSettingsButton:HookScript("OnClick", function(self)
-        anchorSubClassIcon.extendedSettings:Show()
-        contentFrame:SetAlpha(0.5)
+        anchorSubClassIcon.extendedSettings:SetShown(not anchorSubClassIcon.extendedSettings:IsShown())
+        contentFrame:SetAlpha(anchorSubClassIcon.extendedSettings:IsShown() and 0.5 or 1)
     end)
 
     local classIndicatorSpecIcon = CreateCheckbox("classIndicatorSpecIcon", "Show Spec Icon", anchorSubClassIcon.extendedSettings)
@@ -7063,6 +7090,10 @@ local function guiPositionAndScale()
     anchorSubHeal.classIndicatorFrameStrataHigh = CreateCheckbox("classIndicatorFrameStrataHigh", "Raise Strata", anchorSubClassIcon.extendedSettings)
     anchorSubHeal.classIndicatorFrameStrataHigh:SetPoint("TOPLEFT", classIndicatorHideRaidMarker, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubHeal.classIndicatorFrameStrataHigh, "Class Indicator Frame Strata", "Raise the Frame Strata of Class Indicator so it appears on top of other elements.")
+
+    anchorSubHeal.classIndicatorHideName = CreateCheckbox("classIndicatorHideName", "Hide Name", anchorSubClassIcon.extendedSettings)
+    anchorSubHeal.classIndicatorHideName:SetPoint("TOPLEFT", anchorSubHeal.classIndicatorFrameStrataHigh, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubHeal.classIndicatorHideName, "Hide Name", "Hides the name on nameplates with Class Indicator on them.")
 
     anchorSubHeal.classIndicatorAlpha = CreateSlider(anchorSubClassIcon.extendedSettings, "Alpha", 0.1, 1, 0.01, "classIndicatorAlpha", false, 110)
     anchorSubHeal.classIndicatorAlpha:SetPoint("BOTTOM", anchorSubClassIcon.extendedSettings, "BOTTOM", 3, 5)
@@ -7246,6 +7277,11 @@ local function guiPositionAndScale()
     local fakeNameRaiseStrata = CreateCheckbox("fakeNameRaiseStrata", "Raise Strata", useFakeName)
     fakeNameRaiseStrata:SetPoint("TOPLEFT", useFakeNameAnchorBottom, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(fakeNameRaiseStrata, "Raise Strata", "Raise the frame strata of name so it overlaps healthbar.")
+    fakeNameRaiseStrata:HookScript("OnClick", function(self)
+        if not self:GetChecked() then
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        end
+    end)
 
     ----------------------
     -- Health Numbers
@@ -8943,8 +8979,8 @@ local function guiNameplateAuras()
     local function OpenCCSettingsWindow(cb)
         if not ccOptionsFrame then
             -- Create a new frame if it doesn't exist
-            ccOptionsFrame = CreateFrame("Frame", nil, UIParent, "BasicFrameTemplateWithInset")
-            ccOptionsFrame:SetSize(170, 130)
+            ccOptionsFrame = CreateFrame("Frame", nil, guiNameplateAuras, "BasicFrameTemplateWithInset")
+            ccOptionsFrame:SetSize(210, 130)
             ccOptionsFrame:SetPoint("CENTER")
             ccOptionsFrame:SetFrameStrata("HIGH")
             ccOptionsFrame:SetMovable(true)
@@ -8959,37 +8995,167 @@ local function guiNameplateAuras()
             ccOptionsFrame.title:SetPoint("LEFT", ccOptionsFrame.TitleBg, "LEFT", 5, 0)
             ccOptionsFrame.title:SetText("PvP CC (All units)")
 
-            -- CC filter options
-            local ccFilters = {
-                { label = "CC Full", var = "importantCCFull" },
-                { label = "CC Disarm", var = "importantCCDisarm" },
-                { label = "CC Root", var = "importantCCRoot" },
-                { label = "CC Silence", var = "importantCCSilence" },
+
+            local function OpenColorPicker(colorTbl, cb)
+                local colorData = BetterBlizzPlatesDB[colorTbl] or {}
+                local r, g, b = colorData.r or 1, colorData.g or 1, colorData.b or 1
+                local a = colorData.a or 1 -- Default alpha to 1 if not present
+
+                local backupColorData = {r = r, g = g, b = b, a = a}
+
+                local function updateColors()
+                    BetterBlizzPlatesDB[colorTbl].r, BetterBlizzPlatesDB[colorTbl].g, BetterBlizzPlatesDB[colorTbl].b, BetterBlizzPlatesDB[colorTbl].a = r, g, b, a
+                    cb.texture:SetVertexColor(r, g, b, 1)
+                    cb.Text:SetTextColor(r, g, b, 1)
+                    BBP.RefreshAllNameplates()
+                    ColorPickerFrame.Content.ColorSwatchCurrent:SetAlpha(a)
+                end
+
+                local function swatchFunc()
+                    r, g, b = ColorPickerFrame:GetColorRGB()
+                    updateColors()
+                end
+
+                local function opacityFunc()
+                    a = ColorPickerFrame:GetColorAlpha()
+                    updateColors()
+                end
+
+                local function cancelFunc()
+                    r, g, b, a = backupColorData.r, backupColorData.g, backupColorData.b, backupColorData.a
+                    updateColors()
+                end
+
+                ColorPickerFrame.previousValues = {r, g, b, a}
+                ColorPickerFrame:SetupColorPickerAndShow({
+                    r = r, g = g, b = b, opacity = a, hasOpacity = true,
+                    swatchFunc = swatchFunc, opacityFunc = opacityFunc, cancelFunc = cancelFunc
+                })
+            end
+
+            local glowCCCheckboxes = {}
+
+            -- First Loop: Glow Checkboxes
+            local glowCCFilters = {
+                { label = "Glow Full", var = "importantCCFullGlow", tt = "Full CC Auras", colorTbl = "importantCCFullGlowRGB", linkedVar = "importantCCFull" },
+                { label = "Glow Disarm", var = "importantCCDisarmGlow", tt = "Disarm CC Auras", colorTbl = "importantCCDisarmGlowRGB", linkedVar = "importantCCDisarm" },
+                { label = "Glow Root", var = "importantCCRootGlow", tt = "Root CC Auras", colorTbl = "importantCCRootGlowRGB", linkedVar = "importantCCRoot" },
+                { label = "Glow Silence", var = "importantCCSilenceGlow", tt = "Silence CC Auras", colorTbl = "importantCCSilenceGlowRGB", linkedVar = "importantCCSilence" },
             }
 
-            local previousCheckbox
-            for i, ccFilter in ipairs(ccFilters) do
-                local ccCheckbox = CreateFrame("CheckButton", nil, ccOptionsFrame, "UICheckButtonTemplate")
-                ccCheckbox:SetSize(24, 24)
-                ccCheckbox.Text:SetText(ccFilter.label)
+            local previousGlowCheckbox
+            for i, ccFilter in ipairs(glowCCFilters) do
+                local glowCheckbox = CreateFrame("CheckButton", nil, ccOptionsFrame, "UICheckButtonTemplate")
+                glowCheckbox:SetSize(24, 24)
+                glowCheckbox.Text:SetText(ccFilter.label)
 
                 -- Positioning
                 if i == 1 then
-                    ccCheckbox:SetPoint("TOPLEFT", ccOptionsFrame, "TOPLEFT", 10, -30)
+                    glowCheckbox:SetPoint("TOPLEFT", ccOptionsFrame, "TOPLEFT", 95, -30)
                 else
-                    ccCheckbox:SetPoint("TOPLEFT", previousCheckbox, "BOTTOMLEFT", 0, 3)
+                    glowCheckbox:SetPoint("TOPLEFT", previousGlowCheckbox, "BOTTOMLEFT", 0, 3)
                 end
 
                 -- Set initial state from DB
-                ccCheckbox:SetChecked(BetterBlizzPlatesDB[ccFilter.var])
+                glowCheckbox:SetChecked(BetterBlizzPlatesDB[ccFilter.var])
 
                 -- Save state when toggled
-                ccCheckbox:SetScript("OnClick", function(self)
-                    BetterBlizzPlatesDB[ccFilter.var] = self:GetChecked() or nil
+                glowCheckbox:SetScript("OnClick", function(self)
+                    BetterBlizzPlatesDB[ccFilter.var] = self:GetChecked()
+                    local color = BetterBlizzPlatesDB[ccFilter.colorTbl]
+                    glowCheckbox.texture:SetVertexColor(color.r, color.g, color.b, BetterBlizzPlatesDB[ccFilter.var] and 1 or 0)
+                    if BetterBlizzPlatesDB[ccFilter.var] then
+                        glowCheckbox.Text:SetTextColor(color.r, color.g, color.b, 1)
+                    else
+                        glowCheckbox.Text:SetTextColor(1, 0.819607, 0, 1)
+                    end
                     BBP.UpdateImportantBuffsAndCCTables()
+                    BBP.RefreshAllNameplates()
                 end)
 
-                previousCheckbox = ccCheckbox
+                -- Create texture for color indication
+                glowCheckbox.texture = glowCheckbox:CreateTexture(nil, "ARTWORK", nil, 1)
+                glowCheckbox.texture:SetAtlas("newplayertutorial-drag-slotgreen")
+                glowCheckbox.texture:SetSize(27, 27)
+                glowCheckbox.texture:SetDesaturated(true)
+                glowCheckbox.texture:SetPoint("CENTER", glowCheckbox, "CENTER", -0.5, 0.5)
+
+                -- Tooltip
+                CreateTooltipTwo(glowCheckbox, "Important Glow |A:importantavailablequesticon:22:22|a", "Check for a glow on all "..ccFilter.tt.."\n\n|cff32f795Right-click to change Color.|r", "Auras that are in the whitelist with glow enabled will override this behavior", "ANCHOR_TOPRIGHT")
+
+                -- Set initial color
+                local color = BetterBlizzPlatesDB[ccFilter.colorTbl]
+                glowCheckbox.texture:SetVertexColor(color.r, color.g, color.b, BetterBlizzPlatesDB[ccFilter.var] and 1 or 0)
+                if BetterBlizzPlatesDB[ccFilter.var] then
+                    glowCheckbox.Text:SetTextColor(color.r, color.g, color.b, 1)
+                else
+                    glowCheckbox.Text:SetTextColor(1, 0.819607, 0, 1)
+                end
+
+                -- Right-click opens color picker
+                glowCheckbox:HookScript("OnMouseDown", function(self, button)
+                    if button == "RightButton" then
+                        OpenColorPicker(ccFilter.colorTbl, self)
+                    end
+                end)
+
+                -- Store reference to the checkbox for later enabling/disabling
+                glowCCCheckboxes[ccFilter.linkedVar] = glowCheckbox
+
+                previousGlowCheckbox = glowCheckbox
+            end
+
+            -- Second Loop: Important CC Checkboxes (Enable/Disable Glow Checkboxes)
+            local importantCCFilters = {
+                { label = "CC Full", var = "importantCCFull", tt = "Show Full CC Auras" },
+                { label = "CC Disarm", var = "importantCCDisarm", tt = "Show Disarm CC Auras" },
+                { label = "CC Root", var = "importantCCRoot", tt = "Show Root CC Auras" },
+                { label = "CC Silence", var = "importantCCSilence", tt = "Show Silence CC Auras" },
+            }
+
+            local previousImportantCheckbox
+            for i, ccFilter in ipairs(importantCCFilters) do
+                local importantCheckbox = CreateFrame("CheckButton", nil, ccOptionsFrame, "UICheckButtonTemplate")
+                importantCheckbox:SetSize(24, 24)
+                importantCheckbox.Text:SetText(ccFilter.label)
+
+                -- Positioning
+                if i == 1 then
+                    importantCheckbox:SetPoint("TOPLEFT", ccOptionsFrame, "TOPLEFT", 10, -30)
+                else
+                    importantCheckbox:SetPoint("TOPLEFT", previousImportantCheckbox, "BOTTOMLEFT", 0, 3)
+                end
+
+                -- Set initial state from DB
+                importantCheckbox:SetChecked(BetterBlizzPlatesDB[ccFilter.var])
+
+                -- Enable/Disable Glow Checkboxes based on initial state
+                local linkedGlowCheckbox = glowCCCheckboxes[ccFilter.var]
+                if linkedGlowCheckbox then
+                    local isChecked = BetterBlizzPlatesDB[ccFilter.var] or false
+                    linkedGlowCheckbox:SetEnabled(isChecked)
+                    linkedGlowCheckbox:SetAlpha(isChecked and 1 or 0.5) -- Dim if disabled
+                end
+
+                -- Save state when toggled + Enable/Disable Glow Checkboxes
+                importantCheckbox:SetScript("OnClick", function(self)
+                    local isChecked = self:GetChecked()
+                    BetterBlizzPlatesDB[ccFilter.var] = isChecked
+                    BBP.UpdateImportantBuffsAndCCTables()
+
+                    -- Enable or disable the corresponding glow checkbox
+                    local linkedGlowCheckbox = glowCCCheckboxes[ccFilter.var]
+                    if linkedGlowCheckbox then
+                        linkedGlowCheckbox:SetEnabled(isChecked)
+                        linkedGlowCheckbox:SetAlpha(isChecked and 1 or 0.5) -- Dim it if disabled
+                    end
+                end)
+
+                -- Tooltip
+                CreateTooltipTwo(importantCheckbox, ccFilter.tt)
+
+                -- Store reference
+                previousImportantCheckbox = importantCheckbox
             end
 
             ccOptionsFrame:Show()
@@ -9009,8 +9175,8 @@ local function guiNameplateAuras()
     local function OpenBuffSettingsWindow(cb)
         if not buffOptionsFrame then
             -- Create a new frame if it doesn't exist
-            buffOptionsFrame = CreateFrame("Frame", nil, UIParent, "BasicFrameTemplateWithInset")
-            buffOptionsFrame:SetSize(180, 110)
+            buffOptionsFrame = CreateFrame("Frame", nil, guiNameplateAuras, "BasicFrameTemplateWithInset")
+            buffOptionsFrame:SetSize(280, 110)
             buffOptionsFrame:SetPoint("CENTER")
             buffOptionsFrame:SetFrameStrata("HIGH")
             buffOptionsFrame:SetMovable(true)
@@ -9025,36 +9191,166 @@ local function guiNameplateAuras()
             buffOptionsFrame.title:SetPoint("LEFT", buffOptionsFrame.TitleBg, "LEFT", 5, 0)
             buffOptionsFrame.title:SetText("PvP Buffs (All units)")
 
-            -- Buff filter options
-            local buffFilters = {
-                { label = "Important Offensives", var = "importantBuffsOffensives" },
-                { label = "Important Defensives", var = "importantBuffsDefensives" },
-                { label = "Important Mobility", var = "importantBuffsMobility" },
+            local function OpenColorPicker(colorTbl, cb)
+                local colorData = BetterBlizzPlatesDB[colorTbl] or {}
+                local r, g, b = colorData.r or 1, colorData.g or 1, colorData.b or 1
+                local a = colorData.a or 1 -- Default alpha to 1 if not present
+
+                local backupColorData = {r = r, g = g, b = b, a = a}
+
+                local function updateColors()
+                    BetterBlizzPlatesDB[colorTbl].r, BetterBlizzPlatesDB[colorTbl].g, BetterBlizzPlatesDB[colorTbl].b, BetterBlizzPlatesDB[colorTbl].a = r, g, b, a
+                    cb.texture:SetVertexColor(r, g, b, 1)
+                    cb.Text:SetTextColor(r, g, b, 1)
+                    BBP.RefreshAllNameplates()
+                    ColorPickerFrame.Content.ColorSwatchCurrent:SetAlpha(a)
+                end
+
+                local function swatchFunc()
+                    r, g, b = ColorPickerFrame:GetColorRGB()
+                    updateColors()
+                end
+
+                local function opacityFunc()
+                    a = ColorPickerFrame:GetColorAlpha()
+                    updateColors()
+                end
+
+                local function cancelFunc()
+                    r, g, b, a = backupColorData.r, backupColorData.g, backupColorData.b, backupColorData.a
+                    updateColors()
+                end
+
+                ColorPickerFrame.previousValues = {r, g, b, a}
+                ColorPickerFrame:SetupColorPickerAndShow({
+                    r = r, g = g, b = b, opacity = a, hasOpacity = true,
+                    swatchFunc = swatchFunc, opacityFunc = opacityFunc, cancelFunc = cancelFunc
+                })
+            end
+
+            -- Store references to glow checkboxes
+            local glowCheckboxes = {}
+
+            -- First Loop: Glow Checkboxes
+            local glowFilters = {
+                { label = "Glow Offensives", var = "importantBuffsOffensivesGlow", tt = "Important Offensive Auras", colorTbl = "importantBuffsOffensivesGlowRGB", linkedVar = "importantBuffsOffensives" },
+                { label = "Glow Defensives", var = "importantBuffsDefensivesGlow", tt = "Important Defensive Auras", colorTbl = "importantBuffsDefensivesGlowRGB", linkedVar = "importantBuffsDefensives" },
+                { label = "Glow Mobility", var = "importantBuffsMobilityGlow", tt = "Important Mobility/Freedom Auras", colorTbl = "importantBuffsMobilityGlowRGB", linkedVar = "importantBuffsMobility" },
             }
 
-            local previousCheckbox
-            for i, buffFilter in ipairs(buffFilters) do
-                local buffCheckbox = CreateFrame("CheckButton", nil, buffOptionsFrame, "UICheckButtonTemplate")
-                buffCheckbox:SetSize(24, 24)
-                buffCheckbox.Text:SetText(buffFilter.label)
+            local previousGlowCheckbox
+            for i, buffFilter in ipairs(glowFilters) do
+                local glowCheckbox = CreateFrame("CheckButton", nil, buffOptionsFrame, "UICheckButtonTemplate")
+                glowCheckbox:SetSize(24, 24)
+                glowCheckbox.Text:SetText(buffFilter.label)
 
                 -- Positioning
                 if i == 1 then
-                    buffCheckbox:SetPoint("TOPLEFT", buffOptionsFrame, "TOPLEFT", 10, -30)
+                    glowCheckbox:SetPoint("TOPLEFT", buffOptionsFrame, "TOPLEFT", 145, -30)
                 else
-                    buffCheckbox:SetPoint("TOPLEFT", previousCheckbox, "BOTTOMLEFT", 0, 3)
+                    glowCheckbox:SetPoint("TOPLEFT", previousGlowCheckbox, "BOTTOMLEFT", 0, 3)
                 end
 
                 -- Set initial state from DB
-                buffCheckbox:SetChecked(BetterBlizzPlatesDB[buffFilter.var])
+                glowCheckbox:SetChecked(BetterBlizzPlatesDB[buffFilter.var])
 
                 -- Save state when toggled
-                buffCheckbox:SetScript("OnClick", function(self)
-                    BetterBlizzPlatesDB[buffFilter.var] = self:GetChecked() or nil
+                glowCheckbox:SetScript("OnClick", function(self)
+                    BetterBlizzPlatesDB[buffFilter.var] = self:GetChecked()
+                    local color = BetterBlizzPlatesDB[buffFilter.colorTbl]
+                    glowCheckbox.texture:SetVertexColor(color.r, color.g, color.b, BetterBlizzPlatesDB[buffFilter.var] and 1 or 0)
+                    if BetterBlizzPlatesDB[buffFilter.var] then
+                        glowCheckbox.Text:SetTextColor(color.r, color.g, color.b, 1)
+                    else
+                        glowCheckbox.Text:SetTextColor(1, 0.819607, 0, 1)
+                    end
                     BBP.UpdateImportantBuffsAndCCTables()
+                    BBP.RefreshAllNameplates()
                 end)
 
-                previousCheckbox = buffCheckbox
+                -- Create texture for color indication
+                glowCheckbox.texture = glowCheckbox:CreateTexture(nil, "ARTWORK", nil, 1)
+                glowCheckbox.texture:SetAtlas("newplayertutorial-drag-slotgreen")
+                glowCheckbox.texture:SetSize(27, 27)
+                glowCheckbox.texture:SetDesaturated(true)
+                glowCheckbox.texture:SetPoint("CENTER", glowCheckbox, "CENTER", -0.5, 0.5)
+
+                -- Tooltip
+                CreateTooltipTwo(glowCheckbox, "Important Glow |A:importantavailablequesticon:22:22|a", "Check for a glow on all "..buffFilter.tt.."\n\n|cff32f795Right-click to change Color.|r", "Auras that are in the whitelist with glow enabled will override this behavior", "ANCHOR_TOPRIGHT")
+
+                -- Set initial color
+                local color = BetterBlizzPlatesDB[buffFilter.colorTbl]
+                glowCheckbox.texture:SetVertexColor(color.r, color.g, color.b, BetterBlizzPlatesDB[buffFilter.var] and 1 or 0)
+                if BetterBlizzPlatesDB[buffFilter.var] then
+                    glowCheckbox.Text:SetTextColor(color.r, color.g, color.b, 1)
+                else
+                    glowCheckbox.Text:SetTextColor(1, 0.819607, 0, 1)
+                end
+
+                -- Right-click opens color picker
+                glowCheckbox:HookScript("OnMouseDown", function(self, button)
+                    if button == "RightButton" then
+                        OpenColorPicker(buffFilter.colorTbl, self)
+                    end
+                end)
+
+                -- Store reference to the checkbox for later enabling/disabling
+                glowCheckboxes[buffFilter.linkedVar] = glowCheckbox
+
+                previousGlowCheckbox = glowCheckbox
+            end
+
+            -- Second Loop: Important Buff Checkboxes (Enable/Disable Glow Checkboxes)
+            local importantFilters = {
+                { label = "Important Offensives", var = "importantBuffsOffensives", tt = "Show Important Offensives" },
+                { label = "Important Defensives", var = "importantBuffsDefensives", tt = "Show Important Defensives" },
+                { label = "Important Mobility", var = "importantBuffsMobility", tt = "Show Important Mobility/Freedoms" },
+            }
+
+            local previousImportantCheckbox
+            for i, buffFilter in ipairs(importantFilters) do
+                local importantCheckbox = CreateFrame("CheckButton", nil, buffOptionsFrame, "UICheckButtonTemplate")
+                importantCheckbox:SetSize(24, 24)
+                importantCheckbox.Text:SetText(buffFilter.label)
+
+                -- Positioning
+                if i == 1 then
+                    importantCheckbox:SetPoint("TOPLEFT", buffOptionsFrame, "TOPLEFT", 10, -30)
+                else
+                    importantCheckbox:SetPoint("TOPLEFT", previousImportantCheckbox, "BOTTOMLEFT", 0, 3)
+                end
+
+                -- Set initial state from DB
+                importantCheckbox:SetChecked(BetterBlizzPlatesDB[buffFilter.var])
+
+                -- Save state when toggled + Enable/Disable Glow Checkboxes
+                importantCheckbox:SetScript("OnClick", function(self)
+                    local isChecked = self:GetChecked()
+                    BetterBlizzPlatesDB[buffFilter.var] = isChecked
+                    BBP.UpdateImportantBuffsAndCCTables()
+
+                    -- Enable or disable the corresponding glow checkbox
+                    local linkedGlowCheckbox = glowCheckboxes[buffFilter.var]
+                    if linkedGlowCheckbox then
+                        linkedGlowCheckbox:SetEnabled(isChecked)
+                        linkedGlowCheckbox:SetAlpha(isChecked and 1 or 0.5) -- Dim it if disabled
+                    end
+                end)
+
+                -- Disable Glow Checkbox if Important Checkbox is not checked
+                if not BetterBlizzPlatesDB[buffFilter.var] then
+                    local linkedGlowCheckbox = glowCheckboxes[buffFilter.var]
+                    if linkedGlowCheckbox then
+                        linkedGlowCheckbox:SetEnabled(false)
+                        linkedGlowCheckbox:SetAlpha(0.5) -- Make it look disabled
+                    end
+                end
+
+                -- Tooltip
+                CreateTooltipTwo(importantCheckbox, buffFilter.tt)
+
+                -- Store reference
+                previousImportantCheckbox = importantCheckbox
             end
 
             buffOptionsFrame:Show()
@@ -9135,7 +9431,7 @@ local function guiNameplateAuras()
     CreateTooltipTwo(nameplateAuraCountScale, "Aura Stack Size", "Size of the stack/count/charges number on auras.")
 
     local nameplateAuraEnlargedScale = CreateSlider(enableNameplateAuraCustomisation, "Enlarged Aura Size", 1, 2, 0.01, "nameplateAuraEnlargedScale")
-    nameplateAuraEnlargedScale:SetPoint("TOPLEFT", nameplateAuraScale, "BOTTOMLEFT", -170, -81)
+    nameplateAuraEnlargedScale:SetPoint("TOPLEFT", nameplateAuraScale, "BOTTOMLEFT", -170, -101)
     local enlargedAuraIcon = contentFrame:CreateTexture(nil, "ARTWORK")
     enlargedAuraIcon:SetAtlas("ui-hud-minimap-zoom-in")
     enlargedAuraIcon:SetSize(18, 18)
@@ -9146,7 +9442,7 @@ local function guiNameplateAuras()
 
 
     local npColorAuraBorder = CreateCheckbox("npColorAuraBorder", "Color Border by Type", enableNameplateAuraCustomisation)
-    npColorAuraBorder:SetPoint("RIGHT", enlargedAuraIcon, "LEFT", -10, 275)
+    npColorAuraBorder:SetPoint("RIGHT", enlargedAuraIcon, "LEFT", -10, 295)
     CreateTooltipTwo(npColorAuraBorder, "Color Border by Type", "Color Border by Type")
 
     local npAuraBuffsRGB = CreateColorBox(npColorAuraBorder, "npAuraBuffsRGB", "Buffs")
@@ -9194,8 +9490,12 @@ local function guiNameplateAuras()
     sortEnlargedAurasFirst:SetPoint("BOTTOMLEFT", sortCompactedAurasFirst, "TOPLEFT", 0, -4)
     CreateTooltipTwo(sortEnlargedAurasFirst, "Sort Enlarged Auras First", "Sorts the nameplate auras to put Enlarged auras first and Compacted auras last.")
 
+    local sortDurationAuras = CreateCheckbox("sortDurationAuras", "Sort Auras by Duration", enableNameplateAuraCustomisation)
+    sortDurationAuras:SetPoint("BOTTOMLEFT", sortEnlargedAurasFirst, "TOPLEFT", 0, -4)
+    CreateTooltipTwo(sortDurationAuras, "Sort Auras by Duration", "Sorts the nameplate auras with the shortest duration first. Enlarged Auras will still appear first but also sorted by duration (I want feedback here if you have).")
+
     local enlargeAllImportantBuffs = CreateCheckbox("enlargeAllImportantBuffs", "Enlarge all Important Buffs", enableNameplateAuraCustomisation)
-    enlargeAllImportantBuffs:SetPoint("BOTTOMLEFT", sortEnlargedAurasFirst, "TOPLEFT", 0, -4)
+    enlargeAllImportantBuffs:SetPoint("BOTTOMLEFT", sortDurationAuras, "TOPLEFT", 0, -4)
     CreateTooltipTwo(enlargeAllImportantBuffs, "Enlarge all Important Buffs", "Enlarges all Important PvP Buffs.\n\nThis setting requires any of the\n\"PvP Buffs\" filters to be active.")
     BBP.enlargeAllImportantBuffs = enlargeAllImportantBuffs
 
@@ -9486,7 +9786,11 @@ local function guiNameplateAuras()
     end
 
     enableNameplateAuraCustomisation:HookScript("OnClick", function (self)
-        StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        if self:GetChecked() then
+            StaticPopup_Show("BBP_NP_AURA_ENABLE")
+        else
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        end
         CheckAndToggleCheckboxes(enableNameplateAuraCustomisation)
         --TogglePanel()
     end)
@@ -10729,7 +11033,7 @@ function BBP.CreateIntroMessageWindow()
 
     local description1 = BBP.IntroMessageWindow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     description1:SetPoint("TOP", welcomeText, "BOTTOM", 0, -10)
-    description1:SetText("Thank you for trying out my addon!\n\nBelow you can pick a profile to start with or you can exit and customize everything by yourself.\n\nIf you just want a quick start with only the essentials I highly recommend the Starter Profile.")
+    description1:SetText("Thank you for trying out my addon!\n\nBelow you can pick a profile to start with or you can exit and customize everything by yourself.\n\nIf you just want a quick start with only the essentials I highly recommend the minimal Starter Profile.")
     description1:SetJustifyH("CENTER")
     description1:SetWidth(410)
 
