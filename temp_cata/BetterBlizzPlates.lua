@@ -5379,7 +5379,7 @@ SlashCmdList["BBP"] = function(msg)
     elseif command == "dump" then
         local exportVersion = BetterBlizzPlatesDB.exportVersion or "No export version registered"
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: "..exportVersion)
-    elseif command == "intro" then
+    elseif command == "profiles" then
         BBP.CreateIntroMessageWindow()
     else
         --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
