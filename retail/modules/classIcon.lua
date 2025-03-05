@@ -35,14 +35,15 @@ local icons = {
 BBP.ClassIndicatorIcons = icons
 
 local bgsWithObjectives = {
-    [489] = true, -- wsg
-    [566] = true, -- eots
-    [2106] = true, --wsg2
-    [998] = true, -- Temple
-    [2656] = true, --Depphaul Revine
+    [489] = true, -- Warsong Gulch
+    [2106] = true, -- Warsong Gulch 2
+    [566] = true, -- Eye of the Storm
+    [998] = true, -- Temple of Kotmogu
+    [2656] = true, --Deephaul Ravine
     [1191] = true, -- Ashran
-    [1105] = true, -- deepwind gorge brawl
-    [2245] = true -- deepwind gorge other
+    [2245] = true, -- Deepwind Gorge
+    [1105] = true, -- Deepwind Gorge Brawl
+    [726] = true, -- Twin Peaks
 }
 
 local function GetAuraIcon(frame, foundID, auraType, bgId)
@@ -182,8 +183,8 @@ function BBP.ClassIndicator(frame, foundID, fade)
     if BBP.isInBg and (enabledOnThisUnit or config.classIconAlwaysShowBgObj) then
         local _, _, _, _, _, _, _, instanceMapID = GetInstanceInfo()
         if bgsWithObjectives[instanceMapID] then
-            local debuffObj = instanceMapID == 998
-            flagIcon = GetAuraIcon(frame, foundID, debuffObj and "HARMFUL" or "HELPFUL", instanceMapID)
+            local auraType = (instanceMapID == 998 and "HARMFUL") or "HELPFUL"
+            flagIcon = GetAuraIcon(frame, foundID, auraType, instanceMapID)
         end
     end
 
@@ -429,7 +430,7 @@ function BBP.ClassIndicator(frame, foundID, fade)
     end
 
     frame.classIndicator:Show()
-    if config.classIndicatorHideName then
+    if config.classIndicatorHideName and info.isFriend then
         frame.classIndicatorHideName = true
         frame.name:SetText("")
     elseif config.classIconHealthNumbers then

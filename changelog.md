@@ -1,3 +1,15 @@
+# BetterBlizzPlates 1.6.9i
+## The War Within
+### Bugfix:
+- Fix Twin Peaks missing from BG Objectives.
+- Potential fix for nameplate frame level issue.
+
+## All versions
+### Bugfix:
+- Fix Hide Healthbar Toggle keybind not updating settings properly.
+
+
+
 # BetterBlizzPlates 1.6.9h
 ## The War Within, Classic Era/SoD & Catalcysm
 ### New:

@@ -7093,7 +7093,7 @@ local function guiPositionAndScale()
 
     anchorSubHeal.classIndicatorHideName = CreateCheckbox("classIndicatorHideName", "Hide Name", anchorSubClassIcon.extendedSettings)
     anchorSubHeal.classIndicatorHideName:SetPoint("TOPLEFT", anchorSubHeal.classIndicatorFrameStrataHigh, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(anchorSubHeal.classIndicatorHideName, "Hide Name", "Hides the name on nameplates with Class Indicator on them.")
+    CreateTooltipTwo(anchorSubHeal.classIndicatorHideName, "Hide Name (Friend)", "Hides the name on friendly nameplates with Class Indicator on them.")
 
     anchorSubHeal.classIndicatorAlpha = CreateSlider(anchorSubClassIcon.extendedSettings, "Alpha", 0.1, 1, 0.01, "classIndicatorAlpha", false, 110)
     anchorSubHeal.classIndicatorAlpha:SetPoint("BOTTOM", anchorSubClassIcon.extendedSettings, "BOTTOM", 3, 5)
@@ -10733,9 +10733,17 @@ local function guiImportAndExport()
     text:SetText("")
     text:SetPoint("TOP", guiImportAndExport, "TOPRIGHT", -220, 0)
 
-    local text2 = guiImportAndExport:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    text2:SetText("Color NPC & Cast Emphasis now supports\nPlater NPC Color & Plater Cast Color import.")
-    text2:SetPoint("TOP", text, "BOTTOM", 0, -30)
+    local profilesBtn = CreateFrame("Button", nil, guiImportAndExport, "GameMenuButtonTemplate")
+    profilesBtn:SetSize(150, 25)
+    profilesBtn:SetText("PROFILES SELECTION")
+    profilesBtn:SetPoint("TOP", text, "BOTTOM", 0, -25)
+    profilesBtn:SetScale(1.3)
+    profilesBtn:SetNormalFontObject("GameFontNormal")
+    profilesBtn:SetHighlightFontObject("GameFontHighlight")
+    profilesBtn:SetScript("OnClick", function()
+        BBP.CreateIntroMessageWindow()
+    end)
+    CreateTooltipTwo(profilesBtn, "Profiles", "Check out the included profiles. Selecting one will delete all your current settings and apply the profile.", nil, "ANCHOR_TOP")
 
     local fullProfile = CreateImportExportUI(guiImportAndExport, "Full Profile", BetterBlizzPlatesDB, 20, -20, "fullProfile")
 
@@ -10754,6 +10762,10 @@ local function guiImportAndExport()
 
     local colorNpcList = CreateImportExportUI(castEmphasisList, "Color NPC List", BetterBlizzPlatesDB.colorNpcList, 0, -100, "colorNpcList")
     local auraColorList = CreateImportExportUI(colorNpcList, "Color by Aura List", BetterBlizzPlatesDB.auraColorList, 210, 0, "auraColorList")
+
+    local text2 = guiImportAndExport:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    text2:SetText("Color NPC & Cast Emphasis now supports\nPlater NPC Color & Plater Cast Color import.")
+    text2:SetPoint("LEFT", totemIndicatorList, "RIGHT", 60, 0)
 end
 
 local function guiSupport()

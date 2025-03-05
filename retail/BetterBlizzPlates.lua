@@ -850,6 +850,10 @@ local function FetchAndSaveValuesOnFirstLogin()
             if BetterBlizzPlatesDB.sendResetMessage then
                 DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates has been reset. If you are having any issues feel free to join the Discord. You'll find the link in the Support section /bbp")
                 BetterBlizzPlatesDB.sendResetMessage = nil
+            elseif BetterBlizzPlatesDB.hasNotOpenedSettings then
+                C_Timer.After(3, function()
+                    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates first run. Thank you for trying out my AddOn. Access settings with /bbp")
+                end)
             end
             return
         end
@@ -924,6 +928,9 @@ local function ResetNameplates()
     BetterBlizzPlatesDB.nameplateMaxAlphaDistance = 40
     BetterBlizzPlatesDB.nameplateOccludedAlphaMult = 0.4
 
+    BetterBlizzPlatesDB.ShowClassColorInNameplate = "1"
+    BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate = "1"
+
     BetterBlizzPlatesDB.nameplateShowEnemyGuardians = "1"
     BetterBlizzPlatesDB.nameplateShowEnemyMinions = "1"
     BetterBlizzPlatesDB.nameplateShowEnemyMinus = "0"
@@ -967,6 +974,8 @@ local function ResetNameplates()
     C_CVar.SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
     C_CVar.SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
     C_CVar.SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
+    C_CVar.SetCVar("ShowClassColorInNameplate", BetterBlizzPlatesDB.ShowClassColorInNameplate)
+    C_CVar.SetCVar("ShowClassColorInFriendlyNameplate", BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate)
     C_CVar.SetCVar('nameplateShowOnlyNames', "0")
 
     ReloadUI()
@@ -3818,7 +3827,7 @@ end
 local function HideFriendlyHealthbar(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
-
+    config.friendlyHideHealthBar = BetterBlizzPlatesDB.friendlyHideHealthBar
     if frame.healthBar and info.isFriend then
         if BetterBlizzPlatesDB.friendlyHideHealthBar then
             if not info.isPlayer then
@@ -4648,9 +4657,6 @@ local function IsSpecHealer(frame)
 end
 BBP.IsSpecHealer = IsSpecHealer
 
-local hf = CreateFrame("Frame")
-hf:Hide()
-
 -- What to do on a new nameplate
 local function HandleNamePlateAdded(unit)
     local nameplate, frame = BBP.GetSafeNameplate(unit)
@@ -4684,8 +4690,8 @@ local function HandleNamePlateAdded(unit)
         frame.ClassificationFrame:SetParent(frame.HealthBarsContainer)
         frame.castBar.Icon:SetIgnoreParentAlpha(false)
         frame.castBar.BorderShield:SetIgnoreParentAlpha(false)
-        -- nameplate:SetParent(hf)
-        -- nameplate:SetParent(WorldFrame)
+        nameplate:SetParent(BBP.hiddenFrame)
+        nameplate:SetParent(WorldFrame)
         frame.nameplateTweaksBBP = true
     end
 
@@ -4923,8 +4929,8 @@ local function HandleNamePlateAdded(unit)
 
     NameplateShadowAndMouseoverHighlight(frame)
 
-    --print("3: ", frame:GetFrameLevel(), nameplate:GetFrameLevel())
-    --print("______________________")
+    -- print("3: ", frame:GetFrameLevel(), nameplate:GetFrameLevel())
+    -- print("______________________")
 end
 
 
@@ -5661,6 +5667,8 @@ SlashCmdList["BBP"] = function(msg)
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: "..exportVersion)
     elseif command == "intro" then
         BBP.CreateIntroMessageWindow()
+    elseif command == "swap" then
+        
     else
         --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
         if not BetterBlizzPlates.guiLoaded then
@@ -6537,13 +6545,3 @@ end
 --         spellbar:SetPoint("TOP", frame, "BOTTOM",0, -2)
 --     end
 -- end
-
-
-
-
-
-
-
-
-
-

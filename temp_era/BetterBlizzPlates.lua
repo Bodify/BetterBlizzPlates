@@ -825,6 +825,10 @@ local function FetchAndSaveValuesOnFirstLogin()
             if BetterBlizzPlatesDB.sendResetMessage then
                 DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates has been reset. If you are having any issues feel free to join the Discord. You'll find the link in the Support section /bbp")
                 BetterBlizzPlatesDB.sendResetMessage = nil
+            elseif BetterBlizzPlatesDB.hasNotOpenedSettings then
+                C_Timer.After(3, function()
+                    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates first run. Thank you for trying out my AddOn. Access settings with /bbp")
+                end)
             end
             return
         end
@@ -3887,7 +3891,7 @@ end
 local function HideFriendlyHealthbar(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
-
+    config.friendlyHideHealthBar = BetterBlizzPlatesDB.friendlyHideHealthBar
     if frame.healthBar and info.isFriend then
         if BetterBlizzPlatesDB.friendlyHideHealthBar then
             if not info.isPlayer then
