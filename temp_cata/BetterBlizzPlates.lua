@@ -14,6 +14,8 @@ local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
+BBP.hiddenFrame = CreateFrame("Frame")
+BBP.hiddenFrame:Hide()
 
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 local UnitName = UnitName
@@ -4375,6 +4377,14 @@ local function HandleNamePlateAdded(unit)
     end
     BBP.CustomizeNameOnNameplate(frame)
     BBP.ClassColorAndScaleNames(frame)
+
+    if not frame.nameplateTweaksBBP then
+        frame.CastBar.Icon:SetIgnoreParentAlpha(false)
+        frame.CastBar.BorderShield:SetIgnoreParentAlpha(false)
+        nameplate:SetParent(BBP.hiddenFrame)
+        nameplate:SetParent(WorldFrame)
+        frame.nameplateTweaksBBP = true
+    end
 
     --small nameplate
     if BetterBlizzPlatesDB.smallPetsInPvP then
