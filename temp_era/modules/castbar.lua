@@ -364,7 +364,8 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 for _, interruptSpellIDx in ipairs(interruptSpellIDs) do
                     local start, duration = GetSpellCooldown(interruptSpellIDx)
                     local cooldownRemaining = start + duration - GetTime()
-                    local castRemaining = (endTime/1000) - GetTime()
+                    local castRemaining = (endTime / 1000) - GetTime()
+                    local totalCastTime = (endTime / 1000) - (castStart / 1000)
 
                     if not notInterruptible then
                         if cooldownRemaining > 0 and cooldownRemaining > castRemaining then
@@ -379,6 +380,60 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                             end
                             castBar.delayedInterruptColor = true
                             castBar:SetStatusBarColor(unpack(castBarDelayedInterruptColor))
+
+                            if cooldownRemaining < castRemaining then
+                                if not castBar.spark then
+                                    castBar.spark = castBar:CreateTexture(nil, "OVERLAY")
+                                    castBar.spark:SetColorTexture(0, 1, 0, 1) -- Solid green color with full opacity
+                                    castBar.spark:SetSize(2, castBar:GetHeight())
+                                    --castBar.spark:SetBlendMode("ADD")
+                                    --castBar.spark:SetVertexColor(0, 1, 0)
+                                end
+
+                                -- Calculate the interrupt percentage
+                                local interruptPercent = (totalCastTime - castRemaining + cooldownRemaining) / totalCastTime
+
+                                -- Adjust the spark position based on the percentage, reverse if channeling
+                                local sparkPosition
+                                if channeling then
+                                    -- Channeling: reverse the direction, starting from the right
+                                    sparkPosition = (1 - interruptPercent) * castBar:GetWidth()
+                                else
+                                    -- Casting: normal direction, from left to right
+                                    sparkPosition = interruptPercent * castBar:GetWidth()
+                                end
+
+                                castBar.spark:SetPoint("CENTER", castBar, "LEFT", sparkPosition, 0)
+                                castBar.spark:Show()
+
+                                -- Schedule the color update for when the interrupt will be ready
+                                C_Timer.After(cooldownRemaining, function()
+                                    if castBar then
+                                        if not castBarRecolor and not useCustomCastbarTexture then
+                                            if castBarTexture then
+                                                castBarTexture:SetDesaturated(false)
+                                            end
+                                            if not classicFrames then
+                                                castBar:SetStatusBarColor(1, 1, 1)
+                                            end
+                                        else
+                                            if casting then
+                                                castBar:SetStatusBarColor(unpack(castBarCastColor))
+                                            elseif channeling then
+                                                castBar:SetStatusBarColor(unpack(castBarChanneledColor))
+                                            end
+                                        end
+                                        -- Hide the spark once the interrupt is ready
+                                        if castBar.spark then
+                                            castBar.spark:Hide()
+                                        end
+                                    end
+                                end)
+                            else
+                                if castBar.spark then
+                                    castBar.spark:Hide()
+                                end
+                            end
                         else
                             castBar.noInterruptColor = false
                             castBar.delayedInterruptColor = false
@@ -393,6 +448,9 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                                 elseif channeling then
                                     castBar:SetStatusBarColor(unpack(castBarChanneledColor))
                                 end
+                            end
+                            if castBar.spark then
+                                castBar.spark:Hide()
                             end
                         end
                     end

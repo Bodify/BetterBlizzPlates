@@ -109,6 +109,8 @@ local defaultSettings = {
     smallPetsWidth = 20,
     enlargeAllImportantBuffs = true,
     enlargeAllCC = true,
+    normalCastbarForEmpoweredCasts = true,
+    interruptedByIndicator = true,
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -5586,6 +5588,7 @@ Frame:SetScript("OnEvent", function(...)
     -- end
 
     C_Timer.After(1, function()
+        BBP.InstantComboPoints()
         if not db.skipAdjustingFixedFonts then
             BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
             BBP.SetFontBasedOnOption(SystemFont_NamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)

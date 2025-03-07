@@ -4880,7 +4880,7 @@ local function guiGeneralTab()
     local resetBBPButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     resetBBPButton:SetText("Reset BetterBlizzPlates")
     resetBBPButton:SetWidth(165)
-    resetBBPButton:SetPoint("BOTTOMLEFT", SettingsPanel, "BOTTOMLEFT", 16, 16)
+    resetBBPButton:SetPoint("RIGHT", reloadUiButton, -615, 0)
     resetBBPButton:SetScript("OnClick", function()
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     end)
@@ -8907,6 +8907,10 @@ function BBP.InitializeOptions()
         loadGUI:SetPoint("CENTER", BetterBlizzPlates, "CENTER", -18, 6)
         BetterBlizzPlates.loadGUI = loadGUI
         loadGUI:SetScript("OnClick", function(self)
+            if InCombatLockdown() then
+                print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Leave combat to open settings for the first time.")
+                return
+            end
             BBP.LoadGUI()
             titleText:Hide()
             self:Hide()
@@ -8919,6 +8923,10 @@ function BBP.LoadGUI()
     if BetterBlizzPlatesDB.hasNotOpenedSettings then
         BBP.CreateIntroMessageWindow()
         BetterBlizzPlatesDB.hasNotOpenedSettings = nil
+        return
+    end
+    if InCombatLockdown() then
+        print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Leave combat to open settings for the first time.")
         return
     end
     guiGeneralTab()

@@ -133,12 +133,15 @@ local opBarriers = {
     [235450] = true, -- Prismatic Barrier
 }
 
+local importantColor = {r = 0, g = 1, b = 0, a = 1}
+
 local importantBuffs = {}
 local importantGeneralBuffs = {
     [156621] = {r = 0.207, g = 0.662, b = 1, a = 1}, --true, -- Alliance Flag
     [434339] = {r = 0.207, g = 0.662, b = 1, a = 1}, --true, -- Deephaul Crystal
     [156618] = {r = 1, g = 0, b = 0, a = 1}, --true, -- Horde Flag
-    [34976] = {r = 0, g = 1, b = 0, a = 1}, --true, -- Netherstorm Flag
+    [34976] = importantColor, --true, -- Netherstorm Flag
+    [188501] = importantColor,
 }
 local importantGeneralDebuffs = {
     [121164] = {r = 0, g = 1, b = 0.94, a = 1}, --true, -- Orb of Power
@@ -152,6 +155,19 @@ local importantGeneralDebuffs = {
 }
 
 local importantOffensives = {
+    [194249] = true,
+    [389794] = true,
+    [216468] = true,
+    [264667] = true,
+    [198144] = true,
+    [204362] = true,
+    [32182] = true,
+    [466904] = true,
+    [390386] = true,
+    [47568] = true,
+    [231895] = true,
+    [114051] = true,
+    [90355] = true,
     [1218128] = true,
     [115192] = true,
     [357210] = true,
@@ -204,6 +220,9 @@ local importantOffensives = {
     [375087] = true,
 }
 local importantMobility = {
+    [199545] = true,
+    [205629] = true,
+    [206572] = true,
     [221885] = true,
     [294133] = true,
     [254474] = true,
@@ -226,26 +245,40 @@ local importantMobility = {
     [363608] = true,
 }
 local importantDefensives = {
-    [473909] = {r = 0, g = 1, b = 0, a = 1}, -- tree
+    [117679] = true,
+    [161495] = true,
+    [132578] = true,
+    [29166] = true,
+    [102558] = true,
+    [212641] = true,
+    [443026] = importantColor,
+    [462823] = importantColor,
+    [359816] = importantColor,
+    [390239] = true,
+    [213871] = true,
+    [384100] = true,
+    [216331] = true,
+    [317929] = importantColor,
+    [456499] = importantColor, -- Absolute Serenity
+    [473909] = importantColor, -- tree
     [1221107] = true,
     [31224] = true,
     [118038] = true,
     [45182] = true,
     [31230] = true,
     [125174] = true,
-    [33891] = true,
     [424655] = true,
-    [408558] = {r = 0, g = 1, b = 0, a = 1}, -- Phase Shift
+    [408558] = importantColor, -- Phase Shift
     [145629] = true,
-    [289655] = {r = 0, g = 1, b = 0, a = 1}, -- Sanctified Ground
+    [289655] = importantColor, -- Sanctified Ground
     [202748] = true,
     [378081] = true,
     [5277] = true,
     [122278] = true,
     [264735] = true,
     [48707] = true,
-    [378464] = {r = 0, g = 1, b = 0, a = 1}, -- Nullifying Shroud
-    [353319] = {r = 0, g = 1, b = 0, a = 1}, -- Peaceweaver
+    [378464] = importantColor, -- Nullifying Shroud
+    [353319] = importantColor, -- Peaceweaver
     [974] = true,
     [48743] = true,
     [871] = true,
@@ -253,9 +286,9 @@ local importantDefensives = {
     [212800] = true,
     [61336] = true,
     [81782] = true,
-    [213610] = {r = 0, g = 1, b = 0, a = 1}, -- Holy Ward
+    [213610] = importantColor, -- Holy Ward
     [6940] = true,
-    [199450] = {r = 0, g = 1, b = 0, a = 1}, -- Ultimate Sacrifice
+    [199450] = importantColor, -- Ultimate Sacrifice
     [120954] = true,
     [385391] = true,
     [18499] = true,
@@ -273,8 +306,8 @@ local importantDefensives = {
     [108271] = true,
     [498] = true,
     [357170] = true,
-    [23920] = {r = 0, g = 1, b = 0, a = 1}, -- Spell Reflection
-    [212295] = {r = 0, g = 1, b = 0, a = 1}, -- Nether Ward
+    [23920] = importantColor, -- Spell Reflection
+    [212295] = importantColor, -- Nether Ward
     [102342] = true,
     [22842] = true,
     [374348] = true,
@@ -282,7 +315,7 @@ local importantDefensives = {
     [403876] = true,
     [184364] = true,
     [374349] = true,
-    [378078] = {r = 0, g = 1, b = 0, a = 1}, -- Spiritwalker's Aegis
+    [378078] = importantColor, -- Spiritwalker's Aegis
     [48792] = true,
     [319454] = true,
     [47585] = true,
@@ -295,8 +328,8 @@ local importantDefensives = {
     [232708] = true,
     [370889] = true,
     [116849] = true,
-    [378441] = {r = 0, g = 1, b = 0, a = 1}, -- Time Stop
-    [209584] = {r = 0, g = 1, b = 0, a = 1}, -- Zen Focus Tea
+    [378441] = importantColor, -- Time Stop
+    [209584] = importantColor, -- Zen Focus Tea
     [53480] = true,
     [196555] = true,
     [410358] = true,
@@ -305,7 +338,7 @@ local importantDefensives = {
     [209426] = true,
     [414658] = true,
     [79206] = true,
-    [377362] = {r = 0, g = 1, b = 0, a = 1}, -- precog
+    [377362] = importantColor, -- precog
     [122783] = true,
     [186265] = true,
     [108416] = true,
@@ -319,9 +352,9 @@ local importantDefensives = {
     [22812] = true,
     [342246] = true,
     [113862] = true,
-    [354610] = {r = 0, g = 1, b = 0, a = 1}, -- Glimpse
+    [354610] = importantColor, -- Glimpse
     [432180] = true,
-    [248519] = {r = 0, g = 1, b = 0, a = 1}, -- Interlope
+    [248519] = importantColor, -- Interlope
     [15286] = true,
     [228050] = true,
     [202162] = true,
@@ -1101,6 +1134,10 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     end
 
     local function durationComparator(a, b)
+        if a.isCC ~= b.isCC then
+            return a.isCC
+        end
+
         if a.isEnlarged ~= b.isEnlarged then
             return a.isEnlarged
         end
@@ -1129,6 +1166,10 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
 
 
     local function largeSmallAuraComparator(a, b)
+        if a.isCC ~= b.isCC then
+            return a.isCC
+        end
+
         if a.isEnlarged or b.isEnlarged then
             if a.isEnlarged and not b.isEnlarged then
                 return true
@@ -2135,8 +2176,10 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             end
         end
 
+        buff.isCC = nil
         local isCC = crowdControl[spellId]
         if isCC then
+            buff.isCC = true
             if enlargeAllCC and enlargeAllCCsFilter then
                 isEnlarged = true
             end

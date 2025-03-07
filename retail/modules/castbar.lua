@@ -160,7 +160,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         castBar.Spark:SetSize(4, castBarHeight + 5)
         castBar.Text:SetScale(castBarTextScale)
         castBar.BorderShield:SetScale(borderShieldSize)
-        frame:GetParent():SetParent(BBP.OverlayFrame)
+        frame:GetParent():SetParent(WorldFrame)
         frame.castbarEmphasisActive = false
     end
 
@@ -410,7 +410,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                                     sparkPosition = interruptPercent * castBar:GetWidth()
                                 end
 
-                                castBar.spark:SetPoint("CENTER", castBar, "LEFT", sparkPosition)
+                                castBar.spark:SetPoint("CENTER", castBar, "LEFT", sparkPosition, 0)
                                 castBar.spark:Show()
 
                                 -- Schedule the color update for when the interrupt will be ready

@@ -236,7 +236,7 @@ local defaultColors = {
 function BBP.MergeNpcColorToBBP(platerData)
     for key, npcData in pairs(platerData) do
         -- Check if npcData is a table
-        if type(npcData) == "table" then
+        if type(npcData) == "table" and type(npcData[1]) == "number" and type(npcData[4]) == "string" then
             local npcID = npcData[1]
             --local enabled = npcData[2]
             local colorName = npcData[3]
@@ -281,7 +281,7 @@ end
 function BBP.MergeCastColorToBBP(platerData)
     for key, castData in pairs(platerData) do
         -- Check if castData is a table
-        if type(castData) == "table" then
+        if type(castData) == "table" and type(castData[1]) == "number" and type(castData[2]) == "string" then
             local spellID = castData[1]
             local colorName = castData[2]
 

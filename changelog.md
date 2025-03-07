@@ -1,3 +1,18 @@
+# BetterBlizzPlates 1.7.0
+## The War Within
+### New:
+- Instant Combo Points setting (in CVar Control). Remove combo points animations for instant feedback on Rogue, Druid, Monk and Arcane Mage.
+### Tweak:
+- Add more auras to to PvP CC & Buffs Filters. Thanks to Zwacky for gathering the ids and helping.
+### Bugfix:
+- Added some extra safe checks when importing Plater strings to avoid lua errors if importing a wrong type of string.
+- Fix position of interrupt highlight spark on castbar 
+
+## Classic & Cata
+### Tweak:
+- Added highlight spark on castbar for when interrupt will be ready during cast if that setting is on.
+
+
 # BetterBlizzPlates 1.6.9i
 ## The War Within
 ### Bugfix:

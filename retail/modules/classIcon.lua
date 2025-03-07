@@ -237,9 +237,9 @@ function BBP.ClassIndicator(frame, foundID, fade)
             if frame.classIndicator.border.circle then
                 return
             end
-            frame.classIndicator.icon:SetSize(24, 24)
+            frame.classIndicator.icon:SetSize(22, 22)
             frame.classIndicator.mask:SetTexture("Interface/Masks/CircleMaskScalable")
-            frame.classIndicator.mask:SetSize(24, 24)
+            frame.classIndicator.mask:SetSize(22, 22)
             frame.classIndicator.mask:SetPoint("CENTER", frame.classIndicator.icon)
             frame.classIndicator.border:SetAtlas("AutoQuest-badgeborder")
             frame.classIndicator.border:SetAllPoints(frame.classIndicator)
@@ -363,14 +363,14 @@ function BBP.ClassIndicator(frame, foundID, fade)
                     frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
                 else
                     frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
-                    frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87) -- circle
+                    frame.classIndicator.icon:SetTexCoord(0.0092, 0.1118, 0.7644, 0.8656) -- circle
                 end
             else
                 frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
                 if frame.classIndicator.border.square then
                     frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
                 else
-                    frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87) -- circle
+                    frame.classIndicator.icon:SetTexCoord(0.0092, 0.1118, 0.7644, 0.8656) -- circle
                 end
                 if BetterBlizzPlatesDB.classIconHealerIconType == 2 then
                     frame.classIndicator.icon:SetDesaturated(true)
@@ -399,14 +399,14 @@ function BBP.ClassIndicator(frame, foundID, fade)
                 frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
             else
                 frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
-                frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87) -- circle
+                frame.classIndicator.icon:SetTexCoord(0.0092, 0.1118, 0.7644, 0.8656) -- circle
             end
         else
             frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
             if frame.classIndicator.border.square then
                 frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
             else
-                frame.classIndicator.icon:SetTexCoord(0.005, 0.116, 0.76, 0.87) -- circle
+                frame.classIndicator.icon:SetTexCoord(0.0092, 0.1118, 0.7644, 0.8656) -- circle
             end
             if BetterBlizzPlatesDB.classIconHealerIconType == 2 then
                 frame.classIndicator.icon:SetDesaturated(true)
