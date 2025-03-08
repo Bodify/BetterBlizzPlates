@@ -11291,7 +11291,7 @@ function BBP.CreateIntroMessageWindow()
             Settings.OpenToCategory(BBP.category.ID)
         end
     end)
-    CreateTooltipTwo(buttonLast, "Exit, No Profile", "Exit and customize everything yourself.\n\nYou can always change your mind later!")
+    CreateTooltipTwo(buttonLast, "Exit, No Profile", "Exit and customize everything yourself.\n\nYou can always change your mind later!", nil, "ANCHOR_TOP")
     local f,s,o = buttonLast.Text:GetFont()
     buttonLast.Text:SetFont(f,s,"OUTLINE")
 
