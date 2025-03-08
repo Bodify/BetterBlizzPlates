@@ -388,6 +388,9 @@ local defaultSettings = {
     importantBuffsOffensivesGlowRGB = {r = 1, g = 0.5, b = 0, a = 1},
     importantBuffsDefensivesGlowRGB = {r = 1, g = 0.662, b = 0.945, a = 1},
     importantBuffsMobilityGlowRGB = {r = 0, g = 1, b = 1, a = 1},
+    nameplateKeyAurasXPos = 0,
+    nameplateKeyAurasYPos = 0,
+    nameplateKeyAuraScale = 1,
     castBarCastColor = {
 		1,
 		0.8431373238563538,
@@ -1077,7 +1080,7 @@ local function SendUpdateMessage()
                 -- if BetterBlizzPlatesDB.fadeAllButTarget then
                 DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
                 DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New:")
-                DEFAULT_CHAT_FRAME:AddMessage("   - Nameplate Auras now have \"PvP Buffs\" and \"PvP CC\" filters.")
+                DEFAULT_CHAT_FRAME:AddMessage("   - Nameplate Auras now have a \"Key Auras Positioning\" setting that works similar to BigDebuffs. This will be expanded on in the future. Also \"PvP Buffs\" and \"PvP CC\" filters.")
                 -- BetterBlizzPlatesDB.fadeAllButTarget = nil
                 -- end
                 -- DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
@@ -3464,7 +3467,6 @@ function BBP.NameplateTargetAlpha(frame)
     end
 end
 
-
 --################################################################################################
 -- Apply raidmarker change
 function BBP.ApplyRaidmarkerChanges(frame)
@@ -4692,8 +4694,10 @@ local function HandleNamePlateAdded(unit)
         frame.ClassificationFrame:SetParent(frame.HealthBarsContainer)
         frame.castBar.Icon:SetIgnoreParentAlpha(false)
         frame.castBar.BorderShield:SetIgnoreParentAlpha(false)
-        nameplate:SetParent(BBP.hiddenFrame)
-        nameplate:SetParent(WorldFrame)
+        if not BetterBlizzPlatesDB.skipNpFix then
+            nameplate:SetParent(BBP.hiddenFrame)
+            nameplate:SetParent(WorldFrame)
+        end
         frame.nameplateTweaksBBP = true
     end
 
@@ -4892,6 +4896,9 @@ local function HandleNamePlateAdded(unit)
 
     if config.classicNameplates then
         CreateBetterClassicHealthbarBorder(frame)
+        if info.isSelf then
+            frame.LevelFrame:Hide()
+        end
         frame.classicNameplatesOn = true
     elseif frame.classicNameplatesOn then
         frame.BetterBlizzPlates.bbpBorder:Hide()
@@ -5649,6 +5656,15 @@ nameplateWidthOnEnterWorld:SetScript("OnEvent", function()
     end
 end)
 
+local function MoveableSettingsPanel()
+    local frame = SettingsPanel
+    if frame and not frame:GetScript("OnDragStart") and not C_AddOns.IsAddOnLoaded("BlizzMove") then
+        frame:RegisterForDrag("LeftButton")
+        frame:SetScript("OnDragStart", frame.StartMoving)
+        frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+    end
+end
+
 -- Slash command
 SLASH_BBP1 = "/bbp"
 SlashCmdList["BBP"] = function(msg)
@@ -5671,7 +5687,47 @@ SlashCmdList["BBP"] = function(msg)
     elseif command == "profiles" then
         BBP.CreateIntroMessageWindow()
     elseif command == "swap" then
-        
+
+    elseif command == "snupylol" then
+        local db = BetterBlizzPlatesDB
+        db["classIndicatorFriendlyScale"] = 1.23
+        db["classIndicatorAnchor"] = "TOP"
+        db["classIndicatorEnemy"] = false
+        db["classIndicatorYPos"] = 0
+        db["classIndicatorHideRaidMarker"] = false
+        db["classIndicatorFriendlyXPosXPos"] = 0
+        db["classIndicatorFriendly"] = true
+        db["classIndicatorScale"] = 1
+        db["classIndicatorFrameStrataHigh"] = false
+        db["classIndicatorHealer"] = true
+        db["classIndicatorHighlight"] = true
+        db["classIndicatorHideName"] = false
+        db["classIndicatorSpecIcon"] = false
+        db["classIndicatorFriendlyAnchor"] = "TOP"
+        db["classIndicatorOnlyHealer"] = true
+        db["classIndicatorXPos"] = 0
+        db["classIndicatorFriendlyXPos"] = 0
+        db["classIndicatorTank"] = false
+        db["classIndicatorHighlightColor"] = true
+        db["classIndicatorXPosXPos"] = 0
+        db["classIndicatorFriendlyYPos"] = 0
+        db["classIndicator"] = true
+        db["classIndicatorFriendlyYPosYPos"] = 0
+        db["classIndicatorAlpha"] = 1
+        db["classIndicatorYPosYPos"] = 0
+        db["classIconAlwaysShowBgObj"] = true
+        db["classIconReactionBorder"] = false
+        db["classIconArenaOnly"] = true
+        db["classIconAlwaysShowTank"] = false
+        db["classIconColorBorder"] = true
+        db["classIconHealthNumbers"] = false
+        db["classIconBgOnly"] = true
+        db["classIconAlwaysShowHealer"] = false
+        db["classIconSquareBorder"] = false
+        db["classIconSquareBorderFriendly"] = false
+        db["classIconHealerIconType"] = 2
+        db["classIconEnemyHealIcon"] = true
+        ReloadUI()
     else
         --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
         if not BetterBlizzPlates.guiLoaded then
@@ -5679,6 +5735,7 @@ SlashCmdList["BBP"] = function(msg)
         else
             Settings.OpenToCategory(BBP.category.ID)
         end
+        MoveableSettingsPanel()
     end
 end
 
@@ -5705,10 +5762,10 @@ ShuffleNpWidthUpdate.eventRegistered = false
 local function UpdateNpWidthShuffle(self, event, ...)
     if event == "ARENA_OPPONENT_UPDATE" or event == "GROUP_ROSTER_UPDATE" then
         if not BBP.isInArena then return end
-        local name = AuraUtil.FindAuraByName("Arena Preparation", "player", "HELPFUL")
-        if not name then return end
+        local aura = C_UnitAuras.GetPlayerAuraBySpellID(32727) -- Arena Preparation
+        if not aura then return end
 
-        if UnitAffectingCombat("player") then
+        if InCombatLockdown() then
             if not ShuffleNpWidthUpdate.eventRegistered then
                 ShuffleNpWidthUpdate:RegisterEvent("PLAYER_REGEN_ENABLED")
                 ShuffleNpWidthUpdate.eventRegistered = true
@@ -5717,7 +5774,7 @@ local function UpdateNpWidthShuffle(self, event, ...)
             BBP.ApplyNameplateWidth()
             BBP.RefreshAllNameplates()
             C_Timer.After(1, function()
-                if not UnitAffectingCombat("player") then
+                if not InCombatLockdown() then
                     BBP.ApplyNameplateWidth()
                     BBP.RefreshAllNameplates()
                 end
@@ -5797,11 +5854,6 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     db.classIndicatorHealer = false
                 end
 
-                C_Timer.After(5, function()
-                    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. BBP.VersionNumber .. ":")
-                    DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a News:")
-                    DEFAULT_CHAT_FRAME:AddMessage("   - Many new Class Indicator settings! Check them out and read patch notes for more info.")
-                end)
             end
 
             if db.hasSaved and db.separateAuraBuffRow == nil then

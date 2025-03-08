@@ -483,3 +483,56 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
     end
 end
+
+function BBP.UpdateTotemPos(frame)
+    local config = frame.BetterBlizzPlates.config
+    local totemIndicatorSwappingAnchor
+
+    --if not config.totemIndicatorInitialized or BBP.needsUpdate then
+        config.totemIndicatorXPos = BetterBlizzPlatesDB.totemIndicatorXPos
+        config.totemIndicatorYPos = BetterBlizzPlatesDB.totemIndicatorYPos
+
+        config.totemIndicatorHideNameAndShiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
+        config.totemIndicatorTestMode = BetterBlizzPlatesDB.totemIndicatorTestMode
+        config.totemIndicatorHideHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
+        config.totemIndicatorEnemyOnly = BetterBlizzPlatesDB.totemIndicatorEnemyOnly
+        config.hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
+        config.totemIndicatorAnchor = BetterBlizzPlatesDB.totemIndicatorAnchor
+        config.showTotemIndicatorCooldownSwipe = BetterBlizzPlatesDB.showTotemIndicatorCooldownSwipe
+        config.totemIndicatorScale = BetterBlizzPlatesDB.totemIndicatorScale
+        config.totemIndicatorTestMode = BetterBlizzPlatesDB.totemIndicatorTestMode
+        config.totemIndicatorDefaultCooldownTextSize = BetterBlizzPlatesDB.totemIndicatorDefaultCooldownTextSize
+        config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
+        config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
+        config.totemIndicatorHideAuras = BetterBlizzPlatesDB.totemIndicatorHideAuras
+        config.totemIndicatorWidthEnabled = BetterBlizzPlatesDB.totemIndicatorWidthEnabled
+
+        --config.totemIndicatorInitialized = true
+    --end
+    if config.totemIndicatorHideNameAndShiftIconDown then
+        totemIndicatorSwappingAnchor = frame.healthBar
+    else
+        if config.totemIndicatorAnchor == "TOP" then
+            totemIndicatorSwappingAnchor = frame.name
+        else
+            totemIndicatorSwappingAnchor = frame.healthBar
+        end
+    end
+    frame.totemIndicator:ClearAllPoints()
+    local iconOnlyMode = (npcData and npcData.iconOnly or config.randomTotemIconOnly)
+    if config.totemIndicatorHideNameAndShiftIconDown or iconOnlyMode then
+        if iconOnlyMode then
+            frame.totemIndicator:SetPoint("CENTER", frame, "CENTER", config.totemIndicatorXPos, config.totemIndicatorYPos)
+            frame.name:SetText("")
+        else
+            frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, yPosAdjustment)
+            frame.name:SetText("")
+        end
+    elseif config.nameplateResourceOnTarget == "1"  and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
+        local resourceFrame = resourceFrames[playerClass]
+        if not resourceFrame or resourceFrame:IsForbidden() then return end
+        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), resourceFrame or totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
+    else
+        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
+    end
+end

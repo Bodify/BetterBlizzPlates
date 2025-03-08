@@ -20,6 +20,7 @@ local sliderList = {}
 local function ExportProfile(profileTable, dataType)
     local wowVersion = GetBuildInfo()
     BetterBlizzPlatesDB.exportVersion = "BBP: "..BBP.VersionNumber.." WoW: "..wowVersion
+    BetterBlizzPlatesDB.friendlyNameplatesEnabledOnExport = C_CVar.GetCVarBool("nameplateShowFriends")
     -- Include a dataType in the table being serialized
     local exportTable = {
         dataType = dataType,
@@ -107,13 +108,13 @@ end
 
 local function deepMergeTables(destination, source)
     for k, v in pairs(source) do
-        if type(v) == "table" then
-            if not destination[k] then
+        if destination[k] == nil then
+            if type(v) == "table" then
                 destination[k] = {}
+                deepMergeTables(destination[k], v)
+            else
+                destination[k] = v
             end
-            deepMergeTables(destination[k], v) -- Recursive merge for nested tables
-        else
-            destination[k] = v
         end
     end
 end
@@ -1094,6 +1095,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "nameplateAuraScale" then
                     BetterBlizzPlatesDB.nameplateAuraScale = value
                     BBP.RefreshBuffFrame()
+                elseif element == "nameplateKeyAurasXPos" or element == "nameplateKeyAurasYPos" or element == "nameplateKeyAuraScale" then
+                    BetterBlizzPlatesDB[element] = value
+                    BBP.RefreshBuffFrame()
                 elseif element == "nameplateAuraSelfScale" then
                     BetterBlizzPlatesDB.nameplateAuraSelfScale = value
                     BBP.RefreshBuffFrame()
@@ -1351,7 +1355,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                             BBP.PartyPointer(frame)
                         elseif element == "hideNpcMurlocScale" or element == "hideNpcMurlocYPos" then
                             BBP.HideNPCs(frame, nameplate)
-                        elseif element == "nameplateAuraEnlargedScale" or element == "nameplateAuraCompactedScale" or element == "nameplateAuraBuffScale" or element == "nameplateAuraDebuffScale" or element == "nameplateAuraBuffSelfScale" or element == "nameplateAuraDebuffSelfScale" then
+                        elseif element == "nameplateAuraEnlargedScale" or element == "nameplateKeyAuraScale" or element == "nameplateAuraCompactedScale" or element == "nameplateAuraBuffScale" or element == "nameplateAuraDebuffScale" or element == "nameplateAuraBuffSelfScale" or element == "nameplateAuraDebuffSelfScale" then
                             BBP.RefUnitAuraTotally(frame)
                         -- Fake name
                         elseif element == "fakeNameXPos" or element == "fakeNameYPos" or element == "fakeNameFriendlyXPos" or element == "fakeNameFriendlyYPos" then
@@ -1370,16 +1374,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                                 --BBP.CreateTotemComponents(frame, 30)
                                 BBP.ApplyTotemIconsAndColorNameplate(frame, frame.unit)
                             else
-                                if axis then
-                                    local yPosAdjustment = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown and yPos + 4 or yPos
-                                    if BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown then
-                                        frame.totemIndicator:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 4)
-                                    else
-                                        frame.totemIndicator:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 0)
-                                    end
-                                else
-                                    frame.totemIndicator:SetScale(value)
-                                end
+                                BBP.UpdateTotemPos(frame)
                             end
                         -- Cast Timer Pos and Scale
                         elseif element == "castTimer" then
@@ -1646,6 +1641,94 @@ local function RefreshTooltip(widget, title, mainText, subText, anchor, cvarName
     GameTooltip:Show()
 end
 
+-- Function to show the confirmation popup with dynamic profile information
+local function ShowProfileConfirmation(profileName, profileFunction, additionalNote)
+    local noteText = additionalNote or ""
+    local confirmationText
+    if profileName == "Starter Profile" or profileName == "Blitz Profile" then
+        confirmationText = titleText .. "Are you sure you want to enable the " .. profileName .. "?\n\n" .. noteText .. "Click yes to apply and Reload UI."
+    else
+        confirmationText = titleText .. "This action will delete all settings and apply " .. profileName .. "'s profile and reload the UI.\n\n" .. noteText .. "Are you sure you want to continue?"
+    end
+    StaticPopupDialogs["BBP_CONFIRM_PROFILE"].text = confirmationText
+    StaticPopup_Show("BBP_CONFIRM_PROFILE", nil, nil, { func = profileFunction })
+end
+
+local CLASS_COLORS = {
+    ROGUE = "|cfffff569",
+    WARRIOR = "|cffc79c6e",
+    MAGE = "|cff40c7eb",
+    DRUID = "|cffff7d0a",
+    HUNTER = "|cffabd473",
+    PRIEST = "|cffffffff",
+    WARLOCK = "|cff8787ed",
+    SHAMAN = "|cff0070de",
+    PALADIN = "|cfff58cba",
+    DEATHKNIGHT = "|ffc41f3b",
+    MONK = "|cff00ff96",
+    DEMONHUNTER = "|cffa330c9",
+    EVOKER = "|cff33937f",
+    STARTER = "|cff32cd32",
+    BLITZ = "|cffff8000",
+    MYTHIC = "|cff7dd1c2",
+}
+
+local CLASS_ICONS = {
+    ROGUE = "groupfinder-icon-class-rogue",
+    WARRIOR = "groupfinder-icon-class-warrior",
+    MAGE = "groupfinder-icon-class-mage",
+    DRUID = "groupfinder-icon-class-druid",
+    HUNTER = "groupfinder-icon-class-hunter",
+    PRIEST = "groupfinder-icon-class-priest",
+    WARLOCK = "groupfinder-icon-class-warlock",
+    SHAMAN = "groupfinder-icon-class-shaman",
+    PALADIN = "groupfinder-icon-class-paladin",
+    DEATHKNIGHT = "groupfinder-icon-class-deathknight",
+    MONK = "groupfinder-icon-class-monk",
+    DEMONHUNTER = "groupfinder-icon-class-demonhunter",
+    EVOKER = "groupfinder-icon-class-evoker",
+    STARTER = "newplayerchat-chaticon-newcomer",
+    BLITZ = "questlog-questtypeicon-pvp",
+    MYTHIC = "worldquest-icon-dungeon",
+}
+
+local function CreateClassButton(parent, class, name, twitchName, onClickFunc)
+    local bbpParent = parent == BetterBlizzPlates
+    local btnWidth, btnHeight = bbpParent and 96 or 150, bbpParent and 22 or  30
+    local button = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
+    button:SetSize(btnWidth, btnHeight)
+
+    local dontIncludeProfileText = bbpParent and "" or " Profile"
+    local color = CLASS_COLORS[class] or "|cffffffff"
+    local icon = CLASS_ICONS[class] or "groupfinder-icon-role-leader"
+
+    button:SetText(string.format("|A:%s:16:16|a %s%s|r", icon, color, name..dontIncludeProfileText))
+    button:SetNormalFontObject("GameFontNormal")
+    button:SetHighlightFontObject("GameFontHighlight")
+    local a,b,c = button.Text:GetFont()
+    button.Text:SetFont(a,b,"OUTLINE")
+    local a,b,c,d,e = button.Text:GetPoint()
+    button.Text:SetPoint(a,b,c,d,e-0.6)
+
+    button:SetScript("OnClick", function()
+        if onClickFunc then
+            onClickFunc()
+        end
+    end)
+
+    if class == "STARTER" then
+        CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), "A basic starter profile that only enables the few things you need.\n\nIntended to work as a very minimal quick start that can be built upon.", nil, "ANCHOR_TOP")
+    elseif class == "BLITZ" then
+        CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), "A more advanced profile enabling a few more settings and customizing things a bit more.\n\nGreat for Battlegrounds (and Arenas) with Class Icons showing Healers, Tanks and Battleground Objectives.", nil, "ANCHOR_TOP")
+    elseif class == "MYTHIC" then
+        CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), "A great, well-rounded profile made by |cffc79c6eJovelo|r that enhances the default Blizzard nameplates.\n\nGreat for all types of content with Mythic+ Season 2 NPC nameplate colors included.", nil, "ANCHOR_TOP")
+    else
+        CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), string.format("Enable all of %s's profile settings.", name), string.format("www.twitch.tv/%s", twitchName), "ANCHOR_TOP")
+    end
+
+    return button
+end
+
 local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableName)
     -- Frame to hold all import/export elements
     local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
@@ -1759,6 +1842,10 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
 
 
     importBtn:SetScript("OnClick", function()
+        if InCombatLockdown() then
+            print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Leave combat to Import")
+            return
+        end
         local importString = importBox:GetText()
         local profileData, errorMessage, bypass = BBP.ImportProfile(importString, tableName)
         if errorMessage then
@@ -1777,9 +1864,13 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
                         dataTable[k] = v -- Populate with new data
                     end
                 end
-                print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: " .. title .. " imported successfully. While still BETA this requires a reload to load in new lists.")
+                --print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: " .. title .. " imported successfully. While still BETA this requires a reload to load in new lists.")
             end
             BetterBlizzPlatesDB.scStart = true
+            if BetterBlizzPlatesDB.friendlyNameplatesEnabledOnExport then
+                C_CVar.SetCVar("nameplateShowFriends", "1")
+                BetterBlizzPlatesDB.friendlyNameplatesEnabledOnExport = nil
+            end
             StaticPopup_Show("BBP_CONFIRM_RELOAD")
         end
     end)
@@ -5714,84 +5805,83 @@ local function guiGeneralTab()
     partySpecScale:SetPoint("TOPLEFT", partyIDScale, "BOTTOMLEFT", 0, -11)
     CreateTooltipTwo(partySpecScale, "Arena Spec Size", "Size of the friendly spec name text on top of nameplate during arena.")
 
+
+    local btnGap = 3
+    local starterButton = CreateClassButton(BetterBlizzPlates, "STARTER", "Starter", nil, function()
+        ShowProfileConfirmation("Starter Profile", BBP.StarterProfile)
+    end)
+    starterButton:SetPoint("TOPLEFT", SettingsPanel, "BOTTOMLEFT", 16, 38)
+
+    local blitzButton = CreateClassButton(BetterBlizzPlates, "BLITZ", "Blitz", nil, function()
+        ShowProfileConfirmation("Blitz Profile", BBP.BlitzProfile)
+    end)
+    blitzButton:SetPoint("LEFT", starterButton, "RIGHT", btnGap, 0)
+
+    local mythicButton = CreateClassButton(BetterBlizzPlates, "MYTHIC", "Mythic", nil, function()
+        ShowProfileConfirmation("Mythic Profile", BBP.MythicProfile)
+    end)
+    mythicButton:SetPoint("LEFT", blitzButton, "RIGHT", btnGap, 0)
+
+    local aeghisButton = CreateClassButton(BetterBlizzPlates, "MAGE", "Aeghis", "aeghis", function()
+        ShowProfileConfirmation("Aeghis Profile", BBP.AeghisProfile)
+    end)
+    aeghisButton:SetPoint("LEFT", mythicButton, "RIGHT", btnGap, 0)
+
+    local kalvishButton = CreateClassButton(BetterBlizzPlates, "ROGUE", "Kalvish", "kalvish", function()
+        ShowProfileConfirmation("Kalvish Profile", BBP.KalvishProfile)
+    end)
+    kalvishButton:SetPoint("LEFT", aeghisButton, "RIGHT", btnGap, 0)
+
+    local magnuszButton = CreateClassButton(BetterBlizzPlates, "WARRIOR", "Magnusz", "magnusz", function()
+        ShowProfileConfirmation("Magnusz Profile", BBP.MagnuszProfile)
+    end)
+    magnuszButton:SetPoint("LEFT", kalvishButton, "RIGHT", btnGap, 0)
+
+    local mmarkersButton = CreateClassButton(BetterBlizzPlates, "DRUID", "Mmarkers", "mmarkers", function()
+        ShowProfileConfirmation("Mmarkers Profile", BBP.MmarkersProfile)
+    end)
+    mmarkersButton:SetPoint("LEFT", magnuszButton, "RIGHT", btnGap, 0)
+
+    local nahjButton = CreateClassButton(BetterBlizzPlates, "ROGUE", "Nahj", "nahj", function()
+        ShowProfileConfirmation("Nahj Profile", BBP.NahjProfile)
+    end)
+    nahjButton:SetPoint("LEFT", mmarkersButton, "RIGHT", btnGap, 0)
+
+    local snupyButton = CreateClassButton(BetterBlizzPlates, "DRUID", "Snupy", "snupy", function()
+        ShowProfileConfirmation("Snupy Profile", BBP.SnupyProfile)
+    end)
+    snupyButton:SetPoint("LEFT", nahjButton, "RIGHT", btnGap, 0)
+
+
+
+
+
     ----------------------
     -- Reload etc
     ----------------------
     local reloadUiButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     reloadUiButton:SetText("Reload UI")
-    reloadUiButton:SetWidth(85)
-    reloadUiButton:SetPoint("TOP", BetterBlizzPlates, "BOTTOMRIGHT", -140, -9)
+    reloadUiButton:SetWidth(96)
+    reloadUiButton:SetPoint("RIGHT", SettingsPanel.CloseButton, "LEFT", -btnGap, 0)
     reloadUiButton:SetScript("OnClick", function()
         BetterBlizzPlatesDB.reopenOptions = true
         ReloadUI()
     end)
 
-    -- Function to show the confirmation popup with dynamic profile information
-    local function ShowProfileConfirmation(profileName, profileFunction, additionalNote)
-        local noteText = additionalNote or ""
-        local confirmationText = titleText .. "This action will delete all settings and apply " .. profileName .. "'s profile and reload the UI.\n\n" .. noteText .. "Are you sure you want to continue?"
-        StaticPopupDialogs["BBP_CONFIRM_PROFILE"].text = confirmationText
-        StaticPopup_Show("BBP_CONFIRM_PROFILE", nil, nil, { func = profileFunction })
+    if not SettingsPanel.CloseButton.origPoint then
+        SettingsPanel.CloseButton.origPoint, SettingsPanel.CloseButton.origRel, SettingsPanel.CloseButton.origAnchor, SettingsPanel.CloseButton.origX, SettingsPanel.CloseButton.origY = SettingsPanel.CloseButton:GetPoint()
     end
-
-    -- Create the buttons and hook them to show the confirmation popup
-    local snupyProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    snupyProfileButton:SetText("Snupy")
-    snupyProfileButton:SetWidth(80)
-    snupyProfileButton:SetPoint("RIGHT", reloadUiButton, "LEFT", -25, 0)
-    snupyProfileButton:SetScript("OnClick", function()
-        ShowProfileConfirmation("Snupy", BBP.SnupyProfile)
+    SettingsPanel.CloseButton:ClearAllPoints()
+    SettingsPanel.CloseButton:SetPoint("TOPRIGHT", BetterBlizzPlates, "BOTTOMRIGHT", 6, -41)
+    BetterBlizzPlates:HookScript("OnShow", function()
+        SettingsPanel.CloseButton:ClearAllPoints()
+        SettingsPanel.CloseButton:SetPoint("TOPRIGHT", BetterBlizzPlates, "BOTTOMRIGHT", 6, -41)
     end)
-    CreateTooltipTwo(snupyProfileButton, "|A:groupfinder-icon-class-druid:16:16|a |cffff7d0aSnupy Profile|r", "Enable all of Snupy's profile settings.", "www.twitch.tv/snupy", "ANCHOR_TOP")
-
-    local nahjProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    nahjProfileButton:SetText("Nahj")
-    nahjProfileButton:SetWidth(80)
-    nahjProfileButton:SetPoint("RIGHT", snupyProfileButton, "LEFT", -5, 0)
-    nahjProfileButton:SetScript("OnClick", function()
-        ShowProfileConfirmation("Nahj", BBP.NahjProfile, "|cff32f795NOTE: Nahj only shows his own auras on nameplates and has them hidden on NPCs.\n\nTo enable more default settings go to Nameplate Auras after setting profile and check \"Blizzard Default Filter\" under Show DEBUFFS on Enemy Nameplates and uncheck \"Hide auras on NPCs\".|r\n\n")
+    BetterBlizzPlates:HookScript("OnHide", function()
+        if BetterBlizzFrames and BetterBlizzFrames:IsShown() then return end
+        SettingsPanel.CloseButton:ClearAllPoints()
+        SettingsPanel.CloseButton:SetPoint(SettingsPanel.CloseButton.origPoint, SettingsPanel.CloseButton.origRel, SettingsPanel.CloseButton.origAnchor, SettingsPanel.CloseButton.origX, SettingsPanel.CloseButton.origY)
     end)
-    CreateTooltipTwo(nahjProfileButton, "|A:groupfinder-icon-class-rogue:16:16|a |cfffff569Nahj Profile|r", "Enable all of Nahj's profile settings.", "www.twitch.tv/nahj", "ANCHOR_TOP")
-
-    local mmarkersProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    mmarkersProfileButton:SetText("Mmarkers")
-    mmarkersProfileButton:SetWidth(80)
-    mmarkersProfileButton:SetPoint("RIGHT", nahjProfileButton, "LEFT", -5, 0)
-    mmarkersProfileButton:SetScript("OnClick", function()
-        ShowProfileConfirmation("Mmarkers", BBP.MmarkersProfile)
-    end)
-    CreateTooltipTwo(mmarkersProfileButton, "|A:groupfinder-icon-class-druid:16:16|a |cffff7d0aMmarkers Profile|r", "Enable all of Mmarkers' profile settings.", "www.twitch.tv/mmarkers", "ANCHOR_TOP")
-
-    local magnuszProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    magnuszProfileButton:SetText("Magnusz")
-    magnuszProfileButton:SetWidth(80)
-    magnuszProfileButton:SetPoint("RIGHT", mmarkersProfileButton, "LEFT", -5, 0)
-    magnuszProfileButton:SetScript("OnClick", function()
-        ShowProfileConfirmation("Magnusz", BBP.MagnuszProfile)
-    end)
-    CreateTooltipTwo(magnuszProfileButton, "|A:groupfinder-icon-class-warrior:16:16|a |cffc79c6eMagnusz Profile|r", "Enable all of Magnusz's profile settings.", "www.twitch.tv/magnusz", "ANCHOR_TOP")
-
-    local aeghisProfileButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    aeghisProfileButton:SetText("Aeghis")
-    aeghisProfileButton:SetWidth(80)
-    aeghisProfileButton:SetPoint("RIGHT", magnuszProfileButton, "LEFT", -5, 0)
-    aeghisProfileButton:SetScript("OnClick", function()
-        ShowProfileConfirmation("Aeghis", BBP.AeghisProfile)
-    end)
-    CreateTooltipTwo(aeghisProfileButton, "|A:groupfinder-icon-class-mage:16:16|a |cff3fc7ebAeghis Profile|r", "Enable all of Aeghis' profile settings.", "www.twitch.tv/aeghis", "ANCHOR_TOP")
-
-    local profileText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    profileText:SetPoint("RIGHT", aeghisProfileButton, "LEFT", -5, 0)
-    profileText:SetText("Profiles:")
-
-    local resetBBPButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    resetBBPButton:SetText("Reset BetterBlizzPlates")
-    resetBBPButton:SetWidth(165)
-    resetBBPButton:SetPoint("RIGHT", reloadUiButton, -615, 0)
-    resetBBPButton:SetScript("OnClick", function()
-        StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
-    end)
-    CreateTooltipTwo(resetBBPButton, "Reset", "Reset ALL BetterBlizzPlates settings")
 end
 
 local function guiPositionAndScale()
@@ -6897,7 +6987,7 @@ local function guiPositionAndScale()
     -- Extended Settings Frame
     anchorSubClassIcon.extendedSettings = CreateFrame("Frame", nil, BetterBlizzPlatesSubPanel, "DefaultPanelFlatTemplate")
     -- anchorSubClassIcon.extendedSettings:SetAllPoints(anchorSubClassIcon.border)
-    anchorSubClassIcon.extendedSettings:SetSize(anchorSubClassIcon.border:GetHeight()+40, 375)
+    anchorSubClassIcon.extendedSettings:SetSize(anchorSubClassIcon.border:GetHeight()+40, 395)
     anchorSubClassIcon.extendedSettings:SetPoint("BOTTOMRIGHT", anchorSubClassIcon.border, "BOTTOMLEFT", 87, -115)
     anchorSubClassIcon.extendedSettings:SetFrameStrata("HIGH")
     anchorSubClassIcon.extendedSettings:SetIgnoreParentAlpha(true)
@@ -6926,8 +7016,12 @@ local function guiPositionAndScale()
     classIndicatorSpecIcon:SetPoint("TOPLEFT", anchorSubClassIcon.extendedSettings, "TOPLEFT", 10, -23)
     CreateTooltip(classIndicatorSpecIcon, "Show spec instead of class icon.")
 
+    anchorSubClassIcon.classIndicatorOnlyHealer = CreateCheckbox("classIndicatorOnlyHealer", "Only Show Healer", anchorSubClassIcon.extendedSettings)
+    anchorSubClassIcon.classIndicatorOnlyHealer:SetPoint("TOPLEFT", classIndicatorSpecIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(anchorSubClassIcon.classIndicatorOnlyHealer, "Only show on Healers")
+
     local classIndicatorHealer = CreateCheckbox("classIndicatorHealer", "Show cross on Healer", anchorSubClassIcon.extendedSettings)
-    classIndicatorHealer:SetPoint("TOPLEFT", classIndicatorSpecIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    classIndicatorHealer:SetPoint("TOPLEFT", anchorSubClassIcon.classIndicatorOnlyHealer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(classIndicatorHealer, "Show cross instead of class/spec icon on Healers")
 
     anchorSubClassIcon.classIndicatorTank = CreateCheckbox("classIndicatorTank", "Show shield on Tank", anchorSubClassIcon.extendedSettings)
@@ -7477,6 +7571,15 @@ local function guiPositionAndScale()
         BetterBlizzPlatesDB.reopenOptions = true
         ReloadUI()
     end)
+
+    BetterBlizzPlatesSubPanel.resetBBPButton = CreateFrame("Button", nil, BetterBlizzPlatesSubPanel, "UIPanelButtonTemplate")
+    BetterBlizzPlatesSubPanel.resetBBPButton:SetText("Reset BetterBlizzPlates")
+    BetterBlizzPlatesSubPanel.resetBBPButton:SetWidth(165)
+    BetterBlizzPlatesSubPanel.resetBBPButton:SetPoint("RIGHT", BetterBlizzPlatesSubPanel.reloadButton, "LEFT", -528, 0)
+    BetterBlizzPlatesSubPanel.resetBBPButton:SetScript("OnClick", function()
+        StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
+    end)
+    CreateTooltipTwo(BetterBlizzPlatesSubPanel.resetBBPButton, "Reset", "Reset ALL BetterBlizzPlates settings")
 
     BetterBlizzPlatesSubPanel.rightClickTip = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     BetterBlizzPlatesSubPanel.rightClickTip:SetPoint("RIGHT", BetterBlizzPlatesSubPanel.reloadButton, "LEFT", -80, -2)
@@ -9537,8 +9640,31 @@ local function guiNameplateAuras()
     nameplateAuraCompactedSquare:SetPoint("RIGHT", compactedAuraIcon, "LEFT", -60, 1)
     CreateTooltipTwo(nameplateAuraCompactedSquare, "Halve Compacted Aura", "Halve the Compacted Aura.", "Half-sized auras will count as half towards \"max buffs per row\" and if two are next to eachother they will combine taking up the space of 1 normal aura slot.")
 
+    local nameplateAuraKeyAuraPositionEnabled = CreateCheckbox("nameplateAuraKeyAuraPositionEnabled", "Enable Key Auras", enableNameplateAuraCustomisation)
+    nameplateAuraKeyAuraPositionEnabled:SetPoint("TOPLEFT", nameplateAuraCompactedSquare, "BOTTOMLEFT", 5, -2)
+    CreateTooltipTwo(nameplateAuraKeyAuraPositionEnabled, "Enable Key Auras", "Show and move CC and Important Buffs to the right of healthbar similar to BigDebuffs.", "All CC will be moved, but unlike BigDebuffs, this location is intended only for a select number of very important buffs, such as immunities. Smaller, less urgent buffs will either be displayed in their normal position (if enabled) or hidden completely (if disabled)..\n\nExpect to a see a lot of tweaks to this. WIP.")
+    nameplateAuraKeyAuraPositionEnabled:SetScale(1.4)
 
 
+    local nameplateKeyAurasXPos = CreateSlider(nameplateAuraKeyAuraPositionEnabled, "Key Aura X Offset", -80, 80, 1, "nameplateKeyAurasXPos", "X")
+    nameplateKeyAurasXPos:SetPoint("TOPLEFT", nameplateAuraKeyAuraPositionEnabled, "BOTTOMLEFT", 15, -14)
+    CreateTooltipTwo(nameplateKeyAurasXPos, "Key Aura X Offset", "X Offset for Key Auras.\nRight click to input own values.")
+    nameplateKeyAurasXPos:SetScale(0.7)
+
+    local nameplateKeyAurasYPos = CreateSlider(nameplateAuraKeyAuraPositionEnabled, "Key Aura Y Offset", -80, 80, 1, "nameplateKeyAurasYPos", "Y")
+    nameplateKeyAurasYPos:SetPoint("TOPLEFT", nameplateKeyAurasXPos, "BOTTOMLEFT", 0, -17)
+    CreateTooltipTwo(nameplateKeyAurasYPos, "Key Aura Y Offset", "Y Offset for Key Auras.\nRight click to input own values.")
+    nameplateKeyAurasYPos:SetScale(0.7)
+
+    local nameplateKeyAuraScale = CreateSlider(nameplateAuraKeyAuraPositionEnabled, "Key Aura Size", 0.6, 2.2, 0.01, "nameplateKeyAuraScale")
+    nameplateKeyAuraScale:SetPoint("TOPLEFT", nameplateKeyAurasYPos, "BOTTOMLEFT", 0, -17)
+    CreateTooltipTwo(nameplateKeyAuraScale, "Key Aura Size", "The size of Key Auras like CC and very Important Buffs.")
+    nameplateKeyAuraScale:SetScale(0.7)
+
+    nameplateAuraKeyAuraPositionEnabled:HookScript("OnClick", function()
+        BBP.UpdateImportantBuffsAndCCTables()
+        CheckAndToggleCheckboxes(nameplateAuraKeyAuraPositionEnabled)
+    end)
 
     local prdText = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     prdText:SetPoint("BOTTOMLEFT", nameplateAuraCountScale, "BOTTOMLEFT", 0, -30)
@@ -10905,6 +11031,22 @@ end
 ------------------------------------------------------------
 -- GUI Setup
 ------------------------------------------------------------
+local function CombatOnGUICreation()
+    if InCombatLockdown() then
+        print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Waiting for combat to drop before opening settings for the first time.")
+        if not BBP.waitingCombat then
+            local f = CreateFrame("Frame")
+            f:RegisterEvent("PLAYER_REGEN_ENABLED")
+            f:SetScript("OnEvent", function(self)
+                self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+                BBP.LoadGUI()
+            end)
+            BBP.waitingCombat = true
+        end
+        return true
+    end
+end
+
 function BBP.InitializeOptions()
     if not BetterBlizzPlates then
         BetterBlizzPlates = CreateFrame("Frame")
@@ -10925,10 +11067,7 @@ function BBP.InitializeOptions()
         loadGUI:SetPoint("CENTER", BetterBlizzPlates, "CENTER", -18, 6)
         BetterBlizzPlates.loadGUI = loadGUI
         loadGUI:SetScript("OnClick", function(self)
-            if InCombatLockdown() then
-                print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Leave combat to open settings for the first time.")
-                return
-            end
+            if CombatOnGUICreation() then return end
             BBP.LoadGUI()
             titleText:Hide()
             self:Hide()
@@ -10943,10 +11082,8 @@ function BBP.LoadGUI()
         BetterBlizzPlatesDB.hasNotOpenedSettings = nil
         return
     end
-    if InCombatLockdown() then
-        print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Leave combat to open settings for the first time.")
-        return
-    end
+    if CombatOnGUICreation() then return end
+
     guiGeneralTab()
     guiPositionAndScale()
     guiCastbar()
@@ -11071,7 +11208,7 @@ function BBP.CreateIntroMessageWindow()
 
     local description1 = BBP.IntroMessageWindow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     description1:SetPoint("TOP", welcomeText, "BOTTOM", 0, -10)
-    description1:SetText("Thank you for trying out my addon!\n\nBelow you can pick a profile to start with or you can exit and customize everything by yourself.\n\nIf you just want a quick start with only the essentials I highly recommend the minimal Starter Profile.")
+    description1:SetText("Thank you for trying out my addon!\n\nBelow you can pick a profile to start with or you can exit and customize everything by yourself.\n\nI highly recommend the minimal |A:newplayerchat-chaticon-newcomer:16:16|a|cff32cd32Starter Profile|r if you just\nwant a quick start with only the essentials!")
     description1:SetJustifyH("CENTER")
     description1:SetWidth(410)
 
@@ -11085,98 +11222,65 @@ function BBP.CreateIntroMessageWindow()
     end
 
     -- Create button for your profile
-    local myProfileButton = CreateFrame("Button", nil, BBP.IntroMessageWindow, "GameMenuButtonTemplate")
-    myProfileButton:SetPoint("TOP", description1, "BOTTOM", 0, -20)
-    myProfileButton:SetSize(btnWidth, btnHeight)
-    myProfileButton:SetText("Starter Profile")
-    myProfileButton:SetNormalFontObject("GameFontNormal")
-    myProfileButton:SetHighlightFontObject("GameFontHighlight")
-    myProfileButton:SetScript("OnClick", function()
+    local starterButton = CreateClassButton(BBP.IntroMessageWindow, "STARTER", "Starter", nil, function()
         ShowProfileConfirmation("Starter Profile", BBP.StarterProfile)
     end)
-    CreateTooltipTwo(myProfileButton, "Starter Profile", "A basic starter profile that only enables the few things you need.\n\nIntended to work as a very minimal quick start that can be built upon.")
+    starterButton:SetPoint("TOP", description1, "BOTTOM", 0, -20)
 
-    local blitzButton = CreateFrame("Button", nil, BBP.IntroMessageWindow, "GameMenuButtonTemplate")
-    blitzButton:SetPoint("TOP", myProfileButton, "BOTTOM", 0, btnGap)
-    blitzButton:SetSize(btnWidth, btnHeight)
-    blitzButton:SetText("Blitz Profile")
-    blitzButton:SetNormalFontObject("GameFontNormal")
-    blitzButton:SetHighlightFontObject("GameFontHighlight")
-    blitzButton:SetScript("OnClick", function()
+    local blitzButton = CreateClassButton(BBP.IntroMessageWindow, "BLITZ", "Blitz", nil, function()
         ShowProfileConfirmation("Blitz Profile", BBP.BlitzProfile)
     end)
-    CreateTooltipTwo(blitzButton, "Blitz Profile", "A more advanced profile enabling a few more settings and customizing things a bit more.\n\nGreat for Battlegrounds (and Arenas) with Class Icons showing Healers, Tanks and Battleground Objectives.")
+    blitzButton:SetPoint("TOP", starterButton, "BOTTOM", 0, btnGap)
+
+    local mythicButton = CreateClassButton(BBP.IntroMessageWindow, "MYTHIC", "Mythic", nil, function()
+        ShowProfileConfirmation("Mythic Profile", BBP.MythicProfile)
+    end)
+    mythicButton:SetPoint("TOP", blitzButton, "BOTTOM", 0, btnGap)
 
     local orText = BBP.IntroMessageWindow:CreateFontString(nil, "OVERLAY", "GameFontNormalMed2")
-    orText:SetPoint("CENTER", blitzButton, "BOTTOM", 0, -20)
+    orText:SetPoint("CENTER", mythicButton, "BOTTOM", 0, -20)
     orText:SetText("OR")
     orText:SetJustifyH("CENTER")
 
-    local button = CreateFrame("Button", nil, BBP.IntroMessageWindow, "GameMenuButtonTemplate")
-    button:SetSize(btnWidth, btnHeight)
-    button:SetText("|A:groupfinder-icon-class-mage:16:16|a |cff3fc7ebAeghis Profile|r")
-    button:SetPoint("TOP", blitzButton, "BOTTOM", 0, -40)
-    button:SetNormalFontObject("GameFontNormal")
-    button:SetHighlightFontObject("GameFontHighlight")
-    button:SetScript("OnClick", function()
+    local aeghisButton = CreateClassButton(BBP.IntroMessageWindow, "MAGE", "Aeghis", "aeghis", function()
         ShowProfileConfirmation("Aeghis Profile", BBP.AeghisProfile)
     end)
-    CreateTooltipTwo(button, "|A:groupfinder-icon-class-mage:16:16|a |cff3fc7ebAeghis Profile|r", "www.twitch.tv/aeghis")
+    aeghisButton:SetPoint("TOP", mythicButton, "BOTTOM", 0, -40)
 
+    local kalvishButton = CreateClassButton(BBP.IntroMessageWindow, "ROGUE", "Kalvish", "kalvish", function()
+        ShowProfileConfirmation("Kalvish Profile", BBP.KalvishProfile)
+    end)
+    kalvishButton:SetPoint("TOP", aeghisButton, "BOTTOM", 0, btnGap)
 
-    local button2 = CreateFrame("Button", nil, BBP.IntroMessageWindow, "GameMenuButtonTemplate")
-    button2:SetSize(btnWidth, btnHeight)
-    button2:SetText("|A:groupfinder-icon-class-warrior:16:16|a |cffc79c6eMagnusz Profile|r")
-    button2:SetPoint("TOP", button, "BOTTOM", 0, btnGap)
-    button2:SetNormalFontObject("GameFontNormal")
-    button2:SetHighlightFontObject("GameFontHighlight")
-    button2:SetScript("OnClick", function()
+    local magnuszButton = CreateClassButton(BBP.IntroMessageWindow, "WARRIOR", "Magnusz", "magnusz", function()
         ShowProfileConfirmation("Magnusz Profile", BBP.MagnuszProfile)
     end)
-    CreateTooltipTwo(button2, "|A:groupfinder-icon-class-warrior:16:16|a |cffc79c6eMagnusz Profile|r", "www.twitch.tv/magnusz")
+    magnuszButton:SetPoint("TOP", kalvishButton, "BOTTOM", 0, btnGap)
 
-    local button3 = CreateFrame("Button", nil, BBP.IntroMessageWindow, "GameMenuButtonTemplate")
-    button3:SetSize(btnWidth, btnHeight)
-    button3:SetText("|A:groupfinder-icon-class-druid:16:16|a |cffff7d0aMmarkers Profile|r")
-    button3:SetPoint("TOP", button2, "BOTTOM", 0, btnGap)
-    button3:SetNormalFontObject("GameFontNormal")
-    button3:SetHighlightFontObject("GameFontHighlight")
-    button3:SetScript("OnClick", function()
+    local mmarkersButton = CreateClassButton(BBP.IntroMessageWindow, "DRUID", "Mmarkers", "mmarkers", function()
         ShowProfileConfirmation("Mmarkers Profile", BBP.MmarkersProfile)
     end)
-    CreateTooltipTwo(button3, "|A:groupfinder-icon-class-druid:16:16|a |cffff7d0aMmarkers Profile|r", "www.twitch.tv/mmarkers")
+    mmarkersButton:SetPoint("TOP", magnuszButton, "BOTTOM", 0, btnGap)
 
-    local button4 = CreateFrame("Button", nil, BBP.IntroMessageWindow, "GameMenuButtonTemplate")
-    button4:SetSize(btnWidth, btnHeight)
-    button4:SetText("|A:groupfinder-icon-class-rogue:16:16|a |cfffff569Nahj Profile|r")
-    button4:SetPoint("TOP", button3, "BOTTOM", 0, btnGap)
-    button4:SetNormalFontObject("GameFontNormal")
-    button4:SetHighlightFontObject("GameFontHighlight")
-    button4:SetScript("OnClick", function()
+    local nahjButton = CreateClassButton(BBP.IntroMessageWindow, "ROGUE", "Nahj", "nahj", function()
         ShowProfileConfirmation("Nahj Profile", BBP.NahjProfile)
     end)
-    CreateTooltipTwo(button4, "|A:groupfinder-icon-class-rogue:16:16|a |cfffff569Nahj Profile|r", "www.twitch.tv/nahj")
+    nahjButton:SetPoint("TOP", mmarkersButton, "BOTTOM", 0, btnGap)
 
-    local button5 = CreateFrame("Button", nil, BBP.IntroMessageWindow, "GameMenuButtonTemplate")
-    button5:SetSize(btnWidth, btnHeight)
-    button5:SetText("|A:groupfinder-icon-class-druid:16:16|a |cffff7d0aSnupy Profile|r")
-    button5:SetPoint("TOP", button4, "BOTTOM", 0, btnGap)
-    button5:SetNormalFontObject("GameFontNormal")
-    button5:SetHighlightFontObject("GameFontHighlight")
-    button5:SetScript("OnClick", function()
-        ShowProfileConfirmation("Snupy Profile", BBP.NahjProfile)
+    local snupyButton = CreateClassButton(BBP.IntroMessageWindow, "DRUID", "Snupy", "snupy", function()
+        ShowProfileConfirmation("Snupy Profile", BBP.SnupyProfile)
     end)
-    CreateTooltipTwo(button5, "|A:groupfinder-icon-class-druid:16:16|a |cffff7d0aSnupy Profile|r", "www.twitch.tv/snupy")
+    snupyButton:SetPoint("TOP", nahjButton, "BOTTOM", 0, btnGap)
 
     local orText2 = BBP.IntroMessageWindow:CreateFontString(nil, "OVERLAY", "GameFontNormalMed2")
-    orText2:SetPoint("CENTER", button5, "BOTTOM", 0, -20)
+    orText2:SetPoint("CENTER", snupyButton, "BOTTOM", 0, -20)
     orText2:SetText("OR")
     orText2:SetJustifyH("CENTER")
 
     local buttonLast = CreateFrame("Button", nil, BBP.IntroMessageWindow, "GameMenuButtonTemplate")
     buttonLast:SetSize(btnWidth, btnHeight)
     buttonLast:SetText("Exit, No Profile.")
-    buttonLast:SetPoint("TOP", button5, "BOTTOM", 0, -40)
+    buttonLast:SetPoint("TOP", snupyButton, "BOTTOM", 0, -40)
     buttonLast:SetNormalFontObject("GameFontNormal")
     buttonLast:SetHighlightFontObject("GameFontHighlight")
     buttonLast:SetScript("OnClick", function()
@@ -11188,6 +11292,8 @@ function BBP.CreateIntroMessageWindow()
         end
     end)
     CreateTooltipTwo(buttonLast, "Exit, No Profile", "Exit and customize everything yourself.\n\nYou can always change your mind later!")
+    local f,s,o = buttonLast.Text:GetFont()
+    buttonLast.Text:SetFont(f,s,"OUTLINE")
 
     BBP.IntroMessageWindow.CloseButton:HookScript("OnClick", function()
         if not BetterBlizzPlates.guiLoaded then
@@ -11196,23 +11302,6 @@ function BBP.CreateIntroMessageWindow()
             Settings.OpenToCategory(BBP.category.ID)
         end
     end)
-
-    local function SetFontWithOutline(fontString)
-        local font, size = fontString:GetFont()
-        fontString:SetFont(font, size, "OUTLINE")
-    end
-
-    local textElements = {
-        welcomeText, description1, orText, orText2,
-        myProfileButton.Text, blitzButton.Text, button.Text, button2.Text, button3.Text, button4.Text, button5.Text, buttonLast.Text
-    }
-
-    -- Apply outline to all text elements
-    for _, element in ipairs(textElements) do
-        if element then
-            SetFontWithOutline(element)
-        end
-    end
 
     local function AdjustWindowHeight()
         local baseHeight = 334

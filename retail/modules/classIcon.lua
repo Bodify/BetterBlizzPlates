@@ -117,6 +117,7 @@ function BBP.ClassIndicator(frame, foundID, fade)
         config.classIconAlwaysShowHealer = BetterBlizzPlatesDB.classIconAlwaysShowHealer
         config.classIconAlwaysShowTank = BetterBlizzPlatesDB.classIconAlwaysShowTank
         config.classIndicatorHideName = BetterBlizzPlatesDB.classIndicatorHideName
+        config.classIndicatorOnlyHealer = BetterBlizzPlatesDB.classIndicatorOnlyHealer
 
         config.classIndicatorInitialized = true
     end
@@ -199,7 +200,8 @@ function BBP.ClassIndicator(frame, foundID, fade)
     local isTank = config.classIndicatorTank and TankSpecs[specID]
     local alwaysShowTank = config.classIconAlwaysShowTank and TankSpecs[specID]
     local alwaysShowHealer = config.classIconAlwaysShowHealer and HealerSpecs[specID]
-    if not enabledOnThisUnit and (not flagIcon and not alwaysShowHealer and not alwaysShowTank) then
+    local onlyHealer = config.classIndicatorOnlyHealer and HealerSpecs[specID]
+    if not enabledOnThisUnit or not onlyHealer and (not flagIcon and not alwaysShowHealer and not alwaysShowTank) then
         frame.classIndicator:Hide()
         return
     end
@@ -363,14 +365,14 @@ function BBP.ClassIndicator(frame, foundID, fade)
                     frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
                 else
                     frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
-                    frame.classIndicator.icon:SetTexCoord(0.0092, 0.1118, 0.7644, 0.8656) -- circle
+                    frame.classIndicator.icon:SetTexCoord(0.015, 0.1077, 0.7684, 0.8606) -- circle
                 end
             else
                 frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
                 if frame.classIndicator.border.square then
                     frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
                 else
-                    frame.classIndicator.icon:SetTexCoord(0.0092, 0.1118, 0.7644, 0.8656) -- circle
+                    frame.classIndicator.icon:SetTexCoord(0.015, 0.1077, 0.7684, 0.8606) -- circle
                 end
                 if BetterBlizzPlatesDB.classIconHealerIconType == 2 then
                     frame.classIndicator.icon:SetDesaturated(true)
@@ -399,14 +401,14 @@ function BBP.ClassIndicator(frame, foundID, fade)
                 frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
             else
                 frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
-                frame.classIndicator.icon:SetTexCoord(0.0092, 0.1118, 0.7644, 0.8656) -- circle
+                frame.classIndicator.icon:SetTexCoord(0.015, 0.1077, 0.7684, 0.8606) -- circle
             end
         else
             frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
             if frame.classIndicator.border.square then
                 frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
             else
-                frame.classIndicator.icon:SetTexCoord(0.0092, 0.1118, 0.7644, 0.8656) -- circle
+                frame.classIndicator.icon:SetTexCoord(0.015, 0.1077, 0.7684, 0.8606) -- circle
             end
             if BetterBlizzPlatesDB.classIconHealerIconType == 2 then
                 frame.classIndicator.icon:SetDesaturated(true)

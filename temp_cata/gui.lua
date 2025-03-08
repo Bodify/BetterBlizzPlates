@@ -122,13 +122,13 @@ end
 
 local function deepMergeTables(destination, source)
     for k, v in pairs(source) do
-        if type(v) == "table" then
-            if not destination[k] then
+        if destination[k] == nil then
+            if type(v) == "table" then
                 destination[k] = {}
+                deepMergeTables(destination[k], v)
+            else
+                destination[k] = v
             end
-            deepMergeTables(destination[k], v) -- Recursive merge for nested tables
-        else
-            destination[k] = v
         end
     end
 end
@@ -8819,6 +8819,22 @@ end
 ------------------------------------------------------------
 -- GUI Setup
 ------------------------------------------------------------
+local function CombatOnGUICreation()
+    if InCombatLockdown() then
+        print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Leave combat to open settings for the first time.")
+        if not BBP.waitingCombat then
+            local f = CreateFrame("Frame")
+            f:RegisterEvent("PLAYER_REGEN_ENABLED")
+            f:SetScript("OnEvent", function(self)
+                self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+                BBP.LoadGUI()
+            end)
+            BBP.waitingCombat = true
+        end
+        return true
+    end
+end
+
 function BBP.InitializeOptions()
     if not BetterBlizzPlates then
         BetterBlizzPlates = CreateFrame("Frame")
@@ -8839,10 +8855,7 @@ function BBP.InitializeOptions()
         loadGUI:SetPoint("CENTER", BetterBlizzPlates, "CENTER", -18, 6)
         BetterBlizzPlates.loadGUI = loadGUI
         loadGUI:SetScript("OnClick", function(self)
-            if InCombatLockdown() then
-                print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Leave combat to open settings for the first time.")
-                return
-            end
+            if CombatOnGUICreation() then return end
             BBP.LoadGUI()
             titleText:Hide()
             self:Hide()
@@ -8857,10 +8870,8 @@ function BBP.LoadGUI()
         BetterBlizzPlatesDB.hasNotOpenedSettings = nil
         return
     end
-    if InCombatLockdown() then
-        print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Leave combat to open settings for the first time.")
-        return
-    end
+    if CombatOnGUICreation() then return end
+
     guiGeneralTab()
     guiPositionAndScale()
     guiCastbar()

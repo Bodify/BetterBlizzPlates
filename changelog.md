@@ -1,3 +1,18 @@
+# BetterBlizzPlates 1.7.1
+## The War Within
+### New:
+- Nameplate Auras setting "Enable Key Auras". Works similar to BigDebuffs/OmniAuras. Will be seeing a lot of tweaks.
+- Kalvish profile (www.twitch.tv/kalvish)
+- Class Indicator "Only Show Healers" setting to make it possible showing on friendly OR enemy healers only.
+### Tweaks:
+- "Reset BBP" button moved to show in Advanced Settings section.
+- Few more auras in PvP Buffs filter. Again thanks to Zwacky.
+### Bugfix:
+- Fix Compacted auras being Enlarged instead on Personal Resource Bar due to copypaste mistake.
+- Fix Totem Indicator's positioning being wonky during adjustments.
+
+
+
 # BetterBlizzPlates 1.7.0
 ## The War Within
 ### New:

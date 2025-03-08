@@ -40,7 +40,7 @@ local fakeAuras = {
     },
     {
         auraInstanceID = 780,
-        spellId = 204,
+        spellId = 69420,
         icon = 132092,
         duration = 22,
         applications = 1,
@@ -154,7 +154,54 @@ local importantGeneralDebuffs = {
     [383005] = {r = 0, g = 1, b = 0, a = 1}, -- Chrono Loop (Debuff)
 }
 
+local keyAuraList = {
+    [204018] = "defensiveColor",
+    [212800] = "defensiveColor",
+    [31224] = "defensiveColor",
+    [1022] = "defensiveColor",
+    [642] = "defensiveColor",
+    [8178] = "defensiveColor",
+    [213664] = "defensiveColor",
+    [409293] = "defensiveColor",
+    [116849] = "defensiveColor",
+    [186265] = "defensiveColor",
+    [228050] = "defensiveColor",
+    [446035] = "offensiveColor",
+    [389794] = "offensiveColor",
+    [227847] = "offensiveColor",
+    [115192] = "offensiveColor",
+    [45438] = "importantColor",
+    [378078] = "importantColor",
+    [473909] = "importantColor",
+    [209584] = "importantColor",
+    [1221107] = "importantColor",
+    [48707] = "importantColor",
+    [378441] = "importantColor",
+    [213610] = "importantColor",
+    [212295] = "importantColor",
+    [456499] = "importantColor",
+    [408558] = "importantColor",
+    [196555] = "importantColor",
+    [23920] = "importantColor",
+    [378464] = "importantColor",
+    [410358] = "importantColor",
+    [377362] = "importantColor",
+    [444741] = "importantColor",
+    [248519] = "importantColor",
+    [354610] = "importantColor",
+    [353319] = "importantColor",
+    [454863] = "importantColor",
+    [22812] = "importantColor",
+    [359816] = "importantColor",
+    [69420] = true,
+
+    [212182] = true, -- smoke
+    [359053] = true, -- smoke
+}
+
 local importantOffensives = {
+    [190261] = true, -- death wish
+    [80353] = true,
     [194249] = true,
     [389794] = true,
     [216468] = true,
@@ -261,6 +308,8 @@ local importantDefensives = {
     [317929] = importantColor,
     [456499] = importantColor, -- Absolute Serenity
     [473909] = importantColor, -- tree
+    [213664] = importantColor,
+    [269513] = importantColor,
     [1221107] = true,
     [31224] = true,
     [118038] = true,
@@ -577,8 +626,9 @@ function BBP.UpdateImportantBuffsAndCCTables()
     wipe(crowdControl)
 
     local db = BetterBlizzPlatesDB
-    local importantBuffsEnabled = db.otherNpBuffFilterImportantBuffs or db.friendlyNpBuffFilterImportantBuffs or db.personalNpBuffFilterImportantBuffs
-    local importantCCEnabled = db.otherNpdeBuffFilterCC or db.friendlyNpdeBuffFilterCC or db.personalNpdeBuffFilterCC
+    local importantBuffsEnabled = (db.otherNpBuffEnable and db.otherNpBuffFilterImportantBuffs) or (db.friendlyNpBuffEnable and db.friendlyNpBuffFilterImportantBuffs) or (db.personalNpBuffEnable and db.personalNpBuffFilterImportantBuffs)
+    local importantCCEnabled = (db.otherNpdeBuffEnable and db.otherNpdeBuffFilterCC) or (db.friendlyNpdeBuffEnable and db.friendlyNpdeBuffFilterCC) or (db.personalNpdeBuffEnable and db.personalNpdeBuffFilterCC)
+    local moveKeyAuras = db.nameplateAuraKeyAuraPositionEnabled
 
     enlargeAllImportantBuffsFilter = importantBuffsEnabled
     enlargeAllCCsFilter = importantCCEnabled
@@ -613,6 +663,51 @@ function BBP.UpdateImportantBuffsAndCCTables()
             local color = not db.importantBuffsMobilityGlow and true or db.importantBuffsMobilityGlowRGB or importantMobilityColor
             for spellID, value in pairs(importantMobility) do
                 importantBuffs[spellID] = value == true and color or value
+            end
+        end
+    end
+
+    if moveKeyAuras then
+        local checkColors = db.otherNpBuffFilterImportantBuffs or db.friendlyNpBuffFilterImportantBuffs or db.personalNpBuffFilterImportantBuffs
+        for spellID, colorType in pairs(keyAuraList) do
+            local color
+            if checkColors then
+                if colorType == "defensiveColor" then
+                    color = db.importantBuffsDefensives and db.importantBuffsDefensivesGlow and db.importantBuffsDefensivesGlowRGB or true
+                elseif colorType == "offensiveColor" then
+                    color = db.importantBuffsOffensives and db.importantBuffsOffensivesGlow and db.importantBuffsOffensivesGlowRGB or true
+                elseif colorType == "importantColor" then
+                    color = importantColor
+                else
+                    color = true
+                end
+            else
+                if colorType == "importantColor" then
+                    color = importantColor
+                else
+                    color = true
+                end
+            end
+
+            keyAuraList[spellID] = color
+        end
+
+        if not importantCCEnabled then
+            --local color = (not db.importantCCFullGlow and true) or (db.importantCCFull and db.importantCCFullGlowRGB) or true
+            for spellID, value in pairs(ccFull) do
+                keyAuraList[spellID] = true --value == true and color or value
+            end
+            --local color = (not db.importantCCDisarmGlow and true) or (db.importantCCDisarm and db.importantCCDisarmGlowRGB) or true
+            for spellID, value in pairs(ccDisarm) do
+                keyAuraList[spellID] = true--value == true and color or value
+            end
+            --local color = (not db.importantCCRootGlow and true) or (db.importantCCRoot and db.importantCCRootGlowRGB) or true
+            for spellID, value in pairs(ccRoot) do
+                keyAuraList[spellID] = true--value == true and color or value
+            end
+            --local color = (not db.importantCCSilenceGlow and true) or (db.importantCCSilence and db.importantCCSilenceGlowRGB) or true
+            for spellID, value in pairs(ccSilence) do
+                keyAuraList[spellID] = true--value == true and color or value
             end
         end
     end
@@ -926,7 +1021,7 @@ local function CreatePandemicGlow(buff, orange)
     local nameplateAuraTaller = db.nameplateAuraTaller
     local buffScale = db.nameplateAuraBuffScale
     local debuffScale = db.nameplateAuraDebuffScale
-    local nameplateAuraScale = db.nameplateAuraScale
+    --local nameplateAuraScale = db.nameplateAuraScale
 
     if not buff.PandemicGlow then
         buff.PandemicGlow = buff.GlowFrame:CreateTexture(nil, "OVERLAY")
@@ -934,7 +1029,12 @@ local function CreatePandemicGlow(buff, orange)
         buff.PandemicGlow:SetDesaturated(true)
     end
 
-    if buff.isEnlarged then
+    if buff.isKeyAura then
+        local scale = db.nameplateKeyAuraScale
+        local ten = 16 * scale
+        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
+        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
+    elseif buff.isEnlarged then
         local scale = db.nameplateAuraEnlargedScale
         if db.nameplateAuraEnlargedSquare then
             local ten = 10 * scale
@@ -1091,7 +1191,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     -- Define the spacing and row parameters
     local db = BetterBlizzPlatesDB
     local horizontalSpacing = db.nameplateAuraWidthGap
-    local verticalSpacing = -db.nameplateAuraHeightGap-- + (db.nameplateAuraSquare and 12 or 0) + (db.nameplateAuraTaller and 3 or 0)
+    local verticalSpacing = -db.nameplateAuraHeightGap or 0-- + (db.nameplateAuraSquare and 12 or 0) + (db.nameplateAuraTaller and 3 or 0)
     local maxBuffsPerRow = (isEnemyUnit and db.nameplateAuraRowAmount) or (not isEnemyUnit and db.nameplateAuraRowFriendlyAmount)
     local maxRowHeight = 0
     local rowWidths = {}
@@ -1108,6 +1208,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local nameplateAuraCompactedScale = db.nameplateAuraCompactedScale
     local auraSizeScaled = auraSize * nameplateAuraEnlargedScale
     local sizeMultiplier = 20 * nameplateAuraEnlargedScale
+    local keyAuraSize = 30 * db.nameplateKeyAuraScale
     local texCoord = nameplateAuraSquare and {0.1, 0.9, 0.1, 0.9} or nameplateAuraTaller and {0.05, 0.95, 0.15, 0.82} or {0.05, 0.95, 0.1, 0.6}
     local compactTexCoord = not compactSquare and texCoord or nameplateAuraSquare and {0.25, 0.75, 0.05, 0.95} or nameplateAuraTaller and {0.3, 0.7, 0.15, 0.82} or {0.3, 0.7, 0.15, 0.80}
     local nameplateAuraScale = db.nameplateAuraScale
@@ -1115,6 +1216,8 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local sortEnlargedAurasFirst = db.sortEnlargedAurasFirst
     local sortCompactedAurasFirst = db.sortCompactedAurasFirst
     local sortDurationAuras = db.sortDurationAuras
+    local keyAuraXPos = db.nameplateKeyAurasXPos
+    local keyAuraYPos = db.nameplateKeyAurasYPos
 
     local scaledCompactWidth = compactSize * nameplateAuraCompactedScale
     local scaledCompactHeight = auraHeightSetting * nameplateAuraCompactedScale
@@ -1242,7 +1345,14 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
             buff:SetScale(nameplateAuraScale)
             buff.CountFrame:SetScale(nameplateAuraCountScale)
             local buffWidth
-            if buff.isEnlarged then
+            if buff.isKeyAura then
+                buff:SetSize(keyAuraSize, keyAuraSize)
+                buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
+                buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
+                buff.Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+                buffWidth = sizeMultiplier
+                compactTracker = 0
+            elseif buff.isEnlarged then
                 buff:SetSize(sizeMultiplier, auraSizeScaled)
                 buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
                 buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
@@ -1388,77 +1498,91 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local function LayoutAuras(auras, startRow, isBuffs)
         local currentRow = startRow
         local horizontalOffset = 0
+        local keyAuraOffset = 5
         local firstRowFirstAuraOffset = nil  -- Variable to store the horizontal offset of the first aura in the first row
         local nameplateAurasFriendlyCenteredAnchor = db.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit
         local nameplateAurasEnemyCenteredAnchor = db.nameplateAurasEnemyCenteredAnchor and isEnemyUnit
         local nameplateCenterAllRows = db.nameplateCenterAllRows and (nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor)
         local xPos = db.nameplateAurasXPos
+
         local compactTracker = 0
+        local indexTracker = 0
+
+        -- local keyAuraXPos = db.nameplateKeyAurasXPos
+        -- local keyAuraYPos = db.nameplateKeyAurasYPos
 
         for index, buff in ipairs(auras) do
             local buffWidth, buffHeight = buff:GetSize()
-            if buff.isEnlarged then
-                compactTracker = 0
-            elseif buff.isCompacted then
-                compactTracker = compactTracker + 1
-            else
-                compactTracker = 0
-            end
-
             local buffScale = buff:GetScale()
 
-            -- Update the maximum row height
-            maxRowHeight = math.max(maxRowHeight, buffHeight)
-
-            -- Determine if it's the start of a new row
-            if index % maxBuffsPerRowAdjusted == 1 then
-                local rowIndex = math.floor((index - 1) / maxBuffsPerRowAdjusted) + 1
-                if buff.isCompacted then
-                    compactTracker = 1
+            if buff.isKeyAura then
+                buff:ClearAllPoints()
+                buff:SetPoint("LEFT", healthBar, "RIGHT", keyAuraOffset + keyAuraXPos, keyAuraYPos)
+                keyAuraOffset = keyAuraOffset + (buffWidth * buffScale) + horizontalSpacing
+            else
+                indexTracker = indexTracker + 1
+                if buff.isEnlarged then
+                    compactTracker = 0
+                elseif buff.isCompacted then
+                    compactTracker = compactTracker + 1
                 else
                     compactTracker = 0
                 end
 
-                if nameplateCenterAllRows then
-                    horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2
-                elseif nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
-                    if rowIndex == 1 then
-                        horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2
-                        firstRowFirstAuraOffset = horizontalOffset  -- Save this offset for the first aura
+
+                -- Update the maximum row height
+                maxRowHeight = math.max(maxRowHeight, buffHeight)
+
+                -- Determine if it's the start of a new row
+                if indexTracker % maxBuffsPerRowAdjusted == 1 then
+                    local rowIndex = math.floor((indexTracker - 1) / maxBuffsPerRowAdjusted) + 1
+                    if buff.isCompacted then
+                        compactTracker = 1
                     else
-                        horizontalOffset = firstRowFirstAuraOffset or 0  -- Use the saved offset for the first aura of subsequent rows
+                        compactTracker = 0
                     end
+
+                    if nameplateCenterAllRows then
+                        horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2
+                    elseif nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
+                        if rowIndex == 1 then
+                            horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2
+                            firstRowFirstAuraOffset = horizontalOffset  -- Save this offset for the first aura
+                        else
+                            horizontalOffset = firstRowFirstAuraOffset or 0  -- Use the saved offset for the first aura of subsequent rows
+                        end
+                    else
+                        horizontalOffset = 0  -- or any other default starting offset
+                    end
+
+                    if indexTracker > 1 then
+                        currentRow = currentRow + 1  -- Move to the next row
+                    end
+                end
+
+                -- Position the buff on the nameplate
+                buff:ClearAllPoints()
+                local verticalOffset
+                if not isBuffs then
+                    maxDebuffHeight = maxRowHeight
+                    verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
                 else
-                    horizontalOffset = 0  -- or any other default starting offset
+                    verticalOffset = -currentRow * (-maxDebuffHeight + (currentRow > 0 and verticalSpacing or 0))
                 end
 
-                if index > 1 then
-                    currentRow = currentRow + 1  -- Move to the next row
+                local extraOffset = 0
+                if compactSquare and compactTracker == 2 and buff.isCompacted then
+                    extraOffset = BetterBlizzPlatesDB.nameplateAuraWidthGap
+                    compactTracker = 0
                 end
-            end
 
-            -- Position the buff on the nameplate
-            buff:ClearAllPoints()
-            local verticalOffset
-            if not isBuffs then
-                maxDebuffHeight = maxRowHeight
-                verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
-            else
-                verticalOffset = -currentRow * (-maxDebuffHeight + (currentRow > 0 and verticalSpacing or 0))
+                if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
+                    buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) +(xPos+1-extraOffset/buffScale), verticalOffset - 13)
+                else
+                    buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + xPos-extraOffset/buffScale, verticalOffset - 13)
+                end
+                horizontalOffset = horizontalOffset + ((buffWidth)*buffScale) + horizontalSpacing-extraOffset
             end
-
-            local extraOffset = 0
-            if compactSquare and compactTracker == 2 and buff.isCompacted then
-                extraOffset = BetterBlizzPlatesDB.nameplateAuraWidthGap
-                compactTracker = 0
-            end
-
-            if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
-                buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) +(xPos+1-extraOffset/buffScale), verticalOffset - 13)
-            else
-                buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + xPos-extraOffset/buffScale, verticalOffset - 13)
-            end
-            horizontalOffset = horizontalOffset + ((buffWidth)*buffScale) + horizontalSpacing-extraOffset
         end
 
         return currentRow
@@ -1544,7 +1668,11 @@ local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
                     buff.buffBorderPurge = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
                     buff.buffBorderPurge:SetAtlas("newplayertutorial-drag-slotblue")
                 end
-                if buff.isEnlarged then
+                if buff.isKeyAura then
+                    importantGlowOffset = 16 * BetterBlizzPlatesDB.nameplateKeyAuraScale
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
+                elseif buff.isEnlarged then
                     importantGlowOffset = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
                     buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
                     buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
@@ -1617,7 +1745,11 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
                 buff.ImportantGlow:SetAtlas("newplayertutorial-drag-slotgreen")
                 buff.ImportantGlow:SetDesaturated(true)
             end
-            if buff.isEnlarged then
+            if buff.isKeyAura then
+                local ten = 16 * BetterBlizzPlatesDB.nameplateKeyAuraScale
+                buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
+                buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
+            elseif buff.isEnlarged then
                 if BetterBlizzPlatesDB.nameplateAuraEnlargedSquare then
                     local ten = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
                     buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
@@ -1741,9 +1873,6 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
 
     local db = BetterBlizzPlatesDB
 
-    local showAllCCs = db.showAllCCs and crowdControl[spellId]
-    local showAllImportantBuffs = db.showAllCCs and importantBuffs[spellId]
-
     -- PLAYER
     if UnitIsUnit(unit, "player") then
         -- Buffs
@@ -1827,6 +1956,10 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
 
     -- FRIENDLY
     elseif isFriend then
+        local showKeyAuras = db["nameplateAuraKeyAuraPositionEnabled"]
+        if showKeyAuras and keyAuraList[spellId] then
+            return true
+        end
         -- Buffs
         if db["friendlyNpBuffEnable"] and aura.isHelpful then
             local isInBlacklist = db["friendlyNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
@@ -1921,6 +2054,10 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
         end
     -- ENEMY
     else
+        local showKeyAuras = db["nameplateAuraKeyAuraPositionEnabled"]
+        if showKeyAuras and keyAuraList[spellId] then
+            return true
+        end
         -- Buffs
         if db["otherNpBuffEnable"] and aura.isHelpful then
             local isInBlacklist = db["otherNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
@@ -2138,6 +2275,8 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     local enlargeAllCC = db.enlargeAllCC
     local opBarriersOn = db.opBarriersEnabled
     local npAuraStackFontEnabled = db.npAuraStackFontEnabled
+    local moveKeyAuras = db.nameplateAuraKeyAuraPositionEnabled
+    --local ccGLow = db.
 
     self.auras:Iterate(function(auraInstanceID, aura)
         if buffIndex > BBPMaxAuraNum then return true end
@@ -2164,6 +2303,20 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         if buff.Cooldown._occ_display then
             buff.Cooldown._occ_display:SetFrameStrata("HIGH")
         end
+        buff.isKeyAura = nil
+        buff.isCC = nil
+
+        if moveKeyAuras then
+            local isKeyAura = keyAuraList[spellId]
+            if isKeyAura then
+                buff.isKeyAura = true
+                isEnlarged = true
+                if isKeyAura ~= true and not isImportant then
+                    isImportant = true
+                    auraColor = isKeyAura
+                end
+            end
+        end
 
         local isImportantBuff = importantBuffs[spellId]
         if isImportantBuff then
@@ -2176,10 +2329,12 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             end
         end
 
-        buff.isCC = nil
         local isCC = crowdControl[spellId]
         if isCC then
             buff.isCC = true
+            if moveKeyAuras then
+                buff.isKeyAura = true
+            end
             if enlargeAllCC and enlargeAllCCsFilter then
                 isEnlarged = true
             end
@@ -2207,9 +2362,9 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
             if isCompacted then
                 if not db.disableEnlargedAurasOnSelf then
-                    buff.isEnlarged = true
+                    buff.isCompacted = true
                 else
-                    buff.isEnlarged = false
+                    buff.isCompacted = false
                 end
             else
                 buff.isCompacted = false
@@ -2313,7 +2468,9 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         buff:Show();
         buff:SetMouseClickEnabled(false)
 
-        buffIndex = buffIndex + 1;
+        if not buff.isKeyAura then
+            buffIndex = buffIndex + 1;
+        end
         return buffIndex >= BUFF_MAX_DISPLAY;
     end);
     self:Layout();
@@ -2393,8 +2550,8 @@ function BBP:UpdateAnchor()
 
     local isTarget = frame.unit and UnitIsUnit(frame.unit, "target")
     local isSelf = frame.unit and UnitIsUnit(frame.unit, "player")
-    local reaction = frame.unit and UnitReaction(frame.unit, "player")
-    local isFriend = reaction and reaction >= 5
+    --local reaction = frame.unit and UnitReaction(frame.unit, "player")
+    --local isFriend = reaction and reaction >= 5
 
     local shouldNotOffset = config.nameplateResourceDoNotRaiseAuras or config.nameplateResourceUnderCastbar or not BBP.PlayerSpecHasResource()
     local targetYOffset = self:GetBaseYOffset() + (isTarget and not shouldNotOffset and self:GetTargetYOffset() or 0.0)

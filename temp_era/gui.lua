@@ -122,13 +122,13 @@ end
 
 local function deepMergeTables(destination, source)
     for k, v in pairs(source) do
-        if type(v) == "table" then
-            if not destination[k] then
+        if destination[k] == nil then
+            if type(v) == "table" then
                 destination[k] = {}
+                deepMergeTables(destination[k], v)
+            else
+                destination[k] = v
             end
-            deepMergeTables(destination[k], v) -- Recursive merge for nested tables
-        else
-            destination[k] = v
         end
     end
 end
@@ -8887,6 +8887,22 @@ end
 ------------------------------------------------------------
 -- GUI Setup
 ------------------------------------------------------------
+local function CombatOnGUICreation()
+    if InCombatLockdown() then
+        print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Waiting for combat to drop before opening settings for the first time.")
+        if not BBP.waitingCombat then
+            local f = CreateFrame("Frame")
+            f:RegisterEvent("PLAYER_REGEN_ENABLED")
+            f:SetScript("OnEvent", function(self)
+                self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+                BBP.LoadGUI()
+            end)
+            BBP.waitingCombat = true
+        end
+        return true
+    end
+end
+
 function BBP.InitializeOptions()
     if not BetterBlizzPlates then
         BetterBlizzPlates = CreateFrame("Frame")
@@ -8908,7 +8924,7 @@ function BBP.InitializeOptions()
         BetterBlizzPlates.loadGUI = loadGUI
         loadGUI:SetScript("OnClick", function(self)
             if InCombatLockdown() then
-                print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Leave combat to open settings for the first time.")
+                print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Waiting for combat to drop before opening settings for the first time.")
                 return
             end
             BBP.LoadGUI()
@@ -8926,7 +8942,7 @@ function BBP.LoadGUI()
         return
     end
     if InCombatLockdown() then
-        print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Leave combat to open settings for the first time.")
+        print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Waiting for combat to drop before opening settings for the first time.")
         return
     end
     guiGeneralTab()
