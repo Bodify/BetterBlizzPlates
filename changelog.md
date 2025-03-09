@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.7.1b
+## The War Within
+### Bugfix:
+- Fix broken logic for deciding whether Class Indicator should show or not after introducing healer only setting.
+
 # BetterBlizzPlates 1.7.1
 ## The War Within
 ### New:

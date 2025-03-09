@@ -200,8 +200,10 @@ function BBP.ClassIndicator(frame, foundID, fade)
     local isTank = config.classIndicatorTank and TankSpecs[specID]
     local alwaysShowTank = config.classIconAlwaysShowTank and TankSpecs[specID]
     local alwaysShowHealer = config.classIconAlwaysShowHealer and HealerSpecs[specID]
-    local onlyHealer = config.classIndicatorOnlyHealer and HealerSpecs[specID]
-    if not enabledOnThisUnit or not onlyHealer and (not flagIcon and not alwaysShowHealer and not alwaysShowTank) then
+    local isHealer = HealerSpecs[specID]
+    local shouldHide = not enabledOnThisUnit and not flagIcon and not alwaysShowHealer and not alwaysShowTank
+
+    if shouldHide or (config.classIndicatorOnlyHealer and not isHealer and not flagIcon and not alwaysShowHealer and not alwaysShowTank) then
         frame.classIndicator:Hide()
         return
     end
@@ -306,6 +308,7 @@ function BBP.ClassIndicator(frame, foundID, fade)
                 return
             end
         else
+            print("Hide1 ", frame.name:GetText())
             frame.classIndicator:Hide()
             return
         end
