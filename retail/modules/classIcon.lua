@@ -308,7 +308,6 @@ function BBP.ClassIndicator(frame, foundID, fade)
                 return
             end
         else
-            print("Hide1 ", frame.name:GetText())
             frame.classIndicator:Hide()
             return
         end
