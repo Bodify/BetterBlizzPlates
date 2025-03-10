@@ -38,6 +38,7 @@ local bgsWithObjectives = {
     [489] = true, -- Warsong Gulch
     [2106] = true, -- Warsong Gulch 2
     [566] = true, -- Eye of the Storm
+    [968] = true, -- Eye of the Storm Rated
     [998] = true, -- Temple of Kotmogu
     [2656] = true, --Deephaul Ravine
     [1191] = true, -- Ashran
@@ -55,7 +56,7 @@ local function GetAuraIcon(frame, foundID, auraType, bgId)
     if UnitPvpClassification(frame.unit) then
         if bgId == 2656 then
             return icons[434339]
-        elseif bgId == 566 then
+        elseif bgId == 566 or bgId == 968 then
             return icons[34976]
         else
             -- Otherwise, scan buffs/debuffs based on `auraType`
@@ -301,7 +302,7 @@ function BBP.ClassIndicator(frame, foundID, fade)
     frame.classIndicator:SetScale(flagIcon and scale + 0.15 or scale)
 
     -- Visibility checks
-    if ((config.classIconArenaOnly and not BBP.isInArena) or (config.classIconBgOnly and not BBP.isInBg)) then
+    if ((config.classIconArenaOnly and not BBP.isInArena) or (config.classIconBgOnly and not BBP.isInBg)) and not( config.classIconAlwaysShowBgObj and flagIcon) then
         if config.classIconArenaOnly and config.classIconBgOnly then
             if not BBP.isInPvP then
                 frame.classIndicator:Hide()

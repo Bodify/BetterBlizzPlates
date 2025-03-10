@@ -191,9 +191,10 @@ local keyAuraList = {
     [354610] = "importantColor",
     [353319] = "importantColor",
     [454863] = "importantColor",
-    [22812] = "importantColor",
     [359816] = "importantColor",
     [69420] = true,
+
+    [61574] = "importantColor",
 
     [212182] = true, -- smoke
     [359053] = true, -- smoke
@@ -1341,11 +1342,13 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local function CalculateRowWidths(auras)
         local widths = {}
         local compactTracker = 0
+        local keyAuras = 0
         for index, buff in ipairs(auras) do
             buff:SetScale(nameplateAuraScale)
             buff.CountFrame:SetScale(nameplateAuraCountScale)
             local buffWidth
             if buff.isKeyAura then
+                keyAuras = keyAuras + 1
                 buff:SetSize(keyAuraSize, keyAuraSize)
                 buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
                 buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
@@ -1402,10 +1405,14 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
                 buffWidth = buffWidth * buffScale
             --end
 
-            local rowIndex = math.floor((index - 1) / maxBuffsPerRowAdjusted) + 1
-            widths[rowIndex] = (widths[rowIndex] or 0) + buffWidth -extraOffset
+            local noKeyAuraIndex = index - keyAuras
 
-            if index % maxBuffsPerRowAdjusted ~= 1 then
+            local rowIndex = math.floor((noKeyAuraIndex - 1) / maxBuffsPerRowAdjusted) + 1
+            if not buff.isKeyAUra then
+                widths[rowIndex] = (widths[rowIndex] or 0) + buffWidth -extraOffset
+            end
+
+            if noKeyAuraIndex % maxBuffsPerRowAdjusted ~= 1 then
                 widths[rowIndex] = widths[rowIndex] + horizontalSpacing
             end
         end
@@ -1495,10 +1502,10 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     -- Function to layout auras. ALl of this is scuffed and needs a rework. If one enlarged aura every row gets higher instead of only the row immediately after like intentional.
     local maxRowHeight = 0
     local maxDebuffHeight = 0
+    local keyAuraOffset = 5
     local function LayoutAuras(auras, startRow, isBuffs)
         local currentRow = startRow
         local horizontalOffset = 0
-        local keyAuraOffset = 5
         local firstRowFirstAuraOffset = nil  -- Variable to store the horizontal offset of the first aura in the first row
         local nameplateAurasFriendlyCenteredAnchor = db.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit
         local nameplateAurasEnemyCenteredAnchor = db.nameplateAurasEnemyCenteredAnchor and isEnemyUnit

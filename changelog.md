@@ -1,4 +1,13 @@
-# BetterBlizzPlates 1.7.1b
+# BetterBlizzPlates 1.7.1d
+## The War Within
+### Tweak:
+- Snupy profile update
+### Bugfix:
+- Fixed Key Auras affecting normal auras positioning.
+- Fixed Barkskin being tagged as a Key Aura from testing.
+- Fixed Key Auras not stacking when theres two different aura types (buff/debuff).
+
+# BetterBlizzPlates 1.7.1c
 ## The War Within
 ### Bugfix:
 - Remove a debug print.
