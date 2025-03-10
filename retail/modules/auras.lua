@@ -194,8 +194,6 @@ local keyAuraList = {
     [359816] = "importantColor",
     [69420] = true,
 
-    [61574] = "importantColor",
-
     [212182] = true, -- smoke
     [359053] = true, -- smoke
 }
