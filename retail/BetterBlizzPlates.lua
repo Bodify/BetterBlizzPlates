@@ -11,8 +11,8 @@ LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Pro
 
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
-local sendUpdate = true
-BBP.VersionNumber = addonUpdates.."d"
+local sendUpdate = false
+BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
 BBP.hiddenFrame = CreateFrame("Frame")
@@ -99,6 +99,7 @@ local defaultSettings = {
     healthNumbersYPos = 0,
     healthNumbersScale = 1,
     healthNumbersFontOutline = "THICKOUTLINE",
+    healthNumbersUseMillions = true,
     nameplateBorderSize = 1,
     nameplateTargetBorderSize = 3,
     tankFullAggroColorRGB = {0, 1, 0, 1},
@@ -391,6 +392,8 @@ local defaultSettings = {
     nameplateKeyAurasXPos = 0,
     nameplateKeyAurasYPos = 0,
     nameplateKeyAuraScale = 1,
+    keyAurasImportantGlowOn = true,
+    keyAurasImportantBuffsEnabled = true,
     castBarCastColor = {
 		1,
 		0.8431373238563538,
@@ -777,6 +780,80 @@ function BBP.ResetTotemList()
     BetterBlizzPlatesDB.totemIndicatorNpcList = defaultSettings.totemIndicatorNpcList
 end
 
+local cvarList = {
+    "nameplateShowAll",
+    "nameplateOverlapH",
+    "nameplateOverlapV",
+    "nameplateMotionSpeed",
+    "nameplateHorizontalScale",
+    "NamePlateVerticalScale",
+    "nameplateSelectedScale",
+    "nameplateMinScale",
+    "nameplateMaxScale",
+    "NamePlateClassificationScale",
+    "nameplateGlobalScale",
+    "nameplateLargerScale",
+    "nameplatePlayerLargerScale",
+    "nameplateResourceOnTarget",
+    "nameplateMinAlpha",
+    "nameplateMinAlphaDistance",
+    "nameplateMaxAlpha",
+    "nameplateMaxAlphaDistance",
+    "nameplateOccludedAlphaMult",
+    "nameplateMotion",
+    "ShowClassColorInNameplate",
+    "ShowClassColorInFriendlyNameplate",
+    "nameplateShowEnemyGuardians",
+    "nameplateShowEnemyMinions",
+    "nameplateShowEnemyMinus",
+    "nameplateShowEnemyPets",
+    "nameplateShowEnemyTotems",
+    "nameplateShowFriendlyGuardians",
+    "nameplateShowFriendlyMinions",
+    "nameplateShowFriendlyPets",
+    "nameplateShowFriendlyTotems",
+    "nameplateShowFriendlyNPCs",
+    "nameplateSelfTopInset",
+    "nameplateSelfBottomInset",
+}
+
+function BBP.ResetNameplateCVars()
+    if BBPCVarBackupsDB then
+        for cvar, value in pairs(BBPCVarBackupsDB) do
+            if cvar == "nameplateMinScale" or cvar == "nameplateMaxScale" then
+                value = 0.9
+            end
+            C_CVar.SetCVar(cvar, value)
+            BetterBlizzPlatesDB[cvar] = value
+        end
+    else
+        for _, cvar in ipairs(cvarList) do
+            local defaultValue = C_CVar.GetCVarDefault(cvar)
+            if cvar == "nameplateMinScale" or cvar == "nameplateMaxScale" then
+                defaultValue = 0.9
+            end
+            C_CVar.SetCVar(cvar, defaultValue)
+            BetterBlizzPlatesDB[cvar] = defaultValue
+        end
+    end
+end
+
+local function CVarDefaultOnLogout()
+    if not BBPCVarBackupsDB then return end
+    if InCombatLockdown() then return end
+    for cvar, value in pairs(BBPCVarBackupsDB) do
+        C_CVar.SetCVar(cvar, value)
+    end
+end
+
+local frame = CreateFrame("Frame")
+frame:RegisterEvent("PLAYER_LOGOUT")
+frame:SetScript("OnEvent", function()
+    BBP.LoggingOut = true
+    CVarDefaultOnLogout()
+end)
+
+
 local function CVarFetcher()
     if BBP.variablesLoaded then
         local big = GetCVar("NamePlateHorizontalScale") == "1.4"
@@ -788,43 +865,18 @@ local function CVarFetcher()
         BetterBlizzPlatesDB.nameplateFriendlyWidth = big and 154 or 110
         BetterBlizzPlatesDB.nameplateSelfWidth = big and 154 or 110
 
-        BetterBlizzPlatesDB.nameplateShowAll = GetCVar("nameplateShowAll")
+        if not BBPCVarBackupsDB then
+            BBPCVarBackupsDB = {}
+        end
 
-        BetterBlizzPlatesDB.nameplateOverlapH = GetCVar("nameplateOverlapH")
-        BetterBlizzPlatesDB.nameplateOverlapV = GetCVar("nameplateOverlapV")
-        BetterBlizzPlatesDB.nameplateMotionSpeed = GetCVar("nameplateMotionSpeed")
-        BetterBlizzPlatesDB.nameplateHorizontalScale = GetCVar("NamePlateHorizontalScale")
-        BetterBlizzPlatesDB.NamePlateVerticalScale = GetCVar("NamePlateVerticalScale")
-        BetterBlizzPlatesDB.nameplateMinScale = 0.9
-        BetterBlizzPlatesDB.nameplateMaxScale = 0.9
-        BetterBlizzPlatesDB.nameplateSelectedScale = GetCVar("nameplateSelectedScale")
-        BetterBlizzPlatesDB.NamePlateClassificationScale = GetCVar("NamePlateClassificationScale")
-        BetterBlizzPlatesDB.nameplateGlobalScale = GetCVar("nameplateGlobalScale")
-        BetterBlizzPlatesDB.nameplateLargerScale = GetCVar("nameplateLargerScale")
-        BetterBlizzPlatesDB.nameplatePlayerLargerScale = GetCVar("nameplatePlayerLargerScale")
-        BetterBlizzPlatesDB.nameplateResourceOnTarget = GetCVar("nameplateResourceOnTarget")
-
-        BetterBlizzPlatesDB.nameplateMinAlpha = GetCVar("nameplateMinAlpha")
-        BetterBlizzPlatesDB.nameplateMinAlphaDistance = GetCVar("nameplateMinAlphaDistance")
-        BetterBlizzPlatesDB.nameplateMaxAlpha = GetCVar("nameplateMaxAlpha")
-        BetterBlizzPlatesDB.nameplateMaxAlphaDistance = GetCVar("nameplateMaxAlphaDistance")
-        BetterBlizzPlatesDB.nameplateOccludedAlphaMult = GetCVar("nameplateOccludedAlphaMult")
-        BetterBlizzPlatesDB.nameplateMotion = GetCVar("nameplateMotion")
-
-        BetterBlizzPlatesDB.ShowClassColorInNameplate = GetCVar("ShowClassColorInNameplate")
-        BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate = GetCVar("ShowClassColorInFriendlyNameplate")
-
-        BetterBlizzPlatesDB.nameplateShowEnemyGuardians = GetCVar("nameplateShowEnemyGuardians")
-        BetterBlizzPlatesDB.nameplateShowEnemyMinions = GetCVar("nameplateShowEnemyMinions")
-        BetterBlizzPlatesDB.nameplateShowEnemyMinus = GetCVar("nameplateShowEnemyMinus")
-        BetterBlizzPlatesDB.nameplateShowEnemyPets = GetCVar("nameplateShowEnemyPets")
-        BetterBlizzPlatesDB.nameplateShowEnemyTotems = GetCVar("nameplateShowEnemyTotems")
-
-        BetterBlizzPlatesDB.nameplateShowFriendlyGuardians = GetCVar("nameplateShowFriendlyGuardians")
-        BetterBlizzPlatesDB.nameplateShowFriendlyMinions = GetCVar("nameplateShowFriendlyMinions")
-        BetterBlizzPlatesDB.nameplateShowFriendlyPets = GetCVar("nameplateShowFriendlyPets")
-        BetterBlizzPlatesDB.nameplateShowFriendlyTotems = GetCVar("nameplateShowFriendlyTotems")
-        BetterBlizzPlatesDB.nameplateShowFriendlyNPCs = GetCVar("nameplateShowFriendlyNPCs")
+        for _, cvar in ipairs(cvarList) do
+            local value = GetCVar(cvar)
+            BBPCVarBackupsDB[cvar] = value
+            if cvar == "nameplateMinScale" or cvar == "nameplateMaxScale" then
+                value = 0.9
+            end
+            BetterBlizzPlatesDB[cvar] = value
+        end
 
         if GetCVar("NamePlateHorizontalScale") == "1.4" then
             BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
@@ -1760,13 +1812,14 @@ end
 -- Set CVars that keep changing
 local function SetCVarsOnLogin()
     if BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return end
+    if C_AddOns.IsAddOnLoaded("Plater") and C_AddOns.IsAddOnLoaded("SkillCapped") then return end
     if BetterBlizzPlatesDB.hasSaved and not BetterBlizzPlatesDB.disableCVarForceOnLogin then
         C_CVar.SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
         C_CVar.SetCVar("nameplateOverlapV", BetterBlizzPlatesDB.nameplateOverlapV)
         C_CVar.SetCVar("nameplateMotionSpeed", BetterBlizzPlatesDB.nameplateMotionSpeed)
         C_CVar.SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
         C_CVar.SetCVar("nameplateSelectedScale", BetterBlizzPlatesDB.nameplateSelectedScale)
-        C_CVar.SetCVar("nameplateMinScale", BetterBlizzPlatesDB.nameplateMinScale)
+        C_CVar.SetCVar("nameplateMinScale", BetterBlizzPlatesDB.nameplateMinScale) -- fucked
         C_CVar.SetCVar("nameplateMaxScale", BetterBlizzPlatesDB.nameplateMaxScale)
         C_CVar.SetCVar("nameplateMinAlpha", BetterBlizzPlatesDB.nameplateMinAlpha)
         C_CVar.SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
@@ -2289,6 +2342,8 @@ function BBP.ResetToDefaultValue(slider, element)
         elseif element == "personalBarPosition" then
             C_CVar.SetCVar("nameplateSelfTopInset", C_CVar.GetCVarDefault("nameplateSelfTopInset"))
             C_CVar.SetCVar("nameplateSelfBottomInset", C_CVar.GetCVarDefault("nameplateSelfBottomInset"))
+            BetterBlizzPlatesDB.nameplateSelfTopInset = C_CVar.GetCVarDefault("nameplateSelfTopInset")
+            BetterBlizzPlatesDB.nameplateSelfBottomInset = C_CVar.GetCVarDefault("nameplateSelfBottomInset")
         end
         slider:SetValue(BetterBlizzPlatesDB[element])
     end
@@ -2847,8 +2902,9 @@ function BBP.ColorNpcHealthbar(frame)
         if colorNPCName then
             frame.name:SetVertexColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
         end
-    else
+    elseif config.npcHealthbarColor then
         config.npcHealthbarColor = nil
+        CompactUnitFrame_UpdateName(frame)
     end
 end
 -- frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
@@ -3647,7 +3703,7 @@ local function ColorNameplateBorder(self, frame)
         if config.npBorderClassColor then
             if info.isPlayer then
                 local classColor = RAID_CLASS_COLORS[info.class]
-                self:SetVertexColor(classColor.r, classColor.g, classColor.b)
+                self:SetVertexColor(classColor.r, classColor.g, classColor.b, 1)
             else
                 self:SetVertexColor(unpack(config.npBorderNpcColorRGB))
             end
@@ -3660,7 +3716,7 @@ local function ColorNameplateBorder(self, frame)
     self.changing = false
 end
 
-function BBP.ColorNameplateBorder(frame)
+function BBP.ColorNameplateBorder(frame) --classic border
     local border = frame.BetterBlizzPlates.bbpBorder
     border:SetBorderColor(1,1,1)
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
@@ -3704,7 +3760,7 @@ function BBP.ColorNameplateBorder(frame)
         if config.npBorderClassColor then
             if info.isPlayer then
                 local classColor = RAID_CLASS_COLORS[info.class]
-                border:SetBorderColor(classColor.r, classColor.g, classColor.b)
+                border:SetBorderColor(classColor.r, classColor.g, classColor.b, 1)
             else
                 border:SetBorderColor(unpack(config.npBorderNpcColorRGB))
             end
@@ -3804,6 +3860,9 @@ end
 local function HookNameplateBorder(frame)
     if not frame.BetterBlizzPlates.hooks.nameplateBorderColor then
         hooksecurefunc(frame.HealthBarsContainer.border, "SetVertexColor", function(self)
+            ColorNameplateBorder(self, frame)
+        end)
+        hooksecurefunc(frame.HealthBarsContainer.border, "SetUnderlineColor", function(self) -- softtarget
             ColorNameplateBorder(self, frame)
         end)
         frame.BetterBlizzPlates.hooks.nameplateBorderColor = true
@@ -4660,6 +4719,79 @@ local function IsSpecHealer(frame)
     return HEALER_SPEC_IDS[specID] or false
 end
 BBP.IsSpecHealer = IsSpecHealer
+
+
+local function CreateBorder(frame, r, g, b, a)
+    local border
+    if frame.CreateTexture then
+        border = frame:CreateTexture(nil, "OVERLAY", nil, -1)
+    else
+        border = frame:GetParent():CreateTexture(nil, "OVERLAY", nil, -1)
+    end
+    border:SetColorTexture(r, g, b, a)
+    border:SetIgnoreParentScale(true)
+    return border
+end
+
+function BBP.SetupBorderOnFrame(frame)
+    if frame.border then
+        frame.border:Hide()
+    end
+    if frame.newBorder then return end
+    -- Create borders
+    local borderTop = CreateBorder(frame, 0, 0, 0, 1)  -- Black color
+    local borderBottom = CreateBorder(frame, 0, 0, 0, 1)
+    local borderLeft = CreateBorder(frame, 0, 0, 0, 1)
+    local borderRight = CreateBorder(frame, 0, 0, 0, 1)
+
+    -- Store borders in a table
+    frame.borders = {borderTop, borderBottom, borderLeft, borderRight}
+
+    -- Initial border thickness
+    local borderThickness = 1
+    local minPixels = 1
+
+    -- Define the SizeBorders function to use PixelUtil
+    local function SizeBorders(borderThickness)
+        PixelUtil.SetHeight(borderTop, borderThickness, minPixels)
+        PixelUtil.SetHeight(borderBottom, borderThickness, minPixels)
+        PixelUtil.SetWidth(borderLeft, borderThickness, minPixels)
+        PixelUtil.SetWidth(borderRight, borderThickness, minPixels)
+
+        -- Adjust border positions to grow outward
+        borderTop:ClearAllPoints()
+        PixelUtil.SetPoint(borderTop, "BOTTOMLEFT", frame, "TOPLEFT", 0, 0)
+        PixelUtil.SetPoint(borderTop, "BOTTOMRIGHT", frame, "TOPRIGHT", 0, 0)
+
+        borderBottom:ClearAllPoints()
+        PixelUtil.SetPoint(borderBottom, "TOPLEFT", frame, "BOTTOMLEFT", 0, 0)
+        PixelUtil.SetPoint(borderBottom, "TOPRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+
+        borderLeft:ClearAllPoints()
+        PixelUtil.SetPoint(borderLeft, "TOPLEFT", frame, "TOPLEFT", -borderThickness, borderThickness)
+        PixelUtil.SetPoint(borderLeft, "BOTTOMLEFT", frame, "BOTTOMLEFT", -borderThickness, -borderThickness)
+
+        borderRight:ClearAllPoints()
+        PixelUtil.SetPoint(borderRight, "TOPRIGHT", frame, "TOPRIGHT", borderThickness, borderThickness)
+        PixelUtil.SetPoint(borderRight, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", borderThickness, -borderThickness)
+    end
+
+    SizeBorders(borderThickness)
+
+    -- Define method to set border color
+    function frame:SetBorderColor(r, g, b, a)
+        for _, border in ipairs(self.borders) do
+            border:SetColorTexture(r, g, b, a)
+        end
+    end
+
+    -- Define method to set border size
+    function frame:SetBorderSize(size)
+        SizeBorders(size)
+    end
+
+    frame.newBorder = true
+end
 
 -- What to do on a new nameplate
 local function HandleNamePlateAdded(unit)
@@ -5566,6 +5698,7 @@ Frame:SetScript("OnEvent", function(...)
     if db.enableNameplateAuraCustomisation then
         BBP.RunAuraModule()
         BBP.SmokeCheckBootup()
+        BBP.SetUpAuraInterrupts()
         BBP.UpdateImportantBuffsAndCCTables()
     end
 
@@ -5671,10 +5804,6 @@ SlashCmdList["BBP"] = function(msg)
     local command = string.lower(msg)
     if command == "news" then
         BBP.ToggleUpdateMessageWindow()
-    elseif command == "nahj" then
-        StaticPopup_Show("BBP_CONFIRM_NAHJ_PROFILE")
-    elseif command == "magnusz" then
-        StaticPopup_Show("BBP_CONFIRM_MAGNUSZ_PROFILE")
     elseif command == "reset" then
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     elseif command == "fixnameplates" then
@@ -5686,6 +5815,8 @@ SlashCmdList["BBP"] = function(msg)
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: "..exportVersion)
     elseif command == "profiles" then
         BBP.CreateIntroMessageWindow()
+    elseif command == "resetcvars" then
+        BBP.ResetNameplateCVars()
     elseif command == "swap" then
 
     elseif command == "snupylol" then
@@ -5843,6 +5974,10 @@ First:SetScript("OnEvent", function(_, event, addonName)
             db.castbarEventsOn = false
             db.wasOnLoadingScreen = true
 
+            C_Timer.After(3, function()
+                BBP.CVarTracker()
+            end)
+
             if db.classIndicator and db.classIconAlwaysShowHealer == nil then
                 db.classIconAlwaysShowHealer = false
                 db.classIconAlwaysShowTank = false
@@ -5854,10 +5989,6 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     db.classIndicatorHealer = false
                 end
 
-            end
-
-            if db.hasSaved and db.separateAuraBuffRow == nil then
-                db.separateAuraBuffRow = false
             end
 
             InitializeSavedVariables()

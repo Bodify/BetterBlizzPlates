@@ -471,6 +471,7 @@ local PlayerTargetChanged = CreateFrame("Frame")
 PlayerTargetChanged:RegisterEvent("PLAYER_TARGET_CHANGED")
 PlayerTargetChanged:SetScript("OnEvent", function(self, event)
     local targetNameplate, frame = BBP.GetSafeNameplate("target")
+    local db = BetterBlizzPlatesDB
 
     -- LAST TARGET NAMEPLATE
     if BBP.previousTargetNameplate then
@@ -485,16 +486,16 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             if config.changeNameplateBorderColor then
                 BBP.ColorNameplateBorder(frame)
             else
-                if not BetterBlizzPlatesDB.classicNameplates then
+                if not db.classicNameplates then
                     if frame.healthBar.SetBorderColor then
                         frame.healthBar:SetBorderColor(0,0,0,1)
                     end
                 end
             end
 
-            if BetterBlizzPlatesDB.changeNameplateBorderSize then
+            if db.changeNameplateBorderSize then
                 if frame.healthBar.SetBorderSize then
-                    frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateBorderSize)
+                    frame.healthBar:SetBorderSize(db.nameplateBorderSize)
                 end
             end
 
@@ -539,6 +540,16 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.PetIndicator(frame)
             end
 
+            if db.executeIndicator then
+                if frame.executeIndicatorTexture then
+                    frame.executeIndicatorTexture:SetColorTexture(0, 0, 0, 1)
+                end
+
+                if db.executeIndicatorTargetOnly then
+                    BBP.ExecuteIndicator(frame)
+                end
+            end
+
             BBP.ToggleNameplateAuras(frame)
             BBP.TargetNameplateAuraSize(frame)
         end
@@ -559,10 +570,19 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
         if not UnitIsUnit(frame.unit, "player") then
         --if not info.isSelf then
 
+            if db.executeIndicator then
+                if frame.executeIndicatorTexture then
+                    frame.executeIndicatorTexture:SetColorTexture(unpack(db.npBorderTargetColorRGB))
+                end
+                if db.executeIndicatorTargetOnly then
+                    BBP.ExecuteIndicator(frame)
+                end
+            end
+
             if config.changeNameplateBorderColor then
                 BBP.ColorNameplateBorder(frame)
             else
-                if not BetterBlizzPlatesDB.classicNameplates then
+                if not db.classicNameplates then
                     if frame.healthBar.SetBorderColor then
                         frame.healthBar:SetBorderColor(1,1,1,1)
                     end
@@ -589,7 +609,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             if config.totemIndicator then
                 --if config.totemIndicatorHideHealthBar then BBP.ApplyTotemIconsAndColorNameplate(frame) end
                 -- local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
-                -- local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
+                -- local npcData = db.totemIndicatorNpcList[npcID]
                 -- if config.totemIndicatorHideHealthBar
                 BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
@@ -602,9 +622,9 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.PetIndicator(frame)
             end
 
-            if BetterBlizzPlatesDB.changeNameplateBorderSize then
+            if db.changeNameplateBorderSize then
                 if frame.healthBar.SetBorderSize then
-                    frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateTargetBorderSize)
+                    frame.healthBar:SetBorderSize(db.nameplateTargetBorderSize)
                 end
             end
         end

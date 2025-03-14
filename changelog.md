@@ -1,3 +1,28 @@
+# BetterBlizzPlates 1.7.2
+## All versions
+### Tweak:
+- BBP now stores the value of all CVars that can be adjusted with BBP for new users to ensure there is a backup to go back to should they chose to uninstall.
+- Fix CVars that have options in BBP not updating in BBP if changed elsewhere.
+- Added some Execute Indicator settings from retail to classic versions (Line & Target Only).
+## The War Within
+### New:
+- Castbar Pixel Border & Castbar Icon Pixel Border settings.
+- Nameplate Auras now show Interrupt durations if nameplate auras section is enabled.
+- Key Auras: Setting to only show/move CC and not Important Buffs.
+- Key Auras: Friendly setting (was on by default before, now needs to be checked)
+### Tweak:
+- Small Starter & Blitz profile tweaks.
+- Health Numbers "Format Millions" setting now on by default due to increased health pools.
+### Bugfix:
+- Fix class color nameplate border sometimes having reduced alpha.
+- Fix execute indicator line showing on friendlies without it enabled on them.
+- Fix execute indicator showing on personal plate.
+- Fix "Color NPC Healthbar" setting causing text color to bleed over to other unintended nameplates.
+- Fix nameplate border color settings having reduced Alpha due to default Blizzard functionality.
+
+
+
+
 # BetterBlizzPlates 1.7.1d
 ## The War Within
 ### Tweak:

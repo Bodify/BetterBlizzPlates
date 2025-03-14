@@ -1641,19 +1641,6 @@ local function RefreshTooltip(widget, title, mainText, subText, anchor, cvarName
     GameTooltip:Show()
 end
 
--- Function to show the confirmation popup with dynamic profile information
-local function ShowProfileConfirmation(profileName, profileFunction, additionalNote)
-    local noteText = additionalNote or ""
-    local confirmationText
-    if profileName == "Starter Profile" or profileName == "Blitz Profile" then
-        confirmationText = titleText .. "Are you sure you want to enable the " .. profileName .. "?\n\n" .. noteText .. "Click yes to apply and Reload UI."
-    else
-        confirmationText = titleText .. "This action will delete all settings and apply " .. profileName .. "'s profile and reload the UI.\n\n" .. noteText .. "Are you sure you want to continue?"
-    end
-    StaticPopupDialogs["BBP_CONFIRM_PROFILE"].text = confirmationText
-    StaticPopup_Show("BBP_CONFIRM_PROFILE", nil, nil, { func = profileFunction })
-end
-
 local CLASS_COLORS = {
     ROGUE = "|cfffff569",
     WARRIOR = "|cffc79c6e",
@@ -1691,6 +1678,18 @@ local CLASS_ICONS = {
     BLITZ = "questlog-questtypeicon-pvp",
     MYTHIC = "worldquest-icon-dungeon",
 }
+
+-- Function to show the confirmation popup with dynamic profile information
+local function ShowProfileConfirmation(profileName, class, profileFunction, additionalNote)
+    local noteText = additionalNote or ""
+    local color = CLASS_COLORS[class] or "|cffffffff"
+    local icon = CLASS_ICONS[class] or "groupfinder-icon-role-leader"
+    local profileText = string.format("|A:%s:16:16|a %s%s|r", icon, color, profileName.." Profile")
+    local confirmationText = titleText .. "This action will delete all settings and apply\nthe " .. profileText .. " and reload the UI.\n\n" .. noteText .. "Are you sure you want to continue?"
+
+    StaticPopupDialogs["BBP_CONFIRM_PROFILE"].text = confirmationText
+    StaticPopup_Show("BBP_CONFIRM_PROFILE", nil, nil, { func = profileFunction })
+end
 
 local function CreateClassButton(parent, class, name, twitchName, onClickFunc)
     local bbpParent = parent == BetterBlizzPlates
@@ -5387,6 +5386,12 @@ local function guiGeneralTab()
     classIndicatorIcon:SetAtlas("groupfinder-icon-class-mage")
     classIndicatorIcon:SetSize(18, 18)
     classIndicatorIcon:SetPoint("RIGHT", classIndicator, "LEFT", 0, 0)
+    classIndicator:HookScript("OnClick", function()
+        if InCombatLockdown() then return end
+        if self:GetChecked() then
+            C_CVar.SetCVar("nameplateShowFriends", "1")
+        end
+    end)
 
     local combatIndicator = CreateCheckbox("combatIndicator", "Combat indicator", BetterBlizzPlates, nil, BBP.ToggleCombatIndicator)
     combatIndicator:SetPoint("TOPLEFT", classIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -5419,6 +5424,8 @@ local function guiGeneralTab()
             if BetterBlizzPlatesDB.partyPointerArenaOnly then
                 print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Party Pointer is set to only show during Arena. You can change this in the Advanced Settings section.")
             end
+            if InCombatLockdown() then return end
+            C_CVar.SetCVar("nameplateShowFriends", "1")
         end
     end)
     CreateTooltipTwo(partyPointer, "Party Pointer |A:UI-QuestPoiImportant-QuestNumber-SuperTracked:21:16|a", "Show a class colored pointer above friendly player nameplates.", "Hides default raidmarkers. Only shows in Arena by default or during testing. Can show extra + sign on healers in settings.")
@@ -5808,47 +5815,47 @@ local function guiGeneralTab()
 
     local btnGap = 3
     local starterButton = CreateClassButton(BetterBlizzPlates, "STARTER", "Starter", nil, function()
-        ShowProfileConfirmation("Starter Profile", BBP.StarterProfile)
+        ShowProfileConfirmation("Starter", "STARTER", BBP.StarterProfile, "|cff808080(If you want to completely reset BBP there\nis a button in Advanced Settings)|r\n\n")
     end)
     starterButton:SetPoint("TOPLEFT", SettingsPanel, "BOTTOMLEFT", 16, 38)
 
     local blitzButton = CreateClassButton(BetterBlizzPlates, "BLITZ", "Blitz", nil, function()
-        ShowProfileConfirmation("Blitz Profile", BBP.BlitzProfile)
+        ShowProfileConfirmation("Blitz", "BLITZ", BBP.BlitzProfile)
     end)
     blitzButton:SetPoint("LEFT", starterButton, "RIGHT", btnGap, 0)
 
     local mythicButton = CreateClassButton(BetterBlizzPlates, "MYTHIC", "Mythic", nil, function()
-        ShowProfileConfirmation("Mythic Profile", BBP.MythicProfile)
+        ShowProfileConfirmation("Mythic", "MYTHIC", BBP.MythicProfile)
     end)
     mythicButton:SetPoint("LEFT", blitzButton, "RIGHT", btnGap, 0)
 
     local aeghisButton = CreateClassButton(BetterBlizzPlates, "MAGE", "Aeghis", "aeghis", function()
-        ShowProfileConfirmation("Aeghis Profile", BBP.AeghisProfile)
+        ShowProfileConfirmation("Aeghis", "MAGE", BBP.AeghisProfile)
     end)
     aeghisButton:SetPoint("LEFT", mythicButton, "RIGHT", btnGap, 0)
 
     local kalvishButton = CreateClassButton(BetterBlizzPlates, "ROGUE", "Kalvish", "kalvish", function()
-        ShowProfileConfirmation("Kalvish Profile", BBP.KalvishProfile)
+        ShowProfileConfirmation("Kalvish", "ROGUE", BBP.KalvishProfile)
     end)
     kalvishButton:SetPoint("LEFT", aeghisButton, "RIGHT", btnGap, 0)
 
     local magnuszButton = CreateClassButton(BetterBlizzPlates, "WARRIOR", "Magnusz", "magnusz", function()
-        ShowProfileConfirmation("Magnusz Profile", BBP.MagnuszProfile)
+        ShowProfileConfirmation("Magnusz", "WARRIOR", BBP.MagnuszProfile)
     end)
     magnuszButton:SetPoint("LEFT", kalvishButton, "RIGHT", btnGap, 0)
 
     local mmarkersButton = CreateClassButton(BetterBlizzPlates, "DRUID", "Mmarkers", "mmarkers", function()
-        ShowProfileConfirmation("Mmarkers Profile", BBP.MmarkersProfile)
+        ShowProfileConfirmation("Mmarkers", "DRUID", BBP.MmarkersProfile)
     end)
     mmarkersButton:SetPoint("LEFT", magnuszButton, "RIGHT", btnGap, 0)
 
     local nahjButton = CreateClassButton(BetterBlizzPlates, "ROGUE", "Nahj", "nahj", function()
-        ShowProfileConfirmation("Nahj Profile", BBP.NahjProfile)
+        ShowProfileConfirmation("Nahj", "ROGUE", BBP.NahjProfile)
     end)
     nahjButton:SetPoint("LEFT", mmarkersButton, "RIGHT", btnGap, 0)
 
     local snupyButton = CreateClassButton(BetterBlizzPlates, "DRUID", "Snupy", "snupy", function()
-        ShowProfileConfirmation("Snupy Profile", BBP.SnupyProfile)
+        ShowProfileConfirmation("Snupy", "DRUID", BBP.SnupyProfile)
     end)
     snupyButton:SetPoint("LEFT", nahjButton, "RIGHT", btnGap, 0)
 
@@ -7384,7 +7391,7 @@ local function guiPositionAndScale()
     anchorSubHealthNumbers:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, fourthLineY)
     anchorSubHealthNumbers:SetText("Health Numbers")
 
-    CreateBorderBox(anchorSubHealthNumbers)
+    anchorSubHealthNumbers.border = CreateBorderBox(anchorSubHealthNumbers)
 
     anchorSubHealthNumbers.t = contentFrame:CreateTexture(nil, "ARTWORK")
     anchorSubHealthNumbers.t:SetAtlas("ui_adv_health")
@@ -7434,45 +7441,80 @@ local function guiPositionAndScale()
     healthNumbersNotOnFullHp:SetPoint("TOPLEFT", healthNumbersPercentSymbol, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersNotOnFullHp, "Hide on full HP", "Hide the health text on nameplates with full health.")
 
-    local healthNumbersUseMillions = CreateCheckbox("healthNumbersUseMillions", "Million", contentFrame)
-    healthNumbersUseMillions:SetPoint("TOPLEFT", healthNumbersShowDecimal, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    -- Extended Settings Button
+    anchorSubHealthNumbers.extendedSettingsButton = CreateFrame("Button", nil, contentFrame, "UIPanelButtonTemplate")
+    anchorSubHealthNumbers.extendedSettingsButton:SetSize(120, 25)
+    anchorSubHealthNumbers.extendedSettingsButton:SetPoint("TOP", anchorSubHealthNumbers, "BOTTOM", 0, -212)
+    anchorSubHealthNumbers.extendedSettingsButton:SetText("More options")
+    CreateTooltip(anchorSubHealthNumbers.extendedSettingsButton, "Open more settings for Health Numbers")
+
+    -- Extended Settings Frame
+    anchorSubHealthNumbers.extendedSettings = CreateFrame("Frame", nil, BetterBlizzPlatesSubPanel, "DefaultPanelFlatTemplate")
+    -- anchorSubHealthNumbers.extendedSettings:SetAllPoints(anchorSubHealthNumbers.border)
+    anchorSubHealthNumbers.extendedSettings:SetSize(anchorSubHealthNumbers.border:GetHeight()+40, 255)
+    anchorSubHealthNumbers.extendedSettings:SetPoint("BOTTOMRIGHT", anchorSubHealthNumbers.border, "BOTTOMLEFT", 87, -125)
+    anchorSubHealthNumbers.extendedSettings:SetFrameStrata("DIALOG")
+    anchorSubHealthNumbers.extendedSettings:SetIgnoreParentAlpha(true)
+    anchorSubHealthNumbers.extendedSettings:Hide()
+    anchorSubHealthNumbers.extendedSettings.name = "Advanced Settings"
+    anchorSubHealthNumbers.extendedSettings:SetTitle("Health Numbers")
+
+    anchorSubHealthNumbers.closeButton = CreateFrame("Button", nil, anchorSubHealthNumbers.extendedSettings, "UIPanelCloseButton")
+    anchorSubHealthNumbers.closeButton:SetPoint("TOPRIGHT", anchorSubHealthNumbers.extendedSettings, "TOPRIGHT", 0, 0)
+    anchorSubHealthNumbers.closeButton:SetScript("OnClick", function()
+        anchorSubHealthNumbers.extendedSettings:Hide()
+        contentFrame:SetAlpha(1)
+    end)
+
+    anchorSubHealthNumbers.bg = anchorSubHealthNumbers.extendedSettings:CreateTexture(nil, "BACKGROUND")
+    anchorSubHealthNumbers.bg:SetPoint("TOPLEFT", anchorSubHealthNumbers.extendedSettings, "TOPLEFT", 7, -3)
+    anchorSubHealthNumbers.bg:SetPoint("BOTTOMRIGHT", anchorSubHealthNumbers.extendedSettings, "BOTTOMRIGHT", -3, 3)
+    anchorSubHealthNumbers.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
+
+    anchorSubHealthNumbers.extendedSettingsButton:HookScript("OnClick", function(self)
+        anchorSubHealthNumbers.extendedSettings:SetShown(not anchorSubHealthNumbers.extendedSettings:IsShown())
+        contentFrame:SetAlpha(anchorSubHealthNumbers.extendedSettings:IsShown() and 0.5 or 1)
+    end)
+
+    local healthNumbersUseMillions = CreateCheckbox("healthNumbersUseMillions", "Format Million", anchorSubHealthNumbers.extendedSettings)
+    healthNumbersUseMillions:SetPoint("TOPLEFT", anchorSubHealthNumbers.extendedSettings, "TOPLEFT", 10, -23)
     CreateTooltipTwo(healthNumbersUseMillions, "Format Million", "Display health values above 1million as 1m instead of 1000k")
 
-    local healthNumbersCurrentFull = CreateCheckbox("healthNumbersCurrentFull", "Cur/Max", contentFrame)
-    healthNumbersCurrentFull:SetPoint("TOPLEFT", healthNumbersNotOnFullHp, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local healthNumbersCurrentFull = CreateCheckbox("healthNumbersCurrentFull", "Current / Max", anchorSubHealthNumbers.extendedSettings)
+    healthNumbersCurrentFull:SetPoint("TOPLEFT", healthNumbersUseMillions, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersCurrentFull, "Current / Max", "Show current health and max health.\nFor example 69k/420k")
 
-    local healthNumbersCombined = CreateCheckbox("healthNumbersCombined", "HP/Percent", contentFrame)
+    local healthNumbersCombined = CreateCheckbox("healthNumbersCombined", "Health - Percent", anchorSubHealthNumbers.extendedSettings)
     healthNumbersCombined:SetPoint("TOPLEFT", healthNumbersCurrentFull, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersCombined, "Health - Percent", "Shows health & percent. For example 20m / 100%")
 
-    local healthNumbersOnlyInCombat = CreateCheckbox("healthNumbersOnlyInCombat", "Combat", contentFrame)
-    healthNumbersOnlyInCombat:SetPoint("TOPLEFT", healthNumbersUseMillions, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local healthNumbersOnlyInCombat = CreateCheckbox("healthNumbersOnlyInCombat", "Only in Combat", anchorSubHealthNumbers.extendedSettings)
+    healthNumbersOnlyInCombat:SetPoint("TOPLEFT", healthNumbersCombined, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersOnlyInCombat, "Only in Combat", "Only show health values on nameplates in combat")
 
-    local healthNumbersSwapped = CreateCheckbox("healthNumbersSwapped", "Swap", contentFrame)
+    local healthNumbersSwapped = CreateCheckbox("healthNumbersSwapped", "Swap Numbers", anchorSubHealthNumbers.extendedSettings)
     healthNumbersSwapped:SetPoint("TOPLEFT", healthNumbersOnlyInCombat, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(healthNumbersSwapped, "Swap Number", "Swap the numbers to be percent first. 100% - 200k")
+    CreateTooltipTwo(healthNumbersSwapped, "Swap Numbers", "Swap the numbers to be percent first. 100% - 200k")
 
-    local healthNumbersTargetOnly = CreateCheckbox("healthNumbersTargetOnly", "Target", contentFrame)
-    healthNumbersTargetOnly:SetPoint("TOPLEFT", healthNumbersCombined, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local healthNumbersTargetOnly = CreateCheckbox("healthNumbersTargetOnly", "Show on Target only", anchorSubHealthNumbers.extendedSettings)
+    healthNumbersTargetOnly:SetPoint("TOPLEFT", healthNumbersSwapped, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersTargetOnly, "Show on Target only", "Only show the health values on current target")
 
-    anchorSubHealthNumbers.healthNumbersPlayers = CreateCheckbox("healthNumbersPlayers", "Players", contentFrame)
-    anchorSubHealthNumbers.healthNumbersPlayers:SetPoint("TOPLEFT", healthNumbersSwapped, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    anchorSubHealthNumbers.healthNumbersPlayers = CreateCheckbox("healthNumbersPlayers", "Enable on Players", anchorSubHealthNumbers.extendedSettings)
+    anchorSubHealthNumbers.healthNumbersPlayers:SetPoint("TOPLEFT", healthNumbersTargetOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersPlayers, "Players", "Enable health numbers on players")
 
-    anchorSubHealthNumbers.healthNumbersHideSelf = CreateCheckbox("healthNumbersHideSelf", "Hide self", contentFrame)
+    anchorSubHealthNumbers.healthNumbersHideSelf = CreateCheckbox("healthNumbersHideSelf", "Hide on Personal", anchorSubHealthNumbers.extendedSettings)
     anchorSubHealthNumbers.healthNumbersHideSelf:SetPoint("TOPLEFT", anchorSubHealthNumbers.healthNumbersPlayers, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersHideSelf, "Hide Self", "Hide the health numbers on personal resource bar")
+    CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersHideSelf, "Hide on Personal Resource Display", "Hide the health numbers on personal resource bar")
 
-    anchorSubHealthNumbers.healthNumbersNpcs = CreateCheckbox("healthNumbersNpcs", "NPCs", contentFrame)
-    anchorSubHealthNumbers.healthNumbersNpcs:SetPoint("TOPLEFT", healthNumbersTargetOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersNpcs, "NPCs", "Enable health numbers on NPCs")
+    anchorSubHealthNumbers.healthNumbersNpcs = CreateCheckbox("healthNumbersNpcs", "Enable on NPCs", anchorSubHealthNumbers.extendedSettings)
+    anchorSubHealthNumbers.healthNumbersNpcs:SetPoint("TOPLEFT", anchorSubHealthNumbers.healthNumbersHideSelf, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersNpcs, "Enable on NPCs", "Enable health numbers on NPCs")
 
-    anchorSubHealthNumbers.healthNumbersClassColor = CreateCheckbox("healthNumbersClassColor", "ClassColor", contentFrame)
+    anchorSubHealthNumbers.healthNumbersClassColor = CreateCheckbox("healthNumbersClassColor", "Class Color Text", anchorSubHealthNumbers.extendedSettings)
     anchorSubHealthNumbers.healthNumbersClassColor:SetPoint("TOPLEFT", anchorSubHealthNumbers.healthNumbersNpcs, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersClassColor, "Class Color", "Class color the text for players.")
+    CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersClassColor, "Class Color Text", "Class color the text for players.")
 
     ----------------------
     -- Threat Colors
@@ -7577,9 +7619,14 @@ local function guiPositionAndScale()
     BetterBlizzPlatesSubPanel.resetBBPButton:SetWidth(165)
     BetterBlizzPlatesSubPanel.resetBBPButton:SetPoint("RIGHT", BetterBlizzPlatesSubPanel.reloadButton, "LEFT", -528, 0)
     BetterBlizzPlatesSubPanel.resetBBPButton:SetScript("OnClick", function()
-        StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
+        if IsControlKeyDown() and IsAltKeyDown() then
+            BBP.DisableBBP()
+        else
+            StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
+        end
     end)
-    CreateTooltipTwo(BetterBlizzPlatesSubPanel.resetBBPButton, "Reset", "Reset ALL BetterBlizzPlates settings")
+    BetterBlizzPlatesSubPanel.resetBBPButton.extraText = BBPCVarBackupsDB and "\n\n|cFFFF5555If you want to remove BetterBlizzPlates and reset back to your original CVars hold Control + Alt and LeftClick|r" or ""
+    CreateTooltipTwo(BetterBlizzPlatesSubPanel.resetBBPButton, "Reset", "Reset ALL BetterBlizzPlates settings."..BetterBlizzPlatesSubPanel.resetBBPButton.extraText)
 
     BetterBlizzPlatesSubPanel.rightClickTip = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     BetterBlizzPlatesSubPanel.rightClickTip:SetPoint("RIGHT", BetterBlizzPlatesSubPanel.reloadButton, "LEFT", -80, -2)
@@ -7788,6 +7835,14 @@ local function guiCastbar()
 
     local useCustomCastbarTexture = CreateCheckbox("useCustomCastbarTexture", "Re-texture Castbar", enableCastbarCustomization, nil, BBP.ToggleSpellCastEventRegistration)
     useCustomCastbarTexture:SetPoint("TOPLEFT", castBarRecolor, "BOTTOMLEFT", 0, -16)
+
+    local castBarPixelBorder = CreateCheckbox("castBarPixelBorder", "Pixel Border", enableCastbarCustomization)
+    castBarPixelBorder:SetPoint("LEFT", useCustomCastbarTexture.text, "RIGHT", -1, 0)
+    CreateTooltipTwo(castBarPixelBorder, "Castbar Pixel Border", "Put a pixel border on castbars.")
+
+    local castBarIconPixelBorder = CreateCheckbox("castBarIconPixelBorder", "Icon Pixel", enableCastbarCustomization)
+    castBarIconPixelBorder:SetPoint("LEFT", castBarPixelBorder.text, "RIGHT", -1, 0)
+    CreateTooltipTwo(castBarIconPixelBorder, "Icon Pixel Border", "Put a pixel border on cast icon.")
 
     local customCastbarTextureDropdown = CreateTextureDropdown(
         "customCastbarTextureDropdown",
@@ -9642,9 +9697,24 @@ local function guiNameplateAuras()
 
     local nameplateAuraKeyAuraPositionEnabled = CreateCheckbox("nameplateAuraKeyAuraPositionEnabled", "Enable Key Auras", enableNameplateAuraCustomisation)
     nameplateAuraKeyAuraPositionEnabled:SetPoint("TOPLEFT", nameplateAuraCompactedSquare, "BOTTOMLEFT", 5, -2)
-    CreateTooltipTwo(nameplateAuraKeyAuraPositionEnabled, "Enable Key Auras", "Show and move CC and Important Buffs to the right of healthbar similar to BigDebuffs.", "All CC will be moved, but unlike BigDebuffs, this location is intended only for a select number of very important buffs, such as immunities. Smaller, less urgent buffs will either be displayed in their normal position (if enabled) or hidden completely (if disabled)..\n\nExpect to a see a lot of tweaks to this. WIP.")
+    CreateTooltipTwo(nameplateAuraKeyAuraPositionEnabled, "Enable Key Auras", "Show and move CC and Important Buffs to the right of healthbar similar to BigDebuffs.\n\n|cff32f795Right-click to only move CC and not important buffs.|r", "All CC will be moved, but unlike BigDebuffs, this location is intended only for a select number of very important buffs, such as immunities. Smaller, less urgent buffs will either be displayed in their normal position (if enabled) or hidden completely (if disabled).\n\nExpect to a see a lot of tweaks to this. WIP.")
     nameplateAuraKeyAuraPositionEnabled:SetScale(1.4)
 
+    local nameplateAuraKeyAuraPositionFriendly = CreateCheckbox("nameplateAuraKeyAuraPositionFriendly", "Friendly", enableNameplateAuraCustomisation)
+    nameplateAuraKeyAuraPositionFriendly:SetPoint("LEFT", nameplateAuraKeyAuraPositionEnabled.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(nameplateAuraKeyAuraPositionFriendly, "Enable Key Auras on Friendly", "Enable Key Auras on Friendly units as well.")
+
+    nameplateAuraKeyAuraPositionEnabled:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            BetterBlizzPlatesDB["keyAurasImportantBuffsEnabled"] = not BetterBlizzPlatesDB["keyAurasImportantBuffsEnabled"]
+            local setting = BetterBlizzPlatesDB["keyAurasImportantBuffsEnabled"] and "|cff32f795Moving CC & Important Buffs" or "|cFFFF5555Moving CC but not Important Buffs"
+            RefreshTooltip(nameplateAuraKeyAuraPositionEnabled, "Enable Key Auras", "Show and move CC and Important Buffs to the right of healthbar similar to BigDebuffs.\n\n|cff32f795Right-click to only move CC and not important buffs.|r\n" .. setting, "All CC will be moved, but unlike BigDebuffs, this location is intended only for a select number of very important buffs, such as immunities. Smaller, less urgent buffs will either be displayed in their normal position (if enabled) or hidden completely (if disabled).\n\nExpect to a see a lot of tweaks to this. WIP.")
+            BBP.UpdateImportantBuffsAndCCTables()
+            for k, namePlate in pairs(C_NamePlate.GetNamePlates(false)) do
+                BBP.On_NpRefreshOnce(namePlate.UnitFrame)
+            end
+        end
+    end)
 
     local nameplateKeyAurasXPos = CreateSlider(nameplateAuraKeyAuraPositionEnabled, "Key Aura X Offset", -80, 80, 1, "nameplateKeyAurasXPos", "X")
     nameplateKeyAurasXPos:SetPoint("TOPLEFT", nameplateAuraKeyAuraPositionEnabled, "BOTTOMLEFT", 15, -14)
@@ -10354,18 +10424,19 @@ local function guiCVarControl()
         end)
     --end
 
-    C_Timer.After(3.1, function()
+    C_Timer.After(0.5, function()
         local cvarListener = CreateFrame("Frame")
         cvarListener:RegisterEvent("CVAR_UPDATE")
         cvarListener:SetScript("OnEvent", function(self, event, cvarName, cvarValue)
+            if BBP.LoggingOut then return end
             if (BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater")) then return end
             local checkedState = cvarValue == "1" or false
             if cvarValue then
                 if cbCVars[cvarName] then
-                    BetterBlizzPlatesDB[cvarName] = cvarValue
+                    --BetterBlizzPlatesDB[cvarName] = cvarValue
                     cbCVars[cvarName]:SetChecked(checkedState)
                 elseif sliderCVars[cvarName] then
-                    BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+                    --BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
                     sliderCVars[cvarName]:SetValue(tonumber(cvarValue))
                 end
             end
@@ -10662,11 +10733,15 @@ local function guiMisc()
                 frame:SetScript("OnEvent", function()
                     C_CVar.SetCVar("nameplateSelfTopInset", C_CVar.GetCVarDefault("nameplateSelfTopInset"))
                     C_CVar.SetCVar("nameplateSelfBottomInset", C_CVar.GetCVarDefault("nameplateSelfBottomInset"))
+                    BetterBlizzPlatesDB.nameplateSelfTopInset = C_CVar.GetCVarDefault("nameplateSelfTopInset")
+                    BetterBlizzPlatesDB.nameplateSelfBottomInset = C_CVar.GetCVarDefault("nameplateSelfBottomInset")
                     frame:UnregisterEvent("PLAYER_REGEN_ENABLED")
                 end)
             else
                 C_CVar.SetCVar("nameplateSelfTopInset", C_CVar.GetCVarDefault("nameplateSelfTopInset"))
                 C_CVar.SetCVar("nameplateSelfBottomInset", C_CVar.GetCVarDefault("nameplateSelfBottomInset"))
+                BetterBlizzPlatesDB.nameplateSelfTopInset = C_CVar.GetCVarDefault("nameplateSelfTopInset")
+                BetterBlizzPlatesDB.nameplateSelfBottomInset = C_CVar.GetCVarDefault("nameplateSelfBottomInset")
             end
         end
     end)
@@ -11151,6 +11226,48 @@ end
 -- slider.MaxText:SetText("Max")
 -- slider.MaxText:Show()
 
+function BBP.CVarTracker()
+    local cvarsToTrack = {
+        checkboxes = {
+            nameplateShowEnemyMinions = true,
+            nameplateShowEnemyGuardians = true,
+            nameplateShowEnemyMinus = true,
+            nameplateShowEnemyPets = true,
+            nameplateShowEnemyTotems = true,
+            nameplateShowFriendlyMinions = true,
+            nameplateShowFriendlyGuardians = true,
+            nameplateShowFriendlyPets = true,
+            nameplateShowFriendlyTotems = true,
+            nameplateResourceOnTarget = true,
+            nameplateMotion = true,
+            nameplateShowAll = true
+        },
+        sliders = {
+            nameplateOverlapH = true,
+            nameplateOverlapV = true,
+            nameplateMotionSpeed = true,
+            nameplateMinAlpha = true,
+            nameplateMinAlphaDistance = true,
+            nameplateMaxAlpha = true,
+            nameplateMaxAlphaDistance = true,
+            nameplateOccludedAlphaMult = true
+        }
+    }
+
+    local cvarListener = CreateFrame("Frame")
+    cvarListener:RegisterEvent("CVAR_UPDATE")
+    cvarListener:SetScript("OnEvent", function(self, event, cvarName, cvarValue)
+        if BBP.LoggingOut then return end
+        if BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return end
+
+        if cvarsToTrack.checkboxes[cvarName] then
+            BetterBlizzPlatesDB[cvarName] = cvarValue
+        elseif cvarsToTrack.sliders[cvarName] then
+            BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+        end
+    end)
+end
+
 
 
 
@@ -11214,26 +11331,29 @@ function BBP.CreateIntroMessageWindow()
 
     local btnWidth, btnHeight, btnGap = 150, 30, -3
 
-    local function ShowProfileConfirmation(profileName, profileFunction, additionalNote)
+    local function ShowProfileConfirmation(profileName, class, profileFunction, additionalNote)
         local noteText = additionalNote or ""
-        local confirmationText = titleText .. "Are you sure you want to go with the " .. profileName .. "?\n\n" .. noteText .. "Click yes to apply and Reload UI."
+        local color = CLASS_COLORS[class] or "|cffffffff"
+        local icon = CLASS_ICONS[class] or "groupfinder-icon-role-leader"
+        local profileText = string.format("|A:%s:16:16|a %s%s|r", icon, color, profileName.." Profile")
+        local confirmationText = titleText .. "Are you sure you want to go\nwith the " .. profileText .. "?\n\n" .. noteText .. "Click yes to apply and Reload UI."
         StaticPopupDialogs["BBP_CONFIRM_PROFILE"].text = confirmationText
         StaticPopup_Show("BBP_CONFIRM_PROFILE", nil, nil, { func = profileFunction })
     end
 
     -- Create button for your profile
     local starterButton = CreateClassButton(BBP.IntroMessageWindow, "STARTER", "Starter", nil, function()
-        ShowProfileConfirmation("Starter Profile", BBP.StarterProfile)
+        ShowProfileConfirmation("Starter", "STARTER", BBP.StarterProfile)
     end)
     starterButton:SetPoint("TOP", description1, "BOTTOM", 0, -20)
 
     local blitzButton = CreateClassButton(BBP.IntroMessageWindow, "BLITZ", "Blitz", nil, function()
-        ShowProfileConfirmation("Blitz Profile", BBP.BlitzProfile)
+        ShowProfileConfirmation("Blitz", "BLITZ", BBP.BlitzProfile)
     end)
     blitzButton:SetPoint("TOP", starterButton, "BOTTOM", 0, btnGap)
 
     local mythicButton = CreateClassButton(BBP.IntroMessageWindow, "MYTHIC", "Mythic", nil, function()
-        ShowProfileConfirmation("Mythic Profile", BBP.MythicProfile)
+        ShowProfileConfirmation("Mythic", "MYTHIC", BBP.MythicProfile)
     end)
     mythicButton:SetPoint("TOP", blitzButton, "BOTTOM", 0, btnGap)
 
@@ -11243,32 +11363,32 @@ function BBP.CreateIntroMessageWindow()
     orText:SetJustifyH("CENTER")
 
     local aeghisButton = CreateClassButton(BBP.IntroMessageWindow, "MAGE", "Aeghis", "aeghis", function()
-        ShowProfileConfirmation("Aeghis Profile", BBP.AeghisProfile)
+        ShowProfileConfirmation("Aeghis", "MAGE", BBP.AeghisProfile)
     end)
     aeghisButton:SetPoint("TOP", mythicButton, "BOTTOM", 0, -40)
 
     local kalvishButton = CreateClassButton(BBP.IntroMessageWindow, "ROGUE", "Kalvish", "kalvish", function()
-        ShowProfileConfirmation("Kalvish Profile", BBP.KalvishProfile)
+        ShowProfileConfirmation("Kalvish", "ROGUE", BBP.KalvishProfile)
     end)
     kalvishButton:SetPoint("TOP", aeghisButton, "BOTTOM", 0, btnGap)
 
     local magnuszButton = CreateClassButton(BBP.IntroMessageWindow, "WARRIOR", "Magnusz", "magnusz", function()
-        ShowProfileConfirmation("Magnusz Profile", BBP.MagnuszProfile)
+        ShowProfileConfirmation("Magnusz", "WARRIOR", BBP.MagnuszProfile)
     end)
     magnuszButton:SetPoint("TOP", kalvishButton, "BOTTOM", 0, btnGap)
 
     local mmarkersButton = CreateClassButton(BBP.IntroMessageWindow, "DRUID", "Mmarkers", "mmarkers", function()
-        ShowProfileConfirmation("Mmarkers Profile", BBP.MmarkersProfile)
+        ShowProfileConfirmation("Mmarkers", "DRUID", BBP.MmarkersProfile)
     end)
     mmarkersButton:SetPoint("TOP", magnuszButton, "BOTTOM", 0, btnGap)
 
     local nahjButton = CreateClassButton(BBP.IntroMessageWindow, "ROGUE", "Nahj", "nahj", function()
-        ShowProfileConfirmation("Nahj Profile", BBP.NahjProfile)
+        ShowProfileConfirmation("Nahj", "ROGUE", BBP.NahjProfile)
     end)
     nahjButton:SetPoint("TOP", mmarkersButton, "BOTTOM", 0, btnGap)
 
     local snupyButton = CreateClassButton(BBP.IntroMessageWindow, "DRUID", "Snupy", "snupy", function()
-        ShowProfileConfirmation("Snupy Profile", BBP.SnupyProfile)
+        ShowProfileConfirmation("Snupy", "DRUID", BBP.SnupyProfile)
     end)
     snupyButton:SetPoint("TOP", nahjButton, "BOTTOM", 0, btnGap)
 

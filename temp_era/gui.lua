@@ -4464,6 +4464,12 @@ local function guiGeneralTab()
     classIndicatorIcon:SetAtlas("groupfinder-icon-class-mage")
     classIndicatorIcon:SetSize(18, 18)
     classIndicatorIcon:SetPoint("RIGHT", classIndicator, "LEFT", 0, 0)
+    classIndicator:HookScript("OnClick", function()
+        if InCombatLockdown() then return end
+        if self:GetChecked() then
+            C_CVar.SetCVar("nameplateShowFriends", "1")
+        end
+    end)
 
     local combatIndicator = CreateCheckbox("combatIndicator", "Combat indicator", BetterBlizzPlates, nil, BBP.ToggleCombatIndicator)
     combatIndicator:SetPoint("TOPLEFT", classIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -4498,6 +4504,15 @@ local function guiGeneralTab()
     partyPointerIcon:SetPoint("RIGHT", partyPointer, "LEFT", -2.5, 1.5)
     partyPointerIcon:SetDesaturated(true)
     partyPointerIcon:SetVertexColor(0.04, 0.76, 1)
+    partyPointer:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            if BetterBlizzPlatesDB.partyPointerArenaOnly then
+                print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Party Pointer is set to only show during Arena. You can change this in the Advanced Settings section.")
+            end
+            if InCombatLockdown() then return end
+            C_CVar.SetCVar("nameplateShowFriends", "1")
+        end
+    end)
 
     local petIndicator = CreateCheckbox("petIndicator", "Pet indicator", BetterBlizzPlates)
     petIndicator:SetPoint("TOPLEFT", partyPointer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -5667,10 +5682,10 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubExecute)
 
-    local executeIcon = contentFrame:CreateTexture(nil, "ARTWORK")
-    executeIcon:SetTexture(BBP.executeIndicatorIconReplacement)
-    executeIcon:SetSize(50, 54)
-    executeIcon:SetPoint("BOTTOM", anchorSubExecute, "TOP", 0, -10)
+    anchorSubExecute.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubExecute.t:SetTexture(BBP.executeIndicatorIconReplacement)
+    anchorSubExecute.t:SetSize(50, 54)
+    anchorSubExecute.t:SetPoint("BOTTOM", anchorSubExecute, "TOP", 0, -10)
 
     local executeIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 2.5, 0.01, "executeIndicatorScale")
     executeIndicatorScale:SetPoint("TOP", anchorSubExecute, "BOTTOM", 0, -15)
@@ -5703,6 +5718,29 @@ local function guiPositionAndScale()
     executeIndicatorFriendly:SetPoint("TOPLEFT", executeIndicatorAlwaysOn, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(executeIndicatorFriendly, "Show on friendly nameplates")
 
+    anchorSubExecute.executeIndicatorUseTexture = CreateCheckbox("executeIndicatorUseTexture", "Use Texture", contentFrame)
+    anchorSubExecute.executeIndicatorUseTexture:SetPoint("TOPLEFT", executeIndicatorFriendly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubExecute.executeIndicatorUseTexture, "Use Texture", "Show a line on execute range instead of text.")
+    anchorSubExecute.executeIndicatorUseTexture:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            DisableElement(executeIndicatorScale)
+            DisableElement(executeIndicatorXPos)
+            DisableElement(executeIndicatorYPos)
+            LibDD:UIDropDownMenu_DisableDropDown(executeIndicatorDropdown)
+        else
+            EnableElement(executeIndicatorScale)
+            EnableElement(executeIndicatorXPos)
+            EnableElement(executeIndicatorYPos)
+            LibDD:UIDropDownMenu_EnableDropDown(executeIndicatorDropdown)
+        end
+    end)
+    if BetterBlizzPlatesDB.executeIndicatorUseTexture then
+        DisableElement(executeIndicatorScale)
+        DisableElement(executeIndicatorXPos)
+        DisableElement(executeIndicatorYPos)
+        LibDD:UIDropDownMenu_DisableDropDown(executeIndicatorDropdown)
+    end
+
     local executeIndicatorNotOnFullHp = CreateCheckbox("executeIndicatorNotOnFullHp", "< 100%", contentFrame)
     executeIndicatorNotOnFullHp:SetPoint("LEFT", executeIndicatorAlwaysOn.text, "RIGHT", 2, 0)
     CreateTooltip(executeIndicatorNotOnFullHp, "Hide on 100%")
@@ -5711,12 +5749,16 @@ local function guiPositionAndScale()
     executeIndicatorPercentSymbol:SetPoint("TOPLEFT", executeIndicatorNotOnFullHp, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(executeIndicatorPercentSymbol, "Show % Symbol")
 
+    anchorSubExecute.executeIndicatorTargetOnly = CreateCheckbox("executeIndicatorTargetOnly", "Target", contentFrame)
+    anchorSubExecute.executeIndicatorTargetOnly:SetPoint("TOPLEFT", executeIndicatorPercentSymbol, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubExecute.executeIndicatorTargetOnly, "Target Only", "Only show execute indicator on your current Target.")
+
     local executeIndicatorShowDecimal = CreateCheckbox("executeIndicatorShowDecimal", "Decimal", contentFrame)
     executeIndicatorShowDecimal:SetPoint("BOTTOMLEFT", executeIndicatorNotOnFullHp, "TOPLEFT", 0, -pixelsBetweenBoxes)
     CreateTooltip(executeIndicatorShowDecimal, "Show decimal")
 
     local executeIndicatorThreshold = CreateSlider(contentFrame, "Threshold", 5, 100, 1, "executeIndicatorThreshold")
-    executeIndicatorThreshold:SetPoint("TOP", executeIndicatorAlwaysOn, "BOTTOM", 58, -32)
+    executeIndicatorThreshold:SetPoint("TOP", executeIndicatorAlwaysOn, "BOTTOM", 58, -48)
     CreateTooltip(executeIndicatorThreshold, "Percentage of when the execute indicator should show.")
 
     local function executeIndicatorToggle()
@@ -8342,17 +8384,19 @@ local function guiCVarControl()
         end)
     end
 
-    C_Timer.After(3.1, function()
+    C_Timer.After(0.5, function()
         local cvarListener = CreateFrame("Frame")
         cvarListener:RegisterEvent("CVAR_UPDATE")
         cvarListener:SetScript("OnEvent", function(self, event, cvarName, cvarValue)
+            if BBP.LoggingOut then return end
+            if (BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater")) then return end
             local checkedState = cvarValue == "1" or false
             if cvarValue then
                 if cbCVars[cvarName] then
-                    BetterBlizzPlatesDB[cvarName] = cvarValue
+                    --BetterBlizzPlatesDB[cvarName] = cvarValue
                     cbCVars[cvarName]:SetChecked(checkedState)
                 elseif sliderCVars[cvarName] then
-                    BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+                    --BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
                     sliderCVars[cvarName]:SetValue(tonumber(cvarValue))
                 end
             end
@@ -8923,10 +8967,7 @@ function BBP.InitializeOptions()
         loadGUI:SetPoint("CENTER", BetterBlizzPlates, "CENTER", -18, 6)
         BetterBlizzPlates.loadGUI = loadGUI
         loadGUI:SetScript("OnClick", function(self)
-            if InCombatLockdown() then
-                print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Waiting for combat to drop before opening settings for the first time.")
-                return
-            end
+            if CombatOnGUICreation() then return end
             BBP.LoadGUI()
             titleText:Hide()
             self:Hide()
@@ -8941,10 +8982,7 @@ function BBP.LoadGUI()
         BetterBlizzPlatesDB.hasNotOpenedSettings = nil
         return
     end
-    if InCombatLockdown() then
-        print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Waiting for combat to drop before opening settings for the first time.")
-        return
-    end
+    if CombatOnGUICreation() then return end
     guiGeneralTab()
     guiPositionAndScale()
     guiCastbar()
@@ -8965,6 +9003,48 @@ function BBP.LoadGUI()
     Settings.OpenToCategory(BBP.category.ID)
 end
 
+
+function BBP.CVarTracker()
+    local cvarsToTrack = {
+        checkboxes = {
+            nameplateShowEnemyMinions = true,
+            nameplateShowEnemyGuardians = true,
+            nameplateShowEnemyMinus = true,
+            nameplateShowEnemyPets = true,
+            nameplateShowEnemyTotems = true,
+            nameplateShowFriendlyMinions = true,
+            nameplateShowFriendlyGuardians = true,
+            nameplateShowFriendlyPets = true,
+            nameplateShowFriendlyTotems = true,
+            nameplateResourceOnTarget = true,
+            nameplateMotion = true,
+            nameplateShowAll = true
+        },
+        sliders = {
+            nameplateOverlapH = true,
+            nameplateOverlapV = true,
+            nameplateMotionSpeed = true,
+            nameplateMinAlpha = true,
+            nameplateMinAlphaDistance = true,
+            nameplateMaxAlpha = true,
+            nameplateMaxAlphaDistance = true,
+            nameplateOccludedAlphaMult = true
+        }
+    }
+
+    local cvarListener = CreateFrame("Frame")
+    cvarListener:RegisterEvent("CVAR_UPDATE")
+    cvarListener:SetScript("OnEvent", function(self, event, cvarName, cvarValue)
+        if BBP.LoggingOut then return end
+        if BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return end
+
+        if cvarsToTrack.checkboxes[cvarName] then
+            BetterBlizzPlatesDB[cvarName] = cvarValue
+        elseif cvarsToTrack.sliders[cvarName] then
+            BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+        end
+    end)
+end
 
 function BBP.CreateIntroMessageWindow()
     if BBP.IntroMessageWindow then

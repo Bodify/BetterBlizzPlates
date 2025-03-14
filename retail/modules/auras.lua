@@ -117,6 +117,120 @@ local fakeAuras = {
     },
 }
 
+local activeInterrupts = {}
+
+local interruptSpells = {
+    [1766] = 3,  -- Kick (Rogue)
+    [2139] = 5,  -- Counterspell (Mage)
+    [6552] = 3,  -- Pummel (Warrior)
+    [132409] = 5, -- Spell Lock (Warlock)
+    [19647] = 5, -- Spell Lock (Warlock, pet)
+    [47528] = 3,  -- Mind Freeze (Death Knight)
+    [57994] = 2,  -- Wind Shear (Shaman)
+    [91807] = 2,  -- Shambling Rush (Death Knight)
+    [96231] = 3,  -- Rebuke (Paladin)
+    [93985] = 3,  -- Skull Bash (Druid)
+    [116705] = 3, -- Spear Hand Strike (Monk)
+    [147362] = 3, -- Counter Shot (Hunter)
+    [183752] = 3, -- Disrupt (Demon Hunter)
+    [187707] = 3, -- Muzzle (Hunter)
+    [212619] = 5, -- Call Felhunter (Warlock)
+    [31935] = 3,  -- Avenger's Shield (Paladin)
+    [217824] = 4, -- Shield of Virtue (Protection PvP Talent)
+    [351338] = 4, -- Quell (Evoker)
+}
+
+-- Buffs that reduce interrupt duration
+local spellLockReducer = {
+    [317920] = 0.7, -- Concentration Aura
+    [234084] = 0.5, -- Moon and Stars
+    [383020] = 0.5, -- Tranquil Air
+}
+
+local interruptEvents = {
+    ["SPELL_INTERRUPT"] = true,
+    ["SPELL_CAST_SUCCESS"] = true,
+}
+
+function BBP.SetUpAuraInterrupts()
+    if BBP.interruptTrackerFrame then return end
+    local interruptTrackerFrame = CreateFrame("Frame")
+    interruptTrackerFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+    interruptTrackerFrame:SetScript("OnEvent", function()
+        local _, event, _, sourceGUID, _, _, _, destGUID, _, _, _, spellId, spellName = CombatLogGetCurrentEventInfo()
+
+        if not interruptEvents[event] then return end
+
+        local duration = interruptSpells[spellId]
+        if not duration then return end
+
+        local interruptedNp, wasCasting, isInterruptible = nil, false, false
+
+        for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+            local frame = nameplate.UnitFrame
+            if frame and UnitGUID(frame.unit) == destGUID then
+                interruptedNp = frame
+
+                -- Check if the unit was casting or channeling AND if it was interruptible
+                local castName, _, _, _, _, _, _, notInterruptible = UnitCastingInfo(frame.unit)
+                local channelName, _, _, _, _, _, notInterruptibleChannel = UnitChannelInfo(frame.unit)
+
+                if (castName and not notInterruptible) or (channelName and not notInterruptibleChannel) then
+                    wasCasting = true
+                    isInterruptible = true
+                end
+
+                -- Apply interrupt duration reductions based on active buffs
+                AuraUtil.ForEachAura(frame.unit, "HELPFUL", nil, function(_, _, _, _, _, _, _, _, _, spellId)
+                    local mult = spellLockReducer[spellId]
+                    if mult then
+                        duration = duration * mult
+                    end
+                end)
+
+                break
+            end
+        end
+
+        -- If the target wasn't casting, or was immune to interrupts, do nothing
+        if not interruptedNp or not wasCasting or not isInterruptible then return end
+
+        local expires = GetTime() + duration
+
+        activeInterrupts[destGUID] = {
+            spellId = spellId,
+            name = spellName,
+            duration = duration,
+            expirationTime = expires,
+            icon = C_Spell.GetSpellTexture(spellId),
+        }
+
+        -- Update the interrupted unit's nameplate buffs
+        BBP.UpdateBuffs(interruptedNp.BuffFrame, interruptedNp.unit, nil, {harmful = true}, interruptedNp)
+
+        -- Clear the interrupt after its duration
+        C_Timer.After(duration, function()
+            if activeInterrupts[destGUID] and activeInterrupts[destGUID].expirationTime <= GetTime() then
+                activeInterrupts[destGUID] = nil
+
+                -- Refresh the nameplate to remove the expired interrupt aura
+                for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+                    local frame = nameplate.UnitFrame
+                    if frame and UnitGUID(frame.unit) == destGUID then
+                        BBP.UpdateBuffs(frame.BuffFrame, frame.unit, nil, {harmful = true}, frame)
+                        break
+                    end
+                end
+            end
+        end)
+    end)
+    BBP.interruptTrackerFrame = interruptTrackerFrame
+end
+
+
+
+
+
 local smokeIDs = {
     [212182] = true,
     [359053] = true,
@@ -154,7 +268,7 @@ local importantGeneralDebuffs = {
     [383005] = {r = 0, g = 1, b = 0, a = 1}, -- Chrono Loop (Debuff)
 }
 
-local keyAuraList = {
+local ogKeyAuraList = {
     [204018] = "defensiveColor",
     [212800] = "defensiveColor",
     [31224] = "defensiveColor",
@@ -197,6 +311,8 @@ local keyAuraList = {
     [212182] = true, -- smoke
     [359053] = true, -- smoke
 }
+
+local keyAuraList = {}
 
 local importantOffensives = {
     [190261] = true, -- death wish
@@ -262,7 +378,7 @@ local importantOffensives = {
     [137639] = true,
     [185422] = true,
     [454351] = true,
-    [252071] = true,
+    --[252071] = true, incarn no dur
     [375087] = true,
 }
 local importantMobility = {
@@ -668,27 +784,37 @@ function BBP.UpdateImportantBuffsAndCCTables()
 
     if moveKeyAuras then
         local checkColors = db.otherNpBuffFilterImportantBuffs or db.friendlyNpBuffFilterImportantBuffs or db.personalNpBuffFilterImportantBuffs
-        for spellID, colorType in pairs(keyAuraList) do
-            local color
-            if checkColors then
-                if colorType == "defensiveColor" then
-                    color = db.importantBuffsDefensives and db.importantBuffsDefensivesGlow and db.importantBuffsDefensivesGlowRGB or true
-                elseif colorType == "offensiveColor" then
-                    color = db.importantBuffsOffensives and db.importantBuffsOffensivesGlow and db.importantBuffsOffensivesGlowRGB or true
-                elseif colorType == "importantColor" then
-                    color = importantColor
+        if db.keyAurasImportantBuffsEnabled then
+            for spellID, colorType in pairs(ogKeyAuraList) do
+                local color
+                if checkColors then
+                    if colorType == "defensiveColor" then
+                        color = db.importantBuffsDefensives and db.importantBuffsDefensivesGlow and db.importantBuffsDefensivesGlowRGB or true
+                    elseif colorType == "offensiveColor" then
+                        color = db.importantBuffsOffensives and db.importantBuffsOffensivesGlow and db.importantBuffsOffensivesGlowRGB or true
+                    elseif colorType == "importantColor" then
+                        color = db.keyAurasImportantGlowOn and importantColor or true
+                    else
+                        color = true
+                    end
                 else
-                    color = true
+                    if colorType == "importantColor" then
+                        color = db.keyAurasImportantGlowOn and importantColor or true
+                    else
+                        color = true
+                    end
                 end
-            else
-                if colorType == "importantColor" then
-                    color = importantColor
-                else
-                    color = true
-                end
-            end
 
-            keyAuraList[spellID] = color
+                keyAuraList[spellID] = color
+            end
+        else
+            for spellID, colorType in pairs(keyAuraList) do
+                keyAuraList[spellID] = nil
+            end
+        end
+
+        for spellID, value in pairs(interruptSpells) do
+            keyAuraList[spellID] = true
         end
 
         if not importantCCEnabled then
@@ -739,6 +865,9 @@ function BBP.UpdateImportantBuffsAndCCTables()
             local color = not db.importantCCSilenceGlow and true or db.importantCCSilenceGlowRGB or ccSilenceColor
             for spellID, value in pairs(ccSilence) do
                 crowdControl[spellID] = value == true and color or value
+            end
+            for spellID, value in pairs(interruptSpells) do
+                crowdControl[spellID] = color
             end
         end
     end
@@ -1863,7 +1992,7 @@ local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
     end
 end
 
-local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
+local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride, interrupt)
     if not aura then return false end
     local spellName = aura.name
     local spellId = aura.spellId
@@ -1933,6 +2062,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
         if db["personalNpdeBuffEnable"] and aura.isHarmful then
             local isInBlacklist = db["personalNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
             if isInBlacklist then return end
+            if interrupt then return true end
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
@@ -2011,6 +2141,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
         if db["friendlyNpdeBuffEnable"] and aura.isHarmful then
             local isInBlacklist = db["friendlyNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
             if isInBlacklist then return end
+            if interrupt then return true end
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
@@ -2102,6 +2233,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride)
         if db["otherNpdeBuffEnable"] and aura.isHarmful then
             local isInBlacklist = db["otherNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
             if isInBlacklist then return end
+            if interrupt then return true end
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
@@ -2281,6 +2413,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     local opBarriersOn = db.opBarriersEnabled
     local npAuraStackFontEnabled = db.npAuraStackFontEnabled
     local moveKeyAuras = db.nameplateAuraKeyAuraPositionEnabled
+    local moveKeyAurasFriendly = db.nameplateAuraKeyAuraPositionFriendly
     --local ccGLow = db.
 
     self.auras:Iterate(function(auraInstanceID, aura)
@@ -2314,11 +2447,22 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         if moveKeyAuras then
             local isKeyAura = keyAuraList[spellId]
             if isKeyAura then
-                buff.isKeyAura = true
-                isEnlarged = true
-                if isKeyAura ~= true and not isImportant then
-                    isImportant = true
-                    auraColor = isKeyAura
+                if isEnemyUnit then
+                    buff.isKeyAura = true
+                    isEnlarged = true
+                    if isKeyAura ~= true and not isImportant then
+                        isImportant = true
+                        auraColor = isKeyAura
+                    end
+                else
+                    if moveKeyAurasFriendly then
+                        buff.isKeyAura = true
+                        isEnlarged = true
+                        if isKeyAura ~= true and not isImportant then
+                            isImportant = true
+                            auraColor = isKeyAura
+                        end
+                    end
                 end
             end
         end
@@ -2355,6 +2499,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         end
 
         if isPlayerUnit then
+            buff.isKeyAura = nil
             if isEnlarged then
                 if not db.disableEnlargedAurasOnSelf then
                     buff.isEnlarged = true
@@ -2488,9 +2633,9 @@ function BBP.ParseAllAuras(self, forceAll, UnitFrame)
         self.auras:Clear();
     end
 
-    local function HandleAura(aura, isTestModeEnabled)
+    local function HandleAura(aura, isTestModeEnabled, interrupt)
         local BlizzardShouldShow = self:ShouldShowBuff(aura, forceAll)
-        local shouldShowAura, isImportant, isPandemic = ShouldShowBuff(self.unit, aura, BlizzardShouldShow, isTestModeEnabled)
+        local shouldShowAura, isImportant, isPandemic = ShouldShowBuff(self.unit, aura, BlizzardShouldShow, isTestModeEnabled, interrupt)
         if shouldShowAura then
             self.auras[aura.auraInstanceID] = aura;
         end
@@ -2505,6 +2650,26 @@ function BBP.ParseAllAuras(self, forceAll, UnitFrame)
         AuraUtil.ForEachAura(self.unit, "HELPFUL|INCLUDE_NAME_PLATE_ONLY", batchCount, HandleAura, usePackedAura);
     else
         AuraUtil.ForEachAura(self.unit, "HELPFUL", batchCount, HandleAura, usePackedAura);
+    end
+
+    local destGUID = UnitGUID(self.unit)
+    if destGUID and activeInterrupts[destGUID] then
+        local interruptData = activeInterrupts[destGUID]
+        local currentTime = GetTime()
+        if interruptData.expirationTime > currentTime then
+            local interruptAura = {
+                auraInstanceID = 1,
+                spellId = interruptData.spellId,
+                icon = interruptData.icon,
+                name = interruptData.name,
+                duration = interruptData.duration,
+                expirationTime = interruptData.expirationTime,
+                isHarmful = true,
+                applications = 1,
+                dispelName = "Physical",
+            }
+            HandleAura(interruptAura, false, true)
+        end
     end
 
     -- Injecting fake auras for testing

@@ -38,8 +38,24 @@ function BBP.ExecuteIndicator(frame)
     -- Check for friendly status if required
     if not config.executeIndicatorFriendly then
         if info.isFriend then
+            if frame.executeIndicator then
+                frame.executeIndicator:Hide()
+            end
+            if frame.executeIndicatorTexture then
+                frame.executeIndicatorTexture:Hide()
+            end
             return
         end
+    end
+
+    if UnitIsUnit(frame.unit, "player") then
+        if frame.executeIndicator then
+            frame.executeIndicator:Hide()
+        end
+        if frame.executeIndicatorTexture then
+            frame.executeIndicatorTexture:Hide()
+        end
+        return
     end
 
     local health = UnitHealth(unit)

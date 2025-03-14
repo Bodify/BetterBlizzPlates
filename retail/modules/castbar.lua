@@ -22,6 +22,10 @@ local interruptList = {
     [231665] = true,-- Avengers Shield (Paladin)
     [351338] = true,-- Quell (Evoker)
     [97547]  = true,-- Solar Beam
+    [31935] = true, -- Avenger's Shield (Paladin)
+    [217824] = true,-- Shield of Virtue (Protection PvP Talent)
+    [93985] = true,  -- Skull Bash (Druid)
+    [91807] = true,  -- Shambling Rush (Death Knight)
 }
 
 local IsSpellKnownOrOverridesKnown = IsSpellKnownOrOverridesKnown
@@ -135,6 +139,8 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     local hideCastbarText = db.hideCastbarText
     local hideCastbarBorderShield = db.hideCastbarBorderShield
     local hideCastbarIcon = db.hideCastbarIcon
+    local castBarIconPixelBorder = db.castBarIconPixelBorder
+    local castBarPixelBorder = db.castBarPixelBorder
 
     if not castBarRecolor then
         if castBarTexture then
@@ -162,6 +168,14 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         castBar.BorderShield:SetScale(borderShieldSize)
         frame:GetParent():SetParent(WorldFrame)
         frame.castbarEmphasisActive = false
+    end
+
+    if castBarPixelBorder then
+        BBP.SetupBorderOnFrame(frame.castBar)
+    end
+    if castBarIconPixelBorder then
+        castBar.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        BBP.SetupBorderOnFrame(frame.castBar.Icon)
     end
 
     if UnitCastingInfo(unitToken) then
@@ -207,6 +221,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
                 castBar.Background:SetDesaturated(true)
                 castBar.Background:SetTexture(bgTexture)
+                castBar.Background:SetAllPoints(castBar)
                 if notInterruptible then
                     castBar.Background:SetVertexColor(1,0,0,1)
                 else

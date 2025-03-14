@@ -136,6 +136,13 @@ function BBP.ClassIndicator(frame, foundID, fade)
         return
     end
 
+    if UnitIsUnit(frame.unit, "player") then
+        if frame.classIndicator then
+            frame.classIndicator:Hide()
+        end
+        return
+    end
+
     local anchorPoint =
         (info.isFriend and config.classIndicatorFriendlyAnchor) or
         ((info.isEnemy or info.isNeutral) and config.classIndicatorAnchor)
