@@ -5386,7 +5386,7 @@ local function guiGeneralTab()
     classIndicatorIcon:SetAtlas("groupfinder-icon-class-mage")
     classIndicatorIcon:SetSize(18, 18)
     classIndicatorIcon:SetPoint("RIGHT", classIndicator, "LEFT", 0, 0)
-    classIndicator:HookScript("OnClick", function()
+    classIndicator:HookScript("OnClick", function(self)
         if InCombatLockdown() then return end
         if self:GetChecked() then
             C_CVar.SetCVar("nameplateShowFriends", "1")
@@ -7272,7 +7272,7 @@ local function guiPositionAndScale()
 
     local partyPointerHealerReplace = CreateCheckbox("partyPointerHealerReplace", "Replace", contentFrame)
     partyPointerHealerReplace:SetPoint("TOPLEFT", partyPointerHealer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(partyPointerHealerReplace, "Replace Party Pointer with Healer Icon", "Replace the party pointer with healer icon instead of showing on the top.")
+    CreateTooltipTwo(partyPointerHealerReplace, "Replace Party Pointer with Healer Icon", "Instead of showing the Healer Icon on top of the Party Pointer replace it entirely with the Healer icon.")
 
     anchorSubPointerIndicator.partyPointerHealerOnly = CreateCheckbox("partyPointerHealerOnly", "Heal Only", contentFrame)
     anchorSubPointerIndicator.partyPointerHealerOnly:SetPoint("TOPLEFT", partyPointerHealerReplace, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -7625,8 +7625,7 @@ local function guiPositionAndScale()
             StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
         end
     end)
-    BetterBlizzPlatesSubPanel.resetBBPButton.extraText = BBPCVarBackupsDB and "\n\n|cFFFF5555If you want to remove BetterBlizzPlates and reset back to your original CVars hold Control + Alt and LeftClick|r" or ""
-    CreateTooltipTwo(BetterBlizzPlatesSubPanel.resetBBPButton, "Reset", "Reset ALL BetterBlizzPlates settings."..BetterBlizzPlatesSubPanel.resetBBPButton.extraText)
+    CreateTooltipTwo(BetterBlizzPlatesSubPanel.resetBBPButton, "Reset", "Reset ALL BetterBlizzPlates settings.")
 
     BetterBlizzPlatesSubPanel.rightClickTip = BetterBlizzPlatesSubPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     BetterBlizzPlatesSubPanel.rightClickTip:SetPoint("RIGHT", BetterBlizzPlatesSubPanel.reloadButton, "LEFT", -80, -2)
@@ -11260,11 +11259,14 @@ function BBP.CVarTracker()
         if BBP.LoggingOut then return end
         if BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return end
 
-        if cvarsToTrack.checkboxes[cvarName] then
-            BetterBlizzPlatesDB[cvarName] = cvarValue
-        elseif cvarsToTrack.sliders[cvarName] then
-            BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
-        end
+        C_Timer.After(2, function()
+            if BBP.LoggingOut then return end
+            if cvarsToTrack.checkboxes[cvarName] then
+                BetterBlizzPlatesDB[cvarName] = cvarValue
+            elseif cvarsToTrack.sliders[cvarName] then
+                BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+            end
+        end)
     end)
 end
 

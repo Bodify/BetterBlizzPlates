@@ -438,7 +438,7 @@ function BBP.ClassIndicator(frame, foundID, fade)
         end
     else
         frame.classIndicator.icon:SetAtlas(classAtlas)
-        frame.classIndicator.icon:SetTexCoord(-0.11, 1.10, -0.11, 1.10)
+        frame.classIndicator.icon:SetTexCoord(-0.06, 1.05, -0.06, 1.05)
     end
 
     frame.classIndicator:Show()

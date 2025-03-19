@@ -267,6 +267,7 @@ local defaultSettings = {
     targetIndicatorAnchor = "TOP",
     targetIndicatorTestMode = false,
     targetIndicatorColorNameplateRGB = {1, 0, 0.44},
+    petIndicatorColorHealthbarRGB = {0.03,0.35,0},
     targetIndicatorTexture = "Checkered (BBP)",
     -- Focus Target Indicator
     focusTargetIndicator = false,
@@ -2869,7 +2870,13 @@ function BBP.ColorNpcHealthbar(frame)
     if not info then return end
 
     -- Skip if the unit is a player
-    if info.isPlayer then return end
+    if info.isPlayer then
+        if config.npcHealthbarColor then
+            config.npcHealthbarColor = nil
+            CompactUnitFrame_UpdateName(frame)
+        end
+        return
+    end
     if not info.unitGUID then return end
 
     local npcID = select(6, strsplit("-", info.unitGUID))
@@ -4745,7 +4752,7 @@ function BBP.SetupBorderOnFrame(frame)
     local borderRight = CreateBorder(frame, 0, 0, 0, 1)
 
     -- Store borders in a table
-    frame.borders = {borderTop, borderBottom, borderLeft, borderRight}
+    frame["borders"] = {borderTop, borderBottom, borderLeft, borderRight}
 
     -- Initial border thickness
     local borderThickness = 1

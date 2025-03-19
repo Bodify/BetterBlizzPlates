@@ -171,11 +171,32 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     end
 
     if castBarPixelBorder then
-        BBP.SetupBorderOnFrame(frame.castBar)
+        BBP.SetupBorderOnFrame(castBar)
     end
     if castBarIconPixelBorder then
-        castBar.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-        BBP.SetupBorderOnFrame(frame.castBar.Icon)
+        if not castBar.adjustedIcon then
+            castBar.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+            BBP.SetupBorderOnFrame(castBar.Icon)
+            castBar.Icon:HookScript("OnShow", function()
+                for _, border in ipairs(castBar.Icon.borders) do
+                    border:Show()
+                end
+            end)
+            castBar.Icon:HookScript("OnHide", function()
+                for _, border in ipairs(castBar.Icon.borders) do
+                    border:Hide()
+                end
+            end)
+            castBar.BorderShield:HookScript("OnShow", function()
+                for _, border in ipairs(castBar.Icon.borders) do
+                    border:Hide()
+                end
+                if not showCastBarIconWhenNoninterruptible then
+                    castBar.Icon:Hide()
+                end
+            end)
+            castBar.adjustedIcon = true
+        end
     end
 
     if UnitCastingInfo(unitToken) then

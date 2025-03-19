@@ -2481,7 +2481,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         local isCC = crowdControl[spellId]
         if isCC then
             buff.isCC = true
-            if moveKeyAuras then
+            if moveKeyAuras and (moveKeyAurasFriendly and not isEnemyUnit) or isEnemyUnit then
                 buff.isKeyAura = true
             end
             if enlargeAllCC and enlargeAllCCsFilter then

@@ -8970,11 +8970,14 @@ function BBP.CVarTracker()
         if BBP.LoggingOut then return end
         if BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return end
 
-        if cvarsToTrack.checkboxes[cvarName] then
-            BetterBlizzPlatesDB[cvarName] = cvarValue
-        elseif cvarsToTrack.sliders[cvarName] then
-            BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
-        end
+        C_Timer.After(2, function()
+            if BBP.LoggingOut then return end
+            if cvarsToTrack.checkboxes[cvarName] then
+                BetterBlizzPlatesDB[cvarName] = cvarValue
+            elseif cvarsToTrack.sliders[cvarName] then
+                BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+            end
+        end)
     end)
 end
 

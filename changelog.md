@@ -1,3 +1,11 @@
+# BetterBlizzPlates 1.7.2b
+## Bugfix:
+- Fix Key Auras enabling CC auras to show on friendly nameplates even without Show Debuffs filter enabled.
+- Fix Castbar Icon Pixel Border setting showing border when icon is hidden but castbar shield icon is showing.
+- Fix "Color NPC Healthbar" name color bleeding onto Player nameplates and not getting updated due to function skipping player nameplates.
+
+
+
 # BetterBlizzPlates 1.7.2
 ## All versions
 ### Tweak:

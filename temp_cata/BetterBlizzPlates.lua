@@ -247,6 +247,7 @@ local defaultSettings = {
     focusTargetIndicatorTestMode = false,
     focusTargetIndicatorColorNameplate = false,
     focusTargetIndicatorColorNameplateRGB = {1, 1, 1},
+    petIndicatorColorHealthbarRGB = {0.03,0.35,0},
     focusTargetIndicatorTexture = "Shattered DF (BBP)",
     -- Totem Indicator
     totemIndicator = false,
