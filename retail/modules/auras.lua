@@ -537,6 +537,7 @@ local enlargeAllImportantBuffsFilter
 local crowdControl = {}
 local ccFull = {
     [277778] = true,
+    [353084] = true,
     [853] = true,
     [115268] = true,
     [221527] = true,
@@ -2481,7 +2482,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         local isCC = crowdControl[spellId]
         if isCC then
             buff.isCC = true
-            if moveKeyAuras and (moveKeyAurasFriendly and not isEnemyUnit) or isEnemyUnit then
+            if moveKeyAuras and ((moveKeyAurasFriendly and not isEnemyUnit) or isEnemyUnit) then
                 buff.isKeyAura = true
             end
             if enlargeAllCC and enlargeAllCCsFilter then

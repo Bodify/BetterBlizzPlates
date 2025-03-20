@@ -1,3 +1,7 @@
+# BetterBlizzPlates 1.7.2c
+## Bugfix
+- Fix CC filter causing all CC on enemy nameplates be considered a "Key Aura" by mistake.
+
 # BetterBlizzPlates 1.7.2b
 ## Bugfix:
 - Fix Key Auras enabling CC auras to show on friendly nameplates even without Show Debuffs filter enabled.
