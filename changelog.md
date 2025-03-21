@@ -1,3 +1,13 @@
+# BetterBlizzPlates 1.7.2d
+## Tweak:
+- Tweak to always get updated spec id's in World content to ensure people who respec dont show up as wrong spec.
+- Tweak to Fade NPC to never fade out player pet and work more reliably together with fading non target nameplate setting.
+- Tweaks to interrupt list for interrupt color, only counting pure kicks again.
+- Mirror Images adds 3 frostbolt debuffs. I've made it so only one appears to clean up clutter. You can of course still blacklist the id (59638) entirely.
+## Bugfix:
+- Fixed issue for new users where their Nameplate Height value would reset on logout/login.
+- Fixed Custom HealthBar Color affecting personal plate.
+
 # BetterBlizzPlates 1.7.2c
 ## Bugfix
 - Fix CC filter causing all CC on enemy nameplates be considered a "Key Aura" by mistake.

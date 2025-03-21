@@ -1303,7 +1303,7 @@ end
 
 local function StartCheckBuffsTimer()
     if not checkBuffsTimer then
-        checkBuffsTimer = C_Timer.NewTicker(0.1, CheckBuffs);
+        checkBuffsTimer = C_Timer.NewTicker(0.05, CheckBuffs);
     end
 end
 
@@ -2634,7 +2634,15 @@ function BBP.ParseAllAuras(self, forceAll, UnitFrame)
         self.auras:Clear();
     end
 
+    local mirrorImgFrostbolt = false
+
     local function HandleAura(aura, isTestModeEnabled, interrupt)
+        if aura.spellId == 59638 then
+            if mirrorImgFrostbolt then
+                return false -- Already added one, skip
+            end
+            mirrorImgFrostbolt = true -- Allow this one, skip others later
+        end
         local BlizzardShouldShow = self:ShouldShowBuff(aura, forceAll)
         local shouldShowAura, isImportant, isPandemic = ShouldShowBuff(self.unit, aura, BlizzardShouldShow, isTestModeEnabled, interrupt)
         if shouldShowAura then

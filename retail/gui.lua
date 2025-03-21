@@ -842,7 +842,11 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 end
 
                 if not axis then
-                    BetterBlizzPlatesDB[element .. "Scale"] = value
+                    if not string.match(element, "Scale$") then
+                        BetterBlizzPlatesDB[element .. "Scale"] = value
+                    else
+                        BetterBlizzPlatesDB[element] = value
+                    end
                 end
 
                 local xPos = BetterBlizzPlatesDB[element .. "XPos"] or 0
@@ -5066,7 +5070,7 @@ local function guiGeneralTab()
 
     local friendlyNameplateNonstackable = CreateCheckbox("friendlyNameplateNonstackable", "Non-Stackable", BetterBlizzPlates, nil, BBP.ApplyNameplateWidth)
     friendlyNameplateNonstackable:SetPoint("LEFT", friendlyNameplateClickthrough.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(friendlyNameplateNonstackable, "Non-Stackable", "Makes the friendly nameplates non-stackable even with \"Stacking Nameplates\" on.", "CAUTION: This setting can make nameplate auras appear lower than they should be when a unit changes between enemy/friendly (Duel/MC) due to a Blizzard bug.\nQuickly hiding and unhiding UI with Alt+Z will fix any nameplate issue.")
+    CreateTooltipTwo(friendlyNameplateNonstackable, "Non-Stackable", "Makes the friendly nameplates non-stackable even with \"Stacking Nameplates\" on.")
 
     local friendlyClassColorName = CreateCheckbox("friendlyClassColorName", "Class color name", BetterBlizzPlates)
     friendlyClassColorName:SetPoint("TOPLEFT", friendlyNameplateClickthrough, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -10080,6 +10084,9 @@ local function guiCVarControl()
     instantComboPoints:HookScript("OnClick", function(self)
         if not self:GetChecked() then
             StaticPopup_Show("BBP_CONFIRM_RELOAD")
+            if BetterBlizzFramesDB then
+                BetterBlizzFramesDB.instantComboPoints = false
+            end
         end
     end)
 
@@ -10431,16 +10438,13 @@ local function guiCVarControl()
             if (BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater")) then return end
             local checkedState = cvarValue == "1" or false
             if cvarValue then
-                C_Timer.After(2, function()
-                    if BBP.LoggingOut then return end
-                    if cbCVars[cvarName] then
-                        --BetterBlizzPlatesDB[cvarName] = cvarValue
-                        cbCVars[cvarName]:SetChecked(checkedState)
-                    elseif sliderCVars[cvarName] then
-                        --BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
-                        sliderCVars[cvarName]:SetValue(tonumber(cvarValue))
-                    end
-                end)
+                if cbCVars[cvarName] then
+                    --BetterBlizzPlatesDB[cvarName] = cvarValue
+                    cbCVars[cvarName]:SetChecked(checkedState)
+                elseif sliderCVars[cvarName] then
+                    --BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+                    sliderCVars[cvarName]:SetValue(tonumber(cvarValue))
+                end
             end
         end)
     end)
@@ -11262,14 +11266,11 @@ function BBP.CVarTracker()
         if BBP.LoggingOut then return end
         if BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return end
 
-        C_Timer.After(2, function()
-            if BBP.LoggingOut then return end
-            if cvarsToTrack.checkboxes[cvarName] then
-                BetterBlizzPlatesDB[cvarName] = cvarValue
-            elseif cvarsToTrack.sliders[cvarName] then
-                BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
-            end
-        end)
+        if cvarsToTrack.checkboxes[cvarName] then
+            BetterBlizzPlatesDB[cvarName] = cvarValue
+        elseif cvarsToTrack.sliders[cvarName] then
+            BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+        end
     end)
 end
 

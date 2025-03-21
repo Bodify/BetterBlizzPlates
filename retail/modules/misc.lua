@@ -112,7 +112,7 @@ function BBP.InstantComboPoints()
         end
     end
 
-    if BetterBlizzFramesDB and not BetterBlizzFramesDB.instantComboPoints then
+    if BetterBlizzFramesDB then
         BetterBlizzFramesDB.instantComboPoints = true
     end
     local BBF = BetterBlizzFramesDB

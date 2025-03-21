@@ -1646,7 +1646,12 @@ local function ColorNameplateByReaction(frame)
         config.friendlyHealthBarColorInitalized = true
     end
 
-    if info.isFriend and config.friendlyHealthBarColor then
+    if info.isSelf then
+        if frame.needsRecolor then
+            BBP.CompactUnitFrame_UpdateHealthColor(frame, true)
+        end
+        return
+    elseif info.isFriend and config.friendlyHealthBarColor then
         -- Friendly NPC
         if (info.isPlayer and config.friendlyHealthBarColorPlayer) or (info.isNpc and config.friendlyHealthBarColorNpc) then
             frame.healthBar:SetStatusBarColor(unpack(config.friendlyHealthBarColorRGB))
@@ -2425,17 +2430,23 @@ BBP.secondaryPets = secondaryPets
 -- Fade out npcs from list
 function BBP.FadeOutNPCs(frame)
     local db = BetterBlizzPlatesDB
-    if not db.enableNpNonTargetAlpha then
-        frame:SetAlpha(1)
-        frame.castBar:SetAlpha(1)
-        frame.fadedNpc = nil
-    end
+    local alpha = (db.enableNpNonTargetAlpha and (UnitIsUnit(frame.unit, "target") and 1 or db.nameplateNonTargetAlpha)) or 1
+    frame:SetAlpha(alpha)
+    frame.castBar:SetAlpha(alpha)
+    frame.fadedNpc = nil
 
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
     if not info then return end
 
     if info.isPlayer or not info.unitGUID then return end
+
+    if UnitIsUnit(frame.unit, "pet") then
+        frame:SetAlpha(alpha)
+        frame.castBar:SetAlpha(alpha)
+        frame.fadedNpc = nil
+        return
+    end
 
     if db.fadeNPCPvPOnly and not BBP.isInPvP then
         return
@@ -2488,8 +2499,8 @@ function BBP.FadeOutNPCs(frame)
 
     -- Check if the unit is the current target
     if info.isTarget then
-        frame:SetAlpha(1)
-        frame.castBar:SetAlpha(1)
+        frame:SetAlpha(alpha)
+        frame.castBar:SetAlpha(alpha)
         frame.fadedNpc = nil
     elseif onlyFadeSecondaryPets and BBP.isInArena and mainPets[npcID] then
         local isFakePet = true
@@ -2510,8 +2521,8 @@ function BBP.FadeOutNPCs(frame)
     elseif fadeOutNPCWhitelistOn then
         -- If whitelist mode is on, fade out if not in the whitelist
         if inList then
-            frame:SetAlpha(1)
-            frame.castBar:SetAlpha(1)
+            frame:SetAlpha(alpha)
+            frame.castBar:SetAlpha(alpha)
             frame.fadedNpc = nil
         else
             frame:SetAlpha(config.fadeOutNPCsAlpha)
@@ -2525,8 +2536,8 @@ function BBP.FadeOutNPCs(frame)
             frame.castBar:SetAlpha(config.fadeOutNPCsAlpha)
             frame.fadedNpc = true
         else
-            frame:SetAlpha(1)
-            frame.castBar:SetAlpha(1)
+            frame:SetAlpha(alpha)
+            frame.castBar:SetAlpha(alpha)
             frame.fadedNpc = nil
         end
     end
@@ -4676,7 +4687,7 @@ local function GetSpecID(frame)
     local guid = UnitGUID(frame.unit)
 
     -- Return cached specID if already found
-    if SpecCache[guid] then
+    if SpecCache[guid] and BBP.isInPvP then
         return SpecCache[guid]
     end
 
@@ -5880,6 +5891,7 @@ end
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("CVAR_UPDATE")
 frame:SetScript("OnEvent", function(self, event, cvarName)
+    if BBP.LoggingOut then return end
     if cvarName == "NamePlateHorizontalScale" or cvarName == "nameplateResourceOnTarget" then
         if not BetterBlizzPlatesDB.wasOnLoadingScreen then
             if BBP.isLargeNameplatesEnabled() then
@@ -6185,6 +6197,15 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 end
 
                 db.totemListUpdateTWW6 = true
+            end
+
+            if not db.cleanedScaleScale then
+                for key, _ in pairs(BetterBlizzPlatesDB) do
+                    if string.match(key, "ScaleScale$") then
+                        BetterBlizzPlatesDB[key] = nil
+                    end
+                end
+                db.cleanedScaleScale = true
             end
 
             if not db.auraWhitelistColorsUpdated then

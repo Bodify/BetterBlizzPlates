@@ -796,7 +796,11 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 end
 
                 if not axis then
-                    BetterBlizzPlatesDB[element .. "Scale"] = value
+                    if not string.match(element, "Scale$") then
+                        BetterBlizzPlatesDB[element .. "Scale"] = value
+                    else
+                        BetterBlizzPlatesDB[element] = value
+                    end
                 end
 
                 local xPos = BetterBlizzPlatesDB[element .. "XPos"] or 0
@@ -8392,16 +8396,13 @@ local function guiCVarControl()
             if (BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater")) then return end
             local checkedState = cvarValue == "1" or false
             if cvarValue then
-                C_Timer.After(2, function()
-                    if BBP.LoggingOut then return end
-                    if cbCVars[cvarName] then
-                        --BetterBlizzPlatesDB[cvarName] = cvarValue
-                        cbCVars[cvarName]:SetChecked(checkedState)
-                    elseif sliderCVars[cvarName] then
-                        --BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
-                        sliderCVars[cvarName]:SetValue(tonumber(cvarValue))
-                    end
-                end)
+                if cbCVars[cvarName] then
+                    --BetterBlizzPlatesDB[cvarName] = cvarValue
+                    cbCVars[cvarName]:SetChecked(checkedState)
+                elseif sliderCVars[cvarName] then
+                    --BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+                    sliderCVars[cvarName]:SetValue(tonumber(cvarValue))
+                end
             end
         end)
     end)
@@ -9041,14 +9042,11 @@ function BBP.CVarTracker()
         if BBP.LoggingOut then return end
         if BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return end
 
-        C_Timer.After(2, function()
-            if BBP.LoggingOut then return end
-            if cvarsToTrack.checkboxes[cvarName] then
-                BetterBlizzPlatesDB[cvarName] = cvarValue
-            elseif cvarsToTrack.sliders[cvarName] then
-                BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
-            end
-        end)
+        if cvarsToTrack.checkboxes[cvarName] then
+            BetterBlizzPlatesDB[cvarName] = cvarValue
+        elseif cvarsToTrack.sliders[cvarName] then
+            BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+        end
     end)
 end
 

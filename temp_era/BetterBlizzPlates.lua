@@ -5438,6 +5438,7 @@ end
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("CVAR_UPDATE")
 frame:SetScript("OnEvent", function(self, event, cvarName)
+    if BBP.LoggingOut then return end
     if cvarName == "NamePlateHorizontalScale" or cvarName == "nameplateResourceOnTarget" then
         if not BetterBlizzPlatesDB.wasOnLoadingScreen then
             if BBP.isLargeNameplatesEnabled() then
@@ -5506,6 +5507,15 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 BetterBlizzPlatesDB.castBarIconXPos = 0
                 BetterBlizzPlatesDB.castBarIconYPos = 0
                 BetterBlizzPlatesDB.castBarIconPosReset = true
+            end
+
+            if not BetterBlizzPlatesDB.cleanedScaleScale then
+                for key, _ in pairs(BetterBlizzPlatesDB) do
+                    if string.match(key, "ScaleScale$") then
+                        BetterBlizzPlatesDB[key] = nil
+                    end
+                end
+                BetterBlizzPlatesDB.cleanedScaleScale = true
             end
 
             if not BetterBlizzPlatesDB.nameplateResourcePositionFix then
