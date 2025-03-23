@@ -1,8 +1,10 @@
 # BetterBlizzPlates 1.7.3
 ## Tweaks:
 - Instant Combo Points: Holy Power for Paladins also supported.
+- Aura Filtering now also shows duration on auras Power Word: Barrier, Earthen Wall and Grounding Totem in addition to Smoke Bomb. (This also works on BigDebuffs & OmniAuras. Sidenote: Try out Key Auras setting which is similar to those two)
 ## Bugfix:
-- Fix Key Auras always being shown instead of abiding by the "Show Buffs/Debuffs" and Blacklist filter like intended.
+- Fix Key Auras always being shown instead of abiding by the Show Buffs/Debuffs and Blacklist filters like intended.
+
 
 # BetterBlizzPlates 1.7.2d
 ## Tweak:
