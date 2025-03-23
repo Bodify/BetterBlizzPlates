@@ -1,3 +1,9 @@
+# BetterBlizzPlates 1.7.3
+## Tweaks:
+- Instant Combo Points: Holy Power for Paladins also supported.
+## Bugfix:
+- Fix Key Auras always being shown instead of abiding by the "Show Buffs/Debuffs" and Blacklist filter like intended.
+
 # BetterBlizzPlates 1.7.2d
 ## Tweak:
 - Tweak to always get updated spec id's in World content to ensure people who respec dont show up as wrong spec.

@@ -112,6 +112,46 @@ function BBP.InstantComboPoints()
         end
     end
 
+    local function UpdatePaladinHolyPower(self)
+        local numHolyPower = UnitPower("player", Enum.PowerType.HolyPower)
+        local maxHolyPower = UnitPowerMax("player", Enum.PowerType.HolyPower)
+
+        for i = 1, maxHolyPower do
+            local rune = self["rune"..i]
+            if rune then
+                -- Stop all animations
+                if rune.activateAnim then rune.activateAnim:Stop() end
+                if rune.readyAnim then rune.readyAnim:Stop() end
+                if rune.readyLoopAnim then rune.readyLoopAnim:Stop() end
+                if rune.depleteAnim then rune.depleteAnim:Stop() end
+
+                -- Hide all FX
+                if rune.FX then rune.FX:SetAlpha(0) end
+                if rune.Blur then rune.Blur:SetAlpha(0) end
+                if rune.Glow then rune.Glow:SetAlpha(0) end
+                if rune.DepleteFlipbook then rune.DepleteFlipbook:SetAlpha(0) end
+
+                -- Set active state
+                if i <= numHolyPower then
+                    if rune.ActiveTexture then rune.ActiveTexture:SetAlpha(1) end
+                else
+                    if rune.ActiveTexture then rune.ActiveTexture:SetAlpha(0) end
+                end
+            end
+        end
+
+        -- Stop main bar animations
+        self.activateAnim:Stop()
+        self.readyAnim:Stop()
+        self.readyLoopAnim:Stop()
+        self.depleteAnim:Stop()
+
+        -- Update bar visuals
+        self.ActiveTexture:SetAlpha(numHolyPower > 0 and 1 or 0)
+        self.ThinGlow:SetAlpha(numHolyPower > 2 and 1 or 0)
+        self.Glow:SetAlpha(numHolyPower == 5 and 1 or 0)
+    end
+
     if BetterBlizzFramesDB then
         BetterBlizzFramesDB.instantComboPoints = true
     end
@@ -129,6 +169,9 @@ function BBP.InstantComboPoints()
     elseif class == "MAGE" then
         if not BBF then hooksecurefunc(MageArcaneChargesFrame, "UpdatePower", UpdateArcaneCharges) end
         hooksecurefunc(ClassNameplateBarMageFrame, "UpdatePower", UpdateArcaneCharges)
+    elseif class == "PALADIN" then
+        if not BBF then hooksecurefunc(PaladinPowerBarFrame, "UpdatePower", UpdatePaladinHolyPower) end
+        hooksecurefunc(ClassNameplateBarPaladinFrame, "UpdatePower", UpdatePaladinHolyPower)
     end
     BBP.InstantComboPointsActive = true
 end

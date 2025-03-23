@@ -2092,14 +2092,15 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
 
     -- FRIENDLY
     elseif isFriend then
-        local showKeyAuras = db["nameplateAuraKeyAuraPositionEnabled"]
-        if showKeyAuras and keyAuraList[spellId] then
-            return true
-        end
         -- Buffs
         if db["friendlyNpBuffEnable"] and aura.isHelpful then
             local isInBlacklist = db["friendlyNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
             if isInBlacklist then return end
+
+            local showKeyAuras = db["nameplateAuraKeyAuraPositionEnabled"] and db["nameplateAuraKeyAuraPositionFriendly"]
+            if showKeyAuras and keyAuraList[spellId] then
+                return true
+            end
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
@@ -2143,6 +2144,11 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
             local isInBlacklist = db["friendlyNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
             if isInBlacklist then return end
             if interrupt then return true end
+
+            local showKeyAuras = db["nameplateAuraKeyAuraPositionEnabled"] and db["nameplateAuraKeyAuraPositionFriendly"]
+            if showKeyAuras and keyAuraList[spellId] then
+                return true
+            end
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
@@ -2191,14 +2197,15 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
         end
     -- ENEMY
     else
-        local showKeyAuras = db["nameplateAuraKeyAuraPositionEnabled"]
-        if showKeyAuras and keyAuraList[spellId] then
-            return true
-        end
         -- Buffs
         if db["otherNpBuffEnable"] and aura.isHelpful then
             local isInBlacklist = db["otherNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
             if isInBlacklist then return end
+
+            local showKeyAuras = db["nameplateAuraKeyAuraPositionEnabled"]
+            if showKeyAuras and keyAuraList[spellId] then
+                return true
+            end
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
@@ -2235,6 +2242,11 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
             local isInBlacklist = db["otherNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
             if isInBlacklist then return end
             if interrupt then return true end
+
+            local showKeyAuras = db["nameplateAuraKeyAuraPositionEnabled"]
+            if showKeyAuras and keyAuraList[spellId] then
+                return true
+            end
 
             local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
 
