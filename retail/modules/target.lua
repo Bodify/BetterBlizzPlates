@@ -577,10 +577,15 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 --if config.totemIndicatorHideHealthBar then BBP.ApplyTotemIconsAndColorNameplate(frame) end
                 BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
-            if (config.classIndicator and (config.classIndicatorHighlight or config.classIndicatorHighlightColor)) then
-                if frame.classIndicator and frame.classIndicator.highlightSelect then
-                    frame.classIndicator.highlightSelect:Hide()
-                    frame.classIndicator.border:Show()
+            if config.classIndicator then
+                if (config.classIndicatorHighlight or config.classIndicatorHighlightColor) then
+                    if frame.classIndicator and frame.classIndicator.highlightSelect then
+                        frame.classIndicator.highlightSelect:Hide()
+                        frame.classIndicator.border:Show()
+                    end
+                end
+                if frame.classIndicator.border and frame.classIndicator.border.circle then
+                    frame.classIndicator.bg:SetSize(36, 36)
                 end
             end
 

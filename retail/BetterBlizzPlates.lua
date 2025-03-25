@@ -226,7 +226,7 @@ local defaultSettings = {
     classIndicatorFriendlyAnchor = "TOP",
     classIndicatorScale = 1,
     classIndicatorAlpha = 1,
-    classIndicatorFriendlyScale = 1,
+    classIndicatorFriendlyScale = 1.45,
     --classIndicatorEnemy = true,
     classIndicatorFriendly = true,
     classIconColorBorder = true,
@@ -239,6 +239,8 @@ local defaultSettings = {
     classIconAlwaysShowTank = true,
     classIndicatorTank = true,
     classIndicatorHealer = true,
+    classIndicatorBackgroundSize = 1,
+    classIndicatorBackgroundRGB = {0,0,0,1},
     classIconHealerIconType = 2,
     -- Party Pointer
     partyPointerXPos = 0,
@@ -2826,9 +2828,20 @@ end
 local function ShowLastNameOnlyNpc(frame)
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
     if info.isNpc then
+        local unit = frame.unit
+        local creatureType = unit and UnitCreatureType(unit)
         local name = info.name
-        local lastName = name:match("([^%s%-]+)$")  -- Matches the last word after a space or dash
-        frame.name:SetText(lastName)
+        if creatureType == "Totem" then
+            -- Use first word (e.g., "Stoneclaw" from "Stoneclaw Totem")
+            local firstWord = name:match("^[^%s%-]+")
+            if firstWord then
+                frame.name:SetText(firstWord)
+            end
+        else
+            -- Use last word (e.g., "Guardian" from "Frostwolf Guardian")
+            local lastWord = name:match("([^%s%-]+)$")
+            frame.name:SetText(lastWord)
+        end
     end
 end
 
@@ -5316,6 +5329,7 @@ function BBP.RefreshAllNameplates()
                 frame.partyPointer:Hide()
             end
         end
+        BBP.ConsolidatedUpdateName(frame)
     end
 end
 

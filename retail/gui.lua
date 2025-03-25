@@ -330,6 +330,47 @@ local function OpenColorPicker(colorType, icon)
     })
 end
 
+local function OpenColorOptions(entryColors, func)
+    local colorData = entryColors or {0, 1, 0, 1}
+    local r, g, b = colorData[1] or 1, colorData[2] or 1, colorData[3] or 1
+    local a = colorData[4] or 1
+
+    local function updateColors(newR, newG, newB, newA)
+        entryColors[1] = newR
+        entryColors[2] = newG
+        entryColors[3] = newB
+        entryColors[4] = newA or 1
+
+        if func then
+            func()
+        end
+    end
+
+    local function swatchFunc()
+        r, g, b = ColorPickerFrame:GetColorRGB()
+        updateColors(r, g, b, a)
+    end
+
+    local function opacityFunc()
+        a = ColorPickerFrame:GetColorAlpha()
+        updateColors(r, g, b, a)
+    end
+
+    local function cancelFunc(previousValues)
+        if previousValues then
+            r, g, b, a = previousValues.r, previousValues.g, previousValues.b, previousValues.a
+            updateColors(r, g, b, a)
+        end
+    end
+
+    ColorPickerFrame.previousValues = { r = r, g = g, b = b, a = a }
+
+    ColorPickerFrame:SetupColorPickerAndShow({
+        r = r, g = g, b = b, opacity = a, hasOpacity = true,
+        swatchFunc = swatchFunc, opacityFunc = opacityFunc, cancelFunc = cancelFunc
+    })
+end
+
 local function CreateColorBox(parent, colorVar, labelText)
     local frame = CreateFrame("Frame", nil, parent)
     frame:SetSize(55, 20) -- Adjust size as needed
@@ -1025,6 +1066,8 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BetterBlizzPlatesDB.classIndicatorFriendlyYPos = value
                 elseif element == "classIndicatorFriendlyScale" then
                     BetterBlizzPlatesDB.classIndicatorFriendlyScale = value
+                elseif element == "classIndicatorBackgroundSize" then
+                    BetterBlizzPlatesDB.classIndicatorBackgroundSize = value
                     -- Nameplate Widths
                 elseif element == "nameplateFriendlyWidth" then
                     if not BBP.checkCombatAndWarn() then
@@ -1343,7 +1386,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         elseif element == "healerIndicatorXPos" or element == "healerIndicatorYPos" or element == "healerIndicatorScale" or element == "healerIndicatorEnemyXPos" or element == "healerIndicatorEnemyYPos" or element == "healerIndicatorEnemyScale" then
                             BBP.HealerIndicator(frame)
                         -- Healer Indicator Pos and Scale
-                        elseif element == "classIndicatorXPos" or element == "classIndicatorYPos" or element == "classIndicatorScale" or element == "classIndicatorFriendlyXPos" or element == "classIndicatorFriendlyYPos" or element == "classIndicatorFriendlyScale" or element == "classIndicatorAlpha" then
+                        elseif element == "classIndicatorXPos" or element == "classIndicatorYPos" or element == "classIndicatorScale" or element == "classIndicatorFriendlyXPos" or element == "classIndicatorFriendlyYPos" or element == "classIndicatorFriendlyScale" or element == "classIndicatorAlpha" or element == "classIndicatorBackgroundSize" then
                             BBP.ClassIndicator(frame)
                         -- Pet Indicator Pos and Scale
                         elseif element == "petIndicatorXPos" or element == "petIndicatorYPos" or element == "petIndicatorScale" then
@@ -5161,6 +5204,7 @@ local function guiGeneralTab()
             end
         end
     end)
+    BBP.alwaysHideFriendlyCastbar = alwaysHideFriendlyCastbar
 
     local classColorPersonalNameplate = CreateCheckbox("classColorPersonalNameplate", "Class color personal nameplate", BetterBlizzPlates)
     classColorPersonalNameplate:SetPoint("TOPLEFT", alwaysHideFriendlyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -5329,6 +5373,7 @@ local function guiGeneralTab()
     local hideFriendlyNameText = CreateCheckbox("hideFriendlyNameText", "Hide name", BetterBlizzPlates)
     hideFriendlyNameText:SetPoint("LEFT", friendlyNameScale, "RIGHT", 2, 0)
     CreateTooltipTwo(hideFriendlyNameText, "Hide Name", hideNameTooltip)
+    BBP.hideFriendlyNameText = hideFriendlyNameText
 
     local nameplateFriendlyWidth = CreateSlider(BetterBlizzPlates, "Nameplate Width", 26, 200, 1, "nameplateFriendlyWidth")
     nameplateFriendlyWidth:SetPoint("TOPLEFT", friendlyNameScale, "BOTTOMLEFT", 0, -20)
@@ -5390,12 +5435,22 @@ local function guiGeneralTab()
     classIndicatorIcon:SetAtlas("groupfinder-icon-class-mage")
     classIndicatorIcon:SetSize(18, 18)
     classIndicatorIcon:SetPoint("RIGHT", classIndicator, "LEFT", 0, 0)
+
+    local classIndicatorPinMode = CreateCheckbox("classIndicatorPinMode", "Pin Mode", classIndicator)
+    classIndicatorPinMode:SetPoint("LEFT", classIndicator.text, "RIGHT", 0, 0)
+    classIndicatorPinMode:HookScript("OnClick", function(self)
+        BBP.ToggleClassIndicatorPinMode(self:GetChecked())
+    end)
+    CreateTooltipTwo(classIndicatorPinMode, "Class Indicator: Pin Mode |A:groupfinder-icon-class-mage:16:16|a", "Pin Mode displays the icon as a Pin and hides name, healthbar and castbar in the same go.", "These settings can all be toggled individually later in rest of the GUI.")
+
     classIndicator:HookScript("OnClick", function(self)
+        CheckAndToggleCheckboxes(self)
         if InCombatLockdown() then return end
         if self:GetChecked() then
             C_CVar.SetCVar("nameplateShowFriends", "1")
         end
     end)
+
 
     local combatIndicator = CreateCheckbox("combatIndicator", "Combat indicator", BetterBlizzPlates, nil, BBP.ToggleCombatIndicator)
     combatIndicator:SetPoint("TOPLEFT", classIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -6998,7 +7053,7 @@ local function guiPositionAndScale()
     -- Extended Settings Frame
     anchorSubClassIcon.extendedSettings = CreateFrame("Frame", nil, BetterBlizzPlatesSubPanel, "DefaultPanelFlatTemplate")
     -- anchorSubClassIcon.extendedSettings:SetAllPoints(anchorSubClassIcon.border)
-    anchorSubClassIcon.extendedSettings:SetSize(anchorSubClassIcon.border:GetHeight()+40, 395)
+    anchorSubClassIcon.extendedSettings:SetSize(anchorSubClassIcon.border:GetHeight()+105, 415)
     anchorSubClassIcon.extendedSettings:SetPoint("BOTTOMRIGHT", anchorSubClassIcon.border, "BOTTOMLEFT", 87, -125)
     anchorSubClassIcon.extendedSettings:SetFrameStrata("DIALOG")
     anchorSubClassIcon.extendedSettings:SetIgnoreParentAlpha(true)
@@ -7027,8 +7082,29 @@ local function guiPositionAndScale()
     classIndicatorSpecIcon:SetPoint("TOPLEFT", anchorSubClassIcon.extendedSettings, "TOPLEFT", 10, -23)
     CreateTooltip(classIndicatorSpecIcon, "Show spec instead of class icon.")
 
+    anchorSubClassIcon.classIndicatorBackground = CreateCheckbox("classIndicatorBackground", "Show Background Color", anchorSubClassIcon.extendedSettings)
+    anchorSubClassIcon.classIndicatorBackground:SetPoint("TOPLEFT", classIndicatorSpecIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubClassIcon.classIndicatorBackground, "Show Backlground Color","Show a background color on Class Indicator. Adjustable color and size.\n\n|cff32f795Right-click to change Color.|r\n\n|cff32f795Control + Right-click to turn on/off Class Colors.|r")
+
+    anchorSubClassIcon.classIndicatorBackground:HookScript("OnMouseDown", function(self, button)
+        if IsControlKeyDown() and button == "RightButton" then
+            if not BetterBlizzPlatesDB.classIndicatorBackgroundClassColor then
+                BetterBlizzPlatesDB.classIndicatorBackgroundClassColor = true
+            else
+                BetterBlizzPlatesDB.classIndicatorBackgroundClassColor = nil
+            end
+            BBP.RefreshAllNameplates()
+        elseif button == "RightButton" then
+            OpenColorOptions(BetterBlizzPlatesDB.classIndicatorBackgroundRGB, BBP.RefreshAllNameplates)
+        end
+    end)
+
+    anchorSubClassIcon.classIndicatorBackgroundSize = CreateSlider(anchorSubClassIcon.extendedSettings, "Background Size", 0.8, 1.4, 0.01, "classIndicatorBackgroundSize", false, 90)
+    anchorSubClassIcon.classIndicatorBackgroundSize:SetPoint("LEFT", anchorSubClassIcon.classIndicatorBackground.Text, "RIGHT", 3, -3)
+    CreateTooltipTwo(anchorSubClassIcon.classIndicatorBackgroundSize, "Class Indicator Background Size")
+
     anchorSubClassIcon.classIndicatorOnlyHealer = CreateCheckbox("classIndicatorOnlyHealer", "Only Show Healer", anchorSubClassIcon.extendedSettings)
-    anchorSubClassIcon.classIndicatorOnlyHealer:SetPoint("TOPLEFT", classIndicatorSpecIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    anchorSubClassIcon.classIndicatorOnlyHealer:SetPoint("TOPLEFT", anchorSubClassIcon.classIndicatorBackground, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(anchorSubClassIcon.classIndicatorOnlyHealer, "Only show on Healers")
 
     local classIndicatorHealer = CreateCheckbox("classIndicatorHealer", "Show cross on Healer", anchorSubClassIcon.extendedSettings)
@@ -7192,17 +7268,17 @@ local function guiPositionAndScale()
     classIndicatorHideRaidMarker:SetPoint("TOPLEFT", classIndicatorHighlightColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(classIndicatorHideRaidMarker, "Hide Raidmarker on nameplates with class icons")
 
-    anchorSubHeal.classIndicatorFrameStrataHigh = CreateCheckbox("classIndicatorFrameStrataHigh", "Raise Strata", anchorSubClassIcon.extendedSettings)
-    anchorSubHeal.classIndicatorFrameStrataHigh:SetPoint("TOPLEFT", classIndicatorHideRaidMarker, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(anchorSubHeal.classIndicatorFrameStrataHigh, "Class Indicator Frame Strata", "Raise the Frame Strata of Class Indicator so it appears on top of other elements.")
+    anchorSubClassIcon.classIndicatorFrameStrataHigh = CreateCheckbox("classIndicatorFrameStrataHigh", "Raise Strata", anchorSubClassIcon.extendedSettings)
+    anchorSubClassIcon.classIndicatorFrameStrataHigh:SetPoint("TOPLEFT", classIndicatorHideRaidMarker, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubClassIcon.classIndicatorFrameStrataHigh, "Class Indicator Frame Strata", "Raise the Frame Strata of Class Indicator so it appears on top of other elements.")
 
-    anchorSubHeal.classIndicatorHideName = CreateCheckbox("classIndicatorHideName", "Hide Name", anchorSubClassIcon.extendedSettings)
-    anchorSubHeal.classIndicatorHideName:SetPoint("TOPLEFT", anchorSubHeal.classIndicatorFrameStrataHigh, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(anchorSubHeal.classIndicatorHideName, "Hide Name (Friend)", "Hides the name on friendly nameplates with Class Indicator on them.")
+    anchorSubClassIcon.classIndicatorHideName = CreateCheckbox("classIndicatorHideName", "Hide Name", anchorSubClassIcon.extendedSettings)
+    anchorSubClassIcon.classIndicatorHideName:SetPoint("TOPLEFT", anchorSubClassIcon.classIndicatorFrameStrataHigh, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubClassIcon.classIndicatorHideName, "Hide Name (Friend)", "Hides the name on friendly nameplates with Class Indicator on them.")
 
-    anchorSubHeal.classIndicatorAlpha = CreateSlider(anchorSubClassIcon.extendedSettings, "Alpha", 0.1, 1, 0.01, "classIndicatorAlpha", false, 110)
-    anchorSubHeal.classIndicatorAlpha:SetPoint("BOTTOM", anchorSubClassIcon.extendedSettings, "BOTTOM", 3, 5)
-    CreateTooltipTwo(anchorSubHeal.classIndicatorAlpha, "Class Indicator Alpha")
+    anchorSubClassIcon.classIndicatorAlpha = CreateSlider(anchorSubClassIcon.extendedSettings, "Alpha", 0.1, 1, 0.01, "classIndicatorAlpha", false, 110)
+    anchorSubClassIcon.classIndicatorAlpha:SetPoint("BOTTOM", anchorSubClassIcon.extendedSettings, "BOTTOM", 3, 5)
+    CreateTooltipTwo(anchorSubClassIcon.classIndicatorAlpha, "Class Indicator Alpha")
 
     ----------------------
     -- Party Pointer

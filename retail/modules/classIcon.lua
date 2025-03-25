@@ -78,6 +78,17 @@ local function GetAuraIcon(frame, foundID, auraType, bgId)
     return nil -- No matching aura found
 end
 
+local function BackgroundType(frame, bg)
+    if frame.classIndicator.border.square then
+        bg:SetAtlas("mountequipment-slot-background")
+        bg:SetSize(28, 28)
+    else
+        bg:SetAtlas("talents-node-choiceflyout-circle-greenglow")
+        local size = UnitIsUnit(frame.unit, "target") and 39 or 36
+        bg:SetSize(size, size)
+    end
+end
+
 -- Class Indicator
 function BBP.ClassIndicator(frame, foundID)
     local config = frame.BetterBlizzPlates.config
@@ -117,6 +128,11 @@ function BBP.ClassIndicator(frame, foundID)
         config.classIconAlwaysShowTank = BetterBlizzPlatesDB.classIconAlwaysShowTank
         config.classIndicatorHideName = BetterBlizzPlatesDB.classIndicatorHideName
         config.classIndicatorOnlyHealer = BetterBlizzPlatesDB.classIndicatorOnlyHealer
+        config.classIndicatorBackground = BetterBlizzPlatesDB.classIndicatorBackground
+        config.classIndicatorBackgroundClassColor = BetterBlizzPlatesDB.classIndicatorBackgroundClassColor
+        config.classIndicatorBackgroundRGB = BetterBlizzPlatesDB.classIndicatorBackgroundRGB
+        config.classIndicatorBackgroundSize = BetterBlizzPlatesDB.classIndicatorBackgroundSize
+        config.classIndicatorPinMode = BetterBlizzPlatesDB.classIndicatorPinMode
 
         config.classIndicatorInitialized = true
     end
@@ -282,7 +298,6 @@ function BBP.ClassIndicator(frame, foundID)
     end
 
     SetBorderType()
-
     if frame.classIndicator.highlightSelect or config.classIndicatorHighlightColor then
         if info.isTarget then
             BBP.ClassIndicatorTargetHighlight(frame)
@@ -327,6 +342,38 @@ function BBP.ClassIndicator(frame, foundID)
     -- local classIcon = "Interface/GLUES/CHARACTERCREATE/UI-CHARACTERCREATE-CLASSES"
     local classAtlas = "classicon-" .. string.lower(info.class)
     local classColor = RAID_CLASS_COLORS[info.class]
+    if config.classIndicatorBackground then
+        if not frame.classIndicator.bg then
+            frame.classIndicator.bg = frame.classIndicator:CreateTexture(nil, "BACKGROUND", nil, 1)
+            frame.classIndicator.bg:SetPoint("CENTER", frame.classIndicator)
+            frame.classIndicator.bg:SetDesaturated(true)
+        end
+        frame.classIndicator.bg:Show()
+        if config.classIndicatorBackgroundClassColor then
+            frame.classIndicator.bg:SetVertexColor(classColor.r, classColor.g, classColor.b)
+        else
+            frame.classIndicator.bg:SetVertexColor(unpack(config.classIndicatorBackgroundRGB))
+        end
+        frame.classIndicator.bg:SetScale(config.classIndicatorBackgroundSize)
+        BackgroundType(frame, frame.classIndicator.bg)
+    elseif frame.classIndicator.bg then
+        frame.classIndicator.bg:Hide()
+    end
+
+    if config.classIndicatorPinMode then
+        if not frame.classIndicator.pin then
+            frame.classIndicator.pin = frame.classIndicator:CreateTexture(nil, "BACKGROUND", nil, 0)
+            frame.classIndicator.pin:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
+            frame.classIndicator.pin:SetSize(29, 38)
+            frame.classIndicator.pin:SetPoint("TOP", frame.classIndicator.icon, "BOTTOM", 0, 20)
+            frame.classIndicator.pin:SetDesaturated(true)
+        end
+        frame.classIndicator.pin:SetVertexColor(classColor.r, classColor.g, classColor.b)
+        frame.classIndicator.pin:Show()
+    elseif frame.classIndicator.pin then
+        frame.classIndicator.pin:Hide()
+    end
+
     -- local coords = CLASS_ICON_TCOORDS[info.class]
     -- if not coords then
     --     frame.classIndicator:Hide()
@@ -371,7 +418,7 @@ function BBP.ClassIndicator(frame, foundID)
             if info.isFriend then
                 if frame.classIndicator.border.square then
                     frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
-                    frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
+                    frame.classIndicator.icon:SetTexCoord(0.0196, 0.103, 0.774, 0.856) -- square
                 else
                     frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
                     frame.classIndicator.icon:SetTexCoord(0.015, 0.1077, 0.7684, 0.8606) -- circle
@@ -379,7 +426,7 @@ function BBP.ClassIndicator(frame, foundID)
             else
                 frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
                 if frame.classIndicator.border.square then
-                    frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
+                    frame.classIndicator.icon:SetTexCoord(0.0196, 0.103, 0.774, 0.856) -- square
                 else
                     frame.classIndicator.icon:SetTexCoord(0.015, 0.1077, 0.7684, 0.8606) -- circle
                 end
@@ -407,7 +454,7 @@ function BBP.ClassIndicator(frame, foundID)
         if info.isFriend then
             if frame.classIndicator.border.square then
                 frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
-                frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
+                frame.classIndicator.icon:SetTexCoord(0.0196, 0.103, 0.774, 0.856) -- square
             else
                 frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
                 frame.classIndicator.icon:SetTexCoord(0.015, 0.1077, 0.7684, 0.8606) -- circle
@@ -415,7 +462,7 @@ function BBP.ClassIndicator(frame, foundID)
         else
             frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
             if frame.classIndicator.border.square then
-                frame.classIndicator.icon:SetTexCoord(0.0185, 0.103, 0.772, 0.856) -- square
+                frame.classIndicator.icon:SetTexCoord(0.0196, 0.103, 0.774, 0.856) -- square
             else
                 frame.classIndicator.icon:SetTexCoord(0.015, 0.1077, 0.7684, 0.8606) -- circle
             end
@@ -459,6 +506,9 @@ function BBP.ClassIndicatorTargetHighlight(frame)
     if config.classIndicatorHighlight or config.classIndicatorHighlightColor then
         if frame.classIndicator and frame.classIndicator.highlightSelect then
             frame.classIndicator.highlightSelect:Show()
+            if frame.classIndicator.bg and frame.classIndicator.border.circle then
+                frame.classIndicator.bg:SetSize(39, 39)
+            end
             C_Timer.After(
                 0.05,
                 function()
@@ -535,6 +585,10 @@ local function FadeClassIcon(name, fade)
     if frame and frame.classIndicator then
         if fade then
             frame.classIndicator:SetAlpha(0.15)
+            -- if frame.classIndicator.bg then
+            --     frame.classIndicator.bg:SetDesaturated(true)
+            --     frame.classIndicator.bg:SetVertexColor(0,0,0)
+            -- end
         else
             local config = frame.BetterBlizzPlates.config
             frame.classIndicator:SetAlpha(config.classIndicatorAlpha)
@@ -600,4 +654,70 @@ function BBP.SetupClassIndicatorChat()
     end
 
     BBP.ClassIndicatorChat = true
+end
+
+
+function BBP.ToggleClassIndicatorPinMode(enable)
+    local db = BetterBlizzPlatesDB
+
+    if enable then
+        -- Save current values into session-local table
+        BBP.classIndicatorValues = {
+            hideFriendlyNameText = db.hideFriendlyNameText,
+            alwaysHideFriendlyCastbar = db.alwaysHideFriendlyCastbar,
+            classIndicatorBackground = db.classIndicatorBackground,
+            friendlyHideHealthBar = db.friendlyHideHealthBar,
+            friendlyHideHealthBarNpc = db.friendlyHideHealthBarNpc,
+            classIndicatorYPos = db.classIndicatorYPos,
+            classIconColorBorder = db.classIconColorBorder,
+            classIndicatorHighlightColor = dbclassIndicatorHighlightColor,
+        }
+
+        -- Apply new values for pin mode
+        db.classIndicatorPinMode = true
+        db.hideFriendlyNameText = true
+        db.alwaysHideFriendlyCastbar = true
+        db.classIndicatorBackground = true
+        db.classIconColorBorder = true
+        db.classIndicatorHighlightColor = true
+        db.classIndicatorYPos = -14
+        if not db.friendlyHideHealthBar then
+            db.friendlyHideHealthBarNpc = false
+            BBP.friendlyHideHealthBarNpc:SetChecked(false)
+        end
+        db.friendlyHideHealthBar = true
+
+
+        BBP.alwaysHideFriendlyCastbar:SetChecked(true)
+        BBP.hideFriendlyNameText:SetChecked(true)
+        BBP.friendlyHideHealthBar:SetChecked(true)
+        BBP.friendlyHideHealthBarNpc:Enable()
+        BBP.friendlyHideHealthBarNpc:Show()
+    else
+        local saved = BBP.classIndicatorValues or {}
+
+        db.classIndicatorPinMode = false
+        db.hideFriendlyNameText = saved.hideFriendlyNameText or false
+        db.alwaysHideFriendlyCastbar = saved.alwaysHideFriendlyCastbar or false
+        db.classIndicatorBackground = saved.classIndicatorBackground or false
+        db.friendlyHideHealthBar = saved.friendlyHideHealthBar or false
+        db.friendlyHideHealthBarNpc = saved.friendlyHideHealthBarNpc or false
+        db.classIconColorBorder = saved.classIconColorBorder or true
+        db.classIndicatorHighlightColor = saved.classIndicatorHighlightColor or false
+        db.classIndicatorYPos = saved.classIndicatorYPos or 0
+
+        BBP.alwaysHideFriendlyCastbar:SetChecked(db.alwaysHideFriendlyCastbar)
+        BBP.hideFriendlyNameText:SetChecked(db.hideFriendlyNameText)
+        BBP.friendlyHideHealthBar:SetChecked(db.friendlyHideHealthBar)
+        if BBP.friendlyHideHealthBar:GetChecked() then
+            BBP.friendlyHideHealthBar:SetChecked(db.friendlyHideHealthBarNpc)
+            BBP.friendlyHideHealthBarNpc:Enable()
+            BBP.friendlyHideHealthBarNpc:Show()
+        else
+            BBP.friendlyHideHealthBar:SetChecked(false)
+            BBP.friendlyHideHealthBarNpc:Disable()
+            BBP.friendlyHideHealthBarNpc:Hide()
+        end
+    end
+    BBP.RefreshAllNameplates()
 end

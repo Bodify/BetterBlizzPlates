@@ -1,7 +1,14 @@
-# BetterBlizzPlates 1.7.3b
-## Tweaks:
+# BetterBlizzPlates 1.7.4
+## New stuff:
+- Class Indicator: Pin Mode: Display the Icon as a Pin and hide healthbar, castbar and name.
+- Class Indicator: Background Color (Shadow behind Icon, Class Color & Custom, black default)
 - Nameplate Interrupt Duration Auras are now optional, but on by default when Nameplate Aura Filtering is enabled. Checkbox in Nameplate Auras section called "Interrupts".
+## Tweaks:
+- Class Indicator: Now gets faded out when people chat so you can read chat message from chat bubble.
+- Class Indicator: Small touchups on the Square Border Texture.
+- "Only show last name" setting for NPCs now show first name if its a totem. Grounding/Tremor etc instead of bunch of "Totem"s.
 - Class Indicator and Party Pointer now ignores Nameplate alpha and always show at full alpha.
+
 
 
 # BetterBlizzPlates 1.7.3
