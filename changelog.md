@@ -1,3 +1,9 @@
+# BetterBlizzPlates 1.7.3b
+## Tweaks:
+- Nameplate Interrupt Duration Auras are now optional, but on by default when Nameplate Aura Filtering is enabled. Checkbox in Nameplate Auras section called "Interrupts".
+- Class Indicator and Party Pointer now ignores Nameplate alpha and always show at full alpha.
+
+
 # BetterBlizzPlates 1.7.3
 ## Tweaks:
 - Instant Combo Points: Holy Power for Paladins also supported.

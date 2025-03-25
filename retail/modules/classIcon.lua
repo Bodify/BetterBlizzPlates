@@ -47,6 +47,9 @@ local bgsWithObjectives = {
     [726] = true, -- Twin Peaks
 }
 
+local classIconNames = {}
+BBP.classIconNames = classIconNames
+
 local function GetAuraIcon(frame, foundID, auraType, bgId)
     -- If `foundID` exists in the table, return its color immediately
     if foundID and icons[foundID] then
@@ -76,12 +79,7 @@ local function GetAuraIcon(frame, foundID, auraType, bgId)
 end
 
 -- Class Indicator
-function BBP.ClassIndicator(frame, foundID, fade)
-    -- if fade and frame.classIndicator then
-    --     frame.classIndicator:SetAlpha(0.1)
-    --     return
-    -- end
-
+function BBP.ClassIndicator(frame, foundID)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
@@ -175,6 +173,7 @@ function BBP.ClassIndicator(frame, foundID, fade)
         frame.classIndicator.mask = frame.classIndicator:CreateMaskTexture()
         frame.classIndicator.icon:AddMaskTexture(frame.classIndicator.mask)
         frame.classIndicator.border = frame.classIndicator:CreateTexture(nil, "OVERLAY", nil, 6)
+        frame.classIndicator:SetIgnoreParentAlpha(true)
     end
     frame.classIndicator:SetFrameStrata(config.classIndicatorFrameStrataHigh and "HIGH" or "LOW")
     frame.classIndicator:SetAlpha(config.classIndicatorAlpha)
@@ -441,6 +440,10 @@ function BBP.ClassIndicator(frame, foundID, fade)
         frame.classIndicator.icon:SetTexCoord(-0.06, 1.05, -0.06, 1.05)
     end
 
+    if info.isFriend then
+        classIconNames[info.name] = frame
+    end
+
     frame.classIndicator:Show()
     if config.classIndicatorHideName and info.isFriend then
         frame.classIndicatorHideName = true
@@ -525,4 +528,76 @@ function BBP.SetupClassIndicatorHealthText()
             end
         end
     )
+end
+
+local function FadeClassIcon(name, fade)
+    local frame = classIconNames[name]
+    if frame and frame.classIndicator then
+        if fade then
+            frame.classIndicator:SetAlpha(0.15)
+        else
+            local config = frame.BetterBlizzPlates.config
+            frame.classIndicator:SetAlpha(config.classIndicatorAlpha)
+        end
+    end
+end
+
+local function CalculateFadeTime(msg)
+    local base = 2.5
+    local perChar = 0.05
+    local length = string.len(msg or "")
+    return base + (length * perChar)
+end
+
+function BBP.SetupClassIndicatorChat()
+    if BBP.ClassIndicatorChat then return end
+    local chatBubbles = C_CVar.GetCVarBool("chatBubblesParty")
+    local chatBubblesParty = C_CVar.GetCVarBool("chatBubblesParty")
+
+    if chatBubbles or chatBubblesParty then
+
+        local frame = CreateFrame("Frame")
+        frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+        frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+        frame:SetScript("OnEvent", function(self, event)
+            wipe(classIconNames)
+        end)
+
+
+
+        local chatFrame = CreateFrame("Frame")
+        if C_CVar.GetCVarBool("chatBubblesParty") then
+            chatFrame:RegisterEvent("CHAT_MSG_PARTY")
+            chatFrame:RegisterEvent("CHAT_MSG_PARTY_LEADER")
+        end
+        if C_CVar.GetCVarBool("chatBubbles") then
+            chatFrame:RegisterEvent("CHAT_MSG_SAY")
+        end
+
+
+        local partyPointer = BetterBlizzPlatesDB.partyPointer
+        local classIndicator = BetterBlizzPlatesDB.classIndicator
+
+
+        chatFrame:SetScript("OnEvent", function(self, event, msg, sender)
+            local nameOnly = Ambiguate(sender, "short")
+            if classIconNames[nameOnly] then
+                local delay = CalculateFadeTime(msg)
+                if classIndicator then
+                    FadeClassIcon(nameOnly, true)
+                    C_Timer.After(delay, function()
+                        FadeClassIcon(nameOnly)
+                    end)
+                end
+                if partyPointer then
+                    BBP.FadePartyPointer(nameOnly, true)
+                    C_Timer.After(delay, function()
+                        BBP.FadePartyPointer(nameOnly)
+                    end)
+                end
+            end
+        end)
+    end
+
+    BBP.ClassIndicatorChat = true
 end

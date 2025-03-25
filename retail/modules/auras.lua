@@ -153,6 +153,7 @@ local interruptEvents = {
 }
 
 function BBP.SetUpAuraInterrupts()
+    if not BetterBlizzPlatesDB.showInterruptsOnNameplateAuras then return end
     if BBP.interruptTrackerFrame then return end
     local interruptTrackerFrame = CreateFrame("Frame")
     interruptTrackerFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")

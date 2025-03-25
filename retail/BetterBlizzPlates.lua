@@ -423,6 +423,7 @@ local defaultSettings = {
     castBarBackgroundColor = {0.33,0.33,0.33,1},
     -- Nameplate aura settings
     enableNameplateAuraCustomisation = false,
+    showInterruptsOnNameplateAuras = true,
     nameplateAurasCenteredAnchor = false,
     maxAurasOnNameplate = 12,
     nameplateAuraRowAmount = 5,
@@ -3994,6 +3995,10 @@ local function HandleNamePlateRemoved(unit)
     local nameplate, frame = BBP.GetSafeNameplate(unit)
     if not frame then return end
 
+    local info = frame.BetterBlizzPlates.unitInfo
+    if info then
+        BBP.classIconNames[info.name] = nil
+    end
     frame:SetScale(1)
     frame:SetAlpha(1)
     frame.name:SetAlpha(1)
@@ -5718,6 +5723,10 @@ Frame:SetScript("OnEvent", function(...)
         BBP.SmokeCheckBootup()
         BBP.SetUpAuraInterrupts()
         BBP.UpdateImportantBuffsAndCCTables()
+    end
+
+    if db.partyPointer or db.classIndicator then
+        BBP.SetupClassIndicatorChat()
     end
 
     --if BetterBlizzPlatesDB.enableCastbarCustomization then

@@ -9885,6 +9885,7 @@ local function guiNameplateAuras()
     local nameplateAuraTestMode = CreateCheckbox("nameplateAuraTestMode", "Test Mode", enableNameplateAuraCustomisation)
     nameplateAuraTestMode:SetPoint("BOTTOMLEFT", nameplateAuraSquare, "TOPLEFT", 0, 0)
     CreateTooltipTwo(nameplateAuraTestMode, "Test Mode", "Add some auras to nameplates for testing.", "Testing only respects the Show BUFF/DEBUFF filters and none of the sub-filters.", "ANCHOR_TOP")
+    nameplateAuraTestMode:SetScale(1.2)
 
     local showDefaultCooldownNumbersOnNpAuras = CreateCheckbox("showDefaultCooldownNumbersOnNpAuras", "Default CD", enableNameplateAuraCustomisation)
     showDefaultCooldownNumbersOnNpAuras:SetPoint("TOPLEFT", nameplateAuraSquare, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -9910,6 +9911,17 @@ local function guiNameplateAuras()
             BetterBlizzPlatesDB.nameplateAuraTaller = false
             nameplateAuraTaller:SetChecked(false)
             BBP.RefreshAllNameplates()
+        end
+    end)
+
+    local showInterruptsOnNameplateAuras = CreateCheckbox("showInterruptsOnNameplateAuras", "Interrupts", enableNameplateAuraCustomisation)
+    showInterruptsOnNameplateAuras:SetPoint("LEFT", nameplateAuraTaller.text, "RIGHT", 9, 0)
+    CreateTooltipTwo(showInterruptsOnNameplateAuras, "Show Interrupts", "Show interrupt duration as a nameplate aura when a unit gets interrupted.")
+    showInterruptsOnNameplateAuras:HookScript("OnClick", function (self)
+        if self:GetChecked() then
+            BBP.SetUpAuraInterrupts()
+        else
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
         end
     end)
 
