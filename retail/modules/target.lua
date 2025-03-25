@@ -578,14 +578,16 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
             if config.classIndicator then
-                if (config.classIndicatorHighlight or config.classIndicatorHighlightColor) then
-                    if frame.classIndicator and frame.classIndicator.highlightSelect then
-                        frame.classIndicator.highlightSelect:Hide()
-                        frame.classIndicator.border:Show()
+                if frame.classIndicator then
+                    if (config.classIndicatorHighlight or config.classIndicatorHighlightColor) then
+                        if frame.classIndicator and frame.classIndicator.highlightSelect then
+                            frame.classIndicator.highlightSelect:Hide()
+                            frame.classIndicator.border:Show()
+                        end
                     end
-                end
-                if frame.classIndicator.border and frame.classIndicator.border.circle then
-                    frame.classIndicator.bg:SetSize(36, 36)
+                    if frame.classIndicator.border and frame.classIndicator.border.circle then
+                        frame.classIndicator.bg:SetSize(36, 36)
+                    end
                 end
             end
 
