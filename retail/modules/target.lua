@@ -586,7 +586,9 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                         end
                     end
                     if frame.classIndicator.border and frame.classIndicator.border.circle then
-                        frame.classIndicator.bg:SetSize(36, 36)
+                        if frame.classIndicator.bg then
+                            frame.classIndicator.bg:SetSize(36, 36)
+                        end
                     end
                 end
             end
