@@ -103,6 +103,8 @@ local defaultSettings = {
     nameplateBorderSize = 1,
     nameplateTargetBorderSize = 3,
     tankFullAggroColorRGB = {0, 1, 0, 1},
+    tankOffTankAggroColorRGB = {0, 0.95, 1, 1},
+    tankLosingAggroColorRGB = {1, 0.47, 0, 1},
     tankNoAggroColorRGB = {1, 0, 0, 1},
     dpsOrHealFullAggroColorRGB = {1, 0, 0, 1},
     dpsOrHealNoAggroColorRGB = {0, 1, 0, 1},
@@ -218,6 +220,7 @@ local defaultSettings = {
     healerIndicatorEnemyScale = 1,
     -- Class Icon
     classIndicator = false,
+    classIndicatorCCAuras = true,
     classIndicatorXPos = 0,
     classIndicatorFriendlyXPos = 0,
     classIndicatorYPos = 0,
@@ -242,6 +245,7 @@ local defaultSettings = {
     classIndicatorBackgroundSize = 1,
     classIndicatorBackgroundRGB = {0,0,0,1},
     classIconHealerIconType = 2,
+    classIndicatorShowPet = true,
     -- Party Pointer
     partyPointerXPos = 0,
     partyPointerYPos = 0,
@@ -424,7 +428,7 @@ local defaultSettings = {
 	},
     castBarBackgroundColor = {0.33,0.33,0.33,1},
     -- Nameplate aura settings
-    enableNameplateAuraCustomisation = false,
+    enableNameplateAuraCustomisation = true,
     showInterruptsOnNameplateAuras = true,
     nameplateAurasCenteredAnchor = false,
     maxAurasOnNameplate = 12,
@@ -513,6 +517,7 @@ local defaultSettings = {
     friendlyNpdeBuffFilterWatchList = false,
     friendlyNpdeBuffFilterLessMinite = false,
     friendlyNpdeBuffFilterOnlyMe = false,
+    friendlyNpdeBuffFilterCC = true,
 
     personalNpBuffFilterBlacklist = true,
     personalNpdeBuffFilterBlacklist = true,
@@ -1247,6 +1252,7 @@ local function GetNameplateUnitInfo(frame, unit)
     info.isSelf = UnitIsUnit("player", unit)
     info.isTarget = UnitIsUnit("target", unit)
     info.isFocus = UnitIsUnit("focus", unit)
+    info.isPet = UnitIsUnit("pet", unit)
     info.isPlayer = UnitIsPlayer(unit)
     info.isNpc = not info.isPlayer
     info.unitGUID = UnitGUID(unit)
@@ -1316,6 +1322,10 @@ end
 -- Extracts NPC ID from GUID
 function BBP.GetNPCIDFromGUID(guid)
     return tonumber(string.match(guid, "Creature%-.-%-.-%-.-%-.-%-(.-)%-"))
+end
+
+function BBP.GetNPCIDFromGUID2(guid)
+    return tonumber(string.match(guid, "Pet%-.-%-.-%-.-%-.-%-(.-)%-"))
 end
 
 local C_NamePlate = C_NamePlate
@@ -2535,8 +2545,8 @@ function BBP.FadeOutNPCs(frame)
     else
         -- If not in whitelist mode, fade out if in the list
         if inList then
-            frame:SetAlpha(config.fadeOutNPCsAlpha)
-            frame.castBar:SetAlpha(config.fadeOutNPCsAlpha)
+            frame:SetAlpha((info.isFriend and config.friendlyHideHealthBar and 0) or alpha)
+            frame.castBar:SetAlpha(alpha)
             frame.fadedNpc = true
         else
             frame:SetAlpha(alpha)
@@ -2845,11 +2855,50 @@ local function ShowLastNameOnlyNpc(frame)
     end
 end
 
+local offTanks = {}
+
+local function GetGroupTanks()
+	local tanks = {}
+	local unitPrefix = IsInRaid() and "raid" or "party"
+	local maxUnits = IsInRaid() and MAX_RAID_MEMBERS or GetNumGroupMembers()
+
+	for i = 1, maxUnits do
+		local unit = unitPrefix .. i
+		local role = UnitGroupRolesAssigned(unit)
+
+		-- Classic: fallback to Raid Info or Party Leader
+		if role == "NONE" then
+			if unitPrefix == "raid" then
+				local _, _, _, _, _, _, _, _, _, raidRole = GetRaidRosterInfo(i)
+				if raidRole == "MAINTANK" or raidRole == "MAINASSIST" then
+					role = "TANK"
+				end
+			elseif UnitIsGroupLeader(unit) then
+				role = "TANK"
+			end
+		end
+
+		if role == "TANK" and not UnitIsUnit(unit, "player") then
+			table.insert(tanks, unit)
+		end
+
+		-- Check pet if enabled
+		local pet = unitPrefix .. "pet" .. i
+		if UnitExists(pet) and (role == "TANK") then
+			table.insert(tanks, pet)
+		end
+	end
+
+	return tanks
+end
+
 function BBP.ColorThreat(frame)
     if not frame or not frame.unit then return end
     if UnitIsPlayer(frame.unit) then return end
     if UnitIsFriend(frame.unit, "player") then return end
 
+    local playerCombatOnly = BetterBlizzPlatesDB.enemyColorThreatCombatOnlyPlayer and not InCombatLockdown()
+    if playerCombatOnly then return end
     local combatOnly = BetterBlizzPlatesDB.enemyColorThreatCombatOnly and not UnitAffectingCombat(frame.unit)
     if combatOnly then return end
 
@@ -2859,14 +2908,27 @@ function BBP.ColorThreat(frame)
     local r, g, b
 
     if BBP.isRoleTank then
+        -- Default color: no aggro
         r, g, b = unpack(BetterBlizzPlatesDB.tankNoAggroColorRGB)
 
-        if ( isTanking and threatStatus ) then
-            if ( threatStatus >= 3 ) then
+        if isTanking and threatStatus then
+            if threatStatus == 3 then
+                -- Full threat
                 r, g, b = unpack(BetterBlizzPlatesDB.tankFullAggroColorRGB)
+            elseif threatStatus == 2 then
+                -- Losing threat
+                r, g, b = unpack(BetterBlizzPlatesDB.tankLosingAggroColorRGB)
             else
-                -- targets me, but losing aggro
                 r, g, b = GetThreatStatusColor(threatStatus)
+            end
+        elseif threatStatus then
+            -- Not tanking — check if an offtank has full aggro
+            for _, unit in ipairs(offTanks) do
+                local offTanking, otherThreatStatus = UnitDetailedThreatSituation(unit, frame.unit)
+                if offTanking and otherThreatStatus == 3 then
+                    r, g, b = unpack(BetterBlizzPlatesDB.tankOffTankAggroColorRGB)
+                    break
+                end
             end
         end
     else
@@ -3364,6 +3426,7 @@ local function NameplateShadowAndMouseoverHighlight(frame)
     local keepTargetHighlighted = BetterBlizzPlatesDB.keepNpShadowTargetHighlighted
     local healthVisible = frame.HealthBarsContainer:GetAlpha() ~= 0 and frame.healthBar:IsShown() and frame.healthBar:GetWidth() > 5
     local shadowAlpha = (not healthVisible and 0) or onlyShowHighlight and 0 or 1
+    local onlyOnTarget = BetterBlizzPlatesDB.showNameplateShadowOnlyTarget
 
     -- Create the highlight texture directly on the frame if it doesn't exist
     if not frame.BBPmouseoverTex then
@@ -3392,10 +3455,22 @@ local function NameplateShadowAndMouseoverHighlight(frame)
     local width, height = frame.HealthBarsContainer:GetSize()
     frame.BBPmouseoverTex:SetSize(width + (width * 0.17), height + 20)
 
-    if keepTargetHighlighted and UnitIsUnit("target", frame.unit) and healthVisible then
-        frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+    if onlyOnTarget then
+        if UnitIsUnit("target", frame.unit) then
+            if keepTargetHighlighted and healthVisible then
+                frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+            else
+                frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
+            end
+        else
+            frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, 0)
+        end
     else
-        frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
+        if keepTargetHighlighted and UnitIsUnit("target", frame.unit) and healthVisible then
+            frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+        else
+            frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
+        end
     end
 end
 BBP.NameplateShadowAndMouseoverHighlight = NameplateShadowAndMouseoverHighlight
@@ -3414,10 +3489,15 @@ local function StartPeriodicCheck()
                 if frame and frame.BBPmouseoverTex then
                     local healthVisible = frame.HealthBarsContainer:GetAlpha() ~= 0 and frame.healthBar:IsShown() and frame.healthBar:GetWidth() > 5
                     local shadowAlpha = (not healthVisible and 0) or onlyShowHighlight and 0 or 1
+                    local onlyOnTarget = BetterBlizzPlatesDB.showNameplateShadowOnlyTarget
                     if BetterBlizzPlatesDB.keepNpShadowTargetHighlighted and UnitIsUnit("target", frame.unit) and healthVisible then
                         frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
                     else
-                        frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
+                        if onlyOnTarget and not UnitIsUnit(frame.unit, "target") then
+                            frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, 0)
+                        else
+                            frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
+                        end
                     end
                 end
             end
@@ -3440,16 +3520,21 @@ local function EnableMouseoverChecker()
             for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
                 local frame = nameplate.UnitFrame
                 if frame and frame.BBPmouseoverTex then
-                    local isMouseover = UnitIsUnit(frame.unit, "mouseover")
+                    local isMouseover = UnitIsUnit(frame.unit, "mouseover") and BetterBlizzPlatesDB.highlightNpShadowOnMouseover
                     local isTarget = UnitIsUnit(frame.unit, "target")
                     local healthVisible = frame.HealthBarsContainer:GetAlpha() ~= 0 and frame.healthBar:IsShown() and frame.healthBar:GetWidth() > 5
+                    local onlyOnTarget = BetterBlizzPlatesDB.showNameplateShadowOnlyTarget
 
                     if (isMouseover or (isTarget and BetterBlizzPlatesDB.keepNpShadowTargetHighlighted)) and healthVisible then
                         frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
                     else
-                        local onlyShowHighlight = BetterBlizzPlatesDB.onlyShowHighlightedNpShadow
-                        local shadowAlpha = (not healthVisible and 0) or onlyShowHighlight and 0 or 1
-                        frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
+                        if onlyOnTarget and not UnitIsUnit(frame.unit, "target") then
+                            frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, 0)
+                        else
+                            local onlyShowHighlight = BetterBlizzPlatesDB.onlyShowHighlightedNpShadow
+                            local shadowAlpha = (not healthVisible and 0) or onlyShowHighlight and 0 or 1
+                            frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
+                        end
                     end
                 end
             end
@@ -5566,14 +5651,19 @@ end
 
 -- Function to update the current class role
 local function UpdateClassRoleStatus(self, event)
+    if not BetterBlizzPlatesDB.enemyColorThreat then return end
     local specIndex = GetSpecialization()
     local role = specIndex and GetSpecializationRole(specIndex)
     BBP.isRoleTank = role == "TANK"
+
+    offTanks = GetGroupTanks()
 end
 
 local ClassRoleChecker = CreateFrame("Frame")
 ClassRoleChecker:RegisterEvent("PLAYER_ENTERING_WORLD")
 ClassRoleChecker:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+ClassRoleChecker:RegisterEvent("PLAYER_ROLES_ASSIGNED")
+ClassRoleChecker:RegisterEvent("GROUP_ROSTER_UPDATE")
 ClassRoleChecker:SetScript("OnEvent", UpdateClassRoleStatus)
 
 local function ThreatSituationUpdate(self, event)
@@ -5723,6 +5813,24 @@ Frame:RegisterEvent("PLAYER_LOGIN")
 --Frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 Frame:SetScript("OnEvent", function(...)
     local db = BetterBlizzPlatesDB
+
+    if db.updates and db.updates ~= addonUpdates then
+        if db.enableNameplateAuraCustomisation and db.classIndicator and db.classIndicatorFriendly and not db.classIndicatorUpdated then
+            db.classIndicatorCCAuras = true
+            if not db.friendlyNpdeBuffEnable then
+                db.friendlyNpdeBuffEnable = true
+                db.friendlyNpdeBuffFilterBlacklist = true
+                db.friendlyNpdeBuffFilterWatchList = false
+                db.friendlyNpdeBuffFilterCC = true
+                db.friendlyNpdeBuffFilterBlizzard = false
+                db.friendlyNpdeBuffFilterLessMinite = false
+            else
+                db.friendlyNpdeBuffFilterCC = true
+            end
+
+            db.classIndicatorUpdated = true
+        end
+    end
 
     CheckForUpdate()
 
@@ -6031,6 +6139,26 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     db.classIndicatorHealer = false
                 end
 
+            end
+
+
+            --bodifycheck
+            if db.updates and db.updates ~= addonUpdates then
+                if db.enableNameplateAuraCustomisation and db.classIndicator and db.classIndicatorFriendly and not db.classIndicatorUpdated then
+                    db.classIndicatorCCAuras = true
+                    if not db.friendlyNpdeBuffEnable then
+                        db.friendlyNpdeBuffEnable = true
+                        db.friendlyNpdeBuffFilterBlacklist = true
+                        db.friendlyNpdeBuffFilterWatchList = false
+                        db.friendlyNpdeBuffFilterCC = true
+                        db.friendlyNpdeBuffFilterBlizzard = false
+                        db.friendlyNpdeBuffFilterLessMinite = false
+                    else
+                        db.friendlyNpdeBuffFilterCC = true
+                    end
+
+                    db.classIndicatorUpdated = true
+                end
             end
 
             InitializeSavedVariables()

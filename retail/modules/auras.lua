@@ -293,7 +293,42 @@ local ogKeyAuraList = {
     [353319] = "importantColor",
     [454863] = "importantColor",
     [359816] = "importantColor",
+    [212704] = true,
     [69420] = true,
+
+    [342246] = true, -- alter
+    [1219209] = true,
+    [18499] = true,
+    [384100] = true,
+    [1044] = true,
+    [6940] = true,
+    [210256] = true,
+    [45182] = true,
+    [383005] = true,
+    [444347] = true,
+    [209426] = true,
+    [357210] = true,
+    [433874] = true,
+    [118038] = true,
+    [1222783] = true,
+    [47585] = true,
+    [370960] = true,
+    [86659] = true,
+    [47788] = true,
+    [198144] = true,
+    [48792] = true,
+    [147833] = true,
+    [54216] = true,
+    [62305] = true,
+    [132158] = true, -- ns
+    [378081] = true, -- ns
+    [53480] = true,
+    [289655] = true,
+    [387633] = true,
+    [199545] = true,
+    [125174] = true,
+    [199450] = true,
+    [212552] = true,
 
     [212182] = true, -- smoke
     [359053] = true, -- smoke
@@ -504,7 +539,7 @@ local importantDefensives = {
     [342246] = true,
     [113862] = true,
     [354610] = importantColor, -- Glimpse
-    [432180] = true,
+    [432180] = true, --dance wind
     [248519] = importantColor, -- Interlope
     [15286] = true,
     [228050] = true,
@@ -523,6 +558,7 @@ local enlargeAllImportantBuffsFilter
 
 local crowdControl = {}
 local ccFull = {
+    [32752] = true,
     [277778] = true,
     [353084] = true,
     [853] = true,
@@ -804,6 +840,7 @@ function BBP.UpdateImportantBuffsAndCCTables()
         for spellID, value in pairs(interruptSpells) do
             keyAuraList[spellID] = true
         end
+        keyAuraList[96231] = nil -- Rebuke is an aura now? for no fucking reason? ok i guess
 
         if not importantCCEnabled then
             --local color = (not db.importantCCFullGlow and true) or (db.importantCCFull and db.importantCCFullGlowRGB) or true
@@ -868,6 +905,9 @@ local castToAuraMap = {
     [198838] = 201633, -- Earthen Wall Totem
     [62618]  = 81782,  -- Power Word: Barrier
     [204336] = 8178,   -- Grounding Totem
+    [443028] = 456499, -- Celestial Conduit (Absolute Serenity)
+    [289655] = 289655, -- Sanctified Ground
+    [34861] = 289655, -- Sanctified Ground
 }
 
 local trackedAuras = {
@@ -875,6 +915,8 @@ local trackedAuras = {
     [201633] = {duration = 18, helpful = true, texture = 136098},  -- Earthen Wall
     [81782]  = {duration = 10, helpful = true, texture = 253400},  -- Barrier
     [8178]   = {duration = 3,  helpful = true, texture = 136039},  -- Grounding
+    [456499] = {duration = 4, helpful = true, texture = 988197}, -- Absolute Serenity
+    [289655] = {duration = 5, helpful = true, texture = 237544}, -- Sanctified Ground
 }
 
 
@@ -1503,13 +1545,18 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     -- Calculate the width of each row
     local function CalculateRowWidths(auras)
         local widths = {}
+        widths[1] = 0
         local compactTracker = 0
         local keyAuras = 0
+        local isPinAura = 0
         for index, buff in ipairs(auras) do
             buff:SetScale(nameplateAuraScale)
             buff.CountFrame:SetScale(nameplateAuraCountScale)
             local buffWidth
-            if buff.isKeyAura then
+            if buff.pinIcon then
+                isPinAura = isPinAura + 1
+                buffWidth = 0
+            elseif buff.isKeyAura then
                 keyAuras = keyAuras + 1
                 buff:SetSize(keyAuraSize, keyAuraSize)
                 buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
@@ -1567,15 +1614,15 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
                 buffWidth = buffWidth * buffScale
             --end
 
-            local noKeyAuraIndex = index - keyAuras
+            local noKeyAuraIndex = index - keyAuras - isPinAura
 
             local rowIndex = math.floor((noKeyAuraIndex - 1) / maxBuffsPerRowAdjusted) + 1
-            if not buff.isKeyAUra then
+            if not buff.isKeyAura and not buff.pinIcon then
                 widths[rowIndex] = (widths[rowIndex] or 0) + buffWidth -extraOffset
             end
 
             if noKeyAuraIndex % maxBuffsPerRowAdjusted ~= 1 then
-                widths[rowIndex] = widths[rowIndex] + horizontalSpacing
+                widths[rowIndex] = (widths[rowIndex] or 0) + horizontalSpacing
             end
         end
         return widths
@@ -1684,7 +1731,9 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
             local buffWidth, buffHeight = buff:GetSize()
             local buffScale = buff:GetScale()
 
-            if buff.isKeyAura then
+            if buff.pinIcon then
+                buff:Hide()
+            elseif buff.isKeyAura then
                 buff:ClearAllPoints()
                 buff:SetPoint("LEFT", healthBar, "RIGHT", keyAuraOffset + keyAuraXPos, keyAuraYPos)
                 keyAuraOffset = keyAuraOffset + (buffWidth * buffScale) + horizontalSpacing
@@ -1736,6 +1785,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
                     maxDebuffHeight = maxRowHeight
                     verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
                 else
+                    maxDebuffHeight = maxRowHeight
                     verticalOffset = -currentRow * (-maxDebuffHeight + (currentRow > 0 and verticalSpacing or 0))
                 end
 
@@ -2073,13 +2123,17 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
-                    if filterImportantBuffs and importantBuffs[spellId] then return true end
+                    if filterImportantBuffs and importantBuffs[spellId] then
+                        if spellId == 432180 and aura.applications >= 5 then return false end
+                        return true end
                     if filterBlizzard then return BlizzardShouldShow end
                     return false
                 end
                 -- Filter to show only Blizzard recommended auras
                 if not BlizzardShouldShow and filterBlizzard then
-                    if filterImportantBuffs and importantBuffs[spellId] then return true end
+                    if filterImportantBuffs and importantBuffs[spellId] then
+                        if spellId == 432180 and aura.applications >= 5 then return false end
+                        return true end
                     if filterLessMinite and lessThanOneMin then return true end
                     return false
                 end
@@ -2159,7 +2213,9 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
-                    if filterImportantBuffs and importantBuffs[spellId] then return true end
+                    if filterImportantBuffs and importantBuffs[spellId] then
+                        if spellId == 432180 and aura.applications >= 5 then return false end
+                        return true end
                     if filterBlizzard then return BlizzardShouldShow end
                     return false
                 end
@@ -2191,7 +2247,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
             local filterBlizzard = db["friendlyNpdeBuffFilterBlizzard"]
             local filterLessMinite = db["friendlyNpdeBuffFilterLessMinite"]
             local filterOnlyMe = db["friendlyNpdeBuffFilterOnlyMe"]
-            local filterCC = db["friendlyNpdeBuffFilterCC"]
+            local filterCC = db["friendlyNpdeBuffFilterCC"] or (db["classIndicator"] and db["classIndicatorCCAuras"])
 
             local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe or filterCC
 
@@ -2463,6 +2519,10 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     local moveKeyAurasFriendly = db.nameplateAuraKeyAuraPositionFriendly
     --local ccGLow = db.
 
+    local longestCCAura = nil
+    local longestCCDuration = 0
+    local pinnedAuras = isFriend and (db["classIndicator"] and db["classIndicatorCCAuras"])
+
     self.auras:Iterate(function(auraInstanceID, aura)
         if buffIndex > BBPMaxAuraNum then return true end
         local buff = self.buffPool:Acquire();
@@ -2490,6 +2550,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         end
         buff.isKeyAura = nil
         buff.isCC = nil
+        buff.pinIcon = nil
 
         if moveKeyAuras then
             local isKeyAura = keyAuraList[spellId]
@@ -2538,6 +2599,42 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
                 isImportant = true
                 auraColor = isCC
             end
+            if pinnedAuras and UnitFrame.classIndicatorCC then
+                if buff.duration and buff.expirationTime and buff.duration > longestCCDuration then
+                    longestCCDuration = buff.duration
+                    local ciColor
+                    if isCC ~= true then
+                        -- if not isImportant then
+                        --     if aura.dispelName == "Curse" then
+                        --         ciColor = {r = 0.6, g = 0, b = 1.0, a = 1}
+                        --     elseif aura.dispelName == "Magic" then
+                        --         ciColor = {r = 0.2, g = 0.6, b = 1.0, a = 1}
+                        --     else
+                        --         ciColor = auraColor
+                        --     end
+                        -- else
+                            ciColor = auraColor
+                        --end
+                    else
+                        -- if aura.dispelName == "Curse" then
+                        --     ciColor = {r = 0.6, g = 0, b = 1.0, a = 1}
+                        -- elseif aura.dispelName == "Magic" then
+                        --     ciColor = {r = 0.2, g = 0.6, b = 1.0, a = 1}
+                        -- else
+                            ciColor = ccFullColor
+                        --end
+                    end
+                    longestCCAura = {
+                        icon = aura.icon,
+                        expirationTime = buff.expirationTime,
+                        duration = buff.duration,
+                        color = ciColor,
+                        spellId = spellId,
+                        dispelName = aura.dispelName,
+                    }
+                end
+                buff.pinIcon = true
+            end
         end
 
         if opBarriersOn and opBarriers[spellId] and auraData.duration ~= 5 then
@@ -2584,6 +2681,36 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
                 buff.isCompacted = false
             end
         end
+
+        -- if isFriend and BetterBlizzPlatesDB.classIndicator and not BetterBlizzPlatesDB.classIconSquareBorderFriendly then
+        --     if crowdControl[spellId] and UnitFrame.classIndicatorCC then
+        --         UnitFrame.pinIconActive = true
+        --         UnitFrame.ccIconTexture = aura.icon
+        --         UnitFrame.pinBuffColor = auraColor
+        --         buff.pinIcon = true
+        --         UnitFrame.classIndicatorCC.Glow:SetVertexColor(UnitFrame.pinBuffColor.r, UnitFrame.pinBuffColor.g, UnitFrame.pinBuffColor.b)
+        --         UnitFrame.classIndicatorCC.Glow:Show()
+
+        --         if buff.expirationTime and buff.duration then
+        --             local start = buff.expirationTime - buff.duration
+        --             UnitFrame.classIndicatorCC.Cooldown:SetCooldown(start, buff.duration)
+        --             UnitFrame.classIndicatorCC.Cooldown:Show()
+        --         end
+
+        --         UnitFrame.classIndicatorCC:Show()
+        --         UnitFrame.classIndicatorCC.Icon:SetTexture(UnitFrame.ccIconTexture)
+        --     else
+        --         buff.pinIcon = nil
+        --         buff.pinColor = nil
+        --         buff.originalState = nil
+        --         buff.isPinIcon = nil
+        --     end
+        -- else
+        --     buff.pinIcon = nil
+        --     buff.pinColor = nil
+        --     buff.originalState = nil
+        --     buff.isPinIcon = nil
+        -- end
 
         if not buff.GlowFrame then
             buff.CountFrame:SetFrameStrata("DIALOG")
@@ -2672,6 +2799,33 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         end
         return buffIndex >= BUFF_MAX_DISPLAY;
     end);
+
+    if UnitFrame.classIndicatorCC then
+        if longestCCAura then
+            UnitFrame.pinIconActive = true
+            UnitFrame.ccIconTexture = longestCCAura.icon
+            UnitFrame.pinBuffColor = longestCCAura.color
+            UnitFrame.ccDispelName = longestCCAura.dispelName
+
+            UnitFrame.classIndicatorCC.Glow:SetVertexColor(
+                longestCCAura.color.r,
+                longestCCAura.color.g,
+                longestCCAura.color.b
+            )
+
+            local start = longestCCAura.expirationTime - longestCCAura.duration
+            UnitFrame.classIndicatorCC.Cooldown:SetCooldown(start, longestCCAura.duration)
+            UnitFrame.classIndicatorCC.Icon:SetTexture(longestCCAura.icon)
+            UnitFrame.classIndicatorCC:Show()
+        else
+            UnitFrame.classIndicatorCC:Hide()
+            UnitFrame.pinIconActive = nil
+            UnitFrame.ccIconTexture = nil
+            UnitFrame.pinBuffColor = nil
+            UnitFrame.ccDispelName = nil
+        end
+    end
+
     self:Layout();
 end
 

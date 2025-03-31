@@ -47,6 +47,14 @@ local bgsWithObjectives = {
     [726] = true, -- Twin Peaks
 }
 
+local petIcons = {
+    [417] = "charactercreate-warlockpet-felhunter",
+    [1863] = "charactercreate-warlockpet-sayaad-succubus",
+    [416] = "charactercreate-warlockpet-imp",
+    [1860] = "charactercreate-warlockpet-voidwalker",
+    [17252] = "charactercreate-warlockpet-felguard",
+}
+
 local classIconNames = {}
 BBP.classIconNames = classIconNames
 
@@ -133,6 +141,7 @@ function BBP.ClassIndicator(frame, foundID)
         config.classIndicatorBackgroundRGB = BetterBlizzPlatesDB.classIndicatorBackgroundRGB
         config.classIndicatorBackgroundSize = BetterBlizzPlatesDB.classIndicatorBackgroundSize
         config.classIndicatorPinMode = BetterBlizzPlatesDB.classIndicatorPinMode
+        config.classIndicatorShowPet = BetterBlizzPlatesDB.classIndicatorShowPet
 
         config.classIndicatorInitialized = true
     end
@@ -140,14 +149,18 @@ function BBP.ClassIndicator(frame, foundID)
     frame.classIndicatorHideNumbers = nil
 
     if not info.class then
-        if config.classIndicatorHideRaidMarker then
-            frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
+        if not UnitIsUnit(frame.unit, "pet") and not config.classIndicatorPinMode then
+            if config.classIndicatorHideRaidMarker then
+                frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
+            end
+            if frame.classIndicator then
+                frame.classIndicator:Hide()
+                frame.classIndicatorHideNumbers = true
+            end
+            return
+        else
+            info.class = select(2, UnitClass("player"))
         end
-        if frame.classIndicator then
-            frame.classIndicator:Hide()
-            frame.classIndicatorHideNumbers = true
-        end
-        return
     end
 
     if UnitIsUnit(frame.unit, "player") then
@@ -190,6 +203,67 @@ function BBP.ClassIndicator(frame, foundID)
         frame.classIndicator.icon:AddMaskTexture(frame.classIndicator.mask)
         frame.classIndicator.border = frame.classIndicator:CreateTexture(nil, "OVERLAY", nil, 6)
         frame.classIndicator:SetIgnoreParentAlpha(true)
+
+        if not config.classIconSquareBorderFriendly then
+            frame.classIndicatorCC = CreateFrame("Frame", nil, frame.classIndicator)
+            frame.classIndicatorCC:SetSize(26, 26)
+            frame.classIndicatorCC:SetFrameStrata("HIGH")
+            frame.classIndicatorCC:Hide()
+
+            frame.classIndicatorCC.Icon = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 6)
+            frame.classIndicatorCC.Icon:SetPoint("CENTER", frame.classIndicator)
+            frame.classIndicatorCC.mask = frame.classIndicatorCC:CreateMaskTexture()
+            frame.classIndicatorCC.mask:SetTexture("Interface/Masks/CircleMaskScalable")
+            frame.classIndicatorCC.mask:SetSize(27, 27)
+            frame.classIndicatorCC.mask:SetPoint("CENTER", frame.classIndicator.icon)
+            frame.classIndicatorCC.Icon:AddMaskTexture(frame.classIndicatorCC.mask)
+            frame.classIndicatorCC.Icon:SetSize(26, 26)
+
+            frame.classIndicatorCC.Cooldown = CreateFrame("Cooldown", nil, frame.classIndicatorCC, "CooldownFrameTemplate")
+            frame.classIndicatorCC.Cooldown:SetAllPoints(frame.classIndicatorCC.Icon)
+            frame.classIndicatorCC.Cooldown:SetDrawEdge(false)
+            frame.classIndicatorCC.Cooldown:SetDrawSwipe(true)
+            frame.classIndicatorCC.Cooldown:SetSwipeColor(0, 0, 0, 0.7)
+            frame.classIndicatorCC.Cooldown:SetSwipeTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
+            frame.classIndicatorCC.Cooldown:SetUseCircularEdge(true)
+            frame.classIndicatorCC.Cooldown:SetReverse(true)
+
+            frame.classIndicatorCC.Glow = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 7)
+            frame.classIndicatorCC.Glow:SetAtlas("charactercreate-ring-select")
+            frame.classIndicatorCC.Glow:SetPoint("CENTER", frame.classIndicator, "CENTER", 0, 0)
+            frame.classIndicatorCC.Glow:SetDesaturated(true)
+            frame.classIndicatorCC.Glow:SetSize(36, 36)
+            frame.classIndicatorCC.Glow:SetDrawLayer("OVERLAY", 7)
+        else
+            frame.classIndicatorCC = CreateFrame("Frame", nil, frame.classIndicator)
+            frame.classIndicatorCC:SetSize(27, 27)
+            frame.classIndicatorCC:SetFrameStrata("HIGH")
+            frame.classIndicatorCC:Hide()
+
+            frame.classIndicatorCC.Icon = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 6)
+            frame.classIndicatorCC.Icon:SetPoint("CENTER", frame.classIndicator)
+            frame.classIndicatorCC.mask = frame.classIndicatorCC:CreateMaskTexture()
+            frame.classIndicatorCC.mask:SetAtlas("UI-Frame-IconMask")
+            frame.classIndicatorCC.mask:SetSize(21, 21)
+            frame.classIndicatorCC.mask:SetPoint("CENTER", frame.classIndicator.icon)
+            frame.classIndicatorCC.Icon:AddMaskTexture(frame.classIndicatorCC.mask)
+            frame.classIndicatorCC.Icon:SetSize(20.5, 20.5)
+
+            frame.classIndicatorCC.Cooldown = CreateFrame("Cooldown", nil, frame.classIndicatorCC, "CooldownFrameTemplate")
+            frame.classIndicatorCC.Cooldown:SetAllPoints(frame.classIndicatorCC.Icon)
+            frame.classIndicatorCC.Cooldown:SetDrawEdge(false)
+            frame.classIndicatorCC.Cooldown:SetDrawSwipe(true)
+            frame.classIndicatorCC.Cooldown:SetSwipeColor(0, 0, 0, 0.7)
+            frame.classIndicatorCC.Cooldown:SetSwipeTexture("Interface\\Common\\common-iconmask")
+            frame.classIndicatorCC.Cooldown:SetReverse(true)
+
+            frame.classIndicatorCC.Glow = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 7)
+            frame.classIndicatorCC.Glow:SetAtlas("newplayertutorial-drag-slotblue")
+            frame.classIndicatorCC.Glow:SetPoint("CENTER", frame.classIndicator, "CENTER", 0, 0)
+            frame.classIndicatorCC.Glow:SetDesaturated(true)
+            frame.classIndicatorCC.Glow:SetSize(38, 38)
+            frame.classIndicatorCC.Glow:SetDrawLayer("OVERLAY", 7)
+        end
     end
     frame.classIndicator:SetFrameStrata(config.classIndicatorFrameStrataHigh and "HIGH" or "LOW")
     frame.classIndicator:SetAlpha(config.classIndicatorAlpha)
@@ -200,7 +274,7 @@ function BBP.ClassIndicator(frame, foundID)
         frame.classIndicator.highlightSelect:Hide()
         frame.classIndicator.highlightSelect:SetPoint("CENTER", frame.classIndicator, "CENTER", 0, 0)
         frame.classIndicator.highlightSelect:SetSize(33, 33)
-        frame.classIndicator.highlightSelect:SetDrawLayer("OVERLAY", 7)
+        frame.classIndicator.highlightSelect:SetDrawLayer("OVERLAY", 6)
     end
 
     local flagIcon
@@ -221,10 +295,11 @@ function BBP.ClassIndicator(frame, foundID)
     end
 
     local isTank = config.classIndicatorTank and TankSpecs[specID]
+    local isPet = UnitIsUnit(frame.unit, "pet") and config.classIndicatorShowPet
     local alwaysShowTank = config.classIconAlwaysShowTank and TankSpecs[specID]
     local alwaysShowHealer = config.classIconAlwaysShowHealer and HealerSpecs[specID]
     local isHealer = HealerSpecs[specID]
-    local shouldHide = not enabledOnThisUnit and not flagIcon and not alwaysShowHealer and not alwaysShowTank
+    local shouldHide = not enabledOnThisUnit and not flagIcon and not alwaysShowHealer and not alwaysShowTank and not isPet
 
     if shouldHide or (config.classIndicatorOnlyHealer and not isHealer and not flagIcon and not alwaysShowHealer and not alwaysShowTank) then
         frame.classIndicator:Hide()
@@ -360,7 +435,26 @@ function BBP.ClassIndicator(frame, foundID)
         frame.classIndicator.bg:Hide()
     end
 
-    if config.classIndicatorPinMode then
+    if UnitIsUnit(frame.unit, "pet") and config.classIndicatorShowPet then
+        local npcID = BBP.GetNPCIDFromGUID2(info.unitGUID)
+        local petIcon = petIcons[npcID]
+        if petIcon then
+            classAtlas = petIcon
+        else
+            local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
+            local petIcon = petIcons[npcID]
+            if petIcon then
+                classAtlas = petIcon
+            else
+                classAtlas = "summon-random-pet-icon_128"
+            end
+        end
+        frame.classIndicator.pet = true
+    elseif frame.classIndicator.pet then
+        frame.classIndicator.pet = nil
+    end
+
+    if config.classIndicatorPinMode and info.isFriend then
         if not frame.classIndicator.pin then
             frame.classIndicator.pin = frame.classIndicator:CreateTexture(nil, "BACKGROUND", nil, 0)
             frame.classIndicator.pin:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
@@ -373,17 +467,6 @@ function BBP.ClassIndicator(frame, foundID)
     elseif frame.classIndicator.pin then
         frame.classIndicator.pin:Hide()
     end
-
-    -- local coords = CLASS_ICON_TCOORDS[info.class]
-    -- if not coords then
-    --     frame.classIndicator:Hide()
-    --     if config.classIndicatorHideRaidMarker then
-    --         if not config.hideRaidmarkIndicator then
-    --             frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
-    --         end
-    --     end
-    --     return
-    -- end
 
     -- Optional class coloring for the border
     if config.classIconColorBorder then
@@ -444,7 +527,7 @@ function BBP.ClassIndicator(frame, foundID)
                 frame.classIndicator.icon:SetTexCoord(0.6498, 0.7302, 0.2726, 0.356)
             else
                 frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
-                frame.classIndicator.icon:SetTexCoord(0.637, 0.745, 0.259, 0.365)
+                frame.classIndicator.icon:SetTexCoord(0.637, 0.742, 0.259, 0.365)
             end
         else
             frame.classIndicator.icon:SetTexture(specIcon)
@@ -480,11 +563,15 @@ function BBP.ClassIndicator(frame, foundID)
             frame.classIndicator.icon:SetTexCoord(0.6498, 0.7302, 0.2726, 0.356)
         else
             frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
-            frame.classIndicator.icon:SetTexCoord(0.637, 0.745, 0.259, 0.365)
+            frame.classIndicator.icon:SetTexCoord(0.637, 0.742, 0.259, 0.365)
         end
     else
         frame.classIndicator.icon:SetAtlas(classAtlas)
-        frame.classIndicator.icon:SetTexCoord(-0.06, 1.05, -0.06, 1.05)
+        if frame.classIndicator.pet then
+            frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
+        else
+            frame.classIndicator.icon:SetTexCoord(-0.06, 1.05, -0.06, 1.05)
+        end
     end
 
     if info.isFriend then
@@ -504,6 +591,7 @@ function BBP.ClassIndicatorTargetHighlight(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
     if config.classIndicatorHighlight or config.classIndicatorHighlightColor then
+        if frame.pinIconActive then return end
         if frame.classIndicator and frame.classIndicator.highlightSelect then
             frame.classIndicator.highlightSelect:Show()
             if frame.classIndicator.bg and frame.classIndicator.border.circle then
@@ -548,7 +636,7 @@ function BBP.UpdateHealthText(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
-    if (info.isFriend and config.classIndicatorFriendly) or (info.isEnemy and config.classIndicatorEnemy) then
+    if (info.isFriend and config.classIndicatorFriendly) or (info.isEnemy and config.classIndicatorEnemy) or (config.classIndicatorShowPet and info.isPet) then
         local health = UnitHealth(frame.unit)
         local maxHealth = UnitHealthMax(frame.unit)
 
@@ -663,9 +751,10 @@ function BBP.ToggleClassIndicatorPinMode(enable)
     if enable then
         -- Save current values into session-local table
         BBP.classIndicatorValues = {
-            hideFriendlyNameText = db.hideFriendlyNameText,
+            classIndicatorHideName = db.classIndicatorHideName,
             alwaysHideFriendlyCastbar = db.alwaysHideFriendlyCastbar,
             classIndicatorBackground = db.classIndicatorBackground,
+            classIndicatorBackgroundSize = db.classIndicatorBackgroundSize,
             friendlyHideHealthBar = db.friendlyHideHealthBar,
             friendlyHideHealthBarNpc = db.friendlyHideHealthBarNpc,
             classIndicatorYPos = db.classIndicatorYPos,
@@ -673,11 +762,12 @@ function BBP.ToggleClassIndicatorPinMode(enable)
             classIndicatorHighlightColor = dbclassIndicatorHighlightColor,
         }
 
-        -- Apply new values for pin mode
+        -- Apply new values for pin mode--classIndicatorHideName
         db.classIndicatorPinMode = true
-        db.hideFriendlyNameText = true
+        db.classIndicatorHideName = true
         db.alwaysHideFriendlyCastbar = true
         db.classIndicatorBackground = true
+        db.classIndicatorBackgroundSize = 1
         db.classIconColorBorder = true
         db.classIndicatorHighlightColor = true
         db.classIndicatorYPos = -14
@@ -689,7 +779,6 @@ function BBP.ToggleClassIndicatorPinMode(enable)
 
 
         BBP.alwaysHideFriendlyCastbar:SetChecked(true)
-        BBP.hideFriendlyNameText:SetChecked(true)
         BBP.friendlyHideHealthBar:SetChecked(true)
         BBP.friendlyHideHealthBarNpc:Enable()
         BBP.friendlyHideHealthBarNpc:Show()
@@ -697,9 +786,10 @@ function BBP.ToggleClassIndicatorPinMode(enable)
         local saved = BBP.classIndicatorValues or {}
 
         db.classIndicatorPinMode = false
-        db.hideFriendlyNameText = saved.hideFriendlyNameText or false
+        db.classIndicatorHideName = saved.classIndicatorHideName or false
         db.alwaysHideFriendlyCastbar = saved.alwaysHideFriendlyCastbar or false
         db.classIndicatorBackground = saved.classIndicatorBackground or false
+        db.classIndicatorBackgroundSize = saved.classIndicatorBackgroundSize or 1
         db.friendlyHideHealthBar = saved.friendlyHideHealthBar or false
         db.friendlyHideHealthBarNpc = saved.friendlyHideHealthBarNpc or false
         db.classIconColorBorder = saved.classIconColorBorder or true
@@ -707,7 +797,6 @@ function BBP.ToggleClassIndicatorPinMode(enable)
         db.classIndicatorYPos = saved.classIndicatorYPos or 0
 
         BBP.alwaysHideFriendlyCastbar:SetChecked(db.alwaysHideFriendlyCastbar)
-        BBP.hideFriendlyNameText:SetChecked(db.hideFriendlyNameText)
         BBP.friendlyHideHealthBar:SetChecked(db.friendlyHideHealthBar)
         if BBP.friendlyHideHealthBar:GetChecked() then
             BBP.friendlyHideHealthBar:SetChecked(db.friendlyHideHealthBarNpc)

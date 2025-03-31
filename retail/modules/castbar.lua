@@ -685,7 +685,7 @@ end
 function BBP.UpdateCastTimer(frame, unit)
     if not frame.CastTimerFrame then
         frame.CastTimerFrame = CreateFrame("Frame", nil, frame.healthBar)
-        frame.CastTimer = frame.CastTimerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        frame.CastTimer = frame.CastTimerFrame:CreateFontString(nil, "BACKGROUND", "GameFontNormalSmall")
         --nameplate.CastTimer:SetPoint("LEFT", nameplate, "BOTTOMRIGHT", -10, 15)
         frame.CastTimer:SetPoint("LEFT", frame.castBar, "RIGHT", 5, 0)
         local npTextSize = BetterBlizzPlatesDB.npTargetTextSize

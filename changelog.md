@@ -1,3 +1,29 @@
+# BetterBlizzPlates 1.7.5
+## Retail:
+### New stuff:
+- Class Indicator: CC Icons. Show CC Instead of Class/Spec during CC.
+- Class Indicator: Show Pet. Show class indicator on pet too. On by default but this requires "Show Friendly Pets" enabled in the CVar Control section which is not on by default.
+- Theat Color: Now has "Tank: Losing Aggro" and "Tank: Off-Tank Color" settings. I rely on feedback for these functioning properly so please be vocal (i dont pve)
+- Nameplate Shadow: Target Only setting.
+### Tweaks:
+- Key Auras now have more auras in the list. I've been a bit more lenient on what to show and allowed more to be shown here. What is a key aura? Currently a key aura is: CC, Immunity, and a few other big, but short duration auras requiring a shift in gameplay.
+- Added duration to show on Sanctified Ground and Absolute Serenity auras with aura settings enabled.
+- Nameplate Aura settings are now enabled by default for new users.
+### Bugfix:
+- Fix Nameplate Shadow: "Highlight shadow on Mouseover" always being active regardless of that setting being on or not.
+- Fixed Rebuke showing on Paladin's nameplates when using it with interrupts enabled. Rebuke is also an aura Paladins get when they use it for some reason... This was not accounted for.
+
+## Classic & Cata:
+### New:
+- Elite/Rare Indicator is now on by default for both retail and classic nameplates. New setting to hide it is under "Enemy nameplates" on general page /bbp
+### Bugfix:
+- Fix nameplate aura tooltip repeating spell id multiple times
+
+
+
+
+
+
 # BetterBlizzPlates 1.7.4
 ## New stuff:
 - Class Indicator: Pin Mode: Display the Icon as a Pin and hide healthbar, castbar and name.

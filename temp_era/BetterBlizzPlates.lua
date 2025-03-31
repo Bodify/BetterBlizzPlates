@@ -3279,25 +3279,6 @@ local function CreateRetailNameplateLook(frame)
         end
     end
     SetupBorderOnFrame(frame.healthBar)
-
-    if not frame.classificationIndicator then
-        frame.classificationIndicator = frame:CreateTexture(nil, "OVERLAY")
-        frame.classificationIndicator:SetAtlas("nameplates-icon-elite-gold")
-        frame.classificationIndicator:SetSize(13, 13)
-        frame.classificationIndicator:SetPoint("RIGHT", frame.healthBar, "LEFT", -2, 0)
-        frame.classificationIndicator:Hide()
-    end
-
-    local classification = UnitClassification(frame.unit)
-    if classification == "elite" then
-        frame.classificationIndicator:SetAtlas("nameplates-icon-elite-gold")
-        frame.classificationIndicator:Show()
-    elseif classification == "rareelite" then
-        frame.classificationIndicator:SetAtlas("nameplates-icon-elite-silver")
-        frame.classificationIndicator:Show()
-    else
-        frame.classificationIndicator:Hide()
-    end
 end
 
 local function HideLevelFrameOnClassicNameplate(frame)
@@ -4387,6 +4368,28 @@ local function HandleNamePlateAdded(unit)
                 frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateBorderSize)
             end
         end
+    end
+    if not BetterBlizzPlatesDB.hideEliteDragon then
+        if not frame.classificationIndicator then
+            frame.classificationIndicator = frame:CreateTexture(nil, "OVERLAY")
+            frame.classificationIndicator:SetAtlas("nameplates-icon-elite-gold")
+            frame.classificationIndicator:SetSize(13, 13)
+            frame.classificationIndicator:SetPoint("RIGHT", frame.healthBar, "LEFT", -2, 0)
+            frame.classificationIndicator:Hide()
+        end
+
+        local classification = UnitClassification(frame.unit)
+        if classification == "elite" then
+            frame.classificationIndicator:SetAtlas("nameplates-icon-elite-gold")
+            frame.classificationIndicator:Show()
+        elseif classification == "rareelite" then
+            frame.classificationIndicator:SetAtlas("nameplates-icon-elite-silver")
+            frame.classificationIndicator:Show()
+        else
+            frame.classificationIndicator:Hide()
+        end
+    elseif frame.classificationIndicator then
+        frame.classificationIndicator:Hide()
     end
     BBP.CustomizeNameOnNameplate(frame)
     BBP.ClassColorAndScaleNames(frame)

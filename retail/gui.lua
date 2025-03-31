@@ -5445,6 +5445,26 @@ local function guiGeneralTab()
 
     classIndicator:HookScript("OnClick", function(self)
         CheckAndToggleCheckboxes(self)
+        if self:GetChecked() then
+            if not BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
+                print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Enable Nameplate Aura customization in order to show CC icons in Class Indicator.")
+            else
+                print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Enabled Friendly Debuffs & PvP CC filter in Nameplate Auras section in order to show CC inside of Class Indicator.")
+            end
+            if BBP.friendlyNpdeBuffEnable then
+                if not BBP.friendlyNpdeBuffEnable:GetChecked() then
+                    BBP.friendlyNpdeBuffEnable:Click()
+                end
+                if not BBP.friendlyNpdeBuffFilterCC:GetChecked() then
+                    BBP.friendlyNpdeBuffFilterCC:Click()
+                end
+                BetterBlizzPlatesDB.friendlyNpdeBuffEnable = true
+                BetterBlizzPlatesDB.friendlyNpdeBuffFilterCC = true
+            else
+                BetterBlizzPlatesDB.friendlyNpdeBuffEnable = true
+                BetterBlizzPlatesDB.friendlyNpdeBuffFilterCC = true
+            end
+        end
         if InCombatLockdown() then return end
         if self:GetChecked() then
             C_CVar.SetCVar("nameplateShowFriends", "1")
@@ -7040,13 +7060,43 @@ local function guiPositionAndScale()
     classIconBgOnly:SetPoint("LEFT", classIconArenaOnly.text, "RIGHT", 0, 0)
     CreateTooltip(classIconBgOnly, "Show in battlegrounds only")
 
+    anchorSubClassIcon.classIndicatorCCAuras = CreateCheckbox("classIndicatorCCAuras", "Show CC", contentFrame)
+    anchorSubClassIcon.classIndicatorCCAuras:SetPoint("TOPLEFT", classIconArenaOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubClassIcon.classIndicatorCCAuras, "Show Crowd Control", "Replace Class/Spec Icon with Icon of Crowd Control on Friendly Players.", "This setting requires nameplate aura settings + PvP CC filter enabled.")
+    anchorSubClassIcon.classIndicatorCCAuras:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Enabled Friendly Debuffs & PvP CC filter in Nameplate Auras section.")
+            if BBP.friendlyNpdeBuffEnable then
+                if not BBP.friendlyNpdeBuffEnable:GetChecked() then
+                    BBP.friendlyNpdeBuffEnable:Click()
+                end
+                if not BBP.friendlyNpdeBuffFilterCC:GetChecked() then
+                    BBP.friendlyNpdeBuffFilterCC:Click()
+                end
+            else
+                BetterBlizzPlatesDB.friendlyNpdeBuffEnable = true
+                BetterBlizzPlatesDB.friendlyNpdeBuffFilterCC = true
+            end
+        end
+    end)
 
+    anchorSubClassIcon.classIndicatorShowPet = CreateCheckbox("classIndicatorShowPet", "Pet", contentFrame)
+    anchorSubClassIcon.classIndicatorShowPet:SetPoint("TOPLEFT", classIconBgOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubClassIcon.classIndicatorShowPet, "Show Pet", "Show icon on your pet as well.", "This setting requires \"Show Friendly Pets\" enabled in the CVar Control section.")
+    anchorSubClassIcon.classIndicatorShowPet:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            BBP.RunAfterCombat(function()
+                C_CVar.SetCVar("nameplateShowFriendlyPets", "1")
+                print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Show Friendly Pets CVar toggled on for Pet Class Indicator to work. In order to turn this back off go to /bbp -> CVar Control and uncheck it.")
+            end)
+        end
+    end)
 
 
     -- Extended Settings Button
     anchorSubClassIcon.extendedSettingsButton = CreateFrame("Button", nil, contentFrame, "UIPanelButtonTemplate")
     anchorSubClassIcon.extendedSettingsButton:SetSize(120, 25)
-    anchorSubClassIcon.extendedSettingsButton:SetPoint("TOP", anchorSubClassIcon, "BOTTOM", 0, -212)
+    anchorSubClassIcon.extendedSettingsButton:SetPoint("TOP", anchorSubClassIcon, "BOTTOM", 0, -224)
     anchorSubClassIcon.extendedSettingsButton:SetText("More options")
     CreateTooltip(anchorSubClassIcon.extendedSettingsButton, "Open more settings for Class Indicator")
 
@@ -7613,8 +7663,14 @@ local function guiPositionAndScale()
     local tankFullAggroColorRGB = CreateColorBox(contentFrame, "tankFullAggroColorRGB", "Tank: Full Aggro")
     tankFullAggroColorRGB:SetPoint("TOPLEFT", anchorThreatColor, "BOTTOMLEFT", -28, -5)
 
+    anchorThreatColor.tankLosingAggroColorRGB = CreateColorBox(contentFrame, "tankLosingAggroColorRGB", "Tank: Losing Aggro")
+    anchorThreatColor.tankLosingAggroColorRGB:SetPoint("TOPLEFT", tankFullAggroColorRGB, "BOTTOMLEFT", 0, -2)
+
+    anchorThreatColor.tankOffTankAggroColorRGB = CreateColorBox(contentFrame, "tankOffTankAggroColorRGB", "Tank: Off-Tank Aggro")
+    anchorThreatColor.tankOffTankAggroColorRGB:SetPoint("TOPLEFT", anchorThreatColor.tankLosingAggroColorRGB, "BOTTOMLEFT", 0, -2)
+
     local tankNoAggroColorRGB = CreateColorBox(contentFrame, "tankNoAggroColorRGB", "Tank: No Aggro")
-    tankNoAggroColorRGB:SetPoint("TOPLEFT", tankFullAggroColorRGB, "BOTTOMLEFT", 0, -2)
+    tankNoAggroColorRGB:SetPoint("TOPLEFT", anchorThreatColor.tankOffTankAggroColorRGB, "BOTTOMLEFT", 0, -2)
 
     local dpsOrHealFullAggroColorRGB = CreateColorBox(contentFrame, "dpsOrHealFullAggroColorRGB", "DPS/Heal: Full Aggro")
     dpsOrHealFullAggroColorRGB:SetPoint("TOPLEFT", tankNoAggroColorRGB, "BOTTOMLEFT", 0, -8)
@@ -7628,7 +7684,11 @@ local function guiPositionAndScale()
 
     anchorThreatColor.enemyColorThreatCombatOnly = CreateCheckbox("enemyColorThreatCombatOnly", "Combat only", contentFrame)
     anchorThreatColor.enemyColorThreatCombatOnly:SetPoint("TOPLEFT", anchorThreatColor.threatColorAlwaysOn, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(anchorThreatColor.enemyColorThreatCombatOnly, "Combat only", "Only apply coloring when unit is in combat")
+    CreateTooltipTwo(anchorThreatColor.enemyColorThreatCombatOnly, "Combat only", "Only apply coloring when nameplate unit is in combat")
+
+    anchorThreatColor.enemyColorThreatCombatOnlyPlayer = CreateCheckbox("enemyColorThreatCombatOnlyPlayer", "Player Combat only", contentFrame)
+    anchorThreatColor.enemyColorThreatCombatOnlyPlayer:SetPoint("TOPLEFT", anchorThreatColor.enemyColorThreatCombatOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorThreatColor.enemyColorThreatCombatOnlyPlayer, "Player Combat Only", "Only apply coloring when I am in combat")
 
 
     ----------------------
@@ -9113,6 +9173,7 @@ local function guiNameplateAuras()
         CheckAndToggleCheckboxes(friendlyNpdeBuffEnable)
     end)
     CreateTooltip(friendlyNpdeBuffEnable, "Enable all Debuffs. Select filters under.")
+    BBP.friendlyNpdeBuffEnable = friendlyNpdeBuffEnable
 
     local friendlyNpdeBuffFilterBlacklist = CreateCheckbox("friendlyNpdeBuffFilterBlacklist", "Blacklist", friendlyNpdeBuffEnable)
     friendlyNpdeBuffFilterBlacklist:SetPoint("TOPLEFT", friendlyNpdeBuffEnable, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
@@ -9128,6 +9189,7 @@ local function guiNameplateAuras()
     friendlyNpdeBuffFilterCC:HookScript("OnClick", function()
         BBP.UpdateImportantBuffsAndCCTables()
     end)
+    BBP.friendlyNpdeBuffFilterCC = friendlyNpdeBuffFilterCC
 
     local friendlyNpdeBuffFilterBlizzard = CreateCheckbox("friendlyNpdeBuffFilterBlizzard", "Blizzard Default Filter", friendlyNpdeBuffEnable)
     friendlyNpdeBuffFilterBlizzard:SetPoint("TOPLEFT", friendlyNpdeBuffFilterWatchList, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -10168,7 +10230,7 @@ local function guiCVarControl()
 
     local instantComboPoints = CreateCheckbox("instantComboPoints", "Instant Combo Points", guiCVarControl, nil, BBP.InstantComboPoints)
     instantComboPoints:SetPoint("TOPLEFT", nameplateResourceOnTarget, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(instantComboPoints, "Instant Combo Points", "Remove the combo point animations for instant feedback. Currently works for Rogues, Druids, Monks and Mages.")
+    CreateTooltipTwo(instantComboPoints, "Instant Combo Points", "Remove the combo point animations for instant feedback. Currently works for:\n|cFFFFF569Rogue|r\n|cFFFF7D0ADruid|r\n|cFF00FF96Monk|r\n|cFF3FC7EBMage|r\n|cFFF58CBAPaladin|r")
     instantComboPoints:HookScript("OnClick", function(self)
         if not self:GetChecked() then
             StaticPopup_Show("BBP_CONFIRM_RELOAD")
@@ -10762,6 +10824,10 @@ local function guiMisc()
     highlightNpShadowOnMouseover:HookScript("OnClick", function()
         StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end)
+
+    local showNameplateShadowOnlyTarget = CreateCheckbox("showNameplateShadowOnlyTarget", "Target", guiMisc)
+    showNameplateShadowOnlyTarget:SetPoint("LEFT", highlightNpShadowOnMouseover.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(showNameplateShadowOnlyTarget, "Target Only", "Only show Nameplate Shadow on current Target.")
 
     local onlyShowHighlightedNpShadow = CreateCheckbox("onlyShowHighlightedNpShadow", "Highlighted Only", guiMisc)
     onlyShowHighlightedNpShadow:SetPoint("TOPLEFT", highlightNpShadowOnMouseover, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
