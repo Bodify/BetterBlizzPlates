@@ -1,5 +1,14 @@
+# BetterBlizzPlates 1.7.5c
+### Tweak:
+- Nameplate Auras: PvP Buffs Filter: Monk's Dance of the Wind aura (432180) now only shows when it has 5 stacks or more. If you want it to always show add it to whitelist.
+- Small tweaks to Class Indicator pet settings.
+
+
+
 # BetterBlizzPlates 1.7.5b
 ## Retail
+### Tweak:
+- Nameplate Auras: PvP Buffs Filter: Monk's Dance of the Wind aura (432180) now only shows when it has 5 stacks or more. If you want it to always show add it to whitelist.
 ### Bugfix:
 - Fix CC auras having glow on them on enemy nameplates unintentionally due to "PvP CC" filter being enabled for friendly nameplates for Class Indicator users.
 - Fix Class Indicator showing on all friendly npc nameplates after oopsie in Pet icon logic

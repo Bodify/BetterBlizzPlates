@@ -2123,17 +2123,13 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
-                    if filterImportantBuffs and importantBuffs[spellId] then
-                        if spellId == 432180 and aura.applications >= 5 then return false end
-                        return true end
+                    if filterImportantBuffs and importantBuffs[spellId] then return true end
                     if filterBlizzard then return BlizzardShouldShow end
                     return false
                 end
                 -- Filter to show only Blizzard recommended auras
                 if not BlizzardShouldShow and filterBlizzard then
-                    if filterImportantBuffs and importantBuffs[spellId] then
-                        if spellId == 432180 and aura.applications >= 5 then return false end
-                        return true end
+                    if filterImportantBuffs and importantBuffs[spellId] then return true end
                     if filterLessMinite and lessThanOneMin then return true end
                     return false
                 end
@@ -2213,9 +2209,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
                     if castByPlayer then return true end
-                    if filterImportantBuffs and importantBuffs[spellId] then
-                        if spellId == 432180 and aura.applications >= 5 then return false end
-                        return true end
+                    if filterImportantBuffs and importantBuffs[spellId] then return true end
                     if filterBlizzard then return BlizzardShouldShow end
                     return false
                 end
@@ -2583,6 +2577,9 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             if isImportantBuff ~= true and not isImportant then
                 isImportant = true
                 auraColor = isImportantBuff
+            end
+            if buff.spellID == 432180 and not shouldShowAura and aura.applications < 5 then
+                buff.pinIcon = true
             end
         end
 

@@ -55,6 +55,8 @@ local petIcons = {
     [17252] = "charactercreate-warlockpet-felguard",
 }
 
+local playerClass = select(2, UnitClass("player"))
+
 local classIconNames = {}
 BBP.classIconNames = classIconNames
 
@@ -148,9 +150,10 @@ function BBP.ClassIndicator(frame, foundID)
 
     frame.classIndicatorHideNumbers = nil
 
-    if not info.class then
+    local class = info.class
+    if not class then
         if UnitIsUnit(frame.unit, "pet") and config.classIndicatorPinMode then
-            info.class = select(2, UnitClass("player"))
+            class = playerClass
         else
             if config.classIndicatorHideRaidMarker then
                 frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
@@ -415,8 +418,8 @@ function BBP.ClassIndicator(frame, foundID)
 
     -- -- Get class icon texture and coordinates
     -- local classIcon = "Interface/GLUES/CHARACTERCREATE/UI-CHARACTERCREATE-CLASSES"
-    local classAtlas = "classicon-" .. string.lower(info.class)
-    local classColor = RAID_CLASS_COLORS[info.class]
+    local classAtlas = "classicon-" .. string.lower(class)
+    local classColor = RAID_CLASS_COLORS[class]
     if config.classIndicatorBackground then
         if not frame.classIndicator.bg then
             frame.classIndicator.bg = frame.classIndicator:CreateTexture(nil, "BACKGROUND", nil, 1)
@@ -604,7 +607,7 @@ function BBP.ClassIndicatorTargetHighlight(frame)
                 end
             )
             if info.class and config.classIndicatorHighlightColor then
-                local classColor = RAID_CLASS_COLORS[info.class]
+                local classColor = UnitIsUnit(frame.unit, "pet") and RAID_CLASS_COLORS[playerClass] or RAID_CLASS_COLORS[info.class]
                 frame.classIndicator.highlightSelect:SetDesaturated(true)
                 frame.classIndicator.highlightSelect:SetVertexColor(classColor.r, classColor.g, classColor.b)
                 frame.classIndicator.highlightSelect.classColored = true
