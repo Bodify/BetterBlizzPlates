@@ -2589,16 +2589,32 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         local isCC = crowdControl[spellId]
         if isCC then
             buff.isCC = true
-            if moveKeyAuras and ((moveKeyAurasFriendly and not isEnemyUnit) or isEnemyUnit) then
-                buff.isKeyAura = true
+            if isEnemyUnit then
+                if db.otherNpdeBuffFilterCC then
+                    if moveKeyAuras and ((moveKeyAurasFriendly and not isEnemyUnit) or isEnemyUnit) then
+                        buff.isKeyAura = true
+                    end
+                    if enlargeAllCC and enlargeAllCCsFilter then
+                        isEnlarged = true
+                    end
+                    if isCC ~= true and not isImportant then
+                        isImportant = true
+                        auraColor = isCC
+                    end
+                end
+            else
+                if moveKeyAuras and ((moveKeyAurasFriendly and not isEnemyUnit) or isEnemyUnit) then
+                    buff.isKeyAura = true
+                end
+                if enlargeAllCC and enlargeAllCCsFilter then
+                    isEnlarged = true
+                end
+                if isCC ~= true and not isImportant then
+                    isImportant = true
+                    auraColor = isCC
+                end
             end
-            if enlargeAllCC and enlargeAllCCsFilter then
-                isEnlarged = true
-            end
-            if isCC ~= true and not isImportant then
-                isImportant = true
-                auraColor = isCC
-            end
+
             if pinnedAuras and UnitFrame.classIndicatorCC then
                 if buff.duration and buff.expirationTime and buff.duration > longestCCDuration then
                     longestCCDuration = buff.duration

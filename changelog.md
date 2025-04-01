@@ -1,3 +1,11 @@
+# BetterBlizzPlates 1.7.5b
+## Retail
+### Bugfix:
+- Fix CC auras having glow on them on enemy nameplates unintentionally due to "PvP CC" filter being enabled for friendly nameplates for Class Indicator users.
+- Fix Class Indicator showing on all friendly npc nameplates after oopsie in Pet icon logic
+
+
+
 # BetterBlizzPlates 1.7.5
 ## Retail:
 ### New stuff:

@@ -149,7 +149,9 @@ function BBP.ClassIndicator(frame, foundID)
     frame.classIndicatorHideNumbers = nil
 
     if not info.class then
-        if not UnitIsUnit(frame.unit, "pet") and not config.classIndicatorPinMode then
+        if UnitIsUnit(frame.unit, "pet") and config.classIndicatorPinMode then
+            info.class = select(2, UnitClass("player"))
+        else
             if config.classIndicatorHideRaidMarker then
                 frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
             end
@@ -158,8 +160,6 @@ function BBP.ClassIndicator(frame, foundID)
                 frame.classIndicatorHideNumbers = true
             end
             return
-        else
-            info.class = select(2, UnitClass("player"))
         end
     end
 
