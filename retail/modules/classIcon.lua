@@ -48,11 +48,14 @@ local bgsWithObjectives = {
 }
 
 local petIcons = {
-    [417] = "charactercreate-warlockpet-felhunter",
-    [1863] = "charactercreate-warlockpet-sayaad-succubus",
-    [416] = "charactercreate-warlockpet-imp",
-    [1860] = "charactercreate-warlockpet-voidwalker",
-    [17252] = "charactercreate-warlockpet-felguard",
+    [417] = 136217, -- felhunter
+    [1863] = 136220, -- succubus
+    [416] = 136218, -- imp
+    [1860] = 136221, -- voidwalker
+    [17252] = 136216, -- felguard
+    [208441] = 135862, -- water ele
+    [165189] = 132193, -- hunter pet
+    [26125] = 1531513, -- dk pet
 }
 
 local playerClass = select(2, UnitClass("player"))
@@ -144,6 +147,8 @@ function BBP.ClassIndicator(frame, foundID)
         config.classIndicatorBackgroundSize = BetterBlizzPlatesDB.classIndicatorBackgroundSize
         config.classIndicatorPinMode = BetterBlizzPlatesDB.classIndicatorPinMode
         config.classIndicatorShowPet = BetterBlizzPlatesDB.classIndicatorShowPet
+        config.classIndicatorHideFriendlyHealthbar = BetterBlizzPlatesDB.classIndicatorHideFriendlyHealthbar
+        config.classIndicatorOnlyParty = BetterBlizzPlatesDB.classIndicatorOnlyParty
 
         config.classIndicatorInitialized = true
     end
@@ -302,9 +307,11 @@ function BBP.ClassIndicator(frame, foundID)
     local alwaysShowTank = config.classIconAlwaysShowTank and TankSpecs[specID]
     local alwaysShowHealer = config.classIconAlwaysShowHealer and HealerSpecs[specID]
     local isHealer = HealerSpecs[specID]
+    local partyOnly = config.classIndicatorOnlyParty and not UnitInParty(frame.unit)
+
     local shouldHide = not enabledOnThisUnit and not flagIcon and not alwaysShowHealer and not alwaysShowTank and not isPet
 
-    if shouldHide or (config.classIndicatorOnlyHealer and not isHealer and not flagIcon and not alwaysShowHealer and not alwaysShowTank) then
+    if shouldHide or (config.classIndicatorOnlyHealer and not isHealer and not flagIcon and not alwaysShowHealer and not alwaysShowTank) or partyOnly then
         frame.classIndicator:Hide()
         return
     end
@@ -438,25 +445,6 @@ function BBP.ClassIndicator(frame, foundID)
         frame.classIndicator.bg:Hide()
     end
 
-    if UnitIsUnit(frame.unit, "pet") and config.classIndicatorShowPet then
-        local npcID = BBP.GetNPCIDFromGUID2(info.unitGUID)
-        local petIcon = petIcons[npcID]
-        if petIcon then
-            classAtlas = petIcon
-        else
-            local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
-            local petIcon = petIcons[npcID]
-            if petIcon then
-                classAtlas = petIcon
-            else
-                classAtlas = "summon-random-pet-icon_128"
-            end
-        end
-        frame.classIndicator.pet = true
-    elseif frame.classIndicator.pet then
-        frame.classIndicator.pet = nil
-    end
-
     if config.classIndicatorPinMode and info.isFriend then
         if not frame.classIndicator.pin then
             frame.classIndicator.pin = frame.classIndicator:CreateTexture(nil, "BACKGROUND", nil, 0)
@@ -569,16 +557,41 @@ function BBP.ClassIndicator(frame, foundID)
             frame.classIndicator.icon:SetTexCoord(0.637, 0.742, 0.259, 0.365)
         end
     else
-        frame.classIndicator.icon:SetAtlas(classAtlas)
-        if frame.classIndicator.pet then
-            frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
+        if UnitIsUnit(frame.unit, "pet") and config.classIndicatorShowPet then
+            local npcID = BBP.GetNPCIDFromGUID2(info.unitGUID)
+            local petIcon = petIcons[npcID]
+            if petIcon then
+                frame.classIndicator.icon:SetTexture(petIcon)
+                frame.classIndicator.icon:SetTexCoord(0.05, 0.95, 0.05, 0.95)
+            else
+                local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
+                local petIcon = petIcons[npcID]
+                if petIcon then
+                    frame.classIndicator.icon:SetTexture(petIcon)
+                    frame.classIndicator.icon:SetTexCoord(0.05, 0.95, 0.05, 0.95)
+                else
+                    frame.classIndicator.icon:SetTexture(618972)
+                    frame.classIndicator.icon:SetTexCoord(0.05, 0.95, 0.05, 0.95)
+                end
+            end
         else
+            frame.classIndicator.icon:SetAtlas(classAtlas)
             frame.classIndicator.icon:SetTexCoord(-0.06, 1.05, -0.06, 1.05)
         end
     end
 
     if info.isFriend then
         classIconNames[info.name] = frame
+
+        if config.classIndicatorHideFriendlyHealthbar then
+            frame.HealthBarsContainer:SetAlpha(0)
+            frame.selectionHighlight:SetAlpha(0)
+            frame.ciChange = true
+        elseif frame.ciChange then
+            frame.HealthBarsContainer:SetAlpha(1)
+            frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
+            frame.ciChange = nil
+        end
     end
 
     frame.classIndicator:Show()
@@ -758,8 +771,7 @@ function BBP.ToggleClassIndicatorPinMode(enable)
             alwaysHideFriendlyCastbar = db.alwaysHideFriendlyCastbar,
             classIndicatorBackground = db.classIndicatorBackground,
             classIndicatorBackgroundSize = db.classIndicatorBackgroundSize,
-            friendlyHideHealthBar = db.friendlyHideHealthBar,
-            friendlyHideHealthBarNpc = db.friendlyHideHealthBarNpc,
+            classIndicatorHideFriendlyHealthbar = db.classIndicatorHideFriendlyHealthbar,
             classIndicatorYPos = db.classIndicatorYPos,
             classIconColorBorder = db.classIconColorBorder,
             classIndicatorHighlightColor = dbclassIndicatorHighlightColor,
@@ -774,17 +786,10 @@ function BBP.ToggleClassIndicatorPinMode(enable)
         db.classIconColorBorder = true
         db.classIndicatorHighlightColor = true
         db.classIndicatorYPos = -14
-        if not db.friendlyHideHealthBar then
-            db.friendlyHideHealthBarNpc = false
-            BBP.friendlyHideHealthBarNpc:SetChecked(false)
-        end
-        db.friendlyHideHealthBar = true
+        db.classIndicatorHideFriendlyHealthbar = true
 
 
         BBP.alwaysHideFriendlyCastbar:SetChecked(true)
-        BBP.friendlyHideHealthBar:SetChecked(true)
-        BBP.friendlyHideHealthBarNpc:Enable()
-        BBP.friendlyHideHealthBarNpc:Show()
     else
         local saved = BBP.classIndicatorValues or {}
 
@@ -793,23 +798,12 @@ function BBP.ToggleClassIndicatorPinMode(enable)
         db.alwaysHideFriendlyCastbar = saved.alwaysHideFriendlyCastbar or false
         db.classIndicatorBackground = saved.classIndicatorBackground or false
         db.classIndicatorBackgroundSize = saved.classIndicatorBackgroundSize or 1
-        db.friendlyHideHealthBar = saved.friendlyHideHealthBar or false
-        db.friendlyHideHealthBarNpc = saved.friendlyHideHealthBarNpc or false
+        db.classIndicatorHideFriendlyHealthbar = saved.classIndicatorHideFriendlyHealthbar or false
         db.classIconColorBorder = saved.classIconColorBorder or true
         db.classIndicatorHighlightColor = saved.classIndicatorHighlightColor or false
         db.classIndicatorYPos = saved.classIndicatorYPos or 0
 
         BBP.alwaysHideFriendlyCastbar:SetChecked(db.alwaysHideFriendlyCastbar)
-        BBP.friendlyHideHealthBar:SetChecked(db.friendlyHideHealthBar)
-        if BBP.friendlyHideHealthBar:GetChecked() then
-            BBP.friendlyHideHealthBar:SetChecked(db.friendlyHideHealthBarNpc)
-            BBP.friendlyHideHealthBarNpc:Enable()
-            BBP.friendlyHideHealthBarNpc:Show()
-        else
-            BBP.friendlyHideHealthBar:SetChecked(false)
-            BBP.friendlyHideHealthBarNpc:Disable()
-            BBP.friendlyHideHealthBarNpc:Hide()
-        end
     end
     BBP.RefreshAllNameplates()
 end

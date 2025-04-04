@@ -1,4 +1,25 @@
+# BetterBlizzPlates 1.7.6b
+## Retail
+### Tweak:
+- Kalvish profile update
+
+# BetterBlizzPlates 1.7.6
+## Retail
+### New:
+- Class Indicator: Only for Party setting. - Only shows Class Indicator on people in your Party.
+- Class Indicator: Hide Friendly Healthbar setting. - Hides healthbar only on friendly nameplates with Class Indicator on them.
+- Party Pointer: Only for Party setting. - Only shows Party Pointer on people in your Party.
+- Party Pointer: Show on Pet setting.
+- Hide NPC: Hide Others Pets -> Hide other friendly pets and only show your own. Will only show main pet. This is now on by default.
+### Tweak:
+- Class Indicator Pet Icons updated.
+- Class Indicator: Show Background Color is now on by default for new users.
+- Tweaks to Class Indicator's Pin Mode setting. Toggling the setting now toggles different and new settings: Hide Friendly Healthbar and Hide Name (for Class Indicator nameplates specifically and not all like previously).
+
+
+
 # BetterBlizzPlates 1.7.5c
+## Retail
 ### Tweak:
 - Nameplate Auras: PvP Buffs Filter: Monk's Dance of the Wind aura (432180) now only shows when it has 5 stacks or more. If you want it to always show add it to whitelist.
 - Small tweaks to Class Indicator pet settings.

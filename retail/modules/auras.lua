@@ -172,13 +172,12 @@ function BBP.SetUpAuraInterrupts()
             if frame and UnitGUID(frame.unit) == destGUID then
                 interruptedNp = frame
 
-                -- Check if the unit was casting or channeling AND if it was interruptible
-                local castName, _, _, _, _, _, _, notInterruptible = UnitCastingInfo(frame.unit)
-                local channelName, _, _, _, _, _, notInterruptibleChannel = UnitChannelInfo(frame.unit)
-
-                if (castName and not notInterruptible) or (channelName and not notInterruptibleChannel) then
-                    wasCasting = true
-                    isInterruptible = true
+                if event == "SPELL_CAST_SUCCESS" then
+                    -- Check if the unit was casting or channeling AND if it was interruptible
+                    local _, _, _, _, _, _, notInterruptibleChannel = UnitChannelInfo(frame.unit)
+                    if notInterruptibleChannel ~= false then -- nil when not channeling
+                        return
+                    end
                 end
 
                 -- Apply interrupt duration reductions based on active buffs
@@ -193,9 +192,6 @@ function BBP.SetUpAuraInterrupts()
             end
         end
 
-        -- If the target wasn't casting, or was immune to interrupts, do nothing
-        if not interruptedNp or not wasCasting or not isInterruptible then return end
-
         local expires = GetTime() + duration
 
         activeInterrupts[destGUID] = {
@@ -207,7 +203,9 @@ function BBP.SetUpAuraInterrupts()
         }
 
         -- Update the interrupted unit's nameplate buffs
-        BBP.UpdateBuffs(interruptedNp.BuffFrame, interruptedNp.unit, nil, {harmful = true}, interruptedNp)
+        if interruptedNp then
+            BBP.UpdateBuffs(interruptedNp.BuffFrame, interruptedNp.unit, nil, {harmful = true}, interruptedNp)
+        end
 
         -- Clear the interrupt after its duration
         C_Timer.After(duration, function()
@@ -2540,7 +2538,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         end
 
         if buff.Cooldown._occ_display then
-            buff.Cooldown._occ_display:SetFrameStrata("HIGH")
+            buff.Cooldown._occ_display:SetFrameStrata("DIALOG")
         end
         buff.isKeyAura = nil
         buff.isCC = nil

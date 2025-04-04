@@ -51,6 +51,7 @@ local defaultSettings = {
     hideNPCArenaOnly = false,
     hideNPCHideSecondaryPets = true,
     hideNPCSecondaryShowMurloc = true,
+    hideNPCHideOthersPets = true,
     colorNPC = false,
     colorNPCName = false,
     raidmarkIndicator = false,
@@ -238,6 +239,9 @@ local defaultSettings = {
     --classIndicatorHighlightColor = true,
     classIconAlwaysShowHealer = true,
     classIconAlwaysShowBgObj = true,
+    classIndicatorBackground = true,
+    --classIndicatorHideFriendlyHealthbar = true,
+    --classIndicatorPinMode = true,
     classIconEnemyHealIcon = true,
     classIconAlwaysShowTank = true,
     classIndicatorTank = true,
@@ -255,6 +259,7 @@ local defaultSettings = {
     partyPointerClassColor = true,
     partyPointerHideRaidmarker = true,
     partyPointerHealerReplace = true,
+    partyPointerShowPet = true,
     --partyPointerArenaOnly = true,
     -- Pet Indicator
     petIndicator = false,
@@ -1139,14 +1144,24 @@ local function SendUpdateMessage()
                 --     BBP.CreateUpdateMessageWindow()
                 -- end
                 -- if BetterBlizzPlatesDB.fadeAllButTarget then
-                DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
-                DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New:")
-                DEFAULT_CHAT_FRAME:AddMessage("   - Nameplate Auras now have a \"Key Auras Positioning\" setting that works similar to BigDebuffs. This will be expanded on in the future. Also \"PvP Buffs\" and \"PvP CC\" filters.")
+                -- DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates " .. addonUpdates .. ":")
+                -- DEFAULT_CHAT_FRAME:AddMessage("|A:QuestNormal:16:16|a New:")
+                -- DEFAULT_CHAT_FRAME:AddMessage("   - Nameplate Auras now have a \"Key Auras Positioning\" setting that works similar to BigDebuffs. This will be expanded on in the future. Also \"PvP Buffs\" and \"PvP CC\" filters.")
                 -- BetterBlizzPlatesDB.fadeAllButTarget = nil
                 -- end
                 -- DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
                 -- DEFAULT_CHAT_FRAME:AddMessage("   - Fix aura color module not working on buffs.")
                 -- DEFAULT_CHAT_FRAME:AddMessage("   - Fix class icon module causing a lua error sometimes.")
+
+                if BetterBlizzPlatesDB.hideNPC and C_CVar.GetCVarBool("nameplateShowFriendlyPets") then
+                    StaticPopupDialogs["BBP_HIDE_NPC_UPDATE"] = {
+                        text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nHide NPC now has a \"Hide Others Pets\" setting that is enabled by default.\n\nIf you want this off you will need to disable it in the Hide NPC section.",
+                        button1 = "Ok",
+                        timeout = 0,
+                        whileDead = true,
+                    }
+                    StaticPopup_Show("BBP_HIDE_NPC_UPDATE")
+                end
             end)
         else
             BetterBlizzPlatesDB.scStart = nil
@@ -2659,6 +2674,8 @@ function BBP.HideNPCs(frame, nameplate)
     local hideAllNeutral = db.hideNPCAllNeutral and info.isNeutral and not UnitAffectingCombat(frame.unit)
     local hideSecondaryPets = db.hideNPCHideSecondaryPets
     local murlocSecondary = db.hideNPCSecondaryShowMurloc
+    local hideOthersPets = db.hideNPCHideOthersPets
+    local isTarget = UnitIsUnit(frame.displayedUnit, "target")
 
     if hideNPCArenaOnly and not inBg then
         return
@@ -2672,8 +2689,15 @@ function BBP.HideNPCs(frame, nameplate)
         return
     end
 
-    if hideAllNeutral and not UnitIsUnit(frame.displayedUnit, "target") then
+    if hideAllNeutral and not isTarget then
         BBP.HideNameplate(nameplate)
+        return
+    end
+
+    if hideOthersPets and ((info.isFriend and UnitIsOtherPlayersPet(frame.unit) and UnitCreatureType(frame.unit) ~= "Totem") or (UnitIsOwnerOrControllerOfUnit("player", frame.unit) and not UnitIsUnit("pet", frame.unit))) then
+        if not isTarget then
+            BBP.HideNameplate(nameplate)
+        end
         return
     end
 
@@ -2700,7 +2724,7 @@ function BBP.HideNPCs(frame, nameplate)
     local inList, showMurloc = BBP.CheckNPCList(listToCheck, npcID, lowerCaseNpcName)
 
     -- Determine if the frame should be shown based on the list check or if it's the current target
-    if UnitIsUnit(frame.displayedUnit, "target") then
+    if isTarget then
         BBP.ShowFrame(frame, nameplate, config)
         frame.HealthBarsContainer:SetAlpha(config.friendlyHideHealthBar and info.isFriend and 0 or 1)
         frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
@@ -4637,7 +4661,8 @@ local function CreateBetterClassicHealthbarBorder(frame)
         end
 
         --if not config.hideLevelFrame then
-            frame.LevelFrame = CreateFrame("Frame", nil, frame.bbpOverlay)
+            frame.LevelFrame = CreateFrame("Frame", nil, frame.BetterBlizzPlates.bbpBorder)
+            frame.LevelFrame:SetFrameStrata("DIALOG")
             frame.LevelFrame.text = frame.LevelFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             frame.LevelFrame.text:SetFont("Fonts\\FRIZQT__.TTF", 12)
             frame.LevelFrame.text:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", 1.5, 0)
@@ -6159,6 +6184,18 @@ First:SetScript("OnEvent", function(_, event, addonName)
 
                     db.classIndicatorUpdated = true
                 end
+            end
+
+            if db.firstSaveComplete and not db.classIndicatorUpdated2 then
+                db.classIndicatorBackground = false
+                db.classIndicatorHideFriendlyHealthbar = false
+
+                if db.classIndicatorPinMode then
+                    db.classIndicatorBackground = true
+                    db.classIndicatorBackgroundSize = 1
+                end
+
+                db.classIndicatorUpdated2 = true
             end
 
             InitializeSavedVariables()

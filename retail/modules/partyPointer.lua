@@ -11,25 +11,13 @@ local HealerSpecs = {
 
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 
+local playerClass = select(2, UnitClass("player"))
+
 -- Class Indicator
 function BBP.PartyPointer(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
     if not info then return end
-
-    if not info.isFriend or info.isNpc or info.isSelf then
-        if config.partyPointerHideRaidmarker then
-            frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
-        end
-        if frame.partyPointer then
-            frame.partyPointer:Hide()
-        end
-        if frame.ppChange then
-            frame.hideNameOverride = nil
-            frame.ppChange = nil
-        end
-        return
-    end
 
     if not config.partyPointerInitialized or BBP.needsUpdate then
         config.partyPointerTestMode = BetterBlizzPlatesDB.partyPointerTestMode
@@ -49,8 +37,30 @@ function BBP.PartyPointer(frame)
         config.partyPointerTargetIndicator = BetterBlizzPlatesDB.partyPointerTargetIndicator
         config.partyPointerHideAll = BetterBlizzPlatesDB.partyPointerHideAll
         config.partyPointerHealerOnly = BetterBlizzPlatesDB.partyPointerHealerOnly
+        config.partyPointerShowPet = BetterBlizzPlatesDB.partyPointerShowPet
+        config.partyPointerOnlyParty = BetterBlizzPlatesDB.partyPointerOnlyParty
 
         config.partyPointerInitialized = true
+    end
+
+    local partyOnly = config.partyPointerOnlyParty and not UnitInParty(frame.unit)
+
+    if not info.isFriend or info.isNpc or info.isSelf or partyOnly then
+        if UnitIsUnit(frame.unit, "pet") and config.partyPointerShowPet then
+            --
+        else
+            if config.partyPointerHideRaidmarker then
+                frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
+            end
+            if frame.partyPointer then
+                frame.partyPointer:Hide()
+            end
+            if frame.ppChange then
+                frame.hideNameOverride = nil
+                frame.ppChange = nil
+            end
+            return
+        end
     end
 
     -- Initialize Class Icon Frame
@@ -76,6 +86,8 @@ function BBP.PartyPointer(frame)
         frame.partyPointer:SetFrameStrata("LOW")
     end
     frame.partyPointer:SetAlpha(1)
+
+    local class = info.class or playerClass
 
     -- Enhanced Test Mode: Use local test variables
     if config.partyPointerTestMode then
@@ -113,7 +125,7 @@ function BBP.PartyPointer(frame)
         end
 
         if config.partyPointerClassColor then
-            local classColor = RAID_CLASS_COLORS[info.class]
+            local classColor = RAID_CLASS_COLORS[class]
             frame.partyPointer.icon:SetVertexColor(classColor.r, classColor.g, classColor.b)
         else
             frame.partyPointer.icon:SetVertexColor(0.04, 0.76, 1)
@@ -189,7 +201,7 @@ function BBP.PartyPointer(frame)
     end
 
     if config.partyPointerClassColor then
-        local classColor = RAID_CLASS_COLORS[info.class]
+        local classColor = RAID_CLASS_COLORS[class]
         frame.partyPointer.icon:SetVertexColor(classColor.r, classColor.g, classColor.b)
     else
         frame.partyPointer.icon:SetVertexColor(0.04, 0.76, 1)
