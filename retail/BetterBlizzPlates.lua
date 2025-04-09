@@ -101,6 +101,7 @@ local defaultSettings = {
     healthNumbersScale = 1,
     healthNumbersFontOutline = "THICKOUTLINE",
     healthNumbersUseMillions = true,
+    healthNumbersJustify = "CENTER",
     nameplateBorderSize = 1,
     nameplateTargetBorderSize = 3,
     tankFullAggroColorRGB = {0, 1, 0, 1},
@@ -404,6 +405,7 @@ local defaultSettings = {
     nameplateKeyAurasXPos = 0,
     nameplateKeyAurasYPos = 0,
     nameplateKeyAuraScale = 1,
+    nameplateKeyAurasHorizontalGap = 5,
     keyAurasImportantGlowOn = true,
     keyAurasImportantBuffsEnabled = true,
     castBarCastColor = {
@@ -1781,20 +1783,27 @@ local friendlyNameplatesOnOffFrame = CreateFrame("Frame")
 
 local function ShouldShowFriendlyNameplates()
     local instanceType = select(2, IsInInstance())
-    local showInArena = instanceType == "arena" and BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena
-    local showInDungeon = (instanceType == "party" or instanceType == "raid" or instanceType == "scenario") and BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons
-    local showInBg = instanceType == "pvp" and BetterBlizzPlatesDB.friendlyNameplatesOnlyInBgs
+    local inWorld = instanceType == "none"
 
-    if instanceType == "arena" then
-        return showInArena
-    elseif instanceType == "party" or instanceType == "raid" or instanceType == "scenario" then
-        return showInDungeon
+    if instanceType == "arena" and BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena then
+        return true
+    elseif (instanceType == "party" or instanceType == "scenario") and BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons then
+        return true
+    elseif instanceType == "raid" and BetterBlizzPlatesDB.friendlyNameplatesOnlyInRaids then
+        return true
     elseif instanceType == "pvp" then
-        return showInBg
-    else
-        -- Outside of dungeons and arenas
-        return not BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons and not BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena
+        if C_PvP.GetActiveMatchBracket() == 3 and BetterBlizzPlatesDB.friendlyNameplatesOnlyInEpicBgs then
+            return true
+        elseif BetterBlizzPlatesDB.friendlyNameplatesOnlyInBgs then
+            return true
+        else
+            return false
+        end
+    elseif inWorld and BetterBlizzPlatesDB.friendlyNameplatesOnlyInWorld then
+        return true
     end
+
+    return false
 end
 
 local function ApplyCVarChange()
@@ -1809,7 +1818,13 @@ local function ApplyCVarChange()
 end
 
 local function ToggleFriendlyPlates()
-    if BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena or BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons then
+    if BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInRaids
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInBgs
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInEpicBgs
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInWorld then
+
         if InCombatLockdown() and not inCombatEventRegistered then
             friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
             inCombatEventRegistered = true
@@ -1828,17 +1843,25 @@ friendlyNameplatesOnOffFrame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 function BBP.ToggleFriendlyNameplatesAuto()
-    if (BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena or BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons) and not toggleEventsRegistered then
+    local anyToggleEnabled = BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInRaids
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInBgs
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInEpicBgs
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInWorld
+
+    if anyToggleEnabled and not toggleEventsRegistered then
         friendlyNameplatesOnOffFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
         friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
         friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_ENTERING_BATTLEGROUND")
         toggleEventsRegistered = true
-    elseif toggleEventsRegistered then
+    elseif not anyToggleEnabled and toggleEventsRegistered then
         friendlyNameplatesOnOffFrame:UnregisterEvent("ZONE_CHANGED_NEW_AREA")
         friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_ENTERING_WORLD")
         friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_ENTERING_BATTLEGROUND")
         toggleEventsRegistered = false
     end
+
     ToggleFriendlyPlates()
 end
 
@@ -2560,8 +2583,8 @@ function BBP.FadeOutNPCs(frame)
     else
         -- If not in whitelist mode, fade out if in the list
         if inList then
-            frame:SetAlpha((info.isFriend and config.friendlyHideHealthBar and 0) or alpha)
-            frame.castBar:SetAlpha(alpha)
+            frame:SetAlpha((info.isFriend and config.friendlyHideHealthBar and 0) or config.fadeOutNPCsAlpha)
+            frame.castBar:SetAlpha(config.fadeOutNPCsAlpha)
             frame.fadedNpc = true
         else
             frame:SetAlpha(alpha)
@@ -2937,6 +2960,9 @@ function BBP.ColorThreat(frame)
 
         if isTanking and threatStatus then
             if threatStatus == 3 then
+                if config.npcHealthbarColor then
+                    return
+                end
                 -- Full threat
                 r, g, b = unpack(BetterBlizzPlatesDB.tankFullAggroColorRGB)
             elseif threatStatus == 2 then
@@ -3219,13 +3245,13 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         ColorNameplateByReaction(frame)
     end
 
-    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) and not info.isSelf then
-        BBP.ColorThreat(frame)
-    end
-
     if config.colorNPC then--and config.npcHealthbarColor then --bodify need npc check here since it can run before np added
         --frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
         BBP.ColorNpcHealthbar(frame)
+    end
+
+    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) and not info.isSelf then
+        BBP.ColorThreat(frame)
     end
 
     if config.auraColor and config.auraColorRGB then
@@ -3596,7 +3622,7 @@ local function ShowFriendlyGuildName(frame, unit)
         end
 
         local guildName, guildRankName, guildRankIndex = GetGuildInfo(unit)
-        if guildName then
+        if guildName and (frame.name:GetAlpha() ~= 0 and frame.name:GetText() ~= "") then
             if BBP.needsUpdate then
                 local font, size, outline = frame.name:GetFont()
                 frame.guildName:SetFont(font, 9, outline)
@@ -5056,7 +5082,7 @@ local function HandleNamePlateAdded(unit)
         frame.BuffFrame.Layout = function(self)
             local children = self:GetLayoutChildren()
             local isEnemyUnit = self.isEnemyUnit
-            BBP.CustomBuffLayoutChildren(self, children, isEnemyUnit, unitFrame)
+            BBP.CustomBuffLayoutChildren(self, children, isEnemyUnit, frame)
         end
         --frame.BuffFrame.UpdateBuffs = BBP.UpdateBuffs
         frame.BuffFrame.UpdateBuffs = function() return end
@@ -5170,8 +5196,6 @@ local function HandleNamePlateAdded(unit)
 
     if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
 
-    if config.showGuildNames then ShowFriendlyGuildName(frame, frame.unit) end
-
     if config.classicNameplates then
         CreateBetterClassicHealthbarBorder(frame)
         if info.isSelf then
@@ -5213,6 +5237,8 @@ local function HandleNamePlateAdded(unit)
     if ((config.hideFriendlyNameText or (config.partyPointerHideAll and frame.partyPointer and frame.partyPointer:IsShown())) and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
         frame.name:SetAlpha(0)
     end
+
+    if config.showGuildNames then ShowFriendlyGuildName(frame, frame.unit) end
 
     NameplateShadowAndMouseoverHighlight(frame)
 
@@ -6138,6 +6164,63 @@ local function TurnOnEnabledFeaturesOnLogin()
     EnableMouseoverChecker()
 end
 
+
+local function UpdateLateAdditionSettings(db)
+    if (db.friendlyNameplatesOnlyInDungeons or db.friendlyNameplatesOnlyInBgs) and not db.friendlyNameplateTogglesUpdated then
+        if db.friendlyNameplatesOnlyInDungeons and db.friendlyNameplatesOnlyInRaids == nil then
+            db.friendlyNameplatesOnlyInRaids = true
+        end
+        if db.friendlyNameplatesOnlyInBgs and db.friendlyNameplatesOnlyInEpicBgs == nil then
+            db.friendlyNameplatesOnlyInEpicBgs = true
+        end
+        db.friendlyNameplateTogglesUpdated = true
+    end
+
+    if db.classIndicator and db.classIconAlwaysShowHealer == nil then
+        db.classIconAlwaysShowHealer = false
+        db.classIconAlwaysShowTank = false
+
+        if db.classIndicatorTank == nil then
+            db.classIndicatorTank = false
+        end
+        if db.classIndicatorHealer == nil then
+            db.classIndicatorHealer = false
+        end
+    end
+
+    --bodifycheck
+    if db.updates and db.updates ~= addonUpdates then
+        if db.enableNameplateAuraCustomisation and db.classIndicator and db.classIndicatorFriendly and not db.classIndicatorUpdated then
+            db.classIndicatorCCAuras = true
+            if not db.friendlyNpdeBuffEnable then
+                db.friendlyNpdeBuffEnable = true
+                db.friendlyNpdeBuffFilterBlacklist = true
+                db.friendlyNpdeBuffFilterWatchList = false
+                db.friendlyNpdeBuffFilterCC = true
+                db.friendlyNpdeBuffFilterBlizzard = false
+                db.friendlyNpdeBuffFilterLessMinite = false
+            else
+                db.friendlyNpdeBuffFilterCC = true
+            end
+
+            db.classIndicatorUpdated = true
+        end
+    end
+
+    if db.firstSaveComplete and not db.classIndicatorUpdated2 then
+        db.classIndicatorBackground = false
+        db.classIndicatorHideFriendlyHealthbar = false
+
+        if db.classIndicatorPinMode then
+            db.classIndicatorBackground = true
+            db.classIndicatorBackgroundSize = 1
+        end
+
+        db.classIndicatorUpdated2 = true
+    end
+end
+
+
 -- Event registration for PLAYER_LOGIN
 local First = CreateFrame("Frame")
 First:RegisterEvent("ADDON_LOADED")
@@ -6153,50 +6236,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 BBP.CVarTracker()
             end)
 
-            if db.classIndicator and db.classIconAlwaysShowHealer == nil then
-                db.classIconAlwaysShowHealer = false
-                db.classIconAlwaysShowTank = false
-
-                if db.classIndicatorTank == nil then
-                    db.classIndicatorTank = false
-                end
-                if db.classIndicatorHealer == nil then
-                    db.classIndicatorHealer = false
-                end
-
-            end
-
-
-            --bodifycheck
-            if db.updates and db.updates ~= addonUpdates then
-                if db.enableNameplateAuraCustomisation and db.classIndicator and db.classIndicatorFriendly and not db.classIndicatorUpdated then
-                    db.classIndicatorCCAuras = true
-                    if not db.friendlyNpdeBuffEnable then
-                        db.friendlyNpdeBuffEnable = true
-                        db.friendlyNpdeBuffFilterBlacklist = true
-                        db.friendlyNpdeBuffFilterWatchList = false
-                        db.friendlyNpdeBuffFilterCC = true
-                        db.friendlyNpdeBuffFilterBlizzard = false
-                        db.friendlyNpdeBuffFilterLessMinite = false
-                    else
-                        db.friendlyNpdeBuffFilterCC = true
-                    end
-
-                    db.classIndicatorUpdated = true
-                end
-            end
-
-            if db.firstSaveComplete and not db.classIndicatorUpdated2 then
-                db.classIndicatorBackground = false
-                db.classIndicatorHideFriendlyHealthbar = false
-
-                if db.classIndicatorPinMode then
-                    db.classIndicatorBackground = true
-                    db.classIndicatorBackgroundSize = 1
-                end
-
-                db.classIndicatorUpdated2 = true
-            end
+            UpdateLateAdditionSettings(db)
 
             InitializeSavedVariables()
             -- Fetch Blizzard default values

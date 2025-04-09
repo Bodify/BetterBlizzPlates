@@ -23,7 +23,7 @@ function BBP.AbsorbIndicator(frame)
 
     -- Initialize
     if not frame.absorbIndicator then
-        frame.absorbIndicator = frame.healthBar:CreateFontString(nil, "OVERLAY")
+        frame.absorbIndicator = frame.bbpOverlay:CreateFontString(nil, "OVERLAY")
         frame.absorbIndicator:SetTextColor(1, 1, 1)
     end
 

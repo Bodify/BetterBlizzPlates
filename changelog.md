@@ -1,3 +1,21 @@
+# BetterBlizzPlates 1.7.7
+## Retail
+### New:
+- Key Auras: Horizontal Aura Gap setting specific to Key Auras.
+- Health Numbers: Font Outline dropdown in Advanced Settings
+- Health Numbers: Text Alignment dropdown in Advanced Settings
+- Friendly Nameplate Toggles: Added Epic BGs and World to the auto toggle settings and split Dungeons and Raids into two different settings.
+### Tweak:
+- Having both Color Threat and Color NPC should now work a bit better for Tanks. It will keep NPC Color if you have aggro and only color for threat if you dont have aggro or are losing it.
+- Blessing of Sanctuary now has green important glow by default for PvP Buffs/KeyAuras settings
+- Guild Name if enabled is now not shown if name is hidden.
+### Bugfix:
+- Fix level text on Classic Nameplates sometimes showing behind the texture.
+- Fix issue with "Non-Target Alpha" not applying the reduced alpha on nontargets for new nameplates popping up.
+- Fix alpha issue in Fade NPC feature.
+- Fix "Show resource on nameplate" toggle causing nameplate height to reset to default (due to Blizzard code).
+
+
 # BetterBlizzPlates 1.7.6b
 ## Retail
 ### Tweak:

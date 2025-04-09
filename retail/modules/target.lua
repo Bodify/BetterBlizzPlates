@@ -35,7 +35,7 @@ function BBP.TargetIndicator(frame)
 
     -- Initialize
     if not frame.targetIndicator then
-        frame.targetIndicator = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
+        frame.targetIndicator = frame.bbpOverlay:CreateTexture(nil, "OVERLAY", nil, -1)
         if false then
             frame.targetIndicator:SetAtlas("glues-gameMode-selectArrow")
             frame.targetIndicator:SetSize(22,14)

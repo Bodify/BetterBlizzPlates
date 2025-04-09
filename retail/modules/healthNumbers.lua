@@ -22,6 +22,13 @@ function BBP.HealthNumbers(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
+    -- Initialize or update the health numbers display
+    if not frame.healthNumbers then
+        frame.healthNumbers = frame.bbpOverlay:CreateFontString(nil, "OVERLAY")
+        frame.healthNumbers:SetTextColor(1, 1, 1)
+        frame.healthNumbers:SetJustifyH("CENTER")
+    end
+
     if not config.healthNumbersInitialized or BBP.needsUpdate then
         config.healthNumbersFriendly = BetterBlizzPlatesDB.healthNumbersFriendly
         config.healthNumbersAnchor = BetterBlizzPlatesDB.healthNumbersAnchor
@@ -44,6 +51,8 @@ function BBP.HealthNumbers(frame)
         config.healthNumbersHideSelf = BetterBlizzPlatesDB.healthNumbersHideSelf
         config.healthNumbersClassColor = BetterBlizzPlatesDB.healthNumbersClassColor
 
+        BBP.SetFontBasedOnOption(frame.healthNumbers, 9, BetterBlizzPlatesDB.healthNumbersFontOutline)
+
         config.healthNumbersInitialized = true
     end
 
@@ -54,33 +63,25 @@ function BBP.HealthNumbers(frame)
                              (config.healthNumbersPlayers and not config.healthNumbersNpcs and not isPlayer)
 
     if hideHealthNumbers or (config.healthNumbersHideSelf and UnitIsUnit(unit, "player")) then
-        if frame.healthNumbers then
-            frame.healthNumbers:Hide()
-        end
+        frame.healthNumbers:Hide()
         return
     end
 
     -- Hide health numbers if not the current target and the setting is enabled
     if config.healthNumbersTargetOnly and not UnitIsUnit(unit, "target") then
-        if frame.healthNumbers then
-            frame.healthNumbers:Hide()
-        end
+        frame.healthNumbers:Hide()
         return
     end
 
     -- Hide health numbers based on combat setting
     if config.healthNumbersOnlyInCombat and not UnitAffectingCombat(unit) then
-        if frame.healthNumbers then
-            frame.healthNumbers:Hide()
-        end
+        frame.healthNumbers:Hide()
         return
     end
 
     -- Hide health numbers for friendly units if not configured to show
     if not config.healthNumbersFriendly and info.isFriend then
-        if frame.healthNumbers then
-            frame.healthNumbers:Hide()
-        end
+        frame.healthNumbers:Hide()
         return
     end
 
@@ -89,9 +90,7 @@ function BBP.HealthNumbers(frame)
 
     -- Check if health is full and config.healthNumbersNotOnFullHp is set
     if config.healthNumbersNotOnFullHp and health == maxHealth then
-        if frame.healthNumbers then
-            frame.healthNumbers:Hide()
-        end
+        frame.healthNumbers:Hide()
         return
     end
 
@@ -143,12 +142,9 @@ function BBP.HealthNumbers(frame)
 
     local oppositeAnchor = BBP.GetOppositeAnchor(config.healthNumbersAnchor)
 
-    -- Initialize or update the health numbers display
-    if not frame.healthNumbers then
-        frame.healthNumbers = frame.bbpOverlay:CreateFontString(nil, "OVERLAY")
-        BBP.SetFontBasedOnOption(frame.healthNumbers, 9, BetterBlizzPlatesDB.healthNumbersFontOutline)
-        frame.healthNumbers:SetTextColor(1, 1, 1)
-        frame.healthNumbers:SetJustifyH("CENTER")
+    local justify = BetterBlizzPlatesDB.healthNumbersJustify
+    if justify ~= "CENTER" then
+        oppositeAnchor = justify
     end
 
     if config.healthNumbersClassColor then

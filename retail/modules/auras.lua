@@ -300,7 +300,7 @@ local ogKeyAuraList = {
     [384100] = true,
     [1044] = true,
     [6940] = true,
-    [210256] = true,
+    [210256] = "importantColor",
     [45182] = true,
     [383005] = true,
     [444347] = true,
@@ -518,7 +518,7 @@ local importantDefensives = {
     [196555] = true,
     [410358] = true,
     [1022] = true,
-    [210256] = true,
+    [210256] = importantColor,
     [209426] = true,
     [414658] = true,
     [79206] = true,
@@ -1381,9 +1381,9 @@ local function StartCheckBuffsTimer()
     end
 end
 
-function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
+function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
     -- Obtain the health bar details
-    local healthBar = container:GetParent().healthBar
+    local healthBar = frame.healthBar
     local healthBarWidth = healthBar:GetWidth()
     -- if not container.GreenOverlay then
     --     local greenOverlay = container:CreateTexture("GreenOverlay", "OVERLAY")
@@ -1394,9 +1394,10 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     -- Define the spacing and row parameters
     local db = BetterBlizzPlatesDB
     local horizontalSpacing = db.nameplateAuraWidthGap
+    local nameplateKeyAurasHorizontalGap = db.nameplateKeyAurasHorizontalGap
     local verticalSpacing = -db.nameplateAuraHeightGap or 0-- + (db.nameplateAuraSquare and 12 or 0) + (db.nameplateAuraTaller and 3 or 0)
     local maxBuffsPerRow = (isEnemyUnit and db.nameplateAuraRowAmount) or (not isEnemyUnit and db.nameplateAuraRowFriendlyAmount)
-    local maxRowHeight = 0
+    --local maxRowHeight = 0
     local rowWidths = {}
     local totalChildrenHeight = 0
     local maxBuffsPerRowAdjusted = maxBuffsPerRow
@@ -1432,8 +1433,11 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local scaledDebuffWidth = 20 * nameplateAuraDebuffScale
     local scaledDebuffHeight = auraHeightSetting * nameplateAuraDebuffScale
 
-    local unit = container:GetParent().unit
-    local isSelf = UnitIsUnit(unit, "player")
+    local unit = frame.unit
+    local isSelf
+    if unit then
+        isSelf = UnitIsUnit(unit, "player")
+    end
 
     local function defaultComparator(a, b)
         return a.auraInstanceID < b.auraInstanceID
@@ -1734,7 +1738,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
             elseif buff.isKeyAura then
                 buff:ClearAllPoints()
                 buff:SetPoint("LEFT", healthBar, "RIGHT", keyAuraOffset + keyAuraXPos, keyAuraYPos)
-                keyAuraOffset = keyAuraOffset + (buffWidth * buffScale) + horizontalSpacing
+                keyAuraOffset = keyAuraOffset + (buffWidth * buffScale) + nameplateKeyAurasHorizontalGap
             else
                 indexTracker = indexTracker + 1
                 if buff.isEnlarged then
@@ -2538,7 +2542,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         end
 
         if buff.Cooldown._occ_display then
-            buff.Cooldown._occ_display:SetFrameStrata("DIALOG")
+            buff.Cooldown._occ_display:SetFrameStrata("FULLSCREEN")
         end
         buff.isKeyAura = nil
         buff.isCC = nil

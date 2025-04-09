@@ -697,13 +697,13 @@ local function CreateTextureDropdown(name, parentFrame, labelText, settingKey, t
 end
 
 
-local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggleFunc, point, width, textColor)
+local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggleFunc, point, width, textColor, anchorTypes)
     -- Create the dropdown frame using the library's creation function
     local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
     LibDD:UIDropDownMenu_SetWidth(dropdown, width or 125)
     LibDD:UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
 
-    local anchorPointsToUse = anchorPoints
+    local anchorPointsToUse = anchorTypes or anchorPoints
     if name == "targetIndicatorDropdown" then
         anchorPointsToUse = targetIndicatorAnchorPoints
     end
@@ -1142,7 +1142,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "nameplateAuraScale" then
                     BetterBlizzPlatesDB.nameplateAuraScale = value
                     BBP.RefreshBuffFrame()
-                elseif element == "nameplateKeyAurasXPos" or element == "nameplateKeyAurasYPos" or element == "nameplateKeyAuraScale" then
+                elseif element == "nameplateKeyAurasXPos" or element == "nameplateKeyAurasYPos" or element == "nameplateKeyAuraScale" or element == "nameplateKeyAurasHorizontalGap" then
                     BetterBlizzPlatesDB[element] = value
                     BBP.RefreshBuffFrame()
                 elseif element == "nameplateAuraSelfScale" then
@@ -1402,7 +1402,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                             BBP.PartyPointer(frame)
                         elseif element == "hideNpcMurlocScale" or element == "hideNpcMurlocYPos" then
                             BBP.HideNPCs(frame, nameplate)
-                        elseif element == "nameplateAuraEnlargedScale" or element == "nameplateKeyAuraScale" or element == "nameplateAuraCompactedScale" or element == "nameplateAuraBuffScale" or element == "nameplateAuraDebuffScale" or element == "nameplateAuraBuffSelfScale" or element == "nameplateAuraDebuffSelfScale" then
+                        elseif element == "nameplateAuraEnlargedScale" or element == "nameplateKeyAuraScale" or element == "nameplateAuraCompactedScale" or element == "nameplateAuraBuffScale" or element == "nameplateAuraDebuffScale" or element == "nameplateAuraBuffSelfScale" or element == "nameplateAuraDebuffSelfScale" or element == "nameplateKeyAurasHorizontalGap" then
                             BBP.RefUnitAuraTotally(frame)
                         -- Fake name
                         elseif element == "fakeNameXPos" or element == "fakeNameYPos" or element == "fakeNameFriendlyXPos" or element == "fakeNameFriendlyYPos" then
@@ -2034,7 +2034,9 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
         if cvar then
             newValue = isChecked and "1" or "0"
             BBP.RunAfterCombat(function()
+                BBP.LoggingOut = true
                 C_CVar.SetCVar(option, newValue)
+                BBP.LoggingOut = nil
                 BetterBlizzPlatesDB[option] = newValue
             end)
         else
@@ -5351,20 +5353,43 @@ local function guiGeneralTab()
         BBP.friendlyHideHealthBarNpc:Disable()
     end
 
-    local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Arena Toggle", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
-    toggleFriendlyNameplatesInArena:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local friendlyNpToggles = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    friendlyNpToggles:SetText("Toggles:")
+    friendlyNpToggles:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", -20, -70)
+    CreateTooltipTwo(friendlyNpToggles, "Toggle Friendly Nameplates", "Turn on friendly nameplates when you enter these types of content and off again when it changes.\n\nSelect where you want friendly nameplates enabled:")
+
+    local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Arena", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    toggleFriendlyNameplatesInArena:SetPoint("LEFT", friendlyNpToggles, "RIGHT", 0, 0)
     CreateTooltipTwo(toggleFriendlyNameplatesInArena, "Arena Toggle", "Turn on friendly nameplates when you enter arena and off again when you leave.")
+    toggleFriendlyNameplatesInArena:SetSize(22,22)
 
-    local friendlyNameplatesOnlyInBgs = CreateCheckbox("friendlyNameplatesOnlyInBgs", "BG Toggle", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
-    friendlyNameplatesOnlyInBgs:SetPoint("LEFT", toggleFriendlyNameplatesInArena.text, "RIGHT", 0, 0)
+    local friendlyNameplatesOnlyInBgs = CreateCheckbox("friendlyNameplatesOnlyInBgs", "BGs", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    friendlyNameplatesOnlyInBgs:SetPoint("LEFT", toggleFriendlyNameplatesInArena.text, "RIGHT", -2, 0)
     CreateTooltipTwo(friendlyNameplatesOnlyInBgs, "Battleground Toggle", "Turn on friendly nameplates when you enter battlegrounds and off again when you leave.")
+    friendlyNameplatesOnlyInBgs:SetSize(22,22)
 
-    local friendlyNameplatesOnlyInDungeons = CreateCheckbox("friendlyNameplatesOnlyInDungeons", "Dungeon/raid Toggle", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
-    friendlyNameplatesOnlyInDungeons:SetPoint("LEFT", friendlyNameplatesOnlyInBgs.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(friendlyNameplatesOnlyInDungeons, "Dungeon/Raid Toggle", "Turn on friendly nameplates when you enter dungeons/raids and off again when you leave.")
+    local friendlyNameplatesOnlyInEpicBgs = CreateCheckbox("friendlyNameplatesOnlyInEpicBgs", "E-BGs", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    friendlyNameplatesOnlyInEpicBgs:SetPoint("LEFT", friendlyNameplatesOnlyInBgs.text, "RIGHT", -2, 0)
+    CreateTooltipTwo(friendlyNameplatesOnlyInEpicBgs, "Epic Battleground Toggle", "Turn on friendly nameplates when you enter epic battlegrounds and off again when you leave.")
+    friendlyNameplatesOnlyInEpicBgs:SetSize(22,22)
+
+    local friendlyNameplatesOnlyInDungeons = CreateCheckbox("friendlyNameplatesOnlyInDungeons", "Dungeons", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    friendlyNameplatesOnlyInDungeons:SetPoint("LEFT", friendlyNameplatesOnlyInEpicBgs.text, "RIGHT", -2, 0)
+    CreateTooltipTwo(friendlyNameplatesOnlyInDungeons, "Dungeon Toggle", "Turn on friendly nameplates when you enter dungeons and off again when you leave.")
+    friendlyNameplatesOnlyInDungeons:SetSize(22,22)
+
+    local friendlyNameplatesOnlyInRaids = CreateCheckbox("friendlyNameplatesOnlyInRaids", "Raids", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    friendlyNameplatesOnlyInRaids:SetPoint("LEFT", friendlyNameplatesOnlyInDungeons.text, "RIGHT", -2, 0)
+    CreateTooltipTwo(friendlyNameplatesOnlyInRaids, "Raid Toggle", "Turn on friendly nameplates when you enter raids and off again when you leave.")
+    friendlyNameplatesOnlyInRaids:SetSize(22,22)
+
+    local friendlyNameplatesOnlyInWorld = CreateCheckbox("friendlyNameplatesOnlyInWorld", "World", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    friendlyNameplatesOnlyInWorld:SetPoint("LEFT", friendlyNameplatesOnlyInRaids.text, "RIGHT", -2, 0)
+    CreateTooltipTwo(friendlyNameplatesOnlyInWorld, "World Toggle", "Turn on friendly nameplates when you enter non-instanced World content and off again when enter other types.")
+    friendlyNameplatesOnlyInWorld:SetSize(22,22)
 
     local friendlyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 3, 0.01, "friendlyNameScale")
-    friendlyNameScale:SetPoint("TOPLEFT", toggleFriendlyNameplatesInArena, "BOTTOMLEFT", 12, -10)
+    friendlyNameScale:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", 0, -6)
     CreateTooltipTwo(friendlyNameScale, "Name Size", "Change Name size on Friendly nameplates.", "While adjusting this setting names can get 20% larger/smaller due to Blizzard scaling issues. Reload between adjustments to make sure the size is what you want.")
 
     local hideNameTooltip = "Hide Name on Friendly nameplates."
@@ -7111,6 +7136,7 @@ local function guiPositionAndScale()
     anchorSubClassIcon.extendedSettings:Hide()
     anchorSubClassIcon.extendedSettings.name = "Advanced Settings"
     anchorSubClassIcon.extendedSettings:SetTitle("Class Indicator")
+    anchorSubClassIcon.extendedSettings:EnableMouse(true)
 
     anchorSubClassIcon.closeButton = CreateFrame("Button", nil, anchorSubClassIcon.extendedSettings, "UIPanelCloseButton")
     anchorSubClassIcon.closeButton:SetPoint("TOPRIGHT", anchorSubClassIcon.extendedSettings, "TOPRIGHT", 0, 0)
@@ -7598,10 +7624,11 @@ local function guiPositionAndScale()
     -- Extended Settings Frame
     anchorSubHealthNumbers.extendedSettings = CreateFrame("Frame", nil, BetterBlizzPlatesSubPanel, "DefaultPanelFlatTemplate")
     -- anchorSubHealthNumbers.extendedSettings:SetAllPoints(anchorSubHealthNumbers.border)
-    anchorSubHealthNumbers.extendedSettings:SetSize(anchorSubHealthNumbers.border:GetHeight()+40, 255)
+    anchorSubHealthNumbers.extendedSettings:SetSize(anchorSubHealthNumbers.border:GetHeight()+40, 335)
     anchorSubHealthNumbers.extendedSettings:SetPoint("BOTTOMRIGHT", anchorSubHealthNumbers.border, "BOTTOMLEFT", 87, -125)
     anchorSubHealthNumbers.extendedSettings:SetFrameStrata("DIALOG")
     anchorSubHealthNumbers.extendedSettings:SetIgnoreParentAlpha(true)
+    anchorSubHealthNumbers.extendedSettings:EnableMouse(true)
     anchorSubHealthNumbers.extendedSettings:Hide()
     anchorSubHealthNumbers.extendedSettings.name = "Advanced Settings"
     anchorSubHealthNumbers.extendedSettings:SetTitle("Health Numbers")
@@ -7662,6 +7689,29 @@ local function guiPositionAndScale()
     anchorSubHealthNumbers.healthNumbersClassColor = CreateCheckbox("healthNumbersClassColor", "Class Color Text", anchorSubHealthNumbers.extendedSettings)
     anchorSubHealthNumbers.healthNumbersClassColor:SetPoint("TOPLEFT", anchorSubHealthNumbers.healthNumbersNpcs, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersClassColor, "Class Color Text", "Class color the text for players.")
+
+    anchorSubHealthNumbers.healthNumbersTextJustify = CreateAnchorDropdown(
+        "healthNumbersTextJustifyDropdown",
+        anchorSubHealthNumbers.extendedSettings,
+        "Select Text Alignment",
+        "healthNumbersJustify",
+        function(arg1)
+        BBP.RefreshAllNameplates()
+    end,
+        { anchorFrame = anchorSubHealthNumbers.healthNumbersClassColor, x = 0, y = -45, label = "Text Alignment" },nil,nil,{"CENTER", "LEFT", "RIGHT"}
+    )
+
+
+    anchorSubHealthNumbers.healthNumbersFontOutline = CreateAnchorDropdown(
+        "healthNumbersFontOutlineDropdown",
+        anchorSubHealthNumbers.extendedSettings,
+        "Select Font Outline",
+        "healthNumbersFontOutline",
+        function(arg1)
+        BBP.RefreshAllNameplates()
+    end,
+        { anchorFrame = anchorSubHealthNumbers.healthNumbersTextJustify, x = 0, y = -45, label = "Font Outline" },nil,nil,{"THICKOUTLINE", "OUTLINE"}
+    )
 
     ----------------------
     -- Threat Colors
@@ -9878,8 +9928,13 @@ local function guiNameplateAuras()
         end
     end)
 
+    local nameplateKeyAuraScale = CreateSlider(nameplateAuraKeyAuraPositionEnabled, "Key Aura Size", 0.6, 2.2, 0.01, "nameplateKeyAuraScale")
+    nameplateKeyAuraScale:SetPoint("TOPLEFT", nameplateAuraKeyAuraPositionEnabled, "BOTTOMLEFT", 15, -14)
+    CreateTooltipTwo(nameplateKeyAuraScale, "Key Aura Size", "The size of Key Auras like CC and very Important Buffs.")
+    nameplateKeyAuraScale:SetScale(0.7)
+
     local nameplateKeyAurasXPos = CreateSlider(nameplateAuraKeyAuraPositionEnabled, "Key Aura X Offset", -80, 80, 1, "nameplateKeyAurasXPos", "X")
-    nameplateKeyAurasXPos:SetPoint("TOPLEFT", nameplateAuraKeyAuraPositionEnabled, "BOTTOMLEFT", 15, -14)
+    nameplateKeyAurasXPos:SetPoint("TOPLEFT", nameplateKeyAuraScale, "BOTTOMLEFT", 0, -17)
     CreateTooltipTwo(nameplateKeyAurasXPos, "Key Aura X Offset", "X Offset for Key Auras.\nRight click to input own values.")
     nameplateKeyAurasXPos:SetScale(0.7)
 
@@ -9888,10 +9943,10 @@ local function guiNameplateAuras()
     CreateTooltipTwo(nameplateKeyAurasYPos, "Key Aura Y Offset", "Y Offset for Key Auras.\nRight click to input own values.")
     nameplateKeyAurasYPos:SetScale(0.7)
 
-    local nameplateKeyAuraScale = CreateSlider(nameplateAuraKeyAuraPositionEnabled, "Key Aura Size", 0.6, 2.2, 0.01, "nameplateKeyAuraScale")
-    nameplateKeyAuraScale:SetPoint("TOPLEFT", nameplateKeyAurasYPos, "BOTTOMLEFT", 0, -17)
-    CreateTooltipTwo(nameplateKeyAuraScale, "Key Aura Size", "The size of Key Auras like CC and very Important Buffs.")
-    nameplateKeyAuraScale:SetScale(0.7)
+    local nameplateKeyAurasHorizontalGap = CreateSlider(nameplateAuraKeyAuraPositionEnabled, "Key Aura Aura Gap", 0, 10, 1, "nameplateKeyAurasHorizontalGap", "Y")
+    nameplateKeyAurasHorizontalGap:SetPoint("TOPLEFT", nameplateKeyAurasYPos, "BOTTOMLEFT", 0, -17)
+    CreateTooltipTwo(nameplateKeyAurasHorizontalGap, "Key Aura Gap", "Horizontal Gap between the Key Auras.\nRight click to input own values.")
+    nameplateKeyAurasHorizontalGap:SetScale(0.7)
 
     nameplateAuraKeyAuraPositionEnabled:HookScript("OnClick", function()
         BBP.UpdateImportantBuffsAndCCTables()
@@ -10248,6 +10303,9 @@ local function guiCVarControl()
     local nameplateResourceOnTarget = CreateCheckbox("nameplateResourceOnTarget", "Show resource on target nameplate", guiCVarControl, true, BBP.TargetResourceUpdater)
     nameplateResourceOnTarget:SetPoint("TOPLEFT", comboPointsText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
     CreateTooltipTwo(nameplateResourceOnTarget, "Nameplate Resource", "Show combo points, warlock shards, arcane charges etc on nameplates.", nil, nil, "nameplateResourceOnTarget")
+    nameplateResourceOnTarget:HookScript("OnClick", function()
+        BBP.ApplyNameplateWidth()
+    end)
 
     local instantComboPoints = CreateCheckbox("instantComboPoints", "Instant Combo Points", guiCVarControl, nil, BBP.InstantComboPoints)
     instantComboPoints:SetPoint("TOPLEFT", nameplateResourceOnTarget, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
