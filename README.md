@@ -1,8 +1,8 @@
 # BetterBlizzPlates
 
-**BetterBlizzPlates** is an addon that takes the default Blizzard nameplates and enhances them with additional features and allows you to highly customizable them. You can choose to customize everything from scratch (completely default nameplates) or you can import one of the many included profiles.
+**BetterBlizzPlates** is an addon that takes the default Blizzard nameplates and enhances them with additional features and allows you to customize just about everything on them. You can choose to customize everything from scratch (completely default nameplates) or you can import one of the many included profiles.
 
-> 🎯 **Compatible with Retail, Classic Era & Cataclysm**
+> 🎯 **Compatible with Retail, Classic Era/SoD, Cataclysm and Wrath**
 
 [![](https://shields.io/badge/discord-5865F2?logo=discord&style=for-the-badge&logoColor=white)](https://discord.gg/cjqVaEMm25) [![](https://shields.io/badge/patreon-red?logo=patreon&style=for-the-badge)](https://www.patreon.com/bodifydev) [![](https://shields.io/badge/paypal-00457C?logo=paypal&style=for-the-badge)](https://www.paypal.com/paypalme/bodifydev) [![](https://shields.io/badge/github-gray?logo=github&style=for-the-badge&logoColor=white)](https://github.com/Bodify/BetterBlizzPlates)
 
@@ -12,11 +12,9 @@
 
 All features are off by default so you can ease your way into things but I highly recommend either the Starter Profile for a quick start with all the core minimalistic features enabled or one of the more advanced profiles!
 
-***
-
 ## 🔄 Classic & Retail Nameplate Options
 
-Switch between classic and retail nameplate styles depending on your preference.\\ You can have retail nameplates on classic and classic nameplates on retail!
+Switch between classic and retail nameplate styles depending on your preference. You can have retail nameplates on classic and classic nameplates on retail!
 
 ![Nameplate Options](https://github.com/user-attachments/assets/5dd026f7-e2f0-4b46-9726-6d6e063e0ce5)
 
@@ -35,11 +33,14 @@ Easily identify the class and specialization of enemies and allies with clear, c
 
 *   Circle or Square Icon, can be separate for friendly/enemy.
 *   Displays Battleground Objectives (Flag/Orb)
-*   Can be configured to show on all friendly but only enemy healer & Battleground Objectives.
+*   Show on your Pet.
+*   Can be configured to show on all friendly and only enemy healer & Battleground Objectives.
 *   Target highlight glow.
 *   Can replace name with health percentage.
 
-![Class/Spec Icon](https://github.com/user-attachments/assets/97c908cd-137e-4f07-a16e-626222012106)
+![ClassPetIndicatorPlusCC](https://github.com/user-attachments/assets/224fc2e1-54ab-49c0-a366-5746cd58778f)
+
+![Class/Spec Icon](https://github.com/user-attachments/assets/c334e1f6-b287-458b-a648-c46fa8ea49a4)
 
 ## ❌ Hide Unwanted Nameplates
 
@@ -58,10 +59,11 @@ Easily customize aura size, position, and sorting to fit your preferences. You c
 
 *   Adjust aura size, position, and sorting with ease.
 *   Filter nameplate auras to display only the ones you care about.
+*   PvP CC & PvP Buff filters with optional color coded glow.
 *   Highlight specific auras with a glow, resize them, or both.
 *   Add Pandemic Glow to chosen auras to have them highlight in the pandemic window.
 
-![Aura Filtering](https://github.com/user-attachments/assets/7fd0e49d-e73d-47ea-8e5c-c2c7bb841ca4)![BBPAuras2](https://github.com/user-attachments/assets/5cdc06c1-8396-4828-8ef3-3115b13e8c69)
+![Aura Filtering](https://github.com/user-attachments/assets/7fd0e49d-e73d-47ea-8e5c-c2c7bb841ca4)![BBPAuras2](https://github.com/user-attachments/assets/5cdc06c1-8396-4828-8ef3-3115b13e8c69) ![PvP Auras](https://github.com/user-attachments/assets/b54f7032-e9ad-491d-a931-37d128e0ee73) ![BBPPvPAuras2](https://github.com/user-attachments/assets/4ef5492a-372d-488f-9746-ccded823c3c5)
 
 ## 🎨 Nameplate Coloring
 
@@ -82,7 +84,7 @@ Displays shield amounts directly on health bars, showing exactly how much absorb
 
 ## 🎨 Fonts & Textures
 
-Choose from various font styles and textures to suit your UI aesthetic.\\ Supports SharedMedia so fonts and textures from other addons are available and you can import your own as well.
+Choose from various font styles and textures to suit your UI aesthetic. Supports SharedMedia so fonts and textures from other addons are available and you can import your own as well.
 
 ![Fonts & Textures](https://github.com/user-attachments/assets/f30241c0-c32f-4943-90ea-eefe3989b318)
 
@@ -97,7 +99,9 @@ BetterBlizzPlates offers a range of extra customization options to fine-tune you
 *   **Name Formatting**: Hide realm names, display Arena ID or specialization, or shorten NPC names.
 *   **Castbar Customization**: Adjust size, position, and colors, with options to hide certain casts or enlarge imporant ones.
 *   **CVar Settings**: Access important nameplate-related CVars to fine-tune their behavior.
-*   **Tons more:**: A ton of more features are in the addon. Check screenshots for more!
+*   **Tons more**: A ton of more features are in the addon. Check screenshots for more!
+
+![ClickArea](https://github.com/user-attachments/assets/4da8ac5d-2d50-421c-9aa6-3893e85216f9)
 
 ![ArenaID](https://i.imgur.com/2hQfPY6.png)
 
@@ -133,6 +137,7 @@ BetterBlizzPlates is used by several popular streamers in the WoW community, inc
 *   [Akrololz](https://www.twitch.tv/akrololz)
 *   [Samiyam](https://www.twitch.tv/samiyam)
 *   [Saul](https://www.twitch.tv/saul)
+*   [Minpojke](https://www.twitch.tv/minpojke)
 *   [Pmakewow](https://www.twitch.tv/pmakewow)
 *   [Flop](https://www.twitch.tv/flop)
 *   [Tonyferalmovies](https://www.twitch.tv/tonyferalmovies)
