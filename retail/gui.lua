@@ -10268,12 +10268,16 @@ local function guiNameplateAuras()
 
 
     local nameplateAuraTestMode2 = CreateCheckbox("nameplateAuraTestMode", "Test Mode", enableNameplateAuraCustomisation)
-    nameplateAuraTestMode2:SetPoint("BOTTOMLEFT", nameplateAuraSquare, "TOPLEFT", 0, 0)
+    nameplateAuraTestMode2:SetPoint("LEFT", nameplateKeyAurasAnchor, "RIGHT", 60, 5)
     CreateTooltipTwo(nameplateAuraTestMode2, "Test Mode", "Add some auras to nameplates for testing.", "Testing is limited and not 100% accurate and only respects the Show BUFF/DEBUFF filters and none of the sub-filters.", "ANCHOR_TOP")
-    nameplateAuraTestMode2:SetScale(1.4)
+    nameplateAuraTestMode2:SetScale(1.5)
 
-    nameplateAuraTestMode2:HookScript("OnClick", function()
-        
+    nameplateAuraTestMode:HookScript("OnClick", function(self)
+        nameplateAuraTestMode2:SetChecked(self:GetChecked())
+    end)
+
+    nameplateAuraTestMode2:HookScript("OnClick", function(self)
+        nameplateAuraTestMode:SetChecked(self:GetChecked())
     end)
 end
 

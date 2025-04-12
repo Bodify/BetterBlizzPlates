@@ -409,6 +409,7 @@ local defaultSettings = {
     nameplateKeyAurasYPos = 0,
     nameplateKeyAuraScale = 1,
     nameplateKeyAurasHorizontalGap = 5,
+    nameplateKeyAurasAnchor = "RIGHT",
     keyAurasImportantGlowOn = true,
     keyAurasImportantBuffsEnabled = true,
     castBarCastColor = {
