@@ -901,6 +901,12 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         BBP.ApplyNameplateWidth()
                         BBP.RefreshAllNameplates()
                     end
+                elseif element == "nameplateExtraClickHeight" then
+                    BetterBlizzPlatesDB.nameplateExtraClickHeight = value
+                    BBP.AdjustClickableNameplateHeight()
+                elseif element == "nameplateVerticalPosition" then
+                    BetterBlizzPlatesDB.nameplateVerticalPosition = value
+                    BBP.AdjustNameplateVerticalPosition()
                 elseif element == "partyPointerScale" then
                     BetterBlizzPlatesDB.partyPointerScale = value
                 elseif element == "partyPointerHealerScale" then
@@ -6856,6 +6862,16 @@ local function guiPositionAndScale()
     local executeTestIcons2 = CreateCheckbox("executeIndicatorTestMode", "Test", contentFrame)
     executeTestIcons2:SetPoint("TOPLEFT", executeIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
+    anchorSubExecute.executeIndicatorInRangeColor = CreateCheckbox("executeIndicatorInRangeColor", "C", contentFrame)
+    anchorSubExecute.executeIndicatorInRangeColor:SetPoint("LEFT", executeTestIcons2.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(anchorSubExecute.executeIndicatorInRangeColor, "Color healthbar", "Color healthbar when in execute range.\n\nRight-click to change color.")
+
+    anchorSubExecute.executeIndicatorInRangeColor:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            OpenColorOptions(BetterBlizzPlatesDB.executeIndicatorInRangeColorRGB, BBP.RefreshAllNameplates)
+        end
+    end)
+
     local executeIndicatorAlwaysOn = CreateCheckbox("executeIndicatorAlwaysOn", "Always on", contentFrame)
     executeIndicatorAlwaysOn:SetPoint("TOPLEFT", executeTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(executeIndicatorAlwaysOn, "Always display health percentage")
@@ -7756,6 +7772,10 @@ local function guiPositionAndScale()
     anchorThreatColor.enemyColorThreatCombatOnlyPlayer = CreateCheckbox("enemyColorThreatCombatOnlyPlayer", "Player Combat only", contentFrame)
     anchorThreatColor.enemyColorThreatCombatOnlyPlayer:SetPoint("TOPLEFT", anchorThreatColor.enemyColorThreatCombatOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorThreatColor.enemyColorThreatCombatOnlyPlayer, "Player Combat Only", "Only apply coloring when I am in combat")
+
+    anchorThreatColor.enemyColorThreatHideSolo = CreateCheckbox("enemyColorThreatHideSolo", "Turn off while Solo", contentFrame)
+    anchorThreatColor.enemyColorThreatHideSolo:SetPoint("TOPLEFT", anchorThreatColor.enemyColorThreatCombatOnlyPlayer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorThreatColor.enemyColorThreatHideSolo, "Turn off while Solo", "Don't show threat colors when I am not in a group.")
 
 
     ----------------------
@@ -9948,6 +9968,17 @@ local function guiNameplateAuras()
     CreateTooltipTwo(nameplateKeyAurasHorizontalGap, "Key Aura Gap", "Horizontal Gap between the Key Auras.\nRight click to input own values.")
     nameplateKeyAurasHorizontalGap:SetScale(0.7)
 
+    local nameplateKeyAurasAnchor = CreateAnchorDropdown(
+        "nameplateKeyAurasAnchorDropdown",
+        enableNameplateAuraCustomisation,
+        "Select Key Aura Anchor",
+        "nameplateKeyAurasAnchor",
+        function(arg1)
+        BBP.RefreshAllNameplates()
+    end,
+        { anchorFrame = nameplateKeyAurasHorizontalGap, x = -16, y = -40, label = "Key Auras Position" },nil,nil,{"RIGHT", "LEFT", "CENTER"}
+    )
+
     nameplateAuraKeyAuraPositionEnabled:HookScript("OnClick", function()
         BBP.UpdateImportantBuffsAndCCTables()
         CheckAndToggleCheckboxes(nameplateAuraKeyAuraPositionEnabled)
@@ -10234,6 +10265,16 @@ local function guiNameplateAuras()
     betaHighlightIcon:SetAtlas("CharacterCreate-NewLabel")
     betaHighlightIcon:SetSize(42, 34)
     betaHighlightIcon:SetPoint("RIGHT", enableNameplateAuraCustomisation, "LEFT", 8, 0)
+
+
+    local nameplateAuraTestMode2 = CreateCheckbox("nameplateAuraTestMode", "Test Mode", enableNameplateAuraCustomisation)
+    nameplateAuraTestMode2:SetPoint("BOTTOMLEFT", nameplateAuraSquare, "TOPLEFT", 0, 0)
+    CreateTooltipTwo(nameplateAuraTestMode2, "Test Mode", "Add some auras to nameplates for testing.", "Testing is limited and not 100% accurate and only respects the Show BUFF/DEBUFF filters and none of the sub-filters.", "ANCHOR_TOP")
+    nameplateAuraTestMode2:SetScale(1.4)
+
+    nameplateAuraTestMode2:HookScript("OnClick", function()
+        
+    end)
 end
 
 local function guiCVarControl()
@@ -11056,6 +11097,15 @@ local function guiMisc()
     end)
 
 
+    local hidePersonalManaFX = CreateCheckbox("hidePersonalManaFX", "Hide Personal Resource Manabar FX", guiMisc, nil, BBP.HidePersonalManabarFX)
+    hidePersonalManaFX:SetPoint("BOTTOMLEFT", changeNameplateBorderSize, "BOTTOMLEFT", 0, 20)
+    CreateTooltipTwo(hidePersonalManaFX, "Hide Personal Manabar FX", "Hide the manabar animations on the Personal Resource Display for instant feedback.")
+    hidePersonalManaFX:HookScript("OnClick", function(self)
+        if not self:GetChecked() then
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        end
+    end)
+
     local changeNameplateBorderColor = CreateCheckbox("changeNameplateBorderColor", "Change Nameplate Border Color", guiMisc)
     changeNameplateBorderColor:SetPoint("TOPLEFT", nameplateTargetBorderSize, "BOTTOMLEFT", -10, -4)
 
@@ -11161,6 +11211,26 @@ local function guiMisc()
             DisableElement(customFontSize)
         end
     end)
+
+
+    local enableNpVerticalPos = CreateCheckbox("enableNpVerticalPos", "Change Nameplate Vertical Position", guiMisc)
+    enableNpVerticalPos:SetPoint("TOPLEFT", customFontSizeEnabled, "BOTTOMLEFT", 0, -30)
+    CreateTooltipTwo(enableNpVerticalPos, "Change Nameplate Vertical Position", "Change the vertical position of nameplates.\n\nThis will only move the visual elements and not the clickable area due to restrictions.")
+
+    local nameplateVerticalPosition = CreateSlider(enableNpVerticalPos, "Nameplate Vertical Position", -60, 60, 1, "nameplateVerticalPosition", "Y")
+    nameplateVerticalPosition:SetPoint("TOPLEFT", enableNpVerticalPos, "BOTTOMLEFT", 10, -10)
+
+    enableNpVerticalPos:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            EnableElement(nameplateVerticalPosition)
+        else
+            DisableElement(nameplateVerticalPosition)
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        end
+    end)
+
+    local nameplateExtraClickHeight = CreateSlider(guiMisc, "Nameplate Extra Clickable Height", -60, 60, 1, "nameplateExtraClickHeight", "Y")
+    nameplateExtraClickHeight:SetPoint("TOPLEFT", nameplateVerticalPosition, "BOTTOMLEFT", 0, -20)
 
     local nameplateSelfWidthResetButton = CreateFrame("Button", nil, guiMisc, "UIPanelButtonTemplate")
     nameplateSelfWidthResetButton:SetText("Default")

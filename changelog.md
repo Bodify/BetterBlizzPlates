@@ -1,3 +1,26 @@
+# BetterBlizzPlates 1.7.8
+## Retail
+### New:
+- Nameplate Vertical Position (Misc)
+- Nameplate Clickable Height Adjuster (Misc)
+- Key Auras: Anchor setting. Right (Default), Left & Center. Left will stack leftwards, opposite of the default Right option and Center will stay centered on the nameplate.
+- Execute Indicator: Healthbar recolor when in execute range setting.
+- Hide Personal Resource Manabar FX (Misc)
+### Bugfix:
+- Fix Key Auras' Gap setting being affected by aura scale unintentionally.
+- Fix issue with Classic Nameplates Level not displaying properly.
+- Fix Nameplate Border Size setting not working with Nameplate Size set to 1 due to Blizzard function not running then.
+
+
+# BetterBlizzPlates 1.7.7b
+## Retail
+### New:
+- Threat Color: Turn off while Solo setting.
+### Tweak:
+- Kalvish profile update
+### Bugfix:
+- Fix Hide NPCs' reset function causing some nameplates that should be hidden to pop back up.
+
 # BetterBlizzPlates 1.7.7
 ## Retail
 ### New:

@@ -18,6 +18,8 @@ function BBP.ExecuteIndicator(frame)
         config.executeIndicatorAlwaysOn = BetterBlizzPlatesDB.executeIndicatorAlwaysOn
         config.executeIndicatorUseTexture = BetterBlizzPlatesDB.executeIndicatorUseTexture
         config.executeIndicatorTargetOnly = BetterBlizzPlatesDB.executeIndicatorTargetOnly
+        config.executeIndicatorInRangeColor = BetterBlizzPlatesDB.executeIndicatorInRangeColor
+        config.executeIndicatorInRangeColorRGB = BetterBlizzPlatesDB.executeIndicatorInRangeColorRGB
 
         config.executeIndicatorInitialized = true
     end
@@ -136,12 +138,27 @@ function BBP.ExecuteIndicator(frame)
                 -- Show the texture if health is below 99%
                 if healthPercentage < 99 then
                     frame.executeIndicatorTexture:Show()
+                    if healthPercentage < config.executeIndicatorThreshold then
+                        frame.executeIndicatorInRange = true
+                    else
+                        frame.executeIndicatorInRange = false
+                    end
                 else
                     frame.executeIndicatorTexture:Hide()
+                    if healthPercentage < config.executeIndicatorThreshold then
+                        frame.executeIndicatorInRange = true
+                    else
+                        frame.executeIndicatorInRange = false
+                    end
                 end
             else
                 -- Always show the texture if Always On is true and not restricting full HP
                 frame.executeIndicatorTexture:Show()
+                if healthPercentage < config.executeIndicatorThreshold then
+                    frame.executeIndicatorInRange = true
+                else
+                    frame.executeIndicatorInRange = false
+                end
             end
         else
             -- Only show texture if health is below the threshold
@@ -173,16 +190,33 @@ function BBP.ExecuteIndicator(frame)
         if config.executeIndicatorAlwaysOn then
             if config.executeIndicatorNotOnFullHp and healthPercentage < 99 then
                 frame.executeIndicator:Show()
+                if healthPercentage < config.executeIndicatorThreshold then
+                    frame.executeIndicatorInRange = true
+                else
+                    frame.executeIndicatorInRange = false
+                end
             else
                 frame.executeIndicator:Show()
+                if healthPercentage < config.executeIndicatorThreshold then
+                    frame.executeIndicatorInRange = true
+                else
+                    frame.executeIndicatorInRange = false
+                end
             end
         else
             if healthPercentage < config.executeIndicatorThreshold then
                 frame.executeIndicator:Show()
+                frame.executeIndicatorInRange = true
             else
                 frame.executeIndicator:Hide()
+                frame.executeIndicatorInRange = false
             end
         end
+    end
+
+    if config.executeIndicatorInRangeColor and frame.executeIndicatorInRange then
+        frame.healthBar:SetStatusBarColor(unpack(config.executeIndicatorInRangeColorRGB))
+        frame.needsRecolor = true
     end
 end
 

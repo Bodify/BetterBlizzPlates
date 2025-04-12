@@ -232,6 +232,13 @@ local opBarriers = {
     [235450] = true, -- Prismatic Barrier
 }
 
+local sotfAuras = {
+    [774] = true,
+    [155777] = true,
+    [473919] = true,
+    [474149] = true,
+}
+
 local importantColor = {r = 0, g = 1, b = 0, a = 1}
 
 local importantBuffs = {}
@@ -1422,6 +1429,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
     local sortDurationAuras = db.sortDurationAuras
     local keyAuraXPos = db.nameplateKeyAurasXPos
     local keyAuraYPos = db.nameplateKeyAurasYPos
+    local keyAuraAnchor = db.nameplateAuraKeyAuraPositionEnabled and db.nameplateKeyAurasAnchor
 
     local scaledCompactWidth = compactSize * nameplateAuraCompactedScale
     local scaledCompactHeight = auraHeightSetting * nameplateAuraCompactedScale
@@ -1726,6 +1734,26 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
         local compactTracker = 0
         local indexTracker = 0
 
+        local totalKeyAuraWidth = 0
+        local keyAuraCount = 0
+
+        if keyAuraAnchor and keyAuraAnchor == "CENTER" then
+            for _, buff in ipairs(auras) do
+                if buff.isKeyAura then
+                    local w, _ = buff:GetSize()
+                    local s = buff:GetScale()
+                    totalKeyAuraWidth = totalKeyAuraWidth + (w * s)
+                    keyAuraCount = keyAuraCount + 1
+                end
+            end
+            if keyAuraCount > 1 then
+                totalKeyAuraWidth = totalKeyAuraWidth + ((keyAuraCount - 1) * nameplateKeyAurasHorizontalGap)
+            end
+        end
+
+        local keyAuraHorizontalOffset = 0
+        local keyAuraFirstRowOffset = 0
+
         -- local keyAuraXPos = db.nameplateKeyAurasXPos
         -- local keyAuraYPos = db.nameplateKeyAurasYPos
 
@@ -1736,9 +1764,26 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
             if buff.pinIcon then
                 buff:Hide()
             elseif buff.isKeyAura then
+                -- buff:ClearAllPoints()
+                -- buff:SetPoint("LEFT", healthBar, "RIGHT", keyAuraOffset + keyAuraXPos, keyAuraYPos)
+                -- keyAuraOffset = keyAuraOffset + (buffWidth * buffScale) + nameplateKeyAurasHorizontalGap
                 buff:ClearAllPoints()
-                buff:SetPoint("LEFT", healthBar, "RIGHT", keyAuraOffset + keyAuraXPos, keyAuraYPos)
-                keyAuraOffset = keyAuraOffset + (buffWidth * buffScale) + nameplateKeyAurasHorizontalGap
+
+                local anchor = keyAuraAnchor or "RIGHT" -- Default to RIGHT if not set
+
+                if anchor == "RIGHT" then
+                    buff:SetPoint("LEFT", healthBar, "RIGHT", keyAuraOffset + keyAuraXPos, keyAuraYPos)
+                    keyAuraOffset = keyAuraOffset + buffWidth + nameplateKeyAurasHorizontalGap
+                elseif anchor == "LEFT" then
+                    buff:SetPoint("RIGHT", healthBar, "LEFT", -(keyAuraOffset + keyAuraXPos), keyAuraYPos)
+                    keyAuraOffset = keyAuraOffset + buffWidth + nameplateKeyAurasHorizontalGap
+                elseif anchor == "CENTER" then
+                    if keyAuraHorizontalOffset == 0 then
+                        keyAuraFirstRowOffset = (healthBarWidth - totalKeyAuraWidth) / 2
+                    end
+                    buff:SetPoint("BOTTOMLEFT", healthBar, "LEFT", (keyAuraFirstRowOffset + keyAuraHorizontalOffset + keyAuraXPos)/buffScale, keyAuraYPos + 45)
+                    keyAuraHorizontalOffset = keyAuraHorizontalOffset + buffWidth + nameplateKeyAurasHorizontalGap
+                end
             else
                 indexTracker = indexTracker + 1
                 if buff.isEnlarged then
@@ -2548,10 +2593,13 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         buff.isCC = nil
         buff.pinIcon = nil
 
+        buff:SetFrameStrata("HIGH")
+
         if moveKeyAuras then
             local isKeyAura = keyAuraList[spellId]
             if isKeyAura then
                 if isEnemyUnit then
+                    buff:SetFrameStrata("DIALOG")
                     buff.isKeyAura = true
                     isEnlarged = true
                     if isKeyAura ~= true and not isImportant then
@@ -2560,6 +2608,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
                     end
                 else
                     if moveKeyAurasFriendly then
+                        buff:SetFrameStrata("DIALOG")
                         buff.isKeyAura = true
                         isEnlarged = true
                         if isKeyAura ~= true and not isImportant then
@@ -2615,8 +2664,8 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             end
 
             if pinnedAuras and UnitFrame.classIndicatorCC then
-                if buff.duration and buff.expirationTime and buff.duration > longestCCDuration then
-                    longestCCDuration = buff.duration
+                if buff.duration and buff.expirationTime and buff.expirationTime > longestCCDuration then
+                    longestCCDuration = buff.expirationTime
                     local ciColor
                     if isCC ~= true then
                         -- if not isImportant then
@@ -2732,6 +2781,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             buff.GlowFrame = CreateFrame("Frame", nil, buff)
             buff.GlowFrame:SetFrameStrata("HIGH")
             buff.GlowFrame:SetFrameLevel(9000)
+            buff.CountFrame:SetFrameLevel(9999)
 
             if npAuraStackFontEnabled then
                 local npAuraStackFontPath = LSM:Fetch(LSM.MediaType.FONT, BetterBlizzPlatesDB.npAuraStackFont)
@@ -2760,6 +2810,11 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
         -- Pandemic Glow
         SetPandemicGlow(buff, aura, isPandemic)
+
+        -- temp
+        if UnitFrame.sotfRejuvActive and sotfAuras[aura.spellId] then
+            isImportant = true
+        end
 
         SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
 
