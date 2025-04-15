@@ -8,7 +8,6 @@
 ### Tweak:
 - Classic Nameplates will now have LevelFrame hidden automatically when in PvP.
 - Nameplate Border Size setting now allows minimum 0.5 pixels.
-- Added new Color Threat settings from Retail version to Classic versions.
 - Added Prototype and Yanone font to non-english clients as well, did not realize this was not the case by default.
 ### Bugfix:
 - Fix level text still showing with with Classic Nameplates with Hide Level enabled.
@@ -16,6 +15,7 @@
 - Fix castbar text showing squares with castbar customization on for non-english clients.
 - Fix issue with castbar setting "Hide name during casts" causing names to stay hidden.
 ## Retail, Classic & Cata
+- Added new Color Threat settings from Retail version to Classic versions.
 - Color Threat tweak for DPS, should now color when you are being targeted as well due to threat API being a bit clunky? Testing this pls give feedback.
 
 # BetterBlizzPlates 1.7.8
