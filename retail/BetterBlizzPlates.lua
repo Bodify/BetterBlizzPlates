@@ -6,8 +6,9 @@ LSM:Register("statusbar", "Dragonflight HD (BBP)", [[Interface\Addons\BetterBliz
 LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPlates\media\focusTexture]])
 LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlates\media\targetTexture]])
 LSM:Register("statusbar", "Smooth", [[Interface\Addons\BetterBlizzPlates\media\smooth]])
-LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
-LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
+local allLocales = LSM.LOCALE_BIT_western+LSM.LOCALE_BIT_ruRU+LSM.LOCALE_BIT_zhCN+LSM.LOCALE_BIT_zhTW+LSM.LOCALE_BIT_koKR
+LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]], allLocales)
+LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]], allLocales)
 
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
@@ -835,6 +836,7 @@ local cvarList = {
     "nameplateShowFriendlyNPCs",
     "nameplateSelfTopInset",
     "nameplateSelfBottomInset",
+    "nameplateSelfAlpha",
 }
 
 function BBP.ResetNameplateCVars()
@@ -971,6 +973,7 @@ function BBP.CVarsAreSaved()
        db.nameplateMinAlphaDistance and
        db.nameplateMaxAlpha and
        db.nameplateMaxAlphaDistance and
+       db.nameplateSelfAlpha and
        db.nameplateOccludedAlphaMult then
         return true
     else
@@ -1004,6 +1007,7 @@ local function ResetNameplates()
     BetterBlizzPlatesDB.nameplateMaxAlpha = 1.0
     BetterBlizzPlatesDB.nameplateMaxAlphaDistance = 40
     BetterBlizzPlatesDB.nameplateOccludedAlphaMult = 0.4
+    BetterBlizzPlatesDB.nameplateSelfAlpha = 0.75
 
     BetterBlizzPlatesDB.ShowClassColorInNameplate = "1"
     BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate = "1"
@@ -1053,6 +1057,7 @@ local function ResetNameplates()
     C_CVar.SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
     C_CVar.SetCVar("ShowClassColorInNameplate", BetterBlizzPlatesDB.ShowClassColorInNameplate)
     C_CVar.SetCVar("ShowClassColorInFriendlyNameplate", BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate)
+    C_CVar.SetCVar("nameplateSelfAlpha", BetterBlizzPlatesDB.nameplateSelfAlpha)
     C_CVar.SetCVar('nameplateShowOnlyNames', "0")
 
     ReloadUI()
@@ -1287,6 +1292,35 @@ local function GetNameplateUnitInfo(frame, unit)
     return info
 end
 BBP.GetNameplateUnitInfo = GetNameplateUnitInfo
+
+
+
+local function GetRPNameColor(unit)
+    if not UnitExists(unit) then return end
+    local player = AddOn_TotalRP3 and AddOn_TotalRP3.Player and AddOn_TotalRP3.Player.CreateFromUnit(unit)
+    if player then
+        local color = player:GetCustomColorForDisplay()
+        if color then
+            local r, g, b = color:GetRGB()
+            return r, g, b
+        end
+    end
+end
+
+local function SetRPName(name, unit, rpNamesFirst, rpNamesLast)
+    local fullName = TRP3_API.r.name(unit) or ""
+    local firstRpName, lastRpName = fullName:match("^(%S+)%s*(.*)$")
+
+    if rpNamesFirst and rpNamesLast then
+        name:SetText(fullName)
+    elseif rpNamesFirst then
+        name:SetText(firstRpName or fullName)
+    elseif rpNamesLast then
+        name:SetText(lastRpName ~= "" and lastRpName or fullName)
+    else
+        name:SetText(fullName)
+    end
+end
 
 
 -- If player was just on loading screen set wasOnLoadingScreen to true and skip running functions
@@ -1560,6 +1594,7 @@ local function InitializeNameplateSettings(frame)
             hideLevelFrame = BetterBlizzPlatesDB.hideLevelFrame,
             smallPetsInPvP = BetterBlizzPlatesDB.smallPetsInPvP,
             hideEliteDragon = BetterBlizzPlatesDB.hideEliteDragon,
+            personalBarTweaks = BetterBlizzPlatesDB.personalBarTweaks,
         }
         if frame.BetterBlizzPlates.config.changeHealthbarHeight then
             frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
@@ -1924,6 +1959,10 @@ local function SetCVarsOnLogin()
 
         if BetterBlizzPlatesDB.nameplateMotion then
             C_CVar.SetCVar("nameplateMotion", BetterBlizzPlatesDB.nameplateMotion)
+        end
+
+        if BetterBlizzPlatesDB.nameplateSelfAlpha then
+            C_CVar.SetCVar("nameplateSelfAlpha", BetterBlizzPlatesDB.nameplateSelfAlpha)
         end
 
         if BetterBlizzPlatesDB.NamePlateVerticalScale then
@@ -2436,6 +2475,9 @@ function BBP.ResetToDefaultValue(slider, element)
             C_CVar.SetCVar("nameplateSelfBottomInset", C_CVar.GetCVarDefault("nameplateSelfBottomInset"))
             BetterBlizzPlatesDB.nameplateSelfTopInset = C_CVar.GetCVarDefault("nameplateSelfTopInset")
             BetterBlizzPlatesDB.nameplateSelfBottomInset = C_CVar.GetCVarDefault("nameplateSelfBottomInset")
+        elseif element == "nameplateSelfAlpha" then
+            C_CVar.SetCVar("nameplateSelfAlpha", C_CVar.GetCVarDefault("nameplateSelfAlpha"))
+            BetterBlizzPlatesDB.nameplateSelfAlpha = C_CVar.GetCVarDefault("nameplateSelfAlpha")
         end
         slider:SetValue(BetterBlizzPlatesDB[element])
     end
@@ -3027,16 +3069,14 @@ function BBP.ColorThreat(frame)
             end
         end
     else
-        if config.npcHealthbarColor and not isTanking then
+        local hasAggro = isTanking or (threatStatus and threatStatus > 1)
+        if config.npcHealthbarColor and not hasAggro then
             return
         end
         r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
 
-        if ( isTanking ) then
+        if ( hasAggro ) or UnitIsUnit(frame.unit.."target", "player") then
             r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB)
-        elseif ( threatStatus and threatStatus > 0 ) then
-            -- about to pull aggro
-            --r, g, b = GetThreatStatusColor(threatStatus)
         end
     end
 
@@ -3276,12 +3316,18 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
         config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
         config.colorNPC = BetterBlizzPlatesDB.colorNPC
+        config.personalNpTRP3Color = BetterBlizzPlatesDB.personalNpTRP3Color
 
         config.updateHealthColorInitialized = true
     end
 
     if info.isSelf then
-        if config.classColorPersonalNameplate then
+        if config.personalNpTRP3Color then
+            local r,g,b = GetRPNameColor("player")
+            if r then
+                frame.healthBar:SetStatusBarColor(r, g, b)
+            end
+        elseif config.classColorPersonalNameplate then
             frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
         end
     end
@@ -3383,6 +3429,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         config.focusTargetIndicator = BetterBlizzPlatesDB.focusTargetIndicator
         config.targetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB
         config.colorNPC = BetterBlizzPlatesDB.colorNPC
+        config.personalNpTRP3Color = BetterBlizzPlatesDB.personalNpTRP3Color
 
         config.updateHealthColorInitialized = true
     end
@@ -3508,7 +3555,12 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         end
     end
     if info.isSelf then --without this self nameplate reset to green after targeting self, figure out more
-        if config.classColorPersonalNameplate then
+        if config.personalNpTRP3Color then
+            local r,g,b = GetRPNameColor("player")
+            if r then
+                frame.healthBar:SetStatusBarColor(r, g, b)
+            end
+        elseif config.classColorPersonalNameplate then
             frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
         end
     end
@@ -3651,7 +3703,7 @@ end
 local function ShowFriendlyGuildName(frame, unit)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
-    if config.showGuildNames and info.isFriend then
+    if config.showGuildNames and (info.isFriend or (config.personalBarTweaks and info.isSelf)) then
         if not config.guildNameInitialized then
             config.guildNameColor = BetterBlizzPlatesDB.guildNameColor
             config.guildNameColorRGB = BetterBlizzPlatesDB.guildNameColorRGB
@@ -3881,7 +3933,7 @@ local function ColorNameplateBorder(self, frame)
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
     if not info then return end
 
-    if info.isSelf then return end
+    if (info.isSelf and not config.personalBarTweaks) then return end
 
     if not config.nameplateBorderInitialized or BBP.needsUpdate then
         config.npBorderTargetColor = BetterBlizzPlatesDB.npBorderTargetColor
@@ -3940,7 +3992,7 @@ function BBP.ColorNameplateBorder(frame) --classic border
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
     if not info then return end
 
-    if info.isSelf then return end
+    if (info.isSelf and not config.personalBarTweaks) then return end
 
     if not config.nameplateBorderInitialized or BBP.needsUpdate then
         config.npBorderTargetColor = BetterBlizzPlatesDB.npBorderTargetColor
@@ -4009,15 +4061,15 @@ local function ChangeHealthbarBorderSize(frame)
             if not config then return end
             if UnitIsUnit(frame.unit, "player") then return end
             local borderSize = config.nameplateBorderSize
-            local minPixels = self.borderSizeMinPixels or 2;
+            local minPixels = 0.5;
 
             local unit = frame.unit
             if unit and UnitIsUnit("target", unit) then
                 borderSize = config.nameplateTargetBorderSize
             end
 
-            local upwardExtendHeightPixels = self.upwardExtendHeightPixels or borderSize;
-            local upwardExtendHeightMinPixels = self.upwardExtendHeightMinPixels or minPixels;
+            local upwardExtendHeightPixels = borderSize;
+            local upwardExtendHeightMinPixels = minPixels;
 
             PixelUtil.SetWidth(self.Left, borderSize, minPixels);
             PixelUtil.SetPoint(self.Left, "TOPRIGHT", self, "TOPLEFT", 0, upwardExtendHeightPixels, 0, upwardExtendHeightMinPixels);
@@ -4181,6 +4233,8 @@ local function HandleNamePlateRemoved(unit)
     if not hideTargetHighlight then
         frame.selectionHighlight:SetAlpha(0.22)
     end
+
+    frame.castHiddenName = nil
 
     if frame.needsRecolor then
         BBP.CompactUnitFrame_UpdateHealthColor(frame, true)
@@ -4355,7 +4409,7 @@ function BBP.RepositionName(frame)
             if db.useFakeNameAnchorBottom then
                 frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 27)
             else
-                frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 4)
+                frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + (info.isSelf and 3.5 or 4))
             end
         else
             frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameXPos, db.fakeNameYPos + 4)
@@ -4636,7 +4690,7 @@ end
 local function CreateLevelFrame(frame)
     if not frame.LevelFrame then
         frame.LevelFrame = CreateFrame("Frame", nil, frame.bbpOverlay)
-        frame.LevelFrame.text = frame.LevelFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        frame.LevelFrame.text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.LevelFrame.text:SetFont("Fonts\\FRIZQT__.TTF", 12)
         frame.LevelFrame.text:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", 5, 0)
         BBP.SetFontBasedOnOption(frame.LevelFrame.text, BetterBlizzPlatesDB.levelFrameFontSize)
@@ -4653,11 +4707,15 @@ end
 local function UpdateLevelFrame(frame)
     if BBP.isInPvP then
         frame.LevelFrame:Hide()
+        frame.LevelFrame.text:Hide()
+        frame.LevelFrame.skull:Hide()
         return
     end
 
     if UnitIsFriend(frame.unit, "player") then
         frame.LevelFrame:Hide()
+        frame.LevelFrame.text:Hide()
+        frame.LevelFrame.skull:Hide()
     else
         local unitLevel = UnitLevel(frame.unit)
         local color = GetCreatureDifficultyColor(unitLevel)
@@ -4666,9 +4724,11 @@ local function UpdateLevelFrame(frame)
         frame.LevelFrame.text:SetTextColor(color.r, color.g, color.b)
 
         frame.LevelFrame:Show()
+        frame.LevelFrame.text:Show()
 
         if unitLevel == -1 then
             frame.LevelFrame.skull:Show()
+            frame.LevelFrame.text:Hide()
         else
             frame.LevelFrame.skull:Hide()
         end
@@ -4718,19 +4778,19 @@ local function CreateBetterClassicHealthbarBorder(frame)
         end
 
         --if not config.hideLevelFrame then
-            frame.LevelFrame = CreateFrame("Frame", nil, border)
-            frame.LevelFrame.text = border:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            frame.LevelFrame.text:SetDrawLayer("OVERLAY", 7)
-            frame.LevelFrame.text:SetFont("Fonts\\FRIZQT__.TTF", 12)
-            frame.LevelFrame.text:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", 1.5, 0)
-            frame.LevelFrame.skull = border:CreateTexture(nil, "OVERLAY")
-            frame.LevelFrame.skull:SetTexture("Interface\\TargetingFrame\\UI-TargetingFrame-Skull")
-            frame.LevelFrame.skull:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", 1.5, 0)
-            frame.LevelFrame.skull:SetSize(16,16)
+            frame.ClassicLevelFrame = CreateFrame("Frame", nil, border)
+            frame.ClassicLevelFrame.text = border:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            frame.ClassicLevelFrame.text:SetDrawLayer("OVERLAY", 7)
+            frame.ClassicLevelFrame.text:SetFont("Fonts\\FRIZQT__.TTF", 12)
+            frame.ClassicLevelFrame.text:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", 1.5, 0)
+            frame.ClassicLevelFrame.skull = border:CreateTexture(nil, "OVERLAY")
+            frame.ClassicLevelFrame.skull:SetTexture("Interface\\TargetingFrame\\UI-TargetingFrame-Skull")
+            frame.ClassicLevelFrame.skull:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", 1.5, 0)
+            frame.ClassicLevelFrame.skull:SetSize(16,16)
         --end
     end
 
-    if info.isSelf then
+    if (info.isSelf and not config.personalBarTweaks) then
         frame.BetterBlizzPlates.bbpBorder:Hide()
         frame.HealthBarsContainer.border:Show()
         frame.selfBorderHidden = true
@@ -4746,30 +4806,29 @@ local function CreateBetterClassicHealthbarBorder(frame)
         frame.HealthBarsContainer.border:Hide()
     end
 
-    if frame.LevelFrame then
+    if frame.ClassicLevelFrame and not config.hideLevelFrame then
         local unitLevel = UnitLevel(frame.unit)
-        frame.LevelFrame.text:SetText(unitLevel ~= -1 and unitLevel or "")
+        frame.ClassicLevelFrame.text:SetText(unitLevel ~= -1 and unitLevel or "")
         if unitLevel == -1 then
-            frame.LevelFrame.skull:Show()
+            frame.ClassicLevelFrame.skull:Show()
         else
-            frame.LevelFrame.skull:Hide()
+            frame.ClassicLevelFrame.skull:Hide()
         end
     end
 
     local height = frame.healthBar:GetHeight()
     local bottomOffset = -((0.455) * height - 1.09)
     local topOffset = (2 * height) - 1
-    local rightXOffset = config.hideLevelFrame and 27.9 or 20.9
+    local hideLevel = config.hideLevelFrame or BBP.isInPvP or (info.isSelf and config.personalBarTweaks)
+    local rightXOffset = hideLevel and 27.9 or 20.9
 
-    if config.hideLevelFrame and not frame.BetterBlizzPlates.bbpBorder.changed then
+    if hideLevel then
         frame.BetterBlizzPlates.bbpBorder.right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRightNoLevel")
-        frame.BetterBlizzPlates.bbpBorder.changed = true
-        frame.LevelFrame:Hide()
-    elseif frame.BetterBlizzPlates.bbpBorder.changed and not config.hideLevelFrame then
+        frame.ClassicLevelFrame.text:Hide()
+        frame.ClassicLevelFrame.skull:Hide()
+    else
         frame.BetterBlizzPlates.bbpBorder.right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRight")
-        frame.BetterBlizzPlates.bbpBorder.changed = nil
-        frame.LevelFrame:Show()
-        frame.LevelFrame:SetAlpha(1)
+        frame.ClassicLevelFrame.text:Show()
     end
 
     frame.BetterBlizzPlates.bbpBorder.left:ClearAllPoints()
@@ -5014,6 +5073,9 @@ local function HandleNamePlateAdded(unit)
 
     if info.isTarget then
         BBP.previousTargetNameplate = frame
+        if GetCVarBool("nameplateResourceOnTarget") then
+            BBP.TargetResourceUpdater()
+        end
     end
     if not frame.bbpOverlay then
         frame.bbpOverlay = CreateFrame("Frame", nil, frame.HealthBarsContainer.healthBar)
@@ -5035,8 +5097,6 @@ local function HandleNamePlateAdded(unit)
         frame:ClearPoint("BOTTOMLEFT")
         frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", 0, BetterBlizzPlatesDB.nameplateVerticalPosition or 0)
     end
-
-
 
     if not frame.nameplateTweaksBBP then
         frame.ClassificationFrame:SetParent(frame.HealthBarsContainer)
@@ -5243,7 +5303,9 @@ local function HandleNamePlateAdded(unit)
     if config.classicNameplates then
         CreateBetterClassicHealthbarBorder(frame)
         if info.isSelf then
-            frame.LevelFrame:Hide()
+            frame.ClassicLevelFrame:Hide()
+            frame.ClassicLevelFrame.text:Hide()
+            frame.ClassicLevelFrame.skull:Hide()
         end
         frame.classicNameplatesOn = true
     elseif frame.classicNameplatesOn then
@@ -5259,6 +5321,8 @@ local function HandleNamePlateAdded(unit)
         else
             if frame.LevelFrame then
                 frame.LevelFrame:Hide()
+                frame.LevelFrame.text:Hide()
+                frame.LevelFrame.skull:Hide()
             end
         end
     end
@@ -5566,6 +5630,7 @@ function BBP.ConsolidatedUpdateName(frame)
         config.removeRealmNames = BetterBlizzPlatesDB.removeRealmNames
         config.classIndicator = BetterBlizzPlatesDB.classIndicator
         config.classIconHealthNumbers = BetterBlizzPlatesDB.classIconHealthNumbers
+        config.personalBarTweaks = BetterBlizzPlatesDB.personalBarTweaks
 
         config.updateNameInitialized = true
     end
@@ -5580,7 +5645,68 @@ function BBP.ConsolidatedUpdateName(frame)
         frame.bbpOverlay:SetFrameLevel(9000)
     end
 
-    if info.isSelf then return end
+    if frame.castHiddenName then
+        frame.name:SetText("")
+        return
+    end
+
+    if info.isSelf then
+        if config.personalBarTweaks then
+            frame.name:Show()
+            frame.name:SetIgnoreParentScale(true)
+            frame.name:SetScale(BetterBlizzPlatesDB.friendlyNameScale+0.34)
+            local rpDB = TRP3_Configuration
+            if rpDB then
+                if rpDB.NamePlates_CustomizeNames then
+                    local rpNamesFull = rpDB.NamePlates_CustomizeNames == 1
+                    local rpNamesFirst = rpDB.NamePlates_CustomizeNames == 2
+                    local rpNamesLast = rpDB.NamePlates_CustomizeNames == 3
+                    if rpNamesFull then
+                        rpNamesFirst = true
+                        rpNamesLast = true
+                    end
+                    SetRPName(frame.name, "player", rpNamesFirst, rpNamesLast)
+                    -- first name == 2
+                    -- both == 1
+                    -- last == 3?
+                end
+                if rpDB.NamePlates_CustomizeNameColors then
+                    local r,g,b = GetRPNameColor("player")
+                    if r then
+                        frame.name:SetVertexColor(r,g,b)
+                    else
+                        local friendlyColorName = BetterBlizzPlatesDB.friendlyColorName
+                        local friendlyClassColorName = BetterBlizzPlatesDB.friendlyClassColorName
+                        if friendlyClassColorName then
+                            local _, class = UnitClass(frame.unit)
+                            local classColor = RAID_CLASS_COLORS[class]
+                            frame.name:SetVertexColor(classColor.r, classColor.g, classColor.b)
+                        elseif friendlyColorName then
+                            frame.name:SetVertexColor(unpack(BetterBlizzPlatesDB.friendlyColorNameRGB))
+                        else
+                            frame.name:SetVertexColor(1, 1, 0)
+                        end
+                    end
+                end
+                return
+            else
+                frame.name:SetText(UnitName("player"))
+            end
+
+            -- local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(frame.unit)
+            -- if ((isEnemy or isNeutral) and enemyClassColorName) or (isFriend and friendlyClassColorName) then
+            --     local _, class = UnitClass(frame.unit)
+            --     local classColor = RAID_CLASS_COLORS[class]
+            --     frame.name:SetVertexColor(classColor.r, classColor.g, classColor.b)
+            -- elseif ((isEnemy or isNeutral) and enemyColorName) or (isFriend and friendlyColorName) then
+            --     local color = isEnemy and BetterBlizzPlatesDB.enemyColorNameRGB or BetterBlizzPlatesDB.friendlyColorNameRGB
+            --     frame.name:SetVertexColor(unpack(color))
+            -- end
+
+        else
+            return
+        end
+    end
 
     -- Class color and scale names depending on their reaction
     BBP.ClassColorAndScaleNames(frame)
@@ -5761,20 +5887,32 @@ ClassRoleChecker:RegisterEvent("PLAYER_ROLES_ASSIGNED")
 ClassRoleChecker:RegisterEvent("GROUP_ROSTER_UPDATE")
 ClassRoleChecker:SetScript("OnEvent", UpdateClassRoleStatus)
 
-local function ThreatSituationUpdate(self, event)
+local function ThreatSituationUpdate(self, event, unit)
     if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
-        for _, nameplate in pairs(C_NamePlate.GetNamePlates(issecure())) do
-            local frame = nameplate.UnitFrame
-            if UnitIsUnit(frame.unit, "player") then return end
-            local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
-            if config.totemColorRGB then return end
-            BBP.ColorThreat(frame)
+        if event == "UNIT_THREAT_SITUATION_UPDATE" then
+            for _, nameplate in pairs(C_NamePlate.GetNamePlates(issecure())) do
+                local frame = nameplate.UnitFrame
+                if UnitIsPlayer(unit) then return end
+                local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
+                if config.totemColorRGB then return end
+                BBP.ColorThreat(frame)
+            end
+        elseif event == "UNIT_TARGET" then
+            -- update frame specific
+            local np, frame = BBP.GetSafeNameplate(unit)
+            if frame then
+                if UnitIsPlayer(unit) then return end
+                local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
+                if config.totemColorRGB then return end
+                BBP.ColorThreat(frame)
+            end
         end
     end
 end
 
 local ThreatSitUpdate = CreateFrame("Frame")
 ThreatSitUpdate:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE")
+ThreatSitUpdate:RegisterEvent("UNIT_TARGET")
 ThreatSitUpdate:SetScript("OnEvent", ThreatSituationUpdate)
 
 -- Function to set the nameplate behavior
@@ -5942,10 +6080,6 @@ Frame:SetScript("OnEvent", function(...)
         BBP.UpdateImportantBuffsAndCCTables()
     end
 
-    if db.partyPointer or db.classIndicator then
-        BBP.SetupClassIndicatorChat()
-    end
-
     --if BetterBlizzPlatesDB.enableCastbarCustomization then
         --BBP.HookDefaultCompactNamePlateFrameAnchorInternal()
     --end
@@ -5972,6 +6106,9 @@ Frame:SetScript("OnEvent", function(...)
     -- end
 
     C_Timer.After(1, function()
+        if db.partyPointer or db.classIndicator then
+            BBP.SetupClassIndicatorChat()
+        end
         BBP.InstantComboPoints()
         if not db.skipAdjustingFixedFonts then
             BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
@@ -6205,6 +6342,7 @@ local function TurnOnEnabledFeaturesOnLogin()
     BBP:RegisterTargetCastingEvents()
     BBP.ToggleHealthNumbers()
     BBP.DruidBlueComboPoints()
+    BBP.DruidAlwaysShowCombos()
     EnableMouseoverChecker()
 end
 
@@ -6542,6 +6680,9 @@ local function OnVariablesLoaded(self, event)
         if not BetterBlizzPlatesDB.nameplateShowFriendlyNPCs then
             BetterBlizzPlatesDB.nameplateShowFriendlyNPCs = GetCVar("nameplateShowFriendlyNPCs")
             BetterBlizzPlatesDB.nameplateShowAll = GetCVar("nameplateShowAll")
+        end
+        if not BetterBlizzPlatesDB.nameplateSelfAlpha then
+            BetterBlizzPlatesDB.nameplateSelfAlpha = GetCVar("nameplateSelfAlpha")
         end
         BBP.variablesLoaded = true
     elseif event == "TRAIT_CONFIG_UPDATED" or event == "PLAYER_TALENT_UPDATE" then

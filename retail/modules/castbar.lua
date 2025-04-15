@@ -266,7 +266,13 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
     end
 
-    BBP.SetFontBasedOnOption(castBar.Text, 12, "OUTLINE")
+    local useCustomFont = BetterBlizzPlatesDB.useCustomFont
+    if useCustomFont then
+        BBP.SetFontBasedOnOption(castBar.Text, 12, "OUTLINE")
+    else
+        local f = castBar.Text:GetFont()
+        castBar.Text:SetFont(f,12,"OUTLINE")
+    end
 
     if hideCastbarText then
         local text = castBar.Text:GetText()
@@ -281,19 +287,26 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     end
 
 
-    if db.hideNameDuringCast and (casting or channeling) then
-        if not frame.castHiddenName then
-            frame.castHiddenName = frame.name:GetAlpha()
+    if db.hideNameDuringCast then
+        if (casting or channeling) then
+            frame.castHiddenName = true
+            frame.name:SetText("")
+            if frame.specNameText then
+                frame.specNameText:SetText("")
+            end
         end
-        frame.name:SetAlpha(0)
-        if frame.specNameText then
-            frame.specNameText:SetAlpha(0)
+
+        if not castBar.hideNameWhileCasting then
+            hooksecurefunc(castBar, "Hide", function()
+                if frame:IsForbidden() then return end
+                if frame.castHiddenName then
+                    frame.castHiddenName = nil
+                    BBP.ConsolidatedUpdateName(frame)
+                end
+            end)
+            castBar.hideNameWhileCasting = true
         end
-    elseif frame.castHiddenName and (not casting and not channeling) then
-        frame.name:SetAlpha(frame.castHiddenName)
-        if frame.specNameText then
-            frame.specNameText:SetAlpha(frame.castHiddenName)
-        end
+
     end
 
     if hideCastbarBorderShield then

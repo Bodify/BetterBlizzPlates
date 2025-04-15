@@ -92,6 +92,8 @@ local defaultSettings = {
     npBorderDesaturate = true,
     nameplateGeneralHeight = 32,
     tankFullAggroColorRGB = {0, 1, 0, 1},
+    tankOffTankAggroColorRGB = {0, 0.95, 1, 1},
+    tankLosingAggroColorRGB = {1, 0.47, 0, 1},
     tankNoAggroColorRGB = {1, 0, 0, 1},
     dpsOrHealFullAggroColorRGB = {1, 0, 0, 1},
     dpsOrHealNoAggroColorRGB = {0, 1, 0, 1},
@@ -2399,46 +2401,101 @@ local function ShowLastNameOnlyNpc(frame)
     end
 end
 
+local offTanks = {}
+
+local function GetGroupTanks()
+	local tanks = {}
+	local unitPrefix = IsInRaid() and "raid" or "party"
+	local maxUnits = IsInRaid() and MAX_RAID_MEMBERS or GetNumGroupMembers()
+
+	for i = 1, maxUnits do
+		local unit = unitPrefix .. i
+		local role = UnitGroupRolesAssigned(unit)
+
+		-- Classic: fallback to Raid Info or Party Leader
+		if role == "NONE" then
+			if unitPrefix == "raid" then
+				local _, _, _, _, _, _, _, _, _, raidRole = GetRaidRosterInfo(i)
+				if raidRole == "MAINTANK" or raidRole == "MAINASSIST" then
+					role = "TANK"
+				end
+			elseif UnitIsGroupLeader(unit) then
+				role = "TANK"
+			end
+		end
+
+		if role == "TANK" and not UnitIsUnit(unit, "player") then
+			table.insert(tanks, unit)
+		end
+
+		-- Check pet if enabled
+		local pet = unitPrefix .. "pet" .. i
+		if UnitExists(pet) and (role == "TANK") then
+			table.insert(tanks, pet)
+		end
+	end
+
+	return tanks
+end
+
 function BBP.ColorThreat(frame)
     if not frame or not frame.unit then return end
     if UnitIsPlayer(frame.unit) then return end
     if UnitIsFriend(frame.unit, "player") then return end
 
+    local hideSolo = BetterBlizzPlatesDB.enemyColorThreatHideSolo and not IsInGroup()
+    if hideSolo then return end
+    local playerCombatOnly = BetterBlizzPlatesDB.enemyColorThreatCombatOnlyPlayer and not InCombatLockdown()
+    if playerCombatOnly then return end
     local combatOnly = BetterBlizzPlatesDB.enemyColorThreatCombatOnly and not UnitAffectingCombat(frame.unit)
     if combatOnly then return end
+
 
     local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     local r, g, b
 
     if BBP.isRoleTank then
+        -- Default color: no aggro
         r, g, b = unpack(BetterBlizzPlatesDB.tankNoAggroColorRGB)
 
-        if ( isTanking and threatStatus ) then
-            if ( threatStatus >= 3 ) then
+        if isTanking and threatStatus then
+            if threatStatus == 3 then
+                if config.npcHealthbarColor then
+                    return
+                end
+                -- Full threat
                 r, g, b = unpack(BetterBlizzPlatesDB.tankFullAggroColorRGB)
+            elseif threatStatus == 2 then
+                -- Losing threat
+                r, g, b = unpack(BetterBlizzPlatesDB.tankLosingAggroColorRGB)
             else
-                -- targets me, but losing aggro
                 r, g, b = GetThreatStatusColor(threatStatus)
+            end
+        elseif threatStatus then
+            -- Not tanking — check if an offtank has full aggro
+            for _, unit in ipairs(offTanks) do
+                local offTanking, otherThreatStatus = UnitDetailedThreatSituation(unit, frame.unit)
+                if offTanking and otherThreatStatus and otherThreatStatus > 2 then
+                    r, g, b = unpack(BetterBlizzPlatesDB.tankOffTankAggroColorRGB)
+                    break
+                end
             end
         end
     else
-        if config.npcHealthbarColor and not isTanking then
+        local hasAggro = isTanking or (threatStatus and threatStatus > 1)
+        if config.npcHealthbarColor and not hasAggro then
             return
         end
         r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
 
-        if ( isTanking ) then
+        if ( hasAggro ) or UnitIsUnit(frame.unit.."target", "player") then
             r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB)
-        elseif ( threatStatus and threatStatus > 0 ) then
-            -- about to pull aggro
-            --r, g, b = GetThreatStatusColor(threatStatus)
         end
     end
 
     frame.healthBar:SetStatusBarColor(r, g, b)
 end
-
 
 --################################################################################################
 -- Color NPCs
@@ -3359,13 +3416,13 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         ColorNameplateByReaction(frame)
     end
 
-    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
-        BBP.ColorThreat(frame)
-    end
-
     if config.colorNPC then--and config.npcHealthbarColor then --bodify need npc check here since it can run before np added
         --frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
         BBP.ColorNpcHealthbar(frame)
+    end
+
+    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
+        BBP.ColorThreat(frame)
     end
 
     if (config.focusTargetIndicator and config.focusTargetIndicatorColorNameplate and info.isFocus) or config.focusTargetIndicatorTestMode then
@@ -3512,12 +3569,12 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         ColorNameplateByReaction(frame)
     end
 
-    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
-        BBP.ColorThreat(frame)
-    end
-
     if config.colorNPC and config.npcHealthbarColor then
         frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
+    end
+
+    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
+        BBP.ColorThreat(frame)
     end
 
     if (config.focusTargetIndicator and config.focusTargetIndicatorColorNameplate and info.isFocus) or config.focusTargetIndicatorTestMode then
@@ -5148,25 +5205,43 @@ local function UpdateClassRoleStatus(self, event)
         end
     end
 
+    offTanks = GetGroupTanks()
+
     BBP.isRoleTank = isTank
 end
 
 local ClassRoleChecker = CreateFrame("Frame")
 ClassRoleChecker:RegisterEvent("PLAYER_ENTERING_WORLD")
+ClassRoleChecker:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 ClassRoleChecker:RegisterEvent("PLAYER_TALENT_UPDATE")
+ClassRoleChecker:RegisterEvent("GROUP_ROSTER_UPDATE")
 ClassRoleChecker:SetScript("OnEvent", UpdateClassRoleStatus)
 
-local function ThreatSituationUpdate(self, event)
+local function ThreatSituationUpdate(self, event, unit)
     if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
-        for _, nameplate in pairs(C_NamePlate.GetNamePlates(issecure())) do
-            local frame = nameplate.UnitFrame
-            BBP.ColorThreat(frame)
+        if event == "UNIT_THREAT_SITUATION_UPDATE" then
+            for _, nameplate in pairs(C_NamePlate.GetNamePlates(issecure())) do
+                local frame = nameplate.UnitFrame
+                if UnitIsPlayer(frame.unit) then return end
+                local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
+                if config.totemColorRGB then return end
+                BBP.ColorThreat(frame)
+            end
+        elseif event == "UNIT_TARGET" then
+            if UnitIsPlayer(unit) then return end
+            local np, frame = BBP.GetSafeNameplate(unit)
+            if frame then
+                local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
+                if config.totemColorRGB then return end
+                BBP.ColorThreat(frame)
+            end
         end
     end
 end
 
 local ThreatSitUpdate = CreateFrame("Frame")
 ThreatSitUpdate:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE")
+ThreatSitUpdate:RegisterEvent("UNIT_TARGET")
 ThreatSitUpdate:SetScript("OnEvent", ThreatSituationUpdate)
 
 -- Function to set the nameplate behavior

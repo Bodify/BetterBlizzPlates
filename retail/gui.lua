@@ -118,6 +118,7 @@ local function deepMergeTables(destination, source)
         end
     end
 end
+BBP.deepMergeTables = deepMergeTables
 
 local tooltips = {
     ["5: Replace name with spec + ID on same row"] = "Shows as for example \"Frost 2\"",
@@ -192,6 +193,18 @@ StaticPopupDialogs["BBP_CONFIRM_WIPE_NPCCOLOR"] = {
     whileDead = true,
     hideOnEscape = true,
 }
+
+StaticPopupDialogs["BBP_CONFIRM_IMPORT_NPCCOLOR"] = {
+    text = titleText.."This will add Mythic+ Season 2 NPCs to your color list and reload.\n\nAre you sure?",
+    button1 = "Yes",
+    button2 = "No",
+    OnAccept = function()
+        BBP.MythicSeason2NPCColors()
+    end,
+    timeout = 0,
+    whileDead = true,
+}
+
 
 StaticPopupDialogs["BBP_CONFIRM_WIPE_CASTEMPHASIS"] = {
     text = titleText.."This will delete the entire cast list and reload.\n\nAre you sure?",
@@ -4792,6 +4805,7 @@ local function guiGeneralTab()
             hideLevelFrame:SetChecked(true)
             BetterBlizzPlatesDB.hideLevelFrame = true
         end
+        BBP.RefreshAllNameplates()
     end)
 
     local nameplateMinScale = CreateSlider(BetterBlizzPlates, "Nameplate Size", 0.5, 2, 0.01, "nameplateMinScale")
@@ -8909,6 +8923,16 @@ local function guiColorNPC()
     local colorNPCName = CreateCheckbox("colorNPCName", "Also color name text", colorNPC, nil, BBP.colorNPC)
     colorNPCName:SetPoint("TOPLEFT", colorNPC, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
+
+    local importS2 = CreateFrame("Button", nil, colorNPC, "UIPanelButtonTemplate")
+    importS2:SetText("Import M+ Season 2 NPCs")
+    importS2:SetWidth(175)
+    importS2:SetPoint("TOPLEFT", colorNPCName, "TOPLEFT", -25, -30)
+    importS2:SetScript("OnClick", function()
+        StaticPopup_Show("BBP_CONFIRM_IMPORT_NPCCOLOR")
+    end)
+    CreateTooltipTwo(importS2, "Import M+ Season 2 Colors", "Import M+ Season 2 NPC Colors, made by Jovelo\n\nColors:\n|cffff1291Mob has a high prio kick|r\n|cff00ddffMob should be stunned/cced|r\n|cfffffafbMob has a heal|r", nil, "ANCHOR_TOP")
+
     local wipeColorNpcList = CreateFrame("Button", nil, guiColorNpc, "UIPanelButtonTemplate")
     wipeColorNpcList:SetText("Delete All")
     wipeColorNpcList:SetWidth(85)
@@ -9928,13 +9952,43 @@ local function guiNameplateAuras()
     CreateTooltipTwo(nameplateAuraCompactedSquare, "Halve Compacted Aura", "Halve the Compacted Aura.", "Half-sized auras will count as half towards \"max buffs per row\" and if two are next to eachother they will combine taking up the space of 1 normal aura slot.")
 
     local nameplateAuraKeyAuraPositionEnabled = CreateCheckbox("nameplateAuraKeyAuraPositionEnabled", "Enable Key Auras", enableNameplateAuraCustomisation)
-    nameplateAuraKeyAuraPositionEnabled:SetPoint("TOPLEFT", nameplateAuraCompactedSquare, "BOTTOMLEFT", 5, -2)
-    CreateTooltipTwo(nameplateAuraKeyAuraPositionEnabled, "Enable Key Auras", "Show and move CC and Important Buffs to the right of healthbar similar to BigDebuffs.\n\n|cff32f795Right-click to only move CC and not important buffs.|r", "All CC will be moved, but unlike BigDebuffs, this location is intended only for a select number of very important buffs, such as immunities. Smaller, less urgent buffs will either be displayed in their normal position (if enabled) or hidden completely (if disabled).\n\nExpect to a see a lot of tweaks to this. WIP.")
+    nameplateAuraKeyAuraPositionEnabled:SetPoint("TOPLEFT", nameplateAuraCompactedSquare, "BOTTOMLEFT", 5, -12)
+    CreateTooltipTwo(nameplateAuraKeyAuraPositionEnabled, "Enable Key Auras", "Show and move CC and Important Buffs to the right of healthbar similar to BigDebuffs.\n\n|cff32f795Right-click to only move CC and not important buffs.|r", "All CC will be moved, but unlike BigDebuffs, this location is intended only for a select number of very important buffs, such as immunities.\n\nSmaller, less urgent buffs will either be displayed in their normal position (if enabled) or hidden completely (if disabled).\n\nExpect to a see a lot of tweaks to this. WIP.")
     nameplateAuraKeyAuraPositionEnabled:SetScale(1.4)
 
-    local nameplateAuraKeyAuraPositionFriendly = CreateCheckbox("nameplateAuraKeyAuraPositionFriendly", "Friendly", enableNameplateAuraCustomisation)
-    nameplateAuraKeyAuraPositionFriendly:SetPoint("LEFT", nameplateAuraKeyAuraPositionEnabled.text, "RIGHT", 0, 0)
+    local pvpCC = CreateFrame("CheckButton", nil, nameplateAuraKeyAuraPositionEnabled, "InterfaceOptionsCheckButtonTemplate")
+    pvpCC:SetPoint("TOPLEFT", nameplateAuraKeyAuraPositionEnabled, "BOTTOMRIGHT", -20, 9)
+    pvpCC.Text:SetText("Glow & Filter")
+    pvpCC:SetChecked(BetterBlizzPlatesDB.otherNpdeBuffFilterCC)
+    pvpCC:SetIgnoreParentScale(true)
+    pvpCC:SetScale(0.7)
+    CreateTooltipTwo(pvpCC, "Glow & Filter", "Enable to adjust which CC categories show and which you want a Glow on.\n\n|cff32f795Right-click to open settings.|r","This checkbox is the same as the \"PvP CC\" filter above in the enemy filter settings. Just placed here as well for it to be a bit easier to understand.")
+
+    otherNpdeBuffFilterCC:HookScript("OnClick", function(self)
+        pvpCC:SetChecked(self:GetChecked())
+    end)
+
+    if not nameplateAuraKeyAuraPositionEnabled:GetChecked() then
+        pvpCC:Disable()
+        pvpCC:SetAlpha(0.5)
+    end
+
+    pvpCC:HookScript("OnClick", function(self)
+        BBP.UpdateImportantBuffsAndCCTables()
+        otherNpdeBuffFilterCC:SetChecked(self:GetChecked())
+    end)
+
+    pvpCC:SetScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            OpenCCSettingsWindow(pvpCC)
+        end
+    end)
+
+    local nameplateAuraKeyAuraPositionFriendly = CreateCheckbox("nameplateAuraKeyAuraPositionFriendly", "Friendly", nameplateAuraKeyAuraPositionEnabled)
+    nameplateAuraKeyAuraPositionFriendly:SetPoint("LEFT", pvpCC.text, "RIGHT", 0, 0)
     CreateTooltipTwo(nameplateAuraKeyAuraPositionFriendly, "Enable Key Auras on Friendly", "Enable Key Auras on Friendly units as well.")
+    nameplateAuraKeyAuraPositionFriendly:SetIgnoreParentScale(true)
+    nameplateAuraKeyAuraPositionFriendly:SetScale(0.7)
 
     nameplateAuraKeyAuraPositionEnabled:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
@@ -9948,8 +10002,12 @@ local function guiNameplateAuras()
         end
     end)
 
+    nameplateAuraKeyAuraPositionEnabled:HookScript("OnClick", function(self)
+        CheckAndToggleCheckboxes(self)
+    end)
+
     local nameplateKeyAuraScale = CreateSlider(nameplateAuraKeyAuraPositionEnabled, "Key Aura Size", 0.6, 2.2, 0.01, "nameplateKeyAuraScale")
-    nameplateKeyAuraScale:SetPoint("TOPLEFT", nameplateAuraKeyAuraPositionEnabled, "BOTTOMLEFT", 15, -14)
+    nameplateKeyAuraScale:SetPoint("TOPLEFT", nameplateAuraKeyAuraPositionEnabled, "BOTTOMLEFT", 20, -27)
     CreateTooltipTwo(nameplateKeyAuraScale, "Key Aura Size", "The size of Key Auras like CC and very Important Buffs.")
     nameplateKeyAuraScale:SetScale(0.7)
 
@@ -10332,7 +10390,27 @@ local function guiCVarControl()
         CheckAndToggleCheckboxes(nameplateMotion)
     end
 
-    nameplateMotion:HookScript("OnClick", function() CheckAndToggleCheckboxes(nameplateMotion) end)
+    nameplateMotion:HookScript("OnClick", function(self)
+        CheckAndToggleCheckboxes(nameplateMotion)
+        if self:GetChecked() then
+            if not BBP.StackingPopup then
+                StaticPopupDialogs["BBP_CONFIRM_STACKING_NP"] = {
+                    text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nDo you want the stacking overlap values automatically adjusted to something more reasonable than Blizzard defaults?",
+                    button1 = "Yes",
+                    button2 = "No",
+                    OnAccept = function()
+                        nameplateOverlapH:SetValue(0.50)
+                        nameplateOverlapV:SetValue(0.50)
+                        nameplateMotionSpeed:SetValue(0.03)
+                    end,
+                    timeout = 0,
+                    whileDead = true,
+                }
+                BBP.StackingPopup = true
+            end
+            StaticPopup_Show("BBP_CONFIRM_STACKING_NP")
+        end
+    end)
 
 
 
@@ -10447,8 +10525,12 @@ local function guiCVarControl()
     druidOverstacks:SetPoint("TOPLEFT", hideResourceFrame, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(druidOverstacks, "Druid: Color Berserk Overstack Combo Points Blue", "Color the Druid Berserk Overstack Combo Points blue similar to Rogue's Echoing Reprimand.")
 
+    local druidAlwaysShowCombos = CreateCheckbox("druidAlwaysShowCombos", "Druid: Always Show Combo Points", guiCVarControl)
+    druidAlwaysShowCombos:SetPoint("TOPLEFT", druidOverstacks, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(druidAlwaysShowCombos, "Druid: Always Show Combo Points", "Alway show the combo points regardless of what form you are in if you have active combo points.")
+
     local changeResourceStrata = CreateCheckbox("changeResourceStrata", "Increase resource layer level", guiCVarControl, nil, BBP.ChangeStrataOfResourceFrame)
-    changeResourceStrata:SetPoint("TOP", druidOverstacks, "BOTTOM", 0, pixelsBetweenBoxes)
+    changeResourceStrata:SetPoint("TOP", druidAlwaysShowCombos, "BOTTOM", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(changeResourceStrata, "Increase resource layer level", "Increases the frame strata of the resource frame making it show on top of nameplate instead of under (z-axis)")
 
     local nameplateResourceUnderCastbar = CreateCheckbox("nameplateResourceUnderCastbar", "Anchor resource underneath healthbar/castbar", nameplateResourceOnTarget, nil, BBP.RegisterTargetCastingEvents)
@@ -10490,7 +10572,7 @@ local function guiCVarControl()
     end)
 
     local disableCVarForceOnLogin = CreateCheckbox("disableCVarForceOnLogin", "Disable all CVar forcing", guiCVarControl)
-    disableCVarForceOnLogin:SetPoint("BOTTOM", guiCVarControl, "BOTTOM", 40, 60)
+    disableCVarForceOnLogin:SetPoint("BOTTOM", guiCVarControl, "BOTTOM", 40, 40)
     CreateTooltipTwo(disableCVarForceOnLogin, "Disable all CVar Forcing", "Disables all forcing of CVar's on login (Not recommended)", "Checkboxes and sliders adjusting CVar values will still change CVars.")
     disableCVarForceOnLogin:SetScale(1.2)
 
@@ -10523,6 +10605,11 @@ local function guiCVarControl()
     CreateTooltipTwo(nameplateOccludedAlphaMult, "Occluded Alpha", "The alpha value of nameplates that are not in line of sight.", nil, nil, "nameplateOccludedAlphaMult")
     CreateResetButton(nameplateOccludedAlphaMult, "nameplateOccludedAlphaMult", guiCVarControl)
 
+    local nameplateSelfAlpha = CreateSlider(guiCVarControl, "Personal Bar Alpha", 0, 1, 0.01, "nameplateSelfAlpha")
+    nameplateSelfAlpha:SetPoint("TOPLEFT", nameplateOccludedAlphaMult, "BOTTOMLEFT", 0, -17)
+    CreateTooltipTwo(nameplateSelfAlpha, "Personal Bar Alpha", "The alpha value of your Personal Resource Display.", nil, nil, "nameplateSelfAlpha")
+    CreateResetButton(nameplateSelfAlpha, "nameplateSelfAlpha", guiCVarControl)
+
     local enableNpNonTargetAlpha = CreateCheckbox("enableNpNonTargetAlpha", "Enable", guiCVarControl)
     CreateTooltipTwo(enableNpNonTargetAlpha, "Enable Non-Target Alpha")
 
@@ -10531,7 +10618,7 @@ local function guiCVarControl()
     enableNpNonTargetAlphaTargetOnly:SetPoint("TOPLEFT", enableNpNonTargetAlpha, "BOTTOMLEFT", 0, 6)
 
     local nameplateNonTargetAlpha = CreateSlider(enableNpNonTargetAlpha, "Non-Target Alpha", 0, 1, 0.01, "nameplateNonTargetAlpha")
-    nameplateNonTargetAlpha:SetPoint("TOPLEFT", nameplateOccludedAlphaMult, "BOTTOMLEFT", 0, -17)
+    nameplateNonTargetAlpha:SetPoint("TOPLEFT", nameplateSelfAlpha, "BOTTOMLEFT", 0, -17)
 
     enableNpNonTargetAlpha:SetPoint("LEFT", nameplateNonTargetAlpha, "RIGHT", 5, 8)
     enableNpNonTargetAlpha:HookScript("OnClick", function(self)
@@ -10543,7 +10630,7 @@ local function guiCVarControl()
     end)
 
     local nameplateCVarText = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    nameplateCVarText:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 400, -270)
+    nameplateCVarText:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 400, -320)
     nameplateCVarText:SetText("Nameplate Visibility CVars")
 
     local setCVarAcrossAllCharacters = CreateCheckbox("setCVarAcrossAllCharacters", "Force these CVars across all characters", guiCVarControl)
@@ -10849,7 +10936,7 @@ local function guiMisc()
     showGuildNames:SetPoint("TOPLEFT", settingsText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
     --CreateTooltip(showGuildNames, "*Only works when \"Hide healthbar\" setting on friendly nameplates is on.\n\n(Will add some extra settings for this soon,\ndisable in arena/bg etc,\nplease shoot me a message if you have other suggestions too)")
 
-    local guildNameScale = CreateSlider(guiMisc, "Guild Name Size", 0.2, 2, 0.01, "guildNameScale")
+    local guildNameScale = CreateSlider(guiMisc, "Guild Name Size", 0.2, 2, 0.01, "guildNameScale", nil, 90)
     guildNameScale:SetPoint("LEFT", showGuildNames.Text, "RIGHT", 5, 0)
 
     local guildNameColor = CreateCheckbox("guildNameColor", "Custom Guild Name Color", guiMisc)
@@ -10886,7 +10973,7 @@ local function guiMisc()
     showNpcTitle:SetPoint("TOPLEFT", guildNameColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(showNpcTitle, "Show NPC Titles under name/healthbar. (\"Innkeeper\" etc.)")
 
-    local npcTitleScale = CreateSlider(guiMisc, "NPC Title Size", 0.2, 2, 0.01, "npcTitleScale")
+    local npcTitleScale = CreateSlider(guiMisc, "NPC Title Size", 0.2, 2, 0.01, "npcTitleScale", nil, 90)
     npcTitleScale:SetPoint("LEFT", showNpcTitle.Text, "RIGHT", 25, 0)
 
     local npcTitleColor = CreateCheckbox("npcTitleColor", "Custom NPC Title Color", guiMisc)
@@ -11083,10 +11170,10 @@ local function guiMisc()
     end)
 
     local changeNameplateBorderSize = CreateCheckbox("changeNameplateBorderSize", "Change Nameplate Border Size", guiMisc)
-    changeNameplateBorderSize:SetPoint("TOPLEFT", showGuildNames, "BOTTOMLEFT", 400, -5)
-    local nameplateBorderSize = CreateSlider(changeNameplateBorderSize, "Nameplate Border Size", 1, 10, 1, "nameplateBorderSize")
+    changeNameplateBorderSize:SetPoint("TOPLEFT", showGuildNames, "BOTTOMLEFT", 400, 25)
+    local nameplateBorderSize = CreateSlider(changeNameplateBorderSize, "Nameplate Border Size", 0.5, 10, 0.5, "nameplateBorderSize")
     nameplateBorderSize:SetPoint("TOPLEFT", changeNameplateBorderSize, "BOTTOMLEFT", 10, -10)
-    local nameplateTargetBorderSize = CreateSlider(changeNameplateBorderSize, "Target Border Size", 1, 10, 1, "nameplateTargetBorderSize")
+    local nameplateTargetBorderSize = CreateSlider(changeNameplateBorderSize, "Target Border Size", 0.5, 10, 0.5, "nameplateTargetBorderSize")
     nameplateTargetBorderSize:SetPoint("TOPLEFT", nameplateBorderSize, "BOTTOMLEFT", 0, -17)
     CreateTooltipTwo(nameplateBorderSize, "Nameplate Border Size", "The size of nameplate borders.")
     changeNameplateBorderSize:HookScript("OnClick", function(self)
@@ -11202,7 +11289,7 @@ local function guiMisc()
     end)
 
     local customFontSizeEnabled = CreateCheckbox("customFontSizeEnabled", "Enable Custom Nameplate Font Size", guiMisc)
-    customFontSizeEnabled:SetPoint("TOPLEFT", changeNpHpBgColor, "BOTTOMLEFT", 0, -30)
+    customFontSizeEnabled:SetPoint("TOPLEFT", changeNpHpBgColor, "BOTTOMLEFT", 0, -26)
     CreateTooltipTwo(customFontSizeEnabled, "Custom Nameplate Font Size", "Change the font size on nameplates", "This setting will work in PvE for friendly name size while the font size settings on the general page adjust the scale (not allowed in PvE).\nUse this setting as a baseline for friendly name size and finetune with scale on general page for non-pve content.")
 
     local customFontSize = CreateSlider(customFontSizeEnabled, "Font Size", 2, 32, 1, "customFontSize")
@@ -11234,7 +11321,19 @@ local function guiMisc()
     end)
 
     local nameplateExtraClickHeight = CreateSlider(guiMisc, "Nameplate Extra Clickable Height", -60, 60, 1, "nameplateExtraClickHeight", "Y")
-    nameplateExtraClickHeight:SetPoint("TOPLEFT", nameplateVerticalPosition, "BOTTOMLEFT", 0, -20)
+    nameplateExtraClickHeight:SetPoint("TOPLEFT", nameplateVerticalPosition, "BOTTOMLEFT", 0, -16)
+
+
+    local personalNpTRP3Color = CreateCheckbox("personalNpTRP3Color", "TRP3: Personal Bar Color", guiMisc)
+    personalNpTRP3Color:SetPoint("TOPLEFT", enableNpVerticalPos, "BOTTOMLEFT", 0, -60)
+    CreateTooltipTwo(personalNpTRP3Color, "TRP3: Personal Bar Color", "Color the Personal Resource Display healthbar your TRP3 Color.")
+
+    local personalBarTweaks = CreateCheckbox("personalBarTweaks", "Personal Bar Tweaks", guiMisc)
+    personalBarTweaks:SetPoint("TOPLEFT", personalNpTRP3Color, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(personalBarTweaks, "Personal Bar Tweaks", "Enable to show more features on the Personal Resource Bar\n\nThis will show (if enabled):\nName\nGuild Name\nClassic Border")
+
+
+
 
     local nameplateSelfWidthResetButton = CreateFrame("Button", nil, guiMisc, "UIPanelButtonTemplate")
     nameplateSelfWidthResetButton:SetText("Default")

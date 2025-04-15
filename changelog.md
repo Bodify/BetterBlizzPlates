@@ -1,3 +1,23 @@
+# BetterBlizzPlates 1.7.9
+## Retail
+### New:
+- Druid: Always Show Combo Points (CVar Control)
+- Added "nameplateSelfAlpha" to CVar Control section. This is 0.75 by default on Blizzards side, but most people would maybe want to set it to 1.
+- Personal Bar Tweaks (Misc), shows name + guild name (if enabled) on Personal Bar Nameplate.
+- Support for TRP3 Personal Resource Bar RP Color (Misc)
+### Tweak:
+- Classic Nameplates will now have LevelFrame hidden automatically when in PvP.
+- Nameplate Border Size setting now allows minimum 0.5 pixels.
+- Added new Color Threat settings from Retail version to Classic versions.
+- Added Prototype and Yanone font to non-english clients as well, did not realize this was not the case by default.
+### Bugfix:
+- Fix level text still showing with with Classic Nameplates with Hide Level enabled.
+- Fix typo in pandemic+compacted auras logic causing lua error. 
+- Fix castbar text showing squares with castbar customization on for non-english clients.
+- Fix issue with castbar setting "Hide name during casts" causing names to stay hidden.
+## Retail, Classic & Cata
+- Color Threat tweak for DPS, should now color when you are being targeted as well due to threat API being a bit clunky? Testing this pls give feedback.
+
 # BetterBlizzPlates 1.7.8
 ## Retail
 ### New:

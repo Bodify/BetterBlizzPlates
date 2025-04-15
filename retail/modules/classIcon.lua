@@ -724,11 +724,11 @@ function BBP.SetupClassIndicatorChat()
 
 
         local chatFrame = CreateFrame("Frame")
-        if C_CVar.GetCVarBool("chatBubblesParty") then
+        if chatBubblesParty then
             chatFrame:RegisterEvent("CHAT_MSG_PARTY")
             chatFrame:RegisterEvent("CHAT_MSG_PARTY_LEADER")
         end
-        if C_CVar.GetCVarBool("chatBubbles") then
+        if chatBubbles then
             chatFrame:RegisterEvent("CHAT_MSG_SAY")
         end
 

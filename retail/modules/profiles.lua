@@ -144,3 +144,20 @@ function BBP.SnupyProfile()
         ReloadUI()
     end
 end
+
+function BBP.MythicSeason2NPCColors()
+    if InCombatLockdown() then
+        print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Leave combat to Import")
+        return
+    end
+    local importString = "!BBPDIvtUTXnu4K40g0D6hh3nzbxLDTi3GepwrrUnYjqJqmq3e80iQzyfhscoKsvzvroc(euKJqrpb5eiKtqHwxGc4tqFCuT04ypJNH7Kw8(47NVVp(4C)NgmfmWFe2F0moeN90pQaXuAklk5cwQsQnGWK8NuHrV6ejxQZokWq)nt)oWbDMm45B06F)E37EDIh88)6WdjUFQpiqaP0lpweXW4iNakdWe6izAk()h0F9dE66hMS(GK1FZrR)2CK0h4q4FF)7ZbBYUFU(rQ2hNfrXuAk5mQuLSYqx)DvGXvzX(CBlgjlabLCcMdU6txgg33HX)8KN8ICmoy9J2CvOHcMAFCyqpSqCL1jWZ(XbGXWPZyu(uYiMXcCwMPmCoO45RV)6h95akLCUgeX8gK1QUbmEmLmcmKaBuewaLhDf9T9OmMMQOLN3Lw)FjGdFGjIj9rYW0ghU6OaoloXGJ)qUDAm9hcv0LEulBc4s5uYBwq1zE1lomhGmhvgtMZPtsHyAJRNlcKPtiJLI5no0pfirA4qi2M18SVvGM5OHt(Fm8qe16ePwL50qConYi9OhEfeda9cKm5ZyWbH2QCeI3OHiE1fYT6OGqGSaZ2zOiQCr9nfJNOHLOoKmejbnEaQAFIfjFOlGuo3qRYgQQ6FlgJtSoaQYr6QIVqFipn6SfIzsnQTh6zE0Dlijua7KNkwaEHYH9a98zwKsKRUwc6k8yVX4qD0UW7rtLCMHjfvyUwAlzZoCgSIkG6BZ2zxGNkYuxtvuFAr3DGmKgLat1YQixLucFPhDH0AiVvZQ0MUKWVShlJcoI1auFvvvuAleB8w9eeHFMYvnMkCzpTnZCtNHVobYNb)9ZE2l2RQEjsbtWR50y8JLgAAJpCvRxYbCWtEz6eQMdIp0Ci60heGHfbC0Hu8RwFAIQw95WcPMeMV6ubQCTD3(sFonlHGgvZQOlwEg0UVZwyIeDx82BO1RsGmdFf5Ds20mPLxBf9MbmnYGooldYYyIgiepLZTzO8h04XA5QYdUcpTtrPNHnfx4cqwyc4ZcFBETCjw6dLCAcv7XgpDhccg44rHyRBcR4mO(O0EVxYDU6APCHCmILITgtcwuZ7P7XymtmV4fw35q9tdPgSl8k7(LLQ95E5qu8SGYWM41gJ1whThGXEQcE8z0zGMjTzeNbpE9am3hC6EMBb4zaNF3pFPIBA3JIlBIa)w)QamyJDQCzQp7sE5ikYMsb3wCd9znAvNr0zAuI6Erj5D4eYJlE)0i8opHNjWHJKRqY5pr5Oy)Tw8wRvEKcQ2BH5Cw08TVZP(YdvRW8NLtcn4d3tWeP5hFRWe7SzC37ZU(9(1EuQAhoNYZfQdbny9XS6IqP0KjW1xASmfpE0QNMclZBdjsTp((HgMjkX1fWBEqDpiA(dDVi0GETZS6vnpbAhA105msiJp)6g(1gJnJXfyWxM0Zs5PaVXXR6mwZ45mHJnUhNuOhuBq2m2QDVoo0xVU2JxYY1bKaASLvXN8OclQDyKVyiErk3doP6XORcUqR79U)i5yEucnTI9XUP6SDX47Xw4to89fXiVAYU7BZU1MY1rY9(DnlIbIMNthveP3UsltZxxP5aDyrGc)kh0AxzBC7ys2(nc9r2IZjhab5l8oqU0lUs3Z1S44CXZ2R6HLvBdDRwzD)fjxdP4(cUV0t6vRD8r3hOD8kf9ZrUpa7zQOxJeX)7!BBP"
+
+    local profileData, errorMessage, bypass = BBP.ImportProfile(importString, "colorNpcList")
+    if errorMessage then
+        print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Error importing " .. title .. ":", errorMessage)
+    else
+        BBP.deepMergeTables(BetterBlizzPlatesDB.colorNpcList, profileData)
+        BetterBlizzPlatesDB.reopenOptions = true
+        ReloadUI()
+    end
+end

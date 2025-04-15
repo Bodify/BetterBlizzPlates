@@ -232,13 +232,6 @@ local opBarriers = {
     [235450] = true, -- Prismatic Barrier
 }
 
-local sotfAuras = {
-    [774] = true,
-    [155777] = true,
-    [473919] = true,
-    [474149] = true,
-}
-
 local importantColor = {r = 0, g = 1, b = 0, a = 1}
 
 local importantBuffs = {}
@@ -1268,8 +1261,8 @@ local function CreatePandemicGlow(buff, orange)
             end
         end
     elseif buff.isCompacted then
-        local scale = nameplateAuraCompactedScale
-        if nameplateAuraCompactedSquare then
+        local scale = db.nameplateAuraCompactedScale
+        if db.nameplateAuraCompactedSquare then
             local fourfive = 4.5 * scale
             local fivefive = 6.4 * scale
             buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -fourfive, fivefive)
@@ -2500,7 +2493,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     else
         if unitAuraUpdateInfo.addedAuras ~= nil then
             for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
-                local BlizzardShouldShow = self:ShouldShowBuff(aura, auraSettings.showAll) and not C_UnitAuras.IsAuraFilteredOutByInstanceID(unit, aura.auraInstanceID, filterString)
+                local BlizzardShouldShow = self:ShouldShowBuff(aura, auraSettings.showAll) and not C_UnitAuras.IsAuraFilteredOutByInstanceID(unit, aura.auraInstanceID, filterString)-- and not (true and aura.sourceUnit ~= "player")
                 if ShouldShowBuff(unit, aura, BlizzardShouldShow) then
                     self.auras[aura.auraInstanceID] = aura;
                     aurasChanged = true;
@@ -2812,8 +2805,14 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         SetPandemicGlow(buff, aura, isPandemic)
 
         -- temp
-        if UnitFrame.sotfRejuvActive and sotfAuras[aura.spellId] then
-            isImportant = true
+        if UnitFrame.rejuvsotf then
+            if aura.spellId == 774 then
+                isImportant = true
+            end
+        elseif UnitFrame.germsotf then
+            if aura.spellId == 155777 then
+                isImportant = true
+            end
         end
 
         SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
@@ -2915,7 +2914,7 @@ function BBP.ParseAllAuras(self, forceAll, UnitFrame)
             end
             mirrorImgFrostbolt = true -- Allow this one, skip others later
         end
-        local BlizzardShouldShow = self:ShouldShowBuff(aura, forceAll)
+        local BlizzardShouldShow = self:ShouldShowBuff(aura, forceAll)-- and not (true and aura.sourceUnit ~= "player")
         local shouldShowAura, isImportant, isPandemic = ShouldShowBuff(self.unit, aura, BlizzardShouldShow, isTestModeEnabled, interrupt)
         if shouldShowAura then
             self.auras[aura.auraInstanceID] = aura;
