@@ -1125,7 +1125,7 @@ local pandemicSpells = {
         [1079] = 8,   -- Rip
         [155722] = 15, -- Rake
         [106830] = 15, -- Thrash
-        [155625] = 14, -- Moonfire
+        [155625] = 14.4, -- Moonfire
         -- Balance
         [164815] = 12, -- Sunfire
         [202347] = 24, -- Stellar Flare
@@ -1199,9 +1199,7 @@ local uaPandemic = 8
 local agonyPandemic = 10
 
 local function GetPandemicThresholds(buff)
-    local minBaseDuration = pandemicSpells[buff.spellID] or buff.duration
-    local baseDuration = math.max(buff.duration, minBaseDuration)  -- Ensure the duration doesn't go below the min base duration
-
+    local baseDuration = pandemicSpells[buff.spellID] -- The pandemic mechanic caps the total duration of any follow-up debuff to 130% of its base duration and isn't affected by the total duration of the current debuff
     -- Specific pandemic logic for Agony with talent
     if buff.spellID == 980 and IsPlayerSpell(453034) then
         -- For Agony with talent, return special threshold
@@ -1209,6 +1207,16 @@ local function GetPandemicThresholds(buff)
     elseif buff.spellID == 316099 and IsPlayerSpell(459376) then
         -- Unstable Affliction with talent
         return uaPandemic, baseDuration * defaultPandemic
+    elseif buff.spellID == 1079 then
+        -- Calculate Rip pandemic threshold depending on the players combo points
+        local comboPoints = UnitPower("player", 4)
+        local duration
+        if comboPoints == 0 then
+            duration = baseDuration
+        else
+            duration = baseDuration + (UnitPower("player", 4) - 1) * 4
+        end
+        return nil, duration * defaultPandemic
     elseif pandemicSpells[buff.spellID] then
         -- Use 30% of the greater value (dynamic or minimum) for Pandemic spells
         return nil, baseDuration * defaultPandemic
