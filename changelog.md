@@ -2,6 +2,8 @@
 ## Retail:
 ### New:
 - Added option to keep LevelFrame shown for Classic Nameplates in PvP (Right-click Hide Level setting)
+### Tweak:
+- Fix some pandemic logic and added special logic for Rip. Thank you to NicolasYD for fixing this <3
 ### Bugfix:
 - Fix Personal Bar Alpha slider not actually being hooked up properly to adjust the CVar.
 - Fix level showing on lvl 0 interactable nameplates (untested so hopefully)
