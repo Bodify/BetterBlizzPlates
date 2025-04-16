@@ -3,6 +3,7 @@
 ### New:
 - Added option to keep LevelFrame shown for Classic Nameplates in PvP (Right-click Hide Level setting)
 ### Bugfix:
+- Fix Personal Bar Alpha slider not actually being hooked up properly to adjust the CVar.
 - Fix level showing on lvl 0 interactable nameplates (untested so hopefully)
 ## All versions:
 ### Tweak:

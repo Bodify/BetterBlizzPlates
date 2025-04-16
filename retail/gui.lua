@@ -922,6 +922,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BBP.AdjustNameplateVerticalPosition()
                 elseif element == "nameplateSelfAlpha" then
                     BetterBlizzPlatesDB.nameplateSelfAlpha = value
+                    if not BBP.checkCombatAndWarn() then
+                        C_CVar.SetCVar(element, value)
+                    end
                 elseif element == "partyPointerScale" then
                     BetterBlizzPlatesDB.partyPointerScale = value
                 elseif element == "partyPointerHealerScale" then
