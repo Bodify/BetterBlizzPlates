@@ -801,6 +801,11 @@ function BBP.ResetTotemList()
     BetterBlizzPlatesDB.totemIndicatorNpcList = defaultSettings.totemIndicatorNpcList
 end
 
+
+function BBPrint(msg)
+    print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: "..msg)
+end
+
 local cvarList = {
     "nameplateShowAll",
     "nameplateOverlapH",
@@ -3069,13 +3074,13 @@ function BBP.ColorThreat(frame)
             end
         end
     else
-        local hasAggro = isTanking or (threatStatus and threatStatus > 1)
+        local hasAggro = isTanking-- or (threatStatus and threatStatus > 1)
         if config.npcHealthbarColor and not hasAggro then
             return
         end
         r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
 
-        if ( hasAggro ) or UnitIsUnit(frame.unit.."target", "player") then
+        if hasAggro or UnitIsUnit(frame.unit.."target", "player") then
             r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB)
         end
     end
@@ -4729,6 +4734,10 @@ local function UpdateLevelFrame(frame)
         if unitLevel == -1 then
             frame.LevelFrame.skull:Show()
             frame.LevelFrame.text:Hide()
+        elseif unitLevel == 0 then
+            frame.LevelFrame:Hide()
+            frame.LevelFrame.skull:Hide()
+            frame.LevelFrame.text:Hide()
         else
             frame.LevelFrame.skull:Hide()
         end
@@ -4811,6 +4820,11 @@ local function CreateBetterClassicHealthbarBorder(frame)
         frame.ClassicLevelFrame.text:SetText(unitLevel ~= -1 and unitLevel or "")
         if unitLevel == -1 then
             frame.ClassicLevelFrame.skull:Show()
+            frame.ClassicLevelFrame.text:Hide()
+        elseif unitLevel == 0 then
+            frame.ClassicLevelFrame:Hide()
+            frame.ClassicLevelFrame.skull:Hide()
+            frame.ClassicLevelFrame.text:Hide()
         else
             frame.ClassicLevelFrame.skull:Hide()
         end
@@ -4819,7 +4833,7 @@ local function CreateBetterClassicHealthbarBorder(frame)
     local height = frame.healthBar:GetHeight()
     local bottomOffset = -((0.455) * height - 1.09)
     local topOffset = (2 * height) - 1
-    local hideLevel = config.hideLevelFrame or BBP.isInPvP or (info.isSelf and config.personalBarTweaks)
+    local hideLevel = config.hideLevelFrame or (BBP.isInPvP and not BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP) or (info.isSelf and config.personalBarTweaks)
     local rightXOffset = hideLevel and 27.9 or 20.9
 
     if hideLevel then
@@ -5868,6 +5882,9 @@ local function UpdateInstanceStatus()
     BBP.isInBg = inInstance and (instanceType == "pvp")
     BBP.isInPvP = BBP.isInBg or BBP.isInArena
     BBP.IsInCompStomp = IsInBrawlCompStomp()
+
+    local _, _, _, _, _, _, _, instanceMapID = GetInstanceInfo()
+    BBP.isInAV = instanceMapID == 30 -- Alterac Valley
 end
 
 -- Function to update the current class role
@@ -5888,7 +5905,7 @@ ClassRoleChecker:RegisterEvent("GROUP_ROSTER_UPDATE")
 ClassRoleChecker:SetScript("OnEvent", UpdateClassRoleStatus)
 
 local function ThreatSituationUpdate(self, event, unit)
-    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
+    if BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and (not BBP.isInPvP or BBP.isInAV))) then
         if event == "UNIT_THREAT_SITUATION_UPDATE" then
             for _, nameplate in pairs(C_NamePlate.GetNamePlates(issecure())) do
                 local frame = nameplate.UnitFrame

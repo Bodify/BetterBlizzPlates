@@ -1,3 +1,14 @@
+# BetterBlizzPlates 1.7.9b
+## Retail:
+### New:
+- Added option to keep LevelFrame shown for Classic Nameplates in PvP (Right-click Hide Level setting)
+### Bugfix:
+- Fix level showing on lvl 0 interactable nameplates (untested so hopefully)
+## All versions:
+### Tweak:
+- Updated Threat Color to work in Alterac Valley if "Always on" is enabled (usually disabled in PvP automatically)
+- Another tweak to Threat Color based on feedback.
+
 # BetterBlizzPlates 1.7.9
 ## Retail
 ### New:

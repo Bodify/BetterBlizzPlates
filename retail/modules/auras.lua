@@ -2805,13 +2805,24 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         SetPandemicGlow(buff, aura, isPandemic)
 
         -- temp
-        if UnitFrame.rejuvsotf then
-            if aura.spellId == 774 then
-                isImportant = true
-            end
-        elseif UnitFrame.germsotf then
-            if aura.spellId == 155777 then
-                isImportant = true
+        if BBP.sotfWA then
+            if BBP.sotfAurasAreActive then
+                local unitGUID = UnitGUID(self.unit)
+                local germAuraID = BBP.sotfGerm[unitGUID]
+                local rejuvAuraID = BBP.sotfRejuv[unitGUID]
+                if buff.spellID == germAuraID or buff.spellID == rejuvAuraID then
+                    isImportant = true
+                else
+                    if not germAuraID and not rejuvAuraID then
+                        if buff.spellID == 155777 or buff.spellID == 774 then
+                            buff.pinIcon = true
+                        end
+                    end
+                end
+            else
+                if buff.spellID == 155777 or buff.spellID == 774 then
+                    buff.pinIcon = true
+                end
             end
         end
 

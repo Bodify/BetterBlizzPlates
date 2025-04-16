@@ -920,6 +920,8 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "nameplateVerticalPosition" then
                     BetterBlizzPlatesDB.nameplateVerticalPosition = value
                     BBP.AdjustNameplateVerticalPosition()
+                elseif element == "nameplateSelfAlpha" then
+                    BetterBlizzPlatesDB.nameplateSelfAlpha = value
                 elseif element == "partyPointerScale" then
                     BetterBlizzPlatesDB.partyPointerScale = value
                 elseif element == "partyPointerHealerScale" then
@@ -1620,8 +1622,7 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
-        end
-        if title == "Hide Enemy Castbar" then
+        elseif title == "Hide Enemy Castbar" then
             local showOnTarget = BetterBlizzPlatesDB.alwaysHideEnemyCastbarShowTarget
             local tooltipText = "|cff32f795Right-click to keep them enabled on your Target.|r"
 
@@ -1635,8 +1636,7 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
-        end
-        if title == "Hide Friendly Castbar" then
+        elseif title == "Hide Friendly Castbar" then
             local showOnTarget = BetterBlizzPlatesDB.alwaysHideFriendlyCastbarShowTarget
             local tooltipText = "|cff32f795Right-click to keep them enabled on your Target.|r"
 
@@ -1650,7 +1650,28 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Hide Level" and BetterBlizzPlatesDB.classicNameplates then
+            local showInPvP = BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP
+            local tooltipText = "\n|cff32f795Right-click to show Level in PvP |r"
+
+            if showInPvP then
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Enable Key Auras" then
+            local moveBuffs = BetterBlizzPlatesDB.keyAurasImportantBuffsEnabled
+            local tooltipText = "\n\n|cff32f795Right-click to only move CC and not important buffs.|r"
+
+            if moveBuffs then
+                tooltipText = tooltipText .. "\n|cff32f795Moving CC & Important Buffs |A:ParagonReputation_Checkmark:15:15|a"
+            else
+                tooltipText = tooltipText .. "\n|cFFFFD100Moving CC but not Important Buffs |A:GarrMission_CounterHalfCheck:15:15|a"
+            end
+
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
+
         -- Set the subtext
         if subText then
             GameTooltip:AddLine("____________________________", 0.8, 0.8, 0.8, true)
@@ -4796,6 +4817,19 @@ local function guiGeneralTab()
     local hideLevelFrame = CreateCheckbox("hideLevelFrame", "Hide Lvl", BetterBlizzPlates)
     hideLevelFrame:SetPoint("LEFT", classicNameplates.text, "RIGHT", 0, 0)
     CreateTooltipTwo(hideLevelFrame, "Hide Level", "Hide the level display.")
+    hideLevelFrame:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            if not BetterBlizzPlatesDB.classicNameplates then return end
+            if BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP == nil then
+                BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP = true
+            else
+                BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP = not BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP
+            end
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+        end
+    end)
 
     classicNameplates:HookScript("OnClick", function(self)
         if self:GetChecked() then
@@ -9953,7 +9987,7 @@ local function guiNameplateAuras()
 
     local nameplateAuraKeyAuraPositionEnabled = CreateCheckbox("nameplateAuraKeyAuraPositionEnabled", "Enable Key Auras", enableNameplateAuraCustomisation)
     nameplateAuraKeyAuraPositionEnabled:SetPoint("TOPLEFT", nameplateAuraCompactedSquare, "BOTTOMLEFT", 5, -12)
-    CreateTooltipTwo(nameplateAuraKeyAuraPositionEnabled, "Enable Key Auras", "Show and move CC and Important Buffs to the right of healthbar similar to BigDebuffs.\n\n|cff32f795Right-click to only move CC and not important buffs.|r", "All CC will be moved, but unlike BigDebuffs, this location is intended only for a select number of very important buffs, such as immunities.\n\nSmaller, less urgent buffs will either be displayed in their normal position (if enabled) or hidden completely (if disabled).\n\nExpect to a see a lot of tweaks to this. WIP.")
+    CreateTooltipTwo(nameplateAuraKeyAuraPositionEnabled, "Enable Key Auras", "Show and move CC and Important Buffs to the right of healthbar similar to BigDebuffs.", "All CC will be moved, but unlike BigDebuffs, this location is intended only for a select number of very important buffs, such as immunities.\n\nSmaller, less urgent buffs will either be displayed in their normal position (if enabled) or hidden completely (if disabled).\n\nExpect to a see a lot of tweaks to this. WIP.")
     nameplateAuraKeyAuraPositionEnabled:SetScale(1.4)
 
     local pvpCC = CreateFrame("CheckButton", nil, nameplateAuraKeyAuraPositionEnabled, "InterfaceOptionsCheckButtonTemplate")
@@ -9993,8 +10027,9 @@ local function guiNameplateAuras()
     nameplateAuraKeyAuraPositionEnabled:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
             BetterBlizzPlatesDB["keyAurasImportantBuffsEnabled"] = not BetterBlizzPlatesDB["keyAurasImportantBuffsEnabled"]
-            local setting = BetterBlizzPlatesDB["keyAurasImportantBuffsEnabled"] and "|cff32f795Moving CC & Important Buffs" or "|cFFFF5555Moving CC but not Important Buffs"
-            RefreshTooltip(nameplateAuraKeyAuraPositionEnabled, "Enable Key Auras", "Show and move CC and Important Buffs to the right of healthbar similar to BigDebuffs.\n\n|cff32f795Right-click to only move CC and not important buffs.|r\n" .. setting, "All CC will be moved, but unlike BigDebuffs, this location is intended only for a select number of very important buffs, such as immunities. Smaller, less urgent buffs will either be displayed in their normal position (if enabled) or hidden completely (if disabled).\n\nExpect to a see a lot of tweaks to this. WIP.")
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
             BBP.UpdateImportantBuffsAndCCTables()
             for k, namePlate in pairs(C_NamePlate.GetNamePlates(false)) do
                 BBP.On_NpRefreshOnce(namePlate.UnitFrame)

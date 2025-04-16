@@ -2483,13 +2483,13 @@ function BBP.ColorThreat(frame)
             end
         end
     else
-        local hasAggro = isTanking or (threatStatus and threatStatus > 1)
+        local hasAggro = isTanking-- or (threatStatus and threatStatus > 1)
         if config.npcHealthbarColor and not hasAggro then
             return
         end
         r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
 
-        if ( hasAggro ) or UnitIsUnit(frame.unit.."target", "player") then
+        if hasAggro or UnitIsUnit(frame.unit.."target", "player") then
             r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB)
         end
     end
@@ -3421,7 +3421,7 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         BBP.ColorNpcHealthbar(frame)
     end
 
-    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
+    if BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and (not BBP.isInPvP or BBP.isInAV))) then
         BBP.ColorThreat(frame)
     end
 
@@ -3573,7 +3573,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 
-    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
+    if BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and (not BBP.isInPvP or BBP.isInAV))) then
         BBP.ColorThreat(frame)
     end
 
@@ -5175,6 +5175,9 @@ local function UpdateInstanceStatus()
     BBP.isInArena = inInstance and (instanceType == "arena")
     BBP.isInBg = inInstance and (instanceType == "pvp")
     BBP.isInPvP = BBP.isInBg or BBP.isInArena
+
+    local _, _, _, _, _, _, _, instanceMapID = GetInstanceInfo()
+    BBP.isInAV = instanceMapID == 30 -- Alterac Valley
 end
 
 -- Function to update the current class role
@@ -5218,7 +5221,7 @@ ClassRoleChecker:RegisterEvent("GROUP_ROSTER_UPDATE")
 ClassRoleChecker:SetScript("OnEvent", UpdateClassRoleStatus)
 
 local function ThreatSituationUpdate(self, event, unit)
-    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
+    if BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and (not BBP.isInPvP or BBP.isInAV))) then
         if event == "UNIT_THREAT_SITUATION_UPDATE" then
             for _, nameplate in pairs(C_NamePlate.GetNamePlates(issecure())) do
                 local frame = nameplate.UnitFrame
