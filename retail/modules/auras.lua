@@ -2821,7 +2821,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
                 if buff.spellID == germAuraID or buff.spellID == rejuvAuraID then
                     isImportant = true
                 else
-                    if not germAuraID and not rejuvAuraID then
+                    if not germAuraID or not rejuvAuraID then
                         if buff.spellID == 155777 or buff.spellID == 774 then
                             buff.pinIcon = true
                         end
