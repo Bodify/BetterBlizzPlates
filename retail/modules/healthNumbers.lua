@@ -1,17 +1,28 @@
 -- Helper function to format health numbers
 local function FormatHealthValue(health, useMillions, showDecimal)
     local formatString
-    if health >= 1000000 then
+
+    if health >= 1000000000 then
+        -- Billion
+        formatString = showDecimal and "%.1fb" or "%.0fb"
+        return string.format(formatString, health / 1000000000)
+
+    elseif health >= 1000000 then
         if useMillions then
+            -- Million
             formatString = showDecimal and "%.1fm" or "%.0fm"
             return string.format(formatString, health / 1000000)
         else
+            -- Thousands fallback
             formatString = showDecimal and "%.0fk" or "%.0fk"
-            return string.format(formatString, health / 1000)  -- Format as thousands, not millions
+            return string.format(formatString, health / 1000)
         end
+
     elseif health >= 1000 then
+        -- Thousands
         formatString = showDecimal and "%.1fk" or "%.0fk"
         return string.format(formatString, health / 1000)
+
     else
         return tostring(health)
     end

@@ -94,6 +94,9 @@ local defaultSettings = {
     levelFrameFontSize = 12,
     nameplateExtraClickHeight = 0,
     nameplateVerticalPosition = 0,
+
+    nameplateShadowRGB = {0,0,0,1},
+    nameplateShadowHighlightRGB = {1,1,1,1},
     --health numbers
     healthNumbersPlayers = true,
     healthNumbersNpcs = true,
@@ -3582,7 +3585,9 @@ local function NameplateShadowAndMouseoverHighlight(frame)
     local onlyShowHighlight = BetterBlizzPlatesDB.onlyShowHighlightedNpShadow
     local keepTargetHighlighted = BetterBlizzPlatesDB.keepNpShadowTargetHighlighted
     local healthVisible = frame.HealthBarsContainer:GetAlpha() ~= 0 and frame.healthBar:IsShown() and frame.healthBar:GetWidth() > 5
-    local shadowAlpha = (not healthVisible and 0) or onlyShowHighlight and 0 or 1
+    local r,g,b,a = unpack(BetterBlizzPlatesDB.nameplateShadowRGB)
+    local hlR,hlG,hlB,hlA = unpack(BetterBlizzPlatesDB.nameplateShadowHighlightRGB)
+    local shadowAlpha = (not healthVisible and 0) or onlyShowHighlight and 0 or a
     local onlyOnTarget = BetterBlizzPlatesDB.showNameplateShadowOnlyTarget
 
     -- Create the highlight texture directly on the frame if it doesn't exist
@@ -3615,18 +3620,18 @@ local function NameplateShadowAndMouseoverHighlight(frame)
     if onlyOnTarget then
         if UnitIsUnit("target", frame.unit) then
             if keepTargetHighlighted and healthVisible then
-                frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+                frame.BBPmouseoverTex:SetVertexColor(hlR, hlG, hlB, hlA)
             else
-                frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
+                frame.BBPmouseoverTex:SetVertexColor(r, g, b, shadowAlpha)
             end
         else
             frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, 0)
         end
     else
         if keepTargetHighlighted and UnitIsUnit("target", frame.unit) and healthVisible then
-            frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+            frame.BBPmouseoverTex:SetVertexColor(hlR, hlG, hlB, hlA)
         else
-            frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
+            frame.BBPmouseoverTex:SetVertexColor(r, g, b, shadowAlpha)
         end
     end
 end
@@ -3645,15 +3650,17 @@ local function StartPeriodicCheck()
                 local frame = nameplate.UnitFrame
                 if frame and frame.BBPmouseoverTex then
                     local healthVisible = frame.HealthBarsContainer:GetAlpha() ~= 0 and frame.healthBar:IsShown() and frame.healthBar:GetWidth() > 5
-                    local shadowAlpha = (not healthVisible and 0) or onlyShowHighlight and 0 or 1
+                    local r,g,b,a = unpack(BetterBlizzPlatesDB.nameplateShadowRGB)
+                    local hlR,hlG,hlB,hlA = unpack(BetterBlizzPlatesDB.nameplateShadowHighlightRGB)
+                    local shadowAlpha = (not healthVisible and 0) or onlyShowHighlight and 0 or a
                     local onlyOnTarget = BetterBlizzPlatesDB.showNameplateShadowOnlyTarget
                     if BetterBlizzPlatesDB.keepNpShadowTargetHighlighted and UnitIsUnit("target", frame.unit) and healthVisible then
-                        frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+                        frame.BBPmouseoverTex:SetVertexColor(hlR, hlG, hlB, hlA)
                     else
                         if onlyOnTarget and not UnitIsUnit(frame.unit, "target") then
-                            frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, 0)
+                            frame.BBPmouseoverTex:SetVertexColor(r, g, b, 0)
                         else
-                            frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
+                            frame.BBPmouseoverTex:SetVertexColor(r, g, b, shadowAlpha)
                         end
                     end
                 end
@@ -3681,16 +3688,18 @@ local function EnableMouseoverChecker()
                     local isTarget = UnitIsUnit(frame.unit, "target")
                     local healthVisible = frame.HealthBarsContainer:GetAlpha() ~= 0 and frame.healthBar:IsShown() and frame.healthBar:GetWidth() > 5
                     local onlyOnTarget = BetterBlizzPlatesDB.showNameplateShadowOnlyTarget
+                    local r,g,b,a = unpack(BetterBlizzPlatesDB.nameplateShadowRGB)
+                    local hlR,hlG,hlB,hlA = unpack(BetterBlizzPlatesDB.nameplateShadowHighlightRGB)
 
                     if (isMouseover or (isTarget and BetterBlizzPlatesDB.keepNpShadowTargetHighlighted)) and healthVisible then
-                        frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+                        frame.BBPmouseoverTex:SetVertexColor(hlR, hlG, hlB, hlA)
                     else
                         if onlyOnTarget and not UnitIsUnit(frame.unit, "target") then
                             frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, 0)
                         else
                             local onlyShowHighlight = BetterBlizzPlatesDB.onlyShowHighlightedNpShadow
-                            local shadowAlpha = (not healthVisible and 0) or onlyShowHighlight and 0 or 1
-                            frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, shadowAlpha)
+                            local shadowAlpha = (not healthVisible and 0) or onlyShowHighlight and 0 or a
+                            frame.BBPmouseoverTex:SetVertexColor(r, g, b, shadowAlpha)
                         end
                     end
                 end
@@ -4239,7 +4248,10 @@ local function HandleNamePlateRemoved(unit)
         frame.selectionHighlight:SetAlpha(0.22)
     end
 
-    frame.castHiddenName = nil
+    if frame.castHiddenName then
+        frame.castHiddenName = nil
+        CompactUnitFrame_UpdateName(frame)
+    end
 
     if frame.needsRecolor then
         BBP.CompactUnitFrame_UpdateHealthColor(frame, true)

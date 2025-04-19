@@ -301,7 +301,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 if frame:IsForbidden() then return end
                 if frame.castHiddenName then
                     frame.castHiddenName = nil
-                    BBP.ConsolidatedUpdateName(frame)
+                    CompactUnitFrame_UpdateName(frame)
                 end
             end)
             castBar.hideNameWhileCasting = true
@@ -771,7 +771,7 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                     end
 
                     local castbarQuickHide = BetterBlizzPlatesDB.castbarQuickHide
-                    if castbarQuickHide then
+                    if castbarQuickHide or BetterBlizzPlatesDB.hideCastbar then
                         local nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" and BetterBlizzPlatesDB.nameplateResourceUnderCastbar
                         frame.castBar:Show()
 

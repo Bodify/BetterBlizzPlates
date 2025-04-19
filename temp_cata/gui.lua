@@ -1469,7 +1469,7 @@ local function CreateTooltip(widget, tooltipText, anchor, cvarName)
     end)
 end
 
-local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarName, cvarName2)
+local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarName, cvarName2, category)
     widget:SetScript("OnEnter", function(self)
         -- Clear the tooltip before showing new information
         GameTooltip:ClearLines()
@@ -1519,6 +1519,11 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
                 end
             end
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        end
+
+        if category then
+            GameTooltip:AddLine("")
+            GameTooltip:AddLine("|A:shop-games-magnifyingglass:17:17|a Setting located in "..category.." section.", 0.4, 0.8, 1, true)
         end
         GameTooltip:Show()
     end)

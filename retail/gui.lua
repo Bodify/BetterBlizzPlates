@@ -1692,7 +1692,7 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
 
         if category then
             GameTooltip:AddLine("")
-            GameTooltip:AddLine("|A:shop-games-magnifyingglass:17:17|a Setting located in "..category.." section.", 0.2, 1, 0.6, true)
+            GameTooltip:AddLine("|A:shop-games-magnifyingglass:17:17|a Setting located in "..category.." section.", 0.4, 0.8, 1, true)
         end
 
         GameTooltip:Show()
@@ -11062,16 +11062,26 @@ local function guiMisc()
 
     local showNameplateShadow = CreateCheckbox("showNameplateShadow", "Nameplate Shadow", guiMisc)
     showNameplateShadow:SetPoint("TOPLEFT", hideTempHpLoss, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(showNameplateShadow, "Nameplate Shadow", "Show a shadow behind nameplates.")
+    CreateTooltipTwo(showNameplateShadow, "Nameplate Shadow", "Show a shadow behind nameplates.\n\n|cff32f795Right-click to change Color.|r")
     showNameplateShadow:HookScript("OnClick", function()
         StaticPopup_Show("BBP_CONFIRM_RELOAD")
+    end)
+    showNameplateShadow:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            OpenColorOptions(BetterBlizzPlatesDB.nameplateShadowRGB, BBP.RefreshAllNameplates)
+        end
     end)
 
     local highlightNpShadowOnMouseover = CreateCheckbox("highlightNpShadowOnMouseover", "Highlight Shadow on Mouseover", guiMisc)
     highlightNpShadowOnMouseover:SetPoint("LEFT", showNameplateShadow.text, "RIGHT", 0, 6)
-    CreateTooltipTwo(highlightNpShadowOnMouseover, "Highlight Shadow on Mouseover", "Highlight the Shadow white on Mouseover.")
+    CreateTooltipTwo(highlightNpShadowOnMouseover, "Highlight Shadow on Mouseover", "Highlight the Shadow white on Mouseover.\n\n|cff32f795Right-click to change Color.|r")
     highlightNpShadowOnMouseover:HookScript("OnClick", function()
         StaticPopup_Show("BBP_CONFIRM_RELOAD")
+    end)
+    highlightNpShadowOnMouseover:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            OpenColorOptions(BetterBlizzPlatesDB.nameplateShadowHighlightRGB, BBP.RefreshAllNameplates)
+        end
     end)
 
     local showNameplateShadowOnlyTarget = CreateCheckbox("showNameplateShadowOnlyTarget", "Target", guiMisc)

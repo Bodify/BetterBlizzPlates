@@ -1,3 +1,17 @@
+# BetterBlizzPlates 1.7.9c
+## Retail:
+### New:
+- Color settings for Nameplate Shadow and its Highlight (Misc) - Rightclick to change its color from black/white to any color.
+### Tweak:
+- Health Numbers formatting now show billions as well.
+- Revert last updates pandemic logic changes. Accepting this update before bed and thorough testing was too hasty of me and it is less optimal than the old code. Will see if maybe I can look into it later.
+- Fix it so the "Hide castbar" feature does not instantly hide castbar if "Show who interrupted" is enabled and someone got kicked.
+- Added Stealth (Rogue, druid, hunter camo, invis) to key auras. Mostly to easier see teammates status on Class Indicator.
+### Bugfix:
+- Fixed "Hide name while casting" setting sometimes still not showing name again after cast is finished.
+
+
+
 # BetterBlizzPlates 1.7.9b
 ## Retail:
 ### New:

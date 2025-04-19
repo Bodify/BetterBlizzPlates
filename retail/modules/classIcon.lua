@@ -701,8 +701,8 @@ local function FadeClassIcon(name, fade)
 end
 
 local function CalculateFadeTime(msg)
-    local base = 2.5
-    local perChar = 0.05
+    local base = 3
+    local perChar = 0.1
     local length = string.len(msg or "")
     return base + (length * perChar)
 end

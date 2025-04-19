@@ -328,6 +328,13 @@ local ogKeyAuraList = {
     [199450] = true,
     [212552] = true,
 
+    [32612] = true,
+    [5215] = true,
+    [58984] = true,
+    [110960] = true,
+    [199483] = true,
+    [414664] = true,
+
     [212182] = true, -- smoke
     [359053] = true, -- smoke
 }
