@@ -6,9 +6,8 @@ function BBP.InstantComboPoints()
 
     local function UpdateRogueComboPoints(self)
         if self:IsForbidden() then return end
-        local unit = self.unit
-        local comboPoints = UnitPower(unit, self.powerType)
-        local chargedPowerPoints = GetUnitChargedPowerPoints(unit) or {}
+        local comboPoints = UnitPower("player", self.powerType)
+        local chargedPowerPoints = GetUnitChargedPowerPoints("player") or {}
 
         for i, point in ipairs(self.classResourceButtonTable) do
             local isFull = i <= comboPoints
@@ -46,8 +45,7 @@ function BBP.InstantComboPoints()
 
     local function UpdateDruidComboPoints(self)
         if self:IsForbidden() then return end
-        local unit = self.unit
-        local comboPoints = UnitPower(unit, self.powerType)
+        local comboPoints = UnitPower("player", self.powerType)
 
         for i, point in ipairs(self.classResourceButtonTable) do
             local isFull = i <= comboPoints
@@ -67,8 +65,7 @@ function BBP.InstantComboPoints()
 
     local function UpdateMonkChi(self)
         if self:IsForbidden() then return end
-        local unit = self.unit
-        local numChi = UnitPower(unit, self.powerType)
+        local numChi = UnitPower("player", self.powerType)
 
         for i, point in ipairs(self.classResourceButtonTable) do
             local isFull = i <= numChi
@@ -90,8 +87,7 @@ function BBP.InstantComboPoints()
 
     local function UpdateArcaneCharges(self)
         if self:IsForbidden() then return end
-        local unit = self.unit
-        local numCharges = UnitPower(unit, self.powerType, true)
+        local numCharges = UnitPower("player", self.powerType, true)
 
         for i, point in ipairs(self.classResourceButtonTable) do
             local isFull = i <= numCharges

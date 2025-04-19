@@ -1,3 +1,10 @@
+# BetterBlizzPlates 1.7.9d
+## Retail:
+### Bugfix:
+- Fix issue in Instant Combo Points sometimes causing a lua error.
+- Fix non-english text on "Target Name" for castbar.
+
+
 # BetterBlizzPlates 1.7.9c
 ## Retail:
 ### New:

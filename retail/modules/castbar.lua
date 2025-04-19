@@ -689,7 +689,12 @@ function BBP.UpdateNameplateTargetText(frame, unit)
             frame.TargetText:SetPoint("TOP", frame.castBar, "BOTTOM", 0, 0)  -- Set anchor point for friendly
         end
         local npTextSize = BetterBlizzPlatesDB.npTargetTextSize
-        BBP.SetFontBasedOnOption(frame.TargetText, (useCustomFont and (npTextSize or 11)) or (npTextSize or 12))
+        if useCustomFont then
+            BBP.SetFontBasedOnOption(frame.TargetText, (useCustomFont and (npTextSize or 11)) or (npTextSize or 12))
+        else
+            local f,s,o = frame.TargetText:GetFont()
+            frame.TargetText:SetFont(f,12,"OUTLINE")
+        end
     else
         frame.TargetText:SetText("")
     end
