@@ -1,3 +1,27 @@
+# BetterBlizzPlates 1.8.0
+## Retail:
+### New:
+- Nameplate Auras: New subsetting for "Blizzard Default Filter". Lets you keep the Default Blizzard Filter but hide others auras. Similar to the "Only Mine" filter but doesn't add trash auras that are yours that you need to blacklist.
+- Party Pointer: 13 more textures to pick from in the Advanced Settings Section. The last option lets you enter a custom atlas texture too.
+- Hide Friendly Healthbar setting now has a "Show Pet" subsetting by shift+rightclicking to allow pet to still be shown.
+### Tweak:
+- Made CC show on top of Party Pointer as well.
+- Hide Friendly Healthbar NPCs setting now also works in PvE Dungeons and there is a new right-click setting on the same checkbox that you can enable if you want npc healthbars to be kept shown in PvE only.
+- Castbar Customizations' "Change background texture" setting made it so the background was red on un-interruptible casts, despite the color setting. This was only intended temporarily until settings got made but was forgotten about. This is now off by default but can still be enabled again by right-clicking the color button in /bbp -> Castbar -> Color button next to "Change background texture".
+### Bugfix:
+- Fix Class Indicators Pet setting being dependant on pin mode by accident.
+- Fix "Purgeable" aura filter causing non-purgeable buffs from the "PvP Buffs" filter to not show, this was unintended.
+- Fix issue with Fade NPCs + Hide Friendly NPC Healthbar causing frame to get completely hidden instead of its set value.
+## Retail, Cata, Classic
+### New:
+- Threat Color: DPS/Heal: "Targeted" color. This color kicks in when you are targeted but dont have aggro. Default same color as Full Aggro but now you have the option to change it.
+### Tweak:
+- Cata/Era: Due to Nameplate Class Color CVar being crazy wonky (Blizzard handles this, not BBP) I have added a tweak that should force Blizzard to Class Color them if the setting is enabled. However this will not be able to fix it for friendly nameplates in PvE instances due to restrictions. If you are having issues with this you may have to clear your WTF folder or even do a fresh install. I could not figure out the cause of this rare bug other than it being from Blizzard.
+### Bugfix:
+- Totem Indicator was not able to detect NPC ID on players own Pet and possibly some other cases too, that is now fixed.
+
+
+
 # BetterBlizzPlates 1.7.9d
 ## Retail:
 ### Bugfix:

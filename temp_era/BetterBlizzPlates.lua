@@ -737,6 +737,10 @@ local function InitializeSavedVariables()
         BetterBlizzPlatesDB.alwaysHideFriendlyCastbar = BetterBlizzPlatesDB.hideFriendlyCastbar or false
     end
 
+    if BetterBlizzPlatesDB.dpsOrHealTargetAggroColorRGB == nil then
+        BetterBlizzPlatesDB.dpsOrHealTargetAggroColorRGB = BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB or {1, 0, 0, 1}
+    end
+
     for key, defaultValue in pairs(defaultSettings) do
         if BetterBlizzPlatesDB[key] == nil then
             BetterBlizzPlatesDB[key] = defaultValue
@@ -1233,7 +1237,7 @@ end
 
 -- Extracts NPC ID from GUID
 function BBP.GetNPCIDFromGUID(guid)
-    return tonumber(string.match(guid, "Creature%-.-%-.-%-.-%-.-%-(.-)%-"))
+    return tonumber(guid:match("%-([0-9]+)%-%x+$"))
 end
 
 function BBP.GetNameplate(unit)
@@ -2457,10 +2461,13 @@ function BBP.ColorThreat(frame)
         if config.npcHealthbarColor and not hasAggro then
             return
         end
-        r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
 
-        if hasAggro or UnitIsUnit(frame.unit.."target", "player") then
+        if hasAggro then
             r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB)
+        elseif UnitIsUnit(frame.unit.."target", "player") then
+            r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealTargetAggroColorRGB)
+        else
+            r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
         end
     end
 
@@ -3514,6 +3521,9 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 			r, g, b = healthBarColorOverride.r, healthBarColorOverride.g, healthBarColorOverride.b;
 		else
 			--Try to color it by class.
+            if (not UnitIsFriend("player", frame.unit) and BetterBlizzPlatesDB.ShowClassColorInNameplate) or (UnitIsFriend("player", frame.unit) and BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate) then
+                frame.optionTable.useClassColors = true
+            end
 			local localizedClass, englishClass = UnitClass(frame.unit);
 			local classColor = RAID_CLASS_COLORS[englishClass];
             if englishClass == "SHAMAN" then

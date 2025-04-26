@@ -2357,10 +2357,16 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
             else
                 if auraWhitelisted then return true end
 
-                if filterImportantBuffs and not importantBuffs[spellId] then
-                    if filterPurgeable and isPurgeable then return true end
-                    return false
+                if filterImportantBuffs then
+                    if importantBuffs[spellId] then
+                        return true
+                    else
+                        if filterPurgeable and not isPurgeable then return false end
+                        if moreThanOneMin and filterLessMinite then return false end
+                        return false
+                    end
                 end
+
                 -- Filter to hide long duration auras
                 if filterPurgeable and not isPurgeable then return false end
                 if moreThanOneMin and filterLessMinite then return false end
@@ -2500,7 +2506,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     else
         if unitAuraUpdateInfo.addedAuras ~= nil then
             for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
-                local BlizzardShouldShow = self:ShouldShowBuff(aura, auraSettings.showAll) and not C_UnitAuras.IsAuraFilteredOutByInstanceID(unit, aura.auraInstanceID, filterString)-- and not (true and aura.sourceUnit ~= "player")
+                local BlizzardShouldShow = self:ShouldShowBuff(aura, auraSettings.showAll) and not C_UnitAuras.IsAuraFilteredOutByInstanceID(unit, aura.auraInstanceID, filterString) and not (BetterBlizzPlatesDB.blizzardDefaultFilterOnlyMine and (aura.sourceUnit ~= "player" and aura.sourceUnit~= "pet"))
                 if ShouldShowBuff(unit, aura, BlizzardShouldShow) then
                     self.auras[aura.auraInstanceID] = aura;
                     aurasChanged = true;
@@ -2562,7 +2568,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
     local longestCCAura = nil
     local longestCCDuration = 0
-    local pinnedAuras = isFriend and (db["classIndicator"] and db["classIndicatorCCAuras"])
+    local pinnedAuras = isFriend and ((db["classIndicator"] and db["classIndicatorCCAuras"])) or db["partyPointer"]
 
     self.auras:Iterate(function(auraInstanceID, aura)
         if buffIndex > BBPMaxAuraNum then return true end
@@ -2932,7 +2938,7 @@ function BBP.ParseAllAuras(self, forceAll, UnitFrame)
             end
             mirrorImgFrostbolt = true -- Allow this one, skip others later
         end
-        local BlizzardShouldShow = self:ShouldShowBuff(aura, forceAll)-- and not (true and aura.sourceUnit ~= "player")
+        local BlizzardShouldShow = self:ShouldShowBuff(aura, forceAll) and not (BetterBlizzPlatesDB.blizzardDefaultFilterOnlyMine and (aura.sourceUnit ~= "player" and aura.sourceUnit~= "pet"))
         local shouldShowAura, isImportant, isPandemic = ShouldShowBuff(self.unit, aura, BlizzardShouldShow, isTestModeEnabled, interrupt)
         if shouldShowAura then
             self.auras[aura.auraInstanceID] = aura;

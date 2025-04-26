@@ -243,7 +243,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 castBar.Background:SetDesaturated(true)
                 castBar.Background:SetTexture(bgTexture)
                 castBar.Background:SetAllPoints(castBar)
-                if notInterruptible then
+                if notInterruptible and BetterBlizzPlatesDB.redBgCastColor then
                     castBar.Background:SetVertexColor(1,0,0,1)
                 else
                     castBar.Background:SetVertexColor(unpack(bgColor))
@@ -362,6 +362,14 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
         frame.castbarEmphasisActive = true
 
+        local r,g,b
+
+        if db.castBarEmphasisSelfColor and UnitIsUnit(unitToken.."target", "player") and not UnitIsPlayer(frame.unit) and not BBP.isInPvP then
+            r,g,b = unpack(db.castBarEmphasisSelfColorRGB)
+        else
+            r,g,b = castEmphasis.entryColors.text.r, castEmphasis.entryColors.text.g, castEmphasis.entryColors.text.b
+        end
+
         if not castBar.oldParent then
             castBar.oldParent = castBar:GetParent()
             castBar:SetParent(BBP.OverlayFrame)
@@ -372,7 +380,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
             if castBarTexture then
                 castBarTexture:SetDesaturated(true)
             end
-            castBar:SetStatusBarColor(castEmphasis.entryColors.text.r, castEmphasis.entryColors.text.g, castEmphasis.entryColors.text.b)
+            castBar:SetStatusBarColor(r, g, b)
         end
 
         if castBarEmphasisText then
@@ -397,7 +405,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
         if castBarEmphasisHealthbarColor then
             if frame then
-                frame.healthBar:SetStatusBarColor(castEmphasis.entryColors.text.r, castEmphasis.entryColors.text.g, castEmphasis.entryColors.text.b)
+                frame.healthBar:SetStatusBarColor(r, g, b)
             end
         end
 
@@ -527,8 +535,15 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 for _, castEmphasis in ipairs(castEmphasisList) do
                     if (castEmphasis.name and spellName and strlower(castEmphasis.name) == strlower(spellName)) or
                        (castEmphasis.id and spellID and castEmphasis.id == spellID) then
-                        ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
-                        frame.emphasizedCast = castEmphasis
+                        if castEmphasis.onMeOnly and not UnitIsPlayer(frame.unit) and not BBP.isInPvP then
+                            if UnitIsUnit(unitToken.."target", "player") then
+                                ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
+                                frame.emphasizedCast = castEmphasis
+                            end
+                        else
+                            ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
+                            frame.emphasizedCast = castEmphasis
+                        end
                         -- frame:GetParent():SetParent(BBP.OverlayFrame)
                         -- frame.ogParent = frame:GetParent():GetParent()
                         return

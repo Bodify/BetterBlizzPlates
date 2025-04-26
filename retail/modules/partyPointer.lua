@@ -9,6 +9,27 @@ local HealerSpecs = {
     [1468] = true,  --> preservation evoker  
 }
 
+local ppTextures = {
+    [1] = "UI-QuestPoiImportant-QuestNumber-SuperTracked",
+    [2] = "CreditsScreen-Assets-Buttons-Rewind", --rotate
+    [3] = "CovenantSanctum-Renown-DoubleArrow-Disabled", -- rotate
+    [4] = "Crosshair_Quest_128",
+    [5] = "Crosshair_Wrapper_128",
+    [6] = "honorsystem-icon-prestige-2",
+    [7] = "plunderstorm-glues-queueselector-solo-selected",
+    [8] = "plunderstorm-glues-queueselector-solo",
+    [9] = "AutoQuest-Badge-Campaign",
+    [10] = "Ping_Marker_Icon_OnMyWay",
+    [11] = "Ping_Marker_Icon_NonThreat",
+    [12] = "charactercreate-icon-customize-body-selected",
+    [13] = "128-RedButton-Delete",
+}
+
+local pointerOffsets = {
+    [2] = 2,
+    [5] = -2,
+}
+
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 
 local playerClass = select(2, UnitClass("player"))
@@ -45,6 +66,13 @@ function BBP.PartyPointer(frame)
 
     local partyOnly = config.partyPointerOnlyParty and not UnitInParty(frame.unit)
 
+    local pointerMode = BetterBlizzPlatesDB.partyPointerTexture
+    local xOffset = pointerOffsets[pointerMode] or 0
+    local normalTexture = ppTextures[pointerMode]
+    if pointerMode == 14 then
+        normalTexture = BetterBlizzPlatesDB.partyPointerCustomTexture
+    end
+
     if not info.isFriend or info.isNpc or info.isSelf or partyOnly then
         if UnitIsUnit(frame.unit, "pet") and config.partyPointerShowPet then
             --
@@ -69,7 +97,7 @@ function BBP.PartyPointer(frame)
         frame.partyPointer:SetFrameLevel(0)
         frame.partyPointer:SetSize(24, 24)
         frame.partyPointer.icon = frame.partyPointer:CreateTexture(nil, "BACKGROUND")
-        frame.partyPointer.icon:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
+        frame.partyPointer.icon:SetAtlas(normalTexture)
         frame.partyPointer.icon:SetSize(34, 48)
         frame.partyPointer.icon:SetPoint("BOTTOM", frame.partyPointer, "BOTTOM", 0, 5)
         frame.partyPointer.icon:SetDesaturated(true)
@@ -84,8 +112,48 @@ function BBP.PartyPointer(frame)
 
         frame.partyPointer:SetIgnoreParentAlpha(true)
         frame.partyPointer:SetFrameStrata("LOW")
+
+        if not frame.classIndicatorCC then
+            frame.classIndicatorCC = CreateFrame("Frame", nil, frame.partyPointer)
+            frame.classIndicatorCC:SetSize(39, 39)
+            frame.classIndicatorCC:SetFrameStrata("HIGH")
+            frame.classIndicatorCC:Hide()
+
+            frame.classIndicatorCC.Icon = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 6)
+            frame.classIndicatorCC.Icon:SetPoint("CENTER", frame.partyPointer.icon)
+            frame.classIndicatorCC.mask = frame.classIndicatorCC:CreateMaskTexture()
+            frame.classIndicatorCC.mask:SetTexture("Interface/Masks/CircleMaskScalable")
+            frame.classIndicatorCC.mask:SetSize(40, 40)
+            frame.classIndicatorCC.mask:SetPoint("CENTER", frame.partyPointer.icon)
+            frame.classIndicatorCC.Icon:AddMaskTexture(frame.classIndicatorCC.mask)
+            frame.classIndicatorCC.Icon:SetSize(39, 39)
+
+            frame.classIndicatorCC.Cooldown = CreateFrame("Cooldown", nil, frame.classIndicatorCC, "CooldownFrameTemplate")
+            frame.classIndicatorCC.Cooldown:SetAllPoints(frame.classIndicatorCC.Icon)
+            frame.classIndicatorCC.Cooldown:SetDrawEdge(false)
+            frame.classIndicatorCC.Cooldown:SetDrawSwipe(true)
+            frame.classIndicatorCC.Cooldown:SetSwipeColor(0, 0, 0, 0.7)
+            frame.classIndicatorCC.Cooldown:SetSwipeTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
+            frame.classIndicatorCC.Cooldown:SetUseCircularEdge(true)
+            frame.classIndicatorCC.Cooldown:SetReverse(true)
+
+            frame.classIndicatorCC.Glow = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 7)
+            frame.classIndicatorCC.Glow:SetAtlas("charactercreate-ring-select")
+            frame.classIndicatorCC.Glow:SetPoint("CENTER", frame.partyPointer.icon, "CENTER", 0, 0)
+            frame.classIndicatorCC.Glow:SetDesaturated(true)
+            frame.classIndicatorCC.Glow:SetSize(54,54)
+            frame.classIndicatorCC.Glow:SetDrawLayer("OVERLAY", 7)
+        end
     end
+    frame.partyPointer.icon:SetAtlas(normalTexture)
     frame.partyPointer:SetAlpha(1)
+
+
+    if pointerMode == 2 or pointerMode == 3 then
+        frame.partyPointer.icon:SetRotation(math.rad(90))
+    else
+        frame.partyPointer.icon:SetRotation(0)
+    end
 
     local class = info.class or playerClass
 
@@ -119,9 +187,9 @@ function BBP.PartyPointer(frame)
         frame.partyPointer.healerIcon:SetScale(config.partyPointerHealerScale or 1)
 
         if config.partyPointerAnchor == "TOP" then
-            frame.partyPointer:SetPoint("BOTTOM", frame.name, config.partyPointerAnchor, config.partyPointerXPos, config.partyPointerYPos - 5)
+            frame.partyPointer:SetPoint("BOTTOM", frame.name, config.partyPointerAnchor, config.partyPointerXPos+xOffset, config.partyPointerYPos - 5)
         else
-            frame.partyPointer:SetPoint("BOTTOM", frame.healthBar, config.partyPointerAnchor, config.partyPointerXPos, config.partyPointerYPos)
+            frame.partyPointer:SetPoint("BOTTOM", frame.healthBar, config.partyPointerAnchor, config.partyPointerXPos+xOffset, config.partyPointerYPos)
         end
 
         if config.partyPointerClassColor then
@@ -131,14 +199,14 @@ function BBP.PartyPointer(frame)
             frame.partyPointer.icon:SetVertexColor(0.04, 0.76, 1)
         end
 
-        if config.partyPointerTargetIndicator then
+        if config.partyPointerTargetIndicator and pointerMode == 1 then
             if testIsTarget then
                 frame.partyPointer.icon:SetAtlas("UI-QuestPoiImportant-QuestBang")
             else
-                frame.partyPointer.icon:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
+                frame.partyPointer.icon:SetAtlas(normalTexture)
             end
         else
-            frame.partyPointer.icon:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
+            frame.partyPointer.icon:SetAtlas(normalTexture)
         end
 
         if config.partyPointerHideRaidmarker then
@@ -195,9 +263,9 @@ function BBP.PartyPointer(frame)
 
         local anchorPoint = resourceAnchor or arenaPoint or frame.name
 
-        frame.partyPointer:SetPoint("BOTTOM", anchorPoint, config.partyPointerAnchor, config.partyPointerXPos, config.partyPointerYPos -5)
+        frame.partyPointer:SetPoint("BOTTOM", anchorPoint, config.partyPointerAnchor, config.partyPointerXPos+xOffset, config.partyPointerYPos -5)
     else
-        frame.partyPointer:SetPoint("BOTTOM", frame.healthBar, config.partyPointerAnchor, config.partyPointerXPos, config.partyPointerYPos)
+        frame.partyPointer:SetPoint("BOTTOM", frame.healthBar, config.partyPointerAnchor, config.partyPointerXPos+xOffset, config.partyPointerYPos)
     end
 
     if config.partyPointerClassColor then
@@ -207,11 +275,11 @@ function BBP.PartyPointer(frame)
         frame.partyPointer.icon:SetVertexColor(0.04, 0.76, 1)
     end
 
-    if config.partyPointerTargetIndicator then
+    if config.partyPointerTargetIndicator and pointerMode == 1 then
         if info.isTarget then
             frame.partyPointer.icon:SetAtlas("UI-QuestPoiImportant-QuestBang")
         else
-            frame.partyPointer.icon:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
+            frame.partyPointer.icon:SetAtlas(normalTexture)
         end
     end
 

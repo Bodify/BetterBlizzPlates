@@ -294,7 +294,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
 
 
     local guid = UnitGUID(frame.unit)
-    local npcID = tonumber(guid and guid:match("-(%d+)-%x+$"))
+    local npcID
+    if guid then
+        npcID = BBP.GetNPCIDFromGUID(guid)
+    end
     local totemIndicatorSwappingAnchor
 
     if config.totemIndicatorHideNameAndShiftIconDown then

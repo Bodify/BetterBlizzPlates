@@ -12,7 +12,7 @@ LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Pro
 
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
-local sendUpdate = false
+local sendUpdate = true
 BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
@@ -268,6 +268,7 @@ local defaultSettings = {
     partyPointerHideRaidmarker = true,
     partyPointerHealerReplace = true,
     partyPointerShowPet = true,
+    partyPointerTexture = 1,
     --partyPointerArenaOnly = true,
     -- Pet Indicator
     petIndicator = false,
@@ -717,6 +718,7 @@ local defaultSettings = {
         {name = "Song of Chi-Ji"},
         {name = "Ring of Fire"},
     },
+    castBarEmphasisSelfColorRGB = {1,0,0},
 
     castBarInterruptHighlighter = false,
     castBarInterruptHighlighterColorDontInterrupt = false,
@@ -727,6 +729,8 @@ local defaultSettings = {
 
     nameplateResourceXPos = 0,
     nameplateResourceYPos = 0,
+
+    ghostAuras = {},
 
 
 }
@@ -790,6 +794,10 @@ local function InitializeSavedVariables()
         BetterBlizzPlatesDB.nameplateAuraSelfScale = BetterBlizzPlatesDB.nameplateAuraScale
         BetterBlizzPlatesDB.nameplateAuraBuffSelfScale = BetterBlizzPlatesDB.nameplateAuraBuffScale
         BetterBlizzPlatesDB.nameplateAuraDebuffSelfScale = BetterBlizzPlatesDB.nameplateAuraDebuffScale
+    end
+
+    if BetterBlizzPlatesDB.dpsOrHealTargetAggroColorRGB == nil then
+        BetterBlizzPlatesDB.dpsOrHealTargetAggroColorRGB = BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB or {1, 0, 0, 1}
     end
 
     for key, defaultValue in pairs(defaultSettings) do
@@ -1150,10 +1158,6 @@ end
 -- Update message
 local function SendUpdateMessage()
     if sendUpdate then
-        local db = BetterBlizzPlatesDB
-        if not db.classicNameplates and not db.hideLevelFrame then
-            db.hideLevelFrame = true
-        end
         if not BetterBlizzPlatesDB.scStart then
             C_Timer.After(7, function()
                 --bbp news
@@ -1172,14 +1176,14 @@ local function SendUpdateMessage()
                 -- DEFAULT_CHAT_FRAME:AddMessage("   - Fix aura color module not working on buffs.")
                 -- DEFAULT_CHAT_FRAME:AddMessage("   - Fix class icon module causing a lua error sometimes.")
 
-                if BetterBlizzPlatesDB.hideNPC and C_CVar.GetCVarBool("nameplateShowFriendlyPets") then
-                    StaticPopupDialogs["BBP_HIDE_NPC_UPDATE"] = {
-                        text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nHide NPC now has a \"Hide Others Pets\" setting that is enabled by default.\n\nIf you want this off you will need to disable it in the Hide NPC section.",
+                if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
+                    StaticPopupDialogs["BBP_BG_COLOR_UPDATE"] = {
+                        text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nNameplate castbar background color is no longer red by default on un-interruptible casts.\n\nIf you want this back you will have to go to:\n/bbp -> Castbar -> Right-click the color button next to background texture to re-enable it.",
                         button1 = "Ok",
                         timeout = 0,
                         whileDead = true,
                     }
-                    StaticPopup_Show("BBP_HIDE_NPC_UPDATE")
+                    StaticPopup_Show("BBP_BG_COLOR_UPDATE")
                 end
             end)
         else
@@ -1384,11 +1388,7 @@ end
 
 -- Extracts NPC ID from GUID
 function BBP.GetNPCIDFromGUID(guid)
-    return tonumber(string.match(guid, "Creature%-.-%-.-%-.-%-.-%-(.-)%-"))
-end
-
-function BBP.GetNPCIDFromGUID2(guid)
-    return tonumber(string.match(guid, "Pet%-.-%-.-%-.-%-.-%-(.-)%-"))
+    return tonumber(guid:match("%-([0-9]+)%-%x+$"))
 end
 
 local C_NamePlate = C_NamePlate
@@ -2668,7 +2668,7 @@ function BBP.FadeOutNPCs(frame)
     else
         -- If not in whitelist mode, fade out if in the list
         if inList then
-            frame:SetAlpha((info.isFriend and config.friendlyHideHealthBar and 0) or config.fadeOutNPCsAlpha)
+            frame:SetAlpha(config.fadeOutNPCsAlpha)
             frame.castBar:SetAlpha(config.fadeOutNPCsAlpha)
             frame.fadedNpc = true
         else
@@ -2809,15 +2809,6 @@ function BBP.HideNPCs(frame, nameplate)
         return
     end
 
-    if info.isFriend then
-        local hideNpcHpBar = db.friendlyHideHealthBarNpc
-        if config.friendlyHideHealthBar and hideNpcHpBar then
-            frame.HealthBarsContainer:SetAlpha(0)
-            frame.selectionHighlight:SetAlpha(0)
-            return
-        end
-    end
-
     local unitGUID = UnitGUID(frame.displayedUnit)
     if not unitGUID then return end
 
@@ -2834,7 +2825,8 @@ function BBP.HideNPCs(frame, nameplate)
     -- Determine if the frame should be shown based on the list check or if it's the current target
     if isTarget then
         BBP.ShowFrame(frame, nameplate, config)
-        frame.HealthBarsContainer:SetAlpha(config.friendlyHideHealthBar and info.isFriend and 0 or 1)
+        local alpha = ((config.friendlyHideHealthBar and info.isFriend) and (info.isPlayer or (config.friendlyHideHealthBarNpc and not (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and info.isPet))) and 0) or 1
+        frame.HealthBarsContainer:SetAlpha(alpha)
         frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
     elseif BBP.isInArena and hideSecondaryPets and mainPets[npcID] and info.isEnemy then
         local isFakePet = true
@@ -3081,10 +3073,13 @@ function BBP.ColorThreat(frame)
         if config.npcHealthbarColor and not hasAggro then
             return
         end
-        r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
 
-        if hasAggro or UnitIsUnit(frame.unit.."target", "player") then
+        if hasAggro then
             r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB)
+        elseif UnitIsUnit(frame.unit.."target", "player") then
+            r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealTargetAggroColorRGB)
+        else
+            r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)
         end
     end
 
@@ -4151,7 +4146,7 @@ local function HideFriendlyHealthbar(frame)
     if frame.healthBar and info.isFriend then
         if BetterBlizzPlatesDB.friendlyHideHealthBar then
             if not info.isPlayer then
-                local hideNpcHpBar = BetterBlizzPlatesDB.friendlyHideHealthBarNpc
+                local hideNpcHpBar = BetterBlizzPlatesDB.friendlyHideHealthBarNpc and not (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and UnitIsUnit("pet", frame.unit))
                 if hideNpcHpBar then
                     frame.HealthBarsContainer:SetAlpha(0)
                     frame.selectionHighlight:SetAlpha(0)
@@ -6028,6 +6023,8 @@ local function HideHealthbarInPvEMagic()
         -- Set the hook flag
         hookedGetNamePlateTypeFromUnit = true
 
+        local hideDungeonNPCs = BetterBlizzPlatesDB.friendlyHideHealthBarNpc and not BetterBlizzPlatesDB.friendlyHideHealthBarNpcShowInPve
+
         hooksecurefunc(
             NamePlateDriverFrame,
             'GetNamePlateTypeFromUnit',
@@ -6039,8 +6036,8 @@ local function HideHealthbarInPvEMagic()
                         setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
                         setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
                     else
-                        if isPlayer then
-                            local skipHide = BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve
+                        if isPlayer or hideDungeonNPCs then
+                            local skipHide = BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve or (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and UnitIsUnit("pet", unit))
                             if not skipHide then
                                 setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
                             end
@@ -6091,6 +6088,22 @@ Frame:SetScript("OnEvent", function(...)
             end
 
             db.classIndicatorUpdated = true
+        end
+    end
+
+    if db.updates and db.updates ~= addonUpdates then
+        if db.enableNameplateAuraCustomisation and db.partyPointer and not db.partyPointerUpdated then
+            if not db.friendlyNpdeBuffEnable then
+                db.friendlyNpdeBuffEnable = true
+                db.friendlyNpdeBuffFilterBlacklist = true
+                db.friendlyNpdeBuffFilterWatchList = false
+                db.friendlyNpdeBuffFilterCC = true
+                db.friendlyNpdeBuffFilterBlizzard = false
+                db.friendlyNpdeBuffFilterLessMinite = false
+            else
+                db.friendlyNpdeBuffFilterCC = true
+            end
+            db.partyPointerUpdated = true
         end
     end
 
@@ -6415,6 +6428,22 @@ local function UpdateLateAdditionSettings(db)
             end
 
             db.classIndicatorUpdated = true
+        end
+    end
+
+    if db.updates and db.updates ~= addonUpdates then
+        if db.enableNameplateAuraCustomisation and db.partyPointer and not db.partyPointerUpdated then
+            if not db.friendlyNpdeBuffEnable then
+                db.friendlyNpdeBuffEnable = true
+                db.friendlyNpdeBuffFilterBlacklist = true
+                db.friendlyNpdeBuffFilterWatchList = false
+                db.friendlyNpdeBuffFilterCC = true
+                db.friendlyNpdeBuffFilterBlizzard = false
+                db.friendlyNpdeBuffFilterLessMinite = false
+            else
+                db.friendlyNpdeBuffFilterCC = true
+            end
+            db.partyPointerUpdated = true
         end
     end
 

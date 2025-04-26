@@ -157,7 +157,7 @@ function BBP.ClassIndicator(frame, foundID)
 
     local class = info.class
     if not class then
-        if UnitIsUnit(frame.unit, "pet") and config.classIndicatorPinMode then
+        if UnitIsUnit(frame.unit, "pet") and config.classIndicatorShowPet then
             class = playerClass
         else
             if config.classIndicatorHideRaidMarker then
@@ -558,7 +558,7 @@ function BBP.ClassIndicator(frame, foundID)
         end
     else
         if UnitIsUnit(frame.unit, "pet") and config.classIndicatorShowPet then
-            local npcID = BBP.GetNPCIDFromGUID2(info.unitGUID)
+            local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
             local petIcon = petIcons[npcID]
             if petIcon then
                 frame.classIndicator.icon:SetTexture(petIcon)
