@@ -1,3 +1,22 @@
+# BetterBlizzPlates 1.8.0c
+## Retail
+### New:
+- Party Pointer: New setting to enable/disable showing CC on top of Party Pointer (Advanced Settings). This is on by default.
+- Hide Healthbar (Friendly): New subsetting that lets you keep healthbars on tanks and healers in PvE. Shift+Rightclick the checkbox to toggle.
+### Tweak:
+- Class Icon and Party Pointer CC overlay will now not be shown if Key Auras on Friendly Nameplates are enabled.
+- Updated the PvE healthbar hiding function a little bit.
+### Bugfix:
+- Fix nameplate aura issue from 1.8.0 causing some nameplate auras to become hidden/glitchy due to a flaw in some of the new logic.
+
+
+# BetterBlizzPlates 1.8.0b
+## Retail
+### Bugfix:
+- Fix a lua error in nameplate auras.
+
+
+
 # BetterBlizzPlates 1.8.0
 ## Retail:
 ### New:

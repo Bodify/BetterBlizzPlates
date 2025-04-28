@@ -1614,12 +1614,18 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
         -- Set the main text
         GameTooltip:AddLine(mainText, 1, 1, 1, true) -- true for wrap text
         -- Add the "Right-click to show on Target" text with checkmark depending on BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget
-        if title == "Hide Healthbar" then
+        if widget == BBP.friendlyHideHealthBar then
             local showOnTarget = BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget
             local tooltipText = "|cff32f795Right-click to keep them enabled on your Target.|r"
 
             -- Add or remove the checkmark based on the value of showOnTarget
             if showOnTarget then
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
+            tooltipText = tooltipText .. "\n\n|cffc084f7Shift + Right-click to keep Tank and Healer healthbars visible in PvE.|r"
+
+            if BetterBlizzPlatesDB.friendlyHideHealthBarShowTanksAndHeals then
                 tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
             end
 
@@ -1630,18 +1636,15 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         elseif title == "Hide NPC Healthbar" then
             local hideFriendlyHpNpcPve = BetterBlizzPlatesDB.friendlyHideHealthBarNpcShowInPve
-            local tooltipText
+            local tooltipText = "\n|cff32f795Right-click to keep NPC healthbars shown in PvE.|r"
 
             if hideFriendlyHpNpcPve then
-                tooltipText = "\n|cff32f795Right-click to HIDE healthbar in PvE.|r"
-            else
-                tooltipText = "\n|cff32f795Right-click to SHOW healthbar in PvE.|r"
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
             end
 
+            tooltipText = tooltipText .. "\n\n|cffc084f7Shift + Right-click to keep healthbar shown on your Pet.|r"
             if BetterBlizzPlatesDB.friendlyHideHealthBarShowPet then
-                tooltipText = tooltipText .. "\n\n|cffc084f7Shift + Right-click to HIDE healthbar on your Pet.|r"
-            else
-                tooltipText = tooltipText .. "\n\n|cffc084f7Shift + Right-click to SHOW healthbar on your Pet.|r"
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
@@ -5432,11 +5435,20 @@ local function guiGeneralTab()
     end)
     BBP.friendlyHideHealthBar:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
-            BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget = not BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget
-            --self:SetChecked(BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget)
+            if not IsShiftKeyDown() then
+                BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget = not BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget
+                --self:SetChecked(BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget)
+            else
+                if not BetterBlizzPlatesDB.friendlyHideHealthBarShowTanksAndHeals then
+                    BetterBlizzPlatesDB.friendlyHideHealthBarShowTanksAndHeals = true
+                else
+                    BetterBlizzPlatesDB.friendlyHideHealthBarShowTanksAndHeals = nil
+                end
+            end
             if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
                 self:GetScript("OnEnter")(self)
             end
+            BBP.RefreshAllNameplates()
         end
     end)
 
@@ -7607,12 +7619,16 @@ local function guiPositionAndScale()
     anchorSubPointerIndicator.partyPointerShowPet:SetPoint("TOPLEFT", partyPointerHideAll, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubPointerIndicator.partyPointerShowPet, "Show on Pet", "Show Party Pointer on your Pet.", "This setting requires \"Show Friendly Pets\" enabled in the CVar Control section.")
 
+    anchorSubPointerIndicator.partyPointerCCAuras = CreateCheckbox("partyPointerCCAuras", "Show CC", contentFrame)
+    anchorSubPointerIndicator.partyPointerCCAuras:SetPoint("TOPLEFT", anchorSubPointerIndicator.partyPointerShowPet, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubPointerIndicator.partyPointerCCAuras, "Show CC", "Show CC Overlay on Party Pointer", "This setting requires nameplate aura settings + PvP CC filter enabled.")
+
     anchorSubPointerIndicator.partyPointerOnlyParty = CreateCheckbox("partyPointerOnlyParty", "Party Only", contentFrame)
     anchorSubPointerIndicator.partyPointerOnlyParty:SetPoint("TOPLEFT", anchorSubPointerIndicator.partyPointerHealerOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubPointerIndicator.partyPointerOnlyParty, "Party Only", "Only show Party Pointer for Party Members.")
 
     anchorSubPointerIndicator.partyPointerTexture = CreateSlider(contentFrame, "Party Pointer Texture", 1, 14, 1, "partyPointerTexture")
-    anchorSubPointerIndicator.partyPointerTexture:SetPoint("TOPLEFT", anchorSubPointerIndicator.partyPointerShowPet, "BOTTOMLEFT", 2, -20)
+    anchorSubPointerIndicator.partyPointerTexture:SetPoint("TOPLEFT", anchorSubPointerIndicator.partyPointerCCAuras, "BOTTOMLEFT", 2, -20)
     anchorSubPointerIndicator.partyPointerCustomTextureBox = CreateFrame("EditBox", nil, contentFrame, "InputBoxTemplate")
     anchorSubPointerIndicator.partyPointerCustomTextureBox:SetSize(140, 20)
     anchorSubPointerIndicator.partyPointerCustomTextureBox:SetAutoFocus(false)
@@ -8783,7 +8799,7 @@ local function guiHideCastbar()
 
     local hideCastbarFriendly = CreateCheckbox("hideCastbarFriendly", "Hide friendly castbars", hideCastbar)
     hideCastbarFriendly:SetPoint("TOPLEFT", hideNpcCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(hideCastbarFriendly, "Hide Friendly Castbars", "Hide all friendly castbars (except whitelisted ones).")
+    CreateTooltipTwo(hideCastbarFriendly, "Hide Friendly Castbars", "Hide all friendly castbars, except for whitelisted ones. This setting will NOT be able to whitelist certain spells during PvE and instead just hide all casts.")
 
     local hideCastbarEnemy = CreateCheckbox("hideCastbarEnemy", "Hide enemy castbars", hideCastbar)
     hideCastbarEnemy:SetPoint("TOPLEFT", hideCastbarFriendly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)

@@ -1101,7 +1101,7 @@ local function GetAuraDetails(spellName, spellId)
             return true, isImportant, isPandemic, auraColor, onlyMine, isEnlarged, isCompacted
         end
     end
-    return false, false, false, false, false
+    return
 end
 local importantGlowOffset = 10 * (BetterBlizzPlatesDB.nameplateAuraEnlargedScale or 1)
 local trackedBuffs = {};
@@ -2568,7 +2568,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
     local longestCCAura = nil
     local longestCCDuration = 0
-    local pinnedAuras = isFriend and ((db["classIndicator"] and db["classIndicatorCCAuras"])) or db["partyPointer"]
+    local pinnedAuras = isFriend and ((db["classIndicator"] and db["classIndicatorCCAuras"]) or (db["partyPointer"] and db["partyPointerCCAuras"])) and not (moveKeyAuras and moveKeyAurasFriendly)
 
     self.auras:Iterate(function(auraInstanceID, aura)
         if buffIndex > BBPMaxAuraNum then return true end
@@ -2683,7 +2683,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
                         --         ciColor = auraColor
                         --     end
                         -- else
-                            ciColor = auraColor
+                            ciColor = auraColor or ccFullColor
                         --end
                     else
                         -- if aura.dispelName == "Curse" then
@@ -2693,6 +2693,9 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
                         -- else
                             ciColor = ccFullColor
                         --end
+                    end
+                    if type(ciColor) ~= "table" then
+                        ciColor = ccFullColor
                     end
                     longestCCAura = {
                         icon = aura.icon,
@@ -2751,36 +2754,6 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
                 buff.isCompacted = false
             end
         end
-
-        -- if isFriend and BetterBlizzPlatesDB.classIndicator and not BetterBlizzPlatesDB.classIconSquareBorderFriendly then
-        --     if crowdControl[spellId] and UnitFrame.classIndicatorCC then
-        --         UnitFrame.pinIconActive = true
-        --         UnitFrame.ccIconTexture = aura.icon
-        --         UnitFrame.pinBuffColor = auraColor
-        --         buff.pinIcon = true
-        --         UnitFrame.classIndicatorCC.Glow:SetVertexColor(UnitFrame.pinBuffColor.r, UnitFrame.pinBuffColor.g, UnitFrame.pinBuffColor.b)
-        --         UnitFrame.classIndicatorCC.Glow:Show()
-
-        --         if buff.expirationTime and buff.duration then
-        --             local start = buff.expirationTime - buff.duration
-        --             UnitFrame.classIndicatorCC.Cooldown:SetCooldown(start, buff.duration)
-        --             UnitFrame.classIndicatorCC.Cooldown:Show()
-        --         end
-
-        --         UnitFrame.classIndicatorCC:Show()
-        --         UnitFrame.classIndicatorCC.Icon:SetTexture(UnitFrame.ccIconTexture)
-        --     else
-        --         buff.pinIcon = nil
-        --         buff.pinColor = nil
-        --         buff.originalState = nil
-        --         buff.isPinIcon = nil
-        --     end
-        -- else
-        --     buff.pinIcon = nil
-        --     buff.pinColor = nil
-        --     buff.originalState = nil
-        --     buff.isPinIcon = nil
-        -- end
 
         if not buff.GlowFrame then
             buff.CountFrame:SetFrameStrata("DIALOG")

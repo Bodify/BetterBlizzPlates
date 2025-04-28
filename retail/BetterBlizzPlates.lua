@@ -13,7 +13,7 @@ LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Pro
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
 local sendUpdate = true
-BBP.VersionNumber = addonUpdates
+BBP.VersionNumber = addonUpdates.."c"
 local _, playerClass
 local playerClassColor
 BBP.hiddenFrame = CreateFrame("Frame")
@@ -269,6 +269,7 @@ local defaultSettings = {
     partyPointerHealerReplace = true,
     partyPointerShowPet = true,
     partyPointerTexture = 1,
+    partyPointerCCAuras = true,
     --partyPointerArenaOnly = true,
     -- Pet Indicator
     petIndicator = false,
@@ -5969,7 +5970,7 @@ end
 -- Event handler function
 local hideFriendlyCastbar
 local function CheckIfInInstance(self, event, ...)
-    hideFriendlyCastbar = BetterBlizzPlatesDB.alwaysHideFriendlyCastbar
+    hideFriendlyCastbar = BetterBlizzPlatesDB.alwaysHideFriendlyCastbar or BetterBlizzPlatesDB.hideCastbarFriendly
     -- UpdateInstanceStatus()
     -- SetNameplateBehavior()
     if event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
@@ -6037,10 +6038,18 @@ local function HideHealthbarInPvEMagic()
                         setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
                     else
                         if isPlayer or hideDungeonNPCs then
-                            local skipHide = BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve or (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and UnitIsUnit("pet", unit))
+                            local isTankOrHeal
+                            if BetterBlizzPlatesDB.friendlyHideHealthBarShowTanksAndHeals then
+                                local role = UnitGroupRolesAssigned(unit)
+                                isTankOrHeal = role == "TANK" or role == "HEALER"
+                            end
+                            local skipHide = BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve or (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and UnitIsUnit("pet", unit)) or isTankOrHeal
                             if not skipHide then
                                 setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
+                            else
+                                setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
                             end
+                            -- This method doesnt seem to work for castbar, works fine for healthbar.
                             if hideFriendlyCastbar then
                                 setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
                             else
@@ -6091,7 +6100,7 @@ Frame:SetScript("OnEvent", function(...)
         end
     end
 
-    if db.updates and db.updates ~= addonUpdates then
+    --if db.updates and db.updates ~= addonUpdates then
         if db.enableNameplateAuraCustomisation and db.partyPointer and not db.partyPointerUpdated then
             if not db.friendlyNpdeBuffEnable then
                 db.friendlyNpdeBuffEnable = true
@@ -6103,9 +6112,14 @@ Frame:SetScript("OnEvent", function(...)
             else
                 db.friendlyNpdeBuffFilterCC = true
             end
+            db.partyPointerCCAuras = true
             db.partyPointerUpdated = true
         end
-    end
+        if db.partyPointerUpdated and not db.partyPointerUpdated2 then
+            db.partyPointerCCAuras = true
+            db.partyPointerUpdated2 = true
+        end
+    --end
 
     CheckForUpdate()
 
@@ -6431,7 +6445,7 @@ local function UpdateLateAdditionSettings(db)
         end
     end
 
-    if db.updates and db.updates ~= addonUpdates then
+    --if db.updates and db.updates ~= addonUpdates then
         if db.enableNameplateAuraCustomisation and db.partyPointer and not db.partyPointerUpdated then
             if not db.friendlyNpdeBuffEnable then
                 db.friendlyNpdeBuffEnable = true
@@ -6443,9 +6457,14 @@ local function UpdateLateAdditionSettings(db)
             else
                 db.friendlyNpdeBuffFilterCC = true
             end
+            db.partyPointerCCAuras = true
             db.partyPointerUpdated = true
         end
-    end
+        if db.partyPointerUpdated and not db.partyPointerUpdated2 then
+            db.partyPointerCCAuras = true
+            db.partyPointerUpdated2 = true
+        end
+    --end
 
     if db.firstSaveComplete and not db.classIndicatorUpdated2 then
         db.classIndicatorBackground = false
