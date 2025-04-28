@@ -7,7 +7,7 @@
 - Class Icon and Party Pointer CC overlay will now not be shown if Key Auras on Friendly Nameplates are enabled.
 - Updated the PvE healthbar hiding function a little bit.
 ### Bugfix:
-- Fix nameplate aura issue from 1.8.0 causing some nameplate auras to become hidden/glitchy due to a flaw in some of the new logic.
+- Fix bug from patch 1.8.0 causing some nameplate auras to become hidden/glitchy with Party Pointer enabled due to a flaw in some of the new logic.
 
 
 # BetterBlizzPlates 1.8.0b
