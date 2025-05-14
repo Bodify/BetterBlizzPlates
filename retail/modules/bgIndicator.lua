@@ -27,7 +27,13 @@ local function GetAuraColor(frame, foundID, auraType)
     return nil  -- No matching aura found
 end
 
+local tempVal = 0
 function BBP.BgIndicator(frame, foundID)
+    if BBP.tempDebug then
+        tempVal = tempVal + 1
+        print(tempVal, "BG: ", UnitName(frame.unit), foundID)
+    end
+
     if not BBP.isInBg or not UnitPvpClassification(frame.unit) then
         if frame.bgIndicator then
             frame.bgIndicator:Hide()
@@ -35,6 +41,13 @@ function BBP.BgIndicator(frame, foundID)
         if not BetterBlizzPlatesDB.bgIndicatorTestMode then
             return
         end
+    end
+
+    if not BBP.tempDebug and UnitIsUnit(frame.unit, "player") then
+        if frame.bgIndicator then
+            frame.bgIndicator:Hide()
+        end
+        return
     end
 
     local config = frame.BetterBlizzPlates.config
@@ -119,6 +132,8 @@ function BBP.BgIndicator(frame, foundID)
     if isDeephaulRavine then
         auraColor = GetAuraColor(frame, foundID, "HARMFUL")
     end
+
+    frame.bgIndicator.flagActive = auraColor and true or nil
 
     if auraColor then
         frame.bgIndicator:SetVertexColor(unpack(auraColor))

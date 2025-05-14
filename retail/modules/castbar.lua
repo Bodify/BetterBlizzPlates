@@ -1,32 +1,45 @@
 local LSM = LibStub("LibSharedMedia-3.0")
 
-local interruptList = {
-    [1766] = true,  -- Kick (Rogue)
-    [2139] = true,  -- Counterspell (Mage)
-    [6552] = true,  -- Pummel (Warrior)
-    [57994] = true, -- Wind Shear (Shaman)
-    [47528] = true, -- Mind Freeze (Death Knight)
-    --[91802] = true, -- Shambling Rush (Death Knight)
-    --[91807] = true,  -- Shambling Rush (Death Knight)
-    [106839] = true,-- Skull Bash (Feral)
-    --[97547]  = true,-- Solar Beam (Druid)
-    [93985] = true,  -- Skull Bash (Druid)
-    [116705] = true,-- Spear Hand Strike (Monk)
-    [19647] = true, -- Spell Lock (Warlock)
-    --[115781] = true,-- Optical Blast (Warlock)
-    [132409] = true,-- Spell Lock (Warlock)
-    [119910] = true,-- Spell Lock (Warlock Pet)
-    [171138] = true,-- Shadow Lock (Warlock)
-    [212619] = true,-- Call Felhunter (Warlock)
-    [147362] = true,-- Countershot (Hunter)
-    [187707] = true,-- Muzzle (Hunter)
-    [183752] = true,-- Disrupt (Demon Hunter)
-    [351338] = true,-- Quell (Evoker)
-    [96231] = true, -- Rebuke (Paladin)
-    --[231665] = true,-- Avengers Shield (Paladin)
-    --[31935] = true, -- Avenger's Shield (Paladin)
-    --[217824] = true,-- Shield of Virtue (Protection PvP Talent)
+local interruptSpells = {
+    1766,  -- Kick (Rogue)
+    2139,  -- Counterspell (Mage)
+    6552,  -- Pummel (Warrior)
+    19647, -- Spell Lock (Warlock)
+    47528, -- Mind Freeze (Death Knight)
+    57994, -- Wind Shear (Shaman)
+    --91802, -- Shambling Rush (Death Knight)
+    96231, -- Rebuke (Paladin)
+    106839,-- Skull Bash (Feral)
+    115781,-- Optical Blast (Warlock)
+    116705,-- Spear Hand Strike (Monk)
+    132409,-- Spell Lock (Warlock)
+    119910,-- Spell Lock (Warlock Pet)
+    89766, -- Axe Toss (Warlock Pet)
+    171138,-- Shadow Lock (Warlock)
+    147362,-- Countershot (Hunter)
+    183752,-- Disrupt (Demon Hunter)
+    187707,-- Muzzle (Hunter)
+    212619,-- Call Felhunter (Warlock)
+    --231665,-- Avengers Shield (Paladin)
+    351338,-- Quell (Evoker)
+    97547, -- Solar Beam
+    --47482, -- Leap (DK Transform)
 }
+
+-- Local variable to store the known interrupt spell ID
+local knownInterruptSpellID = nil
+
+-- Function to find and return the interrupt spell the player knows
+local function GetInterruptSpell()
+    for _, spellID in ipairs(interruptSpells) do
+        if IsSpellKnownOrOverridesKnown(spellID) or (UnitExists("pet") and IsSpellKnownOrOverridesKnown(spellID, true)) then
+            knownInterruptSpellID = spellID
+            return spellID
+        end
+    end
+    knownInterruptSpellID = nil
+end
+BBP.GetInterruptSpell = GetInterruptSpell
 
 local IsSpellKnownOrOverridesKnown = IsSpellKnownOrOverridesKnown
 local UnitCastingInfo = UnitCastingInfo
@@ -42,25 +55,27 @@ local classicFrames
 
 local interruptedText = SPELL_FAILED_INTERRUPTED
 
-local interruptSpellIDs = {}
-function BBP.InitializeInterruptSpellID()
-    interruptSpellIDs = {}
-    for spellID in pairs(interruptList) do
-        if IsSpellKnownOrOverridesKnown(spellID) or (UnitExists("pet") and IsSpellKnownOrOverridesKnown(spellID, true)) then
-            table.insert(interruptSpellIDs, spellID)
-        end
+-- Recheck interrupt spells when lock resummons/sacrifices pet
+local petSummonSpells = {
+    [30146] = true,  -- Summon Demonic Tyrant (Demonology)
+    [691]    = true,  -- Summon Felhunter (for Spell Lock)
+    [108503] = true,  -- Grimoire of Sacrifice
+}
+
+local function OnEvent(self, event, unit, _, spellID)
+    if event == "UNIT_SPELLCAST_SUCCEEDED" then
+        if not petSummonSpells[spellID] then return end
     end
+    C_Timer.After(0.1, GetInterruptSpell)
 end
 
--- Recheck interrupt spells when lock resummons/sacrifices pet
-local recheckInterruptListener = CreateFrame("Frame")
-local function OnEvent(self, event, unit, _, spellID)
-    if spellID == 691 or spellID == 108503 then
-        BBP.InitializeInterruptSpellID()
-    end
+local interruptSpellUpdate = CreateFrame("Frame")
+if select(2, UnitClass("player")) == "WARLOCK" then
+    interruptSpellUpdate:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
 end
-recheckInterruptListener:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
-recheckInterruptListener:SetScript("OnEvent", OnEvent)
+interruptSpellUpdate:RegisterEvent("TRAIT_CONFIG_UPDATED")
+interruptSpellUpdate:RegisterEvent("PLAYER_TALENT_UPDATE")
+interruptSpellUpdate:SetScript("OnEvent", OnEvent)
 
 -- Castbar has a fade out animation after UNIT_SPELLCAST_STOP has triggered, reset castbar settings after this fadeout
 local function ResetCastbarAfterFadeout(frame, unitToken)
@@ -154,7 +169,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
     end
 
-    local spellName, spellID, notInterruptible, endTime
+    local spellName, spellID, notInterruptible, endTime, empoweredCast
     local casting, channeling
     local castStart, castDuration
     local _
@@ -214,8 +229,14 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
             end
         end
     elseif UnitChannelInfo(unitToken) then
-        channeling = true
-        spellName, _, _, castStart, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(unitToken)
+        spellName, _, _, castStart, endTime, _, notInterruptible, spellID, empoweredCast = UnitChannelInfo(unitToken)
+        if empoweredCast then
+            casting = true
+            channeling= false
+        else
+            casting = false
+            channeling = true
+        end
         castDuration = endTime - castStart
         if castBarRecolor then
             if castBarTexture then
@@ -427,8 +448,12 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         if spellName or spellID then
             local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
             if not isFriend then
-                for _, interruptSpellIDx in ipairs(interruptSpellIDs) do
-                    local start, duration = BBP.TWWGetSpellCooldown(interruptSpellIDx)
+                --for _, interruptSpellIDx in ipairs(interruptSpellIDs) do
+                if not knownInterruptSpellID then
+                    GetInterruptSpell()
+                end
+                if knownInterruptSpellID then
+                    local start, duration = BBP.TWWGetSpellCooldown(knownInterruptSpellID)
                     local cooldownRemaining = start + duration - GetTime()
                     local castRemaining = (endTime / 1000) - GetTime()
                     local totalCastTime = (endTime / 1000) - (castStart / 1000)
@@ -465,6 +490,9 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                                 else
                                     -- Casting: normal direction, from left to right
                                     sparkPosition = interruptPercent * castBar:GetWidth()
+                                    if empoweredCast then
+                                        sparkPosition = sparkPosition * 0.7 -- ? idk why but on empowered casts it needs to be roughly 30% to the left compared to cast/channel
+                                    end
                                 end
 
                                 castBar.spark:SetPoint("CENTER", castBar, "LEFT", sparkPosition, 0)

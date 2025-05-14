@@ -33,6 +33,36 @@ local function ExportProfile(profileTable, dataType)
 end
 
 local function ImportOtherProfile(encodedString, expectedDataType)
+    -- Temporary native Blizzard encoding to support Platers new system
+    local PlaterString = "!PLATER:2!"
+	if (string.match(encodedString, "^" .. PlaterString)) and C_EncodingUtil then
+		local dataCompressed = C_EncodingUtil.DecodeBase64(string.gsub(encodedString,PlaterString, ""))
+
+        if not dataCompressed then
+            return false, "Error decoding the data."
+        end
+
+		local dataSerialized = C_EncodingUtil.DecompressString(dataCompressed)
+		if not dataSerialized then
+			return false, "Error decoding the data."
+		end
+
+		local importTable = C_EncodingUtil.DeserializeCBOR(dataSerialized)
+		if not importTable then
+			return false, "Error decoding the data."
+		end
+
+        if expectedDataType == "colorNpcList" then
+            BBP.MergeNpcColorToBBP(importTable)
+        elseif expectedDataType == "castEmphasisList" then
+            BBP.MergeCastColorToBBP(importTable)
+        else
+            return false, "Error decoding the data."
+        end
+
+		return true
+	end
+
     -- Decode the data
     local compressed = LibDeflate:DecodeForPrint(encodedString)
     if not compressed then
@@ -5710,7 +5740,7 @@ local function guiGeneralTab()
 
     local targetIndicator = CreateCheckbox("targetIndicator", "Target indicator", BetterBlizzPlates)
     targetIndicator:SetPoint("TOPLEFT", petIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(targetIndicator, "Target Indicator |A:Navigation-Tracked-Arrow:14:19|a", "Show a pointer on your current target.")
+    CreateTooltipTwo(targetIndicator, "Target Indicator |A:Navigation-Tracked-Arrow:14:19|a", "Show a pointer on your current target.\n\nCan also change Target Color/Texture in Advanced Settings.")
     local targetIndicatorIcon = healerIndicator:CreateTexture(nil, "ARTWORK")
     targetIndicatorIcon:SetAtlas("Navigation-Tracked-Arrow")
     targetIndicatorIcon:SetRotation(math.rad(180))
@@ -7297,7 +7327,7 @@ local function guiPositionAndScale()
     -- Extended Settings Frame
     anchorSubClassIcon.extendedSettings = CreateFrame("Frame", nil, BetterBlizzPlatesSubPanel, "DefaultPanelFlatTemplate")
     -- anchorSubClassIcon.extendedSettings:SetAllPoints(anchorSubClassIcon.border)
-    anchorSubClassIcon.extendedSettings:SetSize(anchorSubClassIcon.border:GetHeight()+105, 455)
+    anchorSubClassIcon.extendedSettings:SetSize(anchorSubClassIcon.border:GetHeight()+105, 475)
     anchorSubClassIcon.extendedSettings:SetPoint("BOTTOMRIGHT", anchorSubClassIcon.border, "BOTTOMLEFT", 87, -185)
     anchorSubClassIcon.extendedSettings:SetFrameStrata("DIALOG")
     anchorSubClassIcon.extendedSettings:SetIgnoreParentAlpha(true)
@@ -7335,8 +7365,12 @@ local function guiPositionAndScale()
     anchorSubClassIcon.classIndicatorOnlyParty:SetPoint("TOPLEFT", anchorSubClassIcon.classIndicatorHideFriendlyHealthbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubClassIcon.classIndicatorOnlyParty, "Only show on Party", "Only show Class Indicator on people in your Party.")
 
+    anchorSubClassIcon.classIndicatorOnlyFriends = CreateCheckbox("classIndicatorOnlyFriends", "Only show on Friends (Friendlist)", anchorSubClassIcon.extendedSettings)
+    anchorSubClassIcon.classIndicatorOnlyFriends:SetPoint("TOPLEFT", anchorSubClassIcon.classIndicatorOnlyParty, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubClassIcon.classIndicatorOnlyFriends, "Only show on Friends (Friendlist)", "Only show Class Indicator on friends you have in your Friendlist.")
+
     anchorSubClassIcon.classIndicatorOnlyHealer = CreateCheckbox("classIndicatorOnlyHealer", "Only Show Healer", anchorSubClassIcon.extendedSettings)
-    anchorSubClassIcon.classIndicatorOnlyHealer:SetPoint("TOPLEFT", anchorSubClassIcon.classIndicatorOnlyParty, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    anchorSubClassIcon.classIndicatorOnlyHealer:SetPoint("TOPLEFT", anchorSubClassIcon.classIndicatorOnlyFriends, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(anchorSubClassIcon.classIndicatorOnlyHealer, "Only show on Healers")
 
     local classIndicatorHealer = CreateCheckbox("classIndicatorHealer", "Show cross on Healer", anchorSubClassIcon.extendedSettings)

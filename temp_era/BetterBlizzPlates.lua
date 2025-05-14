@@ -11,7 +11,7 @@ LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Pro
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
 local sendUpdate = false
-BBP.VersionNumber = addonUpdates.."c"
+BBP.VersionNumber = addonUpdates.."f"
 local _, playerClass
 local playerClassColor
 BBP.hiddenFrame = CreateFrame("Frame")
@@ -1557,22 +1557,36 @@ local inCombatEventRegistered = false
 
 local friendlyNameplatesOnOffFrame = CreateFrame("Frame")
 
+local epicBGs = {
+    [30] = true, --av
+    [2582] = true, --av
+    [628] = true, --ioc
+    [1191] = true, --ashran
+}
+
 local function ShouldShowFriendlyNameplates()
     local instanceType = select(2, IsInInstance())
-    local showInArena = instanceType == "arena" and BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena
-    local showInDungeon = (instanceType == "party" or instanceType == "raid" or instanceType == "scenario") and BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons
-    local showInBg = instanceType == "pvp" and BetterBlizzPlatesDB.friendlyNameplatesOnlyInBgs
+    local inWorld = instanceType == "none"
 
-    if instanceType == "arena" then
-        return showInArena
-    elseif instanceType == "party" or instanceType == "raid" or instanceType == "scenario" then
-        return showInDungeon
+    if instanceType == "arena" and BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena then
+        return true
+    elseif (instanceType == "party" or instanceType == "scenario") and BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons then
+        return true
+    elseif instanceType == "raid" and BetterBlizzPlatesDB.friendlyNameplatesOnlyInRaids then
+        return true
     elseif instanceType == "pvp" then
-        return showInBg
-    else
-        -- Outside of dungeons and arenas
-        return not BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons and not BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena
+        if epicBGs[select(8, GetInstanceInfo())] and BetterBlizzPlatesDB.friendlyNameplatesOnlyInEpicBgs then
+            return true
+        elseif BetterBlizzPlatesDB.friendlyNameplatesOnlyInBgs then
+            return true
+        else
+            return false
+        end
+    elseif inWorld and BetterBlizzPlatesDB.friendlyNameplatesOnlyInWorld then
+        return true
     end
+
+    return false
 end
 
 local function ApplyCVarChange()
@@ -1587,7 +1601,13 @@ local function ApplyCVarChange()
 end
 
 local function ToggleFriendlyPlates()
-    if BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena or BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons then
+    if BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInRaids
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInBgs
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInEpicBgs
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInWorld then
+
         if InCombatLockdown() and not inCombatEventRegistered then
             friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
             inCombatEventRegistered = true
@@ -1606,17 +1626,25 @@ friendlyNameplatesOnOffFrame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 function BBP.ToggleFriendlyNameplatesAuto()
-    if (BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena or BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons) and not toggleEventsRegistered then
+    local anyToggleEnabled = BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInRaids
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInBgs
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInEpicBgs
+        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInWorld
+
+    if anyToggleEnabled and not toggleEventsRegistered then
         friendlyNameplatesOnOffFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
         friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
         friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_ENTERING_BATTLEGROUND")
         toggleEventsRegistered = true
-    elseif toggleEventsRegistered then
+    elseif not anyToggleEnabled and toggleEventsRegistered then
         friendlyNameplatesOnOffFrame:UnregisterEvent("ZONE_CHANGED_NEW_AREA")
         friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_ENTERING_WORLD")
         friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_ENTERING_BATTLEGROUND")
         toggleEventsRegistered = false
     end
+
     ToggleFriendlyPlates()
 end
 
@@ -2366,11 +2394,19 @@ end
 local function ShowLastNameOnlyNpc(frame)
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
     if info.isNpc then
+        local unit = frame.unit
+        local creatureType = unit and UnitCreatureType(unit)
         local name = info.name
-        local lastName = name:match("([^%s%-]+)$")  -- Matches the last word after a space or dash
-        frame.name:SetText(lastName)
-        if frame.fakeName then
-            frame.fakeName:SetText(lastName)
+        if creatureType == "Totem" then
+            -- Use first word (e.g., "Stoneclaw" from "Stoneclaw Totem")
+            local firstWord = name:match("^[^%s%-]+")
+            if firstWord then
+                frame.name:SetText(firstWord)
+            end
+        else
+            -- Use last word (e.g., "Guardian" from "Frostwolf Guardian")
+            local lastWord = name:match("([^%s]+)$")
+            frame.name:SetText(lastWord)
         end
     end
 end
@@ -2447,12 +2483,20 @@ function BBP.ColorThreat(frame)
                 r, g, b = GetThreatStatusColor(threatStatus)
             end
         elseif threatStatus then
-            -- Not tanking — check if an offtank has full aggro
-            for _, unit in ipairs(offTanks) do
-                local offTanking, otherThreatStatus = UnitDetailedThreatSituation(unit, frame.unit)
-                if offTanking and otherThreatStatus and otherThreatStatus > 2 then
+            -- Not tanking — check if an offtank or a pet has full aggro
+            local targetUnit = frame.unit.."target"
+            if not UnitIsPlayer(targetUnit) then
+                local offTanking, otherThreatStatus = UnitDetailedThreatSituation(targetUnit, frame.unit)
+                if offTanking and otherThreatStatus and otherThreatStatus >= 2 then
                     r, g, b = unpack(BetterBlizzPlatesDB.tankOffTankAggroColorRGB)
-                    break
+                end
+            else
+                for _, unit in ipairs(offTanks) do
+                    local offTanking, otherThreatStatus = UnitDetailedThreatSituation(unit, frame.unit)
+                    if offTanking and otherThreatStatus and otherThreatStatus >= 2 then
+                        r, g, b = unpack(BetterBlizzPlatesDB.tankOffTankAggroColorRGB)
+                        break
+                    end
                 end
             end
         end
@@ -2749,6 +2793,11 @@ function BBP.CustomizeNameOnNameplate(frame)
         config.fakeNameAnchor = BetterBlizzPlatesDB.fakeNameAnchor
         config.fakeNameAnchorRelative = BetterBlizzPlatesDB.fakeNameAnchorRelative
         config.fakeNameScaleWithParent = BetterBlizzPlatesDB.fakeNameScaleWithParent
+    end
+
+    if BetterBlizzPlatesDB.fakeNameRaiseStrata then
+        frame.name:SetParent(frame.healthBar:GetAlpha() == 0 and frame or frame.bbpOverlay)
+        frame.name:SetDrawLayer("OVERLAY", 7)
     end
 
     local clickthroughHeight = (frame:GetHeight() < 2) and 15.5 or 0
@@ -5491,7 +5540,7 @@ SlashCmdList["BBP"] = function(msg)
     elseif command == "fixnameplates" then
         StaticPopup_Show("CONFIRM_FIX_NAMEPLATES_BBP")
     elseif command == "ver" or command == "version" then
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates Version "..addonUpdates)
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates Version "..BBP.VersionNumber)
     elseif command == "dump" then
         local exportVersion = BetterBlizzPlatesDB.exportVersion or "No export version registered"
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: "..exportVersion)
@@ -5557,6 +5606,17 @@ First:SetScript("OnEvent", function(_, event, addonName)
             C_Timer.After(3, function()
                 BBP.CVarTracker()
             end)
+
+            local db = BetterBlizzPlatesDB
+            if (db.friendlyNameplatesOnlyInDungeons or db.friendlyNameplatesOnlyInBgs) and not db.friendlyNameplateTogglesUpdated then
+                if db.friendlyNameplatesOnlyInDungeons and db.friendlyNameplatesOnlyInRaids == nil then
+                    db.friendlyNameplatesOnlyInRaids = true
+                end
+                if db.friendlyNameplatesOnlyInBgs and db.friendlyNameplatesOnlyInEpicBgs == nil then
+                    db.friendlyNameplatesOnlyInEpicBgs = true
+                end
+                db.friendlyNameplateTogglesUpdated = true
+            end
 
             -- Fetch Blizzard default values
             if not BetterBlizzPlatesDB.firstSaveComplete then

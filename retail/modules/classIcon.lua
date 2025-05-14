@@ -102,10 +102,17 @@ local function BackgroundType(frame, bg)
     end
 end
 
+local tempVal = 0
+
 -- Class Indicator
 function BBP.ClassIndicator(frame, foundID)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
+
+    if BBP.tempDebug then
+        tempVal = tempVal + 1
+        print(tempVal, "BG: ", UnitName(frame.unit), foundID)
+    end
 
     if not config.classIndicatorInitialized or BBP.needsUpdate then
         config.classIconArenaOnly = BetterBlizzPlatesDB.classIconArenaOnly
@@ -149,6 +156,7 @@ function BBP.ClassIndicator(frame, foundID)
         config.classIndicatorShowPet = BetterBlizzPlatesDB.classIndicatorShowPet
         config.classIndicatorHideFriendlyHealthbar = BetterBlizzPlatesDB.classIndicatorHideFriendlyHealthbar
         config.classIndicatorOnlyParty = BetterBlizzPlatesDB.classIndicatorOnlyParty
+        config.classIndicatorOnlyFriends = BetterBlizzPlatesDB.classIndicatorOnlyFriends
 
         config.classIndicatorInitialized = true
     end
@@ -294,6 +302,8 @@ function BBP.ClassIndicator(frame, foundID)
         end
     end
 
+    frame.classIndicator.flagActive = flagIcon and true or nil
+
     local specIcon
     local specID = BBP.GetSpecID(frame)
     if config.classIndicatorSpecIcon or config.classIndicatorHealer then
@@ -311,7 +321,11 @@ function BBP.ClassIndicator(frame, foundID)
 
     local shouldHide = not enabledOnThisUnit and not flagIcon and not alwaysShowHealer and not alwaysShowTank and not isPet
 
-    if shouldHide or (config.classIndicatorOnlyHealer and not isHealer and not flagIcon and not alwaysShowHealer and not alwaysShowTank) or partyOnly then
+    if shouldHide
+        or (config.classIndicatorOnlyHealer and not isHealer and not flagIcon and not alwaysShowHealer and not alwaysShowTank)
+        or partyOnly
+        or (config.classIndicatorOnlyFriends and not (BBP.isFriendlistFriend(frame.unit) or BBP.isUnitBNetFriend(frame.unit)))
+    then
         frame.classIndicator:Hide()
         return
     end

@@ -137,6 +137,7 @@ function BBP.DruidAlwaysShowCombos()
     local frame = ClassNameplateBarFeralDruidFrame
 
     local function UpdateDruidComboPoints(self)
+        if not self then return end
         if self:IsForbidden() then return end
         local form = GetShapeshiftFormID()
         if form == 1 then return end
@@ -164,6 +165,7 @@ function BBP.DruidAlwaysShowCombos()
     end
 
     frame:HookScript("OnHide", function(self)
+        if not self then return end
         if self:IsForbidden() then return end
         if UnitPower("player", self.powerType) > 0 then
             if GetCVarBool("nameplateResourceOnTarget") and not UnitExists("target") then

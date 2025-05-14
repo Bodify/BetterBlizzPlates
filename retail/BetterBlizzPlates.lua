@@ -13,7 +13,7 @@ LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Pro
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
 local sendUpdate = true
-BBP.VersionNumber = addonUpdates.."c"
+BBP.VersionNumber = addonUpdates.."f"
 local _, playerClass
 local playerClassColor
 BBP.hiddenFrame = CreateFrame("Frame")
@@ -1503,7 +1503,7 @@ end
 
 
 --#################################################################################################
-local function isFriendlistFriend(unit)
+function BBP.isFriendlistFriend(unit)
     for i = 1, C_FriendList.GetNumFriends() do
         local friendInfo = C_FriendList.GetFriendInfoByIndex(i)
         if friendInfo and friendInfo.name == UnitName(unit) then
@@ -1513,13 +1513,13 @@ local function isFriendlistFriend(unit)
     return false
 end
 
-local function isUnitGuildmate(unit)
+function BBP.isUnitGuildmate(unit)
     local guildName = GetGuildInfo(unit)
     local playerGuildName = GetGuildInfo("player")
     return guildName and playerGuildName and (guildName == playerGuildName)
 end
 
-local function isUnitBNetFriend(unit)
+function BBP.isUnitBNetFriend(unit)
     local unitName = UnitName(unit)
     local numBNetFriends = BNGetNumFriends()
     for i = 1, numBNetFriends do
@@ -2196,14 +2196,18 @@ end
 
 
 function BBP.DarkModeNameplateResources()
-    local darkModeNpSatVal = BetterBlizzPlatesDB.darkModeNameplateResource and true or false
-    local vertexColor = BetterBlizzPlatesDB.darkModeNameplateResource and BetterBlizzPlatesDB.darkModeNameplateColor or 1
-    local druidComboPoint = BetterBlizzPlatesDB.darkModeNameplateResource and (vertexColor + 0.2) or 1
-    local druidComboPointActive = BetterBlizzPlatesDB.darkModeNameplateResource and (vertexColor + 0.1) or 1
-    local actionBarColor = BetterBlizzPlatesDB.darkModeActionBars and (vertexColor + 0.15) or 1
-    local rogueCombo = BetterBlizzPlatesDB.darkModeNameplateResource and (vertexColor + 0.45) or 1
-    local rogueComboActive = BetterBlizzPlatesDB.darkModeNameplateResource and (vertexColor + 0.30) or 1
-    local monkChi = BetterBlizzPlatesDB.darkModeNameplateResource and (vertexColor + 0.10) or 1
+    local useDarkMode = BetterBlizzPlatesDB.darkModeNameplateResource
+    if not useDarkMode and not BBP.npCombosColored then
+        return
+    end
+    local darkModeNpSatVal = useDarkMode and true or false
+    local vertexColor = useDarkMode and BetterBlizzPlatesDB.darkModeNameplateColor or 1
+    local druidComboPoint = useDarkMode and (vertexColor + 0.2) or 1
+    local druidComboPointActive = useDarkMode and (vertexColor + 0.1) or 1
+    local actionBarColor = useDarkMode and (vertexColor + 0.15) or 1
+    local rogueCombo = useDarkMode and (vertexColor + 0.45) or 1
+    local rogueComboActive = useDarkMode and (vertexColor + 0.30) or 1
+    local monkChi = useDarkMode and (vertexColor + 0.10) or 1
 
 
     local nameplateRunes = _G.DeathKnightResourceOverlayFrame
@@ -2288,6 +2292,7 @@ function BBP.DarkModeNameplateResources()
             applySettings(v.EssenceDepleting.RimGlow, darkModeNpSatVal, evokerColorOne)
         end
     end
+    BBP.npCombosColored = useDarkMode or nil
 end
 
 
@@ -2456,7 +2461,7 @@ function BBP.ResetToDefaultValue(slider, element)
         elseif element == "nameplateMaxAlpha" then
             BetterBlizzPlatesDB.nameplateMaxAlpha = 1
             C_CVar.SetCVar("nameplateMaxAlpha", 1)
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMotionSpeed set to 1")
+            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar nameplateMaxAlpha set to 1")
         elseif element == "nameplateMaxAlphaDistance" then
             BetterBlizzPlatesDB.nameplateMaxAlphaDistance = 40
             C_CVar.SetCVar("nameplateMaxAlphaDistance", 40)
@@ -2501,65 +2506,65 @@ function BBP.ToggleAndPrintCVAR(cvarName)
 end
 
 local mainPets = {
-    ["165189"] = true, -- Hunter
-    ["26125"] = true, -- DK Pet
-    ["17252"] = true, -- Felguard Lock
-    ["417"] = true, -- Felhunter Lock
-    ["416"] = true, -- Imp Lock
-    ["1860"] = true, -- VoidWalker Lock
-    ["1863"] = true, -- Sayaad/Succubus Lock
+    [165189] = true, -- Hunter
+    [26125] = true, -- DK Pet
+    [17252] = true, -- Felguard Lock
+    [417] = true, -- Felhunter Lock
+    [416] = true, -- Imp Lock
+    [1860] = true, -- VoidWalker Lock
+    [1863] = true, -- Sayaad/Succubus Lock
 }
 
 local secondaryPets = {
     -- Death Knight
-    ["221633"] = true, -- High Inquisitor Whitemane
-    ["221632"] = true, -- Highlord Darion Mograine
-    ["221634"] = true, -- Nazgrim
-    ["221635"] = true, -- King Thoras Trollbane
-    ["149555"] = true, -- Raise Abomination
-    ["163366"] = true, -- Magus (Army of the Dead)
+    [221633] = true, -- High Inquisitor Whitemane
+    [221632] = true, -- Highlord Darion Mograine
+    [221634] = true, -- Nazgrim
+    [221635] = true, -- King Thoras Trollbane
+    [149555] = true, -- Raise Abomination
+    [163366] = true, -- Magus (Army of the Dead)
 
     -- Warlock
-    ["135816"] = true, -- Vilefiend
-    ["226268"] = true, -- Gloomhound
-    ["226269"] = true, -- Charhound
-    ["136408"] = true, -- Darkhound
-    ["136398"] = true, -- Illidari Satyr
-    ["136403"] = true, -- Void Terror
-    ["198757"] = true, -- Void Lasher
-    ["224466"] = true, -- Voidwraith
-    ["98035"] = true, -- Dreadstalker
-    ["143622"] = true, -- Wild Imp
-    ["55659"] = true, -- Wild Imp (alternate)
-    ["228574"] = true, -- Pit Lord
-    ["228576"] = true, -- Mother of Chaos
-    ["217429"] = true, -- Overfiend
-    ["225493"] = true, -- Doomguard
-    ["89"] = true, -- Infernal
+    [135816] = true, -- Vilefiend
+    [226268] = true, -- Gloomhound
+    [226269] = true, -- Charhound
+    [136408] = true, -- Darkhound
+    [136398] = true, -- Illidari Satyr
+    [136403] = true, -- Void Terror
+    [198757] = true, -- Void Lasher
+    [224466] = true, -- Voidwraith
+    [98035] = true, -- Dreadstalker
+    [143622] = true, -- Wild Imp
+    [55659] = true, -- Wild Imp (alternate)
+    [228574] = true, -- Pit Lord
+    [228576] = true, -- Mother of Chaos
+    [217429] = true, -- Overfiend
+    [225493] = true, -- Doomguard
+    [89] = true, -- Infernal
 
     -- Mage
-    --["31216"] = true, -- Mirror Images
+    --[31216] = true, -- Mirror Images
 
     -- Shaman
-    ["29264"] = true, -- Spirit Wolves (Enhancement)
-    ["77936"] = true, -- Greater Storm Elemental
-    ["95061"] = true, -- Greater Fire Elemental
+    [29264] = true, -- Spirit Wolves (Enhancement)
+    [77936] = true, -- Greater Storm Elemental
+    [95061] = true, -- Greater Fire Elemental
 
     -- Druid
-    ["54983"] = true, -- Treant
-    ["103822"] = true, -- Treant (alternative)
+    [54983] = true, -- Treant
+    [103822] = true, -- Treant (alternative)
 
     -- -- Priest
-    ["62982"] = true, -- Mindbender
+    [62982] = true, -- Mindbender
 
     -- Hunter
-    ["105419"] = true, -- Dire Basilisk
-    ["62005"] = true, -- Beast
-    ["228224"] = true, -- Fenryr
-    ["228226"] = true, -- Hati
-    ["225190"] = true, -- Dark Hound
-    ["217228"] = true, -- Blood Beast
-    ["234018"] = true, -- Bear Pack Leader
+    [105419] = true, -- Dire Basilisk
+    [62005] = true, -- Beast
+    [228224] = true, -- Fenryr
+    [228226] = true, -- Hati
+    [225190] = true, -- Dark Hound
+    [217228] = true, -- Blood Beast
+    [234018] = true, -- Bear Pack Leader
 }
 BBP.secondaryPets = secondaryPets
 
@@ -2589,7 +2594,7 @@ function BBP.FadeOutNPCs(frame)
         return
     end
 
-    local npcID = select(6, strsplit("-", info.unitGUID))
+    local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
     local npcName = info.name
 
     if not config.fadeOutNPCsAlpha or BBP.needsUpdate then
@@ -2625,10 +2630,10 @@ function BBP.FadeOutNPCs(frame)
     -- Check if the NPC is in the list by ID or name (case insensitive)
     local inList = false
     for _, npc in ipairs(npcListToCheck) do
-        if npc.id == tonumber(npcID) or (npc.id and npc.id == tonumber(npcID)) then
+        if npc.id == npcID or (npc.id and npc.id == npcID) then
             inList = true
             break
-        elseif npc.name == tostring(npcName) or strlower(npc.name) == lowerCaseNpcName then
+        elseif npc.name == npcName or strlower(npc.name) == lowerCaseNpcName then
             inList = true
             break
         end
@@ -2639,7 +2644,7 @@ function BBP.FadeOutNPCs(frame)
         frame:SetAlpha(alpha)
         frame.castBar:SetAlpha(alpha)
         frame.fadedNpc = nil
-    elseif onlyFadeSecondaryPets and BBP.isInArena and mainPets[npcID] then
+    elseif onlyFadeSecondaryPets and BBP.isInArena and mainPets[npcID] and info.isEnemy then
         local isFakePet = true
         for i = 1, 3 do
             if UnitIsUnit(frame.displayedUnit, "arenapet" .. i) then
@@ -2813,7 +2818,7 @@ function BBP.HideNPCs(frame, nameplate)
     local unitGUID = UnitGUID(frame.displayedUnit)
     if not unitGUID then return end
 
-    local npcID = select(6, strsplit("-", unitGUID))
+    local npcID = BBP.GetNPCIDFromGUID(unitGUID)
     local npcName = UnitName(frame.displayedUnit)
     local lowerCaseNpcName = strlower(npcName)
 
@@ -2982,7 +2987,7 @@ local function ShowLastNameOnlyNpc(frame)
             end
         else
             -- Use last word (e.g., "Guardian" from "Frostwolf Guardian")
-            local lastWord = name:match("([^%s%-]+)$")
+            local lastWord = name:match("([^%s]+)$")
             frame.name:SetText(lastWord)
         end
     end
@@ -3060,12 +3065,20 @@ function BBP.ColorThreat(frame)
                 r, g, b = GetThreatStatusColor(threatStatus)
             end
         elseif threatStatus then
-            -- Not tanking — check if an offtank has full aggro
-            for _, unit in ipairs(offTanks) do
-                local offTanking, otherThreatStatus = UnitDetailedThreatSituation(unit, frame.unit)
-                if offTanking and otherThreatStatus and otherThreatStatus > 2 then
+            -- Not tanking — check if an offtank or a pet has full aggro
+            local targetUnit = frame.unit.."target"
+            if not UnitIsPlayer(targetUnit) then
+                local offTanking, otherThreatStatus = UnitDetailedThreatSituation(targetUnit, frame.unit)
+                if offTanking and otherThreatStatus and otherThreatStatus >= 2 then
                     r, g, b = unpack(BetterBlizzPlatesDB.tankOffTankAggroColorRGB)
-                    break
+                end
+            else
+                for _, unit in ipairs(offTanks) do
+                    local offTanking, otherThreatStatus = UnitDetailedThreatSituation(unit, frame.unit)
+                    if offTanking and otherThreatStatus and otherThreatStatus >= 2 then
+                        r, g, b = unpack(BetterBlizzPlatesDB.tankOffTankAggroColorRGB)
+                        break
+                    end
                 end
             end
         end
@@ -3272,6 +3285,9 @@ local function UnitAuraColorEvent(self, event, unit, unitAuraUpdateInfo)
                     end
 
                     if foundID then
+                        if BBP.tempDebug then
+                            print("BG Aura ID: ", foundID)
+                        end
                         if db.bgIndicator then
                             BBP.BgIndicator(frame, foundID)
                         end
@@ -4185,9 +4201,9 @@ BBP.HideFriendlyHealthbar = HideFriendlyHealthbar
 
 local function FriendIndicator(frame)
     local info = frame.BetterBlizzPlates.unitInfo
-    local isFriend = isFriendlistFriend(frame.unit)
-    local isBnetFriend = isUnitBNetFriend(frame.unit)
-    local isGuildmate = isUnitGuildmate(frame.unit)
+    local isFriend = BBP.isFriendlistFriend(frame.unit)
+    local isBnetFriend = BBP.isUnitBNetFriend(frame.unit)
+    local isGuildmate = BBP.isUnitGuildmate(frame.unit)
 
     if not frame.friendIndicator then
         frame.friendIndicator = frame:CreateTexture(nil, "OVERLAY")
@@ -4377,19 +4393,26 @@ end
 
 BBP.InitializeNameplateSettings = InitializeNameplateSettings
 
+local eliteIcons = {
+    ["UI-HUD-UnitFrame-Target-PortraitOn-Boss-Rare-Star"] = true,
+    ["UI-HUD-UnitFrame-Target-PortraitOn-Boss-Rare"] = true,
+    ["nameplates-icon-elite-gold"] = true,
+    ["nameplates-icon-elite-silver"] = true,
+}
+
 function BBP.CustomizeClassificationFrame(frame)
     local config = frame.BetterBlizzPlates.config
     frame.ClassificationFrame:SetFrameStrata("LOW")
 
     if config.hideEliteDragon and not frame.ClassificationFrame.bbpHook then
         local atlas = frame.ClassificationFrame.classificationIndicator:GetAtlas()
-        if atlas == "nameplates-icon-elite-gold" then
+        if eliteIcons[atlas] then
             frame.ClassificationFrame.classificationIndicator:SetAtlas(nil)
         end
 
         hooksecurefunc(frame.ClassificationFrame.classificationIndicator, "SetAtlas", function(self, newAtlas)
             if frame:IsForbidden() then return end
-            if newAtlas == "nameplates-icon-elite-gold" then
+            if eliteIcons[newAtlas] then
                 self:SetAtlas(nil)
             end
         end)
@@ -6075,6 +6098,20 @@ function BBP.HideHealthbarInPvEMagicCaller()
     HideHealthbarInPvEMagic()
 end
 
+local function HookNpFlagUpdates()
+    if BetterBlizzPlatesDB.classIndicator or BetterBlizzPlatesDB.bgIndicator then
+        hooksecurefunc("CompactUnitFrame_UpdatePvPClassificationIndicator", function(frame)
+            if frame:IsForbidden() or not BBP.isInPvP or not UnitIsPlayer(frame.unit) or UnitPvpClassification(frame.unit) then return end
+            if frame.classIndicator and frame.classIndicator.flagActive then
+                BBP.ClassIndicator(frame)
+            end
+            if frame.bgIndicator and frame.bgIndicator.flagActive then
+                BBP.BgIndicator(frame)
+            end
+        end)
+    end
+end
+
 -- Event registration for PLAYER_LOGIN
 local Frame = CreateFrame("Frame")
 Frame:RegisterEvent("PLAYER_LOGIN")
@@ -6179,6 +6216,7 @@ Frame:SetScript("OnEvent", function(...)
     end
 
     BBP.HookOverShields()
+    HookNpFlagUpdates()
 
     BBP.ApplyNameplateWidth()
 
@@ -6193,7 +6231,7 @@ Frame:SetScript("OnEvent", function(...)
     end)
 
     SetCVarsOnLogin()
-    BBP.InitializeInterruptSpellID() --possibly not needed, talent events seem to always run on login?
+    --BBP.InitializeInterruptSpellID() --possibly not needed, talent events seem to always run on login?
 
     if BetterBlizzPlatesDB.classIndicator and BetterBlizzPlatesDB.classIconHealthNumbers then
         BBP.SetupClassIndicatorHealthText()
@@ -6246,7 +6284,7 @@ SlashCmdList["BBP"] = function(msg)
     elseif command == "fixnameplates" then
         StaticPopup_Show("CONFIRM_FIX_NAMEPLATES_BBP")
     elseif command == "ver" or command == "version" then
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates Version "..addonUpdates)
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates Version "..BBP.VersionNumber)
     elseif command == "dump" then
         local exportVersion = BetterBlizzPlatesDB.exportVersion or "No export version registered"
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: "..exportVersion)
@@ -6762,16 +6800,12 @@ local function OnVariablesLoaded(self, event)
             BetterBlizzPlatesDB.nameplateSelfAlpha = GetCVar("nameplateSelfAlpha")
         end
         BBP.variablesLoaded = true
-    elseif event == "TRAIT_CONFIG_UPDATED" or event == "PLAYER_TALENT_UPDATE" then
-        BBP.InitializeInterruptSpellID()
     end
 end
 
 -- Register the frame to listen for the "VARIABLES_LOADED" event
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("VARIABLES_LOADED")
-eventFrame:RegisterEvent("TRAIT_CONFIG_UPDATED")
-eventFrame:RegisterEvent("PLAYER_TALENT_UPDATE")
 eventFrame:SetScript("OnEvent", OnVariablesLoaded)
 
 

@@ -48,6 +48,36 @@ local function ExportProfile(profileTable, dataType)
 end
 
 local function ImportOtherProfile(encodedString, expectedDataType)
+    -- Temporary native Blizzard encoding to support Platers new system
+    local PlaterString = "!PLATER:2!"
+	if (string.match(encodedString, "^" .. PlaterString)) and C_EncodingUtil then
+		local dataCompressed = C_EncodingUtil.DecodeBase64(string.gsub(encodedString,PlaterString, ""))
+
+        if not dataCompressed then
+            return false, "Error decoding the data."
+        end
+
+		local dataSerialized = C_EncodingUtil.DecompressString(dataCompressed)
+		if not dataSerialized then
+			return false, "Error decoding the data."
+		end
+
+		local importTable = C_EncodingUtil.DeserializeCBOR(dataSerialized)
+		if not importTable then
+			return false, "Error decoding the data."
+		end
+
+        if expectedDataType == "colorNpcList" then
+            BBP.MergeNpcColorToBBP(importTable)
+        elseif expectedDataType == "castEmphasisList" then
+            BBP.MergeCastColorToBBP(importTable)
+        else
+            return false, "Error decoding the data."
+        end
+
+		return true
+	end
+
     -- Decode the data
     local compressed = LibDeflate:DecodeForPrint(encodedString)
     if not compressed then
@@ -4287,6 +4317,41 @@ local function guiGeneralTab()
         end
     end)
 
+    local friendlyNpToggles = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    friendlyNpToggles:SetText("Toggles:")
+    friendlyNpToggles:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", -20, -70)
+    CreateTooltipTwo(friendlyNpToggles, "Toggle Friendly Nameplates", "Turn on friendly nameplates when you enter these types of content and off again when it changes.\n\nSelect where you want friendly nameplates enabled:")
+
+    -- local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Arena", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    -- toggleFriendlyNameplatesInArena:SetPoint("LEFT", friendlyNpToggles, "RIGHT", 0, 0)
+    -- CreateTooltipTwo(toggleFriendlyNameplatesInArena, "Arena Toggle", "Turn on friendly nameplates when you enter arena and off again when you leave.")
+    -- toggleFriendlyNameplatesInArena:SetSize(22,22)
+
+    local friendlyNameplatesOnlyInBgs = CreateCheckbox("friendlyNameplatesOnlyInBgs", "BGs", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    friendlyNameplatesOnlyInBgs:SetPoint("LEFT", friendlyNpToggles, "RIGHT", 0, 0)
+    CreateTooltipTwo(friendlyNameplatesOnlyInBgs, "Battleground Toggle", "Turn on friendly nameplates when you enter battlegrounds and off again when you leave.")
+    friendlyNameplatesOnlyInBgs:SetSize(22,22)
+
+    local friendlyNameplatesOnlyInEpicBgs = CreateCheckbox("friendlyNameplatesOnlyInEpicBgs", "E-BGs", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    friendlyNameplatesOnlyInEpicBgs:SetPoint("LEFT", friendlyNameplatesOnlyInBgs.text, "RIGHT", -2, 0)
+    CreateTooltipTwo(friendlyNameplatesOnlyInEpicBgs, "Epic Battleground Toggle", "Turn on friendly nameplates when you enter epic battlegrounds and off again when you leave.")
+    friendlyNameplatesOnlyInEpicBgs:SetSize(22,22)
+
+    local friendlyNameplatesOnlyInDungeons = CreateCheckbox("friendlyNameplatesOnlyInDungeons", "Dungeons", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    friendlyNameplatesOnlyInDungeons:SetPoint("LEFT", friendlyNameplatesOnlyInEpicBgs.text, "RIGHT", -2, 0)
+    CreateTooltipTwo(friendlyNameplatesOnlyInDungeons, "Dungeon Toggle", "Turn on friendly nameplates when you enter dungeons and off again when you leave.")
+    friendlyNameplatesOnlyInDungeons:SetSize(22,22)
+
+    local friendlyNameplatesOnlyInRaids = CreateCheckbox("friendlyNameplatesOnlyInRaids", "Raids", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    friendlyNameplatesOnlyInRaids:SetPoint("LEFT", friendlyNameplatesOnlyInDungeons.text, "RIGHT", -2, 0)
+    CreateTooltipTwo(friendlyNameplatesOnlyInRaids, "Raid Toggle", "Turn on friendly nameplates when you enter raids and off again when you leave.")
+    friendlyNameplatesOnlyInRaids:SetSize(22,22)
+
+    local friendlyNameplatesOnlyInWorld = CreateCheckbox("friendlyNameplatesOnlyInWorld", "World", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
+    friendlyNameplatesOnlyInWorld:SetPoint("LEFT", friendlyNameplatesOnlyInRaids.text, "RIGHT", -2, 0)
+    CreateTooltipTwo(friendlyNameplatesOnlyInWorld, "World Toggle", "Turn on friendly nameplates when you enter non-instanced World content and off again when enter other types.")
+    friendlyNameplatesOnlyInWorld:SetSize(22,22)
+
     -- local friendlyNameColor = CreateCheckbox("friendlyNameColor", "Name", BetterBlizzPlates)
     -- friendlyNameColor:SetPoint("LEFT", friendlyHealthBarColorNpc.Text, "RIGHT", -3, 0)
     -- friendlyNameColor:HookScript("OnClick", function(self)
@@ -4405,20 +4470,8 @@ local function guiGeneralTab()
         BBP.friendlyHideHealthBarNpc:Disable()
     end
 
-    local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Arena Toggle", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
-    toggleFriendlyNameplatesInArena:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(toggleFriendlyNameplatesInArena, "Arena Toggle", "Turn on friendly nameplates when you enter arena and off again when you leave.")
-
-    local friendlyNameplatesOnlyInBgs = CreateCheckbox("friendlyNameplatesOnlyInBgs", "BG Toggle", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
-    friendlyNameplatesOnlyInBgs:SetPoint("LEFT", toggleFriendlyNameplatesInArena.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(friendlyNameplatesOnlyInBgs, "Battleground Toggle", "Turn on friendly nameplates when you enter battlegrounds and off again when you leave.")
-
-    local friendlyNameplatesOnlyInDungeons = CreateCheckbox("friendlyNameplatesOnlyInDungeons", "Dungeon/raid Toggle", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
-    friendlyNameplatesOnlyInDungeons:SetPoint("LEFT", friendlyNameplatesOnlyInBgs.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(friendlyNameplatesOnlyInDungeons, "Dungeon/Raid Toggle", "Turn on friendly nameplates when you enter dungeons/raids and off again when you leave.")
-
     local friendlyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 3, 0.01, "friendlyNameScale")
-    friendlyNameScale:SetPoint("TOPLEFT", toggleFriendlyNameplatesInArena, "BOTTOMLEFT", 12, -10)
+    friendlyNameScale:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", 0, -6)
     CreateTooltipTwo(friendlyNameScale, "Name Size", "Change Name size on Friendly nameplates.", "While adjusting this setting names can get 20% larger/smaller due to Blizzard scaling issues. Reload between adjustments to make sure the size is what you want.")
 
     local hideFriendlyNameText = CreateCheckbox("hideFriendlyNameText", "Hide name", BetterBlizzPlates)
@@ -4537,7 +4590,7 @@ local function guiGeneralTab()
 
     local targetIndicator = CreateCheckbox("targetIndicator", "Target indicator", BetterBlizzPlates)
     targetIndicator:SetPoint("TOPLEFT", petIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(targetIndicator, "Target Indicator |A:Navigation-Tracked-Arrow:14:19|a", "Show a pointer on your current target.")
+    CreateTooltipTwo(targetIndicator, "Target Indicator |A:Navigation-Tracked-Arrow:14:19|a", "Show a pointer on your current target.\n\nCan also change Target Color/Texture in Advanced Settings.")
     local targetIndicatorIcon = healerIndicator:CreateTexture(nil, "ARTWORK")
     targetIndicatorIcon:SetTexture(BBP.targetIndicatorIconReplacement)
     targetIndicatorIcon:SetRotation(math.rad(180))
@@ -6138,7 +6191,7 @@ local function guiPositionAndScale()
     local resetNameSettings = CreateFrame("Button", nil, contentFrame, "UIPanelButtonTemplate")
     resetNameSettings:SetText("Reset")
     resetNameSettings:SetWidth(80)
-    resetNameSettings:SetPoint("TOP", fakeNameAnchorRelativeDropdown, "BOTTOM", 0, -5)
+    resetNameSettings:SetPoint("TOP", fakeNameAnchorRelativeDropdown, "BOTTOM", 0, -13)
     resetNameSettings:SetScript("OnClick", function()
         local db = BetterBlizzPlatesDB
         db.fakeNameXPos = 0
@@ -6150,6 +6203,10 @@ local function guiPositionAndScale()
         BBP.RefreshAllNameplates()
     end)
     CreateTooltipTwo(resetNameSettings, "Reset Name Position Settings")
+
+    local fakeNameRaiseStrata = CreateCheckbox("fakeNameRaiseStrata", "Raise Name Strata", contentFrame)
+    fakeNameRaiseStrata:SetPoint("BOTTOMLEFT", resetNameSettings, "TOPLEFT", -24, -5)
+    CreateTooltipTwo(fakeNameRaiseStrata, "Raise Name Strata", "Raises the name so it shows on top of the healthbar and not behind.")
 
     -- useFakeName:HookScript("OnClick", function(self)
     --     if self:GetChecked() then

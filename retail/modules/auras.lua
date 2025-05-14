@@ -166,29 +166,64 @@ function BBP.SetUpAuraInterrupts()
         if not duration then return end
 
         local interruptedNp, wasCasting, isInterruptible = nil, false, false
+        local interruptedUnit
 
-        for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
-            local frame = nameplate.UnitFrame
-            if frame and UnitGUID(frame.unit) == destGUID then
-                interruptedNp = frame
+        if BBP.isInArena then
+            for i = 1, 3 do
+                local unit = "arena" .. i
+                if UnitGUID(unit) == destGUID then
+                    interruptedUnit = true
 
-                if event == "SPELL_CAST_SUCCESS" then
-                    -- Check if the unit was casting or channeling AND if it was interruptible
-                    local _, _, _, _, _, _, notInterruptibleChannel = UnitChannelInfo(frame.unit)
-                    if notInterruptibleChannel ~= false then -- nil when not channeling
-                        return
+                    local np, frame = BBP.GetSafeNameplate(unit)
+                    if frame then
+                        interruptedNp = frame
                     end
+
+                    if event == "SPELL_CAST_SUCCESS" then
+                        -- Check if the unit was casting or channeling AND if it was interruptible
+                        local _, _, _, _, _, _, notInterruptibleChannel = UnitChannelInfo(unit)
+                        if notInterruptibleChannel ~= false then -- nil when not channeling
+                            return
+                        end
+                    end
+
+                    -- Apply interrupt duration reductions based on active buffs
+                    AuraUtil.ForEachAura(unit, "HELPFUL", nil, function(_, _, _, _, _, _, _, _, _, spellId)
+                        local mult = spellLockReducer[spellId]
+                        if mult then
+                            duration = duration * mult
+                        end
+                    end)
+
+                    break
                 end
+            end
+        end
 
-                -- Apply interrupt duration reductions based on active buffs
-                AuraUtil.ForEachAura(frame.unit, "HELPFUL", nil, function(_, _, _, _, _, _, _, _, _, spellId)
-                    local mult = spellLockReducer[spellId]
-                    if mult then
-                        duration = duration * mult
+        if not interruptedUnit then
+            for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+                local frame = nameplate.UnitFrame
+                if frame and UnitGUID(frame.unit) == destGUID then
+                    interruptedNp = frame
+
+                    if event == "SPELL_CAST_SUCCESS" then
+                        -- Check if the unit was casting or channeling AND if it was interruptible
+                        local _, _, _, _, _, _, notInterruptibleChannel = UnitChannelInfo(frame.unit)
+                        if notInterruptibleChannel ~= false then -- nil when not channeling
+                            return
+                        end
                     end
-                end)
 
-                break
+                    -- Apply interrupt duration reductions based on active buffs
+                    AuraUtil.ForEachAura(frame.unit, "HELPFUL", nil, function(_, _, _, _, _, _, _, _, _, spellId)
+                        local mult = spellLockReducer[spellId]
+                        if mult then
+                            duration = duration * mult
+                        end
+                    end)
+
+                    break
+                end
             end
         end
 

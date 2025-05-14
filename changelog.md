@@ -1,3 +1,45 @@
+# BetterBlizzPlates 1.8.0f
+## All versions:
+### Tweak:
+- Updated Import function to support Blizzards new native functionality that Plater uses so that Plater imports for npc color and casts works again.
+- "Only show last name" setting fixed so words like "Bee-let" dont get shortened to "let". Also Classic versions so that they instead use first name on Totems, like how it is on Retail. 
+## Retail
+### Bugfix:
+- Fix Castbar Interrupt Colors "Soon" Highlight Spark Position on Evoker Empowered Casts.
+- Fix "Hide Elite Dragon" not hiding the silver version and some others.
+- Fix new "Friends Only" setting for Class Indicator not being shown in the GUI in Advanced Settings.
+- Fix BG Objectives not updating when flag drops due to aura update not coming through.
+## Classic & Cata
+### New:
+- "Raise Name Strata" setting added (same as on retail) that shows name above healthbars instead of behind them. In Advanced Settings under "Reposition Name".
+### Bugfix:
+- Fix Friendly Nameplate "Arena" toggle not working. Deleted this setting from Era and accidentally deleted it on Cata too.
+
+
+
+# BetterBlizzPlates 1.8.0e
+## Retail
+### Bugfix:
+- Fix a typo causing lua errors after renaming a function related to "Friends only" settings.
+
+
+
+# BetterBlizzPlates 1.8.0d
+## All versions
+### Tweak:
+- Threat Color: Tweak to when offtank color shows for Tanks. Added a npc check to color pets getting aggro and showing offtank color for those cases.
+## Retail
+### Tweak:
+- Tweaks to Interrupt spell list for Castbar Interrupt Color.
+### Bugfix:
+- Fix inconsistencies for Castbar Interrupt Color.
+- Fix "Blitz Indicator" showing up on Personal Resource Display
+## Era/Sod, Cata & Wrath:
+- Added more friendly nameplate auto toggle settings, as already implemented for Retail.
+
+
+
+
 # BetterBlizzPlates 1.8.0c
 ## Retail
 ### New:

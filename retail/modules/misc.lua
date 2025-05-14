@@ -5,7 +5,7 @@ function BBP.InstantComboPoints()
     local _, class = UnitClass("player")
 
     local function UpdateRogueComboPoints(self)
-        if self:IsForbidden() then return end
+        if not self or self:IsForbidden() then return end
         local comboPoints = UnitPower("player", self.powerType)
         local chargedPowerPoints = GetUnitChargedPowerPoints("player") or {}
 
@@ -44,7 +44,7 @@ function BBP.InstantComboPoints()
     end
 
     local function UpdateDruidComboPoints(self)
-        if self:IsForbidden() then return end
+        if not self or self:IsForbidden() then return end
         local comboPoints = UnitPower("player", self.powerType)
 
         for i, point in ipairs(self.classResourceButtonTable) do
@@ -64,7 +64,7 @@ function BBP.InstantComboPoints()
     end
 
     local function UpdateMonkChi(self)
-        if self:IsForbidden() then return end
+        if not self or self:IsForbidden() then return end
         local numChi = UnitPower("player", self.powerType)
 
         for i, point in ipairs(self.classResourceButtonTable) do
@@ -86,7 +86,7 @@ function BBP.InstantComboPoints()
     end
 
     local function UpdateArcaneCharges(self)
-        if self:IsForbidden() then return end
+        if not self or self:IsForbidden() then return end
         local numCharges = UnitPower("player", self.powerType, true)
 
         for i, point in ipairs(self.classResourceButtonTable) do
@@ -113,7 +113,7 @@ function BBP.InstantComboPoints()
     end
 
     local function UpdatePaladinHolyPower(self)
-        if self:IsForbidden() then return end
+        if not self or self:IsForbidden() then return end
         local numHolyPower = UnitPower("player", Enum.PowerType.HolyPower)
         local maxHolyPower = UnitPowerMax("player", Enum.PowerType.HolyPower)
 
