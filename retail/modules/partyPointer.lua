@@ -59,7 +59,12 @@ function BBP.PartyPointer(frame)
         config.partyPointerHideAll = BetterBlizzPlatesDB.partyPointerHideAll
         config.partyPointerHealerOnly = BetterBlizzPlatesDB.partyPointerHealerOnly
         config.partyPointerShowPet = BetterBlizzPlatesDB.partyPointerShowPet
+        config.partyPointerAlwaysShowPet = BetterBlizzPlatesDB.partyPointerAlwaysShowPet
+        config.partyPointerShowOthersPets = BetterBlizzPlatesDB.partyPointerShowOthersPets
         config.partyPointerOnlyParty = BetterBlizzPlatesDB.partyPointerOnlyParty
+        config.partyPointerHighlight = BetterBlizzPlatesDB.partyPointerHighlight
+        config.partyPointerHighlightRGB = BetterBlizzPlatesDB.partyPointerHighlightRGB
+        config.partyPointerHighlightScale = BetterBlizzPlatesDB.partyPointerHighlightScale
 
         config.partyPointerInitialized = true
     end
@@ -73,8 +78,13 @@ function BBP.PartyPointer(frame)
         normalTexture = BetterBlizzPlatesDB.partyPointerCustomTexture
     end
 
+    local isPet = UnitIsUnit(frame.unit, "pet") and config.partyPointerShowPet
+    local isPetAndAlwaysShow = config.partyPointerAlwaysShowPet and isPet
+    local isOthersPet = config.partyPointerShowOthersPets and UnitIsOtherPlayersPet(frame.unit) and BBP.isInArena and info.isFriend
+
+
     if not info.isFriend or info.isNpc or info.isSelf or partyOnly then
-        if UnitIsUnit(frame.unit, "pet") and config.partyPointerShowPet then
+        if isPet or isOthersPet or isPetAndAlwaysShow then
             --
         else
             if config.partyPointerHideRaidmarker then
@@ -96,11 +106,20 @@ function BBP.PartyPointer(frame)
         frame.partyPointer = CreateFrame("Frame", nil, frame)
         frame.partyPointer:SetFrameLevel(0)
         frame.partyPointer:SetSize(24, 24)
-        frame.partyPointer.icon = frame.partyPointer:CreateTexture(nil, "BACKGROUND")
+        frame.partyPointer.icon = frame.partyPointer:CreateTexture(nil, "BACKGROUND", nil, 1)
         frame.partyPointer.icon:SetAtlas(normalTexture)
         frame.partyPointer.icon:SetSize(34, 48)
         frame.partyPointer.icon:SetPoint("BOTTOM", frame.partyPointer, "BOTTOM", 0, 5)
         frame.partyPointer.icon:SetDesaturated(true)
+
+        frame.partyPointer.highlight = frame.partyPointer:CreateTexture(nil, "BACKGROUND")
+        frame.partyPointer.highlight:SetAtlas(normalTexture)
+        frame.partyPointer.highlight:SetSize(55, 69)
+        frame.partyPointer.highlight:SetPoint("CENTER", frame.partyPointer.icon, "CENTER", 0, -1)
+        frame.partyPointer.highlight:SetDesaturated(true)
+        frame.partyPointer.highlight:SetBlendMode("ADD")
+        frame.partyPointer.highlight:SetVertexColor(1, 1, 0)
+        frame.partyPointer.highlight:Hide()
 
         frame.partyPointer.healerIcon = frame.partyPointer:CreateTexture(nil, "BORDER")
         frame.partyPointer.healerIcon:SetAtlas("communities-chat-icon-plus")
@@ -156,6 +175,18 @@ function BBP.PartyPointer(frame)
     end
 
     local class = info.class or playerClass
+    if isOthersPet then
+        for i = 1, 2 do
+            local partyPet = "partypet"..i
+            if UnitExists(partyPet) and UnitIsUnit(partyPet, frame.unit) then
+                local _, partyClass = UnitClass("party"..i)
+                if partyClass then
+                    class = partyClass
+                end
+                break
+            end
+        end
+    end
 
     -- Enhanced Test Mode: Use local test variables
     if config.partyPointerTestMode then
@@ -194,7 +225,13 @@ function BBP.PartyPointer(frame)
 
         if config.partyPointerClassColor then
             local classColor = RAID_CLASS_COLORS[class]
-            frame.partyPointer.icon:SetVertexColor(classColor.r, classColor.g, classColor.b)
+            local r, g, b = classColor.r, classColor.g, classColor.b
+
+            if isOthersPet then
+                r, g, b = r * 0.5, g * 0.5, b * 0.5
+            end
+
+            frame.partyPointer.icon:SetVertexColor(r, g, b)
         else
             frame.partyPointer.icon:SetVertexColor(0.04, 0.76, 1)
         end
@@ -224,6 +261,7 @@ function BBP.PartyPointer(frame)
 
     frame.partyPointer:SetScale(config.partyPointerScale or 1)
     frame.partyPointer.icon:SetWidth(config.partyPointerWidth)
+    frame.partyPointer.highlight:SetWidth(config.partyPointerWidth + 26)
     frame.partyPointer.healerIcon:SetScale(config.partyPointerHealerScale or 1)
 
     -- Visibility checks
@@ -270,7 +308,14 @@ function BBP.PartyPointer(frame)
 
     if config.partyPointerClassColor then
         local classColor = RAID_CLASS_COLORS[class]
-        frame.partyPointer.icon:SetVertexColor(classColor.r, classColor.g, classColor.b)
+        local r, g, b = classColor.r, classColor.g, classColor.b
+
+        if isOthersPet then
+            r, g, b = r * 0.5, g * 0.5, b * 0.5
+            frame.partyPointer:SetScale(config.partyPointerScale * 0.6)
+        end
+
+        frame.partyPointer.icon:SetVertexColor(r, g, b)
     else
         frame.partyPointer.icon:SetVertexColor(0.04, 0.76, 1)
     end
@@ -280,6 +325,16 @@ function BBP.PartyPointer(frame)
             frame.partyPointer.icon:SetAtlas("UI-QuestPoiImportant-QuestBang")
         else
             frame.partyPointer.icon:SetAtlas(normalTexture)
+        end
+    end
+
+    if config.partyPointerHighlight then
+        frame.partyPointer.highlight:SetScale((isOthersPet and config.partyPointerHighlightScale * 0.6) or config.partyPointerHighlightScale)
+        frame.partyPointer.highlight:SetVertexColor(unpack(config.partyPointerHighlightRGB))
+        if info.isTarget then
+            frame.partyPointer.highlight:Show()
+        else
+            frame.partyPointer.highlight:Hide()
         end
     end
 

@@ -295,6 +295,7 @@ local ogKeyAuraList = {
     [1022] = "defensiveColor",
     [642] = "defensiveColor",
     [8178] = "defensiveColor",
+    [5277] = "defensiveColor",
     [213664] = "defensiveColor",
     [409293] = "defensiveColor",
     [116849] = "defensiveColor",
@@ -1761,8 +1762,9 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
         local currentRow = startRow
         local horizontalOffset = 0
         local firstRowFirstAuraOffset = nil  -- Variable to store the horizontal offset of the first aura in the first row
-        local nameplateAurasFriendlyCenteredAnchor = db.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit
+        local nameplateAurasFriendlyCenteredAnchor = db.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit and not isSelf
         local nameplateAurasEnemyCenteredAnchor = db.nameplateAurasEnemyCenteredAnchor and isEnemyUnit
+        local nameplateAurasPersonalCenteredAnchor = db.nameplateAurasPersonalCenteredAnchor and isSelf
         local nameplateCenterAllRows = db.nameplateCenterAllRows and (nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor)
         local xPos = db.nameplateAurasXPos
 
@@ -1844,7 +1846,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
 
                     if nameplateCenterAllRows then
                         horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2
-                    elseif nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
+                    elseif nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor or nameplateAurasPersonalCenteredAnchor then
                         if rowIndex == 1 then
                             horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2
                             firstRowFirstAuraOffset = horizontalOffset  -- Save this offset for the first aura
@@ -1877,10 +1879,18 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
                     compactTracker = 0
                 end
 
-                if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
-                    buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) +(xPos+1-extraOffset/buffScale), verticalOffset - 13)
+                if isSelf then
+                    if nameplateAurasPersonalCenteredAnchor then
+                        buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) +(db.nameplateAurasPersonalXPos+1-extraOffset/buffScale), verticalOffset - 13)
+                    else
+                        buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + db.nameplateAurasPersonalXPos-extraOffset/buffScale, verticalOffset - 13)
+                    end
                 else
-                    buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + xPos-extraOffset/buffScale, verticalOffset - 13)
+                    if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
+                        buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) +(xPos+1-extraOffset/buffScale), verticalOffset - 13)
+                    else
+                        buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + xPos-extraOffset/buffScale, verticalOffset - 13)
+                    end
                 end
                 horizontalOffset = horizontalOffset + ((buffWidth)*buffScale) + horizontalSpacing-extraOffset
             end
@@ -2378,7 +2388,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
             local filterWhitelist = db["otherNpBuffFilterWatchList"]
             local auraWhitelisted = filterWhitelist and isInWhitelist
             local filterLessMinite = db["otherNpBuffFilterLessMinite"]
-            local filterPurgeable = db["otherNpBuffFilterPurgeable"]
+            local filterPurgeable = db["otherNpBuffFilterPurgeable"] and not (db.otherNpBuffFilterPurgeablePvEOnly and BBP.isInPvE)
             local filterImportantBuffs = db["otherNpBuffFilterImportantBuffs"]
 
             local anyFilter = filterLessMinite or filterPurgeable or filterImportantBuffs
@@ -2396,7 +2406,9 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
                     if importantBuffs[spellId] then
                         return true
                     else
-                        if filterPurgeable and not isPurgeable then return false end
+                        if filterPurgeable then
+                            if isPurgeable then return true else return false end
+                        end
                         if moreThanOneMin and filterLessMinite then return false end
                         return false
                     end
@@ -3055,8 +3067,13 @@ function BBP:UpdateAnchor()
             self:SetPoint("BOTTOM", frame.healthBar, "TOP", 0, 24.5 + targetYOffset + config.nameplateAurasYPos)
         --end
     else
-        local additionalYOffset = 15 * (isSelf and config.nameplateAuraSelfScale - 1 or config.nameplateAuraScale - 1)
-        self:SetPoint("BOTTOM", frame.healthBar, "TOP", 0, 4 + targetYOffset + config.nameplateAurasNoNameYPos + 1 + additionalYOffset)
+        local additionalYOffset
+        if isSelf then
+            additionalYOffset = (15 * (isSelf and config.nameplateAuraSelfScale - 1)) + BetterBlizzPlatesDB.nameplateAurasPersonalYPos
+        else
+            additionalYOffset = 15 * (config.nameplateAuraScale - 1) + config.nameplateAurasNoNameYPos
+        end
+        self:SetPoint("BOTTOM", frame.healthBar, "TOP", 0, 4 + targetYOffset + 1 + additionalYOffset)
     end
 end
 

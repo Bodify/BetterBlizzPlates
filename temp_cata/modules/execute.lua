@@ -103,11 +103,11 @@ function BBP.ExecuteIndicator(frame)
     if config.executeIndicatorTestMode then
         if config.executeIndicatorUseTexture then
             -- Position the texture based on the threshold for testing
-            local barWidth = frame.HealthBarsContainer:GetWidth()
+            local barWidth = frame.healthBar:GetWidth()
             local textureXPos = (config.executeIndicatorThreshold / 100) * barWidth
 
             frame.executeIndicatorTexture:ClearAllPoints()
-            frame.executeIndicatorTexture:SetPoint("CENTER", frame.HealthBarsContainer, "LEFT", textureXPos, 0)
+            frame.executeIndicatorTexture:SetPoint("CENTER", frame.healthBar, "LEFT", textureXPos, 0)
             frame.executeIndicatorTexture:Show()
         else
             -- Show test text

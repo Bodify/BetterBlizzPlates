@@ -169,7 +169,7 @@ function BBP.FocusTargetIndicator(frame)
         else
             BBP.ApplyCustomTextureToNameplate(frame)
         end
-        if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate then
+        if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate and not (BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateNotPvP and BBP.isInPvP) then
             local color = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB or {1, 1, 1}
             frame.healthBar:SetStatusBarColor(unpack(color))
         else
@@ -191,7 +191,7 @@ function BBP.FocusTargetIndicator(frame)
         if shouldColorize then
             color = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB
         end
-        if colorNp then
+        if colorNp and not (BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateNotPvP and BBP.isInPvP) then
             frame.healthBar:SetStatusBarColor(unpack(color))
         end
         if colorName then
@@ -445,7 +445,7 @@ function BBP.RegisterTargetCastingEvents()
         resourceFrame:ClearAllPoints()
         if nameplateResourceUnderCastbar then
             BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
-        else
+        elseif GetCVarBool("nameplateResourceOnTarget") then
             PixelUtil.SetPoint(resourceFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos)
         end
     end
@@ -480,18 +480,22 @@ function BBP.FadeAllButTargetNameplates()
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = namePlate.UnitFrame
         local config = frame.BetterBlizzPlates.config or BBP.InitializeNameplateSettings
-        if UnitExists("target") and not UnitIsPlayer(frame.unit) then
-            if not UnitIsUnit(frame.unit, "target") and not UnitIsUnit(frame.unit, "player") then
-                frame:SetAlpha(config.fadeOutNPCsAlpha)
-            else
-                if not config.enableNpNonTargetAlpha then
-                    frame:SetAlpha(1)
-                end
-            end
+
+        local unit = frame.unit
+        local isPlayer = UnitIsUnit(unit, "player")
+        local isTarget = UnitIsUnit(unit, "target")
+        local isFocus = UnitIsUnit(unit, "focus")
+
+        local shouldFade = true
+
+        if isPlayer or (isTarget and not config.enableNpNonTargetAlpha) or (isFocus and config.enableNpNonFocusAlpha) then
+            shouldFade = false
+        end
+
+        if shouldFade then
+            frame:SetAlpha(config.fadeOutNPCsAlpha)
         else
-            if not config.enableNpNonTargetAlpha then
-                frame:SetAlpha(1)
-            end
+            frame:SetAlpha(1)
         end
     end
 end
@@ -735,6 +739,7 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
         --local info = frame.BetterBlizzPlates.unitInfo
         -- info.isFocus = false
         -- info.wasFocus = true
+        if config.enableNpNonTargetAlpha and BetterBlizzPlatesDB.enableNpNonFocusAlpha then NameplateTargetAlphaAllNps() end
         if config.focusTargetIndicator then
             BBP.FocusTargetIndicator(frame)
             --BBP.ApplyCustomTextureToNameplate(frame)
@@ -748,6 +753,11 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
     if frame then
         local config = frame.BetterBlizzPlates.config
         frame.BetterBlizzPlates.unitInfo = BBP.GetNameplateUnitInfo(frame)
+
+        if config.fadeOutNPC and config.fadeAllButTarget and BetterBlizzPlatesDB.enableNpNonFocusAlpha then
+            BBP.FadeAllButTargetNameplates()
+        end
+        if config.enableNpNonTargetAlpha and BetterBlizzPlatesDB.enableNpNonFocusAlpha then NameplateTargetAlphaAllNps() end
         -- local info = frame.BetterBlizzPlates.unitInfo
         -- info.isFocus = true
         -- info.wasFocus = nil

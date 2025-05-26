@@ -23,6 +23,8 @@ local interruptSpells = {
     --231665,-- Avengers Shield (Paladin)
     351338,-- Quell (Evoker)
     97547, -- Solar Beam
+    78675, -- Solar Beam
+    15487, -- Silence
     --47482, -- Leap (DK Transform)
 }
 
@@ -459,6 +461,9 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                     local totalCastTime = (endTime / 1000) - (castStart / 1000)
 
                     if not notInterruptible then
+                        if castBar.spark and castBar.spark:IsShown() then
+                            castBar.spark:Hide()
+                        end
                         if cooldownRemaining > 0 and cooldownRemaining > castRemaining then
                             if castBarTexture then
                                 castBarTexture:SetDesaturated(true)

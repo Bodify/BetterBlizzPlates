@@ -1935,6 +1935,7 @@ end
 
 
 function BBP.ProcessAurasForNameplate(frame, unitID)
+    if frame:IsForbidden() then return end
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     local info = frame.BetterBlizzPlates.unitInfo
 

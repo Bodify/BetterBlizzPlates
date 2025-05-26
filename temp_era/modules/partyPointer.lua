@@ -49,6 +49,10 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         config.partyPointerTargetIndicator = BetterBlizzPlatesDB.partyPointerTargetIndicator
         config.partyPointerHideAll = BetterBlizzPlatesDB.partyPointerHideAll
 
+        config.partyPointerHighlight = BetterBlizzPlatesDB.partyPointerHighlight
+        config.partyPointerHighlightRGB = BetterBlizzPlatesDB.partyPointerHighlightRGB
+        config.partyPointerHighlightScale = BetterBlizzPlatesDB.partyPointerHighlightScale
+
         config.partyPointerInitialized = true
     end
 
@@ -58,12 +62,21 @@ function BBP.PartyPointer(frame, fetchedSpecID)
         frame.partyPointer:SetFrameLevel(0)
         frame.partyPointer:SetSize(24, 24)
         --frame.partyPointer:SetScale(scale)
-        frame.partyPointer.icon = frame.partyPointer:CreateTexture(nil, "BACKGROUND")
+        frame.partyPointer.icon = frame.partyPointer:CreateTexture(nil, "BACKGROUND", nil, 1)
         frame.partyPointer.icon:SetPoint("CENTER", frame.partyPointer)
         frame.partyPointer.icon:SetTexture(BBP.partyPointerIconReplacement)
         frame.partyPointer.icon:SetSize(34, 42)
         frame.partyPointer.icon:SetPoint("BOTTOM", frame.partyPointer, "BOTTOM", 0, 5)
         frame.partyPointer.icon:SetDesaturated(true)
+
+        frame.partyPointer.highlight = frame.partyPointer:CreateTexture(nil, "BACKGROUND")
+        frame.partyPointer.highlight:SetTexture(BBP.partyPointerIconReplacement)
+        frame.partyPointer.highlight:SetSize(55, 65)
+        frame.partyPointer.highlight:SetPoint("CENTER", frame.partyPointer.icon, "CENTER", 0, -2)
+        frame.partyPointer.highlight:SetDesaturated(true)
+        frame.partyPointer.highlight:SetBlendMode("ADD")
+        frame.partyPointer.highlight:SetVertexColor(1, 1, 0)
+        frame.partyPointer.highlight:Hide()
 
         frame.partyPointer.healerIcon = frame.partyPointer:CreateTexture(nil, "BORDER")
         frame.partyPointer.healerIcon:SetPoint("CENTER", frame.partyPointer)
@@ -79,6 +92,7 @@ function BBP.PartyPointer(frame, fetchedSpecID)
 
     frame.partyPointer:SetScale(config.partyPointerScale or 1)
     frame.partyPointer.icon:SetWidth(config.partyPointerWidth)
+    frame.partyPointer.highlight:SetWidth(config.partyPointerWidth + 27)
     frame.partyPointer.healerIcon:SetScale(config.partyPointerHealerScale or 1)
 
     -- Visibility checks
@@ -125,10 +139,6 @@ function BBP.PartyPointer(frame, fetchedSpecID)
 
     if config.partyPointerClassColor then
         local classColor = RAID_CLASS_COLORS[info.class]
-        if info.class == "SHAMAN" then
-            -- Specific color override for Shaman
-            classColor = {r = 0.00, g = 0.44, b = 0.87}
-        end
         frame.partyPointer.icon:SetVertexColor(classColor.r, classColor.g, classColor.b)
     else
         frame.partyPointer.icon:SetVertexColor(0.04, 0.76, 1)
@@ -139,6 +149,16 @@ function BBP.PartyPointer(frame, fetchedSpecID)
             frame.partyPointer.icon:SetTexture(BBP.ImportantIcon)
         else
             frame.partyPointer.icon:SetTexture(BBP.partyPointerIconReplacement)
+        end
+    end
+
+    if config.partyPointerHighlight then
+        frame.partyPointer.highlight:SetScale(config.partyPointerHighlightScale)
+        frame.partyPointer.highlight:SetVertexColor(unpack(config.partyPointerHighlightRGB))
+        if info.isTarget then
+            frame.partyPointer.highlight:Show()
+        else
+            frame.partyPointer.highlight:Hide()
         end
     end
 

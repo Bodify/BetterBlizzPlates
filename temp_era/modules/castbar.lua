@@ -374,12 +374,14 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                             end
                             castBar.noInterruptColor = true
                             castBar:SetStatusBarColor(unpack(castBarNoInterruptColor))
+                            castBar.interruptRecolorActive = true
                         elseif cooldownRemaining > 0 and cooldownRemaining <= castRemaining then
                             if castBarTexture then
                                 castBarTexture:SetDesaturated(true)
                             end
                             castBar.delayedInterruptColor = true
                             castBar:SetStatusBarColor(unpack(castBarDelayedInterruptColor))
+                            castBar.interruptRecolorActive = true
 
                             if cooldownRemaining < castRemaining then
                                 if not castBar.spark then
@@ -435,6 +437,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                                 end
                             end
                         else
+                            castBar.interruptRecolorActive = nil
                             castBar.noInterruptColor = false
                             castBar.delayedInterruptColor = false
                             if not castBarRecolor and not useCustomCastbarTexture then

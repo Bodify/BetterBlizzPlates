@@ -29,8 +29,6 @@ function BBP.PetIndicator(frame)
         config.petIndicatorXPos = BetterBlizzPlatesDB.petIndicatorXPos or 0
         config.petIndicatorYPos = BetterBlizzPlatesDB.petIndicatorYPos or 0
         config.petIndicatorTestMode = BetterBlizzPlatesDB.petIndicatorTestMode
-        config.combatIndicator = BetterBlizzPlatesDB.combatIndicator
-        config.combatIndicatorAnchor = BetterBlizzPlatesDB.combatIndicatorAnchor
         config.petIndicatorHideSecondaryPets = BetterBlizzPlatesDB.petIndicatorHideSecondaryPets
         config.petIndicatorScale = BetterBlizzPlatesDB.petIndicatorScale or 1
 
@@ -49,16 +47,8 @@ function BBP.PetIndicator(frame)
         shadows[nameplate] = nil
     end
 
-    local combatIndicator = frame.combatIndicatorSap or frame.combatIndicator
-
-    -- Move Pet Indicator to the left if both Pet Indicator and Combat Indicator are showing with the same anchor so they dont overlap
-    local combatOffset = 0
-    if combatIndicator and not UnitAffectingCombat(frame.unit) and (config.petIndicatorAnchor == config.combatIndicatorAnchor) then
-        combatOffset = 5
-    end
-
     -- Set position and scale dynamically
-    frame.petIndicator:SetPoint("CENTER", frame.healthBar, config.petIndicatorAnchor, config.petIndicatorXPos-combatOffset, config.petIndicatorYPos)
+    frame.petIndicator:SetPoint("CENTER", frame.healthBar, config.petIndicatorAnchor, config.petIndicatorXPos, config.petIndicatorYPos)
     frame.petIndicator:SetScale(config.petIndicatorScale)
 
     -- Test mode
@@ -67,10 +57,10 @@ function BBP.PetIndicator(frame)
         return
     end
 
-    local npcID = select(6, strsplit("-", info.unitGUID or ""))
+    local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
 
     -- Demo lock pet
-    if npcID == "17252" then
+    if npcID == 17252 then
         frame.petIndicator:Show()
         return
     end

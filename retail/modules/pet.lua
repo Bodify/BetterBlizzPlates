@@ -49,8 +49,6 @@ function BBP.PetIndicator(frame)
         config.petIndicatorXPos = db.petIndicatorXPos or 0
         config.petIndicatorYPos = db.petIndicatorYPos or 0
         config.petIndicatorTestMode = db.petIndicatorTestMode
-        config.combatIndicator = db.combatIndicator
-        config.combatIndicatorAnchor = db.combatIndicatorAnchor
         config.petIndicatorHideSecondaryPets = db.petIndicatorHideSecondaryPets
         config.petIndicatorScale = db.petIndicatorScale or 1
         config.petIndicatorShowMurloc = db.petIndicatorShowMurloc
@@ -67,16 +65,8 @@ function BBP.PetIndicator(frame)
         frame.petIndicator:SetSize(12, 12)
     end
 
-    local combatIndicator = (frame.combatIndicatorSap or frame.combatIndicator) and not config.combatIndicatorPlayersOnly
-
-    -- Move Pet Indicator to the left if both Pet Indicator and Combat Indicator are showing with the same anchor so they dont overlap
-    local combatOffset = 0
-    if combatIndicator and not UnitAffectingCombat(frame.unit) and (config.petIndicatorAnchor == config.combatIndicatorAnchor) then
-        combatOffset = 5
-    end
-
     -- Set position and scale dynamically
-    frame.petIndicator:SetPoint("CENTER", frame.healthBar, config.petIndicatorAnchor, config.petIndicatorXPos-combatOffset, config.petIndicatorYPos)
+    frame.petIndicator:SetPoint("CENTER", frame.healthBar, config.petIndicatorAnchor, config.petIndicatorXPos, config.petIndicatorYPos)
     frame.petIndicator:SetScale(config.petIndicatorScale)
 
     -- Test mode
@@ -85,14 +75,14 @@ function BBP.PetIndicator(frame)
         return
     end
 
-    local npcID = select(6, strsplit("-", info.unitGUID or ""))
+    local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
 
     -- Demo lock pet
-    if npcID == "17252" then
+    if npcID == 17252 then
         if BBP.isInArena then
-            local isRealPet = false
+            local isRealPet = UnitIsUnit(frame.unit, "pet")
             for i = 1, 3 do
-                if UnitIsUnit(frame.unit, "arenapet" .. i) then
+                if UnitIsUnit(frame.unit, "arenapet" .. i) or UnitIsUnit(frame.unit, "partypet" .. i) then
                     isRealPet = true
                     break
                 end
@@ -119,11 +109,11 @@ function BBP.PetIndicator(frame)
         return
     end
     -- All hunter pets have same NPC id, check for it.
-    if npcID == "165189" then
-        if BBP.isInArena and info.isEnemy then
-            local isRealPet = false
+    if npcID == 165189 then
+        if BBP.isInArena then
+            local isRealPet = UnitIsUnit(frame.unit, "pet")
             for i = 1, 3 do
-                if UnitIsUnit(frame.unit, "arenapet" .. i) then
+                if UnitIsUnit(frame.unit, "arenapet" .. i) or UnitIsUnit(frame.unit, "partypet" .. i) then
                     isRealPet = true
                     break
                 end
@@ -132,6 +122,7 @@ function BBP.PetIndicator(frame)
                 if config.petIndicatorColorHealthbar then
                     frame.mainPetColor = config.petIndicatorColorHealthbarRGB
                     frame.healthBar:SetStatusBarColor(unpack(frame.mainPetColor))
+                    frame.needsRecolor = true
                 end
                 frame.petIndicator:Show()
                 return
@@ -162,6 +153,7 @@ function BBP.PetIndicator(frame)
                 if config.petIndicatorColorHealthbar then
                     frame.mainPetColor = config.petIndicatorColorHealthbarRGB
                     frame.healthBar:SetStatusBarColor(unpack(frame.mainPetColor))
+                    frame.needsRecolor = true
                 end
                 frame.petIndicator:Show()
                 return

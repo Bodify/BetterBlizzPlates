@@ -1,3 +1,64 @@
+# BetterBlizzPlates 1.8.1c
+## Retail
+### New:
+- Nameplate Auras: Enemy "Purgeable" filter now has a rightclick setting "Only show Purgeable Auras in PvE".
+### Tweak:
+- "Small Pets" setting now also reduces the width of your own Pet while in World, but actually this time.
+## Classic versions
+### Tweak:
+- Small Pets and Totem Indicator Width settings have been updated to be similar to their more up-to-date Retail version. Due to this the width of affected nameplates may have changed a little bit and you might have to re-adjust them slightly.
+### Bugfix:
+- MoP Beta: Fix player role check for Threat Color causing lua errors due to API changes on MoP Beta.
+- Fix a logic issue causing nameplates to always be class colored regardless of settings.
+- Fix issue with individual nameplate width (Small Pets & Totem Indicator Width settings) not resetting properly on other nameplates.
+- Fix the text from the Guild Name setting not hiding immediately as the nameplate disappears.
+
+
+
+# BetterBlizzPlates 1.8.1b
+## All versions
+- Import/Export: Added a warning for when exporting a Retail profile to a Classic version and vice versa. Due to CVars being very different between them some of them needs to be reset to not bug out. You will have to readjust a few things like nameplate size etc. Also a reminder than you can delete individual lists in the Import/Export section top right on each field when mouseover.
+## Retail
+### Tweak:
+- "Small Pets" setting now also reduces the width of your own Pet while in World.
+- Pet Indicator now always works on own Pet as well.
+- Rogue's Evasion was missing as a Key Aura and has been added as one.
+### Bugfix:
+- Non-Target Nameplate Alpha now properly updates when Focus changes (if you have Focus also enabled).
+## Classic versions
+### Bugfix:
+- Fixed an issue from a recent change to friendly class color setting causing friendly nameplates to bug out upon entering an instance.
+- Fixed Execute Indicator's test mode having some Retail code in it causing lua errors on Classic.
+
+
+
+# BetterBlizzPlates 1.8.1
+## Mists of Pandaria Beta
+### No beta access :/
+- I don't have beta access so cant work on support. I made it so MoP loads Cata files for now but it's unlikely this will work without changes, and NPC lists need updates etc. If you bugreport I might be able to fix it up, contact me.
+## All versions
+### New:
+- Party Pointer now has a 2nd "Highlight" setting in Advanced Settings. Currently only intended for default texture, might expand on that in the future.
+## Retail
+### New:
+- Focus Indicator's "Color Healthbar" setting now has a right-click option to disable it while in PvP.
+- Class Indicators Pet setting now has a "Always show" setting to keep it enabled with for example "Arena only" enabled.
+- "Non-Target Alpha" setting in CVar Control now has a setting to also keep Focus nameplate full Alpha.
+- "Stacking Nameplates" setting in CVar Control now has a right-click option to keep them Overlapping (Non-Stacking) in PvP.
+- Nameplate Auras: Personal Resource Display now has separate YX Offset and "Centered Auras" settings.
+### Tweak:
+- Added a missing Solar Beam Spell ID to the "Interrupt CD Color" castbar setting and also added Priests Silence back to it.
+### Bugfix:
+- Fix the clickable preview field for "Extra Clickable Height" setting in Misc becoming inaccurate when using a lower click area value.
+- Fix old API call in Totem Indicator NPC List when trying to add a spell id for icon causing a lua error.
+- Fix an issue in Nameplate Aura Filter settings causing Purgeable Auras to not show when it combined with "PvP Buffs" were enabled.
+## Classic versions
+### Bugfix:
+- Added some forbidden nameplate checks on some castbar code to prevent errors in PvE. Please use BugSack & BugGrabber and report bugs so I can fix.
+
+
+
+
 # BetterBlizzPlates 1.8.0f
 ## All versions:
 ### Tweak:

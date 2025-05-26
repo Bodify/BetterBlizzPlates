@@ -37,6 +37,9 @@ local LibAceSerializer = LibStub("AceSerializer-3.0")
 
 local function ExportProfile(profileTable, dataType)
     -- Include a dataType in the table being serialized
+    if dataType == "fullProfile" then
+        BetterBlizzPlatesDB.classicExport = true
+    end
     local exportTable = {
         dataType = dataType,
         data = profileTable
@@ -44,6 +47,7 @@ local function ExportProfile(profileTable, dataType)
     local serialized = LibSerialize:Serialize(exportTable)
     local compressed = LibDeflate:CompressDeflate(serialized)
     local encoded = LibDeflate:EncodeForPrint(compressed)
+    BetterBlizzPlatesDB.classicExport = nil
     return "!BBP" .. encoded .. "!BBP"
 end
 
@@ -347,6 +351,47 @@ local function OpenColorPicker(colorType, icon)
         opacityFunc = opacityFunc,
         cancelFunc = cancelFunc,
         previousValues = {r, g, b, a},
+    })
+end
+
+local function OpenColorOptions(entryColors, func)
+    local colorData = entryColors or {0, 1, 0, 1}
+    local r, g, b = colorData[1] or 1, colorData[2] or 1, colorData[3] or 1
+    local a = colorData[4] or 1
+
+    local function updateColors(newR, newG, newB, newA)
+        entryColors[1] = newR
+        entryColors[2] = newG
+        entryColors[3] = newB
+        entryColors[4] = newA or 1
+
+        if func then
+            func()
+        end
+    end
+
+    local function swatchFunc()
+        r, g, b = ColorPickerFrame:GetColorRGB()
+        updateColors(r, g, b, a)
+    end
+
+    local function opacityFunc()
+        a = ColorPickerFrame:GetColorAlpha()
+        updateColors(r, g, b, a)
+    end
+
+    local function cancelFunc(previousValues)
+        if previousValues then
+            r, g, b, a = previousValues.r, previousValues.g, previousValues.b, previousValues.a
+            updateColors(r, g, b, a)
+        end
+    end
+
+    ColorPickerFrame.previousValues = { r = r, g = g, b = b, a = a }
+
+    ColorPickerFrame:SetupColorPickerAndShow({
+        r = r, g = g, b = b, opacity = a, hasOpacity = true,
+        swatchFunc = swatchFunc, opacityFunc = opacityFunc, cancelFunc = cancelFunc
     })
 end
 
@@ -990,6 +1035,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BetterBlizzPlatesDB.partyPointerYPos = value
                 elseif element == "partyPointerWidth" then
                     BetterBlizzPlatesDB.partyPointerWidth = value
+                elseif element == "partyPointerHighlightScale" then
+                    BetterBlizzPlatesDB.partyPointerHighlightScale = value
+                    BBP.RefreshAllNameplates()
                 elseif element == "hpHeightEnemy" then
                     BetterBlizzPlatesDB.hpHeightEnemy = value
                     BBP.RefreshAllNameplates()
@@ -3774,7 +3822,7 @@ local function guiGeneralTab()
     generalSettingsIcon:SetSize(22, 22)
     generalSettingsIcon:SetPoint("RIGHT", settingsText, "LEFT", -3, -1)
 
-    local removeRealmNames = CreateCheckbox("removeRealmNames", "Hide realm names", BetterBlizzPlates)
+    local removeRealmNames = CreateCheckbox("removeRealmNames", "Hide realm", BetterBlizzPlates)
     removeRealmNames:SetPoint("TOPLEFT", settingsText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
 
     local healthNumbers = CreateCheckbox("healthNumbers", "Health numbers", BetterBlizzPlates, nil, BBP.ToggleHealthNumbers)
@@ -3895,8 +3943,73 @@ local function guiGeneralTab()
     CreateTooltipTwo(hideTargetHighlight, "Hide Target Highlight", "Hide the bright glow on your current target nameplate")
 
     local smallPetsInPvP = CreateCheckbox("smallPetsInPvP", "Small Pets", BetterBlizzPlates)
-    smallPetsInPvP:SetPoint("LEFT", hideTargetHighlight.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(smallPetsInPvP, "Small Pets in PvP", "Enable to make all npcs in arena have smaller healthbars.")
+    smallPetsInPvP:SetPoint("LEFT", healthNumbers.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(smallPetsInPvP, "Small Pets", "Reduce the width of all pet nameplates, and the width of all npc nameplates in PvP.\n\n|cff32f795Right-click to adjust width.|r", "Totem Indicator NPCs will stay full width unless specified otherwise in the Totem Indicator List section.")
+
+    -- Create slider frame when right-clicked
+    smallPetsInPvP:SetScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            GameTooltip:Hide()
+            if not self.slider then
+                -- Create slider frame
+                local slider = CreateFrame("Slider", "SmallPetsWidthSlider", self:GetParent(), "OptionsSliderTemplate")
+                slider:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 0)
+                slider:SetWidth(120)
+                slider:SetMinMaxValues(2, 40)
+                slider:SetValue(BetterBlizzPlatesDB.smallPetsWidth or 20)
+                slider:SetValueStep(1)
+                slider:SetObeyStepOnDrag(true)
+
+                -- Customize the slider text
+                slider.Text:SetFontObject(GameFontHighlightSmall)
+                slider.Text:SetTextColor(1, 0.81, 0, 1)
+                slider.Low:SetText("")
+                slider.High:SetText("")
+
+                -- Set initial label
+                local initialValue = BetterBlizzPlatesDB.smallPetsWidth or 50
+                slider.Text:SetText("Small Pets Width: " .. initialValue)
+
+                -- Slider update logic
+                slider:SetScript("OnValueChanged", function(_, value)
+                    local roundedValue = math.floor(value + 0.5)
+                    BetterBlizzPlatesDB.smallPetsWidth = roundedValue
+                    slider.Text:SetText("Small Pets Width: " .. roundedValue)
+                    slider.adjusting = true
+                    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+                        local frame = nameplate.UnitFrame
+                        if frame then
+                            BBP.SmallPetsInPvP(frame)
+                            if BetterBlizzPlatesDB.classicNameplates then
+                                BBP.AdjustClassicBorderWidth(frame)
+                                BBP.CreateBetterClassicCastbarBorders(frame)
+                            end
+                            --BBP.NameplateShadowAndMouseoverHighlight(frame)
+                        end
+                    end
+                end)
+
+                slider:SetScript("OnMouseUp", function(self)
+                    slider.adjusting = nil
+                    C_Timer.After(2, function()
+                        if not self.adjusting then
+                            self:Hide()
+                        end
+                    end)
+                end)
+                self.slider = slider
+            else
+                self.slider:SetShown(not self.slider:IsShown())
+            end
+        end
+    end)
+
+    -- Ensure slider hides if checkbox is unchecked
+    smallPetsInPvP:HookScript("OnClick", function(self)
+        if not self:GetChecked() and self.slider then
+            self.slider:Hide()
+        end
+    end)
 
     local nameplateMinScale = CreateSlider(BetterBlizzPlates, "Nameplate Size", 0.5, 2, 0.01, "nameplateMinScale")
     nameplateMinScale:SetPoint("TOPLEFT", hideTargetHighlight, "BOTTOMLEFT", 12, -10)
@@ -6121,17 +6234,26 @@ local function guiPositionAndScale()
     partyPointerTargetIndicator:SetPoint("TOPLEFT", partyPointerClassColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(partyPointerTargetIndicator, "Target Indicator", "Replace the texture for your current target with one that has an exclamation mark on it.")
 
-    local partyPointerHealer = CreateCheckbox("partyPointerHealer", "Healer", contentFrame)
-    partyPointerHealer:SetPoint("LEFT", partyPointerClassColor.text, "RIGHT", 0, 0)
-    CreateTooltip(partyPointerHealer, "Show a cross on top of the pointer on healers\n(Requires addon Details and might not always show in world but fine in bgs and arena).")
+    anchorSubPointerIndicator.partyPointerHighlight = CreateCheckbox("partyPointerHighlight", "Highlight", contentFrame)
+    anchorSubPointerIndicator.partyPointerHighlight:SetPoint("TOPLEFT", partyPointerHealer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubPointerIndicator.partyPointerHighlight, "Highlight", "Show a highlight around the Icon.\n\n|cff32f795Right-click to change Highlight Color.|r", "Currently only fit for original texture, will look weird on the others.")
+    anchorSubPointerIndicator.partyPointerHighlight:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            OpenColorOptions(BetterBlizzPlatesDB.partyPointerHighlightRGB, BBP.RefreshAllNameplates)
+        end
+    end)
 
     local partyPointerHealerReplace = CreateCheckbox("partyPointerHealerReplace", "Replace", contentFrame)
-    partyPointerHealerReplace:SetPoint("TOPLEFT", partyPointerHealer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    partyPointerHealerReplace:SetPoint("TOPLEFT", anchorSubPointerIndicator.partyPointerHighlight, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(partyPointerHealerReplace, "Replace Party Pointer with Healer Icon", "Replace the party pointer with healer icon instead of showing on the top.")
 
     local partyPointerHideAll = CreateCheckbox("partyPointerHideAll", "Hide all", contentFrame)
     partyPointerHideAll:SetPoint("TOPLEFT", partyPointerTargetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(partyPointerHideAll, "Hide All", "Hide everything except the Party Pointer for friendly nameplates that have the Party Pointer on them. Hides healthbar, castbar & name.")
+
+    anchorSubPointerIndicator.partyPointerHighlightScale = CreateSlider(contentFrame, "PP: Highlight Size", 0.8, 1.7, 0.01, "partyPointerHighlightScale", "X")
+    anchorSubPointerIndicator.partyPointerHighlightScale:SetPoint("TOPLEFT", partyPointerHideAll, "BOTTOMLEFT", 2, -18)
+    CreateTooltipTwo(anchorSubPointerIndicator.partyPointerHighlightScale, "Change the size of the Highlight. Requires Highlight enabled.")
 
     ----------------------
     -- Fake Name Reposition
@@ -8475,7 +8597,7 @@ local function guiCVarControl()
         local cvarListener = CreateFrame("Frame")
         cvarListener:RegisterEvent("CVAR_UPDATE")
         cvarListener:SetScript("OnEvent", function(self, event, cvarName, cvarValue)
-            if BBP.LoggingOut then return end
+            if BBP.CVarTrackingDisabled then return end
             if (BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater")) then return end
             local checkedState = cvarValue == "1" or false
             if cvarValue then
@@ -9122,7 +9244,7 @@ function BBP.CVarTracker()
     local cvarListener = CreateFrame("Frame")
     cvarListener:RegisterEvent("CVAR_UPDATE")
     cvarListener:SetScript("OnEvent", function(self, event, cvarName, cvarValue)
-        if BBP.LoggingOut then return end
+        if BBP.CVarTrackingDisabled then return end
         if BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return end
 
         if cvarsToTrack.checkboxes[cvarName] then

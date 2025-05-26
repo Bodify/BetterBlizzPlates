@@ -12,8 +12,8 @@ LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Pro
 
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
-local sendUpdate = true
-BBP.VersionNumber = addonUpdates.."f"
+local sendUpdate = false
+BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
 BBP.hiddenFrame = CreateFrame("Frame")
@@ -270,6 +270,8 @@ local defaultSettings = {
     partyPointerShowPet = true,
     partyPointerTexture = 1,
     partyPointerCCAuras = true,
+    partyPointerHighlightRGB = {1,0.71,0},
+    partyPointerHighlightScale = 1,
     --partyPointerArenaOnly = true,
     -- Pet Indicator
     petIndicator = false,
@@ -460,6 +462,8 @@ local defaultSettings = {
     nameplateAuraWidthGap = 4,
     nameplateAurasYPos = 0,
     nameplateAurasXPos = 0,
+    nameplateAurasPersonalXPos = 0,
+    nameplateAurasPersonalYPos = 0,
     nameplateAuraAnchor = "BOTTOMLEFT",
     nameplateAuraRelativeAnchor = "TOPLEFT",
     nameplateAurasNoNameYPos = 0,
@@ -736,74 +740,152 @@ local defaultSettings = {
 
 }
 
+
+local function TempClassicNpFix()
+    local big = GetCVar("NamePlateHorizontalScale") == "1.4"
+    BetterBlizzPlatesDB.nameplateEnemyWidth, BetterBlizzPlatesDB.nameplateEnemyHeight = big and 154 or 110, big and 64.125 or 45
+    BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = big and 154 or 110, big and 64.125 or 45
+    BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight = big and 154 or 110, big and 64.125 or 45
+
+    BetterBlizzPlatesDB.nameplateOverlapH = 0.8
+    BetterBlizzPlatesDB.nameplateOverlapV = 1.1
+    BetterBlizzPlatesDB.nameplateMotionSpeed = 0.025
+    BetterBlizzPlatesDB.nameplateHorizontalScale = big and 1.4 or 1
+    BetterBlizzPlatesDB.NamePlateVerticalScale = big and 2.7 or 1
+    BetterBlizzPlatesDB.nameplateMinScale = 0.9
+    BetterBlizzPlatesDB.nameplateMaxScale = 0.9
+    BetterBlizzPlatesDB.nameplateSelectedScale = 1.2
+    BetterBlizzPlatesDB.NamePlateClassificationScale = 1
+    BetterBlizzPlatesDB.nameplateGlobalScale = 1
+    BetterBlizzPlatesDB.nameplateLargerScale = 1.2
+    BetterBlizzPlatesDB.nameplatePlayerLargerScale = 1.8
+    BetterBlizzPlatesDB.nameplateResourceOnTarget = "0"
+
+    BetterBlizzPlatesDB.nameplateMinAlphaDistance = 10
+    BetterBlizzPlatesDB.nameplateMaxAlpha = 1.0
+    BetterBlizzPlatesDB.nameplateMaxAlphaDistance = 40
+    BetterBlizzPlatesDB.nameplateSelfAlpha = 0.75
+
+    BetterBlizzPlatesDB.ShowClassColorInNameplate = "1"
+    BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate = "1"
+
+    BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = big and 10.8 or 4
+    BetterBlizzPlatesDB.castBarHeight = big and 18.8 or 8
+    BetterBlizzPlatesDB.largeNameplates = big and true or false
+
+    C_CVar.SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
+    C_CVar.SetCVar("nameplateOverlapV", BetterBlizzPlatesDB.nameplateOverlapV)
+    C_CVar.SetCVar("nameplateMotionSpeed", BetterBlizzPlatesDB.nameplateMotionSpeed)
+    C_CVar.SetCVar("nameplateHorizontalScale", BetterBlizzPlatesDB.nameplateHorizontalScale)
+    C_CVar.SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
+    C_CVar.SetCVar("nameplateMinScale", BetterBlizzPlatesDB.nameplateMinScale)
+    C_CVar.SetCVar("nameplateMaxScale", BetterBlizzPlatesDB.nameplateMaxScale)
+    C_CVar.SetCVar("nameplateSelectedScale", BetterBlizzPlatesDB.nameplateSelectedScale)
+    C_CVar.SetCVar("NamePlateClassificationScale", BetterBlizzPlatesDB.NamePlateClassificationScale)
+    C_CVar.SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
+    C_CVar.SetCVar("nameplateLargerScale", BetterBlizzPlatesDB.nameplateLargerScale)
+    C_CVar.SetCVar("nameplatePlayerLargerScale", BetterBlizzPlatesDB.nameplatePlayerLargerScale)
+    C_CVar.SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
+    C_CVar.SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
+    C_CVar.SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
+    C_CVar.SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
+    C_CVar.SetCVar("ShowClassColorInNameplate", BetterBlizzPlatesDB.ShowClassColorInNameplate)
+    C_CVar.SetCVar("ShowClassColorInFriendlyNameplate", BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate)
+    C_CVar.SetCVar("nameplateSelfAlpha", BetterBlizzPlatesDB.nameplateSelfAlpha)
+    C_CVar.SetCVar('nameplateShowOnlyNames', "0")
+end
+
 local function InitializeSavedVariables()
     if not BetterBlizzPlatesDB then
         BetterBlizzPlatesDB = {}
     end
 
+    if BetterBlizzPlatesDB.classicExport then
+        TempClassicNpFix()
+        BBP.ResetTotemList()
+        BetterBlizzPlatesDB.classicExport = nil
+        StaticPopupDialogs["BBP_EXPORT_MISMATCH"] = {
+            text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nClassic profile export detected.\n\nDue to Nameplate CVars being very different on Retail many of them have now been reset to their default value.\n\nClassic->Retail export is not fully supported but should be fine but consider this a warning and please report any bugs.\n\nPlease reload for changes to take effect.",
+            button1 = "OK",
+            OnAccept = function()
+                BetterBlizzPlatesDB.reopenOptions = true
+                ReloadUI()
+            end,
+            timeout = 0,
+            whileDead = true,
+        }
+        StaticPopup_Show("BBP_EXPORT_MISMATCH")
+    end
+
+    local db = BetterBlizzPlatesDB
+
     -- Check the stored version against the current addon version
-    if not BetterBlizzPlatesDB.version or BetterBlizzPlatesDB.version ~= addonVersion then
+    if not db.version or db.version ~= addonVersion then
         -- Perform database update here (if needed)
-        if not BetterBlizzPlatesDB.fadeOutNPCsList then
-            BetterBlizzPlatesDB.fadeOutNPCsList = defaultSettings.defaultFadeOutNPCsList
+        if not db.fadeOutNPCsList then
+            db.fadeOutNPCsList = defaultSettings.defaultFadeOutNPCsList
         else
             -- Check if any new NPC IDs need to be added to the user's list
             for _, defaultNPC in ipairs(defaultSettings.defaultFadeOutNPCsList) do
                 local isFound = false
-                for _, userNPC in ipairs(BetterBlizzPlatesDB.fadeOutNPCsList) do
+                for _, userNPC in ipairs(db.fadeOutNPCsList) do
                     if defaultNPC.id == userNPC.id then
                         isFound = true
                         break
                     end
                 end
                 if not isFound then
-                    table.insert(BetterBlizzPlatesDB.fadeOutNPCsList, defaultNPC)
+                    table.insert(db.fadeOutNPCsList, defaultNPC)
                 end
             end
         end
-        BetterBlizzPlatesDB.version = addonVersion  -- Update the version number in the database
+        db.version = addonVersion  -- Update the version number in the database
     end
 
-    if not BetterBlizzPlatesDB.classIndicatorFriendlyYPos then
-        BetterBlizzPlatesDB.classIndicatorFriendlyXPos = BetterBlizzPlatesDB.classIndicatorXPos
-        BetterBlizzPlatesDB.classIndicatorFriendlyYPos = BetterBlizzPlatesDB.classIndicatorYPos
-        BetterBlizzPlatesDB.classIndicatorFriendlyAnchor = BetterBlizzPlatesDB.classIndicatorAnchor
-        BetterBlizzPlatesDB.classIndicatorFriendlyScale = BetterBlizzPlatesDB.classIndicatorScale
+    if not db.classIndicatorFriendlyYPos then
+        db.classIndicatorFriendlyXPos = db.classIndicatorXPos
+        db.classIndicatorFriendlyYPos = db.classIndicatorYPos
+        db.classIndicatorFriendlyAnchor = db.classIndicatorAnchor
+        db.classIndicatorFriendlyScale = db.classIndicatorScale
     end
 
-    if not BetterBlizzPlatesDB.healerIndicatorEnemyXPos then
-        BetterBlizzPlatesDB.healerIndicatorEnemyXPos = BetterBlizzPlatesDB.healerIndicatorXPos
-        BetterBlizzPlatesDB.healerIndicatorEnemyYPos = BetterBlizzPlatesDB.healerIndicatorYPos
-        BetterBlizzPlatesDB.healerIndicatorEnemyAnchor = BetterBlizzPlatesDB.healerIndicatorAnchor
-        BetterBlizzPlatesDB.healerIndicatorEnemyScale = BetterBlizzPlatesDB.healerIndicatorScale
+    if not db.healerIndicatorEnemyXPos then
+        db.healerIndicatorEnemyXPos = db.healerIndicatorXPos
+        db.healerIndicatorEnemyYPos = db.healerIndicatorYPos
+        db.healerIndicatorEnemyAnchor = db.healerIndicatorAnchor
+        db.healerIndicatorEnemyScale = db.healerIndicatorScale
     end
 
-    if BetterBlizzPlatesDB.friendlyHealthBarColorPlayer == nil then
-        BetterBlizzPlatesDB.friendlyHealthBarColorPlayer = BetterBlizzPlatesDB.friendlyHealthBarColor
-        BetterBlizzPlatesDB.friendlyHealthBarColorNpc = BetterBlizzPlatesDB.friendlyHealthBarColor
+    if db.friendlyHealthBarColorPlayer == nil then
+        db.friendlyHealthBarColorPlayer = db.friendlyHealthBarColor
+        db.friendlyHealthBarColorNpc = db.friendlyHealthBarColor
     end
 
-    if BetterBlizzPlatesDB.nameplateAuraRowFriendlyAmount == nil then
-        BetterBlizzPlatesDB.nameplateAuraRowFriendlyAmount = BetterBlizzPlatesDB.nameplateAuraRowAmount or 5
+    if db.nameplateAuraRowFriendlyAmount == nil then
+        db.nameplateAuraRowFriendlyAmount = db.nameplateAuraRowAmount or 5
     end
 
-    if BetterBlizzPlatesDB.alwaysHideFriendlyCastbar == nil then
-        BetterBlizzPlatesDB.alwaysHideFriendlyCastbar = BetterBlizzPlatesDB.hideFriendlyCastbar or false
+    if db.alwaysHideFriendlyCastbar == nil then
+        db.alwaysHideFriendlyCastbar = db.hideFriendlyCastbar or false
     end
 
-    if BetterBlizzPlatesDB.nameplateAuraSelfScale == nil then
-        BetterBlizzPlatesDB.nameplateAuraSelfScale = BetterBlizzPlatesDB.nameplateAuraScale
-        BetterBlizzPlatesDB.nameplateAuraBuffSelfScale = BetterBlizzPlatesDB.nameplateAuraBuffScale
-        BetterBlizzPlatesDB.nameplateAuraDebuffSelfScale = BetterBlizzPlatesDB.nameplateAuraDebuffScale
+    if db.nameplateAuraSelfScale == nil then
+        db.nameplateAuraSelfScale = db.nameplateAuraScale
+        db.nameplateAuraBuffSelfScale = db.nameplateAuraBuffScale
+        db.nameplateAuraDebuffSelfScale = db.nameplateAuraDebuffScale
     end
 
-    if BetterBlizzPlatesDB.dpsOrHealTargetAggroColorRGB == nil then
-        BetterBlizzPlatesDB.dpsOrHealTargetAggroColorRGB = BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB or {1, 0, 0, 1}
+    if db.dpsOrHealTargetAggroColorRGB == nil then
+        db.dpsOrHealTargetAggroColorRGB = db.dpsOrHealFullAggroColorRGB or {1, 0, 0, 1}
+    end
+
+    if db.nameplateAurasPersonalCenteredAnchor == nil then
+        db.nameplateAurasPersonalCenteredAnchor = db.nameplateAurasFriendlyCenteredAnchor
     end
 
     for key, defaultValue in pairs(defaultSettings) do
-        if BetterBlizzPlatesDB[key] == nil then
-            BetterBlizzPlatesDB[key] = defaultValue
+        if db[key] == nil then
+            db[key] = defaultValue
         end
     end
 end
@@ -888,7 +970,7 @@ end
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_LOGOUT")
 frame:SetScript("OnEvent", function()
-    BBP.LoggingOut = true
+    BBP.CVarTrackingDisabled = true
     CVarDefaultOnLogout()
 end)
 
@@ -1596,6 +1678,7 @@ local function InitializeNameplateSettings(frame)
             nameplateTargetBorderSize = BetterBlizzPlatesDB.nameplateTargetBorderSize,
             showNpcTitle = BetterBlizzPlatesDB.showNpcTitle,
             enableNpNonTargetAlpha = BetterBlizzPlatesDB.enableNpNonTargetAlpha,
+            enableNpNonFocusAlpha = BetterBlizzPlatesDB.enableNpNonFocusAlpha,
             targetHighlightFix = BetterBlizzPlatesDB.targetHighlightFix,
             bgIndicator = BetterBlizzPlatesDB.bgIndicator or BetterBlizzPlatesDB.bgIndicatorTestMode,
             arenaIndicatorBg = BetterBlizzPlatesDB.arenaIndicatorBg,
@@ -2572,7 +2655,7 @@ BBP.secondaryPets = secondaryPets
 -- Fade out npcs from list
 function BBP.FadeOutNPCs(frame)
     local db = BetterBlizzPlatesDB
-    local alpha = (db.enableNpNonTargetAlpha and (UnitIsUnit(frame.unit, "target") and 1 or db.nameplateNonTargetAlpha)) or 1
+    local alpha = (db.enableNpNonTargetAlpha and (UnitIsUnit(frame.unit, "target") and 1 or db.nameplateNonTargetAlpha)) or (db.enableNpNonFocusAlpha and (UnitIsUnit(frame.unit, "focus") and 1 or db.nameplateNonTargetAlpha)) or 1
     frame:SetAlpha(alpha)
     frame.castBar:SetAlpha(alpha)
     frame.fadedNpc = nil
@@ -2713,7 +2796,7 @@ local function SmallPetsInPvP(frame)
     if not config.smallPetsInPvP then return end
     if BBP.IsInCompStomp then return end
 
-    if UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP and not UnitIsPlayer(frame.unit)) then
+    if UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP and not UnitIsPlayer(frame.unit)) or UnitIsUnit(frame.unit, "pet") then
         local db = BetterBlizzPlatesDB
         if not frame.bbpWidthHook then
             hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
@@ -2731,10 +2814,10 @@ local function SmallPetsInPvP(frame)
                                 SetBarWidth(frame, npcData.hpWidth, true)
                             end
                         end
-                    elseif db.smallPetsInPvP and (UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP) then
+                    elseif db.smallPetsInPvP and (UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP or UnitIsUnit(frame.unit, "pet")) then
                         SetBarWidth(frame, db.smallPetsWidth, false)
                     end
-                elseif UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP then
+                elseif UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP or UnitIsUnit(frame.unit, "pet") then
                     SetBarWidth(frame, db.smallPetsWidth, false)
                 end
             end)
@@ -3787,34 +3870,27 @@ function BBP.NameplateTargetAlpha(frame)
     if not config.npTargetAlphaInit or BBP.needsUpdate then
         config.enableNpNonTargetAlphaTargetOnly = BetterBlizzPlatesDB.enableNpNonTargetAlphaTargetOnly
         config.nameplateNonTargetAlpha = BetterBlizzPlatesDB.nameplateNonTargetAlpha
+        config.enableNpNonFocusAlpha = BetterBlizzPlatesDB.enableNpNonFocusAlpha
 
         config.npTargetAlphaInit = true
     end
 
-    if config.enableNpNonTargetAlphaTargetOnly then
-        if UnitExists("target") then
-            if UnitIsUnit(frame.unit, "target") then
-                frame:SetAlpha(1)
-            else
-                if not UnitIsUnit(frame.unit, "player") then
-                    frame:SetAlpha(config.nameplateNonTargetAlpha)
-                else
-                    frame:SetAlpha(1)
-                end
-            end
-        else
-            frame:SetAlpha(1)
-        end
+    local unit = frame.unit
+    local isPlayer = UnitIsUnit(unit, "player")
+    local isTarget = UnitIsUnit(unit, "target")
+    local isFocus = UnitIsUnit(unit, "focus")
+
+    if isPlayer or isTarget or (isFocus and config.enableNpNonFocusAlpha) then
+        frame:SetAlpha(1)
+        return
+    end
+
+    if config.enableNpNonTargetAlphaTargetOnly and UnitExists("target") then
+        frame:SetAlpha(config.nameplateNonTargetAlpha)
+    elseif not config.enableNpNonTargetAlphaTargetOnly then
+        frame:SetAlpha(config.nameplateNonTargetAlpha)
     else
-        if UnitIsUnit(frame.unit, "target") then
-            frame:SetAlpha(1)
-        else
-            if not UnitIsUnit(frame.unit, "player") then
-                frame:SetAlpha(config.nameplateNonTargetAlpha)
-            else
-                frame:SetAlpha(1)
-            end
-        end
+        frame:SetAlpha(1)
     end
 end
 
@@ -4147,6 +4223,7 @@ local function HookNameplateCastbarHide(frame)
         --     end
         -- end)--probably remove, stays for now bodify
         frame.castBar:HookScript("OnHide", function()
+            if frame:IsForbidden() then return end
             if not frame.unit then return end
             if UnitIsUnit(frame.unit, "target") then
                 BBP.UpdateNameplateResourcePositionForCasting(frame:GetParent(), true)
@@ -4608,6 +4685,7 @@ local function CreateBetterClassicCastbarBorders(frame)
 
     -- Update border visibility
     local function UpdateBorders()
+        if frame:IsForbidden() then return end
         --frame.castBar.Border:SetAlpha(0)
         --frame.castBar.BorderShield:SetAlpha(0)
         if frame.castBar.BorderShield:IsShown() then
@@ -4657,6 +4735,7 @@ local function CreateBetterClassicCastbarBorders(frame)
 
         if not frame.castBar.isClassicStyle then
             frame.castBar:HookScript("OnEvent", function(self)
+                if frame:IsForbidden() then return end
                 self.Background:SetTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
                 self.Background:SetVertexColor(0, 0, 0, 0.6)
                 self:SetStatusBarTexture(137012)
@@ -4897,7 +4976,8 @@ function BBP.ClickableArea(frame)
     if frame.clickableAreaOverlay then return end
 
     local texture = frame:CreateTexture(nil, "BACKGROUND")
-    texture:SetAllPoints()
+    texture:SetPoint("TOPLEFT", frame.UnitFrame, "TOPLEFT", 0, -1)
+    texture:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
     local text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     text:SetPoint("BOTTOM", texture, "TOP", 0, 2)
     text:SetText("Clickable Area")
@@ -4962,7 +5042,8 @@ end
 local ALL_SPECS = GetLocalizedSpecs()
 
 -- Caching Tables
-local SpecCache = {}  -- Stores GUID -> specID
+BBA.SpecCache = {}
+local SpecCache = BBA.SpecCache  -- Stores GUID -> specID
 local GetUnitTooltip = C_TooltipInfo.GetUnit
 
 -- Function to retrieve the specialization ID of a unit
@@ -5618,6 +5699,9 @@ function BBP.RefreshAllNameplates()
                 frame.partyPointer:Hide()
             end
         end
+        if BetterBlizzPlatesDB.focusTargetIndicator then
+            BBP.FocusTargetIndicator(frame)
+        end
         BBP.ConsolidatedUpdateName(frame)
     end
 end
@@ -5966,6 +6050,12 @@ ThreatSitUpdate:SetScript("OnEvent", ThreatSituationUpdate)
 -- Function to set the nameplate behavior
 local InstanceChecker = CreateFrame("Frame")
 
+local function SetStackingNameplateBehaviour(enabled)
+    BBP.CVarTrackingDisabled = true
+    C_CVar.SetCVar("nameplateMotion", enabled and 1 or 0)
+    BBP.CVarTrackingDisabled = nil
+end
+
 local function SetNameplateBehavior()
     if InCombatLockdown() then
         --C_Timer.After(1, SetNameplateBehavior)
@@ -5980,15 +6070,26 @@ local function SetNameplateBehavior()
                 C_CVar.SetCVar('nameplateShowOnlyNames', 0)
             end
             if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then C_CVar.SetCVar("UnitNameFriendlyPlayerName", 0) end
+            if BetterBlizzPlatesDB.nameplateMotion == "1" and BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP then
+                SetStackingNameplateBehaviour(true)
+            end
             BBP.ApplyNameplateWidth()
         else
             --if BetterBlizzPlatesDB.friendlyHideHealthBar then C_CVar.SetCVar('nameplateShowOnlyNames', 0) end
             C_CVar.SetCVar('nameplateShowOnlyNames', 0)
             if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then C_CVar.SetCVar("UnitNameFriendlyPlayerName", 1) end
+            if BetterBlizzPlatesDB.nameplateMotion == "1" and BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP then
+                if BBP.isInPvP then
+                    SetStackingNameplateBehaviour(false)
+                else
+                    SetStackingNameplateBehaviour(true)
+                end
+            end
             BBP.ApplyNameplateWidth()
         end
     end
 end
+BBP.SetNameplateBehavior = SetNameplateBehavior
 
 -- Event handler function
 local hideFriendlyCastbar
@@ -6348,7 +6449,7 @@ end
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("CVAR_UPDATE")
 frame:SetScript("OnEvent", function(self, event, cvarName)
-    if BBP.LoggingOut then return end
+    if BBP.CVarTrackingDisabled then return end
     if cvarName == "NamePlateHorizontalScale" or cvarName == "nameplateResourceOnTarget" then
         if not BetterBlizzPlatesDB.wasOnLoadingScreen then
             if BBP.isLargeNameplatesEnabled() then

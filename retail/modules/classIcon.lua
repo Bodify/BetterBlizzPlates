@@ -157,16 +157,33 @@ function BBP.ClassIndicator(frame, foundID)
         config.classIndicatorHideFriendlyHealthbar = BetterBlizzPlatesDB.classIndicatorHideFriendlyHealthbar
         config.classIndicatorOnlyParty = BetterBlizzPlatesDB.classIndicatorOnlyParty
         config.classIndicatorOnlyFriends = BetterBlizzPlatesDB.classIndicatorOnlyFriends
+        config.classIndicatorAlwaysShowPet = BetterBlizzPlatesDB.classIndicatorAlwaysShowPet
+        config.classIndicatorShowOthersPets = BetterBlizzPlatesDB.classIndicatorShowOthersPets
 
         config.classIndicatorInitialized = true
     end
 
     frame.classIndicatorHideNumbers = nil
 
+    local isOthersPet = config.classIndicatorShowOthersPets and UnitIsOtherPlayersPet(frame.unit) and BBP.isInArena and info.isFriend
+
     local class = info.class
     if not class then
-        if UnitIsUnit(frame.unit, "pet") and config.classIndicatorShowPet then
-            class = playerClass
+        if (UnitIsUnit(frame.unit, "pet") and config.classIndicatorShowPet) or isOthersPet then
+            if isOthersPet then
+                for i = 1, 2 do
+                    local partyPet = "partypet"..i
+                    if UnitExists(partyPet) and UnitIsUnit(partyPet, frame.unit) then
+                        local _, partyClass = UnitClass("party"..i)
+                        if partyClass then
+                            class = partyClass
+                        end
+                        break
+                    end
+                end
+            else
+                class = playerClass
+            end
         else
             if config.classIndicatorHideRaidMarker then
                 frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
@@ -282,7 +299,7 @@ function BBP.ClassIndicator(frame, foundID)
         end
     end
     frame.classIndicator:SetFrameStrata(config.classIndicatorFrameStrataHigh and "HIGH" or "LOW")
-    frame.classIndicator:SetAlpha(config.classIndicatorAlpha)
+    frame.classIndicator:SetAlpha(config.classIndicatorAlpha or 1)
 
     if (config.classIndicatorHighlight or config.classIndicatorHighlightColor) and not frame.classIndicator.highlightSelect then
         frame.classIndicator.highlightSelect = frame.classIndicator:CreateTexture(nil, "OVERLAY")
@@ -314,6 +331,7 @@ function BBP.ClassIndicator(frame, foundID)
 
     local isTank = config.classIndicatorTank and TankSpecs[specID]
     local isPet = UnitIsUnit(frame.unit, "pet") and config.classIndicatorShowPet
+    local isPetAndAlwaysShow = config.classIndicatorAlwaysShowPet and isPet
     local alwaysShowTank = config.classIconAlwaysShowTank and TankSpecs[specID]
     local alwaysShowHealer = config.classIconAlwaysShowHealer and HealerSpecs[specID]
     local isHealer = HealerSpecs[specID]
@@ -326,8 +344,10 @@ function BBP.ClassIndicator(frame, foundID)
         or partyOnly
         or (config.classIndicatorOnlyFriends and not (BBP.isFriendlistFriend(frame.unit) or BBP.isUnitBNetFriend(frame.unit)))
     then
-        frame.classIndicator:Hide()
-        return
+        if not isPetAndAlwaysShow then
+            frame.classIndicator:Hide()
+            return
+        end
     end
 
     frame.classIndicator.icon:SetPoint("CENTER", frame.classIndicator)
@@ -419,18 +439,22 @@ function BBP.ClassIndicator(frame, foundID)
     else
         frame.classIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos)
     end
-    frame.classIndicator:SetScale(flagIcon and scale + 0.15 or scale)
+    frame.classIndicator:SetScale((flagIcon and scale * 1.15) or (isOthersPet and scale * 0.7) or scale)
 
     -- Visibility checks
     if ((config.classIconArenaOnly and not BBP.isInArena) or (config.classIconBgOnly and not BBP.isInBg)) and not( config.classIconAlwaysShowBgObj and flagIcon) then
         if config.classIconArenaOnly and config.classIconBgOnly then
             if not BBP.isInPvP then
+                if not isPetAndAlwaysShow then
+                    frame.classIndicator:Hide()
+                    return
+                end
+            end
+        else
+            if not isPetAndAlwaysShow then
                 frame.classIndicator:Hide()
                 return
             end
-        else
-            frame.classIndicator:Hide()
-            return
         end
     end
 
@@ -709,7 +733,7 @@ local function FadeClassIcon(name, fade)
             -- end
         else
             local config = frame.BetterBlizzPlates.config
-            frame.classIndicator:SetAlpha(config.classIndicatorAlpha)
+            frame.classIndicator:SetAlpha(config.classIndicatorAlpha or 1)
         end
     end
 end
