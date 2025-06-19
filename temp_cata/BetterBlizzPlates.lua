@@ -99,7 +99,11 @@ local defaultSettings = {
     dpsOrHealNoAggroColorRGB = {0, 1, 0, 1},
     npBgColorRGB = {1, 1, 1, 1},
     levelFrameFontSize = 12,
+    nameplateExtraClickHeight = 0,
+    nameplateVerticalPosition = 0,
     smallPetsWidth = 20,
+
+    mopUpdated = true,
     -- Enemy
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
@@ -198,6 +202,7 @@ local defaultSettings = {
     healerIndicatorEnemyAnchor = "TOPRIGHT",
     healerIndicatorEnemyScale = 1,
     -- Class Icon
+    classIndicatorCCAuras = true,
     classIndicator = false,
     classIndicatorXPos = 0,
     classIndicatorFriendlyXPos = 0,
@@ -216,6 +221,7 @@ local defaultSettings = {
     classIndicatorHighlightColor = true,
     classIconArenaOnly = false,
     -- Party Pointer
+    partyPointerCCAuras = true,
     partyPointerXPos = 0,
     partyPointerYPos = 0,
     partyPointerScale = 1,
@@ -269,37 +275,7 @@ local defaultSettings = {
     totemIndicatorDefaultCooldownTextSize = 0.85,
     showTotemIndicatorCooldownSwipe = true,
     totemIndicatorShieldType = 1,
-    totemIndicatorHideAuras = true,
-    totemIndicatorNpcList = {
-        -- Important
-        [3527] =    { name = "Healing Stream Totem", icon = GetSpellTexture(5394),       hideIcon = false, size = 31, duration = nil, color = {0, 1, 0.78},       important = true, widthOn = true, hpWidth = -25 },
-        [5925] =    { name = "Grounding Totem", icon = GetSpellTexture(8177),            hideIcon = false, size = 31, duration = 30,  color = {1, 0, 1},          important = true, widthOn = true, hpWidth = -25 },
-        [53006] =   { name = "Spirit Link Totem", icon = GetSpellTexture(98008),         hideIcon = false, size = 31, duration = 6,   color = {0, 1, 0.78},       important = true },
-        [5913] =    { name = "Tremor Totem", icon = GetSpellTexture(8143),               hideIcon = false, size = 31, duration = 8.4, color = {0.49, 0.9, 0.08},  important = true, widthOn = true, hpWidth = -25 },
-        [27829] =   { name = "Ebon Gargoyle", icon = GetSpellTexture(49206),             hideIcon = false, size = 31, duration = 30,  color = {1, 0.69, 0},       important = true },
-        [10467] =   { name = "Mana Tide Totem", icon = GetSpellTexture(16191),           hideIcon = false, size = 27, duration = 16.8,color = {0.08, 0.82, 0.78}, important = true, widthOn = true, hpWidth = -25 },
-        [3579] =    { name = "Stoneclaw Totem", icon = GetSpellTexture(5730),            hideIcon = false, size = 29, duration = 21,  color = {0.78, 0.51, 0.39}, important = true, widthOn = true, hpWidth = -25 },
-        -- Normal
-        [19668] =   { name = "Shadowfiend", icon = GetSpellTexture(34433),               hideIcon = false, size = 27, duration = 15,  color = {0.43, 0.20, 1},    important = false, widthOn = true, hpWidth = -25 },
-        [510] =     { name = "Water Elemental", icon = GetSpellTexture(31687),           hideIcon = true,  size = 27, duration = nil, color = {0.25, 1, 0.83},    important = false, widthOn = true, hpWidth = -25 },
-        [15430] =   { name = "Earth Elemental Totem", icon = GetSpellTexture(2062),      hideIcon = false, size = 27, duration = nil, color = {0.78, 0.51, 0.39}, important = false, widthOn = true, hpWidth = -25 },
-        [15439] =   { name = "Fire Elemental Totem", icon = GetSpellTexture(2894),       hideIcon = false, size = 27, duration = nil, color = {1, 0.23, 0},       important = false, widthOn = true, hpWidth = -25 },
-        [15438] =   { name = "Greater Fire Elemental", icon = GetSpellTexture(2894),     hideIcon = false, size = 27, duration = nil, color = {1, 0.23, 0},       important = false, widthOn = true, hpWidth = -25 },
-        [15352] =   { name = "Greater Earth Elemental", icon = GetSpellTexture(2062),    hideIcon = false, size = 27, duration = nil, color = {0.78, 0.51, 0.39}, important = false, widthOn = true, hpWidth = -25 },
-        [2630] =    { name = "Earthbind Totem", icon = GetSpellTexture(2484),            hideIcon = false, size = 27, duration = nil, color = {0.78, 0.51, 0.39}, important = false, iconOnly = true },
-        -- Un-important
-        [3573] =    { name = "Mana Spring Totem", icon = GetSpellTexture(5675),          hideIcon = false, size = 25, duration = nil, color = {0.70, 0.98, 1},    important = false, iconOnly = true },
-        [47069] =   { name = "Tranquil Mind", icon = GetSpellTexture(87718),             hideIcon = false, size = 25, duration = nil, color = {0.70, 0.98, 1},    important = false, iconOnly = true },
-        [6112] =    { name = "Windfury Totem", icon = GetSpellTexture(8512),             hideIcon = false, size = 25, duration = nil, color = {0.70, 0.98, 1},    important = false, iconOnly = true },
-        [15447] =   { name = "Wrath of Air", icon = GetSpellTexture(3738),               hideIcon = false, size = 25, duration = nil, color = {0.70, 0.98, 1},    important = false, iconOnly = true },
-        [5874] =    { name = "Strength of Earth", icon = GetSpellTexture(8075),          hideIcon = false, size = 25, duration = nil, color = {0.78, 0.51, 0.39}, important = false, iconOnly = true },
-        [5929] =    { name = "Magma Totem", icon = GetSpellTexture(8190),                hideIcon = false, size = 25, duration = nil, color = {1, 0.23, 0},       important = false, iconOnly = true },
-        [2523] =    { name = "Searing Totem", icon = GetSpellTexture(3599),              hideIcon = false, size = 25, duration = nil, color = {1, 0.23, 0},       important = false, iconOnly = true },
-        [5950] =    { name = "Flametongue Totem", icon = GetSpellTexture(8227),          hideIcon = false, size = 25, duration = nil, color = {1, 0.23, 0},       important = false, iconOnly = true },
-        [5873] =    { name = "Stoneskin Totem", icon = GetSpellTexture(8071),            hideIcon = false, size = 25, duration = nil, color = {0.78, 0.51, 0.39}, important = false, iconOnly = true },
-        [5927] =    { name = "Elemental Resistance Totem", icon = GetSpellTexture(8184), hideIcon = false, size = 25, duration = nil, color = {0.08, 0.82, 0.78}, important = false, iconOnly = true },
-    },
-
+    totemIndicatorHideAuras = false,
     --hideHp
 
     -- Quest Indicator
@@ -318,7 +294,7 @@ local defaultSettings = {
     useCustomTextureForBars = false,
     -- Castbar
     enableCastbarCustomization = false,
-    showCastBarIconWhenNoninterruptible = false,
+    showCastBarIconWhenNoninterruptible = true,
     enableCastbarEmphasis = false,
     castBarEmphasisOnlyInterruptable = false,
     castBarEmphasisColor = false,
@@ -343,6 +319,35 @@ local defaultSettings = {
     showCastbarIfTarget = false,
     castBarRecolor = false,
     castBarRecolorInterrupt = false,
+    importantCCFullGlow = true,
+    importantCCSilenceGlow = true,
+    importantBuffsOffensivesGlow = true,
+    importantBuffsDefensivesGlow = true,
+    importantBuffsMobilityGlow = true,
+    importantBuffsOffensives = true,
+    importantBuffsDefensives = true,
+    importantBuffsMobility = true,
+    importantCCFullGlowRGB = {r = 1, g = 0.874, b = 0, a = 1},
+    importantCCDisarmGlowRGB = {r = 1, g = 0.874, b = 0, a = 1},
+    importantCCRootGlowRGB = {r = 1, g = 0.874, b = 0, a = 1},
+    importantCCSilenceGlowRGB = {r = 1, g = 0.874, b = 0, a = 1},
+    importantBuffsOffensivesGlowRGB = {r = 1, g = 0.5, b = 0, a = 1},
+    importantBuffsDefensivesGlowRGB = {r = 1, g = 0.662, b = 0.945, a = 1},
+    importantBuffsMobilityGlowRGB = {r = 0, g = 1, b = 1, a = 1},
+    nameplateKeyAurasXPos = 0,
+    nameplateKeyAurasYPos = 0,
+    nameplateKeyAuraScale = 1,
+    nameplateKeyAurasHorizontalGap = 5,
+    nameplateKeyAurasAnchor = "RIGHT",
+    nameplateKeyAurasFriendlyAnchor = "RIGHT",
+    keyAurasImportantGlowOn = true,
+    keyAurasImportantBuffsEnabled = true,
+    npAuraDiseaseRGB = {1,0.53,0.14},
+    npAuraOtherRGB = {0,0,0},
+    npAuraCurseRGB = {0.47,0,0.78},
+    npAuraBuffsRGB = {0,0.67,1},
+    npAuraPoisonRGB = {0,0.52,0.031},
+    npAuraMagicRGB = {0.13,0.44,1},
     castBarCastColor = {
 		1,
 		0.8431373238563538,
@@ -390,6 +395,10 @@ local defaultSettings = {
     nameplateAurasNoNameYPos = 0,
     nameplateAuraScale = 1,
     hideDefaultPersonalNameplateAuras = false,
+    importantCCFull = true,
+    importantCCDisarm = true,
+    importantCCRoot = true,
+    importantCCSilence = true,
     defaultNpAuraCdSize = 0.5,
     onlyPandemicAuraMine = true,
     nameplateAuraEnlargedScale = 1,
@@ -488,61 +497,6 @@ local defaultSettings = {
         {name = "Wild Imp (Warlock)", id = 55659, comment = ""},
         {name = "Wild Imp (Warlock)", id = 143622, comment = ""},
     },
-    hideNPCsWhitelist = {
-        {name = "Healing Stream Totem", id = 3527, comment = ""},
-        {name = "Grounding Totem", id = 5925, comment = ""},
-        {name = "Spirit Link Totem", id = 53006, comment = ""},
-        {name = "Tremor Totem", id = 5913, comment = ""},
-        {name = "Ebon Gargoyle", id = 27829, comment = ""},
-        {name = "Mana Tide Totem", id = 10467, comment = ""},
-        {name = "Shadowfiend", id = 19668, comment = ""},
-        {name = "Earth Elemental Totem", id = 15430, comment = ""},
-        {name = "Fire Elemental Totem", id = 15439, comment = ""},
-        {name = "Greater Fire Elemental", id = 15438, comment = ""},
-        {name = "Greater Earth Elemental", id = 15352, comment = ""},
-        {name = "Earthbind Totem", id = 2630, comment = ""},
-        {name = "Stoneclaw Totem", id = 3579, comment = ""},
-        {name = "Mana Spring Totem", id = 3573, comment = ""},
-        {name = "Tranquil Mind", id = 47069, comment = ""},
-        {name = "Windfury Totem", id = 6112, comment = ""},
-        {name = "Wrath of Air", id = 15447, comment = ""},
-        {name = "Strength of Earth", id = 5874, comment = ""},
-        {name = "Magma Totem", id = 5929, comment = ""},
-        {name = "Searing Totem", id = 2523, comment = ""},
-        {name = "Flametongue Totem", id = 5950, comment = ""},
-        {name = "Stoneskin Totem", id = 5873, comment = ""},
-        {name = "Elemental Resistance Totem", id = 5927, comment = ""},
-        {name = "Water Elemental", id = 510, comment = ""},
-        {name = "Death Knight Pet", id = 26125, comment = ""},
-    },
-
-    fadeOutNPCsWhitelist = {
-        {name = "Healing Stream Totem", id = 3527, comment = ""},
-        {name = "Grounding Totem", id = 5925, comment = ""},
-        {name = "Spirit Link Totem", id = 53006, comment = ""},
-        {name = "Tremor Totem", id = 5913, comment = ""},
-        {name = "Ebon Gargoyle", id = 27829, comment = ""},
-        {name = "Mana Tide Totem", id = 10467, comment = ""},
-        {name = "Shadowfiend", id = 19668, comment = ""},
-        {name = "Earth Elemental Totem", id = 15430, comment = ""},
-        {name = "Fire Elemental Totem", id = 15439, comment = ""},
-        {name = "Greater Fire Elemental", id = 15438, comment = ""},
-        {name = "Greater Earth Elemental", id = 15352, comment = ""},
-        {name = "Earthbind Totem", id = 2630, comment = ""},
-        {name = "Stoneclaw Totem", id = 3579, comment = ""},
-        {name = "Mana Spring Totem", id = 3573, comment = ""},
-        {name = "Tranquil Mind", id = 47069, comment = ""},
-        {name = "Windfury Totem", id = 6112, comment = ""},
-        {name = "Wrath of Air", id = 15447, comment = ""},
-        {name = "Strength of Earth", id = 5874, comment = ""},
-        {name = "Magma Totem", id = 5929, comment = ""},
-        {name = "Searing Totem", id = 2523, comment = ""},
-        {name = "Flametongue Totem", id = 5950, comment = ""},
-        {name = "Stoneskin Totem", id = 5873, comment = ""},
-        {name = "Elemental Resistance Totem", id = 5927, comment = ""},
-        {name = "Water Elemental", id = 510, comment = ""},
-        {name = "Death Knight Pet", id = 26125, comment = ""},
-    },
 
     hideCastbarList = {},
     hideCastbarWhitelist = {},
@@ -588,32 +542,6 @@ local defaultSettings = {
 
 
 }
-
-local smallNpcs = {
-    [510] = true,
-}
-
-function BBP.greenScreen(frame)
-    -- Ensure that the frame is valid
-    if not frame then return end
-    if frame.texture then return end
-
-    -- Create a texture on the specified frame
-    local texture = frame:CreateTexture(nil, "BACKGROUND")
-    texture:SetAllPoints()  -- Make the texture fill the entire frame
-
-    -- Generate random RGB values
-    local r = math.random()
-    local g = math.random()
-    local b = math.random()
-
-    -- Set the color and transparency (alpha) of the texture
-    texture:SetColorTexture(r, g, b, 0.5)  -- 50% transparency
-
-    frame.greenScreen = texture
-
-    return texture  -- Return the texture for further manipulation if necessary
-end
 
 local version = GetBuildInfo()
 if version and version:match("^5") then
@@ -747,6 +675,200 @@ if version and version:match("^5") then
     end)
 end
 
+if BBP.isMoP then
+    defaultSettings.totemIndicatorNpcList = {
+        -- Important
+        [59764] =   { name = "Healing Tide Totem", icon = GetSpellTexture(108280),       hideIcon = false, size = 31, duration = 10, color =  {0, 1, 0.39},       important = true },
+        [3527] =    { name = "Healing Stream Totem", icon = GetSpellTexture(5394),       hideIcon = false, size = 31, duration = 15, color = {0, 1, 0.78},       important = true, widthOn = true, hpWidth = -25 },
+        [5925] =    { name = "Grounding Totem", icon = GetSpellTexture(8177),            hideIcon = false, size = 31, duration = 15,  color = {1, 0, 1},          important = true },
+        [53006] =   { name = "Spirit Link Totem", icon = GetSpellTexture(98008),         hideIcon = false, size = 31, duration = 6,   color = {0, 1, 0.78},       important = true },
+        [5913] =    { name = "Tremor Totem", icon = GetSpellTexture(8143),               hideIcon = false, size = 31, duration = 8.4, color = {0.49, 0.9, 0.08},  important = true, widthOn = true, hpWidth = -25 },
+        [27829] =   { name = "Ebon Gargoyle", icon = GetSpellTexture(49206),             hideIcon = false, size = 31, duration = 30,  color = {1, 0.69, 0},       important = true, widthOn = true, hpWidth = -25},
+        [10467] =   { name = "Mana Tide Totem", icon = GetSpellTexture(16191),           hideIcon = false, size = 27, duration = 16.8,color = {0.08, 0.82, 0.78}, important = true, widthOn = true, hpWidth = -25 },
+        [59190] =   { name = "Psyfiend", icon = GetSpellTexture(108921),                 hideIcon = false, size = 31, duration = 10, color = {0.49, 0, 1}, important = true },
+        [62002] =   { name = "Stormlash Totem", icon = GetSpellTexture(120668),          hideIcon = false, size = 31, duration = 10, color = {1, 0.69, 0}, important = true },
+        [59717] =   { name = "Windwalk Totem", icon = GetSpellTexture(108273),           hideIcon = false, size = 27, duration = 6,  color = {0, 1, 1},           important = true,  widthOn = true, hpWidth = -25 },
+
+        -- Normal
+        [19668] =   { name = "Shadowfiend", icon = GetSpellTexture(34433),               hideIcon = false, size = 27, duration = 15,  color = {0.43, 0.20, 1},    important = false, widthOn = true, hpWidth = -25 },
+        [510] =     { name = "Water Elemental", icon = GetSpellTexture(31687),           hideIcon = true,  size = 27, duration = nil, color = {0.25, 1, 0.83},    important = false, widthOn = true, hpWidth = -25 },
+        [15430] =   { name = "Earth Elemental Totem", icon = GetSpellTexture(2062),      hideIcon = false, size = 27, duration = nil, color = {0.78, 0.51, 0.39}, important = false, widthOn = true, hpWidth = -25 },
+        [15439] =   { name = "Fire Elemental Totem", icon = GetSpellTexture(2894),       hideIcon = false, size = 27, duration = nil, color = {1, 0.23, 0},       important = false, widthOn = true, hpWidth = -25 },
+        [15438] =   { name = "Greater Fire Elemental", icon = GetSpellTexture(2894),     hideIcon = false, size = 27, duration = nil, color = {1, 0.23, 0},       important = false, widthOn = true, hpWidth = -25 },
+        [15352] =   { name = "Greater Earth Elemental", icon = GetSpellTexture(2062),    hideIcon = false, size = 27, duration = nil, color = {0.78, 0.51, 0.39}, important = false, widthOn = true, hpWidth = -25 },
+        [2630] =    { name = "Earthbind Totem", icon = GetSpellTexture(2484),            hideIcon = false, size = 27, duration = nil, color = {0.78, 0.51, 0.39}, important = false, iconOnly = true },
+        [59399] =   { name = "Skull Banner", icon = GetSpellTexture(114207),             hideIcon = false, size = 27, duration = 10,  color = {0.43, 0.20, 1},    important = false, widthOn = true, hpWidth = -25 },
+        [64571] =   { name = "Lightwell", icon = GetSpellTexture(126135),                hideIcon = false, size = 25, duration = nil,  color = {0, 1, 0.78},      important = false, widthOn = true, hpWidth = -25 },
+
+
+        -- Un-important
+        [5929] =    { name = "Magma Totem", icon = GetSpellTexture(8190),                hideIcon = false, size = 25, duration = nil, color = {1, 0.23, 0},       important = false, iconOnly = true },
+        [2523] =    { name = "Searing Totem", icon = GetSpellTexture(3599),              hideIcon = false, size = 25, duration = nil, color = {1, 0.23, 0},       important = false, iconOnly = true },
+    }
+
+    defaultSettings.hideNPCsWhitelist = {
+        {name = "Water Elemental", id = 510, comment = ""},
+        {name = "Death Knight Pet", id = 26125, comment = ""},
+        {name = "Healing Tide Totem", id = 59764, comment = ""},
+        {name = "Healing Stream Totem", id = 3527, comment = ""},
+        {name = "Grounding Totem", id = 5925, comment = ""},
+        {name = "Spirit Link Totem", id = 53006, comment = ""},
+        {name = "Tremor Totem", id = 5913, comment = ""},
+        {name = "Ebon Gargoyle", id = 27829, comment = ""},
+        {name = "Mana Tide Totem", id = 10467, comment = ""},
+        {name = "Psyfiend", id = 59190, comment = ""},
+        {name = "Stormlash Totem", id = 62002, comment = ""},
+        {name = "Windwalk Totem", id = 59717, comment = ""},
+        {name = "Shadowfiend", id = 19668, comment = ""},
+        {name = "Earth Elemental Totem", id = 15430, comment = ""},
+        {name = "Fire Elemental Totem", id = 15439, comment = ""},
+        {name = "Greater Fire Elemental", id = 15438, comment = ""},
+        {name = "Greater Earth Elemental", id = 15352, comment = ""},
+        {name = "Earthbind Totem", id = 2630, comment = ""},
+        {name = "Skull Banner", id = 59399, comment = ""},
+        {name = "Lightwell", id = 64571, comment = ""},
+        {name = "Magma Totem", id = 5929, comment = ""},
+        {name = "Searing Totem", id = 2523, comment = ""},
+    }
+
+    defaultSettings.fadeOutNPCsWhitelist = {
+        {name = "Water Elemental", id = 510, comment = ""},
+        {name = "Death Knight Pet", id = 26125, comment = ""},
+        {name = "Healing Tide Totem", id = 59764, comment = ""},
+        {name = "Healing Stream Totem", id = 3527, comment = ""},
+        {name = "Grounding Totem", id = 5925, comment = ""},
+        {name = "Spirit Link Totem", id = 53006, comment = ""},
+        {name = "Tremor Totem", id = 5913, comment = ""},
+        {name = "Ebon Gargoyle", id = 27829, comment = ""},
+        {name = "Mana Tide Totem", id = 10467, comment = ""},
+        {name = "Psyfiend", id = 59190, comment = ""},
+        {name = "Stormlash Totem", id = 62002, comment = ""},
+        {name = "Windwalk Totem", id = 59717, comment = ""},
+        {name = "Shadowfiend", id = 19668, comment = ""},
+        {name = "Earth Elemental Totem", id = 15430, comment = ""},
+        {name = "Fire Elemental Totem", id = 15439, comment = ""},
+        {name = "Greater Fire Elemental", id = 15438, comment = ""},
+        {name = "Greater Earth Elemental", id = 15352, comment = ""},
+        {name = "Earthbind Totem", id = 2630, comment = ""},
+        {name = "Skull Banner", id = 59399, comment = ""},
+        {name = "Lightwell", id = 64571, comment = ""},
+        {name = "Magma Totem", id = 5929, comment = ""},
+        {name = "Searing Totem", id = 2523, comment = ""},
+    }
+
+else
+    defaultSettings.totemIndicatorNpcList = {
+        -- Important
+        [3527] =    { name = "Healing Stream Totem", icon = GetSpellTexture(5394),       hideIcon = false, size = 31, duration = nil, color = {0, 1, 0.78},       important = true, widthOn = true, hpWidth = -25 },
+        [5925] =    { name = "Grounding Totem", icon = GetSpellTexture(8177),            hideIcon = false, size = 31, duration = 30,  color = {1, 0, 1},          important = true, widthOn = true, hpWidth = -25 },
+        [53006] =   { name = "Spirit Link Totem", icon = GetSpellTexture(98008),         hideIcon = false, size = 31, duration = 6,   color = {0, 1, 0.78},       important = true },
+        [5913] =    { name = "Tremor Totem", icon = GetSpellTexture(8143),               hideIcon = false, size = 31, duration = 8.4, color = {0.49, 0.9, 0.08},  important = true, widthOn = true, hpWidth = -25 },
+        [27829] =   { name = "Ebon Gargoyle", icon = GetSpellTexture(49206),             hideIcon = false, size = 31, duration = 30,  color = {1, 0.69, 0},       important = true },
+        [10467] =   { name = "Mana Tide Totem", icon = GetSpellTexture(16191),           hideIcon = false, size = 27, duration = 16.8,color = {0.08, 0.82, 0.78}, important = true, widthOn = true, hpWidth = -25 },
+        [3579] =    { name = "Stoneclaw Totem", icon = GetSpellTexture(5730),            hideIcon = false, size = 29, duration = 21,  color = {0.78, 0.51, 0.39}, important = true, widthOn = true, hpWidth = -25 },
+        -- Normal
+        [19668] =   { name = "Shadowfiend", icon = GetSpellTexture(34433),               hideIcon = false, size = 27, duration = 15,  color = {0.43, 0.20, 1},    important = false, widthOn = true, hpWidth = -25 },
+        [510] =     { name = "Water Elemental", icon = GetSpellTexture(31687),           hideIcon = true,  size = 27, duration = nil, color = {0.25, 1, 0.83},    important = false, widthOn = true, hpWidth = -25 },
+        [15430] =   { name = "Earth Elemental Totem", icon = GetSpellTexture(2062),      hideIcon = false, size = 27, duration = nil, color = {0.78, 0.51, 0.39}, important = false, widthOn = true, hpWidth = -25 },
+        [15439] =   { name = "Fire Elemental Totem", icon = GetSpellTexture(2894),       hideIcon = false, size = 27, duration = nil, color = {1, 0.23, 0},       important = false, widthOn = true, hpWidth = -25 },
+        [15438] =   { name = "Greater Fire Elemental", icon = GetSpellTexture(2894),     hideIcon = false, size = 27, duration = nil, color = {1, 0.23, 0},       important = false, widthOn = true, hpWidth = -25 },
+        [15352] =   { name = "Greater Earth Elemental", icon = GetSpellTexture(2062),    hideIcon = false, size = 27, duration = nil, color = {0.78, 0.51, 0.39}, important = false, widthOn = true, hpWidth = -25 },
+        [2630] =    { name = "Earthbind Totem", icon = GetSpellTexture(2484),            hideIcon = false, size = 27, duration = nil, color = {0.78, 0.51, 0.39}, important = false, iconOnly = true },
+        -- Un-important
+        [3573] =    { name = "Mana Spring Totem", icon = GetSpellTexture(5675),          hideIcon = false, size = 25, duration = nil, color = {0.70, 0.98, 1},    important = false, iconOnly = true },
+        [47069] =   { name = "Tranquil Mind", icon = GetSpellTexture(87718),             hideIcon = false, size = 25, duration = nil, color = {0.70, 0.98, 1},    important = false, iconOnly = true },
+        [6112] =    { name = "Windfury Totem", icon = GetSpellTexture(8512),             hideIcon = false, size = 25, duration = nil, color = {0.70, 0.98, 1},    important = false, iconOnly = true },
+        [15447] =   { name = "Wrath of Air", icon = GetSpellTexture(3738),               hideIcon = false, size = 25, duration = nil, color = {0.70, 0.98, 1},    important = false, iconOnly = true },
+        [5874] =    { name = "Strength of Earth", icon = GetSpellTexture(8075),          hideIcon = false, size = 25, duration = nil, color = {0.78, 0.51, 0.39}, important = false, iconOnly = true },
+        [5929] =    { name = "Magma Totem", icon = GetSpellTexture(8190),                hideIcon = false, size = 25, duration = nil, color = {1, 0.23, 0},       important = false, iconOnly = true },
+        [2523] =    { name = "Searing Totem", icon = GetSpellTexture(3599),              hideIcon = false, size = 25, duration = nil, color = {1, 0.23, 0},       important = false, iconOnly = true },
+        [5950] =    { name = "Flametongue Totem", icon = GetSpellTexture(8227),          hideIcon = false, size = 25, duration = nil, color = {1, 0.23, 0},       important = false, iconOnly = true },
+        [5873] =    { name = "Stoneskin Totem", icon = GetSpellTexture(8071),            hideIcon = false, size = 25, duration = nil, color = {0.78, 0.51, 0.39}, important = false, iconOnly = true },
+        [5927] =    { name = "Elemental Resistance Totem", icon = GetSpellTexture(8184), hideIcon = false, size = 25, duration = nil, color = {0.08, 0.82, 0.78}, important = false, iconOnly = true },
+    }
+    defaultSettings.hideNPCsWhitelist = {
+        {name = "Healing Stream Totem", id = 3527, comment = ""},
+        {name = "Grounding Totem", id = 5925, comment = ""},
+        {name = "Spirit Link Totem", id = 53006, comment = ""},
+        {name = "Tremor Totem", id = 5913, comment = ""},
+        {name = "Ebon Gargoyle", id = 27829, comment = ""},
+        {name = "Mana Tide Totem", id = 10467, comment = ""},
+        {name = "Shadowfiend", id = 19668, comment = ""},
+        {name = "Earth Elemental Totem", id = 15430, comment = ""},
+        {name = "Fire Elemental Totem", id = 15439, comment = ""},
+        {name = "Greater Fire Elemental", id = 15438, comment = ""},
+        {name = "Greater Earth Elemental", id = 15352, comment = ""},
+        {name = "Earthbind Totem", id = 2630, comment = ""},
+        {name = "Stoneclaw Totem", id = 3579, comment = ""},
+        {name = "Mana Spring Totem", id = 3573, comment = ""},
+        {name = "Tranquil Mind", id = 47069, comment = ""},
+        {name = "Windfury Totem", id = 6112, comment = ""},
+        {name = "Wrath of Air", id = 15447, comment = ""},
+        {name = "Strength of Earth", id = 5874, comment = ""},
+        {name = "Magma Totem", id = 5929, comment = ""},
+        {name = "Searing Totem", id = 2523, comment = ""},
+        {name = "Flametongue Totem", id = 5950, comment = ""},
+        {name = "Stoneskin Totem", id = 5873, comment = ""},
+        {name = "Elemental Resistance Totem", id = 5927, comment = ""},
+        {name = "Water Elemental", id = 510, comment = ""},
+        {name = "Death Knight Pet", id = 26125, comment = ""},
+    }
+    defaultSettings.fadeOutNPCsWhitelist = {
+        {name = "Healing Stream Totem", id = 3527, comment = ""},
+        {name = "Grounding Totem", id = 5925, comment = ""},
+        {name = "Spirit Link Totem", id = 53006, comment = ""},
+        {name = "Tremor Totem", id = 5913, comment = ""},
+        {name = "Ebon Gargoyle", id = 27829, comment = ""},
+        {name = "Mana Tide Totem", id = 10467, comment = ""},
+        {name = "Shadowfiend", id = 19668, comment = ""},
+        {name = "Earth Elemental Totem", id = 15430, comment = ""},
+        {name = "Fire Elemental Totem", id = 15439, comment = ""},
+        {name = "Greater Fire Elemental", id = 15438, comment = ""},
+        {name = "Greater Earth Elemental", id = 15352, comment = ""},
+        {name = "Earthbind Totem", id = 2630, comment = ""},
+        {name = "Stoneclaw Totem", id = 3579, comment = ""},
+        {name = "Mana Spring Totem", id = 3573, comment = ""},
+        {name = "Tranquil Mind", id = 47069, comment = ""},
+        {name = "Windfury Totem", id = 6112, comment = ""},
+        {name = "Wrath of Air", id = 15447, comment = ""},
+        {name = "Strength of Earth", id = 5874, comment = ""},
+        {name = "Magma Totem", id = 5929, comment = ""},
+        {name = "Searing Totem", id = 2523, comment = ""},
+        {name = "Flametongue Totem", id = 5950, comment = ""},
+        {name = "Stoneskin Totem", id = 5873, comment = ""},
+        {name = "Elemental Resistance Totem", id = 5927, comment = ""},
+        {name = "Water Elemental", id = 510, comment = ""},
+        {name = "Death Knight Pet", id = 26125, comment = ""},
+    }
+end
+
+
+
+
+
+function BBP.greenScreen(frame)
+    -- Ensure that the frame is valid
+    if not frame then return end
+    if frame.texture then return end
+
+    -- Create a texture on the specified frame
+    local texture = frame:CreateTexture(nil, "BACKGROUND")
+    texture:SetAllPoints()  -- Make the texture fill the entire frame
+
+    -- Generate random RGB values
+    local r = math.random()
+    local g = math.random()
+    local b = math.random()
+
+    -- Set the color and transparency (alpha) of the texture
+    texture:SetColorTexture(r, g, b, 0.5)  -- 50% transparency
+
+    frame.greenScreen = texture
+
+    return texture  -- Return the texture for further manipulation if necessary
+end
+
+
 --#################################################################################################
 --#################################################################################################
 --#################################################################################################
@@ -803,14 +925,23 @@ local function InitializeNameplateSettings(frame)
             changeNameplateBorderSize = BetterBlizzPlatesDB.changeNameplateBorderSize,
             nameplateBorderSize = BetterBlizzPlatesDB.nameplateBorderSize,
             nameplateTargetBorderSize = BetterBlizzPlatesDB.nameplateTargetBorderSize,
-            hideLevelFrame = BetterBlizzPlatesDB.hideLevelFrame,
-            classicNameplates = BetterBlizzPlatesDB.classicNameplates,
             showNpcTitle = BetterBlizzPlatesDB.showNpcTitle,
-            showLastNameNpc = BetterBlizzPlatesDB.showLastNameNpc,
+            enableNpNonTargetAlpha = BetterBlizzPlatesDB.enableNpNonTargetAlpha,
+            enableNpNonFocusAlpha = BetterBlizzPlatesDB.enableNpNonFocusAlpha,
+            targetHighlightFix = BetterBlizzPlatesDB.targetHighlightFix,
+            bgIndicator = BetterBlizzPlatesDB.bgIndicator or BetterBlizzPlatesDB.bgIndicatorTestMode,
+            arenaIndicatorBg = BetterBlizzPlatesDB.arenaIndicatorBg,
+            classicNameplates = BetterBlizzPlatesDB.classicNameplates,
+            hideLevelFrame = BetterBlizzPlatesDB.hideLevelFrame,
+            smallPetsInPvP = BetterBlizzPlatesDB.smallPetsInPvP,
+            hideEliteDragon = BetterBlizzPlatesDB.hideEliteDragon,
+            personalBarTweaks = BetterBlizzPlatesDB.personalBarTweaks,
         }
         if frame.BetterBlizzPlates.config.changeHealthbarHeight then
             frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
             frame.BetterBlizzPlates.config.hpHeightFriendly = BetterBlizzPlatesDB.hpHeightFriendly
+            frame.BetterBlizzPlates.config.hpHeightSelf = BetterBlizzPlatesDB.hpHeightSelf
+            frame.BetterBlizzPlates.config.hpHeightSelfMana = BetterBlizzPlatesDB.hpHeightSelfMana
         end
     end
     return frame.BetterBlizzPlates.config
@@ -1010,19 +1141,34 @@ function BBP.ResetNameplateCVars()
     end
 end
 
+local function IsBBPTurningOff()
+    local _, _, _, _, reason = C_AddOns.GetAddOnInfo("BetterBlizzPlates")
+    local isLoaded = C_AddOns.IsAddOnLoaded("BetterBlizzPlates")
+
+    return isLoaded and reason == "DISABLED"
+end
+
 local function CVarDefaultOnLogout()
     if not BBPCVarBackupsDB then return end
     if InCombatLockdown() then return end
     for cvar, value in pairs(BBPCVarBackupsDB) do
-        C_CVar.SetCVar(cvar, value)
+        if cvar == "nameplateSelfBottomInset" or cvar == "nameplateSelfTopInset" then
+            if BetterBlizzPlatesDB.nameplateSelfBottomInset and BetterBlizzPlatesDB.nameplateSelfTopInset then
+                C_CVar.SetCVar(cvar, value)
+            end
+        else
+            C_CVar.SetCVar(cvar, value)
+        end
     end
 end
 
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_LOGOUT")
 frame:SetScript("OnEvent", function()
-    BBP.CVarTrackingDisabled = true
-    CVarDefaultOnLogout()
+    if IsBBPTurningOff() then
+        BBP.CVarTrackingDisabled = true
+        CVarDefaultOnLogout()
+    end
 end)
 
 local function CVarFetcher()
@@ -1393,6 +1539,28 @@ function BBP.GetUnitReaction(unit)
     return isEnemy, isFriend, isNeutral
 end
 
+local function isFriend(unit)
+    local reaction = UnitReaction(unit, "player")
+    if reaction and reaction >= 5 then
+        return true
+    end
+end
+
+local function isEnemy(unit)
+    local reaction = UnitReaction(unit, "player")
+    if reaction and reaction <= 4 then
+        return true
+    end
+end
+
+function BBP.GetSpecID(frame)
+    if Details and Details.realversion >= 134 then
+        local unitGUID = UnitGUID(frame.unit)
+        local specID = Details:GetSpecByGUID(unitGUID)
+        return specID
+    end
+end
+
 local function GetNameplateUnitInfo(frame, unit)
     local unit = unit or frame.unit or frame.displayedUnit
     if not unit then return end
@@ -1523,7 +1691,7 @@ function BBP.ApplyNameplateWidth()
         if BetterBlizzPlatesDB.nameplateEnemyHeight and BetterBlizzPlatesDB.nameplateFriendlyHeight then
             local friendlyWidth = BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeFriendlyWidth or BetterBlizzPlatesDB.nameplateDefaultFriendlyWidth
             local enemyWidth = BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeEnemyWidth or BetterBlizzPlatesDB.nameplateDefaultEnemyWidth
-            local generalHeight = BetterBlizzPlatesDB.nameplateGeneralHeight
+            local generalHeight = BetterBlizzPlatesDB.nameplateGeneralHeight + BetterBlizzPlatesDB.nameplateExtraClickHeight + 8
             local friendlyHeight = BetterBlizzPlatesDB.friendlyNameplateClickthrough and 1 or generalHeight--(BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeFriendlyHeight or BetterBlizzPlatesDB.nameplateDefaultFriendlyHeight)
 
             if BetterBlizzPlatesDB.NamePlateVerticalScale then
@@ -1543,6 +1711,59 @@ function BBP.ApplyNameplateWidth()
             local friendlyWidthAdjustment = BBP.isInPvE and 128 or BetterBlizzPlatesDB.nameplateFriendlyWidth
             C_NamePlate.SetNamePlateFriendlySize(friendlyWidthAdjustment, friendlyHeight)--friendlyHeight)
             C_NamePlate.SetNamePlateEnemySize(BetterBlizzPlatesDB.nameplateEnemyWidth, generalHeight)--BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeEnemyHeight or BetterBlizzPlatesDB.nameplateDefaultEnemyHeight)
+        end
+    end
+end
+
+function BBP.ClickableArea(frame)
+    if not frame then return end
+    if frame.clickableAreaOverlay then return end
+
+    local texture = frame:CreateTexture(nil, "BACKGROUND")
+    texture:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -1)
+    texture:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+    local text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    text:SetPoint("BOTTOM", texture, "TOP", 0, 2)
+    text:SetText("Clickable Area")
+
+    -- Generate random RGB values
+    local r = math.random()
+    local g = math.random()
+    local b = math.random()
+
+    texture:SetColorTexture(r, g, b, 0.5)
+    --text:SetTextColor(r,g,b,0.5)
+
+    frame.clickableAreaOverlay = texture
+
+    return texture
+end
+
+function BBP.AdjustClickableNameplateHeight()
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        if not UnitIsUnit(frame.unit, "player") then
+            BBP.ClickableArea(nameplate)
+        end
+    end
+    BBP.ApplyNameplateWidth()
+end
+
+function BBP.AdjustNameplateVerticalPosition()
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        if not UnitIsUnit(frame.unit, "player") then
+            BBP.ClickableArea(nameplate)
+            if not frame.verticalPositionTweak then
+                hooksecurefunc(frame.healthBar, "SetHeight", function(self)
+                    if self:IsForbidden() then return end
+                    frame:ClearPoint("BOTTOMLEFT")
+                    frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", 0, (BetterBlizzPlatesDB.nameplateVerticalPosition or 0)+9)
+                end)
+                frame.verticalPositionTweak = true
+            end
+            frame:ClearPoint("BOTTOMLEFT")
+            frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", 0, (BetterBlizzPlatesDB.nameplateVerticalPosition or 0)+9)
         end
     end
 end
@@ -1985,20 +2206,30 @@ end
 
 --#################################################################################################
 local function ToggleNameplateBuffFrameVisibility(frame)
-    -- local config = frame.BetterBlizzPlates.config
-    -- local info = frame.BetterBlizzPlates.unitInfo
+    local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo
 
-    -- local buffFrameAlpha = 1
-    -- if config.hideNameplateAuras then
-    --     buffFrameAlpha = 0
-    -- elseif config.nameplateAuraPlayersOnly then
-    --     if config.nameplateAuraPlayersOnlyShowTarget and info.isTarget then
-    --         buffFrameAlpha = 1
-    --     else
-    --         buffFrameAlpha = info.isPlayer and 1 or 0
-    --     end
-    -- end
-    -- frame.BuffFrame:SetAlpha(buffFrameAlpha) --bodifycata
+    local buffFrameAlpha = 1
+    if config.hideNameplateAuras then
+        if not frame.bbpHookedBuffFrameAlpha then
+            hooksecurefunc(frame.BuffFrame, "SetAlpha", function(self)
+                if frame:IsForbidden() or self.changing then return end
+                self.changing = true
+                self:SetAlpha(0)
+                self.changing = false
+            end)
+            frame.bbpHookedBuffFrameAlpha = true
+            frame.BuffFrame:SetAlpha(0)
+        end
+        return
+    elseif config.nameplateAuraPlayersOnly then
+        if config.nameplateAuraPlayersOnlyShowTarget and info.isTarget then
+            buffFrameAlpha = 1
+        else
+            buffFrameAlpha = info.isPlayer and 1 or 0
+        end
+    end
+    frame.BuffFrame:SetAlpha(buffFrameAlpha)
 end
 
 local function ToggleTargetNameplateHighlight(frame)
@@ -2217,7 +2448,7 @@ function BBP.ResetToDefaultWidth(slider, isFriendly)
     if not BBP.checkCombatAndWarn() then
         local classic = BetterBlizzPlatesDB.classicNameplates
         local width = classic and 128 or 110
-        local height = BetterBlizzPlatesDB.nameplateGeneralHeight
+        local height = BetterBlizzPlatesDB.nameplateGeneralHeight + 8
         if isFriendly then
             if BBP.isLargeNameplatesEnabled() then
                 C_NamePlate.SetNamePlateFriendlySize(width, friendlyHeight)
@@ -2373,54 +2604,176 @@ function BBP.ToggleAndPrintCVAR(cvarName)
     print(string.format("%s set to %s", cvarName, newValue))
 end
 
+local mainPets = {
+    [165189] = true, -- Hunter
+    [26125] = true, -- DK Pet
+    [17252] = true, -- Felguard Lock
+    [417] = true, -- Felhunter Lock
+    [416] = true, -- Imp Lock
+    [1860] = true, -- VoidWalker Lock
+    [1863] = true, -- Sayaad/Succubus Lock
+}
+
+local secondaryPets = {
+    -- Death Knight
+    [221633] = true, -- High Inquisitor Whitemane
+    [221632] = true, -- Highlord Darion Mograine
+    [221634] = true, -- Nazgrim
+    [221635] = true, -- King Thoras Trollbane
+    [149555] = true, -- Raise Abomination
+    [163366] = true, -- Magus (Army of the Dead)
+
+    -- Warlock
+    [135816] = true, -- Vilefiend
+    [226268] = true, -- Gloomhound
+    [226269] = true, -- Charhound
+    [136408] = true, -- Darkhound
+    [136398] = true, -- Illidari Satyr
+    [136403] = true, -- Void Terror
+    [198757] = true, -- Void Lasher
+    [224466] = true, -- Voidwraith
+    [98035] = true, -- Dreadstalker
+    [143622] = true, -- Wild Imp
+    [55659] = true, -- Wild Imp (alternate)
+    [228574] = true, -- Pit Lord
+    [228576] = true, -- Mother of Chaos
+    [217429] = true, -- Overfiend
+    [225493] = true, -- Doomguard
+    [89] = true, -- Infernal
+
+    -- Mage
+    --[31216] = true, -- Mirror Images
+
+    -- Shaman
+    [29264] = true, -- Spirit Wolves (Enhancement)
+    [77936] = true, -- Greater Storm Elemental
+    [95061] = true, -- Greater Fire Elemental
+
+    -- Druid
+    [54983] = true, -- Treant
+    [103822] = true, -- Treant (alternative)
+
+    -- -- Priest
+    [62982] = true, -- Mindbender
+
+    -- Hunter
+    [105419] = true, -- Dire Basilisk
+    [62005] = true, -- Beast
+    [228224] = true, -- Fenryr
+    [228226] = true, -- Hati
+    [225190] = true, -- Dark Hound
+    [217228] = true, -- Blood Beast
+    [234018] = true, -- Bear Pack Leader
+}
+BBP.secondaryPets = secondaryPets
+
+    -- [51052] = "meirl",
+    -- [35189] = "Spirit Beast",
+    -- [58450] = "Crane",
+    -- [67128] = "birdup",
+    -- [66184] = "Cat",
+    -- [59665] = "Crane",
+    -- [43417] = "Monkey",
+    -- [681] = "Cat",
+    -- [6499] = "Devilsaur",
+    -- [26125] = "Spineslobber",
+    -- [58741] = "chicken",
+    -- [32485] = "Devilsaur",
+    -- [58892] = "Goat",
+    -- [683] = "Cat",
+    -- [1964] = "Treant",
+    -- [58448] = "Goat",
+    -- [69791] = "Onepunchman",
+    -- [69680] = "Onepunchman",
+    -- [628] = "Rockey",
+    -- [736] = "Félin",
+    -- [28096] = "Fifftycent",
+    -- [525] = "Wolf",
+    -- [47676] = "Fox",
+    -- [58964] = "Kermek",
+    -- [58456] = "Wolf",
+    -- [2959] = "Wolf",
+    -- [69792] = "Onepunchman",
+    -- [69946] = "oinkoink",
+    -- [54984] = "Treant",
+    -- [43050] = "Monkey",
+    -- [28009] = "Rhino",
+    -- [56524] = "Wolf",
+    -- [62005] = "Beast",
+    -- [55659] = "Wild Imp",
+    -- [51107] = "Spider",
+    -- [299] = "Wolf",
+    -- [59607] = "Hozitojones",
+    -- [31216] = "Worldstar",
+    -- [32517] = "Spirit Beast",
+    -- [51663] = "cat",
+
 --##################################################################################################
 -- Fade out npcs from list
 function BBP.FadeOutNPCs(frame)
-    frame:SetAlpha(1)
-    frame.CastBar:SetAlpha(1)
-    -- Skip if the unit is a player
+    local db = BetterBlizzPlatesDB
+    local alpha = (db.enableNpNonTargetAlpha and (UnitIsUnit(frame.unit, "target") and 1 or db.nameplateNonTargetAlpha)) or (db.enableNpNonFocusAlpha and (UnitIsUnit(frame.unit, "focus") and 1 or db.nameplateNonTargetAlpha)) or 1
+    frame:SetAlpha(alpha)
+    frame.CastBar:SetAlpha(alpha)
+    frame.fadedNpc = nil
+
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
     if not info then return end
 
-    if info.isPlayer then return end
-    if not info.unitGUID then return end
+    if info.isPlayer or not info.unitGUID then return end
 
-    local npcID = select(6, strsplit("-", info.unitGUID))
-    local npcName = info.name
-
-    if not config.fadeAllButTarget or BBP.needsUpdate then
-        config.fadeOutNPCsAlpha = BetterBlizzPlatesDB.fadeOutNPCsAlpha
-        config.fadeAllButTarget = BetterBlizzPlatesDB.fadeAllButTarget
-    end
-
-    if config.fadeAllButTarget then
-        if UnitExists("target") then
-            if not info.isTarget and not info.isPlayer then
-                frame:SetAlpha(config.fadeOutNPCsAlpha)
-                frame.CastBar:SetAlpha(config.fadeOutNPCsAlpha)
-            else
-                frame:SetAlpha(1)
-                frame.CastBar:SetAlpha(1)
-            end
-        else
-            frame:SetAlpha(1)
-            frame.CastBar:SetAlpha(1)
-        end
+    if UnitIsUnit(frame.unit, "pet") then
+        frame:SetAlpha(alpha)
+        frame.CastBar:SetAlpha(alpha)
+        frame.fadedNpc = nil
         return
     end
 
-    -- Convert npcName to lowercase for case insensitive comparison
+    if db.fadeNPCPvPOnly and not BBP.isInPvP then
+        return
+    end
+
+    local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
+    local npcName = info.name
+
+    if not config.fadeOutNPCsAlpha or BBP.needsUpdate then
+        config.fadeOutNPCsAlpha = db.fadeOutNPCsAlpha
+        --config.fadeAllButTarget = db.fadeAllButTarget
+    end
+
+    -- Handle fade out logic when target exists and fadeAllButTarget is enabled
+    -- if config.fadeAllButTarget then
+    --     if UnitExists("target") then
+    --         if not info.isTarget and not info.isPlayer then
+    --             frame:SetAlpha(config.fadeOutNPCsAlpha)
+    --             frame.fadedNpc = true
+    --         else
+    --             frame:SetAlpha(1)
+    --             frame.fadedNpc = nil
+    --         end
+    --     else
+    --         frame:SetAlpha(1)
+    --         frame.fadedNpc = nil
+    --     end
+    --     return
+    -- end
+
+    -- Convert npcName to lowercase for case-insensitive comparison
     local lowerCaseNpcName = strlower(npcName)
+
+    -- Get the whitelist mode flag and appropriate NPC list
+    local fadeOutNPCWhitelistOn = db.fadeOutNPCWhitelistOn
+    local onlyFadeSecondaryPets = db.fadeOutNPCOnlyFadeSecondaryPets
+    local npcListToCheck = fadeOutNPCWhitelistOn and db.fadeOutNPCsWhitelist or db.fadeOutNPCsList
 
     -- Check if the NPC is in the list by ID or name (case insensitive)
     local inList = false
-    local fadeOutNPCsList = BetterBlizzPlatesDB.fadeOutNPCsList
-    for _, npc in ipairs(fadeOutNPCsList) do
-        if npc.id == tonumber(npcID) or (npc.id and npc.id == tonumber(npcID)) then
+    for _, npc in ipairs(npcListToCheck) do
+        if npc.id == npcID or (npc.id and npc.id == npcID) then
             inList = true
             break
-        elseif npc.name == tostring(npcName) or strlower(npc.name) == lowerCaseNpcName then
+        elseif npc.name == npcName or strlower(npc.name) == lowerCaseNpcName then
             inList = true
             break
         end
@@ -2428,14 +2781,47 @@ function BBP.FadeOutNPCs(frame)
 
     -- Check if the unit is the current target
     if info.isTarget then
-        frame:SetAlpha(1)
-        frame.CastBar:SetAlpha(1)
-    elseif inList then
+        frame:SetAlpha(alpha)
+        frame.CastBar:SetAlpha(alpha)
+        frame.fadedNpc = nil
+    elseif onlyFadeSecondaryPets and BBP.isInArena and mainPets[npcID] and info.isEnemy then
+        local isFakePet = true
+        for i = 1, 3 do
+            if UnitIsUnit(frame.displayedUnit, "arenapet" .. i) then
+                isFakePet = false
+            end
+        end
+        if isFakePet then
+            frame:SetAlpha(config.fadeOutNPCsAlpha)
+            frame.CastBar:SetAlpha(config.fadeOutNPCsAlpha)
+            frame.fadedNpc = true
+        end
+    elseif onlyFadeSecondaryPets and secondaryPets[npcID] then
         frame:SetAlpha(config.fadeOutNPCsAlpha)
         frame.CastBar:SetAlpha(config.fadeOutNPCsAlpha)
+        frame.fadedNpc = true
+    elseif fadeOutNPCWhitelistOn then
+        -- If whitelist mode is on, fade out if not in the whitelist
+        if inList then
+            frame:SetAlpha(alpha)
+            frame.CastBar:SetAlpha(alpha)
+            frame.fadedNpc = nil
+        else
+            frame:SetAlpha(config.fadeOutNPCsAlpha)
+            frame.CastBar:SetAlpha(config.fadeOutNPCsAlpha)
+            frame.fadedNpc = true
+        end
     else
-        frame:SetAlpha(1)
-        frame.CastBar:SetAlpha(1)
+        -- If not in whitelist mode, fade out if in the list
+        if inList then
+            frame:SetAlpha(config.fadeOutNPCsAlpha)
+            frame.CastBar:SetAlpha(config.fadeOutNPCsAlpha)
+            frame.fadedNpc = true
+        else
+            frame:SetAlpha(alpha)
+            frame.CastBar:SetAlpha(alpha)
+            frame.fadedNpc = nil
+        end
     end
 end
 
@@ -2455,11 +2841,11 @@ local function SetBarWidth(frame, width, useOffsets)
             frame.CastBar:SetPoint("LEFT", frame, "LEFT", -width + 4, 0)
             frame.CastBar:SetPoint("RIGHT", frame, "RIGHT", width + xPos, 0)
         else
-            frame.healthBar:SetPoint("LEFT", frame, "LEFT", -width, 0)
-            frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", width,0)
+            frame.healthBar:SetPoint("LEFT", frame, "LEFT", -width + 12, 0)
+            frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", width - 12,0)
 
-            frame.CastBar:SetPoint("LEFT", frame, "LEFT", -width, 0)
-            frame.CastBar:SetPoint("RIGHT", frame, "RIGHT", width, 0)
+            frame.CastBar:SetPoint("LEFT", frame, "LEFT", -width + 12, 0)
+            frame.CastBar:SetPoint("RIGHT", frame, "RIGHT", width - 12, 0)
         end
     else
         if BetterBlizzPlatesDB.classicNameplates then
@@ -2535,14 +2921,20 @@ function BBP.HideNPCs(frame, nameplate)
     local db = BetterBlizzPlatesDB
     local hideNPCArenaOnly = db.hideNPCArenaOnly
     local hideNPCWhitelistOn = db.hideNPCWhitelistOn
-    local hideNPCPetsOnly = db.hideNPCPetsOnly
+    --local hideNPCPetsOnly = db.hideNPCPetsOnly
     local inBg = BBP.isInPvP
-    local isPet = (UnitGUID(frame.displayedUnit) and select(6, strsplit("-", UnitGUID(frame.displayedUnit))) == "Pet")
-    local hideAllNeutral = db.hideNPCAllNeutral and info.isNeutral and UnitAffectingCombat(frame.unit)
+    --local isPet = (UnitGUID(frame.displayedUnit) and select(6, strsplit("-", UnitGUID(frame.displayedUnit))) == "Pet")
+    local hideAllNeutral = db.hideNPCAllNeutral and info.isNeutral and not UnitAffectingCombat(frame.unit)
+    local hideSecondaryPets = db.hideNPCHideSecondaryPets
+    local murlocSecondary = db.hideNPCSecondaryShowMurloc
+    local hideOthersPets = db.hideNPCHideOthersPets
+    local isTarget = UnitIsUnit(frame.displayedUnit, "target")
 
     if hideNPCArenaOnly and not inBg then
         return
     end
+
+    if BBP.IsInCompStomp then return end
 
     -- Skip if the unit is a player
     if info.isPlayer then
@@ -2550,24 +2942,33 @@ function BBP.HideNPCs(frame, nameplate)
         return
     end
 
-    if hideAllNeutral and not UnitIsUnit(frame.displayedUnit, "target") then
+    if hideAllNeutral and not isTarget then
         BBP.HideNameplate(nameplate)
         return
     end
 
-    if info.isFriend then
-        local hideNpcHpBar = db.friendlyHideHealthBarNpc
-        if config.friendlyHideHealthBar and hideNpcHpBar then
-            frame.healthBar:SetAlpha(0)
-            frame.selectionHighlight:SetAlpha(0)
-            return
+    if hideOthersPets and ((info.isFriend and UnitIsOtherPlayersPet(frame.unit)) or (UnitIsOwnerOrControllerOfUnit("player", frame.unit) and not UnitIsUnit("pet", frame.unit))) then
+        if UnitCreatureType(frame.unit) ~= "Totem" then
+            if UnitIsOwnerOrControllerOfUnit("player", frame.unit) then
+                if UnitPlayerControlled("target") then
+                    if not isTarget then
+                        BBP.HideNameplate(nameplate)
+                    end
+                    return
+                end
+            else
+                if not isTarget then
+                    BBP.HideNameplate(nameplate)
+                end
+                return
+            end
         end
     end
 
     local unitGUID = UnitGUID(frame.displayedUnit)
     if not unitGUID then return end
 
-    local npcID = select(6, strsplit("-", unitGUID))
+    local npcID = BBP.GetNPCIDFromGUID(unitGUID)
     local npcName = UnitName(frame.displayedUnit)
     local lowerCaseNpcName = strlower(npcName)
 
@@ -2578,10 +2979,26 @@ function BBP.HideNPCs(frame, nameplate)
     local inList, showMurloc = BBP.CheckNPCList(listToCheck, npcID, lowerCaseNpcName)
 
     -- Determine if the frame should be shown based on the list check or if it's the current target
-    if UnitIsUnit(frame.displayedUnit, "target") then
+    if isTarget then
         BBP.ShowFrame(frame, nameplate, config)
-        frame.healthBar:SetAlpha(config.friendlyHideHealthBar and info.isFriend and 0 or 1)
+        local alpha = ((config.friendlyHideHealthBar and info.isFriend) and (info.isPlayer or (config.friendlyHideHealthBarNpc and not (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and info.isPet))) and 0) or 1
+        frame.healthBar:SetAlpha(alpha)
         frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
+    elseif BBP.isInArena and hideSecondaryPets and mainPets[npcID] and info.isEnemy then
+        local isFakePet = true
+        for i = 1, 3 do
+            if UnitIsUnit(frame.displayedUnit, "arenapet" .. i) then
+                isFakePet = false
+                break
+            end
+        end
+        if isFakePet then
+            if murlocSecondary then
+                BBP.ShowMurloc(frame, nameplate)
+            else
+                BBP.HideNameplate(nameplate)
+            end
+        end
     elseif hideNPCWhitelistOn then
         if inList then
             if showMurloc then
@@ -2590,10 +3007,20 @@ function BBP.HideNPCs(frame, nameplate)
                 BBP.ShowFrame(frame, nameplate, config)
             end
         else
+            if murlocSecondary and secondaryPets[npcID] then
+                BBP.ShowMurloc(frame, nameplate)
+            else
+                BBP.HideNameplate(nameplate)
+            end
+        end
+    elseif inList then
+        if showMurloc then
+            BBP.ShowMurloc(frame, nameplate)
+        else
             BBP.HideNameplate(nameplate)
         end
-    elseif inList or (hideNPCPetsOnly and isPet) then
-        if showMurloc then
+    elseif hideSecondaryPets and secondaryPets[npcID] then
+        if murlocSecondary then
             BBP.ShowMurloc(frame, nameplate)
         else
             BBP.HideNameplate(nameplate)
@@ -2605,18 +3032,20 @@ end
 
 -- Resets the frame to default display settings
 function BBP.ResetFrame(frame, config, info)
-    if frame.murlocMode then
+    if frame.murlocModeActive then
         frame.murlocMode:Hide()
         frame.hideNameOverride = false
         frame.hideCastbarOverride = false
-        frame.healthBar:SetAlpha((info.isSelf and 1) or (config.friendlyHideHealthBar and info.isFriend and 0) or 1)
-        frame.selectionHighlight:SetAlpha(((info.isFriend and config.friendlyHideHealthBar) and 0) or (config.hideTargetHighlight and 0) or 0.22)
-        ToggleNameplateBuffFrameVisibility(frame)
-        if frame.fakeName then
-            frame.fakeName:SetAlpha(1)
+        if config.classIndicatorHideFriendlyHealthbar then
+            frame.healthBar:SetAlpha((info.isSelf and 1) or (frame.ciChange and 0) or 1)
+            frame.selectionHighlight:SetAlpha((((config.hideTargetHighlight and 0) or info.isFriend and config.friendlyHideHealthBar) and 0) or frame.ciChange and 0 or 0.22)
         else
-            frame.name:SetAlpha(1)
+            frame.healthBar:SetAlpha((info.isSelf and 1) or (config.friendlyHideHealthBar and info.isFriend and 0) or 1)
+            frame.selectionHighlight:SetAlpha((((config.hideTargetHighlight and 0) or info.isFriend and config.friendlyHideHealthBar) and 0) or 0.22)
         end
+        ToggleNameplateBuffFrameVisibility(frame)
+        frame.name:SetAlpha(1)
+        frame.murlocModeActive = nil
     end
 end
 
@@ -2657,13 +3086,14 @@ end
 -- Shows the frame with default settings
 function BBP.ShowFrame(frame, nameplate, config)
     if shadows[nameplate] then
-        nameplate:SetParent(shadows[nameplate])
+        nameplate:SetParent(WorldFrame)
         shadows[nameplate] = nil
     end
     frame.hideCastInfo = false
     if frame.murlocMode then
         frame.murlocMode:Hide()
     end
+    frame.murlocModeActive = nil
     frame.hideNameOverride = false
     frame.hideCastbarOverride = false
 end
@@ -2671,18 +3101,16 @@ end
 -- Shows the murlocMode on the frame
 function BBP.ShowMurloc(frame, nameplate)
     if shadows[nameplate] then
-        nameplate:SetParent(shadows[nameplate])
+        nameplate:SetParent(WorldFrame)
         shadows[nameplate] = nil
     end
+    frame.murlocModeActive = true
     frame.healthBar:SetAlpha(0)
     frame.selectionHighlight:SetAlpha(0)
     frame.BuffFrame:SetAlpha(0)
-    if frame.fakeName then
-        frame.fakeName:SetAlpha(0)
-    else
-        frame.name:SetAlpha(0)
-    end
+    frame.name:SetAlpha(0)
     frame.murlocMode:Show()
+    frame.CastBar:Hide()
     frame.hideNameOverride = true
     frame.hideCastbarOverride = true
 end
@@ -2690,7 +3118,7 @@ end
 -- Hides the nameplate by setting its parent to shadowRealm
 function BBP.HideNameplate(nameplate)
     if not shadows[nameplate] then
-        shadows[nameplate] = nameplate:GetParent()
+        shadows[nameplate] = true
         nameplate:SetParent(shadowRealm)
     end
 end
@@ -3051,6 +3479,20 @@ local function CreateBetterClassicHealthbarBorder(frame)
         function frame.healthBar:SetBorderSize(size)
             --
         end
+
+        frame.healthBar.topNameAnchor = CreateFrame("Frame", nil, frame)
+        frame.healthBar.topNameAnchor:SetSize(50,10)
+        frame.healthBar.topNameAnchor:SetPoint("TOPLEFT", frame.healthBar, "TOPLEFT", 0, 0)
+        frame.healthBar.topNameAnchor:SetPoint("TOPRIGHT", right, "TOPRIGHT", -3, 0)
+    end
+
+    frame.healthBar:ClearPoint("BOTTOMLEFT")
+    frame.healthBar:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 4, 9)
+
+    if config.hideLevelFrame then
+        frame.healthBar.topNameAnchor:SetPoint("TOPRIGHT", frame.healthBar, "TOPRIGHT", 0, 0)
+    else
+        frame.healthBar.topNameAnchor:SetPoint("TOPRIGHT", frame.BetterBlizzPlates.bbpBorder.right, "TOPRIGHT", -4, 0)
     end
 
     local height = frame.healthBar:GetHeight()
@@ -3082,44 +3524,6 @@ local function ColorNameplateNameReaction(frame)
     frame.name:SetTextColor(r, g, b)
 end
 
-function BBP.CustomizeNameOnNameplate(frame)
-    local info = frame.BetterBlizzPlates.unitInfo
-    local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
-    frame.name:ClearAllPoints()
-    -- frame.name:SetPoint("CENTER", frame, "CENTER", 0, 10)
-
-    if not config.fakeNameXPos or BBP.needsUpdate then
-        config.fakeNameXPos = BetterBlizzPlatesDB.fakeNameXPos
-        config.fakeNameYPos = BetterBlizzPlatesDB.fakeNameYPos
-        config.fakeNameFriendlyXPos = BetterBlizzPlatesDB.fakeNameFriendlyXPos
-        config.fakeNameFriendlyYPos = BetterBlizzPlatesDB.fakeNameFriendlyYPos
-        config.useFakeNameAnchorBottom = BetterBlizzPlatesDB.useFakeNameAnchorBottom
-        config.fakeNameAnchor = BetterBlizzPlatesDB.fakeNameAnchor
-        config.fakeNameAnchorRelative = BetterBlizzPlatesDB.fakeNameAnchorRelative
-        config.fakeNameScaleWithParent = BetterBlizzPlatesDB.fakeNameScaleWithParent
-    end
-
-    if BetterBlizzPlatesDB.fakeNameRaiseStrata then
-        frame.name:SetParent(frame.healthBar:GetAlpha() == 0 and frame or frame.bbpOverlay)
-        frame.name:SetDrawLayer("OVERLAY", 7)
-    end
-
-    local clickthroughHeight = (frame:GetHeight() < 2) and 15.5 or 0
-    local clickableAdjustment = BetterBlizzPlatesDB.nameplateGeneralHeight - 32
-
-    if info.isFriend then
-        -- if config.useFakeNameAnchorBottom then
-        --     frame.fakeName:SetPoint("BOTTOM", frame, "BOTTOM", config.fakeNameFriendlyXPos, config.fakeNameFriendlyYPos + 27)
-        -- else
-            frame.name:SetPoint(config.fakeNameAnchor, frame, config.fakeNameAnchorRelative, config.fakeNameFriendlyXPos, (config.fakeNameFriendlyYPos - 7 + frame.healthBar:GetHeight() + clickthroughHeight)-(clickableAdjustment/2))
-        --end
-    else
-        frame.name:SetPoint(config.fakeNameAnchor, frame, config.fakeNameAnchorRelative, config.fakeNameXPos, (config.fakeNameYPos - 7 + frame.healthBar:GetHeight() + clickthroughHeight)-(clickableAdjustment/2))
-    end
-
-    ColorNameplateNameReaction(frame)
-end
-
 local function CreateBetterClassicCastbarBorders(frame)
     local info = frame.BetterBlizzPlates.unitInfo
     --local width = info.isFriend and BetterBlizzPlatesDB.nameplateFriendlyWidth or BetterBlizzPlatesDB.nameplateEnemyWidth
@@ -3130,18 +3534,18 @@ local function CreateBetterClassicCastbarBorders(frame)
     local function CreateBorder(frame, textureLeft, textureCenter, textureRight, yPos)
         local border = CreateFrame("Frame", nil, frame.CastBar)
         border:SetFrameStrata("HIGH")
-        local left = border:CreateTexture(nil, "OVERLAY")
+        local left = border:CreateTexture(nil, "OVERLAY", nil, 3)
         left:SetTexture(textureLeft)
         left:SetPoint("BOTTOMLEFT", frame.CastBar, "BOTTOMLEFT", -21, yPos)
         border.left = left
 
-        local center = border:CreateTexture(nil, "OVERLAY")
+        local center = border:CreateTexture(nil, "OVERLAY", nil, 3)
         center:SetTexture(textureCenter)
         center:SetPoint("TOPLEFT", left, "TOPRIGHT", 0, 0)
         center:SetPoint("BOTTOMLEFT", left, "BOTTOMRIGHT", 0, 0)
         border.center = center
 
-        local right = border:CreateTexture(nil, "OVERLAY")
+        local right = border:CreateTexture(nil, "OVERLAY", nil, 3)
         right:SetTexture(textureRight)
         right:SetPoint("TOPLEFT", center, "TOPRIGHT", 0, 0)
         right:SetPoint("BOTTOMLEFT", center, "BOTTOMRIGHT", 0, 0)
@@ -3193,7 +3597,7 @@ local function CreateBetterClassicCastbarBorders(frame)
         if frame:IsForbidden() then return end
         frame.CastBar.Border:SetAlpha(0)
         frame.CastBar.BorderShield:SetAlpha(0)
-        if frame.CastBar.BorderShield:IsShown() then
+        if frame.CastBar.notInterruptible then
             frame.CastBar.bbpCastUninterruptibleBorder:Show()
             frame.CastBar.bbpCastBorder:Hide()
             frame.CastBar.Icon:SetParent(frame.CastBar.bbpCastUninterruptibleBorder)
@@ -3294,36 +3698,8 @@ local function FixLevelFramePosition(frame)
     end
 end
 
-function BBP.UpdateCastBarText(self)
-    local unit = self.unit
-    local spellName
-    if UnitChannelInfo(unit) then
-        spellName = UnitChannelInfo(unit)
-    elseif UnitCastingInfo(unit) then
-        spellName = UnitCastingInfo(unit)
-    else
-        spellName = ""
-    end
-    self.castText:SetText(spellName)
-    self.castText:SetWidth(self:GetWidth() - 10)
-end
-
-local function ClassicCastbarText(self)
-    if not self.noInterruptColor and not self.delayedInterruptColor then
-        local spellName, spellID, notInterruptible, endTime
-        local _
-
-        if UnitCastingInfo(self.unit) then
-            spellName, _, _, _, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(self.unit)
-        elseif UnitChannelInfo(self.unit) then
-            spellName, _, _, _, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
-        end
-
-        if spellName then
-            self.castText:SetText(spellName)
-        end
-    end
-end
+--  BBP.UpdateCastBarText
+-- ClassicCastbarText
 
 local function CreateBetterCastbarText(frame)
     if not frame.CastBar.castText then
@@ -3337,29 +3713,12 @@ local function CreateBetterCastbarText(frame)
         frame.CastBar.castText:SetJustifyV("MIDDLE") -- Vertical alignment
         frame.CastBar.castText:SetWordWrap(false) -- Disable word wrap
         frame.CastBar.castText:SetMaxLines(1) -- Only one line
-        -- Set up scripts to update cast text
-
-        frame.CastBar:HookScript("OnShow", function(self)
-            if frame:IsForbidden() then return end
-            BBP.UpdateCastBarText(self)
-        end)
-
-        if BetterBlizzPlatesDB.classicNameplates then
-            frame.CastBar:HookScript("OnUpdate", function(self)
-                if frame:IsForbidden() then return end
-                ClassicCastbarText(self)
-            end)
-        end
-
-        -- frame.CastBar:HookScript("OnHide", function(self)
-        --     --self.castText:SetText("")
-        -- end)
     end
     --frame.CastBar.castText:SetWidth(frame.CastBar:GetWidth() - 20)
 
     BBP.SetFontBasedOnOption(frame.CastBar.castText, BetterBlizzPlatesDB.classicNameplates and 8 or 10, "THINOUTLINE")
-    BBP.UpdateCastBarText(frame.CastBar)
 end
+BBP.CreateBetterCastbarText = CreateBetterCastbarText
 
 -- local function AdjustRetailCastbar(frame)
 --     local width = frame.healthBar:GetWidth() + 25
@@ -3394,6 +3753,7 @@ local function CreateBetterRetailCastbar(frame)
 
     -- Create the background texture
     if not frame.CastBar.Background then
+        frame.CastBar.retailCastbar = true
         frame.CastBar.Background = frame.CastBar:CreateTexture(nil, "BORDER")
         frame.CastBar.Background:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Background")
         -- frame.CastBar.Background:SetPoint("TOPLEFT", frame.CastBar, "TOPLEFT", -11, 1)
@@ -3405,7 +3765,7 @@ local function CreateBetterRetailCastbar(frame)
     if not frame.CastBar.bbpSpark then
         frame.CastBar.bbpSpark = frame.CastBar:CreateTexture(nil, "BORDER")
         frame.CastBar.bbpSpark:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Pip")
-        frame.CastBar.bbpSpark:SetSize(16,16)
+        frame.CastBar.bbpSpark:SetSize(18,18)
         --frame.CastBar.bbpSpark:SetParent(frame.CastBar.Spark)
         frame.CastBar.bbpSpark:SetPoint("CENTER", frame.CastBar.Spark, "CENTER", 0, 0)
         frame.CastBar.bbpSpark:SetDrawLayer("BORDER", 1)
@@ -3420,16 +3780,28 @@ local function CreateBetterRetailCastbar(frame)
     frame.CastBar.bbpSpark:ClearAllPoints()
     frame.CastBar.bbpSpark:SetPoint("CENTER", frame.CastBar.Spark, "CENTER", 0, 0)
 
-    if not frame.CastBar.bbpBorderShield then
-        frame.CastBar.BorderShield:SetAlpha(0)
-        frame.CastBar.bbpBorderShield = frame.CastBar:CreateTexture(nil, "BORDER")
-        if not BetterBlizzPlatesDB.hideCastbarBorderShield then
-            frame.CastBar.bbpBorderShield:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Shield")
-        end
-        frame.CastBar.bbpBorderShield:SetSize(31,31)
-        frame.CastBar.bbpBorderShield:SetPoint("CENTER", frame.CastBar.Icon, "CENTER", 0, -1)
-        frame.CastBar.bbpBorderShield:SetDrawLayer("BORDER", 1)
+    -- if not frame.CastBar.bbpBorderShield then
+    --     frame.CastBar.BorderShield:SetAlpha(0)
+    --     frame.CastBar.bbpBorderShield = frame.CastBar:CreateTexture(nil, "BORDER")
+    --     if not BetterBlizzPlatesDB.hideCastbarBorderShield then
+    --         frame.CastBar.bbpBorderShield:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Shield")
+    --     end
+    --     frame.CastBar.bbpBorderShield:SetSize(31,31)
+    --     frame.CastBar.bbpBorderShield:SetPoint("CENTER", frame.CastBar.Icon, "CENTER", 0, -1)
+    --     frame.CastBar.bbpBorderShield:SetDrawLayer("BORDER", 1)
+    -- end
+
+
+    if BetterBlizzPlatesDB.hideCastbarBorderShield then
+        frame.CastBar.BorderShield:SetTexture(nil)
+    else
+        frame.CastBar.BorderShield:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Shield")
     end
+    frame.CastBar.BorderShield:SetSize(31,31)
+    frame.CastBar.BorderShield:ClearAllPoints()
+    frame.CastBar.BorderShield:SetPoint("CENTER", frame.CastBar.Icon, "CENTER", 0, -1)
+    frame.CastBar.BorderShield:SetDrawLayer("OVERLAY", 5)
+
 
     -- -- Create the frame texture
     -- if not frame.CastBar.Frame then
@@ -3442,18 +3814,18 @@ local function CreateBetterRetailCastbar(frame)
     -- Update the filling texture based on cast type
     local function UpdateCastBarTextures(self)
         local texture
-        if self.BorderShield:IsShown() then
+        if self.notInterruptible then
             texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Uninterruptable"
-            self.bbpBorderShield:Show()
+            --self.bbpBorderShield:Show()
         elseif self.channeling then
             texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
-            self.bbpBorderShield:Hide()
+            --self.bbpBorderShield:Hide()
         elseif self.interruptedColor then
             texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted"
-            self.bbpBorderShield:Hide()
+            --self.bbpBorderShield:Hide()
         else
             texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
-            self.bbpBorderShield:Hide()
+            --self.bbpBorderShield:Hide()
         end
 
         if not self.noInterruptColor and not self.delayedInterruptColor then
@@ -3478,8 +3850,7 @@ local function CreateBetterRetailCastbar(frame)
                         texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
                     end
                 end
-            elseif not self.interruptedColor then
-                --self.castText:SetText("")
+            else
                 if not self.notInterruptible then
                     if channel then
                         texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
@@ -3490,7 +3861,12 @@ local function CreateBetterRetailCastbar(frame)
             end
         end
 
-        if self.castText:GetText() == interruptedText then
+        if not self.colorActive then
+            self:GetStatusBarTexture():SetDesaturated(false)
+            self:SetStatusBarColor(1,1,1)
+        end
+
+        if self.interruptedBy or self.castText:GetText() == SPELL_FAILED_INTERRUPTED then
             texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted"
         end
 
@@ -3500,48 +3876,10 @@ local function CreateBetterRetailCastbar(frame)
     end
 
     if not BetterBlizzPlatesDB.useCustomCastbarTexture and not BetterBlizzPlatesDB.castBarRecolor then
+        frame.CastBar.reColorSettings = true
         frame.CastBar:SetStatusBarColor(1,1,1)
         UpdateCastBarTextures(frame.CastBar)
     end
-
-    -- if not frame.CastBar.castText then
-    --     frame.CastBar.castText = frame.CastBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    --     frame.CastBar.castText:SetText("")
-    --     frame.CastBar.castText:SetDrawLayer("OVERLAY", 7)
-    --     frame.CastBar.castText:SetPoint("CENTER", frame.CastBar, "CENTER", 0, 0)
-    --     BBP.SetFontBasedOnOption(frame.CastBar.castText, 10, "THINOUTLINE")
-    --     frame.CastBar.castText:SetTextColor(1, 1, 1)
-    --     frame.CastBar.castText:SetJustifyH("CENTER") -- Horizontal alignment
-    --     frame.CastBar.castText:SetJustifyV("MIDDLE") -- Vertical alignment
-    --     frame.CastBar.castText:SetWordWrap(false) -- Disable word wrap
-    --     frame.CastBar.castText:SetMaxLines(1) -- Only one line
-    -- end
-    -- --frame.CastBar.castText:SetWidth(frame.CastBar:GetWidth() - 20)
-
-    -- -- Set up scripts to update cast text
-    -- local function BBP.UpdateCastBarText(self)
-    --     local unit = self.unit
-    --     local spellName
-    --     if UnitChannelInfo(unit) then
-    --         spellName = UnitChannelInfo(unit)
-    --     elseif UnitCastingInfo(unit) then
-    --         spellName = UnitCastingInfo(unit)
-    --     else
-    --         spellName = ""
-    --     end
-    --     self.castText:SetText(spellName)
-    --     self.castText:SetWidth(frame.CastBar:GetWidth() - 20)
-    -- end
-
-    -- frame.CastBar:HookScript("OnShow", function(self)
-    --     BBP.UpdateCastBarText(self)
-    -- end)
-
-    -- frame.CastBar:HookScript("OnHide", function(self)
-    --     self.castText:SetText("")
-    -- end)
-
-    -- BBP.UpdateCastBarText(frame.CastBar)
 
     local children = {frame.CastBar:GetRegions()}
     for _, region in ipairs(children) do
@@ -3551,12 +3889,18 @@ local function CreateBetterRetailCastbar(frame)
     end
 
     local function UpdateSpark()
+        if not frame.CastBar.barType or frame.CastBar.barType == "interrupted" then
+            frame.CastBar.bbpSpark:Hide()
+            return
+        end
+
         local min, max = frame.CastBar:GetMinMaxValues()
         local value   = frame.CastBar:GetValue()
         local width   = frame.CastBar:GetWidth()
         local range   = max - min
 
-        if range <= 0 then
+        if (range <= 0) then
+            frame.CastBar.bbpSpark:Hide()
             return
         end
 
@@ -3568,7 +3912,7 @@ local function CreateBetterRetailCastbar(frame)
 
 
     if not frame.bbpRetailCastbarHook then
-        if BetterBlizzPlatesDB.castBarRecolor or BetterBlizzPlatesDB.useCustomCastbarTexture then
+        if BetterBlizzPlatesDB.useCustomCastbarTexture then
             frame.CastBar:HookScript("OnUpdate", function(self)
                 if frame:IsForbidden() then return end
                 --UpdateCastBarIconSize(frame.CastBar)
@@ -3579,10 +3923,16 @@ local function CreateBetterRetailCastbar(frame)
             frame.CastBar:HookScript("OnUpdate", function(self)
                 if frame:IsForbidden() then return end
                 --UpdateCastBarIconSize(frame.CastBar)
-                UpdateCastBarTextures(self)
+                --UpdateCastBarTextures(self)
                 UpdateSpark()
             end)
         end
+        frame.CastBar:HookScript("OnEvent", function()
+            frame.CastBar.BorderShield:SetSize(31,31)
+            frame.CastBar.BorderShield:ClearAllPoints()
+            frame.CastBar.BorderShield:SetPoint("CENTER", frame.CastBar.Icon, "CENTER", 0, -1)
+            frame.CastBar.BorderShield:SetDrawLayer("OVERLAY", 5)
+        end)
 
         -- frame.CastBar:HookScript("OnEvent", function(self, event, ...)
         --     -- --UpdateCastBarIconSize(frame.CastBar)
@@ -3612,7 +3962,12 @@ end
 --#############################################################
 
 local function CreateBorder(frame, r, g, b, a)
-    local border = frame:CreateTexture(nil, "OVERLAY", nil, -1)
+    local border
+    if frame.CreateTexture then
+        border = frame:CreateTexture(nil, "OVERLAY", nil, -1)
+    else
+        border = frame:GetParent():CreateTexture(nil, "OVERLAY", nil, -1)
+    end
     border:SetColorTexture(r, g, b, a)
     border:SetIgnoreParentScale(true)
     return border
@@ -3678,6 +4033,65 @@ local function SetupBorderOnFrame(frame)
     frame.newBorder = true
 end
 
+function BBP.SetupBorderOnFrame(frame)
+    if frame.border then
+        frame.border:Hide()
+    end
+    if frame.newBorder then return end
+    -- Create borders
+    local borderTop = CreateBorder(frame, 0, 0, 0, 1)  -- Black color
+    local borderBottom = CreateBorder(frame, 0, 0, 0, 1)
+    local borderLeft = CreateBorder(frame, 0, 0, 0, 1)
+    local borderRight = CreateBorder(frame, 0, 0, 0, 1)
+
+    -- Store borders in a table
+    frame["borders"] = {borderTop, borderBottom, borderLeft, borderRight}
+
+    -- Initial border thickness
+    local borderThickness = 1
+    local minPixels = 1
+
+    -- Define the SizeBorders function to use PixelUtil
+    local function SizeBorders(borderThickness)
+        PixelUtil.SetHeight(borderTop, borderThickness, minPixels)
+        PixelUtil.SetHeight(borderBottom, borderThickness, minPixels)
+        PixelUtil.SetWidth(borderLeft, borderThickness, minPixels)
+        PixelUtil.SetWidth(borderRight, borderThickness, minPixels)
+
+        -- Adjust border positions to grow outward
+        borderTop:ClearAllPoints()
+        PixelUtil.SetPoint(borderTop, "BOTTOMLEFT", frame, "TOPLEFT", 0, 0)
+        PixelUtil.SetPoint(borderTop, "BOTTOMRIGHT", frame, "TOPRIGHT", 0, 0)
+
+        borderBottom:ClearAllPoints()
+        PixelUtil.SetPoint(borderBottom, "TOPLEFT", frame, "BOTTOMLEFT", 0, 0)
+        PixelUtil.SetPoint(borderBottom, "TOPRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+
+        borderLeft:ClearAllPoints()
+        PixelUtil.SetPoint(borderLeft, "TOPLEFT", frame, "TOPLEFT", -borderThickness, borderThickness)
+        PixelUtil.SetPoint(borderLeft, "BOTTOMLEFT", frame, "BOTTOMLEFT", -borderThickness, -borderThickness)
+
+        borderRight:ClearAllPoints()
+        PixelUtil.SetPoint(borderRight, "TOPRIGHT", frame, "TOPRIGHT", borderThickness, borderThickness)
+        PixelUtil.SetPoint(borderRight, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", borderThickness, -borderThickness)
+    end
+
+    SizeBorders(borderThickness)
+
+    -- Define method to set border color
+    function frame:SetBorderColor(r, g, b, a)
+        for _, border in ipairs(self.borders) do
+            border:SetColorTexture(r, g, b, a)
+        end
+    end
+
+    -- Define method to set border size
+    function frame:SetBorderSize(size)
+        SizeBorders(size)
+    end
+
+    frame.newBorder = true
+end
 
 
 local function SetNameplateHeight(frame, height)
@@ -3687,8 +4101,10 @@ end
 local function CreateRetailNameplateLook(frame)
     frame.healthBar:ClearPoint("RIGHT")
     frame.healthBar:ClearPoint("LEFT")
-    frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", 0,0)
-    frame.healthBar:SetPoint("LEFT", frame, "LEFT", 0, 0)
+    frame.healthBar:ClearPoint("BOTTOMLEFT")
+    frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", -12, 0)
+    frame.healthBar:SetPoint("LEFT", frame, "LEFT", 12, 0)
+    frame.healthBar:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 12, 9)
     -- frame.LevelFrame:Hide()
     -- frame.LevelFrame:SetAlpha(0)
     SetupBorderOnFrame(frame.healthBar)
@@ -3708,6 +4124,8 @@ local function HideLevelFrameOnClassicNameplate(frame)
     frame.healthBar:ClearPoint("RIGHT")
     frame.healthBar:ClearPoint("LEFT")
     frame.healthBar:SetPoint("LEFT", frame, "LEFT", 4, 0)
+    frame.healthBar:ClearPoint("BOTTOMLEFT")
+    frame.healthBar:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 4, 9)
     local xPos = BetterBlizzPlatesDB.hideLevelFrame and -4 or -21
     frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", xPos,0)
     frame.LevelFrame:SetAlpha(0)
@@ -3876,7 +4294,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 			--Try to color it by class.
 			local localizedClass, englishClass = UnitClass(frame.unit);
 			local classColor = RAID_CLASS_COLORS[englishClass];
-			if ( (frame.optionTable.allowClassColorsForNPCs or UnitIsPlayer(frame.unit)) and classColor and frame.optionTable.useClassColors ) or (unitIsPlayer and (not UnitIsFriend("player", frame.unit) and BetterBlizzPlatesDB.ShowClassColorInNameplate == "1") or (UnitIsFriend("player", frame.unit) and BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate == "1")) then
+			if ( (frame.optionTable.allowClassColorsForNPCs or UnitIsPlayer(frame.unit)) and classColor and frame.optionTable.useClassColors ) or (unitIsPlayer and (UnitCanAttack("player", frame.unit) and BetterBlizzPlatesDB.ShowClassColorInNameplate == "1") or (unitIsPlayer and not UnitCanAttack("player", frame.unit) and BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate == "1")) then
 				-- Use class colors for players if class color option is turned on
 				r, g, b = classColor.r, classColor.g, classColor.b;
 			elseif ( CompactUnitFrame_IsTapDenied(frame) ) then
@@ -4190,14 +4608,15 @@ function BBP.ChangeRaidmarker()
     end
 end
 
-function BBP.RefUnitAuraTotally(frame)
-    local unit = frame.unit
-    BBP.ProcessAurasForNameplate(frame, unit)
+function BBP.RefUnitAuraTotally(unitFrame)
+    local unit = unitFrame.unit
+    BBP.UpdateBuffs(unitFrame.BuffFrame, unit, nil, {}, unitFrame)
 end
 
 local auraModuleIsOn = false
 function BBP.RunAuraModule()
     if not auraModuleIsOn  then
+        BBP.UpdateAuraTypeColors()
         local nameplateFrame = CreateFrame("Frame")
         nameplateFrame:RegisterEvent("UNIT_AURA")
         nameplateFrame:SetScript("OnEvent", function(self, event, ...)
@@ -4205,8 +4624,36 @@ function BBP.RunAuraModule()
             if unit:find("nameplate") then
                 local nameplate, frame = BBP.GetSafeNameplate(unit)
                 if frame then
-                    BBP.ProcessAurasForNameplate(frame, unit)
+                    BBP.OnUnitAuraUpdate(frame.BuffFrame, unit, unitAuraUpdateInfo)
                 end
+            end
+        end)
+
+        function BBP.On_NpRefreshOnce(frame)
+            --if unitFrame:IsForbidden() then return end
+            BBP.RefUnitAuraTotally(frame)
+        end
+
+        hooksecurefunc(NamePlateDriverFrame, "UpdateNamePlateOptions", function()
+            for k, namePlate in pairs(C_NamePlate.GetNamePlates(false)) do
+                BBP.On_NpRefreshOnce(namePlate.UnitFrame)
+            end
+        end)
+
+        -- Unit Faction
+        hooksecurefunc(NamePlateDriverFrame, "OnUnitFactionChanged", function(self,unit)
+            if not unit:find("nameplate") then return end
+            local nameplate, frame = BBP.GetSafeNameplate(unit)
+            if frame then
+                BBP.On_NpRefreshOnce(frame)
+                C_Timer.After(0.2, function() --This needs more testing, silly attempt to make sure nameplates are updated after Mind Control
+                    local nameplate, frame = BBP.GetSafeNameplate(unit)
+                    if frame then
+                        if frame then
+                            BBP.On_NpRefreshOnce(frame)
+                        end
+                    end
+                end)
             end
         end)
         auraModuleIsOn = true
@@ -4619,22 +5066,9 @@ function BBP.CustomizeClassificationFrame(frame)
     --frame.ClassificationFrame:SetFrameStrata("LOW") bodifycata
 end
 
-function BBP.SetupFakeName(frame)
+function BBP.RepositionName(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
-
-    if info.isSelf then
-        if frame.fakeName then
-            frame.fakeName:SetText("")
-        end
-        return
-    end
-
-    if not frame.fakeName then
-        frame.fakeName = frame.healthBar:CreateFontString(nil, "OVERLAY", "SystemFont_NamePlateFixed")
-        frame.fakeName:SetShadowColor(frame.name:GetShadowColor())
-        frame.fakeName:GetShadowOffset(frame.name:GetShadowOffset())
-    end
 
     if not config.fakeNameXPos or BBP.needsUpdate then
         config.fakeNameXPos = BetterBlizzPlatesDB.fakeNameXPos
@@ -4645,42 +5079,37 @@ function BBP.SetupFakeName(frame)
         config.fakeNameAnchor = BetterBlizzPlatesDB.fakeNameAnchor
         config.fakeNameAnchorRelative = BetterBlizzPlatesDB.fakeNameAnchorRelative
         config.fakeNameScaleWithParent = BetterBlizzPlatesDB.fakeNameScaleWithParent
+        config.fakeNameRaiseStrata = BetterBlizzPlatesDB.fakeNameRaiseStrata
     end
-
-    if config.fakeNameScaleWithParent then
-        frame.fakeName:SetIgnoreParentScale(false)
-    else
-        frame.fakeName:SetIgnoreParentScale(true)
-    end
-
-    frame.fakeName:ClearAllPoints()
-    if info.isFriend then
-        if config.useFakeNameAnchorBottom then
-            frame.fakeName:SetPoint("BOTTOM", frame, "BOTTOM", config.fakeNameFriendlyXPos, config.fakeNameFriendlyYPos + 27)
+    local function RepositionName(frame)
+        if frame:IsForbidden() or not frame.unit or frame.name.changing then return end
+        frame.name.changing = true
+        local db = BetterBlizzPlatesDB
+        frame.name:ClearPoint("BOTTOM")
+        if isFriend(frame.unit) then
+            if db.useFakeNameAnchorBottom then
+                frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 27)
+            else
+                frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 10)
+            end
         else
-            frame.fakeName:SetPoint(config.fakeNameAnchor, frame.healthBar, config.fakeNameAnchorRelative, config.fakeNameFriendlyXPos, config.fakeNameFriendlyYPos + 4)
+            frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameXPos, db.fakeNameYPos + 10)
         end
-    else
-        frame.fakeName:SetPoint(config.fakeNameAnchor, frame.healthBar, config.fakeNameAnchorRelative, config.fakeNameXPos, config.fakeNameYPos + 4)
+        frame.name.changing = false
     end
-    frame.fakeName:SetFont(frame.name:GetFont())
-    if BetterBlizzPlatesDB.arenaIndicatorTestMode and not BetterBlizzPlatesDB.partyIndicatorModeTwo then
-        frame.fakeName:SetText("")
-    else
-        frame.fakeName:SetText(frame.name:GetText() or UnitName(frame.unit))
+    if not frame.nameHooked then
+        hooksecurefunc(frame.name, "SetPoint", function()
+            RepositionName(frame)
+        end)
+
+        frame.nameHooked = true
     end
-    frame.fakeName:SetShown(frame.name:IsShown())
-    frame.fakeName:SetScale(frame.name:GetScale())
-    local r, g, b, a = frame.name:GetVertexColor()
-    frame.fakeName:SetVertexColor(r, g, b, 1)
-    --  Temp solution, figure out how to show on top of healthbar while keeping frame alpha and not healthbar alpha if possible
-    if frame.healthBar:GetAlpha() == 0 then
-        frame.fakeName:SetIgnoreParentAlpha(true)
-    else
-        frame.fakeName:SetIgnoreParentAlpha(false)
+    RepositionName(frame)
+
+    if config.fakeNameRaiseStrata then
+        frame.name:SetParent(frame.healthBar:GetAlpha() == 0 and frame or frame.bbpOverlay)
+        frame.name:SetDrawLayer("OVERLAY", 7)
     end
-    --
-    frame.name:SetAlpha(0)
 end
 
 local function GetNameplateHookTable(frame)
@@ -4747,6 +5176,14 @@ local function NameplateNPCTitle(frame)
     end
 end
 
+local function SetDefaultNamePosition(frame)
+    if BetterBlizzPlatesDB.classicNameplates then
+        frame.name:SetPoint("BOTTOM", frame.healthBar.topNameAnchor, "CENTER", 0, 8)
+    else
+        frame.name:SetPoint("BOTTOM", frame.healthBar, "CENTER", 0, 9)
+    end
+end
+
 -- What to do on a new nameplate
 local function HandleNamePlateAdded(unit)
     local nameplate, frame = BBP.GetSafeNameplate(unit)
@@ -4764,12 +5201,56 @@ local function HandleNamePlateAdded(unit)
         frame.bbpOverlay:SetFrameLevel(9000)
     end
 
+    if not frame.nameplateTweaksBBP then
+        frame.CastBar.Icon:SetIgnoreParentAlpha(false)
+        frame.CastBar.BorderShield:SetIgnoreParentAlpha(false)
+        if not BetterBlizzPlatesDB.skipNpFix then
+            nameplate:SetParent(BBP.hiddenFrame)
+            nameplate:SetParent(WorldFrame)
+        end
+        if not frame.hookedHideCastbar then
+            hooksecurefunc(frame.CastBar, "Show", function()
+                if frame.CastBar.hideThis and not frame:IsForbidden() then
+                    frame.CastBar:Hide()
+                end
+            end)
+            frame.hookedHideCastbar = true
+        end
+        if frame.CastBar.hideThis then
+            frame.CastBar:Hide()
+        end
+        frame.nameplateTweaksBBP = true
+    end
+
+    if BetterBlizzPlatesDB.enableNpVerticalPos and not UnitIsUnit(frame.unit, "player") then
+        if not frame.verticalPositionTweak then
+            hooksecurefunc(frame.healthBar, "SetHeight", function(self)
+                if self:IsForbidden() then return end
+                if frame.unit and UnitIsUnit(frame.unit, "player") then return end
+                frame:ClearPoint("BOTTOMLEFT")
+                frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", 0, (BetterBlizzPlatesDB.nameplateVerticalPosition or 0)+9)
+            end)
+            frame.verticalPositionTweak = true
+        end
+        frame:ClearPoint("BOTTOMLEFT")
+        frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", 0, (BetterBlizzPlatesDB.nameplateVerticalPosition or 0)+9)
+    end
+
 
     -- Get settings and unitInfo
     local config = InitializeNameplateSettings(frame)
     local info = GetNameplateUnitInfo(frame, unit)
     if not info then return end
     local hooks = GetNameplateHookTable(frame)
+
+    if not frame.BuffFrame then
+        if not config.nameplateAurasYPos then
+            config.nameplateAurasYPos = BetterBlizzPlatesDB.nameplateAurasYPos
+        end
+        frame.BuffFrame = CreateFrame("Frame", nil, frame)
+        frame.BuffFrame:SetSize(frame:GetWidth(), 26)
+        frame.BuffFrame.auraFrames = {}
+    end
 
     BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 
@@ -4869,7 +5350,11 @@ local function HandleNamePlateAdded(unit)
     elseif frame.classificationIndicator then
         frame.classificationIndicator:Hide()
     end
-    BBP.CustomizeNameOnNameplate(frame)
+    if config.useFakeName then
+        BBP.RepositionName(frame)
+    else
+        SetDefaultNamePosition(frame)
+    end
     BBP.ClassColorAndScaleNames(frame)
 
     if not frame.nameplateTweaksBBP then
@@ -4884,14 +5369,20 @@ local function HandleNamePlateAdded(unit)
     SmallPetsInPvP(frame)
 
     if config.enableNameplateAuraCustomisation then
-        BBP.ProcessAurasForNameplate(frame, frame.unit)
+        frame.BuffFrame.UpdateAnchor = BBP.UpdateAnchor;
+        frame.BuffFrame.Layout = function(self)
+            local children = frame.BuffFrame.auraFrames
+            local isEnemyUnit = self.isEnemyUnit
+            BBP.CustomBuffLayoutChildren(self, children, isEnemyUnit, frame)
+        end
+        BBP.UpdateBuffs(frame.BuffFrame, unit, nil, {}, frame)
         if frame.BuffFrame and frame.BuffFrameHidden then
             frame.BuffFrame:SetAlpha(1)
             frame.BuffFrameHidden = false
         end
     end
 
-    BBP.ColorCastbar(frame)
+    --BBP.ColorCastbar(frame)
 
     -- --HealthBar Height
     -- if config.changeHealthbarHeight then ChangeHealthbarHeight(frame) end
@@ -4988,7 +5479,11 @@ local function HandleNamePlateAdded(unit)
     if config.friendIndicator then FriendIndicator(frame) end
 
     -- Name repositioning
-    if config.useFakeName then BBP.SetupFakeName(frame) end
+    if config.useFakeName then--config.useFakeName then
+        BBP.RepositionName(frame)
+    else
+        SetDefaultNamePosition(frame)
+    end
 
     if config.showNpcTitle then NameplateNPCTitle(frame) end
 
@@ -5065,6 +5560,7 @@ function BBP.RefreshAllNameplates()
         BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultLargeNamePlateFontFlags)
         BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")--db.defaultNamePlateFontFlags)
     end
+    BBP.UpdateAuraTypeColors()
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = nameplate.UnitFrame
         local unitFrame = nameplate.UnitFrame
@@ -5126,7 +5622,7 @@ function BBP.RefreshAllNameplates()
         end
 
         if BetterBlizzPlatesDB.enableCastbarCustomization then
-            BBP.CustomizeCastbar(unitToken)
+            BBP.CustomizeCastbar(frame, unitToken)
         end
 
         if BetterBlizzPlatesDB.classicNameplates then
@@ -5293,6 +5789,7 @@ end
 
 hooksecurefunc(NamePlateDriverFrame, "OnUnitFactionChanged", function(self,unit)
     if not unit or not unit:find("nameplate") then return end
+    HandleNamePlateAdded(unit)
     C_Timer.After(0.2, function()
         HandleNamePlateAdded(unit)
     end)
@@ -5448,7 +5945,11 @@ function BBP.ConsolidatedUpdateName(frame)
         frame.name:SetVertexColor(unpack(config.targetIndicatorColorNameplateRGB))
     end
 
-    if config.useFakeName then BBP.SetupFakeName(frame) end
+    if config.useFakeName then--config.useFakeName then
+        BBP.RepositionName(frame)
+    else
+        SetDefaultNamePosition(frame)
+    end
 
     if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
 
@@ -5660,6 +6161,26 @@ end
 
 
 
+function BBP.ChatBubbleFix()
+    local chatBubbles = C_CVar.GetCVarBool("chatBubblesParty")
+    local chatBubblesParty = C_CVar.GetCVarBool("chatBubblesParty")
+
+    if chatBubbles or chatBubblesParty then
+        local f = CreateFrame("Frame")
+        f:RegisterEvent("CHAT_MSG_SAY")
+        f:RegisterEvent("CHAT_MSG_YELL")
+        f:RegisterEvent("CHAT_MSG_PARTY")
+        f:SetScript("OnEvent", function()
+            C_Timer.After(0.2, function()
+                for _, bubble in ipairs(C_ChatBubbles.GetAllChatBubbles()) do
+                    bubble:SetFrameStrata("HIGH")
+                end
+            end)
+        end)
+    end
+end
+
+
 
 local forbiddenFrame = CreateFrame("Frame")
 forbiddenFrame:RegisterEvent("FORBIDDEN_NAME_PLATE_UNIT_ADDED")
@@ -5749,6 +6270,9 @@ Frame:SetScript("OnEvent", function(...)
 
     if db.enableNameplateAuraCustomisation then
         BBP.RunAuraModule()
+        BBP.SmokeCheckBootup()
+        BBP.SetUpAuraInterrupts()
+        BBP.UpdateImportantBuffsAndCCTables()
     end
 
     --if BetterBlizzPlatesDB.enableCastbarCustomization then
@@ -5790,7 +6314,10 @@ Frame:SetScript("OnEvent", function(...)
     end
 
     BBP.HookOverShields()
-    BBP.ToggleTotemIndicatorShieldBorder()
+    if not BBP.isMoP then
+        BBP.ToggleTotemIndicatorShieldBorder()
+    end
+    BBP.ChatBubbleFix()
 
     BBP.ApplyNameplateWidth()
 
@@ -5801,7 +6328,6 @@ Frame:SetScript("OnEvent", function(...)
     end)
 
     SetCVarsOnLogin()
-    BBP.InitializeInterruptSpellID() --possibly not needed, talent events seem to always run on login?
 
     -- Re-open options when clicking reload button
     if db.reopenOptions then
@@ -5858,6 +6384,10 @@ SlashCmdList["BBP"] = function(msg)
         BBP.CreateIntroMessageWindow()
     elseif command == "resetcvars" then
         BBP.ResetNameplateCVars()
+    elseif command == "uninstall" then
+        BBP.ResetNameplateCVars()
+        C_AddOns.DisableAddOn("BetterBlizzPlates")
+        ReloadUI()
     else
         --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
         if not BetterBlizzPlates.guiLoaded then
@@ -5872,7 +6402,7 @@ local frame = CreateFrame("Frame")
 frame:RegisterEvent("CVAR_UPDATE")
 frame:SetScript("OnEvent", function(self, event, cvarName)
     if BBP.CVarTrackingDisabled then return end
-    if cvarName == "NamePlateHorizontalScale" or cvarName == "nameplateResourceOnTarget" then
+    if cvarName == "NamePlateHorizontalScale" or cvarName == "nameplateResourceOnTarget" or cvarName == "uiScale" then
         if not BetterBlizzPlatesDB.wasOnLoadingScreen then
             if BBP.isLargeNameplatesEnabled() then
                 BetterBlizzPlatesDB.NamePlateVerticalScale = 2.7
@@ -5910,6 +6440,72 @@ First:SetScript("OnEvent", function(_, event, addonName)
             TurnOffTestModes()
             BetterBlizzPlatesDB.castbarEventsOn = false
             BetterBlizzPlatesDB.wasOnLoadingScreen = true
+
+            if BetterBlizzPlatesDB.firstSaveComplete and not BetterBlizzPlatesDB.mopUpdated then
+                if BBP.isMoP then
+                    StaticPopupDialogs["BBP_MOP_UPDATE"] = {
+                        text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\n|A:services-icon-warning:16:16|a UPDATE CHANGES |A:services-icon-warning:16:16|a\n\nLots of features from Retail BBP have been brought over to MoP and Cata.\n\nDue to the large amount of changes, some elements may have shifted slightly and might need readjustments.\n\nRead changelog for more info and\nplease report any missed bugs.\n\n|cff32f795Totem List has also been updated for MoP.\nClick Update to reset and update it to the new default or click Don't Update if you want to keep your current and out-of-date Totem List.|r",
+                        button1 = "|A:glueannouncementpopup-arrow:16:16|a Update Totems",
+                        button2 = "Dont update",
+                        OnAccept = function()
+                            BBP.ResetTotemList()
+                            ReloadUI()
+                        end,
+                        timeout = 0,
+                        whileDead = true,
+                        OnShow = function(self)
+                        self.button2:Disable()
+                        local function UpdateButtonText(remainingTime)
+                            if remainingTime > 1 then
+                                self.button2:SetText("Dont update.. "..remainingTime - 1 .. "")
+                                C_Timer.After(1, function() UpdateButtonText(remainingTime - 1) end)
+                            else
+                                self.button2:SetText("Dont update")
+                                self.button2:Enable()
+                            end
+                        end
+                        UpdateButtonText(14)
+                    end
+                    }
+                    StaticPopup_Show("BBP_MOP_UPDATE")
+                else
+                    StaticPopupDialogs["BBP_MOP_UPDATE"] = {
+                        text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\n|A:services-icon-warning:16:16|a UPDATE CHANGES |A:services-icon-warning:16:16|a\n\nLots of features from Retail BBP have been brought over to MoP and Cata.\n\nDue to the large amount of changes, some elements may have shifted slightly and might need readjustments.\n\nRead changelog for more info and\nplease report any missed bugs.",
+                        button1 = "Okay",
+                        timeout = 0,
+                        whileDead = true,
+                        OnShow = function(self)
+                        self.button1:Disable()
+                        local function UpdateButtonText(remainingTime)
+                            if remainingTime > 1 then
+                                self.button1:SetText("Okay.. "..remainingTime - 1 .. "")
+                                C_Timer.After(1, function() UpdateButtonText(remainingTime - 1) end)
+                            else
+                                self.button1:SetText("Okay")
+                                self.button1:Enable()
+                            end
+                        end
+                        UpdateButtonText(5)
+                    end
+                    }
+                    StaticPopup_Show("BBP_MOP_UPDATE")
+                end
+                BetterBlizzPlatesDB.useFakeName = true
+                BetterBlizzPlatesDB.mopUpdated = true
+            end
+
+            if not BetterBlizzPlatesDB.mopBetaUpdated2 then
+                BetterBlizzPlatesDB.showCastBarIconWhenNoninterruptible = true
+                BetterBlizzPlatesDB.mopBetaUpdated2 = true
+                BetterBlizzPlatesDB.totemIndicatorHideAuras = false
+            end
+
+            if not BetterBlizzPlatesDB.mopBetaUpdated3 then
+                if BBPCVarBackupsDB then
+                    BBPCVarBackupsDB.NamePlateVerticalScale = "1"
+                end
+                BetterBlizzPlatesDB.mopBetaUpdated3 = true
+            end
 
             InitializeSavedVariables()
 
@@ -5986,16 +6582,12 @@ local function OnVariablesLoaded(self, event)
             BetterBlizzPlatesDB.nameplateNotSelectedAlpha = GetCVar("nameplateNotSelectedAlpha")
         end
         BBP.variablesLoaded = true
-    elseif event == "TRAIT_CONFIG_UPDATED" or event == "PLAYER_TALENT_UPDATE" then
-        BBP.InitializeInterruptSpellID()
     end
 end
 
 -- Register the frame to listen for the "VARIABLES_LOADED" event
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("VARIABLES_LOADED")
-eventFrame:RegisterEvent("TRAIT_CONFIG_UPDATED")
-eventFrame:RegisterEvent("PLAYER_TALENT_UPDATE")
 eventFrame:SetScript("OnEvent", OnVariablesLoaded)
 
 

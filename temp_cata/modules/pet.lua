@@ -6,45 +6,63 @@ local petValidSpellIDs = {
     [284301] = true,
 }
 
-local cataHunterPets = {
-    ["43417"] = true, -- Monkey
-    ["525"] = true, -- Wolf
-    ["1713"] = true, -- Cat
-    ["45582"] = true, -- Spider
-}
-
 local shadowRealm = CreateFrame("Frame")
 shadowRealm:Hide()
 local shadows = {}
+
+local function ShowMurloc(frame, nameplate)
+    frame.isMurloc = true
+    frame.healthBar:SetAlpha(0)
+    frame.selectionHighlight:SetAlpha(0)
+    frame.BuffFrame:SetAlpha(0)
+    frame.name:SetAlpha(0)
+    frame.murlocMode:Show()
+    frame.CastBar:Hide()
+    frame.hideNameOverride = true
+    frame.hideCastbarOverride = true
+end
 
 -- Pet Indicator
 function BBP.PetIndicator(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
+    local db = BetterBlizzPlatesDB
 
     local nameplate = frame:GetParent()
+    if shadows[nameplate] then
+        nameplate:SetParent(WorldFrame)
+        shadows[nameplate] = nil
+    end
+    frame.mainPetColor = nil
+    if frame.isMurloc then
+        frame.hideCastInfo = false
+        if frame.murlocMode then
+            frame.murlocMode:Hide()
+        end
+        frame.hideNameOverride = false
+        frame.hideCastbarOverride = false
+        frame.isMurloc = false
+    end
 
     if not config.petIndicatorInitialized or BBP.needsUpdate then
-        config.petIndicatorAnchor = BetterBlizzPlatesDB.petIndicatorAnchor or "CENTER"
-        config.petIndicatorXPos = BetterBlizzPlatesDB.petIndicatorXPos or 0
-        config.petIndicatorYPos = BetterBlizzPlatesDB.petIndicatorYPos or 0
-        config.petIndicatorTestMode = BetterBlizzPlatesDB.petIndicatorTestMode
-        config.petIndicatorHideSecondaryPets = BetterBlizzPlatesDB.petIndicatorHideSecondaryPets
-        config.petIndicatorScale = BetterBlizzPlatesDB.petIndicatorScale or 1
+        config.petIndicatorAnchor = db.petIndicatorAnchor or "CENTER"
+        config.petIndicatorXPos = db.petIndicatorXPos or 0
+        config.petIndicatorYPos = db.petIndicatorYPos or 0
+        config.petIndicatorTestMode = db.petIndicatorTestMode
+        config.petIndicatorHideSecondaryPets = db.petIndicatorHideSecondaryPets
+        config.petIndicatorScale = db.petIndicatorScale or 1
+        config.petIndicatorShowMurloc = db.petIndicatorShowMurloc
+        config.petIndicatorColorHealthbar = db.petIndicatorColorHealthbar
+        config.petIndicatorColorHealthbarRGB = db.petIndicatorColorHealthbarRGB
 
         config.petIndicatorInitialized = true
     end
 
     -- Initialize
     if not frame.petIndicator then
-        frame.petIndicator = frame.healthBar:CreateTexture(nil, "OVERLAY")
+        frame.petIndicator = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
         frame.petIndicator:SetAtlas("newplayerchat-chaticon-newcomer")
         frame.petIndicator:SetSize(12, 12)
-    end
-
-    if shadows[nameplate] then
-        nameplate:SetParent(shadows[nameplate])
-        shadows[nameplate] = nil
     end
 
     -- Set position and scale dynamically
@@ -61,13 +79,148 @@ function BBP.PetIndicator(frame)
 
     -- Demo lock pet
     if npcID == 17252 then
-        frame.petIndicator:Show()
+        if BBP.isInArena then
+            local isRealPet = UnitIsUnit(frame.unit, "pet")
+            for i = 1, 3 do
+                if UnitIsUnit(frame.unit, "arenapet" .. i) or UnitIsUnit(frame.unit, "partypet" .. i) then
+                    isRealPet = true
+                    break
+                end
+            end
+            if isRealPet then
+                frame.petIndicator:Show()
+            elseif config.petIndicatorHideSecondaryPets then
+                if not UnitIsUnit(frame.unit, "target") then
+                    if config.petIndicatorShowMurloc then
+                        BBP.InitMurlocMode(frame, config, db)
+                        ShowMurloc(frame, nameplate)
+                    elseif not shadows[nameplate] then
+                        shadows[nameplate] = true
+                        nameplate:SetParent(shadowRealm)
+                    end
+                end
+            else
+                frame.petIndicator:Hide()
+            end
+            return
+        else
+            frame.petIndicator:Show()
+        end
         return
     end
     -- All hunter pets have same NPC id, check for it.
-    if UnitIsOtherPlayersPet(frame.unit) or UnitIsUnit("pet", frame.unit) then
+    if npcID == 165189 then
+        if BBP.isInArena then
+            local isRealPet = UnitIsUnit(frame.unit, "pet")
+            for i = 1, 3 do
+                if UnitIsUnit(frame.unit, "arenapet" .. i) or UnitIsUnit(frame.unit, "partypet" .. i) then
+                    isRealPet = true
+                    break
+                end
+            end
+            if isRealPet then
+                if config.petIndicatorColorHealthbar then
+                    frame.mainPetColor = config.petIndicatorColorHealthbarRGB
+                    frame.healthBar:SetStatusBarColor(unpack(frame.mainPetColor))
+                    frame.needsRecolor = true
+                end
+                frame.petIndicator:Show()
+                return
+            else
+                frame.petIndicator:Hide()
+            end
+            if config.petIndicatorHideSecondaryPets and not isRealPet then
+                if not UnitIsUnit(frame.unit, "target") then
+                    if config.petIndicatorShowMurloc then
+                        BBP.InitMurlocMode(frame, config, db)
+                        ShowMurloc(frame, nameplate)
+                    elseif not shadows[nameplate] then
+                        shadows[nameplate] = true
+                        nameplate:SetParent(shadowRealm)
+                    end
+                end
+            end
+        else
+            local isValidPet = false
+            for i = 1, 6 do -- Only loop through the first 5 buffs
+                local _, _, _, _, _, _, _, _, _, spellID = UnitAura(frame.displayedUnit, i, "HELPFUL")
+                if petValidSpellIDs[spellID] then
+                    isValidPet = true
+                    break
+                end
+            end
+            if isValidPet then
+                if config.petIndicatorColorHealthbar then
+                    frame.mainPetColor = config.petIndicatorColorHealthbarRGB
+                    frame.healthBar:SetStatusBarColor(unpack(frame.mainPetColor))
+                    frame.needsRecolor = true
+                end
+                frame.petIndicator:Show()
+                return
+            elseif config.petIndicatorHideSecondaryPets and info.isEnemy then
+                if not UnitIsUnit(frame.unit, "target") then
+                    if config.petIndicatorShowMurloc then
+                        BBP.InitMurlocMode(frame, config, db)
+                        ShowMurloc(frame, nameplate)
+                    elseif not shadows[nameplate] then
+                        shadows[nameplate] = true
+                        nameplate:SetParent(shadowRealm)
+                    end
+                end
+            end
+        end
+    end
+
+    if config.petIndicatorHideSecondaryPets and BBP.secondaryPets[npcID] and info.isEnemy then
+        if not UnitIsUnit(frame.unit, "target") then
+            if config.petIndicatorShowMurloc then
+                BBP.InitMurlocMode(frame, config, db)
+                ShowMurloc(frame, nameplate)
+            elseif not shadows[nameplate] then
+                shadows[nameplate] = true
+                nameplate:SetParent(shadowRealm)
+            end
+        end
+    end
+
+    if UnitIsUnit("pet", frame.unit) then
         frame.petIndicator:Show()
         return
+    end
+
+    if UnitIsOtherPlayersPet(frame.unit) then
+        if BBP.isInArena then
+            local isRealPet = UnitIsUnit(frame.unit, "pet")
+            for i = 1, 3 do
+                if UnitIsUnit(frame.unit, "arenapet" .. i) or UnitIsUnit(frame.unit, "partypet" .. i) then
+                    isRealPet = true
+                    break
+                end
+            end
+            if isRealPet then
+                if config.petIndicatorColorHealthbar then
+                    frame.mainPetColor = config.petIndicatorColorHealthbarRGB
+                    frame.healthBar:SetStatusBarColor(unpack(frame.mainPetColor))
+                    frame.needsRecolor = true
+                end
+                frame.petIndicator:Show()
+                return
+            else
+                frame.petIndicator:Hide()
+            end
+            -- if config.petIndicatorHideSecondaryPets and not isRealPet then
+            --     if not UnitIsUnit(frame.unit, "target") then
+            --         if config.petIndicatorShowMurloc then
+            --             BBP.InitMurlocMode(frame, config, db)
+            --             ShowMurloc(frame, nameplate)
+            --         elseif not shadows[nameplate] then
+            --             shadows[nameplate] = true
+            --             nameplate:SetParent(shadowRealm)
+            --         end
+            --     end
+            -- end
+            return
+        end
     end
 
     -- If the conditions aren't met, hide the texture if it exists

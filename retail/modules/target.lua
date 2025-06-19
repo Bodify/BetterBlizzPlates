@@ -535,6 +535,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.HealthNumbers(frame)
             end
 
+            if db.changeNameplateBorderSize and db.nameplateMinScale == 1 then
+                frame.HealthBarsContainer.border:UpdateSizes()
+            end
+
             if frame.BBPmouseoverTex and db.keepNpShadowTargetHighlighted then
                 frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, 1)
             end
@@ -645,6 +649,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 if db.executeIndicatorTargetOnly then
                     BBP.ExecuteIndicator(frame)
                 end
+            end
+
+            if db.changeNameplateBorderSize and db.nameplateMinScale == 1 then
+                frame.HealthBarsContainer.border:UpdateSizes()
             end
 
             if frame.BBPmouseoverTex and db.keepNpShadowTargetHighlighted then

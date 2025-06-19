@@ -6,11 +6,8 @@ local petValidSpellIDs = {
     [284301] = true,
 }
 
-local shadowRealm = CreateFrame("Frame")
-shadowRealm:Hide()
-local shadows = {}
-
-local function ShowMurloc(frame, nameplate)
+local function ShowMurloc(frame)
+    frame:SetAlpha(1)
     frame.isMurloc = true
     frame.HealthBarsContainer:SetAlpha(0)
     frame.selectionHighlight:SetAlpha(0)
@@ -28,10 +25,9 @@ function BBP.PetIndicator(frame)
     local info = frame.BetterBlizzPlates.unitInfo
     local db = BetterBlizzPlatesDB
 
-    local nameplate = frame:GetParent()
-    if shadows[nameplate] then
-        nameplate:SetParent(WorldFrame)
-        shadows[nameplate] = nil
+    if frame.bbpHiddenNPC then
+        frame:SetAlpha(1)
+        frame.bbpHiddenNPC = nil
     end
     frame.mainPetColor = nil
     if frame.isMurloc then
@@ -93,10 +89,10 @@ function BBP.PetIndicator(frame)
                 if not UnitIsUnit(frame.unit, "target") then
                     if config.petIndicatorShowMurloc then
                         BBP.InitMurlocMode(frame, config, db)
-                        ShowMurloc(frame, nameplate)
-                    elseif not shadows[nameplate] then
-                        shadows[nameplate] = true
-                        nameplate:SetParent(shadowRealm)
+                        ShowMurloc(frame)
+                    elseif not frame.bbpHiddenNPC then
+                        frame.bbpHiddenNPC = true
+                        frame:SetAlpha(0)
                     end
                 end
             else
@@ -133,10 +129,10 @@ function BBP.PetIndicator(frame)
                 if not UnitIsUnit(frame.unit, "target") then
                     if config.petIndicatorShowMurloc then
                         BBP.InitMurlocMode(frame, config, db)
-                        ShowMurloc(frame, nameplate)
-                    elseif not shadows[nameplate] then
-                        shadows[nameplate] = true
-                        nameplate:SetParent(shadowRealm)
+                        ShowMurloc(frame)
+                    elseif not frame.bbpHiddenNPC then
+                        frame.bbpHiddenNPC = true
+                        frame:SetAlpha(0)
                     end
                 end
             end
@@ -161,10 +157,10 @@ function BBP.PetIndicator(frame)
                 if not UnitIsUnit(frame.unit, "target") then
                     if config.petIndicatorShowMurloc then
                         BBP.InitMurlocMode(frame, config, db)
-                        ShowMurloc(frame, nameplate)
-                    elseif not shadows[nameplate] then
-                        shadows[nameplate] = true
-                        nameplate:SetParent(shadowRealm)
+                        ShowMurloc(frame)
+                    elseif not frame.bbpHiddenNPC then
+                        frame.bbpHiddenNPC = true
+                        frame:SetAlpha(0)
                     end
                 end
             end
@@ -175,10 +171,10 @@ function BBP.PetIndicator(frame)
         if not UnitIsUnit(frame.unit, "target") then
             if config.petIndicatorShowMurloc then
                 BBP.InitMurlocMode(frame, config, db)
-                ShowMurloc(frame, nameplate)
-            elseif not shadows[nameplate] then
-                shadows[nameplate] = true
-                nameplate:SetParent(shadowRealm)
+                ShowMurloc(frame)
+            elseif not frame.bbpHiddenNPC then
+                frame.bbpHiddenNPC = true
+                frame:SetAlpha(0)
             end
         end
     end

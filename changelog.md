@@ -1,3 +1,35 @@
+# BetterBlizzPlates 1.8.2
+## Mists of Pandaria Classic & Cata
+### New:
+- A lot of features from Retail BBP has been ported over and theres been a lot of changes. Due to so many changes its possible I have missed something.
+- Key Auras (BigDebuffs'ish feature) and PvP CC and PvP Buffs filters have all been updated for Mists of Pandaria (and also added to Cata but might miss some auras there, its not prio rn).
+- Nameplate Auras section have been updated to include all the retail features.
+- Party Pointer & Class Indicator CC shown on them (Requires nameplate auras enabled, Can turn off in Advanced Settings)
+- Nameplate vertical position and click box size adjusters in Misc
+### Note:
+- Things to look out for on this new patch:
+1) Name position. This was not perfect after doing a retail import. People may have moved it down as a fix and will probably have to move it back up now in Advanced Settings.
+2) Bugs. So much has changed and there is probably things I have missed.
+### Bugfix:
+- Fix pets getting class colored accidentally
+
+## The War Within
+### Tweak:
+- Aeghis profile update
+- Mythic S2 NPC list updated (Ty Sporadic)
+- Nameplate Auras: Whitelist's "Compacted Aura" will now have priority over the setting "Enlarge all Important Buffs" as intended.
+### Bugfix:
+- Fix "ADDON_ACTION_BLOCKED" error due to logic related to Hide NPC. Unfortunately this change required to fix it will make it so hidden nameplates now are hidden but still clickable.
+- Fix issues with castbar coloring with emphasis castbar.
+- Fix Target Nameplate Border size not updating when Nameplate Size CVars were set to 1
+
+## All versions
+### Bugfix:
+- Fix chatbubbles getting covered by nameplates and not showing above them.
+- Classics: Fixed the Nameplate Height CVar essentially getting stuck and not being able to be changed after introducing the CVar Backup system.
+
+
+
 # BetterBlizzPlates 1.8.1c
 ## Retail
 ### New:

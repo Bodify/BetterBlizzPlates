@@ -838,19 +838,34 @@ function BBP.ResetNameplateCVars()
     end
 end
 
+local function IsBBPTurningOff()
+    local _, _, _, _, reason = C_AddOns.GetAddOnInfo("BetterBlizzPlates")
+    local isLoaded = C_AddOns.IsAddOnLoaded("BetterBlizzPlates")
+
+    return isLoaded and reason == "DISABLED"
+end
+
 local function CVarDefaultOnLogout()
     if not BBPCVarBackupsDB then return end
     if InCombatLockdown() then return end
     for cvar, value in pairs(BBPCVarBackupsDB) do
-        C_CVar.SetCVar(cvar, value)
+        if cvar == "nameplateSelfBottomInset" or cvar == "nameplateSelfTopInset" then
+            if BetterBlizzPlatesDB.nameplateSelfBottomInset and BetterBlizzPlatesDB.nameplateSelfTopInset then
+                C_CVar.SetCVar(cvar, value)
+            end
+        else
+            C_CVar.SetCVar(cvar, value)
+        end
     end
 end
 
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_LOGOUT")
 frame:SetScript("OnEvent", function()
-    BBP.CVarTrackingDisabled = true
-    CVarDefaultOnLogout()
+    if IsBBPTurningOff() then
+        BBP.CVarTrackingDisabled = true
+        CVarDefaultOnLogout()
+    end
 end)
 
 local function CVarFetcher()
@@ -3322,8 +3337,7 @@ local function CreateBetterRetailCastbar(frame)
                         texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard"
                     end
                 end
-            elseif not self.interruptedColor then
-                --self.castText:SetText("")
+            else
                 if not self.notInterruptible then
                     if channel then
                         texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
@@ -3334,7 +3348,7 @@ local function CreateBetterRetailCastbar(frame)
             end
         end
 
-        if not self.interruptRecolorActive then
+        if not self.interruptRecolorActive and not self.reColorSettings then
             self:SetStatusBarColor(1,1,1)
         end
 
@@ -3348,6 +3362,7 @@ local function CreateBetterRetailCastbar(frame)
     end
 
     if not BetterBlizzPlatesDB.useCustomCastbarTexture and not BetterBlizzPlatesDB.castBarRecolor then
+        frame.CastBar.reColorSettings = true
         frame.CastBar:SetStatusBarColor(1,1,1)
         UpdateCastBarTextures(frame.CastBar)
     end
@@ -3737,7 +3752,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
                 -- Specific color override for Shaman
                 classColor = {r = 0.00, g = 0.44, b = 0.87}
             end
-			if ( (frame.optionTable.allowClassColorsForNPCs or UnitIsPlayer(frame.unit)) and classColor and frame.optionTable.useClassColors ) or (unitIsPlayer and (not UnitIsFriend("player", frame.unit) and BetterBlizzPlatesDB.ShowClassColorInNameplate == "1") or (UnitIsFriend("player", frame.unit) and BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate == "1")) then
+			if ( (frame.optionTable.allowClassColorsForNPCs or UnitIsPlayer(frame.unit)) and classColor and frame.optionTable.useClassColors ) or (unitIsPlayer and (UnitCanAttack("player", frame.unit) and BetterBlizzPlatesDB.ShowClassColorInNameplate == "1") or (unitIsPlayer and not UnitCanAttack("player", frame.unit) and BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate == "1")) then
 				-- Use class colors for players if class color option is turned on
 				r, g, b = classColor.r, classColor.g, classColor.b;
 			elseif ( CompactUnitFrame_IsTapDenied(frame) ) then
@@ -5493,6 +5508,25 @@ forbiddenFrame:SetScript("OnEvent", function(self, event, unit)
     end
 end)
 
+function BBP.ChatBubbleFix()
+    local chatBubbles = C_CVar.GetCVarBool("chatBubblesParty")
+    local chatBubblesParty = C_CVar.GetCVarBool("chatBubblesParty")
+
+    if chatBubbles or chatBubblesParty then
+        local f = CreateFrame("Frame")
+        f:RegisterEvent("CHAT_MSG_SAY")
+        f:RegisterEvent("CHAT_MSG_YELL")
+        f:RegisterEvent("CHAT_MSG_PARTY")
+        f:SetScript("OnEvent", function()
+            C_Timer.After(0.2, function()
+                for _, bubble in ipairs(C_ChatBubbles.GetAllChatBubbles()) do
+                    bubble:SetFrameStrata("HIGH")
+                end
+            end)
+        end)
+    end
+end
+
 
 hooksecurefunc (NamePlateDriverFrame, "UpdateNamePlateOptions", function()
     if BBP.isInPvE and hideFriendlyCastbar then
@@ -5617,6 +5651,7 @@ Frame:SetScript("OnEvent", function(...)
     BBP.ToggleTotemIndicatorShieldBorder()
 
     BBP.ApplyNameplateWidth()
+    BBP.ChatBubbleFix()
 
     C_Timer.After(1, function()
         if db.executeIndicatorScale <= 0 then --had a slider with borked values
@@ -5682,6 +5717,10 @@ SlashCmdList["BBP"] = function(msg)
         BBP.CreateIntroMessageWindow()
     elseif command == "resetcvars" then
         BBP.ResetNameplateCVars()
+    elseif command == "uninstall" then
+        BBP.ResetNameplateCVars()
+        C_AddOns.DisableAddOn("BetterBlizzPlates")
+        ReloadUI()
     else
         --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
         if not BetterBlizzPlates.guiLoaded then

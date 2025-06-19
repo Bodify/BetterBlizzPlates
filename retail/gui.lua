@@ -18,9 +18,9 @@ local checkBoxList = {}
 local sliderList = {}
 
 local function ExportProfile(profileTable, dataType)
-    local wowVersion = GetBuildInfo()
-    BetterBlizzPlatesDB.exportVersion = "BBP: "..BBP.VersionNumber.." WoW: "..wowVersion
     if dataType == "fullProfile" then
+        local wowVersion = GetBuildInfo()
+        BetterBlizzPlatesDB.exportVersion = "BBP: "..BBP.VersionNumber.." WoW: "..wowVersion
         BetterBlizzPlatesDB.retailExport = true
     end
     BetterBlizzPlatesDB.friendlyNameplatesEnabledOnExport = C_CVar.GetCVarBool("nameplateShowFriends")
@@ -8144,11 +8144,7 @@ local function guiPositionAndScale()
     BetterBlizzPlatesSubPanel.resetBBPButton:SetWidth(165)
     BetterBlizzPlatesSubPanel.resetBBPButton:SetPoint("RIGHT", BetterBlizzPlatesSubPanel.reloadButton, "LEFT", -528, 0)
     BetterBlizzPlatesSubPanel.resetBBPButton:SetScript("OnClick", function()
-        if IsControlKeyDown() and IsAltKeyDown() then
-            BBP.DisableBBP()
-        else
-            StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
-        end
+        StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     end)
     CreateTooltipTwo(BetterBlizzPlatesSubPanel.resetBBPButton, "Reset", "Reset ALL BetterBlizzPlates settings.")
 
@@ -9248,7 +9244,7 @@ local function guiColorNPC()
     importS2:SetScript("OnClick", function()
         StaticPopup_Show("BBP_CONFIRM_IMPORT_NPCCOLOR")
     end)
-    CreateTooltipTwo(importS2, "Import M+ Season 2 Colors", "Import M+ Season 2 NPC Colors, made by Jovelo\n\nColors:\n|cffff1291Mob has a high prio kick|r\n|cff00ddffMob should be stunned/cced|r\n|cfffffafbMob has a heal|r", nil, "ANCHOR_TOP")
+    CreateTooltipTwo(importS2, "Import M+ Season 2 Colors", "Import M+ Season 2 NPC Colors, made by Sporadic.\n\nColors:\n|cff00ff00Kill on sight|r\n|cffff1493High prio kick|r\n|cff3366ffHigh prio / high HP - 1st priority|r\n|cffc287ffHigh prio / high HP - 2nd priority|r\n|cffff7a00Stun / CC target|r", nil, "ANCHOR_TOP")
 
     local wipeColorNpcList = CreateFrame("Button", nil, guiColorNpc, "UIPanelButtonTemplate")
     wipeColorNpcList:SetText("Delete All")
@@ -10615,7 +10611,7 @@ local function guiNameplateAuras()
 
     local defaultNpAuraCdSize = CreateSlider(showDefaultCooldownNumbersOnNpAuras, "Default CD Text Size", 0.1, 2, 0.01, "defaultNpAuraCdSize")
     defaultNpAuraCdSize:SetPoint("TOP", nameplateAuraHeightGap,  "BOTTOM", 0, -17)
-    CreateTooltip(defaultNpAuraCdSize, "The text size of the default Blizz CD counter.\n\nIf you use OmniCC this setting will not work.")
+    CreateTooltipTwo(defaultNpAuraCdSize, "Default CD Text Size", "The text size of the default Blizzard Timer Text.\nEnable \"Default CD\" to use.\n\nIf you use OmniCC this setting will not work.")
     showDefaultCooldownNumbersOnNpAuras:HookScript("OnClick", function(self)
         if self:GetChecked() then
             defaultNpAuraCdSize:Enable()

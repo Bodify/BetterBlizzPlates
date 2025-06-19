@@ -185,6 +185,15 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         castBar.BorderShield:SetScale(borderShieldSize)
         frame:GetParent():SetParent(WorldFrame)
         frame.castbarEmphasisActive = false
+        frame.emphasizedCast = nil
+    end
+
+    if castBar.emphasisColored then
+        castBar.emphasisColored = nil
+        if castBarTexture then
+            castBarTexture:SetDesaturated(false)
+        end
+        castBar:SetStatusBarColor(1,1,1)
     end
 
     if castBarPixelBorder then
@@ -404,6 +413,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 castBarTexture:SetDesaturated(true)
             end
             castBar:SetStatusBarColor(r, g, b)
+            castBar.emphasisColored = true
         end
 
         if castBarEmphasisText then
@@ -750,7 +760,7 @@ end
 
 function BBP.UpdateCastTimer(frame, unit)
     if not frame.CastTimerFrame then
-        frame.CastTimerFrame = CreateFrame("Frame", nil, frame.healthBar)
+        frame.CastTimerFrame = CreateFrame("Frame", nil, frame.castBar)
         frame.CastTimer = frame.CastTimerFrame:CreateFontString(nil, "BACKGROUND", "GameFontNormalSmall")
         --nameplate.CastTimer:SetPoint("LEFT", nameplate, "BOTTOMRIGHT", -10, 15)
         frame.CastTimer:SetPoint("LEFT", frame.castBar, "RIGHT", 5, 0)
@@ -1030,6 +1040,17 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
             end
 
             BBP.CustomizeCastbar(frame, self.unit, event)
+
+            if not BBP.UnitTargetCastbarUpdate then
+                BBP.UnitTargetCastbarUpdate = CreateFrame("Frame")
+                BBP.UnitTargetCastbarUpdate:RegisterEvent("UNIT_TARGET")
+                BBP.UnitTargetCastbarUpdate:SetScript("OnEvent", function(_, _, unit)
+                    local np, frame = BBP.GetSafeNameplate(unit)
+                    if frame and not UnitIsPlayer(unit) then
+                        BBP.CustomizeCastbar(frame, unit)
+                    end
+                end)
+            end
 
             if useCustomCastbarTexture and not useCustomCastbarTextureHooked then
                 if not self.hooked then

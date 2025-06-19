@@ -365,7 +365,6 @@ function BBP.PartyPointer(frame)
     else
         frame.partyPointer.healerIcon:Hide()
     end
-    BBP.classIconNames[info.name] = frame
     frame.partyPointer:Show()
     if config.partyPointerHideRaidmarker then
         frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(0)
@@ -387,17 +386,5 @@ function BBP.PartyPointer(frame)
         end
         BBP.hideFriendlyCastbar = nil
         frame.ppChange = nil
-    end
-end
-
-
-function BBP.FadePartyPointer(name, fade)
-    local frame = BBP.classIconNames[name]
-    if frame and frame.partyPointer then
-        if fade then
-            frame.partyPointer:SetAlpha(0.15)
-        else
-            frame.partyPointer:SetAlpha(1)
-        end
     end
 end

@@ -2676,7 +2676,9 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         local isImportantBuff = importantBuffs[spellId]
         if isImportantBuff then
             if enlargeAllImportantBuffs and enlargeAllImportantBuffsFilter then
-                isEnlarged = true
+                if not isCompacted then
+                    isEnlarged = true
+                end
             end
             if isImportantBuff ~= true and not isImportant then
                 isImportant = true

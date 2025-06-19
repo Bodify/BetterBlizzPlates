@@ -39,6 +39,8 @@ local function ExportProfile(profileTable, dataType)
     -- Include a dataType in the table being serialized
     if dataType == "fullProfile" then
         BetterBlizzPlatesDB.classicExport = true
+        local wowVersion = GetBuildInfo()
+        BetterBlizzPlatesDB.exportVersion = "BBP: "..BBP.VersionNumber.." WoW: "..wowVersion
     end
     local exportTable = {
         dataType = dataType,
@@ -257,7 +259,6 @@ StaticPopupDialogs["BBP_RETAILORCLASSIC"] = {
     end,
     timeout = 0,
     whileDead = true,
-    hideOnEscape = true,
 }
 
 ------------------------------------------------------------
@@ -4642,7 +4643,7 @@ local function guiGeneralTab()
     classIndicatorIcon:SetAtlas("groupfinder-icon-class-mage")
     classIndicatorIcon:SetSize(18, 18)
     classIndicatorIcon:SetPoint("RIGHT", classIndicator, "LEFT", 0, 0)
-    classIndicator:HookScript("OnClick", function()
+    classIndicator:HookScript("OnClick", function(self)
         if InCombatLockdown() then return end
         if self:GetChecked() then
             C_CVar.SetCVar("nameplateShowFriends", "1")

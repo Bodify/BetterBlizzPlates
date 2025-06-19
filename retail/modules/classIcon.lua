@@ -60,9 +60,6 @@ local petIcons = {
 
 local playerClass = select(2, UnitClass("player"))
 
-local classIconNames = {}
-BBP.classIconNames = classIconNames
-
 local function GetAuraIcon(frame, foundID, auraType, bgId)
     -- If `foundID` exists in the table, return its color immediately
     if foundID and icons[foundID] then
@@ -102,17 +99,10 @@ local function BackgroundType(frame, bg)
     end
 end
 
-local tempVal = 0
-
 -- Class Indicator
 function BBP.ClassIndicator(frame, foundID)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
-
-    if BBP.tempDebug then
-        tempVal = tempVal + 1
-        print(tempVal, "BG: ", UnitName(frame.unit), foundID)
-    end
 
     if not config.classIndicatorInitialized or BBP.needsUpdate then
         config.classIconArenaOnly = BetterBlizzPlatesDB.classIconArenaOnly
@@ -619,8 +609,6 @@ function BBP.ClassIndicator(frame, foundID)
     end
 
     if info.isFriend then
-        classIconNames[info.name] = frame
-
         if config.classIndicatorHideFriendlyHealthbar then
             frame.HealthBarsContainer:SetAlpha(0)
             frame.selectionHighlight:SetAlpha(0)
@@ -721,83 +709,6 @@ function BBP.SetupClassIndicatorHealthText()
         end
     )
 end
-
-local function FadeClassIcon(name, fade)
-    local frame = classIconNames[name]
-    if frame and frame.classIndicator then
-        if fade then
-            frame.classIndicator:SetAlpha(0.15)
-            -- if frame.classIndicator.bg then
-            --     frame.classIndicator.bg:SetDesaturated(true)
-            --     frame.classIndicator.bg:SetVertexColor(0,0,0)
-            -- end
-        else
-            local config = frame.BetterBlizzPlates.config
-            frame.classIndicator:SetAlpha(config.classIndicatorAlpha or 1)
-        end
-    end
-end
-
-local function CalculateFadeTime(msg)
-    local base = 3
-    local perChar = 0.1
-    local length = string.len(msg or "")
-    return base + (length * perChar)
-end
-
-function BBP.SetupClassIndicatorChat()
-    if BBP.ClassIndicatorChat then return end
-    local chatBubbles = C_CVar.GetCVarBool("chatBubblesParty")
-    local chatBubblesParty = C_CVar.GetCVarBool("chatBubblesParty")
-
-    if chatBubbles or chatBubblesParty then
-
-        local frame = CreateFrame("Frame")
-        frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-        frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-        frame:SetScript("OnEvent", function(self, event)
-            wipe(classIconNames)
-        end)
-
-
-
-        local chatFrame = CreateFrame("Frame")
-        if chatBubblesParty then
-            chatFrame:RegisterEvent("CHAT_MSG_PARTY")
-            chatFrame:RegisterEvent("CHAT_MSG_PARTY_LEADER")
-        end
-        if chatBubbles then
-            chatFrame:RegisterEvent("CHAT_MSG_SAY")
-        end
-
-
-        local partyPointer = BetterBlizzPlatesDB.partyPointer
-        local classIndicator = BetterBlizzPlatesDB.classIndicator
-
-
-        chatFrame:SetScript("OnEvent", function(self, event, msg, sender)
-            local nameOnly = Ambiguate(sender, "short")
-            if classIconNames[nameOnly] then
-                local delay = CalculateFadeTime(msg)
-                if classIndicator then
-                    FadeClassIcon(nameOnly, true)
-                    C_Timer.After(delay, function()
-                        FadeClassIcon(nameOnly)
-                    end)
-                end
-                if partyPointer then
-                    BBP.FadePartyPointer(nameOnly, true)
-                    C_Timer.After(delay, function()
-                        BBP.FadePartyPointer(nameOnly)
-                    end)
-                end
-            end
-        end)
-    end
-
-    BBP.ClassIndicatorChat = true
-end
-
 
 function BBP.ToggleClassIndicatorPinMode(enable)
     local db = BetterBlizzPlatesDB
