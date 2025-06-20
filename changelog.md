@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.8.2b
+## The War Within
+### Bugfix
+- Fix some more issues with hiding nameplates due to the new changes in 11.1.7
+
 # BetterBlizzPlates 1.8.2
 ## Mists of Pandaria Classic & Cata
 ### New:

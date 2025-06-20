@@ -25,10 +25,6 @@ function BBP.PetIndicator(frame)
     local info = frame.BetterBlizzPlates.unitInfo
     local db = BetterBlizzPlatesDB
 
-    if frame.bbpHiddenNPC then
-        frame:SetAlpha(1)
-        frame.bbpHiddenNPC = nil
-    end
     frame.mainPetColor = nil
     if frame.isMurloc then
         frame.hideCastInfo = false
@@ -38,6 +34,18 @@ function BBP.PetIndicator(frame)
         frame.hideNameOverride = false
         frame.hideCastbarOverride = false
         frame.isMurloc = false
+    end
+
+    if not frame.bbpAlphaHook then
+        hooksecurefunc(frame, "SetAlpha", function(self)
+            if not self.bbpHiddenNPC or self.changingAlpha or self:IsForbidden() then return end
+            self.changingAlpha = true
+            if not UnitIsUnit(self.unit, "target") then
+                self:SetAlpha(0)
+            end
+            self.changingAlpha = nil
+        end)
+        frame.bbpAlphaHook = true
     end
 
     if not config.petIndicatorInitialized or BBP.needsUpdate then

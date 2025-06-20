@@ -2862,6 +2862,18 @@ function BBP.HideNPCs(frame, nameplate)
 
     BBP.ShowFrame(frame)
 
+    if not frame.bbpAlphaHook then
+        hooksecurefunc(frame, "SetAlpha", function(self)
+            if not self.bbpHiddenNPC or self.changingAlpha or self:IsForbidden() then return end
+            self.changingAlpha = true
+            if not UnitIsUnit(self.unit, "target") then
+                self:SetAlpha(0)
+            end
+            self.changingAlpha = nil
+        end)
+        frame.bbpAlphaHook = true
+    end
+
     local db = BetterBlizzPlatesDB
     local hideNPCArenaOnly = db.hideNPCArenaOnly
     local hideNPCWhitelistOn = db.hideNPCWhitelistOn
