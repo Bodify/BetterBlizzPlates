@@ -40,7 +40,7 @@ function BBP.PetIndicator(frame)
         hooksecurefunc(frame, "SetAlpha", function(self)
             if not self.bbpHiddenNPC or self.changingAlpha or self:IsForbidden() then return end
             self.changingAlpha = true
-            if not UnitIsUnit(self.unit, "target") then
+            if self.unit and not UnitIsUnit(self.unit, "target") then
                 self:SetAlpha(0)
             end
             self.changingAlpha = nil
