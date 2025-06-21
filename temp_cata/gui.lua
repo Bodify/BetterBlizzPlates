@@ -1203,15 +1203,17 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         -- else
                         --     heightValue = BBP.isLargeNameplatesEnabled() and 64.125 or 40
                         -- end
-                    C_NamePlate.SetNamePlateFriendlySize(value, 32)
-                    BBP.RefreshAllNameplates()
+                        local retailExtra = (not BetterBlizzPlatesDB.classicNameplates and 24) or 0
+                        C_NamePlate.SetNamePlateFriendlySize(value + retailExtra, 32)
+                        BBP.RefreshAllNameplates()
                     end
                 elseif element == "nameplateEnemyWidth" then
                     if not BBP.checkCombatAndWarn() then
                         BetterBlizzPlatesDB.nameplateEnemyWidth = value
                         -- local heightValue
                         -- heightValue = BBP.isLargeNameplatesEnabled() and 64.125 or 40
-                        C_NamePlate.SetNamePlateEnemySize(value, 32)
+                        local retailExtra = (not BetterBlizzPlatesDB.classicNameplates and 24) or 0
+                        C_NamePlate.SetNamePlateEnemySize(value + retailExtra, 32)
                         BBP.RefreshAllNameplates()
                     end
                 elseif element == "nameplateSelfWidth" then

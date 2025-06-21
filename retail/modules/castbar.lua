@@ -183,7 +183,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         castBar.Spark:SetSize(4, castBarHeight + 5)
         castBar.Text:SetScale(castBarTextScale)
         castBar.BorderShield:SetScale(borderShieldSize)
-        frame:GetParent():SetParent(WorldFrame)
+        --frame:GetParent():SetParent(WorldFrame)
         frame.castbarEmphasisActive = false
         frame.emphasizedCast = nil
     end

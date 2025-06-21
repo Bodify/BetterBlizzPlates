@@ -3189,14 +3189,15 @@ function BBP.ColorThreat(frame)
             end
         end
     else
-        local hasAggro = isTanking-- or (threatStatus and threatStatus > 1)
+        local isTargeted = UnitIsUnit(frame.unit.."target", "player")
+        local hasAggro = isTanking or isTargeted-- or (threatStatus and threatStatus > 1)
         if config.npcHealthbarColor and not hasAggro then
             return
         end
 
         if hasAggro then
             r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealFullAggroColorRGB)
-        elseif UnitIsUnit(frame.unit.."target", "player") then
+        elseif isTargeted then
             r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealTargetAggroColorRGB)
         else
             r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealNoAggroColorRGB)

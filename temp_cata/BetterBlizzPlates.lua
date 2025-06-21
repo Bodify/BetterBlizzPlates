@@ -1708,9 +1708,11 @@ function BBP.ApplyNameplateWidth()
                 C_NamePlate.SetNamePlateSelfSize(BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight)
             end
 
+            local retailExtra = (not BetterBlizzPlatesDB.classicNameplates and 24) or 0
+
             local friendlyWidthAdjustment = BBP.isInPvE and 128 or BetterBlizzPlatesDB.nameplateFriendlyWidth
-            C_NamePlate.SetNamePlateFriendlySize(friendlyWidthAdjustment, friendlyHeight)--friendlyHeight)
-            C_NamePlate.SetNamePlateEnemySize(BetterBlizzPlatesDB.nameplateEnemyWidth, generalHeight)--BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeEnemyHeight or BetterBlizzPlatesDB.nameplateDefaultEnemyHeight)
+            C_NamePlate.SetNamePlateFriendlySize(friendlyWidthAdjustment + retailExtra, friendlyHeight)--friendlyHeight)
+            C_NamePlate.SetNamePlateEnemySize(BetterBlizzPlatesDB.nameplateEnemyWidth + retailExtra, generalHeight)--BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeEnemyHeight or BetterBlizzPlatesDB.nameplateDefaultEnemyHeight)
         end
     end
 end
@@ -2448,26 +2450,27 @@ function BBP.ResetToDefaultWidth(slider, isFriendly)
     if not BBP.checkCombatAndWarn() then
         local classic = BetterBlizzPlatesDB.classicNameplates
         local width = classic and 128 or 110
+        local retailExtra = not classic and 24 or 0
         local height = BetterBlizzPlatesDB.nameplateGeneralHeight + 8
         if isFriendly then
             if BBP.isLargeNameplatesEnabled() then
-                C_NamePlate.SetNamePlateFriendlySize(width, friendlyHeight)
+                C_NamePlate.SetNamePlateFriendlySize(width + retailExtra, friendlyHeight)
                 slider:SetValue(width)
             else
-                C_NamePlate.SetNamePlateFriendlySize(width, friendlyHeight)
+                C_NamePlate.SetNamePlateFriendlySize(width + retailExtra, friendlyHeight)
                 slider:SetValue(width)
             end
         else
             if slider ~= nameplateSelfWidth then
                 if BBP.isLargeNameplatesEnabled() then
-                    C_NamePlate.SetNamePlateEnemySize(width, height)
+                    C_NamePlate.SetNamePlateEnemySize(width + retailExtra, height)
                     slider:SetValue(width)
                 else
-                    C_NamePlate.SetNamePlateEnemySize(width, height)
+                    C_NamePlate.SetNamePlateEnemySize(width + retailExtra, height)
                     slider:SetValue(width)
                 end
             else
-                C_NamePlate.SetNamePlateFriendlySize(width, friendlyHeight)
+                C_NamePlate.SetNamePlateFriendlySize(width + retailExtra, friendlyHeight)
                 slider:SetValue(width)
             end
         end

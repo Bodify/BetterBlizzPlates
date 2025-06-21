@@ -1595,6 +1595,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
         local compactTracker = 0
         local keyAuras = 0
         local isPinAura = 0
+        local hasRealAuras
         for index, buff in ipairs(auras) do
             buff:SetScale(nameplateAuraScale)
             buff.CountFrame:SetScale(nameplateAuraCountScale)
@@ -1664,6 +1665,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
 
             local rowIndex = math.floor((noKeyAuraIndex - 1) / maxBuffsPerRowAdjusted) + 1
             if not buff.isKeyAura and not buff.pinIcon then
+                hasRealAuras = true
                 widths[rowIndex] = (widths[rowIndex] or 0) + buffWidth -extraOffset
             end
 
@@ -1671,7 +1673,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
                 widths[rowIndex] = (widths[rowIndex] or 0) + horizontalSpacing
             end
         end
-        return widths
+        return widths, hasRealAuras
     end
 
     local function CalculateRowWidths2(auras)
@@ -1902,6 +1904,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
     -- Layout logic
     local lastRow = 0
     if db.separateAuraBuffRow then
+        local hasNormalDebuff
         if #debuffs > 0 then
             if sortDurationAuras then
                 table.sort(debuffs, durationComparator)
@@ -1910,7 +1913,11 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
             elseif sortCompactedAurasFirst then
                 table.sort(debuffs, smallLargeAuraComparator)
             end
-            rowWidths = isSelf and CalculateRowWidths2(debuffs) or CalculateRowWidths(debuffs)
+            if isSelf then
+                rowWidths, hasNormalDebuff = CalculateRowWidths2(deuffs)
+            else
+                rowWidths, hasNormalDebuff = CalculateRowWidths(debuffs)
+            end
             lastRow = LayoutAuras(debuffs, 0)
         end
 
@@ -1922,7 +1929,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
             table.sort(buffs, smallLargeAuraComparator)
         end
         rowWidths = isSelf and CalculateRowWidths2(buffs) or CalculateRowWidths(buffs)
-        LayoutAuras(buffs, lastRow + (#debuffs > 0 and 1 or 0), true)
+        LayoutAuras(buffs, lastRow + ((#debuffs > 0 and hasNormalDebuff) and 1 or 0), true)
     else
         if sortDurationAuras then
             table.sort(buffs, durationComparator)

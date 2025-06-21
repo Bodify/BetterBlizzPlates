@@ -1,3 +1,14 @@
+# BetterBlizzPlates 1.8.2c
+## Mists of Pandaria & Cataclysm
+### Bugfix
+- Fixed retail nameplate width being off after adjustsments. If you changed it you will have to change it back. Apologies for the trouble.
+- Fixed Starter Profile not being able to be selected. Also cleaned up a few things in the profile system for the new patch.
+- Fix Cata's ArenaID stuff accidentally being updated to new MoP API. This needs to remain old version, fixed.
+## The War Within
+### Bugfix
+- Fix issue with Separate Buff Row + Key Auras causing the buff row to get shifted up when it doesnt have to due to the debuff being a key aura.
+- Fix one more issue causing the ADDON_ACTION_BLOCKED error (in Castbar Emphasis) due to new Blizzard changes in 11.1.7.
+
 # BetterBlizzPlates 1.8.2b
 ## The War Within
 ### Bugfix
