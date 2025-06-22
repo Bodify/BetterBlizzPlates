@@ -968,7 +968,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                                 frame.CastBar.UpdateBorders()
                             end
                         elseif element == "castBarTextScale" then
-                            frame.CastBar.Text:SetScale(value)
+                            frame.CastBar.castText:SetScale(value)
                         -- Cast bar emphasis icon pos and scale
                         elseif element == "castBarEmphasisIconXPos" or element == "castBarEmphasisIconYPos" then
                             if axis then
@@ -1598,7 +1598,17 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
                 end
             end
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Hide Castbar Text" then
+            local alsoHideInt = BetterBlizzPlatesDB.hideCastbarTextInt
+            local tooltipText = "\n|cff32f795Right-click to also hide the \"Interrupted\" text|r"
+
+            if alsoHideInt then
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
+
         if category then
             GameTooltip:AddLine("")
             GameTooltip:AddLine("|A:shop-games-magnifyingglass:17:17|a Setting located in "..category.." section.", 0.4, 0.8, 1, true)
@@ -6830,7 +6840,19 @@ local function guiCastbar()
 
     local hideCastbarText = CreateCheckbox("hideCastbarText", "Hide Castbar Text", enableCastbarCustomization)
     hideCastbarText:SetPoint("TOPLEFT", normalCastbarForEmpoweredCasts, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(hideCastbarText, "Hide Castbar Text\n(except for interrupts if \"Show who interrupted\" is on)", "ANCHOR_LEFT")
+    CreateTooltipTwo(hideCastbarText, "Hide Castbar Text", "Hides castbar text except for the \"Interrupted\" text\nor if \"Show who interrupted\" is on.", nil, "ANCHOR_LEFT")
+    hideCastbarText:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            if not BetterBlizzPlatesDB.hideCastbarTextInt then
+                BetterBlizzPlatesDB.hideCastbarTextInt = true
+            else
+                BetterBlizzPlatesDB.hideCastbarTextInt = nil
+            end
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+        end
+    end)
 
     local castBarRecolorInterrupt = CreateCheckbox("castBarRecolorInterrupt", "Interrupt CD color", enableCastbarCustomization)
     castBarRecolorInterrupt:SetPoint("TOPLEFT", interruptedByIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)

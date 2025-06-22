@@ -1,3 +1,18 @@
+# BetterBlizzPlates 1.8.2d
+## All versions
+### New
+- Hide Castbar Text subsetting: Right-click to also hide the "Interrupted" text.
+## Retail
+### Bugfix
+- More fixes regarding nameplate visibility for 11.1.7. Please be vocal and report if there are still issues here.
+## Mists of Pandaria / Cataclysm
+### New
+- Saul profile (www.twitch.tv/saul)
+### Bugfix
+- Fix cooldown numbers on auras showing regardless if you had "Default CD" enabled or not.
+- Fix red castbars with castbar recoloring/retexturing enabled
+- Fix castbar text size setting not working.
+
 # BetterBlizzPlates 1.8.2c
 ## Mists of Pandaria & Cataclysm
 ### Bugfix

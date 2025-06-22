@@ -37,6 +37,8 @@ local useCustomCastbarTextureHooked = false
 local castIconHooked = false
 local useCustomCastbarTextureBigHook
 
+local interruptedText = SPELL_FAILED_INTERRUPTED or "Interrupted"
+
 local interruptSpellIDs = {}
 function BBP.InitializeInterruptSpellID()
     interruptSpellIDs = {}
@@ -240,7 +242,11 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     if hideCastbarText then
         local text = castBar.castText:GetText()
         -- First, check if 'text' is not nil and then check its content
-        if text and (string.match(text, "Interrupted") or string.match(text, "%b[]")) then
+        if db.hideCastbarTextInt then
+            if not castBar.interruptedBy then
+                castBar.castText:SetAlpha(0)
+            end
+        elseif text and (string.match(text, interruptedText) or string.match(text, "%b[]")) then
             -- If the text contains "Interrupted" or is within square brackets, ensure it's visible
             castBar.castText:SetAlpha(1)
         else
@@ -1739,7 +1745,7 @@ frame:SetScript("OnEvent", function(self, event, unit, ...)
                         if (castBarRecolor or useCustomCastbarTexture) and frame.CastBar then
                             frame.CastBar:SetStatusBarColor(1,0,0)
                         end
-                        frame.CastBar.castText:SetText("Interrupted")
+                        frame.CastBar.castText:SetText(interruptedText or "Interrupted")
                         if not frame.CastBar.interruptedBy then
                             frame.CastBar.interruptedBy = true
                         end

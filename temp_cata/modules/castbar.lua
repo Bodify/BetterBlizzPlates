@@ -204,6 +204,8 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         frame.CastbarEmphasisActive = false
     end
 
+    castBar.castText:SetScale(castBarTextScale)
+
     if castBarPixelBorder then
         BBP.SetupBorderOnFrame(castBar)
     end
@@ -317,7 +319,11 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     if hideCastbarText then
         local text = castBar.castText:GetText()
         -- First, check if 'text' is not nil and then check its content
-        if text and (string.match(text, interruptedText) or string.match(text, "%b[]")) then
+        if db.hideCastbarTextInt then
+            if not castBar.interruptedBy then
+                castBar.castText:SetAlpha(0)
+            end
+        elseif text and (string.match(text, interruptedText) or string.match(text, "%b[]")) then
             -- If the text contains "Interrupted" or is within square brackets, ensure it's visible
             castBar.castText:SetAlpha(1)
         else
@@ -1036,8 +1042,12 @@ frame:RegisterEvent("UNIT_SPELLCAST_START")
 frame:RegisterEvent("UNIT_SPELLCAST_STOP")
 frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
 frame:RegisterEvent("UNIT_SPELLCAST_FAILED")
+--frame:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
 frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
 frame:RegisterEvent("UNIT_SPELLCAST_DELAYED")
+frame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+-- frame:RegisterEvent("UNIT_SPELLCAST_RETICLE_CLEAR")
+-- frame:RegisterEvent("UNIT_SPELLCAST_RETICLE_TARGET")
 frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
 frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
 frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTIBLE")
@@ -1061,7 +1071,7 @@ local function ClassicCastbarAdjustments(self, event, frame)
                 self:SetStatusBarColor(1,1,1)
             end
         end
-        self.barType = "interrupted"
+        --self.barType = "interrupted"
         if event == "UNIT_SPELLCAST_FAILED" then --only change text when its actually interrupted, "STOP" events proc on finished casts
             self.castText:SetText(interruptedText or "Interrupted")
         end
@@ -1080,7 +1090,7 @@ local function ClassicCastbarAdjustments(self, event, frame)
         self.barType = "interrupted"
         self.castText:SetText(interruptedText or "Interrupted")
     else
-        self.barType = nil
+        --self.barType = nil
     -- elseif event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
     --     self.barType = "interrupted"
     end
@@ -1140,7 +1150,7 @@ local function ClassicCastbarAdjustments(self, event, frame)
             elseif self.barType == "interrupted" then
                 self:SetStatusBarColor(1,0,0)
             else
-                self.barType = nil
+                --self.barType = nil
             end
         end
     else
@@ -1182,14 +1192,17 @@ frame:SetScript("OnEvent", function(self, event, unit, ...)
             BBP.CreateBetterCastbarText(frame)
         end
         local name, notInterruptible
+        local casting, channeling
 
         local castName, _, _, _, _, _, _, csNotInterruptible = UnitCastingInfo(unit)
         if castName then
+            casting = true
             name = castName
             notInterruptible = csNotInterruptible
         else
             local channelName, _, _, _, _, _, chNotInterruptible = UnitChannelInfo(unit)
             if channelName then
+                channeling= true
                 name = channelName
                 notInterruptible = chNotInterruptible
             end
@@ -1210,14 +1223,18 @@ frame:SetScript("OnEvent", function(self, event, unit, ...)
             frame.CastBar.Icon:Show()
         end
 
-        if frame.CastBar.notInterruptible then
+        if notInterruptible then
             frame.CastBar.barType = "uninterruptible"
-        elseif frame.CastBar.casting then
+        elseif casting then
             frame.CastBar.barType = "casting"
-        elseif frame.CastBar.channeling then
+        elseif channeling then
             frame.CastBar.barType = "channeling"
+        elseif event == "UNIT_SPELLCAST_INTERRUPTED" then--or event == "UNIT_SPELLCAST_FAILED" then
+            frame.CastBar.barType = "interrupted"
         else
-            frame.CastBar.barType = nil
+            -- if frame.castBar.barType == "casting"
+            -- frame.castBar.barType = "casting"
+            --frame.CastBar.barType = "finished"
         end
 
         ClassicCastbarAdjustments(frame.CastBar, event, frame)
@@ -1266,12 +1283,16 @@ frame:SetScript("OnEvent", function(self, event, unit, ...)
                 if self.recolor then
                     if self.barType == "uninterruptible" then
                         self:SetStatusBarColor(unpack(BetterBlizzPlatesDB.castBarNoninterruptibleColor))
-                    elseif self.casting then
+                    elseif self.barType == "casting" then
                         self:SetStatusBarColor(unpack(BetterBlizzPlatesDB.castBarCastColor))
-                    elseif self.channeling then
+                    elseif self.barType == "channeling" then
                         self:SetStatusBarColor(unpack(BetterBlizzPlatesDB.castBarChanneledColor))
-                    else
+                    elseif self.barType == "interrupted" then
                         self:SetStatusBarColor(1,0,0)
+                    elseif self.barType == "finished" then
+                        self:SetStatusBarColor(0,1,0)
+                    else
+                        self:SetStatusBarColor(unpack(BetterBlizzPlatesDB.castBarCastColor))
                     end
                 else
                     if classicFrames then

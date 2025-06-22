@@ -974,7 +974,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                                 frame.CastBar.UpdateBorders()
                             end
                         elseif element == "castBarTextScale" then
-                            frame.CastBar.Text:SetScale(value)
+                            frame.CastBar.castText:SetScale(value)
                         -- Cast bar emphasis icon pos and scale
                         elseif element == "castBarEmphasisIconXPos" or element == "castBarEmphasisIconYPos" then
                             if axis then
@@ -1614,6 +1614,15 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
                     tooltipText = tooltipText .. border .. "\n"
                 end
             end
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Hide Castbar Text" then
+            local alsoHideInt = BetterBlizzPlatesDB.hideCastbarTextInt
+            local tooltipText = "\n|cff32f795Right-click to also hide the \"Interrupted\" text|r"
+
+            if alsoHideInt then
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
 
@@ -5152,10 +5161,15 @@ local function guiGeneralTab()
     end)
     nahjButton:SetPoint("LEFT", blitzButton, "RIGHT", btnGap, 0)
 
+    local saulButton = CreateClassButton(BetterBlizzPlates, "SHAMAN", "Saul", "saul", function()
+        ShowProfileConfirmation("Saul", "SHAMAN", BBP.SaulProfile)
+    end)
+    saulButton:SetPoint("LEFT", nahjButton, "RIGHT", btnGap, 0)
+
     local snupyButton = CreateClassButton(BetterBlizzPlates, "DRUID", "Snupy", "snupy", function()
         ShowProfileConfirmation("Snupy", "DRUID", BBP.SnupyProfile)
     end)
-    snupyButton:SetPoint("LEFT", nahjButton, "RIGHT", btnGap, 0)
+    snupyButton:SetPoint("LEFT", saulButton, "RIGHT", btnGap, 0)
 
 
 
@@ -7048,7 +7062,19 @@ local function guiCastbar()
 
     local hideCastbarText = CreateCheckbox("hideCastbarText", "Hide Castbar Text", enableCastbarCustomization)
     hideCastbarText:SetPoint("TOPLEFT", normalCastbarForEmpoweredCasts, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(hideCastbarText, "Hide Castbar Text\n(except for interrupts if \"Show who interrupted\" is on)", "ANCHOR_LEFT")
+    CreateTooltipTwo(hideCastbarText, "Hide Castbar Text", "Hides castbar text except for the \"Interrupted\" text\nor if \"Show who interrupted\" is on.", nil, "ANCHOR_LEFT")
+    hideCastbarText:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            if not BetterBlizzPlatesDB.hideCastbarTextInt then
+                BetterBlizzPlatesDB.hideCastbarTextInt = true
+            else
+                BetterBlizzPlatesDB.hideCastbarTextInt = nil
+            end
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+        end
+    end)
 
     local castBarRecolorInterrupt = CreateCheckbox("castBarRecolorInterrupt", "Interrupt CD color", enableCastbarCustomization)
     castBarRecolorInterrupt:SetPoint("TOPLEFT", interruptedByIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -10367,10 +10393,15 @@ function BBP.CreateIntroMessageWindow()
     end)
     nahjButton:SetPoint("TOP", blitzButton, "BOTTOM", 0, -40)
 
+    local saulButton = CreateClassButton(BBP.IntroMessageWindow, "SHAMAN", "Saul", "saul", function()
+        ShowProfileConfirmation("Saul", "SHAMAN", BBP.SaulProfile)
+    end)
+    saulButton:SetPoint("TOP", nahjButton, "BOTTOM", 0, btnGap)
+
     local snupyButton = CreateClassButton(BBP.IntroMessageWindow, "DRUID", "Snupy", "snupy", function()
         ShowProfileConfirmation("Snupy", "DRUID", BBP.SnupyProfile)
     end)
-    snupyButton:SetPoint("TOP", nahjButton, "BOTTOM", 0, btnGap)
+    snupyButton:SetPoint("TOP", saulButton, "BOTTOM", 0, btnGap)
 
     local orText2 = BBP.IntroMessageWindow:CreateFontString(nil, "OVERLAY", "GameFontNormalMed2")
     orText2:SetPoint("CENTER", snupyButton, "BOTTOM", 0, -20)

@@ -1699,6 +1699,15 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Hide Castbar Text" then
+            local alsoHideInt = BetterBlizzPlatesDB.hideCastbarTextInt
+            local tooltipText = "\n|cff32f795Right-click to also hide the \"Interrupted\" text|r"
+
+            if alsoHideInt then
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         elseif title == "Hide Friendly Castbar" then
             local showOnTarget = BetterBlizzPlatesDB.alwaysHideFriendlyCastbarShowTarget
             local tooltipText = "|cff32f795Right-click to keep them enabled on your Target.|r"
@@ -8502,7 +8511,19 @@ local function guiCastbar()
 
     local hideCastbarText = CreateCheckbox("hideCastbarText", "Hide Castbar Text", enableCastbarCustomization)
     hideCastbarText:SetPoint("TOPLEFT", normalCastbarForEmpoweredCasts, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(hideCastbarText, "Hide Castbar Text\n(except for interrupts if \"Show who interrupted\" is on)", "ANCHOR_LEFT")
+    CreateTooltipTwo(hideCastbarText, "Hide Castbar Text", "Hides castbar text except for the \"Interrupted\" text\nor if \"Show who interrupted\" is on.", nil, "ANCHOR_LEFT")
+    hideCastbarText:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            if not BetterBlizzPlatesDB.hideCastbarTextInt then
+                BetterBlizzPlatesDB.hideCastbarTextInt = true
+            else
+                BetterBlizzPlatesDB.hideCastbarTextInt = nil
+            end
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+        end
+    end)
 
     local castBarRecolorInterrupt = CreateCheckbox("castBarRecolorInterrupt", "Interrupt CD color", enableCastbarCustomization)
     castBarRecolorInterrupt:SetPoint("TOPLEFT", interruptedByIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)

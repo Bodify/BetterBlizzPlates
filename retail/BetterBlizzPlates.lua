@@ -4346,6 +4346,7 @@ local function HandleNamePlateRemoved(unit)
     local nameplate, frame = BBP.GetSafeNameplate(unit)
     if not frame then return end
 
+    frame.bbpHiddenNPC = nil
     frame:SetScale(1)
     frame:SetAlpha(1)
     frame.name:SetAlpha(1)

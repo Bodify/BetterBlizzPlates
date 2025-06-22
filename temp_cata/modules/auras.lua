@@ -3512,6 +3512,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             -- Create cooldown frame
             buff.Cooldown = CreateFrame("Cooldown", nil, buff, "CooldownFrameTemplate")
             buff.Cooldown:SetAllPoints(true)
+            buff.Cooldown:SetHideCountdownNumbers(showDefaultCooldownNumbersOnNpAuras and false or true)
 
             -- Create FontString for aura stacks
             buff.CountFrame = CreateFrame("Frame", nil, buff)
