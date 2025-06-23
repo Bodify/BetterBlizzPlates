@@ -2672,7 +2672,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
                 table.sort(debuffs, smallLargeAuraComparator)
             end
             if isSelf then
-                rowWidths, hasNormalDebuff = CalculateRowWidths2(deuffs)
+                rowWidths, hasNormalDebuff = CalculateRowWidths2(debuffs)
             else
                 rowWidths, hasNormalDebuff = CalculateRowWidths(debuffs)
             end
