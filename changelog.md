@@ -1,3 +1,13 @@
+# BetterBlizzPlates 1.8.2e
+## Retail
+### New
+- RaidMark setting to always keep the mark Full Alpha (Advanced Settings).
+- "Casting Full Alpha" setting for "Non-Target Alpha" setting in the CVar Control section.
+### Tweak
+- The "Targeting" color from Threat Color feature should now override Color NPC.
+### Bugfix
+- Fix typo in nameplate aura stuff, ty vkottler for noticing this.
+
 # BetterBlizzPlates 1.8.2d
 ## All versions
 ### New

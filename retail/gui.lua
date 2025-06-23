@@ -6822,6 +6822,10 @@ local function guiPositionAndScale()
     anchorSubRaidmark.box4:SetPoint("TOPLEFT", anchorSubRaidmark.box3, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubRaidmark.box4, "Raise Strata", "Raise strata of Raidmark to it appears above healthbar.")
 
+    anchorSubRaidmark.box5 = CreateCheckbox("raidmarkIndicatorFullAlpha", "Always Full Alpha", contentFrame)
+    anchorSubRaidmark.box5:SetPoint("TOPLEFT", anchorSubRaidmark.box4, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubRaidmark.box5, "Always Full Alpha", "Always display the Raid Marker at full opacity, regardless of the nameplate's alpha.")
+
 
     --CreateTooltip(hideRaidmarkIndicator, "Hide all raidmarkers on nameplates\n\n(Class Indicator and Party Pointer has their own setting\nto only hide on those specific nameplates where those icons show)")
     CreateTooltipTwo(hideRaidmarkIndicator, "Hide Raidmarker", "Hide all raidmarkers on nameplates", "Class Indicator and Party Pointer has their own setting to only hide on those specific nameplates where those icons show", anchor, cvarName)
@@ -11007,6 +11011,10 @@ local function guiCVarControl()
     local enableNpNonTargetAlphaTargetOnly = CreateCheckbox("enableNpNonTargetAlphaTargetOnly", "Require Target", enableNpNonTargetAlpha)
     CreateTooltipTwo(enableNpNonTargetAlphaTargetOnly, "Only fade out other nameplates when you have a target")
     enableNpNonTargetAlphaTargetOnly:SetPoint("TOPLEFT", enableNpNonTargetAlpha, "BOTTOMLEFT", 0, 6)
+
+    local enableNpNonTargetAlphaFullAlphaCasting = CreateCheckbox("enableNpNonTargetAlphaFullAlphaCasting", "Casting Full Alpha", enableNpNonTargetAlpha)
+    CreateTooltipTwo(enableNpNonTargetAlphaFullAlphaCasting, "Keep casting nameplates at full Alpha")
+    enableNpNonTargetAlphaFullAlphaCasting:SetPoint("TOPLEFT", enableNpNonTargetAlphaTargetOnly, "BOTTOMLEFT", 0, 6)
 
     local nameplateNonTargetAlpha = CreateSlider(enableNpNonTargetAlpha, "Non-Target Alpha", 0, 1, 0.01, "nameplateNonTargetAlpha")
     nameplateNonTargetAlpha:SetPoint("TOPLEFT", nameplateSelfAlpha, "BOTTOMLEFT", 0, -17)

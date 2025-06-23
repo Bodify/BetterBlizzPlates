@@ -1005,6 +1005,10 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
         local showNameplateTargetText = db.showNameplateTargetText
         local showNameplateCastbarTimer = db.showNameplateCastbarTimer
 
+        if db.enableNpNonTargetAlpha and db.enableNpNonTargetAlphaFullAlphaCasting then
+            BBP.NameplateTargetAlpha(frame)
+        end
+
         if frame.hideCastbarOverride then
             frame.castBar:Hide()
             return

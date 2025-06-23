@@ -675,7 +675,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                     BBP.FadeAllButTargetNameplates()
                 end
             end
-            if config.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
+            --if config.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
 
             if config.healthNumbers and config.healthNumbersTargetOnly then
                 BBP.HealthNumbers(frame)
@@ -729,6 +729,8 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
         end
         BBP.previousTargetNameplate = frame
     end
+
+    if db.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
 end)
 
 
@@ -765,7 +767,6 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
         if config.fadeOutNPC and config.fadeAllButTarget and BetterBlizzPlatesDB.enableNpNonFocusAlpha then
             BBP.FadeAllButTargetNameplates()
         end
-        if config.enableNpNonTargetAlpha and BetterBlizzPlatesDB.enableNpNonFocusAlpha then NameplateTargetAlphaAllNps() end
         -- local info = frame.BetterBlizzPlates.unitInfo
         -- info.isFocus = true
         -- info.wasFocus = nil
@@ -773,6 +774,7 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
         if config.focusTargetIndicator then BBP.FocusTargetIndicator(frame) end
         BBP.previousFocusNameplate = frame
     end
+    if BetterBlizzPlatesDB.enableNpNonTargetAlpha and BetterBlizzPlatesDB.enableNpNonFocusAlpha then NameplateTargetAlphaAllNps() end
 end)
 
 

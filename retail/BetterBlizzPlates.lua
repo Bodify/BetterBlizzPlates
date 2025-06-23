@@ -3190,9 +3190,15 @@ function BBP.ColorThreat(frame)
         end
     else
         local isTargeted = UnitIsUnit(frame.unit.."target", "player")
-        local hasAggro = isTanking or isTargeted-- or (threatStatus and threatStatus > 1)
+        local hasAggro = isTanking-- or (threatStatus and threatStatus > 1)
         if config.npcHealthbarColor and not hasAggro then
-            return
+            if isTargeted then
+                r, g, b = unpack(BetterBlizzPlatesDB.dpsOrHealTargetAggroColorRGB)
+                frame.healthBar:SetStatusBarColor(r, g, b)
+                return
+            else
+                return
+            end
         end
 
         if hasAggro then
@@ -3895,6 +3901,7 @@ function BBP.NameplateTargetAlpha(frame)
         config.enableNpNonTargetAlphaTargetOnly = BetterBlizzPlatesDB.enableNpNonTargetAlphaTargetOnly
         config.nameplateNonTargetAlpha = BetterBlizzPlatesDB.nameplateNonTargetAlpha
         config.enableNpNonFocusAlpha = BetterBlizzPlatesDB.enableNpNonFocusAlpha
+        config.enableNpNonTargetAlphaFullAlphaCasting = BetterBlizzPlatesDB.enableNpNonTargetAlphaFullAlphaCasting
 
         config.npTargetAlphaInit = true
     end
@@ -3903,6 +3910,13 @@ function BBP.NameplateTargetAlpha(frame)
     local isPlayer = UnitIsUnit(unit, "player")
     local isTarget = UnitIsUnit(unit, "target")
     local isFocus = UnitIsUnit(unit, "focus")
+
+    local isCasting = config.enableNpNonTargetAlphaFullAlphaCasting and (UnitCastingInfo(unit) or UnitChannelInfo(unit))
+
+    if isCasting then
+        frame:SetAlpha(1)
+        return
+    end
 
     if isPlayer or isTarget or (isFocus and config.enableNpNonFocusAlpha) then
         frame:SetAlpha(1)
@@ -3923,15 +3937,17 @@ end
 function BBP.ApplyRaidmarkerChanges(frame)
     local config = frame.BetterBlizzPlates.config
 
+    if not config.raidmarkInitialized or BBP.needsUpdate then
+        config.raidmarkIndicatorAnchor = BetterBlizzPlatesDB.raidmarkIndicatorAnchor or "TOP"
+        config.raidmarkIndicatorXPos = BetterBlizzPlatesDB.raidmarkIndicatorXPos
+        config.raidmarkIndicatorYPos = BetterBlizzPlatesDB.raidmarkIndicatorYPos
+        config.raidmarkIndicatorScale = BetterBlizzPlatesDB.raidmarkIndicatorScale
+        config.raidmarkIndicatorRaiseStrata = BetterBlizzPlatesDB.raidmarkIndicatorRaiseStrata
+        config.raidmarkIndicatorFullAlpha = BetterBlizzPlatesDB.raidmarkIndicatorFullAlpha
+        config.raidmarkInitialized = true
+    end
+
     if config.raidmarkIndicator then
-        if not config.raidmarkInitialized or BBP.needsUpdate then
-            config.raidmarkIndicatorAnchor = BetterBlizzPlatesDB.raidmarkIndicatorAnchor or "TOP"
-            config.raidmarkIndicatorXPos = BetterBlizzPlatesDB.raidmarkIndicatorXPos
-            config.raidmarkIndicatorYPos = BetterBlizzPlatesDB.raidmarkIndicatorYPos
-            config.raidmarkIndicatorScale = BetterBlizzPlatesDB.raidmarkIndicatorScale
-            config.raidmarkIndicatorRaiseStrata = BetterBlizzPlatesDB.raidmarkIndicatorRaiseStrata
-            config.raidmarkInitialized = true
-        end
 
         local shouldMove = not BetterBlizzPlatesDB.raidmarkerPvPOnly or BBP.isInPvP
 
@@ -3954,14 +3970,18 @@ function BBP.ApplyRaidmarkerChanges(frame)
             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("RIGHT", frame.healthBar, "LEFT", -15, 0)
         end
 
-        if config.raidmarkIndicatorRaiseStrata then
-            frame.RaidTargetFrame:SetFrameStrata("HIGH")
-        end
     elseif BBP.needsUpdate then
         frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
         frame.RaidTargetFrame.RaidTargetIcon:SetScale(1)
         frame.RaidTargetFrame.RaidTargetIcon:SetSize(22, 22)
         frame.RaidTargetFrame.RaidTargetIcon:SetPoint("RIGHT", frame.healthBar, "LEFT", -15, 0)
+    end
+    if config.raidmarkIndicatorRaiseStrata then
+        frame.RaidTargetFrame:SetFrameStrata("HIGH")
+    end
+    if config.raidmarkIndicatorFullAlpha then
+        frame.RaidTargetFrame:SetIgnoreParentAlpha(true)
+        frame.RaidTargetFrame:SetAlpha(1)
     end
 end
 
@@ -6039,18 +6059,18 @@ ClassRoleChecker:SetScript("OnEvent", UpdateClassRoleStatus)
 local function ThreatSituationUpdate(self, event, unit)
     if BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and (not BBP.isInPvP or BBP.isInAV))) then
         if event == "UNIT_THREAT_SITUATION_UPDATE" then
+            if UnitIsPlayer(unit) then return end
             for _, nameplate in pairs(C_NamePlate.GetNamePlates(issecure())) do
                 local frame = nameplate.UnitFrame
-                if UnitIsPlayer(unit) then return end
                 local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
                 if config.totemColorRGB then return end
                 BBP.ColorThreat(frame)
             end
         elseif event == "UNIT_TARGET" then
             -- update frame specific
+            if UnitIsPlayer(unit) then return end
             local np, frame = BBP.GetSafeNameplate(unit)
             if frame then
-                if UnitIsPlayer(unit) then return end
                 local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
                 if config.totemColorRGB then return end
                 BBP.ColorThreat(frame)
