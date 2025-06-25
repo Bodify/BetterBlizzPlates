@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.8.2f
+## Mists of Pandaria & Cataclysm
+### Bugfix
+- Fix issues with hiding castbar not always hiding it
+
 # BetterBlizzPlates 1.8.2e
 ## Retail
 ### New

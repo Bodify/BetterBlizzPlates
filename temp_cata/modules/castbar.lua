@@ -626,6 +626,8 @@ function BBP.HideCastbar(frame, unitToken)
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or BBP.InitializeNameplateSettings(frame)
     local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
 
+    frame.CastBar.hideThis = false
+
     if not config.showCastbarIfTarget or BBP.needsUpdate then
         config.showCastbarIfTarget = BetterBlizzPlatesDB.showCastbarIfTarget
         config.hideCastbarWhitelistOn = BetterBlizzPlatesDB.hideCastbarWhitelistOn
@@ -660,6 +662,7 @@ function BBP.HideCastbar(frame, unitToken)
 
     if config.onlyShowInterruptableCasts then
         if notInterruptible then
+            castBar.hideThis = true
             castBar:Hide()
             return
         end
@@ -686,6 +689,7 @@ function BBP.HideCastbar(frame, unitToken)
             end
         end
         if hideCastbar then
+            castBar.hideThis = true
             castBar:Hide()
             return
         end
@@ -709,6 +713,7 @@ function BBP.HideCastbar(frame, unitToken)
         if inWhitelist and isCasting then
             -- castBar:Show()
         else
+            castBar.hideThis = true
             castBar:Hide()
         end
     else
@@ -730,10 +735,12 @@ function BBP.HideCastbar(frame, unitToken)
         if isCasting and not inList then
             -- castBar:Show()
         else
+            castBar.hideThis = true
             castBar:Hide()
         end
         if config.hideNpcCastbar then
             if info and not info.isPlayer then
+                castBar.hideThis = true
                 castBar:Hide()
             end
         end
@@ -1323,6 +1330,24 @@ frame:SetScript("OnEvent", function(self, event, unit, ...)
         frame.CastBar.colorActive = false
         if frame.CastBar.casting or frame.CastBar.channeling then
             frame.CastBar.interruptedBy = nil
+        end
+
+        if not frame.CastBar.hideHooked and (frame.hideCastbarOverride or alwaysHideFriendlyCastbar or alwaysHideEnemyCastbar or BBP.hideFriendlyCastbar) then
+            frame.CastBar.hideHooked = true
+            hooksecurefunc(frame.CastBar, "Show", function(self)
+                if frame:IsForbidden() then return end
+                if frame.hideCastbarOverride then self:Hide() end
+                local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(frame.unit)
+                if ((BetterBlizzPlatesDB.alwaysHideFriendlyCastbar or BBP.hideFriendlyCastbar) and isFriend) or (BetterBlizzPlatesDB.alwaysHideEnemyCastbar and not isFriend) then
+                    local alwaysHideFriendlyCastbarShowTarget = BetterBlizzPlatesDB.alwaysHideFriendlyCastbarShowTarget
+                    local alwaysHideEnemyCastbarShowTarget = BetterBlizzPlatesDB.alwaysHideEnemyCastbarShowTarget
+                    if (alwaysHideFriendlyCastbarShowTarget and isFriend and UnitIsUnit("target", frame.unit)) or (alwaysHideEnemyCastbarShowTarget and not isFriend and UnitIsUnit("target", frame.unit)) then
+                        -- go thruugh
+                    else
+                        self:Hide()
+                    end
+                end
+            end)
         end
 
 
