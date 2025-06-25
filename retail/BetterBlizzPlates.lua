@@ -3891,11 +3891,11 @@ end
 
 
 function BBP.NameplateTargetAlpha(frame)
-    local config = frame.BetterBlizzPlates.config
-
-    if frame.fadedNpc then
+    if frame.fadedNpc or not frame.BetterBlizzPlates then
         return
     end
+
+    local config = frame.BetterBlizzPlates.config
 
     if not config.npTargetAlphaInit or BBP.needsUpdate then
         config.enableNpNonTargetAlphaTargetOnly = BetterBlizzPlatesDB.enableNpNonTargetAlphaTargetOnly
