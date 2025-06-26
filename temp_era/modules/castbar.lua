@@ -144,7 +144,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     local _
 
     if frame.castbarEmphasisActive then
-        frame:GetParent():SetParent(BBP.OverlayFrame)
+        --frame:GetParent():SetParent(BBP.OverlayFrame)
         frame.castbarEmphasisActive = false
     end
 
@@ -483,7 +483,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                         ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
                         frame.emphasizedCast = castEmphasis
                         frame.CastBar.emphasizedCast = castEmphasis
-                        frame:GetParent():SetParent(BBP.OverlayFrame)
+                        --frame:GetParent():SetParent(BBP.OverlayFrame)
                     else
                         frame.emphasizedCast = nil
                     end
@@ -814,98 +814,98 @@ function BBP.ToggleSpellCastEventRegistration()
         end
     end
     if BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarInterruptHighlighter and not castbarOnUpdateHooked then
-        hooksecurefunc("CastingBarFrame_OnUpdate", function(self, event, ...)
-            if self.unit and self.unit:find("nameplate") then
-                local spellName, spellID, notInterruptible, endTime
-                local castStart, castDuration
-                local _
-                local cast
+        -- hooksecurefunc("CastingBarFrame_OnUpdate", function(self, event, ...)
+        --     if self.unit and self.unit:find("nameplate") then
+        --         local spellName, spellID, notInterruptible, endTime
+        --         local castStart, castDuration
+        --         local _
+        --         local cast
 
-                if UnitCastingInfo(self.unit) then
-                    spellName, _, _, castStart, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(self.unit)
-                    castDuration = endTime - castStart
-                    cast = true
-                elseif UnitChannelInfo(self.unit) then
-                    spellName, _, _, castStart, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
-                    castDuration = endTime - castStart
-                end
+        --         if UnitCastingInfo(self.unit) then
+        --             spellName, _, _, castStart, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(self.unit)
+        --             castDuration = endTime - castStart
+        --             cast = true
+        --         elseif UnitChannelInfo(self.unit) then
+        --             spellName, _, _, castStart, endTime, _, notInterruptible, _, spellID = UnitChannelInfo(self.unit)
+        --             castDuration = endTime - castStart
+        --         end
 
-                local castBar = self
-                local interruptedCastbar = castBar.barType == "interrupted"
-                if spellName and not interruptedCastbar and castDuration and not notInterruptible then
-                    local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(self.unit)
-                    if not isFriend then
-                        local currentTime = GetTime() -- currentTime is in seconds
-                        -- Convert startTime from milliseconds to seconds for these calculations
-                        local castStartSeconds = castStart / 1000
-                        local castEndSeconds = endTime / 1000
-                        local currentCastTime = currentTime - castStartSeconds
-                        local timeRemaining = castEndSeconds - currentTime
-                        local db = BetterBlizzPlatesDB
+        --         local castBar = self
+        --         local interruptedCastbar = castBar.barType == "interrupted"
+        --         if spellName and not interruptedCastbar and castDuration and not notInterruptible then
+        --             local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(self.unit)
+        --             if not isFriend then
+        --                 local currentTime = GetTime() -- currentTime is in seconds
+        --                 -- Convert startTime from milliseconds to seconds for these calculations
+        --                 local castStartSeconds = castStart / 1000
+        --                 local castEndSeconds = endTime / 1000
+        --                 local currentCastTime = currentTime - castStartSeconds
+        --                 local timeRemaining = castEndSeconds - currentTime
+        --                 local db = BetterBlizzPlatesDB
 
-                        -- Convert the start and end times from configuration to seconds for comparison
-                        local highlightStartTime = db.castBarInterruptHighlighterStartTime
-                        local highlightEndTime = db.castBarInterruptHighlighterEndTime
+        --                 -- Convert the start and end times from configuration to seconds for comparison
+        --                 local highlightStartTime = db.castBarInterruptHighlighterStartTime
+        --                 local highlightEndTime = db.castBarInterruptHighlighterEndTime
 
-                        -- Check if the current cast time is within the specified start and end times
-                        if currentCastTime <= highlightStartTime or timeRemaining <= highlightEndTime then
-                            -- Highlight the cast bar
-                            local color = db.castBarInterruptHighlighterInterruptRGB
-                            if castBarTexture then
-                                castBarTexture:SetDesaturated()
-                            end
-                            castBar:SetStatusBarColor(unpack(color)) -- Color for highlight (e.g., green)
-                        else
-                            local colorDontInterrupt = db.castBarInterruptHighlighterColorDontInterrupt
-                            if colorDontInterrupt then
-                                local color = db.castBarInterruptHighlighterDontInterruptRGB
-                                if castBarTexture then
-                                    castBarTexture:SetDesaturated()
-                                end
-                                castBar:SetStatusBarColor(unpack(color)) -- Color for no interrupt (e.g., red)
-                            else
-                                if castBarTexture then
-                                    castBarTexture:SetDesaturated(false)
-                                end
-                                local castBarRecolor = db.castBarRecolor
-                                local useCustomCastbarTexture = db.useCustomCastbarTexture
-                                if castBarRecolor then
-                                    if cast then
-                                        castBar:SetStatusBarColor(unpack(db.castBarCastColor))
-                                    else
-                                        castBar:SetStatusBarColor(unpack(db.castBarChanneledColor))
-                                    end
-                                elseif useCustomCastbarTexture then
-                                    if cast then
-                                        castBar:SetStatusBarColor(1,0.843,0.2)
-                                    else
-                                        castBar:SetStatusBarColor(0,1,0)
-                                    end
-                                else
-                                    --castBar:SetStatusBarColor(1,1,1)
-                                end
-                                --castBar:SetStatusBarColor(1, 1, 1) -- Default color
-                            end
-                        end
-                    end
-                else
-                    if interruptedCastbar then
-                        if castBarTexture then
-                            castBarTexture:SetDesaturated(false)
-                        end
-                        local db = BetterBlizzPlatesDB
-                        local castBarRecolor = db.castBarRecolor
-                        local useCustomCastbarTexture = db.useCustomCastbarTexture
-                        if castBarRecolor or useCustomCastbarTexture then
-                            castBar:SetStatusBarColor(1,0,0)
-                        else
-                            --castBar:SetStatusBarColor(1,1,1)
-                        end
-                        --castBar:SetStatusBarColor(1, 1, 1) -- Reset to default color if interrupted
-                    end
-                end
-            end
-        end)
+        --                 -- Check if the current cast time is within the specified start and end times
+        --                 if currentCastTime <= highlightStartTime or timeRemaining <= highlightEndTime then
+        --                     -- Highlight the cast bar
+        --                     local color = db.castBarInterruptHighlighterInterruptRGB
+        --                     if castBarTexture then
+        --                         castBarTexture:SetDesaturated()
+        --                     end
+        --                     castBar:SetStatusBarColor(unpack(color)) -- Color for highlight (e.g., green)
+        --                 else
+        --                     local colorDontInterrupt = db.castBarInterruptHighlighterColorDontInterrupt
+        --                     if colorDontInterrupt then
+        --                         local color = db.castBarInterruptHighlighterDontInterruptRGB
+        --                         if castBarTexture then
+        --                             castBarTexture:SetDesaturated()
+        --                         end
+        --                         castBar:SetStatusBarColor(unpack(color)) -- Color for no interrupt (e.g., red)
+        --                     else
+        --                         if castBarTexture then
+        --                             castBarTexture:SetDesaturated(false)
+        --                         end
+        --                         local castBarRecolor = db.castBarRecolor
+        --                         local useCustomCastbarTexture = db.useCustomCastbarTexture
+        --                         if castBarRecolor then
+        --                             if cast then
+        --                                 castBar:SetStatusBarColor(unpack(db.castBarCastColor))
+        --                             else
+        --                                 castBar:SetStatusBarColor(unpack(db.castBarChanneledColor))
+        --                             end
+        --                         elseif useCustomCastbarTexture then
+        --                             if cast then
+        --                                 castBar:SetStatusBarColor(1,0.843,0.2)
+        --                             else
+        --                                 castBar:SetStatusBarColor(0,1,0)
+        --                             end
+        --                         else
+        --                             --castBar:SetStatusBarColor(1,1,1)
+        --                         end
+        --                         --castBar:SetStatusBarColor(1, 1, 1) -- Default color
+        --                     end
+        --                 end
+        --             end
+        --         else
+        --             if interruptedCastbar then
+        --                 if castBarTexture then
+        --                     castBarTexture:SetDesaturated(false)
+        --                 end
+        --                 local db = BetterBlizzPlatesDB
+        --                 local castBarRecolor = db.castBarRecolor
+        --                 local useCustomCastbarTexture = db.useCustomCastbarTexture
+        --                 if castBarRecolor or useCustomCastbarTexture then
+        --                     castBar:SetStatusBarColor(1,0,0)
+        --                 else
+        --                     --castBar:SetStatusBarColor(1,1,1)
+        --                 end
+        --                 --castBar:SetStatusBarColor(1, 1, 1) -- Reset to default color if interrupted
+        --             end
+        --         end
+        --     end
+        -- end)
         castbarOnUpdateHooked = true
     end
 end

@@ -200,7 +200,6 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         castBar.Spark:SetSize(4, castBarHeight + 5)
         castBar.Text:SetScale(castBarTextScale)
         castBar.BorderShield:SetScale(borderShieldSize)
-        frame:GetParent():SetParent(WorldFrame)
         frame.CastbarEmphasisActive = false
     end
 
@@ -388,7 +387,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     end
 
     if castBar.oldParent then
-        castBar:SetParent(castBar.oldParent)
+        --castBar:SetParent(castBar.oldParent)
         castBar:SetFrameStrata("MEDIUM")
         castBar.oldParent = nil
     end
@@ -418,7 +417,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
         if not castBar.oldParent then
             castBar.oldParent = castBar:GetParent()
-            castBar:SetParent(BBP.OverlayFrame)
+            --castBar:SetParent(BBP.OverlayFrame)
             castBar:SetFrameStrata("HIGH")
         end
 
@@ -937,7 +936,7 @@ function BBP.ToggleSpellCastEventRegistration()
         end
     end
     if BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarInterruptHighlighter and not castbarOnUpdateHooked then
-        hooksecurefunc("CastingBarFrame_OnUpdate", "OnUpdate", function(self, event, ...)
+        hooksecurefunc("CastingBarFrame_OnUpdate", function(self, event, ...)
             if self.unit and self.unit:find("nameplate") then
                 if self:IsForbidden() then return end
                 local spellName, spellID, notInterruptible, endTime
@@ -1381,7 +1380,7 @@ frame:SetScript("OnEvent", function(self, event, unit, ...)
         if enableCastbarCustomization then
 
             if db.castbarAlwaysOnTop then
-                frame.CastBar:SetParent(BBP.OverlayFrame)
+                --frame.CastBar:SetParent(BBP.OverlayFrame)
                 frame.CastBar:SetFrameStrata("HIGH")
             end
 

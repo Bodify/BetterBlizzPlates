@@ -98,7 +98,7 @@ function BBP.PetIndicator(frame)
                     if config.petIndicatorShowMurloc then
                         BBP.InitMurlocMode(frame, config, db)
                         ShowMurloc(frame)
-                    elseif not frame.bbpHiddenNPC then
+                    else
                         frame.bbpHiddenNPC = true
                         frame:SetAlpha(0)
                     end
@@ -138,7 +138,7 @@ function BBP.PetIndicator(frame)
                     if config.petIndicatorShowMurloc then
                         BBP.InitMurlocMode(frame, config, db)
                         ShowMurloc(frame)
-                    elseif not frame.bbpHiddenNPC then
+                    else
                         frame.bbpHiddenNPC = true
                         frame:SetAlpha(0)
                     end
@@ -166,7 +166,7 @@ function BBP.PetIndicator(frame)
                     if config.petIndicatorShowMurloc then
                         BBP.InitMurlocMode(frame, config, db)
                         ShowMurloc(frame)
-                    elseif not frame.bbpHiddenNPC then
+                    else
                         frame.bbpHiddenNPC = true
                         frame:SetAlpha(0)
                     end
@@ -180,7 +180,7 @@ function BBP.PetIndicator(frame)
             if config.petIndicatorShowMurloc then
                 BBP.InitMurlocMode(frame, config, db)
                 ShowMurloc(frame)
-            elseif not frame.bbpHiddenNPC then
+            else
                 frame.bbpHiddenNPC = true
                 frame:SetAlpha(0)
             end

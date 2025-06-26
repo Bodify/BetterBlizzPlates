@@ -13,16 +13,10 @@ local cataHunterPets = {
     ["45582"] = true, -- Spider
 }
 
-local shadowRealm = CreateFrame("Frame")
-shadowRealm:Hide()
-local shadows = {}
-
 -- Pet Indicator
 function BBP.PetIndicator(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
-
-    local nameplate = frame:GetParent()
 
     if not config.petIndicatorInitialized or BBP.needsUpdate then
         config.petIndicatorAnchor = BetterBlizzPlatesDB.petIndicatorAnchor or "CENTER"
@@ -40,11 +34,6 @@ function BBP.PetIndicator(frame)
         frame.petIndicator = frame.healthBar:CreateTexture(nil, "OVERLAY")
         frame.petIndicator:SetAtlas("newplayerchat-chaticon-newcomer")
         frame.petIndicator:SetSize(12, 12)
-    end
-
-    if shadows[nameplate] then
-        nameplate:SetParent(shadows[nameplate])
-        shadows[nameplate] = nil
     end
 
     -- Set position and scale dynamically

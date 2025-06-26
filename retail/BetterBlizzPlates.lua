@@ -3042,8 +3042,8 @@ end
 -- Shows the frame with default settings
 function BBP.ShowFrame(frame)
     if frame.bbpHiddenNPC then
-        frame:SetAlpha(1)
         frame.bbpHiddenNPC = nil
+        frame:SetAlpha(1)
     end
     frame.hideCastInfo = false
     if frame.murlocMode then
@@ -3057,8 +3057,8 @@ end
 -- Shows the murlocMode on the frame
 function BBP.ShowMurloc(frame)
     if frame.bbpHiddenNPC then
-        frame:SetAlpha(1)
         frame.bbpHiddenNPC = nil
+        frame:SetAlpha(1)
     end
     frame.murlocModeActive = true
     frame.HealthBarsContainer:SetAlpha(0)
@@ -3073,10 +3073,8 @@ end
 
 -- Hides the nameplate by setting its parent to shadowRealm -- addon blocked error in 11.1.7
 function BBP.HideNameplate(frame)
-    if not frame.bbpHiddenNPC then
-        frame.bbpHiddenNPC = true
-        frame:SetAlpha(0)
-    end
+    frame.bbpHiddenNPC = true
+    frame:SetAlpha(0)
 end
 
 local function ShowLastNameOnlyNpc(frame)

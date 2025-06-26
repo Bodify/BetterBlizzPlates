@@ -1,3 +1,14 @@
+# BetterBlizzPlates 1.8.2g
+## Retail
+### Bugfix
+- Fix changing anchors for Blitz Indicator not working properly until a reload.
+## Classic versions
+### Bugfix
+- Fix hiding nameplates causing lua errors and unintentionally hiding nameplates, due to Blizzard changes in the 11.1.7 patch. These changes are active in Classic versions of wow. As a result hidden nameplates are now clickable again as mentioned in previous patch notes as well. :/
+- Fix nil error related to BuffFrame
+- Fix Edge Highlighter causing lua errors due to copypaste mistake from retail -> cata/mop.
+- Fix a nil function being called causing a lua error.
+
 # BetterBlizzPlates 1.8.2f
 ## Mists of Pandaria & Cataclysm
 ### Bugfix

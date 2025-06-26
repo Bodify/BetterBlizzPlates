@@ -2185,6 +2185,7 @@ function BBP.ToggleNameplateAuras(frame)
 end
 
 function BBP.TargetNameplateAuraSize(frame)
+    if not frame.BuffFrame then return end
     local db = BetterBlizzPlatesDB
     if not db.targetNameplateAuraScaleEnabled then return end
     --if not frame then return end
@@ -2210,6 +2211,7 @@ end
 local function ToggleNameplateBuffFrameVisibility(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
+    if not frame.BuffFrame then return end
 
     local buffFrameAlpha = 1
     if config.hideNameplateAuras then
@@ -2906,12 +2908,6 @@ BBP.SmallPetsInPvP = SmallPetsInPvP
 
 
 --##################################################################################################
--- Hide npcs from list
--- Initialize shadow realm frame and shadows table
-local shadowRealm = CreateFrame("Frame")
-shadowRealm:Hide()
-local shadows = {}
-
 -- Hide NPCs from list
 function BBP.HideNPCs(frame, nameplate)
     if not frame or not frame.displayedUnit then return end
@@ -2919,7 +2915,19 @@ function BBP.HideNPCs(frame, nameplate)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
-    BBP.ShowFrame(frame, nameplate, config)
+    if not frame.bbpAlphaHook then
+        hooksecurefunc(frame, "SetAlpha", function(self)
+            if not self.bbpHiddenNPC or self.changingAlpha or self:IsForbidden() then return end
+            self.changingAlpha = true
+            if self.unit and not UnitIsUnit(self.unit, "target") then
+                self:SetAlpha(0)
+            end
+            self.changingAlpha = nil
+        end)
+        frame.bbpAlphaHook = true
+    end
+
+    BBP.ShowFrame(frame)
 
     local db = BetterBlizzPlatesDB
     local hideNPCArenaOnly = db.hideNPCArenaOnly
@@ -2946,7 +2954,7 @@ function BBP.HideNPCs(frame, nameplate)
     end
 
     if hideAllNeutral and not isTarget then
-        BBP.HideNameplate(nameplate)
+        BBP.HideNameplate(frame)
         return
     end
 
@@ -2955,13 +2963,13 @@ function BBP.HideNPCs(frame, nameplate)
             if UnitIsOwnerOrControllerOfUnit("player", frame.unit) then
                 if UnitPlayerControlled("target") then
                     if not isTarget then
-                        BBP.HideNameplate(nameplate)
+                        BBP.HideNameplate(frame)
                     end
                     return
                 end
             else
                 if not isTarget then
-                    BBP.HideNameplate(nameplate)
+                    BBP.HideNameplate(frame)
                 end
                 return
             end
@@ -2983,7 +2991,7 @@ function BBP.HideNPCs(frame, nameplate)
 
     -- Determine if the frame should be shown based on the list check or if it's the current target
     if isTarget then
-        BBP.ShowFrame(frame, nameplate, config)
+        BBP.ShowFrame(frame)
         local alpha = ((config.friendlyHideHealthBar and info.isFriend) and (info.isPlayer or (config.friendlyHideHealthBarNpc and not (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and info.isPet))) and 0) or 1
         frame.healthBar:SetAlpha(alpha)
         frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (config.friendlyHideHealthBar and info.isFriend and 0) or 0.22)
@@ -2997,39 +3005,39 @@ function BBP.HideNPCs(frame, nameplate)
         end
         if isFakePet then
             if murlocSecondary then
-                BBP.ShowMurloc(frame, nameplate)
+                BBP.ShowMurloc(frame)
             else
-                BBP.HideNameplate(nameplate)
+                BBP.HideNameplate(frame)
             end
         end
     elseif hideNPCWhitelistOn then
         if inList then
             if showMurloc then
-                BBP.ShowMurloc(frame, nameplate)
+                BBP.ShowMurloc(frame)
             else
-                BBP.ShowFrame(frame, nameplate, config)
+                BBP.ShowFrame(frame)
             end
         else
             if murlocSecondary and secondaryPets[npcID] then
-                BBP.ShowMurloc(frame, nameplate)
+                BBP.ShowMurloc(frame)
             else
-                BBP.HideNameplate(nameplate)
+                BBP.HideNameplate(frame)
             end
         end
     elseif inList then
         if showMurloc then
-            BBP.ShowMurloc(frame, nameplate)
+            BBP.ShowMurloc(frame)
         else
-            BBP.HideNameplate(nameplate)
+            BBP.HideNameplate(frame)
         end
     elseif hideSecondaryPets and secondaryPets[npcID] then
         if murlocSecondary then
-            BBP.ShowMurloc(frame, nameplate)
+            BBP.ShowMurloc(frame)
         else
-            BBP.HideNameplate(nameplate)
+            BBP.HideNameplate(frame)
         end
     else
-        BBP.ShowFrame(frame, nameplate, config)
+        BBP.ShowFrame(frame)
     end
 end
 
@@ -3087,10 +3095,10 @@ function BBP.CheckNPCList(list, npcID, lowerCaseNpcName)
 end
 
 -- Shows the frame with default settings
-function BBP.ShowFrame(frame, nameplate, config)
-    if shadows[nameplate] then
-        nameplate:SetParent(WorldFrame)
-        shadows[nameplate] = nil
+function BBP.ShowFrame(frame)
+    if frame.bbpHiddenNPC then
+        frame.bbpHiddenNPC = nil
+        frame:SetAlpha(1)
     end
     frame.hideCastInfo = false
     if frame.murlocMode then
@@ -3102,15 +3110,17 @@ function BBP.ShowFrame(frame, nameplate, config)
 end
 
 -- Shows the murlocMode on the frame
-function BBP.ShowMurloc(frame, nameplate)
-    if shadows[nameplate] then
-        nameplate:SetParent(WorldFrame)
-        shadows[nameplate] = nil
+function BBP.ShowMurloc(frame)
+    if frame.bbpHiddenNPC then
+        frame.bbpHiddenNPC = nil
+        frame:SetAlpha(1)
     end
     frame.murlocModeActive = true
     frame.healthBar:SetAlpha(0)
     frame.selectionHighlight:SetAlpha(0)
-    frame.BuffFrame:SetAlpha(0)
+    if frame.BuffFrame then
+        frame.BuffFrame:SetAlpha(0)
+    end
     frame.name:SetAlpha(0)
     frame.murlocMode:Show()
     frame.CastBar:Hide()
@@ -3118,12 +3128,10 @@ function BBP.ShowMurloc(frame, nameplate)
     frame.hideCastbarOverride = true
 end
 
--- Hides the nameplate by setting its parent to shadowRealm
-function BBP.HideNameplate(nameplate)
-    if not shadows[nameplate] then
-        shadows[nameplate] = true
-        nameplate:SetParent(shadowRealm)
-    end
+-- Hides the nameplate by setting its parent to shadowRealm -- addon blocked error in 11.1.7
+function BBP.HideNameplate(frame)
+    frame.bbpHiddenNPC = true
+    frame:SetAlpha(0)
 end
 
 local function ShowLastNameOnlyNpc(frame)
@@ -4916,6 +4924,8 @@ local function HandleNamePlateRemoved(unit)
     local nameplate, frame = BBP.GetSafeNameplate(unit)
     if not frame then return end
 
+    frame.bbpHiddenNPC = nil
+    frame:SetAlpha(1)
     frame:SetScale(1)
     frame.name:SetAlpha(1)
     if frame.healthBar then
@@ -5207,10 +5217,10 @@ local function HandleNamePlateAdded(unit)
     if not frame.nameplateTweaksBBP then
         frame.CastBar.Icon:SetIgnoreParentAlpha(false)
         frame.CastBar.BorderShield:SetIgnoreParentAlpha(false)
-        if not BetterBlizzPlatesDB.skipNpFix then
-            nameplate:SetParent(BBP.hiddenFrame)
-            nameplate:SetParent(WorldFrame)
-        end
+        -- if not BetterBlizzPlatesDB.skipNpFix then
+        --     nameplate:SetParent(BBP.hiddenFrame)
+        --     nameplate:SetParent(WorldFrame)
+        -- end
         if not frame.hookedHideCastbar then
             hooksecurefunc(frame.CastBar, "Show", function()
                 if frame.CastBar.hideThis and not frame:IsForbidden() then
@@ -5363,8 +5373,8 @@ local function HandleNamePlateAdded(unit)
     if not frame.nameplateTweaksBBP then
         frame.CastBar.Icon:SetIgnoreParentAlpha(false)
         frame.CastBar.BorderShield:SetIgnoreParentAlpha(false)
-        nameplate:SetParent(BBP.hiddenFrame)
-        nameplate:SetParent(WorldFrame)
+        -- nameplate:SetParent(BBP.hiddenFrame)
+        -- nameplate:SetParent(WorldFrame)
         frame.nameplateTweaksBBP = true
     end
 
@@ -5786,7 +5796,7 @@ function BBP.RefreshAllNameplates()
             end
         end
 
-        if BetterBlizzPlatesDB.changeHealthbarHeight then AdjustHealthBarHeight(frame) end
+        --if BetterBlizzPlatesDB.changeHealthbarHeight then AdjustHealthBarHeight(frame) end
     end
 end
 
@@ -5853,6 +5863,15 @@ function BBP.ConsolidatedUpdateName(frame)
         frame.bbpOverlay = CreateFrame("Frame", nil, frame.healthBar)
         frame.bbpOverlay:SetFrameStrata("DIALOG")
         frame.bbpOverlay:SetFrameLevel(9000)
+    end
+
+    if not frame.BuffFrame then
+        if not config.nameplateAurasYPos then
+            config.nameplateAurasYPos = BetterBlizzPlatesDB.nameplateAurasYPos
+        end
+        frame.BuffFrame = CreateFrame("Frame", nil, frame)
+        frame.BuffFrame:SetSize(frame:GetWidth(), 26)
+        frame.BuffFrame.auraFrames = {}
     end
 
     --if info.isSelf then return end

@@ -115,6 +115,7 @@ function BBP.BgIndicator(frame, foundID)
         frame.bgIndicator:SetVertexColor(unpack(auraColor))
         frame.bgIndicator:Show()
         frame.bgIndicator:SetScale(config.bgIndicatorScale or 1)
+        frame.bgIndicator:ClearAllPoints()
         frame.bgIndicator:SetPoint(config.bgIndicatorAnchor, frame, config.bgIndicatorOppositeAnchor, config.bgIndicatorXPos, config.bgIndicatorYPos - 3)
         return
     end
@@ -151,6 +152,7 @@ function BBP.BgIndicator(frame, foundID)
         end
 
         frame.bgIndicator:SetScale(config.bgIndicatorScale or 1)
+        frame.bgIndicator:ClearAllPoints()
         frame.bgIndicator:SetPoint(config.bgIndicatorAnchor, frame.HealthBarsContainer, config.bgIndicatorOppositeAnchor, config.bgIndicatorXPos, config.bgIndicatorYPos - 3)
         frame.bgIndicator:Show()
     else
