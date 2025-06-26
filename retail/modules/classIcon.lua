@@ -441,7 +441,7 @@ function BBP.ClassIndicator(frame, foundID)
                 end
             end
         else
-            if not isPetAndAlwaysShow then
+            if not isPetAndAlwaysShow and not ((alwaysShowHealer or alwaysShowTank) and BBP.isInPvP) then
                 frame.classIndicator:Hide()
                 return
             end

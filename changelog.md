@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.8.2h
+## Retail
+### Tweak
+- Class Indicator's "Always show Healer/Tank" settings now properly shows for Healer/Tanks in both Arenas and BGs if "Only Arena/BG" were selected. Lets you enable for all nameplates in Arena but only for Healer/Tanks in BGs for example. Tooltip updated.
+
 # BetterBlizzPlates 1.8.2g
 ## Retail
 ### Bugfix
