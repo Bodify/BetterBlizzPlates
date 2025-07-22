@@ -797,7 +797,7 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
 end
 
 local function CreateSlider(parent, label, minValue, maxValue, stepValue, element, axis, width)
-    local slider = CreateFrame("Slider", name, parent, "OptionsSliderTemplate")
+    local slider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
     slider:SetOrientation('HORIZONTAL')
     slider:SetMinMaxValues(minValue, maxValue)
     slider:SetValueStep(stepValue)
@@ -1239,6 +1239,13 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     local np, frame = BBP.GetSafeNameplate("target")
                     if frame then
                         frame.BetterBlizzPlates.config.nameplateTargetBorderSize = value
+                        frame.HealthBarsContainer.border:UpdateSizes()
+                    end
+                elseif element == "nameplatePersonalBorderSize" then
+                    BetterBlizzPlatesDB.nameplatePersonalBorderSize = value
+                    local np, frame = BBP.GetSafeNameplate("player")
+                    if frame then
+                        frame.BetterBlizzPlates.config.nameplatePersonalBorderSize = value
                         frame.HealthBarsContainer.border:UpdateSizes()
                     end
                 elseif element == "totemIndicatorDefaultCooldownTextSize" then
@@ -1747,6 +1754,20 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             local tooltipText = "\n|cff32f795Right-click to only show Purgeable in PvE.|r"
             if BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly then
                 tooltipText = tooltipText .. "\nOnly in PvE enabled|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
+            local onlyShowIfPurge = BetterBlizzPlatesDB.otherNpBuffFilterPurgeableHasPurge
+            tooltipText = tooltipText.."\n\n|cff32f795Shift-Right-click to only show purgeable auras if you have a purge|r"
+
+            if onlyShowIfPurge then
+                tooltipText = tooltipText .. "\nOnly in show if have a purge|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Sort Auras by Duration" then
+            local tooltipText = "\n|cff32f795Right-click to reverse duration sort.|r"
+            if BetterBlizzPlatesDB.sortDurationAurasReverse then
+                tooltipText = tooltipText .. "\nReverse sorting|A:ParagonReputation_Checkmark:15:15|a"
             end
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         elseif title == "Enable Key Auras" then
@@ -5493,7 +5514,7 @@ local function guiGeneralTab()
         friendlyHealthBarColorButton:Disable()
     end
 
-    BBP.friendlyHideHealthBar = CreateCheckbox("friendlyHideHealthBar", "Hide healthbar", BetterBlizzPlates, nil, nil, true)
+    BBP.friendlyHideHealthBar = CreateCheckbox("friendlyHideHealthBar", "Hide healthbar", BetterBlizzPlates)
     BBP.friendlyHideHealthBar:SetPoint("LEFT", alwaysHideFriendlyCastbar.text, "RIGHT", 0, 0)
     BBP.friendlyHideHealthBar:HookScript("OnClick", function()
         BBP.HideHealthbarInPvEMagicCaller()
@@ -5519,7 +5540,7 @@ local function guiGeneralTab()
 
     CreateTooltipTwo(BBP.friendlyHideHealthBar, "Hide Healthbar", "Hide healthbars on Friendly nameplates.", "Castbar and name will still show.\nThis also hides healthbars in PvE, if you don't want that behaviour then check the setting in Misc.")
 
-    BBP.friendlyHideHealthBarNpc = CreateCheckbox("friendlyHideHealthBarNpc", "NPC's", BetterBlizzPlates, nil, nil, true)
+    BBP.friendlyHideHealthBarNpc = CreateCheckbox("friendlyHideHealthBarNpc", "NPC's", BetterBlizzPlates)
     BBP.friendlyHideHealthBarNpc:SetPoint("LEFT", BBP.friendlyHideHealthBar.text, "RIGHT", 0, 0)
     CreateTooltipTwo(BBP.friendlyHideHealthBarNpc, "Hide NPC Healthbar", "Hide healthbars on Friendly NPC's", "Castbar and name will still show.")
 
@@ -5546,20 +5567,20 @@ local function guiGeneralTab()
         end
     end)
 
-    BBP.friendlyHideHealthBar:HookScript("OnClick", function(self)
-        if self:GetChecked() then
-            BBP.friendlyHideHealthBarNpc:Enable()
-            BBP.friendlyHideHealthBarNpc:Show()
-            BBP.friendlyHideHealthBarNpc:SetAlpha(1)
-        else
-            BBP.friendlyHideHealthBarNpc:Disable()
-            BBP.friendlyHideHealthBarNpc:Hide()
-        end
-    end)
-    if not BetterBlizzPlatesDB.friendlyHideHealthBar then
-        BBP.friendlyHideHealthBarNpc:Hide()
-        BBP.friendlyHideHealthBarNpc:Disable()
-    end
+    -- BBP.friendlyHideHealthBar:HookScript("OnClick", function(self)
+    --     if self:GetChecked() then
+    --         BBP.friendlyHideHealthBarNpc:Enable()
+    --         BBP.friendlyHideHealthBarNpc:Show()
+    --         BBP.friendlyHideHealthBarNpc:SetAlpha(1)
+    --     else
+    --         BBP.friendlyHideHealthBarNpc:Disable()
+    --         BBP.friendlyHideHealthBarNpc:Hide()
+    --     end
+    -- end)
+    -- if not BetterBlizzPlatesDB.friendlyHideHealthBar then
+    --     BBP.friendlyHideHealthBarNpc:Hide()
+    --     BBP.friendlyHideHealthBarNpc:Disable()
+    -- end
 
     local friendlyNpToggles = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     friendlyNpToggles:SetText("Toggles:")
@@ -9519,14 +9540,26 @@ local function guiNameplateAuras()
     CreateTooltipTwo(otherNpBuffFilterPurgeable, "Purgeable", "Only show purgeable/stealable buffs. (Plus other filters)")
     otherNpBuffFilterPurgeable:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
-            if BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly == nil then
-                if not otherNpBuffFilterPurgeable:GetChecked() then
-                    otherNpBuffFilterPurgeable:Click()
-                    otherNpBuffFilterPurgeable:SetChecked(true)
+            if IsShiftKeyDown() then 
+                if BetterBlizzPlatesDB.otherNpBuffFilterPurgeableHasPurge == nil then
+                    if not otherNpBuffFilterPurgeable:GetChecked() then
+                        otherNpBuffFilterPurgeable:Click()
+                        otherNpBuffFilterPurgeable:SetChecked(true)
+                    end
+                    BetterBlizzPlatesDB.otherNpBuffFilterPurgeableHasPurge = true
+                else
+                    BetterBlizzPlatesDB.otherNpBuffFilterPurgeableHasPurge = nil
                 end
-                BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly = true
             else
-                BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly = nil
+                if BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly == nil then
+                    if not otherNpBuffFilterPurgeable:GetChecked() then
+                        otherNpBuffFilterPurgeable:Click()
+                        otherNpBuffFilterPurgeable:SetChecked(true)
+                    end
+                    BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly = true
+                else
+                    BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly = nil
+                end
             end
             if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
                 self:GetScript("OnEnter")(self)
@@ -10279,6 +10312,18 @@ local function guiNameplateAuras()
     local sortDurationAuras = CreateCheckbox("sortDurationAuras", "Sort Auras by Duration", enableNameplateAuraCustomisation)
     sortDurationAuras:SetPoint("BOTTOMLEFT", sortEnlargedAurasFirst, "TOPLEFT", 0, -4)
     CreateTooltipTwo(sortDurationAuras, "Sort Auras by Duration", "Sorts the nameplate auras with the shortest duration first. Enlarged Auras will still appear first but also sorted by duration (I want feedback here if you have).")
+    sortDurationAuras:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            if BetterBlizzPlatesDB.sortDurationAurasReverse then
+                BetterBlizzPlatesDB.sortDurationAurasReverse = nil
+            else
+                BetterBlizzPlatesDB.sortDurationAurasReverse = true
+            end
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+        end
+    end)
 
     local enlargeAllImportantBuffs = CreateCheckbox("enlargeAllImportantBuffs", "Enlarge all Important Buffs", enableNameplateAuraCustomisation)
     enlargeAllImportantBuffs:SetPoint("BOTTOMLEFT", sortDurationAuras, "TOPLEFT", 0, -4)
@@ -11261,7 +11306,7 @@ local function guiTotemList()
             BBP.totemIndicatorScale:SetValue(val)
         end)
         totemIndicatorScale:SetScale(1.2)
-    
+
         local totemIndicatorWidthEnabled = CreateCheckbox("totemIndicatorWidthEnabled", "Enable healthbar width settings", listFrame)
         totemIndicatorWidthEnabled:SetPoint("LEFT", totemIndicatorScale, "RIGHT", 25, 2)
         totemIndicatorWidthEnabled:HookScript("OnClick", function()
@@ -11269,7 +11314,12 @@ local function guiTotemList()
         end)
         CreateTooltipTwo(totemIndicatorWidthEnabled,"Enable healthbar width settings", "Enable individual healthbar width settings for npcs in totem list.\n\nRequires a reload.")
         totemIndicatorWidthEnabled:SetScale(1.1)
-    
+
+        local totemIndicatorUseNicknames = CreateCheckbox("totemIndicatorUseNicknames", "Use Nicknames", listFrame)
+        totemIndicatorUseNicknames:SetPoint("TOPLEFT", totemIndicatorWidthEnabled, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+        CreateTooltipTwo(totemIndicatorUseNicknames,"Use Nicknames", "The nameplates will show the name you enter in the list instead of their original name.")
+        totemIndicatorUseNicknames:SetScale(1.1)
+
         local resetTotemListButton = CreateFrame("Button", nil, listFrame, "UIPanelButtonTemplate")
         resetTotemListButton:SetText("Reset Totem List")
         resetTotemListButton:SetWidth(120)
@@ -11579,19 +11629,26 @@ local function guiMisc()
     end)
 
     local changeNameplateBorderSize = CreateCheckbox("changeNameplateBorderSize", "Change Nameplate Border Size", guiMisc)
-    changeNameplateBorderSize:SetPoint("TOPLEFT", showGuildNames, "BOTTOMLEFT", 400, 25)
+    changeNameplateBorderSize:SetPoint("TOPLEFT", showGuildNames, "BOTTOMLEFT", 400, 39)
     local nameplateBorderSize = CreateSlider(changeNameplateBorderSize, "Nameplate Border Size", 0.5, 10, 0.5, "nameplateBorderSize")
     nameplateBorderSize:SetPoint("TOPLEFT", changeNameplateBorderSize, "BOTTOMLEFT", 10, -10)
     local nameplateTargetBorderSize = CreateSlider(changeNameplateBorderSize, "Target Border Size", 0.5, 10, 0.5, "nameplateTargetBorderSize")
     nameplateTargetBorderSize:SetPoint("TOPLEFT", nameplateBorderSize, "BOTTOMLEFT", 0, -17)
+    local nameplatePersonalBorderSize = CreateSlider(changeNameplateBorderSize, "Personal Border Size", 0.5, 10, 0.5, "nameplatePersonalBorderSize")
+    nameplatePersonalBorderSize:SetPoint("TOPLEFT", nameplateTargetBorderSize, "BOTTOMLEFT", 0, -17)
+
+
+
     CreateTooltipTwo(nameplateBorderSize, "Nameplate Border Size", "The size of nameplate borders.")
     changeNameplateBorderSize:HookScript("OnClick", function(self)
         if self:GetChecked() then
             EnableElement(nameplateBorderSize)
             EnableElement(nameplateTargetBorderSize)
+            EnableElement(nameplatePersonalBorderSize)
         else
             DisableElement(nameplateBorderSize)
             DisableElement(nameplateTargetBorderSize)
+            DisableElement(nameplatePersonalBorderSize)
             StaticPopup_Show("BBP_CONFIRM_RELOAD")
         end
     end)
@@ -11607,7 +11664,7 @@ local function guiMisc()
     end)
 
     local changeNameplateBorderColor = CreateCheckbox("changeNameplateBorderColor", "Change Nameplate Border Color", guiMisc)
-    changeNameplateBorderColor:SetPoint("TOPLEFT", nameplateTargetBorderSize, "BOTTOMLEFT", -10, -4)
+    changeNameplateBorderColor:SetPoint("TOPLEFT", nameplatePersonalBorderSize, "BOTTOMLEFT", -10, -2)
 
     local npBorderTargetColor = CreateCheckbox("npBorderTargetColor", "Target Border", changeNameplateBorderColor)
     npBorderTargetColor:SetPoint("TOPLEFT", changeNameplateBorderColor, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
@@ -11698,7 +11755,7 @@ local function guiMisc()
     end)
 
     local customFontSizeEnabled = CreateCheckbox("customFontSizeEnabled", "Enable Custom Nameplate Font Size", guiMisc)
-    customFontSizeEnabled:SetPoint("TOPLEFT", changeNpHpBgColor, "BOTTOMLEFT", 0, -26)
+    customFontSizeEnabled:SetPoint("TOPLEFT", changeNpHpBgColor, "BOTTOMLEFT", 0, -22)
     CreateTooltipTwo(customFontSizeEnabled, "Custom Nameplate Font Size", "Change the font size on nameplates", "This setting will work in PvE for friendly name size while the font size settings on the general page adjust the scale (not allowed in PvE).\nUse this setting as a baseline for friendly name size and finetune with scale on general page for non-pve content.")
 
     local customFontSize = CreateSlider(customFontSizeEnabled, "Font Size", 2, 32, 1, "customFontSize")
@@ -11714,7 +11771,7 @@ local function guiMisc()
 
 
     local enableNpVerticalPos = CreateCheckbox("enableNpVerticalPos", "Change Nameplate Vertical Position", guiMisc)
-    enableNpVerticalPos:SetPoint("TOPLEFT", customFontSizeEnabled, "BOTTOMLEFT", 0, -30)
+    enableNpVerticalPos:SetPoint("TOPLEFT", customFontSizeEnabled, "BOTTOMLEFT", 0, -27)
     CreateTooltipTwo(enableNpVerticalPos, "Change Nameplate Vertical Position", "Change the vertical position of nameplates.\n\nThis will only move the visual elements and not the clickable area due to restrictions.")
 
     local nameplateVerticalPosition = CreateSlider(enableNpVerticalPos, "Nameplate Vertical Position", -60, 60, 1, "nameplateVerticalPosition", "Y")

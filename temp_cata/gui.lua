@@ -744,7 +744,7 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
 end
 
 local function CreateSlider(parent, label, minValue, maxValue, stepValue, element, axis, width)
-    local slider = CreateFrame("Slider", name, parent, "OptionsSliderTemplate")
+    local slider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
     slider:SetOrientation('HORIZONTAL')
     slider:SetMinMaxValues(minValue, maxValue)
     slider:SetValueStep(stepValue)
@@ -1621,6 +1621,26 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
 
             if alsoHideInt then
                 tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Sort Auras by Duration" then
+            local tooltipText = "\n|cff32f795Right-click to reverse duration sort.|r"
+            if BetterBlizzPlatesDB.sortDurationAurasReverse then
+                tooltipText = tooltipText .. "\nReverse sorting|A:ParagonReputation_Checkmark:15:15|a"
+            end
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Purgeable" then
+            local tooltipText = "\n|cff32f795Right-click to only show Purgeable in PvE.|r"
+            if BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly then
+                tooltipText = tooltipText .. "\nOnly in PvE enabled|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
+            local onlyShowIfPurge = BetterBlizzPlatesDB.otherNpBuffFilterPurgeableHasPurge
+            tooltipText = tooltipText.."\n\n|cff32f795Shift-Right-click to only show purgeable auras if you have a purge|r"
+
+            if onlyShowIfPurge then
+                tooltipText = tooltipText .. "\nOnly in show if have a purge|A:ParagonReputation_Checkmark:15:15|a"
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
@@ -5155,11 +5175,15 @@ local function guiGeneralTab()
     --     ShowProfileConfirmation("Mmarkers", "DRUID", BBP.MmarkersProfile)
     -- end)
     -- mmarkersButton:SetPoint("LEFT", magnuszButton, "RIGHT", btnGap, 0)
+    local mmarkersButton = CreateClassButton(BetterBlizzPlates, "DRUID", "Mmarkers", "mmarkers", function()
+        ShowProfileConfirmation("Mmarkers", "DRUID", BBP.MmarkersProfile)
+    end)
+    mmarkersButton:SetPoint("LEFT", blitzButton, "RIGHT", btnGap, 0)
 
     local nahjButton = CreateClassButton(BetterBlizzPlates, "ROGUE", "Nahj", "nahj", function()
         ShowProfileConfirmation("Nahj", "ROGUE", BBP.NahjProfile)
     end)
-    nahjButton:SetPoint("LEFT", blitzButton, "RIGHT", btnGap, 0)
+    nahjButton:SetPoint("LEFT", mmarkersButton, "RIGHT", btnGap, 0)
 
     local saulButton = CreateClassButton(BetterBlizzPlates, "SHAMAN", "Saul", "saul", function()
         ShowProfileConfirmation("Saul", "SHAMAN", BBP.SaulProfile)
@@ -8036,14 +8060,26 @@ local function guiNameplateAuras()
     CreateTooltipTwo(otherNpBuffFilterPurgeable, "Purgeable", "Only show purgeable/stealable buffs. (Plus other filters)")
     otherNpBuffFilterPurgeable:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
-            if BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly == nil then
-                if not otherNpBuffFilterPurgeable:GetChecked() then
-                    otherNpBuffFilterPurgeable:Click()
-                    otherNpBuffFilterPurgeable:SetChecked(true)
+            if IsShiftKeyDown() then 
+                if BetterBlizzPlatesDB.otherNpBuffFilterPurgeableHasPurge == nil then
+                    if not otherNpBuffFilterPurgeable:GetChecked() then
+                        otherNpBuffFilterPurgeable:Click()
+                        otherNpBuffFilterPurgeable:SetChecked(true)
+                    end
+                    BetterBlizzPlatesDB.otherNpBuffFilterPurgeableHasPurge = true
+                else
+                    BetterBlizzPlatesDB.otherNpBuffFilterPurgeableHasPurge = nil
                 end
-                BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly = true
             else
-                BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly = nil
+                if BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly == nil then
+                    if not otherNpBuffFilterPurgeable:GetChecked() then
+                        otherNpBuffFilterPurgeable:Click()
+                        otherNpBuffFilterPurgeable:SetChecked(true)
+                    end
+                    BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly = true
+                else
+                    BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly = nil
+                end
             end
             if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
                 self:GetScript("OnEnter")(self)
@@ -8800,6 +8836,18 @@ local function guiNameplateAuras()
     local sortDurationAuras = CreateCheckbox("sortDurationAuras", "Sort Auras by Duration", enableNameplateAuraCustomisation)
     sortDurationAuras:SetPoint("BOTTOMLEFT", sortEnlargedAurasFirst, "TOPLEFT", 0, -4)
     CreateTooltipTwo(sortDurationAuras, "Sort Auras by Duration", "Sorts the nameplate auras with the shortest duration first. Enlarged Auras will still appear first but also sorted by duration (I want feedback here if you have).")
+    sortDurationAuras:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            if BetterBlizzPlatesDB.sortDurationAurasReverse then
+                BetterBlizzPlatesDB.sortDurationAurasReverse = nil
+            else
+                BetterBlizzPlatesDB.sortDurationAurasReverse = true
+            end
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+        end
+    end)
 
     local enlargeAllImportantBuffs = CreateCheckbox("enlargeAllImportantBuffs", "Enlarge all Important Buffs", enableNameplateAuraCustomisation)
     enlargeAllImportantBuffs:SetPoint("BOTTOMLEFT", sortDurationAuras, "TOPLEFT", 0, -4)
@@ -9313,8 +9361,8 @@ local function guiCVarControl()
 
     local tempResourceWA = CreateFrame("Button", nil, guiCVarControl, "UIPanelButtonTemplate")
     tempResourceWA:SetText("Import WeakAura")
-    tempResourceWA:SetWidth(150)
-    tempResourceWA:SetPoint("TOPLEFT", comboPointsText, "BOTTOMLEFT", 0, -10)
+    tempResourceWA:SetSize(170, 37)
+    tempResourceWA:SetPoint("TOPLEFT", comboPointsText, "BOTTOMLEFT", 0, -6)
     tempResourceWA:SetScript("OnClick", function()
         if WeakAuras then
             WeakAuras.Import(BBP.tempComboPointWA)
@@ -9330,13 +9378,15 @@ local function guiCVarControl()
     CreateTooltipTwo(nameplateResourceOnTarget, "Nameplate Resource", "Show combo points, warlock shards, arcane charges etc on nameplates.", nil, nil, "nameplateResourceOnTarget")
     notWorking(nameplateResourceOnTarget)
 
-    local nameplateResourceUnderCastbar = CreateCheckbox("nameplateResourceUnderCastbar", "Anchor resource underneath healthbar/castbar", nameplateResourceOnTarget, nil, BBP.RegisterTargetCastingEvents)
+    local nameplateResourceUnderCastbar = CreateCheckbox("nameplateResourceUnderCastbar", "Anchor resource underneath healthbar/castbar", guiCVarControl, nil, BBP.RegisterTargetCastingEvents)
     nameplateResourceUnderCastbar:SetPoint("TOP", nameplateResourceOnTarget, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateResourceUnderCastbar, "Anchor Resource Under", "Anchor nameplate combo points etc underneath the healthbar and underneath the castbar during casts.")
+    CreateTooltipTwo(nameplateResourceUnderCastbar, "Anchor Resource Under", "Anchor nameplate combo points etc underneath the healthbar and underneath the castbar during casts.\n\nWEAKAURA: This setting will work with the Imported WeakAura.")
     nameplateResourceOnTarget:HookScript("OnClick", function()
         CheckAndToggleCheckboxes(nameplateResourceOnTarget)
     end)
-    notWorking(nameplateResourceUnderCastbar)
+    if not BBP.isMoP then
+        notWorking(nameplateResourceUnderCastbar)
+    end
 
     local hideResourceOnFriend = CreateCheckbox("hideResourceOnFriend", "Hide resource on friendly nameplates", guiCVarControl)
     hideResourceOnFriend:SetPoint("TOP", nameplateResourceUnderCastbar, "BOTTOM", 0, pixelsBetweenBoxes)
@@ -9645,6 +9695,11 @@ local function guiTotemList()
         BBP.totemIndicatorScale:SetValue(val)
     end)
     totemIndicatorScale:SetScale(1.2)
+
+    local totemIndicatorUseNicknames = CreateCheckbox("totemIndicatorUseNicknames", "Use Nicknames", listFrame)
+    totemIndicatorUseNicknames:SetPoint("LEFT", totemIndicatorScale, "RIGHT", 25, 2)
+    CreateTooltipTwo(totemIndicatorUseNicknames,"Use Nicknames", "The nameplates will show the name you enter in the list instead of their original name.")
+    totemIndicatorUseNicknames:SetScale(1.1)
 
     local resetTotemListButton = CreateFrame("Button", nil, guiTotemList, "UIPanelButtonTemplate")
     resetTotemListButton:SetText("Reset Totem List")
@@ -10388,10 +10443,15 @@ function BBP.CreateIntroMessageWindow()
     -- end)
     -- mmarkersButton:SetPoint("TOP", magnuszButton, "BOTTOM", 0, btnGap)
 
+    local mmarkersButton = CreateClassButton(BBP.IntroMessageWindow, "DRUID", "Mmarkers", "mmarkers", function()
+        ShowProfileConfirmation("Mmarkers", "DRUID", BBP.MmarkersProfile)
+    end)
+    mmarkersButton:SetPoint("TOP", blitzButton, "BOTTOM", 0, -40)
+
     local nahjButton = CreateClassButton(BBP.IntroMessageWindow, "ROGUE", "Nahj", "nahj", function()
         ShowProfileConfirmation("Nahj", "ROGUE", BBP.NahjProfile)
     end)
-    nahjButton:SetPoint("TOP", blitzButton, "BOTTOM", 0, -40)
+    nahjButton:SetPoint("TOP", mmarkersButton, "BOTTOM", 0, btnGap)
 
     local saulButton = CreateClassButton(BBP.IntroMessageWindow, "SHAMAN", "Saul", "saul", function()
         ShowProfileConfirmation("Saul", "SHAMAN", BBP.SaulProfile)

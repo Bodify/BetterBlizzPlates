@@ -739,7 +739,7 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
 end
 
 local function CreateSlider(parent, label, minValue, maxValue, stepValue, element, axis, width)
-    local slider = CreateFrame("Slider", name, parent, "OptionsSliderTemplate")
+    local slider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
     slider:SetOrientation('HORIZONTAL')
     slider:SetMinMaxValues(minValue, maxValue)
     slider:SetValueStep(stepValue)
@@ -800,6 +800,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
     local function SetSliderValue()
         if BBP.variablesLoaded and BBP.CVarsAreSaved() then
             local initialValue = tonumber(BetterBlizzPlatesDB[element]) -- Convert to number
+            print(element)
 
             if initialValue then
                 local currentMin, currentMax = slider:GetMinMaxValues() -- Fetch the latest min and max values
@@ -1606,6 +1607,12 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
                 tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
             end
 
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Sort Auras by Duration" then
+            local tooltipText = "\n|cff32f795Right-click to reverse duration sort.|r"
+            if BetterBlizzPlatesDB.sortDurationAurasReverse then
+                tooltipText = tooltipText .. "\nReverse sorting|A:ParagonReputation_Checkmark:15:15|a"
+            end
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
 
@@ -8680,6 +8687,11 @@ local function guiTotemList()
         BBP.totemIndicatorScale:SetValue(val)
     end)
     totemIndicatorScale:SetScale(1.2)
+
+    local totemIndicatorUseNicknames = CreateCheckbox("totemIndicatorUseNicknames", "Use Nicknames", listFrame)
+    totemIndicatorUseNicknames:SetPoint("LEFT", totemIndicatorScale, "RIGHT", 25, 2)
+    CreateTooltipTwo(totemIndicatorUseNicknames,"Use Nicknames", "The nameplates will show the name you enter in the list instead of their original name.")
+    totemIndicatorUseNicknames:SetScale(1.1)
 
     local resetTotemListButton = CreateFrame("Button", nil, guiTotemList, "UIPanelButtonTemplate")
     resetTotemListButton:SetText("Reset Totem List")

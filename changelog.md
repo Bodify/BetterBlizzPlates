@@ -1,3 +1,40 @@
+# BetterBlizzPlates 1.8.3
+## Retail
+### New
+- "Change Nameplate Border Size" setting in Misc now also has a slider for Personal Resource Display.
+- Nameplate Auras: "Sort Auras by Duration" right-click subsetting that reverses order.
+### Tweak
+- Friendly "Hide healthbar" and "Hide healthbar NPC" are no longer tied together so you can hide one or the other.
+- Custom name color for enemy/neutral npcs now changes the neutral color to enemy when they get in combat.
+### Bugfix
+- Fix the 2 extra rogue combo points from talents sometimes not getting darkened from the darkmode setting.
+## Mists of Pandaria
+## New
+- Nameplate Auras: "Sort Auras by Duration" right-click subsetting that reverses order.
+### Tweak
+- Added missing Earthgrab Totem in Totem Indicator List after accidental removal from cata -> mop update. This has been auto added to your list.
+- Updated the "temporary" nameplate resource weakaura for MoP to support Monk etc. Still in CVar Control with a "Import WeakAura" button.
+### Bugfix
+- Fix "Color by Aura" missing "Only Mine" check on MoP version.
+- Fix some issues with castbar text due to it not being linked to the proper element after copypaste from retail (clasic version originally doesnt have castbar text)
+- Fix the default width of friendly nameplates in PvE being off after the big changes to BBP in MoP. This width is forced to default width due to friendly nameplates not being allowed to be altered and the border is a single texture and cant follow the nameplate width when BBP is not allowed to customize it.
+## All versions
+### New
+- Totem Indicator: Use Nicknames. This setting will show the nameplates with the name you put in the totem indicator list instead of their default name. Setting found in the Totem Indicator List section.
+- Nameplate Auras: "Purgeable" filter now has a Shift-Rightclick setting to only display purgeable auras if your class has a purge. This is checking Blizzards default logic whether or not you have a purge.
+### Tweak
+- Little tweak to how the default nameplate font is handled. This was poorly handled from way back when and this should fix some issues. However there have been weird issues spawning from attempting to change this behaviour before. If you are seeing any issues with the nameplate font with this new change please type "/bbp oldfonts"
+### Bugfix
+- Fix "Show last name only" setting conflicting with Totem Indicator's "Hide Name" setting causing names to to despite being set to hidden.
+## Classic Era
+### Bugfix
+- Fix issues with sliders caused by broken CVar fetcher for new users. Been broken for awhile... oops.
+## Note
+- If you have reported bugs or requested features that I promised but did not deliver please remind me. Been hectic and I lost a lot of data due to some oopsies during Linux testing.
+
+
+
+
 # BetterBlizzPlates 1.8.2h
 ## Retail
 ### Tweak

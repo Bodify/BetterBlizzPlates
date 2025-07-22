@@ -577,7 +577,7 @@ function BBP.OnUnitAura(unit)
     if nameplate and nameplate.UnitFrame then
         local frame = nameplate.UnitFrame
         local guid = UnitGUID(frame.unit)
-        local npcID = tonumber(guid and guid:match("-(%d+)-%x+$"))
+        local npcID = BBP.GetNPCIDFromGUID(guid)
         local entry = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
         if entry then
             local hasAura = false

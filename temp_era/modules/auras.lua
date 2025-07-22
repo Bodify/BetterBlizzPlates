@@ -469,6 +469,124 @@ local function StartCheckBuffsTimer()
     end
 end
 
+local function defaultComparator(a, b)
+    return a.auraInstanceID < b.auraInstanceID
+end
+
+local function durationComparator(a, b)
+    if a.isCC ~= b.isCC then
+        return a.isCC
+    end
+
+    if a.isEnlarged ~= b.isEnlarged then
+        return a.isEnlarged
+    end
+
+    if a.duration == 0 and b.duration == 0 then
+        return a.auraInstanceID < b.auraInstanceID
+    elseif a.duration == 0 then
+        return false
+    elseif b.duration == 0 then
+        return true
+    end
+
+    local now = GetTime()
+    local timeLeftA = (a.expirationTime or 0) - now
+    local timeLeftB = (b.expirationTime or 0) - now
+
+    if timeLeftA < 0 then timeLeftA = 0 end
+    if timeLeftB < 0 then timeLeftB = 0 end
+
+    if timeLeftA ~= timeLeftB then
+        return timeLeftA < timeLeftB
+    end
+
+    return a.auraInstanceID < b.auraInstanceID
+end
+
+local function reverseDurationComparator(a, b)
+    if a.isCC ~= b.isCC then
+        return b.isCC
+    end
+
+    if a.isEnlarged ~= b.isEnlarged then
+        return b.isEnlarged
+    end
+
+    if a.duration == 0 and b.duration == 0 then
+        return a.auraInstanceID > b.auraInstanceID
+    elseif a.duration == 0 then
+        return true
+    elseif b.duration == 0 then
+        return false
+    end
+
+    local now = GetTime()
+    local timeLeftA = (a.expirationTime or 0) - now
+    local timeLeftB = (b.expirationTime or 0) - now
+
+    if timeLeftA < 0 then timeLeftA = 0 end
+    if timeLeftB < 0 then timeLeftB = 0 end
+
+    if timeLeftA ~= timeLeftB then
+        return timeLeftA > timeLeftB
+    end
+
+    return a.auraInstanceID > b.auraInstanceID
+end
+
+local function largeSmallAuraComparator(a, b)
+    if a.isCC ~= b.isCC then
+        return a.isCC
+    end
+
+    if a.isEnlarged or b.isEnlarged then
+        if a.isEnlarged and not b.isEnlarged then
+            return true
+        elseif not a.isEnlarged and b.isEnlarged then
+            return false
+        else
+            return defaultComparator(a, b)
+        end
+    end
+
+    if a.isCompacted or b.isCompacted then
+        if a.isCompacted and not b.isCompacted then
+            return false
+        elseif not a.isCompacted and b.isCompacted then
+            return true
+        else
+            return defaultComparator(a, b)
+        end
+    end
+
+    return defaultComparator(a, b)
+end
+
+local function smallLargeAuraComparator(a, b)
+    if a.isCompacted or b.isCompacted then
+        if a.isCompacted and not b.isCompacted then
+            return true
+        elseif not a.isCompacted and b.isCompacted then
+            return false
+        else
+            return defaultComparator(a, b)
+        end
+    end
+
+    if a.isEnlarged or b.isEnlarged then
+        if a.isEnlarged and not b.isEnlarged then
+            return false
+        elseif not a.isEnlarged and b.isEnlarged then
+            return true
+        else
+            return defaultComparator(a, b)
+        end
+    end
+
+    return defaultComparator(a, b)
+end
+
 function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     -- Obtain the health bar details
     local healthBar = container:GetParent().healthBar
@@ -505,6 +623,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local sortEnlargedAurasFirst = BetterBlizzPlatesDB.sortEnlargedAurasFirst
     local sortCompactedAurasFirst = BetterBlizzPlatesDB.sortCompactedAurasFirst
     local sortDurationAuras = BetterBlizzPlatesDB.sortDurationAuras
+    local sortDurationAurasReverse = BetterBlizzPlatesDB.sortDurationAurasReverse
 
     local scaledCompactWidth = compactSize * nameplateAuraCompactedScale
     local scaledCompactHeight = auraHeightSetting * nameplateAuraCompactedScale
@@ -515,86 +634,6 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local scaledBuffHeight = auraHeightSetting * nameplateAuraBuffScale
     local scaledDebuffWidth = 20 * nameplateAuraDebuffScale
     local scaledDebuffHeight = auraHeightSetting * nameplateAuraDebuffScale
-
-    local function defaultComparator(a, b)
-        return a.auraInstanceID < b.auraInstanceID
-    end
-
-    local function durationComparator(a, b)
-        if a.isEnlarged ~= b.isEnlarged then
-            return a.isEnlarged
-        end
-
-        if a.duration == 0 and b.duration == 0 then
-            return a.auraInstanceID < b.auraInstanceID
-        elseif a.duration == 0 then
-            return false
-        elseif b.duration == 0 then
-            return true
-        end
-
-        local now = GetTime()
-        local timeLeftA = (a.expirationTime or 0) - now
-        local timeLeftB = (b.expirationTime or 0) - now
-
-        if timeLeftA < 0 then timeLeftA = 0 end
-        if timeLeftB < 0 then timeLeftB = 0 end
-
-        if timeLeftA ~= timeLeftB then
-            return timeLeftA < timeLeftB
-        end
-
-        return a.auraInstanceID < b.auraInstanceID
-    end
-
-    local function largeSmallAuraComparator(a, b)
-        if a.isEnlarged or b.isEnlarged then
-            if a.isEnlarged and not b.isEnlarged then
-                return true
-            elseif not a.isEnlarged and b.isEnlarged then
-                return false
-            else
-                return defaultComparator(a, b)
-            end
-        end
-
-        if a.isCompacted or b.isCompacted then
-            if a.isCompacted and not b.isCompacted then
-                return false
-            elseif not a.isCompacted and b.isCompacted then
-                return true
-            else
-                return defaultComparator(a, b)
-            end
-        end
-
-        return defaultComparator(a, b)
-    end
-
-    local function smallLargeAuraComparator(a, b)
-        if a.isCompacted or b.isCompacted then
-            if a.isCompacted and not b.isCompacted then
-                return true
-            elseif not a.isCompacted and b.isCompacted then
-                return false
-            else
-                return defaultComparator(a, b)
-            end
-        end
-
-        if a.isEnlarged or b.isEnlarged then
-            if a.isEnlarged and not b.isEnlarged then
-                return false
-            elseif not a.isEnlarged and b.isEnlarged then
-                return true
-            else
-                return defaultComparator(a, b)
-            end
-        end
-
-        return defaultComparator(a, b)
-    end
-
 
     -- Separate buffs and debuffs if needed
     local buffs = {}
@@ -758,7 +797,9 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     local lastRow = 0
     if BetterBlizzPlatesDB.separateAuraBuffRow then
         if #debuffs > 0 then
-            if sortDurationAuras then
+            if sortDurationAurasReverse then
+                table.sort(debuffs, reverseDurationComparator)
+            elseif sortDurationAuras then
                 table.sort(debuffs, durationComparator)
             elseif sortEnlargedAurasFirst then
                 table.sort(debuffs, largeSmallAuraComparator)
@@ -769,7 +810,9 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
             lastRow = LayoutAuras(debuffs, 0)
         end
 
-        if sortDurationAuras then
+        if sortDurationAurasReverse then
+            table.sort(buffs, reverseDurationComparator)
+        elseif sortDurationAuras then
             table.sort(buffs, durationComparator)
         elseif sortEnlargedAurasFirst then
             table.sort(buffs, largeSmallAuraComparator)
@@ -779,7 +822,9 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
         rowWidths = CalculateRowWidths(buffs)
         LayoutAuras(buffs, lastRow + (#debuffs > 0 and 1 or 0))
     else
-        if sortDurationAuras then
+        if sortDurationAurasReverse then
+            table.sort(buffs, reverseDurationComparator)
+        elseif sortDurationAuras then
             table.sort(buffs, durationComparator)
         elseif sortEnlargedAurasFirst then
             table.sort(buffs, largeSmallAuraComparator)

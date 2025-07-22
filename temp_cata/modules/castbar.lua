@@ -198,7 +198,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         castBar:SetHeight(castBarHeight)
         castBar.Icon:SetScale(castBarIconScale)
         castBar.Spark:SetSize(4, castBarHeight + 5)
-        castBar.Text:SetScale(castBarTextScale)
+        castBar.castText:SetScale(castBarTextScale)
         castBar.BorderShield:SetScale(borderShieldSize)
         frame.CastbarEmphasisActive = false
     end
@@ -309,10 +309,10 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     local useCustomFont = BetterBlizzPlatesDB.useCustomFont
     if useCustomFont then
-        BBP.SetFontBasedOnOption(castBar.Text, 12, "OUTLINE")
+        BBP.SetFontBasedOnOption(castBar.castText, 12, "OUTLINE")
     else
-        local f = castBar.Text:GetFont()
-        castBar.Text:SetFont(f,12,"OUTLINE")
+        local f = castBar.castText:GetFont()
+        castBar.castText:SetFont(f,12,"OUTLINE")
     end
 
     if hideCastbarText then
@@ -367,7 +367,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     castBar.BorderShield:SetScale(borderShieldSize)
     castBar:SetHeight(castBarHeight)
     castBar.Spark:SetSize(4, castBarHeight) --4 width, 5 height original
-    castBar.Text:SetScale(castBarTextScale)
+    castBar.castText:SetScale(castBarTextScale)
 
     if not hideCastbarIcon then
         if showCastBarIconWhenNoninterruptible and notInterruptible then
@@ -429,7 +429,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
 
         if castBarEmphasisText then
-            castBar.Text:SetScale(castBarEmphasisTextScale)
+            castBar.castText:SetScale(castBarEmphasisTextScale)
         end
 
         if castBarEmphasisIcon then

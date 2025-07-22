@@ -697,6 +697,7 @@ if BBP.isMoP then
         [15438] =   { name = "Greater Fire Elemental", icon = GetSpellTexture(2894),     hideIcon = false, size = 27, duration = nil, color = {1, 0.23, 0},       important = false, widthOn = true, hpWidth = -25 },
         [15352] =   { name = "Greater Earth Elemental", icon = GetSpellTexture(2062),    hideIcon = false, size = 27, duration = nil, color = {0.78, 0.51, 0.39}, important = false, widthOn = true, hpWidth = -25 },
         [2630] =    { name = "Earthbind Totem", icon = GetSpellTexture(2484),            hideIcon = false, size = 27, duration = nil, color = {0.78, 0.51, 0.39}, important = false, iconOnly = true },
+        [60561] =   { name = "Earthgrab Totem", icon = GetSpellTexture(51485),           hideIcon = false, size = 27, duration = 20,  color = {0.75, 0.31, 0.10},  important = false, widthOn = true, hpWidth = -25 },
         [59399] =   { name = "Skull Banner", icon = GetSpellTexture(114207),             hideIcon = false, size = 27, duration = 10,  color = {0.43, 0.20, 1},    important = false, widthOn = true, hpWidth = -25 },
         [64571] =   { name = "Lightwell", icon = GetSpellTexture(126135),                hideIcon = false, size = 25, duration = nil,  color = {0, 1, 0.78},      important = false, widthOn = true, hpWidth = -25 },
 
@@ -774,6 +775,7 @@ else
         [15438] =   { name = "Greater Fire Elemental", icon = GetSpellTexture(2894),     hideIcon = false, size = 27, duration = nil, color = {1, 0.23, 0},       important = false, widthOn = true, hpWidth = -25 },
         [15352] =   { name = "Greater Earth Elemental", icon = GetSpellTexture(2062),    hideIcon = false, size = 27, duration = nil, color = {0.78, 0.51, 0.39}, important = false, widthOn = true, hpWidth = -25 },
         [2630] =    { name = "Earthbind Totem", icon = GetSpellTexture(2484),            hideIcon = false, size = 27, duration = nil, color = {0.78, 0.51, 0.39}, important = false, iconOnly = true },
+        [60561] =   { name = "Earthgrab Totem", icon = GetSpellTexture(51485),           hideIcon = false, size = 27, duration = 20, color = {0.75, 0.31, 0.10}, important = false, widthOn = true, hpWidth = -25 },
         -- Un-important
         [3573] =    { name = "Mana Spring Totem", icon = GetSpellTexture(5675),          hideIcon = false, size = 25, duration = nil, color = {0.70, 0.98, 1},    important = false, iconOnly = true },
         [47069] =   { name = "Tranquil Mind", icon = GetSpellTexture(87718),             hideIcon = false, size = 25, duration = nil, color = {0.70, 0.98, 1},    important = false, iconOnly = true },
@@ -1708,7 +1710,7 @@ function BBP.ApplyNameplateWidth()
                 C_NamePlate.SetNamePlateSelfSize(BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight)
             end
 
-            local retailExtra = (not BetterBlizzPlatesDB.classicNameplates and 24) or 0
+            local retailExtra = ((not BBP.isInPvE and not BetterBlizzPlatesDB.classicNameplates) and 24) or 0
 
             local friendlyWidthAdjustment = BBP.isInPvE and 128 or BetterBlizzPlatesDB.nameplateFriendlyWidth
             C_NamePlate.SetNamePlateFriendlySize(friendlyWidthAdjustment + retailExtra, friendlyHeight)--friendlyHeight)
@@ -2278,7 +2280,7 @@ function BBP.ClassColorAndScaleNames(frame)
             frame.name:SetVertexColor(unpack(color))
         end
     elseif ((isEnemy or isNeutral) and enemyColorName) or (isFriend and friendlyColorName) then
-        local color = (isEnemy and BetterBlizzPlatesDB.enemyColorNameRGB) or (isNeutral and BetterBlizzPlatesDB.enemyNeutralColorNameRGB) or (isFriend and BetterBlizzPlatesDB.friendlyColorNameRGB)
+        local color = ((isEnemy or (isNeutral and UnitAffectingCombat(frame.unit))) and BetterBlizzPlatesDB.enemyColorNameRGB) or (isNeutral and BetterBlizzPlatesDB.enemyNeutralColorNameRGB) or (isFriend and BetterBlizzPlatesDB.friendlyColorNameRGB)
         frame.name:SetVertexColor(unpack(color))
     end
 
@@ -3273,7 +3275,7 @@ function BBP.ColorNpcHealthbar(frame)
     if info.isPlayer then return end
     if not info.unitGUID then return end
 
-    local npcID = select(6, strsplit("-", info.unitGUID))
+    local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
     local npcName = UnitName(frame.unit)
 
     -- Convert npcName to lowercase for case insensitive comparison
@@ -3324,11 +3326,12 @@ function BBP.UpdateAuraLookupTables()
     -- Populate new lookup tables
     for _, npc in ipairs(BetterBlizzPlatesDB.auraColorList) do
         if npc.id then
-            BBP.spellIdLookup[npc.id] = {priority = npc.priority, color = npc.entryColors.text}
-        end
-        if npc.name then
+            -- If the aura has an ID, add it to spellIdLookup and skip the name
+            BBP.spellIdLookup[npc.id] = {priority = npc.priority, color = npc.entryColors.text, onlyMine = npc.onlyMine}
+        elseif npc.name then
+            -- Only add to auraNameLookup if no ID is present
             local lowerCaseName = strlower(npc.name)
-            BBP.auraNameLookup[lowerCaseName] = {priority = npc.priority, color = npc.entryColors.text}
+            BBP.auraNameLookup[lowerCaseName] = {priority = npc.priority, color = npc.entryColors.text, onlyMine = npc.onlyMine}
         end
     end
 
@@ -3364,8 +3367,10 @@ function BBP.AuraColor(frame)
                 spellInfo = BBP.auraNameLookup[strlower(name)]
             end
             if spellInfo and spellInfo.priority > highestPriority then
-                highestPriority = spellInfo.priority
-                auraColor = spellInfo.color
+                if not spellInfo.onlyMine or source == "player" then
+                    highestPriority = spellInfo.priority
+                    auraColor = spellInfo.color
+                end
             end
             if highestPriority >= 10 then return true end
         end
@@ -5482,15 +5487,6 @@ local function HandleNamePlateAdded(unit)
     -- Show Focus Target Indicator
     if config.focusTargetIndicator then BBP.FocusTargetIndicator(frame) end
 
-    -- Show totem icons
-    if config.totemIndicator then BBP.ApplyTotemIconsAndColorNameplate(frame, unit) end
-
-    -- Color nameplate depending on aura
-    if config.auraColor then BBP.AuraColor(frame) end
-
-    -- Friend Indicator
-    if config.friendIndicator then FriendIndicator(frame) end
-
     -- Name repositioning
     if config.useFakeName then--config.useFakeName then
         BBP.RepositionName(frame)
@@ -5503,6 +5499,15 @@ local function HandleNamePlateAdded(unit)
     if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
 
     if config.showGuildNames then ShowFriendlyGuildName(frame, frame.unit) end
+
+    -- Show totem icons
+    if config.totemIndicator then BBP.ApplyTotemIconsAndColorNameplate(frame) end
+
+    -- Color nameplate depending on aura
+    if config.auraColor then BBP.AuraColor(frame) end
+
+    -- Friend Indicator
+    if config.friendIndicator then FriendIndicator(frame) end
 
     local alwaysHideFriendlyCastbar = BetterBlizzPlatesDB.alwaysHideFriendlyCastbar
     local alwaysHideEnemyCastbar = BetterBlizzPlatesDB.alwaysHideEnemyCastbar
@@ -5913,6 +5918,8 @@ function BBP.ConsolidatedUpdateName(frame)
     end
 
     -- Color nameplate and pick random name or hide name during totem tester
+    if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
+
     if config.totemIndicatorTest then
         if config.totemIndicatorColorName then
             frame.name:SetVertexColor(unpack(frame.randomColor))
@@ -5924,37 +5931,56 @@ function BBP.ConsolidatedUpdateName(frame)
         end
     end
 
+
     -- Ensure totem nameplate color is correct
     if config.totemIndicator then
-        local guid = UnitGUID(frame.unit);
-        local npcID = tonumber(guid and guid:match("-(%d+)-%x+$"))
-        if BetterBlizzPlatesDB.totemIndicatorNpcList[npcID] then
-            if not info.isFriend then
-                if BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color then
-                    if config.totemIndicatorColorHealthBar then
-                        frame.healthBar:SetStatusBarColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
-                    end
-                    if config.totemIndicatorColorName then
-                        frame.name:SetVertexColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
-                    end
+        local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
+        local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
+
+        if npcData then
+            if not config.totemIndicatorInitialized or BBP.needsUpdate then
+                config.totemIndicatorXPos = BetterBlizzPlatesDB.totemIndicatorXPos
+                config.totemIndicatorYPos = BetterBlizzPlatesDB.totemIndicatorYPos
+
+                config.totemIndicatorHideNameAndShiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
+                config.totemIndicatorTestMode = BetterBlizzPlatesDB.totemIndicatorTestMode
+                config.totemIndicatorHideHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
+                config.totemIndicatorEnemyOnly = BetterBlizzPlatesDB.totemIndicatorEnemyOnly
+                config.hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
+                config.totemIndicatorAnchor = BetterBlizzPlatesDB.totemIndicatorAnchor
+                config.showTotemIndicatorCooldownSwipe = BetterBlizzPlatesDB.showTotemIndicatorCooldownSwipe
+                config.totemIndicatorScale = BetterBlizzPlatesDB.totemIndicatorScale
+                config.totemIndicatorTestMode = BetterBlizzPlatesDB.totemIndicatorTestMode
+                config.totemIndicatorDefaultCooldownTextSize = BetterBlizzPlatesDB.totemIndicatorDefaultCooldownTextSize
+                config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
+                config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
+                config.totemIndicatorHideAuras = BetterBlizzPlatesDB.totemIndicatorHideAuras
+                config.totemIndicatorWidthEnabled = BetterBlizzPlatesDB.totemIndicatorWidthEnabled
+                config.totemIndicatorUseNicknames = BetterBlizzPlatesDB.totemIndicatorUseNicknames
+
+                config.totemIndicatorInitialized = true
+            end
+            local color = npcData.color
+
+            if not info.isFriend or (info.isFriend and not config.totemIndicatorEnemyOnly) then
+                if config.totemIndicatorColorHealthBar and color then
+                    frame.healthBar:SetStatusBarColor(unpack(color))
                 end
-                if config.totemIndicatorHideNameAndShiftIconDown or BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].iconOnly then
+
+                if config.totemIndicatorHideNameAndShiftIconDown then
                     frame.name:SetText("")
+                elseif config.totemIndicatorColorName and color then
+                    frame.name:SetVertexColor(unpack(color))
                 end
-            else
-                if not config.totemIndicatorEnemyOnly then
-                    if BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color then
-                        if config.totemIndicatorColorHealthBar then
-                            frame.healthBar:SetStatusBarColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
-                        end
-                        if config.totemIndicatorColorName then
-                            frame.name:SetVertexColor(unpack(BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].color))
-                        end
-                    end
-                    if config.totemIndicatorHideNameAndShiftIconDown or BetterBlizzPlatesDB.totemIndicatorNpcList[npcID].iconOnly then
-                        frame.name:SetText("")
-                    end
+
+                if config.totemIndicatorUseNicknames then
+                    frame.name:SetText(npcData.name)
                 end
+            end
+
+            if npcData.iconOnly then
+                frame.name:SetText("")
+                frame.name:SetAlpha(0)
             end
         end
     end
@@ -5973,26 +5999,15 @@ function BBP.ConsolidatedUpdateName(frame)
         SetDefaultNamePosition(frame)
     end
 
-    if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
-
     if (config.hideFriendlyNameText and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
         frame.name:SetAlpha(0)
-        if frame.fakeName then
-            frame.fakeName:SetAlpha(0)
-        end
     end
 
     if frame.hideNameOverride then
         frame.name:SetAlpha(0)
-        if frame.fakeName then
-            frame.fakeName:SetAlpha(0)
-        end
     else
         if frame.partyPointer and config.partyPointerHideAll and frame.partyPointer:IsShown() then
             frame.name:SetAlpha(0)
-            if frame.fakeName then
-                frame.fakeName:SetAlpha(0)
-            end
         end
     end
 
@@ -6410,6 +6425,8 @@ SlashCmdList["BBP"] = function(msg)
         BBP.ResetNameplateCVars()
         C_AddOns.DisableAddOn("BetterBlizzPlates")
         ReloadUI()
+    elseif command == "oldfonts" then
+        BBP.UseOldFonts()
     else
         --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
         if not BetterBlizzPlates.guiLoaded then
@@ -6453,6 +6470,19 @@ local function TurnOnEnabledFeaturesOnLogin()
     BBP.ToggleHealthNumbers()
 end
 
+function BBP.UseOldFonts()
+    local db = BetterBlizzPlatesDB
+    if not db.old_defaultLargeNamePlateFont then return end
+    db.defaultLargeNamePlateFont = db.old_defaultLargeNamePlateFont
+    db.defaultLargeFontSize = db.old_defaultLargeFontSize
+    db.defaultLargeNamePlateFontFlags = db.old_defaultLargeNamePlateFontFlags
+    db.defaultNamePlateFont = db.old_defaultNamePlateFont
+    db.defaultFontSize = db.old_defaultFontSize
+    db.defaultNamePlateFontFlags = db.old_defaultNamePlateFontFlags
+    db.skipFontCollect = true
+    ReloadUI()
+end
+
 -- Event registration for PLAYER_LOGIN
 local First = CreateFrame("Frame")
 First:RegisterEvent("ADDON_LOADED")
@@ -6460,6 +6490,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
     if event == "ADDON_LOADED" and addonName then
         if addonName == "BetterBlizzPlates" then
             TurnOffTestModes()
+            local db = BetterBlizzPlatesDB
             BetterBlizzPlatesDB.castbarEventsOn = false
             BetterBlizzPlatesDB.wasOnLoadingScreen = true
 
@@ -6529,6 +6560,15 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 BetterBlizzPlatesDB.mopBetaUpdated3 = true
             end
 
+            if not db.totemListUpdateMop1 then
+                if db.totemIndicatorNpcList then
+                    if not db.totemIndicatorNpcList[60561] then
+                        db.totemIndicatorNpcList[60561] = defaultSettings.totemIndicatorNpcList[60561]
+                    end
+                end
+                db.totemListUpdateMop1 = true
+            end
+
             InitializeSavedVariables()
 
             C_Timer.After(1, function()
@@ -6557,6 +6597,18 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 FetchAndSaveValuesOnFirstLogin()
 
                 BetterBlizzPlatesDB.firstSaveComplete = true
+            end
+            if not db.old_defaultLargeNamePlateFont then
+                db.old_defaultLargeNamePlateFont = db.defaultLargeNamePlateFont
+                db.old_defaultLargeFontSize = db.defaultLargeFontSize
+                db.old_defaultLargeNamePlateFontFlags = db.defaultLargeNamePlateFontFlags
+                db.old_defaultNamePlateFont = db.defaultNamePlateFont
+                db.old_defaultFontSize = db.defaultFontSize
+                db.old_defaultNamePlateFontFlags = db.defaultNamePlateFontFlags
+            end
+            if not db.skipFontCollect then
+                db.defaultLargeNamePlateFont, db.defaultLargeFontSize, db.defaultLargeNamePlateFontFlags = SystemFont_LargeNamePlate:GetFont()
+                db.defaultNamePlateFont, db.defaultFontSize, db.defaultNamePlateFontFlags = SystemFont_NamePlate:GetFont()
             end
 
             if not BetterBlizzPlatesDB.auraWhitelistColorsUpdated then
