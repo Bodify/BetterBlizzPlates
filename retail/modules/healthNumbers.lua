@@ -38,6 +38,12 @@ function BBP.HealthNumbers(frame)
         frame.healthNumbers = frame.bbpOverlay:CreateFontString(nil, "OVERLAY")
         frame.healthNumbers:SetTextColor(1, 1, 1)
         frame.healthNumbers:SetJustifyH("CENTER")
+
+        -- Copy outline and shadow from frame.name
+        local shadowColorR, shadowColorG, shadowColorB, shadowColorA = frame.name:GetShadowColor()
+        local shadowOffsetX, shadowOffsetY = frame.name:GetShadowOffset()
+        frame.healthNumbers:SetShadowColor(shadowColorR, shadowColorG, shadowColorB, shadowColorA)
+        frame.healthNumbers:SetShadowOffset(shadowOffsetX, shadowOffsetY)
     end
 
     if not config.healthNumbersInitialized or BBP.needsUpdate then

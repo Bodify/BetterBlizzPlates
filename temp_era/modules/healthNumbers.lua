@@ -149,6 +149,11 @@ function BBP.HealthNumbers(frame)
         BBP.SetFontBasedOnOption(frame.healthNumbers, 9, BetterBlizzPlatesDB.healthNumbersFontOutline)
         frame.healthNumbers:SetTextColor(1, 1, 1)
         frame.healthNumbers:SetJustifyH("CENTER")
+        -- Copy outline and shadow from frame.name
+        local shadowColorR, shadowColorG, shadowColorB, shadowColorA = frame.name:GetShadowColor()
+        local shadowOffsetX, shadowOffsetY = frame.name:GetShadowOffset()
+        frame.healthNumbers:SetShadowColor(shadowColorR, shadowColorG, shadowColorB, shadowColorA)
+        frame.healthNumbers:SetShadowOffset(shadowOffsetX, shadowOffsetY)
     end
 
     if BBP.needsUpdate then
