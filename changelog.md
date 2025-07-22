@@ -1,3 +1,11 @@
+# BetterBlizzPlates 1.8.3b
+## Retail
+### Bugfix
+- Fix friendly nameplates being hidden in PvE when "Hide Friendly NPC Healthbar" was enabled (After decoupling player & npc healthbar settings). Also turned off the hide npc healthbar setting if hide player healthbar was not enabled since this should not be enabled by default anymore.
+## Mists of Pandaria
+### Bugfix
+- Fix enemy nameplates getting a bit more narrow in PvE.
+
 # BetterBlizzPlates 1.8.3
 ## Retail
 ### New

@@ -65,7 +65,7 @@ local defaultSettings = {
     customTextureSelf = "Solid",
     customTextureSelfMana = "Solid",
     customFont = "Yanone (BBP)",
-    friendlyHideHealthBarNpc = true,
+    --friendlyHideHealthBarNpc = true,
     nameplateResourceScale = 0.7,
     darkModeNameplateColor = 0.2,
     fakeNameXPos = 0,
@@ -6226,7 +6226,7 @@ local function HideHealthbarInPvEMagic()
                                 local role = UnitGroupRolesAssigned(unit)
                                 isTankOrHeal = role == "TANK" or role == "HEALER"
                             end
-                            local skipHide = BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve or (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and UnitIsUnit("pet", unit)) or isTankOrHeal
+                            local skipHide = BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve or (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and UnitIsUnit("pet", unit)) or isTankOrHeal or (UnitIsPlayer(unit) and not BetterBlizzPlatesDB.friendlyHideHealthBar)
                             if not skipHide then
                                 setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
                             else
@@ -6958,6 +6958,13 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     end
                 end
                 db.cleanedScaleScale = true
+            end
+
+            if not db.fixedFriendlyHealthbarHide then
+                if not db.friendlyHideHealthBar then
+                    db.friendlyHideHealthBarNpc = nil
+                end
+                db.fixedFriendlyHealthbarHide = true
             end
 
             if not db.auraWhitelistColorsUpdated then

@@ -1710,10 +1710,11 @@ function BBP.ApplyNameplateWidth()
                 C_NamePlate.SetNamePlateSelfSize(BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight)
             end
 
-            local retailExtra = ((not BBP.isInPvE and not BetterBlizzPlatesDB.classicNameplates) and 24) or 0
+            local retailExtra = ((not BetterBlizzPlatesDB.classicNameplates) and 24) or 0
+            local friendlyRetailExtra = ((not BBP.isInPvE and not BetterBlizzPlatesDB.classicNameplates) and 24) or 0
 
             local friendlyWidthAdjustment = BBP.isInPvE and 128 or BetterBlizzPlatesDB.nameplateFriendlyWidth
-            C_NamePlate.SetNamePlateFriendlySize(friendlyWidthAdjustment + retailExtra, friendlyHeight)--friendlyHeight)
+            C_NamePlate.SetNamePlateFriendlySize(friendlyWidthAdjustment + friendlyRetailExtra, friendlyHeight)--friendlyHeight)
             C_NamePlate.SetNamePlateEnemySize(BetterBlizzPlatesDB.nameplateEnemyWidth + retailExtra, generalHeight)--BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeEnemyHeight or BetterBlizzPlatesDB.nameplateDefaultEnemyHeight)
         end
     end
