@@ -546,133 +546,133 @@ local defaultSettings = {
 local version = GetBuildInfo()
 if version and version:match("^5") then
     BBP.isMoP = true
-    C_Timer.After(5, function()
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates has not been fully updated for MoP Classic yet. |cff32f795Please report bugs with BugSack & BugGrabber so I can fix.|r")
-    end)
-    C_Timer.After(1, function()
-        local f = CreateFrame("Frame")
+    -- C_Timer.After(5, function()
+    --     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates has not been fully updated for MoP Classic yet. |cff32f795Please report bugs with BugSack & BugGrabber so I can fix.|r")
+    -- end)
+    -- C_Timer.After(1, function()
+    --     local f = CreateFrame("Frame")
 
-        BetterBlizzPlatesDB.mopBetaData = BetterBlizzPlatesDB.mopBetaData or {
-            npcs = {},
-            auras = {},
-            spells = {},
-        }
+    --     BetterBlizzPlatesDB.mopBetaData = BetterBlizzPlatesDB.mopBetaData or {
+    --         npcs = {},
+    --         auras = {},
+    --         spells = {},
+    --     }
 
-        -- Helpers
-        local function GetNPCIDFromGUID(guid)
-            return tonumber(guid:match("%-([0-9]+)%-%x+$"))
-        end
+    --     -- Helpers
+    --     local function GetNPCIDFromGUID(guid)
+    --         return tonumber(guid:match("%-([0-9]+)%-%x+$"))
+    --     end
 
-        local function GetClassOrDefault(guid)
-            if not guid or guid == "" then
-                return "NOCLASS"
-            end
-            local _, class = GetPlayerInfoByGUID(guid)
-            return class or "NOCLASS"
-        end
+    --     local function GetClassOrDefault(guid)
+    --         if not guid or guid == "" then
+    --             return "NOCLASS"
+    --         end
+    --         local _, class = GetPlayerInfoByGUID(guid)
+    --         return class or "NOCLASS"
+    --     end
 
-        -- Log NPCs
-        local function LogNPC(unit)
-            if not UnitExists(unit) or UnitIsPlayer(unit) then return end
-            local guid = UnitGUID(unit)
-            local npcID = GetNPCIDFromGUID(guid)
-            local name = UnitName(unit)
-            if npcID and name and not BetterBlizzPlatesDB.mopBetaData.npcs[npcID] then
-                BetterBlizzPlatesDB.mopBetaData.npcs[npcID] = name
-            end
-        end
+    --     -- Log NPCs
+    --     local function LogNPC(unit)
+    --         if not UnitExists(unit) or UnitIsPlayer(unit) then return end
+    --         local guid = UnitGUID(unit)
+    --         local npcID = GetNPCIDFromGUID(guid)
+    --         local name = UnitName(unit)
+    --         if npcID and name and not BetterBlizzPlatesDB.mopBetaData.npcs[npcID] then
+    --             BetterBlizzPlatesDB.mopBetaData.npcs[npcID] = name
+    --         end
+    --     end
 
-        local function LogTargetAuras()
-            local unit = "target"
-            if not UnitExists(unit) or UnitIsPlayer(unit) then return end
+    --     local function LogTargetAuras()
+    --         local unit = "target"
+    --         if not UnitExists(unit) or UnitIsPlayer(unit) then return end
 
-            local guid = UnitGUID(unit)
-            local class = GetClassOrDefault(guid)
+    --         local guid = UnitGUID(unit)
+    --         local class = GetClassOrDefault(guid)
 
-            -- Scan helpful auras (buffs)
-            for i = 1, 40 do
-                local name, _, _, _, _, _, _, _, _, spellID = UnitBuff(unit, i)
-                if not name then break end
-                if spellID then
-                    BetterBlizzPlatesDB.mopBetaData.auras[class] = BetterBlizzPlatesDB.mopBetaData.auras[class] or {}
-                    if not BetterBlizzPlatesDB.mopBetaData.auras[class][spellID] then
-                        BetterBlizzPlatesDB.mopBetaData.auras[class][spellID] = name
-                    end
-                end
-            end
+    --         -- Scan helpful auras (buffs)
+    --         for i = 1, 40 do
+    --             local name, _, _, _, _, _, _, _, _, spellID = UnitBuff(unit, i)
+    --             if not name then break end
+    --             if spellID then
+    --                 BetterBlizzPlatesDB.mopBetaData.auras[class] = BetterBlizzPlatesDB.mopBetaData.auras[class] or {}
+    --                 if not BetterBlizzPlatesDB.mopBetaData.auras[class][spellID] then
+    --                     BetterBlizzPlatesDB.mopBetaData.auras[class][spellID] = name
+    --                 end
+    --             end
+    --         end
 
-            -- Scan harmful auras (debuffs)
-            for i = 1, 40 do
-                local name, _, _, _, _, _, _, _, _, spellID = UnitDebuff(unit, i)
-                if not name then break end
-                if spellID then
-                    BetterBlizzPlatesDB.mopBetaData.auras[class] = BetterBlizzPlatesDB.mopBetaData.auras[class] or {}
-                    if not BetterBlizzPlatesDB.mopBetaData.auras[class][spellID] then
-                        BetterBlizzPlatesDB.mopBetaData.auras[class][spellID] = name
-                    end
-                end
-            end
-        end
+    --         -- Scan harmful auras (debuffs)
+    --         for i = 1, 40 do
+    --             local name, _, _, _, _, _, _, _, _, spellID = UnitDebuff(unit, i)
+    --             if not name then break end
+    --             if spellID then
+    --                 BetterBlizzPlatesDB.mopBetaData.auras[class] = BetterBlizzPlatesDB.mopBetaData.auras[class] or {}
+    --                 if not BetterBlizzPlatesDB.mopBetaData.auras[class][spellID] then
+    --                     BetterBlizzPlatesDB.mopBetaData.auras[class][spellID] = name
+    --                 end
+    --             end
+    --         end
+    --     end
 
 
-        -- Log aura by class
-        local function LogAuraByClass(spellID, spellName, sourceGUID)
-            if not spellID or not spellName then return end
+    --     -- Log aura by class
+    --     local function LogAuraByClass(spellID, spellName, sourceGUID)
+    --         if not spellID or not spellName then return end
             
-            local class = GetClassOrDefault(sourceGUID)
-            BetterBlizzPlatesDB.mopBetaData.auras[class] = BetterBlizzPlatesDB.mopBetaData.auras[class] or {}
+    --         local class = GetClassOrDefault(sourceGUID)
+    --         BetterBlizzPlatesDB.mopBetaData.auras[class] = BetterBlizzPlatesDB.mopBetaData.auras[class] or {}
             
-            if not BetterBlizzPlatesDB.mopBetaData.auras[class][spellID] then
-                BetterBlizzPlatesDB.mopBetaData.auras[class][spellID] = spellName
-            end
-        end
+    --         if not BetterBlizzPlatesDB.mopBetaData.auras[class][spellID] then
+    --             BetterBlizzPlatesDB.mopBetaData.auras[class][spellID] = spellName
+    --         end
+    --     end
 
-        -- Log spell cast by class
-        local function LogSpellByClass(spellID, spellName, sourceGUID)
-            if not spellID or not spellName then return end
+    --     -- Log spell cast by class
+    --     local function LogSpellByClass(spellID, spellName, sourceGUID)
+    --         if not spellID or not spellName then return end
             
-            local class = GetClassOrDefault(sourceGUID)
-            BetterBlizzPlatesDB.mopBetaData.spells[class] = BetterBlizzPlatesDB.mopBetaData.spells[class] or {}
+    --         local class = GetClassOrDefault(sourceGUID)
+    --         BetterBlizzPlatesDB.mopBetaData.spells[class] = BetterBlizzPlatesDB.mopBetaData.spells[class] or {}
             
-            if not BetterBlizzPlatesDB.mopBetaData.spells[class][spellID] then
-                BetterBlizzPlatesDB.mopBetaData.spells[class][spellID] = spellName
-            end
-        end
+    --         if not BetterBlizzPlatesDB.mopBetaData.spells[class][spellID] then
+    --             BetterBlizzPlatesDB.mopBetaData.spells[class][spellID] = spellName
+    --         end
+    --     end
 
-        -- Event handler
-        f:SetScript("OnEvent", function(_, event, ...)
-            if not BBP.isInArena then return end
+    --     -- Event handler
+    --     f:SetScript("OnEvent", function(_, event, ...)
+    --         if not BBP.isInArena then return end
             
-            if event == "NAME_PLATE_UNIT_ADDED" then
-                local unit = ...
-                LogNPC(unit)
+    --         if event == "NAME_PLATE_UNIT_ADDED" then
+    --             local unit = ...
+    --             LogNPC(unit)
                 
-            elseif event == "PLAYER_TARGET_CHANGED" then
-                LogNPC("target")
-                LogTargetAuras()
+    --         elseif event == "PLAYER_TARGET_CHANGED" then
+    --             LogNPC("target")
+    --             LogTargetAuras()
                 
-            elseif event == "UPDATE_MOUSEOVER_UNIT" then
-                LogNPC("mouseover")
+    --         elseif event == "UPDATE_MOUSEOVER_UNIT" then
+    --             LogNPC("mouseover")
                 
-            elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
-                local _, subevent, _, sourceGUID, _, _, _, _, _, _, _, spellID, spellName = CombatLogGetCurrentEventInfo()
+    --         elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
+    --             local _, subevent, _, sourceGUID, _, _, _, _, _, _, _, spellID, spellName = CombatLogGetCurrentEventInfo()
                 
-                if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_AURA_REFRESH" then
-                    LogAuraByClass(spellID, spellName, sourceGUID)
+    --             if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_AURA_REFRESH" then
+    --                 LogAuraByClass(spellID, spellName, sourceGUID)
                     
-                elseif subevent == "SPELL_CAST_START" or subevent == "SPELL_CAST_SUCCESS" then
-                    LogSpellByClass(spellID, spellName, sourceGUID)
-                end
-            end
-        end)
+    --             elseif subevent == "SPELL_CAST_START" or subevent == "SPELL_CAST_SUCCESS" then
+    --                 LogSpellByClass(spellID, spellName, sourceGUID)
+    --             end
+    --         end
+    --     end)
 
-        -- Register Events
-        f:RegisterEvent("NAME_PLATE_UNIT_ADDED")
-        f:RegisterEvent("PLAYER_TARGET_CHANGED")
-        f:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
-        f:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+    --     -- Register Events
+    --     f:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+    --     f:RegisterEvent("PLAYER_TARGET_CHANGED")
+    --     f:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
+    --     f:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 
-    end)
+    -- end)
 end
 
 if BBP.isMoP then
@@ -6299,6 +6299,7 @@ Frame:RegisterEvent("PLAYER_LOGIN")
 --Frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 Frame:SetScript("OnEvent", function(...)
     local db = BetterBlizzPlatesDB
+    BetterBlizzPlatesDB.mopBetaData = nil
 
     CheckForUpdate()
 
