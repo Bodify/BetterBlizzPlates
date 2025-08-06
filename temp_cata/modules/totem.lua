@@ -234,6 +234,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
         config.totemIndicatorHideAuras = BetterBlizzPlatesDB.totemIndicatorHideAuras
         config.totemIndicatorWidthEnabled = BetterBlizzPlatesDB.totemIndicatorWidthEnabled
+        config.totemIndicatorUseNicknames = BetterBlizzPlatesDB.totemIndicatorUseNicknames
 
         config.totemIndicatorInitialized = true
     end
@@ -356,6 +357,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
         else
             config.totemColorRGB = nil
+        end
+
+        if config.totemIndicatorUseNicknames then
+            frame.name:SetText(npcData.name)
         end
 
         if npcData.important then

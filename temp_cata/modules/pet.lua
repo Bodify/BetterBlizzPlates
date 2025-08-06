@@ -99,8 +99,7 @@ function BBP.PetIndicator(frame)
                         BBP.InitMurlocMode(frame, config, db)
                         ShowMurloc(frame)
                     else
-                        frame.bbpHiddenNPC = true
-                        frame:SetAlpha(0)
+                        BBP.HideNameplate(frame)
                     end
                 end
             else
@@ -139,8 +138,7 @@ function BBP.PetIndicator(frame)
                         BBP.InitMurlocMode(frame, config, db)
                         ShowMurloc(frame)
                     else
-                        frame.bbpHiddenNPC = true
-                        frame:SetAlpha(0)
+                        BBP.HideNameplate(frame)
                     end
                 end
             end
@@ -167,8 +165,7 @@ function BBP.PetIndicator(frame)
                         BBP.InitMurlocMode(frame, config, db)
                         ShowMurloc(frame)
                     else
-                        frame.bbpHiddenNPC = true
-                        frame:SetAlpha(0)
+                        BBP.HideNameplate(frame)
                     end
                 end
             end
@@ -181,8 +178,7 @@ function BBP.PetIndicator(frame)
                 BBP.InitMurlocMode(frame, config, db)
                 ShowMurloc(frame)
             else
-                frame.bbpHiddenNPC = true
-                frame:SetAlpha(0)
+                BBP.HideNameplate(frame)
             end
         end
     end

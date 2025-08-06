@@ -2698,6 +2698,8 @@ function BBP.ColorThreat(frame)
                     end
                 end
             end
+        elseif config.npcHealthbarColor then
+            return
         end
     else
         local hasAggro = isTanking-- or (threatStatus and threatStatus > 1)
@@ -4301,6 +4303,11 @@ local function HandleNamePlateRemoved(unit)
         frame.selectionHighlight:SetAlpha(0.22)
     end
 
+    if frame.castHiddenName then
+        frame.castHiddenName = nil
+        CompactUnitFrame_UpdateName(frame)
+    end
+
     if frame.partyPointer then
         frame.partyPointer:Hide()
     end
@@ -5183,10 +5190,28 @@ function BBP.RefreshAllNameplates()
 end
 
 hooksecurefunc(NamePlateDriverFrame, "OnUnitFactionChanged", function(self,unit)
-    if not unit or not unit:find("nameplate") then return end
-    C_Timer.After(0.2, function()
+    if not unit then return end
+    if unit:find("nameplate") then
         HandleNamePlateAdded(unit)
-    end)
+        C_Timer.After(0.2, function()
+            HandleNamePlateAdded(unit)
+        end)
+    else
+        local frame = BBP.GetSafeNameplate(unit)
+        if frame then
+            HandleNamePlateAdded(frame.unit)
+            C_Timer.After(0.2, function()
+                HandleNamePlateAdded(frame.unit)
+            end)
+        else
+            C_Timer.After(0.2, function()
+                local frame = BBP.GetSafeNameplate(unit)
+                if frame then
+                    HandleNamePlateAdded(frame.unit)
+                end
+            end)
+        end
+    end
 end)
 
 function BBP.RefreshAllNameplatesLightVer()
@@ -5244,6 +5269,11 @@ function BBP.ConsolidatedUpdateName(frame)
         frame.bbpOverlay = CreateFrame("Frame", nil, frame.healthBar)
         frame.bbpOverlay:SetFrameStrata("DIALOG")
         frame.bbpOverlay:SetFrameLevel(9000)
+    end
+
+    if frame.castHiddenName then
+        frame.name:SetText("")
+        return
     end
 
     --if info.isSelf then return end
@@ -5380,10 +5410,6 @@ function BBP.ConsolidatedUpdateName(frame)
                 frame.fakeName:SetAlpha(0)
             end
         end
-    end
-
-    if frame.castHiddenName then
-        frame.name:SetAlpha(0)
     end
 end
 -- Use the consolidated function to hook into CompactUnitFrame_UpdateName

@@ -3187,6 +3187,8 @@ function BBP.ColorThreat(frame)
                     end
                 end
             end
+        elseif config.npcHealthbarColor then
+            return
         end
     else
         local isTargeted = UnitIsUnit(frame.unit.."target", "player")
@@ -5754,10 +5756,28 @@ function BBP.RefreshAllNameplates()
 end
 
 hooksecurefunc(NamePlateDriverFrame, "OnUnitFactionChanged", function(self,unit)
-    if not unit or not unit:find("nameplate") then return end
-    C_Timer.After(0.2, function()
+    if not unit then return end
+    if unit:find("nameplate") then
         HandleNamePlateAdded(unit)
-    end)
+        C_Timer.After(0.2, function()
+            HandleNamePlateAdded(unit)
+        end)
+    else
+        local frame = BBP.GetSafeNameplate(unit)
+        if frame then
+            HandleNamePlateAdded(frame.unit)
+            C_Timer.After(0.2, function()
+                HandleNamePlateAdded(frame.unit)
+            end)
+        else
+            C_Timer.After(0.2, function()
+                local frame = BBP.GetSafeNameplate(unit)
+                if frame then
+                    HandleNamePlateAdded(frame.unit)
+                end
+            end)
+        end
+    end
 end)
 
 function BBP.RefreshAllNameplatesLightVer()
@@ -6014,13 +6034,6 @@ function BBP.ConsolidatedUpdateName(frame)
     else
         if frame.partyPointer and config.partyPointerHideAll and frame.partyPointer:IsShown() then
             frame.name:SetAlpha(0)
-        end
-    end
-
-    if frame.castHiddenName then
-        frame.name:SetAlpha(0)
-        if frame.specNameText then
-            frame.specNameText:SetAlpha(0)
         end
     end
 

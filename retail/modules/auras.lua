@@ -599,6 +599,7 @@ local enlargeAllImportantBuffsFilter
 
 local crowdControl = {}
 local ccFull = {
+    [427773] = true,
     [32752] = true,
     [277778] = true,
     [353084] = true,
@@ -899,6 +900,13 @@ function BBP.UpdateImportantBuffsAndCCTables()
             --local color = (not db.importantCCSilenceGlow and true) or (db.importantCCSilence and db.importantCCSilenceGlowRGB) or true
             for spellID, value in pairs(ccSilence) do
                 keyAuraList[spellID] = true--value == true and color or value
+            end
+        end
+
+        -- temp custom
+        if db.customKeyAuras and type(db.customKeyAuras) == "table" then
+            for spellID, value in pairs(db.customKeyAuras) do
+                keyAuraList[spellID] = true
             end
         end
     end

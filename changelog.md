@@ -1,3 +1,21 @@
+# BetterBlizzPlates 1.8.3c
+## Retail
+### Tweak
+- Add missing AOE Blind spell id to CC & Key Auras.
+## Mists of Pandaria
+### Tweak
+- Add missing Capacitor Totem & Stone Bulwark Totem to Totem List. These have been auto added to your list if you did not have them.
+### Bugfix
+- Fixed an issue where interrupt and aura tracking for Nameplate Auras remained active even when Nameplate Auras were disabled causing some lua errors.
+## All versions
+### Tweak
+- Tweaked castbar target text slightly, hopefully not showing up when it shouldnt now.
+### Bugfix
+- Fix Totem Indicator's "Use Nicknames" setting not always applying nickname.
+- Fix issues with castbar setting "Hide name while casting" erroring and not hiding/showing names properly.
+- Fix Color NPC color resetting after targeting for tanks when not in combat and Color Threat enabled as well.
+- Fix castbar setting "Interrupt CD Color" only recoloring interrupted castbar immediately and not all active castbars.
+
 # BetterBlizzPlates 1.8.3b
 ## Retail
 ### Bugfix

@@ -31,12 +31,22 @@ local interruptSpells = {
 -- Local variable to store the known interrupt spell ID
 local knownInterruptSpellID = nil
 
+-- Recheck interrupt spells when lock resummons/sacrifices pet
+local petSummonSpells = {
+    [30146] = true,  -- Summon Demonic Tyrant (Demonology)
+    [691]    = true,  -- Summon Felhunter (for Spell Lock)
+    [108503] = true,  -- Grimoire of Sacrifice
+}
+
 -- Function to find and return the interrupt spell the player knows
 local function GetInterruptSpell()
     for _, spellID in ipairs(interruptSpells) do
         if IsSpellKnownOrOverridesKnown(spellID) or (UnitExists("pet") and IsSpellKnownOrOverridesKnown(spellID, true)) then
             knownInterruptSpellID = spellID
+            petSummonSpells[spellID] = true
             return spellID
+        elseif petSummonSpells[spellID] then
+            petSummonSpells[spellID] = nil
         end
     end
     knownInterruptSpellID = nil
@@ -57,24 +67,23 @@ local classicFrames
 
 local interruptedText = SPELL_FAILED_INTERRUPTED
 
--- Recheck interrupt spells when lock resummons/sacrifices pet
-local petSummonSpells = {
-    [30146] = true,  -- Summon Demonic Tyrant (Demonology)
-    [691]    = true,  -- Summon Felhunter (for Spell Lock)
-    [108503] = true,  -- Grimoire of Sacrifice
-}
-
 local function OnEvent(self, event, unit, _, spellID)
     if event == "UNIT_SPELLCAST_SUCCEEDED" then
         if not petSummonSpells[spellID] then return end
     end
-    C_Timer.After(0.1, GetInterruptSpell)
+    if BetterBlizzPlatesDB.castBarRecolorInterrupt and BetterBlizzPlatesDB.enableCastbarCustomization then
+        C_Timer.After(0.1, function()
+            GetInterruptSpell()
+            for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
+                local frame = namePlate.UnitFrame
+                BBP.CustomizeCastbar(frame, frame.unit)
+            end
+        end)
+    end
 end
 
 local interruptSpellUpdate = CreateFrame("Frame")
-if select(2, UnitClass("player")) == "WARLOCK" then
-    interruptSpellUpdate:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
-end
+interruptSpellUpdate:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
 interruptSpellUpdate:RegisterEvent("TRAIT_CONFIG_UPDATED")
 interruptSpellUpdate:RegisterEvent("PLAYER_TALENT_UPDATE")
 interruptSpellUpdate:SetScript("OnEvent", OnEvent)
@@ -329,8 +338,8 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
 
         if not castBar.hideNameWhileCasting then
-            hooksecurefunc(castBar, "Hide", function()
-                if frame:IsForbidden() then return end
+            hooksecurefunc(castBar, "Hide", function(self)
+                if frame:IsForbidden() or not self.unit then return end
                 if frame.castHiddenName then
                     frame.castHiddenName = nil
                     CompactUnitFrame_UpdateName(frame)
@@ -724,6 +733,8 @@ function BBP.UpdateNameplateTargetText(frame, unit)
     if not frame.TargetText then
         frame.TargetText = BBP.OverlayFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.TargetText:SetJustifyH("CENTER")
+        frame.TargetText:SetParent(frame.castBar)
+        frame.TargetText:SetIgnoreParentScale(true)
         -- fix me (make it appear above resource when higher strata resource) bodify
     end
 
@@ -1209,6 +1220,10 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
                             end
                         end
                     end
+                end
+                if frame.castHiddenName then
+                    frame.castHiddenName = nil
+                    CompactUnitFrame_UpdateName(frame)
                 end
             end
         end

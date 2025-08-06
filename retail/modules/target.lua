@@ -479,7 +479,7 @@ end
 function BBP.FadeAllButTargetNameplates()
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = namePlate.UnitFrame
-        local config = frame.BetterBlizzPlates.config or BBP.InitializeNameplateSettings
+        local config = frame.BetterBlizzPlates.config or BBP.InitializeNameplateSettings(frame)
 
         local unit = frame.unit
         local isPlayer = UnitIsUnit(unit, "player")
@@ -503,7 +503,7 @@ end
 function BBP.UnfadeAllNameplates()
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = namePlate.UnitFrame
-        local config = frame.BetterBlizzPlates.config or BBP.InitializeNameplateSettings
+        local config = frame.BetterBlizzPlates.config or BBP.InitializeNameplateSettings(frame)
         if not config.enableNpNonTargetAlpha then
             frame:SetAlpha(1)
         end

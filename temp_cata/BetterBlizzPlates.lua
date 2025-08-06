@@ -688,8 +688,10 @@ if BBP.isMoP then
         [59190] =   { name = "Psyfiend", icon = GetSpellTexture(108921),                 hideIcon = false, size = 31, duration = 10, color = {0.49, 0, 1}, important = true },
         [62002] =   { name = "Stormlash Totem", icon = GetSpellTexture(120668),          hideIcon = false, size = 31, duration = 10, color = {1, 0.69, 0}, important = true },
         [59717] =   { name = "Windwalk Totem", icon = GetSpellTexture(108273),           hideIcon = false, size = 27, duration = 6,  color = {0, 1, 1},           important = true,  widthOn = true, hpWidth = -25 },
+        [61245] =   { name = "Capacitor Totem", icon = GetSpellTexture(192058),          hideIcon = false, size = 30, duration = 5,  color = {1, 0.69, 0},        important = true },
 
         -- Normal
+        [59712] =   { name = "Stone Bulwark Totem", icon = GetSpellTexture(108270),      hideIcon = false, size = 27, duration = 30, color =  {0.98, 0.75, 0.17}, important = true },
         [19668] =   { name = "Shadowfiend", icon = GetSpellTexture(34433),               hideIcon = false, size = 27, duration = 15,  color = {0.43, 0.20, 1},    important = false, widthOn = true, hpWidth = -25 },
         [510] =     { name = "Water Elemental", icon = GetSpellTexture(31687),           hideIcon = true,  size = 27, duration = nil, color = {0.25, 1, 0.83},    important = false, widthOn = true, hpWidth = -25 },
         [15430] =   { name = "Earth Elemental Totem", icon = GetSpellTexture(2062),      hideIcon = false, size = 27, duration = nil, color = {0.78, 0.51, 0.39}, important = false, widthOn = true, hpWidth = -25 },
@@ -3245,6 +3247,8 @@ function BBP.ColorThreat(frame)
                     end
                 end
             end
+        elseif config.npcHealthbarColor then
+            return
         end
     else
         local hasAggro = isTanking-- or (threatStatus and threatStatus > 1)
@@ -4942,6 +4946,11 @@ local function HandleNamePlateRemoved(unit)
         frame.selectionHighlight:SetAlpha(0.22)
     end
 
+    if frame.castHiddenName then
+        frame.castHiddenName = nil
+        CompactUnitFrame_UpdateName(frame)
+    end
+
     if frame.partyPointer then
         frame.partyPointer:Hide()
     end
@@ -5807,11 +5816,28 @@ function BBP.RefreshAllNameplates()
 end
 
 hooksecurefunc(NamePlateDriverFrame, "OnUnitFactionChanged", function(self,unit)
-    if not unit or not unit:find("nameplate") then return end
-    HandleNamePlateAdded(unit)
-    C_Timer.After(0.2, function()
+    if not unit then return end
+    if unit:find("nameplate") then
         HandleNamePlateAdded(unit)
-    end)
+        C_Timer.After(0.2, function()
+            HandleNamePlateAdded(unit)
+        end)
+    else
+        local frame = BBP.GetSafeNameplate(unit)
+        if frame then
+            HandleNamePlateAdded(frame.unit)
+            C_Timer.After(0.2, function()
+                HandleNamePlateAdded(frame.unit)
+            end)
+        else
+            C_Timer.After(0.2, function()
+                local frame = BBP.GetSafeNameplate(unit)
+                if frame then
+                    HandleNamePlateAdded(frame.unit)
+                end
+            end)
+        end
+    end
 end)
 
 function BBP.RefreshAllNameplatesLightVer()
@@ -5878,6 +5904,11 @@ function BBP.ConsolidatedUpdateName(frame)
         frame.BuffFrame = CreateFrame("Frame", nil, frame)
         frame.BuffFrame:SetSize(frame:GetWidth(), 26)
         frame.BuffFrame.auraFrames = {}
+    end
+
+    if frame.castHiddenName then
+        frame.name:SetText("")
+        return
     end
 
     --if info.isSelf then return end
@@ -6010,10 +6041,6 @@ function BBP.ConsolidatedUpdateName(frame)
         if frame.partyPointer and config.partyPointerHideAll and frame.partyPointer:IsShown() then
             frame.name:SetAlpha(0)
         end
-    end
-
-    if frame.castHiddenName then
-        frame.name:SetAlpha(0)
     end
 end
 -- Use the consolidated function to hook into CompactUnitFrame_UpdateName
@@ -6569,6 +6596,18 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     end
                 end
                 db.totemListUpdateMop1 = true
+            end
+
+            if not db.totemListUpdateMop2 then
+                if db.totemIndicatorNpcList then
+                    if not db.totemIndicatorNpcList[61245] then
+                        db.totemIndicatorNpcList[61245] = defaultSettings.totemIndicatorNpcList[61245]
+                    end
+                    if not db.totemIndicatorNpcList[59712] then
+                        db.totemIndicatorNpcList[59712] = defaultSettings.totemIndicatorNpcList[59712]
+                    end
+                end
+                db.totemListUpdateMop2 = true
             end
 
             InitializeSavedVariables()

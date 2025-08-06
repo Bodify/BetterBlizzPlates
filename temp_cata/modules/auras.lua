@@ -1633,6 +1633,13 @@ function BBP.UpdateImportantBuffsAndCCTables()
                 keyAuraList[spellID] = true--value == true and color or value
             end
         end
+
+        -- temp custom
+        if db.customKeyAuras and type(db.customKeyAuras) == "table" then
+            for spellID, value in pairs(db.customKeyAuras) do
+                keyAuraList[spellID] = true
+            end
+        end
     end
 
     if importantCCEnabled then
@@ -1859,8 +1866,6 @@ function BBP.SmokeCheckBootup()
         BBP.NoDurationAuraCheck:SetScript("OnEvent", TrackAuraAfterCast)
     end
 end
-
-BBP.SmokeCheckBootup()
 
 local function isInWhitelist(spellName, spellId)
     for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do

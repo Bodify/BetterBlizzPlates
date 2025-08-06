@@ -394,6 +394,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             config.totemColorRGB = nil
         end
 
+        if config.totemIndicatorUseNicknames then
+            frame.name:SetText(npcData.name)
+        end
+
         if npcData.important then
             BBP.ApplyTotemAttributes(frame, npcData.icon, npcData.duration, npcData.color, npcData.size, npcData.hideIcon, guid)
         else
