@@ -5762,21 +5762,22 @@ hooksecurefunc(NamePlateDriverFrame, "OnUnitFactionChanged", function(self,unit)
         C_Timer.After(0.2, function()
             HandleNamePlateAdded(unit)
         end)
-    else
-        local frame = BBP.GetSafeNameplate(unit)
-        if frame then
-            HandleNamePlateAdded(frame.unit)
-            C_Timer.After(0.2, function()
-                HandleNamePlateAdded(frame.unit)
-            end)
-        else
-            C_Timer.After(0.2, function()
-                local frame = BBP.GetSafeNameplate(unit)
-                if frame then
-                    HandleNamePlateAdded(frame.unit)
-                end
-            end)
-        end
+    -- else
+    --     local frame = BBP.GetSafeNameplate(unit)
+    --     if frame and frame.unit then
+    --         HandleNamePlateAdded(frame.unit)
+    --         C_Timer.After(0.2, function()
+    --             HandleNamePlateAdded(frame.unit)
+    --         end)
+    --     else
+    --         C_Timer.After(0.2, function()
+    --             if not unit then return end
+    --             local frame = BBP.GetSafeNameplate(unit)
+    --             if frame and frame.unit then
+    --                 HandleNamePlateAdded(frame.unit)
+    --             end
+    --         end)
+    --     end
     end
 end)
 

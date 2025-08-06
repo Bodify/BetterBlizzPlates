@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.8.3d
+## All versions
+### Bugfix
+- Fix nameplate unit nil lua error.
+
 # BetterBlizzPlates 1.8.3c
 ## Retail
 ### Tweak
