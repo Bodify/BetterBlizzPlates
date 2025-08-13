@@ -607,8 +607,14 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 end
 
                 for _, castEmphasis in ipairs(castEmphasisList) do
-                    if (castEmphasis.name and spellName and strlower(castEmphasis.name) == strlower(spellName)) or
-                       (castEmphasis.id and spellID and castEmphasis.id == spellID) then
+                    local isMatch
+                    if castEmphasis.id then
+                        isMatch = (spellID and castEmphasis.id == spellID)
+                    elseif castEmphasis.name then
+                        isMatch = (spellName and strlower(castEmphasis.name) == strlower(spellName))
+                    end
+
+                    if isMatch then
                         if castEmphasis.onMeOnly and not UnitIsPlayer(frame.unit) and not BBP.isInPvP then
                             if UnitIsUnit(unitToken.."target", "player") then
                                 ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
@@ -618,10 +624,9 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                             ApplyCastBarEmphasisSettings(castBar, castEmphasis, castBarTexture)
                             frame.emphasizedCast = castEmphasis
                         end
-                        -- frame:GetParent():SetParent(BBP.OverlayFrame)
-                        -- frame.ogParent = frame:GetParent():GetParent()
                         return
                     end
+
                     frame.emphasizedCast = nil
                 end
             end

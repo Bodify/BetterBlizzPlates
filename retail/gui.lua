@@ -229,11 +229,11 @@ StaticPopupDialogs["BBP_CONFIRM_WIPE_NPCCOLOR"] = {
 }
 
 StaticPopupDialogs["BBP_CONFIRM_IMPORT_NPCCOLOR"] = {
-    text = titleText.."This will add Mythic+ Season 2 NPCs to your color list and reload.\n\nAre you sure?",
+    text = titleText.."This will add Mythic+ Season 3 NPCs to your color list and reload.\n\nAre you sure?",
     button1 = "Yes",
     button2 = "No",
     OnAccept = function()
-        BBP.MythicSeason2NPCColors()
+        BBP.MythicSeason3NPCColors()
     end,
     timeout = 0,
     whileDead = true,
@@ -9284,13 +9284,13 @@ local function guiColorNPC()
 
 
     local importS2 = CreateFrame("Button", nil, colorNPC, "UIPanelButtonTemplate")
-    importS2:SetText("Import M+ Season 2 NPCs")
+    importS2:SetText("Import M+ Season 3 NPCs")
     importS2:SetWidth(175)
     importS2:SetPoint("TOPLEFT", colorNPCName, "TOPLEFT", -25, -30)
     importS2:SetScript("OnClick", function()
         StaticPopup_Show("BBP_CONFIRM_IMPORT_NPCCOLOR")
     end)
-    CreateTooltipTwo(importS2, "Import M+ Season 2 Colors", "Import M+ Season 2 NPC Colors, made by Sporadic.\n\nColors:\n|cff00ff00Kill on sight|r\n|cffff1493High prio kick|r\n|cff3366ffHigh prio / high HP - 1st priority|r\n|cffc287ffHigh prio / high HP - 2nd priority|r\n|cffff7a00Stun / CC target|r", nil, "ANCHOR_TOP")
+    CreateTooltipTwo(importS2, "Import M+ Season 3 Colors", "Import M+ Season 3 NPC Colors, made by Gramhehe @ Wago (Plater).\n\nColors:\n|cffc49a6cBoss|r\n|cffff00ffMini Boss / Important mob|r\n|cff00bfffCasters|r\n|cff00ff00Has a spell that needs to be stopped|r\n|cffadff2fEnrage / Soothable / Spellsteal|r\n|cffff7f00Tank debuffs / group debuffs|r", nil, "ANCHOR_TOP")
 
     local wipeColorNpcList = CreateFrame("Button", nil, guiColorNpc, "UIPanelButtonTemplate")
     wipeColorNpcList:SetText("Delete All")

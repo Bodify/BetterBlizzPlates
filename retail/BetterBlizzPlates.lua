@@ -806,7 +806,7 @@ local function InitializeSavedVariables()
         BBP.ResetTotemList()
         BetterBlizzPlatesDB.classicExport = nil
         StaticPopupDialogs["BBP_EXPORT_MISMATCH"] = {
-            text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nClassic profile export detected.\n\nDue to Nameplate CVars being very different on Retail many of them have now been reset to their default value.\n\nClassic->Retail export is not fully supported but should be fine but consider this a warning and please report any bugs.\n\nPlease reload for changes to take effect.",
+            text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nYou've imported a Classic profile into Retail.\n\nDue to Nameplate CVars being very different on Retail many of them have now been reset to their default value.\n\nClassic->Retail export is not fully supported but should be fine but consider this a warning and please report any bugs.\n\nPlease reload for changes to take effect.",
             button1 = "OK",
             OnAccept = function()
                 BetterBlizzPlatesDB.reopenOptions = true
@@ -4878,7 +4878,7 @@ local function UpdateLevelFrame(frame)
         return
     end
 
-    if UnitIsFriend(frame.unit, "player") then
+    if UnitIsFriend(frame.unit, "player") and not BetterBlizzPlatesDB.showLevelFrameOnFriendly then
         frame.LevelFrame:Hide()
         frame.LevelFrame.text:Hide()
         frame.LevelFrame.skull:Hide()

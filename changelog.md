@@ -1,3 +1,26 @@
+# BetterBlizzPlates 1.8.4b
+## Mists of Pandaria/Cata/Wrath
+### Bugfix
+- Fix nameplate aura fix from 1.8.4... :)
+
+# BetterBlizzPlates 1.8.4
+## Retail
+### Tweak
+- Updated Jovelo (Mythic) profile.
+- Updated Color NPC M+ Season 3 Import. From Gramhehe @ Wago (Plater). Might change in the future.
+- Nameplate Auras: Max nameplate auras setting now works more like expected and properly checks all auras instead of immediately ending upon reaching the max value which could cause it to not show some enlarged/important auras.
+## Mists of Pandaria/Cata/Wrath
+### Tweak
+- Nameplate Auras: Max nameplate auras setting now works more like expected and properly checks all auras instead of immediately ending upon reaching the max value which could cause it to not show some enlarged/important auras.
+- Update Class Icons' old spec icon code, with it new Monk spec icons.
+### Bugfix
+- Nameplate Auras: Fix issues with nameplate aura positioning. Inconsistencies especially between enemy and neutral mobs and "Extra Clickable Height" setting also affecting. Due to this fix you might have had your nameplate auras moved slightly and will need to reposition them to your liking if so.
+- Fix Class Indicator's Alpha slider not working.
+## All versions
+### Bugfix
+- Fix Castbar Emphasis activating on spellcasts added by ID that had the same name. If added by ID now only activates on that specific ID and not other spells with the same name as originally intended.
+
+
 # BetterBlizzPlates 1.8.3d
 ## All versions
 ### Bugfix

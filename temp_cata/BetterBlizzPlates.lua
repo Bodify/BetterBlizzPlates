@@ -1009,7 +1009,7 @@ local function InitializeSavedVariables()
         BBP.ResetTotemList()
         BetterBlizzPlatesDB.retailExport = nil
         StaticPopupDialogs["BBP_EXPORT_MISMATCH"] = {
-            text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nRetail profile export detected.\n\nDue to Nameplate CVars being very different on Classic versions many of them have now been reset to their default value.\n\nRetail->Classic export is not fully supported but should be fine but consider this a warning and please report any bugs.\n\nPlease reload for changes to take effect.",
+            text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nYou've imported a Retail profile into Classic..\n\nDue to Nameplate CVars being very different on Classic versions many of them have now been reset to their default value.\n\nRetail->Classic export is not fully supported but should be fine but consider this a warning and please report any bugs.\n\nPlease reload for changes to take effect.",
             button1 = "OK",
             OnAccept = function()
                 BetterBlizzPlatesDB.reopenOptions = true
@@ -4133,7 +4133,7 @@ local function CreateRetailNameplateLook(frame)
     if BBP.isInPvP or BetterBlizzPlatesDB.hideLevelFrame then
         frame.LevelFrame:SetAlpha(0)
     else
-        if UnitIsFriend(frame.unit, "player") then
+        if UnitIsFriend(frame.unit, "player") and not BetterBlizzPlatesDB.showLevelFrameOnFriendly then
             frame.LevelFrame:SetAlpha(0)
         else
             frame.LevelFrame:SetAlpha(1)
@@ -4758,7 +4758,6 @@ local function HookNameplateCastbarHide(frame)
     -- end
 end
 
-local guildName = CreateFrame("Frame")
 local function HideFriendlyHealthbar(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
@@ -6279,6 +6278,9 @@ local function HideHealthbarInPvEMagic()
         -- Set the hook flag
         hookedGetNamePlateTypeFromUnit = true
 
+        --colorNameBySelection
+        --colorNameWithExtendedColors
+
         hooksecurefunc(
             NamePlateDriverFrame,
             'GetNamePlateTypeFromUnit',
@@ -6307,6 +6309,9 @@ local function HideHealthbarInPvEMagic()
                             setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
                         end
                     end
+                elseif DefaultCompactNamePlateFrameSetUpOptions.hideHealthbar then
+                    setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
+                    setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
                 end
                 -- if not UnitIsPlayer(unit) then
                 --     setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')

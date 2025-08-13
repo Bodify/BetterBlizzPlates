@@ -504,6 +504,7 @@ local spellsForAllMoP = {
     [2094]  = true,  -- Blind
     [5782]  = true,  -- Fear
     [130616] = true, -- Fear (Glyphed)
+    [118699] = true, -- Fear (alt ID)
     [49203] = true,  -- Hungering Cold
     [5246]  = true,  -- Intimidating Shout
     [605]   = true,  -- Mind Control
@@ -2266,6 +2267,16 @@ local function largeSmallAuraComparator(a, b)
         end
     end
 
+    if a.isImportant or b.isImportant then
+        if a.isImportant and not b.isImportant then
+            return true
+        elseif not a.isImportant and b.isImportant then
+            return false
+        else
+            return defaultComparator(a, b)
+        end
+    end
+
     if a.isCompacted or b.isCompacted then
         if a.isCompacted and not b.isCompacted then
             return false
@@ -2290,6 +2301,16 @@ local function smallLargeAuraComparator(a, b)
         end
     end
 
+    if a.isImportant or b.isImportant then
+        if a.isImportant and not b.isImportant then
+            return true
+        elseif not a.isImportant and b.isImportant then
+            return false
+        else
+            return defaultComparator(a, b)
+        end
+    end
+
     if a.isEnlarged or b.isEnlarged then
         if a.isEnlarged and not b.isEnlarged then
             return false
@@ -2301,6 +2322,25 @@ local function smallLargeAuraComparator(a, b)
     end
 
     return defaultComparator(a, b)
+end
+
+local function CapForLayout(frames, maxCount)
+    local visible = {}
+    local consumed = 0
+    for _, f in ipairs(frames) do
+        local consumes = not (f.isKeyAura or f.pinIcon)  -- key/pinned don't count
+        if consumes then
+            if consumed < maxCount then
+                table.insert(visible, f)
+                consumed = consumed + 1
+            else
+                f:Hide()
+            end
+        else
+            table.insert(visible, f) -- always show key/pinned
+        end
+    end
+    return visible
 end
 
 function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
@@ -2690,9 +2730,9 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
                         end
                     else
                         if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
-                            buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) +(xPos+1-extraOffset/buffScale), verticalOffset - 13)
+                            buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) +(xPos-extraOffset/buffScale), verticalOffset - 13)
                         else
-                            buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", ((horizontalOffset/buffScale) + xPos-extraOffset/buffScale), verticalOffset - 13)
+                            buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", ((horizontalOffset/buffScale) + xPos-1-extraOffset/buffScale), verticalOffset - 13)
                         end
                     end
                     horizontalOffset = horizontalOffset + ((buffWidth)*buffScale) + horizontalSpacing-extraOffset
@@ -2717,6 +2757,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
             elseif sortCompactedAurasFirst then
                 table.sort(debuffs, smallLargeAuraComparator)
             end
+            debuffs = CapForLayout(debuffs, BetterBlizzPlatesDB.maxAurasOnNameplate)
             if isSelf then
                 rowWidths, hasNormalDebuff = CalculateRowWidths2(debuffs)
             else
@@ -2738,6 +2779,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
         elseif sortCompactedAurasFirst then
             table.sort(buffs, smallLargeAuraComparator)
         end
+        buffs = CapForLayout(buffs, BetterBlizzPlatesDB.maxAurasOnNameplate)
         rowWidths = isSelf and CalculateRowWidths2(buffs) or CalculateRowWidths(buffs)
         LayoutAuras(buffs, lastRow + ((#debuffs > 0 and hasNormalDebuff) and 1 or 0), true)
     else
@@ -2750,6 +2792,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
         elseif sortCompactedAurasFirst then
             table.sort(buffs, smallLargeAuraComparator)
         end
+        buffs = CapForLayout(buffs, BetterBlizzPlatesDB.maxAurasOnNameplate)
         rowWidths = isSelf and CalculateRowWidths2(buffs) or CalculateRowWidths(buffs)
         lastRow = LayoutAuras(buffs, 0)
         BBP.activeTargetAuras = (isTarget and #buffs > 0)
@@ -3555,7 +3598,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
 
     self.auras:Iterate(function(auraInstanceID, aura)
-        if buffIndex > BBPMaxAuraNum then return true end
+        --if buffIndex > BBPMaxAuraNum then return true end
         local buff = frame.BuffFrame.auraFrames[buffIndex]
         if not buff then
             buff = CreateFrame("Frame", nil, frame.BuffFrame)
@@ -4121,11 +4164,12 @@ function BBP:UpdateAnchor()
     end
 
     if frame.unit and ShouldShowName(frame) then
-        if config.friendlyNameplateClickthrough and isFriend then
-            self:SetPoint("BOTTOM", frame, "TOP", 0, -3 + targetYOffset + config.nameplateAurasYPos + 63)
-        else
-            self:SetPoint("BOTTOM", frame, "TOP", 0, -3 + targetYOffset + config.nameplateAurasYPos)
-        end
+        -- if config.friendlyNameplateClickthrough and isFriend then
+        --     --self:SetPoint("BOTTOM", frame, "TOP", 0, -3 + targetYOffset + config.nameplateAurasYPos + 63)
+        --     self:SetPoint("BOTTOMLEFT", frame.healthBar, "TOPLEFT", 0, 13.5 + targetYOffset + config.nameplateAurasYPos)
+        -- else
+            self:SetPoint("BOTTOMLEFT", frame.healthBar, "TOPLEFT", 0, 13.5 + targetYOffset + config.nameplateAurasYPos)
+        --end
     else
         local additionalYOffset = 15 * (config.nameplateAuraScale - 1)
         self:SetPoint("BOTTOM", frame.healthBar, "TOP", 0, 4 + targetYOffset + config.nameplateAurasNoNameYPos + 1 + additionalYOffset)

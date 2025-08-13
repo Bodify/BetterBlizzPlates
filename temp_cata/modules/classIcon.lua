@@ -60,10 +60,15 @@ local specIcons = {
     [71]  = "Interface\\Icons\\Ability_Warrior_SavageBlow",             -- Arms
     [72]  = "Interface\\Icons\\Ability_Warrior_Incite",                 -- Fury
     [73]  = "Interface\\Icons\\Ability_Warrior_DefensiveStance",        -- Protection
+
+    [268] = "Interface\\Icons\\A", -- Brewmaster
+    [269] = "Interface\\Icons\\A", -- Windwalker
+    [270] = "Interface\\Icons\\A", -- Mistweaver
 }
 
 local function GetSpecIconByID(specID)
-    return specIcons[specID]
+    local specIcon = (GetSpecializationInfoByID and select(4, GetSpecializationInfoByID(specID))) or specIcons[specID]
+    return specIcon
 end
 
 -- Class Indicator

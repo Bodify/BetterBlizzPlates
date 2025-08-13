@@ -739,7 +739,7 @@ local function InitializeSavedVariables()
         BBP.ResetTotemList()
         BetterBlizzPlatesDB.retailExport = nil
         StaticPopupDialogs["BBP_EXPORT_MISMATCH"] = {
-            text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nRetail profile export detected.\n\nDue to Nameplate CVars being very different on Classic versions many of them have now been reset to their default value.\n\nRetail->Classic export is not fully supported but should be fine but consider this a warning and please report any bugs.\n\nPlease reload for changes to take effect.",
+            text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nYou've imported a Retail profile into Classic..\n\nDue to Nameplate CVars being very different on Classic versions many of them have now been reset to their default value.\n\nRetail->Classic export is not fully supported but should be fine but consider this a warning and please report any bugs.\n\nPlease reload for changes to take effect.",
             button1 = "OK",
             OnAccept = function()
                 BetterBlizzPlatesDB.reopenOptions = true

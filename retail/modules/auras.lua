@@ -1513,6 +1513,16 @@ local function largeSmallAuraComparator(a, b)
         end
     end
 
+    if a.isImportant or b.isImportant then
+        if a.isImportant and not b.isImportant then
+            return true
+        elseif not a.isImportant and b.isImportant then
+            return false
+        else
+            return defaultComparator(a, b)
+        end
+    end
+
     if a.isCompacted or b.isCompacted then
         if a.isCompacted and not b.isCompacted then
             return false
@@ -1537,6 +1547,16 @@ local function smallLargeAuraComparator(a, b)
         end
     end
 
+    if a.isImportant or b.isImportant then
+        if a.isImportant and not b.isImportant then
+            return true
+        elseif not a.isImportant and b.isImportant then
+            return false
+        else
+            return defaultComparator(a, b)
+        end
+    end
+
     if a.isEnlarged or b.isEnlarged then
         if a.isEnlarged and not b.isEnlarged then
             return false
@@ -1548,6 +1568,25 @@ local function smallLargeAuraComparator(a, b)
     end
 
     return defaultComparator(a, b)
+end
+
+local function CapForLayout(frames, maxCount)
+    local visible = {}
+    local consumed = 0
+    for _, f in ipairs(frames) do
+        local consumes = not (f.isKeyAura or f.pinIcon)  -- key/pinned don't count
+        if consumes then
+            if consumed < maxCount then
+                table.insert(visible, f)
+                consumed = consumed + 1
+            else
+                f:Hide()
+            end
+        else
+            table.insert(visible, f) -- always show key/pinned
+        end
+    end
+    return visible
 end
 
 
@@ -1955,6 +1994,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
             elseif sortCompactedAurasFirst then
                 table.sort(debuffs, smallLargeAuraComparator)
             end
+            debuffs = CapForLayout(debuffs, BetterBlizzPlatesDB.maxAurasOnNameplate)
             if isSelf then
                 rowWidths, hasNormalDebuff = CalculateRowWidths2(debuffs)
             else
@@ -1972,6 +2012,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
         elseif sortCompactedAurasFirst then
             table.sort(buffs, smallLargeAuraComparator)
         end
+        buffs = CapForLayout(buffs, BetterBlizzPlatesDB.maxAurasOnNameplate)
         rowWidths = isSelf and CalculateRowWidths2(buffs) or CalculateRowWidths(buffs)
         LayoutAuras(buffs, lastRow + ((#debuffs > 0 and hasNormalDebuff) and 1 or 0), true)
     else
@@ -1984,6 +2025,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
         elseif sortCompactedAurasFirst then
             table.sort(buffs, smallLargeAuraComparator)
         end
+        buffs = CapForLayout(buffs, BetterBlizzPlatesDB.maxAurasOnNameplate)
         rowWidths = isSelf and CalculateRowWidths2(buffs) or CalculateRowWidths(buffs)
         lastRow = LayoutAuras(buffs, 0)
     end
@@ -2671,7 +2713,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     local pinnedAuras = isFriend and ((db["classIndicator"] and db["classIndicatorCCAuras"]) or (db["partyPointer"] and db["partyPointerCCAuras"])) and not (moveKeyAuras and moveKeyAurasFriendly)
 
     self.auras:Iterate(function(auraInstanceID, aura)
-        if buffIndex > BBPMaxAuraNum then return true end
+        --if buffIndex > BBPMaxAuraNum then return true end
         local buff = self.buffPool:Acquire();
         buff.auraInstanceID = auraInstanceID;
         buff.isBuff = aura.isHelpful;
@@ -2812,7 +2854,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             end
         end
 
-        if opBarriersOn and opBarriers[spellId] and auraData.duration ~= 5 then
+        if opBarriersOn and opBarriers[spellId] and buff.duration ~= 5 then
             isImportant = nil
             isEnlarged = nil
         end

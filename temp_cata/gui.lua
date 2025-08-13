@@ -903,7 +903,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         elseif element == "healerIndicatorXPos" or element == "healerIndicatorYPos" or element == "healerIndicatorScale" or element == "healerIndicatorEnemyXPos" or element == "healerIndicatorEnemyYPos" or element == "healerIndicatorEnemyScale" then
                             BBP.HealerIndicator(frame)
                         -- Healer Indicator Pos and Scale
-                        elseif element == "classIndicatorXPos" or element == "classIndicatorYPos" or element == "classIndicatorScale" or element == "classIndicatorFriendlyXPos" or element == "classIndicatorFriendlyYPos" or element == "classIndicatorFriendlyScale" then
+                        elseif element == "classIndicatorXPos" or element == "classIndicatorYPos" or element == "classIndicatorScale" or element == "classIndicatorFriendlyXPos" or element == "classIndicatorFriendlyYPos" or element == "classIndicatorFriendlyScale" or element == "classIndicatorAlpha" or element == "classIndicatorBackgroundSize" then
                             BBP.ClassIndicator(frame)
                         -- Pet Indicator Pos and Scale
                         elseif element == "petIndicatorXPos" or element == "petIndicatorYPos" or element == "petIndicatorScale" then
@@ -1193,6 +1193,8 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BetterBlizzPlatesDB.classIndicatorFriendlyYPos = value
                 elseif element == "classIndicatorFriendlyScale" then
                     BetterBlizzPlatesDB.classIndicatorFriendlyScale = value
+                elseif element == "classIndicatorAlpha" then
+                    BetterBlizzPlatesDB.classIndicatorAlpha = value
                     -- Nameplate Widths
                 elseif element == "nameplateFriendlyWidth" then
                     if not BBP.checkCombatAndWarn() then
@@ -4743,7 +4745,7 @@ local function guiGeneralTab()
 
     local executeIndicator = CreateCheckbox("executeIndicator", "Execute indicator", BetterBlizzPlates, nil, BBP.ToggleExecuteIndicator)
     executeIndicator:SetPoint("TOPLEFT", combatIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(executeIndicator, "Execute Indicator |A:islands-azeriteboss:24:24|a", "Starts tracking health percentage once target dips below a certain percentage (40% by default).")
+    CreateTooltipTwo(executeIndicator, "Execute Indicator |T"..BBP.executeIndicatorIconReplacement..":22:22:0:0|t", "Starts tracking health percentage once target dips below a certain percentage (40% by default).")
     local executeIndicatorIcon = executeIndicator:CreateTexture(nil, "ARTWORK")
     executeIndicatorIcon:SetTexture(BBP.executeIndicatorIconReplacement)
     executeIndicatorIcon:SetSize(28, 30)
@@ -4759,7 +4761,7 @@ local function guiGeneralTab()
 
     local partyPointer = CreateCheckbox("partyPointer", "Party pointer", BetterBlizzPlates)
     partyPointer:SetPoint("TOPLEFT", healerIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(partyPointer, "Party Pointer |A:UI-QuestPoiImportant-QuestNumber-SuperTracked:21:16|a", "Show a class colored pointer above friendly player nameplates.", "Hides default raidmarkers. Only shows in Arena by default or during testing. Can show extra + sign on healers in settings.")
+    CreateTooltipTwo(partyPointer, "Party Pointer |T"..BBP.partyPointerIconReplacement..":22:22:0:0|t", "Show a class colored pointer above friendly player nameplates.", "Hides default raidmarkers. Only shows in Arena by default or during testing. Can show extra + sign on healers in settings.")
     local partyPointerIcon = partyPointer:CreateTexture(nil, "ARTWORK")
     partyPointerIcon:SetTexture(BBP.partyPointerIconReplacement)
     partyPointerIcon:SetSize(17, 18)
@@ -4802,7 +4804,7 @@ local function guiGeneralTab()
 
     local targetIndicator = CreateCheckbox("targetIndicator", "Target indicator", BetterBlizzPlates)
     targetIndicator:SetPoint("TOPLEFT", petIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(targetIndicator, "Target Indicator |A:Navigation-Tracked-Arrow:14:19|a", "Show a pointer on your current target.\n\nCan also change Target Color/Texture in Advanced Settings.")
+    CreateTooltipTwo(targetIndicator, "Target Indicator |T"..BBP.targetIndicatorIconReplacement..":22:22:0:0|t", "Show a pointer on your current target.\n\nCan also change Target Color/Texture in Advanced Settings.")
     local targetIndicatorIcon = healerIndicator:CreateTexture(nil, "ARTWORK")
     targetIndicatorIcon:SetTexture(BBP.targetIndicatorIconReplacement)
     targetIndicatorIcon:SetRotation(math.rad(180))
@@ -4812,7 +4814,7 @@ local function guiGeneralTab()
     local focusTargetIndicator = CreateCheckbox("focusTargetIndicator", "Focus target indicator", BetterBlizzPlates)
     focusTargetIndicator:SetPoint("TOPLEFT", targetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(focusTargetIndicator, "Show a marker on the focus nameplate")
-    CreateTooltipTwo(focusTargetIndicator, "Focus Target Indicator |A:Waypoint-MapPin-Untracked:19:19|a", "Show a marker on your focus nameplate.")
+    CreateTooltipTwo(focusTargetIndicator, "Focus Target Indicator |T"..BBP.focusIndicatorIconReplacement..":22:22:0:0|t", "Show a marker on your focus nameplate.")
     local focusTargetIndicatorIcon = healerIndicator:CreateTexture(nil, "ARTWORK")
     focusTargetIndicatorIcon:SetTexture(BBP.focusIndicatorIconReplacement)
     focusTargetIndicatorIcon:SetSize(19, 20)
@@ -4835,7 +4837,7 @@ local function guiGeneralTab()
         setTotemCVar()
     end)
 
-    CreateTooltipTwo(totemIndicator, "Totem Indicator |A:teleportationnetwork-ardenweald-32x32:17:17|a", "Show icon on and color important NPC nameplates.", "Full list available in \"Totem Indicator List\" section, designed for PvP.")
+    CreateTooltipTwo(totemIndicator, "Totem Indicator |T"..BBP.TotemIndicatorIcon..":22:22:0:0|t", "Show icon on and color important NPC nameplates.", "Full list available in \"Totem Indicator List\" section, designed for PvP.")
     local totemsIcon = totemIndicator:CreateTexture(nil, "ARTWORK")
     totemsIcon:SetTexture(BBP.TotemIndicatorIcon)
     totemsIcon:SetSize(17, 17)
@@ -5562,7 +5564,7 @@ local function guiPositionAndScale()
     CreateBorderBox(anchorSubTotem)
 
     local totemIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
-    totemIcon2:SetAtlas("teleportationnetwork-ardenweald-32x32")
+    totemIcon2:SetTexture(BBP.TotemIndicatorIcon)
     totemIcon2:SetSize(34, 34)
     totemIcon2:SetPoint("BOTTOM", anchorSubTotem, "TOP", 0, 0)
 
