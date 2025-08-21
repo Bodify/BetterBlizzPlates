@@ -800,7 +800,6 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
     local function SetSliderValue()
         if BBP.variablesLoaded and BBP.CVarsAreSaved() then
             local initialValue = tonumber(BetterBlizzPlatesDB[element]) -- Convert to number
-            print(element)
 
             if initialValue then
                 local currentMin, currentMax = slider:GetMinMaxValues() -- Fetch the latest min and max values

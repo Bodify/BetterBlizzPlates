@@ -3715,7 +3715,7 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         end
     end
 
-    if config.totemIndicator then
+    if config.totemIndicator and info.isNpc then
         local totemColor = config.totemColorRGB or config.randomTotemColor
         if totemColor then
             local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
@@ -3870,7 +3870,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         end
     end
 
-    if config.totemIndicator then
+    if config.totemIndicator and info.isNpc then
         local totemColor = config.totemColorRGB or config.randomTotemColor
         if totemColor then
             if config.totemIndicatorEnemyOnly then
@@ -4886,7 +4886,7 @@ local function HandleNamePlateAdded(unit)
     if config.showGuildNames then ShowFriendlyGuildName(frame, frame.unit) end
 
     -- Show totem icons
-    if config.totemIndicator then BBP.ApplyTotemIconsAndColorNameplate(frame, unit) end
+    if config.totemIndicator and info.isNpc then BBP.ApplyTotemIconsAndColorNameplate(frame, unit) end
 
     -- Color nameplate depending on aura
     if config.auraColor then BBP.AuraColor(frame) end
@@ -5153,7 +5153,7 @@ function BBP.RefreshAllNameplates()
             BBP.HideNPCs(frame, nameplate)
         end
 
-        if BetterBlizzPlatesDB.totemIndicator then
+        if BetterBlizzPlatesDB.totemIndicator and info.isNpc then
             BBP.ApplyTotemIconsAndColorNameplate(frame)
         end
 
@@ -5332,7 +5332,7 @@ function BBP.ConsolidatedUpdateName(frame)
     if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
 
     -- Ensure totem nameplate color is correct
-    if config.totemIndicator then
+    if config.totemIndicator and info.isNpc then
         local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
         local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
 

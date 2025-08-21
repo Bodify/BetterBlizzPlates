@@ -1,7 +1,7 @@
 ## Interface: 40402
 ## Title: Better|cff00c0ffBlizz|rPlates
 ## Notes: Default Blizzard Nameplates with more features added to them with easy settings.
-## Version: 1.8.4b
+## Version: 1.8.4c
 ## SavedVariables: BetterBlizzPlatesDB, BBPCVarBackupsDB
 ## OptionalDeps: LibSharedMedia-3.0
 ## IconAtlas: gmchat-icon-blizz
@@ -13,13 +13,13 @@ init.lua
 
 temp_cata\modules\combat.lua
 temp_cata\modules\castbar.lua
-temp_cata\modules\totem.lua
-temp_cata\modules\arenaid.lua
+temp_cata\modules\totem_Cata.lua
+temp_cata\modules\arenaid_Cata.lua
 temp_cata\modules\execute.lua
 temp_cata\modules\healthNumbers.lua
 temp_cata\modules\target.lua
 temp_cata\modules\healer.lua
-temp_cata\modules\absorb.lua
+temp_cata\modules\absorb_Cata.lua
 temp_cata\modules\classIcon.lua
 temp_cata\modules\partyPointer.lua
 temp_cata\modules\pet.lua

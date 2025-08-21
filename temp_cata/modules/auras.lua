@@ -2016,6 +2016,8 @@ local function GetPandemicThresholds(buff)
     elseif pandemicSpells[buff.spellID] then
         -- Use 30% of the greater value (dynamic or minimum) for Pandemic spells
         return nil, baseDuration * defaultPandemic
+    elseif buff.spellID == 44457 then
+        return nil, 3
     else
         -- Default non-pandemic (5 seconds)
         return nil, nonPandemic

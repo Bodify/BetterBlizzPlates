@@ -1,3 +1,15 @@
+# BetterBlizzPlates 1.8.4c
+## Mists of Pandaria
+### Tweak
+- Saul profile update
+- Living Bomb now shows Pandemic Glow when its below 3 seconds left instead of the default 5 (explode refresh window)
+## Classic Era
+### Bugfix
+- Fix debug printing of variables when opening GUI
+- Fix Totem Indicator issue with icon getting stuck on friendly players
+## Note
+- If you are experiencing missing healthbars/nameplates of any kind please give me as much info as possible on Discord so I can sort it.
+
 # BetterBlizzPlates 1.8.4b
 ## Mists of Pandaria/Cata/Wrath
 ### Bugfix
