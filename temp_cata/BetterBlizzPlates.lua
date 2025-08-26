@@ -681,7 +681,7 @@ if BBP.isMoP then
         -- Important
         [59764] =   { name = "Healing Tide Totem", icon = GetSpellTexture(108280),       hideIcon = false, size = 31, duration = 10, color =  {0, 1, 0.39},       important = true },
         [3527] =    { name = "Healing Stream Totem", icon = GetSpellTexture(5394),       hideIcon = false, size = 31, duration = 15, color = {0, 1, 0.78},       important = true, widthOn = true, hpWidth = -25 },
-        [5925] =    { name = "Grounding Totem", icon = GetSpellTexture(8177),            hideIcon = false, size = 31, duration = 15,  color = {1, 0, 1},          important = true },
+        [5925] =    { name = "Grounding Totem", icon = GetSpellTexture(8177),            hideIcon = false, size = 31, duration = 30,  color = {1, 0, 1},          important = true },
         [53006] =   { name = "Spirit Link Totem", icon = GetSpellTexture(98008),         hideIcon = false, size = 31, duration = 6,   color = {0, 1, 0.78},       important = true },
         [5913] =    { name = "Tremor Totem", icon = GetSpellTexture(8143),               hideIcon = false, size = 31, duration = 8.4, color = {0.49, 0.9, 0.08},  important = true, widthOn = true, hpWidth = -25 },
         [27829] =   { name = "Ebon Gargoyle", icon = GetSpellTexture(49206),             hideIcon = false, size = 31, duration = 30,  color = {1, 0.69, 0},       important = true, widthOn = true, hpWidth = -25},
@@ -6627,6 +6627,9 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     end
                     if db.totemIndicatorNpcList[59717] then
                         db.totemIndicatorNpcList[59717].duration = 6
+                    end
+                    if db.totemIndicatorNpcList[5925] then
+                        db.totemIndicatorNpcList[5925].duration = 30
                     end
                 end
                 db.totemListUpdateMop3 = true
