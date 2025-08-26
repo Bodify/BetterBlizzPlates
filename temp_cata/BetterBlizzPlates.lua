@@ -6625,6 +6625,9 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     if db.totemIndicatorNpcList[61245] then
                         db.totemIndicatorNpcList[61245].icon = GetSpellTexture(108269)
                     end
+                    if db.totemIndicatorNpcList[59717] then
+                        db.totemIndicatorNpcList[59717].duration = 6
+                    end
                 end
                 db.totemListUpdateMop3 = true
             end
