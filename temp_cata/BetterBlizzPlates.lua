@@ -102,6 +102,7 @@ local defaultSettings = {
     nameplateExtraClickHeight = 0,
     nameplateVerticalPosition = 0,
     smallPetsWidth = 20,
+    nameplateNonTargetAlpha = 0.5,
 
     mopUpdated = true,
     -- Enemy
@@ -688,7 +689,7 @@ if BBP.isMoP then
         [59190] =   { name = "Psyfiend", icon = GetSpellTexture(108921),                 hideIcon = false, size = 31, duration = 10, color = {0.49, 0, 1}, important = true },
         [62002] =   { name = "Stormlash Totem", icon = GetSpellTexture(120668),          hideIcon = false, size = 31, duration = 10, color = {1, 0.69, 0}, important = true },
         [59717] =   { name = "Windwalk Totem", icon = GetSpellTexture(108273),           hideIcon = false, size = 27, duration = 6,  color = {0, 1, 1},           important = true,  widthOn = true, hpWidth = -25 },
-        [61245] =   { name = "Capacitor Totem", icon = GetSpellTexture(192058),          hideIcon = false, size = 30, duration = 5,  color = {1, 0.69, 0},        important = true },
+        [61245] =   { name = "Capacitor Totem", icon = GetSpellTexture(108269),          hideIcon = false, size = 30, duration = 5,  color = {1, 0.69, 0},        important = true },
 
         -- Normal
         [59712] =   { name = "Stone Bulwark Totem", icon = GetSpellTexture(108270),      hideIcon = false, size = 27, duration = 30, color =  {0.98, 0.75, 0.17}, important = true },
@@ -6302,10 +6303,6 @@ local function HideHealthbarInPvEMagic()
                             else
                                 setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
                             end
-                            if BetterBlizzPlatesDB.friendlyClassColorName then
-                                setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'colorNameWithExtendedColors')
-                                print("set")
-                            end
                             setNil(DefaultCompactNamePlateFrameSetUpOptions, 'showLevel')
                             setNil(DefaultCompactNamePlateFriendlyFrameOptions, 'showLevel')
                         else
@@ -6618,6 +6615,18 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     end
                 end
                 db.totemListUpdateMop2 = true
+            end
+
+            if not db.totemListUpdateMop3 then
+                if db.totemIndicatorNpcList then
+                    if not db.totemIndicatorNpcList[59764] then
+                        db.totemIndicatorNpcList[59764] = defaultSettings.totemIndicatorNpcList[59764]
+                    end
+                    if db.totemIndicatorNpcList[61245] then
+                        db.totemIndicatorNpcList[61245].icon = GetSpellTexture(108269)
+                    end
+                end
+                db.totemListUpdateMop3 = true
             end
 
             InitializeSavedVariables()

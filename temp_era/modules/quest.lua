@@ -45,7 +45,13 @@ end
 
 
 local QUEST_OBJECTIVE_PARSER_LEFT = function(text)
-    local current, goal, objective_name = string.match(text, "^(%d+)/(%d+)( .*)$")
+    local current, goal, objective_name = string.match(text, "^(%d+)%/(%d+)%s+(.+)$")
+    if objective_name then
+        return objective_name, current, goal
+    end
+
+    -- This is changed in mop?
+    objective_name, current, goal = string.match(text, "^(.-):%s*(%d+)%/(%d+)$")
     return objective_name, current, goal
 end
 

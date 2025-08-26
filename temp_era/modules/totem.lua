@@ -319,8 +319,6 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
     local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
     local size = npcData and npcData.size or 30
 
-    print("x", npcID, frame.name:GetText(), guid)
-
     -- Early return if not in test mode and npcData is nil
     if not config.totemIndicatorTestMode and not npcData then
         config.totemColorRGB = nil

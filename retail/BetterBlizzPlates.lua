@@ -962,7 +962,7 @@ end
 
 local function CVarDefaultOnLogout()
     if not BBPCVarBackupsDB then return end
-    if InCombatLockdown() then return end
+    if InCombatLockdown() or BetterBlizzPlatesDB.disableCVarForceOnLogin then return end
     for cvar, value in pairs(BBPCVarBackupsDB) do
         if cvar == "nameplateSelfBottomInset" or cvar == "nameplateSelfTopInset" then
             if BetterBlizzPlatesDB.nameplateSelfBottomInset and BetterBlizzPlatesDB.nameplateSelfTopInset then
@@ -2045,7 +2045,7 @@ local function SetCVarsOnLogin()
         C_CVar.SetCVar("nameplateMotionSpeed", BetterBlizzPlatesDB.nameplateMotionSpeed)
         C_CVar.SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale)
         C_CVar.SetCVar("nameplateSelectedScale", BetterBlizzPlatesDB.nameplateSelectedScale)
-        C_CVar.SetCVar("nameplateMinScale", BetterBlizzPlatesDB.nameplateMinScale) -- fucked
+        C_CVar.SetCVar("nameplateMinScale", BetterBlizzPlatesDB.nameplateMinScale)
         C_CVar.SetCVar("nameplateMaxScale", BetterBlizzPlatesDB.nameplateMaxScale)
         C_CVar.SetCVar("nameplateMinAlpha", BetterBlizzPlatesDB.nameplateMinAlpha)
         C_CVar.SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
@@ -7006,7 +7006,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
 
             if db.nameplateMinScale and db.nameplateMaxScale then
                 -- Check if the two values are not the same
-                if db.nameplateMinScale ~= db.nameplateMaxScale then
+                if db.nameplateMinScale ~= db.nameplateMaxScale and not BetterBlizzPlatesDB.disableCVarForceOnLogin then
                     -- Calculate the average of the two values to balance them
                     local average = (db.nameplateMinScale + db.nameplateMaxScale) / 2
 

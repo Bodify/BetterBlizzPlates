@@ -1,3 +1,20 @@
+# BetterBlizzPlates 1.8.4d
+## Mists of Pandaria
+### New
+- Aeghis MoP profile
+### Tweak
+- Realised I forgot to force the missed healing tide totem into ppl lists late. This has now been put into into your Totem Indicator List if it was missing.
+### Bugfix
+- Fixed Quest Indicator not showing. Please report if it is still causing issues.
+- Fixed a missing variable in Fade NPCs causing lua errors if you hadn't already adjusted the slider.
+- Fix missing Capacitor Totem icon from Totem Indicator
+## All versions
+### Bugfix
+- Fixed "Disable all CVar forcing on login" setting being borked due to the introduction of the CVar backup system causing CVars to revert on logout despite setting enabled.
+- Removed some debug prints.
+
+
+
 # BetterBlizzPlates 1.8.4c
 ## Mists of Pandaria
 ### Tweak
