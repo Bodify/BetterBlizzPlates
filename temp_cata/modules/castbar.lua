@@ -1237,7 +1237,11 @@ frame:SetScript("OnEvent", function(self, event, unit, ...)
         end
         frame.CastBar.notInterruptible = notInterruptible or false
 
-        frame.CastBar.castText:SetWidth(frame.CastBar:GetWidth() - 10)
+        if db.castBarFullTextWidth then
+            frame.CastBar.castText:SetWidth(frame.CastBar:GetWidth() + 250)
+        else
+            frame.CastBar.castText:SetWidth(frame.CastBar:GetWidth() + 4)
+        end
         if classicFrames then
             local color = castColors[frame.CastBar.barType] or castColors.default
             frame.CastBar:SetStatusBarColor(unpack(color))

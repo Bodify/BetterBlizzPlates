@@ -234,6 +234,15 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
     end
 
+    castBar.Text:ClearAllPoints()
+    if db.castBarFullTextWidth then
+        castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", -70, 0)
+        castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", 70, 0)
+    else
+        castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", -2, 0)
+        castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", 2, 0)
+    end
+
     if UnitCastingInfo(unitToken) then
         casting = true
         spellName, _, _, castStart, endTime, _, _, notInterruptible, spellID = UnitCastingInfo(unitToken)

@@ -2053,7 +2053,7 @@ local function SetCVarsOnLogin()
         C_CVar.SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
         C_CVar.SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
         C_CVar.SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
-        C_CVar.SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
+        C_CVar.SetCVar("nameplateResourceOnTarget", (BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf and 0) or BetterBlizzPlatesDB.nameplateResourceOnTarget)
         C_CVar.SetCVar("ShowClassColorInNameplate", BetterBlizzPlatesDB.ShowClassColorInNameplate)
         C_CVar.SetCVar("ShowClassColorInFriendlyNameplate", BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate)
 
@@ -2675,9 +2675,6 @@ function BBP.FadeOutNPCs(frame)
     if info.isPlayer or not info.unitGUID then return end
 
     if UnitIsUnit(frame.unit, "pet") then
-        frame:SetAlpha(alpha)
-        frame.castBar:SetAlpha(alpha)
-        frame.fadedNpc = nil
         return
     end
 
@@ -2875,6 +2872,21 @@ function BBP.HideNPCs(frame, nameplate)
     end
 
     BBP.ShowFrame(frame)
+    if frame.murlocModeActive then
+        frame.murlocMode:Hide()
+        frame.hideNameOverride = false
+        frame.hideCastbarOverride = false
+        if config.classIndicatorHideFriendlyHealthbar then
+            frame.HealthBarsContainer:SetAlpha((info.isSelf and 1) or (frame.ciChange and 0) or 1)
+            frame.selectionHighlight:SetAlpha((((config.hideTargetHighlight and 0) or info.isFriend and config.friendlyHideHealthBar) and 0) or frame.ciChange and 0 or 0.22)
+        else
+            frame.HealthBarsContainer:SetAlpha((info.isSelf and 1) or (config.friendlyHideHealthBar and info.isFriend and 0) or 1)
+            frame.selectionHighlight:SetAlpha((((config.hideTargetHighlight and 0) or info.isFriend and config.friendlyHideHealthBar) and 0) or 0.22)
+        end
+        ToggleNameplateBuffFrameVisibility(frame)
+        frame.name:SetAlpha(1)
+        frame.murlocModeActive = nil
+    end
 
     local db = BetterBlizzPlatesDB
     local hideNPCArenaOnly = db.hideNPCArenaOnly
@@ -4377,6 +4389,7 @@ local function HandleNamePlateRemoved(unit)
     if not frame then return end
 
     frame.bbpHiddenNPC = nil
+    frame.ciChange = nil
     frame:SetScale(1)
     frame:SetAlpha(1)
     frame.name:SetAlpha(1)

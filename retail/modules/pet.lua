@@ -7,6 +7,9 @@ local petValidSpellIDs = {
 }
 
 local function ShowMurloc(frame)
+    if frame.bbpHiddenNPC then
+        frame.bbpHiddenNPC = nil
+    end
     frame:SetAlpha(1)
     frame.isMurloc = true
     frame.HealthBarsContainer:SetAlpha(0)

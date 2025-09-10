@@ -286,7 +286,7 @@ local adjusted
 local msgPrinted
 function BBP.TargetResourceUpdater()
     local _, className = UnitClass("player")
-    nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true
+    nameplateResourceOnTarget = (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true) and not BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf
     nameplateShowSelf = GetCVarBool("nameplateShowSelf")
     nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
 
@@ -329,17 +329,50 @@ function BBP.TargetResourceUpdater()
             end
         --end
     elseif nameplateShowSelf then
-        local nameplatePlayer = C_NamePlate.GetNamePlateForUnit("player")
-        if nameplatePlayer and nameplatePlayer.driverFrame then
-            local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
-            resourceFrame:SetScale(nameplateResourceScale)
-
+        local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
+        if not InCombatLockdown() and C_CVar.GetCVarBool("nameplateResourceOnTarget") then
+            C_CVar.SetCVar("nameplateResourceOnTarget", "0")
+        end
+        if BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf and nameplateForTarget then
+            if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
             if BetterBlizzPlatesDB.changeResourceStrata then
                 resourceFrame:SetFrameStrata("DIALOG")
             end
             resourceFrame:ClearAllPoints();
-            local padding = resourceFrame.paddingOverride or classPadding[className] or 0
-            PixelUtil.SetPoint(resourceFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
+            if nameplateResourceUnderCastbar then
+                BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
+            else
+                PixelUtil.SetPoint(resourceFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
+            end
+            --resourceFrame:SetPoint()
+            local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
+            resourceFrame:SetScale(nameplateResourceScale)
+
+            if BetterBlizzPlatesDB.hideResourceOnFriend then
+                local info = nameplateForTarget.UnitFrame.BetterBlizzPlates.unitInfo
+                if info.isFriend then
+                    resourceFrame:SetAlpha(0)
+                    adjusted = true
+                else
+                    resourceFrame:SetAlpha(1)
+                end
+            elseif adjusted then
+                resourceFrame:SetAlpha(1)
+                adjusted = nil
+            end
+        else
+            local nameplatePlayer = C_NamePlate.GetNamePlateForUnit("player")
+            if nameplatePlayer and nameplatePlayer.driverFrame then
+                local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
+                resourceFrame:SetScale(nameplateResourceScale)
+
+                if BetterBlizzPlatesDB.changeResourceStrata then
+                    resourceFrame:SetFrameStrata("DIALOG")
+                end
+                resourceFrame:ClearAllPoints();
+                local padding = resourceFrame.paddingOverride or classPadding[className] or 0
+                PixelUtil.SetPoint(resourceFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
+            end
         end
     end
 
@@ -387,18 +420,48 @@ function BBP.TargetResourceUpdater()
                         end
                     end
                 else
-                    local nameplatePlayer = C_NamePlate.GetNamePlateForUnit("player")
-                    if nameplatePlayer and nameplatePlayer.driverFrame then
+                    local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
+                    if BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf and nameplateForTarget then
+                        if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
                         if BetterBlizzPlatesDB.changeResourceStrata then
                             resourceFrame:SetFrameStrata("DIALOG")
                         end
                         resourceFrame:ClearAllPoints();
-
-                        local padding = resourceFrame.paddingOverride or classPadding[className] or 0
-                        PixelUtil.SetPoint(resourceFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
-
+                        if nameplateResourceUnderCastbar then
+                            BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
+                        else
+                            PixelUtil.SetPoint(resourceFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
+                        end
+                        --resourceFrame:SetPoint()
                         local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
                         resourceFrame:SetScale(nameplateResourceScale)
+
+                        if BetterBlizzPlatesDB.hideResourceOnFriend then
+                            local info = nameplateForTarget.UnitFrame.BetterBlizzPlates.unitInfo
+                            if info.isFriend then
+                                resourceFrame:SetAlpha(0)
+                                adjusted = true
+                            else
+                                resourceFrame:SetAlpha(1)
+                            end
+                        elseif adjusted then
+                            resourceFrame:SetAlpha(1)
+                            adjusted = nil
+                        end
+                    else
+                        local nameplatePlayer = C_NamePlate.GetNamePlateForUnit("player")
+                        if nameplatePlayer and nameplatePlayer.driverFrame then
+                            if BetterBlizzPlatesDB.changeResourceStrata then
+                                resourceFrame:SetFrameStrata("DIALOG")
+                            end
+                            resourceFrame:ClearAllPoints();
+
+                            local padding = resourceFrame.paddingOverride or classPadding[className] or 0
+                            PixelUtil.SetPoint(resourceFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
+
+                            local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
+                            resourceFrame:SetScale(nameplateResourceScale)
+                        end
                     end
                 end
             end

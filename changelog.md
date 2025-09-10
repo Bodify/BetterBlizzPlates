@@ -1,3 +1,18 @@
+# BetterBlizzPlates 1.8.4e
+## Retail
+### New
+- New right-click setting on "Show resource on target" (CVar Control) that lets you keep resource on PRD while you have no target and swap to target if you have one.
+- Full Text Width setting for Castbars. Also tweaked the default to be a tiny bit wider.
+### Bugfix
+- Cleanup at some hide nameplate stuff. Hopefully the end of it.
+## Mists of Pandaria
+### New
+- Full Text Width setting for Castbars. Also tweaked the default to be a tiny bit wider.
+### Bugfix
+- Attempted fix at some people getting errors on creating absorb textures. Correct according to API and working for most, wrong according to errors, very poggers.
+
+
+
 # BetterBlizzPlates 1.8.4d
 ## Mists of Pandaria
 ### New

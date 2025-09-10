@@ -139,16 +139,17 @@ end
 
 local function CreateAbsorbBar(frame)
     if frame.absorbBar then return end -- Prevent duplicate elements
-
     -- Absorb Fill (Total Absorb)
-    frame.absorbBar = frame:CreateTexture(nil, "ARTWORK", nil, 1)
+    frame.absorbBar = frame:CreateTexture()
+    frame.absorbBar:SetDrawLayer("ARTWORK", 1)
     frame.absorbBar:SetTexture("Interface\\RaidFrame\\Shield-Fill")
     --frame.absorbBar:SetHorizTile(false)
     --frame.absorbBar:SetVertTile(false)
     frame.absorbBar:Hide()
 
     -- Absorb Overlay
-    frame.absorbOverlay = frame:CreateTexture(nil, "OVERLAY", nil, 2)
+    frame.absorbOverlay = frame:CreateTexture()
+    frame.absorbOverlay:SetDrawLayer("OVERLAY", 2)
     frame.absorbOverlay:SetTexture("Interface\\RaidFrame\\Shield-Overlay", true, true)
     frame.absorbOverlay:SetHorizTile(true)
     frame.absorbOverlay.tileSize = 32
@@ -156,7 +157,8 @@ local function CreateAbsorbBar(frame)
     frame.absorbOverlay:Hide()
 
     -- Over Absorb Glow
-    frame.absorbGlow = frame:CreateTexture(nil, "OVERLAY", nil, 3)
+    frame.absorbGlow = frame:CreateTexture()
+    frame.absorbGlow:SetDrawLayer("OVERLAY", 3)
     frame.absorbGlow:SetTexture("Interface\\RaidFrame\\Shield-Overshield")
     frame.absorbGlow:SetBlendMode("ADD")
     frame.absorbGlow:SetWidth(8)

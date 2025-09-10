@@ -1792,6 +1792,15 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Nameplate Resource" then
+            local showOnPlayerWithoutTarget = BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf
+            local tooltipText = "\n|cff32f795Right-click to show resource on Personal Resource Display when you have no target|r"
+
+            if showOnPlayerWithoutTarget then
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
 
         -- Set the subtext
@@ -8271,9 +8280,13 @@ local function guiCastbar()
     hideNameDuringCast:SetPoint("LEFT", showCastBarIconWhenNoninterruptible.text, "RIGHT", -1, 0)
     CreateTooltipTwo(hideNameDuringCast, "Hide Unit Name", "Hide the name of the unit casting during a cast.")
 
-    local castBarDragonflightShield = CreateCheckbox("castBarDragonflightShield", "Dragonflight Shield on Non-Interruptable", enableCastbarCustomization)
+    local castBarDragonflightShield = CreateCheckbox("castBarDragonflightShield", "New Shield on Non-Interruptable", enableCastbarCustomization)
     castBarDragonflightShield:SetPoint("TOPLEFT", showCastBarIconWhenNoninterruptible, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(castBarDragonflightShield, "Replace the old pixelated non-interruptible\ncastbar shield with the new Dragonflight one")
+
+    local castBarFullTextWidth = CreateCheckbox("castBarFullTextWidth", "Full Text Width", enableCastbarCustomization)
+    castBarFullTextWidth:SetPoint("LEFT", castBarDragonflightShield.text, "RIGHT", -1, 0)
+    CreateTooltipTwo(castBarFullTextWidth, "Full Text Width", "Never shorten spell cast text.")
 
     local castBarIconScale = CreateSlider(enableCastbarCustomization, "Castbar Icon Size", 0.1, 2.5, 0.01, "castBarIconScale")
     castBarIconScale:SetPoint("TOPLEFT", castBarDragonflightShield, "BOTTOMLEFT", 12, -10)
@@ -10866,6 +10879,26 @@ local function guiCVarControl()
         BBP.ApplyNameplateWidth()
     end)
 
+    nameplateResourceOnTarget:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            if not BBP.checkCombatAndWarn() then
+                if BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf == nil then
+                    BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf = true
+                else
+                    BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf = nil
+                end
+                if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                    self:GetScript("OnEnter")(self)
+                end
+                if nameplateResourceOnTarget:GetChecked() and not BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf then
+                    C_CVar.SetCVar("nameplateResourceOnTarget", "1")
+                    BetterBlizzPlatesDB.nameplateResourceOnTarget = "1"
+                end
+                BBP.TargetResourceUpdater()
+            end
+        end
+    end)
+
     local instantComboPoints = CreateCheckbox("instantComboPoints", "Instant Combo Points", guiCVarControl, nil, BBP.InstantComboPoints)
     instantComboPoints:SetPoint("TOPLEFT", nameplateResourceOnTarget, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(instantComboPoints, "Instant Combo Points", "Remove the combo point animations for instant feedback. Currently works for:\n|cFFFFF569Rogue|r\n|cFFFF7D0ADruid|r\n|cFF00FF96Monk|r\n|cFF3FC7EBMage|r\n|cFFF58CBAPaladin|r")
@@ -11204,7 +11237,7 @@ local function guiCVarControl()
     cbCVars["nameplateShowFriendlyGuardians"] = nameplateShowFriendlyGuardians
     cbCVars["nameplateShowFriendlyPets"] = nameplateShowFriendlyPets
     cbCVars["nameplateShowFriendlyTotems"] = nameplateShowFriendlyTotems
-    cbCVars["nameplateResourceOnTarget"] = nameplateResourceOnTarget
+    --cbCVars["nameplateResourceOnTarget"] = nameplateResourceOnTarget
     cbCVars["nameplateMotion"] = nameplateMotion
     cbCVars["nameplateShowAll"] = nameplateShowAll
 

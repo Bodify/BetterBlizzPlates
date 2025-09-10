@@ -3756,8 +3756,8 @@ local function CreateBetterRetailCastbar(frame)
     frame.CastBar:SetFrameStrata("HIGH")
 
     frame.CastBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or 16)
-    frame.CastBar:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 0, -2)
-    frame.CastBar:SetPoint("TOPRIGHT", frame.healthBar, "BOTTOMRIGHT", 0, -2)
+    frame.CastBar:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 0, BetterBlizzPlatesDB.castBarYAxisHeight or -2)
+    frame.CastBar:SetPoint("TOPRIGHT", frame.healthBar, "BOTTOMRIGHT", 0, BetterBlizzPlatesDB.castBarYAxisHeight or -2)
 
     frame.CastBar.Icon:ClearAllPoints()
     --frame.CastBar.Icon:SetSize(10,10)
