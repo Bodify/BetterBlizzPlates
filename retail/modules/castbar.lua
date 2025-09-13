@@ -776,7 +776,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
             BBP.SetFontBasedOnOption(frame.TargetText, (useCustomFont and (npTextSize or 11)) or (npTextSize or 12))
         else
             local f,s,o = frame.TargetText:GetFont()
-            frame.TargetText:SetFont(f,12,"OUTLINE")
+            frame.TargetText:SetFont(f, npTextSize or 12,"OUTLINE")
         end
     else
         frame.TargetText:SetText("")

@@ -5633,7 +5633,7 @@ function BBP.RefreshAllNameplates()
         BBP.ClassColorAndScaleNames(frame)
 
         if frame.TargetText then
-            BBP.SetFontBasedOnOption(frame.TargetText, 12)
+            BBP.SetFontBasedOnOption(frame.TargetText, BetterBlizzPlatesDB.npTargetTextSize or 12)
         end
         if frame.absorbIndicator then
             BBP.SetFontBasedOnOption(frame.absorbIndicator, 10)
