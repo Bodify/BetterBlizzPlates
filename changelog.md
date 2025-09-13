@@ -1,3 +1,13 @@
+# BetterBlizzPlates 1.8.4f
+## All versions
+### Tweak
+- Color Threat: Don't color threat on tapped units.
+## Mists of Pandaria
+### Bugfix
+- Fix missing GUI elements in Totem Indicator List section to toggle Totem Indicator Width settings on/off causing Totem Indicator Width settings to appear broken.
+
+
+
 # BetterBlizzPlates 1.8.4e
 ## Retail
 ### New
