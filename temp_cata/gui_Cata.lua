@@ -945,7 +945,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                                     if BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown then
                                         frame.totemIndicator:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 4)
                                     else
-                                        frame.totemIndicator:SetPoint("BOTTOM", frame.fakeName or frame.name, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 0)
+                                        frame.totemIndicator:SetPoint("BOTTOM", frame.frame.name, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 0)
                                     end
                                 else
                                     frame.totemIndicator:SetScale(value)
@@ -997,7 +997,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                                 --     if axis then
                                 --         if anchorPoint == "TOP" then
                                 --             frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
-                                --             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.fakeName or frame.name, anchorPoint, xPos, yPos)
+                                --             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.frame.name, anchorPoint, xPos, yPos)
                                 --         else
                                 --             frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
                                 --             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.healthBar, anchorPoint, xPos, yPos)
@@ -6581,12 +6581,12 @@ local function guiPositionAndScale()
     anchorSubHealthNumbers:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, fourthLineY)
     anchorSubHealthNumbers:SetText("Health Numbers")
 
-    CreateBorderBox(anchorSubHealthNumbers)
+    anchorSubHealthNumbers.border = CreateBorderBox(anchorSubHealthNumbers)
 
-    anchorSubHealthNumbers.icon = contentFrame:CreateTexture(nil, "ARTWORK")
-    anchorSubHealthNumbers.icon:SetTexture(BBP.healthNumbersIconReplacement)
-    anchorSubHealthNumbers.icon:SetSize(44, 44)
-    anchorSubHealthNumbers.icon:SetPoint("BOTTOM", anchorSubHealthNumbers, "TOP", 0, -5)
+    anchorSubHealthNumbers.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubHealthNumbers.t:SetTexture(BBP.healthNumbersIconReplacement)
+    anchorSubHealthNumbers.t:SetSize(44, 44)
+    anchorSubHealthNumbers.t:SetPoint("BOTTOM", anchorSubHealthNumbers, "TOP", 0, -5)
 
     local healthNumbersScale = CreateSlider(contentFrame, "Size", 0.5, 2.5, 0.01, "healthNumbersScale")
     healthNumbersScale:SetPoint("TOP", anchorSubHealthNumbers, "BOTTOM", 0, -15)
@@ -6631,37 +6631,104 @@ local function guiPositionAndScale()
     healthNumbersNotOnFullHp:SetPoint("TOPLEFT", healthNumbersPercentSymbol, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersNotOnFullHp, "Hide on full HP", "Hide the health text on nameplates with full health.")
 
-    local healthNumbersUseMillions = CreateCheckbox("healthNumbersUseMillions", "Million", contentFrame)
-    healthNumbersUseMillions:SetPoint("TOPLEFT", healthNumbersShowDecimal, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    -- Extended Settings Button
+    anchorSubHealthNumbers.extendedSettingsButton = CreateFrame("Button", nil, contentFrame, "UIPanelButtonTemplate")
+    anchorSubHealthNumbers.extendedSettingsButton:SetSize(120, 25)
+    anchorSubHealthNumbers.extendedSettingsButton:SetPoint("TOP", anchorSubHealthNumbers, "BOTTOM", 0, -212)
+    anchorSubHealthNumbers.extendedSettingsButton:SetText("More options")
+    CreateTooltip(anchorSubHealthNumbers.extendedSettingsButton, "Open more settings for Health Numbers")
+
+    -- Extended Settings Frame
+    anchorSubHealthNumbers.extendedSettings = CreateFrame("Frame", nil, BetterBlizzPlatesSubPanel, "DefaultPanelFlatTemplate")
+    -- anchorSubHealthNumbers.extendedSettings:SetAllPoints(anchorSubHealthNumbers.border)
+    anchorSubHealthNumbers.extendedSettings:SetSize(anchorSubHealthNumbers.border:GetHeight()+40, 335)
+    anchorSubHealthNumbers.extendedSettings:SetPoint("BOTTOMRIGHT", anchorSubHealthNumbers.border, "BOTTOMLEFT", 87, -125)
+    anchorSubHealthNumbers.extendedSettings:SetFrameStrata("DIALOG")
+    anchorSubHealthNumbers.extendedSettings:SetIgnoreParentAlpha(true)
+    anchorSubHealthNumbers.extendedSettings:EnableMouse(true)
+    anchorSubHealthNumbers.extendedSettings:Hide()
+    anchorSubHealthNumbers.extendedSettings.name = "Advanced Settings"
+    anchorSubHealthNumbers.extendedSettings:SetTitle("Health Numbers")
+
+    anchorSubHealthNumbers.closeButton = CreateFrame("Button", nil, anchorSubHealthNumbers.extendedSettings, "UIPanelCloseButton")
+    anchorSubHealthNumbers.closeButton:SetPoint("TOPRIGHT", anchorSubHealthNumbers.extendedSettings, "TOPRIGHT", 4, 4)
+    anchorSubHealthNumbers.closeButton:SetScript("OnClick", function()
+        anchorSubHealthNumbers.extendedSettings:Hide()
+        contentFrame:SetAlpha(1)
+    end)
+
+    anchorSubHealthNumbers.bg = anchorSubHealthNumbers.extendedSettings:CreateTexture(nil, "BACKGROUND")
+    anchorSubHealthNumbers.bg:SetPoint("TOPLEFT", anchorSubHealthNumbers.extendedSettings, "TOPLEFT", 7, -3)
+    anchorSubHealthNumbers.bg:SetPoint("BOTTOMRIGHT", anchorSubHealthNumbers.extendedSettings, "BOTTOMRIGHT", -3, 3)
+    anchorSubHealthNumbers.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
+
+    anchorSubHealthNumbers.extendedSettingsButton:HookScript("OnClick", function(self)
+        anchorSubHealthNumbers.extendedSettings:SetShown(not anchorSubHealthNumbers.extendedSettings:IsShown())
+        contentFrame:SetAlpha(anchorSubHealthNumbers.extendedSettings:IsShown() and 0.5 or 1)
+    end)
+
+    local healthNumbersUseMillions = CreateCheckbox("healthNumbersUseMillions", "Format Million", anchorSubHealthNumbers.extendedSettings)
+    healthNumbersUseMillions:SetPoint("TOPLEFT", anchorSubHealthNumbers.extendedSettings, "TOPLEFT", 10, -23)
     CreateTooltipTwo(healthNumbersUseMillions, "Format Million", "Display health values above 1million as 1m instead of 1000k")
 
-    local healthNumbersCurrentFull = CreateCheckbox("healthNumbersCurrentFull", "Cur/Max", contentFrame)
-    healthNumbersCurrentFull:SetPoint("TOPLEFT", healthNumbersNotOnFullHp, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local healthNumbersCurrentFull = CreateCheckbox("healthNumbersCurrentFull", "Current / Max", anchorSubHealthNumbers.extendedSettings)
+    healthNumbersCurrentFull:SetPoint("TOPLEFT", healthNumbersUseMillions, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersCurrentFull, "Current / Max", "Show current health and max health.\nFor example 69k/420k")
 
-    local healthNumbersCombined = CreateCheckbox("healthNumbersCombined", "HP/Percent", contentFrame)
+    local healthNumbersCombined = CreateCheckbox("healthNumbersCombined", "Health - Percent", anchorSubHealthNumbers.extendedSettings)
     healthNumbersCombined:SetPoint("TOPLEFT", healthNumbersCurrentFull, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersCombined, "Health - Percent", "Shows health & percent. For example 20m / 100%")
 
-    local healthNumbersOnlyInCombat = CreateCheckbox("healthNumbersOnlyInCombat", "Combat", contentFrame)
-    healthNumbersOnlyInCombat:SetPoint("TOPLEFT", healthNumbersUseMillions, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local healthNumbersOnlyInCombat = CreateCheckbox("healthNumbersOnlyInCombat", "Only in Combat", anchorSubHealthNumbers.extendedSettings)
+    healthNumbersOnlyInCombat:SetPoint("TOPLEFT", healthNumbersCombined, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersOnlyInCombat, "Only in Combat", "Only show health values on nameplates in combat")
 
-    local healthNumbersSwapped = CreateCheckbox("healthNumbersSwapped", "Swap", contentFrame)
+    local healthNumbersSwapped = CreateCheckbox("healthNumbersSwapped", "Swap Numbers", anchorSubHealthNumbers.extendedSettings)
     healthNumbersSwapped:SetPoint("TOPLEFT", healthNumbersOnlyInCombat, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(healthNumbersSwapped, "Swap Number", "Swap the numbers to be percent first. 100% - 200k")
+    CreateTooltipTwo(healthNumbersSwapped, "Swap Numbers", "Swap the numbers to be percent first. 100% - 200k")
 
-    local healthNumbersTargetOnly = CreateCheckbox("healthNumbersTargetOnly", "Target", contentFrame)
-    healthNumbersTargetOnly:SetPoint("TOPLEFT", healthNumbersCombined, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local healthNumbersTargetOnly = CreateCheckbox("healthNumbersTargetOnly", "Show on Target only", anchorSubHealthNumbers.extendedSettings)
+    healthNumbersTargetOnly:SetPoint("TOPLEFT", healthNumbersSwapped, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healthNumbersTargetOnly, "Show on Target only", "Only show the health values on current target")
 
-    anchorSubHealthNumbers.healthNumbersPlayers = CreateCheckbox("healthNumbersPlayers", "Players", contentFrame)
-    anchorSubHealthNumbers.healthNumbersPlayers:SetPoint("TOPLEFT", healthNumbersSwapped, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    anchorSubHealthNumbers.healthNumbersPlayers = CreateCheckbox("healthNumbersPlayers", "Enable on Players", anchorSubHealthNumbers.extendedSettings)
+    anchorSubHealthNumbers.healthNumbersPlayers:SetPoint("TOPLEFT", healthNumbersTargetOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersPlayers, "Players", "Enable health numbers on players")
 
-    anchorSubHealthNumbers.healthNumbersNpcs = CreateCheckbox("healthNumbersNpcs", "NPCs", contentFrame)
-    anchorSubHealthNumbers.healthNumbersNpcs:SetPoint("TOPLEFT", healthNumbersTargetOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersNpcs, "NPCs", "Enable health numbers on NPCs")
+    anchorSubHealthNumbers.healthNumbersHideSelf = CreateCheckbox("healthNumbersHideSelf", "Hide on Personal", anchorSubHealthNumbers.extendedSettings)
+    anchorSubHealthNumbers.healthNumbersHideSelf:SetPoint("TOPLEFT", anchorSubHealthNumbers.healthNumbersPlayers, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersHideSelf, "Hide on Personal Resource Display", "Hide the health numbers on personal resource bar")
+
+    anchorSubHealthNumbers.healthNumbersNpcs = CreateCheckbox("healthNumbersNpcs", "Enable on NPCs", anchorSubHealthNumbers.extendedSettings)
+    anchorSubHealthNumbers.healthNumbersNpcs:SetPoint("TOPLEFT", anchorSubHealthNumbers.healthNumbersHideSelf, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersNpcs, "Enable on NPCs", "Enable health numbers on NPCs")
+
+    anchorSubHealthNumbers.healthNumbersClassColor = CreateCheckbox("healthNumbersClassColor", "Class Color Text", anchorSubHealthNumbers.extendedSettings)
+    anchorSubHealthNumbers.healthNumbersClassColor:SetPoint("TOPLEFT", anchorSubHealthNumbers.healthNumbersNpcs, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubHealthNumbers.healthNumbersClassColor, "Class Color Text", "Class color the text for players.")
+
+    anchorSubHealthNumbers.healthNumbersTextJustify = CreateAnchorDropdown(
+        "healthNumbersTextJustifyDropdown",
+        anchorSubHealthNumbers.extendedSettings,
+        "Select Text Alignment",
+        "healthNumbersJustify",
+        function(arg1)
+        BBP.RefreshAllNameplates()
+    end,
+        { anchorFrame = anchorSubHealthNumbers.healthNumbersClassColor, x = 0, y = -45, label = "Text Alignment" },nil,nil,{"CENTER", "LEFT", "RIGHT"}
+    )
+
+
+    anchorSubHealthNumbers.healthNumbersFontOutline = CreateAnchorDropdown(
+        "healthNumbersFontOutlineDropdown",
+        anchorSubHealthNumbers.extendedSettings,
+        "Select Font Outline",
+        "healthNumbersFontOutline",
+        function(arg1)
+        BBP.RefreshAllNameplates()
+    end,
+        { anchorFrame = anchorSubHealthNumbers.healthNumbersTextJustify, x = 0, y = -45, label = "Font Outline" },nil,nil,{"THICKOUTLINE", "OUTLINE"}
+    )
 
 
     ----------------------

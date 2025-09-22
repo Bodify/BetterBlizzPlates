@@ -70,11 +70,7 @@ function BBP.CreateTotemComponents(frame, size)
         totemIndicatorSwappingAnchor = frame.healthBar
     else
         if config.totemIndicatorAnchor == "TOP" then
-            if frame.fakeName then
-                totemIndicatorSwappingAnchor = frame.fakeName
-            else
-                totemIndicatorSwappingAnchor = frame.name
-            end
+            totemIndicatorSwappingAnchor = frame.name
         else
             totemIndicatorSwappingAnchor = frame.healthBar
         end
@@ -305,11 +301,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         totemIndicatorSwappingAnchor = frame.healthBar
     else
         if config.totemIndicatorAnchor == "TOP" then
-            if frame.fakeName then
-                totemIndicatorSwappingAnchor = frame.fakeName
-            else
-                totemIndicatorSwappingAnchor = frame.name
-            end
+            totemIndicatorSwappingAnchor = frame.name
         else
             totemIndicatorSwappingAnchor = frame.healthBar
         end
@@ -344,9 +336,6 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
 
         if config.totemIndicatorHideNameAndShiftIconDown then
             frame.name:SetText("")
-            if frame.fakeName then
-                frame.fakeName:SetText("")
-            end
         end
 
         if frame.BuffFrame and config.totemIndicatorHideAuras then
@@ -441,9 +430,6 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
             if config.totemIndicatorColorName then
                 frame.name:SetVertexColor(unpack(npcData.color))
-                if frame.fakeName then
-                    frame.name:SetVertexColor(unpack(npcData.color))
-                end
             end
         else
             config.totemColorRGB = nil
@@ -498,15 +484,9 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         if iconOnlyMode then
             frame.totemIndicator:SetPoint("CENTER", frame, "CENTER", config.totemIndicatorXPos, config.totemIndicatorYPos)
             frame.name:SetText("")
-            if frame.fakeName then
-                frame.fakeName:SetText("")
-            end
         else
             frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, yPosAdjustment)
             frame.name:SetText("")
-            if frame.fakeName then
-                frame.fakeName:SetText("")
-            end
         end
     -- elseif config.nameplateResourceOnTarget == "1"  and UnitIsUnit(frame.unit, "target") and not BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
     --     local resourceFrame = frame:GetParent().driverFrame.classNamePlateMechanicFrame

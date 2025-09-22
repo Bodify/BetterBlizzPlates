@@ -130,7 +130,7 @@ function BBP.PartyPointer(frame, fetchedSpecID)
             end
         end
 
-        local anhcorPoint = resourceAnchor or arenaPoint or frame.fakeName or frame.name
+        local anhcorPoint = resourceAnchor or arenaPoint or frame.frame.name
 
         frame.partyPointer:SetPoint("BOTTOM", anhcorPoint, config.partyPointerAnchor, config.partyPointerXPos, config.partyPointerYPos -5)
     else

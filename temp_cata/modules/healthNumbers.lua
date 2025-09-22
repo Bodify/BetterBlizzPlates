@@ -1,5 +1,3 @@
-local LSM = LibStub("LibSharedMedia-3.0")
-
 -- Helper function to format health numbers
 local function FormatHealthValue(health, useMillions, showDecimal)
     local formatString
@@ -9,10 +7,10 @@ local function FormatHealthValue(health, useMillions, showDecimal)
             return string.format(formatString, health / 1000000)
         else
             formatString = showDecimal and "%.0fk" or "%.0fk"
-            return string.format(formatString, health / 1000)  -- Format as thousands, not millions
+            return string.format(formatString, health / 1000)
         end
     elseif health >= 1000 then
-        formatString = showDecimal and "%.1fk" or "%.0fk"  -- Correct this to show decimals
+        formatString = showDecimal and "%.1fk" or "%.0fk"
         return string.format(formatString, health / 1000)
     else
         return tostring(health)
@@ -23,6 +21,19 @@ end
 function BBP.HealthNumbers(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
+
+    -- Initialize or update the health numbers display
+    if not frame.healthNumbers then
+        frame.healthNumbers = frame.bbpOverlay:CreateFontString(nil, "OVERLAY")
+        frame.healthNumbers:SetTextColor(1, 1, 1)
+        frame.healthNumbers:SetJustifyH("CENTER")
+
+        -- Copy outline and shadow from frame.name
+        local shadowColorR, shadowColorG, shadowColorB, shadowColorA = frame.name:GetShadowColor()
+        local shadowOffsetX, shadowOffsetY = frame.name:GetShadowOffset()
+        frame.healthNumbers:SetShadowColor(shadowColorR, shadowColorG, shadowColorB, shadowColorA)
+        frame.healthNumbers:SetShadowOffset(shadowOffsetX, shadowOffsetY)
+    end
 
     if not config.healthNumbersInitialized or BBP.needsUpdate then
         config.healthNumbersFriendly = BetterBlizzPlatesDB.healthNumbersFriendly
@@ -143,28 +154,13 @@ function BBP.HealthNumbers(frame)
 
     local oppositeAnchor = BBP.GetOppositeAnchor(config.healthNumbersAnchor)
 
-    -- Initialize or update the health numbers display
-    if not frame.healthNumbers then
-        frame.healthNumbers = frame.healthBar:CreateFontString(nil, "OVERLAY")
-        BBP.SetFontBasedOnOption(frame.healthNumbers, 9, BetterBlizzPlatesDB.healthNumbersFontOutline)
-        frame.healthNumbers:SetTextColor(1, 1, 1)
-        frame.healthNumbers:SetJustifyH("CENTER")
-
-        -- Copy outline and shadow from frame.name
-        local shadowColorR, shadowColorG, shadowColorB, shadowColorA = frame.name:GetShadowColor()
-        local shadowOffsetX, shadowOffsetY = frame.name:GetShadowOffset()
-        frame.healthNumbers:SetShadowColor(shadowColorR, shadowColorG, shadowColorB, shadowColorA)
-        frame.healthNumbers:SetShadowOffset(shadowOffsetX, shadowOffsetY)
+    local justify = BetterBlizzPlatesDB.healthNumbersJustify
+    if justify ~= "CENTER" then
+        oppositeAnchor = justify
     end
 
     if BBP.needsUpdate then
         BBP.SetFontBasedOnOption(frame.healthNumbers, 9, BetterBlizzPlatesDB.healthNumbersFontOutline)
-        -- local db = BetterBlizzPlatesDB
-        -- local fontName = db.healthNumbersFont
-        -- local fontPath = LSM:Fetch(LSM.MediaType.FONT, fontName)
-        -- local fontSize = db.healthNumbersFontSize
-        -- local fontOutline = db.healthNumbersFontOutline
-        -- frame.healthNumbers:SetFont(fontPath, fontSize, fontOutline)
     end
 
     frame.healthNumbers:ClearAllPoints()
@@ -214,20 +210,24 @@ function BBP.HealthNumbers(frame)
 end
 
 -- Event listening for Health Numbers
-local healthEventFrame = CreateFrame("Frame")
-healthEventFrame:SetScript("OnEvent", function(self, event, unit)
-    local nameplate, frame = BBP.GetSafeNameplate(unit)
-    if frame then
-        BBP.HealthNumbers(frame)
-    end
-end)
+local healthEventFrame
 
 -- Toggle event listening on/off for Health Numbers if not enabled
 function BBP.ToggleHealthNumbers()
     if BetterBlizzPlatesDB.healthNumbers then
+        if not healthEventFrame then
+            healthEventFrame = CreateFrame("Frame")
+            healthEventFrame:SetScript("OnEvent", function(self, event, unit)
+                local nameplate, frame = BBP.GetSafeNameplate(unit)
+                if not frame then return end
+                BBP.HealthNumbers(frame)
+            end)
+        end
         healthEventFrame:RegisterEvent("UNIT_HEALTH")
     else
-        healthEventFrame:UnregisterEvent("UNIT_HEALTH")
+        if healthEventFrame then
+            healthEventFrame:UnregisterEvent("UNIT_HEALTH")
+        end
     end
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         BBP.HealthNumbers(nameplate.UnitFrame)

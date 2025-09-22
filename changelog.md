@@ -2,9 +2,18 @@
 ## All versions
 ### Tweak
 - Color Threat: Don't color threat on tapped units.
+## All classic versions
+### Tweak
+- Health Numbers' Advanced Settings updated to same stuff as on Retail (new anchor settings and some others)
+- Misc: Change nameplate border color now also colors castbar border when using Classic Nameplates.
 ## Mists of Pandaria
 ### Bugfix
 - Fix missing GUI elements in Totem Indicator List section to toggle Totem Indicator Width settings on/off causing Totem Indicator Width settings to appear broken.
+## Classic Era
+### Tweak
+- Cleaned up name position stuff and updated it to same as on Retail/MoP. Shouldnt notice any difference unless I've messed smth up. Please report bugs as always.
+### Bugfix
+- Fixed some issues with name text updates and some features not working properly because of it, for example "Show last name only on npcs" bugging on mouseover.
 
 
 

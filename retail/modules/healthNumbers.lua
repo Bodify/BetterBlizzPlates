@@ -28,7 +28,6 @@ local function FormatHealthValue(health, useMillions, showDecimal)
     end
 end
 
--- Update the Execute Indicator
 function BBP.HealthNumbers(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
@@ -165,13 +164,6 @@ function BBP.HealthNumbers(frame)
     end
 
     if config.healthNumbersClassColor then
-        -- if isPlayer then
-        --     local _, class = UnitClass(unit)
-        --     local classColor = RAID_CLASS_COLORS[class]
-        --     frame.healthNumbers:SetTextColor(classColor.r, classColor.g, classColor.b)
-        -- else
-        --     frame.healthNumbers:SetTextColor(1, 1, 1)
-        -- end
         frame.healthNumbers:SetTextColor(frame.healthBar:GetStatusBarColor())
     end
 
@@ -220,7 +212,6 @@ function BBP.HealthNumbers(frame)
     frame.healthNumbers:SetText(healthText)
     frame.healthNumbers:Show()
 end
-
 
 local healthEventFrame
 -- Toggle event listening on/off for Health Numbers if not enabled

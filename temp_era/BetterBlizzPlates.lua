@@ -37,6 +37,7 @@ local defaultSettings = {
     wasOnLoadingScreen = true,
     setCVarAcrossAllCharacters = true,
     -- General
+    useFakeName = true, -- old name var, to enable moving names (on by default classics)
     classicNameplates = false,
     removeRealmNames = true,
     hideNameplateAuras = false,
@@ -1274,6 +1275,29 @@ function BBP.GetUnitReaction(unit)
     return isEnemy, isFriend, isNeutral
 end
 
+local function isFriend(unit)
+    local reaction = UnitReaction(unit, "player")
+    if reaction and reaction >= 5 then
+        return true
+    end
+end
+
+local function isEnemy(unit)
+    local reaction = UnitReaction(unit, "player")
+    if reaction and reaction <= 4 then
+        return true
+    end
+end
+
+function BBP.GetSpecID(frame)
+    if Details and Details.realversion >= 134 then
+        local unitGUID = UnitGUID(frame.unit)
+        local specID = Details:GetSpecByGUID(unitGUID)
+        return specID
+    end
+end
+
+
 local function GetNameplateUnitInfo(frame, unit)
     local unit = unit or frame.unit or frame.displayedUnit
     if not unit then return end
@@ -1946,9 +1970,6 @@ function BBP.ClassColorAndScaleNames(frame)
     end
     frame.name:SetIgnoreParentScale(true)
     frame.name:SetScale(scale)
-    if frame.fakeName then
-        frame.fakeName:SetScale(scale)
-    end
 end
 
 
@@ -2501,18 +2522,20 @@ end
 
 -- Resets the frame to default display settings
 function BBP.ResetFrame(frame, config, info)
-    if frame.murlocMode then
+    if frame.murlocModeActive then
         frame.murlocMode:Hide()
         frame.hideNameOverride = false
         frame.hideCastbarOverride = false
-        frame.healthBar:SetAlpha((info.isSelf and 1) or (config.friendlyHideHealthBar and info.isFriend and 0) or 1)
-        frame.selectionHighlight:SetAlpha(((info.isFriend and config.friendlyHideHealthBar) and 0) or (config.hideTargetHighlight and 0) or 0.22)
-        ToggleNameplateBuffFrameVisibility(frame)
-        if frame.fakeName then
-            frame.fakeName:SetAlpha(1)
+        if config.classIndicatorHideFriendlyHealthbar then
+            frame.healthBar:SetAlpha((info.isSelf and 1) or (frame.ciChange and 0) or 1)
+            frame.selectionHighlight:SetAlpha((((config.hideTargetHighlight and 0) or info.isFriend and config.friendlyHideHealthBar) and 0) or frame.ciChange and 0 or 0.22)
         else
-            frame.name:SetAlpha(1)
+            frame.healthBar:SetAlpha((info.isSelf and 1) or (config.friendlyHideHealthBar and info.isFriend and 0) or 1)
+            frame.selectionHighlight:SetAlpha((((config.hideTargetHighlight and 0) or info.isFriend and config.friendlyHideHealthBar) and 0) or 0.22)
         end
+        ToggleNameplateBuffFrameVisibility(frame)
+        frame.name:SetAlpha(1)
+        frame.murlocModeActive = nil
     end
 end
 
@@ -2871,37 +2894,6 @@ function BBP.CreateUnitAuraEventFrame()
     UnitAuraEventFrame:RegisterEvent("UNIT_AURA")
 end
 
--- if not frame.BetterBlizzPlates.bbpBorder then
---     frame.healthBar.border:Hide()
---     frame.BetterBlizzPlates.bbpBorder = CreateFrame("Frame", nil, frame)
---     local border = frame.BetterBlizzPlates.bbpBorder
-
---     local left = border:CreateTexture(nil, "OVERLAY")
---     left:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderLeft")
---     left:SetPoint("BOTTOMLEFT", frame.healthBar, "BOTTOMLEFT", -28, -3.5)
---     border.left = left
-
---     local center = border:CreateTexture(nil, "OVERLAY")
---     center:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderCenter")
---     center:SetPoint("LEFT", left, "RIGHT", 0, 0)
---     border.center = center
-
---     local right = border:CreateTexture(nil, "OVERLAY")
---     right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRight")
---     right:SetPoint("LEFT", center, "RIGHT", 0, 0)
---     border.right = right
-
---     border:SetParent(frame.healthBar)
-
---     function border:SetBorderColor(r, g, b, a)
---         self.left:SetDesaturated(true)
---         self.center:SetDesaturated(true)
---         self.right:SetDesaturated(true)
---         self.left:SetVertexColor(r, g, b, a)
---         self.center:SetVertexColor(r, g, b, a)
---         self.right:SetVertexColor(r, g, b, a)
---     end
--- end
 
 local function AdjustClassicBorderWidth(frame)
     local width = frame.healthBar:GetWidth() + 25
@@ -2948,6 +2940,8 @@ local function CreateBetterClassicHealthbarBorder(frame)
             self.left:SetVertexColor(r, g, b, a)
             self.center:SetVertexColor(r, g, b, a)
             self.right:SetVertexColor(r, g, b, a)
+            frame.CastBar.bbpCastBorder:SetCastBorderColor(r, g, b, a)
+            frame.CastBar.bbpCastUninterruptibleBorder:SetCastBorderColor(r, g, b, a)
         end
 
         function frame.healthBar:SetBorderSize(size)
@@ -2984,44 +2978,6 @@ local function ColorNameplateNameReaction(frame)
     frame.name:SetTextColor(r, g, b)
 end
 
-function BBP.CustomizeNameOnNameplate(frame)
-    local info = frame.BetterBlizzPlates.unitInfo
-    local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
-    frame.name:ClearAllPoints()
-    -- frame.name:SetPoint("CENTER", frame, "CENTER", 0, 10)
-
-    if not config.fakeNameXPos or BBP.needsUpdate then
-        config.fakeNameXPos = BetterBlizzPlatesDB.fakeNameXPos
-        config.fakeNameYPos = BetterBlizzPlatesDB.fakeNameYPos
-        config.fakeNameFriendlyXPos = BetterBlizzPlatesDB.fakeNameFriendlyXPos
-        config.fakeNameFriendlyYPos = BetterBlizzPlatesDB.fakeNameFriendlyYPos
-        config.useFakeNameAnchorBottom = BetterBlizzPlatesDB.useFakeNameAnchorBottom
-        config.fakeNameAnchor = BetterBlizzPlatesDB.fakeNameAnchor
-        config.fakeNameAnchorRelative = BetterBlizzPlatesDB.fakeNameAnchorRelative
-        config.fakeNameScaleWithParent = BetterBlizzPlatesDB.fakeNameScaleWithParent
-    end
-
-    if BetterBlizzPlatesDB.fakeNameRaiseStrata then
-        frame.name:SetParent(frame.healthBar:GetAlpha() == 0 and frame or frame.bbpOverlay)
-        frame.name:SetDrawLayer("OVERLAY", 7)
-    end
-
-    local clickthroughHeight = (frame:GetHeight() < 2) and 15.5 or 0
-    local clickableAdjustment = BetterBlizzPlatesDB.nameplateGeneralHeight - 32
-
-    if info.isFriend then
-        -- if config.useFakeNameAnchorBottom then
-        --     frame.fakeName:SetPoint("BOTTOM", frame, "BOTTOM", config.fakeNameFriendlyXPos, config.fakeNameFriendlyYPos + 27)
-        -- else
-            frame.name:SetPoint(config.fakeNameAnchor, frame, config.fakeNameAnchorRelative, config.fakeNameFriendlyXPos, (config.fakeNameFriendlyYPos - 7 + frame.healthBar:GetHeight() + clickthroughHeight)-(clickableAdjustment/2))
-        --end
-    else
-        frame.name:SetPoint(config.fakeNameAnchor, frame, config.fakeNameAnchorRelative, config.fakeNameXPos, (config.fakeNameYPos - 7 + frame.healthBar:GetHeight() + clickthroughHeight)-(clickableAdjustment/2))
-    end
-
-    ColorNameplateNameReaction(frame)
-end
-
 local function CreateBetterClassicCastbarBorders(frame)
     local info = frame.BetterBlizzPlates.unitInfo
     --local width = info.isFriend and BetterBlizzPlatesDB.nameplateFriendlyWidth or BetterBlizzPlatesDB.nameplateEnemyWidth
@@ -3048,6 +3004,17 @@ local function CreateBetterClassicCastbarBorders(frame)
         right:SetPoint("TOPLEFT", center, "TOPRIGHT", 0, 0)
         right:SetPoint("BOTTOMLEFT", center, "BOTTOMRIGHT", 0, 0)
         border.right = right
+
+        function border:SetCastBorderColor(r, g, b, a)
+            if BetterBlizzPlatesDB.npBorderDesaturate then
+                self.left:SetDesaturated(true)
+                self.center:SetDesaturated(true)
+                self.right:SetDesaturated(true)
+            end
+            self.left:SetVertexColor(r, g, b, a)
+            self.center:SetVertexColor(r, g, b, a)
+            self.right:SetVertexColor(r, g, b, a)
+        end
 
         border:Hide()
         return border
@@ -3727,23 +3694,11 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
                         if config.totemIndicatorColorHealthBar then
                             frame.healthBar:SetStatusBarColor(unpack(totemColor))
                         end
-                        -- if config.totemIndicatorColorName then
-                        --     frame.name:SetVertexColor(unpack(totemColor))
-                        --     if frame.fakeName then
-                        --         frame.name:SetVertexColor(unpack(totemColor))
-                        --     end
-                        -- end
                     end
                 else
                     if config.totemIndicatorColorHealthBar then
                         frame.healthBar:SetStatusBarColor(unpack(totemColor))
                     end
-                    -- if config.totemIndicatorColorName then
-                    --     frame.name:SetVertexColor(unpack(totemColor))
-                    --     if frame.fakeName then
-                    --         frame.name:SetVertexColor(unpack(totemColor))
-                    --     end
-                    -- end
                 end
             else
                 config.totemColorRGB = nil
@@ -3760,7 +3715,6 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 
     if not frame or not frame.unit then return end
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
-    --local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
     frame.BetterBlizzPlates.unitInfo = BBP.GetNameplateUnitInfo(frame)
     local info = frame.BetterBlizzPlates.unitInfo
     if not info then return end
@@ -3881,9 +3835,6 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
                     end
                     if config.totemIndicatorColorName then
                         frame.name:SetVertexColor(unpack(totemColor))
-                        if frame.fakeName then
-                            frame.fakeName:SetVertexColor(unpack(totemColor))
-                        end
                     end
                 end
             else
@@ -3892,174 +3843,11 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
                 end
                 if config.totemIndicatorColorName then
                     frame.name:SetVertexColor(unpack(totemColor))
-                    if frame.fakeName then
-                        frame.fakeName:SetVertexColor(unpack(totemColor))
-                    end
                 end
             end
         end
     end
-    -- if info.isSelf then --without this self nameplate reset to green after targeting self, figure out more
-    --     if config.classColorPersonalNameplate then
-    --         frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
-    --     end
-    -- end
 end
-
--- -- Copy of blizzards update health color function
--- function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
---     if not frame or not frame.unit then return end
---     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
---     --local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
---     frame.BetterBlizzPlates.unitInfo = BBP.GetNameplateUnitInfo(frame)
---     local info = frame.BetterBlizzPlates.unitInfo
---     if not info then return end
-
---     if not config.updateHealthColorInitialized or BBP.needsUpdate then
---         config.castBarEmphasisHealthbarColor = BetterBlizzPlatesDB.castBarEmphasisHealthbarColor
---         config.classColorPersonalNameplate = BetterBlizzPlatesDB.classColorPersonalNameplate
---         config.targetIndicatorColorNameplate = BetterBlizzPlatesDB.targetIndicatorColorNameplate
---         config.enemyHealthBarColorNpcOnly = BetterBlizzPlatesDB.enemyHealthBarColorNpcOnly
---         config.enemyNeutralHealthBarColorRGB = BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 1, 0}
---         config.enemyHealthBarColorRGB = BetterBlizzPlatesDB.enemyHealthBarColorRGB or {1, 0, 0}
---         config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
---         config.focusTargetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB
---         config.focusTargetIndicator = BetterBlizzPlatesDB.focusTargetIndicator
---         config.targetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB
---         config.colorNPC = BetterBlizzPlatesDB.colorNPC
-
---         config.updateHealthColorInitialized = true
---     end
-
--- 	local r, g, b;
--- 	local unitIsConnected = UnitIsConnected(frame.unit);
--- 	local unitIsDead = unitIsConnected and UnitIsDead(frame.unit);
--- 	local unitIsPlayer = UnitIsPlayer(frame.unit) or UnitIsPlayer(frame.displayedUnit);
-
---     if info.isSelf then
---         if config.classColorPersonalNameplate then
---             frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
---         --else return end
---         end
---     end
-
--- 	if ( not unitIsConnected or (unitIsDead and not unitIsPlayer) ) then
--- 		--Color it gray
--- 		r, g, b = 0.5, 0.5, 0.5;
--- 	else
--- 		if ( frame.optionTable.healthBarColorOverride ) then
--- 			local healthBarColorOverride = frame.optionTable.healthBarColorOverride;
--- 			r, g, b = healthBarColorOverride.r, healthBarColorOverride.g, healthBarColorOverride.b;
--- 		else
--- 			--Try to color it by class.
--- 			local localizedClass, englishClass = UnitClass(frame.unit);
--- 			local classColor = RAID_CLASS_COLORS[englishClass];
--- 			--debug
--- 			--classColor = RAID_CLASS_COLORS["PRIEST"];
--- 			--local useClassColors = CompactUnitFrame_GetOptionUseClassColors(frame, frame.optionTable);
--- 			--if ( (frame.optionTable.allowClassColorsForNPCs or UnitIsPlayer(frame.unit) or UnitTreatAsPlayerForDisplay(frame.unit)) and classColor and useClassColors ) then
---             if ( (frame.optionTable.allowClassColorsForNPCs or UnitIsPlayer(frame.unit)) or classColor and frame.optionTable.useClassColors ) then
--- 				-- Use class colors for players if class color option is turned on
--- 				r, g, b = classColor.r, classColor.g, classColor.b;
--- 			elseif ( CompactUnitFrame_IsTapDenied(frame) ) then
--- 				-- Use grey if not a player and can't get tap on unit
--- 				r, g, b = 0.9, 0.9, 0.9;
--- 			elseif ( frame.optionTable.colorHealthBySelection ) then
--- 				-- Use color based on the type of unit (neutral, etc.)
--- 				if ( frame.optionTable.considerSelectionInCombatAsHostile and CompactUnitFrame_IsOnThreatListWithPlayer(frame.displayedUnit) and not UnitIsFriend("player", frame.unit) ) then
--- 					r, g, b = 1.0, 0.0, 0.0;
--- 				elseif ( UnitIsPlayer(frame.displayedUnit) and UnitIsFriend("player", frame.displayedUnit) ) then
--- 					-- We don't want to use the selection color for friendly player nameplates because
--- 					-- it doesn't show player health clearly enough.
--- 					r, g, b = 0.667, 0.667, 1.0;
--- 				else
--- 					r, g, b = UnitSelectionColor(frame.unit, frame.optionTable.colorHealthWithExtendedColors);
--- 				end
--- 			elseif ( UnitIsFriend("player", frame.unit) ) then
--- 				r, g, b = 0.0, 1.0, 0.0;
--- 			else
--- 				r, g, b = 1.0, 0.0, 0.0;
--- 			end
--- 		end
--- 	end
-
--- 	local oldR, oldG, oldB = frame.healthBar:GetStatusBarColor();
--- 	if ( r ~= oldR or g ~= oldG or b ~= oldB ) then
--- 		frame.healthBar:SetStatusBarColor(r, g, b);
-
--- 		if (frame.optionTable.colorHealthWithExtendedColors) then
--- 			frame.selectionHighlight:SetVertexColor(r, g, b);
--- 		else
--- 			frame.selectionHighlight:SetVertexColor(1, 1, 1);
--- 		end
--- 	end
-
---     if config.friendlyHealthBarColor or config.enemyHealthBarColor then
---         ColorNameplateByReaction(frame)
---     end
-
---     if config.colorNPC and config.npcHealthbarColor then
---         frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
---     end
-
---     if (config.focusTargetIndicator and config.focusTargetIndicatorColorNameplate and info.isFocus) or config.focusTargetIndicatorTestMode then
---         frame.healthBar:SetStatusBarColor(unpack(config.focusTargetIndicatorColorNameplateRGB))
---         --BBP.FocusTargetIndicator(frame)
---     end
-
---     if config.auraColor and config.auraColorRGB then
---         frame.healthBar:SetStatusBarColor(config.auraColorRGB.r, config.auraColorRGB.g, config.auraColorRGB.b)
---     end
-
---     if (config.targetIndicator and config.targetIndicatorColorNameplate and info.isTarget) or config.targetIndicatorTestMode then
---         frame.healthBar:SetStatusBarColor(unpack(config.targetIndicatorColorNameplateRGB))
---     end
-
---     if config.castBarEmphasisHealthbarColor then
---         if frame.emphasizedCast then
---             local isCasting = UnitCastingInfo(frame.unit) or UnitChannelInfo(frame.unit)
---             if isCasting then
---                 frame.healthBar:SetStatusBarColor(frame.emphasizedCast.entryColors.text.r, frame.emphasizedCast.entryColors.text.g, frame.emphasizedCast.entryColors.text.b)
---             end
---         end
---     end
-
---     if config.totemIndicator then
---         local totemColor = config.totemColorRGB or config.randomTotemColor
---         if totemColor then
---             if config.totemIndicatorEnemyOnly then
---                 if not info.isFriend then
---                     if config.totemIndicatorColorHealthBar then
---                         frame.healthBar:SetStatusBarColor(unpack(totemColor))
---                     end
---                     if config.totemIndicatorColorName then
---                         frame.name:SetVertexColor(unpack(totemColor))
---                         if frame.fakeName then
---                             frame.fakeName:SetVertexColor(unpack(totemColor))
---                         end
---                     end
---                 end
---             else
---                 if config.totemIndicatorColorHealthBar then
---                     frame.healthBar:SetStatusBarColor(unpack(totemColor))
---                 end
---                 if config.totemIndicatorColorName then
---                     frame.name:SetVertexColor(unpack(totemColor))
---                     if frame.fakeName then
---                         frame.fakeName:SetVertexColor(unpack(totemColor))
---                     end
---                 end
---             end
---         end
---     end
---     if info.isSelf then --without this self nameplate reset to green after targeting self, figure out more
---         if config.classColorPersonalNameplate then
---             frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
---         end
---     end
--- end
-
-
 
 --################################################################################################
 -- Apply raidmarker change
@@ -4080,7 +3868,7 @@ function BBP.ApplyRaidmarkerChanges(frame)
         if shouldMove then
             if config.raidmarkIndicatorAnchor == "TOP" then
                 frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
-                frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.fakeName or frame.name, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos)
+                frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.name, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos)
             else
                 local hiddenHealthbarOffset = (config.friendlyHideHealthBar and config.raidmarkIndicatorAnchor == "BOTTOM" and frame.healthBar:GetAlpha() == 0) and frame.healthBar:GetHeight() + 10 or 0
                 frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
@@ -4432,10 +4220,6 @@ local function HandleNamePlateRemoved(unit)
         frame.arenaNumberCircle:Hide()
     end
 
-    if frame.fakeName then
-        frame.fakeName:SetText("")
-    end
-
 end
 
 
@@ -4446,22 +4230,9 @@ function BBP.CustomizeClassificationFrame(frame)
     --frame.ClassificationFrame:SetFrameStrata("LOW") bodifycata
 end
 
-function BBP.SetupFakeName(frame)
+function BBP.RepositionName(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
-
-    if info.isSelf then
-        if frame.fakeName then
-            frame.fakeName:SetText("")
-        end
-        return
-    end
-
-    if not frame.fakeName then
-        frame.fakeName = frame.healthBar:CreateFontString(nil, "OVERLAY", "SystemFont_NamePlateFixed")
-        frame.fakeName:SetShadowColor(frame.name:GetShadowColor())
-        frame.fakeName:GetShadowOffset(frame.name:GetShadowOffset())
-    end
 
     if not config.fakeNameXPos or BBP.needsUpdate then
         config.fakeNameXPos = BetterBlizzPlatesDB.fakeNameXPos
@@ -4472,42 +4243,37 @@ function BBP.SetupFakeName(frame)
         config.fakeNameAnchor = BetterBlizzPlatesDB.fakeNameAnchor
         config.fakeNameAnchorRelative = BetterBlizzPlatesDB.fakeNameAnchorRelative
         config.fakeNameScaleWithParent = BetterBlizzPlatesDB.fakeNameScaleWithParent
+        config.fakeNameRaiseStrata = BetterBlizzPlatesDB.fakeNameRaiseStrata
     end
-
-    if config.fakeNameScaleWithParent then
-        frame.fakeName:SetIgnoreParentScale(false)
-    else
-        frame.fakeName:SetIgnoreParentScale(true)
-    end
-
-    frame.fakeName:ClearAllPoints()
-    if info.isFriend then
-        if config.useFakeNameAnchorBottom then
-            frame.fakeName:SetPoint("BOTTOM", frame, "BOTTOM", config.fakeNameFriendlyXPos, config.fakeNameFriendlyYPos + 27)
+    local function RepositionName(frame)
+        if frame:IsForbidden() or not frame.unit or frame.name.changing then return end
+        frame.name.changing = true
+        local db = BetterBlizzPlatesDB
+        frame.name:ClearPoint("BOTTOM")
+        if isFriend(frame.unit) then
+            if db.useFakeNameAnchorBottom then
+                frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 27)
+            else
+                frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 10)
+            end
         else
-            frame.fakeName:SetPoint(config.fakeNameAnchor, frame.healthBar, config.fakeNameAnchorRelative, config.fakeNameFriendlyXPos, config.fakeNameFriendlyYPos + 4)
+            frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameXPos, db.fakeNameYPos + 10)
         end
-    else
-        frame.fakeName:SetPoint(config.fakeNameAnchor, frame.healthBar, config.fakeNameAnchorRelative, config.fakeNameXPos, config.fakeNameYPos + 4)
+        frame.name.changing = false
     end
-    frame.fakeName:SetFont(frame.name:GetFont())
-    if BetterBlizzPlatesDB.arenaIndicatorTestMode and not BetterBlizzPlatesDB.partyIndicatorModeTwo then
-        frame.fakeName:SetText("")
-    else
-        frame.fakeName:SetText(frame.name:GetText() or UnitName(frame.unit))
+    if not frame.nameHooked then
+        hooksecurefunc(frame.name, "SetPoint", function()
+            RepositionName(frame)
+        end)
+
+        frame.nameHooked = true
     end
-    frame.fakeName:SetShown(frame.name:IsShown())
-    frame.fakeName:SetScale(frame.name:GetScale())
-    local r, g, b, a = frame.name:GetVertexColor()
-    frame.fakeName:SetVertexColor(r, g, b, 1)
-    --  Temp solution, figure out how to show on top of healthbar while keeping frame alpha and not healthbar alpha if possible
-    if frame.healthBar:GetAlpha() == 0 then
-        frame.fakeName:SetIgnoreParentAlpha(true)
-    else
-        frame.fakeName:SetIgnoreParentAlpha(false)
+    RepositionName(frame)
+
+    if config.fakeNameRaiseStrata then
+        frame.name:SetParent(frame.healthBar:GetAlpha() == 0 and frame or frame.bbpOverlay)
+        frame.name:SetDrawLayer("OVERLAY", 7)
     end
-    --
-    frame.name:SetAlpha(0)
 end
 
 local function GetNameplateHookTable(frame)
@@ -4763,7 +4529,7 @@ local function HandleNamePlateAdded(unit)
     elseif frame.classificationIndicator then
         frame.classificationIndicator:Hide()
     end
-    BBP.CustomizeNameOnNameplate(frame)
+    BBP.RepositionName(frame)
     BBP.ClassColorAndScaleNames(frame)
 
     if not frame.nameplateTweaksBBP then
@@ -4878,7 +4644,7 @@ local function HandleNamePlateAdded(unit)
     if config.focusTargetIndicator then BBP.FocusTargetIndicator(frame) end
 
     -- Name repositioning
-    if config.useFakeName then BBP.SetupFakeName(frame) end
+    BBP.RepositionName(frame)
 
     if config.showNpcTitle then NameplateNPCTitle(frame) end
 
@@ -4904,9 +4670,6 @@ local function HandleNamePlateAdded(unit)
     -- Hide name
     if ((config.hideFriendlyNameText or (config.partyPointerHideAll and frame.partyPointer and frame.partyPointer:IsShown())) and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
         frame.name:SetAlpha(0)
-        if frame.fakeName then
-            frame.fakeName:SetAlpha(0)
-        end
     end
 
     if BetterBlizzPlatesDB.changeHealthbarHeight then
@@ -5014,14 +4777,6 @@ function BBP.RefreshAllNameplates()
 
         if BetterBlizzPlatesDB.auraColor then
             BBP.AuraColor(frame)
-        end
-
-        if not BetterBlizzPlatesDB.useFakeName then
-            if frame.fakeName then
-                frame.fakeName:SetAlpha(0)
-                frame.fakeName = nil
-                frame.name:SetAlpha(1)
-            end
         end
 
         if BetterBlizzPlatesDB.enableCastbarCustomization then
@@ -5132,23 +4887,6 @@ function BBP.RefreshAllNameplates()
         if not BetterBlizzPlatesDB.hideRaidmarkIndicator then
             frame.RaidTargetFrame.RaidTargetIcon:SetAlpha(1)
         end
-
-        -- -- Hide name
-        -- if BetterBlizzPlatesDB.hideFriendlyNameText or BetterBlizzPlatesDB.hideEnemyNameText then
-        --     if (BetterBlizzPlatesDB.hideFriendlyNameText and info.isFriend) or (BetterBlizzPlatesDB.hideEnemyNameText and not info.isFriend) then
-        --         frame.name:SetAlpha(0)
-        --         if frame.fakeName then
-        --             frame.fakeName:SetAlpha(0)
-        --         end
-        --     else
-        --         if frame.fakeName then
-        --             frame.name:SetAlpha(0)
-        --             frame.fakeName:SetAlpha(1)
-        --         else
-        --             frame.name:SetAlpha(1)
-        --         end
-        --     end
-        -- end
 
         if BetterBlizzPlatesDB.hideNPC then
             BBP.HideNPCs(frame, nameplate)
@@ -5328,8 +5066,6 @@ function BBP.ConsolidatedUpdateName(frame)
         end
     end
 
-    if config.useFakeName then BBP.SetupFakeName(frame) end
-
     if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
 
     -- Ensure totem nameplate color is correct
@@ -5393,30 +5129,22 @@ function BBP.ConsolidatedUpdateName(frame)
         frame.name:SetVertexColor(unpack(config.targetIndicatorColorNameplateRGB))
     end
 
+    BBP.RepositionName(frame)
+
     if (config.hideFriendlyNameText and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
         frame.name:SetAlpha(0)
-        if frame.fakeName then
-            frame.fakeName:SetAlpha(0)
-        end
     end
 
     if frame.hideNameOverride then
         frame.name:SetAlpha(0)
-        if frame.fakeName then
-            frame.fakeName:SetAlpha(0)
-        end
     else
         if frame.partyPointer and config.partyPointerHideAll and frame.partyPointer:IsShown() then
             frame.name:SetAlpha(0)
-            if frame.fakeName then
-                frame.fakeName:SetAlpha(0)
-            end
         end
     end
 end
 -- Use the consolidated function to hook into CompactUnitFrame_UpdateName
 hooksecurefunc("CompactUnitFrame_UpdateName", BBP.ConsolidatedUpdateName)
-
 local function setNil(table, member)
     TextureLoadingGroupMixin.RemoveTexture(
         { textures = table }, member
@@ -5910,6 +5638,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
             TurnOffTestModes()
             BetterBlizzPlatesDB.castbarEventsOn = false
             BetterBlizzPlatesDB.wasOnLoadingScreen = true
+            BetterBlizzPlatesDB.useFakeName = true
 
             InitializeSavedVariables()
 
