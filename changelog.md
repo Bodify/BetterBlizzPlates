@@ -7,7 +7,7 @@
 - Health Numbers' Advanced Settings updated to same stuff as on Retail (new anchor settings and some others)
 - Misc: Change nameplate border color now also colors castbar border when using Classic Nameplates.
 ## Retail
-## Tweak
+### Tweak
 - Aeghis profile update
 ## Mists of Pandaria
 ### Bugfix
