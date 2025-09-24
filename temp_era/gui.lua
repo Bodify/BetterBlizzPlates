@@ -919,7 +919,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         -- Fake name
                         elseif element == "fakeNameXPos" or element == "fakeNameYPos" or element == "fakeNameFriendlyXPos" or element == "fakeNameFriendlyYPos" then
                             --BBP.SetupFakeName(frame)
-                            BBP.CustomizeNameOnNameplate(frame)
+                            BBP.RepositionName(frame)
                         -- Target Indicator Pos and Scale
                         elseif element == "targetIndicatorXPos" or element == "targetIndicatorYPos" or element == "targetIndicatorScale" then
                             BBP.TargetIndicator(frame)
