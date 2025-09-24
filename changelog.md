@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.8.4i
+## Retail
+### Tweak
+- Kalvish profile update
+
 # BetterBlizzPlates 1.8.4h
 ## Mists of Pandaria
 ### Bugfix
