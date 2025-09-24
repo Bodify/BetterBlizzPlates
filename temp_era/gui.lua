@@ -939,7 +939,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                                     if BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown then
                                         frame.totemIndicator:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 4)
                                     else
-                                        frame.totemIndicator:SetPoint("BOTTOM", frame.frame.name, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 0)
+                                        frame.totemIndicator:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.totemIndicatorAnchor, xPos, yPos + 0)
                                     end
                                 else
                                     frame.totemIndicator:SetScale(value)
@@ -991,7 +991,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                                 --     if axis then
                                 --         if anchorPoint == "TOP" then
                                 --             frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
-                                --             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.frame.name, anchorPoint, xPos, yPos)
+                                --             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.name, anchorPoint, xPos, yPos)
                                 --         else
                                 --             frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
                                 --             frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.healthBar, anchorPoint, xPos, yPos)

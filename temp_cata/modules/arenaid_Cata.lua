@@ -203,7 +203,7 @@ function BBP.ArenaIndicator2(frame)
                         frame.arenaNumberText:SetTextColor(1, 1, 0)
                     end
                     frame.arenaNumberText:SetScale(arenaIDScale)
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
 
                     if idCircle then
                         addIdCircle(frame, i)
@@ -231,7 +231,7 @@ function BBP.ArenaIndicator2(frame)
                     frame.arenaNumberText:SetTextColor(1, 1, 0)
                 end
                 frame.arenaNumberText:SetScale(arenaIDScale)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
 
                 if idCircle then
                     addIdCircle(frame, i)
@@ -659,7 +659,7 @@ function BBP.PartyIndicator2(frame)
                     frame.arenaNumberText:SetText(displayNumber)
                     frame.arenaNumberText:SetTextColor(r, g, b, 1)
                     frame.arenaNumberText:SetScale(partyIDScale)
-                    frame.arenaNumberText:SetPoint("BOTTOM", frame.frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                    frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
                     break
                 end
             end
@@ -679,7 +679,7 @@ function BBP.PartyIndicator2(frame)
                 frame.arenaNumberText:SetText(i)
                 frame.arenaNumberText:SetTextColor(r, g, b, 1)
                 frame.arenaNumberText:SetScale(partyIDScale)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
+                frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
                 break
             end
         end
@@ -1068,7 +1068,7 @@ function BBP.TestArenaIndicator2(frame)
                 frame.arenaNumberText:SetTextColor(1, 1, 0)
             end
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaIDScale)
-            frame.arenaNumberText:SetPoint("BOTTOM", frame.frame.name, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
+            frame.arenaNumberText:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
 
             if idCircle then
                 local i = math.random(1, 3)
@@ -1244,7 +1244,7 @@ function BBP.TestPartyIndicator2(frame)
             frame.arenaNumberText:SetText("2")
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.partyIDScale)
-            frame.arenaNumberText:SetPoint("BOTTOM", frame.frame.name, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos)
+            frame.arenaNumberText:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos)
             break
         end
     end

@@ -301,7 +301,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         if config.nameplateResourceOnTarget == "1" and not config.nameplateResourceUnderCastbar and info.isTarget and not (config.hideResourceOnFriend and info.isFriend) then
             resourceAnchor = frame:GetParent().driverFrame.classNamePlateMechanicFrame
         end
-        frame.classIndicator:SetPoint(oppositeAnchor, resourceAnchor or frame.frame.name, anchorPoint, xPos, yPos)
+        frame.classIndicator:SetPoint(oppositeAnchor, resourceAnchor or frame.name, anchorPoint, xPos, yPos)
     else
         frame.classIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos)
     end

@@ -4428,7 +4428,7 @@ function BBP.ApplyRaidmarkerChanges(frame)
         if shouldMove then
             if config.raidmarkIndicatorAnchor == "TOP" then
                 frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
-                frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.frame.name, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos)
+                frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.name, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos)
             else
                 local hiddenHealthbarOffset = (config.friendlyHideHealthBar and config.raidmarkIndicatorAnchor == "BOTTOM" and frame.healthBar:GetAlpha() == 0) and frame.healthBar:GetHeight() + 10 or 0
                 frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
@@ -4644,10 +4644,10 @@ local function HideFriendlyHealthbar(frame)
                         if config.guildNameColor then
                             frame.guildName:SetTextColor(unpack(config.guildNameColorRGB))
                         else
-                            local name = frame.frame.name
+                            local name = frame.name
                             frame.guildName:SetTextColor(name:GetTextColor())
                         end
-                        frame.guildName:SetPoint("TOP", frame.frame.name, "BOTTOM", 0, 0)
+                        frame.guildName:SetPoint("TOP", frame.name, "BOTTOM", 0, 0)
                         frame.guildName:SetScale(config.guildNameScale or 1)
                     else
                         frame.guildName:SetText("")
