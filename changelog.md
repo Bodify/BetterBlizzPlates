@@ -1,3 +1,9 @@
+# BetterBlizzPlates 1.8.4g
+## Classic versions
+### Bugfix
+- Fix multiple naming mistakes on era and mop causing lua errors due to multiselect and not double checking.
+
+
 # BetterBlizzPlates 1.8.4f
 ## All versions
 ### Tweak
