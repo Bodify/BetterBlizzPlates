@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.8.4h
+## Mists of Pandaria
+### Bugfix
+- Health number fixes for mop
+
 # BetterBlizzPlates 1.8.4g
 ## Classic versions
 ### Bugfix
