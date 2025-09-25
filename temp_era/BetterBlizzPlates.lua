@@ -5402,6 +5402,9 @@ local function HideHealthbarInPvEMagic()
                             setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
                         end
                     end
+                elseif DefaultCompactNamePlateFrameSetUpOptions.hideHealthbar then
+                    setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
+                    setNil(DefaultCompactNamePlateFrameSetUpOptions, 'hideCastbar')
                 end
                 -- if not UnitIsPlayer(unit) then
                 --     setTrue(DefaultCompactNamePlateFrameSetUpOptions, 'hideHealthbar')
