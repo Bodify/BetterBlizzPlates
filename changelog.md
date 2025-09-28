@@ -2,6 +2,8 @@
 ## Retail
 ### Tweak
 - Kalvish profile update
+## Classic Era/SoD
+- Fix healthbars getting stuck hidden with some settings
 
 # BetterBlizzPlates 1.8.4h
 ## Mists of Pandaria
