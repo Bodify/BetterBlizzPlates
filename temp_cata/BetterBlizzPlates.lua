@@ -5111,6 +5111,13 @@ local function HandleNamePlateAdded(unit)
     BBP.RangeIndicator(frame)
 
     if BetterBlizzPlatesDB.changeNpHpBgColor then
+        if BetterBlizzPlatesDB.changeNpHpBgColorSolid then
+            frame.healthBar.background:SetTexture("Interface\\Buttons\\WHITE8x8")
+            frame.changedBgTexture = true
+        elseif frame.changedBgTexture then
+            frame.healthBar.background:SetTexture(nil)
+            frame.changedBgTexture = nil
+        end
         frame.healthBar.background:SetVertexColor(unpack(BetterBlizzPlatesDB.npBgColorRGB))
     end
 

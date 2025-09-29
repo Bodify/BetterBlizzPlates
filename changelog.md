@@ -1,3 +1,11 @@
+# BetterBlizzPlates 1.8.4j
+## Retail
+### Tweak
+- Blitz preset profile adjusted to show pvp buffs by default too.
+## All versions
+### New
+- New setting for nameplate background color which makes it solid and allows you to properly put any color as background which was limited before.
+
 # BetterBlizzPlates 1.8.4i
 ## Retail
 ### Tweak

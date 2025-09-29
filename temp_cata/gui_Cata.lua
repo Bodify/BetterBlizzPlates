@@ -403,13 +403,13 @@ end
 
 local function CreateColorBox(parent, colorVar, labelText)
     local frame = CreateFrame("Frame", nil, parent)
-    frame:SetSize(55, 20) -- Adjust size as needed
+    frame:SetSize(55, 20)
     frame:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
 
     -- Border Frame (slightly larger to act as a border)
     local borderFrame = CreateFrame("Frame", nil, frame)
-    borderFrame:SetSize(18, 18) -- Slightly larger than the color texture
-    borderFrame:SetPoint("LEFT", frame, "LEFT", 4, 0) -- Adjust to center the border around the color texture
+    borderFrame:SetSize(18, 18)
+    borderFrame:SetPoint("LEFT", frame, "LEFT", 4, 0)
 
     local border = borderFrame:CreateTexture(nil, "OVERLAY", nil, 5)
     border:SetAtlas("CommentatorSpellBorder")
@@ -417,7 +417,7 @@ local function CreateColorBox(parent, colorVar, labelText)
 
     -- Create the color texture within the border frame
     local colorTexture = borderFrame:CreateTexture(nil, "OVERLAY")
-    colorTexture:SetSize(15, 15) -- Adjust size as needed
+    colorTexture:SetSize(15, 15)
     colorTexture:SetPoint("CENTER", borderFrame, "CENTER", 0, 0)
     colorTexture:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UIFrameIconMask")
     colorTexture:SetVertexColor(unpack(BetterBlizzPlatesDB[colorVar] or {1, 1, 1}))
@@ -425,7 +425,8 @@ local function CreateColorBox(parent, colorVar, labelText)
     -- Label text for the color box
     local text = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
     text:SetText(labelText)
-    text:SetPoint("LEFT", borderFrame, "RIGHT", 5, 0) -- Adjust position as needed
+    text:SetPoint("LEFT", borderFrame, "RIGHT", 5, 0)
+    frame.text = text
 
     -- Make the frame clickable and open a color picker on click
     frame:SetScript("OnMouseDown", function()
@@ -486,8 +487,7 @@ local function CreateModeDropdown(name, parent, defaultText, settingKey, toggleF
 
         local dropdownTextFontString = _G[dropdown:GetName() .. "Text"]
         if dropdownTextFontString then
-            -- Set text color (example: yellow)
-            dropdownTextFontString:SetTextColor(1, 1, 0) -- RGB for yellow
+            dropdownTextFontString:SetTextColor(1, 1, 0)
         end
 
         table.sort(orderedKeys)
@@ -849,11 +849,11 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
     -- Create Input Box on Right Click
     local editBox = CreateFrame("EditBox", nil, slider, "InputBoxTemplate")
     editBox:SetAutoFocus(false)
-    editBox:SetWidth(50) -- Set the width of the EditBox
-    editBox:SetHeight(20) -- Set the height of the EditBox
+    editBox:SetWidth(50)
+    editBox:SetHeight(20)
     editBox:SetMultiLine(false)
-    editBox:SetPoint("CENTER", slider, "CENTER", 0, 0) -- Position it to the right of the slider
-    editBox:SetFrameStrata("DIALOG") -- Ensure it appears above other UI elements
+    editBox:SetPoint("CENTER", slider, "CENTER", 0, 0)
+    editBox:SetFrameStrata("DIALOG")
     editBox:Hide()
 
     editBox:SetFontObject(GameFontHighlightSmall)
@@ -1816,7 +1816,7 @@ end
 local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableName)
     -- Frame to hold all import/export elements
     local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
-    frame:SetSize(210, 65) -- Adjust size as needed
+    frame:SetSize(210, 65)
     frame:SetPoint("TOPLEFT", parent, "TOPLEFT", posX, posY)
 
     -- Setting the backdrop
@@ -3338,10 +3338,10 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             
                 local editBox = CreateFrame("EditBox", nil, barWidthSlider, "InputBoxTemplate")
                 editBox:SetAutoFocus(false)
-                editBox:SetWidth(50) -- Set the width of the EditBox
-                editBox:SetHeight(20) -- Set the height of the EditBox
+                editBox:SetWidth(50)
+                editBox:SetHeight(20)
                 editBox:SetMultiLine(false)
-                editBox:SetFrameStrata("DIALOG") -- Ensure it appears above other UI elements
+                editBox:SetFrameStrata("DIALOG")
                 editBox:Hide()
                 
                 editBox:SetFontObject(GameFontHighlightSmall)
@@ -10076,10 +10076,14 @@ local function guiMisc()
 
     local changeNpHpBgColor = CreateCheckbox("changeNpHpBgColor", "Change Nameplate Background Color", guiMisc)
     changeNpHpBgColor:SetPoint("TOPLEFT", npBorderNpcColorRGB, "BOTTOMLEFT", -15, 0)
-    CreateTooltipTwo(changeNpHpBgColor, "Nameplate Background Color", "Change the nameplate background color.", "This color is being layered underneath a transparent black layer (i think?) so the color will not be 100% accurate. This is just meant as a setting mostly to darken the background.")
+    CreateTooltipTwo(changeNpHpBgColor, "Nameplate Background Color", "Change the nameplate background color.")
 
     local npBgColorRGB = CreateColorBox(changeNpHpBgColor, "npBgColorRGB", "Background Color")
     npBgColorRGB:SetPoint("TOPLEFT", changeNpHpBgColor, "BOTTOMLEFT", 15, 0)
+
+    local changeNpHpBgColorSolid = CreateCheckbox("changeNpHpBgColorSolid", "Solid", guiMisc)
+    changeNpHpBgColorSolid:SetPoint("LEFT", npBgColorRGB.text, "RIGHT", 2, 0)
+    CreateTooltipTwo(changeNpHpBgColorSolid, "Solid Background Color", "Make the nameplate background color solid and non-transparent.")
 
     changeNpHpBgColor:HookScript("OnClick", function(self)
         if self:GetChecked() then
@@ -10110,13 +10114,13 @@ local function guiMisc()
     nameplateExtraClickHeight:SetPoint("TOPLEFT", nameplateVerticalPosition, "BOTTOMLEFT", 0, -16)
 
 
-    local nameplateSelfWidthResetButton = CreateFrame("Button", nil, guiMisc, "UIPanelButtonTemplate")
-    nameplateSelfWidthResetButton:SetText("Default")
-    nameplateSelfWidthResetButton:SetWidth(60)
-    nameplateSelfWidthResetButton:SetPoint("LEFT", nameplateSelfWidth, "RIGHT", 10, 0)
-    nameplateSelfWidthResetButton:SetScript("OnClick", function()
-        BBP.ResetToDefaultWidth(nameplateSelfWidth, false)
-    end)
+    -- local nameplateSelfWidthResetButton = CreateFrame("Button", nil, guiMisc, "UIPanelButtonTemplate")
+    -- nameplateSelfWidthResetButton:SetText("Default")
+    -- nameplateSelfWidthResetButton:SetWidth(60)
+    -- nameplateSelfWidthResetButton:SetPoint("LEFT", nameplateSelfWidth, "RIGHT", 10, 0)
+    -- nameplateSelfWidthResetButton:SetScript("OnClick", function()
+    --     BBP.ResetToDefaultWidth(nameplateSelfWidth, false)
+    -- end)
 end
 
 local function guiSupport()

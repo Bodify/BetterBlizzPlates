@@ -5384,6 +5384,13 @@ local function HandleNamePlateAdded(unit)
     end--and auraModuleIsOn then BBP.HidePersonalBuffFrame() end
 
     if BetterBlizzPlatesDB.changeNpHpBgColor then
+        if BetterBlizzPlatesDB.changeNpHpBgColorSolid then
+            frame.HealthBarsContainer.background:SetTexture("Interface\\Buttons\\WHITE8x8")
+            frame.changedBgTexture = true
+        elseif frame.changedBgTexture then
+            frame.HealthBarsContainer.background:SetTexture(nil)
+            frame.changedBgTexture = nil
+        end
         frame.HealthBarsContainer.background:SetVertexColor(unpack(BetterBlizzPlatesDB.npBgColorRGB))
     end
 
@@ -5604,10 +5611,6 @@ function BBP.RefreshAllNameplates()
 
         if BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
             BBP.RefUnitAuraTotally(unitFrame)
-        end
-
-        if BetterBlizzPlatesDB.changeNpHpBgColor then
-            frame.HealthBarsContainer.background:SetVertexColor(unpack(BetterBlizzPlatesDB.npBgColorRGB))
         end
 
         if BetterBlizzPlatesDB.focusTargetIndicator then
