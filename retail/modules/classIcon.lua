@@ -58,7 +58,101 @@ local petIcons = {
     [26125] = 1531513, -- dk pet
 }
 
+-- Huge thanks to Stroold @ Discord for putting together this list of hunter pet spell ids and icons
+local petSpellIcons = {
+    -- Hunter pet family abilities
+    [160065] = 236195, -- Aqiri — Tendon Rip
+    [263841] = 877476, -- Basilisk — Petrifying Gaze
+    [344348] = 132182, -- Bat — Sonic Screech
+    [263934] = 132183, -- Bear — Thick Fur
+    [90339]  = 133570, -- Beetle — Harden Carapace
+    [263852] = 132192, -- Bird of Prey — Talon Rend
+    [288962] = 1687702,-- Blood Beast — Blood Bolt
+    [263869] = 132184, -- Boar — Bristle
+    [341115] = 454771, -- Camel — Hardy
+    [279410] = 2011146, -- Carapid — Bulwark
+    [24423]  = 132200, -- Carrion Bird — Bloody Screech
+    [263892] = 132185, -- Cat — Catlike Reflexes
+    [54644]  = 236190, -- Chimaera — Frost Breath
+    [160057] = 1044794, -- Clefthoof — Thick Hide
+    [263867] = 236191, -- Core Hound — Obsidian Skin
+    [341117] = 2143073, -- Courser — Fleethoof
+    [50245]  = 132186, -- Crab — Pin
+    [50433]  = 132187, -- Crocolisk — Ankle Crack
+    [54680]  = 236192, -- Devilsaur — Monstrous Bite
+    [263861] = 877480, -- Direhorn — Gore
+    [263887] = 132188, -- Dragonhawk — Dragon's Guile
+    [263916] = 929300, -- Feathermane — Feather Flurry
+    [160011] = 458223, -- Fox — Agile Reflexes
+    [263939] = 132189, -- Gorilla — Silverback
+    [263921] = 877477, -- Gruffhorn — Gruff
+    [279336] = 804969, -- Hopper — Swarm of Flies
+    [263423] = 877481, -- Hound — Lock Jaw
+    [263863] = 463493, -- Hydra — Acid Bite
+    [263853] = 132190, -- Hyena — Infected Bite
+    [392622] = 797547, -- Lesser Dragonkin — Shimmering Scales
+    [279362] = 2027936, -- Lizard — Grievous Bite
+    [341118] = 132254, -- Mammoth — Trample
+    [263868] = 132247, -- Mechanical — Defense Matrix
+    [160044] = 877482, -- Monkey — Primal Agility
+    [344353] = 236193, -- Moth — Serenity Dust
+    [264023] = 616693, -- Oxen — Niuzao's Fortitude
+    [279399] = 1624590, -- Pterrordax — Ancient Hide
+    [263854] = 132193, -- Raptor — Savage Rend
+    [263857] = 132194, -- Ravager — Ravage
+    [344349] = 132191, -- Ray — Nether Energy
+    [160018] = 1044490, -- Riverbeast — Gruesome Bite
+    [263856] = 644001, -- Rodent — Gnaw
+    [263865] = 646378, -- Scalehide — Scale Shield
+    [160060] = 132195, -- Scorpid — Deadly Sting
+    [263904] = 136040, -- Serpent — Serpent's Swiftness
+    [160063] = 877478, -- Shale Beast — Solid Shell
+    [160067] = 132196, -- Spider — Web Spray
+    [344351] = 236165, -- Spirit Beast — Spirit Pulse
+    [344347] = 132197, -- Sporebat — Spore Cloud
+    [344352] = 1044501, -- Stag — Nature's Grace
+    [160049] = 625905, -- Stone Hound — Stone Armor
+    [50285]  = 132198, -- Tallstrider — Dust Cloud
+    [26064]  = 132199, -- Turtle — Shell Shield
+    [35346]  = 132201, -- Warp Stalker — Warp Time
+    [263858] = 236196, -- Wasp — Toxic Sting
+    [344346] = 643423, -- Water Strider — Soothing Waters
+    [344350] = 877479, -- Waterfowl — Oiled Feathers
+    [264360] = 132202, -- Wind Serpent — Winged Agility
+    [263840] = 132203, -- Wolf — Furious Bite
+    [263446] = 236197, -- Worm — Acid Spit
+}
+
 local playerClass = select(2, UnitClass("player"))
+local currentPetIcon = nil
+
+if playerClass == "HUNTER" then
+    local f = CreateFrame("Frame")
+    f:RegisterEvent("UNIT_PET")
+
+    local function UpdateCurrentPetIcon()
+        currentPetIcon = nil
+        if UnitExists("pet") then
+            for spellID, iconID in pairs(petSpellIcons) do
+                if IsSpellKnownOrOverridesKnown(spellID, true) then
+                    currentPetIcon = iconID
+                    break
+                end
+            end
+        end
+    end
+
+    f:SetScript("OnEvent", function(self, event, arg1)
+        if (event == "UNIT_PET" and arg1 == "player") and BetterBlizzPlatesDB.classIndicatorShowPet then
+            UpdateCurrentPetIcon()
+            local _, frame = BBP.GetSafeNameplate("pet")
+            if frame then
+                BBP.ClassIndicator(frame)
+                return
+            end
+        end
+    end)
+end
 
 local function GetAuraIcon(frame, foundID, auraType, bgId)
     -- If `foundID` exists in the table, return its color immediately
@@ -587,13 +681,14 @@ function BBP.ClassIndicator(frame, foundID)
     else
         if UnitIsUnit(frame.unit, "pet") and config.classIndicatorShowPet then
             local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
-            local petIcon = petIcons[npcID]
+            local petIcon = currentPetIcon or petIcons[npcID]
+            print(currentPetIcon)
             if petIcon then
                 frame.classIndicator.icon:SetTexture(petIcon)
                 frame.classIndicator.icon:SetTexCoord(0.05, 0.95, 0.05, 0.95)
             else
                 local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
-                local petIcon = petIcons[npcID]
+                local petIcon = currentPetIcon or petIcons[npcID]
                 if petIcon then
                     frame.classIndicator.icon:SetTexture(petIcon)
                     frame.classIndicator.icon:SetTexCoord(0.05, 0.95, 0.05, 0.95)
