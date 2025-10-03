@@ -1,7 +1,7 @@
 # BetterBlizzPlates 1.8.4j
 ## Retail
 ### Tweak
-- Add unique pet icons for Hunter pet families. Huge thanks to Stroold @ Discord for putting this list together <3
+- Add unique pet icons for Class Indicator for Hunter pet families. Huge thanks to Stroold @ Discord for putting this list together <3
 - Blitz preset profile adjusted to show pvp buffs by default too.
 - Health Numbers now show three decimals on billions and two decimals on millions if decimals are selected to show.
 ## All versions
