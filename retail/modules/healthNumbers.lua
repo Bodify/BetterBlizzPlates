@@ -4,13 +4,13 @@ local function FormatHealthValue(health, useMillions, showDecimal)
 
     if health >= 1000000000 then
         -- Billion
-        formatString = showDecimal and "%.1fb" or "%.0fb"
+        formatString = showDecimal and "%.3fb" or "%.0fb"
         return string.format(formatString, health / 1000000000)
 
     elseif health >= 1000000 then
         if useMillions then
             -- Million
-            formatString = showDecimal and "%.1fm" or "%.0fm"
+            formatString = showDecimal and "%.2fm" or "%.0fm"
             return string.format(formatString, health / 1000000)
         else
             -- Thousands fallback

@@ -2,6 +2,7 @@
 ## Retail
 ### Tweak
 - Blitz preset profile adjusted to show pvp buffs by default too.
+- Health Numbers now show three decimals on billions and two decimals on millions if decimals are selected to show.
 ## All versions
 ### New
 - New setting for nameplate background color which makes it solid and allows you to properly put any color as background which was limited before.
