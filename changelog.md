@@ -2,6 +2,7 @@
 ## Retail
 ### Tweak
 - Add missing classes & genders to the GetSpecID workaround for Spanish clients.Thank you Dardo @ Discord for notifying and helping me collect the missing data. Blizzards API does not have a proper GetSpecID API and even the workaround fails in some cases (like classes/specs in Spanish) due to Blizzards own data not properly supporting it..
+- Changing castbar background texture now updates immediately (instead of only when a real cast happens)
 ### Bugfix
 - Fix capital letter typo in pixel border + border size change causing lua errors.
 

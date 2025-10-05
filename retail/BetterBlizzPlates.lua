@@ -5835,6 +5835,17 @@ function BBP.RefreshAllNameplates()
                 frame.castBar.Background:SetDesaturated(false)
                 frame.castBar.Background:SetVertexColor(1,1,1,1)
                 frame.castBar.Background:SetAtlas("UI-CastingBar-Background")
+            else
+                local bgTextureName = BetterBlizzPlatesDB.customCastbarBGTexture
+                local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, bgTextureName)
+                local changeBgTexture = BetterBlizzPlatesDB.useCustomCastbarBGTexture
+                if changeBgTexture then
+                    local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
+                    frame.castBar.Background:SetDesaturated(true)
+                    frame.castBar.Background:SetTexture(bgTexture)
+                    frame.castBar.Background:SetAllPoints(frame.castBar)
+                    frame.castBar.Background:SetVertexColor(unpack(bgColor))
+                end
             end
         end
 
@@ -7224,6 +7235,17 @@ local function NamePlateCastBarTestMode(frame)
                     frame.castBar.Background:SetDesaturated(false)
                     frame.castBar.Background:SetVertexColor(1,1,1,1)
                     frame.castBar.Background:SetAtlas("UI-CastingBar-Background")
+                else
+                    local bgTextureName = BetterBlizzPlatesDB.customCastbarBGTexture
+                    local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, bgTextureName)
+                    local changeBgTexture = BetterBlizzPlatesDB.useCustomCastbarBGTexture
+                    if changeBgTexture then
+                        local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
+                        frame.castBar.Background:SetDesaturated(true)
+                        frame.castBar.Background:SetTexture(bgTexture)
+                        frame.castBar.Background:SetAllPoints(frame.castBar)
+                        frame.castBar.Background:SetVertexColor(unpack(bgColor))
+                    end
                 end
 
                 if castBarTimer then
