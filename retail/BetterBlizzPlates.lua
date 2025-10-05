@@ -4268,8 +4268,8 @@ local function ChangeHealthbarBorderSize(frame)
             end
         end
         if BetterBlizzPlatesDB.castBarIconPixelBorder then
-            if frame.CastBar.Icon.SetBorderSize then
-                frame.CastBar.Icon:SetBorderSize(borderSize)
+            if frame.castBar.Icon.SetBorderSize then
+                frame.castBar.Icon:SetBorderSize(borderSize)
             end
         end
 
@@ -5108,6 +5108,98 @@ local function GetLocalizedSpecs()
             if classFemale and classFemale ~= classMale then
                 specs[string.format("%s %s", specName, classFemale)] = specID
             end
+        end
+    end
+
+    -- Blizzard API poopoo. Not possible to get gendered specNames AFAIK.
+    -- And some classes were even missing from LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_FEMALE
+    if GetLocale() == "esES" then
+        local esES_overrides = {
+            ["Armas Guerrero"] = 71,
+            ["Armas Guerrera"] = 71,
+            ["Furia Guerrero"] = 72,
+            ["Furia Guerrera"] = 72,
+            ["Protección Guerrero"] = 73,
+            ["Protección Guerrera"] = 73,
+
+            ["Sagrado Paladín"] = 65,
+            ["Sagrada Paladín"] = 65,
+            ["Protección Paladín"] = 66,
+            ["Reprensión Paladín"] = 70,
+
+            ["Bestias Cazador"] = 253,
+            ["Bestias Cazadora"] = 253,
+            ["Puntería Cazador"] = 254,
+            ["Puntería Cazadora"] = 254,
+            ["Supervivencia Cazador"] = 255,
+            ["Supervivencia Cazadora"] = 255,
+
+            ["Asesinato Pícaro"] = 259,
+            ["Asesinato Pícara"] = 259,
+            ["Forajido Pícaro"] = 260,
+            ["Forajida Pícara"] = 260,
+            ["Sutileza Pícaro"] = 261,
+            ["Sutileza Pícara"] = 261,
+
+            ["Disciplina Sacerdote"] = 256,
+            ["Disciplina Sacerdotisa"] = 256,
+            ["Sagrado Sacerdote"] = 257,
+            ["Sagrada Sacerdotisa"] = 257,
+            ["Sombra Sacerdote"] = 258,
+            ["Sombra Sacerdotisa"] = 258,
+
+            ["Sangre Caballero de la Muerte"] = 250,
+            ["Sangre Caballera de la Muerte"] = 250,
+            ["Escarcha Caballero de la Muerte"] = 251,
+            ["Escarcha Caballera de la Muerte"] = 251,
+            ["Profano Caballero de la Muerte"] = 252,
+            ["Profana Caballera de la Muerte"] = 252,
+
+            ["Elemental Chamán"] = 262,
+            ["Mejora Chamán"] = 263,
+            ["Restauración Chamán"] = 264,
+
+            ["Arcano Mago"] = 62,
+            ["Arcana Maga"] = 62,
+            ["Fuego Mago"] = 63,
+            ["Fuego Maga"] = 63,
+            ["Escarcha Mago"] = 64,
+            ["Escarcha Maga"] = 64,
+
+            ["Aflicción Brujo"] = 265,
+            ["Aflicción Bruja"] = 265,
+            ["Demonología Brujo"] = 266,
+            ["Demonología Bruja"] = 266,
+            ["Destrucción Brujo"] = 267,
+            ["Destrucción Bruja"] = 267,
+
+            ["Maestro cervecero Monje"] = 268,
+            ["Maestra cervecera Monje"] = 268,
+            ["Tejedor de niebla Monje"] = 270,
+            ["Tejedora de niebla Monje"] = 270,
+            ["Viajero del viento Monje"] = 269,
+            ["Viajera del viento Monje"] = 269,
+
+            ["Equilibrio Druida"] = 102,
+            ["Feral Druida"] = 103,
+            ["Guardián Druida"] = 104,
+            ["Guardiana Druida"] = 104,
+            ["Restauración Druida"] = 105,
+
+            ["Devastación Cazador de demonios"] = 577,
+            ["Devastación Cazadora de demonios"] = 577,
+            ["Venganza Cazador de demonios"] = 581,
+            ["Venganza Cazadora de demonios"] = 581,
+
+            ["Devastación Evocador"] = 1467,
+            ["Devastación Evocadora"] = 1467,
+            ["Preservación Evocador"] = 1468,
+            ["Preservación Evocadora"] = 1468,
+            ["Aumento Evocador"] = 1473,
+            ["Aumento Evocadora"] = 1473,
+        }
+        for k, v in pairs(esES_overrides) do
+            specs[k] = v
         end
     end
 
