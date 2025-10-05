@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.8.5c
+## Classics
+### Bugfix
+- Add forbidden check for absorb stuff so it wont error in dungeons due to friendly nameplates.
+
 # BetterBlizzPlates 1.8.5b
 ## Retail
 ### Tweak

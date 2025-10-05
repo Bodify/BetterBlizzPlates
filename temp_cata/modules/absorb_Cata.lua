@@ -48,6 +48,7 @@ end
 
 -- Absorb Indicator
 function BBP.AbsorbIndicator(frame, absorb)
+    if frame:IsForbidden() then return end
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
 
@@ -147,6 +148,7 @@ end
 
 local function UpdateCompactUnitFrameAbsorbTexture(unit, frame, absorbValue)
     if not frame or not frame.unit or not UnitIsUnit(unit, frame.unit) then return end
+    if frame:IsForbidden() then return end
     local healthBar = frame.healthBar or frame.HealthBar or frame.healthbar
     if not healthBar then return end
 

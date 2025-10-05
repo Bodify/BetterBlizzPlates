@@ -1,5 +1,6 @@
 -- Absorb Indicator
 function BBP.AbsorbIndicator(frame)
+    if frame:IsForbidden() then return end
     --if not frame or frame.unit then return end
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
@@ -91,6 +92,7 @@ local COMPACT_UNITFRAME_OVERSHIELD_HOOKED = false
 
 function BBP.CompactUnitFrame_UpdateAll(frame)
     if frame.unit and frame.unit:find("nameplate") then
+        if frame:IsForbidden() then return end
         local absorbBar = frame.totalAbsorb;
         if not absorbBar or absorbBar:IsForbidden() then
             return
@@ -140,7 +142,7 @@ end
 local function CreateAbsorbBar(frame)
     if frame.absorbBar then return end -- Prevent duplicate elements
     -- Absorb Fill (Total Absorb)
-    frame.absorbBar = frame:CreateTexture()
+    frame.absorbBar = frame:CreateTexture(nil, "ARTWORK", 1)
     frame.absorbBar:SetDrawLayer("ARTWORK", 1)
     frame.absorbBar:SetTexture("Interface\\RaidFrame\\Shield-Fill")
     --frame.absorbBar:SetHorizTile(false)
@@ -168,6 +170,7 @@ local function CreateAbsorbBar(frame)
 end
 
 function BBP.CompactUnitFrame_UpdateHealPrediction(frame)
+    if frame:IsForbidden() then return end
     if frame.unit and frame.unit:find("nameplate") then
         local healthBar = frame.healthBar or frame.HealthBar or frame.healthbar
         if not healthBar then return end

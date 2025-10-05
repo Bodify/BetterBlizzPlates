@@ -25,6 +25,7 @@ end
 
 -- Absorb Indicator
 function BBP.AbsorbIndicator(frame)
+    if frame:IsForbidden() then return end
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
 
@@ -132,6 +133,7 @@ local ABSORB_GLOW_OFFSET = -5;
 local COMPACT_UNITFRAME_OVERSHIELD_HOOKED = false
 
 function BBP.CompactUnitFrame_UpdateAll(frame)
+    if frame:IsForbidden() then return end
     if frame.unit and frame.unit:find("nameplate") then
         local absorbBar = frame.totalAbsorb;
         if not absorbBar or absorbBar:IsForbidden() then
@@ -180,6 +182,7 @@ function BBP.CompactUnitFrame_UpdateAll(frame)
 end
 
 function BBP.CompactUnitFrame_UpdateHealPrediction(frame)
+    if frame:IsForbidden() then return end
     if frame.unit and frame.unit:find("nameplate") then
         local absorbBar = frame.totalAbsorb;
         if not absorbBar or absorbBar:IsForbidden() then
