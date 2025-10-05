@@ -5,6 +5,7 @@
 - Changing castbar background texture now updates immediately (instead of only when a real cast happens)
 ### Bugfix
 - Fix capital letter typo in pixel border + border size change causing lua errors.
+- Remove debug print accidentally left in Class Indicator pet logic.
 
 
 # BetterBlizzPlates 1.8.5
