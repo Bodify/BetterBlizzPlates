@@ -5113,6 +5113,7 @@ local function GetLocalizedSpecs()
 
     -- Blizzard API poopoo. Not possible to get gendered specNames AFAIK.
     -- And some classes were even missing from LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_FEMALE
+    -- Thanks to Dardo7 @ Discord for helping get all the correct Spanish data.
     if GetLocale() == "esES" then
         local esES_overrides = {
             ["Armas Guerrero"] = 71,
