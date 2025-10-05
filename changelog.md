@@ -1,16 +1,19 @@
-# BetterBlizzPlates 1.8.4j
+# BetterBlizzPlates 1.8.5
 ## Retail
 ### New
-- Added Mes's Profile. Thank you <3
+- Added Mes's Profile (www.twitch.tv/notmes). Thank you <3
 ### Tweak
 - Add unique pet icons for Class Indicator for Hunter pet families. Huge thanks to Stroold @ Discord for putting this list together <3
 - Blitz preset profile adjusted to show pvp buffs by default too.
 - Health Numbers now show three decimals on billions and two decimals on millions if decimals are selected to show.
+- Tweaked Class Indicator's Pin Mode a little bit. (Cropped the pin texture so it doesnt stick out on square icon. Repositioned and resized ever so slightly)
 ## All versions
 ### New
 - New setting for nameplate background color which makes it solid and allows you to properly put any color as background which was limited before.
 ### Tweak
 - Change nameplate border size now also resizes border on castbar and castbar icon if enabled and not just healthbar.
+
+
 
 # BetterBlizzPlates 1.8.4i
 ## Retail

@@ -571,9 +571,10 @@ function BBP.ClassIndicator(frame, foundID)
         if not frame.classIndicator.pin then
             frame.classIndicator.pin = frame.classIndicator:CreateTexture(nil, "BACKGROUND", nil, 0)
             frame.classIndicator.pin:SetAtlas("UI-QuestPoiImportant-QuestNumber-SuperTracked")
-            frame.classIndicator.pin:SetSize(29, 38)
-            frame.classIndicator.pin:SetPoint("TOP", frame.classIndicator.icon, "BOTTOM", 0, 20)
+            frame.classIndicator.pin:SetSize(25, 23)
+            frame.classIndicator.pin:SetPoint("TOP", frame.classIndicator.icon, "BOTTOM", 0, 6)
             frame.classIndicator.pin:SetDesaturated(true)
+            frame.classIndicator.pin:SetTexCoord(0, 1, 0.27, 1)
         end
         frame.classIndicator.pin:SetVertexColor(classColor.r, classColor.g, classColor.b)
         frame.classIndicator.pin:Show()
