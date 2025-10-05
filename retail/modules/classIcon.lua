@@ -683,7 +683,6 @@ function BBP.ClassIndicator(frame, foundID)
         if UnitIsUnit(frame.unit, "pet") and config.classIndicatorShowPet then
             local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
             local petIcon = currentPetIcon or petIcons[npcID]
-            print(currentPetIcon)
             if petIcon then
                 frame.classIndicator.icon:SetTexture(petIcon)
                 frame.classIndicator.icon:SetTexCoord(0.05, 0.95, 0.05, 0.95)
