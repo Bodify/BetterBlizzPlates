@@ -497,6 +497,16 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 if frame.healthBar.SetBorderSize then
                     frame.healthBar:SetBorderSize(db.nameplateBorderSize)
                 end
+                if db.castBarPixelBorder then
+                    if frame.CastBar.SetBorderSize then
+                        frame.CastBar:SetBorderSize(db.nameplateBorderSize)
+                    end
+                end
+                if db.castBarIconPixelBorder then
+                    if frame.CastBar.Icon.SetBorderSize then
+                        frame.CastBar.Icon:SetBorderSize(db.nameplateBorderSize)
+                    end
+                end
             end
 
             if config.healthNumbersTargetOnly then
@@ -625,6 +635,16 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             if db.changeNameplateBorderSize then
                 if frame.healthBar.SetBorderSize then
                     frame.healthBar:SetBorderSize(db.nameplateTargetBorderSize)
+                end
+                if db.castBarPixelBorder then
+                    if frame.CastBar.SetBorderSize then
+                        frame.CastBar:SetBorderSize(db.nameplateTargetBorderSize)
+                    end
+                end
+                if db.castBarIconPixelBorder then
+                    if frame.CastBar.Icon.SetBorderSize then
+                        frame.CastBar.Icon:SetBorderSize(db.nameplateTargetBorderSize)
+                    end
                 end
             end
         end

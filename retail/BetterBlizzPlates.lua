@@ -4262,6 +4262,17 @@ local function ChangeHealthbarBorderSize(frame)
             end
         end
 
+        if BetterBlizzPlatesDB.castBarPixelBorder then
+            if frame.castBar.SetBorderSize then
+                frame.castBar:SetBorderSize(borderSize)
+            end
+        end
+        if BetterBlizzPlatesDB.castBarIconPixelBorder then
+            if frame.CastBar.Icon.SetBorderSize then
+                frame.CastBar.Icon:SetBorderSize(borderSize)
+            end
+        end
+
         ApplyBorderSize(self, borderSize, minPixels)
     end)
 

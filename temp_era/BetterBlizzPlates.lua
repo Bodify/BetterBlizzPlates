@@ -4513,8 +4513,18 @@ local function HandleNamePlateAdded(unit)
         if BetterBlizzPlatesDB.changeNameplateBorderSize then
             if info.isTarget then
                 frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateTargetBorderSize)
+                if BetterBlizzPlatesDB.castBarPixelBorder then
+                    if frame.CastBar.SetBorderSize then
+                        frame.CastBar:SetBorderSize(BetterBlizzPlatesDB.nameplateTargetBorderSize)
+                    end
+                end
             else
                 frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateBorderSize)
+                if BetterBlizzPlatesDB.castBarPixelBorder then
+                    if frame.CastBar.SetBorderSize then
+                        frame.CastBar:SetBorderSize(BetterBlizzPlatesDB.nameplateBorderSize)
+                    end
+                end
             end
         end
     end
@@ -4918,8 +4928,18 @@ function BBP.RefreshAllNameplates()
         if BetterBlizzPlatesDB.changeNameplateBorderSize then
             if info.isTarget then
                 frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateTargetBorderSize)
+                if BetterBlizzPlatesDB.castBarPixelBorder then
+                    if frame.CastBar.SetBorderSize then
+                        frame.CastBar:SetBorderSize(BetterBlizzPlatesDB.nameplateTargetBorderSize)
+                    end
+                end
             else
                 frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateBorderSize)
+                if BetterBlizzPlatesDB.castBarPixelBorder then
+                    if frame.CastBar.SetBorderSize then
+                        frame.CastBar:SetBorderSize(BetterBlizzPlatesDB.nameplateBorderSize)
+                    end
+                end
             end
         end
 

@@ -1869,7 +1869,7 @@ local CLASS_COLORS = {
     WARLOCK = "|cff8787ed",
     SHAMAN = "|cff0070de",
     PALADIN = "|cfff58cba",
-    DEATHKNIGHT = "|ffc41f3b",
+    DEATHKNIGHT = "|cffc41f3b",
     MONK = "|cff00ff96",
     DEMONHUNTER = "|cffa330c9",
     EVOKER = "|cff33937f",
@@ -1911,7 +1911,7 @@ end
 
 local function CreateClassButton(parent, class, name, twitchName, onClickFunc)
     local bbpParent = parent == BetterBlizzPlates
-    local btnWidth, btnHeight = bbpParent and 96 or 150, bbpParent and 22 or  30
+    local btnWidth, btnHeight = bbpParent and 88 or 150, bbpParent and 22 or  30
     local button = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
     button:SetSize(btnWidth, btnHeight)
 
@@ -6172,7 +6172,7 @@ local function guiGeneralTab()
     CreateTooltipTwo(partySpecScale, "Arena Spec Size", "Size of the friendly spec name text on top of nameplate during arena.")
 
 
-    local btnGap = 3
+    local btnGap = 1
     local starterButton = CreateClassButton(BetterBlizzPlates, "STARTER", "Starter", nil, function()
         ShowProfileConfirmation("Starter", "STARTER", BBP.StarterProfile, "|cff808080(If you want to completely reset BBP there\nis a button in Advanced Settings)|r\n\n")
     end)
@@ -6203,10 +6203,15 @@ local function guiGeneralTab()
     end)
     magnuszButton:SetPoint("LEFT", kalvishButton, "RIGHT", btnGap, 0)
 
+    local mesButton = CreateClassButton(BetterBlizzPlates, "DEATHKNIGHT", "Mes", "notmes", function()
+        ShowProfileConfirmation("Mes", "DEATHKNIGHT", BBP.MesProfile)
+    end)
+    mesButton:SetPoint("LEFT", magnuszButton, "RIGHT", btnGap, 0)
+
     local mmarkersButton = CreateClassButton(BetterBlizzPlates, "DRUID", "Mmarkers", "mmarkers", function()
         ShowProfileConfirmation("Mmarkers", "DRUID", BBP.MmarkersProfile)
     end)
-    mmarkersButton:SetPoint("LEFT", magnuszButton, "RIGHT", btnGap, 0)
+    mmarkersButton:SetPoint("LEFT", mesButton, "RIGHT", btnGap, 0)
 
     local nahjButton = CreateClassButton(BetterBlizzPlates, "ROGUE", "Nahj", "nahj", function()
         ShowProfileConfirmation("Nahj", "ROGUE", BBP.NahjProfile)
@@ -12292,10 +12297,15 @@ function BBP.CreateIntroMessageWindow()
     end)
     magnuszButton:SetPoint("TOP", kalvishButton, "BOTTOM", 0, btnGap)
 
+    local mesButton = CreateClassButton(BBP.IntroMessageWindow, "DEATHKNIGHT", "Mes", "notmes", function()
+        ShowProfileConfirmation("Mes", "DEATHKNIGHT", BBP.MesProfile)
+    end)
+    mesButton:SetPoint("TOP", magnuszButton, "BOTTOM", 0, btnGap)
+
     local mmarkersButton = CreateClassButton(BBP.IntroMessageWindow, "DRUID", "Mmarkers", "mmarkers", function()
         ShowProfileConfirmation("Mmarkers", "DRUID", BBP.MmarkersProfile)
     end)
-    mmarkersButton:SetPoint("TOP", magnuszButton, "BOTTOM", 0, btnGap)
+    mmarkersButton:SetPoint("TOP", mesButton, "BOTTOM", 0, btnGap)
 
     local nahjButton = CreateClassButton(BBP.IntroMessageWindow, "ROGUE", "Nahj", "nahj", function()
         ShowProfileConfirmation("Nahj", "ROGUE", BBP.NahjProfile)
