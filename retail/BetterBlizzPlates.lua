@@ -3413,9 +3413,6 @@ local function UnitAuraColorEvent(self, event, unit, unitAuraUpdateInfo)
                     end
 
                     if foundID then
-                        if BBP.tempDebug then
-                            print("BG Aura ID: ", foundID)
-                        end
                         if db.bgIndicator then
                             BBP.BgIndicator(frame, foundID)
                         end

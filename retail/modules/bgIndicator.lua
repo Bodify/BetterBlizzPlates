@@ -27,13 +27,7 @@ local function GetAuraColor(frame, foundID, auraType)
     return nil  -- No matching aura found
 end
 
-local tempVal = 0
 function BBP.BgIndicator(frame, foundID)
-    if BBP.tempDebug then
-        tempVal = tempVal + 1
-        print(tempVal, "BG: ", UnitName(frame.unit), foundID)
-    end
-
     if not BBP.isInBg or not UnitPvpClassification(frame.unit) then
         if frame.bgIndicator then
             frame.bgIndicator:Hide()
