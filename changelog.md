@@ -1,3 +1,11 @@
+# BetterBlizzPlates 1.8.5d
+## All versions
+### Bugfix
+- Fix target highlight showing unintentionally on friendly npcs thats had their healthbar hidden.
+## Classics
+### Bugfix
+- Another tweak for absorb code on Classics due to error reports that I can't reproduce. Hopefully this works.
+
 # BetterBlizzPlates 1.8.5c
 ## Classics
 ### Bugfix

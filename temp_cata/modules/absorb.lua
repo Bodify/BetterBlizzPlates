@@ -142,7 +142,7 @@ end
 local function CreateAbsorbBar(frame)
     if frame.absorbBar then return end -- Prevent duplicate elements
     -- Absorb Fill (Total Absorb)
-    frame.absorbBar = frame:CreateTexture(nil, "ARTWORK", 1)
+    frame.absorbBar = frame:CreateTexture()
     frame.absorbBar:SetDrawLayer("ARTWORK", 1)
     frame.absorbBar:SetTexture("Interface\\RaidFrame\\Shield-Fill")
     --frame.absorbBar:SetHorizTile(false)
