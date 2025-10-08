@@ -1,7 +1,7 @@
 ## Interface: 11507
 ## Title: Better|cff00c0ffBlizz|rPlates
 ## Notes: Default Blizzard Nameplates with more features added to them with easy settings.
-## Version: 1.8.5b
+## Version: 1.8.5d
 ## SavedVariables: BetterBlizzPlatesDB, BBPCVarBackupsDB
 ## OptionalDeps: LibSharedMedia-3.0
 ## IconAtlas: gmchat-icon-blizz
