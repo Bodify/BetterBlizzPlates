@@ -1,3 +1,13 @@
+# BetterBlizzPlates 1.8.6
+## All versions
+### New
+Nameplate Auras: Center Auras on Enemy now has a right-click option to only center buffs and not debuffs. Allows you to keep the debuffs where youre used to and have buffs centered above/under.
+Nameplate Auras: "Gap between Buffs and Debuffs" slider setting.
+### Tweak
+- Fixed an issue with separate buff row setting and buff scale setting causing the scale to also adjust the gap size (introduced new gap setting if ur setup changed)
+
+
+
 # BetterBlizzPlates 1.8.5d
 ## All versions
 ### Bugfix

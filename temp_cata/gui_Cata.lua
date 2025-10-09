@@ -1253,8 +1253,8 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "nameplateAuraHeightGap" then
                     BetterBlizzPlatesDB.nameplateAuraHeightGap = value
                     BBP.RefreshBuffFrame()
-                elseif element == "nameplateAuraWidthGap" then
-                    BetterBlizzPlatesDB.nameplateAuraWidthGap = value
+                elseif element == "nameplateAuraTypeGap" then
+                    BetterBlizzPlatesDB.nameplateAuraTypeGap = value
                     BBP.RefreshBuffFrame()
                 elseif element == "nameplateAuraHeightGap" then
                     BetterBlizzPlatesDB.nameplateAuraHeightGap = value
@@ -1623,6 +1623,15 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
 
             if alsoHideInt then
                 tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Center Auras on Enemy" then
+            local centerBuffsOnly = BetterBlizzPlatesDB.nameplateCenterOnlyBuffs
+            local tooltipText = "\n|cff32f795Right-click to only center Buffs.|r"
+
+            if centerBuffsOnly then
+                tooltipText = tooltipText .. "\n|A:ParagonReputation_Checkmark:15:15|a"
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
@@ -8984,6 +8993,7 @@ local function guiNameplateAuras()
     end
 
     pvpCC:HookScript("OnClick", function(self)
+        BetterBlizzPlatesDB.otherNpdeBuffFilterCC = self:GetChecked()
         BBP.UpdateImportantBuffsAndCCTables()
         otherNpdeBuffFilterCC:Click()
         otherNpdeBuffFilterCC:SetChecked(BetterBlizzPlatesDB.otherNpdeBuffFilterCC)
@@ -9136,7 +9146,19 @@ local function guiNameplateAuras()
 
     local nameplateAurasEnemyCenteredAnchor = CreateCheckbox("nameplateAurasEnemyCenteredAnchor", "Center Auras on Enemy", enableNameplateAuraCustomisation)
     nameplateAurasEnemyCenteredAnchor:SetPoint("BOTTOM", nameplateAurasXPos, "TOP", -80, 80)
-    CreateTooltip(nameplateAurasEnemyCenteredAnchor, "Keep auras centered on enemy nameplates.")
+    CreateTooltipTwo(nameplateAurasEnemyCenteredAnchor, "Center Auras on Enemy", "Keep auras centered on enemy nameplates.")
+    nameplateAurasEnemyCenteredAnchor:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            if BetterBlizzPlatesDB.nameplateCenterOnlyBuffs == nil then
+                BetterBlizzPlatesDB.nameplateCenterOnlyBuffs = true
+            else
+                BetterBlizzPlatesDB.nameplateCenterOnlyBuffs = nil
+            end
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+        end
+    end)
 
     local nameplateAurasFriendlyCenteredAnchor = CreateCheckbox("nameplateAurasFriendlyCenteredAnchor", "Center Auras on Friendly", enableNameplateAuraCustomisation)
     nameplateAurasFriendlyCenteredAnchor:SetPoint("TOPLEFT", nameplateAurasEnemyCenteredAnchor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -9252,7 +9274,7 @@ local function guiNameplateAuras()
     end)
 
     local showInterruptsOnNameplateAuras = CreateCheckbox("showInterruptsOnNameplateAuras", "Interrupts", enableNameplateAuraCustomisation)
-    showInterruptsOnNameplateAuras:SetPoint("LEFT", nameplateAuraTaller.text, "RIGHT", 9, 0)
+    showInterruptsOnNameplateAuras:SetPoint("TOPLEFT", nameplateAuraTaller, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(showInterruptsOnNameplateAuras, "Show Interrupts", "Show interrupt duration as a nameplate aura when a unit gets interrupted.")
     showInterruptsOnNameplateAuras:HookScript("OnClick", function (self)
         if self:GetChecked() then
@@ -9262,12 +9284,8 @@ local function guiNameplateAuras()
         end
     end)
 
-    local separateAuraBuffRow = CreateCheckbox("separateAuraBuffRow", "Separate Buff Row", enableNameplateAuraCustomisation)
-    separateAuraBuffRow:SetPoint("TOPLEFT", nameplateAuraTaller, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(separateAuraBuffRow, "Show Buffs on a separate row on top of debuffs.", "ANCHOR_LEFT")
-
     local onlyPandemicAuraMine = CreateCheckbox("onlyPandemicAuraMine", "Only Pandemic Mine", enableNameplateAuraCustomisation)
-    onlyPandemicAuraMine:SetPoint("TOPLEFT", separateAuraBuffRow, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    onlyPandemicAuraMine:SetPoint("TOPLEFT", showInterruptsOnNameplateAuras, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(onlyPandemicAuraMine, "Only show the red pandemic aura glow on my own auras", "ANCHOR_LEFT")
 
     local nameplateResourceDoNotRaiseAuras = CreateCheckbox("nameplateResourceDoNotRaiseAuras", "Don't raise for resource", enableNameplateAuraCustomisation)
@@ -9322,25 +9340,17 @@ local function guiNameplateAuras()
         end
     end)
 
+    local separateAuraBuffRow = CreateCheckbox("separateAuraBuffRow", "Separate Buff Row", enableNameplateAuraCustomisation)
+    separateAuraBuffRow:SetPoint("TOPLEFT", nameplateAuraCountScale, "BOTTOMLEFT", 0, -10)
+    CreateTooltip(separateAuraBuffRow, "Show Buffs on a separate row on top of debuffs.", "ANCHOR_LEFT")
+
+    local nameplateAuraTypeGap = CreateSlider(enableNameplateAuraCustomisation, "Gap between Buffs and Debuffs", -100, 100, 0.5, "nameplateAuraTypeGap")
+    nameplateAuraTypeGap:SetPoint("LEFT", separateAuraBuffRow.text,  "RIGHT", 0, 0)
+    CreateTooltipTwo(nameplateAuraTypeGap, "Gap between Buffs and Debuffs", "The vertical gap between Buffs and Debuffs (0 is default).\n\nOnly works if \"Separate Buff Row\" is enabled.", nil, "ANCHOR_LEFT")
+
     local imintoodeep1 = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     imintoodeep1:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -95, -80)
     imintoodeep1:SetText("Scroll down for more settings")
-
-    local function TogglePanel()
-        if BBP.variablesLoaded then
-            if BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
-                LibDD:UIDropDownMenu_EnableDropDown(nameplateAuraDropdown)
-                LibDD:UIDropDownMenu_EnableDropDown(nameplateAuraRelativeDropdown)
-            else
-                LibDD:UIDropDownMenu_DisableDropDown(nameplateAuraDropdown)
-                LibDD:UIDropDownMenu_DisableDropDown(nameplateAuraRelativeDropdown)
-            end
-        else
-            C_Timer.After(1, function()
-                --TogglePanel()
-            end)
-        end
-    end
 
     enableNameplateAuraCustomisation:HookScript("OnClick", function (self)
         if self:GetChecked() then
@@ -9360,7 +9370,7 @@ local function guiNameplateAuras()
 
 
     local nameplateAuraTestMode2 = CreateCheckbox("nameplateAuraTestMode", "Test Mode", enableNameplateAuraCustomisation)
-    nameplateAuraTestMode2:SetPoint("LEFT", nameplateKeyAurasAnchor, "RIGHT", 60, 5)
+    nameplateAuraTestMode2:SetPoint("LEFT", nameplateKeyAurasAnchor, "RIGHT", 60, -25)
     CreateTooltipTwo(nameplateAuraTestMode2, "Test Mode", "Add some auras to nameplates for testing.", "Testing is limited and not 100% accurate and only respects the Show BUFF/DEBUFF filters and none of the sub-filters.", "ANCHOR_TOP")
     nameplateAuraTestMode2:SetScale(1.5)
 

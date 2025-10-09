@@ -1237,8 +1237,8 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "nameplateAuraHeightGap" then
                     BetterBlizzPlatesDB.nameplateAuraHeightGap = value
                     BBP.RefreshBuffFrame()
-                elseif element == "nameplateAuraWidthGap" then
-                    BetterBlizzPlatesDB.nameplateAuraWidthGap = value
+                elseif element == "nameplateAuraTypeGap" then
+                    BetterBlizzPlatesDB.nameplateAuraTypeGap = value
                     BBP.RefreshBuffFrame()
                 elseif element == "nameplateAuraHeightGap" then
                     BetterBlizzPlatesDB.nameplateAuraHeightGap = value
@@ -1604,6 +1604,15 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
 
             if alsoHideInt then
                 tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Center Auras on Enemy" then
+            local centerBuffsOnly = BetterBlizzPlatesDB.nameplateCenterOnlyBuffs
+            local tooltipText = "\n|cff32f795Right-click to only center Buffs.|r"
+
+            if centerBuffsOnly then
+                tooltipText = tooltipText .. "\n|A:ParagonReputation_Checkmark:15:15|a"
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
@@ -8142,7 +8151,19 @@ local function guiNameplateAuras()
 
     local nameplateAurasEnemyCenteredAnchor = CreateCheckbox("nameplateAurasEnemyCenteredAnchor", "Center Auras on Enemy", enableNameplateAuraCustomisation)
     nameplateAurasEnemyCenteredAnchor:SetPoint("BOTTOM", nameplateAurasXPos, "TOP", -80, 80)
-    CreateTooltip(nameplateAurasEnemyCenteredAnchor, "Keep auras centered on enemy nameplates.")
+    CreateTooltipTwo(nameplateAurasEnemyCenteredAnchor, "Center Auras on Enemy", "Keep auras centered on enemy nameplates.")
+    nameplateAurasEnemyCenteredAnchor:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            if BetterBlizzPlatesDB.nameplateCenterOnlyBuffs == nil then
+                BetterBlizzPlatesDB.nameplateCenterOnlyBuffs = true
+            else
+                BetterBlizzPlatesDB.nameplateCenterOnlyBuffs = nil
+            end
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+        end
+    end)
 
     local nameplateAurasFriendlyCenteredAnchor = CreateCheckbox("nameplateAurasFriendlyCenteredAnchor", "Center Auras on Friendly", enableNameplateAuraCustomisation)
     nameplateAurasFriendlyCenteredAnchor:SetPoint("TOPLEFT", nameplateAurasEnemyCenteredAnchor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)

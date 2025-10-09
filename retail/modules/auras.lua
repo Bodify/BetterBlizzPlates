@@ -1838,16 +1838,18 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
     -- Function to layout auras. ALl of this is scuffed and needs a rework. If one enlarged aura every row gets higher instead of only the row immediately after like intentional.
     local maxRowHeight = 0
     local maxDebuffHeight = 0
+    local maxBuffHeight = 0
     local keyAuraOffset = 5
     local function LayoutAuras(auras, startRow, isBuffs)
         local currentRow = startRow
         local horizontalOffset = 0
         local firstRowFirstAuraOffset = nil  -- Variable to store the horizontal offset of the first aura in the first row
         local nameplateAurasFriendlyCenteredAnchor = db.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit and not isSelf
-        local nameplateAurasEnemyCenteredAnchor = db.nameplateAurasEnemyCenteredAnchor and isEnemyUnit
+        local nameplateAurasEnemyCenteredAnchor = db.nameplateAurasEnemyCenteredAnchor and isEnemyUnit and (not db.nameplateCenterOnlyBuffs or isBuffs)
         local nameplateAurasPersonalCenteredAnchor = db.nameplateAurasPersonalCenteredAnchor and isSelf
         local nameplateCenterAllRows = db.nameplateCenterAllRows and (nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor)
         local xPos = db.nameplateAurasXPos
+        local nameplateAuraTypeGap = db.nameplateAuraTypeGap
 
         local compactTracker = 0
         local indexTracker = 0
@@ -1950,8 +1952,8 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
                     maxDebuffHeight = maxRowHeight
                     verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
                 else
-                    maxDebuffHeight = maxRowHeight
-                    verticalOffset = -currentRow * (-maxDebuffHeight + (currentRow > 0 and verticalSpacing or 0))
+                    maxBuffHeight = maxRowHeight
+                    verticalOffset = (-currentRow * (-maxDebuffHeight + (currentRow > 0 and verticalSpacing or 0))) + nameplateAuraTypeGap
                 end
 
                 local extraOffset = 0
