@@ -5,6 +5,7 @@ Nameplate Auras: Center Auras on Enemy now has a right-click option to only cent
 Nameplate Auras: "Gap between Buffs and Debuffs" slider setting.
 ### Tweak
 - Fixed an issue with separate buff row setting and buff scale setting causing the scale to also adjust the gap size (introduced new gap setting if ur setup changed)
+- Fixed an issue with Class Indicator & Party Pointers pet detection while in Arena. When summoning a Pet the nameplate update would not register it as a pet unit. Use a different detection method that gets the pet update immediately cuz Blizz API poopoo.
 
 
 

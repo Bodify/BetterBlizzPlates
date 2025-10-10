@@ -250,10 +250,11 @@ function BBP.ClassIndicator(frame, foundID)
     frame.classIndicatorHideNumbers = nil
 
     local isOthersPet = config.classIndicatorShowOthersPets and UnitIsOtherPlayersPet(frame.unit) and BBP.isInArena and info.isFriend
+    local isPetGUID = info.unitGUID and info.unitGUID:sub(1, 3) == "Pet"
 
     local class = info.class
     if not class then
-        if (UnitIsUnit(frame.unit, "pet") and config.classIndicatorShowPet) or isOthersPet then
+        if (isPetGUID and config.classIndicatorShowPet) or isOthersPet then
             if isOthersPet then
                 for i = 1, 2 do
                     local partyPet = "partypet"..i
@@ -414,7 +415,7 @@ function BBP.ClassIndicator(frame, foundID)
     end
 
     local isTank = config.classIndicatorTank and TankSpecs[specID]
-    local isPet = UnitIsUnit(frame.unit, "pet") and config.classIndicatorShowPet
+    local isPet = isPetGUID and config.classIndicatorShowPet
     local isPetAndAlwaysShow = config.classIndicatorAlwaysShowPet and isPet
     local alwaysShowTank = config.classIconAlwaysShowTank and TankSpecs[specID]
     local alwaysShowHealer = config.classIconAlwaysShowHealer and HealerSpecs[specID]
@@ -680,7 +681,7 @@ function BBP.ClassIndicator(frame, foundID)
             frame.classIndicator.icon:SetTexCoord(0.637, 0.742, 0.259, 0.365)
         end
     else
-        if UnitIsUnit(frame.unit, "pet") and config.classIndicatorShowPet then
+        if isPet then
             local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
             local petIcon = currentPetIcon or petIcons[npcID]
             if petIcon then
