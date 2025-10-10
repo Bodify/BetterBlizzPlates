@@ -193,6 +193,12 @@ local function BackgroundType(frame, bg)
     end
 end
 
+local function IsMyPet(unit)
+  local myPet = UnitGUID("pet")
+  local u = UnitGUID(unit)
+  return myPet and u and myPet == u
+end
+
 -- Class Indicator
 function BBP.ClassIndicator(frame, foundID)
     local config = frame.BetterBlizzPlates.config
@@ -250,10 +256,11 @@ function BBP.ClassIndicator(frame, foundID)
     frame.classIndicatorHideNumbers = nil
 
     local isOthersPet = config.classIndicatorShowOthersPets and UnitIsOtherPlayersPet(frame.unit) and BBP.isInArena and info.isFriend
-    local isPetGUID = info.unitGUID and info.unitGUID:sub(1, 3) == "Pet"
+    local isPetGUID
 
     local class = info.class
     if not class then
+        isPetGUID = (info.unitGUID and info.unitGUID:sub(1, 3) == "Pet") and UnitIsOwnerOrControllerOfUnit("player",frame.unit)
         if (isPetGUID and config.classIndicatorShowPet) or isOthersPet then
             if isOthersPet then
                 for i = 1, 2 do

@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.8.6b
+## Retail
+### Tweak
+- Add another tweak to Pet detection on Class Indicator etc to avoid others pets triggering this new check.
+
 # BetterBlizzPlates 1.8.6
 ## All versions
 ### New
