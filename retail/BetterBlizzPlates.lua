@@ -12,7 +12,7 @@ LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Pro
 
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")
-local sendUpdate = true
+local sendUpdate = false
 BBP.VersionNumber = addonUpdates
 local _, playerClass
 local playerClassColor
@@ -1266,7 +1266,6 @@ local function SendUpdateMessage()
                 -- DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
                 -- DEFAULT_CHAT_FRAME:AddMessage("   - Fix aura color module not working on buffs.")
                 -- DEFAULT_CHAT_FRAME:AddMessage("   - Fix class icon module causing a lua error sometimes.")
-
                 if BetterBlizzPlatesDB.enableNameplateAuraCustomisation and BetterBlizzPlatesDB.separateAuraBuffRow then
                     StaticPopupDialogs["BBP_ROW_UPDATE"] = {
                     text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nFixed an issue causing Nameplate Buffs with separate buff row enabled to move upwards on higher scale settings.\n\nThis will likely have shifted the position of them for many setups.\n\nAlso introduced a new\n\"Gap between Buffs & Debuffs\"\nslider to adjust the space to your liking.\n|cff808080Also accepts negative values if you want to have them below (rows will still stack upwards tho)|r",

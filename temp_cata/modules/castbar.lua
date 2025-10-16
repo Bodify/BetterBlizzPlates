@@ -18,6 +18,7 @@ local interruptSpells = {
     171138,-- Shadow Lock (Warlock)
     147362,-- Countershot (Hunter)
     183752,-- Disrupt (Demon Hunter)
+    34490, -- Silencing Shot (Hunter)
     187707,-- Muzzle (Hunter)
     212619,-- Call Felhunter (Warlock)
     --231665,-- Avengers Shield (Paladin)

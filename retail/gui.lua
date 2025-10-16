@@ -139,6 +139,41 @@ function BBP.ImportProfile(encodedString, expectedDataType)
     end
 end
 
+local function RecolorEntireAuraWhitelist(r, g, b, a)
+    if type(BetterBlizzPlatesDB) ~= "table" then return false end
+    local wl = BetterBlizzPlatesDB.auraWhitelist
+    if type(wl) ~= "table" then return false end
+
+    for i = 1, #wl do
+        local entry = wl[i]
+        if type(entry) == "table" then
+            local ec = entry.entryColors
+            if type(ec) ~= "table" then
+                ec = {}
+                entry.entryColors = ec
+            end
+
+            local touched = false
+            for _, sub in pairs(ec) do
+                if type(sub) == "table" and (sub.r or sub.g or sub.b or sub.a) then
+                    sub.r, sub.g, sub.b, sub.a = r, g, b, a
+                    touched = true
+                end
+            end
+
+            if not touched then
+                ec.text = { r = r, g = g, b = b, a = a }
+            end
+        end
+    end
+
+    if BBP["auraWhitelistRefresh"] then
+        BBP["auraWhitelistRefresh"]()
+    end
+
+    return true
+end
+
 
 local function deepMergeTables(destination, source)
     for k, v in pairs(source) do
@@ -2544,7 +2579,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             checkBoxI.texture:SetSize(27, 27)
             checkBoxI.texture:SetDesaturated(true)
             checkBoxI.texture:SetPoint("CENTER", checkBoxI, "CENTER", -0.5, 0.5)
-            CreateTooltipTwo(checkBoxI, "Important Glow |A:importantavailablequesticon:22:22|a", "Check for a glow on the aura to highlight it.\n|cff32f795Right-click to change Color.|r", nil, "ANCHOR_TOPRIGHT")
+            CreateTooltipTwo(checkBoxI, "Important Glow |A:importantavailablequesticon:22:22|a", "Check for a glow on the aura to highlight it.\n|cff32f795Right-click to change Color.|r", "Ctrl+Alt+Right-click to change the color of ALL auras in the whitelist.", "ANCHOR_TOPRIGHT")
 
             -- Handler for the I checkbox
             checkBoxI:SetScript("OnClick", function(self)
@@ -2569,51 +2604,98 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             end
 
             SetImportantBoxColor(entryColors.text.r, entryColors.text.g, entryColors.text.b, entryColors.text.a)
-
             -- Function to open the color picker
-            local function OpenColorPicker()
+
+            local function OpenColorPicker(isAll)
                 BBP.needsUpdate = true
-                local colorData = entryColors.text or {}
-                local r, g, b = colorData.r or 1, colorData.g or 1, colorData.b or 1
-                local a = colorData.a or 1 -- Default alpha to 1 if not present
 
-                local backupColorData = {r = r, g = g, b = b, a = a}
+                if isAll and not BBP.allColorHook then
+                    BBP.allColorHook = true
+                    local okBtn      = ColorPickerFrame.Footer and ColorPickerFrame.Footer.OkayButton
+                    local cancelBtn  = ColorPickerFrame.Footer and ColorPickerFrame.Footer.CancelButton
+                    if okBtn then
+                        okBtn:HookScript("OnClick", function()
+                            if BBP._allColorActive and BBP._allColorPending then
+                                local p = BBP._allColorPending
+                                RecolorEntireAuraWhitelist(p.r, p.g, p.b, p.a)
+                            end
+                            BBP._allColorActive = false
+                            BBP._allColorPending = nil
+                        end)
+                    end
+                    if cancelBtn then
+                        cancelBtn:HookScript("OnClick", function()
+                            BBP._allColorActive = false
+                            BBP._allColorPending = nil
+                        end)
+                    end
+                end
 
-                local function updateColors()
+                BBP._allColorActive  = isAll or false
+                BBP._allColorPending = nil
+
+                local okBtn = ColorPickerFrame.Footer and ColorPickerFrame.Footer.OkayButton
+                if okBtn then
+                    if not BBP._colorPickerOkText then
+                        BBP._colorPickerOkText = okBtn:GetText()
+                    end
+                    if isAll then
+                        okBtn:SetText("Color ALL Auras")
+                    else
+                        okBtn:SetText(BBP._colorPickerOkText)
+                    end
+                end
+
+                local colorData      = entryColors.text or {}
+                local r, g, b        = colorData.r or 1, colorData.g or 1, colorData.b or 1
+                local a              = colorData.a or 1
+                local backup         = { r = r, g = g, b = b, a = a }
+
+                local function updateRowPreview()
+                    entryColors.text = entryColors.text or {}
                     entryColors.text.r, entryColors.text.g, entryColors.text.b, entryColors.text.a = r, g, b, a
-                    SetTextColor(r, g, b)  -- Update text color
+                    SetTextColor(r, g, b)
                     SetImportantBoxColor(r, g, b, a)
                     BBP.RefreshAllNameplates()
-                    ColorPickerFrame.Content.ColorSwatchCurrent:SetAlpha(a)
+                    if ColorPickerFrame.Content and ColorPickerFrame.Content.ColorSwatchCurrent then
+                        ColorPickerFrame.Content.ColorSwatchCurrent:SetAlpha(a)
+                    end
                     BBP.auraListNeedsUpdate = true
+                    if isAll then BBP._allColorPending = { r = r, g = g, b = b, a = a } end
                 end
 
                 local function swatchFunc()
-                    r, g, b = ColorPickerFrame:GetColorRGB()
-                    updateColors()
+                    r, g, b = ColorPickerFrame:GetColorRGB(); updateRowPreview()
                 end
-
                 local function opacityFunc()
-                    a = ColorPickerFrame:GetColorAlpha()
-                    updateColors()
+                    a = ColorPickerFrame:GetColorAlpha(); updateRowPreview()
                 end
-
                 local function cancelFunc()
-                    r, g, b, a = backupColorData.r, backupColorData.g, backupColorData.b, backupColorData.a
-                    updateColors()
+                    r, g, b, a = backup.r, backup.g, backup.b, backup.a
+                    updateRowPreview()
+                    BBP._allColorActive = false
+                    BBP._allColorPending = nil
                 end
 
-                ColorPickerFrame.previousValues = {r, g, b, a}
+                ColorPickerFrame.previousValues = { r, g, b, a }
                 ColorPickerFrame:SetupColorPickerAndShow({
-                    r = r, g = g, b = b, opacity = a, hasOpacity = true,
-                    swatchFunc = swatchFunc, opacityFunc = opacityFunc, cancelFunc = cancelFunc
+                    r = r,
+                    g = g,
+                    b = b,
+                    opacity = a,
+                    hasOpacity = true,
+                    swatchFunc = swatchFunc,
+                    opacityFunc = opacityFunc,
+                    cancelFunc = cancelFunc
                 })
+
+                updateRowPreview()
             end
 
             checkBoxI:HookScript("OnMouseDown", function(self, button)
-                if button == "RightButton" then
-                    OpenColorPicker()
-                end
+                if button ~= "RightButton" then return end
+                local isAll = IsControlKeyDown() and IsAltKeyDown()
+                OpenColorPicker(isAll)
             end)
 
             -- Create Checkbox C (Compacted)
@@ -2813,6 +2895,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         contentFrame:SetHeight(newHeight)
     end
     contentFrame.refreshList = refreshList
+    BBP[listName.."Refresh"] = refreshList
 
     local editBox = CreateFrame("EditBox", nil, subPanel, "InputBoxTemplate")
     editBox:SetSize((width and width - 62) or (322 - 62), 19)
@@ -10378,7 +10461,7 @@ local function guiNameplateAuras()
     local nameplateAuraCompactedScale = CreateSlider(enableNameplateAuraCustomisation, "Compacted Aura Size", 0.4, 1, 0.01, "nameplateAuraCompactedScale")
     nameplateAuraCompactedScale:SetPoint("TOPLEFT", nameplateAuraEnlargedScale, "BOTTOMLEFT", 0, -17)
     local compactedAuraIcon = contentFrame:CreateTexture(nil, "ARTWORK")
-    compactedAuraIcon:SetAtlas("ui-hud-minimap-zoom-out")
+    compactedAuraIcon:SetTexture(BBP.CompactIcon)
     compactedAuraIcon:SetSize(18, 18)
     compactedAuraIcon:SetPoint("RIGHT", nameplateAuraCompactedScale, "LEFT", -3, 0)
 
@@ -12040,6 +12123,195 @@ local function guiSupport()
     boxTwoTex:SetSize(58, 58)
     boxTwoTex:SetPoint("BOTTOM", boxTwo, "TOP", 0, 1)
 end
+
+local function guiMidnight()
+    local guiMidnight = CreateFrame("Frame")
+    guiMidnight.name = "|T136221:12:12|t |cffcc66ffWoW: Midnight|r"
+    guiMidnight.parent = BetterBlizzPlates.name
+    --InterfaceOptions_AddCategory(guiMidnight)
+    local guiMidnightCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiMidnight, guiMidnight.name, guiMidnight.name)
+    guiMidnightCategory.ID = guiMidnight.name;
+    BBP.guiMidnight = guiMidnight.name
+    BBP.category.guiMidnightCategory = guiMidnightCategory.ID
+    CreateTitle(guiMidnight)
+
+    local titleText = guiMidnight:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+    titleText:SetPoint("TOPLEFT", guiMidnight, "TOPLEFT", 20, -10)
+    titleText:SetText("|cffcc66ffWorld of Warcraft: Midnight Plans|r")
+    local titleIcon = guiMidnight:CreateTexture(nil, "ARTWORK")
+    titleIcon:SetTexture(136221)
+    titleIcon:SetSize(23, 23)
+    titleIcon:SetPoint("RIGHT", titleText, "LEFT", -3, 0.5)
+
+    local midnightInfo = guiMidnight:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    midnightInfo:SetPoint("TOPLEFT", titleIcon, "BOTTOMLEFT", 2, -5)
+    midnightInfo:SetText("|cffffffffI'm planning to continue developing all my addons for Midnight as well.\n\nSome features will need to be adjusted or removed but the addons should stick around.\nMidnight is still in early Alpha and I haven't started preparing yet (14th Oct), but I will soon.\n\nPlans might change, but I'm confident |A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates and my other addons\n|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rFrames & |cffffffffsArena |cffff8000Reloaded|r |T135884:13:13|t will stick around for Midnight (with changes/removals).\n\nI have a lot of work ahead of me and any support is greatly appreciated |A:GarrisonTroops-Health:10:10|a (|cff00c0ff@bodify|r)\nI'll update this section with more detailed information as I know more in some weeks/months.")
+    midnightInfo:SetTextColor(1,1,1,1)
+    midnightInfo:SetJustifyH("LEFT")
+
+    local bgImg = guiMidnight:CreateTexture(nil, "BACKGROUND")
+    bgImg:SetAtlas("professions-recipe-background")
+    bgImg:SetPoint("CENTER", guiMidnight, "CENTER", -8, 4)
+    bgImg:SetSize(680, 610)
+    bgImg:SetAlpha(0.4)
+    bgImg:SetVertexColor(0,0,0)
+
+    local f = CreateFrame("PlayerModel", nil, guiMidnight)
+    f:SetIgnoreParentScale(true)
+    f:SetScale(1)
+    f:SetAllPoints(bgImg)
+    f:SetPortraitZoom(0)
+    f:SetDisplayInfo(121956)
+    f.anim = 69
+    f:SetAnimation(69)
+    f:HookScript("OnAnimFinished", function(self)
+        if self.anim == 3 or self.anim == 15 then return end
+        self:SetAnimation(self.anim)
+    end)
+
+    local DEFAULT_CAM     = 1.35
+    local DEFAULT_VTX     = -35
+    local DEFAULT_VTY     = -30
+
+    local validAnimations = {}
+    for i = 1, 84 do
+        if i ~= 7 and i ~= 11 and i ~= 12 and i ~= 40 and i ~= 56 then
+            table.insert(validAnimations, i)
+        end
+    end
+    local extras = { 102, 103, 105, 106, 107, 108, 109, 110, 111, 112, 113, 144, 164, 185, 186, 195, 196, 225 }
+    for _, v in ipairs(extras) do
+        table.insert(validAnimations, v)
+    end
+
+    local pool = {}
+    local function RefillPool()
+        wipe(pool)
+        for i = 1, #validAnimations do
+            pool[i] = validAnimations[i]
+        end
+        for i = #pool, 2, -1 do
+            local j = math.random(i)
+            pool[i], pool[j] = pool[j], pool[i]
+        end
+    end
+    RefillPool()
+
+    local function PlayRandomAnimation()
+        if #pool == 0 then
+            RefillPool()
+        end
+        local anim = table.remove(pool)
+        f.anim = anim
+        f:SetAnimation(anim)
+    end
+
+    local poke = CreateFrame("Button", nil, guiMidnight, "UIPanelButtonTemplate")
+    poke:SetText("Poke")
+    poke:SetWidth(50)
+    poke:SetPoint("LEFT", f, "LEFT", 65, -55)
+    poke:SetScale(1.5)
+    poke:SetFrameStrata("HIGH")
+    poke:SetScript("OnClick", PlayRandomAnimation)
+    poke.Text:SetVertexColor(1, 1, 1)
+
+
+    local r, g, b = 0.945, 0.769, 1.0
+    for _, region in ipairs({ poke:GetRegions() }) do
+        if region:IsObjectType("Texture") then
+            region:SetDesaturated(true)
+            region:SetVertexColor(r, g, b)
+        end
+    end
+
+    local ROT_SENS   = 0.010 * 0.8
+    local PITCH_SENS = 0.010 * 0.8
+    local DOLLY_SENS = 0.015 * 0.35
+    local WHEEL_PAN  = 0.34
+
+    f:EnableMouse(true)
+    f:EnableMouseWheel(true)
+    f:UseModelCenterToTransform(true)
+
+    local camScale = DEFAULT_CAM
+    f:SetCamDistanceScale(camScale)
+
+    local startX, startY, startYaw, startPitch, startPX, startPY, startPZ
+    local dragMode
+
+    local function Cur()
+        local x, y = GetCursorPosition()
+        local s = UIParent:GetEffectiveScale()
+        return x / s, y / s
+    end
+
+    f:SetScript("OnMouseDown", function(self, button)
+        startX, startY            = Cur()
+        startYaw                  = self:GetFacing() or 0
+        startPitch                = self:GetPitch() or 0
+        startPX, startPY, startPZ = self:GetPosition()
+        if button == "LeftButton" then
+            dragMode = "lmb"
+        elseif button == "RightButton" then
+            dragMode = "rmb"
+        elseif button == "MiddleButton" then
+            camScale = DEFAULT_CAM
+            self:SetCamDistanceScale(camScale)
+            self:SetFacing(0)
+            self:SetPitch(0)
+            self:SetPosition(0, 0, 0)
+            self:SetViewTranslation(DEFAULT_VTX, DEFAULT_VTY)
+            return
+        end
+        self:EnableMouseMotion(true)
+    end)
+
+    f:SetScript("OnMouseUp", function(self)
+        self:EnableMouseMotion(false)
+        dragMode = nil
+    end)
+
+    f:SetScript("OnHide", function(self)
+        self:EnableMouseMotion(false)
+        dragMode = nil
+    end)
+
+    f:SetScript("OnMouseWheel", function(self, delta)
+        local px, py, pz = self:GetPosition()
+        self:SetPosition(px + delta * WHEEL_PAN, py, pz)
+    end)
+
+    f:SetScript("OnUpdate", function(self)
+        if not dragMode then return end
+        local x, y = Cur()
+        local dx, dy = x - startX, y - startY
+        if dragMode == "lmb" then
+            self:SetFacing(startYaw + dx * ROT_SENS)
+            self:SetPitch(startPitch - dy * PITCH_SENS)
+        elseif dragMode == "rmb" then
+            self:SetPosition(startPX, startPY + dx * DOLLY_SENS, startPZ + dy * DOLLY_SENS)
+        end
+    end)
+
+    local function ResetView()
+        camScale = DEFAULT_CAM
+        f:RefreshCamera()
+        f:ZeroCachedCenterXY()
+        f:UseModelCenterToTransform(true)
+        f:SetPortraitZoom(0)
+        f:SetFacing(0)
+        f:SetPitch(0)
+        f:SetRoll(0)
+        f:SetPosition(0, 0, 0)
+        f:SetCamDistanceScale(camScale)
+        f:SetViewTranslation(DEFAULT_VTX, DEFAULT_VTY)
+    end
+    ResetView()
+
+    guiMidnight:HookScript("OnShow", function()
+        ResetView()
+    end)
+end
 ------------------------------------------------------------
 -- GUI Setup
 ------------------------------------------------------------
@@ -12110,6 +12382,7 @@ function BBP.LoadGUI()
     guiImportAndExport()
     guiTotemList()
     guiSupport()
+    guiMidnight()
     BetterBlizzPlates.guiLoaded = true
 
     Settings.OpenToCategory(BBP.guiSupport)

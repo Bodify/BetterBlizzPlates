@@ -1,3 +1,17 @@
+# BetterBlizzPlates 1.8.7
+## All versions
+### New
+- Nameplate Auras: Add new Ctrl+Alt+Rightclick option for important color that colors ALL whitelist auras at once. This is irreversible so only do this if you are planning and wanting to easily change the color on every single aura at once.
+- Temporary Midnight section explaining plans.
+## Retail
+### Tweak
+- Class Indicator/Party Pointer Pet Detection tweaked again: Previous workaround had issues BM hunter pets. This new workaround should solve that and the other issue so hopefully good now.
+- Change Health Number billions to only show two decimals instead of three
+## Mists of Pandaria
+### Tweak
+- Add Hunter Silence Shot for Castbar Interrupt Color. Thanks to Snackqt @ CurseForge.
+
+
 # BetterBlizzPlates 1.8.6b
 ## Retail
 ### Tweak
