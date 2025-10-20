@@ -1,3 +1,14 @@
+# BetterBlizzPlates 1.8.7b
+## All versions
+### New
+- Nameplate Auras: Reverse Aura Direction setting, stacks right to left instead (also works together with Centered auras to change Enlarged sorting etc).
+### Tweak
+- Tweak couple of Pandemic Aura windows and logic.
+## Classic versions
+### Tweak
+- Tweak Nameplate Auras' Container position to fix new Reverse Aura Direction setting working properly. I don't think this will cause any issues but if anything changes let me know.
+
+
 # BetterBlizzPlates 1.8.7
 ## All versions
 ### New

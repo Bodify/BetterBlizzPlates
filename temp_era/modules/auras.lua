@@ -1864,6 +1864,7 @@ local function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
         local nameplateAuraTypeGap = db.nameplateAuraTypeGap
         local compactTracker = 0
         local visibleIndex = 0
+        local rightToLeft = db.nameplateAuraRightToLeft
 
         for index, buff in ipairs(auras) do
             if buff:IsShown() then
@@ -1926,9 +1927,17 @@ local function CustomBuffLayoutChildrenCata(container, children, isEnemyUnit)
                 end
 
                 if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
-                    buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset / buffScale) + (xPos - extraOffset / buffScale), verticalOffset - 13)
+                    if rightToLeft then
+                        buff:SetPoint("BOTTOMRIGHT", container, "TOPRIGHT", -((horizontalOffset/buffScale) + (xPos - extraOffset/buffScale)), verticalOffset - 13)
+                    else
+                        buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + (xPos - extraOffset/buffScale), verticalOffset - 13)
+                    end
                 else
-                    buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset / buffScale) + xPos - extraOffset / buffScale, verticalOffset - 13)
+                    if rightToLeft then
+                        buff:SetPoint("BOTTOMRIGHT", container, "TOPRIGHT", -((horizontalOffset/buffScale) + (xPos - 1 - (extraOffset/buffScale))), verticalOffset - 13)
+                    else
+                        buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + xPos - 1 - extraOffset/buffScale, verticalOffset - 13)
+                    end
                 end
                 horizontalOffset = horizontalOffset + ((buffWidth) * buffScale) + horizontalSpacing - extraOffset
             end
@@ -2012,8 +2021,9 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
         if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
             frame.BuffFrame:SetPoint("BOTTOM", frame.healthBar, "TOP", 0, 10+BetterBlizzPlatesDB.nameplateAurasYPos)
         else
-            --frame.BuffFrame:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", -1, -10+BetterBlizzPlatesDB.nameplateAurasYPos)
-            frame.BuffFrame:SetPoint("BOTTOMLEFT", frame.healthBar, "TOPLEFT", -1, 10+BetterBlizzPlatesDB.nameplateAurasYPos)
+            local yPos = 10 + BetterBlizzPlatesDB.nameplateAurasYPos
+            frame.BuffFrame:SetPoint("BOTTOMLEFT", frame.healthBar, "TOPLEFT", -1, yPos)
+            frame.BuffFrame:SetPoint("BOTTOMRIGHT", frame.healthBar, "TOPRIGHT", -1, yPos)
         end
     --end
 

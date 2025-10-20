@@ -2222,7 +2222,9 @@ function BBP.TargetNameplateAuraSize(frame)
         if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
             frame.BuffFrame:SetPoint("BOTTOM", frame, "TOP", 0, -10+BetterBlizzPlatesDB.nameplateAurasYPos)
         else
-            frame.BuffFrame:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", 0, -10+BetterBlizzPlatesDB.nameplateAurasYPos)
+            local yPos = 10 + BetterBlizzPlatesDB.nameplateAurasYPos
+            frame.BuffFrame:SetPoint("BOTTOMLEFT", frame.healthBar, "TOPLEFT", -1, yPos)
+            frame.BuffFrame:SetPoint("BOTTOMRIGHT", frame.healthBar, "TOPRIGHT", -1, yPos)
         end
     else
         frame.BuffFrame:SetPoint("BOTTOM", frame, "TOP", 0, -10+BetterBlizzPlatesDB.nameplateAurasYPos)

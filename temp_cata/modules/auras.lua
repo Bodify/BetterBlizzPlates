@@ -1926,7 +1926,7 @@ local pandemicSpells = {
 
     -- Druid
         -- Feral
-        [1079] = 8,   -- Rip
+        [1079] = 16,   -- Rip
         [155722] = 15, -- Rake
         [106830] = 15, -- Thrash
         [155625] = 14, -- Moonfire
@@ -1967,7 +1967,7 @@ local pandemicSpells = {
         [335467] = 6,  -- Devouring Plague
 
     -- Rogue
-        [1943] = 8,   -- Rupture
+        [1943] = 24,   -- Rupture
         [315496] = 12, -- Slice and Dice
         -- Assassination
         [703] = 18,    -- Garrote
@@ -2004,18 +2004,16 @@ local agonyPandemic = 10
 
 local function GetPandemicThresholds(buff)
     local minBaseDuration = pandemicSpells[buff.spellID] or buff.duration
-    local baseDuration = math.max(buff.duration, minBaseDuration)  -- Ensure the duration doesn't go below the min base duration
-
     -- Specific pandemic logic for Agony with talent
     if buff.spellID == 980 and IsPlayerSpell(453034) then
         -- For Agony with talent, return special threshold
-        return agonyPandemic, baseDuration * defaultPandemic
+        return agonyPandemic, minBaseDuration * defaultPandemic
     elseif buff.spellID == 316099 and IsPlayerSpell(459376) then
         -- Unstable Affliction with talent
-        return uaPandemic, baseDuration * defaultPandemic
+        return uaPandemic, minBaseDuration * defaultPandemic
     elseif pandemicSpells[buff.spellID] then
         -- Use 30% of the greater value (dynamic or minimum) for Pandemic spells
-        return nil, baseDuration * defaultPandemic
+        return nil, minBaseDuration * defaultPandemic
     elseif buff.spellID == 44457 then
         return nil, 3
     else
@@ -2612,6 +2610,7 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
         local nameplateCenterAllRows = db.nameplateCenterAllRows and (nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor)
         local xPos = db.nameplateAurasXPos
         local nameplateAuraTypeGap = db.nameplateAuraTypeGap
+        local rightToLeft = db.nameplateAuraRightToLeft
 
         local compactTracker = 0
         local indexTracker = 0
@@ -2727,15 +2726,31 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
 
                     if isSelf then
                         if nameplateAurasPersonalCenteredAnchor then
-                            buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) +(db.nameplateAurasPersonalXPos+1-extraOffset/buffScale), verticalOffset - 13)
+                            if rightToLeft then
+                                buff:SetPoint("BOTTOMRIGHT", container, "TOPRIGHT", -((horizontalOffset/buffScale) + (db.nameplateAurasPersonalXPos + 1 - (extraOffset/buffScale))), verticalOffset - 13)
+                            else
+                                buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + (db.nameplateAurasPersonalXPos + 1 - extraOffset/buffScale), verticalOffset - 13)
+                            end
                         else
-                            buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + db.nameplateAurasPersonalXPos-extraOffset/buffScale, verticalOffset - 13)
+                            if rightToLeft then
+                                buff:SetPoint("BOTTOMRIGHT", container, "TOPRIGHT", -((horizontalOffset/buffScale) + (db.nameplateAurasPersonalXPos + 1 - (extraOffset/buffScale))), verticalOffset - 13)
+                            else
+                                buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + db.nameplateAurasPersonalXPos - extraOffset/buffScale, verticalOffset - 13)
+                            end
                         end
                     else
                         if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
-                            buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) +(xPos-extraOffset/buffScale), verticalOffset - 13)
+                            if rightToLeft then
+                                buff:SetPoint("BOTTOMRIGHT", container, "TOPRIGHT", -((horizontalOffset/buffScale) + (xPos - extraOffset/buffScale)), verticalOffset - 13)
+                            else
+                                buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + (xPos - extraOffset/buffScale), verticalOffset - 13)
+                            end
                         else
-                            buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", ((horizontalOffset/buffScale) + xPos-1-extraOffset/buffScale), verticalOffset - 13)
+                            if rightToLeft then
+                                buff:SetPoint("BOTTOMRIGHT", container, "TOPRIGHT", -((horizontalOffset/buffScale) + (xPos - 1 - (extraOffset/buffScale))), verticalOffset - 13)
+                            else
+                                buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + xPos - 1 - extraOffset/buffScale, verticalOffset - 13)
+                            end
                         end
                     end
                     horizontalOffset = horizontalOffset + ((buffWidth)*buffScale) + horizontalSpacing-extraOffset
@@ -3492,7 +3507,9 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
         frame.BuffFrame:SetPoint("BOTTOM", frame.healthBar, "TOP", 0, 10+BetterBlizzPlatesDB.nameplateAurasYPos)
     else
-        frame.BuffFrame:SetPoint("BOTTOMLEFT", frame.healthBar, "TOPLEFT", -1, 10+BetterBlizzPlatesDB.nameplateAurasYPos)
+        local yPos = 10 + BetterBlizzPlatesDB.nameplateAurasYPos
+        frame.BuffFrame:SetPoint("BOTTOMLEFT", frame.healthBar, "TOPLEFT", -1, yPos)
+        frame.BuffFrame:SetPoint("BOTTOMRIGHT", frame.healthBar, "TOPRIGHT", -1, yPos)
     end
 
 

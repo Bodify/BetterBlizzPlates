@@ -2,7 +2,7 @@
 
 **BetterBlizzPlates** is an addon that takes the default Blizzard nameplates and enhances them with additional features and allows you to customize just about everything on them. You can choose to customize everything from scratch (completely default nameplates) or you can import one of the many included profiles.
 
-> 🎯 **Compatible with Retail, Classic Era/SoD, Cataclysm and Wrath**
+> 🎯 **Compatible with Retail, Classic Era/SoD, Mists of Pandaria, Cataclysm and Wrath**
 
 [![](https://shields.io/badge/discord-5865F2?logo=discord&style=for-the-badge&logoColor=white)](https://discord.gg/cjqVaEMm25) [![](https://shields.io/badge/patreon-red?logo=patreon&style=for-the-badge)](https://www.patreon.com/bodifydev) [![](https://shields.io/badge/paypal-00457C?logo=paypal&style=for-the-badge)](https://www.paypal.com/paypalme/bodifydev) [![](https://shields.io/badge/github-gray?logo=github&style=for-the-badge&logoColor=white)](https://github.com/Bodify/BetterBlizzPlates)
 

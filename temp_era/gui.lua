@@ -8247,6 +8247,11 @@ local function guiNameplateAuras()
         end
     end)
 
+    local nameplateAuraRightToLeft = CreateCheckbox("nameplateAuraRightToLeft", "Reverse Auras", enableNameplateAuraCustomisation)
+    nameplateAuraRightToLeft:SetPoint("BOTTOMLEFT", nameplateAurasEnemyCenteredAnchor, "TOPLEFT", 0, -pixelsBetweenBoxes)
+    CreateTooltipTwo(nameplateAuraRightToLeft, "Reverse Auras", "Stack auras right to left instead of the default left to right.")
+
+
     local nameplateAurasFriendlyCenteredAnchor = CreateCheckbox("nameplateAurasFriendlyCenteredAnchor", "Center Auras on Friendly", enableNameplateAuraCustomisation)
     nameplateAurasFriendlyCenteredAnchor:SetPoint("TOPLEFT", nameplateAurasEnemyCenteredAnchor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(nameplateAurasFriendlyCenteredAnchor, "Keep auras centered on friendly nameplates.")
@@ -8329,8 +8334,9 @@ local function guiNameplateAuras()
     CreateTooltip(nameplateAuraSquare, "Square aura icons.")
 
     local nameplateAuraTestMode = CreateCheckbox("nameplateAuraTestMode", "Test Mode", enableNameplateAuraCustomisation)
-    nameplateAuraTestMode:SetPoint("BOTTOMLEFT", nameplateAuraSquare, "TOPLEFT", 0, 0)
+    nameplateAuraTestMode:SetPoint("BOTTOMLEFT", nameplateAuraSquare, "TOPLEFT", -10, 2)
     CreateTooltipTwo(nameplateAuraTestMode, "Test Mode", "Add some auras to nameplates for testing.", "Testing only respects the Show BUFF/DEBUFF filters and none of the sub-filters.", "ANCHOR_TOP")
+    nameplateAuraTestMode:SetScale(1.2)
 
     local showDefaultCooldownNumbersOnNpAuras = CreateCheckbox("showDefaultCooldownNumbersOnNpAuras", "Default CD", enableNameplateAuraCustomisation)
     showDefaultCooldownNumbersOnNpAuras:SetPoint("TOPLEFT", nameplateAuraSquare, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -8360,7 +8366,7 @@ local function guiNameplateAuras()
     end)
 
     local nameplateAuraTooltip = CreateCheckbox("nameplateAuraTooltip", "Tooltip", enableNameplateAuraCustomisation)
-    nameplateAuraTooltip:SetPoint("BOTTOMLEFT", nameplateAuraTaller, "TOPLEFT", 0, 0)
+    nameplateAuraTooltip:SetPoint("BOTTOMLEFT", nameplateAuraTaller, "TOPLEFT", 0, -pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateAuraTooltip, "Show Tooltip", "Show tooltip on nameplate auras.")
     nameplateAuraTooltip:HookScript("OnClick", function() StaticPopup_Show("BBP_CONFIRM_RELOAD")end)
 
