@@ -6292,10 +6292,10 @@ local function guiGeneralTab()
     end)
     mythicButton:SetPoint("TOPLEFT", starterButton, "BOTTOMLEFT", 0, -1)
 
-    local kalvishButton = CreateClassButton(BetterBlizzPlates, "MAGE", "Bodify", "bodify", function()
-        ShowProfileConfirmation("Bodify", "MAGE", BBP.KalvishProfile)
+    local bodifyButton = CreateClassButton(BetterBlizzPlates, "MAGE", "Bodify", "bodify", function()
+        ShowProfileConfirmation("Bodify", "MAGE", BBP.BodifyProfile)
     end)
-    kalvishButton:SetPoint("LEFT", mythicButton, "RIGHT", btnGap, 0)
+    bodifyButton:SetPoint("LEFT", mythicButton, "RIGHT", btnGap, 0)
 
     local aeghisButton = CreateClassButton(BetterBlizzPlates, "MAGE", "Aeghis", "aeghis", function()
         ShowProfileConfirmation("Aeghis", "MAGE", BBP.AeghisProfile)
