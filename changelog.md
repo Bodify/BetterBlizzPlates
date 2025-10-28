@@ -1,3 +1,9 @@
+# BetterBlizzPlates 1.8.8
+## Retail
+### New
+- Added Pmake profile (www.twitch.tv/pmakewow)
+- Added my own personal profile (i havent played since march or so)
+
 # BetterBlizzPlates 1.8.7b
 ## All versions
 ### New

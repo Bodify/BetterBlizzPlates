@@ -1955,13 +1955,21 @@ end
 
 local function CreateClassButton(parent, class, name, twitchName, onClickFunc)
     local bbpParent = parent == BetterBlizzPlates
-    local btnWidth, btnHeight = bbpParent and 88 or 150, bbpParent and 22 or  30
+    local btnWidth, btnHeight = bbpParent and 88 or 150, bbpParent and 20.5 or  30
     local button = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
     button:SetSize(btnWidth, btnHeight)
+    local coreProfile = class == "STARTER" or class == "BLITZ" or class == "MYTHIC" or name == "Bodify"
+    if bbpParent then
+        button:SetScale(0.95)
+    end
 
     local dontIncludeProfileText = bbpParent and "" or " Profile"
     local color = CLASS_COLORS[class] or "|cffffffff"
     local icon = CLASS_ICONS[class] or "groupfinder-icon-role-leader"
+
+    if name == "Bodify" then
+        icon = "gmchat-icon-blizz"
+    end
 
     button:SetText(string.format("|A:%s:16:16|a %s%s|r", icon, color, name..dontIncludeProfileText))
     button:SetNormalFontObject("GameFontNormal")
@@ -1969,7 +1977,9 @@ local function CreateClassButton(parent, class, name, twitchName, onClickFunc)
     local a,b,c = button.Text:GetFont()
     button.Text:SetFont(a,b,"OUTLINE")
     local a,b,c,d,e = button.Text:GetPoint()
-    button.Text:SetPoint(a,b,c,d,e-0.6)
+    if not bbpParent then
+        button.Text:SetPoint("LEFT",b,"LEFT",10,e-0.6)
+    end
 
     button:SetScript("OnClick", function()
         if onClickFunc then
@@ -1983,6 +1993,8 @@ local function CreateClassButton(parent, class, name, twitchName, onClickFunc)
         CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), "A more advanced profile enabling a few more settings and customizing things a bit more.\n\nGreat for Battlegrounds (and Arenas) with Class Icons showing Healers, Tanks and Battleground Objectives.", nil, "ANCHOR_TOP")
     elseif class == "MYTHIC" then
         CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), "A great, well-rounded profile made by |cffc79c6eJovelo|r that enhances the default Blizzard nameplates.\n\nGreat for all types of content with Mythic+ Season 3 NPC nameplate colors included.", nil, "ANCHOR_TOP")
+    elseif name == "Bodify" then
+        CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), "My personal profile from a while ago. Meant for Arenas only. Possible I'd make some tweaks if I was actively playing still.", nil, "ANCHOR_TOP")
     else
         CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), string.format("Enable all of %s's profile settings.", name), string.format("www.twitch.tv/%s", twitchName), "ANCHOR_TOP")
     end
@@ -6268,7 +6280,7 @@ local function guiGeneralTab()
     local starterButton = CreateClassButton(BetterBlizzPlates, "STARTER", "Starter", nil, function()
         ShowProfileConfirmation("Starter", "STARTER", BBP.StarterProfile, "|cff808080(If you want to completely reset BBP there\nis a button in Advanced Settings)|r\n\n")
     end)
-    starterButton:SetPoint("TOPLEFT", SettingsPanel, "BOTTOMLEFT", 16, 38)
+    starterButton:SetPoint("TOPLEFT", SettingsPanel, "BOTTOMLEFT", 18, 47)
 
     local blitzButton = CreateClassButton(BetterBlizzPlates, "BLITZ", "Blitz", nil, function()
         ShowProfileConfirmation("Blitz", "BLITZ", BBP.BlitzProfile)
@@ -6278,12 +6290,17 @@ local function guiGeneralTab()
     local mythicButton = CreateClassButton(BetterBlizzPlates, "MYTHIC", "Mythic", nil, function()
         ShowProfileConfirmation("Mythic", "MYTHIC", BBP.MythicProfile)
     end)
-    mythicButton:SetPoint("LEFT", blitzButton, "RIGHT", btnGap, 0)
+    mythicButton:SetPoint("TOPLEFT", starterButton, "BOTTOMLEFT", 0, -1)
+
+    local kalvishButton = CreateClassButton(BetterBlizzPlates, "MAGE", "Bodify", "bodify", function()
+        ShowProfileConfirmation("Bodify", "MAGE", BBP.KalvishProfile)
+    end)
+    kalvishButton:SetPoint("LEFT", mythicButton, "RIGHT", btnGap, 0)
 
     local aeghisButton = CreateClassButton(BetterBlizzPlates, "MAGE", "Aeghis", "aeghis", function()
         ShowProfileConfirmation("Aeghis", "MAGE", BBP.AeghisProfile)
     end)
-    aeghisButton:SetPoint("LEFT", mythicButton, "RIGHT", btnGap, 0)
+    aeghisButton:SetPoint("LEFT", blitzButton, "RIGHT", btnGap + 30, -11)
 
     local kalvishButton = CreateClassButton(BetterBlizzPlates, "ROGUE", "Kalvish", "kalvish", function()
         ShowProfileConfirmation("Kalvish", "ROGUE", BBP.KalvishProfile)
@@ -6310,10 +6327,15 @@ local function guiGeneralTab()
     end)
     nahjButton:SetPoint("LEFT", mmarkersButton, "RIGHT", btnGap, 0)
 
+    local pmakeButton = CreateClassButton(BetterBlizzPlates, "MAGE", "Pmake", "pmakewow", function()
+        ShowProfileConfirmation("Pmake", "MAGE", BBP.PmakeProfile)
+    end)
+    pmakeButton:SetPoint("LEFT", nahjButton, "RIGHT", btnGap, 0)
+
     local snupyButton = CreateClassButton(BetterBlizzPlates, "DRUID", "Snupy", "snupy", function()
         ShowProfileConfirmation("Snupy", "DRUID", BBP.SnupyProfile)
     end)
-    snupyButton:SetPoint("LEFT", nahjButton, "RIGHT", btnGap, 0)
+    snupyButton:SetPoint("LEFT", pmakeButton, "RIGHT", btnGap, 0)
 
 
 
@@ -12559,7 +12581,7 @@ function BBP.CreateIntroMessageWindow()
     local starterButton = CreateClassButton(BBP.IntroMessageWindow, "STARTER", "Starter", nil, function()
         ShowProfileConfirmation("Starter", "STARTER", BBP.StarterProfile)
     end)
-    starterButton:SetPoint("TOP", description1, "BOTTOM", 0, -20)
+    starterButton:SetPoint("TOP", description1, "BOTTOM", -75, -20)
 
     local blitzButton = CreateClassButton(BBP.IntroMessageWindow, "BLITZ", "Blitz", nil, function()
         ShowProfileConfirmation("Blitz", "BLITZ", BBP.BlitzProfile)
@@ -12569,17 +12591,22 @@ function BBP.CreateIntroMessageWindow()
     local mythicButton = CreateClassButton(BBP.IntroMessageWindow, "MYTHIC", "Mythic", nil, function()
         ShowProfileConfirmation("Mythic", "MYTHIC", BBP.MythicProfile)
     end)
-    mythicButton:SetPoint("TOP", blitzButton, "BOTTOM", 0, btnGap)
+    mythicButton:SetPoint("TOP", description1, "BOTTOM", 75, -20)
+
+    local bodifyButton = CreateClassButton(BBP.IntroMessageWindow, "MAGE", "Bodify", "bodify", function()
+        ShowProfileConfirmation("Bodify", "MAGE", BBP.BodifyProfile)
+    end)
+    bodifyButton:SetPoint("TOP", mythicButton, "BOTTOM", 0, btnGap)
 
     local orText = BBP.IntroMessageWindow:CreateFontString(nil, "OVERLAY", "GameFontNormalMed2")
-    orText:SetPoint("CENTER", mythicButton, "BOTTOM", 0, -20)
+    orText:SetPoint("CENTER", bodifyButton, "BOTTOM", -75, -20)
     orText:SetText("OR")
     orText:SetJustifyH("CENTER")
 
     local aeghisButton = CreateClassButton(BBP.IntroMessageWindow, "MAGE", "Aeghis", "aeghis", function()
         ShowProfileConfirmation("Aeghis", "MAGE", BBP.AeghisProfile)
     end)
-    aeghisButton:SetPoint("TOP", mythicButton, "BOTTOM", 0, -40)
+    aeghisButton:SetPoint("TOP", bodifyButton, "BOTTOM", -150, -40)
 
     local kalvishButton = CreateClassButton(BBP.IntroMessageWindow, "ROGUE", "Kalvish", "kalvish", function()
         ShowProfileConfirmation("Kalvish", "ROGUE", BBP.KalvishProfile)
@@ -12599,27 +12626,32 @@ function BBP.CreateIntroMessageWindow()
     local mmarkersButton = CreateClassButton(BBP.IntroMessageWindow, "DRUID", "Mmarkers", "mmarkers", function()
         ShowProfileConfirmation("Mmarkers", "DRUID", BBP.MmarkersProfile)
     end)
-    mmarkersButton:SetPoint("TOP", mesButton, "BOTTOM", 0, btnGap)
+    mmarkersButton:SetPoint("TOP", bodifyButton, "BOTTOM", 0, -40)
 
     local nahjButton = CreateClassButton(BBP.IntroMessageWindow, "ROGUE", "Nahj", "nahj", function()
         ShowProfileConfirmation("Nahj", "ROGUE", BBP.NahjProfile)
     end)
     nahjButton:SetPoint("TOP", mmarkersButton, "BOTTOM", 0, btnGap)
 
+    local pmakeButton = CreateClassButton(BBP.IntroMessageWindow, "MAGE", "Pmake", "pmakewow", function()
+        ShowProfileConfirmation("Pmake", "MAGE", BBP.PmakeProfile)
+    end)
+    pmakeButton:SetPoint("TOP", nahjButton, "BOTTOM", 0, btnGap)
+
     local snupyButton = CreateClassButton(BBP.IntroMessageWindow, "DRUID", "Snupy", "snupy", function()
         ShowProfileConfirmation("Snupy", "DRUID", BBP.SnupyProfile)
     end)
-    snupyButton:SetPoint("TOP", nahjButton, "BOTTOM", 0, btnGap)
+    snupyButton:SetPoint("TOP", pmakeButton, "BOTTOM", 0, btnGap)
 
     local orText2 = BBP.IntroMessageWindow:CreateFontString(nil, "OVERLAY", "GameFontNormalMed2")
-    orText2:SetPoint("CENTER", snupyButton, "BOTTOM", 0, -20)
+    orText2:SetPoint("CENTER", snupyButton, "BOTTOM", -75, -20)
     orText2:SetText("OR")
     orText2:SetJustifyH("CENTER")
 
     local buttonLast = CreateFrame("Button", nil, BBP.IntroMessageWindow, "GameMenuButtonTemplate")
     buttonLast:SetSize(btnWidth, btnHeight)
     buttonLast:SetText("Exit, No Profile.")
-    buttonLast:SetPoint("TOP", snupyButton, "BOTTOM", 0, -40)
+    buttonLast:SetPoint("TOP", snupyButton, "BOTTOM", -75, -40)
     buttonLast:SetNormalFontObject("GameFontNormal")
     buttonLast:SetHighlightFontObject("GameFontHighlight")
     buttonLast:SetScript("OnClick", function()
@@ -12644,14 +12676,17 @@ function BBP.CreateIntroMessageWindow()
 
     local function AdjustWindowHeight()
         local baseHeight = 334
-        local perButtonHeight = 29
-        local buttonCount = -1
+        local perRowHeight = 29
+        local buttonCount = 0
         for _, child in ipairs({BBP.IntroMessageWindow:GetChildren()}) do
             if child and child:IsObjectType("Button") then
                 buttonCount = buttonCount + 1
             end
         end
-        local newHeight = baseHeight + (buttonCount * perButtonHeight)
+
+        local rowCount = math.ceil(buttonCount / 2)
+        local newHeight = baseHeight + (rowCount * perRowHeight)
+
         BBP.IntroMessageWindow:SetSize(470, newHeight)
     end
     AdjustWindowHeight()

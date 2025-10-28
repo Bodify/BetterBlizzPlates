@@ -536,7 +536,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
             if config.hideNPC then BBP.HideNPCs(frame, BBP.previousTargetNameplate:GetParent()) end
-            if config.totemIndicator then
+            if config.totemIndicator and not UnitIsPlayer(frame.unit)then
                 --if config.totemIndicatorHideHealthBar then BBP.ApplyTotemIconsAndColorNameplate(frame) end
                 BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
@@ -616,7 +616,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
 
             if config.hideNPC then BBP.HideNPCs(frame, targetNameplate) end
 
-            if config.totemIndicator then
+            if config.totemIndicator and not UnitIsPlayer(frame.unit) then
                 --if config.totemIndicatorHideHealthBar then BBP.ApplyTotemIconsAndColorNameplate(frame) end
                 -- local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
                 -- local npcData = db.totemIndicatorNpcList[npcID]

@@ -544,7 +544,7 @@ function BBP.ToggleTotemIndicatorShieldBorder()
             shieldAuraEvent = CreateFrame("Frame")
             shieldAuraEvent:RegisterEvent("UNIT_AURA")
             shieldAuraEvent:SetScript("OnEvent", function(self, event, unit)
-                if event == "UNIT_AURA" then
+                if not UnitIsPlayer(unit) then
                     BBP.OnUnitAura(unit)
                 end
             end)
