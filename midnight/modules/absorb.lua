@@ -1,4 +1,4 @@
-if BBP.isMidnight then return end
+if not BBP.isMidnight then return end
 -- Absorb Indicator
 function BBP.AbsorbIndicator(frame)
     --if not frame or frame.unit then return end
@@ -54,17 +54,8 @@ function BBP.AbsorbIndicator(frame)
 
     -- Check absorb amount and hide if less than 1k
     local absorb = UnitGetTotalAbsorbs(unit) or 0
-    if absorb >= 1000000 then
-        local displayValue = string.format("%.1fm", absorb / 1000000)
-        frame.absorbIndicator:SetText(displayValue)
-        frame.absorbIndicator:Show()
-    elseif absorb >= 1000 then
-        local displayValue = math.floor(absorb / 1000) .. "k"
-        frame.absorbIndicator:SetText(displayValue)
-        frame.absorbIndicator:Show()
-    else
-        frame.absorbIndicator:Hide()
-    end
+    frame.absorbIndicator:SetText(AbbreviateNumbers(absorb))
+    frame.absorbIndicator:Show()
 end
 
 -- Event listener for Absorb Indicator
@@ -139,6 +130,7 @@ function BBP.CompactUnitFrame_UpdateAll(frame)
 end
 
 function BBP.CompactUnitFrame_UpdateHealPrediction(frame)
+    if BBP.isMidnight then return end
     if frame.unit and frame.unit:find("nameplate") then
         local absorbBar = frame.totalAbsorb;
         if not absorbBar or absorbBar:IsForbidden() then
@@ -227,7 +219,9 @@ function BBP.HookOverShields()
     end
 
     --hooksecurefunc("CompactUnitFrame_UpdateAll", BBP.CompactUnitFrame_UpdateAll)
-    hooksecurefunc("CompactUnitFrame_UpdateHealPrediction", BBP.CompactUnitFrame_UpdateHealPrediction)
+    if not BBP.isMidnight then
+        hooksecurefunc("CompactUnitFrame_UpdateHealPrediction", BBP.CompactUnitFrame_UpdateHealPrediction)
+    end
 
     for _, np in pairs(C_NamePlate.GetNamePlates()) do
         local frame = np.UnitFrame

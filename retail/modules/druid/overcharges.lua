@@ -1,3 +1,4 @@
+if BBP.isMidnight then return end
 function BBP.DruidBlueComboPoints()
     if not BetterBlizzPlatesDB.druidOverstacks then return end
     if select(2, UnitClass("player")) ~= "DRUID" then return end

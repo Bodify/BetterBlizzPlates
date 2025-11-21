@@ -1,4 +1,4 @@
-if BBP.isMidnight then return end
+if not BBP.isMidnight then return end
 local LSM = LibStub("LibSharedMedia-3.0")
 
 BBP.previousTargetNameplate = nil
@@ -29,7 +29,7 @@ local function GetRotationForAnchor(anchorPoint)
 end
 
 -- Target Indicator
-function BBP.TargetIndicator(frame)
+function BBP.TargetIndicator(frame, isTarget)
     --if not frame or not frame.unit then return end
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
@@ -83,7 +83,8 @@ function BBP.TargetIndicator(frame)
     end
 
     -- Show or hide Target Indicator
-    if UnitIsUnit(frame.unit, "target") then
+    --if UnitIsUnit(frame.unit, "target") then
+    if isTarget then
         if not config.targetIndicatorHideIcon then
             frame.targetIndicator:Show()
         end
@@ -114,7 +115,7 @@ function BBP.TargetIndicator(frame)
 end
 
 -- Focus Target Indicator
-function BBP.FocusTargetIndicator(frame)
+function BBP.FocusTargetIndicator(frame, isFocus)
     --if not frame or frame.unit then return end
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
@@ -180,7 +181,7 @@ function BBP.FocusTargetIndicator(frame)
         return
     end
 
-    if info and info.isFocus then
+    if isFocus then
         frame.focusTargetIndicator:Show()
         if changeTexture then
             frame.healthBar:SetStatusBarTexture(focusTexture)
@@ -212,7 +213,7 @@ end
 function BBP.ColorTargetNameplate(frame)
     local color = BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB
 
-    if UnitIsUnit(frame.unit, "target") then
+    if frame == BBP.currentTargetNameplate then
         frame.healthBar:SetStatusBarColor(unpack(color))
     end
 end
@@ -253,7 +254,7 @@ function BBP.UpdateNameplateResourcePositionForCasting(nameplate, bypass)
     if nameplate and nameplate.UnitFrame and nameplate.driverFrame then
         local resourceFrame = resourceFrames[playerClass]
         if not resourceFrame or resourceFrame:IsForbidden() then return end
-        if UnitIsUnit(nameplate.UnitFrame.unit, "player") then return end
+        --if UnitIsUnit(nameplate.UnitFrame.unit, "player") then return end
 
         local yOffset = BetterBlizzPlatesDB.nameplateResourceYPos
         local xPos = BetterBlizzPlatesDB.nameplateResourceXPos or 0
@@ -306,7 +307,7 @@ function BBP.TargetResourceUpdater()
         --local inInstance, instanceType = IsInInstance()
         --if not (inInstance and (instanceType == "raid" or instanceType == "party" or instanceType == "scenario")) then
             if nameplateForTarget then
-                if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
+                --if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
                 local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
                 resourceFrame:SetScale(nameplateResourceScale)
 
@@ -335,7 +336,7 @@ function BBP.TargetResourceUpdater()
             C_CVar.SetCVar("nameplateResourceOnTarget", "0")
         end
         if BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf and nameplateForTarget then
-            if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
+            --if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
             if BetterBlizzPlatesDB.changeResourceStrata then
                 resourceFrame:SetFrameStrata("DIALOG")
             end
@@ -393,7 +394,7 @@ function BBP.TargetResourceUpdater()
                 if nameplateResourceOnTarget then
                     local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
                     if nameplateForTarget then--and nameplateForTarget.driverFrame then
-                        if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
+                        --if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
                         if BetterBlizzPlatesDB.changeResourceStrata then
                             resourceFrame:SetFrameStrata("DIALOG")
                         end
@@ -423,7 +424,7 @@ function BBP.TargetResourceUpdater()
                 else
                     local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
                     if BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf and nameplateForTarget then
-                        if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
+                        --if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
                         if BetterBlizzPlatesDB.changeResourceStrata then
                             resourceFrame:SetFrameStrata("DIALOG")
                         end
@@ -546,9 +547,9 @@ function BBP.FadeAllButTargetNameplates()
         local config = frame.BetterBlizzPlates.config or BBP.InitializeNameplateSettings(frame)
 
         local unit = frame.unit
-        local isPlayer = UnitIsUnit(unit, "player")
-        local isTarget = UnitIsUnit(unit, "target")
-        local isFocus = UnitIsUnit(unit, "focus")
+        local isPlayer = false--UnitIsUnit(unit, "player")
+        local isTarget = frame == BBP.currentTargetNameplate--UnitIsUnit(unit, "target")
+        local isFocus = frame == BBP.currentFocusNameplate --UnitIsUnit(unit, "focus")
 
         local shouldFade = true
 
@@ -586,6 +587,7 @@ PlayerTargetChanged:RegisterEvent("PLAYER_TARGET_CHANGED")
 PlayerTargetChanged:SetScript("OnEvent", function(self, event)
     local targetNameplate, frame = BBP.GetSafeNameplate("target")
     local db = BetterBlizzPlatesDB
+    BBP.currentTargetNameplate = nil
 
     -- LAST TARGET NAMEPLATE
     if BBP.previousTargetNameplate then
@@ -599,8 +601,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.HealthNumbers(frame)
             end
 
-            if db.changeNameplateBorderSize and db.nameplateMinScale == 1 then
-                frame.HealthBarsContainer.border:UpdateSizes()
+            if db.changeNameplateBorderSize then
+                if frame.HealthBarsContainer.healthBar.borders then
+                    frame.HealthBarsContainer.healthBar:SetBorderSize(db.nameplateBorderSize)
+                end
             end
 
             if frame.BBPmouseoverTex and db.keepNpShadowTargetHighlighted then
@@ -633,9 +637,9 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             end
 
             if config.targetIndicator then
-                BBP.TargetIndicator(frame)
+                BBP.TargetIndicator(frame, false)
             end
-            if config.focusTargetIndicator then BBP.FocusTargetIndicator(frame) end
+            --if config.focusTargetIndicator then BBP.FocusTargetIndicator(frame, true) end
             if config.fadeOutNPC then
                 BBP.FadeOutNPCs(frame)
                 if config.fadeAllButTarget then
@@ -695,6 +699,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
 
     -- CURRENT TARGET NAMEPLATE
     if frame then
+        BBP.currentTargetNameplate = frame
         local config = frame.BetterBlizzPlates.config
         --local info = frame.BetterBlizzPlates.unitInfo
         frame.BetterBlizzPlates.unitInfo = BBP.GetNameplateUnitInfo(frame)
@@ -703,7 +708,8 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
 
         -- info.isTarget = true
         -- info.wasTarget = nil
-        if not UnitIsUnit(frame.unit, "player") then
+        --if not UnitIsUnit(frame.unit, "player") then
+        if true then--BBP.isMidnight
         --if not info.isSelf then
 
             if db.executeIndicator then
@@ -715,8 +721,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
 
-            if db.changeNameplateBorderSize and db.nameplateMinScale == 1 then
-                frame.HealthBarsContainer.border:UpdateSizes()
+            if db.changeNameplateBorderSize then
+                if frame.HealthBarsContainer.healthBar.borders then
+                    frame.HealthBarsContainer.healthBar:SetBorderSize(db.nameplateTargetBorderSize)
+                end
             end
 
             if frame.BBPmouseoverTex and db.keepNpShadowTargetHighlighted then
@@ -725,7 +733,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
 
             BBP.ToggleNameplateAuras(frame)
             BBP.TargetNameplateAuraSize(frame)
-            if config.targetIndicator then BBP.TargetIndicator(frame) end
+            if config.targetIndicator then BBP.TargetIndicator(frame, true) end
 
             if config.classicNameplates then
                 if config.changeNameplateBorderColor then
@@ -803,6 +811,7 @@ local PlayerFocusChanged = CreateFrame("Frame")
 PlayerFocusChanged:RegisterEvent("PLAYER_FOCUS_CHANGED")
 PlayerFocusChanged:SetScript("OnEvent", function(self, event)
     local focusNameplate, frame = BBP.GetSafeNameplate("focus")
+    BBP.currentFocusNameplate = nil
 
     -- PREVIOUS FOCUS NAMEPLATE
     if BBP.previousFocusNameplate then
@@ -815,7 +824,7 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
         -- info.wasFocus = true
         if config.enableNpNonTargetAlpha and BetterBlizzPlatesDB.enableNpNonFocusAlpha then NameplateTargetAlphaAllNps() end
         if config.focusTargetIndicator then
-            BBP.FocusTargetIndicator(frame)
+            BBP.FocusTargetIndicator(frame, false)
             --BBP.ApplyCustomTextureToNameplate(frame)
         end
         BBP.CompactUnitFrame_UpdateHealthColor(frame)
@@ -825,6 +834,7 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
 
     -- CURRENT FOCUS NAMEPLATE
     if frame then
+        BBP.currentFocusNameplate = frame
         local config = frame.BetterBlizzPlates.config
         frame.BetterBlizzPlates.unitInfo = BBP.GetNameplateUnitInfo(frame)
 
@@ -835,7 +845,7 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
         -- info.isFocus = true
         -- info.wasFocus = nil
         --local info = frame.BetterBlizzPlates.unitInfo
-        if config.focusTargetIndicator then BBP.FocusTargetIndicator(frame) end
+        if config.focusTargetIndicator then BBP.FocusTargetIndicator(frame, true) end
         BBP.previousFocusNameplate = frame
     end
     if BetterBlizzPlatesDB.enableNpNonTargetAlpha and BetterBlizzPlatesDB.enableNpNonFocusAlpha then NameplateTargetAlphaAllNps() end

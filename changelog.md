@@ -1,3 +1,36 @@
+# BetterBlizzPlates 1.8.9f
+## Midnight & Retail
+### New
+- Add Venruki Profile (www.twitch.tv/venruki)
+
+# BetterBlizzPlates 1.8.9e
+## Midnight
+### Bugfix
+- Fix nameplates breaking if you had level frame shown due to new Blizzard changes on latest Beta.
+### Tweak
+- Some other minor tweaks I forget. BBP will see some more love this weekend with fixes and new stuff for Midnight Beta.
+## Retail & Midnight
+- Mes profile update
+
+# BetterBlizzPlates 1.8.9d
+## Retail
+### Bugfix
+- Fix border size setting for personal nameplate & manabar.
+## Mists of Pandaria
+- Fix error on nameplate aura tooltip settings.
+
+# BetterBlizzPlates 1.8.9c
+## Midnight
+- Few more fixes for Midnight
+
+# BetterBlizzPlates 1.8.9b
+## Midnight
+- Many fixes for Midnight. Damn you Blizzurd.
+
+# BetterBlizzPlates 1.8.9
+## MIDNIGHT
+- Midnight support is live. Very early version so bugs are expected, especially week 1-2. Things are not finished, I still have months of work left so please be patient.
+
 # BetterBlizzPlates 1.8.8
 ## Retail
 ### New

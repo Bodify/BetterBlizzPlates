@@ -1,3 +1,4 @@
+if BBP.isMidnight then return end
 ----------------------------------------------------
 ---- Aura Function Copied From RSPlates and edited by me
 ----------------------------------------------------

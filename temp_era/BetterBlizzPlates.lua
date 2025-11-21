@@ -2,11 +2,16 @@
 
 local LSM = LibStub("LibSharedMedia-3.0")
 LSM:Register("statusbar", "Dragonflight (BBP)", [[Interface\Addons\BetterBlizzPlates\media\DragonflightTexture]])
+LSM:Register("statusbar", "Dragonflight HD (BBP)", [[Interface\Addons\BetterBlizzPlates\media\DragonflightTextureHD]])
 LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPlates\media\focusTexture]])
 LSM:Register("statusbar", "Checkered (BBP)", [[Interface\Addons\BetterBlizzPlates\media\targetTexture]])
 LSM:Register("statusbar", "Smooth", [[Interface\Addons\BetterBlizzPlates\media\smooth]])
-LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]])
-LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]])
+LSM:Register("statusbar", "Blizzard Retail Bar", [[Interface\AddOns\BetterBlizzPlates\media\blizzTex\BlizzardRetailBar]])
+LSM:Register("statusbar", "Blizzard Retail Bar Crop", [[Interface\AddOns\BetterBlizzPlates\media\blizzTex\BlizzardRetailBarCrop]])
+LSM:Register("statusbar", "Blizzard Retail Bar Crop 2", [[Interface\AddOns\BetterBlizzPlates\media\blizzTex\BlizzardRetailBarCrop2]])
+local allLocales = LSM.LOCALE_BIT_western+LSM.LOCALE_BIT_ruRU+LSM.LOCALE_BIT_zhCN+LSM.LOCALE_BIT_zhTW+LSM.LOCALE_BIT_koKR
+LSM:Register("font", "Yanone (BBP)", [[Interface\Addons\BetterBlizzPlates\media\YanoneKaffeesatz-Medium.ttf]], allLocales)
+LSM:Register("font", "Prototype", [[Interface\Addons\BetterBlizzPlates\media\Prototype.ttf]], allLocales)
 
 local addonVersion = "1.00" --too afraid to to touch for now
 local addonUpdates = C_AddOns.GetAddOnMetadata("BetterBlizzPlates", "Version")

@@ -1,4 +1,4 @@
-if BBP.isMidnight then return end
+if not BBP.isMidnight then return end
 -- Healer spec id's
 local HealerSpecs = {
     [105] = true, --> druid resto
@@ -204,7 +204,7 @@ local function BackgroundType(frame, bg)
         bg:SetSize(28, 28)
     else
         bg:SetAtlas("talents-node-choiceflyout-circle-greenglow")
-        local size = UnitIsUnit(frame.unit, "target") and 39 or 36
+        local size = BBP.UnitIsTarget(frame) and 39 or 36
         bg:SetSize(size, size)
     end
 end
@@ -270,7 +270,7 @@ function BBP.ClassIndicator(frame, foundID)
 
     local class = info.class
     if not class then
-        isPetGUID = UnitIsUnit(frame.unit, "pet")
+        isPetGUID = false--UnitIsUnit(frame.unit, "pet")
         if (isPetGUID and config.classIndicatorShowPet) or isOthersPet then
             if isOthersPet then
                 for i = 1, 2 do
@@ -298,12 +298,12 @@ function BBP.ClassIndicator(frame, foundID)
         end
     end
 
-    if UnitIsUnit(frame.unit, "player") then
-        if frame.classIndicator then
-            frame.classIndicator:Hide()
-        end
-        return
-    end
+    -- if UnitIsUnit(frame.unit, "player") then
+    --     if frame.classIndicator then
+    --         frame.classIndicator:Hide()
+    --     end
+    --     return
+    -- end
 
     local anchorPoint =
         (info.isFriend and config.classIndicatorFriendlyAnchor) or
@@ -531,13 +531,10 @@ function BBP.ClassIndicator(frame, foundID)
     frame.classIndicator:ClearAllPoints()
     if anchorPoint == "TOP" then
         local resourceAnchor = nil
-        if
-            config.nameplateResourceOnTarget == "1" and not config.nameplateResourceUnderCastbar and info.isTarget and
-                not (config.hideResourceOnFriend and info.isFriend)
-         then
+        if config.nameplateResourceOnTarget == "1" and not config.nameplateResourceUnderCastbar and info.isTarget and not (config.hideResourceOnFriend and info.isFriend) then
             resourceAnchor = frame:GetParent().driverFrame.classNamePlateMechanicFrame
         end
-        frame.classIndicator:SetPoint(oppositeAnchor, resourceAnchor or frame.name, anchorPoint, xPos, yPos)
+        frame.classIndicator:SetPoint(oppositeAnchor, resourceAnchor or frame.healthBar, anchorPoint, xPos, yPos + 7)
     else
         frame.classIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos)
     end
@@ -759,7 +756,7 @@ function BBP.ClassIndicatorTargetHighlight(frame)
                 end
             )
             if info.class and config.classIndicatorHighlightColor then
-                local classColor = UnitIsUnit(frame.unit, "pet") and RAID_CLASS_COLORS[playerClass] or RAID_CLASS_COLORS[info.class]
+                local classColor = RAID_CLASS_COLORS[info.class] --BBP.isMidnight
                 frame.classIndicator.highlightSelect:SetDesaturated(true)
                 frame.classIndicator.highlightSelect:SetVertexColor(classColor.r, classColor.g, classColor.b)
                 frame.classIndicator.highlightSelect.classColored = true
@@ -775,6 +772,7 @@ function BBP.ClassIndicatorTargetHighlight(frame)
 end
 
 function BBP.UpdateHealthText(frame)
+    if BBP.isMidnight then return end
     if not frame.classIndicator then
         return
     end

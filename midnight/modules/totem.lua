@@ -1,4 +1,4 @@
-if BBP.isMidnight then return end
+if not BBP.isMidnight then return end
 local activeCooldowns = {}
 
 local playerClass = select(2, UnitClass("player"))
@@ -322,7 +322,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         end
 
         if config.totemIndicatorHideAuras then
-            frame.BuffFrame:SetAlpha(0)
+            frame.AurasFrame:SetAlpha(0)
         end
 
         if config.totemIsImportant then
@@ -379,7 +379,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         end
 
         if config.totemIndicatorHideAuras then
-            frame.BuffFrame:SetAlpha(0)
+            frame.AurasFrame:SetAlpha(0)
         end
 
         if npcData.color then

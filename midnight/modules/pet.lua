@@ -1,4 +1,4 @@
-if BBP.isMidnight then return end
+if not BBP.isMidnight then return end
 -- Main pet buff spell id's
 local petValidSpellIDs = {
     [264662] = true,
@@ -15,7 +15,7 @@ local function ShowMurloc(frame)
     frame.isMurloc = true
     frame.HealthBarsContainer:SetAlpha(0)
     frame.selectionHighlight:SetAlpha(0)
-    frame.BuffFrame:SetAlpha(0)
+    frame.AurasFrame:SetAlpha(0)
     frame.name:SetAlpha(0)
     frame.murlocMode:Show()
     frame.castBar:Hide()

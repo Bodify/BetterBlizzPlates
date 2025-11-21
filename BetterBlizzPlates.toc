@@ -1,7 +1,7 @@
-## Interface: 110205
+## Interface: 120000, 110207, 110205
 ## Title: Better|cff00c0ffBlizz|rPlates
 ## Notes: Default Blizzard Nameplates with more features added to them with easy settings.
-## Version: 1.8.8
+## Version: 1.8.9f
 ## SavedVariables: BetterBlizzPlatesDB, BBPCVarBackupsDB
 ## OptionalDeps: LibSharedMedia-3.0
 ## IconAtlas: gmchat-icon-blizz
@@ -14,24 +14,38 @@ retail\temp_tww.lua
 
 retail\modules\combat.lua
 retail\modules\castbar.lua
+midnight\modules\castbar.lua
 retail\modules\totem.lua
+midnight\modules\totem.lua
 retail\modules\arenaid.lua
+midnight\modules\arenaid.lua
 retail\modules\execute.lua
+midnight\modules\execute.lua
 retail\modules\healthNumbers.lua
+midnight\modules\healthNumbers.lua
 retail\modules\target.lua
+midnight\modules\target.lua
 retail\modules\healer.lua
 retail\modules\absorb.lua
+midnight\modules\absorb.lua
 retail\modules\classIcon.lua
+midnight\modules\classIcon.lua
 retail\modules\partyPointer.lua
 retail\modules\pet.lua
+midnight\modules\pet.lua
 retail\modules\bgIndicator.lua
 retail\modules\quest.lua
 retail\modules\auras.lua
+midnight\modules\auras.lua
 retail\modules\profiles.lua
 retail\modules\importConvert.lua
 retail\modules\misc.lua
+midnight\modules\misc.lua
 
 retail\modules\druid\overcharges.lua
+midnight\modules\druid\overcharges.lua
 
 retail\gui.lua
+midnight\gui.lua
 retail\BetterBlizzPlates.lua
+midnight\BetterBlizzPlates.lua
