@@ -841,39 +841,6 @@ function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit)
     return totalChildrenWidth, totalChildrenHeight, hasExpandableChild
 end
 
-local function SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit, aura)
-    local otherNpBuffBlueBorder = BetterBlizzPlatesDB.otherNpBuffBlueBorder
-    if otherNpBuffBlueBorder then
-        if not isPlayerUnit and isEnemyUnit then
-            if aura.isHelpful then
-                if not buff.buffBorder then
-                    buff.buffBorder = buff:CreateTexture(nil, "ARTWORK");
-                    if buff.Cooldown and buff.Cooldown:IsVisible() then
-                        buff.buffBorder:SetParent(buff.Cooldown)
-                    end
-                    buff.buffBorder:SetAllPoints()
-                    buff.buffBorder:SetAtlas("communities-create-avatar-border-hover");
-                end
-                buff.buffBorder:Show();
-                buff.Border:Hide()
-            else
-                if buff.buffBorder then
-                    buff.buffBorder:Hide();
-                    buff.Border:Show()
-                end
-            end
-            if not aura.isBuff then
-                buff.Border:Show()
-            end
-        end
-    else
-        if buff.buffBorder then
-            buff.buffBorder:Hide()
-            buff.Border:Show()
-        end
-    end
-end
-
 local function SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit)
     local otherNpBuffBlueBorder = BetterBlizzPlatesDB.otherNpBuffBlueBorder
     if otherNpBuffBlueBorder then
@@ -886,54 +853,6 @@ local function SetBlueBuffBorder(buff, isPlayerUnit, isEnemyUnit)
         end
     else
         buff.Border:SetVertexColor(0,0,0)
-    end
-end
-
-local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit)
-    local otherNpBuffPurgeGlow = BetterBlizzPlatesDB.otherNpBuffPurgeGlow
-    local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
-    local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
-
-    if otherNpBuffPurgeGlow then
-        if not isPlayerUnit and isEnemyUnit then
-            if buff.isHelpful and buff.isStealable then
-                if not buff.buffBorderPurge then
-                    buff.buffBorderPurge = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
-                    buff.buffBorderPurge:SetTexture(BBP.squareBlueGlow)
-                end
-                if buff.isEnlarged then
-                    importantGlowOffset = 22 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
-                elseif buff.isCompacted then
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -11, 15.5)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 11, -15.5)
-                elseif nameplateAuraSquare then
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -22, 22)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 22, -22)
-                elseif nameplateAuraTaller then
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -22, 17.5)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 22, -17.5)
-                else
-                    -- buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -9.5, 7)
-                    -- buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 9.5, -7)
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -22, 15.5)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 22, -15.5)
-                end
-                buff.buffBorderPurge:Show()
-                buff.Border:Hide()
-            else
-                if buff.buffBorderPurge then
-                    buff.buffBorderPurge:Hide()
-                    buff.Border:Show()
-                end
-            end
-        end
-    else
-        if buff.buffBorderPurge then
-            buff.buffBorderPurge:Hide()
-            buff.Border:Show()
-        end
     end
 end
 
@@ -2234,14 +2153,14 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
         end
     end
 
-    local function SetAuraGlows(auraIndex, isImportant, auraColor, isEnemyUnit, isPandemic)
+    local function SetAuraGlows(auraIndex, isImportant, auraColor, isEnemyUnit, isPandemic, auraInfo)
         local aura = frame.BuffFrame.auras[auraIndex]
 
         SetImportantGlow(aura, isPlayerUnit, isImportant, auraColor)
 
         SetBlueBuffBorder(aura, isPlayerUnit, isEnemyUnit)
 
-        SetPurgeGlow(aura, isPlayerUnit, isEnemyUnit)
+        SetPurgeGlow(aura, isPlayerUnit, isEnemyUnit, auraInfo)
 
         SetPandemicGlow(aura, isPandemic)
 
@@ -2299,7 +2218,7 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
 
             if ShouldShowBuff(unitID, auraInfo) then
                 UpdateAuraIcon(index, auraInfo)
-                SetAuraGlows(index, isImportant, auraColor, isEnemyUnit, isPandemic)
+                SetAuraGlows(index, isImportant, auraColor, isEnemyUnit, isPandemic, auraInfo)
                 index = index + 1
                 if index > MAX_AURAS then break end
             end
