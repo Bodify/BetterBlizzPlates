@@ -5389,12 +5389,24 @@ local function GetSpecID(frame)
         return nil
     end
 
-    -- local guid = UnitGUID(frame.unit)
+    local guid = UnitGUID(frame.unit)
+    if issecretvalue(guid) then
+        if BBP.isInArena then
+            local i = BBP.GetArenaIndexByFrame(frame)
+            if i then
+                local specID = GetArenaOpponentSpec(i)
+                if specID then
+                    return specID
+                end
+            end
+        end
+        return
+    end
 
-    -- -- Return cached specID if already found
-    -- if SpecCache[guid] and BBP.isInPvP then
-    --     return SpecCache[guid]
-    -- end
+    -- Return cached specID if already found
+    if SpecCache[guid] and BBP.isInPvP then
+        return SpecCache[guid]
+    end
 
     -- Fetch tooltip data
     local tooltipData = GetUnitTooltip(unit)
@@ -5405,14 +5417,15 @@ local function GetSpecID(frame)
     local tooltipGUID = tooltipData.guid
 
     -- Iterate through tooltip lines to find the spec name
-    -- for _, line in ipairs(tooltipData.lines) do
-    --     if line and line.type == Enum.TooltipDataLineType.None and line.leftText and line.leftText ~= "" then
-    --         local specID = ALL_SPECS[line.leftText]
-    --         if specID then
-    --             return specID
-    --         end
-    --     end
-    -- end
+    for _, line in ipairs(tooltipData.lines) do
+        if line and line.type == Enum.TooltipDataLineType.None and line.leftText and line.leftText ~= "" then
+            local specID = ALL_SPECS[line.leftText]
+            if specID then
+                SpecCache[guid] = specID
+                return specID
+            end
+        end
+    end
     --BBP.isMidnight
 
     return nil -- Return nil if no spec ID was found
@@ -5428,10 +5441,22 @@ local function IsSpecHealer(frame)
         return false
     end
 
-    --local guid = UnitGUID(unit)
+    local guid = UnitGUID(unit)
+    if issecretvalue(guid) then
+        if BBP.isInArena then
+            local i = BBP.GetArenaIndexByFrame(frame)
+            if i then
+                local specID = GetArenaOpponentSpec(i)
+                if specID then
+                    return HEALER_SPEC_IDS[specID] or false
+                end
+            end
+        end
+        return false
+    end
 
     -- Use cached spec ID if available
-    local specID = GetSpecID(frame)--(BBP.isInPvP and SpecCache[guid]) or GetSpecID(frame)
+    local specID = (BBP.isInPvP and SpecCache[guid]) or GetSpecID(frame)
 
     -- If no valid spec ID found, return false
     if not specID then

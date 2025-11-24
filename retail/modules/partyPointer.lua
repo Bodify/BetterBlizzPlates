@@ -277,7 +277,7 @@ function BBP.PartyPointer(frame)
         end
     end
 
-    if config.partyPointerAnchor == "TOP" and ShouldShowName(frame) then
+    if config.partyPointerAnchor == "TOP" and ShouldShowName(frame) then --isMidnight ShouldShowName == secret?
         local resourceAnchor = nil
         if config.nameplateResourceOnTarget == "1" and not config.nameplateResourceUnderCastbar and info.isTarget and not (BetterBlizzPlatesDB.hideResourceOnFriend and info.isFriend) then
             resourceAnchor = frame:GetParent().driverFrame.classNamePlateMechanicFrame

@@ -94,20 +94,8 @@ f:SetScript("OnEvent", function(_, e)
     BBP.RefreshPartyPlates()
 end)
 
-
-function BBP.GetPlateForFrame(frame)
-    -- try the token first
-    if frame.unit then
-        local p = C_NamePlate.GetNamePlateForUnit(frame.unit)
-        if p then return p end
-    end
-    -- fallbacks if you store/know the plate
-    if frame.namePlate then return frame.namePlate end
-    return frame:GetParent()
-end
-
 function BBP.GetArenaIndexByFrame(frame)
-    local plate = BBP.GetPlateForFrame(frame)
+    local plate = BBP.GetSafeNameplate(frame.unit)
     if not plate then return nil end
     for i = 1, 3 do
         local ap = BBP.ArenaPlates[i]
@@ -119,7 +107,7 @@ function BBP.GetArenaIndexByFrame(frame)
 end
 
 function BBP.GetPartyIndexByFrame(frame)
-    local plate = BBP.GetPlateForFrame(frame)
+    local plate = BBP.GetSafeNameplate(frame.unit)
     if not plate then return nil end
     for i = 1, 2 do
         local ap = BBP.PartyPlates[i]

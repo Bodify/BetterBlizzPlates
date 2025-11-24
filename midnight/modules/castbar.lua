@@ -278,18 +278,6 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
     end
 
-    if castBar.barType == "uninterruptable" then
-        castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
-    elseif BBP.interruptStatusColorOn and not BBP.interruptReady then
-        castBar:SetStatusBarColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
-    elseif castBar.barType == "channel" then
-        castBar:SetStatusBarColor(unpack(castBarChanneledColor))
-    elseif castBar.barType == "interrupted" then
-        castBar:SetStatusBarColor(1, 0, 0)
-    else
-        castBar:SetStatusBarColor(unpack(castBarCastColor))
-    end
-
     if useCustomCastbarTexture then
         local textureName = BetterBlizzPlatesDB.customCastbarTexture
         local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
@@ -311,19 +299,28 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 end
             end
         end
-        if not castBarRecolor then
+    end
+
+    if castBarRecolor or useCustomCastbarTexture then
+        if castBarTexture then
             castBarTexture:SetDesaturated(true)
-            if notInterruptible then
-                castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
-            elseif casting then
-                if not frame.emphasizedCast then
-                    castBar:SetStatusBarColor(unpack(castBarCastColor))
-                end
-            elseif channeling then
-                if not frame.emphasizedCast then
-                    castBar:SetStatusBarColor(unpack(castBarChanneledColor))
-                end
-            end
+        end
+        if castBar.barType == "uninterruptable" then
+            castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
+        elseif BBP.interruptStatusColorOn and not BBP.interruptReady then
+            castBar:SetStatusBarColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+        elseif castBar.barType == "channel" then
+            castBar:SetStatusBarColor(unpack(castBarChanneledColor))
+        elseif castBar.barType == "interrupted" then
+            castBar:SetStatusBarColor(1, 0, 0)
+        else
+            castBar:SetStatusBarColor(unpack(castBarCastColor))
+        end
+    else
+        if BBP.interruptStatusColorOn and not BBP.interruptReady then
+            castBar:SetStatusBarColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+        else
+            castBar:SetStatusBarColor(1,1,1)
         end
     end
 

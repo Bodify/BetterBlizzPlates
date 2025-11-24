@@ -2087,33 +2087,91 @@ local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
     if otherNpBuffPurgeGlow then
         if not isPlayerUnit and isEnemyUnit then
             local alwaysShowPurgeTexture = BetterBlizzPlatesDB.alwaysShowPurgeTexture
-            if aura.isHelpful and aura.isStealable or (alwaysShowPurgeTexture and aura.dispelName == "Magic" and aura.isHelpful) then
+            if aura.isHelpful and (aura.isStealable or (alwaysShowPurgeTexture and aura.dispelName == "Magic" and aura.isHelpful)) then
                 buff.Icon:SetScale(0.5)
+
                 if not buff.buffBorderPurge then
                     buff.buffBorderPurge = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
-                    buff.buffBorderPurge:SetAtlas("newplayertutorial-drag-slotblue")
+                    buff.buffBorderPurge:SetTexture(BBP.squareBlueGlow)
+                    buff.buffBorderPurge:SetScale(2.25)
                 end
+
                 if buff.isKeyAura then
-                    importantGlowOffset = 16 * BetterBlizzPlatesDB.nameplateKeyAuraScale
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
+                    local ten = 16 * BetterBlizzPlatesDB.nameplateKeyAuraScale
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
+
                 elseif buff.isEnlarged then
-                    importantGlowOffset = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -importantGlowOffset, importantGlowOffset)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", importantGlowOffset, -importantGlowOffset)
+                    if BetterBlizzPlatesDB.nameplateAuraEnlargedSquare then
+                        local ten = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
+                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
+                    else
+                        if nameplateAuraSquare then
+                            local ten = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
+                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
+                        elseif nameplateAuraTaller then
+                            local tenfive = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            local eight = 7.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
+                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
+                        else
+                            local tenfive = 9.4 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            local sevenfive = 6.4 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
+                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, sevenfive)
+                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -sevenfive)
+                        end
+                    end
+
                 elseif buff.isCompacted then
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -4.5, 6)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 4.5, -6)
+                    if BetterBlizzPlatesDB.nameplateAuraCompactedSquare then
+                        local scale = BetterBlizzPlatesDB.nameplateAuraCompactedScale
+                        local fourfive = 4.5 * scale
+                        local fivefive = 6.4 * scale
+                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -fourfive, fivefive)
+                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", fourfive, -fivefive)
+                    else
+                        if nameplateAuraSquare then
+                            local ten = 10 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
+                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
+                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
+                        elseif nameplateAuraTaller then
+                            local tenfive = 10 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
+                            local eight = 7.5 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
+                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
+                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
+                        else
+                            local tenfive = 9.4 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
+                            local sevenfive = 6.4 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
+                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, sevenfive)
+                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -sevenfive)
+                        end
+                    end
+
                 elseif nameplateAuraSquare then
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 10)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -10)
+                    -- Purge only applies to helpful auras, so treat as buff
+                    local buffScale = BetterBlizzPlatesDB.nameplateAuraBuffScale
+                    local tenfive = 10 * buffScale
+                    local eight = 10 * buffScale
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
+
                 elseif nameplateAuraTaller then
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 6.5)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -6.5)
+                    local buffScale = BetterBlizzPlatesDB.nameplateAuraBuffScale
+                    local tenfive = 10 * buffScale
+                    local eight = 7.5 * buffScale
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
+
                 else
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -10, 6)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", 10, -6)
+                    local buffScale = BetterBlizzPlatesDB.nameplateAuraBuffScale
+                    local tenfive = 9.4 * buffScale
+                    local eight = 6.4 * buffScale
+                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
+                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
                 end
+
                 buff.buffBorderPurge:Show()
                 buff.Border:Hide()
             else

@@ -1,3 +1,13 @@
+# BetterBlizzPlates 1.8.9g
+## All versions
+### Bugfix
+- Nameplate Auras: Fix Purge Glow texture not being scaled with the buff scale setting.
+## Midnight
+### Tweak
+- Fix up some spec id stuff for Midnight to have working spec detection for most things. Will still need some more tweaks but good enough for now.
+### Bugfix
+- Fix castbar color issues with castbar customization enabled but recolor castbar disabled.
+
 # BetterBlizzPlates 1.8.9f
 ## Midnight & Retail
 ### New

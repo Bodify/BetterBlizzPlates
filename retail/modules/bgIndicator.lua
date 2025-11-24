@@ -28,6 +28,7 @@ local function GetAuraColor(frame, foundID, auraType)
 end
 
 function BBP.BgIndicator(frame, foundID)
+    if BBP.isMidnight then return end
     if not BBP.isInBg or not UnitPvpClassification(frame.unit) then
         if frame.bgIndicator then
             frame.bgIndicator:Hide()
