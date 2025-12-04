@@ -6237,7 +6237,7 @@ Frame:SetScript("OnEvent", function(...)
     -- Re-open options when clicking reload button
     if db.reopenOptions then
         --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
-        Settings.OpenToCategory(BBP.category.ID)
+        Settings.OpenToCategory(BBP.category:GetID())
         db.reopenOptions = false
     end
     BBP.CreateUnitAuraEventFrame()
@@ -6300,7 +6300,7 @@ SlashCmdList["BBP"] = function(msg)
         if not BetterBlizzPlates.guiLoaded then
             BBP.LoadGUI()
         else
-            Settings.OpenToCategory(BBP.category.ID)
+            Settings.OpenToCategory(BBP.category:GetID())
         end
     end
 end

@@ -6574,7 +6574,7 @@ Frame:SetScript("OnEvent", function(...)
     if db.reopenOptions then
         --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
         C_Timer.After(1, function()
-            Settings.OpenToCategory(BBP.category.ID)
+            Settings.OpenToCategory(BBP.category:GetID())
         end)
         db.reopenOptions = false
     end
@@ -6704,7 +6704,7 @@ SlashCmdList["BBP"] = function(msg)
         if not BetterBlizzPlates.guiLoaded then
             BBP.LoadGUI()
         else
-            Settings.OpenToCategory(BBP.category.ID)
+            Settings.OpenToCategory(BBP.category:GetID())
         end
         MoveableSettingsPanel()
     end

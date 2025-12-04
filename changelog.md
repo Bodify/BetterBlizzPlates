@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.8.9h
+## All versions
+### Bugfix
+- Fix settings panel not opening on Midnight (and tweak it for all the rest too)
+
 # BetterBlizzPlates 1.8.9g
 ## All versions
 ### Bugfix
