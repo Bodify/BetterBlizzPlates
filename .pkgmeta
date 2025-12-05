@@ -7,5 +7,5 @@ ignore:
   - "*.md"
 
 manual-changelog:
-  filename: changelog.md
+  filename: RELEASE_NOTES.md
   markup-type: markdown
