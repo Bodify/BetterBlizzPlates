@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.8.9i
+## Retail & Midnight
+### Tweak
+- Fix Arena Spec Names to have text aligned LEFT when spec text is LEFT anchored and vice versa. Will do this fix for MoP soonTM but needs a few other tweaks as well.
+
 # BetterBlizzPlates 1.8.9h
 ## All versions
 ### Bugfix

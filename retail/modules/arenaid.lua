@@ -88,6 +88,9 @@ local function createSpexText(frame)
             frame.specNameText:SetParent(frame.bbpOverlay)
         end
     end
+    local anchor = BetterBlizzPlatesDB.arenaSpecAnchor
+    local justify = (anchor == "LEFT" or anchor == "RIGHT") and anchor or "CENTER"
+    frame.specNameText:SetJustifyH(justify)
 end
 
 local function createIDText(frame)
