@@ -3,7 +3,7 @@ package-as: BetterBlizzPlates
 ignore:
   - .github
   - .gitignore
-  - ".vscode"
+  - .vscode
   - "*.md"
 
 manual-changelog:
