@@ -1,11 +1,13 @@
 ## Interface: 40402
 ## Title: Better|cff00c0ffBlizz|rPlates
 ## Notes: Default Blizzard Nameplates with more features added to them with easy settings.
+## Author: Bodify
 ## Version: 1.8.9i
 ## SavedVariables: BetterBlizzPlatesDB, BBPCVarBackupsDB
 ## OptionalDeps: LibSharedMedia-3.0
 ## IconAtlas: gmchat-icon-blizz
-## Author: Bodify
+## X-Curse-Project-ID: 913377
+## X-Wago-ID: b6mb47KP
 
 embeds.xml
 

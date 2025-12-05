@@ -1,0 +1,23 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Package and Release
+        uses: BigWigsMods/packager@v2.5.0
+        env:
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}        # TOC: ## X-Curse-Project-ID: 1234
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}  # TOC: ## X-Wago-ID: abcd1234
+          # WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}  # TOC: ## X-WoWI-ID: 5678

@@ -1,0 +1,11 @@
+package-as: BetterBlizzPlates
+
+ignore:
+  - .github
+  - .gitignore
+  - ".vscode"
+  - "*.md"
+
+manual-changelog:
+  filename: changelog.md
+  markup-type: markdown
