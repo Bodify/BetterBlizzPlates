@@ -1,4 +1,4 @@
-# BetterBlizzPlates 1.8.9j
+# BetterBlizzPlates 1.8.9k
 ## GitHub
 - With this patch and forward my addons will also have GitHub releases. Huge thanks to zerbiniandrea for the pull request with everything set up quickly for me for this.
 ## All versions
