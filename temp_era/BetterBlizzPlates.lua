@@ -432,10 +432,10 @@ local defaultSettings = {
 
     otherNpdeBuffEnable = true,
     otherNpdeBuffFilterAll = false,
-    otherNpdeBuffFilterBlizzard = true,
+    otherNpdeBuffFilterBlizzard = false, -- only false on Era cuz no defaults (each spell rank has separate id)
     otherNpdeBuffFilterWatchList = true,
     otherNpdeBuffFilterLessMinite = false,
-    otherNpdeBuffFilterOnlyMe = false,
+    otherNpdeBuffFilterOnlyMe = true, -- only true on Era cuz no defaults (each spell rank has separate id)
     otherNpdeBuffPandemicGlow = false,
 
     friendlyNpBuffEnable = false,

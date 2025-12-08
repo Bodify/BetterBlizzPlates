@@ -3678,6 +3678,9 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         local buff = frame.BuffFrame.auraFrames[buffIndex]
         if not buff then
             buff = CreateFrame("Frame", nil, frame.BuffFrame)
+            buff.unit = unit
+            buff.isBuff = aura.isHelpful;
+            buff.spellID = aura.spellId;
             buff:SetSize(20, 14)
             buff.Icon = buff:CreateTexture(nil, "BORDER")
             buff.Icon:SetAllPoints(true)
@@ -3705,24 +3708,29 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             if BetterBlizzPlatesDB.nameplateAuraTooltip then
                 buff:SetScript("OnEnter", function(self)
                     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-                    GameTooltip:SetUnitAura(self.unit, buff.auraInstanceID, buff.isHelpful and "HELPFUL" or "HARMFUL")
-                    GameTooltip:AddLine("Spell ID: " .. buff.spellId, 1, 1, 1)
-                    GameTooltip:Show()
-
-                    buff:SetScript("OnUpdate", function(self)
-                        GameTooltip:ClearLines()
-                        GameTooltip:SetUnitAura(self.unit, buff.auraInstanceID, buff.isHelpful and "HELPFUL" or "HARMFUL")
-                        GameTooltip:AddLine("Spell ID: " .. buff.spellId, 1, 1, 1)
+                    local foundIndex = nil
+                    for i = 1, 255 do
+                        local aura = C_UnitAuras.GetAuraDataByIndex(self.unit, i, self.isBuff and "HELPFUL" or "HARMFUL")
+                        if not aura then break end
+                        if aura.auraInstanceID == self.auraInstanceID then
+                            foundIndex = i
+                            break
+                        end
+                    end
+                    
+                    if foundIndex then
+                        GameTooltip:SetUnitAura(self.unit, foundIndex, self.isBuff and "HELPFUL" or "HARMFUL")
+                        GameTooltip:AddLine("Spell ID: " .. self.spellID, 1, 1, 1)
                         GameTooltip:Show()
-                    end)
+                    end
                 end)
 
                 buff:SetScript("OnLeave", function(self)
                     GameTooltip:Hide()
-                    buff:SetScript("OnUpdate", nil)
                 end)
             end
         end
+        buff.unit = unit
         buff.Border:SetVertexColor(0,0,0,1)
         buff.auraInstanceID = auraInstanceID;
         buff.isBuff = aura.isHelpful;

@@ -76,6 +76,17 @@ local function isFistweaver(unit)
     -- end
 end
 
+local function getSpecTextAnchorPoint()
+    local anchor = BetterBlizzPlatesDB.arenaSpecAnchor
+    if anchor == "LEFT" then
+        return "BOTTOMLEFT"
+    elseif anchor == "RIGHT" then
+        return "BOTTOMRIGHT"
+    else
+        return "BOTTOM"
+    end
+end
+
 --there is so much room for improvement here... oh well future me will surely have improved it.
 
 local function addIdCircle(frame, index)
@@ -290,7 +301,8 @@ function BBP.ArenaIndicator3(frame)
                     end
                     frame.specNameText:SetTextColor(r, g, b, 1)
                     frame.specNameText:SetScale(arenaSpecScale)
-                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    local anchorPoint = getSpecTextAnchorPoint()
+                    frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
                     break
                 end
             end
@@ -332,7 +344,8 @@ function BBP.ArenaIndicator3(frame)
                 end
                 frame.specNameText:SetTextColor(r, g, b, 1)
                 frame.specNameText:SetScale(arenaSpecScale)
-                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                local anchorPoint = getSpecTextAnchorPoint()
+                frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
                 break
             end
         end
@@ -400,7 +413,8 @@ function BBP.ArenaIndicator4(frame)
                     end
                     frame.specNameText:SetTextColor(r, g, b, 1)
                     frame.specNameText:SetScale(arenaSpecScale)
-                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    local anchorPoint = getSpecTextAnchorPoint()
+                    frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 
                     frame.arenaNumberText:SetText(i)
                     if enemyClassColorName then
@@ -461,7 +475,8 @@ function BBP.ArenaIndicator4(frame)
                 end
                 frame.specNameText:SetTextColor(r, g, b, 1)
                 frame.specNameText:SetScale(arenaSpecScale)
-                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                local anchorPoint = getSpecTextAnchorPoint()
+                frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 
                 frame.arenaNumberText:SetText(i)
                 if enemyClassColorName then
@@ -524,7 +539,8 @@ function BBP.ArenaIndicator5(frame)
                     frame.specNameText:SetText(specName .. " " .. i)
                     frame.specNameText:SetTextColor(r, g, b, 1)
                     frame.specNameText:SetScale(arenaSpecScale)
-                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    local anchorPoint = getSpecTextAnchorPoint()
+                    frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
                     break
                 end
             end
@@ -561,7 +577,8 @@ function BBP.ArenaIndicator5(frame)
                 frame.specNameText:SetText(specName .. " " .. i)
                 frame.specNameText:SetTextColor(r, g, b, 1)
                 frame.specNameText:SetScale(arenaSpecScale)
-                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                local anchorPoint = getSpecTextAnchorPoint()
+                frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
                 break
             end
         end
@@ -729,7 +746,8 @@ function BBP.PartyIndicator3(frame)
                     frame.specNameText:SetText(specName)
                     frame.specNameText:SetTextColor(r, g, b, 1)
                     frame.specNameText:SetScale(partySpecScale)
-                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    local anchorPoint = getSpecTextAnchorPoint()
+                    frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
                     break
                 end
             end
@@ -766,7 +784,8 @@ function BBP.PartyIndicator3(frame)
                 frame.specNameText:SetText(specName)
                 frame.specNameText:SetTextColor(r, g, b, 1)
                 frame.specNameText:SetScale(partySpecScale)
-                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                local anchorPoint = getSpecTextAnchorPoint()
+                frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
                 break
             end
         end
@@ -828,7 +847,8 @@ function BBP.PartyIndicator4(frame)
                     frame.specNameText:SetText(specName)
                     frame.specNameText:SetTextColor(r, g, b, 1)
                     frame.specNameText:SetScale(partySpecScale)
-                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    local anchorPoint = getSpecTextAnchorPoint()
+                    frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 
                     local displayNumber = i
                     if reduceID and i > 1 then
@@ -880,7 +900,8 @@ function BBP.PartyIndicator4(frame)
                 frame.specNameText:SetText(specName)
                 frame.specNameText:SetTextColor(r, g, b, 1)
                 frame.specNameText:SetScale(partySpecScale)
-                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                local anchorPoint = getSpecTextAnchorPoint()
+                frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 
                 frame.arenaNumberText:SetText(i)
                 frame.arenaNumberText:SetTextColor(r, g, b, 1)
@@ -941,7 +962,8 @@ function BBP.PartyIndicator5(frame)
                     frame.specNameText:SetText(specName .. " " .. displayNumber)
                     frame.specNameText:SetTextColor(r, g, b, 1)
                     frame.specNameText:SetScale(partySpecScale)
-                    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                    local anchorPoint = getSpecTextAnchorPoint()
+                    frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
                     break
                 end
             end
@@ -978,7 +1000,8 @@ function BBP.PartyIndicator5(frame)
                 frame.specNameText:SetText(specName .. " " .. i)
                 frame.specNameText:SetTextColor(r, g, b, 1)
                 frame.specNameText:SetScale(partySpecScale)
-                frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+                local anchorPoint = getSpecTextAnchorPoint()
+                frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
                 break
             end
         end
@@ -1101,7 +1124,8 @@ function BBP.TestArenaIndicator3(frame)
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
-            frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            local anchorPoint = getSpecTextAnchorPoint()
+            frame.specNameText:SetPoint(anchorPoint, frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
             break
         end
     end
@@ -1136,7 +1160,8 @@ function BBP.TestArenaIndicator4(frame)
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
-            frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            local anchorPoint = getSpecTextAnchorPoint()
+            frame.specNameText:SetPoint(anchorPoint, frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
             frame.arenaNumberText:SetText("1")
             if BetterBlizzPlatesDB.enemyClassColorName then
                 frame.arenaNumberText:SetTextColor(r, g, b, 1)
@@ -1177,7 +1202,8 @@ function BBP.TestArenaIndicator5(frame)
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
-            frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            local anchorPoint = getSpecTextAnchorPoint()
+            frame.specNameText:SetPoint(anchorPoint, frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
             break
         end
     end
@@ -1271,7 +1297,8 @@ function BBP.TestPartyIndicator3(frame)
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.partySpecScale)
-            frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            local anchorPoint = getSpecTextAnchorPoint()
+            frame.specNameText:SetPoint(anchorPoint, frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
             break
         end
     end
@@ -1304,7 +1331,8 @@ function BBP.TestPartyIndicator4(frame)
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.partySpecScale)
-            frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            local anchorPoint = getSpecTextAnchorPoint()
+            frame.specNameText:SetPoint(anchorPoint, frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
             frame.arenaNumberText:SetText("2")
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.partyIDScale)
@@ -1335,7 +1363,8 @@ function BBP.TestPartyIndicator5(frame)
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.partySpecScale)
-            frame.specNameText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
+            local anchorPoint = getSpecTextAnchorPoint()
+            frame.specNameText:SetPoint(anchorPoint, frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
             break
         end
     end
@@ -1503,5 +1532,6 @@ function BBP.BattlegroundSpecNames(frame)
     frame.specNameText:SetText(specName)
     frame.specNameText:SetTextColor(r, g, b, 1)
     frame.specNameText:SetScale(arenaSpecScale)
-    frame.specNameText:SetPoint("BOTTOM", frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+    local anchorPoint = getSpecTextAnchorPoint()
+    frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 end

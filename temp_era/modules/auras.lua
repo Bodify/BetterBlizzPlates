@@ -2080,6 +2080,7 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
             aura:SetSize(iconWidth, iconHeight)
             aura.Icon = aura:CreateTexture(nil, "BORDER")
             aura.Icon:SetAllPoints(true)
+            aura.auraIndex = auraIndex
             SetupBorderOnFrame(aura)
 
             -- Create cooldown frame
@@ -2106,24 +2107,17 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
             if BetterBlizzPlatesDB.nameplateAuraTooltip then
                 aura:SetScript("OnEnter", function(self)
                     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-                    GameTooltip:SetUnitAura(unitID, aura.auraInstanceID, aura.isHelpful and "HELPFUL" or "HARMFUL")
-                    GameTooltip:AddLine("Spell ID: " .. aura.spellId, 1, 1, 1)
+                    GameTooltip:SetUnitAura(unitID, self.auraIndex, auraInfo.isHelpful and "HELPFUL" or "HARMFUL")
+                    GameTooltip:AddLine("Spell ID: " .. auraInfo.spellId, 1, 1, 1)
                     GameTooltip:Show()
-
-                    aura:SetScript("OnUpdate", function(self)
-                        GameTooltip:ClearLines()
-                        GameTooltip:SetUnitAura(unitID, aura.auraInstanceID, aura.isHelpful and "HELPFUL" or "HARMFUL")
-                        GameTooltip:AddLine("Spell ID: " .. aura.spellId, 1, 1, 1)
-                        GameTooltip:Show()
-                    end)
                 end)
 
                 aura:SetScript("OnLeave", function(self)
                     GameTooltip:Hide()
-                    aura:SetScript("OnUpdate", nil)
                 end)
             end
         end
+        aura.auraIndex = auraIndex
         aura:SetSize(iconWidth, iconHeight)
         aura.isActive = true
         for key, value in pairs(auraInfo) do

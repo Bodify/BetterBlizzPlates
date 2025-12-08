@@ -4,7 +4,8 @@ ignore:
   - .github
   - .gitignore
   - .vscode
-  - "*.md"
+  - README.md
+  - RELEASE_NOTES.md
 
 manual-changelog:
   filename: RELEASE_NOTES.md
