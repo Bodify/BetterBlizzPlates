@@ -978,13 +978,19 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 local anchorPoint = BetterBlizzPlatesDB[element .. "Anchor"] or "CENTER"
 
                 --If no nameplates are present still adjust values
-                if element == "NamePlateVerticalScale" then
-                    BetterBlizzPlatesDB.NamePlateVerticalScale = value
-                    if not BBP.checkCombatAndWarn() then
-                        BBP.ApplyNameplateWidth()
-                        BBP.RefreshAllNameplates()
-                    end
-                elseif element == "nameplateExtraClickHeight" then
+                -- if element == "nameplateGeneralHeight" then
+                --     BetterBlizzPlatesDB.nameplateGeneralHeight = value
+                --     if not BBP.checkCombatAndWarn() then
+                --         BBP.ApplyNameplateWidth()
+                --         BBP.RefreshAllNameplates()
+                --     end
+                -- elseif element == "nameplateGeneralWidth" then
+                --     BetterBlizzPlatesDB.nameplateGeneralWidth = value
+                --     if not BBP.checkCombatAndWarn() then
+                --         BBP.ApplyNameplateWidth()
+                --         BBP.RefreshAllNameplates()
+                --     end
+                if element == "nameplateExtraClickHeight" then
                     BetterBlizzPlatesDB.nameplateExtraClickHeight = value
                     BBP.AdjustClickableNameplateSize()
                 elseif element == "nameplateExtraClickWidth" then
@@ -1346,29 +1352,14 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         BetterBlizzPlatesDB.nameplateSelectedScale = value
                     end
                 -- Nameplate Height cvar
-                elseif element == "NamePlateVerticalScale" then
-                    if not BBP.checkCombatAndWarn() then
-                        C_CVar.SetCVar("NamePlateVerticalScale", value)
-                        BetterBlizzPlatesDB.NamePlateVerticalScale = value
-                        local verticalScale = tonumber(BetterBlizzPlatesDB.NamePlateVerticalScale)
-                        if verticalScale and verticalScale >= 2 then
-                            C_CVar.SetCVar("NamePlateHorizontalScale", 1.4)
-                        else
-                            C_CVar.SetCVar("NamePlateHorizontalScale", 1)
-                        end
-                        if frame.castBar then
-                            if not BetterBlizzPlatesDB.enableCastbarCustomization then
-                                if BBP.isLargeNameplatesEnabled() then
-                                    frame.castBar:SetHeight(18.8)
-                                else
-                                    frame.castBar:SetHeight(8)
-                                end
-                            else
-                                frame.castBar:SetHeight(BetterBlizzPlatesDB.castBarHeight)
-                            end
-                        end
-                        BBP.RefreshAllNameplates()
-                    end
+                elseif element == "nameplateGeneralHeight" then
+                    BetterBlizzPlatesDB.nameplateGeneralHeight = value
+                    BBP.ApplyNameplateWidth()
+                    BBP.RefreshAllNameplates()
+                elseif element == "nameplateGeneralWidth" then
+                    BetterBlizzPlatesDB.nameplateGeneralWidth = value
+                    BBP.ApplyNameplateWidth()
+                    BBP.RefreshAllNameplates()
                 -- Nameplate Horizontal Overlap
                 elseif element == "nameplateOverlapH" then
                     if not BBP.checkCombatAndWarn() then
@@ -5238,18 +5229,32 @@ local function guiGeneralTab()
         BBP.ResetToDefaultScales(nameplateSelectedScale, "nameplateSelected")
     end)
 
-    local NamePlateVerticalScale = CreateSlider(BetterBlizzPlates, "Nameplate Height", 0.5, 5, 0.01, "NamePlateVerticalScale")
-    NamePlateVerticalScale:SetPoint("TOPLEFT", nameplateSelectedScale, "BOTTOMLEFT", 0, -17)
-    CreateTooltipTwo(NamePlateVerticalScale, "Nameplate Height", "Changes the height of ALL nameplates.", "Will also increase castbar height by default. Can be re-adjusted in castbar section.", nil, "NamePlateVerticalScale")
+    local nameplateGeneralWidth = CreateSlider(BetterBlizzPlates, "Nameplate Width", 20, 250, 1, "nameplateGeneralWidth")
+    nameplateGeneralWidth:SetPoint("TOPLEFT", nameplateSelectedScale, "BOTTOMLEFT", 0, -17)
+    CreateTooltipTwo(nameplateGeneralWidth, "Nameplate Width", "Changes the width of ALL nameplates.", "Will also increase castbar width by default. Can be re-adjusted in castbar section.")
 
-    local NamePlateVerticalScaleResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    NamePlateVerticalScaleResetButton:SetText("Default")
-    NamePlateVerticalScaleResetButton:SetWidth(60)
-    NamePlateVerticalScaleResetButton:SetPoint("LEFT", NamePlateVerticalScale, "RIGHT", 10, 0)
-    NamePlateVerticalScaleResetButton:SetScript("OnClick", function()
-        BBP.ResetToDefaultHeight2(NamePlateVerticalScale)
+    local nameplateGeneralWidthResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
+    nameplateGeneralWidthResetButton:SetText("Default")
+    nameplateGeneralWidthResetButton:SetWidth(60)
+    nameplateGeneralWidthResetButton:SetPoint("LEFT", nameplateGeneralWidth, "RIGHT", 10, 0)
+    nameplateGeneralWidthResetButton:SetScript("OnClick", function()
+        BBP.ResetToDefaultWidth2(nameplateGeneralWidth)
     end)
-    CreateTooltipTwo(NamePlateVerticalScaleResetButton, "Reset Nameplate Height", "Small nameplate default is 1\nLarge nameplate default is 2.7", nil, "ANCHOR_TOP")
+    CreateTooltipTwo(nameplateGeneralWidthResetButton, "Reset Nameplate Width", "Default is 172.5", nil, "ANCHOR_TOP")
+
+    -- Nameplate height only adjusts clickable area, no other effect
+    -- local nameplateGeneralHeight = CreateSlider(BetterBlizzPlates, "Nameplate Height", 20, 150, 1, "nameplateGeneralHeight")
+    -- nameplateGeneralHeight:SetPoint("TOPLEFT", nameplateGeneralWidth, "BOTTOMLEFT", 0, -17)
+    -- CreateTooltipTwo(nameplateGeneralHeight, "Nameplate Height", "Changes the height of ALL nameplates.", "Will also increase castbar height by default. Can be re-adjusted in castbar section.")
+
+    -- local nameplateGeneralHeightResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
+    -- nameplateGeneralHeightResetButton:SetText("Default")
+    -- nameplateGeneralHeightResetButton:SetWidth(60)
+    -- nameplateGeneralHeightResetButton:SetPoint("LEFT", nameplateGeneralHeight, "RIGHT", 10, 0)
+    -- nameplateGeneralHeightResetButton:SetScript("OnClick", function()
+    --     BBP.ResetToDefaultHeight2(nameplateGeneralHeight)
+    -- end)
+    -- CreateTooltipTwo(nameplateGeneralHeightResetButton, "Reset Nameplate Height", "Default is 65", nil, "ANCHOR_TOP")
 
     ----------------------
     -- Enemy nameplates:
@@ -5514,8 +5519,9 @@ local function guiGeneralTab()
 
 ]]
 
-    local nameplateEnemyWidth = CreateSlider(BetterBlizzPlates, "Nameplate Width", 26, 300, 1, "nameplateEnemyWidth")
+    local nameplateEnemyWidth = CreateSlider(BetterBlizzPlates, "Healthbar Width", 26, 300, 1, "nameplateEnemyWidth")
     nameplateEnemyWidth:SetPoint("TOPLEFT", enemyNameScale, "BOTTOMLEFT", 0, -17)
+    CreateTooltipTwo(nameplateEnemyWidth, "Enemy Healthbar Width", "Changes the width of the healthbar on enemy nameplates.")
 
     local nameplateEnemyWidthResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     nameplateEnemyWidthResetButton:SetText("Default")
@@ -5860,9 +5866,9 @@ local function guiGeneralTab()
     CreateTooltipTwo(hideFriendlyNameText, "Hide Name", hideNameTooltip)
     BBP.hideFriendlyNameText = hideFriendlyNameText
 
-    local nameplateFriendlyWidth = CreateSlider(BetterBlizzPlates, "Nameplate Width", 26, 300, 1, "nameplateFriendlyWidth")
+    local nameplateFriendlyWidth = CreateSlider(BetterBlizzPlates, "Healthbar Width", 26, 300, 1, "nameplateFriendlyWidth")
     nameplateFriendlyWidth:SetPoint("TOPLEFT", friendlyNameScale, "BOTTOMLEFT", 0, -20)
-    CreateTooltipTwo(nameplateFriendlyWidth, "Friendly Nameplate Width", "Adjust the width of Friendly Nameplates.\n\nNote:\nDue to a Blizzard bug if you change this width to be different from your Enemy Nameplates then Mind Control/Duels/etc can cause the Nameplate to get stuck in the opposite width setting.\n\nYou can fix this manually by forcing a refresh of the Nameplate which can be done via looking away, or Alt+Z to hide/unhide UI quickly, or turning off/on Nameplates quickly with a keybind. |cff00c0ff#Blizzard")
+    CreateTooltipTwo(nameplateFriendlyWidth, "Friendly Healthbar Width", "Changes the width of the healthbar on friendly nameplates.")
 
     local nameplateFriendlyWidthResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     nameplateFriendlyWidthResetButton:SetText("Default")
