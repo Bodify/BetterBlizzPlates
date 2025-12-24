@@ -2620,19 +2620,8 @@ function BBP.ResetToDefaultHeight(slider)
 end
 
 function BBP.ResetToDefaultHeight2(slider)
-    if BBP.isLargeNameplatesEnabled() then
-        --slider:SetValue(10.8)
-        --BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
-        slider:SetValue(2.7)
-        BetterBlizzPlatesDB.NamePlateVerticalScale = "2.7"
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar NamePlateVerticalScale set to 2.7")
-    else
-        --slider:SetValue(4)
-        --BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 4
-        slider:SetValue(1)
-        BetterBlizzPlatesDB.NamePlateVerticalScale = "1"
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar NamePlateVerticalScale set to 1")
-    end
+    slider:SetValue(16)
+    BetterBlizzPlatesDB.nameplateGeneralHpHeight = 16
 end
 
 function BBP.ResetToDefaultValue(slider, element)
@@ -2908,17 +2897,29 @@ end
 local function SetFriendlyBarWidthTemp(frame)
     if frame:IsForbidden() or not frame.unit or UnitCanAttack("player", frame.unit) then return end
     local db = BetterBlizzPlatesDB
-    local width = db.nameplateFriendlyWidth
+    local width = db.nameplateFriendlyWidth/2
 
     frame.HealthBarsContainer:ClearPoint("RIGHT")
     frame.HealthBarsContainer:ClearPoint("LEFT")
     frame.castBar:ClearPoint("RIGHT")
     frame.castBar:ClearPoint("LEFT")
+    frame.castBar.Icon:ClearAllPoints()
 
     frame.HealthBarsContainer:SetPoint("LEFT", frame, "CENTER", -width + 12, 0)
     frame.HealthBarsContainer:SetPoint("RIGHT", frame, "CENTER", width - 12, 0)
-    frame.castBar:SetPoint("LEFT", frame, "CENTER", -width + 12, 0)
-    frame.castBar:SetPoint("RIGHT", frame, "CENTER", width - 12, 0)
+
+    local setupOptions = NamePlateSetupOptions
+    if setupOptions and setupOptions.spellNameInsideCastBar == true then
+        -- Text inside castbar (Block, CastFocus styles)
+        frame.castBar:SetPoint("LEFT", frame, "CENTER", -width + 12, 0)
+        frame.castBar:SetPoint("RIGHT", frame, "CENTER", width - 12, 0)
+        frame.castBar.Icon:SetPoint("LEFT", frame.castBar, "LEFT", 0, 0)
+    else
+        -- Text outside castbar (Modern, Thin, HealthFocus, Legacy styles)
+        frame.castBar.Icon:SetPoint("BOTTOMLEFT", frame, "CENTER", -width + 12, 0)
+        frame.castBar:SetPoint("LEFT", frame, "CENTER", -width + 12, 0)
+        frame.castBar:SetPoint("RIGHT", frame, "CENTER", width - 12, 0)
+    end
 end
 BBP.SetFriendlyBarWidthTemp = SetFriendlyBarWidthTemp
 
@@ -5623,10 +5624,16 @@ local function HandleNamePlateAdded(unit)
             end)
         end
 
+        -- BPP.isMidnight temp nameplate tweaks
         if not frame.bbpTempMidnightWidthHook then
             frame.bbpTempMidnightWidthHook = true
             hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
                 SetFriendlyBarWidthTemp(frame)
+            end)
+
+            hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
+                if frame:IsForbidden() or BetterBlizzPlatesDB.changeHealthbarHeight then return end
+                self:SetSize(2, BetterBlizzPlatesDB.nameplateGeneralHpHeight or 16)
             end)
         end
     end
@@ -6212,6 +6219,7 @@ function BBP.RefreshAllNameplates()
         end
         BBP.ConsolidatedUpdateName(frame)
         SetFriendlyBarWidthTemp(frame)
+        frame.HealthBarsContainer:SetHeight(BetterBlizzPlatesDB.nameplateGeneralHpHeight or 16)
         --HideFriendlyHealthbar(frame)
     end
 end
@@ -7235,6 +7243,10 @@ First:SetScript("OnEvent", function(_, event, addonName)
             else
                 BBP.CVarAdditionFetcher()
             end
+            if not BetterBlizzPlatesDB.nameplateGeneralHpHeight then
+                BetterBlizzPlatesDB.nameplateGeneralHpHeight = ((BetterBlizzPlatesDB.NamePlateVerticalScale or 2.7) * 4) + 5.5
+            end
+
             if not db.old_defaultLargeNamePlateFont then
                 db.old_defaultLargeNamePlateFont = db.defaultLargeNamePlateFont
                 db.old_defaultLargeFontSize = db.defaultLargeFontSize
