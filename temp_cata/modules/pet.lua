@@ -17,7 +17,8 @@ local function ShowMurloc(frame)
     frame.BuffFrame:SetAlpha(0)
     frame.name:SetAlpha(0)
     frame.murlocMode:Show()
-    frame.CastBar:Hide()
+    local castBar = frame.CastBar or frame.castBar
+    castBar:Hide()
     frame.hideNameOverride = true
     frame.hideCastbarOverride = true
 end

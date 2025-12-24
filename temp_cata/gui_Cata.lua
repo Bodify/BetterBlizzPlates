@@ -10641,7 +10641,11 @@ function BBP.LoadGUI()
     guiMidnight()
     BetterBlizzPlates.guiLoaded = true
 
-    Settings.OpenToCategory(BBP.category:GetID(), BBP.guiSupport)
+    if SettingsPanel:IsShown() then
+        HideUIPanel(SettingsPanel)
+    end
+    Settings.OpenToCategory(BBP.category:GetID())
+    Settings.OpenToCategory(BBP.category:GetID(), BBP.guiCustomCode)
     Settings.OpenToCategory(BBP.category:GetID())
 end
 

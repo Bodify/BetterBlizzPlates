@@ -991,29 +991,33 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                             --not rdy
                         -- Cast bar icon pos and scale
                         elseif element == "castBarIconXPos" or element == "castBarIconYPos" then
+                            local castBar = frame.CastBar or frame.castBar
                             if axis then
                                 local yOffset = BetterBlizzPlatesDB.castBarDragonflightShield and -2 or 0
-                                frame.CastBar.Icon:ClearAllPoints()
-                                frame.CastBar.Icon:SetPoint("CENTER", frame.CastBar, "LEFT", xPos, yPos)
-                                frame.CastBar.BorderShield:ClearAllPoints()
-                                frame.CastBar.BorderShield:SetPoint("CENTER", frame.CastBar.Icon, "CENTER", 0, 0)
+                                castBar.Icon:ClearAllPoints()
+                                castBar.Icon:SetPoint("CENTER", castBar, "LEFT", xPos, yPos)
+                                castBar.BorderShield:ClearAllPoints()
+                                castBar.BorderShield:SetPoint("CENTER", castBar.Icon, "CENTER", 0, 0)
                             else
                                 BetterBlizzPlatesDB.castBarIconScale = value
-                                frame.CastBar.Icon:SetScale(value)
-                                frame.CastBar.BorderShield:SetScale(value)
+                                castBar.Icon:SetScale(value)
+                                castBar.BorderShield:SetScale(value)
                             end
                         -- Cast bar height
                         elseif element == "castBarHeight" then
-                            frame.CastBar:SetHeight(value)
+                            local castBar = frame.CastBar or frame.castBar
+                            castBar:SetHeight(value)
                             if BetterBlizzPlatesDB.classicNameplates then
-                                frame.CastBar.UpdateBorders()
+                                castBar.UpdateBorders()
                             end
                         elseif element == "castBarTextScale" then
-                            frame.CastBar.castText:SetScale(value)
+                            local castBar = frame.CastBar or frame.castBar
+                            castBar.castText:SetScale(value)
                         -- Cast bar emphasis icon pos and scale
                         elseif element == "castBarEmphasisIconXPos" or element == "castBarEmphasisIconYPos" then
                             if axis then
-                                frame.CastBar.Icon:SetPoint("CENTER", frame.CastBar, "LEFT", xPos, yPos)
+                                local castBar = frame.CastBar or frame.castBar
+                                castBar.Icon:SetPoint("CENTER", castBar, "LEFT", xPos, yPos)
                             end
                         elseif element == "nameplateGeneralHeight" then
                             if not frame.greenScreened then
@@ -1360,15 +1364,16 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         else
                             C_CVar.SetCVar("NamePlateHorizontalScale", 1)
                         end
-                        if frame.CastBar then
+                        local castBar = frame.CastBar or frame.castBar
+                        if castBar then
                             if not BetterBlizzPlatesDB.enableCastbarCustomization then
                                 if BBP.isLargeNameplatesEnabled() then
-                                    frame.CastBar:SetHeight(18.8)
+                                    castBar:SetHeight(18.8)
                                 else
-                                    frame.CastBar:SetHeight(8)
+                                    castBar:SetHeight(8)
                                 end
                             else
-                                frame.CastBar:SetHeight(BetterBlizzPlatesDB.castBarHeight)
+                                castBar:SetHeight(BetterBlizzPlatesDB.castBarHeight)
                             end
                         end
                     end
@@ -11430,7 +11435,11 @@ function BBP.LoadGUI()
     guiMidnight()
     BetterBlizzPlates.guiLoaded = true
 
-    Settings.OpenToCategory(BBP.category:GetID(), BBP.guiSupport)
+    if SettingsPanel:IsShown() then
+        HideUIPanel(SettingsPanel)
+    end
+    Settings.OpenToCategory(BBP.category:GetID())
+    Settings.OpenToCategory(BBP.category:GetID(), BBP.guiCustomCode)
     Settings.OpenToCategory(BBP.category:GetID())
 end
 

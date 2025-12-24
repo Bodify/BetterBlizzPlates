@@ -252,12 +252,13 @@ function BBP.UpdateNameplateResourcePositionForCasting(nameplate, bypass)
         if bypass then
             PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset + classOffset)
         elseif isCasting then
-            PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.Unitframe.CastBar, "BOTTOM", xPos, yOffset + classOffset)
+            PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.Unitframe.castBar, "BOTTOM", xPos, yOffset + classOffset)
         else
-            if not nameplate.Unitframe.CastBar:IsShown() then
+            local castBar = nameplate.UnitFrame.CastBar or nameplate.UnitFrame.castBar
+            if not castBar:IsShown() then
                 PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset + classOffset)
             else
-                PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", nameplate.Unitframe.CastBar, "BOTTOM", xPos, yOffset + classOffset)
+                PixelUtil.SetPoint(nameplate.driverFrame.classNamePlateMechanicFrame, "TOP", castBar, "BOTTOM", xPos, yOffset + classOffset)
             end
         end
     end
@@ -497,14 +498,15 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 if frame.healthBar.SetBorderSize then
                     frame.healthBar:SetBorderSize(db.nameplateBorderSize)
                 end
+                local castBar = frame.CastBar or frame.castBar
                 if db.castBarPixelBorder then
-                    if frame.CastBar.SetBorderSize then
-                        frame.CastBar:SetBorderSize(db.nameplateBorderSize)
+                    if castBar.SetBorderSize then
+                        castBar:SetBorderSize(db.nameplateBorderSize)
                     end
                 end
                 if db.castBarIconPixelBorder then
-                    if frame.CastBar.Icon.SetBorderSize then
-                        frame.CastBar.Icon:SetBorderSize(db.nameplateBorderSize)
+                    if castBar.Icon.SetBorderSize then
+                        castBar.Icon:SetBorderSize(db.nameplateBorderSize)
                     end
                 end
             end
@@ -636,14 +638,15 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 if frame.healthBar.SetBorderSize then
                     frame.healthBar:SetBorderSize(db.nameplateTargetBorderSize)
                 end
+                local castBar = frame.CastBar or frame.castBar
                 if db.castBarPixelBorder then
-                    if frame.CastBar.SetBorderSize then
-                        frame.CastBar:SetBorderSize(db.nameplateTargetBorderSize)
+                    if castBar.SetBorderSize then
+                        castBar:SetBorderSize(db.nameplateTargetBorderSize)
                     end
                 end
                 if db.castBarIconPixelBorder then
-                    if frame.CastBar.Icon.SetBorderSize then
-                        frame.CastBar.Icon:SetBorderSize(db.nameplateTargetBorderSize)
+                    if castBar.Icon.SetBorderSize then
+                        castBar.Icon:SetBorderSize(db.nameplateTargetBorderSize)
                     end
                 end
             end

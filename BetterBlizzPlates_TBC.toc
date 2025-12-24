@@ -1,4 +1,4 @@
-## Interface: 40402
+## Interface: 20505
 ## Title: Better|cff00c0ffBlizz|rPlates
 ## Notes: Default Blizzard Nameplates with more features added to them with easy settings.
 ## Author: Bodify
@@ -14,8 +14,8 @@ init.lua
 
 temp_cata\modules\combat.lua
 temp_cata\modules\castbar.lua
-temp_cata\modules\totem_Cata.lua
-temp_cata\modules\arenaid_Cata.lua
+temp_cata\modules\totem.lua
+temp_cata\modules\arenaid.lua
 temp_cata\modules\execute.lua
 temp_cata\modules\healthNumbers.lua
 temp_cata\modules\target.lua
@@ -31,4 +31,4 @@ temp_cata\modules\profiles.lua
 retail\modules\importConvert.lua
 
 temp_cata\gui.lua
-temp_cata\BetterBlizzPlates.lua
+temp_tbc\BetterBlizzPlates.lua

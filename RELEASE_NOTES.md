@@ -1,10 +1,9 @@
-# BetterBlizzPlates 1.8.9k
-## GitHub
-- With this patch and forward my addons will also have GitHub releases. Huge thanks to zerbiniandrea for the pull request with everything set up quickly for me for this.
+# BetterBlizzPlates 1.9.0
+## The Burning Crusade
+- Very early and scuffed TBC support. Not very well tested and no default spells/npcs updated for TBC. Best I can do for now. Please report bugs. Any support in terms of spell ids and npc ids etc is welcome.
+## Midnight
+### Tweak
+- Some tweaks to nameplate height and width so they can be adjusted separately between friendly enemy again after Blizzard removed the default API for it. This will see more tweaks in the future so don't expect your settings to be 100% until a full release sometime before Midnight release.
 ## All versions
 ### Bugfix
-- Fix Arena Spec Names to have text aligned LEFT when spec text is LEFT anchored and vice versa. But actually this time (forgot an anchor).
-- Fix issues with tooltip setting for auras on both MoP and Era. Added "Show tooltip" setting back in the MoP version since that was accidentally removed from the GUI during the Cata->MoP update.
-## Classic Era
-### Tweak
-- Classic Era/SoD version now has different defaults for new users for Nameplate Aura filter settings. Due to no existing "Blizzard Default Filter" and too much work required to make my own preset (need debuffs of all classes and then also spell ids for every single rank since they are unique) this "Blizzard Default Filter" is now disabled (it doesnt do much anyway on Era) and instead "Only show mine" is enabled by default to show all your own debuffs. Whitelist etc can ofc still be tweaked however you like. Honestly thought I made this change forever ago but appearently not.
+- Fix all gui subcategories not showing instantly when loading GUI.
