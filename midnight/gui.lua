@@ -1208,7 +1208,13 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     -- Nameplate Widths
                 elseif element == "nameplateFriendlyWidth" then
                     -- if not BBP.checkCombatAndWarn() then
-                    --     BetterBlizzPlatesDB.nameplateFriendlyWidth = value
+                        BetterBlizzPlatesDB.nameplateFriendlyWidth = value
+                        for _, np in pairs(C_NamePlate.GetNamePlates()) do
+                            local frame = np.UnitFrame
+                            if frame then
+                                BBP.SetFriendlyBarWidthTemp(frame, BetterBlizzPlatesDB.nameplateFriendlyWidth/2)
+                            end
+                        end
                     --     local heightValue
                     --     if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
                     --         heightValue = 1
@@ -12560,6 +12566,11 @@ local function guiTemp()
             BetterBlizzPlatesDB.hpHeightFriendly = 4 * 2.7
             BetterBlizzPlatesDB.hpHeightSelf = 4 * 2.7
             BetterBlizzPlatesDB.hpHeightSelfMana = 4 * 2.7
+            BetterBlizzPlatesDB.useCustomTextureForBars = true
+            BetterBlizzPlatesDB.useCustomTextureForEnemy = true
+            BetterBlizzPlatesDB.useCustomTextureForFriendly = true
+            BetterBlizzPlatesDB.customTexture = "Blizzard DF"
+            BetterBlizzPlatesDB.customTextureFriendly = "Blizzard DF"
             -- BetterBlizzPlatesDB.fakeNameXPos = 0
             -- BetterBlizzPlatesDB.fakeNameYPos = 0
             -- BetterBlizzPlatesDB.fakeNameFriendlyXPos = 0
@@ -12567,6 +12578,7 @@ local function guiTemp()
         else
             BetterBlizzPlatesDB.useFakeName = false
             BetterBlizzPlatesDB.changeHealthbarHeight = false
+            BetterBlizzPlatesDB.useCustomTextureForBars = false
         end
         StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end)

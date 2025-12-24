@@ -1618,67 +1618,14 @@ end
 -- Set nameplate width
 function BBP.ApplyNameplateWidth()
     if not BBP.checkCombatAndWarn() then
-        local db = BetterBlizzPlatesDB
-        if db.nameplateEnemyHeight and db.nameplateFriendlyHeight then
-            local friendlyWidth = BBP.isLargeNameplatesEnabled() and db.nameplateDefaultLargeFriendlyWidth or db.nameplateDefaultFriendlyWidth
-            local enemyWidth = BBP.isLargeNameplatesEnabled() and db.nameplateDefaultLargeEnemyWidth or db.nameplateDefaultEnemyWidth
-            local friendlyHeight = db.friendlyNameplateNonstackable and 0.01 or (BBP.isLargeNameplatesEnabled() and (db.nameplateDefaultLargeFriendlyHeight + db.nameplateExtraClickHeight) or db.nameplateDefaultFriendlyHeight)
+        local enemyWidth   = BetterBlizzPlatesDB.nameplateEnemyWidth or 172.5
+        local friendlyWidth = BetterBlizzPlatesDB.nameplateFriendlyWidth or 172.5
 
-            if db.NamePlateVerticalScale then
-                C_CVar.SetCVar("NamePlateVerticalScale", db.NamePlateVerticalScale)
-            end
-
-            if db.friendlyNameplateClickthrough then
-                -- Disable clicking on friendly nameplates
-                C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Friendly, -10000, -10000, -10000, -10000)
-            else
-                -- Expand the clickable area with extra padding (argument order: left, right, top, bottom)
-                local extraClickHeight = (BetterBlizzPlatesDB.nameplateExtraClickHeight or 0)
-                local extraClickWidth = (BetterBlizzPlatesDB.nameplateExtraClickWidth or 0)
-                
-                C_NamePlateManager.SetNamePlateHitTestInsets(
-                    Enum.NamePlateType.Enemy,
-                    -extraClickWidth,      -- left: expand left
-                    -extraClickWidth,      -- right: expand right
-                    -extraClickHeight,     -- top: expand up
-                    -20                    -- bottom: expand down
-                )
-                C_NamePlateManager.SetNamePlateHitTestInsets(
-                    Enum.NamePlateType.Friendly,
-                    -extraClickWidth,      -- left: expand left
-                    -extraClickWidth,      -- right: expand right
-                    -extraClickHeight,     -- top: expand up
-                    -20                    -- bottom: expand down
-                )
-            end
-
-            if db.nameplateSelfHeight then
-                --C_NamePlate.SetNamePlateSelfSize(db.nameplateSelfWidth, db.nameplateSelfHeight)
-            end
-
-            --C_NamePlate.SetNamePlateFriendlySize(db.nameplateFriendlyWidth or friendlyWidth, friendlyHeight)
-            --C_NamePlate.SetNamePlateEnemySize(db.nameplateEnemyWidth or enemyWidth, BBP.isLargeNameplatesEnabled() and (db.nameplateDefaultLargeEnemyHeight + db.nameplateExtraClickHeight) or (db.nameplateDefaultEnemyHeight + db.nameplateExtraClickHeight))
-            C_NamePlate.SetNamePlateSize(db.nameplateEnemyWidth or enemyWidth, BBP.isLargeNameplatesEnabled() and (db.nameplateDefaultLargeEnemyHeight + db.nameplateExtraClickHeight) or (db.nameplateDefaultEnemyHeight + db.nameplateExtraClickHeight))
-        end
-    end
-end
-
-function BBP.ApplyNameplateWidth()
-    if not BBP.checkCombatAndWarn() then
-        local healthBarWidth = BetterBlizzPlatesDB.nameplateGeneralWidth or 172.5
+        local widestBar = math.max(enemyWidth, friendlyWidth)
         local healthBarHeight = BetterBlizzPlatesDB.nameplateGeneralHeight or 65
-        local extraClickHeight = (BetterBlizzPlatesDB.nameplateExtraClickHeight or 0)
-        local extraClickWidth = (BetterBlizzPlatesDB.nameplateExtraClickWidth or 0)
-
-        local hpBarWidth = 150
-        local hpBarHeight = 16
-
-        -- The nameplate size defines the maximum clickable bounds
-        local totalWidth = healthBarWidth + extraClickWidth
-        local totalHeight = healthBarHeight + extraClickHeight
 
         -- Set the nameplate size
-        C_NamePlate.SetNamePlateSize(totalWidth, totalHeight)
+        C_NamePlate.SetNamePlateSize(widestBar, healthBarHeight)
 
         if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
             -- Collapse friendly nameplates to un-clickable (positive = shrink)
@@ -2957,6 +2904,23 @@ local function SetBarWidth(frame, width, useOffsets)
         frame.castBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
     end
 end
+
+local function SetFriendlyBarWidthTemp(frame)
+    if frame:IsForbidden() or not frame.unit or UnitCanAttack("player", frame.unit) then return end
+    local db = BetterBlizzPlatesDB
+    local width = db.nameplateFriendlyWidth
+
+    frame.HealthBarsContainer:ClearPoint("RIGHT")
+    frame.HealthBarsContainer:ClearPoint("LEFT")
+    frame.castBar:ClearPoint("RIGHT")
+    frame.castBar:ClearPoint("LEFT")
+
+    frame.HealthBarsContainer:SetPoint("LEFT", frame, "CENTER", -width + 12, 0)
+    frame.HealthBarsContainer:SetPoint("RIGHT", frame, "CENTER", width - 12, 0)
+    frame.castBar:SetPoint("LEFT", frame, "CENTER", -width + 12, 0)
+    frame.castBar:SetPoint("RIGHT", frame, "CENTER", width - 12, 0)
+end
+BBP.SetFriendlyBarWidthTemp = SetFriendlyBarWidthTemp
 
 local function SmallPetsInPvP(frame)
     local config = frame.BetterBlizzPlates.config
@@ -5659,6 +5623,12 @@ local function HandleNamePlateAdded(unit)
             end)
         end
 
+        if not frame.bbpTempMidnightWidthHook then
+            frame.bbpTempMidnightWidthHook = true
+            hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
+                SetFriendlyBarWidthTemp(frame)
+            end)
+        end
     end
 
     -- Make settings
@@ -5722,6 +5692,7 @@ local function HandleNamePlateAdded(unit)
     if BetterBlizzPlatesDB.classicRetailNameplates or not config.useCustomTextureForBars then
         if frame.HealthBarsContainer.healthBar.MaskTexture then
             frame.HealthBarsContainer.healthBar.MaskTexture:Hide()
+            frame.HealthBarsContainer.healthBar.deselectedOverlay:SetAlpha(0)
         end
     end
     -- if info.isFriend and BetterBlizzPlatesDB.friendlyNameplateClickthrough then
@@ -6240,6 +6211,7 @@ function BBP.RefreshAllNameplates()
             BBP.FocusTargetIndicator(frame)
         end
         BBP.ConsolidatedUpdateName(frame)
+        SetFriendlyBarWidthTemp(frame)
         --HideFriendlyHealthbar(frame)
     end
 end
