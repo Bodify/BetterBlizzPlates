@@ -10616,13 +10616,19 @@ function BBP.InitializeOptions()
 end
 
 function BBP.LoadGUI()
-    if BetterBlizzPlates.guiLoaded then return end
+    -- First time opening settings
     if BetterBlizzPlatesDB.hasNotOpenedSettings then
         BBP.CreateIntroMessageWindow()
         BetterBlizzPlatesDB.hasNotOpenedSettings = nil
         return
     end
+
     if CombatOnGUICreation() then return end
+
+    if BetterBlizzPlates.guiLoaded then
+        Settings.OpenToCategory(BBP.category:GetID())
+        return
+    end
 
     guiGeneralTab()
     guiPositionAndScale()

@@ -6297,12 +6297,7 @@ SlashCmdList["BBP"] = function(msg)
     elseif command == "oldfonts" then
         BBP.UseOldFonts()
     else
-        --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
-        if not BetterBlizzPlates.guiLoaded then
-            BBP.LoadGUI()
-        else
-            Settings.OpenToCategory(BBP.category:GetID())
-        end
+        BBP.LoadGUI()
     end
 end
 
