@@ -443,10 +443,10 @@ local defaultSettings = {
 
     otherNpdeBuffEnable = true,
     otherNpdeBuffFilterAll = false,
-    otherNpdeBuffFilterBlizzard = false, -- only false on Era/TBC cuz no defaults (each spell rank has separate id)
+    otherNpdeBuffFilterBlizzard = true,
     otherNpdeBuffFilterWatchList = true,
     otherNpdeBuffFilterLessMinite = false,
-    otherNpdeBuffFilterOnlyMe = true,  -- only true on Era/TBC cuz no defaults (each spell rank has separate id)
+    otherNpdeBuffFilterOnlyMe = false,
     otherNpdeBuffPandemicGlow = false,
 
     friendlyNpBuffEnable = false,
@@ -1880,7 +1880,7 @@ function BBP.ApplyCustomTextureToNameplate(frame)
         config.customTextureFriendly = LSM:Fetch(LSM.MediaType.STATUSBAR, customTextureFriendly)
         config.customTextureSelf = LSM:Fetch(LSM.MediaType.STATUSBAR, customTextureSelf)
         config.customTextureSelfMana = LSM:Fetch(LSM.MediaType.STATUSBAR, customTextureSelfMana)
-        frame.HealthBarsContainer.border:SetFrameStrata("HIGH")
+        frame.healthBar.border:SetFrameStrata("HIGH")
 
         config.customTextureInitialized = true
     end
@@ -2745,7 +2745,7 @@ function BBP.FadeOutNPCs(frame)
     local db = BetterBlizzPlatesDB
     local alpha = (db.enableNpNonTargetAlpha and (UnitIsUnit(frame.unit, "target") and 1 or db.nameplateNonTargetAlpha)) or (db.enableNpNonFocusAlpha and (UnitIsUnit(frame.unit, "focus") and 1 or db.nameplateNonTargetAlpha)) or 1
     frame:SetAlpha(alpha)
-    frame.castBar:SetAlpha(alpha)
+    frame.CastBar:SetAlpha(alpha)
     frame.fadedNpc = nil
 
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
@@ -2756,7 +2756,7 @@ function BBP.FadeOutNPCs(frame)
 
     if UnitIsUnit(frame.unit, "pet") then
         frame:SetAlpha(alpha)
-        frame.castBar:SetAlpha(alpha)
+        frame.CastBar:SetAlpha(alpha)
         frame.fadedNpc = nil
         return
     end
@@ -2813,7 +2813,7 @@ function BBP.FadeOutNPCs(frame)
     -- Check if the unit is the current target
     if info.isTarget then
         frame:SetAlpha(alpha)
-        frame.castBar:SetAlpha(alpha)
+        frame.CastBar:SetAlpha(alpha)
         frame.fadedNpc = nil
     elseif onlyFadeSecondaryPets and BBP.isInArena and mainPets[npcID] and info.isEnemy then
         local isFakePet = true
@@ -2824,33 +2824,33 @@ function BBP.FadeOutNPCs(frame)
         end
         if isFakePet then
             frame:SetAlpha(config.fadeOutNPCsAlpha)
-            frame.castBar:SetAlpha(config.fadeOutNPCsAlpha)
+            frame.CastBar:SetAlpha(config.fadeOutNPCsAlpha)
             frame.fadedNpc = true
         end
     elseif onlyFadeSecondaryPets and secondaryPets[npcID] then
         frame:SetAlpha(config.fadeOutNPCsAlpha)
-        frame.castBar:SetAlpha(config.fadeOutNPCsAlpha)
+        frame.CastBar:SetAlpha(config.fadeOutNPCsAlpha)
         frame.fadedNpc = true
     elseif fadeOutNPCWhitelistOn then
         -- If whitelist mode is on, fade out if not in the whitelist
         if inList then
             frame:SetAlpha(alpha)
-            frame.castBar:SetAlpha(alpha)
+            frame.CastBar:SetAlpha(alpha)
             frame.fadedNpc = nil
         else
             frame:SetAlpha(config.fadeOutNPCsAlpha)
-            frame.castBar:SetAlpha(config.fadeOutNPCsAlpha)
+            frame.CastBar:SetAlpha(config.fadeOutNPCsAlpha)
             frame.fadedNpc = true
         end
     else
         -- If not in whitelist mode, fade out if in the list
         if inList then
             frame:SetAlpha(config.fadeOutNPCsAlpha)
-            frame.castBar:SetAlpha(config.fadeOutNPCsAlpha)
+            frame.CastBar:SetAlpha(config.fadeOutNPCsAlpha)
             frame.fadedNpc = true
         else
             frame:SetAlpha(alpha)
-            frame.castBar:SetAlpha(alpha)
+            frame.CastBar:SetAlpha(alpha)
             frame.fadedNpc = nil
         end
     end
@@ -2860,8 +2860,8 @@ end
 local function SetBarWidth(frame, width, useOffsets)
     frame.healthBar:ClearPoint("RIGHT")
     frame.healthBar:ClearPoint("LEFT")
-    frame.castBar:ClearPoint("RIGHT")
-    frame.castBar:ClearPoint("LEFT")
+    frame.CastBar:ClearPoint("RIGHT")
+    frame.CastBar:ClearPoint("LEFT")
 
     if useOffsets then
         if BetterBlizzPlatesDB.classicNameplates then
@@ -2869,14 +2869,14 @@ local function SetBarWidth(frame, width, useOffsets)
             frame.healthBar:SetPoint("LEFT", frame, "LEFT", -width + 4, 0)
             frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", width + xPos,0)
 
-            frame.castBar:SetPoint("LEFT", frame, "LEFT", -width + 4, 0)
-            frame.castBar:SetPoint("RIGHT", frame, "RIGHT", width + xPos, 0)
+            frame.CastBar:SetPoint("LEFT", frame, "LEFT", -width + 4, 0)
+            frame.CastBar:SetPoint("RIGHT", frame, "RIGHT", width + xPos, 0)
         else
             frame.healthBar:SetPoint("LEFT", frame, "LEFT", -width + 12, 0)
             frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", width - 12,0)
 
-            frame.castBar:SetPoint("LEFT", frame, "LEFT", -width + 12, 0)
-            frame.castBar:SetPoint("RIGHT", frame, "RIGHT", width - 12, 0)
+            frame.CastBar:SetPoint("LEFT", frame, "LEFT", -width + 12, 0)
+            frame.CastBar:SetPoint("RIGHT", frame, "RIGHT", width - 12, 0)
         end
     else
         if BetterBlizzPlatesDB.classicNameplates then
@@ -2884,21 +2884,21 @@ local function SetBarWidth(frame, width, useOffsets)
                 frame.healthBar:SetPoint("LEFT", frame, "CENTER", -width, 0)
                 frame.healthBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
 
-                frame.castBar:SetPoint("LEFT", frame, "CENTER", -width, 0)
-                frame.castBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
+                frame.CastBar:SetPoint("LEFT", frame, "CENTER", -width, 0)
+                frame.CastBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
             else
                 frame.healthBar:SetPoint("LEFT", frame, "CENTER", -width - 17, 0)
                 frame.healthBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
 
-                frame.castBar:SetPoint("LEFT", frame, "CENTER", -width - 17, 0)
-                frame.castBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
+                frame.CastBar:SetPoint("LEFT", frame, "CENTER", -width - 17, 0)
+                frame.CastBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
             end
         else
             frame.healthBar:SetPoint("LEFT", frame, "CENTER", -width, 0)
             frame.healthBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
 
-            frame.castBar:SetPoint("LEFT", frame, "CENTER", -width, 0)
-            frame.castBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
+            frame.CastBar:SetPoint("LEFT", frame, "CENTER", -width, 0)
+            frame.CastBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
         end
     end
     frame.healthBar.bbpAdjusted = true
@@ -3149,7 +3149,7 @@ function BBP.ShowMurloc(frame)
     end
     frame.name:SetAlpha(0)
     frame.murlocMode:Show()
-    frame.castBar:Hide()
+    frame.CastBar:Hide()
     frame.hideNameOverride = true
     frame.hideCastbarOverride = true
 end
@@ -3441,7 +3441,7 @@ function BBP.CreateUnitAuraEventFrame()
 end
 
 -- if not frame.BetterBlizzPlates.bbpBorder then
---     frame.HealthBarsContainer.border:Hide()
+--     frame.healthBar.border:Hide()
 --     frame.BetterBlizzPlates.bbpBorder = CreateFrame("Frame", nil, frame)
 --     local border = frame.BetterBlizzPlates.bbpBorder
 
@@ -3484,7 +3484,7 @@ local function CreateBetterClassicHealthbarBorder(frame)
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
 
     if not frame.BetterBlizzPlates.bbpBorder then
-        frame.HealthBarsContainer.border:Hide()
+        frame.healthBar.border:Hide()
         frame.BetterBlizzPlates.bbpBorder = CreateFrame("Frame", nil, frame)
         local border = frame.BetterBlizzPlates.bbpBorder
 
@@ -3517,8 +3517,8 @@ local function CreateBetterClassicHealthbarBorder(frame)
             self.left:SetVertexColor(r, g, b, a)
             self.center:SetVertexColor(r, g, b, a)
             self.right:SetVertexColor(r, g, b, a)
-            frame.castBar.bbpCastBorder:SetCastBorderColor(r, g, b, a)
-            frame.castBar.bbpCastUninterruptibleBorder:SetCastBorderColor(r, g, b, a)
+            frame.CastBar.bbpCastBorder:SetCastBorderColor(r, g, b, a)
+            frame.CastBar.bbpCastUninterruptibleBorder:SetCastBorderColor(r, g, b, a)
         end
 
         function frame.healthBar:SetBorderSize(size)
@@ -3577,11 +3577,11 @@ local function CreateBetterClassicCastbarBorders(frame)
 
     -- Helper function to create borders
     local function CreateBorder(frame, textureLeft, textureCenter, textureRight, yPos)
-        local border = CreateFrame("Frame", nil, frame.castBar)
+        local border = CreateFrame("Frame", nil, frame.CastBar)
         border:SetFrameStrata("HIGH")
         local left = border:CreateTexture(nil, "OVERLAY", nil, 3)
         left:SetTexture(textureLeft)
-        left:SetPoint("BOTTOMLEFT", frame.castBar, "BOTTOMLEFT", -21, yPos)
+        left:SetPoint("BOTTOMLEFT", frame.CastBar, "BOTTOMLEFT", -21, yPos)
         border.left = left
 
         local center = border:CreateTexture(nil, "OVERLAY", nil, 3)
@@ -3616,24 +3616,24 @@ local function CreateBetterClassicCastbarBorders(frame)
     end
 
     -- Interruptible
-    if not frame.castBar.bbpCastBorder then
-        frame.castBar.Border:SetAlpha(0)
-        frame.castBar.bbpCastBorder = CreateBorder(
+    if not frame.CastBar.bbpCastBorder then
+        frame.CastBar.Border:SetAlpha(0)
+        frame.CastBar.bbpCastBorder = CreateBorder(
             frame,
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderLeft",
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderCenter",
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderRight",
             -3
         )
-        frame.castBar.Icon:SetParent(frame.castBar)
-        frame.castBar.Icon:SetDrawLayer("OVERLAY", 7)
+        frame.CastBar.Icon:SetParent(frame.CastBar)
+        frame.CastBar.Icon:SetDrawLayer("OVERLAY", 7)
     end
-    frame.castBar.bbpCastBorder.center:SetWidth(width - 40 + levelFrameAdjustment)
+    frame.CastBar.bbpCastBorder.center:SetWidth(width - 40 + levelFrameAdjustment)
 
     -- Uninterruptible
-    if not frame.castBar.bbpCastUninterruptibleBorder then
-        frame.castBar.BorderShield:SetAlpha(0)
-        frame.castBar.bbpCastUninterruptibleBorder = CreateBorder(
+    if not frame.CastBar.bbpCastUninterruptibleBorder then
+        frame.CastBar.BorderShield:SetAlpha(0)
+        frame.CastBar.bbpCastUninterruptibleBorder = CreateBorder(
             frame,
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleLeft",
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleCenter",
@@ -3641,39 +3641,39 @@ local function CreateBetterClassicCastbarBorders(frame)
             -11
         )
         if BetterBlizzPlatesDB.hideCastbarBorderShield then
-            frame.castBar.bbpCastUninterruptibleBorder.left:SetAlpha(0)
-            frame.castBar.bbpCastUninterruptibleBorder.right:SetAlpha(0)
-            frame.castBar.bbpCastUninterruptibleBorder.center:SetAlpha(0)
+            frame.CastBar.bbpCastUninterruptibleBorder.left:SetAlpha(0)
+            frame.CastBar.bbpCastUninterruptibleBorder.right:SetAlpha(0)
+            frame.CastBar.bbpCastUninterruptibleBorder.center:SetAlpha(0)
         end
     end
-    frame.castBar.bbpCastUninterruptibleBorder.center:SetWidth(width - 40 + levelFrameAdjustment)
+    frame.CastBar.bbpCastUninterruptibleBorder.center:SetWidth(width - 40 + levelFrameAdjustment)
 
     -- Update border visibility
     local function UpdateBorders()
         if frame:IsForbidden() then return end
-        frame.castBar.Border:SetAlpha(0)
-        frame.castBar.BorderShield:SetAlpha(0)
-        if frame.castBar.notInterruptible then
-            frame.castBar.bbpCastUninterruptibleBorder:Show()
-            frame.castBar.bbpCastBorder:Hide()
-            frame.castBar.Icon:SetParent(frame.castBar.bbpCastUninterruptibleBorder)
+        frame.CastBar.Border:SetAlpha(0)
+        frame.CastBar.BorderShield:SetAlpha(0)
+        if frame.CastBar.notInterruptible then
+            frame.CastBar.bbpCastUninterruptibleBorder:Show()
+            frame.CastBar.bbpCastBorder:Hide()
+            frame.CastBar.Icon:SetParent(frame.CastBar.bbpCastUninterruptibleBorder)
         else
-            frame.castBar.bbpCastUninterruptibleBorder:Hide()
-            frame.castBar.bbpCastBorder:Show()
-            frame.castBar.Icon:SetParent(frame.castBar.bbpCastBorder)
+            frame.CastBar.bbpCastUninterruptibleBorder:Hide()
+            frame.CastBar.bbpCastBorder:Show()
+            frame.CastBar.Icon:SetParent(frame.CastBar.bbpCastBorder)
         end
-        frame.castBar.Icon:SetDrawLayer("OVERLAY", 7) -- Ensure the icon is on top
+        frame.CastBar.Icon:SetDrawLayer("OVERLAY", 7) -- Ensure the icon is on top
 
-        local height = frame.castBar:GetHeight()
+        local height = frame.CastBar:GetHeight()
         local bottomOffset = -((5/11) * height - 1.09)
         local topOffset = (1.97 * height)-- - 1
-        frame.castBar.bbpCastBorder.left:ClearAllPoints()
-        frame.castBar.bbpCastBorder.left:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -21, topOffset)
-        frame.castBar.bbpCastBorder.left:SetPoint("BOTTOMLEFT", frame.castBar, "BOTTOMLEFT", -21, bottomOffset)
+        frame.CastBar.bbpCastBorder.left:ClearAllPoints()
+        frame.CastBar.bbpCastBorder.left:SetPoint("TOPLEFT", frame.CastBar, "TOPLEFT", -21, topOffset)
+        frame.CastBar.bbpCastBorder.left:SetPoint("BOTTOMLEFT", frame.CastBar, "BOTTOMLEFT", -21, bottomOffset)
 
-        frame.castBar.bbpCastUninterruptibleBorder.left:ClearAllPoints()
-        frame.castBar.bbpCastUninterruptibleBorder.left:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -21, topOffset-(height*0.85))
-        frame.castBar.bbpCastUninterruptibleBorder.left:SetPoint("BOTTOMLEFT", frame.castBar, "BOTTOMLEFT", -21, bottomOffset-(height*0.85))
+        frame.CastBar.bbpCastUninterruptibleBorder.left:ClearAllPoints()
+        frame.CastBar.bbpCastUninterruptibleBorder.left:SetPoint("TOPLEFT", frame.CastBar, "TOPLEFT", -21, topOffset-(height*0.85))
+        frame.CastBar.bbpCastUninterruptibleBorder.left:SetPoint("BOTTOMLEFT", frame.CastBar, "BOTTOMLEFT", -21, bottomOffset-(height*0.85))
     end
 
     -- local function UpdateCastBarIconSize(self)
@@ -3687,33 +3687,33 @@ local function CreateBetterClassicCastbarBorders(frame)
     --     end
     --     if notInterruptible then
     --         self.Icon:ClearAllPoints()
-    --         self.Icon:SetPoint("CENTER", frame.castBar, "LEFT", -10.5, 1)
+    --         self.Icon:SetPoint("CENTER", frame.CastBar, "LEFT", -10.5, 1)
     --         --self.Icon:SetSize(11, 11)
     --         self.Icon:SetDrawLayer("OVERLAY", 7)
     --     end
     -- end
     -- if not frame.bbpClassicCastbarHook then
-    --     frame.castBar:HookScript("OnUpdate", function()
-    --         UpdateCastBarIconSize(frame.castBar)
+    --     frame.CastBar:HookScript("OnUpdate", function()
+    --         UpdateCastBarIconSize(frame.CastBar)
     --     end)
     --     frame.bbpClassicCastbarHook = true
     -- end
 
-    frame.castBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or 10)
+    frame.CastBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or 10)
 
-    if not frame.castBar.eventsHooked then
-        frame.castBar.UpdateBorders = UpdateBorders
-        frame.castBar:HookScript("OnShow", UpdateBorders)
-        frame.castBar:HookScript("OnHide", UpdateBorders)
-        frame.castBar.BorderShield:HookScript("OnShow", UpdateBorders)
-        frame.castBar.BorderShield:HookScript("OnHide", UpdateBorders)
-        frame.castBar.eventsHooked = true
+    if not frame.CastBar.eventsHooked then
+        frame.CastBar.UpdateBorders = UpdateBorders
+        frame.CastBar:HookScript("OnShow", UpdateBorders)
+        frame.CastBar:HookScript("OnHide", UpdateBorders)
+        frame.CastBar.BorderShield:HookScript("OnShow", UpdateBorders)
+        frame.CastBar.BorderShield:HookScript("OnHide", UpdateBorders)
+        frame.CastBar.eventsHooked = true
 
-        hooksecurefunc(frame.castBar.Icon, "SetPoint", function(self)
+        hooksecurefunc(frame.CastBar.Icon, "SetPoint", function(self)
             if self.changing or self:IsForbidden() then return end
             self.changing = true
             self:ClearAllPoints()
-            self:SetPoint("RIGHT", frame.castBar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos-2, BetterBlizzPlatesDB.castBarIconYPos)
+            self:SetPoint("RIGHT", frame.CastBar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos-2, BetterBlizzPlatesDB.castBarIconYPos)
             --borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
             self.changing = false
         end)
@@ -3724,12 +3724,12 @@ local function CreateBetterClassicCastbarBorders(frame)
 
     -- Adjust cast bar position
     if centerCastbar then
-        frame.castBar:ClearAllPoints()
-        frame.castBar:SetPoint("TOP", frame, "BOTTOM", 0, -5)
+        frame.CastBar:ClearAllPoints()
+        frame.CastBar:SetPoint("TOP", frame, "BOTTOM", 0, -5)
     else
-        frame.castBar:ClearAllPoints()
-        frame.castBar:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 17, -8)
-        frame.castBar:SetWidth(width - 25 + levelFrameAdjustment)
+        frame.CastBar:ClearAllPoints()
+        frame.CastBar:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 17, -8)
+        frame.CastBar:SetWidth(width - 25 + levelFrameAdjustment)
     end
 end
 BBP.CreateBetterClassicCastbarBorders = CreateBetterClassicCastbarBorders
@@ -3758,113 +3758,113 @@ end
 -- ClassicCastbarText
 
 local function CreateBetterCastbarText(frame)
-    if not frame.castBar.castText then
-        frame.castBar.castText = frame.castBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        frame.castBar.castText:SetText("")
-        frame.castBar.castText:SetDrawLayer("OVERLAY", 7)
-        frame.castBar.castText:SetPoint("CENTER", frame.castBar, "CENTER", 0, BetterBlizzPlatesDB.classicNameplates and 0.5 or 0)
-        BBP.SetFontBasedOnOption(frame.castBar.castText, BetterBlizzPlatesDB.classicNameplates and 8 or 10, "THINOUTLINE")
-        frame.castBar.castText:SetTextColor(1, 1, 1)
-        frame.castBar.castText:SetJustifyH("CENTER") -- Horizontal alignment
-        frame.castBar.castText:SetJustifyV("MIDDLE") -- Vertical alignment
-        frame.castBar.castText:SetWordWrap(false) -- Disable word wrap
-        frame.castBar.castText:SetMaxLines(1) -- Only one line
+    if not frame.CastBar.castText then
+        frame.CastBar.castText = frame.CastBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        frame.CastBar.castText:SetText("")
+        frame.CastBar.castText:SetDrawLayer("OVERLAY", 7)
+        frame.CastBar.castText:SetPoint("CENTER", frame.CastBar, "CENTER", 0, BetterBlizzPlatesDB.classicNameplates and 0.5 or 0)
+        BBP.SetFontBasedOnOption(frame.CastBar.castText, BetterBlizzPlatesDB.classicNameplates and 8 or 10, "THINOUTLINE")
+        frame.CastBar.castText:SetTextColor(1, 1, 1)
+        frame.CastBar.castText:SetJustifyH("CENTER") -- Horizontal alignment
+        frame.CastBar.castText:SetJustifyV("MIDDLE") -- Vertical alignment
+        frame.CastBar.castText:SetWordWrap(false) -- Disable word wrap
+        frame.CastBar.castText:SetMaxLines(1) -- Only one line
     end
-    --frame.castBar.castText:SetWidth(frame.castBar:GetWidth() - 20)
+    --frame.CastBar.castText:SetWidth(frame.CastBar:GetWidth() - 20)
 
-    BBP.SetFontBasedOnOption(frame.castBar.castText, BetterBlizzPlatesDB.classicNameplates and 8 or 10, "THINOUTLINE")
+    BBP.SetFontBasedOnOption(frame.CastBar.castText, BetterBlizzPlatesDB.classicNameplates and 8 or 10, "THINOUTLINE")
 end
 BBP.CreateBetterCastbarText = CreateBetterCastbarText
 
 -- local function AdjustRetailCastbar(frame)
 --     local width = frame.healthBar:GetWidth() + 25
 --     local levelFrameAdjustment = BetterBlizzPlatesDB.hideLevelFrame and -17 or 0
---         frame.castBar:ClearAllPoints()
---         frame.castBar:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 17, -5)
---         frame.castBar:SetWidth(width - 25 + levelFrameAdjustment)
+--         frame.CastBar:ClearAllPoints()
+--         frame.CastBar:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 17, -5)
+--         frame.CastBar:SetWidth(width - 25 + levelFrameAdjustment)
 -- end
 
 local function CreateBetterRetailCastbar(frame)
-    frame.castBar:ClearAllPoints()
-    frame.castBar.Border:SetAlpha(0)
-    frame.castBar:SetFrameStrata("HIGH")
+    frame.CastBar:ClearAllPoints()
+    frame.CastBar.Border:SetAlpha(0)
+    frame.CastBar:SetFrameStrata("HIGH")
 
-    frame.castBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or 16)
-    frame.castBar:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 0, BetterBlizzPlatesDB.castBarYAxisHeight or -2)
-    frame.castBar:SetPoint("TOPRIGHT", frame.healthBar, "BOTTOMRIGHT", 0, BetterBlizzPlatesDB.castBarYAxisHeight or -2)
+    frame.CastBar:SetHeight(BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarHeight or 16)
+    frame.CastBar:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 0, BetterBlizzPlatesDB.castBarYAxisHeight or -2)
+    frame.CastBar:SetPoint("TOPRIGHT", frame.healthBar, "BOTTOMRIGHT", 0, BetterBlizzPlatesDB.castBarYAxisHeight or -2)
 
-    frame.castBar.Icon:ClearAllPoints()
-    --frame.castBar.Icon:SetSize(10,10)
-    frame.castBar.Icon:SetPoint("CENTER", frame.castBar, "LEFT", 5, 0)
-    frame.castBar.Icon:SetDrawLayer("OVERLAY", 7)
-    --frame.castBar:SetWidth(width - 26)
+    frame.CastBar.Icon:ClearAllPoints()
+    --frame.CastBar.Icon:SetSize(10,10)
+    frame.CastBar.Icon:SetPoint("CENTER", frame.CastBar, "LEFT", 5, 0)
+    frame.CastBar.Icon:SetDrawLayer("OVERLAY", 7)
+    --frame.CastBar:SetWidth(width - 26)
 
     -- Hook the OnUpdate script to ensure the size is set correctly
     local function UpdateCastBarIconSize(self)
         self.Icon:ClearAllPoints()
-        self.Icon:SetPoint("CENTER", frame.castBar, "LEFT", 0, 0)
+        self.Icon:SetPoint("CENTER", frame.CastBar, "LEFT", 0, 0)
         self.Icon:SetSize(13, 13)
         self.Icon:SetDrawLayer("OVERLAY", 7)
     end
 
     -- Create the background texture
-    if not frame.castBar.Background then
-        frame.castBar.retailCastbar = true
-        frame.castBar.Background = frame.castBar:CreateTexture(nil, "BORDER")
-        frame.castBar.Background:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Background")
-        -- frame.castBar.Background:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -11, 1)
-        -- frame.castBar.Background:SetPoint("BOTTOMRIGHT", frame.castBar, "BOTTOMRIGHT", 11, -1)
-        frame.castBar.Background:SetAllPoints()
-        frame.castBar.Background:SetDrawLayer("BORDER", -7)
+    if not frame.CastBar.Background then
+        frame.CastBar.retailCastbar = true
+        frame.CastBar.Background = frame.CastBar:CreateTexture(nil, "BORDER")
+        frame.CastBar.Background:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Background")
+        -- frame.CastBar.Background:SetPoint("TOPLEFT", frame.CastBar, "TOPLEFT", -11, 1)
+        -- frame.CastBar.Background:SetPoint("BOTTOMRIGHT", frame.CastBar, "BOTTOMRIGHT", 11, -1)
+        frame.CastBar.Background:SetAllPoints()
+        frame.CastBar.Background:SetDrawLayer("BORDER", -7)
     end
 
-    if not frame.castBar.bbpSpark then
-        frame.castBar.bbpSpark = frame.castBar:CreateTexture(nil, "BORDER")
-        frame.castBar.bbpSpark:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Pip")
-        frame.castBar.bbpSpark:SetSize(18,18)
-        --frame.castBar.bbpSpark:SetParent(frame.castBar.Spark)
-        frame.castBar.bbpSpark:SetPoint("CENTER", frame.castBar.Spark, "CENTER", 0, 0)
-        frame.castBar.bbpSpark:SetDrawLayer("BORDER", 1)
-        frame.castBar.Spark:SetAlpha(0)
-        -- frame.castBar.bbpSpark:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -12, 2)
-        -- frame.castBar.bbpSpark:SetPoint("BOTTOMRIGHT", frame.castBar, "BOTTOMRIGHT", 12, -2)
-        -- frame.castBar.Spark = frame.castBar.bbpSpark
+    if not frame.CastBar.bbpSpark then
+        frame.CastBar.bbpSpark = frame.CastBar:CreateTexture(nil, "BORDER")
+        frame.CastBar.bbpSpark:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Pip")
+        frame.CastBar.bbpSpark:SetSize(18,18)
+        --frame.CastBar.bbpSpark:SetParent(frame.CastBar.Spark)
+        frame.CastBar.bbpSpark:SetPoint("CENTER", frame.CastBar.Spark, "CENTER", 0, 0)
+        frame.CastBar.bbpSpark:SetDrawLayer("BORDER", 1)
+        frame.CastBar.Spark:SetAlpha(0)
+        -- frame.CastBar.bbpSpark:SetPoint("TOPLEFT", frame.CastBar, "TOPLEFT", -12, 2)
+        -- frame.CastBar.bbpSpark:SetPoint("BOTTOMRIGHT", frame.CastBar, "BOTTOMRIGHT", 12, -2)
+        -- frame.CastBar.Spark = frame.CastBar.bbpSpark
 
-        --frame.castBar.Spark
+        --frame.CastBar.Spark
     end
 
-    frame.castBar.bbpSpark:ClearAllPoints()
-    frame.castBar.bbpSpark:SetPoint("CENTER", frame.castBar.Spark, "CENTER", 0, 0)
+    frame.CastBar.bbpSpark:ClearAllPoints()
+    frame.CastBar.bbpSpark:SetPoint("CENTER", frame.CastBar.Spark, "CENTER", 0, 0)
 
-    -- if not frame.castBar.bbpBorderShield then
-    --     frame.castBar.BorderShield:SetAlpha(0)
-    --     frame.castBar.bbpBorderShield = frame.castBar:CreateTexture(nil, "BORDER")
+    -- if not frame.CastBar.bbpBorderShield then
+    --     frame.CastBar.BorderShield:SetAlpha(0)
+    --     frame.CastBar.bbpBorderShield = frame.CastBar:CreateTexture(nil, "BORDER")
     --     if not BetterBlizzPlatesDB.hideCastbarBorderShield then
-    --         frame.castBar.bbpBorderShield:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Shield")
+    --         frame.CastBar.bbpBorderShield:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Shield")
     --     end
-    --     frame.castBar.bbpBorderShield:SetSize(31,31)
-    --     frame.castBar.bbpBorderShield:SetPoint("CENTER", frame.castBar.Icon, "CENTER", 0, -1)
-    --     frame.castBar.bbpBorderShield:SetDrawLayer("BORDER", 1)
+    --     frame.CastBar.bbpBorderShield:SetSize(31,31)
+    --     frame.CastBar.bbpBorderShield:SetPoint("CENTER", frame.CastBar.Icon, "CENTER", 0, -1)
+    --     frame.CastBar.bbpBorderShield:SetDrawLayer("BORDER", 1)
     -- end
 
 
     if BetterBlizzPlatesDB.hideCastbarBorderShield then
-        frame.castBar.BorderShield:SetTexture(nil)
+        frame.CastBar.BorderShield:SetTexture(nil)
     else
-        frame.castBar.BorderShield:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Shield")
+        frame.CastBar.BorderShield:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Shield")
     end
-    frame.castBar.BorderShield:SetSize(31,31)
-    frame.castBar.BorderShield:ClearAllPoints()
-    frame.castBar.BorderShield:SetPoint("CENTER", frame.castBar.Icon, "CENTER", 0, -1)
-    frame.castBar.BorderShield:SetDrawLayer("OVERLAY", 5)
+    frame.CastBar.BorderShield:SetSize(31,31)
+    frame.CastBar.BorderShield:ClearAllPoints()
+    frame.CastBar.BorderShield:SetPoint("CENTER", frame.CastBar.Icon, "CENTER", 0, -1)
+    frame.CastBar.BorderShield:SetDrawLayer("OVERLAY", 5)
 
 
     -- -- Create the frame texture
-    -- if not frame.castBar.Frame then
-    --     frame.castBar.Frame = frame.castBar:CreateTexture(nil, "ARTWORK")
-    --     frame.castBar.Frame:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Frame")
-    --     frame.castBar.Frame:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -12, 2)
-    --     frame.castBar.Frame:SetPoint("BOTTOMRIGHT", frame.castBar, "BOTTOMRIGHT", 12, -2)
+    -- if not frame.CastBar.Frame then
+    --     frame.CastBar.Frame = frame.CastBar:CreateTexture(nil, "ARTWORK")
+    --     frame.CastBar.Frame:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Frame")
+    --     frame.CastBar.Frame:SetPoint("TOPLEFT", frame.CastBar, "TOPLEFT", -12, 2)
+    --     frame.CastBar.Frame:SetPoint("BOTTOMRIGHT", frame.CastBar, "BOTTOMRIGHT", 12, -2)
     -- end
 
     -- Update the filling texture based on cast type
@@ -3932,12 +3932,12 @@ local function CreateBetterRetailCastbar(frame)
     end
 
     if not BetterBlizzPlatesDB.useCustomCastbarTexture and not BetterBlizzPlatesDB.castBarRecolor then
-        frame.castBar.reColorSettings = true
-        frame.castBar:SetStatusBarColor(1,1,1)
-        UpdateCastBarTextures(frame.castBar)
+        frame.CastBar.reColorSettings = true
+        frame.CastBar:SetStatusBarColor(1,1,1)
+        UpdateCastBarTextures(frame.CastBar)
     end
 
-    local children = {frame.castBar:GetRegions()}
+    local children = {frame.CastBar:GetRegions()}
     for _, region in ipairs(children) do
         if region:IsObjectType("Texture") and region:GetDrawLayer() == "BACKGROUND" then
             region:SetAlpha(0)
@@ -3945,53 +3945,53 @@ local function CreateBetterRetailCastbar(frame)
     end
 
     local function UpdateSpark()
-        if not frame.castBar.barType or frame.castBar.barType == "interrupted" then
-            frame.castBar.bbpSpark:Hide()
+        if not frame.CastBar.barType or frame.CastBar.barType == "interrupted" then
+            frame.CastBar.bbpSpark:Hide()
             return
         end
 
-        local min, max = frame.castBar:GetMinMaxValues()
-        local value   = frame.castBar:GetValue()
-        local width   = frame.castBar:GetWidth()
+        local min, max = frame.CastBar:GetMinMaxValues()
+        local value   = frame.CastBar:GetValue()
+        local width   = frame.CastBar:GetWidth()
         local range   = max - min
 
         if (range <= 0) then
-            frame.castBar.bbpSpark:Hide()
+            frame.CastBar.bbpSpark:Hide()
             return
         end
 
         -- otherwise, show + position it
-        frame.castBar.bbpSpark:Show()
+        frame.CastBar.bbpSpark:Show()
         local sparkPos = (value - min) / range * width
-        frame.castBar.bbpSpark:SetPoint("CENTER", frame.castBar, "LEFT", sparkPos, 0)
+        frame.CastBar.bbpSpark:SetPoint("CENTER", frame.CastBar, "LEFT", sparkPos, 0)
     end
 
 
     if not frame.bbpRetailCastbarHook then
         if BetterBlizzPlatesDB.useCustomCastbarTexture then
-            frame.castBar:HookScript("OnUpdate", function(self)
+            frame.CastBar:HookScript("OnUpdate", function(self)
                 if frame:IsForbidden() then return end
-                --UpdateCastBarIconSize(frame.castBar)
+                --UpdateCastBarIconSize(frame.CastBar)
                 --UpdateCastBarTextures(self)
                 UpdateSpark()
             end)
         else
-            frame.castBar:HookScript("OnUpdate", function(self)
+            frame.CastBar:HookScript("OnUpdate", function(self)
                 if frame:IsForbidden() then return end
-                --UpdateCastBarIconSize(frame.castBar)
+                --UpdateCastBarIconSize(frame.CastBar)
                 --UpdateCastBarTextures(self)
                 UpdateSpark()
             end)
         end
-        frame.castBar:HookScript("OnEvent", function()
-            frame.castBar.BorderShield:SetSize(31,31)
-            frame.castBar.BorderShield:ClearAllPoints()
-            frame.castBar.BorderShield:SetPoint("CENTER", frame.castBar.Icon, "CENTER", 0, -1)
-            frame.castBar.BorderShield:SetDrawLayer("OVERLAY", 5)
+        frame.CastBar:HookScript("OnEvent", function()
+            frame.CastBar.BorderShield:SetSize(31,31)
+            frame.CastBar.BorderShield:ClearAllPoints()
+            frame.CastBar.BorderShield:SetPoint("CENTER", frame.CastBar.Icon, "CENTER", 0, -1)
+            frame.CastBar.BorderShield:SetDrawLayer("OVERLAY", 5)
         end)
 
-        -- frame.castBar:HookScript("OnEvent", function(self, event, ...)
-        --     -- --UpdateCastBarIconSize(frame.castBar)
+        -- frame.CastBar:HookScript("OnEvent", function(self, event, ...)
+        --     -- --UpdateCastBarIconSize(frame.CastBar)
         --     -- UpdateCastBarTextures(self)
         --     -- UpdateSpark()
         --     if event == "UNIT_SPELLCAST_INTERRUPTED" then
@@ -3999,11 +3999,11 @@ local function CreateBetterRetailCastbar(frame)
         --     end
         -- end)
 
-        hooksecurefunc(frame.castBar.Icon, "SetPoint", function(self)
+        hooksecurefunc(frame.CastBar.Icon, "SetPoint", function(self)
             if self.changing or self:IsForbidden() then return end
             self.changing = true
             self:ClearAllPoints()
-            self:SetPoint("CENTER", frame.castBar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
+            self:SetPoint("CENTER", frame.CastBar, "LEFT", BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
             --borderShield:SetPoint("CENTER", self, "CENTER", 0, 0)
             self.changing = false
         end)
@@ -4163,7 +4163,6 @@ local function CreateRetailNameplateLook(frame)
     frame.healthBar:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 12, 9)
     -- frame.LevelFrame:Hide()
     -- frame.LevelFrame:SetAlpha(0)
-    frame.HealthBarsContainer.border:Hide()
     SetupBorderOnFrame(frame.healthBar)
 
     if BBP.isInPvP or BetterBlizzPlatesDB.hideLevelFrame then
@@ -4600,19 +4599,19 @@ function BBP.ColorNameplateBorder(frame)
 end
 
 local function HookNameplateCastbarHide(frame)
-    -- if not frame.castBar.hideHooked then
-    --     -- hooksecurefunc(frame.castBar, "Hide", function(self)
+    -- if not frame.CastBar.hideHooked then
+    --     -- hooksecurefunc(frame.CastBar, "Hide", function(self)
     --     --     if UnitIsUnit(frame.unit, "target") then
     --     --         BBP.UpdateNameplateResourcePositionForCasting(nameplate, true)
     --     --     end
     --     -- end)--probably remove, stays for now bodify
-    --     frame.castBar:HookScript("OnHide", function()
+    --     frame.CastBar:HookScript("OnHide", function()
     --         if not frame.unit then return end
     --         if UnitIsUnit(frame.unit, "target") then
     --             BBP.UpdateNameplateResourcePositionForCasting(nameplate, true)
     --         end
     --     end)
-    --     frame.castBar.hideHooked = true
+    --     frame.CastBar.hideHooked = true
     -- end
 end
 
@@ -4969,12 +4968,12 @@ function BBP.RepositionName(frame)
         frame.name:ClearPoint("BOTTOM")
         if isFriend(frame.unit) then
             if db.useFakeNameAnchorBottom then
-                frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 21)
+                frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 27)
             else
-                frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 4)
+                frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 10)
             end
         else
-            frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameXPos, db.fakeNameYPos + 4)
+            frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameXPos, db.fakeNameYPos + 10)
         end
         frame.name.changing = false
     end
@@ -5075,22 +5074,22 @@ local function HandleNamePlateAdded(unit)
     end
 
     if not frame.nameplateTweaksBBP then
-        frame.castBar.Icon:SetIgnoreParentAlpha(false)
-        frame.castBar.BorderShield:SetIgnoreParentAlpha(false)
+        frame.CastBar.Icon:SetIgnoreParentAlpha(false)
+        frame.CastBar.BorderShield:SetIgnoreParentAlpha(false)
         -- if not BetterBlizzPlatesDB.skipNpFix then
         --     nameplate:SetParent(BBP.hiddenFrame)
         --     nameplate:SetParent(WorldFrame)
         -- end
         if not frame.hookedHideCastbar then
-            hooksecurefunc(frame.castBar, "Show", function()
-                if frame.castBar.hideThis and not frame:IsForbidden() then
-                    frame.castBar:Hide()
+            hooksecurefunc(frame.CastBar, "Show", function()
+                if frame.CastBar.hideThis and not frame:IsForbidden() then
+                    frame.CastBar:Hide()
                 end
             end)
             frame.hookedHideCastbar = true
         end
-        if frame.castBar.hideThis then
-            frame.castBar:Hide()
+        if frame.CastBar.hideThis then
+            frame.CastBar:Hide()
         end
         frame.nameplateTweaksBBP = true
     end
@@ -5204,15 +5203,15 @@ local function HandleNamePlateAdded(unit)
             if info.isTarget then
                 frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateTargetBorderSize)
                 if BetterBlizzPlatesDB.castBarPixelBorder then
-                    if frame.castBar.SetBorderSize then
-                        frame.castBar:SetBorderSize(BetterBlizzPlatesDB.nameplateTargetBorderSize)
+                    if frame.CastBar.SetBorderSize then
+                        frame.CastBar:SetBorderSize(BetterBlizzPlatesDB.nameplateTargetBorderSize)
                     end
                 end
             else
                 frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateBorderSize)
                 if BetterBlizzPlatesDB.castBarPixelBorder then
-                    if frame.castBar.SetBorderSize then
-                        frame.castBar:SetBorderSize(BetterBlizzPlatesDB.nameplateBorderSize)
+                    if frame.CastBar.SetBorderSize then
+                        frame.CastBar:SetBorderSize(BetterBlizzPlatesDB.nameplateBorderSize)
                     end
                 end
             end
@@ -5245,8 +5244,8 @@ local function HandleNamePlateAdded(unit)
     BBP.ClassColorAndScaleNames(frame)
 
     if not frame.nameplateTweaksBBP then
-        frame.castBar.Icon:SetIgnoreParentAlpha(false)
-        frame.castBar.BorderShield:SetIgnoreParentAlpha(false)
+        frame.CastBar.Icon:SetIgnoreParentAlpha(false)
+        frame.CastBar.BorderShield:SetIgnoreParentAlpha(false)
         -- nameplate:SetParent(BBP.hiddenFrame)
         -- nameplate:SetParent(WorldFrame)
         frame.nameplateTweaksBBP = true
@@ -5377,7 +5376,7 @@ local function HandleNamePlateAdded(unit)
     local alwaysHideFriendlyCastbar = BetterBlizzPlatesDB.alwaysHideFriendlyCastbar
     local alwaysHideEnemyCastbar = BetterBlizzPlatesDB.alwaysHideEnemyCastbar
     if (info.isFriend and alwaysHideFriendlyCastbar) or (not info.isFriend and alwaysHideEnemyCastbar) then
-        frame.castBar:Hide()
+        frame.CastBar:Hide()
     end
 
     -- Hide name
@@ -5586,11 +5585,11 @@ function BBP.RefreshAllNameplates()
             end
         end
 
-        -- if frame.castBar then
+        -- if frame.CastBar then
         --     if not BetterBlizzPlatesDB.useCustomCastbarBGTexture or not BetterBlizzPlatesDB.useCustomCastbarTexture then
-        --         frame.castBar.Background:SetDesaturated(false)
-        --         frame.castBar.Background:SetVertexColor(1,1,1,1)
-        --         frame.castBar.Background:SetAtlas("UI-CastingBar-Background")
+        --         frame.CastBar.Background:SetDesaturated(false)
+        --         frame.CastBar.Background:SetVertexColor(1,1,1,1)
+        --         frame.CastBar.Background:SetAtlas("UI-CastingBar-Background")
         --     end
         -- end
 
@@ -5622,15 +5621,15 @@ function BBP.RefreshAllNameplates()
             if info.isTarget then
                 frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateTargetBorderSize)
                 if BetterBlizzPlatesDB.castBarPixelBorder then
-                    if frame.castBar.SetBorderSize then
-                        frame.castBar:SetBorderSize(BetterBlizzPlatesDB.nameplateTargetBorderSize)
+                    if frame.CastBar.SetBorderSize then
+                        frame.CastBar:SetBorderSize(BetterBlizzPlatesDB.nameplateTargetBorderSize)
                     end
                 end
             else
                 frame.healthBar:SetBorderSize(BetterBlizzPlatesDB.nameplateBorderSize)
                 if BetterBlizzPlatesDB.castBarPixelBorder then
-                    if frame.castBar.SetBorderSize then
-                        frame.castBar:SetBorderSize(BetterBlizzPlatesDB.nameplateBorderSize)
+                    if frame.CastBar.SetBorderSize then
+                        frame.CastBar:SetBorderSize(BetterBlizzPlatesDB.nameplateBorderSize)
                     end
                 end
             end
@@ -6087,7 +6086,7 @@ forbiddenFrame:SetScript("OnEvent", function(self, event, unit)
     if BBP.isInPvE and hideFriendlyCastbar then
         local plateFrame = C_NamePlate.GetNamePlateForUnit (unit, true)
         if (plateFrame) then -- and plateFrame.template == "ForbiddenNamePlateUnitFrameTemplate"
-            TextureLoadingGroupMixin.RemoveTexture({ textures = plateFrame.UnitFrame.castBar }, "showCastbar")
+            TextureLoadingGroupMixin.RemoveTexture({ textures = plateFrame.UnitFrame.CastBar }, "showCastbar")
         end
     end
 end)
@@ -6098,9 +6097,9 @@ hooksecurefunc (NamePlateDriverFrame, "UpdateNamePlateOptions", function()
         for _, plateFrame in pairs(C_NamePlate.GetNamePlates(true)) do
             if (plateFrame) then
                 if GetCVarBool ("nameplateShowOnlyNames") then
-                    TextureLoadingGroupMixin.RemoveTexture({ textures = plateFrame.UnitFrame.castBar }, "showCastbar")
+                    TextureLoadingGroupMixin.RemoveTexture({ textures = plateFrame.UnitFrame.CastBar }, "showCastbar")
                 else
-                    TextureLoadingGroupMixin.AddTexture({ textures = plateFrame.UnitFrame.castBar }, "showCastbar")
+                    TextureLoadingGroupMixin.AddTexture({ textures = plateFrame.UnitFrame.CastBar }, "showCastbar")
                 end
             end
         end
@@ -6220,7 +6219,7 @@ Frame:SetScript("OnEvent", function(...)
     end
 
     BBP.HookOverShields()
-    if BBP.isCata then
+    if not BBP.isMoP then
         BBP.ToggleTotemIndicatorShieldBorder()
     end
     BBP.ChatBubbleFix()
@@ -6573,7 +6572,7 @@ local timers = {}
 local temporaryNpCastTest = CreateFrame("Frame")
 
 local function NamePlateCastBarTestMode(frame)
-    local castBar = frame.castBar
+    local castBar = frame.CastBar
     if castBar then
         castBar:Show()
         castBar:SetAlpha(1)
@@ -6620,15 +6619,15 @@ local function NamePlateCastBarTestMode(frame)
                 castBar.BorderShield:SetScale(borderShieldSize)
 
                 -- if not BetterBlizzPlatesDB.useCustomCastbarBGTexture or not BetterBlizzPlatesDB.useCustomCastbarTexture then
-                --     frame.castBar.Background:SetDesaturated(false)
-                --     frame.castBar.Background:SetVertexColor(1,1,1,1)
-                --     frame.castBar.Background:SetAtlas("UI-CastingBar-Background")
+                --     frame.CastBar.Background:SetDesaturated(false)
+                --     frame.CastBar.Background:SetVertexColor(1,1,1,1)
+                --     frame.CastBar.Background:SetAtlas("UI-CastingBar-Background")
                 -- end
 
                 if castBarTimer then
                     if not frame.dummyTimer then
                         frame.dummyTimer = frame.healthBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-                        frame.dummyTimer:SetPoint("LEFT", frame.castBar, "RIGHT", 5, 0)
+                        frame.dummyTimer:SetPoint("LEFT", frame.CastBar, "RIGHT", 5, 0)
                         frame.dummyTimer:SetTextColor(1, 1, 1)
                         frame.dummyTimer:SetText("1.5")
                     end
@@ -6823,7 +6822,7 @@ function BBP.cancelTimers()
     for _, nameplate in ipairs(nameplates) do
         local frame = nameplate.UnitFrame
         if frame then
-            local castBar = frame.castBar
+            local castBar = frame.CastBar
             if castBar then
                 castBar:Hide()
                 if castBar.tickTimer then
@@ -7072,7 +7071,7 @@ end
 --     local scale = slider:GetValue()
 --     local namePlate = C_NamePlate.GetNamePlateForUnit("target")
 --     if namePlate then
---         local castBar = namePlate.UnitFrame.castBar
+--         local castBar = namePlate.UnitFrame.CastBar
 --         if castBar then
 --             castBar:SetWidth(scale)
 --         end
