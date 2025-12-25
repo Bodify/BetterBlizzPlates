@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.0b
+## MoP
+### Bugfix
+- Fix changes meant for tbc unintentionally being pushed on MoP version causing lua errors.
+
 # BetterBlizzPlates 1.9.0
 ## The Burning Crusade
 - Very early and scuffed TBC support. Not very well tested and no default spells/npcs updated for TBC. Best I can do for now. Please report bugs. Any support in terms of spell ids and npc ids etc is welcome.
