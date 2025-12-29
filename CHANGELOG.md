@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.0c
+## The Burning Crusade
+### Tweak
+- Fixup auras for Key Auras, PvP Buffs & CC Filters.
+
 # BetterBlizzPlates 1.9.0b
 ## MoP
 ### Bugfix
