@@ -1,4 +1,4 @@
-# BetterBlizzPlates 1.9.0c
+# BetterBlizzPlates 1.9.1
 ## The Burning Crusade
 ### Tweak
 - Tweak nameplate height and name position in TBC. Tweak needed for Era/Cata is no longer needed for TBC and caused nameplates to be much shorter than intended.
