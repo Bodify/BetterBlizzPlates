@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.1b
+## The Burning Crusade
+### Tweak
+- Fix nameplate height when level frame was hidden.
+
 # BetterBlizzPlates 1.9.1
 ## The Burning Crusade
 ### Tweak
