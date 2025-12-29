@@ -907,7 +907,7 @@ function BBP.UpdateImportantBuffsAndCCTables()
         -- temp custom
         if db.customKeyAuras and type(db.customKeyAuras) == "table" then
             for spellID, value in pairs(db.customKeyAuras) do
-                keyAuraList[spellID] = true
+                keyAuraList[spellID] = value
             end
         end
     end
