@@ -3531,8 +3531,8 @@ local function CreateBetterClassicHealthbarBorder(frame)
         frame.healthBar.topNameAnchor:SetPoint("TOPRIGHT", right, "TOPRIGHT", -3, 0)
     end
 
-    frame.healthBar:ClearPoint("BOTTOMLEFT")
-    frame.healthBar:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 4, 9)
+    -- frame.healthBar:ClearPoint("BOTTOMLEFT")
+    -- frame.healthBar:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 4, 9)
 
     if config.hideLevelFrame then
         frame.healthBar.topNameAnchor:SetPoint("TOPRIGHT", frame.healthBar, "TOPRIGHT", 0, 0)
@@ -4157,10 +4157,10 @@ end
 local function CreateRetailNameplateLook(frame)
     frame.healthBar:ClearPoint("RIGHT")
     frame.healthBar:ClearPoint("LEFT")
-    frame.healthBar:ClearPoint("BOTTOMLEFT")
+    --frame.healthBar:ClearPoint("BOTTOMLEFT")
     frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", -12, 0)
     frame.healthBar:SetPoint("LEFT", frame, "LEFT", 12, 0)
-    frame.healthBar:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 12, 9)
+    --frame.healthBar:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 12, 9)
     -- frame.LevelFrame:Hide()
     -- frame.LevelFrame:SetAlpha(0)
     frame.HealthBarsContainer.border:Hide()
@@ -4969,12 +4969,12 @@ function BBP.RepositionName(frame)
         frame.name:ClearPoint("BOTTOM")
         if isFriend(frame.unit) then
             if db.useFakeNameAnchorBottom then
-                frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 21)
+                frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 27)
             else
-                frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 4)
+                frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 10)
             end
         else
-            frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameXPos, db.fakeNameYPos + 4)
+            frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameXPos, db.fakeNameYPos + 10)
         end
         frame.name.changing = false
     end
