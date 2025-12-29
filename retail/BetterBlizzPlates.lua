@@ -2,6 +2,7 @@ if BBP.isMidnight then return end
 -- I did not know what a variable was when I started. I know a little bit more now and I am so sorry.
 
 local LSM = LibStub("LibSharedMedia-3.0")
+LSM:Register("statusbar", "Blizzard DF", [[Interface\TargetingFrame\UI-TargetingFrame-BarFill]])
 LSM:Register("statusbar", "Dragonflight (BBP)", [[Interface\Addons\BetterBlizzPlates\media\DragonflightTexture]])
 LSM:Register("statusbar", "Dragonflight HD (BBP)", [[Interface\Addons\BetterBlizzPlates\media\DragonflightTextureHD]])
 LSM:Register("statusbar", "Shattered DF (BBP)", [[Interface\Addons\BetterBlizzPlates\media\focusTexture]])
