@@ -1,6 +1,7 @@
 # BetterBlizzPlates 1.9.0c
 ## The Burning Crusade
 ### Tweak
+- Tweak nameplate height and name position in TBC. Tweak needed for Era/Cata is no longer needed for TBC and caused nameplates to be much shorter than intended.
 - Fixup aura spell ids for Key Auras, PvP Buffs & CC Filters.
 
 # BetterBlizzPlates 1.9.0b
