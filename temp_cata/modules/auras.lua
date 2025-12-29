@@ -1778,6 +1778,7 @@ function BBP.UpdateImportantBuffsAndCCTables()
         importantMobility[11305]   = true      -- Sprint
         importantMobility[1044]    = true       -- Hand of Freedom
 
+        importantDefensives[20230]   = true    -- Retaliation
         importantDefensives[16188]   = true    -- Nature's Swiftness
         importantDefensives[20600]   = true    -- Perception
         importantDefensives[17116]   = true    -- Nature's Swiftness (Shaman)
