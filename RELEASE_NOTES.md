@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.1c
+## The Burning Crusade
+### Tweak
+- Remove Thorns from PvP Buffs filter.
+
 # BetterBlizzPlates 1.9.1b
 ## The Burning Crusade
 ### Tweak
