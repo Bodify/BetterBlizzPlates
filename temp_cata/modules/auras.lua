@@ -1823,8 +1823,6 @@ function BBP.UpdateImportantBuffsAndCCTables()
         importantDefensives[6346]    = true      -- Fear Ward
         importantDefensives[7744]    = true      -- Will of the Forsaken
         importantDefensives[20216] = true -- Divine Favor
-        importantDefensives[467] = true -- Thorns
-        importantDefensives[26992] = true -- Thorns
         importantDefensives[18708] = true      -- Fel Domination
         importantDefensives[34709]  = true     -- Shadow Sight (Arena Eye)(Debuff)
         importantDefensives[46989] = true     -- Improved Blink (25% chance to miss attacks and spells, 4sec buff)
