@@ -1596,13 +1596,9 @@ function BBP.UpdateImportantBuffsAndCCTables()
         ccFull[14327]   = true    -- Scare Beast
         ccFull[20407]   = true    -- Seduction
         ccFull[30850]   = true    -- Seduction
-        ccFull[24131]   = true    -- Wyvern Sting
         ccFull[24132]   = true    -- Wyvern Sting
         ccFull[24133]   = true    -- Wyvern Sting
-        ccFull[24134]   = true    -- Wyvern Sting
-        ccFull[24135]   = true    -- Wyvern Sting
         ccFull[27068]   = true    -- Wyvern Sting
-        ccFull[27069]   = true    -- Wyvern Sting
         ccFull[18647]   = true    -- Banish
 
         ccDisarm[676]     = true    -- Disarm
