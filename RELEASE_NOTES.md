@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.1d
+## The Burning Crusade
+### Tweak
+- Remove Wyvern Sting dot debuff (not CC) from PvP CC/Key Auras filter.
+
 # BetterBlizzPlates 1.9.1c
 ## The Burning Crusade
 ### Tweak
