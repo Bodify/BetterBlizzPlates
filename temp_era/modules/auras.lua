@@ -2220,17 +2220,75 @@ function BBP.ProcessAurasForNameplate(frame, unitID)
         return index
     end
 
+    -- Process Extra Classic Auras detected via combat log
+    local function ProcessExtraAuras(isEnemyUnit, index)
+        local unitGUID = UnitGUID(unitID)
+        if not unitGUID then
+            return index
+        end
+
+        local extraAuras = BBP.GetExtraAurasForGUID(unitGUID)
+
+        for spellId, extraAuraInfo in pairs(extraAuras) do
+            if index > MAX_AURAS then break end
+
+            local alreadyShown = false
+            for i = 1, index - 1 do
+                local existingAura = frame.BuffFrame.auras[i]
+                if existingAura and existingAura.spellId == spellId then
+                    alreadyShown = true
+                    break
+                end
+            end
+
+            if not alreadyShown then
+                local shouldShowAura, isImportant, isPandemic, auraColor, onlyMine, isEnlarged, isCompacted = GetAuraDetails(extraAuraInfo.name, spellId)
+
+                local auraInfo = {
+                    name = extraAuraInfo.name,
+                    icon = extraAuraInfo.icon,
+                    count = extraAuraInfo.count,
+                    debuffType = extraAuraInfo.debuffType,
+                    duration = extraAuraInfo.duration,
+                    expirationTime = extraAuraInfo.expirationTime,
+                    sourceUnit = extraAuraInfo.sourceUnit,
+                    isStealable = extraAuraInfo.isStealable,
+                    spellId = spellId,
+                    castByPlayer = extraAuraInfo.castByPlayer,
+                    isHelpful = extraAuraInfo.isHelpful,
+                    isBuff = extraAuraInfo.isBuff,
+                    isHarmful = extraAuraInfo.isHarmful,
+                    isEnlarged = isEnlarged or false,
+                    isCompacted = isCompacted or false,
+                    auraInstanceID = 1000 + index,
+                    fromExtraAuras = true,
+                }
+
+                if ShouldShowBuff(unitID, auraInfo) then
+                    UpdateAuraIcon(index, auraInfo)
+                    SetAuraGlows(index, isImportant, auraColor, isEnemyUnit, isPandemic, auraInfo)
+                    index = index + 1
+                end
+            end
+        end
+
+        return index
+    end
+
     local children = frame.BuffFrame.auras
     --local isFriend, isEnemy, isNeutral = BBP.GetUnitReaction(frame.unit)
     local isEnemyUnit = UnitCanAttack(frame.unit, "player")--not isFriend and not UnitIsPlayer(frame.unit)
 
     if BetterBlizzPlatesDB.separateBuffRow then
-        ProcessAuras("HARMFUL", isEnemyUnit, 1)
-        ProcessAuras("HELPFUL", isEnemyUnit, 1)
+        local index1 = ProcessAuras("HARMFUL", isEnemyUnit, 1)
+
+        local index2 = ProcessAuras("HELPFUL", isEnemyUnit, 1)
+        ProcessExtraAuras(isEnemyUnit, index2)
     else
         local index = 1
         index = ProcessAuras("HARMFUL", isEnemyUnit, index)
-        ProcessAuras("HELPFUL", isEnemyUnit, index)
+        index = ProcessAuras("HELPFUL", isEnemyUnit, index)
+        ProcessExtraAuras(isEnemyUnit, index)
     end
 
     CustomBuffLayoutChildrenCata(frame.BuffFrame, children, isEnemyUnit)

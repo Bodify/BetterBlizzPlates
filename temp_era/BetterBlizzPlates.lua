@@ -5689,6 +5689,13 @@ First:SetScript("OnEvent", function(_, event, addonName)
             BetterBlizzPlatesDB.useFakeName = true
 
             InitializeSavedVariables()
+            
+            -- Initialize Extra Classic Aura Detection
+            C_Timer.After(0.5, function()
+                if BBP.InitializeExtraAuraTracking then
+                    BBP.InitializeExtraAuraTracking()
+                end
+            end)
 
             C_Timer.After(1, function()
                 MoveableSettingsPanel()
