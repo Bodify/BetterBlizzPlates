@@ -1984,7 +1984,6 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
 
 
     checkBox:SetScript("OnClick", function(self)
-        print(option)
         local isChecked = self:GetChecked()
         local newValue = isChecked
         if cvar then
