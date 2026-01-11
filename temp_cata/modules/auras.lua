@@ -2008,6 +2008,16 @@ local trackedAuras = {
 local activeNonDurationAuras = {}
 BBP.ActiveAuraCheck = CreateFrame("Frame")
 
+-- Stance auras for TBC (stances don't have real auras, only cast/aura events)
+local stanceAuras = {
+    [71]   = true, -- Defensive Stance
+    [2458] = true, -- Berserker Stance
+    [2457] = true, -- Battle Stance
+}
+
+-- Active stance auras per GUID: [GUID] = spellID (e.g. ["Player-xxx"] = 71)
+local activeStanceAuras = {}
+
 
 local function AddAuraCooldownTimer(frame, auraID)
     local unit = frame.unit
@@ -2112,8 +2122,22 @@ end)
 
 
 local function TrackAuraAfterCast()
-    local _, subEvent, _, _, _, _, _, _, _, _, _, spellID = CombatLogGetCurrentEventInfo()
+    local _, subEvent, _, sourceGUID, _, _, _, _, _, _, _, spellID = CombatLogGetCurrentEventInfo()
     if subEvent ~= "SPELL_CAST_SUCCESS" then return end
+    if stanceAuras[spellID] and sourceGUID then
+        activeStanceAuras[sourceGUID] = spellID
+
+        C_Timer.After(0.1, function()
+            for _, nameplate in ipairs(C_NamePlate.GetNamePlates()) do
+                local frame = nameplate.UnitFrame
+                if frame and frame.unit and UnitGUID(frame.unit) == sourceGUID then
+                    BBP.UpdateBuffs(frame.BuffFrame, frame.unit, nil, {helpful = true}, frame)
+                    break
+                end
+            end
+        end)
+        return
+    end
     if not castToAuraMap[spellID] then return end
     local auraID = castToAuraMap[spellID]
 
@@ -2156,6 +2180,14 @@ function BBP.SmokeCheckBootup()
         BBP.NoDurationAuraCheck = CreateFrame("Frame")
         BBP.NoDurationAuraCheck:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
         BBP.NoDurationAuraCheck:SetScript("OnEvent", TrackAuraAfterCast)
+    end
+
+    if BBP.isTBC and not BBP.StanceAuraWiper then
+        BBP.StanceAuraWiper = CreateFrame("Frame")
+        BBP.StanceAuraWiper:RegisterEvent("PLAYER_ENTERING_WORLD")
+        BBP.StanceAuraWiper:SetScript("OnEvent", function()
+            wipe(activeStanceAuras)
+        end)
     end
 end
 
@@ -4458,6 +4490,24 @@ function BBP.ParseAllAuras(self, forceAll, UnitFrame)
             }
             HandleAura(interruptAura, false, true)
         end
+    end
+
+    -- Inject stance auras (TBC warrior stances tracked via CLEU)
+    if BBP.isTBC and destGUID and activeStanceAuras[destGUID] then
+        local stanceSpellID = activeStanceAuras[destGUID]
+        local spellName = GetSpellInfo(stanceSpellID)
+        local stanceAura = {
+            auraInstanceID = 2,
+            spellId = stanceSpellID,
+            icon = GetSpellTexture(stanceSpellID),
+            name = spellName,
+            duration = 0,
+            expirationTime = 0,
+            isHelpful = true,
+            applications = 0,
+            dispelName = nil,
+        }
+        HandleAura(stanceAura, false, false)
     end
 
     -- Injecting fake auras for testing
