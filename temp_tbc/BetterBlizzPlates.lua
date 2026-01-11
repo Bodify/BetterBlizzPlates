@@ -6370,14 +6370,14 @@ First:SetScript("OnEvent", function(_, event, addonName)
                         timeout = 0,
                         whileDead = true,
                         OnShow = function(self)
-                        self.button2:Disable()
+                        self.ButtonContainer.Button2:Disable()
                         local function UpdateButtonText(remainingTime)
                             if remainingTime > 1 then
-                                self.button2:SetText("Dont update.. "..remainingTime - 1 .. "")
+                                self.ButtonContainer.Button2:SetText("Dont update.. "..remainingTime - 1 .. "")
                                 C_Timer.After(1, function() UpdateButtonText(remainingTime - 1) end)
                             else
-                                self.button2:SetText("Dont update")
-                                self.button2:Enable()
+                                self.ButtonContainer.Button2:SetText("Dont update")
+                                self.ButtonContainer.Button2:Enable()
                             end
                         end
                         UpdateButtonText(14)
@@ -6391,14 +6391,14 @@ First:SetScript("OnEvent", function(_, event, addonName)
                         timeout = 0,
                         whileDead = true,
                         OnShow = function(self)
-                        self.button1:Disable()
+                        self.ButtonContainer.Button1:Disable()
                         local function UpdateButtonText(remainingTime)
                             if remainingTime > 1 then
-                                self.button1:SetText("Okay.. "..remainingTime - 1 .. "")
+                                self.ButtonContainer.Button1:SetText("Okay.. "..remainingTime - 1 .. "")
                                 C_Timer.After(1, function() UpdateButtonText(remainingTime - 1) end)
                             else
-                                self.button1:SetText("Okay")
-                                self.button1:Enable()
+                                self.ButtonContainer.Button1:SetText("Okay")
+                                self.ButtonContainer.Button1:Enable()
                             end
                         end
                         UpdateButtonText(5)
