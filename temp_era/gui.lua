@@ -721,13 +721,13 @@ local function CreateTextureDropdown(name, parent, defaultText, settingKey, togg
     return dropdown
 end
 
-local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggleFunc, point, width, textColor)
+local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggleFunc, point, width, textColor, anchorTypes)
     -- Create the dropdown frame using the library's creation function
     local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
     LibDD:UIDropDownMenu_SetWidth(dropdown, width or 125)
     LibDD:UIDropDownMenu_SetText(dropdown, BetterBlizzPlatesDB[settingKey] or defaultText)
 
-    local anchorPointsToUse = anchorPoints
+    local anchorPointsToUse = anchorTypes or anchorPoints
     if name == "targetIndicatorDropdown" then
         anchorPointsToUse = targetIndicatorAnchorPoints
     end
