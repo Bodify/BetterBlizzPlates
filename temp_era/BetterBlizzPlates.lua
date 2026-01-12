@@ -5482,6 +5482,7 @@ Frame:SetScript("OnEvent", function(...)
     end
 
     if db.enableNameplateAuraCustomisation then
+        BBP.InitializeExtraAuraTracking()
         BBP.RunAuraModule()
     end
 
