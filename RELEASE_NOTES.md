@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.2b
+## Classic Era
+### Tweak
+- Fix missing initialization of the new extra buff detection oops.
+
 # BetterBlizzPlates 1.9.2
 ## The Burning Crusade
 ### Tweak
