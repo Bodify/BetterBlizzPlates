@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.2c
+## TBC
+### Tweak
+- Remove vampiric embrace listed as a defensive buff on TBC.
+
 # BetterBlizzPlates 1.9.2b
 ## Classic Era
 ### Tweak
