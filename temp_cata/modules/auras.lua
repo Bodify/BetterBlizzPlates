@@ -1822,6 +1822,7 @@ function BBP.UpdateImportantBuffsAndCCTables()
         importantDefensives[18708] = true      -- Fel Domination
         importantDefensives[34709]  = true     -- Shadow Sight (Arena Eye)(Debuff)
         importantDefensives[46989] = true     -- Improved Blink (25% chance to miss attacks and spells, 4sec buff)
+        importantDefensives[15286] = nil -- Vamp Embrace is debuff in tbc
 
     elseif not BBP.isMoP then
         ccFull[2812] = true
