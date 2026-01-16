@@ -1,3 +1,9 @@
+# BetterBlizzPlates 1.9.2d
+## TBC
+### Tweak
+- Fix nameplate position/width settings being off due to TBC changes to nameplates.
+- Remove UA (non silence) auras accidentally being in Key Auras filter.
+
 # BetterBlizzPlates 1.9.2c
 ## TBC
 ### Tweak
