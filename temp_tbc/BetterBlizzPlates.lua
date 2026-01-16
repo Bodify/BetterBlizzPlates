@@ -2857,22 +2857,22 @@ end
 
 
 local function SetBarWidth(frame, width, useOffsets)
-    frame.healthBar:ClearPoint("RIGHT")
-    frame.healthBar:ClearPoint("LEFT")
+    frame.HealthBarsContainer:ClearPoint("RIGHT")
+    frame.HealthBarsContainer:ClearPoint("LEFT")
     frame.castBar:ClearPoint("RIGHT")
     frame.castBar:ClearPoint("LEFT")
 
     if useOffsets then
         if BetterBlizzPlatesDB.classicNameplates then
             local xPos = BetterBlizzPlatesDB.hideLevelFrame and -4 or -21
-            frame.healthBar:SetPoint("LEFT", frame, "LEFT", -width + 4, 0)
-            frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", width + xPos,0)
+            frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", -width + 4, 0)
+            frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", width + xPos,0)
 
             frame.castBar:SetPoint("LEFT", frame, "LEFT", -width + 4, 0)
             frame.castBar:SetPoint("RIGHT", frame, "RIGHT", width + xPos, 0)
         else
-            frame.healthBar:SetPoint("LEFT", frame, "LEFT", -width + 12, 0)
-            frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", width - 12,0)
+            frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", -width + 12, 0)
+            frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", width - 12,0)
 
             frame.castBar:SetPoint("LEFT", frame, "LEFT", -width + 12, 0)
             frame.castBar:SetPoint("RIGHT", frame, "RIGHT", width - 12, 0)
@@ -2880,21 +2880,21 @@ local function SetBarWidth(frame, width, useOffsets)
     else
         if BetterBlizzPlatesDB.classicNameplates then
             if BetterBlizzPlatesDB.hideLevelFrame then
-                frame.healthBar:SetPoint("LEFT", frame, "CENTER", -width, 0)
-                frame.healthBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
+                frame.HealthBarsContainer:SetPoint("LEFT", frame, "CENTER", -width, 0)
+                frame.HealthBarsContainer:SetPoint("RIGHT", frame, "CENTER", width, 0)
 
                 frame.castBar:SetPoint("LEFT", frame, "CENTER", -width, 0)
                 frame.castBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
             else
-                frame.healthBar:SetPoint("LEFT", frame, "CENTER", -width - 17, 0)
-                frame.healthBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
+                frame.HealthBarsContainer:SetPoint("LEFT", frame, "CENTER", -width - 17, 0)
+                frame.HealthBarsContainer:SetPoint("RIGHT", frame, "CENTER", width, 0)
 
                 frame.castBar:SetPoint("LEFT", frame, "CENTER", -width - 17, 0)
                 frame.castBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
             end
         else
-            frame.healthBar:SetPoint("LEFT", frame, "CENTER", -width, 0)
-            frame.healthBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
+            frame.HealthBarsContainer:SetPoint("LEFT", frame, "CENTER", -width, 0)
+            frame.HealthBarsContainer:SetPoint("RIGHT", frame, "CENTER", width, 0)
 
             frame.castBar:SetPoint("LEFT", frame, "CENTER", -width, 0)
             frame.castBar:SetPoint("RIGHT", frame, "CENTER", width, 0)
@@ -4154,11 +4154,11 @@ local function SetNameplateHeight(frame, height)
 end
 
 local function CreateRetailNameplateLook(frame)
-    frame.healthBar:ClearPoint("RIGHT")
-    frame.healthBar:ClearPoint("LEFT")
+    frame.HealthBarsContainer:ClearPoint("RIGHT")
+    frame.HealthBarsContainer:ClearPoint("LEFT")
     --frame.healthBar:ClearPoint("BOTTOMLEFT")
-    frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", -12, 0)
-    frame.healthBar:SetPoint("LEFT", frame, "LEFT", 12, 0)
+    frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", -12, 0)
+    frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", 12, 0)
     --frame.healthBar:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 12, 9)
     -- frame.LevelFrame:Hide()
     -- frame.LevelFrame:SetAlpha(0)
@@ -4177,13 +4177,13 @@ local function CreateRetailNameplateLook(frame)
 end
 
 local function HideLevelFrameOnClassicNameplate(frame)
-    frame.healthBar:ClearPoint("RIGHT")
-    frame.healthBar:ClearPoint("LEFT")
-    frame.healthBar:SetPoint("LEFT", frame, "LEFT", 4, 0)
+    frame.HealthBarsContainer:ClearPoint("RIGHT")
+    frame.HealthBarsContainer:ClearPoint("LEFT")
+    frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", 4, 0)
     --frame.healthBar:ClearPoint("BOTTOMLEFT")
     --frame.healthBar:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 4, 9)
     local xPos = BetterBlizzPlatesDB.hideLevelFrame and -4 or -21
-    frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", xPos,0)
+    frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", xPos,0)
     frame.LevelFrame:SetAlpha(0)
 end
 
@@ -4812,15 +4812,15 @@ local function HandleNamePlateRemoved(unit)
     end
 
     if frame.healthBar.bbpAdjusted then
-        frame.healthBar:ClearPoint("RIGHT")
-        frame.healthBar:ClearPoint("LEFT")
+        frame.HealthBarsContainer:ClearPoint("RIGHT")
+        frame.HealthBarsContainer:ClearPoint("LEFT")
         if BetterBlizzPlatesDB.classicNameplates then
             local xPos = BetterBlizzPlatesDB.hideLevelFrame and -4 or -21
-            frame.healthBar:SetPoint("LEFT", frame, "LEFT", 4, 0)
-            frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", xPos,0)
+            frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", 4, 0)
+            frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", xPos,0)
         else
-            frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", 0,0)
-            frame.healthBar:SetPoint("LEFT", frame, "LEFT", 0, 0)
+            frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", 0,0)
+            frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", 0, 0)
         end
         frame.healthBar.bbpAdjusted = nil
     end
@@ -5457,11 +5457,11 @@ function BBP.RefreshAllNameplates()
             if BetterBlizzPlatesDB.classicNameplates then
                 if frame.BetterBlizzPlates.bbpBorder and frame.BetterBlizzPlates.bbpBorder.changed then
                     frame.BetterBlizzPlates.bbpBorder.right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRight")
-                    frame.healthBar:ClearPoint("RIGHT")
-                    frame.healthBar:ClearPoint("LEFT")
-                    frame.healthBar:SetPoint("LEFT", frame, "LEFT", 4, 0)
+                    frame.HealthBarsContainer:ClearPoint("RIGHT")
+                    frame.HealthBarsContainer:ClearPoint("LEFT")
+                    frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", 4, 0)
                     local xPos = BetterBlizzPlatesDB.hideLevelFrame and -4 or -21
-                    frame.healthBar:SetPoint("RIGHT", frame, "RIGHT", xPos,0)
+                    frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", xPos,0)
                     AdjustClassicBorderWidth(frame)
                 end
                 frame.LevelFrame:SetAlpha(1)
