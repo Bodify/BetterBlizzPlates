@@ -6204,8 +6204,6 @@ function BBP.RefreshAllNameplates()
             BBP.ClassIndicator(frame)
         end
 
-        if BetterBlizzPlatesDB.changeHealthbarHeight then AdjustHealthBarHeight(frame) end
-
         if BetterBlizzPlatesDB.partyPointer or BetterBlizzPlatesDB.partyPointerTestMode then
             BBP.PartyPointer(frame)
         else
