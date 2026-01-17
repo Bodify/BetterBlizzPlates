@@ -1731,7 +1731,7 @@ local function notWorking(element, re)
     if element.Text then
         element.Text:SetTextColor(1,0,0)
     end
-    CreateTooltipTwo(element, "Not Working", "Currently not working and disabled for "..(BBP.isMoP and "MoP" or "Cata")..". May or may not be removed TBD.", "A lot of other features might also not work 100% in this Beta version. Keep an eye out for errors.")
+    CreateTooltipTwo(element, "Not Working", "Currently not working and disabled for "..(BBP.isMoP and "MoP" or BBP.isTBC and "TBC" or "Cata")..". May or may not be removed TBD.", "A lot of other features might also not work 100% in this Beta version. Keep an eye out for errors.")
 
     if re then
         C_Timer.After(4, function()
@@ -4021,7 +4021,7 @@ local function guiGeneralTab()
 
     local alpha2 = BetterBlizzPlates:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
     alpha2:SetPoint("BOTTOM", SettingsPanel, "TOP", 0, 0)
-    alpha2:SetText("BetterBlizzPlates "..(BBP.isMoP and "MoP" or "Cata").." is still in Beta. Please report bugs.")
+    alpha2:SetText("BetterBlizzPlates "..(BBP.isMoP and "MoP" or BBP.isTBC and "TBC" or "Cata").." is still in Beta. Please report bugs.")
     alpha2:SetFont("Fonts\\FRIZQT__.TTF", 20, "THINOUTLINE")
     alpha2:Hide()
     BetterBlizzPlates:HookScript("OnShow",function()
