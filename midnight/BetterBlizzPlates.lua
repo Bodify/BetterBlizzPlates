@@ -2908,7 +2908,7 @@ local function SetFriendlyBarWidthTemp(frame)
     frame.HealthBarsContainer:SetPoint("RIGHT", frame, "CENTER", width - 12, 0)
 
     local setupOptions = NamePlateSetupOptions
-    if setupOptions and setupOptions.spellNameInsideCastBar == true then
+    if setupOptions and setupOptions.spellNameInsideCastBar == true and not C_CVar.GetCVar("nameplateStyle") == "2" then
         -- Text inside castbar (Block, CastFocus styles)
         frame.castBar:SetPoint("LEFT", frame, "CENTER", -width + 12, 0)
         frame.castBar:SetPoint("RIGHT", frame, "CENTER", width - 12, 0)
@@ -6219,6 +6219,7 @@ function BBP.RefreshAllNameplates()
         BBP.ConsolidatedUpdateName(frame)
         SetFriendlyBarWidthTemp(frame)
         frame.HealthBarsContainer:SetHeight(BetterBlizzPlatesDB.nameplateGeneralHpHeight or 16)
+        if BetterBlizzPlatesDB.changeHealthbarHeight then AdjustHealthBarHeight(frame) end
         --HideFriendlyHealthbar(frame)
     end
 end
