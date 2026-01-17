@@ -5832,7 +5832,7 @@ local function HandleNamePlateAdded(unit)
     if config.changeNameplateBorderSize then ChangeHealthbarBorderSize(frame) end
 
     -- Apply custom healthbar texture
-    if config.useCustomTextureForBars or BBP.needsUpdate then BBP.ApplyCustomTextureToNameplate(frame) end
+    if config.useCustomTextureForBars or BBP.needsUpdate or BetterBlizzPlatesDB.classicRetailNameplates then BBP.ApplyCustomTextureToNameplate(frame) end
 
     -- Hook castbar hide function for resource
     if config.nameplateResourceUnderCastbar then HookNameplateCastbarHide(frame) end
