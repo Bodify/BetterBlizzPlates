@@ -5222,7 +5222,13 @@ local function guiGeneralTab()
 
     local nameplateGeneralHpHeight = CreateSlider(BetterBlizzPlates, "Nameplate Height", 4, 50, 0.5, "nameplateGeneralHpHeight")
     nameplateGeneralHpHeight:SetPoint("TOPLEFT", nameplateSelectedScale, "BOTTOMLEFT", 0, -17)
-    CreateTooltipTwo(nameplateGeneralHpHeight, "Nameplate Height", "Changes the height of ALL nameplates.")
+    if BetterBlizzPlatesDB.changeHealthbarHeight then
+        CreateTooltipTwo(nameplateGeneralHpHeight, "Nameplate Height", "Disabled due to Misc setting:\nSeparate Enemy/Friendly Healthbar Height\n\nUse that instead.")
+        nameplateGeneralHpHeight:Disable()
+        nameplateGeneralHpHeight:SetAlpha(0.5)
+    else
+        CreateTooltipTwo(nameplateGeneralHpHeight, "Nameplate Height", "Changes the height of ALL nameplates.")
+    end
 
     local nameplateGeneralHpHeightResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     nameplateGeneralHpHeightResetButton:SetText("Default")
