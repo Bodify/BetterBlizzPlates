@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.2e
+## Midnight
+### Tweak
+- Minor tweaks and bugfixes.
+
 # BetterBlizzPlates 1.9.2d
 ## TBC
 ### Tweak
