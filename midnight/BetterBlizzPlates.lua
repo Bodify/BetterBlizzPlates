@@ -4252,8 +4252,10 @@ local function ColorNameplateBorder(self, frame)
 end
 
 function BBP.ColorNameplateBorder(frame) --classic border
+    -- Support classic borders, classicRetailNameplates borders, and default midnight borders
     local border = frame.BetterBlizzPlates.bbpBorder
     local newBorder = frame.HealthBarsContainer and frame.HealthBarsContainer.newBorder
+    local selectedBorder = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar and frame.HealthBarsContainer.healthBar.selectedBorder
     local db = BetterBlizzPlatesDB
 
     if border then
@@ -4289,12 +4291,18 @@ function BBP.ColorNameplateBorder(frame) --classic border
         if newBorder and db.classicRetailNameplates then
             frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderTargetColorRGB))
         end
+        if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
+            selectedBorder:SetVertexColor(unpack(config.npBorderTargetColorRGB))
+        end
     elseif info.isFocus and config.npBorderTargetColor then
         if border then
             border:SetBorderColor(unpack(config.npBorderFocusColorRGB))
         end
         if newBorder and db.classicRetailNameplates then
             frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderFocusColorRGB))
+        end
+        if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
+            selectedBorder:SetVertexColor(unpack(config.npBorderFocusColorRGB))
         end
     else
         --non target
@@ -4306,6 +4314,9 @@ function BBP.ColorNameplateBorder(frame) --classic border
                 if newBorder and db.classicRetailNameplates then
                     frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderEnemyColorRGB))
                 end
+                if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
+                    selectedBorder:SetVertexColor(unpack(config.npBorderEnemyColorRGB))
+                end
             elseif info.isNeutral then
                 if border then
                     border:SetBorderColor(unpack(config.npBorderNeutralColorRGB))
@@ -4313,12 +4324,18 @@ function BBP.ColorNameplateBorder(frame) --classic border
                 if newBorder and db.classicRetailNameplates then
                     frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderNeutralColorRGB))
                 end
+                if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
+                    selectedBorder:SetVertexColor(unpack(config.npBorderNeutralColorRGB))
+                end
             elseif info.isFriend then
                 if border then
                     border:SetBorderColor(unpack(config.npBorderFriendlyColorRGB))
                 end
                 if newBorder and db.classicRetailNameplates then
                     frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderFriendlyColorRGB))
+                end
+                if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
+                    selectedBorder:SetVertexColor(unpack(config.npBorderFriendlyColorRGB))
                 end
             end
         end
@@ -4332,12 +4349,18 @@ function BBP.ColorNameplateBorder(frame) --classic border
                 if newBorder and db.classicRetailNameplates then
                     frame.HealthBarsContainer:SetBorderColor(classColor.r, classColor.g, classColor.b, 1)
                 end
+                if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
+                    selectedBorder:SetVertexColor(classColor.r, classColor.g, classColor.b, 1)
+                end
             else
                 if border then
                     border:SetBorderColor(unpack(config.npBorderNpcColorRGB))
                 end
                 if newBorder and db.classicRetailNameplates then
                     frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderNpcColorRGB))
+                end
+                if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
+                    selectedBorder:SetVertexColor(unpack(config.npBorderNpcColorRGB))
                 end
             end
         end
@@ -4348,6 +4371,9 @@ function BBP.ColorNameplateBorder(frame) --classic border
             end
             if newBorder and db.classicRetailNameplates then
                 frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderNonTargetColorRGB))
+            end
+            if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
+                selectedBorder:SetVertexColor(unpack(config.npBorderNonTargetColorRGB))
             end
         end
     end
@@ -4484,6 +4510,22 @@ local function HookNameplateBorder(frame)
         end)
         frame.BetterBlizzPlates.hooks.nameplateBorderColor = true
         ColorNameplateBorder(frame.HealthBarsContainer.border, frame)
+    end
+end
+
+local function HookSelectedBorder(frame)
+    local selectedBorder = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar and frame.HealthBarsContainer.healthBar.selectedBorder
+    if not selectedBorder then return end
+
+    if not frame.BetterBlizzPlates.hooks.selectedBorderColor then
+        hooksecurefunc(selectedBorder, "SetVertexColor", function(self, r, g, b, a)
+            if self.changing or frame:IsForbidden() then return end
+            self.changing = true
+            BBP.ColorNameplateBorder(frame)
+            self.changing = false
+        end)
+        frame.BetterBlizzPlates.hooks.selectedBorderColor = true
+        BBP.ColorNameplateBorder(frame)
     end
 end
 
@@ -6009,6 +6051,7 @@ local function HandleNamePlateAdded(unit)
     if config.changeNameplateBorderColor then
         if not config.classicNameplates then
             HookNameplateBorder(frame)
+            HookSelectedBorder(frame)
         else
             BBP.ColorNameplateBorder(frame)
         end

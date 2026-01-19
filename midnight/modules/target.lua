@@ -636,6 +636,15 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
 
+            local selectedBorder = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar and frame.HealthBarsContainer.healthBar.selectedBorder
+            if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
+                if config.changeNameplateBorderColor then
+                    BBP.ColorNameplateBorder(frame)
+                else
+                    selectedBorder:SetVertexColor(0, 0, 0, 1)
+                end
+            end
+
             if db.friendlyHideHealthBar then
                 local showOnTarget = db.friendlyHideHealthBarShowTarget
                 if showOnTarget and (info.isPlayer and info.isFriend) then
@@ -754,6 +763,15 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                     BBP.ColorNameplateBorder(frame)
                 else
                     frame.HealthBarsContainer:SetBorderColor(1, 1, 1, 1)
+                end
+            end
+
+            local selectedBorder = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar and frame.HealthBarsContainer.healthBar.selectedBorder
+            if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
+                if config.changeNameplateBorderColor then
+                    BBP.ColorNameplateBorder(frame)
+                else
+                    selectedBorder:SetVertexColor(1, 1, 1, 1)
                 end
             end
 
