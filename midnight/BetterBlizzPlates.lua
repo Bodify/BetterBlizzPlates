@@ -2915,7 +2915,11 @@ local function SetFriendlyBarWidthTemp(frame)
         frame.castBar.Icon:SetPoint("LEFT", frame.castBar, "LEFT", 0, 0)
     else
         -- Text outside castbar (Modern, Thin, HealthFocus, Legacy styles)
-        frame.castBar.Icon:SetPoint("BOTTOMLEFT", frame, "CENTER", -width + 12, 0)
+        if C_CVar.GetCVar("nameplateStyle") == "2" then -- Blocky
+            frame.castBar.Icon:SetPoint("CENTER", frame.castBar, "LEFT", 0, 0)
+        else
+            frame.castBar.Icon:SetPoint("BOTTOMLEFT", frame, "CENTER", -width + 12, 0)
+        end
         frame.castBar:SetPoint("LEFT", frame, "CENTER", -width + 12, 0)
         frame.castBar:SetPoint("RIGHT", frame, "CENTER", width - 12, 0)
     end
