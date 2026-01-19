@@ -4253,7 +4253,13 @@ end
 
 function BBP.ColorNameplateBorder(frame) --classic border
     local border = frame.BetterBlizzPlates.bbpBorder
-    border:SetBorderColor(1,1,1)
+    local newBorder = frame.HealthBarsContainer and frame.HealthBarsContainer.newBorder
+    local db = BetterBlizzPlatesDB
+
+    if border then
+        border:SetBorderColor(1,1,1)
+    end
+
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
     if not info then return end
@@ -4277,32 +4283,72 @@ function BBP.ColorNameplateBorder(frame) --classic border
     end
 
     if info.isTarget and config.npBorderTargetColor then
-        border:SetBorderColor(unpack(config.npBorderTargetColorRGB))
+        if border then
+            border:SetBorderColor(unpack(config.npBorderTargetColorRGB))
+        end
+        if newBorder and db.classicRetailNameplates then
+            frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderTargetColorRGB))
+        end
     elseif info.isFocus and config.npBorderTargetColor then
-        border:SetBorderColor(unpack(config.npBorderFocusColorRGB))
+        if border then
+            border:SetBorderColor(unpack(config.npBorderFocusColorRGB))
+        end
+        if newBorder and db.classicRetailNameplates then
+            frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderFocusColorRGB))
+        end
     else
         --non target
         if config.npBorderFriendFoeColor then
             if info.isEnemy then
-                border:SetBorderColor(unpack(config.npBorderEnemyColorRGB))
+                if border then
+                    border:SetBorderColor(unpack(config.npBorderEnemyColorRGB))
+                end
+                if newBorder and db.classicRetailNameplates then
+                    frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderEnemyColorRGB))
+                end
             elseif info.isNeutral then
-                border:SetBorderColor(unpack(config.npBorderNeutralColorRGB))
+                if border then
+                    border:SetBorderColor(unpack(config.npBorderNeutralColorRGB))
+                end
+                if newBorder and db.classicRetailNameplates then
+                    frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderNeutralColorRGB))
+                end
             elseif info.isFriend then
-                border:SetBorderColor(unpack(config.npBorderFriendlyColorRGB))
+                if border then
+                    border:SetBorderColor(unpack(config.npBorderFriendlyColorRGB))
+                end
+                if newBorder and db.classicRetailNameplates then
+                    frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderFriendlyColorRGB))
+                end
             end
         end
 
         if config.npBorderClassColor then
             if info.isPlayer then
                 local classColor = RAID_CLASS_COLORS[info.class]
-                border:SetBorderColor(classColor.r, classColor.g, classColor.b, 1)
+                if border then
+                    border:SetBorderColor(classColor.r, classColor.g, classColor.b, 1)
+                end
+                if newBorder and db.classicRetailNameplates then
+                    frame.HealthBarsContainer:SetBorderColor(classColor.r, classColor.g, classColor.b, 1)
+                end
             else
-                border:SetBorderColor(unpack(config.npBorderNpcColorRGB))
+                if border then
+                    border:SetBorderColor(unpack(config.npBorderNpcColorRGB))
+                end
+                if newBorder and db.classicRetailNameplates then
+                    frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderNpcColorRGB))
+                end
             end
         end
 
         if not config.npBorderFriendFoeColor and not config.npBorderClassColor and config.npBorderTargetColor then
-            border:SetBorderColor(unpack(config.npBorderNonTargetColorRGB))
+            if border then
+                border:SetBorderColor(unpack(config.npBorderNonTargetColorRGB))
+            end
+            if newBorder and db.classicRetailNameplates then
+                frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderNonTargetColorRGB))
+            end
         end
     end
 end
