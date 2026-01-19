@@ -1,3 +1,10 @@
+# BetterBlizzPlates 1.9.2f
+## Midnight
+### Tweak
+- Fix default "pre-midnight nameplates" border color now turning white on target.
+- Fix Misc "Nameplate Border Color" setting to work with both midnight and pre-midnight nameplates.
+- Fix an issue with castbar text being too high on one nameplate style
+
 # BetterBlizzPlates 1.9.2e
 ## Midnight
 ### Tweak
