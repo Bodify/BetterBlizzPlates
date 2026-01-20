@@ -11,6 +11,7 @@
 embeds.xml
 
 init.lua
+temp_shared\ImportExport.lua
 
 temp_cata\modules\combat.lua
 temp_cata\modules\castbar.lua
