@@ -1120,6 +1120,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "nameplateAuraWidthGap" then
                     BetterBlizzPlatesDB.nameplateAuraWidthGap = value
                     BBP.RefreshBuffFrame()
+                elseif element == "nameplateAuraScale" then
+                    BetterBlizzPlatesDB.nameplateAuraScale = value
+                    BBP.RefreshBuffFrame()
                 elseif element == "nameplateAuraHeightGap" then
                     BetterBlizzPlatesDB.nameplateAuraHeightGap = value
                     BBP.RefreshBuffFrame()
@@ -11032,6 +11035,13 @@ local function guiCVarControl()
 
     local hideResourceFrame = CreateCheckbox("hideResourceFrame", "Hide resource on Personal Bar", guiCVarControl, nil, BBP.HideResourceFrames)
     hideResourceFrame:SetPoint("TOPLEFT", instantComboPoints, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    hideResourceFrame:HookScript("OnClick", function(self)
+        if not self:GetChecked() then
+            if prdClassFrame then
+                prdClassFrame:SetAlpha(1)
+            end
+        end
+    end)
     CreateTooltipTwo(hideResourceFrame, "Hide resource on Personal Bar", "Hide Resource/Power under Personal Resource Bar. Rogue combopoints, Warlock shards etc.\n\n|cff32f795Right-click for class specific options.|r")
 
     local classOptionsFrame
@@ -12442,8 +12452,12 @@ local function guiTemp()
     nameplateAuraWidthGap:SetPoint("TOPLEFT", nameplateDebuffPadding, "BOTTOMLEFT", 0, -10)
     CreateTooltipTwo(nameplateAuraWidthGap, "Nameplate Aura Gap", "Adjust the gap between buff and debuff icons on nameplates.")
 
+    local nameplateAuraScale = CreateSlider(enableMidnightNameplateTweaks, "Nameplate Aura Scale", 0.6, 3, 0.01, "nameplateAuraScale")
+    nameplateAuraScale:SetPoint("TOPLEFT", nameplateAuraWidthGap, "BOTTOMLEFT", 0, -10)
+    CreateTooltipTwo(nameplateAuraScale, "Nameplate Aura Scale", "Adjust the scale of buff and debuff icons on nameplates.")
+
     local ccIconScale = CreateSlider(enableMidnightNameplateTweaks, "CC Icon Scale", 0.4, 3, 0.01, "ccIconScale")
-    ccIconScale:SetPoint("TOPLEFT", nameplateAuraWidthGap, "BOTTOMLEFT", 0, -25)
+    ccIconScale:SetPoint("TOPLEFT", nameplateAuraScale, "BOTTOMLEFT", 0, -25)
     CreateTooltipTwo(ccIconScale, "CC Icon Scale", "Change the scale of the new Crowd Control icons on Nameplates")
 
     local ccIconXPos = CreateSlider(enableMidnightNameplateTweaks, "CC Icon X Position", -100, 100, 1, "ccIconXPos", "X")

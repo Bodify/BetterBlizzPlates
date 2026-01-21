@@ -221,9 +221,14 @@ end
 local nameplateResourceHooked
 local nameplateResourceOnTarget
 local nameplateShowSelf
-local notifiedUser
 local nameplateResourceUnderCastbar
 local nameplateResourceUnderCastbarEventFrame
+
+local classPadding = {
+    ["MONK"] = -8,
+    ["EVOKER"] = -9,
+    ["WARLOCK"] = -8
+}
 
 local classResourceYOffsets = {
     PALADIN = 4,
@@ -232,243 +237,133 @@ local classResourceYOffsets = {
     MONK = -4,
     DRUID = -4,
     ROGUE = -4,
-    WARLOCK = 2,
+    WARLOCK = 0,
     EVOKER = -1,
 }
 local playerClass = select(2, UnitClass("player"))
 
--- Table holding references to class-specific resource frames
-local resourceFrames = {
-    ["WARLOCK"] = ClassNameplateBarWarlockFrame,
-    ["DEATHKNIGHT"] = DeathKnightResourceOverlayFrame,
-    ["PALADIN"] = ClassNameplateBarPaladinFrame,
-    ["MONK"] = ClassNameplateBarWindwalkerMonkFrame,
-    ["ROGUE"] = ClassNameplateBarRogueFrame,
-    ["MAGE"] = ClassNameplateBarMageFrame,
-    ["DRUID"] = ClassNameplateBarFeralDruidFrame,
-    ["EVOKER"] = ClassNameplateBarDracthyrFrame,
-}
+local adjusted
+
+local function RepositionClassFrame(point, relativeTo, relativePoint, xOfs, yOfs)
+    local prdClassFrame = prdClassFrame
+    if not prdClassFrame then return end
+    if prdClassFrame.bbpChanging  then return end
+
+    prdClassFrame.bbpChanging = true
+    prdClassFrame:ClearAllPoints()
+    PixelUtil.SetPoint(prdClassFrame, point, relativeTo, relativePoint, xOfs, yOfs)
+    prdClassFrame.bbpChanging = false
+end
 
 function BBP.UpdateNameplateResourcePositionForCasting(nameplate, bypass)
-    if not GetCVarBool("nameplateResourceOnTarget") then return end
-    if nameplate and nameplate.UnitFrame and nameplate.driverFrame then
-        local resourceFrame = resourceFrames[playerClass]
-        if not resourceFrame or resourceFrame:IsForbidden() then return end
-        --if UnitIsUnit(nameplate.UnitFrame.unit, "player") then return end
+    local prdClassFrame = prdClassFrame
+    if not prdClassFrame then return end
 
+    if nameplate and nameplate.UnitFrame and nameplate.driverFrame then
         local yOffset = BetterBlizzPlatesDB.nameplateResourceYPos
         local xPos = BetterBlizzPlatesDB.nameplateResourceXPos or 0
         local isCasting = UnitCastingInfo("target") or UnitChannelInfo("target")
-
         local classOffset = classResourceYOffsets[playerClass] or 0
 
         -- Adjust position based on casting state and setting
-        resourceFrame:ClearAllPoints()
         if bypass then
-            PixelUtil.SetPoint(resourceFrame, "TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset + classOffset)
+            RepositionClassFrame("TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset + classOffset)
         elseif isCasting then
-            PixelUtil.SetPoint(resourceFrame, "TOP", nameplate.UnitFrame.castBar, "BOTTOM", xPos, yOffset + classOffset)
+            RepositionClassFrame("TOP", nameplate.UnitFrame.castBar, "BOTTOM", xPos, yOffset + classOffset)
         else
             if not nameplate.UnitFrame.castBar:IsShown() then
-                PixelUtil.SetPoint(resourceFrame, "TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset + classOffset)
+                RepositionClassFrame("TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset + classOffset)
             else
-                PixelUtil.SetPoint(resourceFrame, "TOP", nameplate.UnitFrame.castBar, "BOTTOM", xPos, yOffset + classOffset)
+                RepositionClassFrame("TOP", nameplate.UnitFrame.castBar, "BOTTOM", xPos, yOffset + classOffset)
             end
         end
     end
 end
 
-local classPadding = {
-    ["MONK"] = -8,
-    ["EVOKER"] = -9,
-    ["WARLOCK"] = -8
-}
-
-local adjusted
-local msgPrinted
 function BBP.TargetResourceUpdater()
     local _, className = UnitClass("player")
     nameplateResourceOnTarget = (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true) and not BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf
     nameplateShowSelf = GetCVarBool("nameplateShowSelf")
     nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
 
-    local resourceFrame = resourceFrames[playerClass]
-    if not resourceFrame then return end
-    if resourceFrame:IsForbidden() then
-        if not msgPrinted then
-            DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Nameplate Resource Frame has become restricted after it attached to a friendly nameplate in PvE and can not be repositioned until a reload. In order to avoid this do not target friendly players or turn off friendly nameplates during PvE.")
-            msgPrinted = true
-        end
-        return
+    local prdClassFrame = prdClassFrame
+    if not prdClassFrame then return end
+
+    if not nameplateResourceHooked then
+        hooksecurefunc(prdClassFrame, "SetPoint", function(self)
+            BBP.TargetResourceUpdater()
+        end)
+        nameplateResourceHooked = true
     end
 
     if nameplateResourceOnTarget then
         local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
-        --local inInstance, instanceType = IsInInstance()
-        --if not (inInstance and (instanceType == "raid" or instanceType == "party" or instanceType == "scenario")) then
-            if nameplateForTarget then
-                --if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
-                local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
-                resourceFrame:SetScale(nameplateResourceScale)
+        if nameplateForTarget then
+            prdClassFrame:SetAlpha(1)
+            local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 1
+            prdClassFrame:SetScale(nameplateResourceScale)
 
-                if BetterBlizzPlatesDB.hideResourceOnFriend then
-                    if not UnitCanAttack(nameplateForTarget.UnitFrame.unit, "player") then
-                        resourceFrame:SetAlpha(0)
-                    else
-                        resourceFrame:SetAlpha(1)
-                    end
-                end
-
-                if BetterBlizzPlatesDB.changeResourceStrata then
-                    resourceFrame:SetFrameStrata("DIALOG")
-                end
-                resourceFrame:ClearAllPoints();
-                if nameplateResourceUnderCastbar then
-                    BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
+            if BetterBlizzPlatesDB.hideResourceOnFriend then
+                if not UnitCanAttack(nameplateForTarget.UnitFrame.unit, "player") then
+                    prdClassFrame:SetAlpha(0)
                 else
-                    PixelUtil.SetPoint(resourceFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
+                    prdClassFrame:SetAlpha(1)
                 end
             end
-        --end
-    elseif nameplateShowSelf then
-        local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
-        if not InCombatLockdown() and C_CVar.GetCVarBool("nameplateResourceOnTarget") then
-            C_CVar.SetCVar("nameplateResourceOnTarget", "0")
-        end
-        if BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf and nameplateForTarget then
-            --if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
+
             if BetterBlizzPlatesDB.changeResourceStrata then
-                resourceFrame:SetFrameStrata("DIALOG")
+                prdClassFrame:SetFrameStrata("DIALOG")
             end
-            resourceFrame:ClearAllPoints();
+
             if nameplateResourceUnderCastbar then
                 BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
             else
-                PixelUtil.SetPoint(resourceFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
+                RepositionClassFrame("BOTTOM", nameplateForTarget.UnitFrame.healthBar, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos + 30)
             end
-            --resourceFrame:SetPoint()
+        else
+            prdClassFrame:SetAlpha(0)
+        end
+    elseif nameplateShowSelf then
+        local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
+        if BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf and nameplateForTarget then
+            if BetterBlizzPlatesDB.changeResourceStrata then
+                prdClassFrame:SetFrameStrata("DIALOG")
+            end
+
+            if nameplateResourceUnderCastbar then
+                BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
+            else
+                RepositionClassFrame("BOTTOM", nameplateForTarget.UnitFrame.healthBar, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos)
+            end
+
             local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
-            resourceFrame:SetScale(nameplateResourceScale)
+            prdClassFrame:SetScale(nameplateResourceScale)
 
             if BetterBlizzPlatesDB.hideResourceOnFriend then
                 local info = nameplateForTarget.UnitFrame.BetterBlizzPlates.unitInfo
                 if info.isFriend then
-                    resourceFrame:SetAlpha(0)
+                    prdClassFrame:SetAlpha(0)
                     adjusted = true
                 else
-                    resourceFrame:SetAlpha(1)
+                    prdClassFrame:SetAlpha(1)
                 end
             elseif adjusted then
-                resourceFrame:SetAlpha(1)
+                prdClassFrame:SetAlpha(1)
                 adjusted = nil
             end
         else
-            local nameplatePlayer = C_NamePlate.GetNamePlateForUnit("player")
-            if nameplatePlayer and nameplatePlayer.driverFrame then
+            if PersonalResourceDisplayFrame then
                 local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
-                resourceFrame:SetScale(nameplateResourceScale)
+                prdClassFrame:SetScale(nameplateResourceScale)
 
                 if BetterBlizzPlatesDB.changeResourceStrata then
-                    resourceFrame:SetFrameStrata("DIALOG")
+                    prdClassFrame:SetFrameStrata("DIALOG")
                 end
-                resourceFrame:ClearAllPoints();
-                local padding = resourceFrame.paddingOverride or classPadding[className] or 0
-                PixelUtil.SetPoint(resourceFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
+
+                local padding = prdClassFrame.paddingOverride or classPadding[className] or 0
+                RepositionClassFrame("TOP", PersonalResourceDisplayFrame, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
             end
         end
-    end
-
-
-    -- hook
-
-    if not nameplateResourceHooked and (nameplateShowSelf or nameplateResourceOnTarget) then
-        hooksecurefunc(NamePlateDriverFrame, "SetupClassNameplateBars", function(self)
-            if self.classNamePlateMechanicFrame then --after entering an instance classNamePlateMechanicFrame becomes, and stays forbidden even when you leave the instance. not sure if there is a workaround.
-                if self.classNamePlateMechanicFrame:IsForbidden() then
-                    if not notifiedUser and nameplateResourceOnTarget then
-                        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Nameplate Resource Frame has become restricted after it attached to a friendly nameplate in PvE and can not be repositioned until a reload. In order to avoid this do not target friendly players or turn off friendly nameplates during PvE.")
-                        notifiedUser = true
-                    end
-                    return
-                end
-                if nameplateResourceOnTarget then
-                    local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
-                    if nameplateForTarget then--and nameplateForTarget.driverFrame then
-                        --if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
-                        if BetterBlizzPlatesDB.changeResourceStrata then
-                            resourceFrame:SetFrameStrata("DIALOG")
-                        end
-                        resourceFrame:ClearAllPoints();
-                        if nameplateResourceUnderCastbar then
-                            BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
-                        else
-                            PixelUtil.SetPoint(resourceFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
-                        end
-                        --resourceFrame:SetPoint()
-                        local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
-                        resourceFrame:SetScale(nameplateResourceScale)
-
-                        if BetterBlizzPlatesDB.hideResourceOnFriend then
-                            local info = nameplateForTarget.UnitFrame.BetterBlizzPlates.unitInfo
-                            if info.isFriend then
-                                resourceFrame:SetAlpha(0)
-                                adjusted = true
-                            else
-                                resourceFrame:SetAlpha(1)
-                            end
-                        elseif adjusted then
-                            resourceFrame:SetAlpha(1)
-                            adjusted = nil
-                        end
-                    end
-                else
-                    local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
-                    if BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf and nameplateForTarget then
-                        --if UnitIsUnit(nameplateForTarget.UnitFrame.unit, "player") then return end
-                        if BetterBlizzPlatesDB.changeResourceStrata then
-                            resourceFrame:SetFrameStrata("DIALOG")
-                        end
-                        resourceFrame:ClearAllPoints();
-                        if nameplateResourceUnderCastbar then
-                            BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
-                        else
-                            PixelUtil.SetPoint(resourceFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos);
-                        end
-                        --resourceFrame:SetPoint()
-                        local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
-                        resourceFrame:SetScale(nameplateResourceScale)
-
-                        if BetterBlizzPlatesDB.hideResourceOnFriend then
-                            local info = nameplateForTarget.UnitFrame.BetterBlizzPlates.unitInfo
-                            if info.isFriend then
-                                resourceFrame:SetAlpha(0)
-                                adjusted = true
-                            else
-                                resourceFrame:SetAlpha(1)
-                            end
-                        elseif adjusted then
-                            resourceFrame:SetAlpha(1)
-                            adjusted = nil
-                        end
-                    else
-                        local nameplatePlayer = C_NamePlate.GetNamePlateForUnit("player")
-                        if nameplatePlayer and nameplatePlayer.driverFrame then
-                            if BetterBlizzPlatesDB.changeResourceStrata then
-                                resourceFrame:SetFrameStrata("DIALOG")
-                            end
-                            resourceFrame:ClearAllPoints();
-
-                            local padding = resourceFrame.paddingOverride or classPadding[className] or 0
-                            PixelUtil.SetPoint(resourceFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
-
-                            local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
-                            resourceFrame:SetScale(nameplateResourceScale)
-                        end
-                    end
-                end
-            end
-        end)
-        nameplateResourceHooked = true
     end
 end
 
@@ -503,15 +398,14 @@ function BBP.RegisterTargetCastingEvents()
     end
 
     local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
-    local resourceFrame = resourceFrames[playerClass]
-    if not resourceFrame or resourceFrame:IsForbidden() then return end
+    local prdClassFrame = prdClassFrame
+    if not prdClassFrame then return end
+
     if nameplateForTarget then
-        --resourceFrame:SetParent(nameplateForTarget)
-        resourceFrame:ClearAllPoints()
         if nameplateResourceUnderCastbar then
             BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
-        elseif GetCVarBool("nameplateResourceOnTarget") then
-            PixelUtil.SetPoint(resourceFrame, "BOTTOM", nameplateForTarget.UnitFrame.name, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos)
+        elseif BetterBlizzPlatesDB.nameplateResourceOnTarget then
+            RepositionClassFrame("BOTTOM", nameplateForTarget.UnitFrame.healthBar, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos)
         end
     end
 end
@@ -588,6 +482,8 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
     local targetNameplate, frame = BBP.GetSafeNameplate("target")
     local db = BetterBlizzPlatesDB
     BBP.currentTargetNameplate = nil
+
+    BBP.TargetResourceUpdater()
 
     -- LAST TARGET NAMEPLATE
     if BBP.previousTargetNameplate then

@@ -3252,14 +3252,7 @@ function BBP:UpdateAnchor()
 end
 
 function BBP.RefreshBuffFrame()
-	for i, namePlate in ipairs(C_NamePlate.GetNamePlates(false)) do
-		local unitFrame = namePlate.UnitFrame
-		unitFrame.AurasFrame:UpdateAnchor()
-		if unitFrame.unit then
-			local self = unitframe.AurasFrame
-            BBP.UpdateBuffs(self, unitFrame.unit, nil, {}, unitFrame)
-        end
-	end
+
 end
 
 function BBP.HideNameplateAuraTooltip()

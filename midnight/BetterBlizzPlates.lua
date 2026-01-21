@@ -71,7 +71,7 @@ local defaultSettings = {
     customTextureSelfMana = "Solid",
     customFont = "Yanone (BBP)",
     --friendlyHideHealthBarNpc = true,
-    nameplateResourceScale = 0.7,
+    nameplateResourceScale = 1,
     darkModeNameplateColor = 0.2,
     fakeNameXPos = 0,
     fakeNameYPos = 0,
@@ -777,7 +777,7 @@ local function TempClassicNpFix()
     BetterBlizzPlatesDB.nameplateGlobalScale = 1
     BetterBlizzPlatesDB.nameplateLargerScale = 1.2
     BetterBlizzPlatesDB.nameplatePlayerLargerScale = 1.8
-    BetterBlizzPlatesDB.nameplateResourceOnTarget = "0"
+    --BetterBlizzPlatesDB.nameplateResourceOnTarget = "0"
 
     BetterBlizzPlatesDB.nameplateMinAlphaDistance = 10
     BetterBlizzPlatesDB.nameplateMaxAlpha = 1.0
@@ -803,7 +803,7 @@ local function TempClassicNpFix()
     C_CVar.SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
     C_CVar.SetCVar("nameplateLargerScale", BetterBlizzPlatesDB.nameplateLargerScale)
     C_CVar.SetCVar("nameplatePlayerLargerScale", BetterBlizzPlatesDB.nameplatePlayerLargerScale)
-    C_CVar.SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
+    --C_CVar.SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
     C_CVar.SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
     C_CVar.SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
     C_CVar.SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
@@ -932,7 +932,7 @@ local cvarList = {
     --"nameplateGlobalScale",
     "nameplateLargerScale",
     "nameplatePlayerLargerScale",
-    "nameplateResourceOnTarget",
+    --"nameplateResourceOnTarget",
     "nameplateMinAlpha",
     "nameplateMinAlphaDistance",
     "nameplateMaxAlpha",
@@ -957,6 +957,7 @@ local cvarList = {
     -- Midnights
     "nameplateDebuffPadding",
     "nameplateStyle",
+    "nameplateAuraScale",
 }
 
 function BBP.ResetNameplateCVars()
@@ -1184,7 +1185,7 @@ local function ResetNameplates()
     BetterBlizzPlatesDB.nameplateGlobalScale = 1
     BetterBlizzPlatesDB.nameplateLargerScale = 1.2
     BetterBlizzPlatesDB.nameplatePlayerLargerScale = 1.8
-    BetterBlizzPlatesDB.nameplateResourceOnTarget = "0"
+    --BetterBlizzPlatesDB.nameplateResourceOnTarget = "0"
 
     BetterBlizzPlatesDB.nameplateMinAlpha = 0.6
     BetterBlizzPlatesDB.nameplateMinAlphaDistance = 10
@@ -1224,7 +1225,7 @@ local function ResetNameplates()
     C_CVar.SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
     C_CVar.SetCVar("nameplateLargerScale", BetterBlizzPlatesDB.nameplateLargerScale)
     C_CVar.SetCVar("nameplatePlayerLargerScale", BetterBlizzPlatesDB.nameplatePlayerLargerScale)
-    C_CVar.SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
+    --C_CVar.SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
     C_CVar.SetCVar("nameplateMinAlpha", BetterBlizzPlatesDB.nameplateMinAlpha)
     C_CVar.SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
     C_CVar.SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
@@ -2164,7 +2165,7 @@ local function SetCVarsOnLogin()
         C_CVar.SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
         C_CVar.SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
         C_CVar.SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
-        C_CVar.SetCVar("nameplateResourceOnTarget", (BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf and 0) or BetterBlizzPlatesDB.nameplateResourceOnTarget)
+        --C_CVar.SetCVar("nameplateResourceOnTarget", (BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf and 0) or BetterBlizzPlatesDB.nameplateResourceOnTarget)
         C_CVar.SetCVar("nameplateShowClassColor", BetterBlizzPlatesDB.nameplateShowClassColor)
         C_CVar.SetCVar("nameplateShowFriendlyClassColor", BetterBlizzPlatesDB.nameplateShowFriendlyClassColor)
 
@@ -2178,6 +2179,10 @@ local function SetCVarsOnLogin()
 
         if BetterBlizzPlatesDB.nameplateSelfAlpha then
             C_CVar.SetCVar("nameplateSelfAlpha", BetterBlizzPlatesDB.nameplateSelfAlpha)
+        end
+
+        if BetterBlizzPlatesDB.nameplateAuraScale then
+            C_CVar.SetCVar("nameplateAuraScale", BetterBlizzPlatesDB.nameplateAuraScale)
         end
 
         if BetterBlizzPlatesDB.NamePlateVerticalScale then
@@ -2382,21 +2387,8 @@ end
 function BBP.HideResourceFrames()
     local db = BetterBlizzPlatesDB
     if not db.hideResourceFrame then return end
-    local resourceFrames = {
-        { frame = _G.DeathKnightResourceOverlayFrame, setting = db.hideResourceFrameNoDeathKnight },
-        { frame = _G.ClassNameplateBarWarlockFrame, setting = db.hideResourceFrameNoWarlock },
-        { frame = _G.ClassNameplateBarFeralDruidFrame, setting = db.hideResourceFrameNoDruid },
-        { frame = _G.ClassNameplateBarMageFrame, setting = db.hideResourceFrameNoMage },
-        { frame = _G.ClassNameplateBarWindwalkerMonkFrame, setting = db.hideResourceFrameNoMonk },
-        { frame = _G.ClassNameplateBarRogueFrame, setting = db.hideResourceFrameNoRogue },
-        { frame = _G.ClassNameplateBarPaladinFrame, setting = db.hideResourceFrameNoPaladin },
-        { frame = _G.ClassNameplateBarDracthyrFrame, setting = db.hideResourceFrameNoEvoker },
-    }
-
-    for _, resource in ipairs(resourceFrames) do
-        if resource.frame and not resource.setting then
-            resource.frame:SetAlpha(0)
-        end
+    if prdClassFrame then
+        prdClassFrame:SetAlpha(0)
     end
 end
 
@@ -2416,8 +2408,8 @@ function BBP.DarkModeNameplateResources()
     local monkChi = useDarkMode and (vertexColor + 0.10) or 1
 
 
-    local nameplateRunes = _G.DeathKnightResourceOverlayFrame
-    if nameplateRunes and not nameplateRunes:IsForbidden() then
+    local nameplateRunes = prdClassFrame
+    if nameplateRunes and not nameplateRunes:IsForbidden() and playerClass == "DEATHKNIGHT" then
         local dkNpRunes = vertexColor or 1
         for i = 1, 6 do
             applySettings(nameplateRunes["Rune" .. i].BG_Active, darkModeNpSatVal, dkNpRunes)
@@ -2425,16 +2417,16 @@ function BBP.DarkModeNameplateResources()
         end
     end
 
-    local soulShardsNameplate = _G.ClassNameplateBarWarlockFrame
-    if soulShardsNameplate and not soulShardsNameplate:IsForbidden() then
+    local soulShardsNameplate = prdClassFrame
+    if soulShardsNameplate and not soulShardsNameplate:IsForbidden() and playerClass == "WARLOCK" then
         local soulShardNp = vertexColor or 1
         for _, v in pairs({soulShardsNameplate:GetChildren()}) do
             applySettings(v.Background, darkModeNpSatVal, soulShardNp)
         end
     end
 
-    local druidComboPointsNameplate = _G.ClassNameplateBarFeralDruidFrame
-    if druidComboPointsNameplate and not druidComboPointsNameplate:IsForbidden() then
+    local druidComboPointsNameplate = prdClassFrame
+    if druidComboPointsNameplate and not druidComboPointsNameplate:IsForbidden() and playerClass == "DRUID" then
         local druidComboPointNp = druidComboPoint or 1
         local druidComboPointActiveNp = druidComboPointActive or 1
         for _, v in pairs({druidComboPointsNameplate:GetChildren()}) do
@@ -2446,8 +2438,8 @@ function BBP.DarkModeNameplateResources()
         end
     end
 
-    local mageArcaneChargesNameplate = _G.ClassNameplateBarMageFrame
-    if mageArcaneChargesNameplate and not mageArcaneChargesNameplate:IsForbidden() then
+    local mageArcaneChargesNameplate = prdClassFrame
+    if mageArcaneChargesNameplate and not mageArcaneChargesNameplate:IsForbidden() and playerClass == "MAGE" then
         local mageChargeNp = actionBarColor or 1
         for _, v in pairs({mageArcaneChargesNameplate:GetChildren()}) do
             applySettings(v.ArcaneBG, darkModeNpSatVal, mageChargeNp)
@@ -2455,8 +2447,8 @@ function BBP.DarkModeNameplateResources()
         end
     end
 
-    local monkChiPointsNameplate = _G.ClassNameplateBarWindwalkerMonkFrame
-    if monkChiPointsNameplate and not monkChiPointsNameplate:IsForbidden() then
+    local monkChiPointsNameplate = prdClassFrame
+    if monkChiPointsNameplate and not monkChiPointsNameplate:IsForbidden() and playerClass == "MONK" then
         local monkChiNp = monkChi or 1
         for _, v in pairs({monkChiPointsNameplate:GetChildren()}) do
             applySettings(v.Chi_BG, darkModeNpSatVal, monkChiNp)
@@ -2464,8 +2456,8 @@ function BBP.DarkModeNameplateResources()
         end
     end
 
-    local rogueComboPointsNameplate = _G.ClassNameplateBarRogueFrame
-    if rogueComboPointsNameplate and not rogueComboPointsNameplate:IsForbidden() then
+    local rogueComboPointsNameplate = prdClassFrame
+    if rogueComboPointsNameplate and not rogueComboPointsNameplate:IsForbidden() and playerClass == "ROGUE" then
         local rogueComboNp = rogueCombo or 1
         local rogueComboActiveNp = rogueComboActive or 1
         for _, v in pairs({rogueComboPointsNameplate:GetChildren()}) do
@@ -2474,15 +2466,15 @@ function BBP.DarkModeNameplateResources()
         end
     end
 
-    local paladinHolyPowerNameplate = _G.ClassNameplateBarPaladinFrame
-    if paladinHolyPowerNameplate and not paladinHolyPowerNameplate:IsForbidden() then
+    local paladinHolyPowerNameplate = prdClassFrame
+    if paladinHolyPowerNameplate and not paladinHolyPowerNameplate:IsForbidden() and playerClass == "PALADIN" then
         local palaPowerNp = vertexColor or 1
-        applySettings(ClassNameplateBarPaladinFrame.Background, darkModeNpSatVal, palaPowerNp)
-        applySettings(ClassNameplateBarPaladinFrame.ActiveTexture, darkModeNpSatVal, palaPowerNp)
+        applySettings(paladinHolyPowerNameplate.Background, darkModeNpSatVal, palaPowerNp)
+        applySettings(paladinHolyPowerNameplate.ActiveTexture, darkModeNpSatVal, palaPowerNp)
     end
 
-    local evokerEssencePointsNameplate = _G.ClassNameplateBarDracthyrFrame
-    if evokerEssencePointsNameplate and not evokerEssencePointsNameplate:IsForbidden() then
+    local evokerEssencePointsNameplate = prdClassFrame
+    if evokerEssencePointsNameplate and not evokerEssencePointsNameplate:IsForbidden() and playerClass == "EVOKER" then
         local evokerColorOne = monkChi or 1
         local evokerColorTwo = vertexColor or 1
         for _, v in pairs({evokerEssencePointsNameplate:GetChildren()}) do
@@ -5679,7 +5671,7 @@ local function HandleNamePlateAdded(unit)
 
     if info.isTarget then
         BBP.previousTargetNameplate = frame
-        if GetCVarBool("nameplateResourceOnTarget") then
+        if BetterBlizzPlatesDB.nameplateResourceOnTarget then
             BBP.TargetResourceUpdater()
         end
     end
@@ -6916,7 +6908,7 @@ Frame:SetScript("OnEvent", function(...)
         --BBP.HookDefaultCompactNamePlateFrameAnchorInternal()
     --end
 
-    if BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true or GetCVarBool("nameplateShowSelf") then
+    if BetterBlizzPlatesDB.nameplateResourceOnTarget then
         BBP.TargetResourceUpdater()
     end
 
@@ -7111,7 +7103,7 @@ local frame = CreateFrame("Frame")
 frame:RegisterEvent("CVAR_UPDATE")
 frame:SetScript("OnEvent", function(self, event, cvarName)
     if BBP.CVarTrackingDisabled then return end
-    if cvarName == "NamePlateHorizontalScale" or cvarName == "nameplateResourceOnTarget" then
+    if cvarName == "NamePlateHorizontalScale" then
         if not BetterBlizzPlatesDB.wasOnLoadingScreen then
             if BBP.isLargeNameplatesEnabled() then
                 BetterBlizzPlatesDB.NamePlateVerticalScale = 2.7
@@ -7331,6 +7323,13 @@ First:SetScript("OnEvent", function(_, event, addonName)
             if db.ShowClassColorInNameplate then
                 db.nameplateShowClassColor = db.ShowClassColorInNameplate
                 db.ShowClassColorInNameplate = nil
+            end
+            if db.nameplateResourceOnTarget then
+                if db.nameplateResourceOnTarget == 1 or db.nameplateResourceOnTarget == "1" or db.nameplateResourceOnTarget == true then
+                    db.nameplateResourceOnTarget = true
+                else
+                    db.nameplateResourceOnTarget = nil
+                end
             end
 
             UpdateLateAdditionSettings(db)
