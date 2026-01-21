@@ -2086,8 +2086,8 @@ end
 
 local function ApplyCVarChange()
     local shouldShow = ShouldShowFriendlyNameplates() and "1" or "0"
-    if GetCVar("nameplateShowFriends") ~= shouldShow then
-        C_CVar.SetCVar("nameplateShowFriends", shouldShow)
+    if GetCVar("nameplateShowFriendlyPlayers") ~= shouldShow then
+        C_CVar.SetCVar("nameplateShowFriendlyPlayers", shouldShow)
     end
     if inCombatEventRegistered then
         friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_REGEN_ENABLED")

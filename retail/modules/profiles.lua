@@ -10,7 +10,7 @@ function BBP.StarterProfile()
             BetterBlizzPlatesDB[k] = v
         end
         BetterBlizzPlatesDB.scStart = true
-        C_CVar.SetCVar("nameplateShowFriends", "1")
+        C_CVar.SetCVar("nameplateShowFriendlyPlayers", "1")
         ReloadUI()
     end
 end
@@ -27,7 +27,7 @@ function BBP.BlitzProfile()
             BetterBlizzPlatesDB[k] = v
         end
         BetterBlizzPlatesDB.scStart = true
-        C_CVar.SetCVar("nameplateShowFriends", "1")
+        C_CVar.SetCVar("nameplateShowFriendlyPlayers", "1")
         ReloadUI()
     end
 end
@@ -44,7 +44,7 @@ function BBP.BodifyProfile()
             BetterBlizzPlatesDB[k] = v
         end
         BetterBlizzPlatesDB.scStart = true
-        C_CVar.SetCVar("nameplateShowFriends", "1")
+        C_CVar.SetCVar("nameplateShowFriendlyPlayers", "1")
         ReloadUI()
     end
 end
@@ -61,7 +61,7 @@ function BBP.MythicProfile()
             BetterBlizzPlatesDB[k] = v
         end
         BetterBlizzPlatesDB.scStart = true
-        C_CVar.SetCVar("nameplateShowFriends", "1")
+        C_CVar.SetCVar("nameplateShowFriendlyPlayers", "1")
         ReloadUI()
     end
 end

@@ -2022,7 +2022,7 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
             end
             BetterBlizzPlatesDB.scStart = true
             if BetterBlizzPlatesDB.friendlyNameplatesEnabledOnExport then
-                C_CVar.SetCVar("nameplateShowFriends", "1")
+                C_CVar.SetCVar("nameplateShowFriendlyPlayers", "1")
                 BetterBlizzPlatesDB.friendlyNameplatesEnabledOnExport = nil
             end
             StaticPopup_Show("BBP_CONFIRM_RELOAD")
@@ -5799,7 +5799,7 @@ local function guiGeneralTab()
         end
         if InCombatLockdown() then return end
         if self:GetChecked() then
-            C_CVar.SetCVar("nameplateShowFriends", "1")
+            C_CVar.SetCVar("nameplateShowFriendlyPlayers", "1")
         end
     end)
 
@@ -5851,7 +5851,7 @@ local function guiGeneralTab()
                 BetterBlizzPlatesDB.friendlyNpdeBuffFilterCC = true
             end
             if InCombatLockdown() then return end
-            C_CVar.SetCVar("nameplateShowFriends", "1")
+            C_CVar.SetCVar("nameplateShowFriendlyPlayers", "1")
         end
     end)
     CreateTooltipTwo(partyPointer, "Party Pointer |A:UI-QuestPoiImportant-QuestNumber-SuperTracked:21:16|a", "Show a class colored pointer above friendly player nameplates.", "Hides default raidmarkers. Only shows in Arena by default or during testing. Can show extra + sign on healers in settings.")
