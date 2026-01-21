@@ -784,8 +784,8 @@ local function TempClassicNpFix()
     BetterBlizzPlatesDB.nameplateMaxAlphaDistance = 40
     BetterBlizzPlatesDB.nameplateSelfAlpha = 0.75
 
-    BetterBlizzPlatesDB.ShowClassColorInNameplate = "1"
-    BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate = "1"
+    BetterBlizzPlatesDB.nameplateShowClassColor = "1"
+    BetterBlizzPlatesDB.nameplateShowFriendlyClassColor = "1"
 
     BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
     BetterBlizzPlatesDB.castBarHeight = 18.8
@@ -807,8 +807,8 @@ local function TempClassicNpFix()
     C_CVar.SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
     C_CVar.SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
     C_CVar.SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
-    C_CVar.SetCVar("ShowClassColorInNameplate", BetterBlizzPlatesDB.ShowClassColorInNameplate)
-    C_CVar.SetCVar("ShowClassColorInFriendlyNameplate", BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate)
+    C_CVar.SetCVar("nameplateShowClassColor", BetterBlizzPlatesDB.nameplateShowClassColor)
+    C_CVar.SetCVar("nameplateShowFriendlyClassColor", BetterBlizzPlatesDB.nameplateShowFriendlyClassColor)
     C_CVar.SetCVar("nameplateSelfAlpha", BetterBlizzPlatesDB.nameplateSelfAlpha)
     C_CVar.SetCVar('nameplateShowOnlyNames', "0")
 end
@@ -939,8 +939,8 @@ local cvarList = {
     "nameplateMaxAlphaDistance",
     "nameplateOccludedAlphaMult",
     "nameplateMotion",
-    "ShowClassColorInNameplate",
-    "ShowClassColorInFriendlyNameplate",
+    "nameplateShowClassColor",
+    "nameplateShowFriendlyClassColor",
     "nameplateShowEnemyGuardians",
     "nameplateShowEnemyMinions",
     "nameplateShowEnemyMinus",
@@ -989,7 +989,9 @@ local function CVarDefaultOnLogout()
                 C_CVar.SetCVar(cvar, value)
             end
         else
-            C_CVar.SetCVar(cvar, value)
+            if cvar ~= "nameplateStyle" then -- Midnight style, skip for now
+                C_CVar.SetCVar(cvar, value)
+            end
         end
     end
 end
@@ -1191,8 +1193,8 @@ local function ResetNameplates()
     BetterBlizzPlatesDB.nameplateOccludedAlphaMult = 0.4
     BetterBlizzPlatesDB.nameplateSelfAlpha = 0.75
 
-    BetterBlizzPlatesDB.ShowClassColorInNameplate = "1"
-    BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate = "1"
+    BetterBlizzPlatesDB.nameplateShowClassColor = "1"
+    BetterBlizzPlatesDB.nameplateShowFriendlyClassColor = "1"
 
     BetterBlizzPlatesDB.nameplateShowEnemyGuardians = "1"
     BetterBlizzPlatesDB.nameplateShowEnemyMinions = "1"
@@ -1237,8 +1239,8 @@ local function ResetNameplates()
     C_CVar.SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
     C_CVar.SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
     C_CVar.SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
-    C_CVar.SetCVar("ShowClassColorInNameplate", BetterBlizzPlatesDB.ShowClassColorInNameplate)
-    C_CVar.SetCVar("ShowClassColorInFriendlyNameplate", BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate)
+    C_CVar.SetCVar("nameplateShowClassColor", BetterBlizzPlatesDB.nameplateShowClassColor)
+    C_CVar.SetCVar("nameplateShowFriendlyClassColor", BetterBlizzPlatesDB.nameplateShowFriendlyClassColor)
     C_CVar.SetCVar("nameplateSelfAlpha", BetterBlizzPlatesDB.nameplateSelfAlpha)
     C_CVar.SetCVar('nameplateShowOnlyNames', "0")
 
@@ -2163,8 +2165,8 @@ local function SetCVarsOnLogin()
         C_CVar.SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
         C_CVar.SetCVar("nameplateGlobalScale", BetterBlizzPlatesDB.nameplateGlobalScale)
         C_CVar.SetCVar("nameplateResourceOnTarget", (BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf and 0) or BetterBlizzPlatesDB.nameplateResourceOnTarget)
-        C_CVar.SetCVar("ShowClassColorInNameplate", BetterBlizzPlatesDB.ShowClassColorInNameplate)
-        C_CVar.SetCVar("ShowClassColorInFriendlyNameplate", BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate)
+        C_CVar.SetCVar("nameplateShowClassColor", BetterBlizzPlatesDB.nameplateShowClassColor)
+        C_CVar.SetCVar("nameplateShowFriendlyClassColor", BetterBlizzPlatesDB.nameplateShowFriendlyClassColor)
 
         if BetterBlizzPlatesDB.nameplateMotion then
             C_CVar.SetCVar("nameplateMotion", BetterBlizzPlatesDB.nameplateMotion)
@@ -7320,6 +7322,16 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 BBP.CVarTracker()
                 db.hasSaved = true -- Ended up with a config without this tag, idk how. Put this here just in case.
             end)
+
+            -- Midnight update
+            if db.ShowClassColorInFriendlyNameplate then
+                db.nameplateShowFriendlyClassColor = db.ShowClassColorInFriendlyNameplate
+                db.ShowClassColorInFriendlyNameplate = nil
+            end
+            if db.ShowClassColorInNameplate then
+                db.nameplateShowClassColor = db.ShowClassColorInNameplate
+                db.ShowClassColorInNameplate = nil
+            end
 
             UpdateLateAdditionSettings(db)
 
