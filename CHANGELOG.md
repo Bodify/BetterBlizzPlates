@@ -1,6 +1,15 @@
 # BetterBlizzPlates 1.9.3
 ## Prepatch/Midnight
 ### Tweak
+- Hide absorb indicator when absorb is 0
+### Bugfix
+- Fix Nameplate Style CVar changing on logout.
+- Fix everything related to showing friendly nameplates due to Blizzard CVar name change.
+- Fix everything related to nameplate class colors due to Blizzard CVar name change.
+
+# BetterBlizzPlates 1.9.3
+## Prepatch/Midnight
+### Tweak
 - Tweak Class Indicator position for some settings
 - Update profiles for Midnight: Aeghis, Starter, Blitz, Bodify (Likely more tweaks later on)
 ### Bugfix
