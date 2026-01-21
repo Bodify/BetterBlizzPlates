@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.2g
+## All versions
+### Tweak
+- Extremely minor cleanup to some settings and a toc update.
+
 # BetterBlizzPlates 1.9.2f
 ## Midnight
 ### Tweak
