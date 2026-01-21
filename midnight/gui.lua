@@ -5096,7 +5096,7 @@ local function guiGeneralTab()
     nameplateGeneralHpHeightResetButton:SetScript("OnClick", function()
         BBP.ResetToDefaultHeight2(nameplateGeneralHpHeight)
     end)
-    CreateTooltipTwo(nameplateGeneralHpHeightResetButton, "Reset Nameplate Height", "Small nameplate default is 1\nLarge nameplate default is 2.7", nil, "ANCHOR_TOP")
+    CreateTooltipTwo(nameplateGeneralHpHeightResetButton, "Reset Nameplate Height", "Midnight default is 16. Pre-midnight is ~12.", nil, "ANCHOR_TOP")
     ----------------------
     -- Enemy nameplates:
     ----------------------
