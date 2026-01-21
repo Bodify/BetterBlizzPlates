@@ -3533,12 +3533,12 @@ local function UnitAuraColorEvent(self, event, unit, unitAuraUpdateInfo)
 end
 
 function BBP.CreateUnitAuraEventFrame()
-    if UnitAuraEventFrame then
-        return
-    end
-    UnitAuraEventFrame = CreateFrame("Frame")
-    UnitAuraEventFrame:SetScript("OnEvent", UnitAuraColorEvent)
-    UnitAuraEventFrame:RegisterEvent("UNIT_AURA")
+    -- if UnitAuraEventFrame then
+    --     return
+    -- end
+    -- UnitAuraEventFrame = CreateFrame("Frame")
+    -- UnitAuraEventFrame:SetScript("OnEvent", UnitAuraColorEvent)
+    -- UnitAuraEventFrame:RegisterEvent("UNIT_AURA")
 end
 
 -- can run before a nameplate is fetched so needs updated info
@@ -6972,7 +6972,7 @@ Frame:SetScript("OnEvent", function(...)
         end)
         db.reopenOptions = false
     end
-    BBP.CreateUnitAuraEventFrame()
+    --BBP.CreateUnitAuraEventFrame()
 
     -- Modify the hooksecurefunc based on instance status
     HideHealthbarInPvEMagic()
