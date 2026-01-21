@@ -1,3 +1,14 @@
+# BetterBlizzPlates 1.9.3b
+## Prepatch/Midnight
+### Tweak
+- Add back support for Combo Points on Target Nameplate (Requires PRD enabled, which you can hide bars of in Edit Mode)
+- Fixup Border Size Settings for Pre-midnight look
+- Hide absorb indicator when absorb is 0
+### Bugfix
+- Fix Nameplate Style CVar changing on logout.
+- Fix everything related to showing friendly nameplates due to Blizzard CVar name change.
+- Fix everything related to nameplate class colors due to Blizzard CVar name change.
+
 # BetterBlizzPlates 1.9.3
 ## Prepatch/Midnight
 ### Tweak
