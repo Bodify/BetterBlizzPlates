@@ -1,4 +1,4 @@
-## Interface: 120000, 110207
+## Interface: 120001, 120000, 110207
 ## Title: Better|cff00c0ffBlizz|rPlates
 ## Notes: Default Blizzard Nameplates with more features added to them with easy settings.
 ## Author: Bodify
