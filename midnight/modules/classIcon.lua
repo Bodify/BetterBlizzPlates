@@ -534,7 +534,8 @@ function BBP.ClassIndicator(frame, foundID)
         if config.nameplateResourceOnTarget == "1" and not config.nameplateResourceUnderCastbar and info.isTarget and not (config.hideResourceOnFriend and info.isFriend) then
             resourceAnchor = frame:GetParent().driverFrame.classNamePlateMechanicFrame
         end
-        frame.classIndicator:SetPoint(oppositeAnchor, resourceAnchor or frame.healthBar, anchorPoint, xPos, yPos + 7)
+        local attachPoint = (BetterBlizzPlatesDB.useFakeName and BetterBlizzPlatesDB.fakeNameAnchorRelative == "TOP" and frame.name) or resourceAnchor or frame.healthBar
+        frame.classIndicator:SetPoint(oppositeAnchor, attachPoint, anchorPoint, xPos, yPos + 7)
     else
         frame.classIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos)
     end

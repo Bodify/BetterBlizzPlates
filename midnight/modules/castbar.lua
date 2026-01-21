@@ -2,57 +2,85 @@ if not BBP.isMidnight then return end
 local LSM = LibStub("LibSharedMedia-3.0")
 
 local interruptSpells = {
-    1766,  -- Kick (Rogue)
-    2139,  -- Counterspell (Mage)
-    6552,  -- Pummel (Warrior)
-    19647, -- Spell Lock (Warlock)
-    47528, -- Mind Freeze (Death Knight)
-    57994, -- Wind Shear (Shaman)
-    --91802, -- Shambling Rush (Death Knight)
-    96231, -- Rebuke (Paladin)
-    106839,-- Skull Bash (Feral)
-    115781,-- Optical Blast (Warlock)
-    116705,-- Spear Hand Strike (Monk)
-    132409,-- Spell Lock (Warlock)
-    119910,-- Spell Lock (Warlock Pet)
-    89766, -- Axe Toss (Warlock Pet)
-    171138,-- Shadow Lock (Warlock)
-    147362,-- Countershot (Hunter)
-    183752,-- Disrupt (Demon Hunter)
-    187707,-- Muzzle (Hunter)
-    212619,-- Call Felhunter (Warlock)
-    --231665,-- Avengers Shield (Paladin)
-    351338,-- Quell (Evoker)
-    97547, -- Solar Beam
-    78675, -- Solar Beam
-    15487, -- Silence
-    --47482, -- Leap (DK Transform)
+    [1766]   = true, -- Kick (Rogue)
+    [2139]   = true, -- Counterspell (Mage)
+    [6552]   = true, -- Pummel (Warrior)
+    [19647]  = true, -- Spell Lock (Warlock)
+    [47528]  = true, -- Mind Freeze (Death Knight)
+    [57994]  = true, -- Wind Shear (Shaman)
+    --[91802]  = true, -- Shambling Rush (Death Knight)
+    [96231]  = true, -- Rebuke (Paladin)
+    [106839] = true, -- Skull Bash (Feral)
+    [115781] = true, -- Optical Blast (Warlock)
+    [116705] = true, -- Spear Hand Strike (Monk)
+    [132409] = true, -- Spell Lock (Warlock)
+    [119910] = true, -- Spell Lock (Warlock Pet)
+    [89766]  = true, -- Axe Toss (Warlock Pet)
+    [171138] = true, -- Shadow Lock (Warlock)
+    [147362] = true, -- Countershot (Hunter)
+    [183752] = true, -- Disrupt (Demon Hunter)
+    [187707] = true, -- Muzzle (Hunter)
+    [212619] = true, -- Call Felhunter (Warlock)
+    --[231665] = true, -- Avengers Shield (Paladin)
+    [351338] = true, -- Quell (Evoker)
+    [97547]  = true, -- Solar Beam
+    [78675]  = true, -- Solar Beam
+    [15487]  = true, -- Silence
+    --[47482]  = true, -- Leap (DK Transform)
 }
 
 -- Local variable to store the known interrupt spell ID
-local knownInterruptSpellID = nil
+local playerKick = nil
+
+-- Interrupt ready status
+BBP.interruptReady = true
+BBP.interruptStatusColorOn = false
 
 -- Recheck interrupt spells when lock resummons/sacrifices pet
 local petSummonSpells = {
-    [30146] = true,  -- Summon Demonic Tyrant (Demonology)
-    [691]    = true,  -- Summon Felhunter (for Spell Lock)
-    [108503] = true,  -- Grimoire of Sacrifice
+    [30146]  = true, -- Summon Demonic Tyrant (Demonology)
+    [691]    = true, -- Summon Felhunter (for Spell Lock)
+    [108503] = true, -- Grimoire of Sacrifice
 }
 
--- Function to find and return the interrupt spell the player knows
 local function GetInterruptSpell()
-    for _, spellID in ipairs(interruptSpells) do
+    for spellID, _ in pairs(interruptSpells) do
         if IsSpellKnownOrOverridesKnown(spellID) or (UnitExists("pet") and IsSpellKnownOrOverridesKnown(spellID, true)) then
-            knownInterruptSpellID = spellID
-            petSummonSpells[spellID] = true
             return spellID
-        elseif petSummonSpells[spellID] then
-            petSummonSpells[spellID] = nil
         end
     end
-    knownInterruptSpellID = nil
+    return nil
 end
 BBP.GetInterruptSpell = GetInterruptSpell
+
+BBP.interruptIcon = CreateFrame("Frame")
+BBP.interruptIcon.cooldown = CreateFrame("Cooldown", nil, BBP.interruptIcon, "CooldownFrameTemplate")
+BBP.interruptIcon.cooldown:HookScript("OnCooldownDone", function()
+    BBP.interruptReady = true
+    BBP.UpdateCastbarInterruptStatus()
+end)
+
+function BBP.UpdateCastbarInterruptStatus()
+    if not BetterBlizzPlatesDB.castBarRecolorInterrupt then return end
+    for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = namePlate.UnitFrame
+        if frame and frame.castBar and frame.castBar:IsShown() then
+            BBP.CustomizeCastbar(frame, frame.unit)
+        end
+    end
+end
+
+local function UpdateInterruptIcon(frame)
+    if not playerKick then
+        playerKick = GetInterruptSpell()
+    end
+    if playerKick then
+        local cooldownInfo = C_Spell.GetSpellCooldown(playerKick)
+        if cooldownInfo then
+            frame.cooldown:SetCooldown(cooldownInfo.startTime, cooldownInfo.duration)
+        end
+    end
+end
 
 local IsSpellKnownOrOverridesKnown = IsSpellKnownOrOverridesKnown
 local UnitCastingInfo = UnitCastingInfo
@@ -70,11 +98,25 @@ local interruptedText = SPELL_FAILED_INTERRUPTED
 
 local function OnEvent(self, event, unit, _, spellID)
     if event == "UNIT_SPELLCAST_SUCCEEDED" then
+        -- Check if player used an interrupt spell
+        if interruptSpells[spellID] then
+            local cooldownInfo = C_Spell.GetSpellCooldown(spellID)
+            if cooldownInfo then
+                BBP.interruptIcon.cooldown:SetCooldown(cooldownInfo.startTime, cooldownInfo.duration)
+            end
+            BBP.interruptReady = false
+            if BetterBlizzPlatesDB.castBarRecolorInterrupt then
+                BBP.UpdateCastbarInterruptStatus()
+            end
+            return
+        end
+        -- Check for pet summon spells
         if not petSummonSpells[spellID] then return end
     end
     if BetterBlizzPlatesDB.castBarRecolorInterrupt and BetterBlizzPlatesDB.enableCastbarCustomization then
         C_Timer.After(0.1, function()
-            GetInterruptSpell()
+            playerKick = GetInterruptSpell()
+            UpdateInterruptIcon(BBP.interruptIcon)
             for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
                 local frame = namePlate.UnitFrame
                 BBP.CustomizeCastbar(frame, frame.unit)
@@ -89,51 +131,19 @@ interruptSpellUpdate:RegisterEvent("TRAIT_CONFIG_UPDATED")
 interruptSpellUpdate:RegisterEvent("PLAYER_TALENT_UPDATE")
 interruptSpellUpdate:SetScript("OnEvent", OnEvent)
 
--- Castbar has a fade out animation after UNIT_SPELLCAST_STOP has triggered, reset castbar settings after this fadeout
-local function ResetCastbarAfterFadeout(frame, unitToken)
-    local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
-    if not enableCastbarCustomization then return end
+local cooldownFrame = CreateFrame("Frame")
+cooldownFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+cooldownFrame:SetScript("OnEvent", function(self, event, spellID)
+    if spellID and spellID ~= playerKick then return end
+    UpdateInterruptIcon(BBP.interruptIcon)
+end)
 
-    if not (frame and frame.castBar) then return end
-    if unitToken == "player" then return end
-
-    local castBar = frame.castBar
-    if castBar:IsForbidden() then return end
-
-    C_Timer.After(0.5, function()
-        if not castBar then return end
-        local showCastBarIconWhenNoninterruptible = BetterBlizzPlatesDB.showCastBarIconWhenNoninterruptible
-        local castBarIconScale = BetterBlizzPlatesDB.castBarIconScale
-        local castBarHeight = BetterBlizzPlatesDB.castBarHeight
-        local castBarTextScale = BetterBlizzPlatesDB.castBarTextScale
-        local castBarEmphasisHealthbarColor = BetterBlizzPlatesDB.castBarEmphasisHealthbarColor
-
-        local borderShieldSize = showCastBarIconWhenNoninterruptible and (castBarIconScale + 0.3) or castBarIconScale
-
-        -- castBar:SetHeight(castBarHeight)
-        -- castBar.Icon:SetScale(castBarIconScale)
-        -- castBar.Spark:SetSize(4, castBarHeight + 5)
-        -- castBar.Text:SetScale(castBarTextScale)
-        -- castBar.BorderShield:SetScale(borderShieldSize)
-        -- if (not castBar.casting and not castBar.channeling and not castBar.reverseChanneling) then
-        --     castBar.BorderShield:Hide()
-        -- end
-
-        -- -- local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
-        -- -- local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
-        -- -- if (castBarRecolor or useCustomCastbarTexture) and frame.castBar then
-        -- --     frame.castBar:SetStatusBarColor(1,0,0)
-        -- -- end
-        -- -- if BetterBlizzPlatesDB.castBarInterruptHighlighter then
-        -- --     frame.castBar:SetStatusBarColor(1,1,1)
-        -- -- end
-
-        -- if castBarEmphasisHealthbarColor then
-        --     if not frame or frame:IsForbidden() then return end
-        --     BBP.CompactUnitFrame_UpdateHealthColor(frame)
-        -- end
-    end)
-end
+C_Timer.After(1, function()
+    playerKick = GetInterruptSpell()
+    if playerKick then
+        UpdateInterruptIcon(BBP.interruptIcon)
+    end
+end)
 
 -- Cast emphasis
 function BBP.CustomizeCastbar(frame, unitToken, event)
@@ -400,7 +410,20 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     local castBarRecolorInterrupt = db.castBarRecolorInterrupt
 
     if castBarRecolorInterrupt then
-        -- fill in isMidnight
+        BBP.interruptStatusColorOn = true
+        if (casting or channeling) and castBar.barType ~= "uninterruptable" then
+            local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
+            if not isFriend then
+                if not BBP.interruptReady then
+                    if castBarTexture then
+                        castBarTexture:SetDesaturated(true)
+                    end
+                    castBar:SetStatusBarColor(unpack(db.castBarNoInterruptColor or { 0.7, 0.7, 0.7, 1 }))
+                end
+            end
+        end
+    else
+        BBP.interruptStatusColorOn = false
     end
 end
 

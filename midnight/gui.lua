@@ -12400,6 +12400,9 @@ local function guiTemp()
             BetterBlizzPlatesDB.hpHeightFriendly = 4 * 2.7
             BetterBlizzPlatesDB.hpHeightSelf = 4 * 2.7
             BetterBlizzPlatesDB.hpHeightSelfMana = 4 * 2.7
+            if not InCombatLockdown() then
+                C_CVar.SetCVar("nameplateStyle", "2")
+            end
             -- BetterBlizzPlatesDB.fakeNameXPos = 0
             -- BetterBlizzPlatesDB.fakeNameYPos = 0
             -- BetterBlizzPlatesDB.fakeNameFriendlyXPos = 0

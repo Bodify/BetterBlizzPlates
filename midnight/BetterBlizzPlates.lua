@@ -956,6 +956,7 @@ local cvarList = {
     "nameplateSelfAlpha",
     -- Midnights
     "nameplateDebuffPadding",
+    "nameplateStyle",
 }
 
 function BBP.ResetNameplateCVars()
@@ -2167,6 +2168,10 @@ local function SetCVarsOnLogin()
 
         if BetterBlizzPlatesDB.nameplateMotion then
             C_CVar.SetCVar("nameplateMotion", BetterBlizzPlatesDB.nameplateMotion)
+        end
+
+        if BetterBlizzPlatesDB.nameplateDebuffPadding then
+            C_CVar.SetCVar("nameplateDebuffPadding", BetterBlizzPlatesDB.nameplateDebuffPadding)
         end
 
         if BetterBlizzPlatesDB.nameplateSelfAlpha then
@@ -7348,185 +7353,6 @@ First:SetScript("OnEvent", function(_, event, addonName)
 
             BBP.HidePersonalManabarFX()
 
-            -- update totem indicator list
-            if not db.totemListUpdateTWW1 then
-                if not db.totemIndicatorNpcList[59712] then
-                    db.totemIndicatorNpcList[59712] = defaultSettings.totemIndicatorNpcList[59712]
-                end
-                if db.totemIndicatorNpcList[105427] then
-                    db.totemIndicatorNpcList[105427].name = "Totem of Wrath"
-                end
-                db.totemIndicatorNpcList[179193] = nil --fel obelisk removed
-                db.totemIndicatorNpcList[6112] = nil --windfury totem removed
-                db.totemListUpdateTWW1 = true
-            end
-
-            if not db.totemListUpdateTWW2 then
-                if not db.totemIndicatorNpcList[225672] then
-                    db.totemIndicatorNpcList[225672] = defaultSettings.totemIndicatorNpcList[225672]
-                end
-                local entriesToCheck = {
-                    {name = "Shadow (Priest Re-Fear)", id = 225672, comment = ""},
-                    {name = "Stone Bulwark Totem", id = 59712, comment = ""},
-                    {name = "Past Self (Evoker)", id = 185800, comment = ""}
-                }
-
-                for _, newEntry in ipairs(entriesToCheck) do
-                    local entryExists = false
-
-                    -- Check if the entry exists in hideNPCsWhitelist
-                    for _, existingEntry in ipairs(db.hideNPCsWhitelist) do
-                        if existingEntry.id == newEntry.id then
-                            entryExists = true
-                            break
-                        end
-                    end
-
-                    -- If the entry does not exist, add it to the list
-                    if not entryExists then
-                        table.insert(db.hideNPCsWhitelist, newEntry)
-                    end
-                end
-                db.totemListUpdateTWW2 = true
-            end
-
-            if not db.totemListUpdateTWW3 then
-                if not db.totemIndicatorNpcList[224466] then
-                    db.totemIndicatorNpcList[224466] = defaultSettings.totemIndicatorNpcList[224466]
-                end
-                if not db.totemIndicatorNpcList[19668] then
-                    db.totemIndicatorNpcList[19668] = defaultSettings.totemIndicatorNpcList[19668]
-                end
-                if not db.totemIndicatorNpcList[225409] then
-                    db.totemIndicatorNpcList[225409] = defaultSettings.totemIndicatorNpcList[225409]
-                end
-                local entriesToCheck = {
-                    {name = "Voidwraith (Priest)", id = 224466, comment = ""},
-                    {name = "Shadowfiend", id = 19668, comment = ""},
-                    {name = "Surging Totem", id = 225409, comment = ""}
-                }
-
-                for _, newEntry in ipairs(entriesToCheck) do
-                    local entryExists = false
-                    local entryExistsFade = false
-
-                    -- Check if the entry exists in hideNPCsWhitelist
-                    for _, existingEntry in ipairs(db.hideNPCsWhitelist) do
-                        if existingEntry.id == newEntry.id then
-                            entryExists = true
-                            break
-                        end
-                    end
-
-                    for _, existingEntry in ipairs(db.fadeOutNPCsWhitelist) do
-                        if existingEntry.id == newEntry.id then
-                            entryExistsFade = true
-                            break
-                        end
-                    end
-
-                    -- If the entry does not exist, add it to the list
-                    if not entryExists then
-                        table.insert(db.hideNPCsWhitelist, newEntry)
-                    end
-                    if not entryExistsFade then
-                        table.insert(db.fadeOutNPCsWhitelist, newEntry)
-                    end
-                end
-                db.totemListUpdateTWW3 = true
-            end
-
-            if not db.totemListUpdateTWW4 then
-                local entriesToCheck = {
-                    {name = "Monk Image (Red)", id = 69791, comment = ""},
-                    {name = "Monk Image (Green)", id = 69792, comment = ""},
-                }
-
-                for _, newEntry in ipairs(entriesToCheck) do
-                    local entryExists = false
-                    local entryExistsFade = false
-
-                    -- Check if the entry exists in hideNPCsWhitelist
-                    for _, existingEntry in ipairs(db.hideNPCsWhitelist) do
-                        if existingEntry.id == newEntry.id then
-                            entryExists = true
-                            break
-                        end
-                    end
-
-                    for _, existingEntry in ipairs(db.fadeOutNPCsWhitelist) do
-                        if existingEntry.id == newEntry.id then
-                            entryExistsFade = true
-                            break
-                        end
-                    end
-
-                    -- If the entry does not exist, add it to the list
-                    if not entryExists then
-                        table.insert(db.hideNPCsWhitelist, newEntry)
-                    end
-                    if not entryExistsFade then
-                        table.insert(db.fadeOutNPCsWhitelist, newEntry)
-                    end
-                end
-                db.totemListUpdateTWW4 = true
-            end
-
-            if not db.totemListUpdateTWW5 then
-                if not db.totemIndicatorNpcList[14465] then
-                    db.totemIndicatorNpcList[14465] = defaultSettings.totemIndicatorNpcList[14465]
-                end
-                if not db.totemIndicatorNpcList[14466] then
-                    db.totemIndicatorNpcList[14466] = defaultSettings.totemIndicatorNpcList[14466]
-                end
-                db.totemListUpdateTWW5 = true
-
-                local entriesToCheck = {
-                    {name = "Fenryr (Hunter)", id = 228224, comment = ""},
-                    {name = "Hati (Hunter)", id = 228226, comment = ""},
-                    {name = "Dark Hound (Hunter)", id = 228226, comment = ""},
-                    {name = "Monk SEF Image (Red)", id = 69791, comment = ""},
-                    {name = "Monk SEF Image (Green)", id = 69792, comment = ""},
-            
-                    {name = "Vilefiend (Warlock)", id = 135816, comment = ""},
-                    {name = "Gloomhound (Warlock)", id = 226268, comment = ""},
-                    {name = "Charhound (Warlock)", id = 226269, comment = ""},
-                    {name = "Treant", id = 103822, comment = ""},
-                    {name = "Whitemane (DK)", id = 221633, comment = ""},
-                    {name = "Mograine (DK)", id = 221632, comment = ""},
-                    {name = "Nazgrim (DK)", id = 221634, comment = ""},
-                    {name = "Trollbane (DK)", id = 221635, comment = ""},
-                    {name = "Water Elemental (Mage)", id = 208441, comment = ""},
-                }
-
-                for _, newEntry in ipairs(entriesToCheck) do
-                    local entryExistsFade = false
-
-                    for _, existingEntry in ipairs(db.fadeOutNPCsList) do
-                        if existingEntry.id == newEntry.id then
-                            entryExistsFade = true
-                            break
-                        end
-                    end
-
-                    if not entryExistsFade then
-                        table.insert(db.fadeOutNPCsList, newEntry)
-                    end
-                end
-            end
-
-            if not db.totemListUpdateTWW6 then
-                local totemIDs = {119052, 107100, 10467}
-
-                for _, id in ipairs(totemIDs) do
-                    if db.totemIndicatorNpcList[id] then
-                        db.totemIndicatorNpcList[id] = nil
-                    end
-                end
-
-                db.totemListUpdateTWW6 = true
-            end
-
             if not db.cleanedScaleScale then
                 for key, _ in pairs(BetterBlizzPlatesDB) do
                     if string.match(key, "ScaleScale$") then
@@ -7541,16 +7367,6 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     db.friendlyHideHealthBarNpc = nil
                 end
                 db.fixedFriendlyHealthbarHide = true
-            end
-
-            if not db.auraWhitelistColorsUpdated then
-                UpdateAuraColorsToGreen() --update default yellow text to green for new color featur
-                db.auraWhitelistColorsUpdated = true
-            end
-
-            if not db.auraWhitelistAlphaUpdated then
-                AddAlphaValuesToAuraColors()
-                db.auraWhitelistAlphaUpdated = true
             end
 
             if db.castBarIconXPos and not db.castBarIconPosReset then
@@ -8330,7 +8146,9 @@ hooksecurefunc(NamePlateDriverFrame, "UpdateNamePlateOptions", function()
         end
         return
     end
-    ApplyNameplateUpdates()
+    C_Timer.After(0, function()
+        ApplyNameplateUpdates()
+    end)
 end)
 
 hooksecurefunc(NamePlateDriverFrame, "UpdateNamePlateSize", function(self, namePlateStyle, namePlateScale)
@@ -8343,5 +8161,7 @@ hooksecurefunc(NamePlateDriverFrame, "UpdateNamePlateSize", function(self, nameP
         end
         return
     end
-    ApplyNameplateUpdates()
+    C_Timer.After(0, function()
+        ApplyNameplateUpdates()
+    end)
 end)

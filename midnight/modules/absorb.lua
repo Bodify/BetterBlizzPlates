@@ -53,7 +53,7 @@ function BBP.AbsorbIndicator(frame)
     end
 
     -- Check absorb amount and hide if less than 1k
-    local absorb = UnitGetTotalAbsorbs(unit) or 0
+    local absorb = UnitGetTotalAbsorbs(unit)
     frame.absorbIndicator:SetText(AbbreviateNumbers(absorb))
     frame.absorbIndicator:Show()
 end
