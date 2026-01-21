@@ -4442,6 +4442,31 @@ local function ChangeHealthbarBorderSize(frame)
 
         frame.HealthBarsContainer.healthBar:SetBorderSize(borderSize)
 
+    elseif frame.HealthBarsContainer.borders and frame.HealthBarsContainer.SetBorderSize then
+        -- (classicRetailNameplates)
+        local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config
+        if not config then return end
+
+        local borderSize = config.nameplateBorderSize
+        local unit = frame.unit
+
+        if frame == BBP.currentTargetNameplate then
+            borderSize = config.nameplateTargetBorderSize
+        end
+
+        if BetterBlizzPlatesDB.castBarPixelBorder then
+            if frame.castBar.SetBorderSize then
+                frame.castBar:SetBorderSize(borderSize)
+            end
+        end
+        if BetterBlizzPlatesDB.castBarIconPixelBorder then
+            if frame.castBar.Icon.SetBorderSize then
+                frame.castBar.Icon:SetBorderSize(borderSize)
+            end
+        end
+
+        frame.HealthBarsContainer:SetBorderSize(borderSize)
+
     else
         if not frame.HealthBarsContainer.border then return end
         if frame.borderHooked then
@@ -5920,7 +5945,12 @@ local function HandleNamePlateAdded(unit)
     -- --HealthBar Height
     if config.changeHealthbarHeight then AdjustHealthBarHeight(frame) end
 
-    if config.changeNameplateBorderSize then ChangeHealthbarBorderSize(frame) end
+    if config.changeNameplateBorderSize then
+        ChangeHealthbarBorderSize(frame)
+    elseif BetterBlizzPlatesDB.classicRetailNameplates and frame.HealthBarsContainer.newBorder then
+        -- Ensure classicRetailNameplates borders are initialized even if changeNameplateBorderSize is off
+        ChangeHealthbarBorderSize(frame)
+    end
 
     -- Apply custom healthbar texture
     if config.useCustomTextureForBars or BBP.needsUpdate or BetterBlizzPlatesDB.classicRetailNameplates then BBP.ApplyCustomTextureToNameplate(frame) end

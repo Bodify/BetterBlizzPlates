@@ -498,9 +498,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             end
 
             if db.changeNameplateBorderSize then
-                if frame.HealthBarsContainer.healthBar.borders then
-                    frame.HealthBarsContainer.healthBar:SetBorderSize(db.nameplateBorderSize)
-                end
+                BBP.ChangeHealthbarBorderSize(frame)
             end
 
             if frame.BBPmouseoverTex and db.keepNpShadowTargetHighlighted then
@@ -635,9 +633,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             end
 
             if db.changeNameplateBorderSize then
-                if frame.HealthBarsContainer.healthBar.borders then
-                    frame.HealthBarsContainer.healthBar:SetBorderSize(db.nameplateTargetBorderSize)
-                end
+                BBP.ChangeHealthbarBorderSize(frame)
             end
 
             if frame.BBPmouseoverTex and db.keepNpShadowTargetHighlighted then
