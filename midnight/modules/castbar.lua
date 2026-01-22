@@ -1063,9 +1063,9 @@ function BBP.CastbarOnEvent(frame, event)
         end)
     end
 
-    if hideCastbar then
-        BBP.HideCastbar(frame, self.unit)
-    end
+    -- if hideCastbar then
+    --     BBP.HideCastbar(frame, self.unit)
+    -- end
 end
 
 function BBP.HookCastbarOnEvent(frame)
