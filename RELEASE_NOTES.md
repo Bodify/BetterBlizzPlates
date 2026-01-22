@@ -1,3 +1,12 @@
+# BetterBlizzPlates 1.9.3c
+## Prepatch/Midnight
+### Tweak
+- Fix rogue combo points offset on nameplate due to them not being centered by Blizzard.
+### Bugfix
+- Fix Pre-Midnight Nameplate Border getting stuck white target color sometimes.
+- Fix Pre-Midnight Nameplate Border resizing sometimes when it shouldnt.
+- Misc fixes.
+
 # BetterBlizzPlates 1.9.3b
 ## Prepatch/Midnight
 ### Tweak
