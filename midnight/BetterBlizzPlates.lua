@@ -5956,9 +5956,9 @@ local function HandleNamePlateAdded(unit)
 
     if config.changeNameplateBorderSize then
         ChangeHealthbarBorderSize(frame)
-    elseif BetterBlizzPlatesDB.classicRetailNameplates and frame.HealthBarsContainer.newBorder then
-        -- Ensure classicRetailNameplates borders are initialized even if changeNameplateBorderSize is off
-        ChangeHealthbarBorderSize(frame)
+    -- elseif BetterBlizzPlatesDB.classicRetailNameplates and frame.HealthBarsContainer.newBorder then
+    --     -- Ensure classicRetailNameplates borders are initialized even if changeNameplateBorderSize is off
+    --     ChangeHealthbarBorderSize(frame)
     end
 
     -- Apply custom healthbar texture

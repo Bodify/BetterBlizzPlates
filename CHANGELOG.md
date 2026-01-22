@@ -1,7 +1,8 @@
-# BetterBlizzPlates 1.9.3b
+# BetterBlizzPlates 1.9.3c
 ## Prepatch/Midnight
 ### Bugfix
 - Fix Pre-Midnight Nameplate Border getting stuck white target color sometimes.
+- Fix Pre-Midnight Nameplate Border resizing sometimes when it shouldnt.
 
 # BetterBlizzPlates 1.9.3b
 ## Prepatch/Midnight
