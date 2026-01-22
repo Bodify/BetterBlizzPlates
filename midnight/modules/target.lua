@@ -249,6 +249,15 @@ local function RepositionClassFrame(point, relativeTo, relativePoint, xOfs, yOfs
     if not prdClassFrame then return end
     if prdClassFrame.bbpChanging  then return end
 
+    if playerClass == "ROGUE" then
+        local maxComboPoints = RogueComboPointBarFrame.maxUsablePoints
+        if maxComboPoints == 7 then
+            xOfs = xOfs + 20
+        elseif maxComboPoints == 6 then
+            xOfs = xOfs + 10
+        end
+    end
+
     prdClassFrame.bbpChanging = true
     prdClassFrame:ClearAllPoints()
     PixelUtil.SetPoint(prdClassFrame, point, relativeTo, relativePoint, xOfs, yOfs)
@@ -264,6 +273,15 @@ function BBP.UpdateNameplateResourcePositionForCasting(nameplate, bypass)
         local xPos = BetterBlizzPlatesDB.nameplateResourceXPos or 0
         local isCasting = UnitCastingInfo("target") or UnitChannelInfo("target")
         local classOffset = classResourceYOffsets[playerClass] or 0
+
+        if playerClass == "ROGUE" then
+            local maxComboPoints = RogueComboPointBarFrame.maxUsablePoints
+            if maxComboPoints == 7 then
+                xPos = xPos + 20
+            elseif maxComboPoints == 6 then
+                xPos = xPos + 10
+            end
+        end
 
         -- Adjust position based on casting state and setting
         if bypass then
