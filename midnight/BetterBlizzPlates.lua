@@ -1699,12 +1699,12 @@ end
 
 --#################################################################################################
 function BBP.isFriendlistFriend(unit)
-    for i = 1, C_FriendList.GetNumFriends() do
-        local friendInfo = C_FriendList.GetFriendInfoByIndex(i)
-        if friendInfo and friendInfo.name == UnitName(unit) then
-            return true
-        end
-    end
+    -- for i = 1, C_FriendList.GetNumFriends() do
+    --     local friendInfo = C_FriendList.GetFriendInfoByIndex(i)
+    --     if friendInfo and friendInfo.name == UnitName(unit) then
+    --         return true
+    --     end
+    -- end
     return false
 end
 
@@ -1715,17 +1715,17 @@ function BBP.isUnitGuildmate(unit)
 end
 
 function BBP.isUnitBNetFriend(unit)
-    local unitName = UnitName(unit)
-    local numBNetFriends = BNGetNumFriends()
-    for i = 1, numBNetFriends do
-        local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
-        if accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.isOnline then
-            local characterName = accountInfo.gameAccountInfo.characterName
-            if characterName and characterName == unitName then
-                return true
-            end
-        end
-    end
+    -- local unitName = UnitName(unit)
+    -- local numBNetFriends = BNGetNumFriends()
+    -- for i = 1, numBNetFriends do
+    --     local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
+    --     if accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.isOnline then
+    --         local characterName = accountInfo.gameAccountInfo.characterName
+    --         if characterName and characterName == unitName then
+    --             return true
+    --         end
+    --     end
+    -- end
     return false
 end
 
