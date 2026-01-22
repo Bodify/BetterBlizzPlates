@@ -5813,7 +5813,7 @@ local function HandleNamePlateAdded(unit)
         if config.changeNameplateBorderColor then
             BBP.ColorNameplateBorder(frame)
         else
-            if UnitIsUnit(frame.unit, "target") then
+            if UnitIsUnit(unit, "target") then
                 frame.HealthBarsContainer:SetBorderColor(1, 1, 1, 1)
             else
                 frame.HealthBarsContainer:SetBorderColor(0, 0, 0, 1)
