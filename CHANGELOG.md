@@ -1,5 +1,10 @@
 # BetterBlizzPlates 1.9.3b
 ## Prepatch/Midnight
+### Bugfix
+- Fix Pre-Midnight Nameplate Border getting stuck white target color sometimes.
+
+# BetterBlizzPlates 1.9.3b
+## Prepatch/Midnight
 ### Tweak
 - Add back support for Combo Points on Target Nameplate (Requires PRD enabled, which you can hide bars of in Edit Mode)
 - Fixup Border Size Settings for Pre-midnight look

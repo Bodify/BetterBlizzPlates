@@ -5810,6 +5810,15 @@ local function HandleNamePlateAdded(unit)
 
     if BetterBlizzPlatesDB.classicRetailNameplates then
         BBP.SetupBorderOnFrame(frame.HealthBarsContainer, true)
+        if config.changeNameplateBorderColor then
+            BBP.ColorNameplateBorder(frame)
+        else
+            if UnitIsUnit(frame.unit, "target") then
+                frame.HealthBarsContainer:SetBorderColor(1, 1, 1, 1)
+            else
+                frame.HealthBarsContainer:SetBorderColor(0, 0, 0, 1)
+            end
+        end
     end
     if BetterBlizzPlatesDB.classicRetailNameplates or not config.useCustomTextureForBars then
         if frame.HealthBarsContainer.healthBar.MaskTexture then
