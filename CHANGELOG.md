@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.3d
+## Prepatch/Midnight
+### Tweak
+- Update mes profile
+
 # BetterBlizzPlates 1.9.3c
 ## Prepatch/Midnight
 ### Tweak
