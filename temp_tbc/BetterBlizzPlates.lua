@@ -2903,31 +2903,72 @@ local function SetBarWidth(frame, width, useOffsets)
     frame.healthBar.bbpAdjusted = true
 end
 BBP.SetBarWidth = SetBarWidth
+function BBP.IsSmallPet(frame)
+    return UnitIsOtherPlayersPet(frame.unit)
+           or (BBP.isInPvP and not UnitIsPlayer(frame.unit))
+           or UnitIsUnit(frame.unit, "pet")
+end
+
+function BBP.IsTotem(frame)
+    if not frame or not frame.name then return false end
+    local nameText = frame.name:GetText()
+    if not nameText then return false end
+    return nameText:find("Totem", 1, true) ~= nil
+end
+
+function BBP.SetFontSize(fontString, size)
+    if not fontString or not size then return end
+    local font, _, flags = fontString:GetFont()
+    fontString:SetFont(font, size, flags)
+end
+
+-- Helper to apply scaling for small pets
+function BBP.ApplyPetScaling(frame, width)
+    local db = BetterBlizzPlatesDB
+
+    SetBarWidth(frame, width or db.smallPetsWidth, false)
+    frame:SetScale(0.65)
+    BBP.SetFontSize(frame.name, 10)
+end
+
+-- Helper to apply scaling for totems
+function BBP.ApplyTotemScaling(frame, width)
+    local db = BetterBlizzPlatesDB
+
+    SetBarWidth(frame, width or db.smallPetsWidth, false)
+    frame:SetScale(0.5)
+    BBP.SetFontSize(frame.name, 9)
+end
 
 local function SmallPetsInPvP(frame)
-    if not BetterBlizzPlatesDB.smallPetsInPvP then return end
-    if BBP.IsInCompStomp then return end
+    if not BetterBlizzPlatesDB.smallPetsInPvP then return end
+    if BBP.IsInCompStomp then return end
 
-    if UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP and not UnitIsPlayer(frame.unit)) or UnitIsUnit(frame.unit, "pet") then
-        local db = BetterBlizzPlatesDB
-        if db.totemIndicator then
-            local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
-            local db = BetterBlizzPlatesDB
-            local npcData = db.totemIndicatorNpcList[npcID]
+    if BBP.IsSmallPet(frame) then
+        local db = BetterBlizzPlatesDB
+        
+        if db.totemIndicator then
+            local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
+            local db = BetterBlizzPlatesDB
+            local npcData = db.totemIndicatorNpcList[npcID]
 
-            if npcData then
-                if db.totemIndicatorWidthEnabled then
-                    if npcData.widthOn and npcData.hpWidth then
-                        SetBarWidth(frame, npcData.hpWidth, true)
-                    end
-                end
-            else
-                SetBarWidth(frame, db.smallPetsWidth, false)
-            end
-        else
-            SetBarWidth(frame, db.smallPetsWidth, false)
-        end
-    end
+            if npcData then
+                if db.totemIndicatorWidthEnabled then
+                    if npcData.widthOn and npcData.hpWidth then
+                        BBP.ApplyTotemScaling(frame, npcData.hpWidth)
+                    end
+                end
+            else
+                BBP.ApplyPetScaling(frame)
+            end
+        elseif BBP.IsTotem(frame) then
+            BBP.ApplyTotemScaling(frame)
+        else
+            BBP.ApplyPetScaling(frame)
+        end
+    else
+        BBP.SetFontSize(frame.name, 13) -- lazy fix to prevent recycling of small font size
+    end
 end
 BBP.SmallPetsInPvP = SmallPetsInPvP
 
