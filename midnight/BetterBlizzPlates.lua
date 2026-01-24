@@ -746,8 +746,8 @@ local defaultSettings = {
     ghostAuras = {},
 
     -- Midnight new additions
-    ccIconScale = 1.65,
-    buffIconScale = 1.65,
+    ccIconScale = 1.35,
+    buffIconScale = 1.35,
     nameplateExtraClickWidth = 0,
 
     ccIconAnchor = "RIGHT",
