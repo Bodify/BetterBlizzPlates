@@ -4848,9 +4848,12 @@ function BBP.RepositionName(frame)
     RepositionName(frame)
 
     if config.fakeNameRaiseStrata then
-        frame.name:SetParent(frame.HealthBarsContainer:GetAlpha() == 0 and frame or frame.bbpOverlay) -- comparison secret needs fix (ALSO FIX show resource on target nameplate being off causing errors with PRD enabled)
-        -- ALSO FIX: CC/BUFF icon anchors, disablef or now
-        -- 
+        if not frame.newNameParent then
+            frame.newNameParent = CreateFrame("Frame", nil, frame)
+            frame.newNameParent:SetAllPoints(frame)
+            frame.newNameParent:SetFrameStrata("HIGH")
+        end
+        frame.name:SetParent(frame.newNameParent)
         frame.name:SetDrawLayer("OVERLAY", 7)
     end
 end
@@ -5737,44 +5740,46 @@ local function HandleNamePlateAdded(unit)
                 self.changing = true
                 self:SetScale(BetterBlizzPlatesDB.ccIconScale or 1.65)
                 self:ClearAllPoints()
-                if BetterBlizzPlatesDB.ccIconAnchor == "RIGHT" then
+                --if BetterBlizzPlatesDB.ccIconAnchor == "RIGHT" then --  TODO: fix later
                     self:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", 5, 0)
-                elseif BetterBlizzPlatesDB.ccIconAnchor == "LEFT" then
-                    self:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", -5, 0)
-                elseif BetterBlizzPlatesDB.ccIconAnchor == "TOP" then
-                    self:SetPoint("BOTTOM", frame.HealthBarsContainer, "TOP", 0, 30)
-                end
+                -- elseif BetterBlizzPlatesDB.ccIconAnchor == "LEFT" then
+                --     self:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", -5, 0)
+                -- elseif BetterBlizzPlatesDB.ccIconAnchor == "TOP" then
+                --     self:SetPoint("BOTTOM", frame.HealthBarsContainer, "TOP", 0, 30)
+                -- end
                 self.changing = false
             end)
             hooksecurefunc(frame.AurasFrame.CrowdControlListFrame, "SetScale", function(self)
                 if self.changing or self:IsForbidden() then return end
                 self.changing = true
-                self:SetScale(BetterBlizzPlatesDB.ccIconScale or 1.65)
-                if BetterBlizzPlatesDB.ccIconAnchor == "RIGHT" then
+                self:SetScale(BetterBlizzPlatesDB.ccIconScale or 1.35)
+                self:ClearAllPoints()
+                --if BetterBlizzPlatesDB.ccIconAnchor == "RIGHT" then
                     self:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", 5, 1)
-                elseif BetterBlizzPlatesDB.ccIconAnchor == "LEFT" then
-                    self:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", -5, 21)
-                elseif BetterBlizzPlatesDB.ccIconAnchor == "TOP" then
-                    self:SetPoint("BOTTOM", frame.HealthBarsContainer, "TOP", 0, 30)
-                end
+                -- elseif BetterBlizzPlatesDB.ccIconAnchor == "LEFT" then
+                --     self:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", -5, 21)
+                -- elseif BetterBlizzPlatesDB.ccIconAnchor == "TOP" then
+                --     self:SetPoint("BOTTOM", frame.HealthBarsContainer, "TOP", 0, 30)
+                -- end
                 self.changing = false
             end)
             hooksecurefunc(frame.AurasFrame.BuffListFrame, "SetScale", function(self)
                 if self.changing or self:IsForbidden() then return end
                 self.changing = true
-                self:SetScale(BetterBlizzPlatesDB.buffIconScale or 1.65)
-                if BetterBlizzPlatesDB.buffIconAnchor == "LEFT" then
+                self:SetScale(BetterBlizzPlatesDB.buffIconScale or 1.35)
+                self:ClearAllPoints()
+                --if BetterBlizzPlatesDB.buffIconAnchor == "LEFT" then
                     self:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", -5, 1)
-                elseif BetterBlizzPlatesDB.buffIconAnchor == "RIGHT" then
-                    self:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", 5, 1)
-                elseif BetterBlizzPlatesDB.buffIconAnchor == "TOP" then
-                    self:SetPoint("BOTTOM", frame.HealthBarsContainer, "TOP", 0, 30)
-                end
+                -- elseif BetterBlizzPlatesDB.buffIconAnchor == "RIGHT" then
+                --     self:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", 5, 1)
+                -- elseif BetterBlizzPlatesDB.buffIconAnchor == "TOP" then
+                --     self:SetPoint("BOTTOM", frame.HealthBarsContainer, "TOP", 0, 30)
+                -- end
                 self.changing = false
             end)
-            frame.AurasFrame.LossOfControlFrame:SetScale(BetterBlizzPlatesDB.ccIconScale or 1.65)
-            frame.AurasFrame.CrowdControlListFrame:SetScale(BetterBlizzPlatesDB.ccIconScale or 1.65)
-            frame.AurasFrame.BuffListFrame:SetScale(BetterBlizzPlatesDB.buffIconScale or 1.65)
+            frame.AurasFrame.LossOfControlFrame:SetScale(BetterBlizzPlatesDB.ccIconScale or 1.35)
+            frame.AurasFrame.CrowdControlListFrame:SetScale(BetterBlizzPlatesDB.ccIconScale or 1.35)
+            frame.AurasFrame.BuffListFrame:SetScale(BetterBlizzPlatesDB.buffIconScale or 1.35)
         end
     end
 
