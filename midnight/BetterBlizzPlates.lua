@@ -938,7 +938,7 @@ local cvarList = {
     "nameplateMaxAlpha",
     "nameplateMaxAlphaDistance",
     "nameplateOccludedAlphaMult",
-    "nameplateMotion",
+    --"nameplateMotion", -- MIDNIGHT: nameplateStackingTypes
     "nameplateShowClassColor",
     "nameplateShowFriendlyClassColor",
     "nameplateShowEnemyGuardians",
@@ -946,13 +946,13 @@ local cvarList = {
     "nameplateShowEnemyMinus",
     "nameplateShowEnemyPets",
     "nameplateShowEnemyTotems",
-    "nameplateShowFriendlyGuardians",
-    "nameplateShowFriendlyMinions",
-    "nameplateShowFriendlyPets",
-    "nameplateShowFriendlyTotems",
+    "nameplateShowFriendlyPlayerGuardians",
+    "nameplateShowFriendlyPlayerMinions",
+    "nameplateShowFriendlyPlayerPets",
+    "nameplateShowFriendlyPlayerTotems",
     "nameplateShowFriendlyNPCs",
-    "nameplateSelfTopInset",
-    "nameplateSelfBottomInset",
+    --"nameplateSelfTopInset",
+    --"nameplateSelfBottomInset",
     "nameplateSelfAlpha",
     -- Midnights
     "nameplateDebuffPadding",
@@ -985,14 +985,8 @@ local function CVarDefaultOnLogout()
     if not BBPCVarBackupsDB then return end
     if InCombatLockdown() or BetterBlizzPlatesDB.disableCVarForceOnLogin then return end
     for cvar, value in pairs(BBPCVarBackupsDB) do
-        if cvar == "nameplateSelfBottomInset" or cvar == "nameplateSelfTopInset" then
-            if BetterBlizzPlatesDB.nameplateSelfBottomInset and BetterBlizzPlatesDB.nameplateSelfTopInset then
-                C_CVar.SetCVar(cvar, value)
-            end
-        else
-            if cvar ~= "nameplateStyle" then -- Midnight style, skip for now
-                C_CVar.SetCVar(cvar, value)
-            end
+        if cvar ~= "nameplateStyle" then -- Midnight style, skip for now
+            C_CVar.SetCVar(cvar, value)
         end
     end
 end
@@ -1091,7 +1085,7 @@ local function FetchAndSaveValuesOnFirstLogin()
     if BBP.variablesLoaded then
         BetterBlizzPlatesDB.hasNotOpenedSettings = true
         -- collect some cvars added at a later time
-        if not BetterBlizzPlatesDB.nameplateMinAlpha or not BetterBlizzPlatesDB.nameplateShowFriendlyMinions or not BetterBlizzPlatesDB.nameplateSelfWidth or not BetterBlizzPlatesDB.nameplateResourceOnTarget then
+        if not BetterBlizzPlatesDB.nameplateMinAlpha or not BetterBlizzPlatesDB.nameplateShowFriendlyPlayerMinions or not BetterBlizzPlatesDB.nameplateSelfWidth or not BetterBlizzPlatesDB.nameplateResourceOnTarget then
             CVarFetcher()
         end
 
@@ -1203,10 +1197,10 @@ local function ResetNameplates()
     BetterBlizzPlatesDB.nameplateShowEnemyPets = "1"
     BetterBlizzPlatesDB.nameplateShowEnemyTotems = "1"
 
-    BetterBlizzPlatesDB.nameplateShowFriendlyGuardians = "0"
-    BetterBlizzPlatesDB.nameplateShowFriendlyMinions = "0"
-    BetterBlizzPlatesDB.nameplateShowFriendlyPets = "0"
-    BetterBlizzPlatesDB.nameplateShowFriendlyTotems = "0"
+    BetterBlizzPlatesDB.nameplateShowFriendlyPlayerGuardians = "0"
+    BetterBlizzPlatesDB.nameplateShowFriendlyPlayerMinions = "0"
+    BetterBlizzPlatesDB.nameplateShowFriendlyPlayerPets = "0"
+    BetterBlizzPlatesDB.nameplateShowFriendlyPlayerTotems = "0"
 
     BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
     BetterBlizzPlatesDB.castBarHeight = 18.8
@@ -1236,10 +1230,10 @@ local function ResetNameplates()
     C_CVar.SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
     C_CVar.SetCVar("nameplateShowEnemyPets", BetterBlizzPlatesDB.nameplateShowEnemyPets)
     C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
-    C_CVar.SetCVar("nameplateShowFriendlyMinions", BetterBlizzPlatesDB.nameplateShowFriendlyMinions)
-    C_CVar.SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
-    C_CVar.SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
-    C_CVar.SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
+    C_CVar.SetCVar("nameplateShowFriendlyPlayerMinions", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerMinions)
+    C_CVar.SetCVar("nameplateShowFriendlyPlayerGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerGuardians)
+    C_CVar.SetCVar("nameplateShowFriendlyPlayerPets", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerPets)
+    C_CVar.SetCVar("nameplateShowFriendlyPlayerTotems", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerTotems)
     C_CVar.SetCVar("nameplateShowClassColor", BetterBlizzPlatesDB.nameplateShowClassColor)
     C_CVar.SetCVar("nameplateShowFriendlyClassColor", BetterBlizzPlatesDB.nameplateShowFriendlyClassColor)
     C_CVar.SetCVar("nameplateSelfAlpha", BetterBlizzPlatesDB.nameplateSelfAlpha)
@@ -2194,11 +2188,6 @@ local function SetCVarsOnLogin()
             end
         end
 
-        if BetterBlizzPlatesDB.nameplateSelfBottomInset and BetterBlizzPlatesDB.nameplateSelfTopInset then
-            C_CVar.SetCVar("nameplateSelfTopInset", BetterBlizzPlatesDB.nameplateSelfTopInset)
-            C_CVar.SetCVar("nameplateSelfBottomInset", BetterBlizzPlatesDB.nameplateSelfBottomInset)
-        end
-
         if BetterBlizzPlatesDB.setCVarAcrossAllCharacters then
             if BetterBlizzPlatesDB.nameplateShowAll then
                 C_CVar.SetCVar("nameplateShowAll", BetterBlizzPlatesDB.nameplateShowAll)
@@ -2210,13 +2199,13 @@ local function SetCVarsOnLogin()
             C_CVar.SetCVar("nameplateShowEnemyPets", BetterBlizzPlatesDB.nameplateShowEnemyPets)
             C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
 
-            C_CVar.SetCVar("nameplateShowFriendlyMinions", BetterBlizzPlatesDB.nameplateShowFriendlyMinions)
-            C_CVar.SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
+            C_CVar.SetCVar("nameplateShowFriendlyPlayerMinions", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerMinions)
+            C_CVar.SetCVar("nameplateShowFriendlyPlayerGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerGuardians)
             if BetterBlizzPlatesDB.nameplateShowFriendlyNPCs then
                 C_CVar.SetCVar("nameplateShowFriendlyNPCs", BetterBlizzPlatesDB.nameplateShowFriendlyNPCs)
             end
-            C_CVar.SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
-            C_CVar.SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
+            C_CVar.SetCVar("nameplateShowFriendlyPlayerPets", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerPets)
+            C_CVar.SetCVar("nameplateShowFriendlyPlayerTotems", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerTotems)
         end
 
         ToggleFriendlyPlates()
@@ -2671,11 +2660,6 @@ function BBP.ResetToDefaultValue(slider, element)
             BetterBlizzPlatesDB.hpHeightSelfMana = 4 * 2.7--tonumber(GetCVar("NamePlateVerticalScale"))
         elseif element == "hpHeightEnemy" then
             BetterBlizzPlatesDB.hpHeightEnemy = 4 * 2.7--tonumber(GetCVar("NamePlateVerticalScale"))
-        elseif element == "personalBarPosition" then
-            C_CVar.SetCVar("nameplateSelfTopInset", C_CVar.GetCVarDefault("nameplateSelfTopInset"))
-            C_CVar.SetCVar("nameplateSelfBottomInset", C_CVar.GetCVarDefault("nameplateSelfBottomInset"))
-            BetterBlizzPlatesDB.nameplateSelfTopInset = C_CVar.GetCVarDefault("nameplateSelfTopInset")
-            BetterBlizzPlatesDB.nameplateSelfBottomInset = C_CVar.GetCVarDefault("nameplateSelfBottomInset")
         elseif element == "nameplateSelfAlpha" then
             C_CVar.SetCVar("nameplateSelfAlpha", C_CVar.GetCVarDefault("nameplateSelfAlpha"))
             BetterBlizzPlatesDB.nameplateSelfAlpha = C_CVar.GetCVarDefault("nameplateSelfAlpha")
@@ -4378,17 +4362,6 @@ function BBP.ColorNameplateBorder(frame) --classic border
     end
 end
 
-function BBP.SetPersonalResourceBarPosition(sliderValue)
-    local total = 0.94
-    local bottomInset = sliderValue
-    local topInset = total - sliderValue
-
-    BetterBlizzPlatesDB.nameplateSelfTopInset = topInset
-    BetterBlizzPlatesDB.nameplateSelfBottomInset = bottomInset
-    C_CVar.SetCVar("nameplateSelfTopInset", topInset)
-    C_CVar.SetCVar("nameplateSelfBottomInset", bottomInset)
-end
-
 local function ApplyBorderSize(border, size, min)
     PixelUtil.SetWidth(border.Left, size, min)
     PixelUtil.SetPoint(border.Left, "TOPRIGHT", border, "TOPLEFT", 0, size, 0, min)
@@ -4875,7 +4848,9 @@ function BBP.RepositionName(frame)
     RepositionName(frame)
 
     if config.fakeNameRaiseStrata then
-        frame.name:SetParent(frame.HealthBarsContainer:GetAlpha() == 0 and frame or frame.bbpOverlay)
+        frame.name:SetParent(frame.HealthBarsContainer:GetAlpha() == 0 and frame or frame.bbpOverlay) -- comparison secret needs fix (ALSO FIX show resource on target nameplate being off causing errors with PRD enabled)
+        -- ALSO FIX: CC/BUFF icon anchors, disablef or now
+        -- 
         frame.name:SetDrawLayer("OVERLAY", 7)
     end
 end
@@ -7348,6 +7323,19 @@ First:SetScript("OnEvent", function(_, event, addonName)
             TurnOffTestModes()
             db.castbarEventsOn = false
             db.wasOnLoadingScreen = true
+
+            if db.nameplateShowFriendlyGuardians and db.nameplateShowFriendlyPlayerGuardians == nil then
+                db.nameplateShowFriendlyPlayerGuardians = db.nameplateShowFriendlyGuardians
+            end
+            if db.nameplateShowFriendlyMinions and db.nameplateShowFriendlyPlayerMinions == nil then
+                db.nameplateShowFriendlyPlayerMinions = db.nameplateShowFriendlyMinions
+            end
+            if db.nameplateShowFriendlyPets and db.nameplateShowFriendlyPlayerPets == nil then
+                db.nameplateShowFriendlyPlayerPets = db.nameplateShowFriendlyPets
+            end
+            if db.nameplateShowFriendlyTotems and db.nameplateShowFriendlyPlayerTotems == nil then
+                db.nameplateShowFriendlyPlayerTotems = db.nameplateShowFriendlyTotems
+            end
 
             C_Timer.After(3, function()
                 BBP.CVarTracker()
