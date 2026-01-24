@@ -306,6 +306,7 @@ function BBP.TargetResourceUpdater()
 
     local prdClassFrame = prdClassFrame
     if not prdClassFrame then return end
+    if not nameplateResourceOnTarget then return end -- TODO: fix, add proper mover for when nameplateResourceOnTarget is false
 
     if not nameplateResourceHooked then
         hooksecurefunc(prdClassFrame, "SetPoint", function(self)
