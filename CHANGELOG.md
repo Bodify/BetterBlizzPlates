@@ -1,3 +1,11 @@
+# BetterBlizzPlates 1.9.3e
+## Prepatch/Midnight
+### Tweak
+- Fix some more CVar renames.
+### Bugfix
+- Fix ComboPoints moving without "Attach to nameplate" enabled.
+- Fix midnight secret error.
+
 # BetterBlizzPlates 1.9.3d
 ## Prepatch/Midnight
 ### Tweak
