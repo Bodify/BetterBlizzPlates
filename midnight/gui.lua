@@ -744,6 +744,8 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
             local newMaxValue = math.max(newValue + nonAxisRangeExtension, maxValue)
             if element == "classIndicatorAlpha" then
                 slider:SetMinMaxValues(newMinValue, 1)
+            elseif element == "nameplateFriendlyWidth" or element == "nameplateEnemyWidth" then
+                slider:SetMinMaxValues(24, newMaxValue)
             else
                 slider:SetMinMaxValues(newMinValue, newMaxValue)
             end
@@ -1484,6 +1486,11 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 if element == "classIndicatorAlpha" then
                     inputValue = 1
                 end
+            end
+
+            -- Force minimum value of 24 for nameplate widths
+            if (element == "nameplateFriendlyWidth" or element == "nameplateEnemyWidth") and inputValue < 24 then
+                inputValue = 24
             end
 
             local currentMin, currentMax = slider:GetMinMaxValues()
@@ -5355,7 +5362,7 @@ local function guiGeneralTab()
 
 ]]
 
-    local nameplateEnemyWidth = CreateSlider(BetterBlizzPlates, "Nameplate Width", 26, 300, 1, "nameplateEnemyWidth")
+    local nameplateEnemyWidth = CreateSlider(BetterBlizzPlates, "Nameplate Width", 24, 300, 1, "nameplateEnemyWidth")
     nameplateEnemyWidth:SetPoint("TOPLEFT", enemyNameScale, "BOTTOMLEFT", 0, -17)
 
     local nameplateEnemyWidthResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
@@ -5701,7 +5708,7 @@ local function guiGeneralTab()
     CreateTooltipTwo(hideFriendlyNameText, "Hide Name", hideNameTooltip)
     BBP.hideFriendlyNameText = hideFriendlyNameText
 
-    local nameplateFriendlyWidth = CreateSlider(BetterBlizzPlates, "Nameplate Width", 26, 300, 1, "nameplateFriendlyWidth")
+    local nameplateFriendlyWidth = CreateSlider(BetterBlizzPlates, "Nameplate Width", 24, 300, 1, "nameplateFriendlyWidth")
     nameplateFriendlyWidth:SetPoint("TOPLEFT", friendlyNameScale, "BOTTOMLEFT", 0, -20)
     CreateTooltipTwo(nameplateFriendlyWidth, "Friendly Nameplate Width", "Adjust the width of Friendly Nameplates.\n\nNote:\nDue to a Blizzard bug if you change this width to be different from your Enemy Nameplates then Mind Control/Duels/etc can cause the Nameplate to get stuck in the opposite width setting.\n\nYou can fix this manually by forcing a refresh of the Nameplate which can be done via looking away, or Alt+Z to hide/unhide UI quickly, or turning off/on Nameplates quickly with a keybind. |cff00c0ff#Blizzard")
 

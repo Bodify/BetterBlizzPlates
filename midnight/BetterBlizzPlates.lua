@@ -920,8 +920,8 @@ end
 
 local cvarList = {
     "nameplateShowAll",
-    --"nameplateOverlapH",
-    --"nameplateOverlapV",
+    "nameplateOverlapH",
+    "nameplateOverlapV",
     --"nameplateMotionSpeed",
     --"nameplateHorizontalScale",
     --"NamePlateVerticalScale",
@@ -1124,8 +1124,8 @@ function BBP.CVarsAreSaved()
         "nameplateEnemyWidth",
         "nameplateFriendlyWidth",
         "nameplateSelfWidth",
-        --"nameplateOverlapH",
-        --"nameplateOverlapV",
+        "nameplateOverlapH",
+        "nameplateOverlapV",
         --"nameplateMotionSpeed",
         --"nameplateHorizontalScale",
         --"NamePlateVerticalScale",
