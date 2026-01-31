@@ -579,10 +579,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             if config.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
             if config.hideNPC then BBP.HideNPCs(frame, BBP.previousTargetNameplate:GetParent()) end
             if config.partyPointer then BBP.PartyPointer(frame) end
-            if config.totemIndicator then
-                --if config.totemIndicatorHideHealthBar then BBP.ApplyTotemIconsAndColorNameplate(frame) end
-                BBP.ApplyTotemIconsAndColorNameplate(frame)
-            end
+
             if config.classIndicator then
                 if frame.classIndicator then
                     if (config.classIndicatorHighlight or config.classIndicatorHighlightColor) then
@@ -725,14 +722,6 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                     frame.HealthBarsContainer:SetAlpha(1)
                     frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
                 end
-            end
-
-            if config.totemIndicator then
-                --if config.totemIndicatorHideHealthBar then BBP.ApplyTotemIconsAndColorNameplate(frame) end
-                -- local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
-                -- local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
-                -- if config.totemIndicatorHideHealthBar
-                BBP.ApplyTotemIconsAndColorNameplate(frame)
             end
 
             if (config.classIndicator and (config.classIndicatorHighlight or config.classIndicatorHighlightColor)) then BBP.ClassIndicatorTargetHighlight(frame) end

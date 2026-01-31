@@ -4560,7 +4560,7 @@ local function HideFriendlyHealthbar(frame)
                 frame.selectionHighlight:SetAlpha(0)
             end
         elseif BetterBlizzPlatesDB.friendlyHideHealthBarNpc and not info.isPlayer then
-            local hideNpcHpBar --= BetterBlizzPlatesDB.friendlyHideHealthBarNpc and not (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and UnitIsUnit("pet", frame.unit))
+            local hideNpcHpBar = BetterBlizzPlatesDB.friendlyHideHealthBarNpc and not (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and UnitIsUnit("pet", frame.unit))
             if hideNpcHpBar then
                 frame.HealthBarsContainer:SetAlpha(0)
                 frame.selectionHighlight:SetAlpha(0)
@@ -6027,8 +6027,6 @@ local function HandleNamePlateAdded(unit)
     if config.showNpcTitle then NameplateNPCTitle(frame) end
 
     if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
-    -- Show totem icons
-    if config.totemIndicator and info.isNpc then BBP.ApplyTotemIconsAndColorNameplate(frame) end
 
     -- Color nameplate depending on aura
     if config.auraColor then BBP.AuraColor(frame) end
@@ -6301,10 +6299,6 @@ function BBP.RefreshAllNameplates()
 
         if BetterBlizzPlatesDB.hideNPC then
             BBP.HideNPCs(frame, nameplate)
-        end
-
-        if BetterBlizzPlatesDB.totemIndicator and info.isNpc then
-            BBP.ApplyTotemIconsAndColorNameplate(frame)
         end
 
         if BetterBlizzPlatesDB.classicNameplates then

@@ -17,8 +17,6 @@ temp_shared\ImportExport.lua
 retail\modules\combat.lua
 retail\modules\castbar.lua
 midnight\modules\castbar.lua
-retail\modules\totem.lua
-midnight\modules\totem.lua
 retail\modules\arenaid.lua
 midnight\modules\arenaid.lua
 retail\modules\execute.lua

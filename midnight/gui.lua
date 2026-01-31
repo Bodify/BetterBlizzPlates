@@ -1402,14 +1402,6 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                             BBP.FocusTargetIndicator(frame)
                         elseif element == "healthNumbersScale" or element == "healthNumbersXPos" or element == "healthNumbersYPos" then
                             BBP.HealthNumbers(frame)
-                        -- Totem Indicator Pos and Scale
-                        elseif element == "totemIndicatorXPos" or element == "totemIndicatorYPos" or element == "totemIndicatorScale" then
-                            if not frame.totemIndicator then
-                                --BBP.CreateTotemComponents(frame, 30)
-                                BBP.ApplyTotemIconsAndColorNameplate(frame, frame.unit)
-                            else
-                                BBP.UpdateTotemPos(frame)
-                            end
                         -- Cast Timer Pos and Scale
                         elseif element == "castTimer" then
                             --not rdy
@@ -1622,7 +1614,7 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
                 tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
             end
 
-            if BetterBlizzPlatesDB.partyPointerHideAll then
+            if BetterBlizzPlatesDB.partyPointer and BetterBlizzPlatesDB.partyPointerHideAll then
                 tooltipText = tooltipText .. "\n\n|cff00c0ffParty Pointer|r: Hide All setting is enabled which affects this setting.\nInfo in |cff32f795Advanced Settings|r."
             end
 
