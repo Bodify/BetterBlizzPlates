@@ -5831,18 +5831,17 @@ local function HandleNamePlateAdded(unit)
 
     --BBP.greenScreen(nameplate)
 
-    -- local alwaysHideFriendlyCastbar = BetterBlizzPlatesDB.alwaysHideFriendlyCastbar
-    -- local alwaysHideEnemyCastbar = BetterBlizzPlatesDB.alwaysHideEnemyCastbar
-    -- if alwaysHideFriendlyCastbar or alwaysHideEnemyCastbar or BBP.hideFriendlyCastbar then
-    --     if ((alwaysHideFriendlyCastbar or BBP.hideFriendlyCastbar) and info.isFriend) or (alwaysHideEnemyCastbar and not info.isFriend) then
-    --         if (alwaysHideFriendlyCastbarShowTarget and info.isFriend) or (alwaysHideEnemyCastbarShowTarget and not info.isFriend) then
-    --             -- go thruugh
-    --         else
-    --             frame.castBar:Hide()
-    --             return
-    --         end
-    --     end
-    -- end
+    local alwaysHideFriendlyCastbar = BetterBlizzPlatesDB.alwaysHideFriendlyCastbar
+    local alwaysHideEnemyCastbar = BetterBlizzPlatesDB.alwaysHideEnemyCastbar
+    if alwaysHideFriendlyCastbar or alwaysHideEnemyCastbar or BBP.hideFriendlyCastbar then
+        if ((alwaysHideFriendlyCastbar or BBP.hideFriendlyCastbar) and frame.isFriend) or (alwaysHideEnemyCastbar and not frame.isFriend) then
+            if (BetterBlizzPlatesDB.alwaysHideFriendlyCastbarShowTarget and frame.isFriend) or (BetterBlizzPlatesDB.alwaysHideEnemyCastbarShowTarget and not frame.isFriend) then
+                -- go thruugh
+            else
+                frame.castBar:Hide()
+            end
+        end
+    end
 
     if info.isFocus then
         BBP.previousFocusNameplate = frame
