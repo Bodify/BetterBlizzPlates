@@ -1649,7 +1649,7 @@ local function ColorNameplateByReaction(frame)
     elseif not info.isFriend and config.enemyHealthBarColor then
         -- Handling enemy health bars
         if (not config.enemyHealthBarColorNpcOnly) or (config.enemyHealthBarColorNpcOnly and not info.isPlayer) then
-            if CompactUnitFrame_IsTapDenied(frame) then
+            if UnitIsTapDenied(frame.unit) then
                 frame.healthBar:SetStatusBarColor(0.9,0.9,0.9)
                 return
             end
@@ -2697,7 +2697,7 @@ function BBP.ColorThreat(frame)
     if not frame or not frame.unit then return end
     if UnitIsPlayer(frame.unit) then return end
     if UnitIsFriend(frame.unit, "player") then return end
-    if CompactUnitFrame_IsTapDenied(frame) then return end
+    if UnitIsTapDenied(frame.unit) then return end
 
     local hideSolo = BetterBlizzPlatesDB.enemyColorThreatHideSolo and not IsInGroup()
     if hideSolo then return end
@@ -3782,7 +3782,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 			if ( (frame.optionTable.allowClassColorsForNPCs or UnitIsPlayer(frame.unit)) and classColor and frame.optionTable.useClassColors ) or (unitIsPlayer and (UnitCanAttack("player", frame.unit) and BetterBlizzPlatesDB.ShowClassColorInNameplate == "1") or (unitIsPlayer and not UnitCanAttack("player", frame.unit) and BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate == "1")) then
 				-- Use class colors for players if class color option is turned on
 				r, g, b = classColor.r, classColor.g, classColor.b;
-			elseif ( CompactUnitFrame_IsTapDenied(frame) ) then
+			elseif ( UnitIsTapDenied(frame.unit) ) then
 				-- Use grey if not a player and can't get tap on unit
 				r, g, b = 0.9, 0.9, 0.9;
 			elseif ( frame.optionTable.colorHealthBySelection ) then
