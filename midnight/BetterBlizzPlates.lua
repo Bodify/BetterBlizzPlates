@@ -1152,6 +1152,8 @@ function BBP.CVarsAreSaved()
 
     if #missing > 0 then
         print("BBP: Missing CVars:", table.concat(missing, ", "))
+        print("Contact @Bodify on Discord with bug report from BugSack and BugGrabber please.")
+        BBP.CVarAdditionFetcher()
         return false
     else
         return true
@@ -2914,23 +2916,25 @@ local function SmallPetsInPvP(frame)
     if not config.smallPetsInPvP then return end
     if BBP.IsInCompStomp then return end
 
-    --if UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP and not UnitIsPlayer(frame.unit)) or UnitIsUnit(frame.unit, "pet") then
-    if UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP) then--BBP.isMidnight
+    if UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP and not UnitIsPlayer(frame.unit)) or UnitIsUnit(frame.unit, "pet") then
         local db = BetterBlizzPlatesDB
         if not frame.bbpWidthHook then
             hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
                 if self:IsForbidden() or not frame.unit or UnitIsPlayer(frame.unit) then return end
                 if BBP.IsInCompStomp then return end
-                local db = BetterBlizzPlatesDB
 
-                if UnitIsOtherPlayersPet(frame.unit) or BBP.isInPvP then
+                if UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP and not UnitIsPlayer(frame.unit)) or UnitIsUnit(frame.unit, "pet") then
+                    local db = BetterBlizzPlatesDB
+                    frame.isSmallPet = true
                     SetBarWidth(frame, db.smallPetsWidth, false)
+                else
+                    frame.isSmallPet = false
                 end
             end)
             frame.bbpWidthHook = true
         end
 
-
+        frame.isSmallPet = true
         SetBarWidth(frame, db.smallPetsWidth, false)
 
     end
