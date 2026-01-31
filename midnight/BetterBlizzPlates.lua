@@ -6793,6 +6793,8 @@ local function HideHealthbarInPvEMagic()
 
         local hideDungeonNPCs = BetterBlizzPlatesDB.friendlyHideHealthBarNpc and not BetterBlizzPlatesDB.friendlyHideHealthBarNpcShowInPve
 
+        -- nameplateShowOnlyNameForFriendlyPlayerUnits TODO: sort out this stuff
+
         --BBP.isMidnight
         -- hooksecurefunc(
         --     NamePlateDriverFrame,
