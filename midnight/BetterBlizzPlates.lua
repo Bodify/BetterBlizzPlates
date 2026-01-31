@@ -1440,24 +1440,6 @@ local function isEnemy(unit)
     end
 end
 
-function BBP.UnitIsTarget(frame)
-    local np, targetNp = BBP.GetSafeNameplate("target")
-    if targetNp and frame == targetNp then
-        return true
-    end
-    return false
-end
-
-function BBP.UnitIsFocus(frame)
-    local np, focusNp = BBP.GetSafeNameplate("focus")
-    if focusNp and frame == focusNp then
-        return true
-    end
-    return false
-end
-
-
-
 
 local function GetNameplateUnitInfo(frame, unit)
     local unit = unit or frame.unit or frame.displayedUnit
@@ -1470,9 +1452,9 @@ local function GetNameplateUnitInfo(frame, unit)
 
     info.name = UnitName(unit)
     info.isSelf = false--UnitIsUnit("player", unit)
-    info.isTarget = BBP.UnitIsTarget(frame)--UnitIsUnit("target", unit)
-    info.isFocus = BBP.UnitIsFocus(frame)--UnitIsUnit("focus", unit)
-    info.isPet = false--UnitIsUnit("pet", unit)
+    info.isTarget = UnitIsUnit("target", unit)
+    info.isFocus = UnitIsUnit("focus", unit)
+    info.isPet = UnitIsUnit("pet", unit)
     info.isPlayer = UnitIsPlayer(unit)
     info.isNpc = not info.isPlayer
     info.unitGUID = 0--UnitGUID(unit)
@@ -4016,8 +3998,8 @@ function BBP.NameplateTargetAlpha(frame)
 
     local unit = frame.unit
     local isPlayer = false--UnitIsUnit(unit, "player")
-    local isTarget = BBP.UnitIsTarget(frame)--UnitIsUnit(unit, "target")
-    local isFocus = BBP.UnitIsFocus(frame)--UnitIsUnit(unit, "focus")
+    local isTarget = UnitIsUnit(unit, "target")
+    local isFocus = UnitIsUnit(unit, "focus")
 
     local isCasting = config.enableNpNonTargetAlphaFullAlphaCasting and (UnitCastingInfo(unit) or UnitChannelInfo(unit))
 

@@ -854,7 +854,7 @@ function BBP.CastbarOnEvent(frame, event)
         if ((alwaysHideFriendlyCastbar or BBP.hideFriendlyCastbar) and isFriend) or (alwaysHideEnemyCastbar and not isFriend) then
             local alwaysHideFriendlyCastbarShowTarget = db.alwaysHideFriendlyCastbarShowTarget
             local alwaysHideEnemyCastbarShowTarget = db.alwaysHideEnemyCastbarShowTarget
-            if (alwaysHideFriendlyCastbarShowTarget and isFriend and BBP.UnitIsTarget(frame)) or (alwaysHideEnemyCastbarShowTarget and not isFriend and BBP.UnitIsTarget(frame)) then
+            if (alwaysHideFriendlyCastbarShowTarget and isFriend and UnitIsUnit("target", frame.unit)) or (alwaysHideEnemyCastbarShowTarget and not isFriend and UnitIsUnit("target", frame.unit)) then
                 -- go thruugh
             else
                 frame.castBar:Hide()
@@ -1039,7 +1039,7 @@ function BBP.CastbarOnEvent(frame, event)
                     frame.castBar:Hide()
                     if BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
                         --if UnitIsUnit(self.unit, "target") then
-                        if BBP.UnitIsTarget(frame) then
+                        if UnitIsUnit("target", frame.unit) then
                             BBP.UpdateNameplateResourcePositionForCasting(nameplate, true)
                         end
                     end
@@ -1056,7 +1056,7 @@ function BBP.CastbarOnEvent(frame, event)
         C_Timer.After(0.6, function()
             if frame and frame.unit then
                 --if UnitIsUnit(frame.unit, "target") then
-                if BBP.UnitIsTarget(frame) then
+                if UnitIsUnit("target", frame.unit) then
                     BBP.UpdateNameplateResourcePositionForCasting(nameplate)
                 end
             end

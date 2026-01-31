@@ -204,7 +204,7 @@ local function BackgroundType(frame, bg)
         bg:SetSize(28, 28)
     else
         bg:SetAtlas("talents-node-choiceflyout-circle-greenglow")
-        local size = BBP.UnitIsTarget(frame) and 39 or 36
+        local size = UnitIsUnit("target", frame.unit) and 39 or 36
         bg:SetSize(size, size)
     end
 end
