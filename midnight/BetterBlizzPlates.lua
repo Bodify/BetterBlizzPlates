@@ -5742,7 +5742,10 @@ local function HandleNamePlateAdded(unit)
             frame.castBarIconFrame:SetFrameStrata("MEDIUM")
             frame.castBarIconFrame:SetFrameLevel(frame.castBar:GetFrameLevel()+1)
             frame.castBarIconFrame:SetSize(14, 14)
-            frame.castBarIconFrame:SetPoint("CENTER", frame.castBar, "LEFT", -2, 0)
+            frame.castBarIconFrame:SetScale(BetterBlizzPlatesDB.castBarIconScale or 1.0)
+            local xPos = BetterBlizzPlatesDB.castBarIconXPos or 0
+            local yPos = BetterBlizzPlatesDB.castBarIconYPos or 0
+            frame.castBarIconFrame:SetPoint("CENTER", frame.castBar, "LEFT", -2 + xPos, yPos)
 
             frame.castBarIconFrame.Icon = frame.castBarIconFrame:CreateTexture(nil, "OVERLAY")
             frame.castBarIconFrame.Icon:SetAllPoints(frame.castBarIconFrame)
@@ -5789,7 +5792,6 @@ local function HandleNamePlateAdded(unit)
                 self.changingIconPos = nil
             end)
         end
-        frame.castBarIconFrame:SetScale(BetterBlizzPlatesDB.castBarIconScale or 1.0)
 
         BBP.CastbarOnEvent(frame)
     end
@@ -6957,9 +6959,11 @@ Frame:SetScript("OnEvent", function(...)
 
     CheckForUpdate()
 
-    C_Timer.After(4, function()
-        print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Bugs are expected in this very early release. Use at own risk for now. Please report bugs.")
-    end)
+    if not db.skipBugWarning then
+        C_Timer.After(4, function()
+            print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Bugs are expected in this very early release. Use at own risk for now. Please report bugs.")
+        end)
+    end
 
     _, playerClass = UnitClass("player")
     playerClassColor = RAID_CLASS_COLORS[playerClass]

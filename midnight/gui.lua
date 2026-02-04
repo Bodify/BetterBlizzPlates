@@ -1409,16 +1409,15 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         elseif element == "castTimer" then
                             --not rdy
                         -- Cast bar icon pos and scale
-                        elseif element == "castBarIconXPos" or element == "castBarIconYPos" then
+                        elseif element == "castBarIconXPos" or element == "castBarIconYPos" or element == "castBarIconScale" then
                             if axis then
-                                local yOffset = BetterBlizzPlatesDB.castBarDragonflightShield and -2 or 0
-                                frame.castBar.castBarIconFrame:ClearAllPoints()
-                                frame.castBar.castBarIconFrame:SetPoint("CENTER", frame.castBar, "LEFT", -1 + xPos, yPos)
+                                frame.castBarIconFrame:ClearAllPoints()
+                                frame.castBarIconFrame:SetPoint("CENTER", frame.castBar, "LEFT", -2 + BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
                                 frame.castBar.BorderShield:ClearAllPoints()
                                 frame.castBar.BorderShield:SetPoint("CENTER", frame.castBarIconFrame, "CENTER", 0, 0)
                             else
                                 BetterBlizzPlatesDB.castBarIconScale = value
-                                frame.castBar.Icon:SetScale(value)
+                                frame.castBarIconFrame:SetScale(value)
                                 frame.castBar.BorderShield:SetScale(value)
                             end
                         -- Cast bar height
