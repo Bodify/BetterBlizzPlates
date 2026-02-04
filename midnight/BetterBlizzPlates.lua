@@ -3914,24 +3914,29 @@ local function ShowFriendlyGuildName(frame, unit)
         end
 
         local guildName, guildRankName, guildRankIndex = GetGuildInfo(unit)
-        if guildName and (frame.name:GetAlpha() ~= 0 and frame.name:GetText() ~= "") then
-            if BBP.needsUpdate then
-                local font, size, outline = frame.name:GetFont()
-                frame.guildName:SetFont(font, 9, outline)
-            end
-            frame.guildName:SetText("<"..guildName..">")
-            if config.guildNameColor then
-                frame.guildName:SetTextColor(unpack(config.guildNameColorRGB))
+        if guildName and (frame.name:GetAlpha() ~= 0) then
+            local hasNameText = not issecretvalue(frame.name:GetText()) and frame.name:GetText() ~= ""
+            if hasNameText then
+                if BBP.needsUpdate then
+                    local font, size, outline = frame.name:GetFont()
+                    frame.guildName:SetFont(font, 9, outline)
+                end
+                frame.guildName:SetText("<"..guildName..">")
+                if config.guildNameColor then
+                    frame.guildName:SetTextColor(unpack(config.guildNameColorRGB))
+                else
+                    frame.guildName:SetTextColor(frame.name:GetTextColor())
+                end
+                frame.guildName:ClearAllPoints()
+                if frame.HealthBarsContainer:GetAlpha() == 0 then
+                    frame.guildName:SetPoint("TOP", frame.name, "BOTTOM", 0, 0)
+                else
+                    frame.guildName:SetPoint("TOP", frame.healthBar, "BOTTOM", 0, -3)
+                end
+                frame.guildName:SetScale(config.guildNameScale or 1)
             else
-                frame.guildName:SetTextColor(frame.name:GetTextColor())
+                frame.guildName:SetText("")
             end
-            frame.guildName:ClearAllPoints()
-            if frame.HealthBarsContainer:GetAlpha() == 0 then
-                frame.guildName:SetPoint("TOP", frame.name, "BOTTOM", 0, 0)
-            else
-                frame.guildName:SetPoint("TOP", frame.healthBar, "BOTTOM", 0, -3)
-            end
-            frame.guildName:SetScale(config.guildNameScale or 1)
         else
             frame.guildName:SetText("")
         end
