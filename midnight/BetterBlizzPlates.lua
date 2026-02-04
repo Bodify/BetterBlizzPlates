@@ -4387,8 +4387,8 @@ local function ChangeHealthbarBorderSize(frame)
             end
         end
         if BetterBlizzPlatesDB.castBarIconPixelBorder then
-            if frame.castBar.Icon.SetBorderSize then
-                frame.castBar.Icon:SetBorderSize(borderSize)
+            if frame.castBarIconFrame.Icon.SetBorderSize then
+                frame.castBarIconFrame.Icon:SetBorderSize(borderSize)
             end
         end
 
@@ -4412,8 +4412,8 @@ local function ChangeHealthbarBorderSize(frame)
             end
         end
         if BetterBlizzPlatesDB.castBarIconPixelBorder then
-            if frame.castBar.Icon.SetBorderSize then
-                frame.castBar.Icon:SetBorderSize(borderSize)
+            if frame.castBarIconFrame.Icon.SetBorderSize then
+                frame.castBarIconFrame.Icon:SetBorderSize(borderSize)
             end
         end
 
@@ -4455,8 +4455,8 @@ local function ChangeHealthbarBorderSize(frame)
                 end
             end
             if BetterBlizzPlatesDB.castBarIconPixelBorder then
-                if frame.castBar.Icon.SetBorderSize then
-                    frame.castBar.Icon:SetBorderSize(borderSize)
+                if frame.castBarIconFrame.Icon.SetBorderSize then
+                    frame.castBarIconFrame.Icon:SetBorderSize(borderSize)
                 end
             end
 
