@@ -103,8 +103,18 @@ function BBP.RefreshArenaPlates(shouldWipe)
             if plate.UnitFrame and plate.UnitFrame.arenaID then
                 local unit = plate.UnitFrame.unit
                 if UnitIsPlayer(unit) and UnitIsEnemy("player", unit) then
-                    alreadyTaggedCount = alreadyTaggedCount + 1
-                    foundArenas[plate.UnitFrame.arenaID] = plate
+                    -- Validate the tag still matches the cache
+                    local cachedIndex = BBP.NameplateToArenaIndex[plate]
+                    if cachedIndex == plate.UnitFrame.arenaID then
+                        alreadyTaggedCount = alreadyTaggedCount + 1
+                        foundArenas[plate.UnitFrame.arenaID] = plate
+                    else
+                        -- Stale tag, clear it
+                        plate.UnitFrame.arenaID = nil
+                    end
+                else
+                    -- Not an enemy player anymore, clear the tag
+                    plate.UnitFrame.arenaID = nil
                 end
             end
         end
@@ -128,11 +138,17 @@ function BBP.RefreshArenaPlates(shouldWipe)
 
                         if cachedClass and cachedClass ~= class then
                             BBP.NameplateToArenaIndex[plate] = nil
+                            if plate.UnitFrame then
+                                plate.UnitFrame.arenaID = nil
+                            end
                             cachedIndex = nil
                         elseif cachedSpec then
                             local currentSpec = GetArenaOpponentSpec(cachedIndex)
                             if currentSpec and currentSpec ~= cachedSpec then
                                 BBP.NameplateToArenaIndex[plate] = nil
+                                if plate.UnitFrame then
+                                    plate.UnitFrame.arenaID = nil
+                                end
                                 cachedIndex = nil
                             end
                         end
@@ -162,6 +178,9 @@ function BBP.RefreshArenaPlates(shouldWipe)
                 else
                     if BBP.NameplateToArenaIndex[plate] then
                         BBP.NameplateToArenaIndex[plate] = nil
+                    end
+                    if plate.UnitFrame and plate.UnitFrame.arenaID then
+                        plate.UnitFrame.arenaID = nil
                     end
                 end
             end
