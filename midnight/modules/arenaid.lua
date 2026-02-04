@@ -4,7 +4,7 @@ local specIDToName = {
     -- Death Knight
     [250] = "Blood", [251] = "Frost", [252] = "Unholy",
     -- Demon Hunter
-    [577] = "Havoc", [581] = "Vengeance",
+    [577] = "Havoc", [581] = "Vengeance", [1480] = "Devourer",
     -- Druid
     [102] = "Balance", [103] = "Feral", [104] = "Guardian", [105] = "Restoration",
     -- Evoker
@@ -33,7 +33,7 @@ local specIDToNameShort = {
     -- Death Knight
     [250] = "Blood", [251] = "Frost", [252] = "Unholy",
     -- Demon Hunter
-    [577] = "Havoc", [581] = "Vengeance",
+    [577] = "Havoc", [581] = "Vengeance", [1480] = "Devourer",
     -- Druid
     [102] = "Balance", [103] = "Feral", [104] = "Guardian", [105] = "Resto",
     -- Evoker
@@ -66,11 +66,191 @@ local idCircleColor = {
 
 -- cache arena -> nameplate frame
 BBP.ArenaPlates = {} -- [1..3] = plate frame or nil
+-- cache nameplate -> arena index (for non-120000 patches)
+BBP.NameplateToArenaIndex = {} -- [nameplate] = 1/2/3 or nil
+BBP.ArenaIndexToClass = {} -- [1..3] = "WARRIOR", "MAGE", etc.
+BBP.ArenaIndexToSpec = {} -- [1..3] = specID
+local patchVersion = select(4, GetBuildInfo())
+local isPrepatch = patchVersion == 120000
 
-function BBP.RefreshArenaPlates()
-    wipe(BBP.ArenaPlates)
-    for i = 1, 3 do
-        BBP.ArenaPlates[i] = C_NamePlate.GetNamePlateForUnit("arena"..i)
+-- Horrendous temporary llm abomination to work around blizzard removing getting nameplate of arena units.
+function BBP.RefreshArenaPlates(shouldWipe)
+    if isPrepatch then
+        wipe(BBP.ArenaPlates)
+        for i = 1, 3 do
+            local plate = C_NamePlate.GetNamePlateForUnit("arena"..i)
+            BBP.ArenaPlates[i] = plate
+            -- Tag the frame with its arena ID for optimization
+            if plate and plate.UnitFrame then
+                plate.UnitFrame.arenaID = i
+            end
+        end
+    else
+        if shouldWipe then
+            wipe(BBP.NameplateToArenaIndex)
+            wipe(BBP.ArenaIndexToClass)
+            wipe(BBP.ArenaIndexToSpec)
+        end
+
+        local nameplates = C_NamePlate.GetNamePlates()
+        local foundArenas = {}
+        local allPlayerPlates = {}
+        local plateToClass = {}
+        local plateToSpec = {}
+
+        local alreadyTaggedCount = 0
+        for _, plate in ipairs(nameplates) do
+            if plate.UnitFrame and plate.UnitFrame.arenaID then
+                local unit = plate.UnitFrame.unit
+                if UnitIsPlayer(unit) and UnitIsEnemy("player", unit) then
+                    alreadyTaggedCount = alreadyTaggedCount + 1
+                    foundArenas[plate.UnitFrame.arenaID] = plate
+                end
+            end
+        end
+
+        if alreadyTaggedCount == 3 and foundArenas[1] and foundArenas[2] and foundArenas[3] then
+            return
+        end
+
+        for _, plate in ipairs(nameplates) do
+            if plate.UnitFrame then
+                local unit = plate.UnitFrame.unit
+                if UnitIsPlayer(unit) and UnitIsEnemy("player", unit) then
+                    table.insert(allPlayerPlates, plate)
+                    local _, class = UnitClass(unit)
+                    plateToClass[plate] = class
+
+                    local cachedIndex = BBP.NameplateToArenaIndex[plate]
+                    if cachedIndex then
+                        local cachedClass = BBP.ArenaIndexToClass[cachedIndex]
+                        local cachedSpec = BBP.ArenaIndexToSpec[cachedIndex]
+
+                        if cachedClass and cachedClass ~= class then
+                            BBP.NameplateToArenaIndex[plate] = nil
+                            cachedIndex = nil
+                        elseif cachedSpec then
+                            local currentSpec = GetArenaOpponentSpec(cachedIndex)
+                            if currentSpec and currentSpec ~= cachedSpec then
+                                BBP.NameplateToArenaIndex[plate] = nil
+                                cachedIndex = nil
+                            end
+                        end
+                    end
+
+                    for i = 1, 3 do
+                        local arenaUnit = "arena" .. i
+                        if (UnitIsUnit(unit, "target") and UnitIsUnit("target", arenaUnit)) or
+                           (UnitIsUnit(unit, "focus") and UnitIsUnit("focus", arenaUnit)) or
+                           (UnitIsUnit(unit, "mouseover") and UnitIsUnit("mouseover", arenaUnit)) then
+                            BBP.NameplateToArenaIndex[plate] = i
+                            BBP.ArenaIndexToClass[i] = class
+
+                            local specID = GetArenaOpponentSpec(i)
+                            if specID then
+                                BBP.ArenaIndexToSpec[i] = specID
+                                plateToSpec[plate] = specID
+                            end
+
+                            if plate.UnitFrame then
+                                plate.UnitFrame.arenaID = i
+                            end
+
+                            foundArenas[i] = plate
+                        end
+                    end
+                else
+                    if BBP.NameplateToArenaIndex[plate] then
+                        BBP.NameplateToArenaIndex[plate] = nil
+                    end
+                end
+            end
+        end
+
+        for _, plate in ipairs(allPlayerPlates) do
+            if not plateToSpec[plate] then
+                local cachedIndex = BBP.NameplateToArenaIndex[plate]
+                if cachedIndex and BBP.ArenaIndexToSpec[cachedIndex] then
+                    plateToSpec[plate] = BBP.ArenaIndexToSpec[cachedIndex]
+                end
+            end
+        end
+
+        if #allPlayerPlates == 3 then
+            for _, plate in ipairs(allPlayerPlates) do
+                if not BBP.NameplateToArenaIndex[plate] then
+                    local class = plateToClass[plate]
+                    if class then
+                        for i = 1, 3 do
+                            if BBP.ArenaIndexToClass[i] == class and not foundArenas[i] then
+                                local cachedSpec = BBP.ArenaIndexToSpec[i]
+                                local plateSpec = plateToSpec[plate]
+
+                                if cachedSpec and plateSpec then
+                                    if cachedSpec == plateSpec then
+                                        BBP.NameplateToArenaIndex[plate] = i
+                                        if plate.UnitFrame then
+                                            plate.UnitFrame.arenaID = i
+                                        end
+                                        foundArenas[i] = plate
+                                        break
+                                    end
+                                else
+                                    local classCount = 0
+                                    for _, p in ipairs(allPlayerPlates) do
+                                        if plateToClass[p] == class and not BBP.NameplateToArenaIndex[p] then
+                                            classCount = classCount + 1
+                                        end
+                                    end
+                                    if classCount == 1 then
+                                        BBP.NameplateToArenaIndex[plate] = i
+                                        if plate.UnitFrame then
+                                            plate.UnitFrame.arenaID = i
+                                        end
+                                        foundArenas[i] = plate
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        local foundCount = 0
+        local missingIndex = nil
+        for i = 1, 3 do
+            if foundArenas[i] then
+                foundCount = foundCount + 1
+            else
+                missingIndex = i
+            end
+        end
+
+        if foundCount == 2 and missingIndex and #allPlayerPlates == 3 then
+            for _, plate in ipairs(allPlayerPlates) do
+                local isAlreadyFound = false
+                for _, foundPlate in pairs(foundArenas) do
+                    if foundPlate == plate then
+                        isAlreadyFound = true
+                        break
+                    end
+                end
+                if not isAlreadyFound then
+                    BBP.NameplateToArenaIndex[plate] = missingIndex
+                    BBP.ArenaIndexToClass[missingIndex] = plateToClass[plate]
+                    local specID = GetArenaOpponentSpec(missingIndex)
+                    if specID then
+                        BBP.ArenaIndexToSpec[missingIndex] = specID
+                    end
+                    if plate.UnitFrame then
+                        plate.UnitFrame.arenaID = missingIndex
+                    end
+                    break
+                end
+            end
+        end
     end
 end
 
@@ -85,25 +265,43 @@ end
 
 local f = CreateFrame("Frame")
 f:RegisterEvent("PLAYER_ENTERING_WORLD")
-f:RegisterEvent("ARENA_OPPONENT_UPDATE")       -- unit, type
-f:RegisterEvent("NAME_PLATE_UNIT_ADDED")       -- unit
-f:RegisterEvent("NAME_PLATE_UNIT_REMOVED")     -- unit
+f:RegisterEvent("ARENA_OPPONENT_UPDATE")
+f:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+f:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+if not isPrepatch then
+    f:RegisterEvent("PLAYER_TARGET_CHANGED")
+    f:RegisterEvent("PLAYER_FOCUS_CHANGED")
+    f:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
+end
 f:SetScript("OnEvent", function(_, e)
     if not BBP.isInArena then return end
-    BBP.RefreshArenaPlates()
+    local shouldWipe = (e == "PLAYER_ENTERING_WORLD" or e == "ARENA_OPPONENT_UPDATE")
+    BBP.RefreshArenaPlates(shouldWipe)
     BBP.RefreshPartyPlates()
 end)
 
 function BBP.GetArenaIndexByFrame(frame)
-    local plate = BBP.GetSafeNameplate(frame.unit)
-    if not plate then return nil end
-    for i = 1, 3 do
-        local ap = BBP.ArenaPlates[i]
-        if ap and ap == plate then
-            return i
-        end
+    if not frame.unit then return nil end
+
+    if frame.arenaID then
+        return frame.arenaID
     end
-    return nil
+
+    if isPrepatch then
+        local plate = BBP.GetSafeNameplate(frame.unit)
+        if not plate then return nil end
+        for i = 1, 3 do
+            local ap = BBP.ArenaPlates[i]
+            if ap and ap == plate then
+                return i
+            end
+        end
+        return nil
+    else
+        local plate = BBP.GetSafeNameplate(frame.unit)
+        if not plate then return nil end
+        return BBP.NameplateToArenaIndex[plate]
+    end
 end
 
 function BBP.GetPartyIndexByFrame(frame)
@@ -123,6 +321,7 @@ local UnitIsUnit = UnitIsUnit
 local GetArenaOpponentSpec = GetArenaOpponentSpec
 
 local function isFistweaver(unit)
+    if true then return end
     if BBP.fistweaverFound then return true end
     local isFistweaver = AuraUtil.FindAuraByName("Ancient Teachings", unit, "HELPFUL")
     if isFistweaver then
@@ -277,8 +476,12 @@ function BBP.ArenaIndicator3(frame)
     local r, g, b = frame.name:GetTextColor()
 
     if not specName then
-        local classLoc = UnitClass("arena"..idx) or ""
-        specName = classLoc ~= "" and classLoc or "Unknown"
+        local classLoc, class = UnitClass(frame.unit) or ""
+        if class and not issecretvalue(class) then
+            specName = classLoc ~= "" and classLoc or "Unknown"
+        else
+            specName = UnitName(frame.unit) or "Unknown"
+        end
     end
 
     local anchorPoint = createSpexText(frame)
@@ -323,11 +526,11 @@ function BBP.ArenaIndicator4(frame)
     local specName = specID and (shortArenaSpecName and specIDToNameShort[specID] or specIDToName[specID])
 
     if not specName then
-        local classLoc = UnitClass("arena"..idx)
-        if type(classLoc) == "string" and classLoc ~= "" then
-            specName = classLoc
+        local classLoc, class = UnitClass(frame.unit) or ""
+        if class and not issecretvalue(class) then
+            specName = classLoc ~= "" and classLoc or "Unknown"
         else
-            specName = "Unknown"
+            specName = UnitName(frame.unit) or "Unknown"
         end
     end
 
@@ -377,11 +580,11 @@ function BBP.ArenaIndicator5(frame)
     local specName = specID and (shortArenaSpecName and specIDToNameShort[specID] or specIDToName[specID])
 
     if not specName then
-        local classLoc = UnitClass("arena"..idx)
-        if type(classLoc) == "string" and classLoc ~= "" then
-            specName = classLoc
+        local classLoc, class = UnitClass(frame.unit) or ""
+        if class and not issecretvalue(class) then
+            specName = classLoc ~= "" and classLoc or "Unknown"
         else
-            specName = "Unknown"
+            specName = UnitName(frame.unit) or "Unknown"
         end
     end
 
@@ -458,11 +661,11 @@ function BBP.PartyIndicator3(frame)
     local specName = specID and (shortArenaSpecName and specIDToNameShort[specID] or specIDToName[specID])
 
     if not specName then
-        local classLoc = UnitClass("party"..idx)
-        if type(classLoc) == "string" and classLoc ~= "" then
-            specName = classLoc
+        local classLoc, class = UnitClass(frame.unit) or ""
+        if class and not issecretvalue(class) then
+            specName = classLoc ~= "" and classLoc or "Unknown"
         else
-            specName = "Unknown"
+            specName = UnitName(frame.unit) or "Unknown"
         end
     end
 
@@ -497,8 +700,12 @@ function BBP.PartyIndicator4(frame)
     local specID   = BBP.GetSpecID(frame)
     local specName = specID and (shortArenaSpecName and specIDToNameShort[specID] or specIDToName[specID])
     if not specName then
-        local classLoc = UnitClass("party"..idx)
-        specName = (type(classLoc) == "string" and classLoc ~= "") and classLoc or "Unknown"
+        local classLoc, class = UnitClass(frame.unit) or ""
+        if class and not issecretvalue(class) then
+            specName = classLoc ~= "" and classLoc or "Unknown"
+        else
+            specName = UnitName(frame.unit) or "Unknown"
+        end
     end
 
     local r, g, b = frame.name:GetTextColor()
@@ -533,8 +740,12 @@ function BBP.PartyIndicator5(frame)
     local specID   = BBP.GetSpecID(frame)
     local specName = specID and (shortArenaSpecName and specIDToNameShort[specID] or specIDToName[specID])
     if not specName then
-        local classLoc = UnitClass("party"..idx)
-        specName = (type(classLoc) == "string" and classLoc ~= "") and classLoc or "Unknown"
+        local classLoc, class = UnitClass(frame.unit) or ""
+        if class and not issecretvalue(class) then
+            specName = classLoc ~= "" and classLoc or "Unknown"
+        else
+            specName = UnitName(frame.unit) or "Unknown"
+        end
     end
 
     local r, g, b = frame.name:GetTextColor()
@@ -869,6 +1080,7 @@ end
 function BBP.ArenaIndicatorCaller(frame)
     local db = BetterBlizzPlatesDB
     -- Arena and party logic
+    if not frame.unit then return end
     if IsActiveBattlefieldArena() then
         local unitType
         if UnitIsEnemy("player", frame.unit) then
@@ -976,40 +1188,40 @@ end)
 
 
 function BBP.BattlegroundSpecNames(frame)
-    if not BBP.isInBg then return end
-    if not UnitIsEnemy(frame.unit, "player") or not UnitIsPlayer(frame.unit) then
-        if frame.specNameText then
-            frame.specNameText:SetText("")
-        end
-        return
-    else
+    -- if not BBP.isInBg then return end
+    -- if not UnitIsEnemy(frame.unit, "player") or not UnitIsPlayer(frame.unit) then
+    --     if frame.specNameText then
+    --         frame.specNameText:SetText("")
+    --     end
+    --     return
+    -- else
 
-        local db = BetterBlizzPlatesDB
-        local shortArenaSpecName = db.shortArenaSpecName
-        local arenaSpecScale = db.arenaSpecScale
-        local arenaSpecAnchor = db.arenaSpecAnchor
-        local arenaSpecXPos = db.arenaSpecXPos
-        local arenaSpecYPos = db.arenaSpecYPos
+    --     local db = BetterBlizzPlatesDB
+    --     local shortArenaSpecName = db.shortArenaSpecName
+    --     local arenaSpecScale = db.arenaSpecScale
+    --     local arenaSpecAnchor = db.arenaSpecAnchor
+    --     local arenaSpecXPos = db.arenaSpecXPos
+    --     local arenaSpecYPos = db.arenaSpecYPos
 
-        local specID = BBP.GetSpecID(frame)
-        local specName = specID and specIDToName[specID]
+    --     local specID = BBP.GetSpecID(frame)
+    --     local specName = specID and specIDToName[specID]
 
-        if shortArenaSpecName and specID then
-            specName = specIDToNameShort[specID]
-        end
-        local r, g, b, a = frame.name:GetTextColor()
+    --     if shortArenaSpecName and specID then
+    --         specName = specIDToNameShort[specID]
+    --     end
+    --     local r, g, b, a = frame.name:GetTextColor()
 
-        if not specName then
-            specName = UnitName(frame.unit)
-        end
+    --     if not specName then
+    --         specName = UnitName(frame.unit)
+    --     end
 
-        local anchorPoint = createSpexText(frame)
+    --     local anchorPoint = createSpexText(frame)
 
-        frame.name:SetText("")
-        frame.name:SetAlpha(0)
-        frame.specNameText:SetText(specName)
-        frame.specNameText:SetTextColor(r, g, b, 1)
-        frame.specNameText:SetScale(arenaSpecScale)
-        frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
-    end
+    --     frame.name:SetText("")
+    --     frame.name:SetAlpha(0)
+    --     frame.specNameText:SetText(specName)
+    --     frame.specNameText:SetTextColor(r, g, b, 1)
+    --     frame.specNameText:SetScale(arenaSpecScale)
+    --     frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+    -- end
 end

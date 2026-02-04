@@ -256,7 +256,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", 2, 0)
     end
 
-    if UnitCastingInfo(unitToken) then
+    if castBar.casting then
         casting = true
         if castBarRecolor then
             if castBarTexture then
@@ -268,7 +268,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
             end
         end
-    elseif UnitChannelInfo(unitToken) then
+    elseif castBar.channeling then
         if empoweredCast then
             casting = true
             channeling= false
@@ -550,6 +550,8 @@ end
 
 -- Update text and color based on the target
 function BBP.UpdateNameplateTargetText(frame, unit)
+    if not unit then return end
+
     if not frame.TargetText then
         frame.TargetText = BBP.OverlayFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.TargetText:SetJustifyH("CENTER")
@@ -558,7 +560,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
         -- fix me (make it appear above resource when higher strata resource) bodify
     end
 
-    local isCasting = UnitCastingInfo(unit) or UnitChannelInfo(unit)
+    local isCasting = frame.castBar.casting or frame.castBar.channeling
 
     frame.TargetText:SetText("")
 
@@ -579,10 +581,10 @@ function BBP.UpdateNameplateTargetText(frame, unit)
         end
         local npTextSize = BetterBlizzPlatesDB.npTargetTextSize
         if useCustomFont then
-            BBP.SetFontBasedOnOption(frame.TargetText, (useCustomFont and (npTextSize or 11)) or (npTextSize or 12))
+            BBP.SetFontBasedOnOption(frame.TargetText, (useCustomFont and (npTextSize or 6)) or (npTextSize or 6))
         else
             local f,s,o = frame.TargetText:GetFont()
-            frame.TargetText:SetFont(f, npTextSize or 12,"OUTLINE")
+            frame.TargetText:SetFont(f, npTextSize or 6,"OUTLINE")
         end
     else
         frame.TargetText:SetText("")
@@ -883,6 +885,7 @@ function BBP.CastbarOnEvent(frame, event)
             BBP.UnitTargetCastbarUpdate = CreateFrame("Frame")
             BBP.UnitTargetCastbarUpdate:RegisterEvent("UNIT_TARGET")
             BBP.UnitTargetCastbarUpdate:SetScript("OnEvent", function(_, _, unit)
+                if string.match(unit, "arena") then return end
                 local np, frame = BBP.GetSafeNameplate(unit)
                 if frame and not UnitIsPlayer(unit) then
                     BBP.CustomizeCastbar(frame, unit)

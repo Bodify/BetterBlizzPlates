@@ -14,6 +14,7 @@ local function ShowMurloc(frame)
     frame:SetAlpha(1)
     frame.isMurloc = true
     frame.HealthBarsContainer:SetAlpha(0)
+    frame.HealthBarsContainer.alphaZero = false
     frame.selectionHighlight:SetAlpha(0)
     frame.AurasFrame:SetAlpha(0)
     frame.name:SetAlpha(0)

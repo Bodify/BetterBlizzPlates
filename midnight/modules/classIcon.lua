@@ -19,34 +19,17 @@ local TankSpecs = {
     [73] = true --> Warrior Protection
 }
 
-local icons = {
-    [121177] = 1119887, -- Red orb
-    [121176] = 1119886, -- Green orb
-    [121164] = 1119885, -- Blue orb
-    [121175] = 1119888, -- Purple orb
-    [156621] = 132486, -- Alliance Flag
-    [156618] = 132485, -- Horde Flag
-    [34976] = 132487, -- Netherstorm Flag
-    [434339] = 463896, -- Deephaul Ravine Crystal
-    [168506] = 134334, -- Ancient Artifact (Ashran)
-    [231813] = 1567722, -- Green Dunkball (Brawl)
-    [231814] = 1545374, -- Orange Dunkball (Brawl)
-    [231529] = 1567723 -- Purple Dunkball (Brawl)
+-- Map PvPUnitClassification enum values to icon textures
+local classificationIcons = {
+    [0] = 132485,  -- FlagCarrierHorde
+    [1] = 132486,  -- FlagCarrierAlliance
+    [2] = 132487,  -- FlagCarrierNeutral
+    [7] = 1119885, -- OrbCarrierBlue
+    [8] = 1119886, -- OrbCarrierGreen
+    [9] = 1119887, -- OrbCarrierOrange (Red)
+    [10] = 1119888, -- OrbCarrierPurple
 }
-BBP.ClassIndicatorIcons = icons
-
-local bgsWithObjectives = {
-    [489] = true, -- Warsong Gulch
-    [2106] = true, -- Warsong Gulch 2
-    [566] = true, -- Eye of the Storm
-    [968] = true, -- Eye of the Storm Rated
-    [998] = true, -- Temple of Kotmogu
-    [2656] = true, --Deephaul Ravine
-    [1191] = true, -- Ashran
-    [2245] = true, -- Deepwind Gorge
-    [1105] = true, -- Deepwind Gorge Brawl
-    [726] = true, -- Twin Peaks
-}
+BBP.ClassIndicatorIcons = classificationIcons
 
 local petIcons = {
     [417] = 136217, -- felhunter
@@ -170,32 +153,12 @@ if playerClass == "HUNTER" or playerClass == "WARLOCK" or playerClass == "DEATHK
     end)
 end
 
-local function GetAuraIcon(frame, foundID, auraType, bgId)
-    -- If `foundID` exists in the table, return its color immediately
-    if foundID and icons[foundID] then
-        return icons[foundID]
+local function GetAuraIcon(frame)
+    local classification = UnitPvpClassification(frame.unit)
+    if classification and classificationIcons[classification] then
+        return classificationIcons[classification]
     end
-
-    if UnitPvpClassification(frame.unit) then
-        if bgId == 2656 then
-            return icons[434339]
-        elseif bgId == 566 or bgId == 968 then
-            return icons[34976]
-        else
-            -- Otherwise, scan buffs/debuffs based on `auraType`
-            for i = 1, 40 do
-                local _, _, _, _, _, _, _, _, _, spellID = BBP.TWWUnitAura(frame.unit, i, auraType or "HARMFUL")
-                if not spellID then
-                    break
-                end
-                if spellID and icons[spellID] then
-                    return icons[spellID]
-                end
-            end
-        end
-    end
-
-    return nil -- No matching aura found
+    return nil
 end
 
 local function BackgroundType(frame, bg)
@@ -270,7 +233,7 @@ function BBP.ClassIndicator(frame, foundID)
 
     local class = info.class
     if not class then
-        isPetGUID = false--UnitIsUnit(frame.unit, "pet")
+        isPetGUID = UnitIsUnit(frame.unit, "pet")
         if (isPetGUID and config.classIndicatorShowPet) or isOthersPet then
             if isOthersPet then
                 for i = 1, 2 do
@@ -414,11 +377,7 @@ function BBP.ClassIndicator(frame, foundID)
 
     local flagIcon
     if BBP.isInBg and (enabledOnThisUnit or config.classIconAlwaysShowBgObj) then
-        local _, _, _, _, _, _, _, instanceMapID = GetInstanceInfo()
-        if bgsWithObjectives[instanceMapID] then
-            local auraType = (instanceMapID == 998 and "HARMFUL") or "HELPFUL"
-            flagIcon = GetAuraIcon(frame, foundID, auraType, instanceMapID)
-        end
+        flagIcon = GetAuraIcon(frame)
     end
 
     frame.classIndicator.flagActive = flagIcon and true or nil
@@ -722,10 +681,12 @@ function BBP.ClassIndicator(frame, foundID)
     if info.isFriend then
         if config.classIndicatorHideFriendlyHealthbar then
             frame.HealthBarsContainer:SetAlpha(0)
+            frame.HealthBarsContainer.alphaZero = true
             frame.selectionHighlight:SetAlpha(0)
             frame.ciChange = true
         elseif frame.ciChange then
             frame.HealthBarsContainer:SetAlpha(1)
+            frame.HealthBarsContainer.alphaZero = false
             frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
             frame.ciChange = nil
         end

@@ -1119,6 +1119,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BBP.RefreshBuffFrame()
                 elseif element == "nameplateAuraScale" then
                     BetterBlizzPlatesDB.nameplateAuraScale = value
+                    if not BBP.checkCombatAndWarn() then
+                        C_CVar.SetCVar("nameplateAuraScale", BetterBlizzPlatesDB.nameplateAuraScale)
+                    end
                     BBP.RefreshBuffFrame()
                 elseif element == "nameplateAuraHeightGap" then
                     BetterBlizzPlatesDB.nameplateAuraHeightGap = value
@@ -1409,10 +1412,10 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         elseif element == "castBarIconXPos" or element == "castBarIconYPos" then
                             if axis then
                                 local yOffset = BetterBlizzPlatesDB.castBarDragonflightShield and -2 or 0
-                                frame.castBar.Icon:ClearAllPoints()
-                                frame.castBar.Icon:SetPoint("CENTER", frame.castBar, "LEFT", xPos, yPos)
+                                frame.castBar.castBarIconFrame:ClearAllPoints()
+                                frame.castBar.castBarIconFrame:SetPoint("CENTER", frame.castBar, "LEFT", -1 + xPos, yPos)
                                 frame.castBar.BorderShield:ClearAllPoints()
-                                frame.castBar.BorderShield:SetPoint("CENTER", frame.castBar.Icon, "CENTER", 0, 0)
+                                frame.castBar.BorderShield:SetPoint("CENTER", frame.castBarIconFrame, "CENTER", 0, 0)
                             else
                                 BetterBlizzPlatesDB.castBarIconScale = value
                                 frame.castBar.Icon:SetScale(value)
@@ -5748,7 +5751,7 @@ local function guiGeneralTab()
 
     local bgIndicator = CreateCheckbox("bgIndicator", "Blitz indicator", BetterBlizzPlates)
     bgIndicator:SetPoint("TOPLEFT", absorbIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(bgIndicator, "Absorb Indicator |A:Ping_Chat_Assist:18:18|a", "Show a big flag/orb on top of carriers in Battlegrounds.")
+    CreateTooltipTwo(bgIndicator, "Blitz Indicator |A:Ping_Chat_Assist:18:18|a", "Show a big flag/orb on top of carriers in Battlegrounds.")
     local bgIcon = bgIndicator:CreateTexture(nil, "ARTWORK")
     bgIcon:SetAtlas("Ping_Chat_Assist")
     bgIcon:SetSize(17, 17)
@@ -5883,31 +5886,31 @@ local function guiGeneralTab()
     focusTargetIndicatorIcon:SetSize(19, 19)
     focusTargetIndicatorIcon:SetPoint("RIGHT", focusTargetIndicator, "LEFT", 0, 0)
 
-    local totemIndicator = CreateCheckbox("totemIndicator", "Totem indicator", BetterBlizzPlates)
-    totemIndicator:SetPoint("TOPLEFT", focusTargetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    totemIndicator:HookScript("OnClick", function(self)
-        local function setTotemCVar()
-            if InCombatLockdown() then
-                C_Timer.After(1.5, setTotemCVar)
-            else
-                if self:GetChecked() and GetCVar("nameplateShowEnemyTotems") ~= "1" then
-                    BetterBlizzPlatesDB.nameplateShowEnemyTotems = 1
-                    C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
-                    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"CVar Control\" section of the addon.")
-                end
-            end
-        end
-        setTotemCVar()
-    end)
+    -- local totemIndicator = CreateCheckbox("totemIndicator", "Totem indicator", BetterBlizzPlates)
+    -- totemIndicator:SetPoint("TOPLEFT", focusTargetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    -- totemIndicator:HookScript("OnClick", function(self)
+    --     local function setTotemCVar()
+    --         if InCombatLockdown() then
+    --             C_Timer.After(1.5, setTotemCVar)
+    --         else
+    --             if self:GetChecked() and GetCVar("nameplateShowEnemyTotems") ~= "1" then
+    --                 BetterBlizzPlatesDB.nameplateShowEnemyTotems = 1
+    --                 C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
+    --                 DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"CVar Control\" section of the addon.")
+    --             end
+    --         end
+    --     end
+    --     setTotemCVar()
+    -- end)
 
-    CreateTooltipTwo(totemIndicator, "Totem Indicator |A:teleportationnetwork-ardenweald-32x32:17:17|a", "Show icon on and color important NPC nameplates.", "Full list available in \"Totem Indicator List\" section, designed for PvP.")
-    local totemsIcon = totemIndicator:CreateTexture(nil, "ARTWORK")
-    totemsIcon:SetAtlas("teleportationnetwork-ardenweald-32x32")
-    totemsIcon:SetSize(17, 17)
-    totemsIcon:SetPoint("RIGHT", totemIndicator, "LEFT", -1, 0)
+    -- CreateTooltipTwo(totemIndicator, "Totem Indicator |A:teleportationnetwork-ardenweald-32x32:17:17|a", "Show icon on and color important NPC nameplates.", "Full list available in \"Totem Indicator List\" section, designed for PvP.")
+    -- local totemsIcon = totemIndicator:CreateTexture(nil, "ARTWORK")
+    -- totemsIcon:SetAtlas("teleportationnetwork-ardenweald-32x32")
+    -- totemsIcon:SetSize(17, 17)
+    -- totemsIcon:SetPoint("RIGHT", totemIndicator, "LEFT", -1, 0)
 
     local questIndicator = CreateCheckbox("questIndicator", "Quest indicator", BetterBlizzPlates)
-    questIndicator:SetPoint("TOPLEFT", totemIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    questIndicator:SetPoint("TOPLEFT", focusTargetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(questIndicator, "Quest Indicator|A:smallquestbang:20:20|a", "Quest symbol on quest NPC's.")
     local questsIcon = questIndicator:CreateTexture(nil, "ARTWORK")
     questsIcon:SetAtlas("smallquestbang")
@@ -6279,10 +6282,15 @@ local function guiGeneralTab()
     end)
     mmarkersButton:SetPoint("TOP", mesButton, "BOTTOM", 0, btnGap)
 
+    local mysticallButton = CreateClassButton(BetterBlizzPlates, "MONK", "Mysticall", "mysticallx", function()
+        ShowProfileConfirmation("Mysticall", "MONK", BBP.MysticallProfile)
+    end)
+    mysticallButton:SetPoint("TOP", mmarkersButton, "BOTTOM", 0, btnGap)
+
     local nahjButton = CreateClassButton(BetterBlizzPlates, "ROGUE", "Nahj", "nahj", function()
         ShowProfileConfirmation("Nahj", "ROGUE", BBP.NahjProfile)
     end)
-    nahjButton:SetPoint("TOP", mmarkersButton, "BOTTOM", 0, btnGap)
+    nahjButton:SetPoint("TOP", mysticallButton, "BOTTOM", 0, btnGap)
 
     local pmakeButton = CreateClassButton(BetterBlizzPlates, "MAGE", "Pmake", "pmakewow", function()
         ShowProfileConfirmation("Pmake", "MAGE", BBP.PmakeProfile)
@@ -6682,84 +6690,84 @@ local function guiPositionAndScale()
     local absorbIndicatorOnPlayersOnly = CreateCheckbox("absorbIndicatorOnPlayersOnly", "Players only", contentFrame)
     absorbIndicatorOnPlayersOnly:SetPoint("TOPLEFT", absorbIndicatorEnemyOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    ----------------------
-    -- Totem Indicator
-    ----------------------
-    local anchorSubTotem = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    anchorSubTotem:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, thirdLineY)
-    anchorSubTotem:SetText("Totem Indicator")
+--     ----------------------
+--     -- Totem Indicator
+--     ----------------------
+--     local anchorSubTotem = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+--     anchorSubTotem:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, thirdLineY)
+--     anchorSubTotem:SetText("Totem Indicator")
 
-    CreateBorderBox(anchorSubTotem)
+--     CreateBorderBox(anchorSubTotem)
 
-    local totemIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
-    totemIcon2:SetAtlas("teleportationnetwork-ardenweald-32x32")
-    totemIcon2:SetSize(34, 34)
-    totemIcon2:SetPoint("BOTTOM", anchorSubTotem, "TOP", 0, 0)
+--     local totemIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
+--     totemIcon2:SetAtlas("teleportationnetwork-ardenweald-32x32")
+--     totemIcon2:SetSize(34, 34)
+--     totemIcon2:SetPoint("BOTTOM", anchorSubTotem, "TOP", 0, 0)
 
-    BBP.totemIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.01, "totemIndicatorScale")
-    BBP.totemIndicatorScale:SetPoint("TOP", anchorSubTotem, "BOTTOM", 0, -15)
-    CreateTooltip( BBP.totemIndicatorScale, "This changes the scale of ALL icons.\n\nYou can adjust individual sizes in the \"Totem Indicator List\" tab.", "ANCHOR_LEFT")
+--     BBP.totemIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.01, "totemIndicatorScale")
+--     BBP.totemIndicatorScale:SetPoint("TOP", anchorSubTotem, "BOTTOM", 0, -15)
+--     CreateTooltip( BBP.totemIndicatorScale, "This changes the scale of ALL icons.\n\nYou can adjust individual sizes in the \"Totem Indicator List\" tab.", "ANCHOR_LEFT")
 
-    local totemIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "totemIndicatorXPos", "X")
-    totemIndicatorXPos:SetPoint("TOP",  BBP.totemIndicatorScale, "BOTTOM", 0, -15)
+--     local totemIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "totemIndicatorXPos", "X")
+--     totemIndicatorXPos:SetPoint("TOP",  BBP.totemIndicatorScale, "BOTTOM", 0, -15)
 
-    local totemIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "totemIndicatorYPos", "Y")
-    totemIndicatorYPos:SetPoint("TOP", totemIndicatorXPos, "BOTTOM", 0, -15)
+--     local totemIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "totemIndicatorYPos", "Y")
+--     totemIndicatorYPos:SetPoint("TOP", totemIndicatorXPos, "BOTTOM", 0, -15)
 
-    local totemIndicatorDropdown = CreateAnchorDropdown(
-        "totemIndicatorDropdown",
-        contentFrame,
-        "Select Anchor Point",
-        "totemIndicatorAnchor",
-        function(arg1)
-        BBP.RefreshAllNameplates()
-    end,
-        { anchorFrame = totemIndicatorYPos, x = -16, y = -35, label = "Anchor" }
-    )
+--     local totemIndicatorDropdown = CreateAnchorDropdown(
+--         "totemIndicatorDropdown",
+--         contentFrame,
+--         "Select Anchor Point",
+--         "totemIndicatorAnchor",
+--         function(arg1)
+--         BBP.RefreshAllNameplates()
+--     end,
+--         { anchorFrame = totemIndicatorYPos, x = -16, y = -35, label = "Anchor" }
+--     )
 
-    local totemTestIcons2 = CreateCheckbox("totemIndicatorTestMode", "Test", contentFrame)
-    totemTestIcons2:SetPoint("TOPLEFT", totemIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
+--     local totemTestIcons2 = CreateCheckbox("totemIndicatorTestMode", "Test", contentFrame)
+--     totemTestIcons2:SetPoint("TOPLEFT", totemIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
-    local totemIndicatorEnemyOnly = CreateCheckbox("totemIndicatorEnemyOnly", "Enemies only", contentFrame)
-    totemIndicatorEnemyOnly:SetPoint("LEFT", totemTestIcons2.text, "RIGHT", 0, 0)
-    CreateTooltip(totemIndicatorEnemyOnly, "Show on enemy totems only")
+--     local totemIndicatorEnemyOnly = CreateCheckbox("totemIndicatorEnemyOnly", "Enemies only", contentFrame)
+--     totemIndicatorEnemyOnly:SetPoint("LEFT", totemTestIcons2.text, "RIGHT", 0, 0)
+--     CreateTooltip(totemIndicatorEnemyOnly, "Show on enemy totems only")
 
-    local totemIndicatorHideNameAndShiftIconDown = CreateCheckbox("totemIndicatorHideNameAndShiftIconDown", "Hide name", contentFrame)
-    totemIndicatorHideNameAndShiftIconDown:SetPoint("TOPLEFT", totemTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+--     local totemIndicatorHideNameAndShiftIconDown = CreateCheckbox("totemIndicatorHideNameAndShiftIconDown", "Hide name", contentFrame)
+--     totemIndicatorHideNameAndShiftIconDown:SetPoint("TOPLEFT", totemTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
-    local totemIndicatorHideHealthBar = CreateCheckbox("totemIndicatorHideHealthBar", "Hide hp", contentFrame)
-    totemIndicatorHideHealthBar:SetPoint("LEFT", totemIndicatorHideNameAndShiftIconDown.text, "RIGHT", 0, 0)
-    CreateTooltip(totemIndicatorHideHealthBar, "Hide the healthbar on totems.\nWill still show if targeted.")
+--     local totemIndicatorHideHealthBar = CreateCheckbox("totemIndicatorHideHealthBar", "Hide hp", contentFrame)
+--     totemIndicatorHideHealthBar:SetPoint("LEFT", totemIndicatorHideNameAndShiftIconDown.text, "RIGHT", 0, 0)
+--     CreateTooltip(totemIndicatorHideHealthBar, "Hide the healthbar on totems.\nWill still show if targeted.")
 
---[=[
-    local totemIndicatorDisplayCdText = CreateCheckbox("totemIndicatorDisplayCdText", "CD Text", contentFrame)
-    totemIndicatorDisplayCdText:SetPoint("TOPLEFT", totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(totemIndicatorDisplayCdText, "Display default Blizz CD Text\n\nWill not work with OmniCC.")
-]=]-- cant force use blizzards own countdown it seems, must make own soonTM
+-- --[=[
+--     local totemIndicatorDisplayCdText = CreateCheckbox("totemIndicatorDisplayCdText", "CD Text", contentFrame)
+--     totemIndicatorDisplayCdText:SetPoint("TOPLEFT", totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+--     CreateTooltip(totemIndicatorDisplayCdText, "Display default Blizz CD Text\n\nWill not work with OmniCC.")
+-- ]=]-- cant force use blizzards own countdown it seems, must make own soonTM
 
-    local showTotemIndicatorCooldownSwipe = CreateCheckbox("showTotemIndicatorCooldownSwipe", "CD Swipe", contentFrame)
-    showTotemIndicatorCooldownSwipe:SetPoint("TOPLEFT", totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(showTotemIndicatorCooldownSwipe, "Show Cooldown Swipe Animation")
+--     local showTotemIndicatorCooldownSwipe = CreateCheckbox("showTotemIndicatorCooldownSwipe", "CD Swipe", contentFrame)
+--     showTotemIndicatorCooldownSwipe:SetPoint("TOPLEFT", totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+--     CreateTooltip(showTotemIndicatorCooldownSwipe, "Show Cooldown Swipe Animation")
 
-    local totemIndicatorColorName = CreateCheckbox("totemIndicatorColorName", "Color Name", contentFrame)
-    totemIndicatorColorName:SetPoint("TOPLEFT", showTotemIndicatorCooldownSwipe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(totemIndicatorColorName, "Color name text")
+--     local totemIndicatorColorName = CreateCheckbox("totemIndicatorColorName", "Color Name", contentFrame)
+--     totemIndicatorColorName:SetPoint("TOPLEFT", showTotemIndicatorCooldownSwipe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+--     CreateTooltip(totemIndicatorColorName, "Color name text")
 
-    local totemIndicatorHideAuras = CreateCheckbox("totemIndicatorHideAuras", "Hide auras", contentFrame)
-    totemIndicatorHideAuras:SetPoint("LEFT", totemIndicatorColorName.text, "RIGHT", 0, 0)
-    CreateTooltip(totemIndicatorHideAuras, "Hide Auras on totem nameplates")
+--     local totemIndicatorHideAuras = CreateCheckbox("totemIndicatorHideAuras", "Hide auras", contentFrame)
+--     totemIndicatorHideAuras:SetPoint("LEFT", totemIndicatorColorName.text, "RIGHT", 0, 0)
+--     CreateTooltip(totemIndicatorHideAuras, "Hide Auras on totem nameplates")
 
-    local totemIndicatorColorHealthBar = CreateCheckbox("totemIndicatorColorHealthBar", "Color HP", contentFrame)
-    totemIndicatorColorHealthBar:SetPoint("LEFT", showTotemIndicatorCooldownSwipe.text, "RIGHT", 0, 0)
-    CreateTooltip(totemIndicatorColorHealthBar, "Color healthbar")
+--     local totemIndicatorColorHealthBar = CreateCheckbox("totemIndicatorColorHealthBar", "Color HP", contentFrame)
+--     totemIndicatorColorHealthBar:SetPoint("LEFT", showTotemIndicatorCooldownSwipe.text, "RIGHT", 0, 0)
+--     CreateTooltip(totemIndicatorColorHealthBar, "Color healthbar")
 
-    local totemIndicatorDefaultCooldownTextSize = CreateSlider(contentFrame, "Default CD Size", 0.3, 2, 0.01, "totemIndicatorDefaultCooldownTextSize", nil, 95)
-    totemIndicatorDefaultCooldownTextSize:SetPoint("TOP", totemIndicatorHideNameAndShiftIconDown, "BOTTOM", 40, -48)
-    CreateTooltip(totemIndicatorDefaultCooldownTextSize, "Size of the default Blizz CD text.\n\nWill not work with OmniCC.")
+--     local totemIndicatorDefaultCooldownTextSize = CreateSlider(contentFrame, "Default CD Size", 0.3, 2, 0.01, "totemIndicatorDefaultCooldownTextSize", nil, 95)
+--     totemIndicatorDefaultCooldownTextSize:SetPoint("TOP", totemIndicatorHideNameAndShiftIconDown, "BOTTOM", 40, -48)
+--     CreateTooltip(totemIndicatorDefaultCooldownTextSize, "Size of the default Blizz CD text.\n\nWill not work with OmniCC.")
 
-    local totemIndicatorNoAnimation = CreateCheckbox("totemIndicatorNoAnimation", "Anim", contentFrame)
-    totemIndicatorNoAnimation:SetPoint("LEFT", totemIndicatorDefaultCooldownTextSize, "RIGHT", 0, 3)
-    CreateTooltipTwo(totemIndicatorNoAnimation, "No Animation", "Stops the pulsing animation on important npcs")
+--     local totemIndicatorNoAnimation = CreateCheckbox("totemIndicatorNoAnimation", "Anim", contentFrame)
+--     totemIndicatorNoAnimation:SetPoint("LEFT", totemIndicatorDefaultCooldownTextSize, "RIGHT", 0, 3)
+--     CreateTooltipTwo(totemIndicatorNoAnimation, "No Animation", "Stops the pulsing animation on important npcs")
 
     ----------------------
     -- Target indicator
@@ -10992,8 +11000,9 @@ local function guiCVarControl()
 
     local nameplateResourceOnTarget = CreateCheckbox("nameplateResourceOnTarget", "Show resource on target nameplate", guiCVarControl, true, BBP.TargetResourceUpdater)
     nameplateResourceOnTarget:SetPoint("TOPLEFT", comboPointsText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
-    CreateTooltipTwo(nameplateResourceOnTarget, "Nameplate Resource", "Show combo points, warlock shards, arcane charges etc on nameplates.", nil, nil, "nameplateResourceOnTarget")
+    CreateTooltipTwo(nameplateResourceOnTarget, "Nameplate Resource", "MIDNIGHT: This needs Personal Resource Display enabled in Blizzard settings. You can then also hide the Health/Mana in Edit Mode for it if you want.\n\nShow combo points, warlock shards, arcane charges etc on nameplates.", nil, nil, "nameplateResourceOnTarget")
     nameplateResourceOnTarget:HookScript("OnClick", function()
+        BBP.RegisterTargetCastingEvents()
         BBP.ApplyNameplateWidth()
     end)
 
@@ -11895,20 +11904,13 @@ local function guiMisc()
     local npBgColorRGB = CreateColorBox(changeNpHpBgColor, "npBgColorRGB", "Background Color")
     npBgColorRGB:SetPoint("TOPLEFT", changeNpHpBgColor, "BOTTOMLEFT", 15, 0)
 
-    local changeNpHpBgColorSolid = CreateCheckbox("changeNpHpBgColorSolid", "Solid", guiMisc)
-    changeNpHpBgColorSolid:SetPoint("LEFT", npBgColorRGB.text, "RIGHT", 2, 0)
-    CreateTooltipTwo(changeNpHpBgColorSolid, "Solid Background Color", "Make the nameplate background color solid and non-transparent.")
-
     changeNpHpBgColor:HookScript("OnClick", function(self)
         if self:GetChecked() then
-            EnableElement(changeNpHpBgColorSolid)
+            npBgColorRGB:SetAlpha(1)
         else
-            DisableElement(changeNpHpBgColorSolid)
+            npBgColorRGB:SetAlpha(0.5)
         end
     end)
-    if not BetterBlizzPlatesDB.changeNpHpBgColor then
-        DisableElement(changeNpHpBgColorSolid)
-    end
 
     local customFontSizeEnabled = CreateCheckbox("customFontSizeEnabled", "Enable Custom Nameplate Font Size", guiMisc)
     customFontSizeEnabled:SetPoint("TOPLEFT", changeNpHpBgColor, "BOTTOMLEFT", 0, -22)
@@ -12401,15 +12403,19 @@ local function guiTemp()
     nameplateAuraRectangleSize:SetPoint("TOPLEFT", nameplateAuraPixelBorder, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateAuraRectangleSize, "Old style Rectangle Size", "Enable to use the old style rectangle size for nameplate auras.")
 
+    local nameplateAuraHideCooldownNumbers = CreateCheckbox("nameplateAuraHideCooldownNumbers", "Hide Cooldown Text on Debuffs", enableMidnightNameplateTweaks)
+    nameplateAuraHideCooldownNumbers:SetPoint("TOPLEFT", nameplateAuraRectangleSize, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(nameplateAuraHideCooldownNumbers, "Hide Cooldown Text on Debuffs", "Hide Cooldown Timer Text on Debuffs, but still show on Buffs/CC.")
+
     local nameplateAuraRightToLeft = CreateCheckbox("nameplateAuraRightToLeft", "Right to Left Auras", enableMidnightNameplateTweaks)
-    nameplateAuraRightToLeft:SetPoint("TOPLEFT", nameplateAuraRectangleSize, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    nameplateAuraRightToLeft:SetPoint("TOPLEFT", nameplateAuraHideCooldownNumbers, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateAuraRightToLeft, "Right to Left Auras", "Enable to have nameplate auras grow from right to left instead of left to right.")
 
     local nameplateAurasEnemyCenteredAnchor = CreateCheckbox("nameplateAurasEnemyCenteredAnchor", "Center Auras", enableMidnightNameplateTweaks)
     nameplateAurasEnemyCenteredAnchor:SetPoint("TOPLEFT", nameplateAuraRightToLeft, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateAurasEnemyCenteredAnchor, "Center Auras", "Enable to have nameplate auras (debuffs, not cc or buffs they have their own anchor setting atm) centered on the nameplate.")
 
-    local nameplateDebuffPadding = CreateSlider(enableMidnightNameplateTweaks, "Nameplate Debuff Padding", -100, 100, 1, "nameplateDebuffPadding")
+    local nameplateDebuffPadding = CreateSlider(enableMidnightNameplateTweaks, "Nameplate Debuff Y Position", -100, 100, 1, "nameplateDebuffPadding")
     nameplateDebuffPadding:SetPoint("TOPLEFT", nameplateAurasEnemyCenteredAnchor, "BOTTOMLEFT", 12, -25)
     CreateTooltipTwo(nameplateDebuffPadding, "Nameplate Debuff Padding", "Adjust the padding between debuff icons on nameplates.")
 
@@ -12797,6 +12803,11 @@ function BBP.CreateIntroMessageWindow()
     end)
     mmarkersButton:SetPoint("TOP", mesButton, "BOTTOM", 0, btnGap)
 
+    local mysticallButton = CreateClassButton(BBP.IntroMessageWindow, "MONK", "Mysticall", "mysticallx", function()
+        ShowProfileConfirmation("Mysticall", "MONK", BBP.MysticallProfile)
+    end)
+    mysticallButton:SetPoint("TOP", mmarkersButton, "BOTTOM", 0, btnGap)
+
     local nahjButton = CreateClassButton(BBP.IntroMessageWindow, "ROGUE", "Nahj", "nahj", function()
         ShowProfileConfirmation("Nahj", "ROGUE", BBP.NahjProfile)
     end)
@@ -12823,14 +12834,14 @@ function BBP.CreateIntroMessageWindow()
     wolfButton:SetPoint("TOP", venrukiButton, "BOTTOM", 0, btnGap)
 
     local orText2 = BBP.IntroMessageWindow:CreateFontString(nil, "OVERLAY", "GameFontNormalMed2")
-    orText2:SetPoint("CENTER", mmarkersButton, "BOTTOM", 75, -20)
+    orText2:SetPoint("CENTER", mysticallButton, "BOTTOM", 75, -20)
     orText2:SetText("OR")
     orText2:SetJustifyH("CENTER")
 
     local buttonLast = CreateFrame("Button", nil, BBP.IntroMessageWindow, "GameMenuButtonTemplate")
     buttonLast:SetSize(btnWidth, btnHeight)
     buttonLast:SetText("Exit, No Profile.")
-    buttonLast:SetPoint("TOP", mmarkersButton, "BOTTOM", 75, -40)
+    buttonLast:SetPoint("TOP", mysticallButton, "BOTTOM", 75, -40)
     buttonLast:SetNormalFontObject("GameFontNormal")
     buttonLast:SetHighlightFontObject("GameFontHighlight")
     buttonLast:SetScript("OnClick", function()

@@ -1,35 +1,32 @@
-local color = {
-    [121177] = {1, 0.24, 0.26}, -- Red orb
-    [121176] = {0.37, 1, 0.45}, -- Green orb
-    [121164] = {0, 0.81, 1},    -- Blue orb
-    [121175] = {0.78, 0.25, 1}, -- Purple orb
-    [156621] = {0.4, 0.6, 1}, -- Ally Flag
-    [156618] = {1, 0.24, 0.26}, -- Horde Flag
-    [34976] = {0, 1, 0}, -- Netherstorm Flag
-    [434339] = {0.81, 1, 0.66} -- Deephaul Ravine Crystal
+-- Map PvPUnitClassification enum values to colors
+local classificationColors = {
+    [0] = {1, 0.24, 0.26},    -- FlagCarrierHorde (Red)
+    [1] = {0.4, 0.6, 1},      -- FlagCarrierAlliance (Blue)
+    [2] = {0, 1, 0},          -- FlagCarrierNeutral (Green)
+    [7] = {0, 0.81, 1},       -- OrbCarrierBlue
+    [8] = {0.37, 1, 0.45},    -- OrbCarrierGreen
+    [9] = {1, 0.24, 0.26},    -- OrbCarrierOrange (Red)
+    [10] = {0.78, 0.25, 1},   -- OrbCarrierPurple
 }
-BBP.BgIndicatorColors = color
 
-local function GetAuraColor(frame, foundID, auraType)
-    -- If `foundID` exists in the table, return its color immediately
-    if foundID and color[foundID] then
-        return color[foundID]
+-- Classification types
+local CLASS_FLAG = {0, 1, 2}
+local CLASS_ORB = {7, 8, 9, 10}
+
+local function GetClassificationType(classification)
+    if not classification then return nil end
+    for _, v in ipairs(CLASS_FLAG) do
+        if classification == v then return "FLAG" end
     end
-
-    -- Otherwise, scan buffs/debuffs based on `auraType`
-    for i = 1, 40 do
-        local _, _, _, _, _, _, _, _, _, spellID = BBP.TWWUnitAura(frame.unit, i, auraType or "HARMFUL")
-        if spellID and color[spellID] then
-            return color[spellID]
-        end
+    for _, v in ipairs(CLASS_ORB) do
+        if classification == v then return "ORB" end
     end
-
-    return nil  -- No matching aura found
+    return nil
 end
 
-function BBP.BgIndicator(frame, foundID)
-    if BBP.isMidnight then return end
-    if not BBP.isInBg or not UnitPvpClassification(frame.unit) then
+function BBP.BgIndicator(frame)
+    local classification = UnitPvpClassification(frame.unit)
+    if not BBP.isInBg or not classification then
         if frame.bgIndicator then
             frame.bgIndicator:Hide()
         end
@@ -67,47 +64,23 @@ function BBP.BgIndicator(frame, foundID)
         frame.bgIndicator:SetDesaturated(true)
     end
 
-    -- if config.bgIndicatorEnemyOnly and info.isFriend then
-    --     frame.bgIndicator:Hide()
-    --     return
-    -- end
-
-    local _, _, _, _, _, _, _, instanceMapID = GetInstanceInfo()
-    local isTemple = instanceMapID == 998
-    local isWSGorEOTS = instanceMapID == 489 or instanceMapID == 566 or instanceMapID == 2106
-    local isDeephaulRavine = instanceMapID == 2656
-    local auraColor
+    local classificationType = GetClassificationType(classification)
+    local indicatorColor
 
     -- Test Mode logic
     if BetterBlizzPlatesDB.bgIndicatorTestMode then
-        -- Randomly choose between flag (30%) and orb (70%)
-        if math.random() <= 0.3 then
-            -- Flag texture
+        -- Randomly choose between flag (40%) and orb (60%)
+        if math.random() <= 0.4 then
             frame.bgIndicator:SetAtlas("Ping_Marker_Icon_Assist")
             frame.bgIndicator:SetSize(40, 45)
-
-            -- Randomly pick red or soft green for the flag in test mode (50-50 chance)
-            if math.random() <= 0.5 then
-                auraColor = {1, 0.24, 0.26}  -- Red for enemy
-            else
-                auraColor = {0.4, 0.6, 1}  -- Softer green for friendly
-            end
+            indicatorColor = classificationColors[math.random(0, 2)]
         else
-            -- Orb texture
             frame.bgIndicator:SetAtlas("oribos-weeklyrewards-orb-dialog")
             frame.bgIndicator:SetSize(50, 50)
-
-            -- Randomly pick one of the orb colors
-            local orbColors = {
-                color[121177], -- Red orb
-                color[121176], -- Green orb
-                color[121164], -- Blue orb
-                color[121175]  -- Purple orb
-            }
-            auraColor = orbColors[math.random(#orbColors)]
+            indicatorColor = classificationColors[math.random(7, 10)]
         end
 
-        frame.bgIndicator:SetVertexColor(unpack(auraColor))
+        frame.bgIndicator:SetVertexColor(unpack(indicatorColor))
         frame.bgIndicator:Show()
         frame.bgIndicator:SetScale(config.bgIndicatorScale or 1)
         frame.bgIndicator:ClearAllPoints()
@@ -115,33 +88,29 @@ function BBP.BgIndicator(frame, foundID)
         return
     end
 
-    -- Check for debuffs in Temple of Kotmogu
-    if isTemple and config.bgIndicatorOrbs then
-        auraColor = GetAuraColor(frame, foundID, "HARMFUL")
+    -- Check if we should show this type based on config
+    if classificationType == "ORB" and not config.bgIndicatorOrbs then
+        frame.bgIndicator:Hide()
+        return
     end
 
-    -- Check for buffs in Warsong Gulch or Eye of the Storm
-    if isWSGorEOTS and config.bgIndicatorFlags then
-        auraColor = GetAuraColor(frame, foundID, "HELPFUL")
+    if classificationType == "FLAG" and not config.bgIndicatorFlags then
+        frame.bgIndicator:Hide()
+        return
     end
 
-    if isDeephaulRavine then
-        auraColor = GetAuraColor(frame, foundID, "HARMFUL")
-    end
+    -- Get color from classification
+    indicatorColor = classificationColors[classification]
+    frame.bgIndicator.flagActive = indicatorColor and true or nil
 
-    frame.bgIndicator.flagActive = auraColor and true or nil
+    if indicatorColor then
+        frame.bgIndicator:SetVertexColor(unpack(indicatorColor))
 
-    if auraColor then
-        frame.bgIndicator:SetVertexColor(unpack(auraColor))
-
-        -- Flag (Netherstorm Flag, Horde Flag, Alliance Flag)
-        if isWSGorEOTS then
+        -- Set texture and size based on classification type
+        if classificationType == "FLAG" then
             frame.bgIndicator:SetAtlas("Ping_Marker_Icon_Assist")
             frame.bgIndicator:SetSize(40, 45)
-        elseif isDeephaulRavine then
-            frame.bgIndicator:SetAtlas("SpecDial_Pip_Empty")
-            frame.bgIndicator:SetSize(28, 45)
-        else -- Orb of Power
+        else -- ORB
             frame.bgIndicator:SetAtlas("oribos-weeklyrewards-orb-dialog")
             frame.bgIndicator:SetSize(50, 50)
         end

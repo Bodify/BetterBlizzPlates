@@ -71,7 +71,7 @@ function BBP.DruidAlwaysShowCombos()
         if not self then return end
         if self:IsForbidden() then return end
         -- if UnitPower("player", self.powerType) > 0 then --isMidnight
-        --     if GetCVarBool("nameplateResourceOnTarget") and not UnitExists("target") then
+        --     if (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true) and not UnitExists("target") then
         --         self:Hide()
         --     else
         --         self:Show()
