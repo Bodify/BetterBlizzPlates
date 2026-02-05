@@ -6281,7 +6281,7 @@ SlashCmdList["BBP"] = function(msg)
     elseif command == "fixnameplates" then
         StaticPopup_Show("CONFIRM_FIX_NAMEPLATES_BBP")
     elseif command == "ver" or command == "version" then
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates Version "..BBP.VersionNumber)
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates "..BBP.VersionNumber)
     elseif command == "dump" then
         local exportVersion = BetterBlizzPlatesDB.exportVersion or "No export version registered"
         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: "..exportVersion)
