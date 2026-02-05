@@ -1,3 +1,11 @@
+# BetterBlizzPlates 1.9.4b
+## Prepatch/Midnight
+### Bugfix
+- Fix castbar icon position and size settings (again, but for real this time)
+- Fix castbar icon pixel border setting
+- Fix guild name secret error
+- Attempt to make arena ID more consistent and not be tagged wrong, still a garbage system due to Blizzard restrictions and my low effort.
+
 # BetterBlizzPlates 1.9.4
 ## Prepatch/Midnight
 ### New
