@@ -195,8 +195,8 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     local spellName, spellID, notInterruptible, empoweredCast
     local casting, channeling
     local _
-    notInterruptible = castBar.barType == "uninterruptable"
-    empoweredCast = castBar.barType == "empowered"
+    notInterruptible = false--castBar.barType == "uninterruptable"
+    empoweredCast = false--castBar.barType == "empowered"
 
     if frame.castbarEmphasisActive then
         BBP.CompactUnitFrame_UpdateHealthColor(frame)
@@ -370,14 +370,14 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         if castBarTexture then
             castBarTexture:SetDesaturated(true)
         end
-        if castBar.barType == "uninterruptable" then
-            castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
-        elseif BBP.interruptStatusColorOn and not BBP.interruptReady then
+        -- if castBar.barType == "uninterruptable" then
+        --     castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
+        if BBP.interruptStatusColorOn and not BBP.interruptReady then
             castBar:SetStatusBarColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
-        elseif castBar.barType == "channel" then
+        elseif castBar.channeling then
             castBar:SetStatusBarColor(unpack(castBarChanneledColor))
-        elseif castBar.barType == "interrupted" then
-            castBar:SetStatusBarColor(1, 0, 0)
+        -- elseif castBar.barType == "interrupted" then
+        --     castBar:SetStatusBarColor(1, 0, 0)
         else
             castBar:SetStatusBarColor(unpack(castBarCastColor))
         end
@@ -466,7 +466,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     if castBarRecolorInterrupt then
         BBP.interruptStatusColorOn = true
-        if (casting or channeling) and castBar.barType ~= "uninterruptable" then
+        if (casting or channeling) then
             local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
             if not isFriend then
                 if not BBP.interruptReady then
@@ -955,18 +955,18 @@ function BBP.CastbarOnEvent(frame, event)
                     self.changing = true
                     local textureName = BetterBlizzPlatesDB.customCastbarTexture
                     local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
-                    local nonInterruptibleTextureName = BetterBlizzPlatesDB.customCastbarNonInterruptibleTexture
-                    local nonInterruptibleTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, nonInterruptibleTextureName)
+                    --local nonInterruptibleTextureName = BetterBlizzPlatesDB.customCastbarNonInterruptibleTexture
+                    --local nonInterruptibleTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, nonInterruptibleTextureName)
 
-                    if self.barType then
-                        if self.barType == "uninterruptable" then
-                            self:SetStatusBarTexture(nonInterruptibleTexturePath)
-                        else
-                            self:SetStatusBarTexture(texturePath)
-                        end
-                    else
+                    -- if self.barType then
+                    --     if self.barType == "uninterruptable" then
+                    --         self:SetStatusBarTexture(nonInterruptibleTexturePath)
+                    --     else
+                    --         self:SetStatusBarTexture(texturePath)
+                    --     end
+                    -- else
                         self:SetStatusBarTexture(texturePath)
-                    end
+                    --end
 
                     self.changing = false
                 end)
@@ -976,18 +976,18 @@ function BBP.CastbarOnEvent(frame, event)
                     --self.changing = true
                     local textureName = BetterBlizzPlatesDB.customCastbarTexture
                     local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
-                    local nonInterruptibleTextureName = BetterBlizzPlatesDB.customCastbarNonInterruptibleTexture
-                    local nonInterruptibleTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, nonInterruptibleTextureName)
+                    --local nonInterruptibleTextureName = BetterBlizzPlatesDB.customCastbarNonInterruptibleTexture
+                    --local nonInterruptibleTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, nonInterruptibleTextureName)
 
-                    if self.barType then
-                        if self.barType == "uninterruptable" then
-                            self:SetStatusBarTexture(nonInterruptibleTexturePath)
-                        else
-                            self:SetStatusBarTexture(texturePath)
-                        end
-                    else
+                    -- if self.barType then
+                    --     if self.barType == "uninterruptable" then
+                    --         self:SetStatusBarTexture(nonInterruptibleTexturePath)
+                    --     else
+                    --         self:SetStatusBarTexture(texturePath)
+                    --     end
+                    -- else
                         self:SetStatusBarTexture(texturePath)
-                    end
+                    --end
 
                     --self.changing = false
                     --end)
