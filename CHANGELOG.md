@@ -1,3 +1,12 @@
+# BetterBlizzPlates 1.9.4c
+## Prepatch/Midnight
+### New
+- New DailyShuffle profile (www.twitch.tv/dailyshuffle). Thanks for sharing!
+### Bugfix
+- Fix lua errors from now new restrictions from Blizzard related to castbar types (uninterruptible status).
+    This means currently not possible to color/texture an uninterruptible cast without some sort of wonky workaround maybe.
+    Disabled for now and will just color depending on cast/channel, this may be confusing on uninterruptible casts. Consider Modern Castbars setting which uses default colored textures.
+
 # BetterBlizzPlates 1.9.4b
 ## Prepatch/Midnight
 ### Bugfix
