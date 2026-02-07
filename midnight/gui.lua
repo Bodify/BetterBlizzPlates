@@ -1835,7 +1835,7 @@ end
 
 local function CreateClassButton(parent, class, name, twitchName, onClickFunc)
     local bbpParent = parent == BetterBlizzPlates
-    local btnWidth, btnHeight = bbpParent and 100 or 150, bbpParent and 22 or  30
+    local btnWidth, btnHeight = bbpParent and 104 or 150, bbpParent and 22 or  30
     local button = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
     button:SetSize(btnWidth, btnHeight)
     local coreProfile = class == "STARTER" or class == "BLITZ" or class == "MYTHIC" or name == "Bodify"
@@ -4824,7 +4824,7 @@ local function guiProfiles()
     frame.streamerText:SetText("Streamers")
 
     frame.infoText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 200)
+    frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 150)
     frame.infoText:SetText("If you are missing and want to be here let me know :)")
     frame.infoText:SetWidth(100)
 
@@ -6261,10 +6261,15 @@ local function guiGeneralTab()
     end)
     aeghisButton:SetPoint("TOP", profilesFrame.streamerText, "BOTTOM", 0, -3)
 
+    local dailyShuffleButton = CreateClassButton(BetterBlizzPlates, "HUNTER", "DailyShuffle", "dailyshuffle", function()
+        ShowProfileConfirmation("DailyShuffle", "HUNTER", BBP.DailyShuffleProfile)
+    end)
+    dailyShuffleButton:SetPoint("TOP", aeghisButton, "BOTTOM", 0, btnGap)
+
     local kalvishButton = CreateClassButton(BetterBlizzPlates, "ROGUE", "Kalvish", "kalvish", function()
         ShowProfileConfirmation("Kalvish", "ROGUE", BBP.KalvishProfile)
     end)
-    kalvishButton:SetPoint("TOP", aeghisButton, "BOTTOM", 0, btnGap)
+    kalvishButton:SetPoint("TOP", dailyShuffleButton, "BOTTOM", 0, btnGap)
 
     local magnuszButton = CreateClassButton(BetterBlizzPlates, "WARRIOR", "Magnusz", "magnusz", function()
         ShowProfileConfirmation("Magnusz", "WARRIOR", BBP.MagnuszProfile)
@@ -6313,7 +6318,7 @@ local function guiGeneralTab()
 
     local resetBBPButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     resetBBPButton:SetText("Full Reset")
-    resetBBPButton:SetWidth(100)
+    resetBBPButton:SetWidth(104)
     resetBBPButton:SetPoint("BOTTOM", profilesFrame, "BOTTOM", 2, 15)
     resetBBPButton:SetScript("OnClick", function()
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
@@ -12782,10 +12787,15 @@ function BBP.CreateIntroMessageWindow()
     end)
     aeghisButton:SetPoint("TOP", bodifyButton, "BOTTOM", -150, -40)
 
+    local dailyShuffleButton = CreateClassButton(BBP.IntroMessageWindow, "HUNTER", "DailyShuffle", "dailyshuffle", function()
+        ShowProfileConfirmation("DailyShuffle", "HUNTER", BBP.DailyShuffleProfile)
+    end)
+    dailyShuffleButton:SetPoint("TOP", aeghisButton, "BOTTOM", 0, btnGap)
+
     local kalvishButton = CreateClassButton(BBP.IntroMessageWindow, "ROGUE", "Kalvish", "kalvish", function()
         ShowProfileConfirmation("Kalvish", "ROGUE", BBP.KalvishProfile)
     end)
-    kalvishButton:SetPoint("TOP", aeghisButton, "BOTTOM", 0, btnGap)
+    kalvishButton:SetPoint("TOP", dailyShuffleButton, "BOTTOM", 0, btnGap)
 
     local magnuszButton = CreateClassButton(BBP.IntroMessageWindow, "WARRIOR", "Magnusz", "magnusz", function()
         ShowProfileConfirmation("Magnusz", "WARRIOR", BBP.MagnuszProfile)
@@ -12805,12 +12815,12 @@ function BBP.CreateIntroMessageWindow()
     local mysticallButton = CreateClassButton(BBP.IntroMessageWindow, "MONK", "Mysticall", "mysticallx", function()
         ShowProfileConfirmation("Mysticall", "MONK", BBP.MysticallProfile)
     end)
-    mysticallButton:SetPoint("TOP", mmarkersButton, "BOTTOM", 0, btnGap)
+    mysticallButton:SetPoint("TOP", bodifyButton, "BOTTOM", 0, -40)
 
     local nahjButton = CreateClassButton(BBP.IntroMessageWindow, "ROGUE", "Nahj", "nahj", function()
         ShowProfileConfirmation("Nahj", "ROGUE", BBP.NahjProfile)
     end)
-    nahjButton:SetPoint("TOP", bodifyButton, "BOTTOM", 0, -40)
+    nahjButton:SetPoint("TOP", mysticallButton, "BOTTOM", 0, btnGap)
 
     local pmakeButton = CreateClassButton(BBP.IntroMessageWindow, "MAGE", "Pmake", "pmakewow", function()
         ShowProfileConfirmation("Pmake", "MAGE", BBP.PmakeProfile)
@@ -12833,14 +12843,14 @@ function BBP.CreateIntroMessageWindow()
     wolfButton:SetPoint("TOP", venrukiButton, "BOTTOM", 0, btnGap)
 
     local orText2 = BBP.IntroMessageWindow:CreateFontString(nil, "OVERLAY", "GameFontNormalMed2")
-    orText2:SetPoint("CENTER", mysticallButton, "BOTTOM", 75, -20)
+    orText2:SetPoint("CENTER", mmarkersButton, "BOTTOM", 75, -20)
     orText2:SetText("OR")
     orText2:SetJustifyH("CENTER")
 
     local buttonLast = CreateFrame("Button", nil, BBP.IntroMessageWindow, "GameMenuButtonTemplate")
     buttonLast:SetSize(btnWidth, btnHeight)
     buttonLast:SetText("Exit, No Profile.")
-    buttonLast:SetPoint("TOP", mysticallButton, "BOTTOM", 75, -40)
+    buttonLast:SetPoint("TOP", mmarkersButton, "BOTTOM", 75, -40)
     buttonLast:SetNormalFontObject("GameFontNormal")
     buttonLast:SetHighlightFontObject("GameFontHighlight")
     buttonLast:SetScript("OnClick", function()
