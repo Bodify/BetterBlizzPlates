@@ -1360,6 +1360,20 @@ frame:SetScript("OnEvent", function(self, event, unit, ...)
 
         if not castBar.hideHooked and (frame.hideCastbarOverride or alwaysHideFriendlyCastbar or alwaysHideEnemyCastbar or BBP.hideFriendlyCastbar) then
             castBar.hideHooked = true
+            hooksecurefunc(castBar, "SetShown", function(self)
+                if frame:IsForbidden() then return end
+                if frame.hideCastbarOverride then self:Hide() end
+                local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(frame.unit)
+                if ((BetterBlizzPlatesDB.alwaysHideFriendlyCastbar or BBP.hideFriendlyCastbar) and isFriend) or (BetterBlizzPlatesDB.alwaysHideEnemyCastbar and not isFriend) then
+                    local alwaysHideFriendlyCastbarShowTarget = BetterBlizzPlatesDB.alwaysHideFriendlyCastbarShowTarget
+                    local alwaysHideEnemyCastbarShowTarget = BetterBlizzPlatesDB.alwaysHideEnemyCastbarShowTarget
+                    if (alwaysHideFriendlyCastbarShowTarget and isFriend and UnitIsUnit("target", frame.unit)) or (alwaysHideEnemyCastbarShowTarget and not isFriend and UnitIsUnit("target", frame.unit)) then
+                        -- go thruugh
+                    else
+                        self:Hide()
+                    end
+                end
+            end)
             hooksecurefunc(castBar, "Show", function(self)
                 if frame:IsForbidden() then return end
                 if frame.hideCastbarOverride then self:Hide() end
