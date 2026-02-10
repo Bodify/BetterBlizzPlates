@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.4e
+## Prepatch/Midnight
+### Bugfix
+- Minor lua error bugfix
+
 # BetterBlizzPlates 1.9.4d
 ## Prepatch/Midnight
 ### New
