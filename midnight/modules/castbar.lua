@@ -195,8 +195,6 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     local spellName, spellID, notInterruptible, empoweredCast
     local casting, channeling
     local _
-    notInterruptible = false--castBar.barType == "uninterruptable"
-    empoweredCast = false--castBar.barType == "empowered"
 
     if frame.castbarEmphasisActive then
         BBP.CompactUnitFrame_UpdateHealthColor(frame)
@@ -312,18 +310,20 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     end
 
     if castBar.casting then
+        _, _, _, _, _, _, _, notInterruptible = UnitCastingInfo(unitToken)
         casting = true
         if castBarRecolor then
             if castBarTexture then
                 castBarTexture:SetDesaturated(true)
-            end
-            if not notInterruptible then
-                castBar:SetStatusBarColor(unpack(castBarCastColor))
-            else
-                castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
+                castBarTexture:SetVertexColorFromBoolean(
+                    notInterruptible,
+                    CreateColor(unpack(castBarNonInterruptibleColor)),
+                    CreateColor(unpack(castBarCastColor))
+                )
             end
         end
     elseif castBar.channeling then
+        _, _, _, _, _, _, notInterruptible = UnitChannelInfo(unitToken)
         if empoweredCast then
             casting = true
             channeling= false
@@ -334,11 +334,11 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         if castBarRecolor then
             if castBarTexture then
                 castBarTexture:SetDesaturated(true)
-            end
-            if not notInterruptible then
-                castBar:SetStatusBarColor(unpack(castBarChanneledColor))
-            else
-                castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
+                castBarTexture:SetVertexColorFromBoolean(
+                    notInterruptible,
+                    CreateColor(unpack(castBarNonInterruptibleColor)),
+                    CreateColor(unpack(castBarChanneledColor))
+                )
             end
         end
     end
@@ -357,8 +357,12 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 castBar.Background:SetDesaturated(true)
                 castBar.Background:SetTexture(bgTexture)
                 castBar.Background:SetAllPoints(castBar)
-                if notInterruptible and BetterBlizzPlatesDB.redBgCastColor then
-                    castBar.Background:SetVertexColor(1,0,0,1)
+                if BetterBlizzPlatesDB.redBgCastColor then
+                    castBar.Background:SetVertexColorFromBoolean(
+                        notInterruptible,
+                        CreateColor(1, 0, 0, 1),
+                        CreateColor(unpack(bgColor))
+                    )
                 else
                     castBar.Background:SetVertexColor(unpack(bgColor))
                 end
@@ -370,22 +374,28 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         if castBarTexture then
             castBarTexture:SetDesaturated(true)
         end
-        -- if castBar.barType == "uninterruptable" then
-        --     castBar:SetStatusBarColor(unpack(castBarNonInterruptibleColor))
         if BBP.interruptStatusColorOn and not BBP.interruptReady then
-            castBar:SetStatusBarColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+            castBarTexture:SetVertexColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
         elseif castBar.channeling then
-            castBar:SetStatusBarColor(unpack(castBarChanneledColor))
-        -- elseif castBar.barType == "interrupted" then
-        --     castBar:SetStatusBarColor(1, 0, 0)
+            castBarTexture:SetVertexColorFromBoolean(
+                notInterruptible,
+                CreateColor(unpack(castBarNonInterruptibleColor)),
+                CreateColor(unpack(castBarChanneledColor))
+            )
+        elseif castBar.casting then
+            castBarTexture:SetVertexColorFromBoolean(
+                notInterruptible,
+                CreateColor(unpack(castBarNonInterruptibleColor)),
+                CreateColor(unpack(castBarCastColor))
+            )
         else
-            castBar:SetStatusBarColor(unpack(castBarCastColor))
+            castBarTexture:SetVertexColor(unpack(castBarCastColor))
         end
     else
         if BBP.interruptStatusColorOn and not BBP.interruptReady then
-            castBar:SetStatusBarColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+            castBarTexture:SetVertexColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
         else
-            castBar:SetStatusBarColor(1,1,1)
+            castBarTexture:SetVertexColor(1,1,1)
         end
     end
 
@@ -440,13 +450,15 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     castBar.Text:SetScale(castBarTextScale)
 
     if not hideCastbarIcon then
-        if showCastBarIconWhenNoninterruptible and notInterruptible then
+        if showCastBarIconWhenNoninterruptible then
             castBar.BorderShield:SetDrawLayer("OVERLAY", 1)
             castBar.Icon:Show()
+            castBar.Icon:SetAlphaFromBoolean(notInterruptible, 1, 0)
             castBar.Icon:SetDrawLayer("OVERLAY", 2)
         else
-            if (casting or channeling) and not notInterruptible then
+            if (casting or channeling) then
                 castBar.Icon:Show() --attempt to fix icon randomly not showing (blizz bug)
+                castBar.Icon:SetAlphaFromBoolean(notInterruptible, 0, 1)
             elseif not castBar:IsVisible() then
                 castBar.Icon:Hide()
             end
