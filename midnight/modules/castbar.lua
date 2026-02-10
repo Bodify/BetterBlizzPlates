@@ -391,11 +391,23 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         else
             castBarTexture:SetVertexColor(unpack(castBarCastColor))
         end
+        if event == "UNIT_SPELLCAST_INTERRUPTED" then
+            castBar.lastEvent = event
+            castBar:SetStatusBarColor(1, 0, 0, 1)
+        elseif (event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_EMPOWER_STOP") and castBar.lastEvent == "UNIT_SPELLCAST_INTERRUPTED" then
+            castBar:SetStatusBarColor(1, 0, 0, 1)
+        end
     else
         if BBP.interruptStatusColorOn and not BBP.interruptReady then
             castBarTexture:SetVertexColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
         else
             castBarTexture:SetVertexColor(1,1,1)
+        end
+        if event == "UNIT_SPELLCAST_INTERRUPTED" then
+            castBar.lastEvent = event
+            castBar:SetStatusBarColor(1, 1, 1, 1)
+        elseif (event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_EMPOWER_STOP") and castBar.lastEvent == "UNIT_SPELLCAST_INTERRUPTED" then
+            castBar:SetStatusBarColor(1, 1, 1, 1)
         end
     end
 
@@ -450,7 +462,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     castBar.Text:SetScale(castBarTextScale)
 
     if not hideCastbarIcon then
-        if showCastBarIconWhenNoninterruptible then
+        if showCastBarIconWhenNoninterruptible and (casting or channeling) then
             castBar.BorderShield:SetDrawLayer("OVERLAY", 1)
             castBar.Icon:Show()
             castBar.Icon:SetAlphaFromBoolean(notInterruptible, 1, 0)
