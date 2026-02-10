@@ -5044,6 +5044,7 @@ local function guiGeneralTab()
         if self:GetChecked() then
             hideLevelFrame:SetChecked(false)
             BetterBlizzPlatesDB.hideLevelFrame = false
+            BetterBlizzPlatesDB.classicRetailNameplates = nil
         else
             hideLevelFrame:SetChecked(true)
             BetterBlizzPlatesDB.hideLevelFrame = true

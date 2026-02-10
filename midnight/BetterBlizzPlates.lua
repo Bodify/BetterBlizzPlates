@@ -810,7 +810,7 @@ local function TempClassicNpFix()
     C_CVar.SetCVar("nameplateShowClassColor", BetterBlizzPlatesDB.nameplateShowClassColor)
     C_CVar.SetCVar("nameplateShowFriendlyClassColor", BetterBlizzPlatesDB.nameplateShowFriendlyClassColor)
     C_CVar.SetCVar("nameplateSelfAlpha", BetterBlizzPlatesDB.nameplateSelfAlpha)
-    C_CVar.SetCVar('nameplateShowOnlyNames', "0")
+    C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', "0")
 end
 
 local function InitializeSavedVariables()
@@ -1222,7 +1222,7 @@ local function ResetNameplates()
     C_CVar.SetCVar("nameplateShowClassColor", BetterBlizzPlatesDB.nameplateShowClassColor)
     C_CVar.SetCVar("nameplateShowFriendlyClassColor", BetterBlizzPlatesDB.nameplateShowFriendlyClassColor)
     C_CVar.SetCVar("nameplateSelfAlpha", BetterBlizzPlatesDB.nameplateSelfAlpha)
-    C_CVar.SetCVar('nameplateShowOnlyNames', "0")
+    C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', "0")
 
     ReloadUI()
 end
@@ -6766,9 +6766,9 @@ local function SetNameplateBehavior()
     else
         if BBP.isInPvE then
             if BetterBlizzPlatesDB.friendlyHideHealthBar and not BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve then
-                C_CVar.SetCVar('nameplateShowOnlyNames', 1)
+                C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 1)
             else
-                C_CVar.SetCVar('nameplateShowOnlyNames', 0)
+                C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 0)
             end
             if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then C_CVar.SetCVar("UnitNameFriendlyPlayerName", 0) end
             if BetterBlizzPlatesDB.nameplateMotion == "1" and BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP then
@@ -6776,8 +6776,8 @@ local function SetNameplateBehavior()
             end
             BBP.ApplyNameplateWidth()
         else
-            --if BetterBlizzPlatesDB.friendlyHideHealthBar then C_CVar.SetCVar('nameplateShowOnlyNames', 0) end
-            C_CVar.SetCVar('nameplateShowOnlyNames', 0)
+            --if BetterBlizzPlatesDB.friendlyHideHealthBar then C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 0) end
+            C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 0)
             if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then C_CVar.SetCVar("UnitNameFriendlyPlayerName", 1) end
             if BetterBlizzPlatesDB.nameplateMotion == "1" and BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP then
                 if BBP.isInPvP then
@@ -7379,6 +7379,11 @@ First:SetScript("OnEvent", function(_, event, addonName)
         if addonName == "BetterBlizzPlates" then
             local db = BetterBlizzPlatesDB
             TurnOffTestModes()
+            if db.classicNameplates then
+                if db.classicRetailNameplates then
+                    db.classicRetailNameplates = nil
+                end
+            end
             db.castbarEventsOn = false
             db.wasOnLoadingScreen = true
 
