@@ -3614,6 +3614,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 	local unitIsConnected = UnitIsConnected(frame.unit);
 	local unitIsDead = unitIsConnected and UnitIsDead(frame.unit);
 	local unitIsPlayer = UnitIsPlayer(frame.unit) or UnitIsPlayer(frame.displayedUnit);
+    local unitIsActivePlayer = UnitIsUnit(frame.unit, "player") or UnitIsUnit(frame.displayedUnit, "player");
 
     if info.isSelf then
         if config.classColorPersonalNameplate then
@@ -3625,6 +3626,8 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 	if ( not unitIsConnected or (unitIsDead and not unitIsPlayer) ) then
 		--Color it gray
 		r, g, b = 0.5, 0.5, 0.5;
+    elseif ( C_GameRules.IsGameRuleActive(Enum.GameRule.PlayerNameplateAlternateHealthColor) and unitIsPlayer and not unitIsActivePlayer and UnitCanAttack("player", frame.unit) ) then
+		r, g, b  = PLAYER_NAMEPLATE_ALTERNATE_HEALTH_COLOR:GetRGBA();
 	else
 		if ( frame.optionTable.healthBarColorOverride ) then
 			local healthBarColorOverride = frame.optionTable.healthBarColorOverride;
@@ -3651,10 +3654,11 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 					-- it doesn't show player health clearly enough.
 					r, g, b = 0.667, 0.667, 1.0;
 				else
-					r, g, b = UnitSelectionColor(frame.unit, frame.optionTable.colorHealthWithExtendedColors);
+					local useExtendedColors = GetPlunderstormPlayerExtendedColorOverride(frame.unit, frame.displayedUnit) or frame.optionTable.colorHealthWithExtendedColors;
+					r, g, b = UnitSelectionColor(frame.unit, useExtendedColors);
 				end
-			elseif ( UnitIsFriend("player", frame.unit) ) then
-				r, g, b = 0.0, 1.0, 0.0;
+			elseif UnitIsFriend("player", frame.unit) and not CompactUnitFrame_IsPvpFrame(frame) then -- The PvP frame check is basically for edit mode to ensure that the correct health color is used.
+				r, g, b = CompactUnitFrame_GetOptionCustomHealthBarColors(frame):GetRGB();
 			else
 				r, g, b = 1.0, 0.0, 0.0;
 			end
@@ -3671,6 +3675,10 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 			frame.selectionHighlight:SetVertexColor(1, 1, 1);
 		end
 	end
+
+    -- if frame.background then
+	-- 	frame.background:SetVertexColor(CompactUnitFrame_GetOptionCustomHealthBarColorBG(frame):GetRGB());
+	-- end
 
     if config.friendlyHealthBarColor or config.enemyHealthBarColor then
         if not exitLoop then
