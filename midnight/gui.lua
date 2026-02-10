@@ -6262,10 +6262,15 @@ local function guiGeneralTab()
     end)
     aeghisButton:SetPoint("TOP", profilesFrame.streamerText, "BOTTOM", 0, -3)
 
+    local bualockButton = CreateClassButton(BetterBlizzPlates, "WARLOCK", "Bualock", "bualock", function()
+        ShowProfileConfirmation("Bualock", "WARLOCK", BBP.BualockProfile)
+    end)
+    bualockButton:SetPoint("TOP", aeghisButton, "BOTTOM", 0, btnGap)
+
     local dailyShuffleButton = CreateClassButton(BetterBlizzPlates, "HUNTER", "DailyShuffle", "dailyshuffle", function()
         ShowProfileConfirmation("DailyShuffle", "HUNTER", BBP.DailyShuffleProfile)
     end)
-    dailyShuffleButton:SetPoint("TOP", aeghisButton, "BOTTOM", 0, btnGap)
+    dailyShuffleButton:SetPoint("TOP", bualockButton, "BOTTOM", 0, btnGap)
 
     local kalvishButton = CreateClassButton(BetterBlizzPlates, "ROGUE", "Kalvish", "kalvish", function()
         ShowProfileConfirmation("Kalvish", "ROGUE", BBP.KalvishProfile)
@@ -12788,10 +12793,15 @@ function BBP.CreateIntroMessageWindow()
     end)
     aeghisButton:SetPoint("TOP", bodifyButton, "BOTTOM", -150, -40)
 
+    local bualockButton = CreateClassButton(BBP.IntroMessageWindow, "WARLOCK", "Bualock", "bualock", function()
+        ShowProfileConfirmation("Bualock", "WARLOCK", BBP.BualockProfile)
+    end)
+    bualockButton:SetPoint("TOP", aeghisButton, "BOTTOM", 0, btnGap)
+
     local dailyShuffleButton = CreateClassButton(BBP.IntroMessageWindow, "HUNTER", "DailyShuffle", "dailyshuffle", function()
         ShowProfileConfirmation("DailyShuffle", "HUNTER", BBP.DailyShuffleProfile)
     end)
-    dailyShuffleButton:SetPoint("TOP", aeghisButton, "BOTTOM", 0, btnGap)
+    dailyShuffleButton:SetPoint("TOP", bualockButton, "BOTTOM", 0, btnGap)
 
     local kalvishButton = CreateClassButton(BBP.IntroMessageWindow, "ROGUE", "Kalvish", "kalvish", function()
         ShowProfileConfirmation("Kalvish", "ROGUE", BBP.KalvishProfile)
