@@ -1,3 +1,14 @@
+# BetterBlizzPlates 1.9.4d
+## Prepatch/Midnight
+### New
+- New Bualock profile (www.twitch.tv/bualock). Thanks for sharing!
+### Bugfix
+- Fix castbar color issues due to Midnight restrictions. Uninteruptible should work fine now. Please report any issues.
+- Fix classic nameplates and Pre-Midnight nameplates being able to both be active at once.
+## The Burning Crusade
+### Bugfix
+- Fix castbar hide functions on TBC.
+
 # BetterBlizzPlates 1.9.4c
 ## Prepatch/Midnight
 ### New
