@@ -260,20 +260,20 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     if castBar.casting then
         _, _, _, _, _, _, _, notInterruptible = UnitCastingInfo(unitToken)
-        if notInterruptible ~= nil then
-            print("its not nil")
-        else
-            print("it is nil")
-        end
         casting = true
         if castBarRecolor then
             if castBarTexture then
-                castBarTexture:SetDesaturated(true)
-                castBarTexture:SetVertexColorFromBoolean(
-                    notInterruptible,
-                    CreateColor(unpack(castBarNonInterruptibleColor)),
-                    CreateColor(unpack(castBarCastColor))
-                )
+                if notInterruptible ~= nil then
+                    castBarTexture:SetDesaturated(true)
+                    castBarTexture:SetVertexColorFromBoolean(
+                        notInterruptible,
+                        CreateColor(unpack(castBarNonInterruptibleColor)),
+                        CreateColor(unpack(castBarCastColor))
+                    )
+                else
+                    castBarTexture:SetDesaturated(false)
+                    castBarTexture:SetVertexColor(unpack(castBarCastColor))
+                end
             end
         end
     elseif castBar.channeling then
@@ -287,12 +287,17 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
         if castBarRecolor then
             if castBarTexture then
-                castBarTexture:SetDesaturated(true)
-                castBarTexture:SetVertexColorFromBoolean(
-                    notInterruptible,
-                    CreateColor(unpack(castBarNonInterruptibleColor)),
-                    CreateColor(unpack(castBarChanneledColor))
-                )
+                if notInterruptible ~= nil then
+                    castBarTexture:SetDesaturated(true)
+                    castBarTexture:SetVertexColorFromBoolean(
+                        notInterruptible,
+                        CreateColor(unpack(castBarNonInterruptibleColor)),
+                        CreateColor(unpack(castBarChanneledColor))
+                    )
+                else
+                    castBarTexture:SetDesaturated(false)
+                    castBarTexture:SetVertexColor(unpack(castBarChanneledColor))
+                end
             end
         end
     end
@@ -312,11 +317,15 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 castBar.Background:SetTexture(bgTexture)
                 castBar.Background:SetAllPoints(castBar)
                 if BetterBlizzPlatesDB.redBgCastColor then
-                    castBar.Background:SetVertexColorFromBoolean(
-                        notInterruptible,
-                        CreateColor(1, 0, 0, 1),
-                        CreateColor(unpack(bgColor))
-                    )
+                    if notInterruptible ~= nil then
+                        castBar.Background:SetVertexColorFromBoolean(
+                            notInterruptible,
+                            CreateColor(1, 0, 0, 1),
+                            CreateColor(unpack(bgColor))
+                        )
+                    else
+                        castBar.Background:SetVertexColor(1, 0, 0, 1)
+                    end
                 else
                     castBar.Background:SetVertexColor(unpack(bgColor))
                 end
@@ -331,17 +340,25 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         if BBP.interruptStatusColorOn and not BBP.interruptReady then
             castBarTexture:SetVertexColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
         elseif castBar.channeling then
-            castBarTexture:SetVertexColorFromBoolean(
-                notInterruptible,
-                CreateColor(unpack(castBarNonInterruptibleColor)),
-                CreateColor(unpack(castBarChanneledColor))
-            )
+            if notInterruptible ~= nil then
+                castBarTexture:SetVertexColorFromBoolean(
+                    notInterruptible,
+                    CreateColor(unpack(castBarNonInterruptibleColor)),
+                    CreateColor(unpack(castBarChanneledColor))
+                )
+            else
+                castBarTexture:SetVertexColor(unpack(castBarChanneledColor))
+            end
         elseif castBar.casting then
-            castBarTexture:SetVertexColorFromBoolean(
-                notInterruptible,
-                CreateColor(unpack(castBarNonInterruptibleColor)),
-                CreateColor(unpack(castBarCastColor))
-            )
+            if notInterruptible ~= nil then
+                castBarTexture:SetVertexColorFromBoolean(
+                    notInterruptible,
+                    CreateColor(unpack(castBarNonInterruptibleColor)),
+                    CreateColor(unpack(castBarCastColor))
+                )
+            else
+                castBarTexture:SetVertexColor(unpack(castBarCastColor))
+            end
         else
             castBarTexture:SetVertexColor(unpack(castBarCastColor))
         end
