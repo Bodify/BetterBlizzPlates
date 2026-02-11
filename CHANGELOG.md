@@ -1,3 +1,12 @@
+# BetterBlizzPlates 1.9.4f
+## Prepatch/Midnight
+### New
+- Include new CVar from Blizzard to color friendly names if "Class Color Name" is selected in /bbp under Friendly Nameplates.
+### Bugfix
+- Fix castbar not showing for some configs
+- Fix double castbar icon
+- Fix GetNameplate for boss units causing lua errors
+
 # BetterBlizzPlates 1.9.4e
 ## Prepatch/Midnight
 ### Bugfix
