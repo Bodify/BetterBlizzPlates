@@ -2161,6 +2161,10 @@ local function SetCVarsOnLogin()
             end
         end
 
+        if BetterBlizzPlatesDB.friendlyClassColorName then
+            C_CVar.SetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames", "1")
+        end
+
         if BetterBlizzPlatesDB.setCVarAcrossAllCharacters then
             if BetterBlizzPlatesDB.nameplateShowAll then
                 C_CVar.SetCVar("nameplateShowAll", BetterBlizzPlatesDB.nameplateShowAll)
