@@ -163,7 +163,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     local showCastBarIconWhenNoninterruptible = db.showCastBarIconWhenNoninterruptible
     local castBarIconScale = db.castBarIconScale
-    local borderShieldSize = showCastBarIconWhenNoninterruptible and (castBarIconScale + 0.3) or castBarIconScale
+    local borderShieldSize = showCastBarIconWhenNoninterruptible and (castBarIconScale + 0.45) or castBarIconScale
     local castBarTexture = castBar:GetStatusBarTexture()
     local castBarRecolor = db.castBarRecolor
     local castBarDragonflightShield = db.castBarDragonflightShield
