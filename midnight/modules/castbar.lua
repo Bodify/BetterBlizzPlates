@@ -218,83 +218,32 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     if castBarPixelBorder then
         BBP.SetupBorderOnFrame(castBar)
+        frame.castBar.CastTargetIndicator:SetParent(frame.castBar.borders)
+        frame.castBar.CastTargetIndicator:SetDrawLayer("OVERLAY", 6)
+        castBar.ImportantCastIndicator:SetParent(frame.castBar.borders)
+        --castBar.ImportantCastFlashAnim:SetParent(frame.castBar.borders)
     end
     if castBarIconPixelBorder then
         if not castBar.adjustedIcon then
-            if not frame.castBarIconFrame then
-                frame.castBarIconFrame = CreateFrame("Frame", nil, frame.castBar)
-                frame.castBarIconFrame:SetFrameStrata("MEDIUM")
-                frame.castBarIconFrame:SetFrameLevel(frame.castBar:GetFrameLevel()+1)
-                frame.castBarIconFrame:SetSize(14, 14)
-                frame.castBarIconFrame:SetScale(BetterBlizzPlatesDB.castBarIconScale or 1.0)
-                local xPos = BetterBlizzPlatesDB.castBarIconXPos or 0
-                local yPos = BetterBlizzPlatesDB.castBarIconYPos or 0
-                frame.castBarIconFrame:SetPoint("CENTER", frame.castBar, "LEFT", -2 + xPos, yPos)
-
-                frame.castBarIconFrame.Icon = frame.castBarIconFrame:CreateTexture(nil, "OVERLAY")
-                frame.castBarIconFrame.Icon:SetAllPoints(frame.castBarIconFrame)
-
-                local currentTexture = frame.castBar.Icon:GetTexture()
-                if currentTexture then
-                    frame.castBarIconFrame.Icon:SetTexture(currentTexture)
-                end
-
-                frame.castBar.Icon:SetAlpha(0)
-
-                hooksecurefunc(frame.castBar.Icon, "SetTexture", function(self, texture)
-                    if frame:IsForbidden() then return end
-                    frame.castBarIconFrame.Icon:SetTexture(texture)
-                end)
-
-                hooksecurefunc(frame.castBar.Icon, "Show", function(self)
-                    if frame:IsForbidden() then return end
-                    frame.castBarIconFrame:Show()
-                end)
-
-                hooksecurefunc(frame.castBar.Icon, "SetShown", function(self)
-                    if frame:IsForbidden() then return end
-                    frame.castBarIconFrame:SetShown(self:IsShown())
-                end)
-
-                hooksecurefunc(frame.castBar.Icon, "Hide", function(self)
-                    if frame:IsForbidden() then return end
-                    frame.castBarIconFrame:Hide()
-                end)
-
-                hooksecurefunc(frame.castBar.BorderShield, "SetPoint", function(self)
-                    if frame:IsForbidden() then return end
-                    if self.changingIconPos then return end
-                    self.changingIconPos = true
-                    self:ClearAllPoints()
-                    if frame.castBarIconFrame:IsShown() then
-                        self:SetPoint("TOPLEFT", frame.castBarIconFrame, "TOPLEFT", -2, 2)
-                        self:SetPoint("BOTTOMRIGHT", frame.castBarIconFrame, "BOTTOMRIGHT", 2, -4)
-                    else
-                        self:SetPoint("TOPLEFT", frame.castBarIconFrame, "TOPLEFT", 0, 0)
-                        self:SetPoint("BOTTOMRIGHT", frame.castBarIconFrame, "BOTTOMRIGHT", 0, -2)
-                    end
-                    self.changingIconPos = nil
-                end)
-            end
+            BBP.SetupMidnightCastbarIcon(frame)
             frame.castBarIconFrame.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
             BBP.SetupBorderOnFrame(frame.castBarIconFrame.Icon)
             frame.castBarIconFrame.Icon:HookScript("OnShow", function()
-                for _, border in ipairs(frame.castBarIconFrame.Icon.borders) do
-                    border:Show()
-                end
+                frame.castBarIconFrame.Icon.borders:SetAlpha(1)
             end)
             frame.castBarIconFrame.Icon:HookScript("OnHide", function()
-                for _, border in ipairs(frame.castBarIconFrame.Icon.borders) do
-                    border:Hide()
-                end
+                frame.castBarIconFrame.Icon.borders:SetAlpha(0)
             end)
-            castBar.BorderShield:HookScript("OnShow", function()
-                for _, border in ipairs(frame.castBarIconFrame.Icon.borders) do
-                    border:Hide()
-                end
-                if not showCastBarIconWhenNoninterruptible then
-                    frame.castBarIconFrame.Icon:Hide()
-                end
+
+            hooksecurefunc(frame.castBar.Icon, "Hide", function(self)
+                if frame:IsForbidden() then return end
+                frame.castBarIconFrame.Icon:Hide()
+                frame.castBarIconFrame.Icon.borders:SetAlpha(0)
+            end)
+
+            hooksecurefunc(frame.castBar.BorderShield, "SetShown", function(self, shown)
+                if frame:IsForbidden() then return end
+                frame.castBarIconFrame.Icon.borders:SetAlphaFromBoolean(shown, 0, 1)
             end)
             castBar.adjustedIcon = true
         end
@@ -960,11 +909,11 @@ function BBP.CastbarOnEvent(frame, event)
 
         BBP.CustomizeCastbar(frame, self.unit, event)
 
-        if not BBP.UnitTargetCastbarUpdate then
+        if not BBP.UnitTargetCastbarUpdate then --forget why i do this, maybe remove this bit?
             BBP.UnitTargetCastbarUpdate = CreateFrame("Frame")
             BBP.UnitTargetCastbarUpdate:RegisterEvent("UNIT_TARGET")
             BBP.UnitTargetCastbarUpdate:SetScript("OnEvent", function(_, _, unit)
-                if string.match(unit, "arena") then return end
+                if string.match(unit, "arena") or string.match(unit, "boss") then return end
                 local np, frame = BBP.GetSafeNameplate(unit)
                 if frame and not UnitIsPlayer(unit) then
                     BBP.CustomizeCastbar(frame, unit)

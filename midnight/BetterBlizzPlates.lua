@@ -4539,7 +4539,7 @@ local function HideFriendlyHealthbar(frame)
     if frame.healthBar and info.isFriend then
         if BetterBlizzPlatesDB.friendlyHideHealthBar and info.isPlayer then
             local showOnTarget = BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget
-            if showOnTarget and frame == BBP.currentTargetNameplate then
+            if showOnTarget and frame == BBP.currentTargetNameplate and UnitIsUnit(frame.unit, "target") then
                 frame.HealthBarsContainer:SetAlpha(1)
                 frame.HealthBarsContainer.alphaZero = false
                 frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 0.22)
@@ -5612,14 +5612,22 @@ function BBP.SetupBorderOnFrame(frame, hpBar)
         --frame.selectedBorder:SetParent(frame.hiddenFrame)
     end
     if frame.newBorder then return end
-    -- Create borders
-    local borderTop = CreateBorder(frame, 0, 0, 0, 1)  -- Black color
-    local borderBottom = CreateBorder(frame, 0, 0, 0, 1)
-    local borderLeft = CreateBorder(frame, 0, 0, 0, 1)
-    local borderRight = CreateBorder(frame, 0, 0, 0, 1)
 
-    -- Store borders in a table
-    frame["borders"] = {borderTop, borderBottom, borderLeft, borderRight}
+    -- Create a container frame for borders (SetAlpha on it hides/shows all children)
+    local bordersFrame
+    if frame.CreateTexture then
+        bordersFrame = CreateFrame("Frame", nil, frame)
+    else
+        bordersFrame = CreateFrame("Frame", nil, frame:GetParent())
+    end
+    bordersFrame:SetAllPoints(frame)
+    frame.borders = bordersFrame
+
+    -- Create borders as children of the container frame
+    local borderTop = CreateBorder(bordersFrame, 0, 0, 0, 1)  -- Black color
+    local borderBottom = CreateBorder(bordersFrame, 0, 0, 0, 1)
+    local borderLeft = CreateBorder(bordersFrame, 0, 0, 0, 1)
+    local borderRight = CreateBorder(bordersFrame, 0, 0, 0, 1)
 
     -- Initial border thickness
     local borderThickness = 1
@@ -5654,9 +5662,10 @@ function BBP.SetupBorderOnFrame(frame, hpBar)
 
     -- Define method to set border color
     function frame:SetBorderColor(r, g, b, a)
-        for _, border in ipairs(self.borders) do
-            border:SetColorTexture(r, g, b, a)
-        end
+        borderTop:SetColorTexture(r, g, b, a)
+        borderBottom:SetColorTexture(r, g, b, a)
+        borderLeft:SetColorTexture(r, g, b, a)
+        borderRight:SetColorTexture(r, g, b, a)
     end
 
     -- Define method to set border size
@@ -5665,6 +5674,67 @@ function BBP.SetupBorderOnFrame(frame, hpBar)
     end
 
     frame.newBorder = true
+end
+
+function BBP.SetupMidnightCastbarIcon(frame)
+    if frame.castBarIconFrame then return end
+    frame.castBarIconFrame = CreateFrame("Frame", nil, frame.castBar)
+    frame.castBarIconFrame:SetFrameStrata("HIGH")
+    frame.castBarIconFrame:SetFrameLevel(frame.castBar:GetFrameLevel()+1)
+    frame.castBarIconFrame:SetSize(14, 14)
+    frame.castBarIconFrame:SetScale(BetterBlizzPlatesDB.castBarIconScale or 1.0)
+    local xPos = BetterBlizzPlatesDB.castBarIconXPos or 0
+    local yPos = BetterBlizzPlatesDB.castBarIconYPos or 0
+    frame.castBarIconFrame:SetPoint("CENTER", frame.castBar, "LEFT", -2 + xPos, yPos)
+
+    frame.castBarIconFrame.Icon = frame.castBarIconFrame:CreateTexture(nil, "OVERLAY", nil, 2)
+    frame.castBarIconFrame.Icon:SetAllPoints(frame.castBarIconFrame)
+
+    local currentTexture = frame.castBar.Icon:GetTexture()
+    if currentTexture then
+        frame.castBarIconFrame.Icon:SetTexture(currentTexture)
+    end
+
+    frame.castBar.Icon:SetAlpha(0)
+    frame.castBar.Text:SetParent(frame.castBarIconFrame)
+    frame.castBar.Text:SetDrawLayer("OVERLAY", 7)
+
+    hooksecurefunc(frame.castBar.Icon, "SetTexture", function(self, texture)
+        if frame:IsForbidden() then return end
+        frame.castBarIconFrame.Icon:SetTexture(texture)
+    end)
+
+    hooksecurefunc(frame.castBar.Icon, "Show", function(self)
+        if frame:IsForbidden() then return end
+        self:Hide()
+        frame.castBarIconFrame.Icon:Show()
+    end)
+
+    hooksecurefunc(frame.castBar.Icon, "SetShown", function(self)
+        if frame:IsForbidden() then return end
+        self:Hide()
+        frame.castBarIconFrame.Icon:SetShown(self:IsShown())
+    end)
+
+    hooksecurefunc(frame.castBar.Icon, "Hide", function(self)
+        if frame:IsForbidden() then return end
+        frame.castBarIconFrame.Icon:Hide()
+    end)
+
+    hooksecurefunc(frame.castBar.BorderShield, "SetPoint", function(self)
+        if frame:IsForbidden() then return end
+        if self.changingIconPos then return end
+        self.changingIconPos = true
+        self:ClearAllPoints()
+        if frame.castBarIconFrame:IsShown() then
+            self:SetPoint("TOPLEFT", frame.castBarIconFrame, "TOPLEFT", -2, 2)
+            self:SetPoint("BOTTOMRIGHT", frame.castBarIconFrame, "BOTTOMRIGHT", 2, -4)
+        else
+            self:SetPoint("TOPLEFT", frame.castBarIconFrame, "TOPLEFT", 0, 0)
+            self:SetPoint("BOTTOMRIGHT", frame.castBarIconFrame, "BOTTOMRIGHT", 0, -2)
+        end
+        self.changingIconPos = nil
+    end)
 end
 
 -- What to do on a new nameplate
@@ -5745,61 +5815,7 @@ local function HandleNamePlateAdded(unit)
         SetFriendlyBarWidthTemp(frame)
         AdjustHealthBarHeight(frame)
 
-        if not frame.castBarIconFrame then
-            frame.castBarIconFrame = CreateFrame("Frame", nil, frame.castBar)
-            frame.castBarIconFrame:SetFrameStrata("MEDIUM")
-            frame.castBarIconFrame:SetFrameLevel(frame.castBar:GetFrameLevel()+1)
-            frame.castBarIconFrame:SetSize(14, 14)
-            frame.castBarIconFrame:SetScale(BetterBlizzPlatesDB.castBarIconScale or 1.0)
-            local xPos = BetterBlizzPlatesDB.castBarIconXPos or 0
-            local yPos = BetterBlizzPlatesDB.castBarIconYPos or 0
-            frame.castBarIconFrame:SetPoint("CENTER", frame.castBar, "LEFT", -2 + xPos, yPos)
-
-            frame.castBarIconFrame.Icon = frame.castBarIconFrame:CreateTexture(nil, "OVERLAY")
-            frame.castBarIconFrame.Icon:SetAllPoints(frame.castBarIconFrame)
-
-            local currentTexture = frame.castBar.Icon:GetTexture()
-            if currentTexture then
-                frame.castBarIconFrame.Icon:SetTexture(currentTexture)
-            end
-
-            frame.castBar.Icon:SetAlpha(0)
-
-            hooksecurefunc(frame.castBar.Icon, "SetTexture", function(self, texture)
-                if frame:IsForbidden() then return end
-                frame.castBarIconFrame.Icon:SetTexture(texture)
-            end)
-
-            hooksecurefunc(frame.castBar.Icon, "Show", function(self)
-                if frame:IsForbidden() then return end
-                frame.castBarIconFrame:Show()
-            end)
-
-            hooksecurefunc(frame.castBar.Icon, "SetShown", function(self)
-                if frame:IsForbidden() then return end
-                frame.castBarIconFrame:SetShown(self:IsShown())
-            end)
-
-            hooksecurefunc(frame.castBar.Icon, "Hide", function(self)
-                if frame:IsForbidden() then return end
-                frame.castBarIconFrame:Hide()
-            end)
-
-            hooksecurefunc(frame.castBar.BorderShield, "SetPoint", function(self)
-                if frame:IsForbidden() then return end
-                if self.changingIconPos then return end
-                self.changingIconPos = true
-                self:ClearAllPoints()
-                if frame.castBarIconFrame:IsShown() then
-                    self:SetPoint("TOPLEFT", frame.castBarIconFrame, "TOPLEFT", -2, 2)
-                    self:SetPoint("BOTTOMRIGHT", frame.castBarIconFrame, "BOTTOMRIGHT", 2, -4)
-                else
-                    self:SetPoint("TOPLEFT", frame.castBarIconFrame, "TOPLEFT", 0, 0)
-                    self:SetPoint("BOTTOMRIGHT", frame.castBarIconFrame, "BOTTOMRIGHT", 0, -2)
-                end
-                self.changingIconPos = nil
-            end)
-        end
+        BBP.SetupMidnightCastbarIcon(frame)
 
         BBP.CastbarOnEvent(frame)
     end

@@ -7,6 +7,8 @@ local function FetchSpellName(spellId)
     return spellName
 end
 
+local BUFF_MAX_DISPLAY = BUFF_MAX_DISPLAY or 32
+
 local fakeAuras = {
     -- 6 Fake Debuffs
     {
@@ -4364,14 +4366,10 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         buff:Show();
         buff:SetMouseClickEnabled(false)
 
-        -- if not buff.isKeyAura then
-        --     buffIndex = buffIndex + 1;
-        -- end
-        -- return buffIndex >= BUFF_MAX_DISPLAY;
-        buffIndex = buffIndex + 1
-        if not buff.isKeyAura and buffIndex > BBPMaxAuraNum then
-            return true
+        if not buff.isKeyAura then
+            buffIndex = buffIndex + 1;
         end
+        return buffIndex >= BUFF_MAX_DISPLAY;
     end);
 
     if UnitFrame.classIndicatorCC then
