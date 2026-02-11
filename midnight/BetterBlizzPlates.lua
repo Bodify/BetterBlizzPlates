@@ -1650,13 +1650,8 @@ end
 --#################################################################################################
 --  Remove realm names
 function BBP.RemoveRealmName(frame)
-    -- BBP.isMidnight
-    frame.name:SetText(UnitName(frame.unit))
-    -- local name = GetUnitName(frame.unit)
-    -- if name then
-    --     name = string.gsub(name, " %(%*%)$", "")
-    --     frame.name:SetText(name)
-    -- end
+    local name = UnitFullName(frame.unit)
+    frame.name:SetText(name)
 end
 
 
