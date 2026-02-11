@@ -260,6 +260,11 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     if castBar.casting then
         _, _, _, _, _, _, _, notInterruptible = UnitCastingInfo(unitToken)
+        if notInterruptible ~= nil then
+            print("its not nil")
+        else
+            print("it is nil")
+        end
         casting = true
         if castBarRecolor then
             if castBarTexture then
@@ -629,36 +634,20 @@ function BBP.UpdateCastTimer(frame, unit)
         BBP.SetFontBasedOnOption(frame.CastTimer, npTextSize or 12, "OUTLINE")
         frame.CastTimer:SetTextColor(1, 1, 1)
     end
-    if BBP.isMidnight then return end
 
-    local name, temp_, temp__, startTime, endTime = UnitCastingInfo(unit)
-    if not name then
-        name, temp_, temp__, startTime, endTime = UnitChannelInfo(unit)
+    local duration = UnitCastingDuration(unit)
+    if not duration then
+        duration = UnitChannelDuration(unit)
     end
 
-    if name and endTime and startTime and frame and frame.healthBar and frame.healthBar:IsShown() and not frame.hideCastInfo then
-        -- local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
-
-        -- if enableCastbarCustomization then
-        --     BBP.CustomizeCastbar(unit)
-        -- end
-        frame.CastTimer.endTime = endTime / 1000
-        local currentTime = GetTime()
-        local timeLeft = frame.CastTimer.endTime - currentTime
-        if timeLeft <= 0 then
-            frame.CastTimer:SetText("")
-            if frame.TargetText then
-                frame.TargetText:SetText("")
-            end
-        else
-            frame.CastTimerFrame:Show()
-            frame.CastTimer:SetText(string.format("%.1f", timeLeft))
-            C_Timer.After(0.05, function()
-                BBP.UpdateCastTimer(frame, unit)
-                --BBP.HideCastbar(unit) -- this worked well but could pop up short between casts
-            end)
-        end
+    if duration and frame and frame.healthBar and frame.healthBar:IsShown() and not frame.hideCastInfo then
+        frame.CastTimerFrame:Show()
+        frame.CastTimer:SetText(string.format("%.1f", duration:GetRemainingDuration()))
+        C_Timer.After(0.1, function()
+            BBP.UpdateCastTimer(frame, unit)
+        end)
     else
+        frame.CastTimerFrame:Hide()
         frame.CastTimer:SetText("")
         if frame.TargetText then
             frame.TargetText:SetText("")
