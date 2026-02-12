@@ -1547,7 +1547,7 @@ function BBP.GetNameplate(unit)
 end
 
 function BBP.GetSafeNameplate(unit)
-    if string.match(unit, "arena") then return end
+    if string.match(unit, "arena") or string.match(unit, "boss") then return end
     local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
     -- If there's no nameplate or the nameplate doesn't have a UnitFrame, return nils.
     if not nameplate or not nameplate.UnitFrame then return nil, nil end
