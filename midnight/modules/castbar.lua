@@ -436,12 +436,20 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         if showCastBarIconWhenNoninterruptible and (casting or channeling) then
             castBar.BorderShield:SetDrawLayer("OVERLAY", 1)
             castBar.Icon:Show()
-            castBar.Icon:SetAlphaFromBoolean(notInterruptible, 1, 0)
+            if notInterruptible ~= nil then
+                castBar.Icon:SetAlphaFromBoolean(notInterruptible, 1, 0)
+            else
+                castBar.Icon:SetAlpha(1)
+            end
             castBar.Icon:SetDrawLayer("OVERLAY", 2)
         else
             if (casting or channeling) then
                 castBar.Icon:Show() --attempt to fix icon randomly not showing (blizz bug)
-                castBar.Icon:SetAlphaFromBoolean(notInterruptible, 0, 1)
+                if notInterruptible ~= nil then
+                    castBar.Icon:SetAlphaFromBoolean(notInterruptible, 0, 1)
+                else
+                    castBar.Icon:SetAlpha(1)
+                end
             elseif not castBar:IsVisible() then
                 castBar.Icon:Hide()
             end
