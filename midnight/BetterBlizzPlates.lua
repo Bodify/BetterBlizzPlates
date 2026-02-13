@@ -3769,6 +3769,8 @@ end
 
 function BBP.ColorPRD()
     local frame = PersonalResourceDisplayFrame and PersonalResourceDisplayFrame.HealthBarsContainer
+    _, playerClass = UnitClass("player")
+    playerClassColor = RAID_CLASS_COLORS[playerClass]
     if BetterBlizzPlatesDB.personalNpTRP3Color then
         local r,g,b = GetRPNameColor("player")
         if r then
