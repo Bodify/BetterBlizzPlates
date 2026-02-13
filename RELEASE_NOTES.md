@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.5c
+## Prepatch/Midnight
+### Bugfix
+- Fixup a lot of the Personal Resource Display settings for Midnight. Texture and size etc.
+
 # BetterBlizzPlates 1.9.5b
 ## Prepatch/Midnight
 ### Bugfix

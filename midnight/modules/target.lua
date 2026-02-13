@@ -225,10 +225,38 @@ local nameplateResourceUnderCastbarEventFrame
 
 local classPadding = {
     ["MONK"] = -8,
-    ["EVOKER"] = -9,
+    ["EVOKER"] = {
+        default = -9,
+        [3] = -12,  -- Augmentation
+    },
     ["WARLOCK"] = -8,
     --["DRUID"] = -11,
 }
+
+local function GetClassPadding(className)
+    local padding = classPadding[className]
+    if type(padding) == "table" then
+        local specIndex = GetSpecialization()
+        return padding[specIndex] or padding.default or 0
+    end
+    return padding or 0
+end
+
+local forcedClassPadding = {
+    ["EVOKER"] = {
+        default = 0,
+        [3] = -12,  -- Augmentation
+    },
+}
+
+local function GetForcedClassPadding(className)
+    local padding = forcedClassPadding[className]
+    if type(padding) == "table" then
+        local specIndex = GetSpecialization()
+        return padding[specIndex] or padding.default or 0
+    end
+    return padding or 0
+end
 
 local classResourceYOffsets = {
     PALADIN = 4,
@@ -241,8 +269,6 @@ local classResourceYOffsets = {
     EVOKER = -1,
 }
 local playerClass = select(2, UnitClass("player"))
-
-local adjusted
 
 local function RepositionClassFrame(point, relativeTo, relativePoint, xOfs, yOfs)
     local prdClassFrame = prdClassFrame
@@ -359,7 +385,7 @@ function BBP.TargetResourceUpdater()
                         prdClassFrame:SetFrameStrata("DIALOG")
                     end
 
-                    local padding = PersonalResourceDisplayFrame.ClassFrameContainer.yOffset or classPadding[className] or 0
+                    local padding = PersonalResourceDisplayFrame.ClassFrameContainer.yOffset or GetClassPadding(className)
                     RepositionClassFrame("TOP", PersonalResourceDisplayFrame, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
                 else
                     prdClassFrame:SetAlpha(0)
@@ -378,8 +404,9 @@ function BBP.TargetResourceUpdater()
                 prdClassFrame:SetFrameStrata("DIALOG")
             end
 
-            local padding = PersonalResourceDisplayFrame.ClassFrameContainer.yOffset or classPadding[className] or 0
+            local padding = PersonalResourceDisplayFrame.ClassFrameContainer.yOffset or GetClassPadding(className)
             padding = padding + 52
+            padding = padding + GetForcedClassPadding(className)
             prdClassFrame:SetAlpha(hideResource and 0 or 1)
             RepositionClassFrame("TOP", PersonalResourceDisplayFrame, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
         else

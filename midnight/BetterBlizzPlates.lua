@@ -1434,7 +1434,6 @@ local function GetNameplateUnitInfo(frame, unit)
     local info = frame.BetterBlizzPlates.unitInfo
 
     info.name = UnitName(unit)
-    info.isSelf = false--UnitIsUnit("player", unit)
     info.isTarget = UnitIsUnit("target", unit)
     info.isFocus = UnitIsUnit("focus", unit)
     info.isPet = UnitIsUnit("pet", unit)
@@ -1443,9 +1442,9 @@ local function GetNameplateUnitInfo(frame, unit)
     info.unitGUID = 0--UnitGUID(unit)
     info.class = info.isPlayer and UnitClassBase(unit) or nil
     info.reaction = UnitReaction(unit, "player")
-    info.isEnemy = (info.reaction and info.reaction < 4) and not info.isSelf
-    info.isNeutral = (info.reaction and info.reaction == 4) and not info.isSelf
-    info.isFriend = (info.reaction and info.reaction >= 5) and not info.isSelf
+    info.isEnemy = (info.reaction and info.reaction < 4)
+    info.isNeutral = (info.reaction and info.reaction == 4)
+    info.isFriend = (info.reaction and info.reaction >= 5)
     info.playerClass = playerClass
 
     return info
@@ -1688,7 +1687,7 @@ function BBP.isUnitBNetFriend(unit)
 end
 
 local function anonMode(frame, info)
-    if info.isPlayer and not info.isSelf then
+    if info.isPlayer then
         local anonName = UnitClass(frame.unit)
         frame.name:SetText(anonName)
     end
@@ -1778,6 +1777,39 @@ local function textureExtraBars(frame, setting)
         frame.otherHealPrediction:SetTexture(setting)
         frame.myHealPrediction:SetTexture(setting)
         frame.totalAbsorb:SetTexture(setting)
+    end
+end
+
+function BBP.TexturePRD()
+    local customTextureSelf = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.customTextureSelf)
+    local customTextureSelfMana = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.customTextureSelfMana)
+
+    local frame = PersonalResourceDisplayFrame
+    if not frame then return end
+    if BetterBlizzPlatesDB.useCustomTextureForSelf then
+        frame.HealthBarsContainer.healthBar:SetStatusBarTexture(customTextureSelf)
+        textureExtraBars(frame, customTextureSelf)
+    end
+    if BetterBlizzPlatesDB.useCustomTextureForSelfMana then
+        frame.PowerBar:SetStatusBarTexture(customTextureSelfMana)
+    end
+
+    -- fix borders
+    local borderContainers = {
+        PersonalResourceDisplayFrame.HealthBarsContainer.border,
+        PersonalResourceDisplayFrame.PowerBar.Border,
+        PersonalResourceDisplayFrame.AlternatePowerBar.Border,
+    }
+
+    for _, borderContainer in ipairs(borderContainers) do
+        if borderContainer then
+            for _, child in ipairs({borderContainer:GetChildren()}) do
+                child:SetIgnoreParentAlpha(true)
+            end
+            for _, region in ipairs({borderContainer:GetRegions()}) do
+                region:SetIgnoreParentAlpha(true)
+            end
+        end
     end
 end
 
@@ -2270,12 +2302,30 @@ function BBP.PersonalBarSettings()
             end
         end
     end
+
+    local function SetBorderIgnoreParentAlpha(borderContainer, shouldIgnore)
+        if borderContainer then
+            for _, child in ipairs({borderContainer:GetChildren()}) do
+                child:SetIgnoreParentAlpha(shouldIgnore)
+            end
+            for _, region in ipairs({borderContainer:GetRegions()}) do
+                region:SetIgnoreParentAlpha(shouldIgnore)
+            end
+        end
+    end
+
+    if not PersonalResourceDisplayFrame then return end
+
+    -- Set border alpha behavior based on hide settings
+    SetBorderIgnoreParentAlpha(PersonalResourceDisplayFrame.PowerBar.Border, not db.hidePersonalBarManaFrame)
+    SetBorderIgnoreParentAlpha(PersonalResourceDisplayFrame.AlternatePowerBar.Border, not db.hidePersonalBarExtraFrame)
+
     -- Handle Mana Bar
-    SetFrameAlpha(ClassNameplateManaBarFrame, db.hidePersonalBarManaFrame, "ClassNameplateManaBarFrameHidden")
+    SetFrameAlpha(PersonalResourceDisplayFrame.PowerBar, db.hidePersonalBarManaFrame, "ClassNameplateManaBarFrameHidden")
 
     -- Handle Extra Frames (Ebon Might and Brewmaster)
-    SetFrameAlpha(ClassNameplateEbonMightBarFrame, db.hidePersonalBarExtraFrame, "ClassNameplateEbonMightBarFrameHidden")
-    SetFrameAlpha(ClassNameplateBrewmasterBarFrame, db.hidePersonalBarExtraFrame, "ClassNameplateBrewmasterBarFrameHidden")
+    SetFrameAlpha(PersonalResourceDisplayFrame.AlternatePowerBar, db.hidePersonalBarExtraFrame, "ClassNameplateEbonMightBarFrameHidden")
+    SetFrameAlpha(PersonalResourceDisplayFrame.AlternatePowerBar, db.hidePersonalBarExtraFrame, "ClassNameplateBrewmasterBarFrameHidden")
 end
 
 --#################################################################################################
@@ -2903,10 +2953,10 @@ function BBP.HideNPCs(frame, nameplate)
         frame.hideNameOverride = false
         frame.hideCastbarOverride = false
         if config.classIndicatorHideFriendlyHealthbar then
-            frame.HealthBarsContainer:SetAlpha((info.isSelf and 1) or (frame.ciChange and 0) or 1)
+            frame.HealthBarsContainer:SetAlpha((frame.ciChange and 0) or 1)
             frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or (frame.ciChange and 0) or 0.22)
         else
-            frame.HealthBarsContainer:SetAlpha((info.isSelf and 1) or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 1)
+            frame.HealthBarsContainer:SetAlpha((info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 1)
             frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and (config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc) and 0) or 0.22)
         end
         ToggleNameplateBuffFrameVisibility(frame)
@@ -3033,10 +3083,10 @@ function BBP.ResetFrame(frame, config, info)
         frame.hideNameOverride = false
         frame.hideCastbarOverride = false
         if config.classIndicatorHideFriendlyHealthbar then
-            frame.HealthBarsContainer:SetAlpha((info.isSelf and 1) or (frame.ciChange and 0) or 1)
+            frame.HealthBarsContainer:SetAlpha((frame.ciChange and 0) or 1)
             frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or (frame.ciChange and 0) or 0.22)
         else
-            frame.HealthBarsContainer:SetAlpha((info.isSelf and 1) or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 1)
+            frame.HealthBarsContainer:SetAlpha((info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 1)
             frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and (config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc) and 0) or 0.22)
         end
         ToggleNameplateBuffFrameVisibility(frame)
@@ -3496,17 +3546,6 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         config.updateHealthColorInitialized = true
     end
 
-    if info.isSelf then
-        if config.personalNpTRP3Color then
-            local r,g,b = GetRPNameColor("player")
-            if r then
-                frame.healthBar:SetStatusBarColor(r, g, b)
-            end
-        elseif config.classColorPersonalNameplate then
-            frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
-        end
-    end
-
     if config.friendlyHealthBarColor or config.enemyHealthBarColor then
         ColorNameplateByReaction(frame)
     end
@@ -3516,7 +3555,7 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         BBP.ColorNpcHealthbar(frame)
     end
 
-    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) and not info.isSelf then
+    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
         BBP.ColorThreat(frame)
     end
 
@@ -3614,13 +3653,6 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 	local unitIsDead = unitIsConnected and UnitIsDead(frame.unit);
 	local unitIsPlayer = UnitIsPlayer(frame.unit) or UnitIsPlayer(frame.displayedUnit);
 
-    if info.isSelf then
-        if config.classColorPersonalNameplate then
-            frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
-        --else return end
-        end
-    end
-
 	if ( not unitIsConnected or (unitIsDead and not unitIsPlayer) ) then
 		--Color it gray
 		r, g, b = 0.5, 0.5, 0.5;
@@ -3685,7 +3717,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 
-    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) and not info.isSelf then
+    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
         BBP.ColorThreat(frame)
     end
 
@@ -3733,16 +3765,32 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
             end
         end
     end
-    if info.isSelf then --without this self nameplate reset to green after targeting self, figure out more
-        if config.personalNpTRP3Color then
-            local r,g,b = GetRPNameColor("player")
-            if r then
-                frame.healthBar:SetStatusBarColor(r, g, b)
-            end
-        elseif config.classColorPersonalNameplate then
+end
+
+function BBP.ColorPRD()
+    local frame = PersonalResourceDisplayFrame and PersonalResourceDisplayFrame.HealthBarsContainer
+    if BetterBlizzPlatesDB.personalNpTRP3Color then
+        local r,g,b = GetRPNameColor("player")
+        if r then
+            frame.healthBar:SetStatusBarColor(r, g, b)
+        elseif BetterBlizzPlatesDB.classColorPersonalNameplate then
             frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
         end
+    elseif BetterBlizzPlatesDB.classColorPersonalNameplate then
+        frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
     end
+end
+
+function BBP.ResizePRD()
+    local frame = PersonalResourceDisplayFrame
+    if not frame then return end
+    frame:SetWidth(BetterBlizzPlatesDB.nameplateSelfWidth or 200)
+    frame.PowerBar:SetWidth(BetterBlizzPlatesDB.nameplateSelfWidth or 200)
+    frame.AlternatePowerBar:SetWidth(BetterBlizzPlatesDB.nameplateSelfWidth or 200)
+    if not BetterBlizzPlatesDB.changeHealthbarHeight then return end
+    frame.HealthBarsContainer:SetHeight(BetterBlizzPlatesDB.hpHeightSelf or 11)
+    frame.PowerBar:SetHeight(BetterBlizzPlatesDB.hpHeightSelfMana or 11)
+    frame.AlternatePowerBar:SetHeight(BetterBlizzPlatesDB.hpHeightSelfMana or 11)
 end
 
 local function NameplateShadowAndMouseoverHighlight(frame)
@@ -4585,9 +4633,7 @@ local function FriendIndicator(frame)
         frame.friendIndicator:SetSize(20, 21)
     end
 
-    if info.isSelf then
-        frame.friendIndicator:Hide()
-    elseif isFriend or isBnetFriend then
+    if isFriend or isBnetFriend then
         frame.friendIndicator:SetDesaturated(false)
         frame.friendIndicator:SetVertexColor(1, 1, 1)
         frame.friendIndicator:Show()
@@ -4834,7 +4880,7 @@ function BBP.RepositionName(frame)
             if db.useFakeNameAnchorBottom then
                 frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 27)
             else
-                frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + (info.isSelf and 3.5 or 4))
+                frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 4)
             end
         else
             frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameXPos, db.fakeNameYPos + 4)
@@ -5279,7 +5325,7 @@ local function CreateBetterClassicHealthbarBorder(frame)
     local height = frame.healthBar:GetHeight()
     local bottomOffset = -((0.455) * height - 1.09)
     local topOffset = (2 * height) - 1
-    local hideLevel = config.hideLevelFrame or (BBP.isInPvP and not BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP) or (info.isSelf and config.personalBarTweaks)
+    local hideLevel = config.hideLevelFrame or (BBP.isInPvP and not BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP)
     local rightXOffset = hideLevel and 27.9 or 20.9
 
     if hideLevel then
@@ -6039,7 +6085,7 @@ local function HandleNamePlateAdded(unit)
     if config.questIndicator then BBP.QuestIndicator(frame) end
 
     -- Show Class Indicator
-    if config.classIndicator and not info.isSelf then BBP.ClassIndicator(frame) end
+    if config.classIndicator then BBP.ClassIndicator(frame) end
 
     -- Show Target indicator
     if config.targetIndicator then BBP.TargetIndicator(frame) end
@@ -6109,11 +6155,6 @@ local function HandleNamePlateAdded(unit)
 
     if config.classicNameplates then
         CreateBetterClassicHealthbarBorder(frame)
-        if info.isSelf then
-            frame.ClassicLevelFrame:Hide()
-            frame.ClassicLevelFrame.text:Hide()
-            frame.ClassicLevelFrame.skull:Hide()
-        end
         frame.HealthBarsContainer.healthBar.selectedBorder:SetAlpha(0)
         frame.classicNameplatesOn = true
     elseif frame.classicNameplatesOn then
@@ -7370,9 +7411,9 @@ end
 
 function BBP.HidePersonalManabarFX()
     if BetterBlizzPlatesDB.hidePersonalManaFX then
-        if ClassNameplateManaBarFrame then
-            ClassNameplateManaBarFrame.FullPowerFrame:SetParent(BBP.hiddenFrame)
-            ClassNameplateManaBarFrame.FeedbackFrame:SetParent(BBP.hiddenFrame)
+        if PersonalResourceDisplayFrame then
+            PersonalResourceDisplayFrame.PowerBar.FullPowerFrame:SetParent(BBP.hiddenFrame)
+            PersonalResourceDisplayFrame.PowerBar.FeedbackFrame:SetParent(BBP.hiddenFrame)
         end
     end
 end
@@ -7472,6 +7513,9 @@ First:SetScript("OnEvent", function(_, event, addonName)
             end
 
             BBP.HidePersonalManabarFX()
+            BBP.ColorPRD()
+            BBP.TexturePRD()
+            BBP.ResizePRD()
 
             if not db.cleanedScaleScale then
                 for key, _ in pairs(BetterBlizzPlatesDB) do

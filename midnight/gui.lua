@@ -911,10 +911,10 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BBP.RefreshAllNameplates()
                 elseif element == "hpHeightSelf" then
                     BetterBlizzPlatesDB.hpHeightSelf = value
-                    BBP.RefreshAllNameplates()
+                    BBP.ResizePRD()
                 elseif element == "hpHeightSelfMana" then
                     BetterBlizzPlatesDB.hpHeightSelfMana = value
-                    BBP.RefreshAllNameplates()
+                    BBP.ResizePRD()
                 elseif element == "healthNumbersScale" then
                     BetterBlizzPlatesDB.healthNumbersScale = value
                 elseif element == "healthNumbersXPos" then
@@ -1086,12 +1086,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         C_NamePlate.SetNamePlateSize(value, heightValue)
                     end
                 elseif element == "nameplateSelfWidth" then
-                    -- if not BBP.checkCombatAndWarn() then
-                    --     BetterBlizzPlatesDB.nameplateSelfWidth = value
-                    --     local heightValue
-                    --     heightValue = 45 --BBP.isLargeNameplatesEnabled() and 64.125 or 40
-                    --     C_NamePlate.SetNamePlateSize(value, heightValue)
-                    -- end
+                    BBP.ResizePRD()
                 -- Cast bar emphasis height
                 elseif element == "castBarEmphasisHeightValue" then
                     BetterBlizzPlatesDB.castBarEmphasisHeightValue = value
@@ -5942,7 +5937,8 @@ local function guiGeneralTab()
         "Select Font",
         "customFont",
         function(arg1)
-            BBP.RefreshAllNameplates() 
+            BBP.RefreshAllNameplates()
+            BBP.TexturePRD()
         end,
         { anchorFrame = useCustomFont, x = 20, y = 1, label = "Font" }
     )
