@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.5b
+## Prepatch/Midnight
+### Bugfix
+- Fix two minor (but spammy) errors.
+
 # BetterBlizzPlates 1.9.5
 ## Prepatch/Midnight
 ### New
