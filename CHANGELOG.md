@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.5d
+## Prepatch/Midnight
+### Bugfix
+- Fix nil error from last update, oops.
+
 # BetterBlizzPlates 1.9.5c
 ## Prepatch/Midnight
 ### Bugfix
