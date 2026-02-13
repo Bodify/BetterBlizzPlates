@@ -180,7 +180,7 @@ function BBP.FocusTargetIndicator(frame)
         return
     end
 
-    if UnitIsUnit(frame.unit, "focus") then
+    if frame.unit and UnitIsUnit(frame.unit, "focus") then
         frame.focusTargetIndicator:Show()
         if changeTexture then
             frame.healthBar:SetStatusBarTexture(focusTexture)
