@@ -1788,7 +1788,7 @@ function BBP.TexturePRD()
     if not frame then return end
     if BetterBlizzPlatesDB.useCustomTextureForSelf then
         frame.HealthBarsContainer.healthBar:SetStatusBarTexture(customTextureSelf)
-        textureExtraBars(frame, customTextureSelf)
+        textureExtraBars(frame.HealthBarsContainer.healthBar, customTextureSelf)
     end
     if BetterBlizzPlatesDB.useCustomTextureForSelfMana then
         frame.PowerBar:SetStatusBarTexture(customTextureSelfMana)

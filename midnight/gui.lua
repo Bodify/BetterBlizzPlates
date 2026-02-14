@@ -6067,6 +6067,7 @@ local function guiGeneralTab()
     useCustomTextureForSelf:HookScript("OnClick", function(self)
         if self:GetChecked() then
             textureDropdownSelf:Enable()
+            BBP.TexturePRD()
         else
             textureDropdownSelf:Disable()
         end
@@ -6081,6 +6082,7 @@ local function guiGeneralTab()
     useCustomTextureForSelfMana:HookScript("OnClick", function(self)
         if self:GetChecked() then
             textureDropdownSelfMana:Enable()
+            BBP.TexturePRD()
         else
             textureDropdownSelfMana:Disable()
         end
