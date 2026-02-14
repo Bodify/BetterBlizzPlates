@@ -3692,8 +3692,8 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 		end
 	end
 
-	local oldR, oldG, oldB = frame.healthBar:GetStatusBarColor();
-	if ( r ~= oldR or g ~= oldG or b ~= oldB ) then
+	--local oldR, oldG, oldB = frame.healthBar:GetStatusBarColor();
+	--if ( r ~= oldR or g ~= oldG or b ~= oldB ) then -- now secret
 		frame.healthBar:SetStatusBarColor(r, g, b);
 
 		if (frame.optionTable.colorHealthWithExtendedColors) then
@@ -3701,7 +3701,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 		else
 			frame.selectionHighlight:SetVertexColor(1, 1, 1);
 		end
-	end
+	--end
 
     -- if frame.background then
 	-- 	frame.background:SetVertexColor(CompactUnitFrame_GetOptionCustomHealthBarColorBG(frame):GetRGB());
@@ -3726,9 +3726,9 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         --BBP.FocusTargetIndicator(frame)
     end
 
-    if config.auraColor and config.auraColorRGB then --bodify
-        frame.healthBar:SetStatusBarColor(config.auraColorRGB.r, config.auraColorRGB.g, config.auraColorRGB.b, config.auraColorRGB.a)
-    end
+    -- if config.auraColor and config.auraColorRGB then --bodify
+    --     frame.healthBar:SetStatusBarColor(config.auraColorRGB.r, config.auraColorRGB.g, config.auraColorRGB.b, config.auraColorRGB.a)
+    -- end
 
     if (config.targetIndicator and config.targetIndicatorColorNameplate and info.isTarget) or config.targetIndicatorTestMode then
         frame.healthBar:SetStatusBarColor(unpack(config.targetIndicatorColorNameplateRGB))
