@@ -7461,6 +7461,10 @@ First:SetScript("OnEvent", function(_, event, addonName)
             if db.nameplateShowFriendlyTotems and db.nameplateShowFriendlyPlayerTotems == nil then
                 db.nameplateShowFriendlyPlayerTotems = db.nameplateShowFriendlyTotems
             end
+            if db.nameplateResourceScale == 0.7 and not db.nameplateResourceScaleUpdated then
+                db.nameplateResourceScale = 1
+                db.nameplateResourceScaleUpdated = true
+            end
 
             C_Timer.After(3, function()
                 BBP.CVarTracker()
