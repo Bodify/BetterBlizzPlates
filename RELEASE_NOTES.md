@@ -1,3 +1,12 @@
+# BetterBlizzPlates 1.9.5e
+## Prepatch/Midnight
+### New
+- Add Pinkteddyp profile (www.twitch.tv/pinkteddyp). Thank you for sharing.
+### Bugfix
+- Fix wrong frame being called on retexture overbars
+- Fix a secret comparison
+- Fix PRD width slider
+
 # BetterBlizzPlates 1.9.5d
 ## Prepatch/Midnight
 ### Bugfix
