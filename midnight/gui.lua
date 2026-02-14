@@ -1086,6 +1086,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         C_NamePlate.SetNamePlateSize(value, heightValue)
                     end
                 elseif element == "nameplateSelfWidth" then
+                    BetterBlizzPlatesDB.nameplateSelfWidth = value
                     BBP.ResizePRD()
                 -- Cast bar emphasis height
                 elseif element == "castBarEmphasisHeightValue" then
@@ -11983,7 +11984,7 @@ local function guiMisc()
     nameplateSelfWidthResetButton:SetWidth(60)
     nameplateSelfWidthResetButton:SetPoint("LEFT", nameplateSelfWidth, "RIGHT", 10, 0)
     nameplateSelfWidthResetButton:SetScript("OnClick", function()
-        BBP.ResetToDefaultWidth(nameplateSelfWidth, false)
+        BBP.ResetToDefaultWidth(nameplateSelfWidth, false, true)
     end)
 end
 

@@ -2549,7 +2549,7 @@ end
 
 --#################################################################################################
 -- Reset slider to default value function
-function BBP.ResetToDefaultWidth(slider, isFriendly)
+function BBP.ResetToDefaultWidth(slider, isFriendly, prd)
     local heightValue = BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeFriendlyHeight or BetterBlizzPlatesDB.nameplateDefaultFriendlyHeight
      heightValue = heightValue + BetterBlizzPlatesDB.nameplateExtraClickHeight
 
@@ -2558,8 +2558,8 @@ function BBP.ResetToDefaultWidth(slider, isFriendly)
     end
 
     if not BBP.checkCombatAndWarn() then
-        C_NamePlate.SetNamePlateSize(172.5, heightValue)
-        slider:SetValue(172.5)
+        C_NamePlate.SetNamePlateSize(prd and 200 or 172.5, heightValue)
+        slider:SetValue(prd and 200 or 172.5)
     end
 end
 
