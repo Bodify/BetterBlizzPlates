@@ -416,6 +416,8 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                     if frame.specNameText then
                         frame.specNameText:SetAlpha(1)
                     end
+
+                    BBP.ConsolidatedUpdateName(frame)
                 end
             end)
             castBar.hideNameWhileCasting = true
@@ -1103,6 +1105,8 @@ function BBP.CastbarOnEvent(frame, event)
                 if frame.specNameText then
                     frame.specNameText:SetAlpha(1)
                 end
+
+                BBP.ConsolidatedUpdateName(frame)
             end
         end
     end
