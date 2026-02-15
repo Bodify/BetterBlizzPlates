@@ -398,9 +398,11 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     if db.hideNameDuringCast then
         if (casting or channeling) then
             frame.castHiddenName = true
-            frame.name:SetText("")
+            -- frame.name:SetText("")
+            frame.name:SetAlpha(0)
             if frame.specNameText then
-                frame.specNameText:SetText("")
+                -- frame.specNameText:SetText("")
+                frame.specNameText:SetAlpha(0)
             end
         end
 
@@ -409,7 +411,13 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 if frame:IsForbidden() or not self.unit then return end
                 if frame.castHiddenName then
                     frame.castHiddenName = nil
-                    CompactUnitFrame_UpdateName(frame)
+                    -- CompactUnitFrame_UpdateName(frame)
+                    frame.name:SetAlpha(1)
+                    if frame.specNameText then
+                        frame.specNameText:SetAlpha(1)
+                    end
+
+                    BBP.ConsolidatedUpdateName(frame)
                 end
             end)
             castBar.hideNameWhileCasting = true
@@ -1092,7 +1100,13 @@ function BBP.CastbarOnEvent(frame, event)
             end
             if frame.castHiddenName then
                 frame.castHiddenName = nil
-                CompactUnitFrame_UpdateName(frame)
+                frame.name:SetAlpha(1)
+                -- CompactUnitFrame_UpdateName(frame)
+                if frame.specNameText then
+                    frame.specNameText:SetAlpha(1)
+                end
+
+                BBP.ConsolidatedUpdateName(frame)
             end
         end
     end
