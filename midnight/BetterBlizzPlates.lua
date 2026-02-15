@@ -6526,7 +6526,8 @@ function BBP.ConsolidatedUpdateName(frame)
     end
 
     if frame.castHiddenName then
-        frame.name:SetText("")
+        -- frame.name:SetText("")
+        frame.name:SetAlpha(0)
         return
     end
 
