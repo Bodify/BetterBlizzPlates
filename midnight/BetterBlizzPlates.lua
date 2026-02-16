@@ -3319,7 +3319,8 @@ function BBP.ColorNpcHealthbar(frame)
     if info.isPlayer then
         if config.npcHealthbarColor then
             config.npcHealthbarColor = nil
-            CompactUnitFrame_UpdateName(frame)
+            -- CompactUnitFrame_UpdateName(frame)
+            BBP.ConsolidatedUpdateName(frame)
         end
         return
     end
@@ -3357,7 +3358,8 @@ function BBP.ColorNpcHealthbar(frame)
         end
     elseif config.npcHealthbarColor then
         config.npcHealthbarColor = nil
-        CompactUnitFrame_UpdateName(frame)
+        -- CompactUnitFrame_UpdateName(frame)
+        BBP.ConsolidatedUpdateName(frame)
     end
 end
 -- frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
@@ -4698,7 +4700,11 @@ local function HandleNamePlateRemoved(unit)
 
     if frame.castHiddenName then
         frame.castHiddenName = nil
-        CompactUnitFrame_UpdateName(frame)
+        -- CompactUnitFrame_UpdateName(frame)
+        frame.name:SetAlpha(1)
+        if frame.specNameText then
+            frame.specNameText:SetAlpha(1)
+        end
     end
 
     if frame.needsRecolor then
@@ -6520,7 +6526,8 @@ function BBP.ConsolidatedUpdateName(frame)
     end
 
     if frame.castHiddenName then
-        frame.name:SetText("")
+        -- frame.name:SetText("")
+        frame.name:SetAlpha(0)
         return
     end
 
