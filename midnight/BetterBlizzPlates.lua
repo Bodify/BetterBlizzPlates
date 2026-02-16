@@ -7051,10 +7051,6 @@ Frame:SetScript("OnEvent", function(...)
         --BBP.HookDefaultCompactNamePlateFrameAnchorInternal()
     --end
 
-    --if BetterBlizzPlatesDB.nameplateResourceOnTarget then
-        BBP.TargetResourceUpdater()
-    --end
-
     -- local useCustomFont = BetterBlizzPlatesDB.useCustomFont
     -- if useCustomFont then
     --     local fontName = BetterBlizzPlatesDB.customFont
@@ -7073,6 +7069,7 @@ Frame:SetScript("OnEvent", function(...)
     -- end
 
     C_Timer.After(1, function()
+        BBP.TargetResourceUpdater()
         BBP.InstantComboPoints()
         if not db.skipAdjustingFixedFonts then
             BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "OUTLINE, SLUG")--db.defaultLargeNamePlateFontFlags)
