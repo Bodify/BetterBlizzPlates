@@ -4366,9 +4366,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         buff:Show();
         buff:SetMouseClickEnabled(false)
 
-        if not buff.isKeyAura then
-            buffIndex = buffIndex + 1;
-        end
+        buffIndex = buffIndex + 1;
         return buffIndex >= BUFF_MAX_DISPLAY;
     end);
 
