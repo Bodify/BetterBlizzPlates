@@ -1,5 +1,7 @@
 # BetterBlizzPlates 1.9.5f
 ## Prepatch/Midnight
+### Tweak
+- Update Mmarkers profile.
 ### Bugfix
 - Fix secret comparison error in BGs related to unit name hidden while casting setting. Ty to qalibr @ GitHub for contributing the fix.
 - Fix rogue combo points not being centered properly on first time login. Blizzard is not centering this properly and my fix for it is hopefully temporary. If you have issues with this still please let me know.
