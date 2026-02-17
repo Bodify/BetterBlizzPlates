@@ -10986,24 +10986,6 @@ local function guiCVarControl()
 
     nameplateMotion:HookScript("OnClick", function(self)
         CheckAndToggleCheckboxes(nameplateMotion)
-        if self:GetChecked() then
-            if not BBP.StackingPopup then
-                StaticPopupDialogs["BBP_CONFIRM_STACKING_NP"] = {
-                    text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nDo you want the stacking overlap values automatically adjusted to something more reasonable than Blizzard defaults?",
-                    button1 = "Yes",
-                    button2 = "No",
-                    OnAccept = function()
-                        nameplateOverlapH:SetValue(0.50)
-                        nameplateOverlapV:SetValue(0.50)
-                        nameplateMotionSpeed:SetValue(0.03)
-                    end,
-                    timeout = 0,
-                    whileDead = true,
-                }
-                BBP.StackingPopup = true
-            end
-            StaticPopup_Show("BBP_CONFIRM_STACKING_NP")
-        end
     end)
 
 
