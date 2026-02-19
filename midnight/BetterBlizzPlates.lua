@@ -7522,10 +7522,12 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 db.defaultNamePlateFont, db.defaultFontSize, db.defaultNamePlateFontFlags = SystemFont_NamePlate:GetFont()
             end
 
-            BBP.HidePersonalManabarFX()
-            BBP.ColorPRD()
-            BBP.TexturePRD()
-            BBP.ResizePRD()
+            C_Timer.After(1, function()
+                BBP.HidePersonalManabarFX()
+                BBP.ColorPRD()
+                BBP.TexturePRD()
+                BBP.ResizePRD()
+            end)
 
             if not db.cleanedScaleScale then
                 for key, _ in pairs(BetterBlizzPlatesDB) do
