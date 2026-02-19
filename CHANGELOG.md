@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.5f
+## TBC/MoP
+### Bugfix
+- Fix Arena ID/Spec only checking arena1-3 and not 4-5 for 5v5.
+
 # BetterBlizzPlates 1.9.5g
 ## Prepatch/Midnight
 ### Bugfix

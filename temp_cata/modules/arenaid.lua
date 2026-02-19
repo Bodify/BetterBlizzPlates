@@ -173,7 +173,7 @@ function BBP.ArenaIndicator1(frame)
         return
     end
 
-    for i = 1, 3 do
+    for i = 1, 5 do
         if UnitIsUnit(frame.unit, "arena" .. i) then
             local r, g, b, a = 1, 1, 0, 1
             if enemyClassColorName then
@@ -237,7 +237,7 @@ function BBP.ArenaIndicator2(frame)
         return
     end
 
-    for i = 1, 3 do
+    for i = 1, 5 do
         if UnitIsUnit(frame.unit, "arena" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
 
@@ -306,7 +306,7 @@ function BBP.ArenaIndicator3(frame)
         return
     end
 
-    for i = 1, 3 do
+    for i = 1, 5 do
         if UnitIsUnit(frame.unit, "arena" .. i) then
             local specID = GetArenaOpponentSpec(i)
             local specName = specID and specIDToName[specID]
@@ -408,7 +408,7 @@ function BBP.ArenaIndicator4(frame)
         return
     end
 
-    for i = 1, 3 do
+    for i = 1, 5 do
         if UnitIsUnit(frame.unit, "arena" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
             local specID = GetArenaOpponentSpec(i)
@@ -498,7 +498,7 @@ function BBP.ArenaIndicator5(frame)
         return
     end
 
-    for i = 1, 3 do
+    for i = 1, 5 do
         if UnitIsUnit(frame.unit, "arena" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
             local specID = GetArenaOpponentSpec(i)
@@ -561,7 +561,7 @@ function BBP.PartyIndicator1(frame)
         return
     end
 
-    for i = 1, 3 do
+    for i = 1, 4 do
         if UnitIsUnit(frame.unit, "party" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
 
@@ -608,7 +608,7 @@ function BBP.PartyIndicator2(frame)
         return
     end
 
-    for i = 1, 3 do
+    for i = 1, 4 do
         if UnitIsUnit(frame.unit, "party" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
 
@@ -662,7 +662,7 @@ function BBP.PartyIndicator3(frame)
         return
     end
 
-    for i = 1, 3 do
+    for i = 1, 4 do
         if UnitIsUnit(frame.unit, "party" .. i) then
             local specID = BBP.GetSpecID(frame)
             local specName = specID and specIDToName[specID]
@@ -746,7 +746,7 @@ function BBP.PartyIndicator4(frame)
         return
     end
 
-    for i = 1, 3 do
+    for i = 1, 4 do
         if UnitIsUnit(frame.unit, "party" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
             local specID = BBP.GetSpecID(frame)
@@ -826,7 +826,7 @@ function BBP.PartyIndicator5(frame)
         return
     end
 
-    for i = 1, 3 do
+    for i = 1, 4 do
         if UnitIsUnit(frame.unit, "party" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
             local specID = BBP.GetSpecID(frame)
