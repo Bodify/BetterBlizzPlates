@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.5g
+## Prepatch/Midnight
+### Bugfix
+- Fix timing related issue with class color for Personal Resource Display.
+
 # BetterBlizzPlates 1.9.5f
 ## Prepatch/Midnight
 ### Tweak
