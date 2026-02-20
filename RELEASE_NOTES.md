@@ -1,3 +1,14 @@
+# BetterBlizzPlates 1.9.6
+## Retail/Midnight
+### Tweak
+- PRD: Hiding PRD ManaBar now pushes the Extra Bar (Stagger, Instanity etc) up to the healthbar.
+- PRD: Change Border Size setting now works on PRD again.
+### Bugfix
+- Fix Color Threat errors due to new restrictions. Now using less accurate threat API which is not secret.
+## TBC/MoP
+### Bugfix
+- Fix Arena ID/Spec only checking arena1-3 and not 4-5 for 5v5.
+
 # BetterBlizzPlates 1.9.5g
 ## Prepatch/Midnight
 ### Bugfix
