@@ -4480,43 +4480,31 @@ local function ChangeHealthbarBorderSize(frame)
             if BetterBlizzPlatesDB.nameplateMinScale == 1 then
                 frame.HealthBarsContainer.border:SetBorderSize()
             end
+            frame.HealthBarsContainer.border:UpdateSizes()
+            local mana = frame.PowerBar and frame.PowerBar.Border
+            if mana then
+                ApplyBorderSize(mana, BetterBlizzPlatesDB.nameplatePersonalBorderSize, 0.5)
+            end
             return
         end
 
         hooksecurefunc(frame.HealthBarsContainer.border, "UpdateSizes", function(self)
-            if frame:IsForbidden() or not frame.unit then return end
-
-            local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config
-            if not config then return end
-
-            local borderSize = config.nameplateBorderSize
+            if frame:IsForbidden() then return end
+            local borderSize = BetterBlizzPlatesDB.nameplatePersonalBorderSize
             local minPixels = 0.5
-            local unit = frame.unit
 
-            if UnitIsUnit("target", unit) then
-                borderSize = config.nameplateTargetBorderSize
-            elseif UnitIsUnit("player", unit) then
-                borderSize = config.nameplatePersonalBorderSize
-
-                local mana = ClassNameplateManaBarFrame and ClassNameplateManaBarFrame.Border
-                if mana then
-                    ApplyBorderSize(mana, borderSize, minPixels)
-                end
-            end
-
-            if BetterBlizzPlatesDB.castBarPixelBorder then
-                if frame.castBar.SetBorderSize then
-                    frame.castBar:SetBorderSize(borderSize)
-                end
-            end
-            if BetterBlizzPlatesDB.castBarIconPixelBorder then
-                if frame.castBarIconFrame.Icon.SetBorderSize then
-                    frame.castBarIconFrame.Icon:SetBorderSize(borderSize)
-                end
+            local mana = self.PowerBar and self.PowerBar.Border
+            if mana then
+                ApplyBorderSize(mana, borderSize, minPixels)
             end
 
             ApplyBorderSize(self, borderSize, minPixels)
         end)
+
+        local mana = frame.PowerBar and frame.PowerBar.Border
+        if mana then
+            ApplyBorderSize(mana, BetterBlizzPlatesDB.nameplatePersonalBorderSize, 0.5)
+        end
 
         frame.borderHooked = true
         frame.HealthBarsContainer.border:UpdateSizes()
@@ -7527,6 +7515,9 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 BBP.ColorPRD()
                 BBP.TexturePRD()
                 BBP.ResizePRD()
+                if db.changeNameplateBorderSize then
+                    ChangeHealthbarBorderSize(PersonalResourceDisplayFrame)
+                end
             end)
 
             if not db.cleanedScaleScale then

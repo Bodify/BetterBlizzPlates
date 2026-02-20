@@ -1159,9 +1159,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         local frame = np.UnitFrame
                         if frame then
                             frame.BetterBlizzPlates.config.nameplateBorderSize = value
-                            if frame.HealthBarsContainer.border then
-                                frame.HealthBarsContainer.border:UpdateSizes()
-                            end
+                            BBP.ChangeHealthbarBorderSize(frame)
                         end
                     end
                 elseif element == "nameplateTargetBorderSize" then
@@ -1169,18 +1167,13 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     local np, frame = BBP.GetSafeNameplate("target")
                     if frame then
                         frame.BetterBlizzPlates.config.nameplateTargetBorderSize = value
-                        if frame.HealthBarsContainer.border then
-                            frame.HealthBarsContainer.border:UpdateSizes()
-                        end
+                        BBP.ChangeHealthbarBorderSize(frame)
                     end
                 elseif element == "nameplatePersonalBorderSize" then
                     BetterBlizzPlatesDB.nameplatePersonalBorderSize = value
-                    local np, frame = BBP.GetSafeNameplate("player")
+                    local frame = PersonalResourceDisplayFrame
                     if frame then
-                        frame.BetterBlizzPlates.config.nameplatePersonalBorderSize = value
-                        if frame.HealthBarsContainer.border then
-                            frame.HealthBarsContainer.border:UpdateSizes()
-                        end
+                        BBP.ChangeHealthbarBorderSize(frame)
                     end
                 elseif element == "totemIndicatorDefaultCooldownTextSize" then
                     BetterBlizzPlatesDB.totemIndicatorDefaultCooldownTextSize = value
