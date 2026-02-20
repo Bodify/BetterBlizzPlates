@@ -5694,7 +5694,7 @@ local function guiGeneralTab()
 
     local nameplateFriendlyWidth = CreateSlider(BetterBlizzPlates, "Nameplate Width", 24, 300, 1, "nameplateFriendlyWidth")
     nameplateFriendlyWidth:SetPoint("TOPLEFT", friendlyNameScale, "BOTTOMLEFT", 0, -20)
-    CreateTooltipTwo(nameplateFriendlyWidth, "Friendly Nameplate Width", "Adjust the width of Friendly Nameplates.\n\nNote:\nDue to a Blizzard bug if you change this width to be different from your Enemy Nameplates then Mind Control/Duels/etc can cause the Nameplate to get stuck in the opposite width setting.\n\nYou can fix this manually by forcing a refresh of the Nameplate which can be done via looking away, or Alt+Z to hide/unhide UI quickly, or turning off/on Nameplates quickly with a keybind. |cff00c0ff#Blizzard")
+    CreateTooltipTwo(nameplateFriendlyWidth, "Friendly Nameplate Width", "Adjust the width of Friendly Nameplates.\n\nNote:\nBlizzard decided to remove the API to control different widths for Friendly/Enemy Nameplates in Midnight.\n\nBecause of this, since Friendly nameplates are restricted in PvE and cannot be changed much by addons, the nameplate width in PvE will be forced to be the same as Enemy Nameplates. |cff00c0ff#Blizzard")
 
     local nameplateFriendlyWidthResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     nameplateFriendlyWidthResetButton:SetText("Default")
