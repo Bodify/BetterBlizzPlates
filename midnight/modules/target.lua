@@ -377,6 +377,7 @@ function BBP.TargetResourceUpdater()
         else
             if BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf then
                 if PersonalResourceDisplayFrame then
+                    local hideResource = BetterBlizzPlatesDB.hideResourceFrame
                     local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
                     prdClassFrame:SetScale(nameplateResourceScale)
                     prdClassFrame:SetAlpha(1)
@@ -386,6 +387,10 @@ function BBP.TargetResourceUpdater()
                     end
 
                     local padding = PersonalResourceDisplayFrame.ClassFrameContainer.yOffset or GetClassPadding(className)
+                    padding = padding + 52
+                    padding = padding + GetForcedClassPadding(className)
+                    padding = padding + (BBP.altBarMovedUp and 15 or 0)
+                    prdClassFrame:SetAlpha(hideResource and 0 or 1)
                     RepositionClassFrame("TOP", PersonalResourceDisplayFrame, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
                 else
                     prdClassFrame:SetAlpha(0)
@@ -407,6 +412,7 @@ function BBP.TargetResourceUpdater()
             local padding = PersonalResourceDisplayFrame.ClassFrameContainer.yOffset or GetClassPadding(className)
             padding = padding + 52
             padding = padding + GetForcedClassPadding(className)
+            padding = padding + (BBP.altBarMovedUp and 15 or 0)
             prdClassFrame:SetAlpha(hideResource and 0 or 1)
             RepositionClassFrame("TOP", PersonalResourceDisplayFrame, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
         else

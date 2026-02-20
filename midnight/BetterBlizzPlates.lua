@@ -2326,6 +2326,39 @@ function BBP.PersonalBarSettings()
     -- Handle Extra Frames (Ebon Might and Brewmaster)
     SetFrameAlpha(PersonalResourceDisplayFrame.AlternatePowerBar, db.hidePersonalBarExtraFrame, "ClassNameplateEbonMightBarFrameHidden")
     SetFrameAlpha(PersonalResourceDisplayFrame.AlternatePowerBar, db.hidePersonalBarExtraFrame, "ClassNameplateBrewmasterBarFrameHidden")
+
+    -- Move AlternatePowerBar up when mana bar is hidden but alternate bar is visible
+    local altBar = PersonalResourceDisplayFrame.AlternatePowerBar
+    if altBar and db.hidePersonalBarManaFrame and not db.hidePersonalBarExtraFrame then
+        if not altBar.bbpSetPointHooked then
+            hooksecurefunc(altBar, "SetPoint", function(self)
+                if self.bbpMovingPRD then return end
+                if BBP.altBarMovedUp then
+                    self.bbpMovingPRD = true
+                    self:ClearAllPoints()
+                    self:SetPoint("TOP", PersonalResourceDisplayFrame.HealthBarsContainer, "BOTTOM", 0, 0)
+                    self.bbpMovingPRD = nil
+                end
+            end)
+            altBar.bbpSetPointHooked = true
+        end
+
+        if db.hidePersonalBarManaFrame and not db.hidePersonalBarExtraFrame then
+            if not BBP.altBarMovedUp then
+                BBP.altBarMovedUp = true
+                altBar.bbpMovingPRD = true
+                altBar:ClearAllPoints()
+                altBar:SetPoint("TOP", PersonalResourceDisplayFrame.HealthBarsContainer, "BOTTOM", 0, 0)
+                altBar.bbpMovingPRD = nil
+            end
+        elseif BBP.altBarMovedUp then
+            BBP.altBarMovedUp = nil
+            altBar.bbpMovingPRD = true
+            altBar:ClearAllPoints()
+            altBar:SetPoint("TOP", PersonalResourceDisplayFrame.HealthBarsContainer, "BOTTOM", 0, -15)
+            altBar.bbpMovingPRD = nil
+        end
+    end
 end
 
 --#################################################################################################
@@ -3240,7 +3273,8 @@ function BBP.ColorThreat(frame)
     if combatOnly then return end
 
 
-    local isTanking, threatStatus = UnitDetailedThreatSituation("player", frame.unit)
+    local threatStatus = UnitThreatSituation("player", frame.unit)
+    local isTanking = threatStatus and threatStatus >= 2
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     local r, g, b
 
@@ -3248,31 +3282,29 @@ function BBP.ColorThreat(frame)
         -- Default color: no aggro
         r, g, b = unpack(BetterBlizzPlatesDB.tankNoAggroColorRGB)
 
-        if isTanking and threatStatus then
+        if isTanking then
             if threatStatus == 3 then
                 if config.npcHealthbarColor then
                     return
                 end
-                -- Full threat
+                -- Full threat (primary target, highest threat)
                 r, g, b = unpack(BetterBlizzPlatesDB.tankFullAggroColorRGB)
             elseif threatStatus == 2 then
-                -- Losing threat
+                -- Losing threat (primary target, but another unit has higher threat)
                 r, g, b = unpack(BetterBlizzPlatesDB.tankLosingAggroColorRGB)
-            else
-                r, g, b = GetThreatStatusColor(threatStatus)
             end
         elseif threatStatus then
-            -- Not tanking — check if an offtank or a pet has full aggro
+            -- Not tanking (status 0 or 1) — check if an offtank or a pet has full aggro
             local targetUnit = frame.unit.."target"
             if not UnitIsPlayer(targetUnit) then
-                local offTanking, otherThreatStatus = UnitDetailedThreatSituation(targetUnit, frame.unit)
-                if offTanking and otherThreatStatus and otherThreatStatus >= 2 then
+                local otherThreatStatus = UnitThreatSituation(targetUnit, frame.unit)
+                if otherThreatStatus and otherThreatStatus >= 2 then
                     r, g, b = unpack(BetterBlizzPlatesDB.tankOffTankAggroColorRGB)
                 end
             else
                 for _, unit in ipairs(offTanks) do
-                    local offTanking, otherThreatStatus = UnitDetailedThreatSituation(unit, frame.unit)
-                    if offTanking and otherThreatStatus and otherThreatStatus >= 2 then
+                    local otherThreatStatus = UnitThreatSituation(unit, frame.unit)
+                    if otherThreatStatus and otherThreatStatus >= 2 then
                         r, g, b = unpack(BetterBlizzPlatesDB.tankOffTankAggroColorRGB)
                         break
                     end
@@ -4484,6 +4516,18 @@ local function ChangeHealthbarBorderSize(frame)
             local mana = frame.PowerBar and frame.PowerBar.Border
             if mana then
                 ApplyBorderSize(mana, BetterBlizzPlatesDB.nameplatePersonalBorderSize, 0.5)
+                if not BetterBlizzPlatesDB.hidePersonalBarManaFrame then
+                    PersonalResourceDisplayFrame.HealthBarsContainer.border.Bottom:Hide()
+                    PersonalResourceDisplayFrame.HealthBarsContainer.border.Bottom:SetAlpha(0)
+                end
+            end
+            local altBar = frame.AlternatePowerBar and frame.AlternatePowerBar.Border
+            if altBar then
+                ApplyBorderSize(altBar, BetterBlizzPlatesDB.nameplatePersonalBorderSize, 0.5)
+                mana.Bottom:Hide()
+                mana.Bottom:SetAlpha(0)
+                PersonalResourceDisplayFrame.HealthBarsContainer.border.Bottom:Hide()
+                PersonalResourceDisplayFrame.HealthBarsContainer.border.Bottom:SetAlpha(0)
             end
             return
         end
@@ -4504,7 +4548,22 @@ local function ChangeHealthbarBorderSize(frame)
         local mana = frame.PowerBar and frame.PowerBar.Border
         if mana then
             ApplyBorderSize(mana, BetterBlizzPlatesDB.nameplatePersonalBorderSize, 0.5)
+            if not BetterBlizzPlatesDB.hidePersonalBarManaFrame then
+                PersonalResourceDisplayFrame.HealthBarsContainer.border.Bottom:Hide()
+                PersonalResourceDisplayFrame.HealthBarsContainer.border.Bottom:SetAlpha(0)
+            end
         end
+
+        local altBar = frame.AlternatePowerBar and frame.AlternatePowerBar.Border
+        if altBar then
+            ApplyBorderSize(altBar, BetterBlizzPlatesDB.nameplatePersonalBorderSize, 0.5)
+            mana.Bottom:Hide()
+            mana.Bottom:SetAlpha(0)
+            PersonalResourceDisplayFrame.HealthBarsContainer.border.Bottom:Hide()
+            PersonalResourceDisplayFrame.HealthBarsContainer.border.Bottom:SetAlpha(0)
+        end
+
+        PersonalResourceDisplayFrame:EnableMouse(true)
 
         frame.borderHooked = true
         frame.HealthBarsContainer.border:UpdateSizes()
