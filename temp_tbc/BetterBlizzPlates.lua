@@ -3234,7 +3234,7 @@ function BBP.ColorThreat(frame)
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     local r, g, b
 
-    if BBP.isRoleTank then
+    if BetterBlizzPlatesDB.useTankColors or (BBP.isRoleTank and not BetterBlizzPlatesDB.disableAutoTankDetection) then
         -- Default color: no aggro
         r, g, b = unpack(BetterBlizzPlatesDB.tankNoAggroColorRGB)
 

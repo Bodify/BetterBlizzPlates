@@ -7476,6 +7476,33 @@ local function guiPositionAndScale()
     anchorThreatColor.enemyColorThreatHideSolo:SetPoint("TOPLEFT", anchorThreatColor.enemyColorThreatCombatOnlyPlayer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorThreatColor.enemyColorThreatHideSolo, "Turn off while Solo", "Don't show threat colors when I am not in a group.")
 
+    anchorThreatColor.disableAutoTankDetection = CreateCheckbox("disableAutoTankDetection", "Don't use automatic Tank detection", contentFrame)
+    anchorThreatColor.disableAutoTankDetection:SetPoint("TOPLEFT", anchorThreatColor.enemyColorThreatHideSolo, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorThreatColor.disableAutoTankDetection, "Disable Auto Tank Detection", "Manual control over whether you are considered a tank or not.")
+
+    anchorThreatColor.useTankColors = CreateCheckbox("useTankColors", "Use Tank Colors", contentFrame)
+    anchorThreatColor.useTankColors:SetPoint("TOPLEFT", anchorThreatColor.disableAutoTankDetection, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorThreatColor.useTankColors, "Use Tank Colors", "Force the use of Tank colors.\n\nIf unchecked, DPS/Heal colors will be used.")
+
+    local function UpdateTankColorCheckboxState()
+        if anchorThreatColor.disableAutoTankDetection:GetChecked() then
+            anchorThreatColor.useTankColors:Enable()
+        else
+            anchorThreatColor.useTankColors:Disable()
+        end
+    end
+
+    anchorThreatColor.disableAutoTankDetection:HookScript("OnClick", function()
+        StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        UpdateTankColorCheckboxState()
+    end)
+
+    anchorThreatColor.useTankColors:HookScript("OnClick", function()
+        StaticPopup_Show("BBP_CONFIRM_RELOAD")
+    end)
+
+    UpdateTankColorCheckboxState()
+
 
     ----
 
