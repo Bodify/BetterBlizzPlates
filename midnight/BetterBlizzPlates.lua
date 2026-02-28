@@ -1734,7 +1734,7 @@ function BBP.ApplyNameplateWidth()
         local enemyWidth   = BetterBlizzPlatesDB.nameplateEnemyWidth or 172.5
         local friendlyWidth = BetterBlizzPlatesDB.nameplateFriendlyWidth or 172.5
 
-        local widestBar = math.max(enemyWidth, friendlyWidth)
+        local widestBar = enemyWidth--math.max(enemyWidth, friendlyWidth) -- prefer friendly nameplates, idk if valid to consider friendly
         local healthBarHeight = BetterBlizzPlatesDB.nameplateGeneralHeight or 65
 
         -- Set the nameplate size
