@@ -305,15 +305,6 @@ function BBP.UpdateNameplateResourcePositionForCasting(nameplate, bypass)
         local isCasting = UnitCastingInfo("target") or UnitChannelInfo("target")
         local classOffset = classResourceYOffsets[playerClass] or 0
 
-        if playerClass == "ROGUE" then
-            local maxComboPoints = RogueComboPointBarFrame.maxUsablePoints
-            if maxComboPoints == 7 then
-                xPos = xPos + 20
-            elseif maxComboPoints == 6 then
-                xPos = xPos + 10
-            end
-        end
-
         -- Adjust position based on casting state and setting
         if bypass then
             RepositionClassFrame("TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset + classOffset)
