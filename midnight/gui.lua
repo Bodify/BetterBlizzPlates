@@ -1788,6 +1788,7 @@ local CLASS_COLORS = {
     STARTER = "|cff32cd32",
     BLITZ = "|cffff8000",
     MYTHIC = "|cff7dd1c2",
+    PREMIDNIGHT = "|cffbbc3ff",
 }
 
 local CLASS_ICONS = {
@@ -1807,6 +1808,7 @@ local CLASS_ICONS = {
     STARTER = "newplayerchat-chaticon-newcomer",
     BLITZ = "questlog-questtypeicon-pvp",
     MYTHIC = "worldquest-icon-dungeon",
+    PREMIDNIGHT = "questlog-questtypeicon-clockorange",
 }
 
 -- Function to show the confirmation popup with dynamic profile information
@@ -1857,9 +1859,11 @@ local function CreateClassButton(parent, class, name, twitchName, onClickFunc)
     elseif class == "BLITZ" then
         CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), "A more advanced profile enabling a few more settings and customizing things a bit more.\n\nGreat for Battlegrounds (and Arenas) with Class Icons showing Healers, Tanks and Battleground Objectives.", nil, "ANCHOR_TOP")
     elseif class == "MYTHIC" then
-        CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), "A great, well-rounded profile made by |cffc79c6eJovelo|r that enhances the default Blizzard nameplates.\n\nGreat for all types of content with Mythic+ Season 3 NPC nameplate colors included.", nil, "ANCHOR_TOP")
+        CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), "A tweaked version of the Midnight nameplates with NPC colors enabled.", nil, "ANCHOR_TOP")
     elseif name == "Bodify" then
         CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), "My personal profile from a while ago. Meant for Arenas only. Possible I'd make some tweaks if I was actively playing still.", nil, "ANCHOR_TOP")
+    elseif name == "Pre-Midnight" then
+        CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), "A very basic profile that aims to be similar to how the nameplates looked like before Midnight. A few adjustments that can be tuned later on.", nil, "ANCHOR_TOP")
     else
         CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), string.format("Enable all of %s's profile settings.", name), string.format("www.twitch.tv/%s", twitchName), "ANCHOR_TOP")
     end
@@ -4818,11 +4822,11 @@ local function guiProfiles()
     frame.coreText:SetText("Core")
 
     frame.streamerText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    frame.streamerText:SetPoint("TOP", frame.coreText, "BOTTOM", 0, -110)
+    frame.streamerText:SetPoint("TOP", frame.coreText, "BOTTOM", 0, -130)
     frame.streamerText:SetText("Streamers")
 
     frame.infoText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 100)
+    frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 90)
     frame.infoText:SetText("If you are missing and want to be here let me know :)")
     frame.infoText:SetWidth(100)
 
@@ -6244,102 +6248,23 @@ local function guiGeneralTab()
     partySpecScale:SetPoint("TOPLEFT", partyIDScale, "BOTTOMLEFT", 0, -11)
     CreateTooltipTwo(partySpecScale, "Arena Spec Size", "Size of the friendly spec name text on top of nameplate during arena.")
 
-
     local btnGap = -2
-    local starterButton = CreateClassButton(BetterBlizzPlates, "STARTER", "Starter", nil, function()
-        ShowProfileConfirmation("Starter", "STARTER", BBP.StarterProfile, "|cff808080(If you want to completely reset BBP there\nis a button in Advanced Settings)|r\n\n")
-    end)
-    starterButton:SetPoint("TOP", profilesFrame.coreText, "BOTTOM", 0, -3)
+    local lastCoreButton = profilesFrame.coreText
+    local lastStreamerButton = profilesFrame.streamerText
 
-    local blitzButton = CreateClassButton(BetterBlizzPlates, "BLITZ", "Blitz", nil, function()
-        ShowProfileConfirmation("Blitz", "BLITZ", BBP.BlitzProfile)
-    end)
-    blitzButton:SetPoint("TOP", starterButton, "BOTTOM", 0, btnGap)
-
-    local mythicButton = CreateClassButton(BetterBlizzPlates, "MYTHIC", "Mythic", nil, function()
-        ShowProfileConfirmation("Mythic", "MYTHIC", BBP.MythicProfile)
-    end)
-    mythicButton:SetPoint("TOP", blitzButton, "BOTTOM", 0, btnGap)
-
-    local bodifyButton = CreateClassButton(BetterBlizzPlates, "MAGE", "Bodify", "bodify", function()
-        ShowProfileConfirmation("Bodify", "MAGE", BBP.BodifyProfile)
-    end)
-    bodifyButton:SetPoint("TOP", mythicButton, "BOTTOM", 0, btnGap)
-
-    local aeghisButton = CreateClassButton(BetterBlizzPlates, "MAGE", "Aeghis", "aeghis", function()
-        ShowProfileConfirmation("Aeghis", "MAGE", BBP.AeghisProfile)
-    end)
-    aeghisButton:SetPoint("TOP", profilesFrame.streamerText, "BOTTOM", 0, -3)
-
-    local aswogButton = CreateClassButton(BetterBlizzPlates, "PALADIN", "Aswog", "aswog", function()
-        ShowProfileConfirmation("Aswog", "PALADIN", BBP.AswogProfile)
-    end)
-    aswogButton:SetPoint("TOP", aeghisButton, "BOTTOM", 0, btnGap)
-
-    local bualockButton = CreateClassButton(BetterBlizzPlates, "WARLOCK", "Bualock", "bualock", function()
-        ShowProfileConfirmation("Bualock", "WARLOCK", BBP.BualockProfile)
-    end)
-    bualockButton:SetPoint("TOP", aswogButton, "BOTTOM", 0, btnGap)
-
-    local dailyShuffleButton = CreateClassButton(BetterBlizzPlates, "HUNTER", "DailyShuffle", "dailyshuffle", function()
-        ShowProfileConfirmation("DailyShuffle", "HUNTER", BBP.DailyShuffleProfile)
-    end)
-    dailyShuffleButton:SetPoint("TOP", bualockButton, "BOTTOM", 0, btnGap)
-
-    local kalvishButton = CreateClassButton(BetterBlizzPlates, "ROGUE", "Kalvish", "kalvish", function()
-        ShowProfileConfirmation("Kalvish", "ROGUE", BBP.KalvishProfile)
-    end)
-    kalvishButton:SetPoint("TOP", dailyShuffleButton, "BOTTOM", 0, btnGap)
-
-    local magnuszButton = CreateClassButton(BetterBlizzPlates, "WARRIOR", "Magnusz", "magnusz", function()
-        ShowProfileConfirmation("Magnusz", "WARRIOR", BBP.MagnuszProfile)
-    end)
-    magnuszButton:SetPoint("TOP", kalvishButton, "BOTTOM", 0, btnGap)
-
-    local mesButton = CreateClassButton(BetterBlizzPlates, "DEATHKNIGHT", "Mes", "notmes", function()
-        ShowProfileConfirmation("Mes", "DEATHKNIGHT", BBP.MesProfile)
-    end)
-    mesButton:SetPoint("TOP", magnuszButton, "BOTTOM", 0, btnGap)
-
-    local mmarkersButton = CreateClassButton(BetterBlizzPlates, "DRUID", "Mmarkers", "mmarkers", function()
-        ShowProfileConfirmation("Mmarkers", "DRUID", BBP.MmarkersProfile)
-    end)
-    mmarkersButton:SetPoint("TOP", mesButton, "BOTTOM", 0, btnGap)
-
-    local mysticallButton = CreateClassButton(BetterBlizzPlates, "MONK", "Mysticall", "mysticallx", function()
-        ShowProfileConfirmation("Mysticall", "MONK", BBP.MysticallProfile)
-    end)
-    mysticallButton:SetPoint("TOP", mmarkersButton, "BOTTOM", 0, btnGap)
-
-    local nahjButton = CreateClassButton(BetterBlizzPlates, "ROGUE", "Nahj", "nahj", function()
-        ShowProfileConfirmation("Nahj", "ROGUE", BBP.NahjProfile)
-    end)
-    nahjButton:SetPoint("TOP", mysticallButton, "BOTTOM", 0, btnGap)
-
-    local pinkteddypButton = CreateClassButton(BetterBlizzPlates, "PALADIN", "Pinkteddyp", "pinkteddyp", function()
-        ShowProfileConfirmation("Pinkteddyp", "PALADIN", BBP.PinkteddypProfile)
-    end)
-    pinkteddypButton:SetPoint("TOP", nahjButton, "BOTTOM", 0, btnGap)
-
-    local pmakeButton = CreateClassButton(BetterBlizzPlates, "MAGE", "Pmake", "pmakewow", function()
-        ShowProfileConfirmation("Pmake", "MAGE", BBP.PmakeProfile)
-    end)
-    pmakeButton:SetPoint("TOP", pinkteddypButton, "BOTTOM", 0, btnGap)
-
-    local snupyButton = CreateClassButton(BetterBlizzPlates, "DRUID", "Snupy", "snupy", function()
-        ShowProfileConfirmation("Snupy", "DRUID", BBP.SnupyProfile)
-    end)
-    snupyButton:SetPoint("TOP", pmakeButton, "BOTTOM", 0, btnGap)
-
-    local venrukiButton = CreateClassButton(BetterBlizzPlates, "MAGE", "Venruki", "venruki", function()
-        ShowProfileConfirmation("Venruki", "MAGE", BBP.VenrukiProfile)
-    end)
-    venrukiButton:SetPoint("TOP", snupyButton, "BOTTOM", 0, btnGap)
-
-    local wolfButton = CreateClassButton(BetterBlizzPlates, "DRUID", "Wolf", "wlfzx", function()
-        ShowProfileConfirmation("Wolf", "DRUID", BBP.WolfProfile)
-    end)
-    wolfButton:SetPoint("TOP", venrukiButton, "BOTTOM", 0, btnGap)
+    for _, profile in ipairs(BBP.ProfileData) do
+        local additionalNote = profile.name == "Starter" and "|cff808080(If you want to completely reset BBP there\nis a button in Advanced Settings)|r\n\n" or nil
+        local button = CreateClassButton(BetterBlizzPlates, profile.class, profile.name, profile.twitchName, function()
+            ShowProfileConfirmation(profile.name, profile.class, function() BBP.ApplyProfile(profile.name) end, additionalNote)
+        end)
+        if profile.core then
+            button:SetPoint("TOP", lastCoreButton, "BOTTOM", 0, lastCoreButton == profilesFrame.coreText and -3 or btnGap)
+            lastCoreButton = button
+        else
+            button:SetPoint("TOP", lastStreamerButton, "BOTTOM", 0, lastStreamerButton == profilesFrame.streamerText and -3 or btnGap)
+            lastStreamerButton = button
+        end
+    end
 
     local resetBBPButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     resetBBPButton:SetText("Full Reset")
@@ -12831,93 +12756,43 @@ function BBP.CreateIntroMessageWindow()
     orText:SetText("OR")
     orText:SetJustifyH("CENTER")
 
-    -- Column 1
-    local aeghisButton = CreateClassButton(BBP.IntroMessageWindow, "MAGE", "Aeghis", "aeghis", function()
-        ShowProfileConfirmation("Aeghis", "MAGE", BBP.AeghisProfile)
-    end)
-    aeghisButton:SetPoint("TOP", orText, "BOTTOM", -114, -10)
+    local columnOffsets = { -114, 0, 114 }
+    local columnAnchors = { orText, orText, orText }
+    local columnFirstRow = { true, true, true }
+    local colIndex = 1
+    local lastCol1Button
 
-    local aswogButton = CreateClassButton(BBP.IntroMessageWindow, "PALADIN", "Aswog", "aswog", function()
-        ShowProfileConfirmation("Aswog", "PALADIN", BBP.AswogProfile)
-    end)
-    aswogButton:SetPoint("TOP", aeghisButton, "BOTTOM", 0, btnGap)
+    for _, profile in ipairs(BBP.ProfileData) do
+        if not profile.core then
+            local button = CreateClassButton(BBP.IntroMessageWindow, profile.class, profile.name, profile.twitchName, function()
+                ShowProfileConfirmation(profile.name, profile.class, function() BBP.ApplyProfile(profile.name) end)
+            end)
 
-    local bualockButton = CreateClassButton(BBP.IntroMessageWindow, "WARLOCK", "Bualock", "bualock", function()
-        ShowProfileConfirmation("Bualock", "WARLOCK", BBP.BualockProfile)
-    end)
-    bualockButton:SetPoint("TOP", aswogButton, "BOTTOM", 0, btnGap)
+            if columnFirstRow[colIndex] then
+                button:SetPoint("TOP", columnAnchors[colIndex], "BOTTOM", columnOffsets[colIndex], -10)
+                columnFirstRow[colIndex] = false
+            else
+                button:SetPoint("TOP", columnAnchors[colIndex], "BOTTOM", 0, btnGap)
+            end
 
-    local dailyShuffleButton = CreateClassButton(BBP.IntroMessageWindow, "HUNTER", "DailyShuffle", "dailyshuffle", function()
-        ShowProfileConfirmation("DailyShuffle", "HUNTER", BBP.DailyShuffleProfile)
-    end)
-    dailyShuffleButton:SetPoint("TOP", bualockButton, "BOTTOM", 0, btnGap)
-
-    local kalvishButton = CreateClassButton(BBP.IntroMessageWindow, "ROGUE", "Kalvish", "kalvish", function()
-        ShowProfileConfirmation("Kalvish", "ROGUE", BBP.KalvishProfile)
-    end)
-    kalvishButton:SetPoint("TOP", dailyShuffleButton, "BOTTOM", 0, btnGap)
-
-    -- Column 2
-    local magnuszButton = CreateClassButton(BBP.IntroMessageWindow, "WARRIOR", "Magnusz", "magnusz", function()
-        ShowProfileConfirmation("Magnusz", "WARRIOR", BBP.MagnuszProfile)
-    end)
-    magnuszButton:SetPoint("TOP", orText, "BOTTOM", 0, -10)
-
-    local mesButton = CreateClassButton(BBP.IntroMessageWindow, "DEATHKNIGHT", "Mes", "notmes", function()
-        ShowProfileConfirmation("Mes", "DEATHKNIGHT", BBP.MesProfile)
-    end)
-    mesButton:SetPoint("TOP", magnuszButton, "BOTTOM", 0, btnGap)
-
-    local mmarkersButton = CreateClassButton(BBP.IntroMessageWindow, "DRUID", "Mmarkers", "mmarkers", function()
-        ShowProfileConfirmation("Mmarkers", "DRUID", BBP.MmarkersProfile)
-    end)
-    mmarkersButton:SetPoint("TOP", mesButton, "BOTTOM", 0, btnGap)
-
-    local mysticallButton = CreateClassButton(BBP.IntroMessageWindow, "MONK", "Mysticall", "mysticallx", function()
-        ShowProfileConfirmation("Mysticall", "MONK", BBP.MysticallProfile)
-    end)
-    mysticallButton:SetPoint("TOP", mmarkersButton, "BOTTOM", 0, btnGap)
-
-    local nahjButton = CreateClassButton(BBP.IntroMessageWindow, "ROGUE", "Nahj", "nahj", function()
-        ShowProfileConfirmation("Nahj", "ROGUE", BBP.NahjProfile)
-    end)
-    nahjButton:SetPoint("TOP", mysticallButton, "BOTTOM", 0, btnGap)
-
-    -- Column 3
-    local pinkteddypButton = CreateClassButton(BBP.IntroMessageWindow, "PALADIN", "Pinkteddyp", "pinkteddyp", function()
-        ShowProfileConfirmation("Pinkteddyp", "PALADIN", BBP.PinkteddypProfile)
-    end)
-    pinkteddypButton:SetPoint("TOP", orText, "BOTTOM", 114, -10)
-
-    local pmakeButton = CreateClassButton(BBP.IntroMessageWindow, "MAGE", "Pmake", "pmakewow", function()
-        ShowProfileConfirmation("Pmake", "MAGE", BBP.PmakeProfile)
-    end)
-    pmakeButton:SetPoint("TOP", pinkteddypButton, "BOTTOM", 0, btnGap)
-
-    local snupyButton = CreateClassButton(BBP.IntroMessageWindow, "DRUID", "Snupy", "snupy", function()
-        ShowProfileConfirmation("Snupy", "DRUID", BBP.SnupyProfile)
-    end)
-    snupyButton:SetPoint("TOP", pmakeButton, "BOTTOM", 0, btnGap)
-
-    local venrukiButton = CreateClassButton(BBP.IntroMessageWindow, "MAGE", "Venruki", "venruki", function()
-        ShowProfileConfirmation("Venruki", "MAGE", BBP.VenrukiProfile)
-    end)
-    venrukiButton:SetPoint("TOP", snupyButton, "BOTTOM", 0, btnGap)
-
-    local wolfButton = CreateClassButton(BBP.IntroMessageWindow, "DRUID", "Wolf", "wlfzx", function()
-        ShowProfileConfirmation("Wolf", "DRUID", BBP.WolfProfile)
-    end)
-    wolfButton:SetPoint("TOP", venrukiButton, "BOTTOM", 0, btnGap)
+            columnAnchors[colIndex] = button
+            if colIndex == 1 then
+                lastCol1Button = button
+            end
+            colIndex = colIndex + 1
+            if colIndex > 3 then colIndex = 1 end
+        end
+    end
 
     local orText2 = BBP.IntroMessageWindow:CreateFontString(nil, "OVERLAY", "GameFontNormalMed2")
-    orText2:SetPoint("CENTER", nahjButton, "BOTTOM", 0, -20)
+    orText2:SetPoint("CENTER", lastCol1Button, "BOTTOM", 114, -20)
     orText2:SetText("OR")
     orText2:SetJustifyH("CENTER")
 
     local buttonLast = CreateFrame("Button", nil, BBP.IntroMessageWindow, "GameMenuButtonTemplate")
     buttonLast:SetSize(btnWidth, btnHeight)
     buttonLast:SetText("Exit, No Profile.")
-    buttonLast:SetPoint("TOP", nahjButton, "BOTTOM", 0, -40)
+    buttonLast:SetPoint("TOP", lastCol1Button, "BOTTOM", 114, -40)
     buttonLast:SetNormalFontObject("GameFontNormal")
     buttonLast:SetHighlightFontObject("GameFontHighlight")
     buttonLast:SetScript("OnClick", function()

@@ -1,3 +1,11 @@
+# BetterBlizzPlates 1.9.7d
+## Mindight
+### Tweak
+- Yet another nameplate font size tweak. Still not 100% there, need more time to figure out which exact moment to tweak it.
+- Update Aeghis, Aswog, Bualock, Kalvish, Pinkteddyp, Pmake, Snupy, Venruki & Wolf
+### Bugfix
+- Fix enemy nameplate width being wrong and when friendly width had a higher value.
+
 # BetterBlizzPlates 1.9.7c
 ## Midnight
 ### Tweak
