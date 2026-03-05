@@ -8,6 +8,7 @@
 - Remove rogue combo points offset cuz it was too much now.
 - Fix some gui issues with list search and cleaning names of strings removing the brackets etc causing you to not be able to add for example "Fearie Fire (Feral)"
 - Fix scaling issue of arena names (arenaID / spec name)
+- Fix a secret error in Threat Color API
 
 # BetterBlizzPlates 1.9.7d
 ## Mindight
