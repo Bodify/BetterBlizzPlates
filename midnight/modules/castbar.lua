@@ -33,7 +33,6 @@ local playerKick = nil
 
 -- Interrupt ready status
 BBP.interruptReady = true
-BBP.interruptStatusColorOn = false
 
 -- Recheck interrupt spells when lock resummons/sacrifices pet
 local petSummonSpells = {
@@ -336,13 +335,23 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         if castBarTexture then
             castBarTexture:SetDesaturated(true)
         end
-        if BBP.interruptStatusColorOn and not BBP.interruptReady then
-            castBarTexture:SetVertexColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
-        elseif castBar.channeling then
+        if db.castBarRecolorInterrupt and not BBP.interruptReady then
             if notInterruptible ~= nil then
+                local unIntColor = castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }
                 castBarTexture:SetVertexColorFromBoolean(
                     notInterruptible,
-                    CreateColor(unpack(castBarNonInterruptibleColor)),
+                    CreateColor(unpack(unIntColor)),
+                    CreateColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+                )
+            else
+                castBarTexture:SetVertexColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+            end
+        elseif castBar.channeling then
+            if notInterruptible ~= nil then
+                local unIntColor = castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }
+                castBarTexture:SetVertexColorFromBoolean(
+                    notInterruptible,
+                    CreateColor(unpack(unIntColor)),
                     CreateColor(unpack(castBarChanneledColor))
                 )
             else
@@ -350,9 +359,10 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
             end
         elseif castBar.casting then
             if notInterruptible ~= nil then
+                local unIntColor = castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }
                 castBarTexture:SetVertexColorFromBoolean(
                     notInterruptible,
-                    CreateColor(unpack(castBarNonInterruptibleColor)),
+                    CreateColor(unpack(unIntColor)),
                     CreateColor(unpack(castBarCastColor))
                 )
             else
@@ -368,8 +378,16 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
             castBar:SetStatusBarColor(1, 0, 0, 1)
         end
     else
-        if BBP.interruptStatusColorOn and not BBP.interruptReady then
-            castBarTexture:SetVertexColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+        if db.castBarRecolorInterrupt and not BBP.interruptReady then
+            if notInterruptible ~= nil then
+                castBarTexture:SetVertexColorFromBoolean(
+                    notInterruptible,
+                    CreateColor(1,1,1,1),
+                    CreateColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+                )
+            else
+                castBarTexture:SetVertexColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+            end
         else
             castBarTexture:SetVertexColor(1,1,1)
         end
@@ -483,25 +501,6 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         castBar:SetFrameStrata("MEDIUM")
         castBar.oldParent = nil
     end
-
-    local castBarRecolorInterrupt = db.castBarRecolorInterrupt
-
-    if castBarRecolorInterrupt then
-        BBP.interruptStatusColorOn = true
-        if (casting or channeling) then
-            local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unitToken)
-            if not isFriend then
-                if not BBP.interruptReady then
-                    if castBarTexture then
-                        castBarTexture:SetDesaturated(true)
-                    end
-                    castBar:SetStatusBarColor(unpack(db.castBarNoInterruptColor or { 0.7, 0.7, 0.7, 1 }))
-                end
-            end
-        end
-    else
-        BBP.interruptStatusColorOn = false
-    end
 end
 
 
@@ -527,7 +526,7 @@ function BBP.HideCastbar(frame, unitToken)
     if UnitCastingInfo(unitToken) then
         spellName, _, _, _, _, _, _, notInterruptible, spellID = UnitCastingInfo(unitToken)
     elseif UnitChannelInfo(unitToken) then
-        spellName, _, _, _, _, _, _, notInterruptible, spellID = UnitChannelInfo(unitToken)
+        spellName, _, _, _, _, _, notInterruptible, spellID = UnitChannelInfo(unitToken)
     end
 
     local isCasting = spellName
