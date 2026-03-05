@@ -434,7 +434,9 @@ function BBP.ArenaIndicator1(frame)
     else
         frame.arenaNumberText:SetTextColor(1, 1, 0)
     end
+    frame.arenaNumberText:SetIgnoreParentScale(false)
     frame.arenaNumberText:SetScale(arenaIDScale)
+    frame.arenaNumberText:SetIgnoreParentScale(true)
 
     if idCircle then
         addIdCircle(frame, idx)
@@ -468,7 +470,9 @@ function BBP.ArenaIndicator2(frame)
     else
         frame.arenaNumberText:SetTextColor(1, 1, 0)
     end
+    frame.arenaNumberText:SetIgnoreParentScale(false)
     frame.arenaNumberText:SetScale(arenaIDScale)
+    frame.arenaNumberText:SetIgnoreParentScale(true)
     frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
 
     if idCircle then
@@ -515,7 +519,9 @@ function BBP.ArenaIndicator3(frame)
     end
 
     frame.specNameText:SetTextColor(r, g, b, 1)
+    frame.specNameText:SetIgnoreParentScale(false)
     frame.specNameText:SetScale(arenaSpecScale)
+    frame.specNameText:SetIgnoreParentScale(true)
     frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 end
 
@@ -565,7 +571,9 @@ function BBP.ArenaIndicator4(frame)
         frame.specNameText:SetText("Fistweaver")
     end
     frame.specNameText:SetTextColor(r, g, b, 1)
+    frame.specNameText:SetIgnoreParentScale(false)
     frame.specNameText:SetScale(arenaSpecScale)
+    frame.specNameText:SetIgnoreParentScale(true)
     frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 
     frame.arenaNumberText:SetText(idx)
@@ -574,7 +582,9 @@ function BBP.ArenaIndicator4(frame)
     else
         frame.arenaNumberText:SetTextColor(1, 1, 0)
     end
+    frame.arenaNumberText:SetIgnoreParentScale(false)
     frame.arenaNumberText:SetScale(arenaIDScale)
+    frame.arenaNumberText:SetIgnoreParentScale(true)
     frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos - 1)
 
     if idCircle then
@@ -614,7 +624,9 @@ function BBP.ArenaIndicator5(frame)
     frame.name:SetAlpha(0)
     frame.specNameText:SetText(specName .. " " .. idx)
     frame.specNameText:SetTextColor(r, g, b, 1)
+    frame.specNameText:SetIgnoreParentScale(false)
     frame.specNameText:SetScale(arenaSpecScale)
+    frame.specNameText:SetIgnoreParentScale(true)
     frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 end
 
@@ -639,7 +651,9 @@ function BBP.PartyIndicator1(frame)
     frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
     frame.arenaNumberText:SetText(idx)
     frame.arenaNumberText:SetTextColor(r, g, b, 1)
+    frame.arenaNumberText:SetIgnoreParentScale(false)
     frame.arenaNumberText:SetScale(partyIDScale)
+    frame.arenaNumberText:SetIgnoreParentScale(true)
 end
 
 
@@ -659,7 +673,9 @@ function BBP.PartyIndicator2(frame)
 
     frame.arenaNumberText:SetText(idx)
     frame.arenaNumberText:SetTextColor(r, g, b, 1)
+    frame.arenaNumberText:SetIgnoreParentScale(false)
     frame.arenaNumberText:SetScale(partyIDScale)
+    frame.arenaNumberText:SetIgnoreParentScale(true)
     frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
 end
 
@@ -694,7 +710,9 @@ function BBP.PartyIndicator3(frame)
     frame.name:SetText("")
     frame.specNameText:SetText(specName)
     frame.specNameText:SetTextColor(r, g, b, 1)
+    frame.specNameText:SetIgnoreParentScale(false)
     frame.specNameText:SetScale(partySpecScale)
+    frame.specNameText:SetIgnoreParentScale(true)
     frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 end
 
@@ -735,12 +753,16 @@ function BBP.PartyIndicator4(frame)
 
     frame.specNameText:SetText(specName)
     frame.specNameText:SetTextColor(r, g, b, 1)
+    frame.specNameText:SetIgnoreParentScale(false)
     frame.specNameText:SetScale(partySpecScale)
+    frame.specNameText:SetIgnoreParentScale(true)
     frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 
     frame.arenaNumberText:SetText(idx)
     frame.arenaNumberText:SetTextColor(r, g, b, 1)
+    frame.arenaNumberText:SetIgnoreParentScale(false)
     frame.arenaNumberText:SetScale(partyIDScale)
+    frame.arenaNumberText:SetIgnoreParentScale(true)
     frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos, arenaIdYPos - 1)
 end
 
@@ -773,7 +795,9 @@ function BBP.PartyIndicator5(frame)
     frame.name:SetText("")
     frame.specNameText:SetText(specName .. " " .. idx)
     frame.specNameText:SetTextColor(r, g, b, 1)
+    frame.specNameText:SetIgnoreParentScale(false)
     frame.specNameText:SetScale(partySpecScale)
+    frame.specNameText:SetIgnoreParentScale(true)
     frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 end
 
@@ -795,7 +819,9 @@ function BBP.TestArenaIndicator0(frame)
             frame.arenaNumberText:SetPoint("BOTTOM", frame.name or frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
             frame.arenaNumberText:SetText("Select a mode to test (enemy)")
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
+            frame.arenaNumberText:SetIgnoreParentScale(false)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
+            frame.arenaNumberText:SetIgnoreParentScale(true)
             break
         end
     end
@@ -818,7 +844,9 @@ function BBP.TestArenaIndicator1(frame)
             else
                 frame.arenaNumberText:SetTextColor(1, 1, 0)
             end
+            frame.arenaNumberText:SetIgnoreParentScale(false)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaIDScale)
+            frame.arenaNumberText:SetIgnoreParentScale(true)
 
             if idCircle then
                 local i = math.random(1, 3)
@@ -846,7 +874,9 @@ function BBP.TestArenaIndicator2(frame)
             else
                 frame.arenaNumberText:SetTextColor(1, 1, 0)
             end
+            frame.arenaNumberText:SetIgnoreParentScale(false)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaIDScale)
+            frame.arenaNumberText:SetIgnoreParentScale(true)
             frame.arenaNumberText:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
 
             if idCircle then
@@ -875,7 +905,9 @@ function BBP.TestArenaIndicator3(frame)
                 frame.specNameText:SetText("Affliction")
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
+            frame.specNameText:SetIgnoreParentScale(false)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
+            frame.specNameText:SetIgnoreParentScale(true)
             frame.specNameText:SetPoint(anchorPoint, frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
             break
         end
@@ -902,7 +934,9 @@ function BBP.TestArenaIndicator4(frame)
                 frame.specNameText:SetText("Affliction")
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
+            frame.specNameText:SetIgnoreParentScale(false)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
+            frame.specNameText:SetIgnoreParentScale(true)
             frame.specNameText:SetPoint(anchorPoint, frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
             frame.arenaNumberText:SetText("1")
             if BetterBlizzPlatesDB.enemyClassColorName then
@@ -910,7 +944,9 @@ function BBP.TestArenaIndicator4(frame)
             else
                 frame.arenaNumberText:SetTextColor(1, 1, 0)
             end
+            frame.arenaNumberText:SetIgnoreParentScale(false)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaIDScale)
+            frame.arenaNumberText:SetIgnoreParentScale(true)
             frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos - 1)
 
             if idCircle then
@@ -939,7 +975,9 @@ function BBP.TestArenaIndicator5(frame)
                 frame.specNameText:SetText("Affliction" .. " " .. "3")
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
+            frame.specNameText:SetIgnoreParentScale(false)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
+            frame.specNameText:SetIgnoreParentScale(true)
             frame.specNameText:SetPoint(anchorPoint, frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
             break
         end
@@ -959,7 +997,9 @@ function BBP.TestPartyIndicator0(frame)
             frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
             frame.arenaNumberText:SetText("Select a mode to test (friendly)")
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
+            frame.arenaNumberText:SetIgnoreParentScale(false)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.partySpecScale)
+            frame.arenaNumberText:SetIgnoreParentScale(true)
             break
         end
     end
@@ -977,7 +1017,9 @@ function BBP.TestPartyIndicator1(frame)
             frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos)
             frame.arenaNumberText:SetText("2")
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
+            frame.arenaNumberText:SetIgnoreParentScale(false)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.partyIDScale)
+            frame.arenaNumberText:SetIgnoreParentScale(true)
             break
         end
     end
@@ -994,7 +1036,9 @@ function BBP.TestPartyIndicator2(frame)
 
             frame.arenaNumberText:SetText("2")
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
+            frame.arenaNumberText:SetIgnoreParentScale(false)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.partyIDScale)
+            frame.arenaNumberText:SetIgnoreParentScale(true)
             frame.arenaNumberText:SetPoint("BOTTOM", frame.name, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos)
             break
         end
@@ -1017,7 +1061,9 @@ function BBP.TestPartyIndicator3(frame)
                 frame.specNameText:SetText("Affliction")
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
+            frame.specNameText:SetIgnoreParentScale(false)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.partySpecScale)
+            frame.specNameText:SetIgnoreParentScale(true)
             frame.specNameText:SetPoint(anchorPoint, frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
             break
         end
@@ -1042,11 +1088,15 @@ function BBP.TestPartyIndicator4(frame)
                 frame.specNameText:SetText("Affliction")
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
+            frame.specNameText:SetIgnoreParentScale(false)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.partySpecScale)
+            frame.specNameText:SetIgnoreParentScale(true)
             frame.specNameText:SetPoint(anchorPoint, frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
             frame.arenaNumberText:SetText("2")
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
+            frame.arenaNumberText:SetIgnoreParentScale(false)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.partyIDScale)
+            frame.arenaNumberText:SetIgnoreParentScale(true)
             frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos - 1)
             break
         end
@@ -1069,7 +1119,9 @@ function BBP.TestPartyIndicator5(frame)
                 frame.specNameText:SetText("Affliction" .. " " .. "3")
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
+            frame.specNameText:SetIgnoreParentScale(false)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.partySpecScale)
+            frame.specNameText:SetIgnoreParentScale(true)
             frame.specNameText:SetPoint(anchorPoint, frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
             break
         end
