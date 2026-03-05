@@ -4823,7 +4823,7 @@ local function guiProfiles()
     frame.streamerText:SetText("Streamers")
 
     frame.infoText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 90)
+    frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 60)
     frame.infoText:SetText("If you are missing and want to be here let me know :)")
     frame.infoText:SetWidth(100)
 
