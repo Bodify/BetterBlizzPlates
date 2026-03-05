@@ -1,3 +1,13 @@
+# BetterBlizzPlates 1.9.7e
+## Mindight
+### New
+- Misc: Hide Deselect Overlay. This hides the dark transparent overlay on non-target nameplates (which is new in Midnight by Blizzard).
+- Added Trimaz profile (www.twitch.tv/trimaz_wow). Thank you for sharing!
+### Tweak
+- Few fixups on how the deselect overlay was treated with various settings.
+- Fix some gui issues with list search and cleaning names of strings removing the brackets etc causing you to not be able to add for example "Fearie Fire (Feral)"
+- Fix scaling issue of arena names (arenaID / spec name)
+
 # BetterBlizzPlates 1.9.7d
 ## Mindight
 ### Tweak
