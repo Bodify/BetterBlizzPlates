@@ -6092,7 +6092,7 @@ local function HandleNamePlateAdded(unit)
 
         local castTexture = newBar:GetStatusBarTexture()
         if not newBar.MaskTexture then
-        newBar.MaskTexture = newBar:CreateMaskTexture()
+            newBar.MaskTexture = newBar:CreateMaskTexture()
         end
         newBar.MaskTexture:SetTexture("interface\\castingbar\\uicastingbarfullmask")
         newBar.MaskTexture:ClearAllPoints()
@@ -6206,11 +6206,11 @@ local function HandleNamePlateAdded(unit)
                 frame.HealthBarsContainer:SetBorderColor(0, 0, 0, 1)
             end
         end
+        frame.HealthBarsContainer.healthBar.deselectedOverlay:SetAlpha(0)
     end
     if BetterBlizzPlatesDB.classicRetailNameplates or not config.useCustomTextureForBars then
         if frame.HealthBarsContainer.healthBar.MaskTexture then
             frame.HealthBarsContainer.healthBar.MaskTexture:Hide()
-            frame.HealthBarsContainer.healthBar.deselectedOverlay:SetAlpha(0)
         end
     end
     -- if info.isFriend and BetterBlizzPlatesDB.friendlyNameplateClickthrough then
@@ -6433,6 +6433,7 @@ local function HandleNamePlateAdded(unit)
     if config.classicNameplates then
         CreateBetterClassicHealthbarBorder(frame)
         frame.HealthBarsContainer.healthBar.selectedBorder:SetAlpha(0)
+        frame.HealthBarsContainer.healthBar.deselectedOverlay:SetAlpha(0)
         frame.classicNameplatesOn = true
     elseif frame.classicNameplatesOn then
         frame.BetterBlizzPlates.bbpBorder:Hide()
@@ -6478,6 +6479,10 @@ local function HandleNamePlateAdded(unit)
     if config.showGuildNames then ShowFriendlyGuildName(frame, frame.unit) end
 
     NameplateShadowAndMouseoverHighlight(frame)
+
+    if BetterBlizzPlatesDB.hideDeselectNonTargetOverlay then
+        frame.HealthBarsContainer.healthBar.deselectedOverlay:SetAlpha(0)
+    end
 
     -- print("3: ", frame:GetFrameLevel(), nameplate:GetFrameLevel())
     -- print("______________________")
