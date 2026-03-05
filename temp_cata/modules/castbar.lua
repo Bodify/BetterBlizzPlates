@@ -660,7 +660,7 @@ function BBP.HideCastbar(frame, unitToken)
     if UnitCastingInfo(unitToken) then
         spellName, _, _, _, _, _, _, notInterruptible, spellID = UnitCastingInfo(unitToken)
     elseif UnitChannelInfo(unitToken) then
-        spellName, _, _, _, _, _, _, notInterruptible, spellID = UnitChannelInfo(unitToken)
+        spellName, _, _, _, _, _, notInterruptible, spellID = UnitChannelInfo(unitToken)
     end
 
     local isCasting = spellName
