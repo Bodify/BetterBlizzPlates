@@ -2747,11 +2747,12 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         -- Filter listData based on the current search filter
         local filteredListData = {}
         if currentSearchFilter and currentSearchFilter ~= "" then
+            local safeFilter = currentSearchFilter:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
             for _, entry in ipairs(listData) do
                 local name = entry.name and entry.name:lower() or ""
                 local id = entry.id and tostring(entry.id):lower() or ""
                 local comment = entry.comment and entry.comment:lower() or ""
-                if name:match(currentSearchFilter) or id:match(currentSearchFilter) or comment:match(currentSearchFilter) then
+                if name:match(safeFilter) or id:match(safeFilter) or comment:match(safeFilter) then
                     table.insert(filteredListData, entry)
                 end
             end
@@ -2850,10 +2851,6 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 name = ""
             end
         end
-
-        -- Remove unwanted characters from name and comment individually
-        name = gsub(name, "[%/%(%)%[%]]", "")
-        comment = gsub(comment, "[%/%(%)%[%]]", "")
 
         local isDuplicate = false
         if (name ~= "" or id) then
@@ -11612,10 +11609,19 @@ local function guiMisc()
 
     local friendIndicator = CreateCheckbox("friendIndicator", "Friend/Guildie Indicator", guiMisc)
     friendIndicator:SetPoint("TOPLEFT", npcTitleColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(friendIndicator, "Places a little icon to the left of a friend/guildies name")
+    CreateTooltipTwo(friendIndicator, "Friend/Guildie Indicator", "Places a little icon to the left of a friend/guildies name")
+
+    local hideDeselectNonTargetOverlay = CreateCheckbox("hideDeselectNonTargetOverlay", "Hide Deselect Overlay", guiMisc)
+    hideDeselectNonTargetOverlay:SetPoint("TOPLEFT", friendIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(hideDeselectNonTargetOverlay, "Hide Deselect Overlay", "New in Midnight is that non-target nameplates get a dark transparent overlay to make it more clear which one is your current target. This setting just hides that and makes it how it used to be.")
+    hideDeselectNonTargetOverlay:HookScript("OnClick", function(self)
+        if not self:GetChecked() then
+             StaticPopup_Show("BBP_CONFIRM_RELOAD")
+        end
+    end)
 
     local targetHighlightFix = CreateCheckbox("targetHighlightFix", "TWW Target Highlight Fix", guiMisc)
-    targetHighlightFix:SetPoint("TOPLEFT", friendIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    targetHighlightFix:SetPoint("TOPLEFT", hideDeselectNonTargetOverlay, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(targetHighlightFix, "TWW Target Highlight Fix", "Changes the faint Target Highlight Glow on nameplates to behave like it used to before TWW.\n\nBefore it was only active on current health portion but now in TWW it is active on the entire healthbar, also background.")
 
     local recolorTempHpLoss = CreateCheckbox("recolorTempHpLoss", "Recolor Temp HP Loss", guiMisc)

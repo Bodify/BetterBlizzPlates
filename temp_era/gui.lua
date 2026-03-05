@@ -2424,11 +2424,12 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         -- Filter listData based on the current search filter
         local filteredListData = {}
         if currentSearchFilter and currentSearchFilter ~= "" then
+            local safeFilter = currentSearchFilter:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
             for _, entry in ipairs(listData) do
                 local name = entry.name and entry.name:lower() or ""
                 local id = entry.id and tostring(entry.id):lower() or ""
                 local comment = entry.comment and entry.comment:lower() or ""
-                if name:match(currentSearchFilter) or id:match(currentSearchFilter) or comment:match(currentSearchFilter) then
+                if name:match(safeFilter) or id:match(safeFilter) or comment:match(safeFilter) then
                     table.insert(filteredListData, entry)
                 end
             end
@@ -2515,10 +2516,6 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 name = ""
             end
         end
-
-        -- Remove unwanted characters from name and comment individually
-        name = gsub(name, "[%/%(%)%[%]]", "")
-        comment = gsub(comment, "[%/%(%)%[%]]", "")
 
         local isDuplicate = false
         if (name ~= "" or id) then
