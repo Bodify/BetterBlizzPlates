@@ -3474,13 +3474,13 @@ function BBP.ColorThreat(frame)
             local targetUnit = frame.unit.."target"
             if not UnitIsPlayer(targetUnit) then
                 local otherThreatStatus = UnitThreatSituation(targetUnit, frame.unit)
-                if otherThreatStatus and otherThreatStatus >= 2 then
+                if otherThreatStatus and not issecretvalue(otherThreatStatus) and otherThreatStatus >= 2 then
                     r, g, b = unpack(BetterBlizzPlatesDB.tankOffTankAggroColorRGB)
                 end
             else
                 for _, unit in ipairs(offTanks) do
                     local otherThreatStatus = UnitThreatSituation(unit, frame.unit)
-                    if otherThreatStatus and otherThreatStatus >= 2 then
+                    if otherThreatStatus and not issecretvalue(otherThreatStatus) and otherThreatStatus >= 2 then
                         r, g, b = unpack(BetterBlizzPlatesDB.tankOffTankAggroColorRGB)
                         break
                     end
