@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.7f
+## Midnight
+### Bugfix
+- Fix secret error from classic nameplates setting during combat/instance.
+
 # BetterBlizzPlates 1.9.7e
 ## Mindight
 ### New

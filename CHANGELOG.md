@@ -1,5 +1,10 @@
+# BetterBlizzPlates 1.9.7f
+## Midnight
+### Bugfix
+- Fix secret error from classic nameplates setting during combat/instance.
+
 # BetterBlizzPlates 1.9.7e
-## Mindight
+## Midnight
 ### New
 - Misc: Hide Deselect Overlay. This hides the dark transparent overlay on non-target nameplates (which is new in Midnight by Blizzard).
 - Added Trimaz profile (www.twitch.tv/trimaz_wow). Thank you for sharing!
