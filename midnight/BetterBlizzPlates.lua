@@ -5561,9 +5561,14 @@ local function CreateBetterClassicHealthbarBorder(frame)
         end
     end
 
-    local height = frame.healthBar:GetHeight()
-    local bottomOffset = -((0.455) * height - 1.09)
-    local topOffset = (2 * height) - 1
+    local height = frame.HealthBarsContainer:GetHeight()
+    if not issecretvalue(height) then
+        frame.hpBarHeight = height -- temp fix, needs a better way to handle this
+    else
+        height = frame.hpBarHeight or 13
+    end
+    local bottomOffset = -((0.455) * (frame.hpBarHeight or height) - 1.09)
+    local topOffset = (2 * (frame.hpBarHeight or height)) - 1
     local hideLevel = config.hideLevelFrame or (BBP.isInPvP and not BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP)
     local rightXOffset = hideLevel and 27.9 or 20.9
 
