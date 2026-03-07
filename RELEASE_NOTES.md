@@ -1,3 +1,10 @@
+# BetterBlizzPlates 1.9.7g
+## Midnight
+### New
+- Add Saul profile (www.twitch.tv/saul). Thank you for sharing.
+### Tweak
+- Remove Trimaz profile upon request after a change of hearts.
+
 # BetterBlizzPlates 1.9.7f
 ## Midnight
 ### Bugfix
