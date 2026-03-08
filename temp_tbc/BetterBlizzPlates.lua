@@ -5218,26 +5218,26 @@ local function HandleNamePlateAdded(unit)
         end
     end
     if not BetterBlizzPlatesDB.hideEliteDragon then
-        if not frame.classificationIndicator then
-            frame.classificationIndicator = frame:CreateTexture(nil, "OVERLAY")
-            frame.classificationIndicator:SetAtlas("nameplates-icon-elite-gold")
-            frame.classificationIndicator:SetSize(13, 13)
-            frame.classificationIndicator:SetPoint("RIGHT", frame.healthBar, "LEFT", -2, 0)
-            frame.classificationIndicator:Hide()
+        if not frame.bbfClassificationIndicator then
+            frame.bbfClassificationIndicator = frame:CreateTexture(nil, "OVERLAY")
+            frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
+            frame.bbfClassificationIndicator:SetSize(13, 13)
+            frame.bbfClassificationIndicator:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", -2, 0)
+            frame.bbfClassificationIndicator:Hide()
         end
 
         local classification = UnitClassification(frame.unit)
         if classification == "elite" then
-            frame.classificationIndicator:SetAtlas("nameplates-icon-elite-gold")
-            frame.classificationIndicator:Show()
+            frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
+            frame.bbfClassificationIndicator:Show()
         elseif classification == "rareelite" then
-            frame.classificationIndicator:SetAtlas("nameplates-icon-elite-silver")
-            frame.classificationIndicator:Show()
+            frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-silver")
+            frame.bbfClassificationIndicator:Show()
         else
-            frame.classificationIndicator:Hide()
+            frame.bbfClassificationIndicator:Hide()
         end
-    elseif frame.classificationIndicator then
-        frame.classificationIndicator:Hide()
+    elseif frame.bbfClassificationIndicator then
+        frame.bbfClassificationIndicator:Hide()
     end
     BBP.RepositionName(frame)
 
