@@ -2453,16 +2453,10 @@ end
 
 --#################################################################################################
 -- Clickthrough nameplates function
-function BBP.ClickthroughNameplateAuras(pool, namePlateFrameBase)
-    if not namePlateFrameBase.BuffFrame.buffPool.hooked then
-        namePlateFrameBase.BuffFrame.buffPool.hooked=true
-        hooksecurefunc(namePlateFrameBase.BuffFrame.buffPool,"resetterFunc",function(pool2,buff)
-            buff:SetMouseClickEnabled(false)
-        end)
-    end
-end
---hooksecurefunc(NamePlateDriverFrame.pools:GetPool("NamePlateUnitFrameTemplate"),"resetterFunc",BBP.ClickthroughNameplateAuras) --tww change
---hooksecurefunc(NamePlateDriverFrame.pools:GetPool("ForbiddenNamePlateUnitFrameTemplate"),"resetterFunc",BBP.ClickthroughNameplateAuras)
+hooksecurefunc(NamePlateAuraItemMixin, "SetAura", function(self)
+    if self:IsForbidden() then return end
+    self:SetMouseClickEnabled(false)
+end)
 
 function BBP.PersonalBarSettings()
     local db = BetterBlizzPlatesDB
@@ -8446,7 +8440,6 @@ function BBP.NameplateAuraTweaksTemp()
         local HEIGHT = (not rectangleAuras) and 20 or 14
 
         if auraFrame and auraFrame:IsShown() then
-            auraFrame:SetMouseClickEnabled(false)
             if isDebuffList then
                 if hideCooldownTimer then
                     auraFrame.Cooldown:SetHideCountdownNumbers(true)
