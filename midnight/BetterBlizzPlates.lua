@@ -7344,12 +7344,6 @@ Frame:SetScript("OnEvent", function(...)
 
     CheckForUpdate()
 
-    if not db.skipBugWarning then
-        C_Timer.After(4, function()
-            print("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Bugs are expected in this very early release. Use at own risk for now. Please report bugs.")
-        end)
-    end
-
     _, playerClass = UnitClass("player")
     playerClassColor = RAID_CLASS_COLORS[playerClass]
 
