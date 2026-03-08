@@ -1,3 +1,12 @@
+# BetterBlizzPlates 1.9.7h
+## Midnight
+### Tweak
+- Force all nameplate auras to be clickthrough by default again regardless of settings (was broken by Midnight). Blizzard has them clickable for no reason and it destroys your camera movement sometimes.
+- Update Magnusz profile (www.twitch.tv/magnusz). Thank you for sharing.
+## TBC
+### Tweak
+- Rename elite icon frame to hopefully have it fixed and not disappear randomly in combat. Potentially caused by Blizzards own code due to same name before.
+
 # BetterBlizzPlates 1.9.7g
 ## Midnight
 ### New
