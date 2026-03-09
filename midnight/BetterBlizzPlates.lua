@@ -3645,10 +3645,10 @@ function BBP.AuraColor(frame)
     if auraColor then
         config.auraColorRGB = auraColor
         frame.healthBar:SetStatusBarColor(config.auraColorRGB.r, config.auraColorRGB.g, config.auraColorRGB.b, config.auraColorRGB.a)
-        if (config.focusTargetIndicator and config.focusTargetIndicatorColorNameplate and frame == BBP.currentFocusNameplate)  then
+        if (config.focusTargetIndicator and config.focusTargetIndicatorColorNameplate and UnitIsUnit(frame.unit, "focus"))  then
             frame.healthBar:SetStatusBarColor(unpack(config.focusTargetIndicatorColorNameplateRGB))
         end
-        if (config.targetIndicator and config.targetIndicatorColorNameplate and frame == BBP.currentTargetNameplate) then
+        if (config.targetIndicator and config.targetIndicatorColorNameplate and UnitIsUnit(frame.unit, "target")) then
             frame.healthBar:SetStatusBarColor(unpack(config.targetIndicatorColorNameplateRGB))
         end
     else
@@ -4631,7 +4631,7 @@ local function ChangeHealthbarBorderSize(frame)
         local minPixels = 0.5
         local unit = frame.unit
 
-        if frame == BBP.currentTargetNameplate then
+        if UnitIsUnit(unit, "target") then
             borderSize = config.nameplateTargetBorderSize
         -- elseif UnitIsUnit("player", unit) then
         --     borderSize = config.nameplatePersonalBorderSize
@@ -4663,7 +4663,7 @@ local function ChangeHealthbarBorderSize(frame)
         local borderSize = config.nameplateBorderSize
         local unit = frame.unit
 
-        if frame == BBP.currentTargetNameplate then
+        if UnitIsUnit(unit, "target") then
             borderSize = config.nameplateTargetBorderSize
         end
 
@@ -4795,7 +4795,7 @@ local function HookNameplateCastbarHide(frame)
         frame.castBar:HookScript("OnHide", function()
             if frame:IsForbidden() then return end
             if not frame.unit then return end
-            if frame == BBP.currentTargetNameplate then --BBP.isMidnight
+            if UnitIsUnit(frame.unit, "target") then
                 BBP.UpdateNameplateResourcePositionForCasting(frame:GetParent(), true)
             end
         end)
@@ -4811,7 +4811,7 @@ local function HideFriendlyHealthbar(frame)
     if frame.healthBar and info.isFriend then
         if BetterBlizzPlatesDB.friendlyHideHealthBar and info.isPlayer then
             local showOnTarget = BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget
-            if showOnTarget and frame == BBP.currentTargetNameplate and UnitIsUnit(frame.unit, "target") then
+            if showOnTarget and UnitIsUnit(frame.unit, "target") then
                 frame.HealthBarsContainer:SetAlpha(1)
                 frame.HealthBarsContainer.alphaZero = false
                 frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 0.22)

@@ -491,8 +491,8 @@ function BBP.FadeAllButTargetNameplates()
 
         local unit = frame.unit
         local isPlayer = false--UnitIsUnit(unit, "player")
-        local isTarget = frame == BBP.currentTargetNameplate--UnitIsUnit(unit, "target")
-        local isFocus = frame == BBP.currentFocusNameplate --UnitIsUnit(unit, "focus")
+        local isTarget = UnitIsUnit(unit, "target")
+        local isFocus = UnitIsUnit(unit, "focus")
 
         local shouldFade = true
 
