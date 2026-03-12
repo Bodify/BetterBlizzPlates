@@ -19,6 +19,15 @@ function BBP.StarterChoice()
     StaticPopup_Show("BBP_STARTER_CHOICE")
 end
 
+local function TBCProfileFix()
+    if not BBP.isTBC then return end
+    -- Since TBC doesnt have a Default Blizzard Filter and I havent created one either (cuz of unique aura ids for every rank) this will just make only mine the default for tbc
+    if BetterBlizzPlatesDB.otherNpdeBuffFilterBlizzard then
+        BetterBlizzPlatesDB.otherNpdeBuffFilterBlizzard = false
+        BetterBlizzPlatesDB.otherNpdeBuffFilterOnlyMe = true
+    end
+end
+
 function BBP.StarterProfile(version)
     local starterProfile
     if not version then
@@ -47,6 +56,7 @@ function BBP.StarterProfile(version)
         end
         BetterBlizzPlatesDB.useFakeName = true
         BetterBlizzPlatesDB.mopUpdated = true
+        TBCProfileFix()
         ReloadUI()
     end
 end
@@ -70,6 +80,7 @@ function BBP.BlitzProfile()
         end
         BetterBlizzPlatesDB.useFakeName = true
         BetterBlizzPlatesDB.mopUpdated = true
+        TBCProfileFix()
         ReloadUI()
     end
 end
@@ -86,6 +97,7 @@ function BBP.AeghisProfile()
             BetterBlizzPlatesDB[k] = v
         end
         BetterBlizzPlatesDB.scStart = true
+        TBCProfileFix()
         ReloadUI()
     end
 end
@@ -108,6 +120,7 @@ function BBP.MmarkersProfile()
             BetterBlizzPlatesDB[k] = v
         end
         BetterBlizzPlatesDB.scStart = true
+        TBCProfileFix()
         ReloadUI()
     end
 end
@@ -127,6 +140,7 @@ function BBP.NahjProfile()
         SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale) -- Needs to be set before reload
         BetterBlizzPlatesDB.useFakeName = true
         BetterBlizzPlatesDB.mopUpdated = true
+        TBCProfileFix()
         ReloadUI()
     end
 end
@@ -146,6 +160,7 @@ function BBP.SaulProfile()
         SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale) -- Needs to be set before reload
         BetterBlizzPlatesDB.useFakeName = true
         BetterBlizzPlatesDB.mopUpdated = true
+        TBCProfileFix()
         ReloadUI()
     end
 end
@@ -165,6 +180,7 @@ function BBP.SnupyProfile()
         SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale) -- Needs to be set before reload
         BetterBlizzPlatesDB.useFakeName = true
         BetterBlizzPlatesDB.mopUpdated = true
+        TBCProfileFix()
         ReloadUI()
     end
 end

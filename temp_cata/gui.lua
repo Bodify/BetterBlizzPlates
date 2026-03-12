@@ -8896,6 +8896,11 @@ local function guiNameplateAuras()
     blizzardDefaultFilterOnlyMine:SetPoint("LEFT", otherNpdeBuffFilterBlizzard.text, "RIGHT", 0, 0)
     CreateTooltipTwo(blizzardDefaultFilterOnlyMine, "Blizzard Default Filter: Mine only", "Only show auras that are mine from the Blizzard Default Filter.")
 
+    if BBP.isTBC then
+        DisableElement(otherNpdeBuffFilterBlizzard)
+        DisableElement(otherNpdeBuffFilterBlizzard)
+    end
+
     otherNpdeBuffFilterBlizzard:HookScript("OnClick", function(self)
         CheckAndToggleCheckboxes(self)
     end)
