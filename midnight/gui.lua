@@ -1302,6 +1302,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "npcTitleScale" then
                     BetterBlizzPlatesDB.npcTitleScale = value
                     BBP.RefreshAllNameplates()
+                elseif element == "friendIndicatorScale" then
+                    BetterBlizzPlatesDB.friendIndicatorScale = value
+                    BBP.RefreshAllNameplates()
                 elseif element == "nameplateResourceScale" then
                     BetterBlizzPlatesDB.nameplateResourceScale = value
                     BBP.TargetResourceUpdater()
@@ -11610,6 +11613,9 @@ local function guiMisc()
     local friendIndicator = CreateCheckbox("friendIndicator", "Friend/Guildie Indicator", guiMisc)
     friendIndicator:SetPoint("TOPLEFT", npcTitleColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(friendIndicator, "Friend/Guildie Indicator", "Places a little icon to the left of a friend/guildies name")
+
+    local friendIndicatorScale = CreateSlider(guiMisc, "Friend Indicator Size", 0.2, 2, 0.01, "friendIndicatorScale", nil, 90)
+    friendIndicatorScale:SetPoint("LEFT", friendIndicator.Text, "RIGHT", 25, 0)
 
     local hideDeselectNonTargetOverlay = CreateCheckbox("hideDeselectNonTargetOverlay", "Hide Deselect Overlay", guiMisc)
     hideDeselectNonTargetOverlay:SetPoint("TOPLEFT", friendIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)

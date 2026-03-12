@@ -83,6 +83,7 @@ local defaultSettings = {
     guildNameColorRGB = {0, 1, 0},
     npcTitleColorRGB = {1, 0.85, 0},
     npcTitleScale = 1,
+    friendIndicatorScale = 1,
     hideNpcMurlocScale = 1,
     hideNpcMurlocYPos = 0,
     partyPointerWidth = 36,
@@ -1499,7 +1500,6 @@ local function SendUpdateMessage()
                 whileDead = true,
                 }
                 StaticPopup_Show("BBP_NP_UPDATE")
-                print("asd")
             end)
         else
             BetterBlizzPlatesDB.scStart = nil
@@ -1825,13 +1825,9 @@ end
 
 --#################################################################################################
 function BBP.isFriendlistFriend(unit)
-    -- for i = 1, C_FriendList.GetNumFriends() do
-    --     local friendInfo = C_FriendList.GetFriendInfoByIndex(i)
-    --     if friendInfo and friendInfo.name == UnitName(unit) then
-    --         return true
-    --     end
-    -- end
-    return false
+    local guid = UnitGUID(unit)
+    if not guid or issecretvalue(guid) then return false end
+    return C_FriendList.IsFriend(guid)
 end
 
 function BBP.isUnitGuildmate(unit)
@@ -1841,17 +1837,18 @@ function BBP.isUnitGuildmate(unit)
 end
 
 function BBP.isUnitBNetFriend(unit)
-    -- local unitName = UnitName(unit)
-    -- local numBNetFriends = BNGetNumFriends()
-    -- for i = 1, numBNetFriends do
-    --     local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
-    --     if accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.isOnline then
-    --         local characterName = accountInfo.gameAccountInfo.characterName
-    --         if characterName and characterName == unitName then
-    --             return true
-    --         end
-    --     end
-    -- end
+    local unitName = UnitName(unit)
+    if issecretvalue(unitName) then return false end
+    local numBNetFriends = BNGetNumFriends()
+    for i = 1, numBNetFriends do
+        local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
+        if accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.isOnline then
+            local characterName = accountInfo.gameAccountInfo.characterName
+            if characterName and characterName == unitName then
+                return true
+            end
+        end
+    end
     return false
 end
 
@@ -4861,6 +4858,8 @@ local function FriendIndicator(frame)
         frame.friendIndicator:SetAtlas("groupfinder-icon-friend")
         frame.friendIndicator:SetSize(20, 21)
     end
+
+    frame.friendIndicator:SetScale(BetterBlizzPlatesDB.friendIndicatorScale or 1)
 
     if isFriend or isBnetFriend then
         frame.friendIndicator:SetDesaturated(false)
