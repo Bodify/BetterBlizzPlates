@@ -1953,11 +1953,20 @@ function BBP.TexturePRD()
     local frame = PersonalResourceDisplayFrame
     if not frame then return end
     if BetterBlizzPlatesDB.useCustomTextureForSelf then
+        frame.changedPrdHealthTexture = true
         frame.HealthBarsContainer.healthBar:SetStatusBarTexture(customTextureSelf)
         textureExtraBars(frame.HealthBarsContainer.healthBar, customTextureSelf)
+    elseif frame.changedPrdHealthTexture then
+        frame.HealthBarsContainer.healthBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
+        textureExtraBars(frame.HealthBarsContainer.healthBar, "Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
+        frame.changedPrdHealthTexture = nil
     end
     if BetterBlizzPlatesDB.useCustomTextureForSelfMana then
+        frame.changedPrdManaTexture = true
         frame.PowerBar:SetStatusBarTexture(customTextureSelfMana)
+    elseif frame.changedPrdManaTexture then
+        frame.PowerBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
+        frame.changedPrdManaTexture = nil
     end
 
     -- fix borders
@@ -2189,12 +2198,20 @@ function BBP.SetFontBasedOnOption(namePlateObj, specifiedSize, forcedOutline)
         font = fontPath
         outline = forcedOutline or "THINOUTLINE, SLUG"
         currentSize = (specifiedSize + 2) or (fontSize + 3)
+        -- if db.customFontShadowOff then
+        --     namePlateObj:SetShadowColor(0, 0, 0, 0)
+        -- else
+        --     namePlateObj:SetShadowColor(0, 0, 0, 1)
+        --     namePlateObj:SetShadowOffset(1, -1)
+        -- end
     else
         local defaultNamePlateFontFlags = db.defaultNamePlateFontFlags
         local defaultFontSize = db.defaultFontSize
         font = db.defaultNamePlateFont
         outline = forcedOutline or defaultNamePlateFontFlags
         currentSize = specifiedSize or defaultFontSize
+        -- namePlateObj:SetShadowColor(0, 0, 0, 1)
+        -- namePlateObj:SetShadowOffset(1, -1)
     end
 
     if outline == "" then
@@ -2204,16 +2221,6 @@ function BBP.SetFontBasedOnOption(namePlateObj, specifiedSize, forcedOutline)
     end
 
     namePlateObj:SetFont(font, currentSize, outline)
-    if db.customFontShadowOff then
-        if not namePlateObj.oldShadow then
-            local r, g, b, a = namePlateObj:GetShadowColor()
-            namePlateObj.oldShadow = {r, g, b, a}
-            namePlateObj:SetShadowColor(0, 0, 0, 0)
-        end
-    elseif namePlateObj.oldShadow then
-        namePlateObj:SetShadowColor(unpack(namePlateObj.oldShadow))
-        namePlateObj.oldShadow = nil
-    end
 end
 
 --#################################################################################################
@@ -3974,17 +3981,35 @@ end
 
 function BBP.ColorPRD()
     local frame = PersonalResourceDisplayFrame and PersonalResourceDisplayFrame.HealthBarsContainer
+    if not frame then return end
     _, playerClass = UnitClass("player")
     playerClassColor = RAID_CLASS_COLORS[playerClass]
-    if BetterBlizzPlatesDB.personalNpTRP3Color then
-        local r,g,b = GetRPNameColor("player")
-        if r then
-            frame.healthBar:SetStatusBarColor(r, g, b)
+
+    local function ColorPRD()
+        if BetterBlizzPlatesDB.personalNpTRP3Color then
+            local r,g,b = GetRPNameColor("player")
+            if r then
+                frame.healthBar:SetStatusBarColor(r, g, b)
+            elseif BetterBlizzPlatesDB.classColorPersonalNameplate then
+                frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
+            end
         elseif BetterBlizzPlatesDB.classColorPersonalNameplate then
             frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
+        else
+            frame.healthBar:SetStatusBarColor(0, 1, 0)
         end
-    elseif BetterBlizzPlatesDB.classColorPersonalNameplate then
-        frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
+    end
+
+    ColorPRD()
+
+    if not BBP.prdColorHook then
+        hooksecurefunc(frame.healthBar, "SetStatusBarColor", function(self)
+            if self.changingColor then return end
+            self.changingColor = true
+            ColorPRD()
+            self.changingColor = nil
+        end)
+        BBP.prdColorHook = true
     end
 end
 
@@ -4861,23 +4886,31 @@ local function FriendIndicator(frame)
 
     frame.friendIndicator:SetScale(BetterBlizzPlatesDB.friendIndicatorScale or 1)
 
+    local anchor = BetterBlizzPlatesDB.friendIndicatorAnchor or "LEFT"
+    local oppositeAnchor = BBP.GetOppositeAnchor(anchor)
+
+    local function SetAnchor(relativeTo)
+        frame.friendIndicator:ClearAllPoints()
+        frame.friendIndicator:SetPoint(oppositeAnchor, relativeTo, anchor, 0, 0)
+    end
+
     if isFriend or isBnetFriend then
         frame.friendIndicator:SetDesaturated(false)
         frame.friendIndicator:SetVertexColor(1, 1, 1)
         frame.friendIndicator:Show()
         if BBP.isInArena and frame.specNameText and frame.specNameText ~= "" then
-            frame.friendIndicator:SetPoint("RIGHT", frame.specNameText, "LEFT", 0, 0)
+            SetAnchor(frame.specNameText)
         else
-            frame.friendIndicator:SetPoint("RIGHT", frame.name, "LEFT", 0, 0)
+            SetAnchor(frame.name)
         end
     elseif isGuildmate then
         frame.friendIndicator:SetDesaturated(true)
         frame.friendIndicator:SetVertexColor(0, 1, 0)
         frame.friendIndicator:Show()
         if BBP.isInArena and frame.specNameText and frame.specNameText ~= "" then
-            frame.friendIndicator:SetPoint("RIGHT", frame.specNameText, "LEFT", 0, 0)
+            SetAnchor(frame.specNameText)
         else
-            frame.friendIndicator:SetPoint("RIGHT", frame.name, "LEFT", 0, 0)
+            SetAnchor(frame.name)
         end
     else
         frame.friendIndicator:Hide()
@@ -6092,10 +6125,34 @@ local function HandleNamePlateAdded(unit)
         if not newBar.MaskTexture then
             newBar.MaskTexture = newBar:CreateMaskTexture()
         end
-        newBar.MaskTexture:SetTexture("interface\\castingbar\\uicastingbarfullmask")
+        --newBar.MaskTexture:SetTexture("interface\\castingbar\\uicastingbarfullmask")
+        newBar.MaskTexture:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\midnightNpMask.tga")
         newBar.MaskTexture:ClearAllPoints()
-        newBar.MaskTexture:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPLEFT", -13, 1.5)
-        newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 12, -0.5)
+        newBar.MaskTexture:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPLEFT", -0.5, 1)
+        if not BetterBlizzPlatesDB.changeHealthbarHeight then
+            local height = BetterBlizzPlatesDB.nameplateGeneralHpHeight or 16
+            if height <= 23 then
+                newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -0.5)
+            elseif height <= 32 then
+                newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -1)
+            elseif height <= 40 then
+                newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -1.5)
+            else
+                newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -2)
+            end
+        else
+            local height = isEnemy(frame.unit) and (config.hpHeightEnemy or 11) or (config.hpHeightFriendly or 11)
+            if height <= 23 then
+                newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -0.5)
+            elseif height <= 32 then
+                newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -1)
+            elseif height <= 40 then
+                newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -1.5)
+            else
+                newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -2)
+            end
+        end
+
         newBar.MaskTexture:Show()
         castTexture:AddMaskTexture(newBar.MaskTexture)
 

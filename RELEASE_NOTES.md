@@ -1,74 +1,14 @@
-# BetterBlizzPlates 1.9.7h
+# BetterBlizzPlates 1.9.8
 ## Midnight
+### New
+- Added Xaryu profile. Thank you for sharing.
+- Friend Indicator (Misc): Add a scale setting and a right-click anchor setting. Also seen some tweaks to work better outside of instances (restricted inside).
 ### Tweak
-- Force all nameplate auras to be clickthrough by default again regardless of settings (was broken by Midnight). Blizzard has them clickable for no reason and it destroys your camera movement sometimes.
-- Update Magnusz profile (www.twitch.tv/magnusz). Thank you for sharing.
+- Improve the mask needed for changing textures on the new Midnight nameplates so when changing the texture it should fit more snug to the borders. Best I can do with the mess that is the new nameplates for now I think without changing everything.
+- Fixup "Normal Evoker Castbars" setting, but untested yolo need bed /pray.
+- Update Snupy & Pinkteddyp profiles.
+### Bugfix
+- Fixup some issues with PRD settings. (Still more fixes required but thats for another day, please report any issues)
 ## TBC
 ### Tweak
-- Rename elite icon frame to hopefully have it fixed and not disappear randomly in combat. Potentially caused by Blizzards own code due to same name before.
-
-# BetterBlizzPlates 1.9.7g
-## Midnight
-### New
-- Add Saul profile (www.twitch.tv/saul). Thank you for sharing.
-### Tweak
-- Remove Trimaz profile upon request after a change of hearts.
-
-# BetterBlizzPlates 1.9.7f
-## Midnight
-### Bugfix
-- Fix secret error from classic nameplates setting during combat/instance.
-
-# BetterBlizzPlates 1.9.7e
-## Mindight
-### New
-- Misc: Hide Deselect Overlay. This hides the dark transparent overlay on non-target nameplates (which is new in Midnight by Blizzard).
-- Added Trimaz profile (www.twitch.tv/trimaz_wow). Thank you for sharing!
-### Tweak
-- Few fixups on how the deselect overlay was treated with various settings.
-- Remove rogue combo points offset cuz it was too much now.
-- Fix some gui issues with list search and cleaning names of strings removing the brackets etc causing you to not be able to add for example "Fearie Fire (Feral)"
-- Fix scaling issue of arena names (arenaID / spec name)
-- Fix a secret error in Threat Color API
-
-# BetterBlizzPlates 1.9.7d
-## Mindight
-### Tweak
-- Yet another nameplate font size tweak. Still not 100% there, need more time to figure out which exact moment to tweak it.
-- Update Aeghis, Aswog, Bualock, Kalvish, Pinkteddyp, Pmake, Snupy, Venruki & Wolf
-### Bugfix
-- Fix enemy nameplate width being wrong and when friendly width had a higher value.
-
-# BetterBlizzPlates 1.9.7c
-## Midnight
-### Tweak
-- Update Venruki profile (www.twitch.tv/venruki). Ty for sharing.
-### Bugfix
-- Fix more issues with text rendering and name size. The name size slider should also now finally be sorted properly.
-- Fix typo in nameplate simplified CVar name not storing proper names.
-- Fix some castbar icon issues.
-
-# BetterBlizzPlates 1.9.7b
-## Midnight
-### Bugfix/Tweak
-- Fix issue with nameplate name size. Should be better and more consistent now. HOWEVER; Please read the tooltip of Name Size slider in /bbp as when adjusting this the size still does get a little weird and this is mentioned how to work around in the tooltip. Still not sure what causes this but after a reload there shouldnt be any problems now (hopefully). The name size things have been improved from Blizzards side with more API and I will likely rework the name size settings in the future but for now it stays with this system.
-- Fix PRD frame sometimes having bottom border hidden with certain settings.
-
-# BetterBlizzPlates 1.9.7
-## Retail/Midnight
-### New
-- Color NPC section back with NPC colors
-- New "Disable Outline" setting next to Font settings. More on this under Tweaks notes.
-### Tweak
-- Nameplate font rendering issue fixed and introduced new Disable Outline setting (for when custom Font is not enabled). The outline setting for custom font is now also fixed properly.
-- Cleaned up some temporary Midnight stuff so Castbars now properly don't get messed with by BBP if "Enable Castbar Customization" is disabled. Due to this your Castbar might have changed and follow Blizzards "Nameplate Style" in Blizzards Nameplates section.
-- BBP now stores a lot of the new Midnight nameplate related CVars in its profile so other people will get the same settings when sharing profiles.
-- The stacking nameplates checkbox in CVar Control is now functional again and instead split up into Enemy/Friendly stacking due to new CVars from Blizzard.
-### Bugfix
-- Fix castbar icon not showing if "Enable Castbar Customization" was not enabled.
-- Fix cast icon showing on un-interruptible casts despite the setting "Show icon on un-interruptible casts" being disabled
-- Fix nameplate shadow setting showing up on some special hidden nameplates (like the Delver's Guide book in Dornogal)
-- Fix pre-midnight nameplate setting's border & background showing up on some special hidden nameplates (like the Delver's Guide book in Dornogal)
-- Misc minor issues.
-### Note
-- Lots of stuff to keep track off. Still more bugfixes and feature bring-backs to do but we are getting somewhere. If you have reported something and not seen it fixed please do not hesitate to remind me.
+- All profiles included in addon that had "Default Blizzard Filter" enabled will get it fixed to instead do "Only mine" and whitelist + blacklist due to the fact that the "Default Blizzard Filter" doesnt exist on TBC and I havent made a substitude due to all auras having unique spell ids per rank and no time. Only mine is nearly the same thing anyway, may have to blacklist a trash aura or two.

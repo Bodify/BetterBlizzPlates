@@ -1716,6 +1716,10 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Friend/Guildie Indicator" then
+            local currentAnchor = BetterBlizzPlatesDB.friendIndicatorAnchor or "LEFT"
+            local tooltipText = "\n|cff32f795Right-click to change anchor: " .. currentAnchor .. "|r"
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
 
         -- Set the subtext
@@ -4826,7 +4830,7 @@ local function guiProfiles()
     frame.streamerText:SetText("Streamers")
 
     frame.infoText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 60)
+    frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 50)
     frame.infoText:SetText("If you are missing and want to be here let me know :)")
     frame.infoText:SetWidth(100)
 
@@ -5483,16 +5487,7 @@ local function guiGeneralTab()
     local classColorPersonalNameplate = CreateCheckbox("classColorPersonalNameplate", "Class color personal nameplate", BetterBlizzPlates)
     classColorPersonalNameplate:SetPoint("TOPLEFT", alwaysHideFriendlyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     classColorPersonalNameplate:HookScript("OnClick", function(self)
-        local nameplate, frame = BBP.GetSafeNameplate("player")
-        if frame then
-            if self:GetChecked() then
-                local localizedClass, englishClass = UnitClass(frame.unit);
-                local playerClassColor = RAID_CLASS_COLORS[englishClass];
-                frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
-            else
-                frame.healthBar:SetStatusBarColor(0,1,0)
-            end
-        end
+        BBP.ColorPRD()
     end)
 
     -- local friendlyNameColor = CreateCheckbox("friendlyNameColor", "Name", BetterBlizzPlates)
@@ -6079,10 +6074,10 @@ local function guiGeneralTab()
     useCustomTextureForSelf:HookScript("OnClick", function(self)
         if self:GetChecked() then
             textureDropdownSelf:Enable()
-            BBP.TexturePRD()
         else
             textureDropdownSelf:Disable()
         end
+        BBP.TexturePRD()
     end)
     CreateTooltipTwo(useCustomTextureForSelf, "Personal Texture", "Change Personal resource healthbar texture.", nil, "ANCHOR_LEFT")
     if not useCustomTexture:GetChecked() or not useCustomTextureForSelf:GetChecked() then
@@ -6094,10 +6089,10 @@ local function guiGeneralTab()
     useCustomTextureForSelfMana:HookScript("OnClick", function(self)
         if self:GetChecked() then
             textureDropdownSelfMana:Enable()
-            BBP.TexturePRD()
         else
             textureDropdownSelfMana:Disable()
         end
+        BBP.TexturePRD()
     end)
     CreateTooltipTwo(useCustomTextureForSelfMana, "Personal Mana/Resource Texture", "Change Personal Resource mana/resource-bar texture", nil, "ANCHOR_LEFT")
     if not useCustomTexture:GetChecked() or not useCustomTextureForSelfMana:GetChecked() then
@@ -6173,6 +6168,7 @@ local function guiGeneralTab()
             textureDropdownSelf:Disable()
             textureDropdownSelfMana:Disable()
         end
+        BBP.TexturePRD()
     end)
 
 
@@ -7514,7 +7510,7 @@ local function guiPositionAndScale()
 
     anchorSubClassIcon.classIndicatorOnlyFriends = CreateCheckbox("classIndicatorOnlyFriends", "Only show on Friends (Friendlist)", anchorSubClassIcon.extendedSettings)
     anchorSubClassIcon.classIndicatorOnlyFriends:SetPoint("TOPLEFT", anchorSubClassIcon.classIndicatorOnlyParty, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(anchorSubClassIcon.classIndicatorOnlyFriends, "Only show on Friends (Friendlist)", "Only show Class Indicator on friends you have in your Friendlist.")
+    CreateTooltipTwo(anchorSubClassIcon.classIndicatorOnlyFriends, "Only show on Friends (Friendlist)", "Only show Class Indicator on friends you have in your Friendlist and Guild mates.")
 
     anchorSubClassIcon.classIndicatorOnlyHealer = CreateCheckbox("classIndicatorOnlyHealer", "Only Show Healer", anchorSubClassIcon.extendedSettings)
     anchorSubClassIcon.classIndicatorOnlyHealer:SetPoint("TOPLEFT", anchorSubClassIcon.classIndicatorOnlyFriends, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -11612,9 +11608,25 @@ local function guiMisc()
 
     local friendIndicator = CreateCheckbox("friendIndicator", "Friend/Guildie Indicator", guiMisc)
     friendIndicator:SetPoint("TOPLEFT", npcTitleColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(friendIndicator, "Friend/Guildie Indicator", "Places a little icon to the left of a friend/guildies name")
+    CreateTooltipTwo(friendIndicator, "Friend/Guildie Indicator", "Places a little icon next to a friend/guildies name")
+    friendIndicator:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            local anchorOrder = { "LEFT", "RIGHT", "TOP", "BOTTOM" }
+            local current = BetterBlizzPlatesDB.friendIndicatorAnchor or "LEFT"
+            local idx = 1
+            for i, v in ipairs(anchorOrder) do
+                if v == current then idx = i break end
+            end
+            idx = (idx % #anchorOrder) + 1
+            BetterBlizzPlatesDB.friendIndicatorAnchor = anchorOrder[idx]
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+            BBP.RefreshAllNameplates()
+        end
+    end)
 
-    local friendIndicatorScale = CreateSlider(guiMisc, "Friend Indicator Size", 0.2, 2, 0.01, "friendIndicatorScale", nil, 90)
+    local friendIndicatorScale = CreateSlider(guiMisc, "Friend Indicator Size", 0.2, 2.5, 0.01, "friendIndicatorScale", nil, 90)
     friendIndicatorScale:SetPoint("LEFT", friendIndicator.Text, "RIGHT", 25, 0)
 
     local hideDeselectNonTargetOverlay = CreateCheckbox("hideDeselectNonTargetOverlay", "Hide Deselect Overlay", guiMisc)

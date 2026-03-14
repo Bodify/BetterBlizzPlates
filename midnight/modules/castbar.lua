@@ -883,6 +883,20 @@ function BBP.ToggleSpellCastEventRegistration()
     end
 end
 
+local empowerEvents = {
+    ["UNIT_SPELLCAST_EMPOWER_START"] = true,
+    ["UNIT_SPELLCAST_EMPOWER_UPDATE"] = true,
+    ["UNIT_SPELLCAST_EMPOWER_STOP"] = true,
+}
+
+local function HideChargeTiers(castBar)
+    for _, child in ipairs({castBar:GetChildren()}) do
+        if child.BasePip or (child.Normal and child.Disabled) then
+            child:SetAlpha(0)
+            castBar.empowerHidden = true
+        end
+    end
+end
 
 -- quickfix for now
 function BBP.CastbarOnEvent(frame, event)
@@ -1063,6 +1077,32 @@ function BBP.CastbarOnEvent(frame, event)
             --     -- self.StagePip2:Hide()
             --     -- self.StagePip3:Hide()
             -- end
+
+            if empowerEvents[event] then
+                if not self.empowerSpark then
+                    self.empowerSpark = self:CreateTexture(nil, "OVERLAY")
+                    self.empowerSpark:SetAtlas("UI-CastingBar-Pip")
+                    self.empowerSpark:SetSize(6, 16)
+                    self.empowerSpark:SetPoint("CENTER", self.Spark, "CENTER", 0, -4.5)
+                    self.empowerSpark:Hide()
+                end
+                if not self.empowerHidden then
+                    HideChargeTiers(self)
+                end
+                if not useCustomCastbarTexture then
+                    self:SetStatusBarTexture("UI-CastingBar-Filling-Standard")
+                end
+                self.Spark:Hide()
+                self.empowerSparkShown = true
+                self.empowerSpark:Show()
+            else
+                if self.empowerSparkShown then
+                    self.empowerSpark:Hide()
+                    self.Spark:Show()
+                    self.empowerSparkShown = false
+                end
+            end
+
         end
 
         if not self.hooked then

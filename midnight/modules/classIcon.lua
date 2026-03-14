@@ -402,7 +402,7 @@ function BBP.ClassIndicator(frame, foundID)
     if shouldHide
         or (config.classIndicatorOnlyHealer and not isHealer and not flagIcon and not alwaysShowHealer and not alwaysShowTank)
         or partyOnly
-        or (config.classIndicatorOnlyFriends and not (BBP.isFriendlistFriend(frame.unit) or BBP.isUnitBNetFriend(frame.unit)))
+        or (config.classIndicatorOnlyFriends and not (BBP.isFriendlistFriend(frame.unit) or BBP.isUnitBNetFriend(frame.unit) or BBP.isUnitGuildmate(frame.unit)))
     then
         if not isPetAndAlwaysShow then
             frame.classIndicator:Hide()
