@@ -3255,14 +3255,13 @@ function BBP.RefreshBuffFrame()
 end
 
 function BBP.HideNameplateAuraTooltip()
-    -- BBP.isMidnight
-    -- if BetterBlizzPlatesDB.hideNameplateAuraTooltip and not BBP.hookedNameplateAuraTooltip then
-    --     hooksecurefunc(NameplateBuffButtonTemplateMixin, "OnEnter", function(self)
-    --         if self:IsForbidden() then return end
-    --         self:EnableMouse(false)
-    --     end)
-    --     BBP.hookedNameplateAuraTooltip = true
-    -- end
+    if BetterBlizzPlatesDB.hideNameplateAuraTooltip and not BBP.hookedNameplateAuraTooltip then
+        hooksecurefunc(NamePlateAuraItemMixin, "OnEnter", function(self)
+            if self:IsForbidden() then return end
+            self:EnableMouse(false)
+        end)
+        BBP.hookedNameplateAuraTooltip = true
+    end
 end
 
 function BBP.SmokeCheckBootup()
