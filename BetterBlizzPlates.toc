@@ -18,6 +18,7 @@ retail\modules\combat.lua
 midnight\modules\castbar.lua
 midnight\modules\arenaid.lua
 midnight\modules\execute.lua
+midnight\modules\faction.lua
 midnight\modules\healthNumbers.lua
 midnight\modules\target.lua
 retail\modules\healer.lua

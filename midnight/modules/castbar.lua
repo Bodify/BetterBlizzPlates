@@ -334,42 +334,42 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     if castBarRecolor or useCustomCastbarTexture then
         if castBarTexture then
             castBarTexture:SetDesaturated(true)
-        end
-        if db.castBarRecolorInterrupt and not BBP.interruptReady then
-            if notInterruptible ~= nil then
-                local unIntColor = castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }
-                castBarTexture:SetVertexColorFromBoolean(
-                    notInterruptible,
-                    CreateColor(unpack(unIntColor)),
-                    CreateColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
-                )
-            else
-                castBarTexture:SetVertexColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
-            end
-        elseif castBar.channeling then
-            if notInterruptible ~= nil then
-                local unIntColor = castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }
-                castBarTexture:SetVertexColorFromBoolean(
-                    notInterruptible,
-                    CreateColor(unpack(unIntColor)),
-                    CreateColor(unpack(castBarChanneledColor))
-                )
-            else
-                castBarTexture:SetVertexColor(unpack(castBarChanneledColor))
-            end
-        elseif castBar.casting then
-            if notInterruptible ~= nil then
-                local unIntColor = castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }
-                castBarTexture:SetVertexColorFromBoolean(
-                    notInterruptible,
-                    CreateColor(unpack(unIntColor)),
-                    CreateColor(unpack(castBarCastColor))
-                )
+            if db.castBarRecolorInterrupt and not BBP.interruptReady then
+                if notInterruptible ~= nil then
+                    local unIntColor = castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }
+                    castBarTexture:SetVertexColorFromBoolean(
+                        notInterruptible,
+                        CreateColor(unpack(unIntColor)),
+                        CreateColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+                    )
+                else
+                    castBarTexture:SetVertexColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+                end
+            elseif castBar.channeling then
+                if notInterruptible ~= nil then
+                    local unIntColor = castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }
+                    castBarTexture:SetVertexColorFromBoolean(
+                        notInterruptible,
+                        CreateColor(unpack(unIntColor)),
+                        CreateColor(unpack(castBarChanneledColor))
+                    )
+                else
+                    castBarTexture:SetVertexColor(unpack(castBarChanneledColor))
+                end
+            elseif castBar.casting then
+                if notInterruptible ~= nil then
+                    local unIntColor = castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }
+                    castBarTexture:SetVertexColorFromBoolean(
+                        notInterruptible,
+                        CreateColor(unpack(unIntColor)),
+                        CreateColor(unpack(castBarCastColor))
+                    )
+                else
+                    castBarTexture:SetVertexColor(unpack(castBarCastColor))
+                end
             else
                 castBarTexture:SetVertexColor(unpack(castBarCastColor))
             end
-        else
-            castBarTexture:SetVertexColor(unpack(castBarCastColor))
         end
         if event == "UNIT_SPELLCAST_INTERRUPTED" then
             castBar.lastEvent = event

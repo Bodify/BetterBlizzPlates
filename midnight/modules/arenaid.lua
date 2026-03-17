@@ -69,204 +69,190 @@ BBP.ArenaPlates = {} -- [1..3] = plate frame or nil
 BBP.NameplateToArenaIndex = {} -- [nameplate] = 1/2/3 or nil
 BBP.ArenaIndexToClass = {} -- [1..3] = "WARRIOR", "MAGE", etc.
 BBP.ArenaIndexToSpec = {} -- [1..3] = specID
-local patchVersion = select(4, GetBuildInfo())
-local isPrepatch = patchVersion == 120000
 
 -- Horrendous temporary llm abomination to work around blizzard removing getting nameplate of arena units.
 function BBP.RefreshArenaPlates(shouldWipe)
-    if isPrepatch then
-        wipe(BBP.ArenaPlates)
-        for i = 1, 3 do
-            local plate = C_NamePlate.GetNamePlateForUnit("arena"..i)
-            BBP.ArenaPlates[i] = plate
-            -- Tag the frame with its arena ID for optimization
-            if plate and plate.UnitFrame then
-                plate.UnitFrame.arenaID = i
-            end
-        end
-    else
-        if shouldWipe then
-            wipe(BBP.NameplateToArenaIndex)
-            wipe(BBP.ArenaIndexToClass)
-            wipe(BBP.ArenaIndexToSpec)
-        end
+    if shouldWipe then
+        wipe(BBP.NameplateToArenaIndex)
+        wipe(BBP.ArenaIndexToClass)
+        wipe(BBP.ArenaIndexToSpec)
+    end
 
-        local nameplates = C_NamePlate.GetNamePlates()
-        local foundArenas = {}
-        local allPlayerPlates = {}
-        local plateToClass = {}
-        local plateToSpec = {}
+    local nameplates = C_NamePlate.GetNamePlates()
+    local foundArenas = {}
+    local allPlayerPlates = {}
+    local plateToClass = {}
+    local plateToSpec = {}
 
-        local alreadyTaggedCount = 0
-        for _, plate in ipairs(nameplates) do
-            if plate.UnitFrame and plate.UnitFrame.arenaID then
-                local unit = plate.UnitFrame.unit
-                if UnitIsPlayer(unit) and UnitIsEnemy("player", unit) then
-                    -- Validate the tag still matches the cache
-                    local cachedIndex = BBP.NameplateToArenaIndex[plate]
-                    if cachedIndex == plate.UnitFrame.arenaID then
-                        alreadyTaggedCount = alreadyTaggedCount + 1
-                        foundArenas[plate.UnitFrame.arenaID] = plate
-                    else
-                        -- Stale tag, clear it
-                        plate.UnitFrame.arenaID = nil
-                    end
+    local alreadyTaggedCount = 0
+    for _, plate in ipairs(nameplates) do
+        if plate.UnitFrame and plate.UnitFrame.arenaID then
+            local unit = plate.UnitFrame.unit
+            if UnitIsPlayer(unit) and UnitIsEnemy("player", unit) then
+                -- Validate the tag still matches the cache
+                local cachedIndex = BBP.NameplateToArenaIndex[plate]
+                if cachedIndex == plate.UnitFrame.arenaID then
+                    alreadyTaggedCount = alreadyTaggedCount + 1
+                    foundArenas[plate.UnitFrame.arenaID] = plate
                 else
-                    -- Not an enemy player anymore, clear the tag
+                    -- Stale tag, clear it
                     plate.UnitFrame.arenaID = nil
                 end
+            else
+                -- Not an enemy player anymore, clear the tag
+                plate.UnitFrame.arenaID = nil
             end
         end
+    end
 
-        if alreadyTaggedCount == 3 and foundArenas[1] and foundArenas[2] and foundArenas[3] then
-            return
-        end
+    if alreadyTaggedCount == 3 and foundArenas[1] and foundArenas[2] and foundArenas[3] then
+        return
+    end
 
-        for _, plate in ipairs(nameplates) do
-            if plate.UnitFrame then
-                local unit = plate.UnitFrame.unit
-                if UnitIsPlayer(unit) and UnitIsEnemy("player", unit) then
-                    table.insert(allPlayerPlates, plate)
-                    local _, class = UnitClass(unit)
-                    plateToClass[plate] = class
+    for _, plate in ipairs(nameplates) do
+        if plate.UnitFrame then
+            local unit = plate.UnitFrame.unit
+            if UnitIsPlayer(unit) and UnitIsEnemy("player", unit) then
+                table.insert(allPlayerPlates, plate)
+                local _, class = UnitClass(unit)
+                plateToClass[plate] = class
 
-                    local cachedIndex = BBP.NameplateToArenaIndex[plate]
-                    if cachedIndex then
-                        local cachedClass = BBP.ArenaIndexToClass[cachedIndex]
-                        local cachedSpec = BBP.ArenaIndexToSpec[cachedIndex]
+                local cachedIndex = BBP.NameplateToArenaIndex[plate]
+                if cachedIndex then
+                    local cachedClass = BBP.ArenaIndexToClass[cachedIndex]
+                    local cachedSpec = BBP.ArenaIndexToSpec[cachedIndex]
 
-                        if cachedClass and cachedClass ~= class then
+                    if cachedClass and cachedClass ~= class then
+                        BBP.NameplateToArenaIndex[plate] = nil
+                        if plate.UnitFrame then
+                            plate.UnitFrame.arenaID = nil
+                        end
+                        cachedIndex = nil
+                    elseif cachedSpec then
+                        local currentSpec = GetArenaOpponentSpec(cachedIndex)
+                        if currentSpec and currentSpec ~= cachedSpec then
                             BBP.NameplateToArenaIndex[plate] = nil
                             if plate.UnitFrame then
                                 plate.UnitFrame.arenaID = nil
                             end
                             cachedIndex = nil
-                        elseif cachedSpec then
-                            local currentSpec = GetArenaOpponentSpec(cachedIndex)
-                            if currentSpec and currentSpec ~= cachedSpec then
-                                BBP.NameplateToArenaIndex[plate] = nil
-                                if plate.UnitFrame then
-                                    plate.UnitFrame.arenaID = nil
-                                end
-                                cachedIndex = nil
-                            end
-                        end
-                    end
-
-                    for i = 1, 3 do
-                        local arenaUnit = "arena" .. i
-                        if (UnitIsUnit(unit, "target") and UnitIsUnit("target", arenaUnit)) or
-                           (UnitIsUnit(unit, "focus") and UnitIsUnit("focus", arenaUnit)) or
-                           (UnitIsUnit(unit, "mouseover") and UnitIsUnit("mouseover", arenaUnit)) then
-                            BBP.NameplateToArenaIndex[plate] = i
-                            BBP.ArenaIndexToClass[i] = class
-
-                            local specID = GetArenaOpponentSpec(i)
-                            if specID then
-                                BBP.ArenaIndexToSpec[i] = specID
-                                plateToSpec[plate] = specID
-                            end
-
-                            if plate.UnitFrame then
-                                plate.UnitFrame.arenaID = i
-                            end
-
-                            foundArenas[i] = plate
-                        end
-                    end
-                else
-                    if BBP.NameplateToArenaIndex[plate] then
-                        BBP.NameplateToArenaIndex[plate] = nil
-                    end
-                    if plate.UnitFrame and plate.UnitFrame.arenaID then
-                        plate.UnitFrame.arenaID = nil
-                    end
-                end
-            end
-        end
-
-        for _, plate in ipairs(allPlayerPlates) do
-            if not plateToSpec[plate] then
-                local cachedIndex = BBP.NameplateToArenaIndex[plate]
-                if cachedIndex and BBP.ArenaIndexToSpec[cachedIndex] then
-                    plateToSpec[plate] = BBP.ArenaIndexToSpec[cachedIndex]
-                end
-            end
-        end
-
-        if #allPlayerPlates == 3 then
-            for _, plate in ipairs(allPlayerPlates) do
-                if not BBP.NameplateToArenaIndex[plate] then
-                    local class = plateToClass[plate]
-                    if class then
-                        for i = 1, 3 do
-                            if BBP.ArenaIndexToClass[i] == class and not foundArenas[i] then
-                                local cachedSpec = BBP.ArenaIndexToSpec[i]
-                                local plateSpec = plateToSpec[plate]
-
-                                if cachedSpec and plateSpec then
-                                    if cachedSpec == plateSpec then
-                                        BBP.NameplateToArenaIndex[plate] = i
-                                        if plate.UnitFrame then
-                                            plate.UnitFrame.arenaID = i
-                                        end
-                                        foundArenas[i] = plate
-                                        break
-                                    end
-                                else
-                                    local classCount = 0
-                                    for _, p in ipairs(allPlayerPlates) do
-                                        if plateToClass[p] == class and not BBP.NameplateToArenaIndex[p] then
-                                            classCount = classCount + 1
-                                        end
-                                    end
-                                    if classCount == 1 then
-                                        BBP.NameplateToArenaIndex[plate] = i
-                                        if plate.UnitFrame then
-                                            plate.UnitFrame.arenaID = i
-                                        end
-                                        foundArenas[i] = plate
-                                        break
-                                    end
-                                end
-                            end
                         end
                     end
                 end
-            end
-        end
 
-        local foundCount = 0
-        local missingIndex = nil
-        for i = 1, 3 do
-            if foundArenas[i] then
-                foundCount = foundCount + 1
+                for i = 1, 3 do
+                    local arenaUnit = "arena" .. i
+                    if (UnitIsUnit(unit, "target") and UnitIsUnit("target", arenaUnit)) or
+                        (UnitIsUnit(unit, "focus") and UnitIsUnit("focus", arenaUnit)) or
+                        (UnitIsUnit(unit, "mouseover") and UnitIsUnit("mouseover", arenaUnit)) then
+                        BBP.NameplateToArenaIndex[plate] = i
+                        BBP.ArenaIndexToClass[i] = class
+
+                        local specID = GetArenaOpponentSpec(i)
+                        if specID then
+                            BBP.ArenaIndexToSpec[i] = specID
+                            plateToSpec[plate] = specID
+                        end
+
+                        if plate.UnitFrame then
+                            plate.UnitFrame.arenaID = i
+                        end
+
+                        foundArenas[i] = plate
+                    end
+                end
             else
-                missingIndex = i
+                if BBP.NameplateToArenaIndex[plate] then
+                    BBP.NameplateToArenaIndex[plate] = nil
+                end
+                if plate.UnitFrame and plate.UnitFrame.arenaID then
+                    plate.UnitFrame.arenaID = nil
+                end
             end
         end
+    end
 
-        if foundCount == 2 and missingIndex and #allPlayerPlates == 3 then
-            for _, plate in ipairs(allPlayerPlates) do
-                local isAlreadyFound = false
-                for _, foundPlate in pairs(foundArenas) do
-                    if foundPlate == plate then
-                        isAlreadyFound = true
-                        break
+    for _, plate in ipairs(allPlayerPlates) do
+        if not plateToSpec[plate] then
+            local cachedIndex = BBP.NameplateToArenaIndex[plate]
+            if cachedIndex and BBP.ArenaIndexToSpec[cachedIndex] then
+                plateToSpec[plate] = BBP.ArenaIndexToSpec[cachedIndex]
+            end
+        end
+    end
+
+    if #allPlayerPlates == 3 then
+        for _, plate in ipairs(allPlayerPlates) do
+            if not BBP.NameplateToArenaIndex[plate] then
+                local class = plateToClass[plate]
+                if class then
+                    for i = 1, 3 do
+                        if BBP.ArenaIndexToClass[i] == class and not foundArenas[i] then
+                            local cachedSpec = BBP.ArenaIndexToSpec[i]
+                            local plateSpec = plateToSpec[plate]
+
+                            if cachedSpec and plateSpec then
+                                if cachedSpec == plateSpec then
+                                    BBP.NameplateToArenaIndex[plate] = i
+                                    if plate.UnitFrame then
+                                        plate.UnitFrame.arenaID = i
+                                    end
+                                    foundArenas[i] = plate
+                                    break
+                                end
+                            else
+                                local classCount = 0
+                                for _, p in ipairs(allPlayerPlates) do
+                                    if plateToClass[p] == class and not BBP.NameplateToArenaIndex[p] then
+                                        classCount = classCount + 1
+                                    end
+                                end
+                                if classCount == 1 then
+                                    BBP.NameplateToArenaIndex[plate] = i
+                                    if plate.UnitFrame then
+                                        plate.UnitFrame.arenaID = i
+                                    end
+                                    foundArenas[i] = plate
+                                    break
+                                end
+                            end
+                        end
                     end
                 end
-                if not isAlreadyFound then
-                    BBP.NameplateToArenaIndex[plate] = missingIndex
-                    BBP.ArenaIndexToClass[missingIndex] = plateToClass[plate]
-                    local specID = GetArenaOpponentSpec(missingIndex)
-                    if specID then
-                        BBP.ArenaIndexToSpec[missingIndex] = specID
-                    end
-                    if plate.UnitFrame then
-                        plate.UnitFrame.arenaID = missingIndex
-                    end
+            end
+        end
+    end
+
+    local foundCount = 0
+    local missingIndex = nil
+    for i = 1, 3 do
+        if foundArenas[i] then
+            foundCount = foundCount + 1
+        else
+            missingIndex = i
+        end
+    end
+
+    if foundCount == 2 and missingIndex and #allPlayerPlates == 3 then
+        for _, plate in ipairs(allPlayerPlates) do
+            local isAlreadyFound = false
+            for _, foundPlate in pairs(foundArenas) do
+                if foundPlate == plate then
+                    isAlreadyFound = true
                     break
                 end
+            end
+            if not isAlreadyFound then
+                BBP.NameplateToArenaIndex[plate] = missingIndex
+                BBP.ArenaIndexToClass[missingIndex] = plateToClass[plate]
+                local specID = GetArenaOpponentSpec(missingIndex)
+                if specID then
+                    BBP.ArenaIndexToSpec[missingIndex] = specID
+                end
+                if plate.UnitFrame then
+                    plate.UnitFrame.arenaID = missingIndex
+                end
+                break
             end
         end
     end
@@ -286,16 +272,32 @@ f:RegisterEvent("PLAYER_ENTERING_WORLD")
 f:RegisterEvent("ARENA_OPPONENT_UPDATE")
 f:RegisterEvent("NAME_PLATE_UNIT_ADDED")
 f:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
-if not isPrepatch then
-    f:RegisterEvent("PLAYER_TARGET_CHANGED")
-    f:RegisterEvent("PLAYER_FOCUS_CHANGED")
-    f:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
-end
+f:RegisterEvent("PLAYER_TARGET_CHANGED")
+f:RegisterEvent("PLAYER_FOCUS_CHANGED")
+f:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
 f:SetScript("OnEvent", function(_, e)
     if not BBP.isInArena then return end
     local shouldWipe = (e == "PLAYER_ENTERING_WORLD" or e == "ARENA_OPPONENT_UPDATE")
     BBP.RefreshArenaPlates(shouldWipe)
     BBP.RefreshPartyPlates()
+
+    if (BBP.pendingSpecIconCount or 0) > 0 or (BBP.pendingHealerCount or 0) > 0 then
+        for _, plate in ipairs(C_NamePlate.GetNamePlates()) do
+            local frame = plate and plate.UnitFrame
+            if frame and BBP.GetSpecID(frame) then
+                if frame.needsSpecIconUpdate then
+                    frame.needsSpecIconUpdate = nil
+                    BBP.pendingSpecIconCount = (BBP.pendingSpecIconCount or 0) - 1
+                    BBP.ClassIndicator(frame)
+                end
+                if frame.needsHealerUpdate then
+                    frame.needsHealerUpdate = nil
+                    BBP.pendingHealerCount = (BBP.pendingHealerCount or 0) - 1
+                    BBP.HealerIndicator(frame)
+                end
+            end
+        end
+    end
 end)
 
 function BBP.GetArenaIndexByFrame(frame)
@@ -305,21 +307,9 @@ function BBP.GetArenaIndexByFrame(frame)
         return frame.arenaID
     end
 
-    if isPrepatch then
-        local plate = BBP.GetSafeNameplate(frame.unit)
-        if not plate then return nil end
-        for i = 1, 3 do
-            local ap = BBP.ArenaPlates[i]
-            if ap and ap == plate then
-                return i
-            end
-        end
-        return nil
-    else
-        local plate = BBP.GetSafeNameplate(frame.unit)
-        if not plate then return nil end
-        return BBP.NameplateToArenaIndex[plate]
-    end
+    local plate = BBP.GetSafeNameplate(frame.unit)
+    if not plate then return nil end
+    return BBP.NameplateToArenaIndex[plate]
 end
 
 function BBP.GetPartyIndexByFrame(frame)
@@ -418,6 +408,10 @@ function BBP.ArenaIndicator1(frame)
     local idx = BBP.GetArenaIndexByFrame(frame)
     if not idx then return end
 
+    if FrameSort then
+        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("arena"..idx)
+    end
+
     local r, g, b = 1, 1, 0
     if enemyClassColorName then
         r, g, b = frame.name:GetTextColor()
@@ -456,6 +450,10 @@ function BBP.ArenaIndicator2(frame)
 
     local idx = BBP.GetArenaIndexByFrame(frame)
     if not idx then return end
+
+    if FrameSort then
+        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("arena"..idx)
+    end
 
     local r, g, b = 1, 1, 0
     if enemyClassColorName then
@@ -576,6 +574,10 @@ function BBP.ArenaIndicator4(frame)
     frame.specNameText:SetIgnoreParentScale(true)
     frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 
+    if FrameSort then
+        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("arena"..idx)
+    end
+
     frame.arenaNumberText:SetText(idx)
     if enemyClassColorName then
         frame.arenaNumberText:SetTextColor(r, g, b, 1)
@@ -620,6 +622,10 @@ function BBP.ArenaIndicator5(frame)
 
     local anchorPoint = createSpexText(frame)
 
+    if FrameSort then
+        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("arena"..idx)
+    end
+
     frame.name:SetText("")
     frame.name:SetAlpha(0)
     frame.specNameText:SetText(specName .. " " .. idx)
@@ -642,6 +648,10 @@ function BBP.PartyIndicator1(frame)
 
     local idx = BBP.GetPartyIndexByFrame(frame)
     if not idx then return end
+
+    if FrameSort then
+        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("party"..idx)
+    end
 
     local r, g, b = frame.name:GetTextColor()
 
@@ -666,6 +676,10 @@ function BBP.PartyIndicator2(frame)
 
     local idx = BBP.GetPartyIndexByFrame(frame)
     if not idx then return end
+
+    if FrameSort then
+        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("party"..idx)
+    end
 
     local r, g, b = frame.name:GetTextColor()
 
@@ -758,6 +772,10 @@ function BBP.PartyIndicator4(frame)
     frame.specNameText:SetIgnoreParentScale(true)
     frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 
+    if FrameSort then
+        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("party"..idx)
+    end
+
     frame.arenaNumberText:SetText(idx)
     frame.arenaNumberText:SetTextColor(r, g, b, 1)
     frame.arenaNumberText:SetIgnoreParentScale(false)
@@ -791,6 +809,10 @@ function BBP.PartyIndicator5(frame)
     local r, g, b = frame.name:GetTextColor()
 
     local anchorPoint = createSpexText(frame)
+
+    if FrameSort then
+        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("party"..idx)
+    end
 
     frame.name:SetText("")
     frame.specNameText:SetText(specName .. " " .. idx)

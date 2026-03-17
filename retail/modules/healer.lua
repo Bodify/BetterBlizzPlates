@@ -75,6 +75,19 @@ function BBP.HealerIndicator(frame)
     end
 
     -- Condition check: healerIndicatorEnemyOnly
+    local specID = BBP.GetSpecID(frame)
+    if specID then
+        if frame.needsHealerUpdate then
+            frame.needsHealerUpdate = nil
+            BBP.pendingHealerCount = (BBP.pendingHealerCount or 0) - 1
+        end
+    else
+        if not frame.needsHealerUpdate then
+            frame.needsHealerUpdate = true
+            BBP.pendingHealerCount = (BBP.pendingHealerCount or 0) + 1
+        end
+    end
+
     if BBP.IsSpecHealer(frame) then
         if config.healerIndicatorEnemyOnly and not info.isEnemy then
             if frame.healerIndicator then frame.healerIndicator:Hide() end

@@ -386,6 +386,15 @@ function BBP.ClassIndicator(frame, foundID)
     if config.classIndicatorSpecIcon or config.classIndicatorHealer then
         if specID then
             specIcon = select(4, GetSpecializationInfoByID(specID))
+            if frame.needsSpecIconUpdate then
+                frame.needsSpecIconUpdate = nil
+                BBP.pendingSpecIconCount = (BBP.pendingSpecIconCount or 0) - 1
+            end
+        else
+            if not frame.needsSpecIconUpdate then
+                frame.needsSpecIconUpdate = true
+                BBP.pendingSpecIconCount = (BBP.pendingSpecIconCount or 0) + 1
+            end
         end
     end
 

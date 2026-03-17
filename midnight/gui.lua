@@ -992,6 +992,13 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BetterBlizzPlatesDB.executeIndicatorYPos = value
                 elseif element == "executeIndicatorScale" then
                     BetterBlizzPlatesDB.executeIndicatorScale = value
+                -- Faction Indicator Pos and Scale
+                elseif element == "factionIndicatorXPos" then
+                    BetterBlizzPlatesDB.factionIndicatorXPos = value
+                elseif element == "factionIndicatorYPos" then
+                    BetterBlizzPlatesDB.factionIndicatorYPos = value
+                elseif element == "factionIndicatorScale" then
+                    BetterBlizzPlatesDB.factionIndicatorScale = value
                 -- Target Indicator Pos and Scale
                 elseif element == "targetIndicatorXPos" then
                     BetterBlizzPlatesDB.targetIndicatorXPos = value
@@ -1141,7 +1148,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BBP.RefreshBuffFrame()
                 elseif element == "defaultNpAuraCdSize" then
                     BetterBlizzPlatesDB.defaultNpAuraCdSize = value
-                    BBP.RefreshBuffFrame()
+                    if BBP.UpdateAllNameplatesAuras then BBP.UpdateAllNameplatesAuras() end
                 elseif element == "targetNameplateAuraScale" then
                     BetterBlizzPlatesDB.targetNameplateAuraScale = value
                     BBP.RefreshBuffFrame()
@@ -1378,6 +1385,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         -- Execute Indicator Pos and Scale
                         elseif element == "executeIndicatorXPos" or element == "executeIndicatorYPos" or element == "executeIndicatorScale" then
                             BBP.ExecuteIndicator(frame)
+                        -- Faction Indicator Pos and Scale
+                        elseif element == "factionIndicatorXPos" or element == "factionIndicatorYPos" or element == "factionIndicatorScale" then
+                            BBP.FactionIndicator(frame)
                         -- Party Pointer Pos and Scale
                         elseif element == "partyPointerXPos" or element == "partyPointerYPos" or element == "partyPointerScale"  or element == "partyPointerHealerScale" or element == "partyPointerWidth" then
                             BBP.PartyPointer(frame)
@@ -5814,8 +5824,16 @@ local function guiGeneralTab()
     executeIndicatorIcon:SetSize(28, 30)
     executeIndicatorIcon:SetPoint("RIGHT", executeIndicator, "LEFT", 4, 1)
 
+    local factionIndicator = CreateCheckbox("factionIndicator", "Faction indicator", BetterBlizzPlates, nil, BBP.ToggleFactionIndicator)
+    factionIndicator:SetPoint("TOPLEFT", executeIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(factionIndicator, "Faction Indicator |A:questlog-questtypeicon-alliance:21:21|a", "Show a faction icon on nameplates.", "Enabled only in World PvP Zones by default but more settings in the Advanced Settings section.")
+    local factionIndicatorIcon = factionIndicator:CreateTexture(nil, "ARTWORK")
+    factionIndicatorIcon:SetAtlas("questlog-questtypeicon-alliance")
+    factionIndicatorIcon:SetSize(21, 21)
+    factionIndicatorIcon:SetPoint("RIGHT", factionIndicator, "LEFT", 0, 0)
+
     local healerIndicator = CreateCheckbox("healerIndicator", "Healer indicator", BetterBlizzPlates)
-    healerIndicator:SetPoint("TOPLEFT", executeIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    healerIndicator:SetPoint("TOPLEFT", factionIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healerIndicator, "Healer Indicator |A:greencross:21:21|a", "Show a cross on healers.", "Note: Party Pointer and Class Indicator both have their own Healer Icon settings. This is a separate icon entirely.")
     local healerCrossIcon = healerIndicator:CreateTexture(nil, "ARTWORK")
     healerCrossIcon:SetAtlas("greencross")
@@ -6640,84 +6658,115 @@ local function guiPositionAndScale()
     local absorbIndicatorOnPlayersOnly = CreateCheckbox("absorbIndicatorOnPlayersOnly", "Players only", contentFrame)
     absorbIndicatorOnPlayersOnly:SetPoint("TOPLEFT", absorbIndicatorEnemyOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
---     ----------------------
---     -- Totem Indicator
---     ----------------------
---     local anchorSubTotem = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
---     anchorSubTotem:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, thirdLineY)
---     anchorSubTotem:SetText("Totem Indicator")
+    ----------------------
+    -- Faction Indicator
+    ----------------------
+    local anchorSubFaction = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubFaction:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, thirdLineY)
+    anchorSubFaction:SetText("Faction Indicator")
 
---     CreateBorderBox(anchorSubTotem)
+    CreateBorderBox(anchorSubFaction)
 
---     local totemIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
---     totemIcon2:SetAtlas("teleportationnetwork-ardenweald-32x32")
---     totemIcon2:SetSize(34, 34)
---     totemIcon2:SetPoint("BOTTOM", anchorSubTotem, "TOP", 0, 0)
+    local factionIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
+    factionIcon2:SetAtlas("questlog-questtypeicon-alliance")
+    factionIcon2:SetSize(34, 34)
+    factionIcon2:SetPoint("BOTTOM", anchorSubFaction, "TOP", 0, 0)
 
---     BBP.totemIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.01, "totemIndicatorScale")
---     BBP.totemIndicatorScale:SetPoint("TOP", anchorSubTotem, "BOTTOM", 0, -15)
---     CreateTooltip( BBP.totemIndicatorScale, "This changes the scale of ALL icons.\n\nYou can adjust individual sizes in the \"Totem Indicator List\" tab.", "ANCHOR_LEFT")
+    local factionIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 3, 0.01, "factionIndicatorScale")
+    factionIndicatorScale:SetPoint("TOP", anchorSubFaction, "BOTTOM", 0, -15)
 
---     local totemIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "totemIndicatorXPos", "X")
---     totemIndicatorXPos:SetPoint("TOP",  BBP.totemIndicatorScale, "BOTTOM", 0, -15)
+    local factionIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "factionIndicatorXPos", "X")
+    factionIndicatorXPos:SetPoint("TOP", factionIndicatorScale, "BOTTOM", 0, -15)
 
---     local totemIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "totemIndicatorYPos", "Y")
---     totemIndicatorYPos:SetPoint("TOP", totemIndicatorXPos, "BOTTOM", 0, -15)
+    local factionIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "factionIndicatorYPos", "Y")
+    factionIndicatorYPos:SetPoint("TOP", factionIndicatorXPos, "BOTTOM", 0, -15)
 
---     local totemIndicatorDropdown = CreateAnchorDropdown(
---         "totemIndicatorDropdown",
---         contentFrame,
---         "Select Anchor Point",
---         "totemIndicatorAnchor",
---         function(arg1)
---         BBP.RefreshAllNameplates()
---     end,
---         { anchorFrame = totemIndicatorYPos, x = -16, y = -35, label = "Anchor" }
---     )
+    local factionIndicatorDropdown = CreateAnchorDropdown(
+        "factionIndicatorDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "factionIndicatorAnchor",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = factionIndicatorYPos, x = -16, y = -35, label = "Anchor" }
+    )
 
---     local totemTestIcons2 = CreateCheckbox("totemIndicatorTestMode", "Test", contentFrame)
---     totemTestIcons2:SetPoint("TOPLEFT", totemIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
+    -- Icon Set dropdown
+    local factionIconSetNames = {
+        [1]  = "Quest Log Icons",
+        [2]  = "UnitFrame Icons",
+        [3]  = "PVP Banners",
+        [4]  = "BFA Landing Buttons",
+        [5]  = "Talent Tree Logos",
+        [6]  = "CTF Flags",
+        [7]  = "Quest Portrait Icons",
+        [8]  = "Quest Portrait (Small)",
+        [9]  = "Character Create Icons",
+        [10] = "Character Create (Small)",
+        [11] = "Warfront Armory Icons",
+        [12] = "Wax Seals",
+    }
 
---     local totemIndicatorEnemyOnly = CreateCheckbox("totemIndicatorEnemyOnly", "Enemies only", contentFrame)
---     totemIndicatorEnemyOnly:SetPoint("LEFT", totemTestIcons2.text, "RIGHT", 0, 0)
---     CreateTooltip(totemIndicatorEnemyOnly, "Show on enemy totems only")
+    local factionIconSetDropdown = LibDD:Create_UIDropDownMenu("factionIconSetDropdown", contentFrame)
+    LibDD:UIDropDownMenu_SetWidth(factionIconSetDropdown, 125)
+    local currentSet = BetterBlizzPlatesDB.factionIndicatorIconSet or 1
+    LibDD:UIDropDownMenu_SetText(factionIconSetDropdown, factionIconSetNames[currentSet] or "Quest Log Icons")
 
---     local totemIndicatorHideNameAndShiftIconDown = CreateCheckbox("totemIndicatorHideNameAndShiftIconDown", "Hide name", contentFrame)
---     totemIndicatorHideNameAndShiftIconDown:SetPoint("TOPLEFT", totemTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    LibDD:UIDropDownMenu_Initialize(factionIconSetDropdown, function(self, level, menuList)
+        local info = LibDD:UIDropDownMenu_CreateInfo()
+        for i = 1, 12 do
+            info.text = factionIconSetNames[i]
+            info.arg1 = i
+            info.func = function(self, arg1)
+                BetterBlizzPlatesDB.factionIndicatorIconSet = arg1
+                LibDD:UIDropDownMenu_SetText(factionIconSetDropdown, factionIconSetNames[arg1])
+                BBP.needsUpdate = true
+                BBP.RefreshAllNameplates()
+            end
+            info.checked = (BetterBlizzPlatesDB.factionIndicatorIconSet == i)
+            LibDD:UIDropDownMenu_AddButton(info)
+        end
+    end)
 
---     local totemIndicatorHideHealthBar = CreateCheckbox("totemIndicatorHideHealthBar", "Hide hp", contentFrame)
---     totemIndicatorHideHealthBar:SetPoint("LEFT", totemIndicatorHideNameAndShiftIconDown.text, "RIGHT", 0, 0)
---     CreateTooltip(totemIndicatorHideHealthBar, "Hide the healthbar on totems.\nWill still show if targeted.")
+    factionIconSetDropdown:SetPoint("TOPLEFT", factionIndicatorDropdown, "TOPLEFT", 0, -43)
 
--- --[=[
---     local totemIndicatorDisplayCdText = CreateCheckbox("totemIndicatorDisplayCdText", "CD Text", contentFrame)
---     totemIndicatorDisplayCdText:SetPoint("TOPLEFT", totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
---     CreateTooltip(totemIndicatorDisplayCdText, "Display default Blizz CD Text\n\nWill not work with OmniCC.")
--- ]=]-- cant force use blizzards own countdown it seems, must make own soonTM
+    local factionIconSetLabel = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    factionIconSetLabel:SetPoint("BOTTOM", factionIconSetDropdown, "TOP", 0, 3)
+    factionIconSetLabel:SetText("Icon Set")
 
---     local showTotemIndicatorCooldownSwipe = CreateCheckbox("showTotemIndicatorCooldownSwipe", "CD Swipe", contentFrame)
---     showTotemIndicatorCooldownSwipe:SetPoint("TOPLEFT", totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
---     CreateTooltip(showTotemIndicatorCooldownSwipe, "Show Cooldown Swipe Animation")
+    local factionIndicatorTestMode2 = CreateCheckbox("factionIndicatorTestMode", "Test", contentFrame, nil, BBP.ToggleFactionIndicator)
+    factionIndicatorTestMode2:SetPoint("TOPLEFT", factionIconSetDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
---     local totemIndicatorColorName = CreateCheckbox("totemIndicatorColorName", "Color Name", contentFrame)
---     totemIndicatorColorName:SetPoint("TOPLEFT", showTotemIndicatorCooldownSwipe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
---     CreateTooltip(totemIndicatorColorName, "Color name text")
+    local factionIndicatorEnemy = CreateCheckbox("factionIndicatorEnemy", "Enemy", contentFrame, nil, BBP.ToggleFactionIndicator)
+    factionIndicatorEnemy:SetPoint("TOPLEFT", factionIndicatorTestMode2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(factionIndicatorEnemy, "Show on Enemies", "Show the faction icon on players of the opposing faction.")
 
---     local totemIndicatorHideAuras = CreateCheckbox("totemIndicatorHideAuras", "Hide auras", contentFrame)
---     totemIndicatorHideAuras:SetPoint("LEFT", totemIndicatorColorName.text, "RIGHT", 0, 0)
---     CreateTooltip(totemIndicatorHideAuras, "Hide Auras on totem nameplates")
+    local factionIndicatorFriendly = CreateCheckbox("factionIndicatorFriendly", "Friendly", contentFrame, nil, BBP.ToggleFactionIndicator)
+    factionIndicatorFriendly:SetPoint("LEFT", factionIndicatorEnemy.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(factionIndicatorFriendly, "Show on Friendly", "Show the faction icon on players of your own faction.")
 
---     local totemIndicatorColorHealthBar = CreateCheckbox("totemIndicatorColorHealthBar", "Color HP", contentFrame)
---     totemIndicatorColorHealthBar:SetPoint("LEFT", showTotemIndicatorCooldownSwipe.text, "RIGHT", 0, 0)
---     CreateTooltip(totemIndicatorColorHealthBar, "Color healthbar")
+    local factionIndicatorOnlyPvPZone
 
---     local totemIndicatorDefaultCooldownTextSize = CreateSlider(contentFrame, "Default CD Size", 0.3, 2, 0.01, "totemIndicatorDefaultCooldownTextSize", nil, 95)
---     totemIndicatorDefaultCooldownTextSize:SetPoint("TOP", totemIndicatorHideNameAndShiftIconDown, "BOTTOM", 40, -48)
---     CreateTooltip(totemIndicatorDefaultCooldownTextSize, "Size of the default Blizz CD text.\n\nWill not work with OmniCC.")
+    local factionIndicatorOnlyWorld = CreateCheckbox("factionIndicatorOnlyWorld", "World only", contentFrame, nil, BBP.ToggleFactionIndicator)
+    factionIndicatorOnlyWorld:SetPoint("TOPLEFT", factionIndicatorEnemy, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(factionIndicatorOnlyWorld, "World Only", "Only show the faction icon in the open world.")
+    factionIndicatorOnlyWorld:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            BetterBlizzPlatesDB.factionIndicatorOnlyPvPZone = false
+            factionIndicatorOnlyPvPZone:SetChecked(false)
+        end
+    end)
 
---     local totemIndicatorNoAnimation = CreateCheckbox("totemIndicatorNoAnimation", "Anim", contentFrame)
---     totemIndicatorNoAnimation:SetPoint("LEFT", totemIndicatorDefaultCooldownTextSize, "RIGHT", 0, 3)
---     CreateTooltipTwo(totemIndicatorNoAnimation, "No Animation", "Stops the pulsing animation on important npcs")
+    factionIndicatorOnlyPvPZone = CreateCheckbox("factionIndicatorOnlyPvPZone", "PvP (FFA) only", contentFrame, nil, BBP.ToggleFactionIndicator)
+    factionIndicatorOnlyPvPZone:SetPoint("LEFT", factionIndicatorTestMode2.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(factionIndicatorOnlyPvPZone, "PvP Zone Only", "Only show the faction icon in PvP zones. (Free-For-All in the open world)")
+    factionIndicatorOnlyPvPZone:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            BetterBlizzPlatesDB.factionIndicatorOnlyWorld = false
+            factionIndicatorOnlyWorld:SetChecked(false)
+        end
+    end)
 
     ----------------------
     -- Target indicator
@@ -12406,20 +12455,24 @@ local function guiTemp()
     nameplateAurasEnemyCenteredAnchor:SetPoint("TOPLEFT", nameplateAuraRightToLeft, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateAurasEnemyCenteredAnchor, "Center Auras", "Enable to have nameplate auras (debuffs, not cc or buffs they have their own anchor setting atm) centered on the nameplate.")
 
-    local nameplateDebuffPadding = CreateSlider(enableMidnightNameplateTweaks, "Nameplate Debuff Y Position", -100, 100, 1, "nameplateDebuffPadding")
+    local nameplateDebuffPadding = CreateSlider(guiTemp, "Nameplate Debuff Y Position", -100, 100, 1, "nameplateDebuffPadding")
     nameplateDebuffPadding:SetPoint("TOPLEFT", nameplateAurasEnemyCenteredAnchor, "BOTTOMLEFT", 12, -25)
-    CreateTooltipTwo(nameplateDebuffPadding, "Nameplate Debuff Padding", "Adjust the padding between debuff icons on nameplates.")
+    CreateTooltipTwo(nameplateDebuffPadding, "Nameplate Debuff Padding", "Adjust the padding between debuff icons on nameplates.", "CVar setting and does not require nameplate aura tweaks enabled", nil, "nameplateDebuffPadding")
 
     local nameplateAuraWidthGap = CreateSlider(enableMidnightNameplateTweaks, "Nameplate Aura Gap", 0, 20, 1, "nameplateAuraWidthGap")
     nameplateAuraWidthGap:SetPoint("TOPLEFT", nameplateDebuffPadding, "BOTTOMLEFT", 0, -10)
     CreateTooltipTwo(nameplateAuraWidthGap, "Nameplate Aura Gap", "Adjust the gap between buff and debuff icons on nameplates.")
 
-    local nameplateAuraScale = CreateSlider(enableMidnightNameplateTweaks, "Nameplate Aura Scale", 0.6, 3, 0.01, "nameplateAuraScale")
+    local nameplateAuraScale = CreateSlider(guiTemp, "Nameplate Aura Scale", 0.6, 3, 0.01, "nameplateAuraScale")
     nameplateAuraScale:SetPoint("TOPLEFT", nameplateAuraWidthGap, "BOTTOMLEFT", 0, -10)
-    CreateTooltipTwo(nameplateAuraScale, "Nameplate Aura Scale", "Adjust the scale of buff and debuff icons on nameplates.")
+    CreateTooltipTwo(nameplateAuraScale, "Nameplate Aura Scale", "Adjust the scale of buff and debuff icons on nameplates.", "CVar setting and does not require nameplate aura tweaks enabled", nil, "nameplateAuraScale")
+
+    local defaultNpAuraCdSize2 = CreateSlider(enableMidnightNameplateTweaks, "Default CD Text Size", 0.1, 2, 0.01, "defaultNpAuraCdSize")
+    defaultNpAuraCdSize2:SetPoint("TOPLEFT", nameplateAuraScale, "BOTTOMLEFT", 0, -10)
+    CreateTooltipTwo(defaultNpAuraCdSize2, "Default CD Text Size", "The text size of the default Blizzard Timer Text.\n\nIf you use OmniCC this setting will not work.")
 
     local ccIconScale = CreateSlider(enableMidnightNameplateTweaks, "CC Icon Scale", 0.4, 3, 0.01, "ccIconScale")
-    ccIconScale:SetPoint("TOPLEFT", nameplateAuraScale, "BOTTOMLEFT", 0, -25)
+    ccIconScale:SetPoint("TOPLEFT", defaultNpAuraCdSize2, "BOTTOMLEFT", 0, -25)
     CreateTooltipTwo(ccIconScale, "CC Icon Scale", "Change the scale of the new Crowd Control icons on Nameplates")
 
     local ccIconXPos = CreateSlider(enableMidnightNameplateTweaks, "CC Icon X Position", -100, 100, 1, "ccIconXPos", "X")

@@ -34,6 +34,19 @@ local InCombatLockdown = InCombatLockdown
 local IsInInstance = IsInInstance
 local IsActiveBattlefieldArena = IsActiveBattlefieldArena
 
+-- Cached font settings (populated by CacheFontSettings)
+local cachedFont
+local cachedLargeSizePlus1
+local cachedLargeSize
+local cachedNameSizePlus1
+local cachedNameSize
+local cachedOutlinedSizePlus1
+local cachedOutlinedSize
+local cachedLargeOutline
+local cachedNameOutline
+local cachedOutlinedOutline
+local cachedActiveNameOutline
+
 BBP.variablesLoaded = false
 BBP.OverlayFrame = CreateFrame("Frame", nil, WorldFrame)
 -- BBP.OverlayFrame:SetFrameStrata("DIALOG")
@@ -222,6 +235,14 @@ local defaultSettings = {
     executeIndicatorFriendly = false,
     executeIndicatorShowDecimal = true,
     executeIndicatorInRangeColorRGB = {0,1,0.8,1},
+
+    factionIndicatorEnemy = true,
+    factionIndicatorAnchor = "LEFT",
+    factionIndicatorXPos = 0,
+    factionIndicatorYPos = 0,
+    factionIndicatorScale = 1,
+    factionIndicatorIconSet = 1,
+    factionIndicatorOnlyPvPZone = true,
     -- Healer Indicator
     healerIndicator = false,
     healerIndicatorEnemyOnly = false,
@@ -488,7 +509,7 @@ local defaultSettings = {
     importantBuffsOffensives = true,
     importantBuffsDefensives = true,
     importantBuffsMobility = true,
-    defaultNpAuraCdSize = 0.5,
+    defaultNpAuraCdSize = 0.6,
     onlyPandemicAuraMine = true,
     nameplateAuraEnlargedScale = 1,
     nameplateAuraCompactedScale = 1,
@@ -1540,6 +1561,68 @@ end
 --- Functions
 ------------------------------------------------------------------------------------------------------
 
+-- Ensure font flags string always contains SLUG
+local function EnsureFontFlags(flags)
+    if type(flags) ~= "string" or flags == "" then
+        return "SLUG"
+    end
+    if not flags:find("SLUG") then
+        return flags .. ", SLUG"
+    end
+    return flags
+end
+
+local function CacheFontSettings()
+    local db = BetterBlizzPlatesDB
+    local useCustomFont = db.useCustomFont
+    local customOutline = useCustomFont and ((db.enableCustomFontOutline and db.customFontOutline) and (db.customFontOutline..", SLUG") or "SLUG") or nil
+    local baseSize = db.customFontSizeEnabled and db.customFontSize
+
+    if useCustomFont then
+        cachedFont = LSM:Fetch(LSM.MediaType.FONT, db.customFont)
+    else
+        cachedFont = db.defaultNamePlateFont
+    end
+
+    local sizeOff = useCustomFont and 2 or 0
+    local rawLargeSize = baseSize or db.defaultLargeFontSize
+    local rawNameSize = baseSize or db.defaultFontSize
+    local rawOutlinedSize = baseSize or db.defaultOutlinedFontSize
+
+    cachedLargeSizePlus1 = rawLargeSize + 1 + sizeOff
+    cachedLargeSize = rawLargeSize + sizeOff
+    cachedNameSizePlus1 = rawNameSize + 1 + sizeOff
+    cachedNameSize = rawNameSize + sizeOff
+    cachedOutlinedSizePlus1 = rawOutlinedSize + 1 + sizeOff
+    cachedOutlinedSize = rawOutlinedSize + sizeOff
+
+    local npStyle = tonumber(C_CVar.GetCVar("nameplateStyle")) or 0
+    local defaultOutline = (npStyle == 0 or npStyle == 2) and "OUTLINE" or ""
+
+    cachedLargeOutline = EnsureFontFlags(customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultLargeNamePlateFontFlags ~= "" and db.defaultLargeNamePlateFontFlags or defaultOutline))
+    cachedNameOutline = EnsureFontFlags(customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultNamePlateFontFlags ~= "" and db.defaultNamePlateFontFlags or defaultOutline))
+    cachedOutlinedOutline = EnsureFontFlags(customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or "OUTLINE")
+
+    cachedActiveNameOutline = (npStyle == 0 or npStyle == 2) and cachedOutlinedOutline or cachedNameOutline
+end
+BBP.CacheFontSettings = CacheFontSettings
+
+local function UpdateAllNpFonts()
+    local font = cachedFont
+
+    SystemFont_LargeNamePlate:SetFont(font, cachedLargeSizePlus1, cachedLargeOutline)
+    SystemFont_NamePlate:SetFont(font, cachedNameSizePlus1, cachedNameOutline)
+    SystemFont_NamePlate_Outlined:SetFont(font, cachedOutlinedSizePlus1, cachedOutlinedOutline)
+    SystemFont_LargeNamePlateFixed:SetFont(font, cachedLargeSizePlus1, cachedLargeOutline)
+    SystemFont_NamePlateFixed:SetFont(font, cachedNameSizePlus1, cachedNameOutline)
+
+    SystemFont_LargeNamePlate:SetFont(font, cachedLargeSize, cachedLargeOutline)
+    SystemFont_NamePlate:SetFont(font, cachedNameSize, cachedNameOutline)
+    SystemFont_NamePlate_Outlined:SetFont(font, cachedOutlinedSize, cachedOutlinedOutline)
+    SystemFont_LargeNamePlateFixed:SetFont(font, cachedLargeSize, cachedLargeOutline)
+    SystemFont_NamePlateFixed:SetFont(font, cachedNameSize, cachedNameOutline)
+end
+
 -- Checks if the unit is nameplate and legal
 function BBP.IsLegalNameplateUnit(frame)
     if not (frame and frame.unit) then return end
@@ -1686,20 +1769,21 @@ end
 
 local function TurnOffTestModes()
     local db = BetterBlizzPlatesDB
-    db.absorbIndicatorTestMode = false
-    db.petIndicatorTestMode = false
-    db.healerIndicatorTestMode = false
-    db.arenaIndicatorTestMode = false
-    db.totemIndicatorTestMode = false
-    db.targetIndicatorTestMode = false
-    db.focusTargetIndicatorTestMode = false
-    db.questIndicatorTestMode = false
-    db.executeIndicatorTestMode = false
-    db.testAllEnabledFeatures = false
-    db.nameplateAuraTestMode = false
-    db.partyPointerTestMode = false
-    db.healthNumbersTestMode = false
-    db.bgIndicatorTestMode = false
+    db.absorbIndicatorTestMode = nil
+    db.petIndicatorTestMode = nil
+    db.healerIndicatorTestMode = nil
+    db.arenaIndicatorTestMode = nil
+    db.totemIndicatorTestMode = nil
+    db.targetIndicatorTestMode = nil
+    db.focusTargetIndicatorTestMode = nil
+    db.questIndicatorTestMode = nil
+    db.executeIndicatorTestMode = nil
+    db.factionIndicatorTestMode = nil
+    db.testAllEnabledFeatures = nil
+    db.nameplateAuraTestMode = nil
+    db.partyPointerTestMode = nil
+    db.healthNumbersTestMode = nil
+    db.bgIndicatorTestMode = nil
 end
 
 -- Extracts NPC ID from GUID
@@ -5018,6 +5102,9 @@ local function HandleNamePlateRemoved(unit)
     if frame.healerIndicator then
         frame.healerIndicator:Hide()
     end
+    if frame.factionIndicator then
+        frame.factionIndicator:Hide()
+    end
     -- Hide out of combat icon
     if frame.combatIndicatorSap then
         frame.combatIndicatorSap:Hide()
@@ -5102,6 +5189,7 @@ local eliteIcons = {
 function BBP.CustomizeClassificationFrame(frame)
     local config = frame.BetterBlizzPlates.config
     frame.ClassificationFrame:SetFrameStrata("LOW")
+    frame.ClassificationFrame:SetScale(BetterBlizzPlatesDB.npClassificationScale or 1)
 
     if config.hideEliteDragon and not frame.ClassificationFrame.bbpHook then
         local atlas = frame.ClassificationFrame.classificationIndicator:GetAtlas()
@@ -6112,6 +6200,8 @@ local function HandleNamePlateAdded(unit)
     end
     if BBP.isMidnight then
 
+        BBP.FactionIndicator(frame)
+
         local newBar = frame.HealthBarsContainer.healthBar
         -- frame.HealthBarsContainer.healthBar.selectedBorder:ClearAllPoints()
         -- frame.HealthBarsContainer.healthBar.selectedBorder:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPLEFT", -3, 4)
@@ -6186,11 +6276,11 @@ local function HandleNamePlateAdded(unit)
 
         BBP.CastbarOnEvent(frame)
 
-        frame.name:SetFontHeight((BetterBlizzPlatesDB.customFontSizeEnabled and BetterBlizzPlatesDB.customFontSize) or BetterBlizzPlatesDB.defaultFontSize or 9)
-        if not BetterBlizzPlatesDB.useCustomFont and BetterBlizzPlatesDB.disableDefaultBlizzardOutline then
-            local f,s = frame.name:GetFont()
-            frame.name:SetFont(f,s,"SLUG")
-        end
+        --frame.name:SetFontHeight(cachedNameSize)
+        -- if not BetterBlizzPlatesDB.useCustomFont and BetterBlizzPlatesDB.disableDefaultBlizzardOutline then
+        --     local f,s = frame.name:GetFont()
+        --     frame.name:SetFont(f,s,"SLUG")
+        -- end
     end
 
     -- Make settings
@@ -6557,17 +6647,6 @@ frameRemoved:SetScript("OnEvent", function(self, event, unit)
     HandleNamePlateRemoved(unit)
 end)
 
--- Ensure font flags string always contains SLUG
-local function EnsureFontFlags(flags)
-    if type(flags) ~= "string" or flags == "" then
-        return "SLUG"
-    end
-    if not flags:find("SLUG") then
-        return flags .. ", SLUG"
-    end
-    return flags
-end
-
 --#################################################################################################
 --Update all nameplates
 function BBP.RefreshAllNameplates()
@@ -6589,13 +6668,9 @@ function BBP.RefreshAllNameplates()
     --         fontObject:SetFont(fontPath, fontSize, "THINOUTLINE")
     --     end
     -- end
+    CacheFontSettings()
     if not db.skipAdjustingFixedFonts then
-        local customOutline = db.useCustomFont and ((db.enableCustomFontOutline and db.customFontOutline) and (db.customFontOutline..", SLUG") or "SLUG") or nil
-        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultLargeNamePlateFontFlags))
-        BBP.SetFontBasedOnOption(SystemFont_NamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultNamePlateFontFlags))
-        BBP.SetFontBasedOnOption(SystemFont_NamePlate_Outlined, (db.customFontSizeEnabled and db.customFontSize) or db.defaultOutlinedFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or "OUTLINE")
-        BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultLargeNamePlateFontFlags))
-        BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultNamePlateFontFlags))
+        UpdateAllNpFonts()
     end
     BBP.UpdateAuraTypeColors()
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
@@ -6790,6 +6865,7 @@ function BBP.RefreshAllNameplates()
         BBP.ConsolidatedUpdateName(frame)
         SetFriendlyBarWidthTemp(frame)
         AdjustHealthBarHeight(frame)
+        frame.name:SetFont(cachedFont, cachedNameSize, cachedActiveNameOutline)
         --HideFriendlyHealthbar(frame)
     end
 end
@@ -6807,6 +6883,10 @@ hooksecurefunc(NamePlateUnitFrameMixin, "OnUnitFactionChanged", function(self)
 end)
 
 function BBP.RefreshAllNameplatesLightVer()
+    CacheFontSettings()
+    if not BetterBlizzPlatesDB.skipAdjustingFixedFonts then
+        UpdateAllNpFonts()
+    end
     --if not BBP.checkCombatAndWarn() then
         for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
             local frame = nameplate.UnitFrame
@@ -6873,7 +6953,7 @@ function BBP.ConsolidatedUpdateName(frame)
         return
     end
 
-    frame.name:SetFontHeight((BetterBlizzPlatesDB.customFontSizeEnabled and BetterBlizzPlatesDB.customFontSize) or BetterBlizzPlatesDB.defaultFontSize or 9)
+    --frame.name:SetFontHeight(cachedNameSize)
 
     if info.isSelf then
         if config.personalBarTweaks then
@@ -7105,10 +7185,13 @@ end
 -- Function to update the instance status
 local function UpdateInstanceStatus()
     local inInstance, instanceType = IsInInstance()
+    local _, isPvPZone = C_PvP.GetZonePVPInfo()
     BBP.isInPvE = inInstance and (instanceType == "party" or instanceType == "raid" or instanceType == "scenario")
     BBP.isInArena = inInstance and (instanceType == "arena")
     BBP.isInBg = inInstance and (instanceType == "pvp")
     BBP.isInPvP = BBP.isInBg or BBP.isInArena
+    BBP.isInWorld = not inInstance
+    BBP.isInPvPZone = isPvPZone
     BBP.IsInCompStomp = IsInBrawlCompStomp()
 
     local _, _, _, _, _, _, _, instanceMapID = GetInstanceInfo()
@@ -7431,13 +7514,9 @@ Frame:SetScript("OnEvent", function(...)
     C_Timer.After(1, function()
         BBP.TargetResourceUpdater()
         BBP.InstantComboPoints()
+        CacheFontSettings()
         if not db.skipAdjustingFixedFonts then
-            local customOutline = db.useCustomFont and ((db.enableCustomFontOutline and db.customFontOutline) and (db.customFontOutline..", SLUG") or "SLUG") or nil
-            BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultLargeNamePlateFontFlags))
-            BBP.SetFontBasedOnOption(SystemFont_NamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultNamePlateFontFlags))
-            BBP.SetFontBasedOnOption(SystemFont_NamePlate_Outlined, (db.customFontSizeEnabled and db.customFontSize) or db.defaultOutlinedFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or "OUTLINE")
-            BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultLargeNamePlateFontFlags))
-            BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultNamePlateFontFlags))
+            UpdateAllNpFonts()
         end
         MoveableSettingsPanel()
     end)
@@ -7885,19 +7964,23 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 db.old_defaultFontSize = db.defaultFontSize
                 db.old_defaultNamePlateFontFlags = db.defaultNamePlateFontFlags
             end
+            CacheFontSettings()
             if not db.skipFontCollect then
                 db.defaultLargeNamePlateFont, db.defaultLargeFontSize, db.defaultLargeNamePlateFontFlags = SystemFont_LargeNamePlate:GetFont()
                 db.defaultNamePlateFont, db.defaultFontSize, db.defaultNamePlateFontFlags = SystemFont_NamePlate:GetFont()
                 db.defaultNamePlateOutlinedFont, db.defaultOutlinedFontSize, db.defaultNamePlateOutlinedFontFlags = SystemFont_NamePlate_Outlined:GetFont()
-
-                if not db.skipAdjustingFixedFonts then
-                    local customOutline = db.useCustomFont and ((db.enableCustomFontOutline and db.customFontOutline) and (db.customFontOutline..", SLUG") or "SLUG") or nil
-                    BBP.SetFontBasedOnOption(SystemFont_LargeNamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultLargeNamePlateFontFlags))
-                    BBP.SetFontBasedOnOption(SystemFont_NamePlate, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultNamePlateFontFlags))
-                    BBP.SetFontBasedOnOption(SystemFont_NamePlate_Outlined, (db.customFontSizeEnabled and db.customFontSize) or db.defaultOutlinedFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or "OUTLINE")
-                    BBP.SetFontBasedOnOption(SystemFont_LargeNamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultLargeFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultLargeNamePlateFontFlags))
-                    BBP.SetFontBasedOnOption(SystemFont_NamePlateFixed, (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize, customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultNamePlateFontFlags))
-                end
+            end
+            if not db.skipAdjustingFixedFonts then
+                UpdateAllNpFonts()
+                hooksecurefunc(NamePlateDriverFrame, "OnNamePlateAdded", function(self, unit)
+                    if not unit:find("nameplate") then return end
+                    local nameplate, frame = BBP.GetSafeNameplate(unit)
+                    if not nameplate then
+                        UpdateAllNpFonts()
+                    else
+                        frame.name:SetFont(cachedFont, cachedNameSize, cachedActiveNameOutline)
+                    end
+                end)
             end
 
             C_Timer.After(1, function()
@@ -8492,6 +8575,7 @@ function BBP.NameplateAuraTweaksTemp()
         local pixelBorder = db.nameplateAuraPixelBorder
         local rectangleAuras = db.nameplateAuraRectangleSize
         local hideCooldownTimer = db.nameplateAuraHideCooldownNumbers
+        local cdTextSize = db.defaultNpAuraCdSize or 0.65
         local WIDTH = 20
         local HEIGHT = (not rectangleAuras) and 20 or 14
 
@@ -8525,7 +8609,7 @@ function BBP.NameplateAuraTweaksTemp()
             if auraFrame.Cooldown then
                 local r1 = auraFrame.Cooldown:GetRegions()
                 if r1 and r1.GetObjectType and r1:GetObjectType() == "FontString" then
-                    r1:SetScale(0.65)
+                    r1:SetScale(cdTextSize)
                 end
             end
 
@@ -8672,6 +8756,7 @@ function BBP.NameplateAuraTweaksTemp()
             UpdateOneNameplate(plate)
         end
     end
+    BBP.UpdateAllNameplatesAuras = UpdateAllNameplatesAuras
 
     local evt = CreateFrame("Frame")
     evt:RegisterEvent("CVAR_UPDATE")
