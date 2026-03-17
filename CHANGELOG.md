@@ -1,3 +1,11 @@
+# BetterBlizzPlates 1.9.9b
+## Midnight
+### New
+- Add a "Hostile only" setting for Faction Indicator; showing only on nameplates you can attack.
+### Bugfix
+- Fix nil error on login.
+- Fix issues with Faction Indicator and improve reliabiliy when crossing zones etc.
+
 # BetterBlizzPlates 1.9.9
 ## Midnight
 ### New
