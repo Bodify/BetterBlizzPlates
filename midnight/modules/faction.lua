@@ -79,6 +79,7 @@ function BBP.FactionIndicator(frame)
         config.factionIndicatorIconSet = BetterBlizzPlatesDB.factionIndicatorIconSet or 1
         config.factionIndicatorOnlyWorld = BetterBlizzPlatesDB.factionIndicatorOnlyWorld
         config.factionIndicatorOnlyPvPZone = BetterBlizzPlatesDB.factionIndicatorOnlyPvPZone
+        config.factionIndicatorHostileOnly = BetterBlizzPlatesDB.factionIndicatorHostileOnly
 
         config.factionIndicatorInitialized = true
     end
@@ -93,6 +94,12 @@ function BBP.FactionIndicator(frame)
     end
 
     if not config.factionIndicatorTestMode then
+        if config.factionIndicatorHostileOnly and not BBP.isEnemy(unit) then
+            if frame.factionIndicator then
+                frame.factionIndicator:Hide()
+            end
+            return
+        end
         if config.factionIndicatorOnlyPvPZone and not BBP.isInPvPZone then
             if frame.factionIndicator then
                 frame.factionIndicator:Hide()
@@ -148,4 +155,25 @@ function BBP.FactionIndicator(frame)
     frame.factionIndicator:SetPoint(oppositeAnchor, frame.healthBar, config.factionIndicatorAnchor, config.factionIndicatorXPos, config.factionIndicatorYPos)
     frame.factionIndicator:SetScale(config.factionIndicatorScale or 1)
     frame.factionIndicator:Show()
+end
+
+function BBP.ToggleFactionIndicator()
+    if BetterBlizzPlatesDB.factionIndicator then
+        if not BBP.FactionIndicatorEvent then
+            BBP.FactionIndicatorEvent = CreateFrame("Frame")
+            BBP.FactionIndicatorEvent:SetScript("OnEvent", function(self, event, unit)
+                local nameplate, frame = BBP.GetSafeNameplate(unit)
+                if frame then
+                    BBP.FactionIndicator(frame)
+                end
+            end)
+        end
+        if not BBP.FactionIndicatorEvent:IsEventRegistered("UNIT_FACTION") then
+            BBP.FactionIndicatorEvent:RegisterEvent("UNIT_FACTION")
+        end
+    else
+        if BBP.FactionIndicatorEvent then
+            BBP.FactionIndicatorEvent:UnregisterEvent("UNIT_FACTION")
+        end
+    end
 end

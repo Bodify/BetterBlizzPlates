@@ -1576,7 +1576,7 @@ local function CacheFontSettings()
     local db = BetterBlizzPlatesDB
     local useCustomFont = db.useCustomFont
     local customOutline = useCustomFont and ((db.enableCustomFontOutline and db.customFontOutline) and (db.customFontOutline..", SLUG") or "SLUG") or nil
-    local baseSize = db.customFontSizeEnabled and db.customFontSize
+    local baseSize = (db.customFontSizeEnabled and db.customFontSize) or db.defaultFontSize
 
     if useCustomFont then
         cachedFont = LSM:Fetch(LSM.MediaType.FONT, db.customFont)
@@ -1667,6 +1667,7 @@ local function isFriend(unit)
         return true
     end
 end
+BBP.isFriend = isFriend
 
 local function isEnemy(unit)
     local reaction = UnitReaction(unit, "player")
@@ -1674,6 +1675,7 @@ local function isEnemy(unit)
         return true
     end
 end
+BBP.isEnemy = isEnemy
 
 
 local function GetNameplateUnitInfo(frame, unit)
@@ -6200,7 +6202,9 @@ local function HandleNamePlateAdded(unit)
     end
     if BBP.isMidnight then
 
-        BBP.FactionIndicator(frame)
+        if BetterBlizzPlatesDB.factionIndicator or BetterBlizzPlatesDB.factionIndicatorTestMode then
+            BBP.FactionIndicator(frame)
+        end
 
         local newBar = frame.HealthBarsContainer.healthBar
         -- frame.HealthBarsContainer.healthBar.selectedBorder:ClearAllPoints()
@@ -7185,13 +7189,13 @@ end
 -- Function to update the instance status
 local function UpdateInstanceStatus()
     local inInstance, instanceType = IsInInstance()
-    local _, isPvPZone = C_PvP.GetZonePVPInfo()
+    local pvpType, isPvPZone = C_PvP.GetZonePVPInfo()
     BBP.isInPvE = inInstance and (instanceType == "party" or instanceType == "raid" or instanceType == "scenario")
     BBP.isInArena = inInstance and (instanceType == "arena")
     BBP.isInBg = inInstance and (instanceType == "pvp")
     BBP.isInPvP = BBP.isInBg or BBP.isInArena
     BBP.isInWorld = not inInstance
-    BBP.isInPvPZone = isPvPZone
+    BBP.isInPvPZone = isPvPZone and pvpType ~= "sanctuary"
     BBP.IsInCompStomp = IsInBrawlCompStomp()
 
     local _, _, _, _, _, _, _, instanceMapID = GetInstanceInfo()
@@ -7297,11 +7301,19 @@ local function CheckIfInInstance(self, event, ...)
     hideFriendlyCastbar = BetterBlizzPlatesDB.alwaysHideFriendlyCastbar or BetterBlizzPlatesDB.hideCastbarFriendly
     -- UpdateInstanceStatus()
     -- SetNameplateBehavior()
-    if event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
-        SpecCache = {}
+    if event ~= "PLAYER_REGEN_ENABLED" then
         UpdateInstanceStatus()
-        SetNameplateBehavior()
-        BBP.fistweaverFound = nil
+        if event ~= "ZONE_CHANGED" then
+            SpecCache = {}
+            SetNameplateBehavior()
+            BBP.fistweaverFound = nil
+        end
+        if BetterBlizzPlatesDB.factionIndicator then
+            for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+                local frame = nameplate.UnitFrame
+                BBP.FactionIndicator(frame)
+            end
+        end
     elseif event == "PLAYER_REGEN_ENABLED" then
         SetNameplateBehavior()
         InstanceChecker:UnregisterEvent("PLAYER_REGEN_ENABLED")
@@ -7310,6 +7322,7 @@ end
 
 InstanceChecker:RegisterEvent("PLAYER_ENTERING_WORLD")
 InstanceChecker:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+InstanceChecker:RegisterEvent("ZONE_CHANGED")
 InstanceChecker:SetScript("OnEvent", CheckIfInInstance)
 
 function BBP.CheckIfInInstanceCaller()
@@ -7765,6 +7778,7 @@ local function TurnOnEnabledFeaturesOnLogin()
     BBP.ToggleAbsorbIndicator()
     BBP.ToggleCombatIndicator()
     BBP.ToggleExecuteIndicator()
+    BBP.ToggleFactionIndicator()
     BBP:RegisterTargetCastingEvents()
     BBP.ToggleHealthNumbers()
     --BBP.DruidBlueComboPoints() isMidnight

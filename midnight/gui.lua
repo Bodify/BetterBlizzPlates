@@ -6667,21 +6667,21 @@ local function guiPositionAndScale()
 
     CreateBorderBox(anchorSubFaction)
 
-    local factionIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
-    factionIcon2:SetAtlas("questlog-questtypeicon-alliance")
-    factionIcon2:SetSize(34, 34)
-    factionIcon2:SetPoint("BOTTOM", anchorSubFaction, "TOP", 0, 0)
+    anchorSubFaction.factionIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubFaction.factionIcon2:SetAtlas("questlog-questtypeicon-alliance")
+    anchorSubFaction.factionIcon2:SetSize(34, 34)
+    anchorSubFaction.factionIcon2:SetPoint("BOTTOM", anchorSubFaction, "TOP", 0, 0)
 
-    local factionIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 3, 0.01, "factionIndicatorScale")
-    factionIndicatorScale:SetPoint("TOP", anchorSubFaction, "BOTTOM", 0, -15)
+    anchorSubFaction.factionIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 3, 0.01, "factionIndicatorScale")
+    anchorSubFaction.factionIndicatorScale:SetPoint("TOP", anchorSubFaction, "BOTTOM", 0, -15)
 
-    local factionIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "factionIndicatorXPos", "X")
-    factionIndicatorXPos:SetPoint("TOP", factionIndicatorScale, "BOTTOM", 0, -15)
+    anchorSubFaction.factionIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "factionIndicatorXPos", "X")
+    anchorSubFaction.factionIndicatorXPos:SetPoint("TOP", anchorSubFaction.factionIndicatorScale, "BOTTOM", 0, -15)
 
-    local factionIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "factionIndicatorYPos", "Y")
-    factionIndicatorYPos:SetPoint("TOP", factionIndicatorXPos, "BOTTOM", 0, -15)
+    anchorSubFaction.factionIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "factionIndicatorYPos", "Y")
+    anchorSubFaction.factionIndicatorYPos:SetPoint("TOP", anchorSubFaction.factionIndicatorXPos, "BOTTOM", 0, -15)
 
-    local factionIndicatorDropdown = CreateAnchorDropdown(
+    anchorSubFaction.factionIndicatorDropdown = CreateAnchorDropdown(
         "factionIndicatorDropdown",
         contentFrame,
         "Select Anchor Point",
@@ -6689,11 +6689,11 @@ local function guiPositionAndScale()
         function(arg1)
             BBP.RefreshAllNameplates()
         end,
-        { anchorFrame = factionIndicatorYPos, x = -16, y = -35, label = "Anchor" }
+        { anchorFrame = anchorSubFaction.factionIndicatorYPos, x = -16, y = -35, label = "Anchor" }
     )
 
     -- Icon Set dropdown
-    local factionIconSetNames = {
+    anchorSubFaction.factionIconSetNames = {
         [1]  = "Quest Log Icons",
         [2]  = "UnitFrame Icons",
         [3]  = "PVP Banners",
@@ -6708,19 +6708,19 @@ local function guiPositionAndScale()
         [12] = "Wax Seals",
     }
 
-    local factionIconSetDropdown = LibDD:Create_UIDropDownMenu("factionIconSetDropdown", contentFrame)
-    LibDD:UIDropDownMenu_SetWidth(factionIconSetDropdown, 125)
+    anchorSubFaction.factionIconSetDropdown = LibDD:Create_UIDropDownMenu("factionIconSetDropdown", contentFrame)
+    LibDD:UIDropDownMenu_SetWidth(anchorSubFaction.factionIconSetDropdown, 125)
     local currentSet = BetterBlizzPlatesDB.factionIndicatorIconSet or 1
-    LibDD:UIDropDownMenu_SetText(factionIconSetDropdown, factionIconSetNames[currentSet] or "Quest Log Icons")
+    LibDD:UIDropDownMenu_SetText(anchorSubFaction.factionIconSetDropdown, anchorSubFaction.factionIconSetNames[currentSet] or "Quest Log Icons")
 
-    LibDD:UIDropDownMenu_Initialize(factionIconSetDropdown, function(self, level, menuList)
+    LibDD:UIDropDownMenu_Initialize(anchorSubFaction.factionIconSetDropdown, function(self, level, menuList)
         local info = LibDD:UIDropDownMenu_CreateInfo()
         for i = 1, 12 do
-            info.text = factionIconSetNames[i]
+            info.text = anchorSubFaction.factionIconSetNames[i]
             info.arg1 = i
             info.func = function(self, arg1)
                 BetterBlizzPlatesDB.factionIndicatorIconSet = arg1
-                LibDD:UIDropDownMenu_SetText(factionIconSetDropdown, factionIconSetNames[arg1])
+                LibDD:UIDropDownMenu_SetText(anchorSubFaction.factionIconSetDropdown, anchorSubFaction.factionIconSetNames[arg1])
                 BBP.needsUpdate = true
                 BBP.RefreshAllNameplates()
             end
@@ -6729,42 +6729,44 @@ local function guiPositionAndScale()
         end
     end)
 
-    factionIconSetDropdown:SetPoint("TOPLEFT", factionIndicatorDropdown, "TOPLEFT", 0, -43)
+    anchorSubFaction.factionIconSetDropdown:SetPoint("TOPLEFT", anchorSubFaction.factionIndicatorDropdown, "TOPLEFT", 0, -43)
 
-    local factionIconSetLabel = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    factionIconSetLabel:SetPoint("BOTTOM", factionIconSetDropdown, "TOP", 0, 3)
-    factionIconSetLabel:SetText("Icon Set")
+    anchorSubFaction.factionIconSetLabel = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubFaction.factionIconSetLabel:SetPoint("BOTTOM", anchorSubFaction.factionIconSetDropdown, "TOP", 0, 3)
+    anchorSubFaction.factionIconSetLabel:SetText("Icon Set")
 
-    local factionIndicatorTestMode2 = CreateCheckbox("factionIndicatorTestMode", "Test", contentFrame, nil, BBP.ToggleFactionIndicator)
-    factionIndicatorTestMode2:SetPoint("TOPLEFT", factionIconSetDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
+    anchorSubFaction.factionIndicatorTestMode2 = CreateCheckbox("factionIndicatorTestMode", "Test", contentFrame)
+    anchorSubFaction.factionIndicatorTestMode2:SetPoint("TOPLEFT", anchorSubFaction.factionIconSetDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
-    local factionIndicatorEnemy = CreateCheckbox("factionIndicatorEnemy", "Enemy", contentFrame, nil, BBP.ToggleFactionIndicator)
-    factionIndicatorEnemy:SetPoint("TOPLEFT", factionIndicatorTestMode2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(factionIndicatorEnemy, "Show on Enemies", "Show the faction icon on players of the opposing faction.")
+    anchorSubFaction.factionIndicatorEnemy = CreateCheckbox("factionIndicatorEnemy", "Enemy", contentFrame)
+    anchorSubFaction.factionIndicatorEnemy:SetPoint("TOPLEFT", anchorSubFaction.factionIndicatorTestMode2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubFaction.factionIndicatorEnemy, "Show on Enemies", "Show the faction icon on players of the opposing faction.")
 
-    local factionIndicatorFriendly = CreateCheckbox("factionIndicatorFriendly", "Friendly", contentFrame, nil, BBP.ToggleFactionIndicator)
-    factionIndicatorFriendly:SetPoint("LEFT", factionIndicatorEnemy.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(factionIndicatorFriendly, "Show on Friendly", "Show the faction icon on players of your own faction.")
+    anchorSubFaction.factionIndicatorFriendly = CreateCheckbox("factionIndicatorFriendly", "Friendly", contentFrame)
+    anchorSubFaction.factionIndicatorFriendly:SetPoint("LEFT", anchorSubFaction.factionIndicatorEnemy.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(anchorSubFaction.factionIndicatorFriendly, "Show on Friendly", "Show the faction icon on players of your own faction.")
 
-    local factionIndicatorOnlyPvPZone
-
-    local factionIndicatorOnlyWorld = CreateCheckbox("factionIndicatorOnlyWorld", "World only", contentFrame, nil, BBP.ToggleFactionIndicator)
-    factionIndicatorOnlyWorld:SetPoint("TOPLEFT", factionIndicatorEnemy, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(factionIndicatorOnlyWorld, "World Only", "Only show the faction icon in the open world.")
-    factionIndicatorOnlyWorld:HookScript("OnClick", function(self)
+    anchorSubFaction.factionIndicatorOnlyWorld = CreateCheckbox("factionIndicatorOnlyWorld", "World only", contentFrame)
+    anchorSubFaction.factionIndicatorOnlyWorld:SetPoint("TOPLEFT", anchorSubFaction.factionIndicatorEnemy, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubFaction.factionIndicatorOnlyWorld, "World Only", "Only show the faction icon in the open world.")
+    anchorSubFaction.factionIndicatorOnlyWorld:HookScript("OnClick", function(self)
         if self:GetChecked() then
             BetterBlizzPlatesDB.factionIndicatorOnlyPvPZone = false
-            factionIndicatorOnlyPvPZone:SetChecked(false)
+            anchorSubFaction.factionIndicatorOnlyPvPZone:SetChecked(false)
         end
     end)
 
-    factionIndicatorOnlyPvPZone = CreateCheckbox("factionIndicatorOnlyPvPZone", "PvP (FFA) only", contentFrame, nil, BBP.ToggleFactionIndicator)
-    factionIndicatorOnlyPvPZone:SetPoint("LEFT", factionIndicatorTestMode2.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(factionIndicatorOnlyPvPZone, "PvP Zone Only", "Only show the faction icon in PvP zones. (Free-For-All in the open world)")
-    factionIndicatorOnlyPvPZone:HookScript("OnClick", function(self)
+    anchorSubFaction.factionIndicatorHostileOnly = CreateCheckbox("factionIndicatorHostileOnly", "Hostile only", contentFrame)
+    anchorSubFaction.factionIndicatorHostileOnly:SetPoint("LEFT", anchorSubFaction.factionIndicatorOnlyWorld.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(anchorSubFaction.factionIndicatorHostileOnly, "Hostile Only", "Only enable on hostile nameplates. Nameplates you can attack, regardless of faction.")
+
+    anchorSubFaction.factionIndicatorOnlyPvPZone = CreateCheckbox("factionIndicatorOnlyPvPZone", "PvP (FFA) only", contentFrame)
+    anchorSubFaction.factionIndicatorOnlyPvPZone:SetPoint("LEFT", anchorSubFaction.factionIndicatorTestMode2.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(anchorSubFaction.factionIndicatorOnlyPvPZone, "PvP Zone Only", "Only show the faction icon in PvP zones. (Free-For-All in the open world)")
+    anchorSubFaction.factionIndicatorOnlyPvPZone:HookScript("OnClick", function(self)
         if self:GetChecked() then
             BetterBlizzPlatesDB.factionIndicatorOnlyWorld = false
-            factionIndicatorOnlyWorld:SetChecked(false)
+            anchorSubFaction.factionIndicatorOnlyWorld:SetChecked(false)
         end
     end)
 
