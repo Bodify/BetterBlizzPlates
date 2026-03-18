@@ -1218,11 +1218,11 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         BetterBlizzPlatesDB.nameplateOverlapV = value
                     end
                 -- Nameplate Motion Speed
-                elseif element == "nameplateMotionSpeed" then
-                    if not BBP.checkCombatAndWarn() then
-                        C_CVar.SetCVar("nameplateMotionSpeed", value)
-                        BetterBlizzPlatesDB.nameplateMotionSpeed = value
-                    end
+                -- elseif element == "nameplateMotionSpeed" then
+                --     if not BBP.checkCombatAndWarn() then
+                --         C_CVar.SetCVar("nameplateMotionSpeed", value)
+                --         BetterBlizzPlatesDB.nameplateMotionSpeed = value
+                --     end
                 elseif element == "nameplateMinAlpha" then
                     if not BBP.checkCombatAndWarn() then
                         C_CVar.SetCVar("nameplateMinAlpha", value)
@@ -10959,12 +10959,12 @@ local function guiCVarControl()
     CreateTooltipTwo(nameplateOverlapV, "Vertical Overlap", "Space between nameplates vertically", nil, nil, "nameplateOverlapV")
     local nameplateOverlapVReset = CreateResetButton(nameplateOverlapV, "nameplateOverlapV", guiCVarControl)
 
-    local nameplateMotionSpeed = CreateSlider(guiCVarControl, "Nameplate Motion Speed", 0.01, 1, 0.01, "nameplateMotionSpeed")
-    nameplateMotionSpeed:SetPoint("TOPLEFT", nameplateOverlapV, "BOTTOMLEFT", 0, -17)
-    CreateTooltipTwo(nameplateMotionSpeed, "Nameplate Motion Speed", "The speed at which nameplates move into their new position", nil, nil, "nameplateMotionSpeed")
-    local nameplateMotionSpeedReset = CreateResetButton(nameplateMotionSpeed, "nameplateMotionSpeed", guiCVarControl)
+    -- local nameplateMotionSpeed = CreateSlider(guiCVarControl, "Nameplate Motion Speed", 0.01, 1, 0.01, "nameplateMotionSpeed")
+    -- nameplateMotionSpeed:SetPoint("TOPLEFT", nameplateOverlapV, "BOTTOMLEFT", 0, -17)
+    -- CreateTooltipTwo(nameplateMotionSpeed, "Nameplate Motion Speed", "The speed at which nameplates move into their new position", nil, nil, "nameplateMotionSpeed")
+    -- local nameplateMotionSpeedReset = CreateResetButton(nameplateMotionSpeed, "nameplateMotionSpeed", guiCVarControl)
 
-    local stackingSliders = {nameplateOverlapH, nameplateOverlapV, nameplateMotionSpeed, nameplateOverlapHReset, nameplateOverlapVReset, nameplateMotionSpeedReset}
+    local stackingSliders = {nameplateOverlapH, nameplateOverlapV, nameplateOverlapHReset, nameplateOverlapVReset}
     local function ToggleStackingSliders()
         local eitherChecked = nameplateStackingEnemy:GetChecked() or nameplateStackingFriendly:GetChecked()
         for _, element in ipairs(stackingSliders) do
@@ -11384,7 +11384,7 @@ local function guiCVarControl()
     local sliderCVars = {}
     sliderCVars["nameplateOverlapH"] = nameplateOverlapH
     sliderCVars["nameplateOverlapV"] = nameplateOverlapV
-    sliderCVars["nameplateMotionSpeed"] = nameplateMotionSpeed
+    --sliderCVars["nameplateMotionSpeed"] = nameplateMotionSpeed
     sliderCVars["nameplateMinAlpha"] = nameplateMinAlpha
     sliderCVars["nameplateMinAlphaDistance"] = nameplateMinAlphaDistance
     sliderCVars["nameplateMaxAlpha"] = nameplateMaxAlpha
@@ -12699,7 +12699,7 @@ function BBP.CVarTracker()
         sliders = {
             nameplateOverlapH = true,
             nameplateOverlapV = true,
-            nameplateMotionSpeed = true,
+            --nameplateMotionSpeed = true,
             nameplateMinAlpha = true,
             nameplateMinAlphaDistance = true,
             nameplateMaxAlpha = true,

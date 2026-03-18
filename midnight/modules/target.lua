@@ -87,6 +87,10 @@ function BBP.TargetIndicator(frame)
             frame.targetIndicator:Show()
         end
         if config.targetIndicatorChangeTexture then
+            frame.bbpMaskForceShow = true
+            if frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar.MaskTexture then
+                frame.HealthBarsContainer.healthBar.MaskTexture:Show()
+            end
             frame.healthBar:SetStatusBarTexture(config.targetIndicatorTextureLSM)
         else
             if config.targetIndicatorChangeTexture then
@@ -107,6 +111,7 @@ function BBP.TargetIndicator(frame)
     else
         frame.targetIndicator:Hide()
         if config.targetIndicatorChangeTexture then
+            frame.bbpMaskForceShow = nil
             BBP.ApplyCustomTextureToNameplate(frame)
         end
     end
@@ -165,6 +170,10 @@ function BBP.FocusTargetIndicator(frame)
     if config.focusTargetIndicatorTestMode then
         frame.focusTargetIndicator:Show()
         if BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture then
+            frame.bbpMaskForceShow = true
+            if frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar.MaskTexture then
+                frame.HealthBarsContainer.healthBar.MaskTexture:Show()
+            end
             frame.healthBar:SetStatusBarTexture(focusTexture)
         else
             BBP.ApplyCustomTextureToNameplate(frame)
@@ -182,6 +191,10 @@ function BBP.FocusTargetIndicator(frame)
     if frame.unit and UnitIsUnit(frame.unit, "focus") then
         frame.focusTargetIndicator:Show()
         if changeTexture then
+            frame.bbpMaskForceShow = true
+            if frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar.MaskTexture then
+                frame.HealthBarsContainer.healthBar.MaskTexture:Show()
+            end
             frame.healthBar:SetStatusBarTexture(focusTexture)
         else
             BBP.ApplyCustomTextureToNameplate(frame)
@@ -200,6 +213,7 @@ function BBP.FocusTargetIndicator(frame)
     else
         frame.focusTargetIndicator:Hide()
         if BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture then
+            frame.bbpMaskForceShow = nil
             BBP.ApplyCustomTextureToNameplate(frame)
         end
         if colorName then
