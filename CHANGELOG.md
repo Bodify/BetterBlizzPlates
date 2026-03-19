@@ -1,3 +1,11 @@
+# BetterBlizzPlates 1.9.9c
+## Midnight
+### Tweak
+- Update Mes profile (www.twitch.tv/notmes). Thank you for sharing.
+### Bugfix
+- Fix an issue with Target Indicator's "Change Healthbar Texture" setting not properly applying a Mask on the texture and bleeding over the border/background if you were using default healthbar textures normally.
+- Fix "Hide Personal Manabar" setting showing borders around the bar on login/reload.
+
 # BetterBlizzPlates 1.9.9b
 ## Midnight
 ### New
