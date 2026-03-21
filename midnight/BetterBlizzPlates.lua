@@ -6251,16 +6251,6 @@ local function HandleNamePlateAdded(unit)
         newBar.MaskTexture:Show()
         castTexture:AddMaskTexture(newBar.MaskTexture)
 
-        if not frame.bbpTargetHook then
-            frame.bbpTargetHook = true
-            hooksecurefunc(frame.HealthBarsContainer.healthBar.selectedBorder, "SetVertexColor", function(self, r, g, b, a)
-                if frame:IsForbidden() then return end
-                if frame.targetIndicator and r ~= 1 and g ~=1 and b ~= 1 then
-                    frame.targetIndicator:Hide()
-                end
-            end)
-        end
-
         -- BPP.isMidnight temp nameplate tweaks
         if not frame.bbpTempMidnightWidthHook then
             frame.bbpTempMidnightWidthHook = true
