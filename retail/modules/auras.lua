@@ -2503,7 +2503,7 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
             local filterBlizzard = db["friendlyNpdeBuffFilterBlizzard"]
             local filterLessMinite = db["friendlyNpdeBuffFilterLessMinite"]
             local filterOnlyMe = db["friendlyNpdeBuffFilterOnlyMe"]
-            local filterCC = db["friendlyNpdeBuffFilterCC"] or (db["classIndicator"] and db["classIndicatorCCAuras"])
+            local filterCC = db["friendlyNpdeBuffFilterCC"] or (db["classIndicator"] and db["classIndicatorCCAuras"] and db["friendlyHideHealthBar"])
 
             local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe or filterCC
 
