@@ -4916,6 +4916,7 @@ local function HideFriendlyHealthbar(frame)
     local info = frame.BetterBlizzPlates.unitInfo
     config.friendlyHideHealthBar = BetterBlizzPlatesDB.friendlyHideHealthBar
     config.friendlyHideHealthBarNpc = BetterBlizzPlatesDB.friendlyHideHealthBarNpc
+    if frame.ciChange then return end
     if frame.healthBar and info.isFriend then
         if BetterBlizzPlatesDB.friendlyHideHealthBar and info.isPlayer then
             local showOnTarget = BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget
@@ -8064,11 +8065,11 @@ end)
 
 local function OnVariablesLoaded(self, event)
     if event == "VARIABLES_LOADED" then
-        if not BetterBlizzPlatesDB.nameplateShowFriendlyNPCs then
+        if BetterBlizzPlatesDB.nameplateShowFriendlyNPCs == nil then
             BetterBlizzPlatesDB.nameplateShowFriendlyNPCs = GetCVar("nameplateShowFriendlyNPCs")
             BetterBlizzPlatesDB.nameplateShowAll = GetCVar("nameplateShowAll")
         end
-        if not BetterBlizzPlatesDB.nameplateSelfAlpha then
+        if BetterBlizzPlatesDB.nameplateSelfAlpha == nil then
             BetterBlizzPlatesDB.nameplateSelfAlpha = GetCVar("nameplateSelfAlpha")
         end
         BBP.variablesLoaded = true
