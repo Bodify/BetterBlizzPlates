@@ -1,4 +1,4 @@
-# BetterBlizzPlates 1.9.9d
+# BetterBlizzPlates 1.9.9d+e
 ## Midnight
 ### New
 - Add Jazggz profile (www.twitch.tv/jazggz). Thank you for sharing <3
@@ -7,6 +7,7 @@
 #### Bugfix
 - Remove old target workaround causing some issues
 - Fix nameplate health visibility issue on pets/class indicator logic sometimes.
+- 1.9.9e: Fix PRD being clickable (was used for debugging and left in by accident)
 ## TBC
 ### Tweak
 - Totem List finally updated properly thanks to Hydra (www.twitch.tv/hydramist). Thank you <3
