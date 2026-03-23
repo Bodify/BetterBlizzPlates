@@ -8795,6 +8795,7 @@ end
 NameplatePostCombatUpdater:SetScript("OnEvent", ApplyNameplateUpdates)
 
 hooksecurefunc(NamePlateDriverFrame, "UpdateNamePlateOptions", function()
+    setNil(NamePlateFriendlyFrameOptions, "updateNameUsesGetUnitName")
     if InCombatLockdown() then
         if not needsNameplateUpdate then
             needsNameplateUpdate = true
