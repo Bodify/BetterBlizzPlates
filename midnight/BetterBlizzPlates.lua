@@ -4849,8 +4849,6 @@ local function ChangeHealthbarBorderSize(frame)
             PersonalResourceDisplayFrame.HealthBarsContainer.border.Bottom:SetAlpha(0)
         end
 
-        PersonalResourceDisplayFrame:EnableMouse(true)
-
         frame.borderHooked = true
         frame.HealthBarsContainer.border:UpdateSizes()
     end
