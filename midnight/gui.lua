@@ -4832,15 +4832,15 @@ local function guiProfiles()
     frame.descriptionText:SetWidth(100)
 
     frame.coreText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    frame.coreText:SetPoint("TOP", frame.descriptionText, "BOTTOM", 0, -10)
+    frame.coreText:SetPoint("TOP", frame.descriptionText, "BOTTOM", 0, -5)
     frame.coreText:SetText("Core")
 
     frame.streamerText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    frame.streamerText:SetPoint("TOP", frame.coreText, "BOTTOM", 0, -130)
+    frame.streamerText:SetPoint("TOP", frame.coreText, "BOTTOM", 0, -127)
     frame.streamerText:SetText("Streamers")
 
     frame.infoText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 50)
+    frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 41)
     frame.infoText:SetText("If you are missing and want to be here let me know :)")
     frame.infoText:SetWidth(100)
 

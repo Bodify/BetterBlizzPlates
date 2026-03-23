@@ -2723,10 +2723,10 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
     local function deleteEntry(index)
         if not index or not textLines[index] then return end
 
-        local npcId = textLines[index].npcId
-        if not npcId or not npcList[npcId] then return end
-
-        npcList[npcId] = nil
+        local groupIds = textLines[index].groupIds or {textLines[index].npcId}
+        for _, id in ipairs(groupIds) do
+            npcList[id] = nil
+        end
         textLines[index]:Hide()
         table.remove(textLines, index)
 
@@ -2758,62 +2758,63 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         hideOnEscape = true,
     }
 
-    local function updateImportantFlag(npcId, importantFlag)
-        if not npcId then return end
-
-        local npcData = npcList[npcId]
-        if npcData then
-            npcData.important = importantFlag
+    local function updateImportantFlag(npcIdOrIds, importantFlag)
+        local ids = type(npcIdOrIds) == "table" and npcIdOrIds or {npcIdOrIds}
+        for _, npcId in ipairs(ids) do
+            local npcData = npcList[npcId]
+            if npcData then
+                npcData.important = importantFlag
+            end
         end
-
         refreshFunc()
     end
 
-    local function updateHideIconFlag(npcId, hideIconFlag)
-        if not npcId then return end
-
-        local npcData = npcList[npcId]
-        if npcData then
-            npcData.hideIcon = hideIconFlag
+    local function updateHideIconFlag(npcIdOrIds, hideIconFlag)
+        local ids = type(npcIdOrIds) == "table" and npcIdOrIds or {npcIdOrIds}
+        for _, npcId in ipairs(ids) do
+            local npcData = npcList[npcId]
+            if npcData then
+                npcData.hideIcon = hideIconFlag
+            end
         end
-
         refreshFunc()
     end
 
-    local function updateHideHpFlag(npcId, hideHpFlag)
-        if not npcId then return end
-
-        local npcData = npcList[npcId]
-        if npcData then
-            npcData.hideHp = hideHpFlag
+    local function updateHideHpFlag(npcIdOrIds, hideHpFlag)
+        local ids = type(npcIdOrIds) == "table" and npcIdOrIds or {npcIdOrIds}
+        for _, npcId in ipairs(ids) do
+            local npcData = npcList[npcId]
+            if npcData then
+                npcData.hideHp = hideHpFlag
+            end
         end
-
         refreshFunc()
     end
 
-    local function updateIconOnlyFlag(npcId, iconOnlyFlag)
-        if not npcId then return end
-
-        local npcData = npcList[npcId]
-        if npcData then
-            npcData.iconOnly = iconOnlyFlag
+    local function updateIconOnlyFlag(npcIdOrIds, iconOnlyFlag)
+        local ids = type(npcIdOrIds) == "table" and npcIdOrIds or {npcIdOrIds}
+        for _, npcId in ipairs(ids) do
+            local npcData = npcList[npcId]
+            if npcData then
+                npcData.iconOnly = iconOnlyFlag
+            end
         end
-
         refreshFunc()
     end
 
-    local function updateEntryColor(npcId, color)
-        if not npcId then return end
-
-        local npcData = npcList[npcId]
-        if npcData then
-            npcData.color = color
+    local function updateEntryColor(npcIdOrIds, color)
+        local ids = type(npcIdOrIds) == "table" and npcIdOrIds or {npcIdOrIds}
+        for _, npcId in ipairs(ids) do
+            local npcData = npcList[npcId]
+            if npcData then
+                npcData.color = color
+            end
         end
-
         refreshFunc()
     end
 
-    local function createNpcLineButton(npcId, npcData, index)
+    local function createNpcLineButton(npcId, npcData, index, groupIds)
+        groupIds = groupIds or {npcId}
         local button = CreateFrame("Frame", nil, contentFrame)
         button:SetSize((width and width - 12) or 310, 20)
         button:SetPoint("TOPLEFT", 10, -(index - 1) * 20)
@@ -2821,6 +2822,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         local bg = button:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
         button.bgImg = bg
+        button.groupIds = groupIds
 
         -- New icon texture
         local iconTexture = button:CreateTexture(nil, "OVERLAY")
@@ -2842,7 +2844,15 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
 
         local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         text:SetPoint("LEFT", button, "LEFT", 15, 0)
-        text:SetText((npcData.name .. " ("..npcId .. ")") or "")
+        local idText = tostring(npcId)
+        if #groupIds > 1 then
+            local idParts = {}
+            for _, id in ipairs(groupIds) do
+                table.insert(idParts, tostring(id))
+            end
+            idText = table.concat(idParts, ", ")
+        end
+        text:SetText((npcData.name .. " (" .. idText .. ")") or "")
 
         -- Delete button
         local deleteButton = CreateFrame("Button", nil, button, "UIPanelButtonTemplate")
@@ -2881,7 +2891,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
 
         local function CreateEditFrame()
             npcEditFrame = CreateFrame("Frame", "NPC_EditFrame", UIParent, "BasicFrameTemplateWithInset")
-            npcEditFrame:SetSize(350, 250)
+            npcEditFrame:SetSize(350, 275)
             npcEditFrame:SetPoint("CENTER")
             npcEditFrame:SetFrameStrata("HIGH")
 
@@ -2934,9 +2944,12 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             npcEditFrame.iconEditBox = iconEditBox
             CreateTooltipTwo(iconEditBox, "Icon", "Enter new icon ID", "Use Wowhead to find a new icon. Search for a spell then click on its icon and an icon ID will show.")
 
+            local pulseLabel, pulseEditBox = CreatePropertyField(npcEditFrame, "Pulse:", iconLabel, 0, -10, 50, 20)
+            npcEditFrame.pulseEditBox = pulseEditBox
+            CreateTooltipTwo(pulseEditBox, "Pulse", "Pulse cycle in seconds (0 or empty to disable)")
 
             local GlowText = npcEditFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            GlowText:SetPoint("TOPLEFT", iconLabel, "BOTTOMLEFT", 0, -10)
+            GlowText:SetPoint("TOPLEFT", pulseLabel, "BOTTOMLEFT", 0, -10)
             GlowText:SetText("Glow")
 
             local importantCheckBox = CreateFrame("CheckButton", nil, npcEditFrame, "UICheckButtonTemplate")
@@ -2957,7 +2970,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             colorPickerButton:SetText("Color")
             colorPickerButton:SetScript("OnClick", function()
                 local currentColor = npcEditFrame.currentColor or {1, 1, 1}
-                local currentNpcId = npcEditFrame.currentNpcId
+                local currentGroupIds = npcEditFrame.currentGroupIds or {npcEditFrame.currentNpcId}
 
                 ColorPickerFrame:SetupColorPickerAndShow({
                     r = currentColor[1], g = currentColor[2], b = currentColor[3],
@@ -2967,7 +2980,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
                         text:SetTextColor(r, g, b)
                         npcEditFrame.iconGlowTexture:SetVertexColor(r, g, b)
                         npcEditFrame.nameEditBox:SetTextColor(r, g, b)
-                        updateEntryColor(currentNpcId, {r, g, b})
+                        updateEntryColor(currentGroupIds, {r, g, b})
                         npcEditFrame.currentColor = {r, g, b} -- Update the current color
                         BBP.refreshNpcList()
                     end,
@@ -2976,7 +2989,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
                         text:SetTextColor(r, g, b)
                         npcEditFrame.iconGlowTexture:SetVertexColor(r, g, b)
                         npcEditFrame.nameEditBox:SetTextColor(r, g, b)
-                        updateEntryColor(currentNpcId, {r, g, b})
+                        updateEntryColor(currentGroupIds, {r, g, b})
                         npcEditFrame.currentColor = {r, g, b} -- Revert to the original color
                         BBP.refreshNpcList()
                     end,
@@ -3020,16 +3033,18 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             npcEditFrame.updateButton = updateButton
         end
 
-        local function PopulateEditFrame(npcId)
+        local function PopulateEditFrame(npcId, editGroupIds)
             local npcData = npcList[npcId]
             if not npcData then return end
             if not npcEditFrame then return end
             npcEditFrame.currentNpcId = npcId
+            npcEditFrame.currentGroupIds = editGroupIds or {npcId}
 
             npcEditFrame.iconTexture:SetTexture(npcData.icon)
             npcEditFrame.sizeEditBox:SetText(npcData.size or "")
             npcEditFrame.durationEditBox:SetText(npcData.duration or "")
             npcEditFrame.nameEditBox:SetText(npcData.name or "")
+            npcEditFrame.pulseEditBox:SetText(npcData.pulse or "")
             local color = npcData.color
             npcEditFrame.nameEditBox:SetTextColor(color[1], color[2], color[3])
             npcEditFrame.iconGlowTexture:SetVertexColor(unpack(color))
@@ -3059,23 +3074,19 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
 
             local function updateNpcData()
                 local newSize = tonumber(npcEditFrame.sizeEditBox:GetText())
-                if newSize then
-                    npcList[npcId].size = newSize
-                end
-
                 local newDuration = tonumber(npcEditFrame.durationEditBox:GetText())
-                if newDuration then
-                    npcList[npcId].duration = (newDuration == 0) and nil or newDuration
-                end
-
                 local newIcon = tonumber(npcEditFrame.iconEditBox:GetText())
-                if newIcon then
-                    npcList[npcId].icon = newIcon
-                end
-
                 local newName = npcEditFrame.nameEditBox:GetText()
-                if newName then
-                    npcList[npcId].name = newName
+                local newPulse = tonumber(npcEditFrame.pulseEditBox:GetText())
+
+                for _, gid in ipairs(npcEditFrame.currentGroupIds) do
+                    if npcList[gid] then
+                        if newSize then npcList[gid].size = newSize end
+                        if newDuration then npcList[gid].duration = (newDuration == 0) and nil or newDuration end
+                        if newIcon then npcList[gid].icon = newIcon end
+                        if newName then npcList[gid].name = newName end
+                        npcList[gid].pulse = (newPulse and newPulse > 0) and newPulse or nil
+                    end
                 end
 
                 npcEditFrame.iconTexture:SetTexture(npcData.icon)
@@ -3119,8 +3130,13 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
                 npcEditFrame.iconEditBox:ClearFocus()
             end)
 
+            npcEditFrame.pulseEditBox:SetScript("OnEnterPressed", function()
+                updateNpcData()
+                npcEditFrame.pulseEditBox:ClearFocus()
+            end)
+
             npcEditFrame.hideIconCheckbox:SetScript("OnClick", function(self)
-                updateHideIconFlag(npcId, self:GetChecked())
+                updateHideIconFlag(npcEditFrame.currentGroupIds, self:GetChecked())
                 local npcData = npcList[npcId]
                 if self:GetChecked() then
                     npcData.hideIcon = true
@@ -3138,7 +3154,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             end)
 
             npcEditFrame.hideHpCheckbox:SetScript("OnClick", function(self)
-                updateHideHpFlag(npcId, self:GetChecked())
+                updateHideHpFlag(npcEditFrame.currentGroupIds, self:GetChecked())
                 local npcData = npcList[npcId]
                 if self:GetChecked() then
                     npcData.hideHp = true
@@ -3151,7 +3167,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
 
 
             npcEditFrame.importantCheckBox:SetScript("OnClick", function(self)
-                updateImportantFlag(npcId, self:GetChecked())
+                updateImportantFlag(npcEditFrame.currentGroupIds, self:GetChecked())
                 local npcData = npcList[npcId]
                 if self:GetChecked() then
                     if not npcData.hideIcon then
@@ -3165,22 +3181,22 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
 
             -- Update Button Script
             npcEditFrame.updateButton:SetScript("OnClick", function()
-                local currentNpcId = npcEditFrame.currentNpcId
+                local currentGroupIds = npcEditFrame.currentGroupIds
                 local currentColor = npcEditFrame.currentColor
                 local r, g, b = currentColor[1], currentColor[2], currentColor[3]
-                updateEntryColor(currentNpcId, {r, g, b})
+                updateEntryColor(currentGroupIds, {r, g, b})
                 updateNpcData()
                 npcEditFrame:Hide()
             end)
 
         end
 
-        local function ShowEditFrame(npcId)
+        local function ShowEditFrame(npcId, editGroupIds)
             if not npcEditFrame then
                 CreateEditFrame()
             end
 
-            PopulateEditFrame(npcId)
+            PopulateEditFrame(npcId, editGroupIds)
             if npcEditFrame then
                 npcEditFrame:Show()
             end
@@ -3192,7 +3208,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         editButton:SetPoint("RIGHT", button, "RIGHT", -105, 0)
         editButton:SetText("Edit")
         editButton:SetScript("OnClick", function()
-            ShowEditFrame(npcId)
+            ShowEditFrame(npcId, groupIds)
         end)
         button.editButton = editButton
         CreateTooltipTwo(editButton, "Edit NPC details", "Change size, duration, icon and glow.")
@@ -3208,7 +3224,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         hideIconCheckboxButton:SetSize(24, 24)
         hideIconCheckboxButton:SetPoint("RIGHT", button, "RIGHT", -15, 0)
         hideIconCheckboxButton:SetScript("OnClick", function(self)
-            updateHideIconFlag(npcId, self:GetChecked())
+            updateHideIconFlag(groupIds, self:GetChecked())
             if self:GetChecked() then
                 iconTexture:Hide()
             else
@@ -3227,7 +3243,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         importantCheckBox:SetSize(24, 24)
         importantCheckBox:SetPoint("RIGHT", button, "RIGHT", -55, 0)
         importantCheckBox:SetScript("OnClick", function(self)
-            updateImportantFlag(npcId, self:GetChecked())
+            updateImportantFlag(groupIds, self:GetChecked())
         end)
         CreateTooltip(importantCheckBox, "Important Glow")
 
@@ -3242,7 +3258,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         hideHealthBarCheckBox:SetSize(24, 24)
         hideHealthBarCheckBox:SetPoint("RIGHT", button, "RIGHT", -35, 0)
         hideHealthBarCheckBox:SetScript("OnClick", function(self)
-            updateHideHpFlag(npcId, self:GetChecked())
+            updateHideHpFlag(groupIds, self:GetChecked())
             BBP.RefreshAllNameplates()
         end)
         CreateTooltipTwo(hideHealthBarCheckBox, "Hide HealthBar")
@@ -3258,7 +3274,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
         iconOnlyCheckBox:SetSize(24, 24)
         iconOnlyCheckBox:SetPoint("RIGHT", button, "RIGHT", -75, 0)
         iconOnlyCheckBox:SetScript("OnClick", function(self)
-            updateIconOnlyFlag(npcId, self:GetChecked())
+            updateIconOnlyFlag(groupIds, self:GetChecked())
             BBP.RefreshAllNameplates()
         end)
         CreateTooltipTwo(iconOnlyCheckBox, "Icon Only Mode")
@@ -3319,12 +3335,35 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
     }
 
     local function getSortedNpcList()
-        local sortableNpcList = {}
+        local defaultList = BBP.defaultTotemIndicatorNpcList or {}
+        local grouped = {}
+        local groupOrder = {}
+        local ungrouped = {}
+
         for npcId, npcData in pairs(npcList) do
             if npcData.duration == 0 then
                 npcData.duration = nil
             end
-            table.insert(sortableNpcList, {npcId = npcId, npcData = npcData})
+            if defaultList[npcId] then
+                local name = npcData.name:lower()
+                if not grouped[name] then
+                    grouped[name] = {ids = {}, npcData = npcData, primaryId = npcId}
+                    table.insert(groupOrder, name)
+                end
+                table.insert(grouped[name].ids, npcId)
+            else
+                table.insert(ungrouped, {npcId = npcId, npcData = npcData, groupIds = {npcId}})
+            end
+        end
+
+        local sortableNpcList = {}
+        for _, name in ipairs(groupOrder) do
+            local group = grouped[name]
+            table.sort(group.ids)
+            table.insert(sortableNpcList, {npcId = group.ids[1], npcData = group.npcData, groupIds = group.ids})
+        end
+        for _, entry in ipairs(ungrouped) do
+            table.insert(sortableNpcList, entry)
         end
 
         table.sort(sortableNpcList, function(a, b)
@@ -3336,8 +3375,9 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
 
     local sortedNpcList = getSortedNpcList()
     for _, entry in ipairs(sortedNpcList) do
-        local button = createNpcLineButton(entry.npcId, entry.npcData, #textLines + 1)
+        local button = createNpcLineButton(entry.npcId, entry.npcData, #textLines + 1, entry.groupIds)
         button.npcId = entry.npcId
+        button.groupIds = entry.groupIds
         table.insert(textLines, button)
     end
 
@@ -3362,8 +3402,9 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
 
         -- Repopulate list with sorted entries
         for _, entry in ipairs(sortedNpcList) do
-            local button = createNpcLineButton(entry.npcId, entry.npcData, #textLines + 1)
+            local button = createNpcLineButton(entry.npcId, entry.npcData, #textLines + 1, entry.groupIds)
             button.npcId = entry.npcId
+            button.groupIds = entry.groupIds
             table.insert(textLines, button)
         end
 
@@ -3396,6 +3437,15 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
                 selectedLineIndex = index  -- Set the index of the duplicate entry
                 StaticPopup_Show("BBP_DUPLICATE_NPC_CONFIRM_TOTEM")
                 return
+            end
+            if line.groupIds then
+                for _, gid in ipairs(line.groupIds) do
+                    if gid == npcId then
+                        selectedLineIndex = index
+                        StaticPopup_Show("BBP_DUPLICATE_NPC_CONFIRM_TOTEM")
+                        return
+                    end
+                end
             end
         end
 
@@ -3466,10 +3516,10 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
     local function deleteEntry(index)
         if not index or not textLines[index] then return end
 
-        local npcId = textLines[index].npcId
-        if not npcId or not npcList[npcId] then return end
-
-        npcList[npcId] = nil
+        local groupIds = textLines[index].groupIds or {textLines[index].npcId}
+        for _, id in ipairs(groupIds) do
+            npcList[id] = nil
+        end
         textLines[index]:Hide()
         table.remove(textLines, index)
 
@@ -3501,73 +3551,74 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
         hideOnEscape = true,
     }
 
-    local function updateImportantFlag(npcId, importantFlag)
-        if not npcId then return end
-
-        local npcData = npcList[npcId]
-        if npcData then
-            npcData.important = importantFlag
+    local function updateImportantFlag(npcIdOrIds, importantFlag)
+        local ids = type(npcIdOrIds) == "table" and npcIdOrIds or {npcIdOrIds}
+        for _, npcId in ipairs(ids) do
+            local npcData = npcList[npcId]
+            if npcData then
+                npcData.important = importantFlag
+            end
         end
-
         refreshFunc()
     end
 
-    local function updateHideIconFlag(npcId, hideIconFlag)
-        if not npcId then return end
-
-        local npcData = npcList[npcId]
-        if npcData then
-            npcData.hideIcon = hideIconFlag
+    local function updateHideIconFlag(npcIdOrIds, hideIconFlag)
+        local ids = type(npcIdOrIds) == "table" and npcIdOrIds or {npcIdOrIds}
+        for _, npcId in ipairs(ids) do
+            local npcData = npcList[npcId]
+            if npcData then
+                npcData.hideIcon = hideIconFlag
+            end
         end
-
         refreshFunc()
     end
 
-    local function updateHideHpFlag(npcId, hideHpFlag)
-        if not npcId then return end
-
-        local npcData = npcList[npcId]
-        if npcData then
-            npcData.hideHp = hideHpFlag
+    local function updateHideHpFlag(npcIdOrIds, hideHpFlag)
+        local ids = type(npcIdOrIds) == "table" and npcIdOrIds or {npcIdOrIds}
+        for _, npcId in ipairs(ids) do
+            local npcData = npcList[npcId]
+            if npcData then
+                npcData.hideHp = hideHpFlag
+            end
         end
-
         refreshFunc()
     end
 
-    local function updateIconOnlyFlag(npcId, iconOnlyFlag)
-        if not npcId then return end
-
-        local npcData = npcList[npcId]
-        if npcData then
-            npcData.iconOnly = iconOnlyFlag
+    local function updateIconOnlyFlag(npcIdOrIds, iconOnlyFlag)
+        local ids = type(npcIdOrIds) == "table" and npcIdOrIds or {npcIdOrIds}
+        for _, npcId in ipairs(ids) do
+            local npcData = npcList[npcId]
+            if npcData then
+                npcData.iconOnly = iconOnlyFlag
+            end
         end
-
         refreshFunc()
     end
 
-    local function updatehpWidthFlag(npcId, widthOnFlag)
-        if not npcId then return end
-
-        local npcData = npcList[npcId]
-        if npcData then
-            npcData.widthOn = widthOnFlag
+    local function updatehpWidthFlag(npcIdOrIds, widthOnFlag)
+        local ids = type(npcIdOrIds) == "table" and npcIdOrIds or {npcIdOrIds}
+        for _, npcId in ipairs(ids) do
+            local npcData = npcList[npcId]
+            if npcData then
+                npcData.widthOn = widthOnFlag
+            end
         end
-
         refreshFunc()
     end
 
-    local function updateEntryColor(npcId, color)
-        if not npcId then return end
-
-        local npcData = npcList[npcId]
-        if npcData then
-            npcData.color = color
+    local function updateEntryColor(npcIdOrIds, color)
+        local ids = type(npcIdOrIds) == "table" and npcIdOrIds or {npcIdOrIds}
+        for _, npcId in ipairs(ids) do
+            local npcData = npcList[npcId]
+            if npcData then
+                npcData.color = color
+            end
         end
-
         refreshFunc()
     end
 
-    local function createNpcLineButton(npcId, npcData, index)
+    local function createNpcLineButton(npcId, npcData, index, groupIds)
+        groupIds = groupIds or {npcId}
         local button = CreateFrame("Frame", nil, contentFrame)
         button:SetSize((width and width - 12) or 310, 20)
         button:SetPoint("TOPLEFT", 10, -(index - 1) * 20)
@@ -3575,6 +3626,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
         local bg = button:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
         button.bgImg = bg
+        button.groupIds = groupIds
 
         -- New icon texture
         local iconTexture = button:CreateTexture(nil, "OVERLAY")
@@ -3596,7 +3648,26 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
 
         local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         text:SetPoint("LEFT", button, "LEFT", 15, 0)
-        text:SetText((npcData.name .. " ("..npcId .. ")") or "")
+        text:SetText(npcData.name or "")
+
+        -- Tooltip showing NPC ID(s) on mouseover
+        local idText = tostring(npcId)
+        if #groupIds > 1 then
+            local idParts = {}
+            for _, id in ipairs(groupIds) do
+                table.insert(idParts, tostring(id))
+            end
+            idText = table.concat(idParts, ", ")
+        end
+        button:EnableMouse(true)
+        button:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT")
+            GameTooltip:AddLine("NPC ID(s): " .. idText, 1, 1, 1)
+            GameTooltip:Show()
+        end)
+        button:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
 
         -- Delete button
         local deleteButton = CreateFrame("Button", nil, button, "UIPanelButtonTemplate")
@@ -3635,7 +3706,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
 
         local function CreateEditFrame()
             npcEditFrame = CreateFrame("Frame", "NPC_EditFrame", UIParent, "BasicFrameTemplateWithInset")
-            npcEditFrame:SetSize(350, 250)
+            npcEditFrame:SetSize(350, 275)
             npcEditFrame:SetPoint("CENTER")
             npcEditFrame:SetFrameStrata("HIGH")
 
@@ -3688,9 +3759,12 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
             npcEditFrame.iconEditBox = iconEditBox
             CreateTooltipTwo(iconEditBox, "Icon", "Enter new icon ID", "Use Wowhead to find a new icon. Search for a spell then click on its icon and an icon ID will show.")
 
+            local pulseLabel, pulseEditBox = CreatePropertyField(npcEditFrame, "Pulse:", iconLabel, 0, -10, 50, 20)
+            npcEditFrame.pulseEditBox = pulseEditBox
+            CreateTooltipTwo(pulseEditBox, "Pulse", "Pulse cycle in seconds (0 or empty to disable)")
 
             local GlowText = npcEditFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            GlowText:SetPoint("TOPLEFT", iconLabel, "BOTTOMLEFT", 0, -10)
+            GlowText:SetPoint("TOPLEFT", pulseLabel, "BOTTOMLEFT", 0, -10)
             GlowText:SetText("Glow")
 
             local importantCheckBox = CreateFrame("CheckButton", nil, npcEditFrame, "UICheckButtonTemplate")
@@ -3711,7 +3785,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
             colorPickerButton:SetText("Color")
             colorPickerButton:SetScript("OnClick", function()
                 local currentColor = npcEditFrame.currentColor or {1, 1, 1}
-                local currentNpcId = npcEditFrame.currentNpcId
+                local currentGroupIds = npcEditFrame.currentGroupIds or {npcEditFrame.currentNpcId}
 
                 ColorPickerFrame:SetupColorPickerAndShow({
                     r = currentColor[1], g = currentColor[2], b = currentColor[3],
@@ -3721,7 +3795,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
                         text:SetTextColor(r, g, b)
                         npcEditFrame.iconGlowTexture:SetVertexColor(r, g, b)
                         npcEditFrame.nameEditBox:SetTextColor(r, g, b)
-                        updateEntryColor(currentNpcId, {r, g, b})
+                        updateEntryColor(currentGroupIds, {r, g, b})
                         npcEditFrame.currentColor = {r, g, b} -- Update the current color
                         BBP.refreshNpcList()
                     end,
@@ -3730,7 +3804,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
                         text:SetTextColor(r, g, b)
                         npcEditFrame.iconGlowTexture:SetVertexColor(r, g, b)
                         npcEditFrame.nameEditBox:SetTextColor(r, g, b)
-                        updateEntryColor(currentNpcId, {r, g, b})
+                        updateEntryColor(currentGroupIds, {r, g, b})
                         npcEditFrame.currentColor = {r, g, b} -- Revert to the original color
                         BBP.refreshNpcList()
                     end,
@@ -3774,16 +3848,18 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
             npcEditFrame.updateButton = updateButton
         end
 
-        local function PopulateEditFrame(npcId)
+        local function PopulateEditFrame(npcId, editGroupIds)
             local npcData = npcList[npcId]
             if not npcData then return end
             if not npcEditFrame then return end
             npcEditFrame.currentNpcId = npcId
+            npcEditFrame.currentGroupIds = editGroupIds or {npcId}
 
             npcEditFrame.iconTexture:SetTexture(npcData.icon)
             npcEditFrame.sizeEditBox:SetText(npcData.size or "")
             npcEditFrame.durationEditBox:SetText(npcData.duration or "")
             npcEditFrame.nameEditBox:SetText(npcData.name or "")
+            npcEditFrame.pulseEditBox:SetText(npcData.pulse or "")
             local color = npcData.color
             npcEditFrame.nameEditBox:SetTextColor(color[1], color[2], color[3])
             npcEditFrame.iconGlowTexture:SetVertexColor(unpack(color))
@@ -3813,23 +3889,19 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
 
             local function updateNpcData()
                 local newSize = tonumber(npcEditFrame.sizeEditBox:GetText())
-                if newSize then
-                    npcList[npcId].size = newSize
-                end
-
                 local newDuration = tonumber(npcEditFrame.durationEditBox:GetText())
-                if newDuration then
-                    npcList[npcId].duration = (newDuration == 0) and nil or newDuration
-                end
-
                 local newIcon = tonumber(npcEditFrame.iconEditBox:GetText())
-                if newIcon then
-                    npcList[npcId].icon = newIcon
-                end
-
                 local newName = npcEditFrame.nameEditBox:GetText()
-                if newName then
-                    npcList[npcId].name = newName
+                local newPulse = tonumber(npcEditFrame.pulseEditBox:GetText())
+
+                for _, gid in ipairs(npcEditFrame.currentGroupIds) do
+                    if npcList[gid] then
+                        if newSize then npcList[gid].size = newSize end
+                        if newDuration then npcList[gid].duration = (newDuration == 0) and nil or newDuration end
+                        if newIcon then npcList[gid].icon = newIcon end
+                        if newName then npcList[gid].name = newName end
+                        npcList[gid].pulse = (newPulse and newPulse > 0) and newPulse or nil
+                    end
                 end
 
                 npcEditFrame.iconTexture:SetTexture(npcData.icon)
@@ -3873,8 +3945,13 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
                 npcEditFrame.iconEditBox:ClearFocus()
             end)
 
+            npcEditFrame.pulseEditBox:SetScript("OnEnterPressed", function()
+                updateNpcData()
+                npcEditFrame.pulseEditBox:ClearFocus()
+            end)
+
             npcEditFrame.hideIconCheckbox:SetScript("OnClick", function(self)
-                updateHideIconFlag(npcId, self:GetChecked())
+                updateHideIconFlag(npcEditFrame.currentGroupIds, self:GetChecked())
                 local npcData = npcList[npcId]
                 if self:GetChecked() then
                     npcData.hideIcon = true
@@ -3892,7 +3969,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
             end)
 
             npcEditFrame.hideHpCheckbox:SetScript("OnClick", function(self)
-                updateHideHpFlag(npcId, self:GetChecked())
+                updateHideHpFlag(npcEditFrame.currentGroupIds, self:GetChecked())
                 local npcData = npcList[npcId]
                 if self:GetChecked() then
                     npcData.hideHp = true
@@ -3905,7 +3982,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
 
 
             npcEditFrame.importantCheckBox:SetScript("OnClick", function(self)
-                updateImportantFlag(npcId, self:GetChecked())
+                updateImportantFlag(npcEditFrame.currentGroupIds, self:GetChecked())
                 local npcData = npcList[npcId]
                 if self:GetChecked() then
                     if not npcData.hideIcon then
@@ -3919,22 +3996,22 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
 
             -- Update Button Script
             npcEditFrame.updateButton:SetScript("OnClick", function()
-                local currentNpcId = npcEditFrame.currentNpcId
+                local currentGroupIds = npcEditFrame.currentGroupIds
                 local currentColor = npcEditFrame.currentColor
                 local r, g, b = currentColor[1], currentColor[2], currentColor[3]
-                updateEntryColor(currentNpcId, {r, g, b})
+                updateEntryColor(currentGroupIds, {r, g, b})
                 updateNpcData()
                 npcEditFrame:Hide()
             end)
 
         end
 
-        local function ShowEditFrame(npcId)
+        local function ShowEditFrame(npcId, editGroupIds)
             if not npcEditFrame then
                 CreateEditFrame()
             end
 
-            PopulateEditFrame(npcId)
+            PopulateEditFrame(npcId, editGroupIds)
             if npcEditFrame then
                 npcEditFrame:Show()
             end
@@ -3946,7 +4023,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
         editButton:SetPoint("RIGHT", button, "RIGHT", -250, 0)
         editButton:SetText("Edit")
         editButton:SetScript("OnClick", function()
-            ShowEditFrame(npcId)
+            ShowEditFrame(npcId, groupIds)
         end)
         button.editButton = editButton
         CreateTooltipTwo(editButton, "Edit NPC details", "Change size, duration, icon and glow.")
@@ -3962,7 +4039,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
         hideIconCheckboxButton:SetSize(24, 24)
         hideIconCheckboxButton:SetPoint("RIGHT", button, "RIGHT", -15, 0)
         hideIconCheckboxButton:SetScript("OnClick", function(self)
-            updateHideIconFlag(npcId, self:GetChecked())
+            updateHideIconFlag(groupIds, self:GetChecked())
             if self:GetChecked() then
                 iconTexture:Hide()
             else
@@ -3981,7 +4058,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
         importantCheckBox:SetSize(24, 24)
         importantCheckBox:SetPoint("RIGHT", button, "RIGHT", -55, 0)
         importantCheckBox:SetScript("OnClick", function(self)
-            updateImportantFlag(npcId, self:GetChecked())
+            updateImportantFlag(groupIds, self:GetChecked())
         end)
         CreateTooltip(importantCheckBox, "Important Glow")
 
@@ -3996,7 +4073,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
         hideHealthBarCheckBox:SetSize(24, 24)
         hideHealthBarCheckBox:SetPoint("RIGHT", button, "RIGHT", -35, 0)
         hideHealthBarCheckBox:SetScript("OnClick", function(self)
-            updateHideHpFlag(npcId, self:GetChecked())
+            updateHideHpFlag(groupIds, self:GetChecked())
             BBP.RefreshAllNameplates()
         end)
         CreateTooltipTwo(hideHealthBarCheckBox, "Hide HealthBar")
@@ -4013,7 +4090,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
         iconOnlyCheckBox:SetSize(24, 24)
         iconOnlyCheckBox:SetPoint("RIGHT", button, "RIGHT", -75, 0)
         iconOnlyCheckBox:SetScript("OnClick", function(self)
-            updateIconOnlyFlag(npcId, self:GetChecked())
+            updateIconOnlyFlag(groupIds, self:GetChecked())
             BBP.RefreshAllNameplates()
         end)
         CreateTooltipTwo(iconOnlyCheckBox, "Icon Only Mode")
@@ -4099,7 +4176,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
         hpWidthCheckBox:SetSize(24, 24)
         hpWidthCheckBox:SetPoint("RIGHT", button, "RIGHT", -222, 0)
         hpWidthCheckBox:SetScript("OnClick", function(self)
-            updatehpWidthFlag(npcId, self:GetChecked())
+            updatehpWidthFlag(groupIds, self:GetChecked())
             BBP.RefreshAllNameplates()
             if self:GetChecked() then
                 EnableElement(button.barWidthSlider)
@@ -4168,11 +4245,29 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
 
     local function getSortedNpcList()
         local sortableNpcList = {}
+        local defaultList = BBP.defaultTotemIndicatorNpcList or {}
+        local groupedByName = {}
+        local groupOrder = {}
+
         for npcId, npcData in pairs(npcList) do
             if npcData.duration == 0 then
                 npcData.duration = nil
             end
-            table.insert(sortableNpcList, {npcId = npcId, npcData = npcData})
+            if defaultList[npcId] then
+                local key = npcData.name:lower()
+                if not groupedByName[key] then
+                    groupedByName[key] = { npcId = npcId, npcData = npcData, groupIds = {npcId} }
+                    table.insert(groupOrder, key)
+                else
+                    table.insert(groupedByName[key].groupIds, npcId)
+                end
+            else
+                table.insert(sortableNpcList, {npcId = npcId, npcData = npcData, groupIds = {npcId}})
+            end
+        end
+
+        for _, key in ipairs(groupOrder) do
+            table.insert(sortableNpcList, groupedByName[key])
         end
 
         table.sort(sortableNpcList, function(a, b)
@@ -4184,8 +4279,9 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
 
     local sortedNpcList = getSortedNpcList()
     for _, entry in ipairs(sortedNpcList) do
-        local button = createNpcLineButton(entry.npcId, entry.npcData, #textLines + 1)
+        local button = createNpcLineButton(entry.npcId, entry.npcData, #textLines + 1, entry.groupIds)
         button.npcId = entry.npcId
+        button.groupIds = entry.groupIds
         table.insert(textLines, button)
     end
 
@@ -4210,8 +4306,9 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
 
         -- Repopulate list with sorted entries
         for _, entry in ipairs(sortedNpcList) do
-            local button = createNpcLineButton(entry.npcId, entry.npcData, #textLines + 1)
+            local button = createNpcLineButton(entry.npcId, entry.npcData, #textLines + 1, entry.groupIds)
             button.npcId = entry.npcId
+            button.groupIds = entry.groupIds
             table.insert(textLines, button)
         end
 
@@ -4241,9 +4338,18 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
         -- Check for duplicates
         for index, line in ipairs(textLines) do
             if line.npcId == npcId then
-                selectedLineIndex = index  -- Set the index of the duplicate entry
+                selectedLineIndex = index
                 StaticPopup_Show("BBP_DUPLICATE_NPC_CONFIRM_TOTEM")
                 return
+            end
+            if line.groupIds then
+                for _, gid in ipairs(line.groupIds) do
+                    if gid == npcId then
+                        selectedLineIndex = index
+                        StaticPopup_Show("BBP_DUPLICATE_NPC_CONFIRM_TOTEM")
+                        return
+                    end
+                end
             end
         end
 

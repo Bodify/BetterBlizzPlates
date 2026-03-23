@@ -1037,47 +1037,6 @@ function BBP.CastbarOnEvent(frame, event)
         end
 
         if BetterBlizzPlatesDB.normalCastbarForEmpoweredCasts then
-            -- if (event == "UNIT_SPELLCAST_EMPOWER_START") then
-            --     if self:IsForbidden() then return end
-            --     if self.barType == "empowered" or self.barType == "standard" then
-            --         self:SetStatusBarTexture("ui-castingbar-filling-standard")
-            --     end
-            --     self.ChargeTier1:Hide()
-            --     self.ChargeTier2:Hide()
-            --     self.ChargeTier3:Hide()
-            --     if self.ChargeTier4 then
-            --         self.ChargeTier4:Hide()
-            --     end
-
-            --     local function UpdateSparkPosition(castBar)
-            --         local progressPercent = castBar.value / castBar.maxValue
-            --         local newX = castBar:GetWidth() * progressPercent
-            --         castBar.Spark:SetPoint("CENTER", castBar, "LEFT", newX, 0)
-            --     end
-
-            --     if not self.empoweredFix then
-            --         self:HookScript("OnUpdate", function(self)
-            --             if self:IsForbidden() then return end
-            --             if self.barType == "uninterruptable" then
-            --                 if self.ChargeTier1 then
-            --                     self.Spark:SetAtlas("UI-CastingBar-Pip")
-            --                     self.Spark:SetSize(6, 16)
-            --                     UpdateSparkPosition(self)
-            --                 end
-            --             elseif self.barType == "empowered" then
-            --                 self.Spark:SetAtlas("UI-CastingBar-Pip")
-            --                 self.Spark:SetSize(6, 16)
-            --                 UpdateSparkPosition(self)
-            --             end
-            --         end)
-            --         self.empoweredFix = true
-            --     end
-
-            --     -- self.StagePip1:Hide()
-            --     -- self.StagePip2:Hide()
-            --     -- self.StagePip3:Hide()
-            -- end
-
             if empowerEvents[event] then
                 if not self.empowerSpark then
                     self.empowerSpark = self:CreateTexture(nil, "OVERLAY")

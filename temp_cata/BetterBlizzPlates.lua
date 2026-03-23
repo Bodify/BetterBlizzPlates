@@ -4870,6 +4870,8 @@ local function HandleNamePlateRemoved(unit)
     if frame.animationGroup then
         frame.animationGroup:Stop()
     end
+
+    BBP.StopTotemPulse(frame)
     if frame.customCooldown then
         frame.customCooldown:Hide()
     end

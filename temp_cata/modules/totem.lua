@@ -1,5 +1,100 @@
 local activeCooldowns = {}
 
+function BBP.StartTotemPulse(frame, pulseCycle, totalDuration, guid)
+    if not frame.totemIndicator then return end
+
+    if not frame.totemPulseText then
+        frame.totemPulseText = frame.totemIndicator:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        frame.totemPulseText:SetPoint("TOP", frame.totemIndicator, "BOTTOM", 0, -2)
+        frame.totemPulseText:SetTextColor(1, 1, 1, 1)
+    end
+
+    if not frame.pulseCooldown then
+        frame.pulseCooldown = CreateFrame("Cooldown", nil, frame.totemIndicator, "CooldownFrameTemplate")
+        frame.pulseCooldown:SetPoint("TOPLEFT", frame.totemIndicator, "TOPLEFT", 1, -1)
+        frame.pulseCooldown:SetPoint("BOTTOMRIGHT", frame.totemIndicator, "BOTTOMRIGHT", -1, 1)
+        frame.pulseCooldown:SetReverse(false)
+        frame.pulseCooldown:SetHideCountdownNumbers(true)
+    end
+
+    if frame.customCooldown then
+        frame.customCooldown:Hide()
+    end
+    frame.pulseCooldown:Show()
+
+    local existing = activeCooldowns[guid]
+    local startTime
+    if existing and existing.pulseStart then
+        startTime = existing.pulseStart
+    else
+        startTime = GetTime()
+        if not existing then
+            activeCooldowns[guid] = { startTime = startTime, duration = totalDuration }
+        end
+        activeCooldowns[guid].pulseStart = startTime
+    end
+
+    local invCycle = 1 / pulseCycle
+    local dur = totalDuration
+    local txt = frame.totemPulseText
+    local indicator = frame.totemIndicator
+    local cd = frame.pulseCooldown
+
+    if frame.animationGroup then
+        frame.animationGroup:Stop()
+    end
+
+    local cycleStart = startTime + math.floor((GetTime() - startTime) / pulseCycle) * pulseCycle
+    cd:SetCooldown(cycleStart, pulseCycle)
+
+    txt:Show()
+
+    indicator:SetScript("OnUpdate", function(self, dt)
+        local now = GetTime()
+        local elapsed = now - startTime
+        local remaining = dur - elapsed
+
+        if remaining <= 0 then
+            self:SetScale(1)
+            txt:SetText("0.0")
+            cd:Hide()
+            self:SetScript("OnUpdate", nil)
+            return
+        end
+
+        local cycleElapsed = elapsed % pulseCycle
+        local cycleProgress = cycleElapsed * invCycle
+        self:SetScale(1 + 0.22 * math.cos(cycleProgress * 2 * math.pi))
+
+        if cycleElapsed < dt + 0.01 then
+            cd:SetCooldown(now, pulseCycle)
+        end
+
+        if remaining >= 60 then
+            txt:SetText(string.format("%d:%02d", remaining / 60, remaining % 60))
+        else
+            txt:SetText(string.format("%d", remaining))
+        end
+    end)
+end
+
+function BBP.StopTotemPulse(frame)
+    if frame.totemIndicator then
+        frame.totemIndicator:SetScript("OnUpdate", nil)
+        frame.totemIndicator:SetScale(frame.BetterBlizzPlates and frame.BetterBlizzPlates.config and frame.BetterBlizzPlates.config.totemIndicatorScale or 1)
+    end
+    if frame.pulseCooldown then
+        frame.pulseCooldown:Hide()
+    end
+
+    if frame.customCooldown then
+        frame.customCooldown:Show()
+    end
+    if frame.totemPulseText then
+        frame.totemPulseText:Hide()
+    end
+end
+
 function BBP.ResetNameplateTestAttributes()
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = nameplate.UnitFrame
@@ -144,7 +239,9 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
             frame.glowTexture:Show()
 
             if not BetterBlizzPlatesDB.totemIndicatorNoAnimation then
-                frame.animationGroup:Play()
+                if not frame.bbpTotemPulseActive then
+                    frame.animationGroup:Play()
+                end
             end
         end
 
@@ -371,6 +468,16 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
                 frame.animationGroup:Stop()
             end
         end
+
+        -- Pulse animation on the totem icon itself + duration timer text below
+        if npcData.pulse and not npcData.hideIcon then
+            frame.bbpTotemPulseActive = true
+            BBP.StartTotemPulse(frame, npcData.pulse, npcData.duration or 120, guid)
+        else
+            frame.bbpTotemPulseActive = nil
+            BBP.StopTotemPulse(frame)
+        end
+
         if config.totemIndicatorHideHealthBar or npcData.hideHp or npcData.iconOnly then
             if frame.BigDebuffs then
                 frame.BigDebuffs:SetAlpha(0)
@@ -425,6 +532,8 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         if frame.animationGroup then
             frame.animationGroup:Stop()
         end
+        frame.bbpTotemPulseActive = nil
+        BBP.StopTotemPulse(frame)
     end
 
     if frame.glowTexture then

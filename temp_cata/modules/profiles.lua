@@ -26,6 +26,7 @@ local function TBCProfileFix()
         BetterBlizzPlatesDB.otherNpdeBuffFilterBlizzard = false
         BetterBlizzPlatesDB.otherNpdeBuffFilterOnlyMe = true
     end
+    BBP.ResetTotemList()
 end
 
 function BBP.StarterProfile(version)

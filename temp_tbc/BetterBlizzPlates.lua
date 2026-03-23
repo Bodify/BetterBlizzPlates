@@ -772,7 +772,150 @@ if BBP.isMoP then
         {name = "Searing Totem", id = 2523, comment = ""},
     }
 
+elseif BBP.isTBC then
+    -- Thanks for Hydra (Hydramist) for putting together the list.
+    defaultSettings.totemIndicatorNpcList = {
+        -- Important
+        [5913] =    { name = "Tremor Totem",              icon = 136108, hideIcon = false, size = 35, duration = 120, color = {0.49, 0.9, 0.08},   important = true, iconOnly = true, pulse = 3 },
+        [5925] =    { name = "Grounding Totem",           icon = 136039, hideIcon = false, size = 35, duration = 30,  color = {1, 0, 1},            important = true, iconOnly = true },
+        [10467] =   { name = "Mana Tide Totem",           icon = 135861, hideIcon = false, size = 35, duration = 12,  color = {0.08, 0.82, 0.78},   important = true, iconOnly = true },
+        [5923] =    { name = "Poison Cleansing Totem",    icon = 136070, hideIcon = false, size = 30,                 color = {1, 1, 1},            important = true, iconOnly = true, pulse = 5 },
+        [510] =     { name = "Water Elemental",           icon = 135862, hideIcon = false, size = 30,                 color = {0.25, 1, 0.83},      important = true, iconOnly = true, hideHp = false },
+        [19668] =   { name = "Shadowfiend",               icon = 136199, hideIcon = false, size = 30, duration = 15,  color = {0.43, 0.2, 1},       important = true, iconOnly = true, widthOn = true, hpWidth = -10 },
+
+        -- Normal
+        [3527] =    { name = "Healing Stream Totem",      icon = 135127, hideIcon = false, size = 35, duration = 15,  color = {0, 1, 0.78},         important = false, iconOnly = true },
+        [3906] =    { name = "Healing Stream Totem",      icon = 135127, hideIcon = false, size = 35, duration = 15,  color = {0, 1, 0.78},         important = false, iconOnly = true },
+        [3907] =    { name = "Healing Stream Totem",      icon = 135127, hideIcon = false, size = 35, duration = 15,  color = {0, 1, 0.78},         important = false, iconOnly = true },
+        [3908] =    { name = "Healing Stream Totem",      icon = 135127, hideIcon = false, size = 35, duration = 15,  color = {0, 1, 0.78},         important = false, iconOnly = true },
+        [3909] =    { name = "Healing Stream Totem",      icon = 135127, hideIcon = false, size = 35, duration = 15,  color = {0, 1, 0.78},         important = false, iconOnly = true },
+        [15488] =   { name = "Healing Stream Totem",      icon = 135127, hideIcon = false, size = 35, duration = 15,  color = {0, 1, 0.78},         important = false, iconOnly = true },
+        [2630] =    { name = "Earthbind Totem",           icon = 136102, hideIcon = false, size = 30, duration = 45,  color = {0.78, 0.51, 0.39},   important = false, iconOnly = true },
+        [5929] =    { name = "Magma Totem",               icon = 135826, hideIcon = false, size = 30,                 color = {0.93, 0.95, 1},      important = false, iconOnly = true, pulse = 2 },
+        [7464] =    { name = "Magma Totem",               icon = 135826, hideIcon = false, size = 30,                 color = {0.93, 0.95, 1},      important = false, iconOnly = true, pulse = 2 },
+        [7465] =    { name = "Magma Totem",               icon = 135826, hideIcon = false, size = 30,                 color = {0.93, 0.95, 1},      important = false, iconOnly = true, pulse = 2 },
+        [7466] =    { name = "Magma Totem",               icon = 135826, hideIcon = false, size = 30,                 color = {0.93, 0.95, 1},      important = false, iconOnly = true, pulse = 2 },
+        [15484] =   { name = "Magma Totem",               icon = 135826, hideIcon = false, size = 30,                 color = {0.93, 0.95, 1},      important = false, iconOnly = true, pulse = 2 },
+        [15430] =   { name = "Earth Elemental Totem",     icon = 136024, hideIcon = false, size = 30,                 color = {0.78, 0.51, 0.39},   important = false, iconOnly = true },
+        [15438] =   { name = "Greater Fire Elemental",    icon = 135790, hideIcon = false, size = 30,                 color = {1, 0.23, 0},         important = false, iconOnly = true, hideHp = false },
+        [15439] =   { name = "Fire Elemental Totem",      icon = 135790, hideIcon = false, size = 20,                 color = {1, 0.23, 0},         important = false, iconOnly = true },
+        [15352] =   { name = "Greater Earth Elemental",   icon = 136024, hideIcon = false, size = 20,                 color = {0.78, 0.51, 0.39},   important = false, iconOnly = true, hideHp = false },
+        [15447] =   { name = "Wrath of Air",              icon = 136092, hideIcon = false, size = 30,                 color = {0.7, 0.98, 1},       important = false, iconOnly = true, widthOn = true, hpWidth = -10 },
+        [6112] =    { name = "Windfury Totem",            icon = 136114, hideIcon = false, size = 32,                 color = {0.31, 0.35, 0.62},   important = false, iconOnly = true, widthOn = true, hpWidth = -10, pulse = 5 },
+        [7483] =    { name = "Windfury Totem",            icon = 136114, hideIcon = false, size = 32,                 color = {0.31, 0.35, 0.62},   important = false, iconOnly = true, widthOn = true, hpWidth = -10, pulse = 5 },
+        [7484] =    { name = "Windfury Totem",            icon = 136114, hideIcon = false, size = 32,                 color = {0.31, 0.35, 0.62},   important = false, iconOnly = true, widthOn = true, hpWidth = -10, pulse = 5 },
+        [15496] =   { name = "Windfury Totem",            icon = 136114, hideIcon = false, size = 32,                 color = {0.31, 0.35, 0.62},   important = false, iconOnly = true, widthOn = true, hpWidth = -10, pulse = 5 },
+        [15497] =   { name = "Windfury Totem",            icon = 136114, hideIcon = false, size = 32,                 color = {0.31, 0.35, 0.62},   important = false, iconOnly = true, widthOn = true, hpWidth = -10, pulse = 5 },
+        [5879] =    { name = "Fire Nova Totem",           icon = 135824, hideIcon = false, size = 30, duration = 5,   color = {1, 1, 1},            important = false, iconOnly = true },
+        [6110] =    { name = "Fire Nova Totem",           icon = 135824, hideIcon = false, size = 30, duration = 5,   color = {1, 1, 1},            important = false, iconOnly = true },
+        [6111] =    { name = "Fire Nova Totem",           icon = 135824, hideIcon = false, size = 30, duration = 5,   color = {1, 1, 1},            important = false, iconOnly = true },
+        [7844] =    { name = "Fire Nova Totem",           icon = 135824, hideIcon = false, size = 30, duration = 5,   color = {1, 1, 1},            important = false, iconOnly = true },
+        [7845] =    { name = "Fire Nova Totem",           icon = 135824, hideIcon = false, size = 30, duration = 5,   color = {1, 1, 1},            important = false, iconOnly = true },
+        [15482] =   { name = "Fire Nova Totem",           icon = 135824, hideIcon = false, size = 30, duration = 5,   color = {1, 1, 1},            important = false, iconOnly = true },
+        [15483] =   { name = "Fire Nova Totem",           icon = 135824, hideIcon = false, size = 30, duration = 5,   color = {1, 1, 1},            important = false, iconOnly = true },
+        [19833] =   { name = "Venomous Snake",            icon = 132211, hideIcon = false, size = 30,                 color = {1, 1, 1},            important = false, iconOnly = true },
+        [19921] =   { name = "Viper",                     icon = 132211, hideIcon = false, size = 30,                 color = {1, 1, 1},            important = false, iconOnly = true },
+        [126135] =  { name = "Lightwell",                 icon = 135980, hideIcon = false, size = 30, duration = 180, color = {1, 1, 1},            important = false, iconOnly = true },
+
+        -- Cosmetic (iconOnly = false, hideIcon = true)
+        [2523] =    { name = "Searing Totem",             icon = 135825, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [3902] =    { name = "Searing Totem",             icon = 135825, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [3903] =    { name = "Searing Totem",             icon = 135825, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [3904] =    { name = "Searing Totem",             icon = 135825, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [7400] =    { name = "Searing Totem",             icon = 135825, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [7402] =    { name = "Searing Totem",             icon = 135825, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [15480] =   { name = "Searing Totem",             icon = 135825, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [3573] =    { name = "Mana Spring Totem",         icon = 136053, hideIcon = true,  size = 30,                 color = {0.98, 0.95, 1},      important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [7414] =    { name = "Mana Spring Totem",         icon = 136053, hideIcon = true,  size = 30,                 color = {0.98, 0.95, 1},      important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [7415] =    { name = "Mana Spring Totem",         icon = 136053, hideIcon = true,  size = 30,                 color = {0.98, 0.95, 1},      important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [7416] =    { name = "Mana Spring Totem",         icon = 136053, hideIcon = true,  size = 30,                 color = {0.98, 0.95, 1},      important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [15489] =   { name = "Mana Spring Totem",         icon = 136053, hideIcon = true,  size = 30,                 color = {0.98, 0.95, 1},      important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [5873] =    { name = "Stoneskin Totem",           icon = 136098, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [7366] =    { name = "Stoneskin Totem",           icon = 136098, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [7367] =    { name = "Stoneskin Totem",           icon = 136098, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [7368] =    { name = "Stoneskin Totem",           icon = 136098, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [5919] =    { name = "Stoneskin Totem",           icon = 136098, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [5920] =    { name = "Stoneskin Totem",           icon = 136098, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [15470] =   { name = "Stoneskin Totem",           icon = 136098, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [15474] =   { name = "Stoneskin Totem",           icon = 136098, hideIcon = true,  size = 30,                 color = {1, 1, 0.96},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [5874] =    { name = "Strength of Earth Totem",   icon = 136023, hideIcon = true,  size = 30,                 color = {0.99, 0.97, 1},      important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [5921] =    { name = "Strength of Earth Totem",   icon = 136023, hideIcon = true,  size = 30,                 color = {0.99, 0.97, 1},      important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [5922] =    { name = "Strength of Earth Totem",   icon = 136023, hideIcon = true,  size = 30,                 color = {0.99, 0.97, 1},      important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [7403] =    { name = "Strength of Earth Totem",   icon = 136023, hideIcon = true,  size = 30,                 color = {0.99, 0.97, 1},      important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [15464] =   { name = "Strength of Earth Totem",   icon = 136023, hideIcon = true,  size = 30,                 color = {0.99, 0.97, 1},      important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [15479] =   { name = "Strength of Earth Totem",   icon = 136023, hideIcon = true,  size = 30,                 color = {0.99, 0.97, 1},      important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [5950] =    { name = "Flametongue Totem",         icon = 136040, hideIcon = true,  size = 24,                 color = {0.98, 1, 1},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [6012] =    { name = "Flametongue Totem",         icon = 136040, hideIcon = true,  size = 24,                 color = {0.98, 1, 1},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [7423] =    { name = "Flametongue Totem",         icon = 136040, hideIcon = true,  size = 24,                 color = {0.98, 1, 1},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [10557] =   { name = "Flametongue Totem",         icon = 136040, hideIcon = true,  size = 24,                 color = {0.98, 1, 1},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [15485] =   { name = "Flametongue Totem",         icon = 136040, hideIcon = true,  size = 24,                 color = {0.98, 1, 1},         important = false, iconOnly = false, widthOn = true, hpWidth = -10 },
+        [3579] =    { name = "Stoneclaw Totem",           icon = 136097, hideIcon = true,  size = 30, duration = 21,  color = {0.96, 0.96, 1},      important = false, iconOnly = false },
+        [3911] =    { name = "Stoneclaw Totem",           icon = 136097, hideIcon = true,  size = 30, duration = 21,  color = {0.96, 0.96, 1},      important = false, iconOnly = false },
+        [3912] =    { name = "Stoneclaw Totem",           icon = 136097, hideIcon = true,  size = 30, duration = 21,  color = {0.96, 0.96, 1},      important = false, iconOnly = false },
+        [3913] =    { name = "Stoneclaw Totem",           icon = 136097, hideIcon = true,  size = 30, duration = 21,  color = {0.96, 0.96, 1},      important = false, iconOnly = false },
+        [7398] =    { name = "Stoneclaw Totem",           icon = 136097, hideIcon = true,  size = 30, duration = 21,  color = {0.96, 0.96, 1},      important = false, iconOnly = false },
+        [7399] =    { name = "Stoneclaw Totem",           icon = 136097, hideIcon = true,  size = 30, duration = 21,  color = {0.96, 0.96, 1},      important = false, iconOnly = false },
+        [15478] =   { name = "Stoneclaw Totem",           icon = 136097, hideIcon = true,  size = 30, duration = 21,  color = {0.96, 0.96, 1},      important = false, iconOnly = false },
+        [5924] =    { name = "Disease Cleansing Totem",   icon = 136019, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [5926] =    { name = "Frost Resistance Totem",    icon = 135866, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [7412] =    { name = "Frost Resistance Totem",    icon = 135866, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [7413] =    { name = "Frost Resistance Totem",    icon = 135866, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [15486] =   { name = "Frost Resistance Totem",    icon = 135866, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [5927] =    { name = "Fire Resistance Totem",     icon = 135832, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [7424] =    { name = "Fire Resistance Totem",     icon = 135832, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [7425] =    { name = "Fire Resistance Totem",     icon = 135832, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [15487] =   { name = "Fire Resistance Totem",     icon = 135832, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [7467] =    { name = "Nature Reistance Totem",    icon = 136061, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [7468] =    { name = "Nature Reistance Totem",    icon = 136061, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [7469] =    { name = "Nature Reistance Totem",    icon = 136061, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [15490] =   { name = "Nature Reistance Totem",    icon = 136061, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [10627] =   { name = "Grace of Air Totem",        icon = 136046, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [7486] =    { name = "Grace of Air Totem",        icon = 136046, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [25359] =   { name = "Grace of Air Totem",        icon = 136046, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [9687] =    { name = "Windwall Totem",            icon = 136022, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [9688] =    { name = "Windwall Totem",            icon = 136022, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [9689] =    { name = "Windwall Totem",            icon = 136022, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [15492] =   { name = "Windwall Totem",            icon = 136022, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [15803] =   { name = "Tranquil Air Totem",        icon = 136013, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+        [3968] =    { name = "Sentry Totem",              icon = 136082, hideIcon = true,  size = 30,                 color = {1, 1, 1},            important = false },
+    }
+
+    defaultSettings.hideNPCsWhitelist = {
+        {name = "Water Elemental", id = 510, comment = ""},
+        {name = "Shadowfiend", id = 19668, comment = ""},
+        {name = "Healing Stream Totem", id = 3527, comment = ""},
+        {name = "Grounding Totem", id = 5925, comment = ""},
+        {name = "Tremor Totem", id = 5913, comment = ""},
+        {name = "Mana Tide Totem", id = 10467, comment = ""},
+        {name = "Earth Elemental Totem", id = 15430, comment = ""},
+        {name = "Fire Elemental Totem", id = 15439, comment = ""},
+        {name = "Greater Fire Elemental", id = 15438, comment = ""},
+        {name = "Greater Earth Elemental", id = 15352, comment = ""},
+        {name = "Earthbind Totem", id = 2630, comment = ""},
+        {name = "Magma Totem", id = 5929, comment = ""},
+        {name = "Searing Totem", id = 2523, comment = ""},
+        {name = "Lightwell", id = 126135, comment = ""},
+    }
+
+    defaultSettings.fadeOutNPCsWhitelist = {
+        {name = "Water Elemental", id = 510, comment = ""},
+        {name = "Shadowfiend", id = 19668, comment = ""},
+        {name = "Healing Stream Totem", id = 3527, comment = ""},
+        {name = "Grounding Totem", id = 5925, comment = ""},
+        {name = "Tremor Totem", id = 5913, comment = ""},
+        {name = "Mana Tide Totem", id = 10467, comment = ""},
+        {name = "Earth Elemental Totem", id = 15430, comment = ""},
+        {name = "Fire Elemental Totem", id = 15439, comment = ""},
+        {name = "Greater Fire Elemental", id = 15438, comment = ""},
+        {name = "Greater Earth Elemental", id = 15352, comment = ""},
+        {name = "Earthbind Totem", id = 2630, comment = ""},
+        {name = "Magma Totem", id = 5929, comment = ""},
+        {name = "Searing Totem", id = 2523, comment = ""},
+        {name = "Lightwell", id = 126135, comment = ""},
+    }
+
 else
+
     defaultSettings.totemIndicatorNpcList = {
         -- Important
         [3527] =    { name = "Healing Stream Totem", icon = GetSpellTexture(5394),       hideIcon = false, size = 31, duration = nil, color = {0, 1, 0.78},       important = true, widthOn = true, hpWidth = -25 },
@@ -1093,6 +1236,8 @@ local function InitializeSavedVariables()
             BetterBlizzPlatesDB[key] = defaultValue
         end
     end
+
+    BBP.defaultTotemIndicatorNpcList = defaultSettings.totemIndicatorNpcList
 end
 
 function BBP.ResetTotemList()
@@ -1469,14 +1614,6 @@ local function SendUpdateMessage()
             --     -- DEFAULT_CHAT_FRAME:AddMessage("|A:Professions-Crafting-Orders-Icon:16:16|a Bugfixes/Tweaks:")
             --     -- DEFAULT_CHAT_FRAME:AddMessage("   - Read curseforge changelog for bugfix list.")
             -- end)
-            StaticPopupDialogs["BBP_ROW_UPDATE"] = {
-                text =
-                "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nFixed some nameplate height issues and nameplate name position issues. You will more than likely have to re-adjust your nameplate height and nameplate name position settings due to this. Find some dummies and test. PS: Auras now updated for TBC too.",
-                button1 = "Ok",
-                timeout = 0,
-                whileDead = true,
-            }
-            StaticPopup_Show("BBP_ROW_UPDATE")
         else
             BetterBlizzPlatesDB.scStart = nil
         end
@@ -4869,6 +5006,8 @@ local function HandleNamePlateRemoved(unit)
     if frame.animationGroup then
         frame.animationGroup:Stop()
     end
+    -- Stop pulse animation and hide timer text (re-shows customCooldown internally)
+    BBP.StopTotemPulse(frame)
     if frame.customCooldown then
         frame.customCooldown:Hide()
     end
@@ -6462,6 +6601,90 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 db.totemListUpdateMop3 = true
             end
 
+            if BetterBlizzPlatesDB.firstSaveComplete and not db.tbcTotemListUpdate1 then
+                local pulseDefaults = {
+                    [5913] = 3,
+                    [5923] = 5,
+                    [5929] = 2, [7464] = 2, [7465] = 2, [7466] = 2, [15484] = 2,
+                    [6112] = 5, [7483] = 5, [7484] = 5, [15496] = 5, [15497] = 5,
+                }
+                local function PatchPulseTags(list)
+                    if not list then return end
+                    for npcID, pulseVal in pairs(pulseDefaults) do
+                        if list[npcID] and not list[npcID].pulse then
+                            list[npcID].pulse = pulseVal
+                        end
+                    end
+                end
+                if BBP.isTBC then
+                    StaticPopupDialogs["BBP_TBC_TOTEM_CONFIRM_ADD"] = {
+                        text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nAre you sure you want to only add new NPCs?\n\nThis will keep your current list and add any missing entries.",
+                        button1 = "Yes",
+                        button2 = "Cancel",
+                        OnAccept = function()
+                            local currentList = BetterBlizzPlatesDB.totemIndicatorNpcList or {}
+                            for id, data in pairs(defaultSettings.totemIndicatorNpcList) do
+                                if not currentList[id] then
+                                    currentList[id] = data
+                                end
+                            end
+                            PatchPulseTags(currentList)
+                            BetterBlizzPlatesDB.totemIndicatorNpcList = currentList
+                            BetterBlizzPlatesDB.tbcTotemListUpdate1 = true
+                            ReloadUI()
+                        end,
+                        OnCancel = function()
+                            StaticPopup_Show("BBP_TBC_TOTEM_UPDATE")
+                        end,
+                        timeout = 0,
+                        whileDead = true,
+                        hideOnEscape = false,
+                    }
+
+                    StaticPopupDialogs["BBP_TBC_TOTEM_CONFIRM_RESET"] = {
+                        text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nAre you sure you want to reset the entire totem list to new defaults?\n\nThis will replace your current list entirely.",
+                        button1 = "Yes, Reset",
+                        button2 = "Cancel",
+                        OnAccept = function()
+                            BetterBlizzPlatesDB.totemIndicatorNpcList = {}
+                            BetterBlizzPlatesDB.totemIndicatorNpcList = defaultSettings.totemIndicatorNpcList
+                            BetterBlizzPlatesDB.tbcTotemListUpdate1 = true
+                            ReloadUI()
+                        end,
+                        OnCancel = function()
+                            StaticPopup_Show("BBP_TBC_TOTEM_UPDATE")
+                        end,
+                        timeout = 0,
+                        whileDead = true,
+                        hideOnEscape = false,
+                    }
+
+                    StaticPopupDialogs["BBP_TBC_TOTEM_UPDATE"] = {
+                        text =
+                        "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nTotem Indicator List has finally been properly updated for TBC.\n\nThank you Hydra (www.twitch.tv/hydramist).\n\nHeres 3 options for you:\n",
+                        button1 = "Only add new NPCs",
+                        button2 = "Exit",
+                        button3 = "Reset entire list to new defaults",
+                        OnAccept = function()
+                            StaticPopup_Show("BBP_TBC_TOTEM_CONFIRM_ADD")
+                        end,
+                        OnCancel = function()
+                            PatchPulseTags(BetterBlizzPlatesDB.totemIndicatorNpcList)
+                            BetterBlizzPlatesDB.tbcTotemListUpdate1 = true
+                        end,
+                        OnAlt = function()
+                            StaticPopup_Show("BBP_TBC_TOTEM_CONFIRM_RESET")
+                        end,
+                        timeout = 0,
+                        whileDead = true,
+                        hideOnEscape = false,
+                    }
+                    StaticPopup_Show("BBP_TBC_TOTEM_UPDATE")
+                else
+                    db.tbcTotemListUpdate1 = true
+                end
+            end
+
             InitializeSavedVariables()
 
             C_Timer.After(1, function()
@@ -6490,6 +6713,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 FetchAndSaveValuesOnFirstLogin()
 
                 BetterBlizzPlatesDB.firstSaveComplete = true
+                BetterBlizzPlatesDB.tbcTotemListUpdate1 = true
             end
             if not db.old_defaultLargeNamePlateFont then
                 db.old_defaultLargeNamePlateFont = db.defaultLargeNamePlateFont
