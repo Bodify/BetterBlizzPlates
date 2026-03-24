@@ -87,8 +87,8 @@ function BBP.TargetIndicator(frame)
             frame.targetIndicator:Show()
         end
         if config.targetIndicatorChangeTexture then
-            frame.bbpMaskForceShow = true
-            if frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar.MaskTexture then
+            if frame.HealthBarsContainer.healthBar.MaskTexture then
+                frame.bbpMaskForceShow = true
                 frame.HealthBarsContainer.healthBar.MaskTexture:Show()
             end
             frame.healthBar:SetStatusBarTexture(config.targetIndicatorTextureLSM)
@@ -170,8 +170,8 @@ function BBP.FocusTargetIndicator(frame)
     if config.focusTargetIndicatorTestMode then
         frame.focusTargetIndicator:Show()
         if BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture then
-            frame.bbpMaskForceShow = true
-            if frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar.MaskTexture then
+            if frame.HealthBarsContainer.healthBar.MaskTexture then
+                frame.bbpMaskForceShow = true
                 frame.HealthBarsContainer.healthBar.MaskTexture:Show()
             end
             frame.healthBar:SetStatusBarTexture(focusTexture)
@@ -191,8 +191,8 @@ function BBP.FocusTargetIndicator(frame)
     if frame.unit and UnitIsUnit(frame.unit, "focus") then
         frame.focusTargetIndicator:Show()
         if changeTexture then
-            frame.bbpMaskForceShow = true
-            if frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar.MaskTexture then
+            if frame.HealthBarsContainer.healthBar.MaskTexture then
+                frame.bbpMaskForceShow = true
                 frame.HealthBarsContainer.healthBar.MaskTexture:Show()
             end
             frame.healthBar:SetStatusBarTexture(focusTexture)
