@@ -1,3 +1,10 @@
+# BetterBlizzPlates 1.9.9f
+## Midnight
+### Tweak
+- Fix cooldown API stuff ahead of new Blizzard changes.
+### Bugfix
+- Fix healthbar texture mask being enabled on classic/"old-retail" nameplates with for example Target Indicator's texture swap.
+
 # BetterBlizzPlates 1.9.9d+e
 ## Midnight
 ### New
