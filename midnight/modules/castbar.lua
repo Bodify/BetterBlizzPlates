@@ -98,9 +98,9 @@ local function OnEvent(self, event, unit, _, spellID)
     if event == "UNIT_SPELLCAST_SUCCEEDED" then
         -- Check if player used an interrupt spell
         if interruptSpells[spellID] then
-            local cooldownInfo = C_Spell.GetSpellCooldown(spellID)
+            local cooldownInfo = C_Spell.GetSpellCooldownDuration(spellID)
             if cooldownInfo then
-                BBP.interruptIcon.cooldown:SetCooldown(cooldownInfo.startTime, cooldownInfo.duration)
+                BBP.interruptIcon.cooldown:SetCooldownFromDurationObject(cooldownInfo)
             end
             BBP.interruptReady = false
             if BetterBlizzPlatesDB.castBarRecolorInterrupt then
