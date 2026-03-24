@@ -1,3 +1,8 @@
+# BetterBlizzPlates 1.9.9g
+## Midnight
+### Tweak
+- Update Nahj & Snupy profile. Thank you both for sharing <3
+
 # BetterBlizzPlates 1.9.9f
 ## Midnight
 ### Tweak
