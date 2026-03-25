@@ -640,15 +640,20 @@ function BBP.UpdateNameplateTargetText(frame, unit)
 
     frame.TargetText:SetText("")
 
-    if isCasting and UnitExists(unit.."target") and frame.castBar:IsShown() and not frame.hideCastInfo then
-        local targetOfTarget = unit.."target"
-        local name = UnitName(targetOfTarget)
-        local _, class = UnitClass(targetOfTarget)
-        local color = RAID_CLASS_COLORS[class]
+    if isCasting and frame.castBar:IsShown() and not frame.hideCastInfo then
+        local name = UnitSpellTargetName(unit)
+        if not name then return end
+        local class = UnitSpellTargetClass(unit)
+        local color
+        if class then
+            color = C_ClassColor.GetClassColor(class)
+            if color then
+                name = color:WrapTextInColorCode(name)
+            end
+        end
         local useCustomFont = BetterBlizzPlatesDB.useCustomFont
 
         frame.TargetText:SetText(name)
-        frame.TargetText:SetTextColor(color.r, color.g, color.b)
         frame.TargetText:ClearAllPoints()
         if UnitCanAttack("player", unit) then
             frame.TargetText:SetPoint("TOPRIGHT", frame.castBar, "BOTTOMRIGHT", -4, 0)  -- Set anchor point for enemy
@@ -662,8 +667,6 @@ function BBP.UpdateNameplateTargetText(frame, unit)
             local f,s,o = frame.TargetText:GetFont()
             frame.TargetText:SetFont(f, npTextSize or 6, "OUTLINE, SLUG")
         end
-    else
-        frame.TargetText:SetText("")
     end
 end
 
