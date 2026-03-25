@@ -12711,6 +12711,9 @@ function BBP.CVarTracker()
             -- Midnight
             nameplateDebuffPadding = true,
             nameplateAuraScale = true,
+        },
+        other = {
+            nameplateStyle = true,
         }
     }
 
@@ -12731,6 +12734,8 @@ function BBP.CVarTracker()
             BetterBlizzPlatesDB[cvarName] = cvarValue
         elseif cvarsToTrack.sliders[cvarName] then
             BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+        elseif cvarsToTrack.other[cvarName] then
+            BetterBlizzPlatesDB[cvarName] = cvarValue
         elseif bitCVarNames[cvarName] then
             for _, index in ipairs(BBP.bitCVarList[cvarName]) do
                 BetterBlizzPlatesDB.bitfields[cvarName][tostring(index)] = C_CVar.GetCVarBitfield(cvarName, index)
