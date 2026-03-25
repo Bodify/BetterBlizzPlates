@@ -2433,6 +2433,10 @@ local function SetCVarsOnLogin()
             C_CVar.SetCVar("nameplateSelfAlpha", BetterBlizzPlatesDB.nameplateSelfAlpha)
         end
 
+        if BetterBlizzPlatesDB.fixedNameplateStyle and BetterBlizzPlatesDB.nameplateStyle then
+            C_CVar.SetCVar("nameplateStyle", BetterBlizzPlatesDB.nameplateStyle)
+        end
+
         if BetterBlizzPlatesDB.nameplateAuraScale then
             C_CVar.SetCVar("nameplateAuraScale", BetterBlizzPlatesDB.nameplateAuraScale)
         end
@@ -7914,6 +7918,10 @@ First:SetScript("OnEvent", function(_, event, addonName)
             end
 
             C_Timer.After(3, function()
+                if not BetterBlizzPlatesDB.fixedNameplateStyle then
+                    BetterBlizzPlatesDB.nameplateStyle = C_CVar.GetCVar("nameplateStyle")
+                    BetterBlizzPlatesDB.fixedNameplateStyle = true
+                end
                 BBP.CVarTracker()
                 db.hasSaved = true -- Ended up with a config without this tag, idk how. Put this here just in case.
             end)
