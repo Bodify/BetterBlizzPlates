@@ -1,3 +1,14 @@
+# BetterBlizzPlates 1.9.9h
+## Midnight
+### New
+- Add Dissonance profile (www.twitch.tv/dissonancewow). Ty for sharing.
+### Tweak
+- Update "Show target underneath castbar" setting with new true target API. Thanks to Geopard for the headsup and helpful info on it.
+- Update profiles: Pmake, Magnusz, Mysticall, Nahj, Venruki and Wolf. Ty all for sharing.
+### Bugfix
+- Add secret check for potential secret error.
+- Fix issues with the kick tracking/coloring. Should be better now hopefully.
+
 # BetterBlizzPlates 1.9.9g
 ## Midnight
 ### Tweak
