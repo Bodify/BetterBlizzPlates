@@ -99,6 +99,10 @@ function BBP.OldImportProfile(encodedString, expectedDataType)
     if encodedString:sub(1, 4) == "!BBP" and encodedString:sub(-4) == "!BBP" then
         encodedString = encodedString:sub(5, -5) -- Remove both prefix and suffix
 
+        if encodedString:find("!") then
+            return nil, "Import code probably double copypasted. Make sure to copy the entire code only once."
+        end
+
         -- Proceed with the usual import process for your native format
         local compressed = LibDeflate:DecodeForPrint(encodedString)
         local serialized, decompressMsg = LibDeflate:DecompressDeflate(compressed)
