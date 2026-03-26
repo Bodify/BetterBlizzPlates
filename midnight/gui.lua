@@ -1825,7 +1825,7 @@ local CLASS_ICONS = {
     STARTER = "newplayerchat-chaticon-newcomer",
     BLITZ = "questlog-questtypeicon-pvp",
     MYTHIC = "worldquest-icon-dungeon",
-    PREMIDNIGHT = "questlog-questtypeicon-clockorange",
+    PREMIDNIGHT = "nameplates-icon-elite-gold",
 }
 
 -- Function to show the confirmation popup with dynamic profile information
@@ -1842,7 +1842,7 @@ end
 
 local function CreateClassButton(parent, class, name, twitchName, onClickFunc)
     local bbpParent = parent == BetterBlizzPlates
-    local coreProfile = class == "STARTER" or class == "BLITZ" or class == "MYTHIC" or name == "Bodify"
+    local coreProfile = class == "STARTER" or class == "BLITZ" or class == "MYTHIC" or class == "PREMIDNIGHT" or name == "Bodify"
     local btnWidth, btnHeight = bbpParent and 104 or (coreProfile and 150 or 114), bbpParent and 22 or 30
     local button = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
     button:SetSize(btnWidth, btnHeight)
@@ -1855,7 +1855,11 @@ local function CreateClassButton(parent, class, name, twitchName, onClickFunc)
         icon = "gmchat-icon-blizz"
     end
 
-    button:SetText(string.format("|A:%s:16:16|a %s%s|r", icon, color, name..dontIncludeProfileText))
+    if name == "Pre-Midnight" then
+        button:SetText(string.format("|A:%s:16:16|a%s%s|r", icon, color, name..dontIncludeProfileText))
+    else
+        button:SetText(string.format("|A:%s:16:16|a %s%s|r", icon, color, name..dontIncludeProfileText))
+    end
     button:SetNormalFontObject("GameFontNormal")
     button:SetHighlightFontObject("GameFontHighlight")
     local a,b,c = button.Text:GetFont()
@@ -4827,20 +4831,20 @@ local function guiProfiles()
     frame.titleText:SetText("|A:gmchat-icon-blizz:16:16|a BBP")
 
     frame.descriptionText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    frame.descriptionText:SetPoint("TOP", frame, "TOP", 2, -26)
-    frame.descriptionText:SetText("Pre-configured profiles for BetterBlizzPlates:")
+    frame.descriptionText:SetPoint("TOP", frame, "TOP", 2, -25)
+    frame.descriptionText:SetText("Profiles for BetterBlizzPlates:")
     frame.descriptionText:SetWidth(100)
 
     frame.coreText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    frame.coreText:SetPoint("TOP", frame.descriptionText, "BOTTOM", 0, -5)
+    frame.coreText:SetPoint("TOP", frame.descriptionText, "BOTTOM", 0, -3)
     frame.coreText:SetText("Core")
 
     frame.streamerText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    frame.streamerText:SetPoint("TOP", frame.coreText, "BOTTOM", 0, -127)
+    frame.streamerText:SetPoint("TOP", frame.coreText, "BOTTOM", 0, -125)
     frame.streamerText:SetText("Streamers")
 
     frame.infoText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 41)
+    frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 39)
     frame.infoText:SetText("If you are missing and want to be here let me know :)")
     frame.infoText:SetWidth(100)
 
@@ -12817,29 +12821,33 @@ function BBP.CreateIntroMessageWindow()
         StaticPopup_Show("BBP_CONFIRM_PROFILE", nil, nil, { func = profileFunction })
     end
 
-    -- Create button for your profile
     local starterButton = CreateClassButton(BBP.IntroMessageWindow, "STARTER", "Starter", nil, function()
-        ShowProfileConfirmation("Starter", "STARTER", BBP.StarterProfile)
+        ShowProfileConfirmation("Starter", "STARTER", function() BBP.ApplyProfile("Starter") end)
     end)
     starterButton:SetPoint("TOP", description1, "BOTTOM", -75, -20)
 
     local blitzButton = CreateClassButton(BBP.IntroMessageWindow, "BLITZ", "Blitz", nil, function()
-        ShowProfileConfirmation("Blitz", "BLITZ", BBP.BlitzProfile)
+        ShowProfileConfirmation("Blitz", "BLITZ", function() BBP.ApplyProfile("Blitz") end)
     end)
     blitzButton:SetPoint("TOP", starterButton, "BOTTOM", 0, btnGap)
 
     local mythicButton = CreateClassButton(BBP.IntroMessageWindow, "MYTHIC", "Mythic", nil, function()
-        ShowProfileConfirmation("Mythic", "MYTHIC", BBP.MythicProfile)
+        ShowProfileConfirmation("Mythic", "MYTHIC", function() BBP.ApplyProfile("Mythic") end)
     end)
     mythicButton:SetPoint("TOP", description1, "BOTTOM", 75, -20)
 
     local bodifyButton = CreateClassButton(BBP.IntroMessageWindow, "MAGE", "Bodify", "bodify", function()
-        ShowProfileConfirmation("Bodify", "MAGE", BBP.BodifyProfile)
+        ShowProfileConfirmation("Bodify", "MAGE", function() BBP.ApplyProfile("Bodify") end)
     end)
     bodifyButton:SetPoint("TOP", mythicButton, "BOTTOM", 0, btnGap)
 
+    local preMidnightButton = CreateClassButton(BBP.IntroMessageWindow, "PREMIDNIGHT", "Pre-Midnight", nil, function()
+        ShowProfileConfirmation("Pre-Midnight", "PREMIDNIGHT", function() BBP.ApplyProfile("Pre-Midnight") end)
+    end)
+    preMidnightButton:SetPoint("TOP", bodifyButton, "BOTTOM", -75, btnGap)
+
     local orText = BBP.IntroMessageWindow:CreateFontString(nil, "OVERLAY", "GameFontNormalMed2")
-    orText:SetPoint("CENTER", bodifyButton, "BOTTOM", -75, -20)
+    orText:SetPoint("CENTER", preMidnightButton, "BOTTOM", 0, -20)
     orText:SetText("OR")
     orText:SetJustifyH("CENTER")
 
@@ -12903,7 +12911,7 @@ function BBP.CreateIntroMessageWindow()
     end)
 
     local function AdjustWindowHeight()
-        local baseHeight = 334
+        local baseHeight = 374
         local perRowHeight = 29
         local buttonCount = 0
         for _, child in ipairs({BBP.IntroMessageWindow:GetChildren()}) do
