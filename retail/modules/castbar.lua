@@ -34,7 +34,7 @@ local knownInterruptSpellID = nil
 
 -- Recheck interrupt spells when lock resummons/sacrifices pet
 local petSummonSpells = {
-    [30146] = true,  -- Summon Demonic Tyrant (Demonology)
+    [30146] = true,  -- Summon Felguard (Demonology)
     [691]    = true,  -- Summon Felhunter (for Spell Lock)
     [108503] = true,  -- Grimoire of Sacrifice
 }
