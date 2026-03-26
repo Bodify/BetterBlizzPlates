@@ -69,9 +69,7 @@ function BBP.UpdateCastbarInterruptStatus()
 end
 
 local function UpdateInterruptIcon(frame)
-    if not playerKick then
-        playerKick = GetInterruptSpell()
-    end
+    playerKick = GetInterruptSpell()
     if playerKick then
         local cooldownInfo = C_Spell.GetSpellCooldownDuration(playerKick)
         if cooldownInfo then
@@ -132,7 +130,7 @@ interruptSpellUpdate:SetScript("OnEvent", OnEvent)
 local cooldownFrame = CreateFrame("Frame")
 cooldownFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 cooldownFrame:SetScript("OnEvent", function(self, event, spellID)
-    if spellID and spellID ~= playerKick then return end
+    if not interruptSpells[spellID] then return end
     UpdateInterruptIcon(BBP.interruptIcon)
 end)
 
