@@ -372,6 +372,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         elseif (event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_EMPOWER_STOP") and castBar.lastEvent == "UNIT_SPELLCAST_INTERRUPTED" then
             castBar:SetStatusBarColor(1, 0, 0, 1)
         end
+        castBar.lastEvent = event
     else
         if db.castBarRecolorInterrupt and BBP.interruptReady == false and isAttackable then
             if notInterruptible ~= nil then
@@ -392,6 +393,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         elseif (event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_EMPOWER_STOP") and castBar.lastEvent == "UNIT_SPELLCAST_INTERRUPTED" then
             castBar:SetStatusBarColor(1, 1, 1, 1)
         end
+        castBar.lastEvent = event
     end
 
     local useCustomFont = BetterBlizzPlatesDB.useCustomFont
