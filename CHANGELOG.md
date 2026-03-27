@@ -2,6 +2,7 @@
 ## Midnight
 ### Tweak
 - Update Aeghis profile (www.twitch.tv/aeghis). Thank you for sharing.
+- Update Magnusz profile (www.twitch.tv/magnusz). Thank you for sharing.
 ### Bugfix
 - Fix castbar interrupt coloring issues /pray
 
