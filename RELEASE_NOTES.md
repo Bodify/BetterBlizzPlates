@@ -1,3 +1,10 @@
+# BetterBlizzPlates 1.9.9i
+## Midnight
+### Tweak
+- Update Aeghis profile (www.twitch.tv/aeghis). Thank you for sharing.
+### Bugfix
+- Fix castbar interrupt coloring issues /pray
+
 # BetterBlizzPlates 1.9.9h
 ## Midnight
 ### New
