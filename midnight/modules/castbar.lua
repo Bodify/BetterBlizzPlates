@@ -31,9 +31,6 @@ local interruptSpells = {
 -- Local variable to store the known interrupt spell ID
 local playerKick = nil
 
--- Interrupt ready status
-BBP.interruptReady = true
-
 -- Recheck interrupt spells when lock resummons/sacrifices pet
 local petSummonSpells = {
     [30146]  = true, -- Summon Felguard (Demonology)
@@ -51,15 +48,8 @@ local function GetInterruptSpell()
 end
 BBP.GetInterruptSpell = GetInterruptSpell
 
-BBP.interruptIcon = CreateFrame("Frame")
-BBP.interruptIcon.cooldown = CreateFrame("Cooldown", nil, BBP.interruptIcon, "CooldownFrameTemplate")
-BBP.interruptIcon.cooldown:HookScript("OnCooldownDone", function()
-    BBP.interruptReady = true
-    BBP.UpdateCastbarInterruptStatus()
-end)
-
 function BBP.UpdateCastbarInterruptStatus()
-    if not BetterBlizzPlatesDB.castBarRecolorInterrupt then return end
+    if not (BetterBlizzPlatesDB.castBarRecolorInterrupt and BetterBlizzPlatesDB.enableCastbarCustomization) then return end
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = namePlate.UnitFrame
         if frame and frame.castBar and frame.castBar:IsShown() then
@@ -68,13 +58,25 @@ function BBP.UpdateCastbarInterruptStatus()
     end
 end
 
-local function UpdateInterruptIcon(frame)
-    playerKick = GetInterruptSpell()
+BBP.interruptIcon = CreateFrame("Frame")
+BBP.interruptIcon.cooldown = CreateFrame("Cooldown", nil, BBP.interruptIcon, "CooldownFrameTemplate")
+BBP.interruptIcon.cooldown:HookScript("OnCooldownDone", function()
+    BBP.interruptReady = true
+    BBP.UpdateCastbarInterruptStatus()
+end)
+
+local function UpdateInterruptTracking()
+    if not playerKick then
+        playerKick = GetInterruptSpell()
+    end
     if playerKick then
         local cooldownInfo = C_Spell.GetSpellCooldownDuration(playerKick)
         if cooldownInfo then
-            frame.cooldown:SetCooldownFromDurationObject(cooldownInfo)
+            BBP.interruptIcon.cooldown:SetCooldownFromDurationObject(cooldownInfo)
+            BBP.interruptReady = not BBP.interruptIcon.cooldown:IsShown()
         end
+    else
+        BBP.interruptReady = nil
     end
 end
 
@@ -92,31 +94,15 @@ local classicFrames
 
 local interruptedText = SPELL_FAILED_INTERRUPTED
 
-local function OnEvent(self, event, unit, _, spellID)
+local function OnPetEvent(self, event, unit, _, spellID)
     if event == "UNIT_SPELLCAST_SUCCEEDED" then
-        -- Check if player used an interrupt spell
-        if interruptSpells[spellID] then
-            local cooldownInfo = C_Spell.GetSpellCooldownDuration(spellID)
-            if cooldownInfo then
-                BBP.interruptIcon.cooldown:SetCooldownFromDurationObject(cooldownInfo)
-            end
-            BBP.interruptReady = false
-            if BetterBlizzPlatesDB.castBarRecolorInterrupt then
-                BBP.UpdateCastbarInterruptStatus()
-            end
-            return
-        end
-        -- Check for pet summon spells
         if not petSummonSpells[spellID] then return end
     end
     if BetterBlizzPlatesDB.castBarRecolorInterrupt and BetterBlizzPlatesDB.enableCastbarCustomization then
         C_Timer.After(0.1, function()
             playerKick = GetInterruptSpell()
-            UpdateInterruptIcon(BBP.interruptIcon)
-            for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-                local frame = namePlate.UnitFrame
-                BBP.CustomizeCastbar(frame, frame.unit)
-            end
+            UpdateInterruptTracking()
+            BBP.UpdateCastbarInterruptStatus()
         end)
     end
 end
@@ -125,19 +111,29 @@ local interruptSpellUpdate = CreateFrame("Frame")
 interruptSpellUpdate:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
 interruptSpellUpdate:RegisterEvent("TRAIT_CONFIG_UPDATED")
 interruptSpellUpdate:RegisterEvent("PLAYER_TALENT_UPDATE")
-interruptSpellUpdate:SetScript("OnEvent", OnEvent)
+interruptSpellUpdate:SetScript("OnEvent", OnPetEvent)
 
 local cooldownFrame = CreateFrame("Frame")
 cooldownFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+cooldownFrame:RegisterEvent("SPELL_UPDATE_USABLE")
 cooldownFrame:SetScript("OnEvent", function(self, event, spellID)
-    if not interruptSpells[spellID] then return end
-    UpdateInterruptIcon(BBP.interruptIcon)
+    if event == "SPELL_UPDATE_COOLDOWN" then
+        if spellID ~= playerKick then return end
+        UpdateInterruptTracking()
+        BBP.UpdateCastbarInterruptStatus()
+    else
+        local oldInterruptStatus = BBP.interruptReady
+        UpdateInterruptTracking()
+        if oldInterruptStatus ~= BBP.interruptReady then
+            BBP.UpdateCastbarInterruptStatus()
+        end
+    end
 end)
 
 C_Timer.After(1, function()
     playerKick = GetInterruptSpell()
     if playerKick then
-        UpdateInterruptIcon(BBP.interruptIcon)
+        UpdateInterruptTracking()
     end
 end)
 
@@ -175,6 +171,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     local hideCastbarIcon = db.hideCastbarIcon
     local castBarIconPixelBorder = db.castBarIconPixelBorder
     local castBarPixelBorder = db.castBarPixelBorder
+    local isAttackable = UnitCanAttack("player", unitToken)
 
     if not castBarRecolor then
         if castBarTexture then
@@ -332,7 +329,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     if castBarRecolor or useCustomCastbarTexture then
         if castBarTexture then
             castBarTexture:SetDesaturated(true)
-            if db.castBarRecolorInterrupt and not BBP.interruptReady then
+            if db.castBarRecolorInterrupt and BBP.interruptReady == false and isAttackable then
                 if notInterruptible ~= nil then
                     local unIntColor = castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }
                     castBarTexture:SetVertexColorFromBoolean(
@@ -376,7 +373,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
             castBar:SetStatusBarColor(1, 0, 0, 1)
         end
     else
-        if db.castBarRecolorInterrupt and not BBP.interruptReady then
+        if db.castBarRecolorInterrupt and BBP.interruptReady == false and isAttackable then
             if notInterruptible ~= nil then
                 castBarTexture:SetVertexColorFromBoolean(
                     notInterruptible,
