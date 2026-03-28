@@ -1,6 +1,35 @@
+local executeCurve
+local executeCurveThreshold
+
+local function GetExecuteCurve(threshold)
+    if executeCurveThreshold ~= threshold then
+        executeCurve = C_CurveUtil.CreateCurve()
+        executeCurve:SetType(Enum.LuaCurveType.Linear)
+        local t = threshold / 100
+        executeCurve:AddPoint(0.0, 1)
+        executeCurve:AddPoint(t, 1)
+        executeCurve:AddPoint(t + 0.001, 0)
+        executeCurve:AddPoint(1.0, 0)
+        executeCurveThreshold = threshold
+    end
+    return executeCurve
+end
+
+local notFullCurve
+local function GetNotFullCurve()
+    if not notFullCurve then
+        notFullCurve = C_CurveUtil.CreateCurve()
+        notFullCurve:SetType(Enum.LuaCurveType.Linear)
+        notFullCurve:AddPoint(0.0, 1)
+        notFullCurve:AddPoint(0.99, 1)
+        notFullCurve:AddPoint(0.991, 0)
+        notFullCurve:AddPoint(1.0, 0)
+    end
+    return notFullCurve
+end
+
 -- Update the Execute Indicator
 function BBP.ExecuteIndicator(frame)
-    if BBP.isMidnight then return end
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
@@ -28,12 +57,11 @@ function BBP.ExecuteIndicator(frame)
     local unit = frame.displayedUnit
 
     if config.executeIndicatorTargetOnly and not UnitIsUnit("target", unit) then
-        -- Hide the indicator if not the target
         if frame.executeIndicator then
-            frame.executeIndicator:Hide()
+            frame.executeIndicator:SetAlpha(0)
         end
         if frame.executeIndicatorTexture then
-            frame.executeIndicatorTexture:Hide()
+            frame.executeIndicatorTexture:SetAlpha(0)
         end
         return
     end
@@ -42,10 +70,10 @@ function BBP.ExecuteIndicator(frame)
     if not config.executeIndicatorFriendly then
         if info.isFriend then
             if frame.executeIndicator then
-                frame.executeIndicator:Hide()
+                frame.executeIndicator:SetAlpha(0)
             end
             if frame.executeIndicatorTexture then
-                frame.executeIndicatorTexture:Hide()
+                frame.executeIndicatorTexture:SetAlpha(0)
             end
             return
         end
@@ -53,27 +81,19 @@ function BBP.ExecuteIndicator(frame)
 
     if UnitIsUnit(frame.unit, "player") then
         if frame.executeIndicator then
-            frame.executeIndicator:Hide()
+            frame.executeIndicator:SetAlpha(0)
         end
         if frame.executeIndicatorTexture then
-            frame.executeIndicatorTexture:Hide()
+            frame.executeIndicatorTexture:SetAlpha(0)
         end
         return
     end
 
-    local health = UnitHealth(unit)
-    local maxHealth = UnitHealthMax(unit)
-    local healthPercentage = (health / maxHealth) * 100
+    local healthPercentage = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
+    if not healthPercentage then return end
 
-    if not healthPercentage or maxHealth == 0 then
-        if frame.executeIndicator then
-            frame.executeIndicator:Hide()
-        end
-        if frame.executeIndicatorTexture then
-            frame.executeIndicatorTexture:Hide()
-        end
-        return
-    end
+    local belowThreshold = UnitHealthPercent(unit, true, GetExecuteCurve(config.executeIndicatorThreshold))
+    local notFullHp = UnitHealthPercent(unit, true, GetNotFullCurve())
 
     local oppositeAnchor = BBP.GetOppositeAnchor(config.executeIndicatorAnchor)
 
@@ -95,10 +115,10 @@ function BBP.ExecuteIndicator(frame)
         else
             frame.executeIndicatorTexture:SetColorTexture(0,0,0,1)
         end
-        frame.executeIndicator:Hide()
+        frame.executeIndicator:SetAlpha(0)
     else
         if frame.executeIndicatorTexture then
-            frame.executeIndicatorTexture:Hide()
+            frame.executeIndicatorTexture:SetAlpha(0)
         end
     end
 
@@ -111,7 +131,7 @@ function BBP.ExecuteIndicator(frame)
 
             frame.executeIndicatorTexture:ClearAllPoints()
             frame.executeIndicatorTexture:SetPoint("CENTER", frame.HealthBarsContainer, "LEFT", textureXPos, 0)
-            frame.executeIndicatorTexture:Show()
+            frame.executeIndicatorTexture:SetAlpha(1)
         else
             -- Show test text
             local testText = config.executeIndicatorShowDecimal and "19.5" or "19"
@@ -119,14 +139,14 @@ function BBP.ExecuteIndicator(frame)
                 testText = testText .. "%"
             end
             frame.executeIndicator:SetText(testText)
-            frame.executeIndicator:Show()
+            frame.executeIndicator:SetAlpha(1)
             frame.executeIndicator:SetScale(config.executeIndicatorScale or 1)
         end
         return
     end
 
     if config.executeIndicatorUseTexture then
-        frame.executeIndicator:Hide()
+        frame.executeIndicator:SetAlpha(0)
 
         local barWidth = frame.healthBar:GetWidth()
         local textureXPos = (config.executeIndicatorThreshold / 100) * barWidth
@@ -136,42 +156,16 @@ function BBP.ExecuteIndicator(frame)
 
         if config.executeIndicatorAlwaysOn then
             if config.executeIndicatorNotOnFullHp then
-                -- Show the texture if health is below 99%
-                if healthPercentage < 99 then
-                    frame.executeIndicatorTexture:Show()
-                    if healthPercentage < config.executeIndicatorThreshold then
-                        frame.executeIndicatorInRange = true
-                    else
-                        frame.executeIndicatorInRange = false
-                    end
-                else
-                    frame.executeIndicatorTexture:Hide()
-                    if healthPercentage < config.executeIndicatorThreshold then
-                        frame.executeIndicatorInRange = true
-                    else
-                        frame.executeIndicatorInRange = false
-                    end
-                end
+                frame.executeIndicatorTexture:SetAlpha(notFullHp)
             else
-                -- Always show the texture if Always On is true and not restricting full HP
-                frame.executeIndicatorTexture:Show()
-                if healthPercentage < config.executeIndicatorThreshold then
-                    frame.executeIndicatorInRange = true
-                else
-                    frame.executeIndicatorInRange = false
-                end
+                frame.executeIndicatorTexture:SetAlpha(1)
             end
         else
-            -- Only show texture if health is below the threshold
-            if healthPercentage <= config.executeIndicatorThreshold then
-                frame.executeIndicatorTexture:Show()
-            else
-                frame.executeIndicatorTexture:Hide()
-            end
+            frame.executeIndicatorTexture:SetAlpha(belowThreshold)
         end
     else
         if frame.executeIndicatorTexture then
-            frame.executeIndicatorTexture:Hide()
+            frame.executeIndicatorTexture:SetAlpha(0)
         end
         frame.executeIndicator:ClearAllPoints()
         if config.executeIndicatorAnchor == "LEFT" then
@@ -189,35 +183,37 @@ function BBP.ExecuteIndicator(frame)
         frame.executeIndicator:SetText(text)
 
         if config.executeIndicatorAlwaysOn then
-            if config.executeIndicatorNotOnFullHp and healthPercentage < 99 then
-                frame.executeIndicator:Show()
-                if healthPercentage < config.executeIndicatorThreshold then
-                    frame.executeIndicatorInRange = true
-                else
-                    frame.executeIndicatorInRange = false
-                end
+            if config.executeIndicatorNotOnFullHp then
+                frame.executeIndicator:SetAlpha(notFullHp)
             else
-                frame.executeIndicator:Show()
-                if healthPercentage < config.executeIndicatorThreshold then
-                    frame.executeIndicatorInRange = true
-                else
-                    frame.executeIndicatorInRange = false
-                end
+                frame.executeIndicator:SetAlpha(1)
             end
         else
-            if healthPercentage < config.executeIndicatorThreshold then
-                frame.executeIndicator:Show()
-                frame.executeIndicatorInRange = true
-            else
-                frame.executeIndicator:Hide()
-                frame.executeIndicatorInRange = false
-            end
+            frame.executeIndicator:SetAlpha(belowThreshold)
         end
     end
 
-    if config.executeIndicatorInRangeColor and frame.executeIndicatorInRange then
-        frame.healthBar:SetStatusBarColor(unpack(config.executeIndicatorInRangeColorRGB))
-        frame.needsRecolor = true
+    if config.executeIndicatorInRangeColor and config.executeIndicatorInRangeColorRGB then
+        if not frame.executeColorOverlay then
+            frame.executeColorOverlay = frame.healthBar:CreateTexture(nil, "ARTWORK", nil, 1)
+            frame.executeColorOverlay:SetAllPoints(frame.healthBar:GetStatusBarTexture())
+        end
+        if BetterBlizzPlatesDB.useCustomTextureForBars then
+            frame.executeColorOverlay:SetTexture(frame.healthBar:GetStatusBarTexture():GetTexture())
+        else
+            frame.executeColorOverlay:SetAtlas(frame.healthBar:GetStatusBarTexture():GetAtlas())
+        end
+        local r, g, b = unpack(config.executeIndicatorInRangeColorRGB)
+        frame.executeColorOverlay:SetVertexColor(r, g, b, 1)
+        frame.executeColorOverlay:SetAlpha(belowThreshold)
+
+        if not BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.classicRetailNameplates then
+            BBP.ApplyMidnightMask(frame, frame.executeColorOverlay)
+        end
+    else
+        if frame.executeColorOverlay then
+            frame.executeColorOverlay:SetAlpha(0)
+        end
     end
 end
 
