@@ -5686,10 +5686,12 @@ local function CreateBetterClassicHealthbarBorder(frame)
     else
         height = frame.hpBarHeight or 13
     end
-    local bottomOffset = -((0.455) * (frame.hpBarHeight or height) - 1.09)
-    local topOffset = (2 * (frame.hpBarHeight or height)) - 1
+    local customTextureBars = BetterBlizzPlatesDB.useCustomTextureForBars
+    local bottomOffset = (-((0.455) * (frame.hpBarHeight or height) - 1.09)) + (customTextureBars and 0 or 1)
+    local topOffset = ((2 * (frame.hpBarHeight or height)) - 1) + (customTextureBars and 0 or -2)
     local hideLevel = config.hideLevelFrame or (BBP.isInPvP and not BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP)
-    local rightXOffset = hideLevel and 27.9 or 20.9
+    local rightXOffset = (hideLevel and 27.9 or 20.9) - (customTextureBars and 0 or 1)
+    local leftXOffset = (customTextureBars and -28 or -27)
 
     if hideLevel then
         frame.BetterBlizzPlates.bbpBorder.right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRightNoLevel")
@@ -5701,8 +5703,8 @@ local function CreateBetterClassicHealthbarBorder(frame)
     end
 
     frame.BetterBlizzPlates.bbpBorder.left:ClearAllPoints()
-    frame.BetterBlizzPlates.bbpBorder.left:SetPoint("BOTTOMLEFT", frame.HealthBarsContainer, "BOTTOMLEFT", -28, bottomOffset)
-    frame.BetterBlizzPlates.bbpBorder.left:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPLEFT", -28, topOffset)
+    frame.BetterBlizzPlates.bbpBorder.left:SetPoint("BOTTOMLEFT", frame.HealthBarsContainer, "BOTTOMLEFT", leftXOffset, bottomOffset)
+    frame.BetterBlizzPlates.bbpBorder.left:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPLEFT", leftXOffset, topOffset)
 
     frame.BetterBlizzPlates.bbpBorder.right:ClearAllPoints()
     frame.BetterBlizzPlates.bbpBorder.right:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", rightXOffset, bottomOffset)
@@ -6173,6 +6175,42 @@ function BBP.SetupMidnightCastbarIcon(frame)
     end)
 end
 
+function BBP.ApplyMidnightMask(frame, targetTexture)
+    if not frame.healthBar.bbpMidnightMask then
+        frame.healthBar.bbpMidnightMask = frame.healthBar:CreateMaskTexture()
+    end
+    local mask = frame.healthBar.bbpMidnightMask
+    mask:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\midnightNpMask.tga")
+    mask:ClearAllPoints()
+    mask:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPLEFT", -0.5, 1)
+    if not BetterBlizzPlatesDB.changeHealthbarHeight then
+        local height = BetterBlizzPlatesDB.nameplateGeneralHpHeight or 16
+        if height <= 23 then
+            mask:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -0.5)
+        elseif height <= 32 then
+            mask:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -1)
+        elseif height <= 40 then
+            mask:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -1.5)
+        else
+            mask:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -2)
+        end
+    else
+        local config = frame.BetterBlizzPlates.config
+        local height = BBP.isEnemy(frame.unit) and (config.hpHeightEnemy or 11) or (config.hpHeightFriendly or 11)
+        if height <= 23 then
+            mask:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -0.5)
+        elseif height <= 32 then
+            mask:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -1)
+        elseif height <= 40 then
+            mask:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -1.5)
+        else
+            mask:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -2)
+        end
+    end
+    mask:Show()
+    targetTexture:AddMaskTexture(mask)
+end
+
 -- What to do on a new nameplate
 local function HandleNamePlateAdded(unit)
     local nameplate, frame = BBP.GetSafeNameplate(unit)
@@ -6220,39 +6258,7 @@ local function HandleNamePlateAdded(unit)
 
         local castTexture = newBar:GetStatusBarTexture()
         if not BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.classicRetailNameplates then
-            if not newBar.MaskTexture then
-                newBar.MaskTexture = newBar:CreateMaskTexture()
-            end
-            --newBar.MaskTexture:SetTexture("interface\\castingbar\\uicastingbarfullmask")
-            newBar.MaskTexture:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\midnightNpMask.tga")
-            newBar.MaskTexture:ClearAllPoints()
-            newBar.MaskTexture:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPLEFT", -0.5, 1)
-            if not BetterBlizzPlatesDB.changeHealthbarHeight then
-                local height = BetterBlizzPlatesDB.nameplateGeneralHpHeight or 16
-                if height <= 23 then
-                    newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -0.5)
-                elseif height <= 32 then
-                    newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -1)
-                elseif height <= 40 then
-                    newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -1.5)
-                else
-                    newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -2)
-                end
-            else
-                local height = isEnemy(frame.unit) and (config.hpHeightEnemy or 11) or (config.hpHeightFriendly or 11)
-                if height <= 23 then
-                    newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -0.5)
-                elseif height <= 32 then
-                    newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -1)
-                elseif height <= 40 then
-                    newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -1.5)
-                else
-                    newBar.MaskTexture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0.5, -2)
-                end
-            end
-
-            newBar.MaskTexture:Show()
-            castTexture:AddMaskTexture(newBar.MaskTexture)
+            BBP.ApplyMidnightMask(frame, castTexture)
         end
 
         -- BPP.isMidnight temp nameplate tweaks
