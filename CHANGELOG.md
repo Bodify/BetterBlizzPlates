@@ -1,3 +1,10 @@
+# BetterBlizzPlates 1.9.9j
+## Midnight
+### Fix
+- Execute Indicator now works again on Midnight.
+### Tweak
+- Tiny tweaks to border position for Classic Nameplates setting.
+
 # BetterBlizzPlates 1.9.9i
 ## Midnight
 ### Tweak
