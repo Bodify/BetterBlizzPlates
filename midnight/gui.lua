@@ -7634,7 +7634,7 @@ local function guiPositionAndScale()
     anchorSubClassIcon.classIconEnemyHealIcon:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
 
-            BetterBlizzPlatesDB.classIconHealerIconType = (BetterBlizzPlatesDB.classIconHealerIconType % 3) + 1
+            BetterBlizzPlatesDB.classIconHealerIconType = (BetterBlizzPlatesDB.classIconHealerIconType % 4) + 1
 
             if not anchorSubClassIcon.extendedSettings.healIcon then
                 anchorSubClassIcon.extendedSettings.healIcon = anchorSubClassIcon.extendedSettings:CreateTexture(nil, "BACKGROUND")
@@ -7669,6 +7669,21 @@ local function guiPositionAndScale()
                     anchorSubClassIcon.extendedSettings.healIcon:SetSize(90,90)
                     anchorSubClassIcon.extendedSettings.healIcon:SetTexture(648207)
                     anchorSubClassIcon.extendedSettings.healIcon:SetTexCoord(0, 1, 0, 1)
+                elseif BetterBlizzPlatesDB.classIconHealerIconType == 4 then
+                    anchorSubClassIcon.extendedSettings.healIcon:SetSize(90,90)
+                    if BetterBlizzPlatesDB.classIndicatorSpecIcon then
+                        local specIcon = select(4, GetSpecializationInfoByID(105))
+                        if specIcon then
+                            anchorSubClassIcon.extendedSettings.healIcon:SetTexture(specIcon)
+                            anchorSubClassIcon.extendedSettings.healIcon:SetTexCoord(0, 1, 0, 1)
+                        else
+                            anchorSubClassIcon.extendedSettings.healIcon:SetAtlas("classicon-druid")
+                            anchorSubClassIcon.extendedSettings.healIcon:SetTexCoord(-0.06, 1.05, -0.06, 1.05)
+                        end
+                    else
+                        anchorSubClassIcon.extendedSettings.healIcon:SetAtlas("classicon-druid")
+                        anchorSubClassIcon.extendedSettings.healIcon:SetTexCoord(-0.06, 1.05, -0.06, 1.05)
+                    end
                 end
 
 
@@ -7700,6 +7715,20 @@ local function guiPositionAndScale()
                 elseif BetterBlizzPlatesDB.classIconHealerIconType == 3 then
                     anchorSubClassIcon.extendedSettings.healIcon:SetTexture(648207)
                     anchorSubClassIcon.extendedSettings.healIcon:SetTexCoord(0, 1, 0, 1)
+                elseif BetterBlizzPlatesDB.classIconHealerIconType == 4 then
+                    if BetterBlizzPlatesDB.classIndicatorSpecIcon then
+                        local specIcon = select(4, GetSpecializationInfoByID(105))
+                        if specIcon then
+                            anchorSubClassIcon.extendedSettings.healIcon:SetTexture(specIcon)
+                            anchorSubClassIcon.extendedSettings.healIcon:SetTexCoord(0, 1, 0, 1)
+                        else
+                            anchorSubClassIcon.extendedSettings.healIcon:SetAtlas("classicon-druid")
+                            anchorSubClassIcon.extendedSettings.healIcon:SetTexCoord(-0.06, 1.05, -0.06, 1.05)
+                        end
+                    else
+                        anchorSubClassIcon.extendedSettings.healIcon:SetAtlas("classicon-druid")
+                        anchorSubClassIcon.extendedSettings.healIcon:SetTexCoord(-0.06, 1.05, -0.06, 1.05)
+                    end
                 end
 
 

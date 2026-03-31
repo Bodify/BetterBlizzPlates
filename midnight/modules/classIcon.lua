@@ -594,7 +594,7 @@ function BBP.ClassIndicator(frame, foundID)
         frame.classIndicator.icon:SetTexture(flagIcon)
         frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
     elseif specIcon and config.classIndicatorSpecIcon then
-        if config.classIndicatorHealer and HealerSpecs[specID] then
+        if config.classIndicatorHealer and HealerSpecs[specID] and not (not info.isFriend and BetterBlizzPlatesDB.classIconHealerIconType == 4) then
             if info.isFriend then
                 if frame.classIndicator.border.square then
                     frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
@@ -630,7 +630,7 @@ function BBP.ClassIndicator(frame, foundID)
             frame.classIndicator.icon:SetTexture(specIcon)
             frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
         end
-    elseif config.classIndicatorHealer and HealerSpecs[specID] then
+    elseif config.classIndicatorHealer and HealerSpecs[specID] and not (not info.isFriend and BetterBlizzPlatesDB.classIconHealerIconType == 4) then
         if info.isFriend then
             if frame.classIndicator.border.square then
                 frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
