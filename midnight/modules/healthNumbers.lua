@@ -36,6 +36,7 @@ function BBP.HealthNumbers(frame)
         config.healthNumbersNpcs = BetterBlizzPlatesDB.healthNumbersNpcs
         config.healthNumbersHideSelf = BetterBlizzPlatesDB.healthNumbersHideSelf
         config.healthNumbersClassColor = BetterBlizzPlatesDB.healthNumbersClassColor
+        config.healthNumbersRawNumbers = BetterBlizzPlatesDB.healthNumbersRawNumbers
 
         BBP.SetFontBasedOnOption(frame.healthNumbers, 9, BetterBlizzPlatesDB.healthNumbersFontOutline)
 
@@ -75,9 +76,11 @@ function BBP.HealthNumbers(frame)
     local maxHealth = UnitHealthMax(unit)
     local percent = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100) or 0
 
+    local FormatHealth = config.healthNumbersRawNumbers and tostring or AbbreviateNumbers
+
     local healthText = ""
     if config.healthNumbersCombined then
-        local numericHealth = AbbreviateNumbers(health)
+        local numericHealth = FormatHealth(health)
         local percentHealth = string.format("%.0f%%", percent)
         if config.healthNumbersSwapped then
             healthText = string.format("%s - %s", percentHealth, numericHealth)
@@ -99,8 +102,8 @@ function BBP.HealthNumbers(frame)
                 healthText = string.format("%s / %s", currentHealthPercentage, maxHealthPercentage)
             end
         else
-            local currentHealthFormatted = AbbreviateNumbers(health)
-            local maxHealthFormatted = AbbreviateNumbers(maxHealth)
+            local currentHealthFormatted = FormatHealth(health)
+            local maxHealthFormatted = FormatHealth(maxHealth)
             if config.healthNumbersSwapped then
                 healthText = string.format("%s / %s", maxHealthFormatted, currentHealthFormatted)
             else
@@ -114,7 +117,7 @@ function BBP.HealthNumbers(frame)
             healthText = healthText .. "%"
         end
     else
-        healthText = AbbreviateNumbers(health)
+        healthText = FormatHealth(health)
     end
 
     local oppositeAnchor = BBP.GetOppositeAnchor(config.healthNumbersAnchor)
@@ -138,7 +141,7 @@ function BBP.HealthNumbers(frame)
         local testPercent = (testCurrentHealth / testMaxHealth) * 100
 
         if config.healthNumbersCombined then
-            local numericHealth = AbbreviateNumbers(testCurrentHealth)
+            local numericHealth = FormatHealth(testCurrentHealth)
             local percentHealth = string.format("%.0f%%", testPercent)
             if config.healthNumbersSwapped then
                 healthText = string.format("%s - %s", percentHealth, numericHealth)
@@ -156,8 +159,8 @@ function BBP.HealthNumbers(frame)
                     maxHealthFormatted = maxHealthFormatted .. "%"
                 end
             else
-                currentHealthFormatted = AbbreviateNumbers(testCurrentHealth)
-                maxHealthFormatted = AbbreviateNumbers(testMaxHealth)
+                currentHealthFormatted = FormatHealth(testCurrentHealth)
+                maxHealthFormatted = FormatHealth(testMaxHealth)
             end
             if config.healthNumbersSwapped then
                 healthText = string.format("%s / %s", maxHealthFormatted, currentHealthFormatted)
@@ -171,7 +174,7 @@ function BBP.HealthNumbers(frame)
                 healthText = healthText .. "%"
             end
         else
-            healthText = AbbreviateNumbers(testCurrentHealth)
+            healthText = FormatHealth(testCurrentHealth)
         end
     end
 

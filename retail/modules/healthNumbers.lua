@@ -67,6 +67,7 @@ function BBP.HealthNumbers(frame)
         config.healthNumbersNpcs = BetterBlizzPlatesDB.healthNumbersNpcs
         config.healthNumbersHideSelf = BetterBlizzPlatesDB.healthNumbersHideSelf
         config.healthNumbersClassColor = BetterBlizzPlatesDB.healthNumbersClassColor
+        config.healthNumbersRawNumbers = BetterBlizzPlatesDB.healthNumbersRawNumbers
 
         BBP.SetFontBasedOnOption(frame.healthNumbers, 9, BetterBlizzPlatesDB.healthNumbersFontOutline)
 
@@ -112,10 +113,12 @@ function BBP.HealthNumbers(frame)
     end
 
     -- Determine the appropriate health text based on configuration
+    local FormatHealth = config.healthNumbersRawNumbers and function(v) return tostring(v) end or function(v) return FormatHealthValue(v, config.healthNumbersUseMillions, config.healthNumbersShowDecimal) end
+
     local healthText = ""
     if config.healthNumbersCombined then
         -- New setting: show both the numeric value and percentage
-        local numericHealth = FormatHealthValue(health, config.healthNumbersUseMillions, config.healthNumbersShowDecimal)
+        local numericHealth = FormatHealth(health)
         local percentHealth = string.format("%.0f%%", (health / maxHealth) * 100)
         if config.healthNumbersSwapped then
             healthText = percentHealth .. " - " .. numericHealth
@@ -139,8 +142,8 @@ function BBP.HealthNumbers(frame)
             end
         else
             -- Default to showing raw numbers
-            local currentHealthFormatted = FormatHealthValue(health, config.healthNumbersUseMillions, config.healthNumbersShowDecimal)
-            local maxHealthFormatted = FormatHealthValue(maxHealth, config.healthNumbersUseMillions, config.healthNumbersShowDecimal)
+            local currentHealthFormatted = FormatHealth(health)
+            local maxHealthFormatted = FormatHealth(maxHealth)
             if config.healthNumbersSwapped then
                 healthText = maxHealthFormatted .. " / " .. currentHealthFormatted
             else
@@ -154,7 +157,7 @@ function BBP.HealthNumbers(frame)
             healthText = healthText .. "%"
         end
     else
-        healthText = FormatHealthValue(health, config.healthNumbersUseMillions, config.healthNumbersShowDecimal)
+        healthText = FormatHealth(health)
     end
 
     local oppositeAnchor = BBP.GetOppositeAnchor(config.healthNumbersAnchor)
@@ -190,8 +193,8 @@ function BBP.HealthNumbers(frame)
                     maxHealthFormatted = maxHealthFormatted .. "%"
                 end
             else
-                currentHealthFormatted = FormatHealthValue(testCurrentHealth, config.healthNumbersUseMillions, config.healthNumbersShowDecimal)
-                maxHealthFormatted = FormatHealthValue(testMaxHealth, config.healthNumbersUseMillions, config.healthNumbersShowDecimal)
+                currentHealthFormatted = FormatHealth(testCurrentHealth)
+                maxHealthFormatted = FormatHealth(testMaxHealth)
             end
             if config.healthNumbersSwapped then
                 healthText = maxHealthFormatted .. " / " .. currentHealthFormatted
@@ -206,7 +209,7 @@ function BBP.HealthNumbers(frame)
             end
         else
             -- Default to showing current health in raw format
-            healthText = FormatHealthValue(testCurrentHealth, config.healthNumbersUseMillions, config.healthNumbersShowDecimal)
+            healthText = FormatHealth(testCurrentHealth)
         end
     end
 

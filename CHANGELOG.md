@@ -1,3 +1,11 @@
+# BetterBlizzPlates 1.9.9k
+## All
+### New
+- "Health Numbers: Raw numbers" setting in Advanced Settings section. Shows the entire number instead of the default formatting to thousands.
+### Tweak
+- Update Saul profile (www.twitch.tv/saul). Ty for sharing.
+- Update my own profile with some minor tweaks (despite not playing still >.<)
+
 # BetterBlizzPlates 1.9.9j
 ## Midnight
 ### Fix
