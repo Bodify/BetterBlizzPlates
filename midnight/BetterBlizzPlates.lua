@@ -3819,6 +3819,7 @@ end
 
 -- can run before a nameplate is fetched so needs updated info
 hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
+    if issecretvalue(frame) then return end
     if not frame.unit or not frame.unit:find("nameplate") then return end
     if frame:IsForbidden() then return end
 
@@ -5314,6 +5315,9 @@ local function NameplateNPCTitle(frame)
         local title = GetNPCTitle(frame.unit)
         frame.npcTitle:SetText(title)
         frame.npcTitle:ClearAllPoints()
+        if issecretvalue(frame.HealthBarsContainer:GetAlpha()) then
+            print("FUCK", frame:GetName())
+        end
         if frame.HealthBarsContainer:GetAlpha() == 0 then
             frame.npcTitle:SetPoint("TOP", frame.name, "BOTTOM", 0, -2)
         else
