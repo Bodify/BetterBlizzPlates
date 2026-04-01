@@ -11388,6 +11388,7 @@ local function guiCVarControl()
         ChangeCVarCheckboxBehaviour(nameplateShowFriendlyPlayerMinions, "nameplateShowFriendlyPlayerMinions", changeDB)
         ChangeCVarCheckboxBehaviour(nameplateShowFriendlyPlayerGuardians, "nameplateShowFriendlyPlayerGuardians", changeDB)
         ChangeCVarCheckboxBehaviour(nameplateShowFriendlyPlayerPets, "nameplateShowFriendlyPlayerPets", changeDB)
+        ChangeCVarCheckboxBehaviour(nameplateShowFriendlyNPCs, "nameplateShowFriendlyNPCs", changeDB)
         ChangeCVarCheckboxBehaviour(nameplateShowFriendlyPlayerTotems, "nameplateShowFriendlyPlayerTotems", changeDB)
 
         if changeDB then
@@ -11400,6 +11401,7 @@ local function guiCVarControl()
             nameplateShowFriendlyPlayerGuardians:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyPlayerGuardians"]=="1")
             nameplateShowFriendlyPlayerPets:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyPlayerPets"]=="1")
             nameplateShowFriendlyPlayerTotems:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyPlayerTotems"]=="1")
+            nameplateShowFriendlyNPCs:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyNPCs"]=="1")
         else
             nameplateShowEnemyMinions:SetChecked(GetCVar("nameplateShowEnemyMinions")=="1")
             nameplateShowEnemyGuardians:SetChecked(GetCVar("nameplateShowEnemyGuardians")=="1")
@@ -11410,6 +11412,7 @@ local function guiCVarControl()
             nameplateShowFriendlyPlayerGuardians:SetChecked(GetCVar("nameplateShowFriendlyPlayerGuardians")=="1")
             nameplateShowFriendlyPlayerPets:SetChecked(GetCVar("nameplateShowFriendlyPlayerPets")=="1")
             nameplateShowFriendlyPlayerTotems:SetChecked(GetCVar("nameplateShowFriendlyPlayerTotems")=="1")
+            nameplateShowFriendlyNPCs:SetChecked(GetCVar("nameplateShowFriendlyNPCs")=="1")
         end
     end
 
@@ -11431,6 +11434,7 @@ local function guiCVarControl()
     cbCVars["nameplateShowFriendlyPlayerMinions"] = nameplateShowFriendlyPlayerMinions
     cbCVars["nameplateShowFriendlyPlayerGuardians"] = nameplateShowFriendlyPlayerGuardians
     cbCVars["nameplateShowFriendlyPlayerPets"] = nameplateShowFriendlyPlayerPets
+    cbCVars["nameplateShowFriendlyNPCs"] = nameplateShowFriendlyNPCs
     cbCVars["nameplateShowFriendlyPlayerTotems"] = nameplateShowFriendlyPlayerTotems
     --cbCVars["nameplateResourceOnTarget"] = nameplateResourceOnTarget
     cbCVars["nameplateShowAll"] = nameplateShowAll
@@ -12746,6 +12750,7 @@ function BBP.CVarTracker()
             nameplateShowFriendlyPlayerMinions = true,
             nameplateShowFriendlyPlayerGuardians = true,
             nameplateShowFriendlyPlayerPets = true,
+            nameplateShowFriendlyNPCs = true,
             nameplateShowFriendlyPlayerTotems = true,
             nameplateResourceOnTarget = true,
             nameplateShowAll = true
