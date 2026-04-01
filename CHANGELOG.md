@@ -1,3 +1,11 @@
+# BetterBlizzPlates 1.9.9l
+## Midnight
+### Tweak
+- Update Dissonance profile (www.twitch.tv/dissonancewow). Thank you for sharing.
+- Add missing CVar listener for nameplateShowFriendlyNPCs (so it updates in BBP if changed elsewhere).
+### Bugfix
+- Add some secret checks to avoid potential errors.
+
 # BetterBlizzPlates 1.9.9k
 ## All
 ### New
