@@ -7567,7 +7567,9 @@ Frame:SetScript("OnEvent", function(...)
     if db.reopenOptions then
         --InterfaceOptionsFrame_OpenToCategory(BetterBlizzPlates)
         C_Timer.After(1, function()
-            Settings.OpenToCategory(BBP.category:GetID())
+            if not InCombatLockdown() then
+                Settings.OpenToCategory(BBP.category:GetID())
+            end
         end)
         db.reopenOptions = false
     end
