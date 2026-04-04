@@ -11804,9 +11804,13 @@ local function guiMisc()
     local anonMode = CreateCheckbox("anonMode", "Anon Mode", guiMisc)
     anonMode:SetPoint("TOPLEFT", showNameplateShadow, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(anonMode, "Changes the names of players to their class instead.\nWill be overwritten by Arena Names module during arenas.")
+    
+    local pvpTitleMode = CreateCheckbox("pvpTitleMode", "Use PVP Title", guiMisc) 
+    pvpTitleMode:SetPoint("TOPLEFT", anonMode, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(pvpTitleMode, "Changes the names of players to include their chosen Title.\nWill be overwritten by Anon Mode and Arena Names module during arenas.")
 
     local skipAdjustingFixedFonts = CreateCheckbox("skipAdjustingFixedFonts", "Skip adjusting nameplate fonts", guiMisc)
-    skipAdjustingFixedFonts:SetPoint("TOPLEFT", anonMode, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    skipAdjustingFixedFonts:SetPoint("TOPLEFT", pvpTitleMode, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(skipAdjustingFixedFonts, "Skip adjusting nameplate fonts", "1080p can cause name scaling issues and this setting will fix it.\nIt will however also make you unable to change fonts with this addon\n(you can do it manually in game files still).", "NOTE: Still don't fully understand Blizzards code and how this nameplate font thing works\nso check this at own risk and report to me if it's not working as expected.")
     skipAdjustingFixedFonts:HookScript("OnClick", function()
         StaticPopup_Show("BBP_CONFIRM_RELOAD")
@@ -11834,7 +11838,7 @@ local function guiMisc()
     nameplateSelfWidth:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 10, -20)
 
     local hidePersonalBarManaFrame = CreateCheckbox("hidePersonalBarManaFrame", "Hide Personal Manabar", guiMisc, nil, BBP.PersonalBarSettings)
-    hidePersonalBarManaFrame:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -100)
+    hidePersonalBarManaFrame:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -89)
     CreateTooltipTwo(hidePersonalBarManaFrame, "Hide Personal Manabar", "Hide the manabar on personal resource.")
 
     local hidePersonalBarExtraFrame = CreateCheckbox("hidePersonalBarExtraFrame", "Hide Extra Personal Bar", guiMisc, nil, BBP.PersonalBarSettings)
@@ -11842,7 +11846,7 @@ local function guiMisc()
     CreateTooltipTwo(hidePersonalBarExtraFrame, "Hide Extra Personal Bar", "Hide the extra bar on personal resource for Ebon/Stagger.")
 
     local changeHealthbarHeight = CreateCheckbox("changeHealthbarHeight", "Separate Friendly/Enemy Nameplate Height", guiMisc)
-    changeHealthbarHeight:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -122)
+    changeHealthbarHeight:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -111)
     CreateTooltipTwo(changeHealthbarHeight, "Separate Nameplate Heights", "Change the height of nameplates individually depending if enemy, friendly or personal.")
 
     local hpHeightEnemy = CreateSlider(changeHealthbarHeight, "Enemy Height", 1, 35, 0.1, "hpHeightEnemy")
