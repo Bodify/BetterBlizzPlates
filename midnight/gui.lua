@@ -8048,6 +8048,13 @@ local function guiPositionAndScale()
         end
     end)
 
+    local fakeNameUseTitle = CreateCheckbox("fakeNameUseTitle", "Use PVP Title", useFakeName) 
+    fakeNameUseTitle:SetPoint("LEFT", fakeNameRaiseStrata.text, "RIGHT", 10, 0)
+    CreateTooltipTwo(fakeNameUseTitle, "Use PVP Title", "Show the player's title.")
+    fakeNameUseTitle:HookScript("OnClick", function()
+        BBP.RefreshAllNameplates()
+    end)
+
     ----------------------
     -- Health Numbers
     ----------------------
