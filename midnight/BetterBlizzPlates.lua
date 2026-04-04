@@ -4278,13 +4278,13 @@ local function ShowFriendlyGuildName(frame, unit)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
     if config.showGuildNames and (info.isFriend or (config.personalBarTweaks and info.isSelf)) then
-        if not config.guildNameInitialized then
+        --if not config.guildNameInitialized then
             config.guildNameColor = BetterBlizzPlatesDB.guildNameColor
             config.guildNameColorRGB = BetterBlizzPlatesDB.guildNameColorRGB
             config.guildNameScale = BetterBlizzPlatesDB.guildNameScale
 
-            config.guildNameInitialized = true
-        end
+        --    config.guildNameInitialized = true
+        --end
 
         if not frame.guildName then
             frame.guildName = frame:CreateFontString(nil, "BACKGROUND", "SystemFont_NamePlateFixed")
@@ -6893,13 +6893,13 @@ function BBP.RefreshAllNameplates()
         frame.name:SetFont(cachedFont, cachedNameSize, cachedActiveNameOutline)
         --HideFriendlyHealthbar(frame)
 
-        if frame.guildName then
-            if BetterBlizzPlatesDB.showGuildNames then
+        --if frame.guildName then
+            --if BetterBlizzPlatesDB.showGuildNames then
                 ShowFriendlyGuildName(frame, frame.unit)
-            else
-                frame.guildName:SetText("")
-            end
-        end
+            --else
+            --    frame.guildName:SetText("")
+            --end
+        --end
     end
 end
 
