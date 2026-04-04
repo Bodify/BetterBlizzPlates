@@ -6934,6 +6934,7 @@ function BBP.ConsolidatedUpdateName(frame)
         config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
         --config.totemIndicatorHideNameAndShiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
         config.useFakeName = BetterBlizzPlatesDB.useFakeName
+		config.fakeNameUseTitle = BetterBlizzPlatesDB.fakeNameUseTitle
         --config.totemIndicator = BetterBlizzPlatesDB.totemIndicator
         --config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
         --config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
@@ -7025,6 +7026,14 @@ function BBP.ConsolidatedUpdateName(frame)
 
     -- Class color and scale names depending on their reaction
     BBP.ClassColorAndScaleNames(frame)
+
+	if config.fakeNameUseTitle and info.isPlayer then
+        local pvpName = UnitPVPName(frame.unit)
+        if pvpName then
+            frame.name:SetText(pvpName)
+        end
+    end
+
     -- BBP.isMidnight
     -- Default new np name pos, this removes truncate:
     --frame.name:ClearAllPoints()
