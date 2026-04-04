@@ -1945,6 +1945,15 @@ local function anonMode(frame, info)
     end
 end
 
+local function pvpTitleMode(frame, info)
+    if info.isPlayer then
+        local pvpTitle = UnitPVPName(frame.unit)
+        if pvpTitle then
+            frame.name:SetText(pvpTitle)
+        end
+    end
+end
+
 local function InitializeNameplateSettings(frame)
     if not frame.BetterBlizzPlates then
         --frame.BetterBlizzPlates = CreateFrame("Frame")
@@ -1992,7 +2001,8 @@ local function InitializeNameplateSettings(frame)
             useFakeName = BetterBlizzPlatesDB.useFakeName,
             hideEnemyNameText = BetterBlizzPlatesDB.hideEnemyNameText,
             hideFriendlyNameText = BetterBlizzPlatesDB.hideFriendlyNameText,
-            anonModeOn = BetterBlizzPlatesDB.anonModeOn,
+            anonModeOn = BetterBlizzPlatesDB.anonMode,
+            pvpTitleModeOn = BetterBlizzPlatesDB.pvpTitleMode,
             changeHealthbarHeight = BetterBlizzPlatesDB.changeHealthbarHeight,
             healthNumbers = BetterBlizzPlatesDB.healthNumbers or BetterBlizzPlatesDB.healthNumbersTestMode,
             changeNameplateBorderSize = BetterBlizzPlatesDB.changeNameplateBorderSize,
@@ -4275,6 +4285,7 @@ local function ShowFriendlyGuildName(frame, unit)
 
             config.guildNameInitialized = true
         end
+
         if not frame.guildName then
             frame.guildName = frame:CreateFontString(nil, "BACKGROUND", "SystemFont_NamePlateFixed")
             local db = BetterBlizzPlatesDB
@@ -4318,7 +4329,6 @@ local function ShowFriendlyGuildName(frame, unit)
         frame.guildName:SetText("")
     end
 end
-
 
 function BBP.NameplateTargetAlpha(frame)
     local config = frame.BetterBlizzPlates.config
@@ -5233,6 +5243,7 @@ function BBP.RepositionName(frame)
         if frame:IsForbidden() or not frame.unit or frame.name.changing then return end
         frame.name.changing = true
         local db = BetterBlizzPlatesDB
+        
         --frame.name:ClearPoint("BOTTOM")
         frame.name:ClearAllPoints()
         if isFriend(frame.unit) then
@@ -6500,6 +6511,9 @@ local function HandleNamePlateAdded(unit)
     -- Anon mode
     if config.anonModeOn then anonMode(frame, info) end
 
+    -- PvP Title Toggle
+    if not config.anonModeOn and config.pvpTitleModeOn then pvpTitleMode(frame, info) end
+
     if config.arenaIndicatorBg then
         BBP.BattlegroundSpecNames(frame, nameplate, info.unitGUID)
     end
@@ -6750,13 +6764,15 @@ function BBP.RefreshAllNameplates()
             --BBP.SetFontBasedOnOption(frame.specNameText, 12, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or nil)
             BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
         end
-        if frame.guildName then
-            if BetterBlizzPlatesDB.showGuildNames then
-                ShowFriendlyGuildName(frame, frame.unit)
-            else
-                frame.guildName:SetText("")
-            end
-        end
+        
+        -- Guild name gets destroyed on any update because it anchors to the frame.name, moved it to the bottom of this function to fix
+        --if frame.guildName then
+        --    if BetterBlizzPlatesDB.showGuildNames then
+        --        ShowFriendlyGuildName(frame, frame.unit)
+        --    else
+        --        frame.guildName:SetText("")
+        --    end
+        --end
 
         -- Hide quest indicator after testing
         if BetterBlizzPlatesDB.questIndicator or not BetterBlizzPlatesDB.questIndicatorTestMode then
@@ -6876,6 +6892,14 @@ function BBP.RefreshAllNameplates()
         AdjustHealthBarHeight(frame)
         frame.name:SetFont(cachedFont, cachedNameSize, cachedActiveNameOutline)
         --HideFriendlyHealthbar(frame)
+
+        if frame.guildName then
+            if BetterBlizzPlatesDB.showGuildNames then
+                ShowFriendlyGuildName(frame, frame.unit)
+            else
+                frame.guildName:SetText("")
+            end
+        end
     end
 end
 
@@ -6920,6 +6944,9 @@ function BBP.ConsolidatedUpdateName(frame)
     frame.BetterBlizzPlates.unitInfo = BBP.GetNameplateUnitInfo(frame)
     local info = frame.BetterBlizzPlates.unitInfo
     if not info then return end
+    
+    -- Refresh the name in to undo any edits that need to be undone
+    frame.name:SetText(info.name)
 
     if not config.updateNameInitialized or BBP.needsUpdate then
         config.colorNPCName = BetterBlizzPlatesDB.colorNPCName
@@ -6930,7 +6957,8 @@ function BBP.ConsolidatedUpdateName(frame)
         config.colorFocusName = BetterBlizzPlatesDB.focusTargetIndicatorColorName and BetterBlizzPlatesDB.focusTargetIndicator
         config.focusTargetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB
         --config.totemIndicatorTest = config.totemIndicatorTestMode and frame.randomColor
-        config.anonModeOn = BetterBlizzPlatesDB.anonMode
+        config.anonModeOn = BetterBlizzPlatesDB.anonMode        
+        config.pvpTitleModeOn = BetterBlizzPlatesDB.pvpTitleMode
         config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
         --config.totemIndicatorHideNameAndShiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
         config.useFakeName = BetterBlizzPlatesDB.useFakeName
@@ -7004,8 +7032,9 @@ function BBP.ConsolidatedUpdateName(frame)
                     end
                 end
                 return
-            else
-                frame.name:SetText(UnitName("player"))
+            -- Move this function to the top so that it refreshes everyone's name similar to how this is handled.
+            --else
+            --    frame.name:SetText(UnitName("player"))
             end
 
             -- local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(frame.unit)
@@ -7025,6 +7054,7 @@ function BBP.ConsolidatedUpdateName(frame)
 
     -- Class color and scale names depending on their reaction
     BBP.ClassColorAndScaleNames(frame)
+
     -- BBP.isMidnight
     -- Default new np name pos, this removes truncate:
     --frame.name:ClearAllPoints()
@@ -7052,6 +7082,9 @@ function BBP.ConsolidatedUpdateName(frame)
 
     -- Anon mode replace name with class
     if config.anonModeOn then anonMode(frame, info) end
+
+    -- PvP Title replaces name
+    if not config.anonModeOn and config.pvpTitleModeOn then pvpTitleMode(frame, info) end
 
     -- Use arena numbers
     if config.arenaIndicators then BBP.ArenaIndicatorCaller(frame) end
