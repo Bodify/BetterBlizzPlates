@@ -2635,7 +2635,7 @@ function BBP.PersonalBarSettings()
 end
 
 --#################################################################################################
--- Class color and scale names 
+-- Class color and scale names
 function BBP.ClassColorAndScaleNames(frame)
     if not frame.unit then return end
     local isPlayer = UnitIsPlayer(frame.unit)
@@ -4285,7 +4285,6 @@ local function ShowFriendlyGuildName(frame, unit)
 
             config.guildNameInitialized = true
         end
-
         if not frame.guildName then
             frame.guildName = frame:CreateFontString(nil, "BACKGROUND", "SystemFont_NamePlateFixed")
             local db = BetterBlizzPlatesDB
@@ -5242,7 +5241,7 @@ function BBP.RepositionName(frame)
     local function RepositionName(frame)
         if frame:IsForbidden() or not frame.unit or frame.name.changing then return end
         frame.name.changing = true
-        local db = BetterBlizzPlatesDB   
+        local db = BetterBlizzPlatesDB
         --frame.name:ClearPoint("BOTTOM")
         frame.name:ClearAllPoints()
         if isFriend(frame.unit) then
@@ -5463,7 +5462,7 @@ local function CreateBetterClassicCastbarBorders(frame)
         frame.castBar.bbpCastUninterruptibleBorder.left:ClearAllPoints()
         frame.castBar.bbpCastUninterruptibleBorder.left:SetPoint("BOTTOMLEFT", frame.castBar, "BOTTOMLEFT", -21, bottomOffset)
         frame.castBar.bbpCastUninterruptibleBorder.left:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -21, topOffset)
-    
+
         frame.castBar.bbpCastUninterruptibleBorder.right:ClearAllPoints()
         frame.castBar.bbpCastUninterruptibleBorder.right:SetPoint("BOTTOMRIGHT", frame.castBar, "BOTTOMRIGHT", rightXOffset, bottomOffset)
         frame.castBar.bbpCastUninterruptibleBorder.right:SetPoint("TOPRIGHT", frame.castBar, "TOPRIGHT", rightXOffset, topOffset)
@@ -5736,7 +5735,7 @@ function BBP.ClickableArea(nameplate)
     if not nameplate then return end
     local frame = nameplate.UnitFrame
     local isClickthroughFriend = UnitIsFriend("player", frame.unit) and BetterBlizzPlatesDB.friendlyNameplateClickthrough
-    
+
     if not nameplate.clickableAreaOverlay then
         local texture = nameplate:CreateTexture(nil, "BACKGROUND")
         local text = nameplate:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -5754,7 +5753,7 @@ function BBP.ClickableArea(nameplate)
 
     local texture = nameplate.clickableAreaOverlay
     texture:ClearAllPoints()
-    
+
     if isClickthroughFriend then
         -- Collapse to a point (un-clickable)
         texture:SetPoint("TOPLEFT", frame.HealthBarsContainer, "CENTER", 0, -50)
@@ -6762,7 +6761,7 @@ function BBP.RefreshAllNameplates()
         if frame.specNameText then
             --BBP.SetFontBasedOnOption(frame.specNameText, 12, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or nil)
             BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-        end  
+        end
         if frame.guildName then
             if BetterBlizzPlatesDB.showGuildNames then
                 ShowFriendlyGuildName(frame, frame.unit)
@@ -6943,7 +6942,7 @@ function BBP.ConsolidatedUpdateName(frame)
         config.colorFocusName = BetterBlizzPlatesDB.focusTargetIndicatorColorName and BetterBlizzPlatesDB.focusTargetIndicator
         config.focusTargetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB
         --config.totemIndicatorTest = config.totemIndicatorTestMode and frame.randomColor
-        config.anonModeOn = BetterBlizzPlatesDB.anonMode        
+        config.anonModeOn = BetterBlizzPlatesDB.anonMode
         config.pvpTitleModeOn = BetterBlizzPlatesDB.pvpTitleMode
         config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
         --config.totemIndicatorHideNameAndShiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
