@@ -5242,8 +5242,7 @@ function BBP.RepositionName(frame)
     local function RepositionName(frame)
         if frame:IsForbidden() or not frame.unit or frame.name.changing then return end
         frame.name.changing = true
-        local db = BetterBlizzPlatesDB
-        
+        local db = BetterBlizzPlatesDB        
         --frame.name:ClearPoint("BOTTOM")
         frame.name:ClearAllPoints()
         if isFriend(frame.unit) then
@@ -6763,16 +6762,14 @@ function BBP.RefreshAllNameplates()
         if frame.specNameText then
             --BBP.SetFontBasedOnOption(frame.specNameText, 12, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or nil)
             BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
+        end        
+        if frame.guildName then
+            if BetterBlizzPlatesDB.showGuildNames then
+                ShowFriendlyGuildName(frame, frame.unit)
+            else
+                frame.guildName:SetText("")
+            end
         end
-        
-        -- Guild name gets destroyed on any update because it anchors to the frame.name, moved it to the bottom of this function to fix
-        --if frame.guildName then
-        --    if BetterBlizzPlatesDB.showGuildNames then
-        --        ShowFriendlyGuildName(frame, frame.unit)
-        --    else
-        --        frame.guildName:SetText("")
-        --    end
-        --end
 
         -- Hide quest indicator after testing
         if BetterBlizzPlatesDB.questIndicator or not BetterBlizzPlatesDB.questIndicatorTestMode then
@@ -6892,14 +6889,6 @@ function BBP.RefreshAllNameplates()
         AdjustHealthBarHeight(frame)
         frame.name:SetFont(cachedFont, cachedNameSize, cachedActiveNameOutline)
         --HideFriendlyHealthbar(frame)
-
-        --if frame.guildName then
-            --if BetterBlizzPlatesDB.showGuildNames then
-                ShowFriendlyGuildName(frame, frame.unit)
-            --else
-            --    frame.guildName:SetText("")
-            --end
-        --end
     end
 end
 
@@ -6944,9 +6933,6 @@ function BBP.ConsolidatedUpdateName(frame)
     frame.BetterBlizzPlates.unitInfo = BBP.GetNameplateUnitInfo(frame)
     local info = frame.BetterBlizzPlates.unitInfo
     if not info then return end
-    
-    -- Refresh the name in to undo any edits that need to be undone
-    frame.name:SetText(info.name)
 
     if not config.updateNameInitialized or BBP.needsUpdate then
         config.colorNPCName = BetterBlizzPlatesDB.colorNPCName
@@ -7032,9 +7018,8 @@ function BBP.ConsolidatedUpdateName(frame)
                     end
                 end
                 return
-            -- Move this function to the top so that it refreshes everyone's name similar to how this is handled.
-            --else
-            --    frame.name:SetText(UnitName("player"))
+            else
+                frame.name:SetText(UnitName("player"))
             end
 
             -- local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(frame.unit)
