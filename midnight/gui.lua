@@ -4265,7 +4265,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
         --if prioSlider then
                 -- Create Input Box on Right Click
 
-            
+
                 local barWidthSlider = CreateFrame("Slider", nil, button, "OptionsSliderTemplate")
                 local editBox = CreateFrame("EditBox", nil, barWidthSlider, "InputBoxTemplate")
                 editBox:SetAutoFocus(false)
@@ -4274,9 +4274,9 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
                 editBox:SetMultiLine(false)
                 editBox:SetFrameStrata("DIALOG")
                 editBox:Hide()
-                
+
                 editBox:SetFontObject(GameFontHighlightSmall)
-                
+
                 barWidthSlider:SetSize(100, 16)
                 barWidthSlider:SetPoint("LEFT", button, "RIGHT", -203, 0)
                 barWidthSlider:SetOrientation("HORIZONTAL")
@@ -4293,14 +4293,14 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
                 CreateTooltipTwo(barWidthSlider, "Healthbar Width", "Decrease or Increase the healthbar width of this NPC.\nEnable Change HP Bar width to use.\n\nRight-click to input specific value.")
 
                 editBox:SetPoint("CENTER", barWidthSlider, "CENTER", 0, 0)
-                
+
                 barWidthSlider:SetScript("OnMouseDown", function(self, button)
                     if button == "RightButton" then
                         editBox:Show()
                         editBox:SetFocus()
                     end
                 end)
-                
+
                 local function HandleEditBoxInput()
                     local inputValue = tonumber(editBox:GetText())
                     if inputValue then
@@ -4310,15 +4310,15 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
                     editBox:Hide()
                     BBP.RefreshAllNameplates()
                 end
-                
+
                 editBox:SetScript("OnEnterPressed", HandleEditBoxInput)
                 editBox:SetScript("OnEscapePressed", function() editBox:Hide() end) -- Hide the edit box on escape
-                
+
                 local priorityText = barWidthSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
                 priorityText:SetPoint("RIGHT", barWidthSlider, "LEFT", -5, 0)
                 priorityText:SetText(barWidthSlider:GetValue())
                 priorityText:SetTextColor(1, 0.8196, 0, 1)
-                
+
                 barWidthSlider:SetScript("OnValueChanged", function(self, value)
                     local newValue = math.floor(value + 0.5)  -- Round to the nearest integer
                     self:SetValue(newValue)
@@ -4326,9 +4326,9 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
                     npcData.hpWidth = newValue
                     BBP.RefreshAllNameplates()
                 end)
-                
+
                 button.barWidthSlider = barWidthSlider
-                
+
         --end
 
         -- Creation of the hideIconCheckbox
@@ -5990,31 +5990,31 @@ local function guiGeneralTab()
                 -- Toggle Font Shadow
                 BetterBlizzPlatesDB["customFontShadowOff"] = not BetterBlizzPlatesDB["customFontShadowOff"]
                 local shadowState = BetterBlizzPlatesDB["customFontShadowOff"] and "Disabled" or "Enabled"
-                RefreshTooltip(enableCustomFontOutline, "Font Outline", 
-                    "Enable font outline.\n|cff32f795Right-click to swap between thick and thin outline.\nCurrent: " .. 
-                    (BetterBlizzPlatesDB["customFontOutline"] == "THICKOUTLINE" and "Thick Outline" or "Thin Outline") .. 
+                RefreshTooltip(enableCustomFontOutline, "Font Outline",
+                    "Enable font outline.\n|cff32f795Right-click to swap between thick and thin outline.\nCurrent: " ..
+                    (BetterBlizzPlatesDB["customFontOutline"] == "THICKOUTLINE" and "Thick Outline" or "Thin Outline") ..
                     "\n|cff87ceebShift+Right-click to toggle font shadow.\nCurrent: " .. shadowState)
             else
                 -- Swap Between Thick and Thin Outline
                 local currentOutline = BetterBlizzPlatesDB["customFontOutline"]
                 if currentOutline == "THINOUTLINE" then
                     BetterBlizzPlatesDB["customFontOutline"] = "THICKOUTLINE"
-                    RefreshTooltip(enableCustomFontOutline, "Font Outline", 
+                    RefreshTooltip(enableCustomFontOutline, "Font Outline",
                         "Enable font outline.\n|cff32f795Right-click to swap between thick and thin outline.\nCurrent: Thick Outline" ..
-                        "\n|cff87ceebShift+Right-click to toggle font shadow.\nCurrent: " .. 
+                        "\n|cff87ceebShift+Right-click to toggle font shadow.\nCurrent: " ..
                         (BetterBlizzPlatesDB["customFontShadowOff"] and "Disabled" or "Enabled"))
                 else
                     BetterBlizzPlatesDB["customFontOutline"] = "THINOUTLINE"
-                    RefreshTooltip(enableCustomFontOutline, "Font Outline", 
+                    RefreshTooltip(enableCustomFontOutline, "Font Outline",
                         "Enable font outline.\n|cff32f795Right-click to swap between thick and thin outline.\nCurrent: Thin Outline" ..
-                        "\n|cff87ceebShift+Right-click to toggle font shadow.\nCurrent: " .. 
+                        "\n|cff87ceebShift+Right-click to toggle font shadow.\nCurrent: " ..
                         (BetterBlizzPlatesDB["customFontShadowOff"] and "Disabled" or "Enabled"))
                 end
             end
             BBP.RefreshAllNameplates()
         end
     end)
-    
+
 
     local textureDropdown = CreateTextureDropdown(
         "textureDropdown",
@@ -6490,7 +6490,7 @@ local function guiPositionAndScale()
         contentFrame,
         "Select Anchor Point",
         "combatIndicatorAnchor",
-        function(arg1) 
+        function(arg1)
             BBP.RefreshAllNameplates()
         end,
         { anchorFrame = combatIndicatorYPos, x = -16, y = -35, label = "Anchor" }
@@ -7689,7 +7689,7 @@ local function guiPositionAndScale()
 
                 anchorSubClassIcon.extendedSettings.healMask:SetSize(90,90)
 
-                
+
 
                 anchorSubClassIcon.extendedSettings.healIcon.border:SetSize(129,129)
                 anchorSubClassIcon.extendedSettings.healIcon.border:ClearAllPoints()
@@ -7834,7 +7834,7 @@ local function guiPositionAndScale()
         contentFrame,
         "Select Anchor Point",
         "partyPointerAnchor",
-        function(arg1) 
+        function(arg1)
             BBP.RefreshAllNameplates()
         end,
         { anchorFrame = partyPointerYPos, x = -16, y = -35, label = "Anchor" }
@@ -7982,7 +7982,7 @@ local function guiPositionAndScale()
         contentFrame,
         "Select Anchor Point",
         "fakeNameAnchor",
-        function(arg1) 
+        function(arg1)
             BBP.RefreshAllNameplates()
         end,
         { anchorFrame = fakeNameFriendlyYPos, x = -16, y = -33, label = "Name Anchor Point" }
@@ -9725,7 +9725,7 @@ local function guiNameplateAuras()
     CreateTooltipTwo(otherNpBuffFilterPurgeable, "Purgeable", "Only show purgeable/stealable buffs. (Plus other filters)")
     otherNpBuffFilterPurgeable:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
-            if IsShiftKeyDown() then 
+            if IsShiftKeyDown() then
                 if BetterBlizzPlatesDB.otherNpBuffFilterPurgeableHasPurge == nil then
                     if not otherNpBuffFilterPurgeable:GetChecked() then
                         otherNpBuffFilterPurgeable:Click()
@@ -11801,9 +11801,17 @@ local function guiMisc()
         StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end)
 
+    local showLevelFrameOnFriendly = CreateCheckbox("showLevelFrameOnFriendly", "Friendly Lvl", guiMisc)
+    showLevelFrameOnFriendly:SetPoint("TOPLEFT", showNameplateShadow, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(showLevelFrameOnFriendly, "Also shows level on friendly name plates if enabled.")
+
     local anonMode = CreateCheckbox("anonMode", "Anon Mode", guiMisc)
-    anonMode:SetPoint("TOPLEFT", showNameplateShadow, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    anonMode:SetPoint("TOPLEFT", showLevelFrameOnFriendly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(anonMode, "Changes the names of players to their class instead.\nWill be overwritten by Arena Names module during arenas.")
+
+    local pvpTitleMode = CreateCheckbox("pvpTitleMode", "PVP Title", guiMisc)
+    pvpTitleMode:SetPoint("LEFT", anonMode, "RIGHT", 75, 0)
+    CreateTooltipTwo(pvpTitleMode, "Changes the names of players to include their chosen Title.\nWill be overwritten by Anon Mode and Arena Names module during arenas.")
 
     local skipAdjustingFixedFonts = CreateCheckbox("skipAdjustingFixedFonts", "Skip adjusting nameplate fonts", guiMisc)
     skipAdjustingFixedFonts:SetPoint("TOPLEFT", anonMode, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -11824,7 +11832,7 @@ local function guiMisc()
     showLastNameNpc:SetPoint("TOPLEFT", doNotHideFriendlyHealthbarInPve, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(showLastNameNpc, "Only show last name of NPCs", "Hides the first names/words of npc names and only shows the last part.")
 
-    
+
 
     -- local nameplateResourceText = guiMisc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     -- nameplateResourceText:SetPoint("TOPLEFT", guiMisc, "TOPLEFT", 45, -250)
@@ -11834,7 +11842,7 @@ local function guiMisc()
     nameplateSelfWidth:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 10, -20)
 
     local hidePersonalBarManaFrame = CreateCheckbox("hidePersonalBarManaFrame", "Hide Personal Manabar", guiMisc, nil, BBP.PersonalBarSettings)
-    hidePersonalBarManaFrame:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -100)
+    hidePersonalBarManaFrame:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -89)
     CreateTooltipTwo(hidePersonalBarManaFrame, "Hide Personal Manabar", "Hide the manabar on personal resource.")
 
     local hidePersonalBarExtraFrame = CreateCheckbox("hidePersonalBarExtraFrame", "Hide Extra Personal Bar", guiMisc, nil, BBP.PersonalBarSettings)
@@ -11842,7 +11850,7 @@ local function guiMisc()
     CreateTooltipTwo(hidePersonalBarExtraFrame, "Hide Extra Personal Bar", "Hide the extra bar on personal resource for Ebon/Stagger.")
 
     local changeHealthbarHeight = CreateCheckbox("changeHealthbarHeight", "Separate Friendly/Enemy Nameplate Height", guiMisc)
-    changeHealthbarHeight:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -122)
+    changeHealthbarHeight:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, -111)
     CreateTooltipTwo(changeHealthbarHeight, "Separate Nameplate Heights", "Change the height of nameplates individually depending if enemy, friendly or personal.")
 
     local hpHeightEnemy = CreateSlider(changeHealthbarHeight, "Enemy Height", 1, 35, 0.1, "hpHeightEnemy")

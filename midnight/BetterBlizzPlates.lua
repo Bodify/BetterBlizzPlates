@@ -1945,6 +1945,15 @@ local function anonMode(frame, info)
     end
 end
 
+local function pvpTitleMode(frame, info)
+    if info.isPlayer then
+        local pvpTitle = UnitPVPName(frame.unit)
+        if pvpTitle then
+            frame.name:SetText(pvpTitle)
+        end
+    end
+end
+
 local function InitializeNameplateSettings(frame)
     if not frame.BetterBlizzPlates then
         --frame.BetterBlizzPlates = CreateFrame("Frame")
@@ -1992,7 +2001,8 @@ local function InitializeNameplateSettings(frame)
             useFakeName = BetterBlizzPlatesDB.useFakeName,
             hideEnemyNameText = BetterBlizzPlatesDB.hideEnemyNameText,
             hideFriendlyNameText = BetterBlizzPlatesDB.hideFriendlyNameText,
-            anonModeOn = BetterBlizzPlatesDB.anonModeOn,
+            anonModeOn = BetterBlizzPlatesDB.anonMode,
+            pvpTitleModeOn = BetterBlizzPlatesDB.pvpTitleMode,
             changeHealthbarHeight = BetterBlizzPlatesDB.changeHealthbarHeight,
             healthNumbers = BetterBlizzPlatesDB.healthNumbers or BetterBlizzPlatesDB.healthNumbersTestMode,
             changeNameplateBorderSize = BetterBlizzPlatesDB.changeNameplateBorderSize,
@@ -2625,7 +2635,7 @@ function BBP.PersonalBarSettings()
 end
 
 --#################################################################################################
--- Class color and scale names 
+-- Class color and scale names
 function BBP.ClassColorAndScaleNames(frame)
     if not frame.unit then return end
     local isPlayer = UnitIsPlayer(frame.unit)
@@ -4319,7 +4329,6 @@ local function ShowFriendlyGuildName(frame, unit)
     end
 end
 
-
 function BBP.NameplateTargetAlpha(frame)
     local config = frame.BetterBlizzPlates.config
 
@@ -5453,7 +5462,7 @@ local function CreateBetterClassicCastbarBorders(frame)
         frame.castBar.bbpCastUninterruptibleBorder.left:ClearAllPoints()
         frame.castBar.bbpCastUninterruptibleBorder.left:SetPoint("BOTTOMLEFT", frame.castBar, "BOTTOMLEFT", -21, bottomOffset)
         frame.castBar.bbpCastUninterruptibleBorder.left:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -21, topOffset)
-    
+
         frame.castBar.bbpCastUninterruptibleBorder.right:ClearAllPoints()
         frame.castBar.bbpCastUninterruptibleBorder.right:SetPoint("BOTTOMRIGHT", frame.castBar, "BOTTOMRIGHT", rightXOffset, bottomOffset)
         frame.castBar.bbpCastUninterruptibleBorder.right:SetPoint("TOPRIGHT", frame.castBar, "TOPRIGHT", rightXOffset, topOffset)
@@ -5726,7 +5735,7 @@ function BBP.ClickableArea(nameplate)
     if not nameplate then return end
     local frame = nameplate.UnitFrame
     local isClickthroughFriend = UnitIsFriend("player", frame.unit) and BetterBlizzPlatesDB.friendlyNameplateClickthrough
-    
+
     if not nameplate.clickableAreaOverlay then
         local texture = nameplate:CreateTexture(nil, "BACKGROUND")
         local text = nameplate:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -5744,7 +5753,7 @@ function BBP.ClickableArea(nameplate)
 
     local texture = nameplate.clickableAreaOverlay
     texture:ClearAllPoints()
-    
+
     if isClickthroughFriend then
         -- Collapse to a point (un-clickable)
         texture:SetPoint("TOPLEFT", frame.HealthBarsContainer, "CENTER", 0, -50)
@@ -6500,6 +6509,9 @@ local function HandleNamePlateAdded(unit)
     -- Anon mode
     if config.anonModeOn then anonMode(frame, info) end
 
+    -- PvP Title Toggle
+    if not config.anonModeOn and config.pvpTitleModeOn then pvpTitleMode(frame, info) end
+
     if config.arenaIndicatorBg then
         BBP.BattlegroundSpecNames(frame, nameplate, info.unitGUID)
     end
@@ -6931,6 +6943,7 @@ function BBP.ConsolidatedUpdateName(frame)
         config.focusTargetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB
         --config.totemIndicatorTest = config.totemIndicatorTestMode and frame.randomColor
         config.anonModeOn = BetterBlizzPlatesDB.anonMode
+        config.pvpTitleModeOn = BetterBlizzPlatesDB.pvpTitleMode
         config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
         --config.totemIndicatorHideNameAndShiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
         config.useFakeName = BetterBlizzPlatesDB.useFakeName
@@ -7052,6 +7065,9 @@ function BBP.ConsolidatedUpdateName(frame)
 
     -- Anon mode replace name with class
     if config.anonModeOn then anonMode(frame, info) end
+
+    -- PvP Title replaces name
+    if not config.anonModeOn and config.pvpTitleModeOn then pvpTitleMode(frame, info) end
 
     -- Use arena numbers
     if config.arenaIndicators then BBP.ArenaIndicatorCaller(frame) end
