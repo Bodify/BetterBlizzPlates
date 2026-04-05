@@ -4278,13 +4278,13 @@ local function ShowFriendlyGuildName(frame, unit)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
     if config.showGuildNames and (info.isFriend or (config.personalBarTweaks and info.isSelf)) then
-        --if not config.guildNameInitialized then
+        if not config.guildNameInitialized then
             config.guildNameColor = BetterBlizzPlatesDB.guildNameColor
             config.guildNameColorRGB = BetterBlizzPlatesDB.guildNameColorRGB
             config.guildNameScale = BetterBlizzPlatesDB.guildNameScale
 
-        --    config.guildNameInitialized = true
-        --end
+            config.guildNameInitialized = true
+        end
 
         if not frame.guildName then
             frame.guildName = frame:CreateFontString(nil, "BACKGROUND", "SystemFont_NamePlateFixed")
@@ -5242,7 +5242,7 @@ function BBP.RepositionName(frame)
     local function RepositionName(frame)
         if frame:IsForbidden() or not frame.unit or frame.name.changing then return end
         frame.name.changing = true
-        local db = BetterBlizzPlatesDB        
+        local db = BetterBlizzPlatesDB   
         --frame.name:ClearPoint("BOTTOM")
         frame.name:ClearAllPoints()
         if isFriend(frame.unit) then
@@ -6762,7 +6762,7 @@ function BBP.RefreshAllNameplates()
         if frame.specNameText then
             --BBP.SetFontBasedOnOption(frame.specNameText, 12, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or nil)
             BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
-        end        
+        end  
         if frame.guildName then
             if BetterBlizzPlatesDB.showGuildNames then
                 ShowFriendlyGuildName(frame, frame.unit)
@@ -7039,7 +7039,6 @@ function BBP.ConsolidatedUpdateName(frame)
 
     -- Class color and scale names depending on their reaction
     BBP.ClassColorAndScaleNames(frame)
-
     -- BBP.isMidnight
     -- Default new np name pos, this removes truncate:
     --frame.name:ClearAllPoints()
