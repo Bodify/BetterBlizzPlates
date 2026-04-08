@@ -8731,7 +8731,7 @@ function BBP.NameplateAuraTweaksTemp()
                 auraFrame.Cooldown:SetHideCountdownNumbers(false)
                 auraFrame.cdHidden = nil
             end
-        elseif listType == "cc" or listType == "loc" then
+        elseif listType == "cc" then
             auraFrame:SetSize(25,25)
             auraFrame:SetScale(db.ccIconScale or 1.35)
             if hideCooldownTimer and hideCooldownAll then
@@ -8893,9 +8893,11 @@ function BBP.NameplateAuraTweaksTemp()
         local anchor = db.ccIconAnchor or "RIGHT"
         local xPos = db.ccIconXPos or 0
         local yPos = db.ccIconYPos or 0
-        local scale = db.ccIconScale or 1.35
 
-        self.LossOfControlFrame:SetScale(scale)
+        self.LossOfControlFrame:SetScale(1)
+        if self.LossOfControlFrame.AuraItemFrame then
+            self.LossOfControlFrame.AuraItemFrame:SetScale(1)
+        end
         self.LossOfControlFrame:ClearAllPoints()
 
         if anchor == "LEFT" then
@@ -8909,7 +8911,10 @@ function BBP.NameplateAuraTweaksTemp()
 
         local locAuraFrame = self.LossOfControlFrame.AuraItemFrame
         if locAuraFrame and locAuraFrame:IsShown() then
-            OnAuraFrameRefreshed(locAuraFrame, "loc")
+            locAuraFrame:ClearAllPoints()
+            locAuraFrame:SetPoint("CENTER", self.LossOfControlFrame, "CENTER", 0, 0)
+            OnAuraFrameRefreshed(locAuraFrame, "cc")
+            self.LossOfControlFrame:SetSize(25, 25)
         end
     end
 
