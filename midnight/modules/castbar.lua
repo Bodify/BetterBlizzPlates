@@ -1249,9 +1249,13 @@ function BBP.HookCastbarOnEvent(frame)
                         castBar.wasKicked = true
                     end
                 end
-                local cast = UnitCastingInfo(castBar.unit) or UnitChannelInfo(castBar.unit)
-                if not cast or castBar.wasKicked then
-                    castBar:Hide()
+                if BetterBlizzPlatesDB.castbarQuickHide then
+                    if not (castBar.interruptedBy or castBar.wasKicked) then
+                        local cast = UnitCastingInfo(castBar.unit) or UnitChannelInfo(castBar.unit)
+                        if not cast then
+                            castBar:Hide()
+                        end
+                    end
                 end
             elseif CastStartEvents[event] then
                 castBar.wasKicked = nil
