@@ -50,6 +50,7 @@ function BBP.ExecuteIndicator(frame)
         config.executeIndicatorTargetOnly = BetterBlizzPlatesDB.executeIndicatorTargetOnly
         config.executeIndicatorInRangeColor = BetterBlizzPlatesDB.executeIndicatorInRangeColor
         config.executeIndicatorInRangeColorRGB = BetterBlizzPlatesDB.executeIndicatorInRangeColorRGB
+        config.executeIndicatorHideText = BetterBlizzPlatesDB.executeIndicatorHideText
 
         config.executeIndicatorInitialized = true
     end
@@ -95,101 +96,106 @@ function BBP.ExecuteIndicator(frame)
     local belowThreshold = UnitHealthPercent(unit, true, GetExecuteCurve(config.executeIndicatorThreshold))
     local notFullHp = UnitHealthPercent(unit, true, GetNotFullCurve())
 
-    local oppositeAnchor = BBP.GetOppositeAnchor(config.executeIndicatorAnchor)
-
-    -- Initialize the font string and texture for the Execute Indicator
-    if not frame.executeIndicator then
-        frame.executeIndicator = frame.bbpOverlay:CreateFontString(nil, "OVERLAY")
-        BBP.SetFontBasedOnOption(frame.executeIndicator, 10, "THICKOUTLINE")
-        frame.executeIndicator:SetTextColor(1, 1, 1)
-        frame.executeIndicator:SetJustifyH("CENTER")
-    end
-
-    if config.executeIndicatorUseTexture then
-        if not frame.executeIndicatorTexture then
-            frame.executeIndicatorTexture = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
-            frame.executeIndicatorTexture:SetSize(1.5, frame.healthBar:GetHeight())
+    if config.executeIndicatorHideText and not config.executeIndicatorUseTexture then
+        if frame.executeIndicator then
+            frame.executeIndicator:SetAlpha(0)
         end
-        if info.isTarget then
-            frame.executeIndicatorTexture:SetColorTexture(unpack(BetterBlizzPlatesDB.npBorderTargetColorRGB))
-        else
-            frame.executeIndicatorTexture:SetColorTexture(0,0,0,1)
-        end
-        frame.executeIndicator:SetAlpha(0)
-    else
         if frame.executeIndicatorTexture then
             frame.executeIndicatorTexture:SetAlpha(0)
         end
-    end
+    else
+        local oppositeAnchor = BBP.GetOppositeAnchor(config.executeIndicatorAnchor)
 
-    -- Test mode logic
-    if config.executeIndicatorTestMode then
+        if not frame.executeIndicator then
+            frame.executeIndicator = frame.bbpOverlay:CreateFontString(nil, "OVERLAY")
+            BBP.SetFontBasedOnOption(frame.executeIndicator, 10, "THICKOUTLINE")
+            frame.executeIndicator:SetTextColor(1, 1, 1)
+            frame.executeIndicator:SetJustifyH("CENTER")
+        end
+
         if config.executeIndicatorUseTexture then
-            -- Position the texture based on the threshold for testing
-            local barWidth = frame.HealthBarsContainer:GetWidth()
+            if not frame.executeIndicatorTexture then
+                frame.executeIndicatorTexture = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
+                frame.executeIndicatorTexture:SetSize(1.5, frame.healthBar:GetHeight())
+            end
+            if info.isTarget then
+                frame.executeIndicatorTexture:SetColorTexture(unpack(BetterBlizzPlatesDB.npBorderTargetColorRGB))
+            else
+                frame.executeIndicatorTexture:SetColorTexture(0,0,0,1)
+            end
+            frame.executeIndicator:SetAlpha(0)
+        else
+            if frame.executeIndicatorTexture then
+                frame.executeIndicatorTexture:SetAlpha(0)
+            end
+        end
+
+        if config.executeIndicatorTestMode then
+            if config.executeIndicatorUseTexture then
+                local barWidth = frame.HealthBarsContainer:GetWidth()
+                local textureXPos = (config.executeIndicatorThreshold / 100) * barWidth
+
+                frame.executeIndicatorTexture:ClearAllPoints()
+                frame.executeIndicatorTexture:SetPoint("CENTER", frame.HealthBarsContainer, "LEFT", textureXPos, 0)
+                frame.executeIndicatorTexture:SetAlpha(1)
+            else
+                local testText = config.executeIndicatorShowDecimal and "19.5" or "19"
+                if config.executeIndicatorPercentSymbol then
+                    testText = testText .. "%"
+                end
+                frame.executeIndicator:SetText(testText)
+                frame.executeIndicator:SetAlpha(1)
+                frame.executeIndicator:SetScale(config.executeIndicatorScale or 1)
+            end
+            return
+        end
+
+        if config.executeIndicatorUseTexture then
+            frame.executeIndicator:SetAlpha(0)
+
+            local barWidth = frame.healthBar:GetWidth()
             local textureXPos = (config.executeIndicatorThreshold / 100) * barWidth
 
             frame.executeIndicatorTexture:ClearAllPoints()
-            frame.executeIndicatorTexture:SetPoint("CENTER", frame.HealthBarsContainer, "LEFT", textureXPos, 0)
-            frame.executeIndicatorTexture:SetAlpha(1)
-        else
-            -- Show test text
-            local testText = config.executeIndicatorShowDecimal and "19.5" or "19"
-            if config.executeIndicatorPercentSymbol then
-                testText = testText .. "%"
+            frame.executeIndicatorTexture:SetPoint("CENTER", frame.healthBar, "LEFT", textureXPos, 0)
+
+            if config.executeIndicatorAlwaysOn then
+                if config.executeIndicatorNotOnFullHp then
+                    frame.executeIndicatorTexture:SetAlpha(notFullHp)
+                else
+                    frame.executeIndicatorTexture:SetAlpha(1)
+                end
+            else
+                frame.executeIndicatorTexture:SetAlpha(belowThreshold)
             end
-            frame.executeIndicator:SetText(testText)
-            frame.executeIndicator:SetAlpha(1)
+        else
+            if frame.executeIndicatorTexture then
+                frame.executeIndicatorTexture:SetAlpha(0)
+            end
+            frame.executeIndicator:ClearAllPoints()
+            if config.executeIndicatorAnchor == "LEFT" then
+                frame.executeIndicator:SetPoint(config.executeIndicatorAnchor, frame.healthBar, config.executeIndicatorAnchor, config.executeIndicatorXPos + 24, config.executeIndicatorYPos + -0.5)
+            elseif config.executeIndicatorAnchor == "RIGHT" then
+                frame.executeIndicator:SetPoint(config.executeIndicatorAnchor, frame.healthBar, config.executeIndicatorAnchor, config.executeIndicatorXPos, config.executeIndicatorYPos + -0.5)
+            else
+                frame.executeIndicator:SetPoint(oppositeAnchor, frame.healthBar, config.executeIndicatorAnchor, config.executeIndicatorXPos, config.executeIndicatorYPos + -0.5)
+            end
             frame.executeIndicator:SetScale(config.executeIndicatorScale or 1)
-        end
-        return
-    end
-
-    if config.executeIndicatorUseTexture then
-        frame.executeIndicator:SetAlpha(0)
-
-        local barWidth = frame.healthBar:GetWidth()
-        local textureXPos = (config.executeIndicatorThreshold / 100) * barWidth
-
-        frame.executeIndicatorTexture:ClearAllPoints()
-        frame.executeIndicatorTexture:SetPoint("CENTER", frame.healthBar, "LEFT", textureXPos, 0)
-
-        if config.executeIndicatorAlwaysOn then
-            if config.executeIndicatorNotOnFullHp then
-                frame.executeIndicatorTexture:SetAlpha(notFullHp)
-            else
-                frame.executeIndicatorTexture:SetAlpha(1)
+            local text = config.executeIndicatorShowDecimal and string.format("%.1f", healthPercentage) or string.format("%d", healthPercentage)
+            if config.executeIndicatorPercentSymbol then
+                text = text .. "%"
             end
-        else
-            frame.executeIndicatorTexture:SetAlpha(belowThreshold)
-        end
-    else
-        if frame.executeIndicatorTexture then
-            frame.executeIndicatorTexture:SetAlpha(0)
-        end
-        frame.executeIndicator:ClearAllPoints()
-        if config.executeIndicatorAnchor == "LEFT" then
-            frame.executeIndicator:SetPoint(config.executeIndicatorAnchor, frame.healthBar, config.executeIndicatorAnchor, config.executeIndicatorXPos + 24, config.executeIndicatorYPos + -0.5)
-        elseif config.executeIndicatorAnchor == "RIGHT" then
-            frame.executeIndicator:SetPoint(config.executeIndicatorAnchor, frame.healthBar, config.executeIndicatorAnchor, config.executeIndicatorXPos, config.executeIndicatorYPos + -0.5)
-        else
-            frame.executeIndicator:SetPoint(oppositeAnchor, frame.healthBar, config.executeIndicatorAnchor, config.executeIndicatorXPos, config.executeIndicatorYPos + -0.5)
-        end
-        frame.executeIndicator:SetScale(config.executeIndicatorScale or 1)
-        local text = config.executeIndicatorShowDecimal and string.format("%.1f", healthPercentage) or string.format("%d", healthPercentage)
-        if config.executeIndicatorPercentSymbol then
-            text = text .. "%"
-        end
-        frame.executeIndicator:SetText(text)
+            frame.executeIndicator:SetText(text)
 
-        if config.executeIndicatorAlwaysOn then
-            if config.executeIndicatorNotOnFullHp then
-                frame.executeIndicator:SetAlpha(notFullHp)
+            if config.executeIndicatorAlwaysOn then
+                if config.executeIndicatorNotOnFullHp then
+                    frame.executeIndicator:SetAlpha(notFullHp)
+                else
+                    frame.executeIndicator:SetAlpha(1)
+                end
             else
-                frame.executeIndicator:SetAlpha(1)
+                frame.executeIndicator:SetAlpha(belowThreshold)
             end
-        else
-            frame.executeIndicator:SetAlpha(belowThreshold)
         end
     end
 

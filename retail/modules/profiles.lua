@@ -168,6 +168,13 @@ function BBP.ApplyProfile(profileName)
         end
         BetterBlizzPlatesDB.scStart = true
         C_CVar.SetCVar("nameplateShowFriendlyPlayers", "1")
+        if BetterBlizzPlatesDB.nameplateResourceOnTarget and EditModeManagerFrame and EditModeManagerFrame.AccountSettings and EditModeManagerFrame.AccountSettings.RefreshPersonalResourceDisplay then
+            local personalResourceDisplayEnabled = EditModeManagerFrame:GetAccountSettingValueBool(Enum.EditModeAccountSetting.ShowPersonalResourceDisplay)
+            if not personalResourceDisplayEnabled then
+                EditModeManagerFrame:OnAccountSettingChanged(Enum.EditModeAccountSetting.ShowPersonalResourceDisplay, true)
+                EditModeManagerFrame.AccountSettings:RefreshPersonalResourceDisplay()
+            end
+        end
         ReloadUI()
     end
 end

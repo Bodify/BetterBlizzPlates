@@ -1,7 +1,6 @@
 function BBP.InstantComboPoints()
     if not BetterBlizzPlatesDB.instantComboPoints then return end
     if BBP.InstantComboPointsActive then return end
-    if BBP.isMidnight then return end
     -- Call the function for each frame
     local _, class = UnitClass("player")
 
@@ -161,19 +160,19 @@ function BBP.InstantComboPoints()
 
     if class == "MONK" then
         if not BBF then hooksecurefunc(MonkHarmonyBarFrame, "UpdatePower", UpdateMonkChi) end
-        hooksecurefunc(ClassNameplateBarWindwalkerMonkFrame, "UpdatePower", UpdateMonkChi)
+        hooksecurefunc(prdClassFrame, "UpdatePower", UpdateMonkChi)
     elseif class == "ROGUE" then
         if not BBF then hooksecurefunc(RogueComboPointBarFrame, "UpdatePower", UpdateRogueComboPoints) end
-        hooksecurefunc(ClassNameplateBarRogueFrame, "UpdatePower", UpdateRogueComboPoints)
+        hooksecurefunc(prdClassFrame, "UpdatePower", UpdateRogueComboPoints)
     elseif class == "DRUID" then
         if not BBF then hooksecurefunc(DruidComboPointBarFrame, "UpdatePower", UpdateDruidComboPoints) end
-        hooksecurefunc(ClassNameplateBarFeralDruidFrame, "UpdatePower", UpdateDruidComboPoints)
+        hooksecurefunc(prdClassFrame, "UpdatePower", UpdateDruidComboPoints)
     elseif class == "MAGE" then
         if not BBF then hooksecurefunc(MageArcaneChargesFrame, "UpdatePower", UpdateArcaneCharges) end
-        hooksecurefunc(ClassNameplateBarMageFrame, "UpdatePower", UpdateArcaneCharges)
+        hooksecurefunc(prdClassFrame, "UpdatePower", UpdateArcaneCharges)
     elseif class == "PALADIN" then
         if not BBF then hooksecurefunc(PaladinPowerBarFrame, "UpdatePower", UpdatePaladinHolyPower) end
-        hooksecurefunc(ClassNameplateBarPaladinFrame, "UpdatePower", UpdatePaladinHolyPower)
+        hooksecurefunc(prdClassFrame, "UpdatePower", UpdatePaladinHolyPower)
     end
     BBP.InstantComboPointsActive = true
 end
