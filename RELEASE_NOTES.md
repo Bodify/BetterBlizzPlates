@@ -1,3 +1,10 @@
+# BetterBlizzPlates 2.0.0b
+## Midnight
+### Tweak
+- Nameplate Auras: Fix player CC icon being a little bit larger than other aura icons. You may have to tweak your settings a little bit for it now.
+### Bugfix
+- Fix Quickhide Castbar always being active and also accidentally quick-hiding interrupted castbars due to a mistake.
+
 # BetterBlizzPlates 2.0.0
 ## Midnight
 ### New
