@@ -8722,6 +8722,7 @@ function BBP.NameplateAuraTweaksTemp()
                 auraFrame.cdHidden = nil
             end
         elseif listType == "buff" then
+            auraFrame:SetSize(25,25)
             auraFrame:SetScale(db.buffIconScale or 1.35)
             if hideCooldownTimer and hideCooldownAll then
                 auraFrame.Cooldown:SetHideCountdownNumbers(true)
@@ -8731,6 +8732,7 @@ function BBP.NameplateAuraTweaksTemp()
                 auraFrame.cdHidden = nil
             end
         elseif listType == "cc" or listType == "loc" then
+            auraFrame:SetSize(25,25)
             auraFrame:SetScale(db.ccIconScale or 1.35)
             if hideCooldownTimer and hideCooldownAll then
                 auraFrame.Cooldown:SetHideCountdownNumbers(true)
@@ -8863,7 +8865,7 @@ function BBP.NameplateAuraTweaksTemp()
 
         for idx, auraFrame in ipairs(frames) do
             local i = idx - 1
-            local width = auraFrame:GetWidth()
+            local width = 25
             local widthAndGap = width + GAP
 
             auraFrame:ClearAllPoints()
