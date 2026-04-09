@@ -19,10 +19,8 @@ local notFullCurve
 local function GetNotFullCurve()
     if not notFullCurve then
         notFullCurve = C_CurveUtil.CreateCurve()
-        notFullCurve:SetType(Enum.LuaCurveType.Linear)
+        notFullCurve:SetType(Enum.LuaCurveType.Step)
         notFullCurve:AddPoint(0.0, 1)
-        notFullCurve:AddPoint(0.99, 1)
-        notFullCurve:AddPoint(0.991, 0)
         notFullCurve:AddPoint(1.0, 0)
     end
     return notFullCurve
