@@ -1,3 +1,10 @@
+# BetterBlizzPlates 2.0.0c
+## Midnight
+### Tweak
+- Fix the health numbers "dont show on full hp" setting for Midnight.
+## Titan Reforged
+- Change Titan Reforged to load TBC files instead as a temporary solution because of new API changes. Very difficult for me to do any testing here so please report any errors with BugSack and BugGrabber.
+
 # BetterBlizzPlates 2.0.0b
 ## Midnight
 ### Tweak

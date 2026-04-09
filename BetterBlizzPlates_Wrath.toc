@@ -15,13 +15,13 @@ temp_shared\ImportExport.lua
 
 temp_cata\modules\combat.lua
 temp_cata\modules\castbar.lua
-temp_cata\modules\totem_Cata.lua
-temp_cata\modules\arenaid_Cata.lua
+temp_cata\modules\totem.lua
+temp_cata\modules\arenaid.lua
 temp_cata\modules\execute.lua
 temp_cata\modules\healthNumbers.lua
 temp_cata\modules\target.lua
 temp_cata\modules\healer.lua
-temp_cata\modules\absorb_Cata.lua
+temp_cata\modules\absorb.lua
 temp_cata\modules\classIcon.lua
 temp_cata\modules\partyPointer.lua
 temp_cata\modules\pet.lua
@@ -31,5 +31,5 @@ temp_cata\modules\auras.lua
 temp_cata\modules\profiles.lua
 retail\modules\importConvert.lua
 
-temp_cata\gui_Cata.lua
-temp_cata\BetterBlizzPlates.lua
+temp_cata\gui.lua
+temp_tbc\BetterBlizzPlates.lua
