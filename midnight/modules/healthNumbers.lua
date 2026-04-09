@@ -1,3 +1,14 @@
+local notFullCurve
+local function GetNotFullCurve()
+    if not notFullCurve then
+        notFullCurve = C_CurveUtil.CreateCurve()
+        notFullCurve:SetType(Enum.LuaCurveType.Step)
+        notFullCurve:AddPoint(0.0, 1)
+        notFullCurve:AddPoint(1.0, 0)
+    end
+    return notFullCurve
+end
+
 function BBP.HealthNumbers(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
@@ -75,6 +86,7 @@ function BBP.HealthNumbers(frame)
     local health = UnitHealth(unit)
     local maxHealth = UnitHealthMax(unit)
     local percent = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100) or 0
+    local notFullHp = UnitHealthPercent(unit, true, GetNotFullCurve())
 
     local FormatHealth = config.healthNumbersRawNumbers and tostring or AbbreviateNumbers
 
@@ -180,6 +192,12 @@ function BBP.HealthNumbers(frame)
 
     frame.healthNumbers:SetText(healthText)
     frame.healthNumbers:Show()
+
+    if config.healthNumbersNotOnFullHp then
+        frame.healthNumbers:SetAlpha(notFullHp)
+    else
+        frame.healthNumbers:SetAlpha(1)
+    end
 end
 
 local healthEventFrame
