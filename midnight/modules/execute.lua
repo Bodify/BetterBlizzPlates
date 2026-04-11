@@ -62,6 +62,9 @@ function BBP.ExecuteIndicator(frame)
         if frame.executeIndicatorTexture then
             frame.executeIndicatorTexture:SetAlpha(0)
         end
+        if frame.executeColorOverlay then
+            frame.executeColorOverlay:SetAlpha(0)
+        end
         return
     end
 
@@ -74,18 +77,11 @@ function BBP.ExecuteIndicator(frame)
             if frame.executeIndicatorTexture then
                 frame.executeIndicatorTexture:SetAlpha(0)
             end
+            if frame.executeColorOverlay then
+                frame.executeColorOverlay:SetAlpha(0)
+            end
             return
         end
-    end
-
-    if UnitIsUnit(frame.unit, "player") then
-        if frame.executeIndicator then
-            frame.executeIndicator:SetAlpha(0)
-        end
-        if frame.executeIndicatorTexture then
-            frame.executeIndicatorTexture:SetAlpha(0)
-        end
-        return
     end
 
     local healthPercentage = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)

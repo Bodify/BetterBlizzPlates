@@ -5093,6 +5093,9 @@ local function HandleNamePlateRemoved(unit)
     if not hideTargetHighlight then
         frame.selectionHighlight:SetAlpha(0.22)
     end
+    if frame.executeColorOverlay then
+        frame.executeColorOverlay:SetAlpha(0)
+    end
 
     frame.arenaID = nil
 
