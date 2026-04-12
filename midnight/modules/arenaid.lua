@@ -812,8 +812,11 @@ function BBP.ArenaIndicator1(frame)
     local idx = BBP.GetArenaIndexByFrame(frame)
     if not idx then return end
 
-    if FrameSort then
-        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("arena"..idx)
+    if FrameSortApi then
+        local FrameSortID = FrameSortApi.v3.Frame:FrameNumberForUnit("arena"..idx)
+        if FrameSortID then
+            idx = FrameSortID
+        end
     end
 
     local r, g, b = 1, 1, 0
@@ -855,8 +858,11 @@ function BBP.ArenaIndicator2(frame)
     local idx = BBP.GetArenaIndexByFrame(frame)
     if not idx then return end
 
-    if FrameSort then
-        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("arena"..idx)
+    if FrameSortApi then
+        local FrameSortID = FrameSortApi.v3.Frame:FrameNumberForUnit("arena"..idx)
+        if FrameSortID then
+            idx = FrameSortID
+        end
     end
 
     local r, g, b = 1, 1, 0
@@ -969,8 +975,11 @@ function BBP.ArenaIndicator4(frame)
     frame.specNameText:SetIgnoreParentScale(true)
     frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 
-    if FrameSort then
-        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("arena"..idx)
+    if FrameSortApi then
+        local FrameSortID = FrameSortApi.v3.Frame:FrameNumberForUnit("arena"..idx)
+        if FrameSortID then
+            idx = FrameSortID
+        end
     end
 
     frame.arenaNumberText:SetText(idx)
@@ -1017,8 +1026,11 @@ function BBP.ArenaIndicator5(frame)
 
     local anchorPoint = createSpexText(frame)
 
-    if FrameSort then
-        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("arena"..idx)
+    if FrameSortApi then
+        local FrameSortID = FrameSortApi.v3.Frame:FrameNumberForUnit("arena"..idx)
+        if FrameSortID then
+            idx = FrameSortID
+        end
     end
 
     frame.name:SetText("")
@@ -1044,8 +1056,11 @@ function BBP.PartyIndicator1(frame)
     local idx = BBP.GetPartyIndexByFrame(frame)
     if not idx then return end
 
-    if FrameSort then
-        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("party"..idx)
+    if FrameSortApi then
+        local FrameSortID = FrameSortApi.v3.Frame:FrameNumberForUnit("party"..idx)
+        if FrameSortID then
+            idx = FrameSortID
+        end
     end
 
     local r, g, b = frame.name:GetTextColor()
@@ -1072,8 +1087,11 @@ function BBP.PartyIndicator2(frame)
     local idx = BBP.GetPartyIndexByFrame(frame)
     if not idx then return end
 
-    if FrameSort then
-        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("party"..idx)
+    if FrameSortApi then
+        local FrameSortID = FrameSortApi.v3.Frame:FrameNumberForUnit("party"..idx)
+        if FrameSortID then
+            idx = FrameSortID
+        end
     end
 
     local r, g, b = frame.name:GetTextColor()
@@ -1167,8 +1185,11 @@ function BBP.PartyIndicator4(frame)
     frame.specNameText:SetIgnoreParentScale(true)
     frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
 
-    if FrameSort then
-        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("party"..idx)
+    if FrameSortApi then
+        local FrameSortID = FrameSortApi.v3.Frame:FrameNumberForUnit("party"..idx)
+        if FrameSortID then
+            idx = FrameSortID
+        end
     end
 
     frame.arenaNumberText:SetText(idx)
@@ -1205,8 +1226,11 @@ function BBP.PartyIndicator5(frame)
 
     local anchorPoint = createSpexText(frame)
 
-    if FrameSort then
-        idx = FrameSort.Api.v3.Frame:FrameNumberForUnit("party"..idx)
+    if FrameSortApi then
+        local FrameSortID = FrameSortApi.v3.Frame:FrameNumberForUnit("party"..idx)
+        if FrameSortID then
+            idx = FrameSortID
+        end
     end
 
     frame.name:SetText("")
