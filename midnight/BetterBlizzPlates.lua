@@ -2089,9 +2089,27 @@ end
 local function textureExtraBars(frame, setting)
     local extraBars = BetterBlizzPlatesDB.useCustomTextureForExtraBars
     if extraBars then
-        frame.otherHealPrediction:SetTexture(setting)
-        frame.myHealPrediction:SetTexture(setting)
-        frame.totalAbsorb:SetTexture(setting)
+        if frame.otherHealPrediction then
+            frame.otherHealPrediction:SetTexture(setting)
+        end
+        if frame.myHealPrediction then
+            frame.myHealPrediction:SetTexture(setting)
+        end
+        if frame.totalAbsorb then
+            frame.totalAbsorb:SetTexture(setting)
+        end
+        if frame.ManaCostPredictionBar then
+            frame.ManaCostPredictionBar:SetTexture(setting)
+        end
+        if frame.FeedbackFrame then
+            frame.FeedbackFrame.BarTexture:SetTexture(setting)
+        end
+        if frame.myHealAbsorb then
+            frame.myHealAbsorb:SetTexture(setting)
+        end
+        -- if frame.totalAbsorbOverlay then
+        --     frame.totalAbsorbOverlay:SetTexture(setting)
+        -- end
     end
 end
 
@@ -2113,8 +2131,10 @@ function BBP.TexturePRD()
     if BetterBlizzPlatesDB.useCustomTextureForSelfMana then
         frame.changedPrdManaTexture = true
         frame.PowerBar:SetStatusBarTexture(customTextureSelfMana)
+        textureExtraBars(frame.PowerBar, customTextureSelfMana)
     elseif frame.changedPrdManaTexture then
         frame.PowerBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
+        textureExtraBars(frame.PowerBar, "Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
         frame.changedPrdManaTexture = nil
     end
 
