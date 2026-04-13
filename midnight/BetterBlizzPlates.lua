@@ -7863,6 +7863,14 @@ local function UpdateLateAdditionSettings(db)
         end
     end
 
+    if not db.arenaIndicatorModeOne and not db.arenaIndicatorModeTwo and not db.arenaIndicatorModeThree and not db.arenaIndicatorModeFour and not db.arenaIndicatorModeFive then
+        db.arenaIndicatorModeOff = true
+    end
+
+    if not db.partyIndicatorModeOne and not db.partyIndicatorModeTwo and not db.partyIndicatorModeThree and not db.partyIndicatorModeFour and not db.partyIndicatorModeFive then
+        db.partyIndicatorModeOff = true
+    end
+
     --bodifycheck
     if db.updates and db.updates ~= addonUpdates then
         -- if db.enableNameplateAuraCustomisation and db.classIndicator and db.classIndicatorFriendly and not db.classIndicatorUpdated then

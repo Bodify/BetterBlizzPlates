@@ -1575,7 +1575,8 @@ function BBP.CleanArenaIndicators(frame)
         if removeRealmName then
             BBP.RemoveRealmName(frame)
         else
-            frame.name:SetText(GetUnitName(frame.unit, true))
+            local name = UnitName(frame.unit)
+            frame.name:SetText(name)
         end
     end
     if frame.arenaNumberText then
