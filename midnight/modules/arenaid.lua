@@ -1593,7 +1593,7 @@ function BBP.ArenaIndicatorCaller(frame)
     local db = BetterBlizzPlatesDB
     -- Arena and party logic
     if not frame.unit then return end
-    if IsActiveBattlefieldArena() then
+    if IsActiveBattlefieldArena() and UnitIsPlayer(frame.unit) then
         local unitType
         if UnitIsEnemy("player", frame.unit) then
             unitType = "arena"
