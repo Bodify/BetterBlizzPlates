@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.0.0e
+## Midnight
+### Bugfix
+- Fix test code left in by accident force showing all aura categories.
+
 # BetterBlizzPlates 2.0.0d
 ## Midnight
 ### New
