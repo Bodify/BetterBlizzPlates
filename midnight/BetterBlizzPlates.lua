@@ -8984,7 +8984,7 @@ function BBP.NameplateAuraTweaksTemp()
             end
         end
 
-        listFrame:Show()
+        --listFrame:Show()
 
         if listType == "debuff" then
             LayoutDebuffAuras(self, listFrame)
