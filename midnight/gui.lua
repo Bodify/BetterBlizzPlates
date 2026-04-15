@@ -924,6 +924,8 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BetterBlizzPlatesDB.fakeNameFriendlyXPos = value
                 elseif element == "fakeNameFriendlyYPos" then
                     BetterBlizzPlatesDB.fakeNameFriendlyYPos = value
+                elseif element == "fakeNameMaxWidth" then
+                    BetterBlizzPlatesDB.fakeNameMaxWidth = value
                 elseif element == "hideNpcMurlocScale" then
                     BetterBlizzPlatesDB.hideNpcMurlocScale = value
                 elseif element == "hideNpcMurlocYPos" then
@@ -1268,6 +1270,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         C_CVar.SetCVar("nameplateDebuffPadding", value)
                         BetterBlizzPlatesDB.nameplateDebuffPadding = value
                     end
+                elseif element == "nameplateDebuffXPadding" then
+                    BetterBlizzPlatesDB.nameplateDebuffXPadding = value
+                    if BBP.UpdateAllNameplatesAuras then BBP.UpdateAllNameplatesAuras() end
                     -- Friendly name scale
                 elseif element == "friendlyNameScale" then
                     if not BetterBlizzPlatesDB.arenaIndicatorTestMode then
@@ -1411,7 +1416,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         elseif element == "nameplateAuraEnlargedScale" or element == "nameplateKeyAuraScale" or element == "nameplateAuraCompactedScale" or element == "nameplateAuraBuffScale" or element == "nameplateAuraDebuffScale" or element == "nameplateAuraBuffSelfScale" or element == "nameplateAuraDebuffSelfScale" or element == "nameplateKeyAurasHorizontalGap" then
                             BBP.RefUnitAuraTotally(frame)
                         -- Fake name
-                        elseif element == "fakeNameXPos" or element == "fakeNameYPos" or element == "fakeNameFriendlyXPos" or element == "fakeNameFriendlyYPos" then
+                        elseif element == "fakeNameXPos" or element == "fakeNameYPos" or element == "fakeNameFriendlyXPos" or element == "fakeNameFriendlyYPos" or element == "fakeNameMaxWidth" then
                             BBP.RepositionName(frame)
                         -- Target Indicator Pos and Scale
                         elseif element == "targetIndicatorXPos" or element == "targetIndicatorYPos" or element == "targetIndicatorScale" then
@@ -8076,6 +8081,17 @@ local function guiPositionAndScale()
         end
     end)
 
+    anchorSubFakeName.fakeNameMaxWidthOn = CreateCheckbox("fakeNameMaxWidthOn", "Max Width", useFakeName)
+    anchorSubFakeName.fakeNameMaxWidthOn:SetPoint("TOPLEFT", fakeNameRaiseStrata, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubFakeName.fakeNameMaxWidthOn, "Max Width", "Set a maximum width for the name text on nameplates.")
+    anchorSubFakeName.fakeNameMaxWidthOn:HookScript("OnClick", function(self)
+        CheckAndToggleCheckboxes(self)
+        BBP.RefreshAllNameplates()
+    end)
+
+    anchorSubFakeName.fakeNameMaxWidthSlider = CreateSlider(anchorSubFakeName.fakeNameMaxWidthOn, "Max Width", 25, 400, 1, "fakeNameMaxWidth", false, 120)
+    anchorSubFakeName.fakeNameMaxWidthSlider:SetPoint("TOPLEFT", anchorSubFakeName.fakeNameMaxWidthOn, "BOTTOMLEFT", 18, -10)
+
     ----------------------
     -- Health Numbers
     ----------------------
@@ -12777,8 +12793,12 @@ local function guiTemp()
     nameplateDebuffPadding:SetPoint("TOPLEFT", nameplateAurasEnemyCenteredAnchor, "BOTTOMLEFT", 12, -25)
     CreateTooltipTwo(nameplateDebuffPadding, "Nameplate Debuff Padding", "Adjust the padding between debuff icons on nameplates.", "CVar setting and does not require nameplate aura tweaks enabled", nil, "nameplateDebuffPadding")
 
+    local nameplateDebuffXPadding = CreateSlider(guiTemp, "Nameplate Debuff X Position", -300, 300, 0.5, "nameplateDebuffXPadding")
+    nameplateDebuffXPadding:SetPoint("TOPLEFT", nameplateDebuffPadding, "BOTTOMLEFT", 0, -10)
+    CreateTooltipTwo(nameplateDebuffXPadding, "Nameplate Debuff X Padding", "Adjust the horizontal offset of debuff icons on nameplates.")
+
     local nameplateAuraWidthGap = CreateSlider(enableMidnightNameplateTweaks, "Nameplate Aura Gap", 0, 20, 1, "nameplateAuraWidthGap")
-    nameplateAuraWidthGap:SetPoint("TOPLEFT", nameplateDebuffPadding, "BOTTOMLEFT", 0, -10)
+    nameplateAuraWidthGap:SetPoint("TOPLEFT", nameplateDebuffXPadding, "BOTTOMLEFT", 0, -10)
     CreateTooltipTwo(nameplateAuraWidthGap, "Nameplate Aura Gap", "Adjust the gap between buff and debuff icons on nameplates.")
 
     local nameplateAuraScale = CreateSlider(guiTemp, "Nameplate Aura Scale", 0.6, 3, 0.01, "nameplateAuraScale")

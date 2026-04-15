@@ -93,6 +93,7 @@ local defaultSettings = {
     fakeNameAnchorRelative = "TOP",
     fakeNameScaleWithParent = false,
     fakeNameRaiseStrata = false,
+    fakeNameMaxWidth = 250,
     guildNameColorRGB = {0, 1, 0},
     npcTitleColorRGB = {1, 0.85, 0},
     npcTitleScale = 1,
@@ -509,6 +510,7 @@ local defaultSettings = {
     nameplateAuraTypeGap = 0,
     nameplateAurasYPos = 0,
     nameplateAurasXPos = 0,
+    nameplateDebuffXPadding = 0,
     nameplateAurasPersonalXPos = 0,
     nameplateAurasPersonalYPos = 0,
     nameplateAuraAnchor = "BOTTOMLEFT",
@@ -5301,6 +5303,18 @@ function BBP.CustomizeClassificationFrame(frame)
     end
 end
 
+local nameJustify = {
+    ["LEFT"] = "LEFT",
+    ["TOPLEFT"] = "LEFT",
+    ["BOTTOMLEFT"] = "LEFT",
+    ["RIGHT"] = "RIGHT",
+    ["TOPRIGHT"] = "RIGHT",
+    ["BOTTOMRIGHT"] = "RIGHT",
+    ["CENTER"] = "CENTER",
+    ["TOP"] = "CENTER",
+    ["BOTTOM"] = "CENTER",
+}
+
 function BBP.RepositionName(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
@@ -5315,6 +5329,8 @@ function BBP.RepositionName(frame)
         config.fakeNameAnchorRelative = BetterBlizzPlatesDB.fakeNameAnchorRelative
         config.fakeNameScaleWithParent = BetterBlizzPlatesDB.fakeNameScaleWithParent
         config.fakeNameRaiseStrata = BetterBlizzPlatesDB.fakeNameRaiseStrata
+        config.fakeNameMaxWidthOn = BetterBlizzPlatesDB.fakeNameMaxWidthOn
+        config.fakeNameMaxWidth = BetterBlizzPlatesDB.fakeNameMaxWidth
     end
     local function RepositionName(frame)
         if frame:IsForbidden() or not frame.unit or frame.name.changing then return end
@@ -5341,6 +5357,11 @@ function BBP.RepositionName(frame)
         frame.nameHooked = true
     end
     RepositionName(frame)
+
+    if config.fakeNameMaxWidthOn then
+        frame.name:SetWidth(config.fakeNameMaxWidth)
+        frame.name:SetJustifyH(nameJustify[config.fakeNameAnchor] or "CENTER")
+    end
 
     if config.fakeNameRaiseStrata then
         if not frame.newNameParent then
@@ -8845,6 +8866,7 @@ function BBP.NameplateAuraTweaksTemp()
         local rightToLeft = db.nameplateAuraRightToLeft
         local centerAuras = db.nameplateAurasEnemyCenteredAnchor
         local debuffPad = C_CVar.GetCVar("nameplateDebuffPadding")
+        local debuffXPad = db.nameplateDebuffXPadding or 0
         local WIDTH = 20
         local GAP = db.nameplateAuraWidthGap or 4
         local widthAndGap = WIDTH + GAP
@@ -8867,12 +8889,12 @@ function BBP.NameplateAuraTweaksTemp()
             local i = idx - 1
             auraFrame:ClearAllPoints()
             if centerAuras then
-                local xOffset = -centerOffset + (WIDTH / 2) + (i * widthAndGap)
+                local xOffset = -centerOffset + (WIDTH / 2) + (i * widthAndGap) + debuffXPad
                 auraFrame:SetPoint("BOTTOM", parent.healthBar, "TOP", xOffset, debuffPad)
             elseif rightToLeft then
-                auraFrame:SetPoint("BOTTOMRIGHT", parent.healthBar, "TOPRIGHT", -(i * widthAndGap), debuffPad)
+                auraFrame:SetPoint("BOTTOMRIGHT", parent.healthBar, "TOPRIGHT", -(i * widthAndGap) + debuffXPad, debuffPad)
             else
-                auraFrame:SetPoint("BOTTOMLEFT", parent.healthBar, "TOPLEFT", i * widthAndGap, debuffPad)
+                auraFrame:SetPoint("BOTTOMLEFT", parent.healthBar, "TOPLEFT", i * widthAndGap + debuffXPad, debuffPad)
             end
         end
     end
@@ -8961,6 +8983,8 @@ function BBP.NameplateAuraTweaksTemp()
                 OnAuraFrameRefreshed(auraItemFrame, listType)
             end
         end
+
+        listFrame:Show()
 
         if listType == "debuff" then
             LayoutDebuffAuras(self, listFrame)
@@ -9058,7 +9082,9 @@ end
 NameplatePostCombatUpdater:SetScript("OnEvent", ApplyNameplateUpdates)
 
 hooksecurefunc(NamePlateDriverFrame, "UpdateNamePlateOptions", function()
-    setNil(NamePlateFriendlyFrameOptions, "updateNameUsesGetUnitName")
+    if (BetterBlizzPlatesDB and BetterBlizzPlatesDB.removeRealmNames) then
+        setNil(NamePlateFriendlyFrameOptions, "updateNameUsesGetUnitName")
+    end
     if InCombatLockdown() then
         if not needsNameplateUpdate then
             needsNameplateUpdate = true

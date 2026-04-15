@@ -4216,11 +4216,6 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             end
         end
 
-        if opBarriersOn and opBarriers[spellId] and auraData.duration ~= 5 then
-            isImportant = nil
-            isEnlarged = nil
-        end
-
         if isPlayerUnit then
             buff.isKeyAura = nil
             if isEnlarged then

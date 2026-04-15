@@ -185,6 +185,85 @@ local function propsMatch(unitProps, idx)
     return checked > 0 and true or nil
 end
 
+local function resolveIndex(props, cache, candidates)
+    if #candidates == 0 then return nil end
+
+    if #candidates == 1 then
+        local c = cache[candidates[1]]
+        if not c then return nil end
+        if props.class and c.class and props.class ~= c.class then return nil end
+        if props.race and c.race and props.race ~= c.race then return nil end
+        if props.power ~= nil and c.power ~= nil and props.power ~= c.power then return nil end
+        if props.sex and c.sex and props.sex ~= c.sex then return nil end
+        return candidates[1]
+    end
+
+    local remaining = {}
+    for _, idx in ipairs(candidates) do
+        local c = cache[idx]
+        if c then
+            local dominated = false
+            if props.class and c.class and props.class ~= c.class then dominated = true end
+            if props.race and c.race and props.race ~= c.race then dominated = true end
+            if props.power ~= nil and c.power ~= nil and props.power ~= c.power then dominated = true end
+            if props.sex and c.sex and props.sex ~= c.sex then dominated = true end
+            if not dominated then
+                remaining[#remaining + 1] = idx
+            end
+        end
+    end
+
+    if #remaining == 0 then return nil end
+    if #remaining == 1 then return remaining[1] end
+
+    if props.class then
+        local narrowed = {}
+        for _, idx in ipairs(remaining) do
+            if not cache[idx].class or cache[idx].class == props.class then
+                narrowed[#narrowed + 1] = idx
+            end
+        end
+        if #narrowed == 1 then return narrowed[1] end
+        if #narrowed > 1 then remaining = narrowed end
+    end
+
+    if props.race then
+        local narrowed = {}
+        for _, idx in ipairs(remaining) do
+            if not cache[idx].race or cache[idx].race == props.race then
+                narrowed[#narrowed + 1] = idx
+            end
+        end
+        if #narrowed == 1 then return narrowed[1] end
+        if #narrowed > 1 then remaining = narrowed end
+    end
+
+    if props.power ~= nil then
+        local narrowed = {}
+        for _, idx in ipairs(remaining) do
+            if cache[idx].power == nil or cache[idx].power == props.power then
+                narrowed[#narrowed + 1] = idx
+            end
+        end
+        if #narrowed == 1 then return narrowed[1] end
+        if #narrowed > 1 then remaining = narrowed end
+    end
+
+    if props.sex then
+        local narrowed = {}
+        for _, idx in ipairs(remaining) do
+            if not cache[idx].sex or cache[idx].sex == props.sex then
+                narrowed[#narrowed + 1] = idx
+            end
+        end
+        if #narrowed == 1 then return narrowed[1] end
+        if #narrowed > 1 then remaining = narrowed end
+    end
+
+    if #remaining == 1 then return remaining[1] end
+    return nil
+end
+
 local function tagPlate(plate, idx)
     local oldIdx = plateToIndex[plate]
     if oldIdx and oldIdx ~= idx then
@@ -215,19 +294,29 @@ local function tryTagByFingerprint(plate)
     if plateToIndex[plate] then return true end
 
     local props = readUnitProps(frame.unit)
-    local candidates = {}
-    for i = 1, 3 do
-        if arenaCache[i] and not indexToPlate[i] then
-            if propsMatch(props, i) == true then
-                candidates[#candidates + 1] = i
-            end
-        end
-    end
 
-    if #candidates == 1 then
-        tagPlate(plate, candidates[1])
+    local allIndices = {}
+    for i = 1, 3 do
+        if arenaCache[i] then allIndices[#allIndices + 1] = i end
+    end
+    local idx = resolveIndex(props, arenaCache, allIndices)
+    if idx then
+        tagPlate(plate, idx)
         return true
     end
+
+    local untaggedIndices = {}
+    for i = 1, 3 do
+        if arenaCache[i] and not indexToPlate[i] then
+            untaggedIndices[#untaggedIndices + 1] = i
+        end
+    end
+    idx = resolveIndex(props, arenaCache, untaggedIndices)
+    if idx then
+        tagPlate(plate, idx)
+        return true
+    end
+
     return false
 end
 
@@ -254,33 +343,28 @@ local function learnViaIntermediary(plate, intermediary)
 end
 
 local function tryElimination()
-    local knownCount, missingIdx = 0, nil
-    local totalKnown = 0
-    for i = 1, 3 do
-        if arenaCache[i] then
-            totalKnown = totalKnown + 1
-            if indexToPlate[i] then
-                knownCount = knownCount + 1
-            else
-                missingIdx = i
+    for _ = 1, 2 do
+        for _, plate in ipairs(C_NamePlate.GetNamePlates()) do
+            if not plateToIndex[plate] then
+                local frame = plate.UnitFrame
+                if frame and frame.unit and isValidEnemy(frame.unit) then
+                    local props = readUnitProps(frame.unit)
+                    local matchIdx, matchCount = nil, 0
+                    for i = 1, 3 do
+                        if arenaCache[i] and not indexToPlate[i] then
+                            if propsMatch(props, i) ~= false then
+                                matchCount = matchCount + 1
+                                matchIdx = i
+                                if matchCount > 1 then break end
+                            end
+                        end
+                    end
+                    if matchCount == 1 then
+                        tagPlate(plate, matchIdx)
+                    end
+                end
             end
         end
-    end
-    if not missingIdx or knownCount ~= totalKnown - 1 then return end
-
-    local untagged = {}
-    for _, plate in ipairs(C_NamePlate.GetNamePlates()) do
-        local frame = plate.UnitFrame
-        if frame and frame.unit and isValidEnemy(frame.unit) and not plateToIndex[plate] then
-            local props = readUnitProps(frame.unit)
-            if propsMatch(props, missingIdx) ~= false then
-                untagged[#untagged + 1] = plate
-            end
-        end
-    end
-
-    if #untagged == 1 then
-        tagPlate(untagged[1], missingIdx)
     end
 end
 
@@ -458,19 +542,29 @@ local function tryTagPartyByFingerprint(plate)
     if partyPlateToIndex[plate] then return true end
 
     local props = readUnitProps(frame.unit)
-    local candidates = {}
-    for i = 1, 2 do
-        if partyCache[i] and not partyIndexToPlate[i] then
-            if partyPropsMatch(props, i) == true then
-                candidates[#candidates + 1] = i
-            end
-        end
-    end
 
-    if #candidates == 1 then
-        tagPartyPlate(plate, candidates[1])
+    local allIndices = {}
+    for i = 1, 2 do
+        if partyCache[i] then allIndices[#allIndices + 1] = i end
+    end
+    local idx = resolveIndex(props, partyCache, allIndices)
+    if idx then
+        tagPartyPlate(plate, idx)
         return true
     end
+
+    local untaggedIndices = {}
+    for i = 1, 4 do
+        if partyCache[i] and not partyIndexToPlate[i] then
+            untaggedIndices[#untaggedIndices + 1] = i
+        end
+    end
+    idx = resolveIndex(props, partyCache, untaggedIndices)
+    if idx then
+        tagPartyPlate(plate, idx)
+        return true
+    end
+
     return false
 end
 
@@ -480,7 +574,7 @@ local function learnPartyViaIntermediary(plate, intermediary)
     if not isValidFriendly(frame.unit) then return false end
     if not UnitIsUnit(frame.unit, intermediary) then return false end
 
-    for i = 1, 2 do
+    for i = 1, 4 do
         if UnitIsUnit(intermediary, "party" .. i) then
             local props = readUnitProps(frame.unit)
             if not partyCache[i] then partyCache[i] = {} end
@@ -495,33 +589,28 @@ local function learnPartyViaIntermediary(plate, intermediary)
 end
 
 local function tryPartyElimination()
-    local knownCount, missingIdx = 0, nil
-    local totalKnown = 0
-    for i = 1, 2 do
-        if partyCache[i] then
-            totalKnown = totalKnown + 1
-            if partyIndexToPlate[i] then
-                knownCount = knownCount + 1
-            else
-                missingIdx = i
+    for _ = 1, 2 do
+        for _, plate in ipairs(C_NamePlate.GetNamePlates()) do
+            if not partyPlateToIndex[plate] then
+                local frame = plate.UnitFrame
+                if frame and frame.unit and isValidFriendly(frame.unit) then
+                    local props = readUnitProps(frame.unit)
+                    local matchIdx, matchCount = nil, 0
+                    for i = 1, 4 do
+                        if partyCache[i] and not partyIndexToPlate[i] then
+                            if partyPropsMatch(props, i) ~= false then
+                                matchCount = matchCount + 1
+                                matchIdx = i
+                                if matchCount > 1 then break end
+                            end
+                        end
+                    end
+                    if matchCount == 1 then
+                        tagPartyPlate(plate, matchIdx)
+                    end
+                end
             end
         end
-    end
-    if not missingIdx or knownCount ~= totalKnown - 1 then return end
-
-    local untagged = {}
-    for _, plate in ipairs(C_NamePlate.GetNamePlates()) do
-        local frame = plate.UnitFrame
-        if frame and frame.unit and isValidFriendly(frame.unit) and not partyPlateToIndex[plate] then
-            local props = readUnitProps(frame.unit)
-            if partyPropsMatch(props, missingIdx) ~= false then
-                untagged[#untagged + 1] = plate
-            end
-        end
-    end
-
-    if #untagged == 1 then
-        tagPartyPlate(untagged[1], missingIdx)
     end
 end
 
@@ -636,7 +725,26 @@ f:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
 f:RegisterEvent("PLAYER_TARGET_CHANGED")
 f:RegisterEvent("PLAYER_FOCUS_CHANGED")
 f:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
+f:RegisterEvent("PLAYER_ENTERING_WORLD")
 f:SetScript("OnEvent", function(_, event, unitToken)
+
+    if event == "PLAYER_ENTERING_WORLD" then
+        C_Timer.After(0.5, function()
+            if not BBP.isInArena then return end
+            buildArenaCache()
+            buildPartyCache()
+            refreshAll()
+            refreshAllParty()
+            checkPendingUpdates()
+            for _, plate in ipairs(C_NamePlate.GetNamePlates()) do
+                local frame = plate and plate.UnitFrame
+                if frame and frame.unit then
+                    BBP.ArenaIndicatorCaller(frame)
+                end
+            end
+        end)
+        return
+    end
 
     if event == "PVP_MATCH_STATE_CHANGED" then
         local state = C_PvP.GetActiveMatchState()
