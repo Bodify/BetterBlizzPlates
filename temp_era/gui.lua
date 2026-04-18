@@ -6217,7 +6217,7 @@ local function guiPositionAndScale()
     partyPointerHideAll:SetPoint("TOPLEFT", partyPointerTargetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(partyPointerHideAll, "Hide All", "Hide everything except the Party Pointer for friendly nameplates that have the Party Pointer on them. Hides healthbar, castbar & name.")
 
-    anchorSubPointerIndicator.partyPointerHighlightScale = CreateSlider(contentFrame, "PP: Highlight Size", 0.8, 1.7, 0.01, "partyPointerHighlightScale", "X")
+    anchorSubPointerIndicator.partyPointerHighlightScale = CreateSlider(contentFrame, "PP: Highlight Size", 0.8, 1.7, 0.01, "partyPointerHighlightScale")
     anchorSubPointerIndicator.partyPointerHighlightScale:SetPoint("TOPLEFT", partyPointerHideAll, "BOTTOMLEFT", 2, -18)
     CreateTooltipTwo(anchorSubPointerIndicator.partyPointerHighlightScale, "Change the size of the Highlight. Requires Highlight enabled.")
 

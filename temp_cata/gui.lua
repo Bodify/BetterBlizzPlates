@@ -7260,7 +7260,7 @@ local function guiPositionAndScale()
     anchorSubPointerIndicator.partyPointerCCAuras:SetPoint("TOPLEFT", partyPointerHideAll, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubPointerIndicator.partyPointerCCAuras, "Show CC", "Show CC Overlay on Party Pointer", "This setting requires nameplate aura settings + PvP CC filter enabled.")
 
-    anchorSubPointerIndicator.partyPointerHighlightScale = CreateSlider(contentFrame, "PP: Highlight Size", 0.8, 1.7, 0.01, "partyPointerHighlightScale", "X")
+    anchorSubPointerIndicator.partyPointerHighlightScale = CreateSlider(contentFrame, "PP: Highlight Size", 0.8, 1.7, 0.01, "partyPointerHighlightScale")
     anchorSubPointerIndicator.partyPointerHighlightScale:SetPoint("TOPLEFT", anchorSubPointerIndicator.partyPointerCCAuras, "BOTTOMLEFT", 2, -18)
     CreateTooltipTwo(anchorSubPointerIndicator.partyPointerHighlightScale, "Change the size of the Highlight. Requires Highlight enabled.")
 

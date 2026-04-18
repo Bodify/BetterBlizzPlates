@@ -7834,7 +7834,7 @@ local function guiPositionAndScale()
     anchorSubPointerIndicator.partyPointerOnlyParty:SetPoint("TOPLEFT", anchorSubPointerIndicator.partyPointerHealerOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubPointerIndicator.partyPointerOnlyParty, "Party Only", "Only show Party Pointer for Party Members.")
 
-    anchorSubPointerIndicator.partyPointerHighlightScale = CreateSlider(contentFrame, "PP: Highlight Size", 0.8, 1.7, 0.01, "partyPointerHighlightScale", "X")
+    anchorSubPointerIndicator.partyPointerHighlightScale = CreateSlider(contentFrame, "PP: Highlight Size", 0.8, 1.7, 0.01, "partyPointerHighlightScale")
     anchorSubPointerIndicator.partyPointerHighlightScale:SetPoint("TOPLEFT", anchorSubPointerIndicator.partyPointerCCAuras, "BOTTOMLEFT", 2, -18)
     CreateTooltipTwo(anchorSubPointerIndicator.partyPointerHighlightScale, "Change the size of the Highlight. Requires Highlight enabled.")
 
