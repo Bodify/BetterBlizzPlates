@@ -5347,6 +5347,10 @@ function BBP.RepositionName(frame)
         else
             frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameXPos, db.fakeNameYPos + 4)
         end
+        if BetterBlizzPlatesDB.fakeNameMaxWidthOn then
+            frame.name:SetWidth(BetterBlizzPlatesDB.fakeNameMaxWidth)
+            frame.name:SetJustifyH(nameJustify[BetterBlizzPlatesDB.fakeNameAnchor] or "CENTER")
+        end
         frame.name.changing = false
     end
     if not frame.nameHooked then
@@ -5357,11 +5361,6 @@ function BBP.RepositionName(frame)
         frame.nameHooked = true
     end
     RepositionName(frame)
-
-    if config.fakeNameMaxWidthOn then
-        frame.name:SetWidth(config.fakeNameMaxWidth)
-        frame.name:SetJustifyH(nameJustify[config.fakeNameAnchor] or "CENTER")
-    end
 
     if config.fakeNameRaiseStrata then
         if not frame.newNameParent then
