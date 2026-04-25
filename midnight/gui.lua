@@ -1869,12 +1869,13 @@ local function ShowProfileConfirmation(profileName, class, profileFunction, addi
     StaticPopup_Show("BBP_CONFIRM_PROFILE", nil, nil, { func = profileFunction })
 end
 
-local function CreateClassButton(parent, class, name, twitchName, onClickFunc)
+local function CreateClassButton(parent, class, name, twitchName, onClickFunc, youtubeName)
     local bbpParent = parent == BetterBlizzPlates
     local coreProfile = class == "STARTER" or class == "BLITZ" or class == "MYTHIC" or class == "PREMIDNIGHT" or name == "Bodify"
     local btnWidth, btnHeight = bbpParent and 104 or (coreProfile and 150 or 114), bbpParent and 22 or 30
     local button = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
     button:SetSize(btnWidth, btnHeight)
+    button:SetScale(0.94)
 
     local dontIncludeProfileText = (bbpParent or not coreProfile) and "" or " Profile"
     local color = CLASS_COLORS[class] or "|cffffffff"
@@ -1915,7 +1916,15 @@ local function CreateClassButton(parent, class, name, twitchName, onClickFunc)
     elseif name == "Pre-Midnight" then
         CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), "A very basic profile that aims to be similar to how the nameplates looked like before Midnight. A few adjustments that can be tuned later on.", nil, "ANCHOR_TOP")
     else
-        CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), string.format("Enable all of %s's profile settings.", name), string.format("www.twitch.tv/%s", twitchName), "ANCHOR_TOP")
+        local socialText = ""
+        if twitchName then
+            socialText = string.format("www.twitch.tv/%s", twitchName)
+        end
+        if youtubeName then
+            if socialText ~= "" then socialText = socialText .. "\n" end
+            socialText = socialText .. string.format("www.youtube.com/@%s", youtubeName)
+        end
+        CreateTooltipTwo(button, string.format("|A:%s:16:16|a %s%s|r", icon, color, name.." Profile"), string.format("Enable all of %s's profile settings.", name), socialText ~= "" and socialText or nil, "ANCHOR_TOP")
     end
 
     return button
@@ -6306,7 +6315,7 @@ local function guiGeneralTab()
         local additionalNote = profile.name == "Starter" and "|cff808080(If you want to completely reset BBP there\nis a button in Advanced Settings)|r\n\n" or nil
         local button = CreateClassButton(BetterBlizzPlates, profile.class, profile.name, profile.twitchName, function()
             ShowProfileConfirmation(profile.name, profile.class, function() BBP.ApplyProfile(profile.name) end, additionalNote)
-        end)
+        end, profile.youtubeName)
         if profile.core then
             button:SetPoint("TOP", lastCoreButton, "BOTTOM", 0, lastCoreButton == profilesFrame.coreText and -3 or btnGap)
             lastCoreButton = button
@@ -13192,7 +13201,7 @@ function BBP.CreateIntroMessageWindow()
         if not profile.core then
             local button = CreateClassButton(BBP.IntroMessageWindow, profile.class, profile.name, profile.twitchName, function()
                 ShowProfileConfirmation(profile.name, profile.class, function() BBP.ApplyProfile(profile.name) end)
-            end)
+            end, profile.youtubeName)
 
             if columnFirstRow[colIndex] then
                 button:SetPoint("TOP", columnAnchors[colIndex], "BOTTOM", columnOffsets[colIndex], -10)

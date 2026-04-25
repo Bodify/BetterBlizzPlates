@@ -5393,7 +5393,7 @@ local function GetNPCTitle(unit)
 
     for i = 2, hiddenTooltip:NumLines() do
         local text = _G["HiddenTooltipTextLeft" .. i]:GetText()
-        if text then
+        if text and not issecretvalue(text) then
             if text:find(levelPattern) then
                 levelFound = true
                 break
@@ -7024,64 +7024,6 @@ function BBP.ConsolidatedUpdateName(frame)
     end
 
     --frame.name:SetFontHeight(cachedNameSize)
-
-    if info.isSelf then
-        if config.personalBarTweaks then
-            frame.name:Show()
-            frame.name:SetIgnoreParentScale(true)
-            frame.name:SetScale(BetterBlizzPlatesDB.friendlyNameScale+0.34)
-            local rpDB = TRP3_Configuration
-            if rpDB then
-                if rpDB.NamePlates_CustomizeNames then
-                    local rpNamesFull = rpDB.NamePlates_CustomizeNames == 1
-                    local rpNamesFirst = rpDB.NamePlates_CustomizeNames == 2
-                    local rpNamesLast = rpDB.NamePlates_CustomizeNames == 3
-                    if rpNamesFull then
-                        rpNamesFirst = true
-                        rpNamesLast = true
-                    end
-                    SetRPName(frame.name, "player", rpNamesFirst, rpNamesLast)
-                    -- first name == 2
-                    -- both == 1
-                    -- last == 3?
-                end
-                if rpDB.NamePlates_CustomizeNameColors then
-                    local r,g,b = GetRPNameColor("player")
-                    if r then
-                        frame.name:SetVertexColor(r,g,b)
-                    else
-                        local friendlyColorName = BetterBlizzPlatesDB.friendlyColorName
-                        local friendlyClassColorName = BetterBlizzPlatesDB.friendlyClassColorName
-                        if friendlyClassColorName then
-                            local _, class = UnitClass(frame.unit)
-                            local classColor = RAID_CLASS_COLORS[class]
-                            frame.name:SetVertexColor(classColor.r, classColor.g, classColor.b)
-                        elseif friendlyColorName then
-                            frame.name:SetVertexColor(unpack(BetterBlizzPlatesDB.friendlyColorNameRGB))
-                        else
-                            frame.name:SetVertexColor(1, 1, 0)
-                        end
-                    end
-                end
-                return
-            else
-                frame.name:SetText(UnitName("player"))
-            end
-
-            -- local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(frame.unit)
-            -- if ((isEnemy or isNeutral) and enemyClassColorName) or (isFriend and friendlyClassColorName) then
-            --     local _, class = UnitClass(frame.unit)
-            --     local classColor = RAID_CLASS_COLORS[class]
-            --     frame.name:SetVertexColor(classColor.r, classColor.g, classColor.b)
-            -- elseif ((isEnemy or isNeutral) and enemyColorName) or (isFriend and friendlyColorName) then
-            --     local color = isEnemy and BetterBlizzPlatesDB.enemyColorNameRGB or BetterBlizzPlatesDB.friendlyColorNameRGB
-            --     frame.name:SetVertexColor(unpack(color))
-            -- end
-
-        else
-            return
-        end
-    end
 
     -- Class color and scale names depending on their reaction
     BBP.ClassColorAndScaleNames(frame)

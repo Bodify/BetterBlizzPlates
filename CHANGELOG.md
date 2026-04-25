@@ -1,3 +1,10 @@
+# BetterBlizzPlates 2.0.0f
+## Midnight
+### New
+- New JustDiscipline profile (www.youtube.com/@JustDiscipline). Thank you for sharing!
+### Bugfix
+- Fix tooltip check causing secret error for npc titles.
+
 # BetterBlizzPlates 2.0.0e
 ## Midnight
 ### Bugfix
