@@ -4,7 +4,7 @@ local specIDToName = {
     -- Death Knight
     [250] = "Blood", [251] = "Frost", [252] = "Unholy",
     -- Demon Hunter
-    [577] = "Havoc", [581] = "Vengeance",
+    [577] = "Havoc", [581] = "Vengeance", [1480] = "Devourer",
     -- Druid
     [102] = "Balance", [103] = "Feral", [104] = "Guardian", [105] = "Restoration",
     -- Evoker
@@ -33,7 +33,7 @@ local specIDToNameShort = {
     -- Death Knight
     [250] = "Blood", [251] = "Frost", [252] = "Unholy",
     -- Demon Hunter
-    [577] = "Havoc", [581] = "Vengeance",
+    [577] = "Havoc", [581] = "Vengeance", [1480] = "Devourer",
     -- Druid
     [102] = "Balance", [103] = "Feral", [104] = "Guardian", [105] = "Resto",
     -- Evoker
@@ -65,16 +65,32 @@ local idCircleColor = {
 }
 
 local IsActiveBattlefieldArena = IsActiveBattlefieldArena
-local UnitIsUnit = UnitIsUnit
 local GetArenaOpponentSpec = GetArenaOpponentSpec
 
-local function isFistweaver(unit)
-    if BBP.fistweaverFound then return true end
-    local isFistweaver = AuraUtil.FindAuraByName("Ancient Teachings", unit, "HELPFUL")
-    if isFistweaver then
-        BBP.fistweaverFound = true
-        return true
+local function GetFrameSortID(unit)
+    if FrameSortApi then
+        return FrameSortApi.v3.Frame:FrameNumberForUnit(unit)
     end
+end
+
+local function GetFallbackClassName(unit)
+    local className = UnitClassBase(unit)
+    className = className:sub(1, 1):upper() .. className:sub(2):lower()
+    return className
+end
+
+local function GetSpecName(id, unit)
+    if not id then return GetFallbackClassName(unit) end
+    local short = BetterBlizzPlatesDB.shortArenaSpecName
+    return (short and specIDToNameShort[id]) or specIDToName[id]
+end
+
+local function UnitIsProbablyUnit(unit1, unit2)
+    if not UnitExists(unit1) or not UnitExists(unit2) then return end
+
+    return UnitClassBase(unit1) == UnitClassBase(unit2)
+       and UnitRace(unit1) == UnitRace(unit2)
+       and UnitHonorLevel(unit1) == UnitHonorLevel(unit2)
 end
 
 local function createSpexText(frame)
@@ -82,7 +98,7 @@ local function createSpexText(frame)
         frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
         --local db = BetterBlizzPlatesDB
         --BBP.SetFontBasedOnOption(frame.specNameText, 12, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or nil)
-        BBP.SetFontBasedOnOption(frame.specNameText, 12, "THINOUTLINE")
+        BBP.SetFontBasedOnOption(frame.specNameText, 12, "OUTLINE")
         frame.specNameText:SetIgnoreParentScale(true)
         if BetterBlizzPlatesDB.arenaIdAnchorRaiseStrata then
             frame.specNameText:SetParent(frame.bbpOverlay)
@@ -100,14 +116,14 @@ local function createSpexText(frame)
     else
         anchorPoint = "BOTTOM"
     end
-    
+
     return anchorPoint
 end
 
 local function createIDText(frame)
     if not frame.arenaNumberText then
         frame.arenaNumberText = frame:CreateFontString(nil, "BACKGROUND")
-        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "THINOUTLINE")
+        BBP.SetFontBasedOnOption(frame.arenaNumberText, 15, "OUTLINE")
         frame.arenaNumberText:SetIgnoreParentScale(true)
         if BetterBlizzPlatesDB.arenaIdAnchorRaiseStrata then
             frame.arenaNumberText:SetParent(frame.bbpOverlay)
@@ -135,7 +151,7 @@ end
 -- Arena Indicator for Arena Units
 -- Mode 1: Replace name with ID
 function BBP.ArenaIndicator1(frame)
-    local enemyClassColorName = BetterBlizzPlatesDB.enemyClassColorName or BetterBlizzPlatesDB.enemyColorName or BetterBlizzPlatesDB.enemyColorName
+    local enemyClassColorName = BetterBlizzPlatesDB.enemyClassColorName or BetterBlizzPlatesDB.enemyColorName
     local arenaIdAnchor = BetterBlizzPlatesDB.arenaIdAnchor
     local arenaIdXPos = BetterBlizzPlatesDB.arenaIdXPos
     local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
@@ -143,39 +159,8 @@ function BBP.ArenaIndicator1(frame)
     local idCircle = BetterBlizzPlatesDB.showCircleOnArenaID
     local idCircleOffset = idCircle and 1 or 0
 
-    if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
-        local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
-        for i, unit in ipairs(enemyUnits) do
-            if UnitIsUnit(frame.unit, unit) and UnitIsPlayer(unit) then
-                local r, g, b, a = 1, 1, 0, 1
-                if enemyClassColorName then
-                    r, g, b, a = frame.name:GetTextColor()
-                end
-
-                createIDText(frame)
-
-                frame.name:SetText("")
-                frame.name:SetAlpha(0)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
-                frame.arenaNumberText:SetText(i)
-                if enemyClassColorName then
-                    frame.arenaNumberText:SetTextColor(r, g, b, 1)
-                else
-                    frame.arenaNumberText:SetTextColor(1, 1, 0)
-                end
-                frame.arenaNumberText:SetScale(arenaIDScale)
-
-                if idCircle then
-                    addIdCircle(frame, i)
-                end
-                break
-            end
-        end
-        return
-    end
-
     for i = 1, 3 do
-        if UnitIsUnit(frame.unit, "arena" .. i) then
+        if UnitIsProbablyUnit(frame.unit, "arena" .. i) then
             local r, g, b, a = 1, 1, 0, 1
             if enemyClassColorName then
                 r, g, b, a = frame.name:GetTextColor()
@@ -185,7 +170,10 @@ function BBP.ArenaIndicator1(frame)
 
             frame.name:SetText("")
             frame.name:SetAlpha(0)
-            frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos + idCircleOffset, BetterBlizzPlatesDB.arenaIdYPos)
+            frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
+
+            i = GetFrameSortID("arena" .. i) or i
+
             frame.arenaNumberText:SetText(i)
             if enemyClassColorName then
                 frame.arenaNumberText:SetTextColor(r, g, b, 1)
@@ -212,37 +200,13 @@ function BBP.ArenaIndicator2(frame)
     local idCircle = BetterBlizzPlatesDB.showCircleOnArenaID
     local idCircleOffset = idCircle and 1 or 0
 
-    if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
-        local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
-        for i, unit in ipairs(enemyUnits) do
-            if UnitIsUnit(frame.unit, unit) and UnitIsPlayer(unit) then
-                local r, g, b, a = frame.name:GetTextColor()
-
-                createIDText(frame)
-
-                frame.arenaNumberText:SetText(i)
-                if enemyClassColorName then
-                    frame.arenaNumberText:SetTextColor(r, g, b, 1)
-                else
-                    frame.arenaNumberText:SetTextColor(1, 1, 0)
-                end
-                frame.arenaNumberText:SetScale(arenaIDScale)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos)
-
-                if idCircle then
-                    addIdCircle(frame, i)
-                end
-                break
-            end
-        end
-        return
-    end
-
     for i = 1, 3 do
-        if UnitIsUnit(frame.unit, "arena" .. i) then
+        if UnitIsProbablyUnit(frame.unit, "arena" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
 
             createIDText(frame)
+
+            i = GetFrameSortID("arena" .. i) or i
 
             frame.arenaNumberText:SetText(i)
             if enemyClassColorName then
@@ -263,76 +227,22 @@ end
 
 -- Mode 3: Replace name with Spec
 function BBP.ArenaIndicator3(frame)
-    local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
     local arenaSpecScale = BetterBlizzPlatesDB.arenaSpecScale
     local arenaSpecAnchor = BetterBlizzPlatesDB.arenaSpecAnchor
     local arenaSpecXPos = BetterBlizzPlatesDB.arenaSpecXPos
     local arenaSpecYPos = BetterBlizzPlatesDB.arenaSpecYPos
 
-    if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
-        local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
-        for i, unit in ipairs(enemyUnits) do
-            if UnitIsUnit(frame.unit, unit) and UnitIsPlayer(unit) then
-                local arenaIndex = tonumber(string.match(unit, "arena(%d+)"))
-                local specID = GetArenaOpponentSpec(arenaIndex)
-                local specName = specID and specIDToName[specID]
-
-                if shortArenaSpecName and specID then
-                    specName = specIDToNameShort[specID]
-                end
-                local r, g, b, a = frame.name:GetTextColor()
-
-                if not specName then
-                    local _, className = UnitClass(frame.unit)
-                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                    specName = className
-                end
-
-                local anchorPoint = createSpexText(frame)
-
-                frame.name:SetText("")
-                frame.name:SetAlpha(0)
-                frame.specNameText:SetText(specName)
-                if specID == 270 then
-                    if isFistweaver(frame.unit) then
-                        frame.specNameText:SetText("Fistweaver")
-                    end
-                end
-                frame.specNameText:SetTextColor(r, g, b, 1)
-                frame.specNameText:SetScale(arenaSpecScale)
-                frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
-                break
-            end
-        end
-        return
-    end
-
     for i = 1, 3 do
-        if UnitIsUnit(frame.unit, "arena" .. i) then
+        if UnitIsProbablyUnit(frame.unit, "arena" .. i) then
             local specID = GetArenaOpponentSpec(i)
-            local specName = specID and specIDToName[specID]
-
-            if shortArenaSpecName and specID then
-                specName = specIDToNameShort[specID]
-            end
+            local specName = GetSpecName(specID, "arena" .. i)
             local r, g, b, a = frame.name:GetTextColor()
-
-            if not specName then
-                local _, className = UnitClass("arena" .. i)
-                className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                specName = className
-            end
 
             local anchorPoint = createSpexText(frame)
 
             frame.name:SetText("")
             frame.name:SetAlpha(0)
             frame.specNameText:SetText(specName)
-            if specID == 270 then
-                if isFistweaver(frame.unit) then
-                    frame.specNameText:SetText("Fistweaver")
-                end
-            end
             frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(arenaSpecScale)
             frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
@@ -343,7 +253,6 @@ end
 
 -- Mode 4: Replace name with spec and ID on top
 function BBP.ArenaIndicator4(frame)
-    local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
     local arenaSpecScale = BetterBlizzPlatesDB.arenaSpecScale
     local arenaSpecAnchor = BetterBlizzPlatesDB.arenaSpecAnchor
     local arenaSpecXPos = BetterBlizzPlatesDB.arenaSpecXPos
@@ -356,74 +265,11 @@ function BBP.ArenaIndicator4(frame)
     local idCircle = BetterBlizzPlatesDB.showCircleOnArenaID
     local idCircleOffset = idCircle and 1 or 0
 
-    if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
-        local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
-        for i, unit in ipairs(enemyUnits) do
-            if UnitIsUnit(frame.unit, unit) and UnitIsPlayer(unit) then
-                local r, g, b, a = frame.name:GetTextColor()
-                local arenaIndex = tonumber(string.match(unit, "arena(%d+)"))
-                local specID = GetArenaOpponentSpec(arenaIndex)
-                local specName = specID and specIDToName[specID]
-
-                if shortArenaSpecName and specID then
-                    specName = specIDToNameShort[specID]
-                end
-
-                if not specName then
-                    local _, className = UnitClass(frame.unit)
-                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                    specName = className
-                end
-
-                local anchorPoint = createSpexText(frame)
-
-                createIDText(frame)
-
-                frame.name:SetText("")
-                frame.name:SetAlpha(0)
-                frame.specNameText:SetText(specName)
-                if specID == 270 then
-                    if isFistweaver(frame.unit) then
-                        frame.specNameText:SetText("Fistweaver")
-                    end
-                end
-                frame.specNameText:SetTextColor(r, g, b, 1)
-                frame.specNameText:SetScale(arenaSpecScale)
-                frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
-
-                frame.arenaNumberText:SetText(i)
-                if enemyClassColorName then
-                    frame.arenaNumberText:SetTextColor(r, g, b, 1)
-                else
-                    frame.arenaNumberText:SetTextColor(1, 1, 0)
-                end
-                frame.arenaNumberText:SetScale(arenaIDScale)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos + idCircleOffset, arenaIdYPos - 1)
-
-                if idCircle then
-                    addIdCircle(frame, i)
-                end
-                break
-            end
-        end
-        return
-    end
-
     for i = 1, 3 do
-        if UnitIsUnit(frame.unit, "arena" .. i) then
+        if UnitIsProbablyUnit(frame.unit, "arena" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
             local specID = GetArenaOpponentSpec(i)
-            local specName = specID and specIDToName[specID]
-
-            if shortArenaSpecName and specID then
-                specName = specIDToNameShort[specID]
-            end
-
-            if not specName then
-                local _, className = UnitClass("arena" .. i)
-                className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                specName = className
-            end
+            local specName = GetSpecName(specID, "arena" .. i)
 
             local anchorPoint = createSpexText(frame)
 
@@ -432,14 +278,11 @@ function BBP.ArenaIndicator4(frame)
             frame.name:SetText("")
             frame.name:SetAlpha(0)
             frame.specNameText:SetText(specName)
-            if specID == 270 then
-                if isFistweaver(frame.unit) then
-                    frame.specNameText:SetText("Fistweaver")
-                end
-            end
             frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(arenaSpecScale)
             frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
+
+            i = GetFrameSortID("arena" .. i) or i
 
             frame.arenaNumberText:SetText(i)
             if enemyClassColorName then
@@ -460,62 +303,20 @@ end
 
 -- Mode 5: Put ID and Spec on same line instead of name
 function BBP.ArenaIndicator5(frame)
-    local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
     local arenaSpecScale = BetterBlizzPlatesDB.arenaSpecScale
     local arenaSpecAnchor = BetterBlizzPlatesDB.arenaSpecAnchor
     local arenaSpecXPos = BetterBlizzPlatesDB.arenaSpecXPos
     local arenaSpecYPos = BetterBlizzPlatesDB.arenaSpecYPos
 
-    if FrameSortApi and FrameSortDB.Options.Sorting.EnemyArena.Enabled then
-        local enemyUnits = FrameSortApi.v2.Sorting:GetEnemyUnits()
-        for i, unit in ipairs(enemyUnits) do
-            if UnitIsUnit(frame.unit, unit) and UnitIsPlayer(unit) then
-                local r, g, b, a = frame.name:GetTextColor()
-                local arenaIndex = tonumber(string.match(unit, "arena(%d+)"))
-                local specID = GetArenaOpponentSpec(arenaIndex)
-                local specName = specID and specIDToName[specID]
-
-                if shortArenaSpecName and specID then
-                    specName = specIDToNameShort[specID]
-                end
-
-                if not specName then
-                    local _, className = UnitClass(frame.unit)
-                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                    specName = className
-                end
-
-                local anchorPoint = createSpexText(frame)
-
-                frame.name:SetText("")
-                frame.name:SetAlpha(0)
-                frame.specNameText:SetText(specName .. " " .. i)
-                frame.specNameText:SetTextColor(r, g, b, 1)
-                frame.specNameText:SetScale(arenaSpecScale)
-                frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
-                break
-            end
-        end
-        return
-    end
-
     for i = 1, 3 do
-        if UnitIsUnit(frame.unit, "arena" .. i) then
+        if UnitIsProbablyUnit(frame.unit, "arena" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
             local specID = GetArenaOpponentSpec(i)
-            local specName = specID and specIDToName[specID]
-
-            if shortArenaSpecName and specID then
-                specName = specIDToNameShort[specID]
-            end
-
-            if not specName then
-                local _, className = UnitClass("arena" .. i)
-                className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                specName = className
-            end
+            local specName = GetSpecName(specID, "arena" .. i)
 
             local anchorPoint = createSpexText(frame)
+
+            i = GetFrameSortID("arena" .. i) or i
 
             frame.name:SetText("")
             frame.name:SetAlpha(0)
@@ -537,36 +338,13 @@ function BBP.PartyIndicator1(frame)
     local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
     local partyIDScale = BetterBlizzPlatesDB.partyIDScale
 
-    if FrameSortApi and (FrameSortDB.Options.Sorting.Arena.Default.Enabled or FrameSortDB.Options.Sorting.Arena.Twos.Enabled) then
-        local friendlyUnits = FrameSortApi.v2.Sorting:GetFriendlyUnits()
-        local instanceSize = GetNumGroupMembers()
-        local reduceID = (FrameSortDB.Options.Sorting.Arena.Twos.PlayerSortMode == "Top" and instanceSize == 2) or (FrameSortDB.Options.Sorting.Arena.Default.PlayerSortMode == "Top" and instanceSize == 3)
-        for i, unit in ipairs(friendlyUnits) do
-            if UnitIsUnit(frame.unit, unit) then
-                local r, g, b, a = frame.name:GetTextColor()
-
-                createIDText(frame)
-
-                local displayNumber = i
-                if reduceID and i > 1 then
-                    displayNumber = i - 1
-                end
-                frame.name:SetText("")
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
-                frame.arenaNumberText:SetText(displayNumber)
-                frame.arenaNumberText:SetTextColor(r, g, b, 1)
-                frame.arenaNumberText:SetScale(partyIDScale)
-                break
-            end
-        end
-        return
-    end
-
     for i = 1, 3 do
-        if UnitIsUnit(frame.unit, "party" .. i) then
+        if UnitIsProbablyUnit(frame.unit, "party" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
 
             createIDText(frame)
+
+            i = GetFrameSortID("party" .. i) or i
 
             frame.name:SetText("")
             frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
@@ -585,35 +363,13 @@ function BBP.PartyIndicator2(frame)
     local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
     local partyIDScale = BetterBlizzPlatesDB.partyIDScale
 
-    if FrameSortApi and (FrameSortDB.Options.Sorting.Arena.Default.Enabled or FrameSortDB.Options.Sorting.Arena.Twos.Enabled) then
-        local friendlyUnits = FrameSortApi.v2.Sorting:GetFriendlyUnits()
-        local instanceSize = GetNumGroupMembers()
-        local reduceID = (FrameSortDB.Options.Sorting.Arena.Twos.PlayerSortMode == "Top" and instanceSize == 2) or (FrameSortDB.Options.Sorting.Arena.Default.PlayerSortMode == "Top" and instanceSize == 3)
-        for i, unit in ipairs(friendlyUnits) do
-            if UnitIsUnit(frame.unit, unit) then
-                local r, g, b, a = frame.name:GetTextColor()
-
-                createIDText(frame)
-
-                local displayNumber = i
-                if reduceID and i > 1 then
-                    displayNumber = i - 1
-                end
-                frame.arenaNumberText:SetText(displayNumber)
-                frame.arenaNumberText:SetTextColor(r, g, b, 1)
-                frame.arenaNumberText:SetScale(partyIDScale)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.name, arenaIdAnchor, arenaIdXPos, arenaIdYPos)
-                break
-            end
-        end
-        return
-    end
-
     for i = 1, 3 do
-        if UnitIsUnit(frame.unit, "party" .. i) then
+        if UnitIsProbablyUnit(frame.unit, "party" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
 
             createIDText(frame)
+
+            i = GetFrameSortID("party" .. i) or i
 
             frame.arenaNumberText:SetText(i)
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
@@ -626,58 +382,16 @@ end
 
 -- Mode 3: Replace name with Spec
 function BBP.PartyIndicator3(frame)
-    local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
     local partySpecScale = BetterBlizzPlatesDB.partySpecScale
     local arenaSpecAnchor = BetterBlizzPlatesDB.arenaSpecAnchor
     local arenaSpecXPos = BetterBlizzPlatesDB.arenaSpecXPos
     local arenaSpecYPos = BetterBlizzPlatesDB.arenaSpecYPos
 
-    if FrameSortApi and (FrameSortDB.Options.Sorting.Arena.Default.Enabled or FrameSortDB.Options.Sorting.Arena.Twos.Enabled) then
-        local friendlyUnits = FrameSortApi.v2.Sorting:GetFriendlyUnits()
-        for i, unit in ipairs(friendlyUnits) do
-            if UnitIsUnit(frame.unit, unit) then
-                local specID = BBP.GetSpecID(frame)
-                local specName = specID and specIDToName[specID]
-
-                if shortArenaSpecName and specID then
-                    specName = specIDToNameShort[specID]
-                end
-                local r, g, b, a = frame.name:GetTextColor()
-
-                if not specName then
-                    local _, className = UnitClass(frame.unit)
-                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                    specName = className
-                end
-
-                local anchorPoint = createSpexText(frame)
-
-                frame.name:SetText("")
-                frame.specNameText:SetText(specName)
-                frame.specNameText:SetTextColor(r, g, b, 1)
-                frame.specNameText:SetScale(partySpecScale)
-                frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
-                break
-            end
-        end
-        return
-    end
-
     for i = 1, 3 do
-        if UnitIsUnit(frame.unit, "party" .. i) then
+        if UnitIsProbablyUnit(frame.unit, "party" .. i) then
             local specID = BBP.GetSpecID(frame)
-            local specName = specID and specIDToName[specID]
-
-            if shortArenaSpecName and specID then
-                specName = specIDToNameShort[specID]
-            end
+            local specName = GetSpecName(specID, "party" .. i)
             local r, g, b, a = frame.name:GetTextColor()
-
-            if not specName then
-                local _, className = UnitClass("party" .. i)
-                className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                specName = className
-            end
 
             local anchorPoint = createSpexText(frame)
 
@@ -693,7 +407,6 @@ end
 
 -- Mode 4: Replace name with spec and ID on top
 function BBP.PartyIndicator4(frame)
-    local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
     local partySpecScale = BetterBlizzPlatesDB.partySpecScale
     local arenaSpecAnchor = BetterBlizzPlatesDB.arenaSpecAnchor
     local arenaSpecXPos = BetterBlizzPlatesDB.arenaSpecXPos
@@ -703,69 +416,17 @@ function BBP.PartyIndicator4(frame)
     local arenaIdXPos = BetterBlizzPlatesDB.arenaIdXPos
     local arenaIdYPos = BetterBlizzPlatesDB.arenaIdYPos
 
-    if FrameSortApi and (FrameSortDB.Options.Sorting.Arena.Default.Enabled or FrameSortDB.Options.Sorting.Arena.Twos.Enabled) then
-        local friendlyUnits = FrameSortApi.v2.Sorting:GetFriendlyUnits()
-        local instanceSize = GetNumGroupMembers()
-        local reduceID = (FrameSortDB.Options.Sorting.Arena.Twos.PlayerSortMode == "Top" and instanceSize == 2) or (FrameSortDB.Options.Sorting.Arena.Default.PlayerSortMode == "Top" and instanceSize == 3)
-        for i, unit in ipairs(friendlyUnits) do
-            if UnitIsUnit(frame.unit, unit) then
-                local r, g, b, a = frame.name:GetTextColor()
-                local specID = BBP.GetSpecID(frame)
-                local specName = specID and specIDToName[specID]
-
-                if shortArenaSpecName and specID then
-                    specName = specIDToNameShort[specID]
-                end
-
-                if not specName then
-                    local _, className = UnitClass(frame.unit)
-                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                    specName = className
-                end
-
-                local anchorPoint = createSpexText(frame)
-
-                createIDText(frame)
-
-                frame.name:SetText("")
-                frame.specNameText:SetText(specName)
-                frame.specNameText:SetTextColor(r, g, b, 1)
-                frame.specNameText:SetScale(partySpecScale)
-                frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
-
-                local displayNumber = i
-                if reduceID and i > 1 then
-                    displayNumber = i - 1
-                end
-                frame.arenaNumberText:SetText(displayNumber)
-                frame.arenaNumberText:SetTextColor(r, g, b, 1)
-                frame.arenaNumberText:SetScale(partyIDScale)
-                frame.arenaNumberText:SetPoint("BOTTOM", frame.specNameText, arenaIdAnchor, arenaIdXPos, arenaIdYPos - 1)
-                break
-            end
-        end
-        return
-    end
-
     for i = 1, 3 do
-        if UnitIsUnit(frame.unit, "party" .. i) then
+        if UnitIsProbablyUnit(frame.unit, "party" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
             local specID = BBP.GetSpecID(frame)
-            local specName = specID and specIDToName[specID]
-
-            if shortArenaSpecName and specID then
-                specName = specIDToNameShort[specID]
-            end
-
-            if not specName then
-                local _, className = UnitClass("party" .. i)
-                className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                specName = className
-            end
+            local specName = GetSpecName(specID, "party" .. i)
 
             local anchorPoint = createSpexText(frame)
 
             createIDText(frame)
+
+            i = GetFrameSortID("party" .. i) or i
 
             frame.name:SetText("")
             frame.specNameText:SetText(specName)
@@ -784,66 +445,20 @@ end
 
 -- Mode 5: Put ID and Spec on same line instead of name
 function BBP.PartyIndicator5(frame)
-    local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
     local partySpecScale = BetterBlizzPlatesDB.partySpecScale
     local arenaSpecAnchor = BetterBlizzPlatesDB.arenaSpecAnchor
     local arenaSpecXPos = BetterBlizzPlatesDB.arenaSpecXPos
     local arenaSpecYPos = BetterBlizzPlatesDB.arenaSpecYPos
 
-    if FrameSortApi and (FrameSortDB.Options.Sorting.Arena.Default.Enabled or FrameSortDB.Options.Sorting.Arena.Twos.Enabled) then
-        local friendlyUnits = FrameSortApi.v2.Sorting:GetFriendlyUnits()
-        local instanceSize = GetNumGroupMembers()
-        local reduceID = (FrameSortDB.Options.Sorting.Arena.Twos.PlayerSortMode == "Top" and instanceSize == 2) or (FrameSortDB.Options.Sorting.Arena.Default.PlayerSortMode == "Top" and instanceSize == 3)
-        for i, unit in ipairs(friendlyUnits) do
-            if UnitIsUnit(frame.unit, unit) then
-                local r, g, b, a = frame.name:GetTextColor()
-                local specID = BBP.GetSpecID(frame)
-                local specName = specID and specIDToName[specID]
-
-                if shortArenaSpecName and specID then
-                    specName = specIDToNameShort[specID]
-                end
-
-                if not specName then
-                    local _, className = UnitClass(frame.unit)
-                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                    specName = className
-                end
-
-                local anchorPoint = createSpexText(frame)
-
-                frame.name:SetText("")
-                local displayNumber = i
-                if reduceID and i > 1 then
-                    displayNumber = i - 1
-                end
-                frame.specNameText:SetText(specName .. " " .. displayNumber)
-                frame.specNameText:SetTextColor(r, g, b, 1)
-                frame.specNameText:SetScale(partySpecScale)
-                frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
-                break
-            end
-        end
-        return
-    end
-
     for i = 1, 3 do
-        if UnitIsUnit(frame.unit, "party" .. i) then
+        if UnitIsProbablyUnit(frame.unit, "party" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
             local specID = BBP.GetSpecID(frame)
-            local specName = specID and specIDToName[specID]
-
-            if shortArenaSpecName and specID then
-                specName = specIDToNameShort[specID]
-            end
-
-            if not specName then
-                local _, className = UnitClass("party" .. i)
-                className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                specName = className
-            end
+            local specName = GetSpecName(specID, "party" .. i)
 
             local anchorPoint = createSpexText(frame)
+
+            i = GetFrameSortID("party" .. i) or i
 
             frame.name:SetText("")
             frame.specNameText:SetText(specName .. " " .. i)
@@ -1045,7 +660,7 @@ end
 -- Mode 1: Replace name with ID 
 function BBP.TestPartyIndicator1(frame)
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
+        if UnitIsFriend("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
             createIDText(frame)
@@ -1064,7 +679,7 @@ end
 -- Mode 2: Put ID on top of name
 function BBP.TestPartyIndicator2(frame)
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
+        if UnitIsFriend("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
             createIDText(frame)
@@ -1081,7 +696,7 @@ end
 -- Mode 3: Replace name with Spec
 function BBP.TestPartyIndicator3(frame)
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
+        if UnitIsFriend("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
             local anchorPoint = createSpexText(frame)
@@ -1104,7 +719,7 @@ end
 -- Mode 4: Replace name with spec and ID on top
 function BBP.TestPartyIndicator4(frame)
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
+        if UnitIsFriend("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
             local anchorPoint = createSpexText(frame)
@@ -1133,7 +748,7 @@ end
 -- Mode 5: Put ID and Spec on same line instead of name
 function BBP.TestPartyIndicator5(frame)
     for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
-        if UnitIsFriend("player", frame.unit) and not UnitIsUnit("player", frame.unit) then
+        if UnitIsFriend("player", frame.unit) then
             local r, g, b, a = frame.name:GetTextColor()
 
             local anchorPoint = createSpexText(frame)
@@ -1179,7 +794,7 @@ function BBP.ArenaIndicatorCaller(frame)
         local unitType
         if UnitIsEnemy("player", frame.unit) then
             unitType = "arena"
-        elseif not UnitIsUnit("player", frame.unit) then
+        else
             unitType = "party"
         end
 
@@ -1223,7 +838,7 @@ function BBP.ArenaIndicatorCaller(frame)
         local unitType
         if UnitIsEnemy("player", frame.unit) or (UnitReaction(frame.unit, "player") or 0) < 5 then
             unitType = "arena"
-        elseif not UnitIsUnit("player", frame.unit) then
+        else
             unitType = "party"
         end
 
@@ -1291,23 +906,14 @@ function BBP.BattlegroundSpecNames(frame)
     else
 
         local db = BetterBlizzPlatesDB
-        local shortArenaSpecName = db.shortArenaSpecName
         local arenaSpecScale = db.arenaSpecScale
         local arenaSpecAnchor = db.arenaSpecAnchor
         local arenaSpecXPos = db.arenaSpecXPos
         local arenaSpecYPos = db.arenaSpecYPos
 
         local specID = BBP.GetSpecID(frame)
-        local specName = specID and specIDToName[specID]
-
-        if shortArenaSpecName and specID then
-            specName = specIDToNameShort[specID]
-        end
+        local specName = GetSpecName(specID, frame.unit)
         local r, g, b, a = frame.name:GetTextColor()
-
-        if not specName then
-            specName = UnitName(frame.unit)
-        end
 
         local anchorPoint = createSpexText(frame)
 

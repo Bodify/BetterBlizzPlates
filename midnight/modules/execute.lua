@@ -1,3 +1,5 @@
+local LSM = LibStub("LibSharedMedia-3.0")
+
 local executeCurve
 local executeCurveThreshold
 
@@ -198,7 +200,16 @@ function BBP.ExecuteIndicator(frame)
             frame.executeColorOverlay = frame.healthBar:CreateTexture(nil, "ARTWORK", nil, 1)
             frame.executeColorOverlay:SetAllPoints(frame.healthBar:GetStatusBarTexture())
         end
-        if BetterBlizzPlatesDB.useCustomTextureForBars then
+        local db = BetterBlizzPlatesDB
+        local overrideTex
+        if db.targetIndicatorChangeTexture and frame.unit and UnitIsUnit(frame.unit, "target") then
+            overrideTex = LSM:Fetch(LSM.MediaType.STATUSBAR, db.targetIndicatorTexture)
+        elseif db.focusTargetIndicatorChangeTexture and frame.unit and UnitIsUnit(frame.unit, "focus") then
+            overrideTex = LSM:Fetch(LSM.MediaType.STATUSBAR, db.focusTargetIndicatorTexture)
+        end
+        if overrideTex then
+            frame.executeColorOverlay:SetTexture(overrideTex)
+        elseif db.useCustomTextureForBars then
             frame.executeColorOverlay:SetTexture(frame.healthBar:GetStatusBarTexture():GetTexture())
         else
             frame.executeColorOverlay:SetAtlas(frame.healthBar:GetStatusBarTexture():GetAtlas())

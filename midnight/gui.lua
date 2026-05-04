@@ -1255,6 +1255,11 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         C_CVar.SetCVar("nameplateMaxAlpha", value)
                         BetterBlizzPlatesDB.nameplateMaxAlpha = value
                     end
+                elseif element == "nameplateSimplifiedScale" then
+                    if not BBP.checkCombatAndWarn() then
+                        C_CVar.SetCVar("nameplateSimplifiedScale", value)
+                        BetterBlizzPlatesDB.nameplateSimplifiedScale = value
+                    end
                 elseif element == "nameplateMaxAlphaDistance" then
                     if not BBP.checkCombatAndWarn() then
                         C_CVar.SetCVar("nameplateMaxAlphaDistance", value)

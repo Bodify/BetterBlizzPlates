@@ -658,7 +658,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                     frame.executeIndicatorTexture:SetColorTexture(0, 0, 0, 1)
                 end
 
-                if db.executeIndicatorTargetOnly then
+                if db.executeIndicatorTargetOnly or db.executeIndicatorInRangeColor then
                     BBP.ExecuteIndicator(frame)
                 end
             end
@@ -689,7 +689,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 if frame.executeIndicatorTexture then
                     frame.executeIndicatorTexture:SetColorTexture(unpack(db.npBorderTargetColorRGB))
                 end
-                if db.executeIndicatorTargetOnly then
+                if db.executeIndicatorTargetOnly or db.executeIndicatorInRangeColor then
                     BBP.ExecuteIndicator(frame)
                 end
             end
@@ -810,6 +810,10 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
         end
         BBP.CompactUnitFrame_UpdateHealthColor(frame)
 
+        if BetterBlizzPlatesDB.executeIndicator and BetterBlizzPlatesDB.executeIndicatorInRangeColor then
+            BBP.ExecuteIndicator(frame)
+        end
+
         BBP.previousFocusNameplate = nil
     end
 
@@ -827,6 +831,9 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
         -- info.wasFocus = nil
         --local info = frame.BetterBlizzPlates.unitInfo
         if config.focusTargetIndicator then BBP.FocusTargetIndicator(frame) end
+        if BetterBlizzPlatesDB.executeIndicator and BetterBlizzPlatesDB.executeIndicatorInRangeColor then
+            BBP.ExecuteIndicator(frame)
+        end
         BBP.previousFocusNameplate = frame
     end
     if BetterBlizzPlatesDB.enableNpNonTargetAlpha and BetterBlizzPlatesDB.enableNpNonFocusAlpha then NameplateTargetAlphaAllNps() end

@@ -42,7 +42,7 @@ local petSummonSpells = {
 -- Function to find and return the interrupt spell the player knows
 local function GetInterruptSpell()
     for _, spellID in ipairs(interruptSpells) do
-        if IsSpellKnownOrOverridesKnown(spellID) or (UnitExists("pet") and IsSpellKnownOrOverridesKnown(spellID, true)) then
+        if IsSpellKnownOrOverridesKnown(spellID) or (UnitExists("pet") and IsSpellKnownOrOverridesKnown(spellID, true)) or IsSpellKnown(spellID) then
             knownInterruptSpellID = spellID
             petSummonSpells[spellID] = true
             return spellID

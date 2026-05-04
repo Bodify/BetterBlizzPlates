@@ -2088,30 +2088,39 @@ end
 
 --#################################################################################################
 -- Set custom healthbar texture
+local function applyExtraBarTexture(tex, setting)
+    if not tex then return end
+    if not tex.bbpTextureHooked then
+        tex.bbpTextureHooked = true
+        hooksecurefunc(tex, "SetTexture", function(self)
+            if self.changingTexture then return end
+            if self.bbpTexture then
+                self.changingTexture = true
+                self:SetTexture(self.bbpTexture)
+                self.changingTexture = false
+            end
+        end)
+    end
+    tex.bbpTexture = setting
+    tex.changingTexture = true
+    tex:SetTexture(setting)
+    tex.changingTexture = false
+end
+
 local function textureExtraBars(frame, setting)
     local extraBars = BetterBlizzPlatesDB.useCustomTextureForExtraBars
     if extraBars then
-        if frame.otherHealPrediction then
-            frame.otherHealPrediction:SetTexture(setting)
-        end
-        if frame.myHealPrediction then
-            frame.myHealPrediction:SetTexture(setting)
-        end
-        if frame.totalAbsorb then
-            frame.totalAbsorb:SetTexture(setting)
-        end
-        if frame.ManaCostPredictionBar then
-            frame.ManaCostPredictionBar:SetTexture(setting)
-        end
+        applyExtraBarTexture(frame.otherHealPrediction, setting)
+        applyExtraBarTexture(frame.myHealPrediction, setting)
+        applyExtraBarTexture(frame.totalAbsorb, setting)
+        applyExtraBarTexture(frame.ManaCostPredictionBar, setting)
         if frame.FeedbackFrame then
-            frame.FeedbackFrame.BarTexture:SetTexture(setting)
+            applyExtraBarTexture(frame.FeedbackFrame.BarTexture, setting)
+            applyExtraBarTexture(frame.FeedbackFrame.GainGlowTexture, setting)
+            applyExtraBarTexture(frame.FeedbackFrame.LossGlowTexture, setting)
         end
-        if frame.myHealAbsorb then
-            frame.myHealAbsorb:SetTexture(setting)
-        end
-        -- if frame.totalAbsorbOverlay then
-        --     frame.totalAbsorbOverlay:SetTexture(setting)
-        -- end
+        applyExtraBarTexture(frame.myHealAbsorb, setting)
+        -- applyExtraBarTexture(frame.totalAbsorbOverlay, setting)
     end
 end
 
@@ -2512,6 +2521,10 @@ local function SetCVarsOnLogin()
 
         if BetterBlizzPlatesDB.nameplateDebuffPadding then
             C_CVar.SetCVar("nameplateDebuffPadding", BetterBlizzPlatesDB.nameplateDebuffPadding)
+        end
+
+        if BetterBlizzPlatesDB.nameplateSimplifiedScale then
+            C_CVar.SetCVar("nameplateSimplifiedScale", BetterBlizzPlatesDB.nameplateSimplifiedScale)
         end
 
         if BetterBlizzPlatesDB.fixedNameplateStyle and BetterBlizzPlatesDB.nameplateStyle then
@@ -6022,11 +6035,13 @@ local function GetSpecID(frame)
     local guid = UnitGUID(frame.unit)
     if issecretvalue(guid) then
         if BBP.isInArena then
-            local i = BBP.GetArenaIndexByFrame(frame)
-            if i then
-                local specID = GetArenaOpponentSpec(i)
-                if specID then
-                    return specID
+            for i = 1, 3 do
+                local arenaUnit = "arena"..i
+                if BBP.UnitIsProbablyUnit(frame.unit, arenaUnit) then
+                    local specID = GetArenaOpponentSpec(i)
+                    if specID then
+                        return specID
+                    end
                 end
             end
         end
@@ -6074,11 +6089,13 @@ local function IsSpecHealer(frame)
     local guid = UnitGUID(unit)
     if issecretvalue(guid) then
         if BBP.isInArena then
-            local i = BBP.GetArenaIndexByFrame(frame)
-            if i then
-                local specID = GetArenaOpponentSpec(i)
-                if specID then
-                    return HEALER_SPEC_IDS[specID] or false
+            for i = 1, 3 do
+                local arenaUnit = "arena"..i
+                if BBP.UnitIsProbablyUnit(frame.unit, arenaUnit) then
+                    local specID = GetArenaOpponentSpec(i)
+                    if specID then
+                        return HEALER_SPEC_IDS[specID] or false
+                    end
                 end
             end
         end
@@ -6368,6 +6385,21 @@ local function HandleNamePlateAdded(unit)
         local castTexture = newBar:GetStatusBarTexture()
         if not BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.classicRetailNameplates then
             BBP.ApplyMidnightMask(frame, castTexture)
+        end
+
+        local totalAbsorbOverlay = frame.HealthBarsContainer.healthBar.totalAbsorbOverlay
+        if totalAbsorbOverlay and not totalAbsorbOverlay:IsForbidden() and not totalAbsorbOverlay.bbpRetextured then
+            totalAbsorbOverlay:SetTexture("Interface\\RaidFrame\\Shield-Overlay", "REPEAT", "REPEAT")
+            totalAbsorbOverlay:SetHorizTile(true)
+            totalAbsorbOverlay:SetVertTile(true)
+            totalAbsorbOverlay:SetVertexColor(1, 1, 1, 1)
+            totalAbsorbOverlay.bbpRetextured = true
+        end
+
+        if frame.totalAbsorb and not frame.totalAbsorb:IsForbidden() and not frame.totalAbsorb.bbpMidnightMasked then
+            BBP.ApplyMidnightMask(frame, frame.totalAbsorb)
+            frame.totalAbsorb:SetVertexColor(1, 1, 1, 1)
+            frame.totalAbsorb.bbpMidnightMasked = true
         end
 
         -- BPP.isMidnight temp nameplate tweaks
@@ -7318,7 +7350,6 @@ local function CheckIfInInstance(self, event, ...)
         if event ~= "ZONE_CHANGED" then
             SpecCache = {}
             SetNameplateBehavior()
-            BBP.fistweaverFound = nil
         end
         if BetterBlizzPlatesDB.factionIndicator then
             for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
