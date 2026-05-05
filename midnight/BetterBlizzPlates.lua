@@ -2238,7 +2238,7 @@ function BBP.ApplyCustomTextureToNameplate(frame)
             textureExtraBars(frame, config.customTexture)
         elseif BBP.needsUpdate then
             frame.healthBar:SetStatusBarTexture(defaultTex)
-            textureExtraBars(frame, defaultTex)
+            textureExtraBars(frame, "Interface/TargetingFrame/UI-TargetingFrame-BarFill")
         end
     elseif info.isFriend then
         if config.useCustomTextureForFriendly then
@@ -2246,20 +2246,20 @@ function BBP.ApplyCustomTextureToNameplate(frame)
             textureExtraBars(frame, config.customTextureFriendly)
         elseif BBP.needsUpdate then
             frame.healthBar:SetStatusBarTexture(defaultTex)
-            textureExtraBars(frame, defaultTex)
+            textureExtraBars(frame, "Interface/TargetingFrame/UI-TargetingFrame-BarFill")
         else
             frame.healthBar:SetStatusBarTexture(defaultTex)
-            textureExtraBars(frame, defaultTex)
+            textureExtraBars(frame, "Interface/TargetingFrame/UI-TargetingFrame-BarFill")
         end
     elseif BBP.needsUpdate then--or info.wasFocus or info.wasTarget then
         frame.healthBar:SetStatusBarTexture(defaultTex)
-        textureExtraBars(frame, defaultTex)
+        textureExtraBars(frame, "Interface/TargetingFrame/UI-TargetingFrame-BarFill")
         if not config.useCustomTextureForSelfMana then
             ClassNameplateManaBarFrame:SetStatusBarTexture(defaultTex)
         end
     else
         frame.healthBar:SetStatusBarTexture(defaultTex)
-        textureExtraBars(frame, defaultTex)
+        textureExtraBars(frame, "Interface/TargetingFrame/UI-TargetingFrame-BarFill")
     end
 end
 
@@ -4528,8 +4528,8 @@ function BBP.ChangeRaidmarker()
 end
 
 function BBP.RefUnitAuraTotally(unitFrame)
-    local unit = unitFrame.unit
-    BBP.UpdateBuffs(unitframe.AurasFrame, unit, nil, {}, unitFrame)
+    --local unit = unitFrame.unit
+    --BBP.UpdateBuffs(unitFrame.AurasFrame, unit, nil, {}, unitFrame)
 end
 
 local auraModuleIsOn = false

@@ -139,7 +139,7 @@ local function AdjustAbsorbGlow(absorbGlow, anchorBar, clamped)
     absorbGlow:SetWidth(13)
 end
 
-local function CreateOvershieldBar(frame, healthBar, prd)
+local function CreateOvershieldBar(frame, healthBar, higherLayer)
     local overshieldBar = CreateFrame("StatusBar", nil, healthBar)
     overshieldBar:SetAllPoints(healthBar)
     overshieldBar:SetReverseFill(true)
@@ -151,13 +151,13 @@ local function CreateOvershieldBar(frame, healthBar, prd)
     barTex:SetTexture("Interface\\RaidFrame\\Shield-Overlay", "REPEAT", "REPEAT")
     barTex:SetHorizTile(true)
     barTex:SetVertTile(true)
-    if not prd then
+    if higherLayer then
+        barTex:SetDrawLayer("ARTWORK", 1)
+    else
         barTex:SetDrawLayer("ARTWORK", -3)
         hooksecurefunc(frame, "UpdateAnchors", function()
             AdjustAbsorbGlow(healthBar.overAbsorbGlow, overshieldBar, frame.healPredictionCalcClamped)
         end)
-    else
-        barTex:SetDrawLayer("ARTWORK", 3)
     end
 
     return overshieldBar
@@ -200,6 +200,7 @@ function BBP.HookOverShieldPersonalResourceDisplay()
     prdEvents:RegisterUnitEvent("UNIT_HEAL_ABSORB_AMOUNT_CHANGED", "player")
     prdEvents:RegisterUnitEvent("UNIT_HEALTH", "player")
     prdEvents:RegisterUnitEvent("UNIT_MAXHEALTH", "player")
+    prdEvents:RegisterEvent("PLAYER_REGEN_DISABLED")
 
     totalAbsorbOverlay:SetTexture("Interface\\RaidFrame\\Shield-Overlay", "REPEAT", "REPEAT")
     totalAbsorbOverlay:SetHorizTile(true)

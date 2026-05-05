@@ -1,3 +1,10 @@
+# BetterBlizzPlates 2.0.1b
+## Midnight
+### Bugfix
+- Fix overshield not updating immediately on the PRD when it was set to shown in combat only.
+- Fix an issue with a mix of settings "Change nameplate texture" + "Overbars" + No actual texture change selected for enemy/friend/self causing the nameplate absorb texture (white) to disappear.
+- Fix some old aura code being called from gui causing a lua error.
+
 # BetterBlizzPlates 2.0.1
 ## Midnight
 ### New
