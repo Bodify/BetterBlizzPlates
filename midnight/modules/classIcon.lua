@@ -104,6 +104,13 @@ local petSpellIcons = {
     [264360] = 132202, -- Wind Serpent — Winged Agility
     [263840] = 132203, -- Wolf — Furious Bite
     [263446] = 236197, -- Worm — Acid Spit
+
+    -- Warlock pet abilities
+    [3110]   = 136218, -- Imp — Firebolt
+    [6360]  = 136220, -- Succubus — Whiplash
+    [19505]    = 136217, -- Felhunter — Devour Magic
+    [112042]  = 136221, -- Voidwalker — Suffering
+    [89751] = 136216, -- Felguard — Legion Strike
 }
 
 local playerClass = select(2, UnitClass("player"))
@@ -130,7 +137,7 @@ if playerClass == "HUNTER" or playerClass == "WARLOCK" or playerClass == "DEATHK
             local pp = BetterBlizzPlatesDB.partyPointer and BetterBlizzPlatesDB.partyPointerShowPet
             local ci = BetterBlizzPlatesDB.classIndicator and BetterBlizzPlatesDB.classIndicatorShowPet
             if ci then
-                if playerClass == "HUNTER" then
+                if playerClass == "HUNTER" or playerClass == "WARLOCK" then
                     UpdateCurrentPetIcon()
                 end
                 C_Timer.After(0.5, function()
