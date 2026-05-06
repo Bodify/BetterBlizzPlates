@@ -111,12 +111,25 @@ local petSpellIcons = {
     [19505]    = 136217, -- Felhunter — Devour Magic
     [112042]  = 136221, -- Voidwalker — Suffering
     [89751] = 136216, -- Felguard — Legion Strike
+
+    -- Mage
+    [135029] = 135862, -- Water Elemental — Water Jet
+
+    -- Death Knight
+    [47482] = 1531513, -- ghoul - leap
+}
+
+local petClasses = {
+    ["DEATHKNIGHT"] = true,
+    ["HUNTER"] = true,
+    ["MAGE"] = true,
+    ["WARLOCK"] = true,
 }
 
 local playerClass = select(2, UnitClass("player"))
 local currentPetIcon = nil
 
-if playerClass == "HUNTER" or playerClass == "WARLOCK" or playerClass == "DEATHKNIGHT" or playerClass == "MAGE" then
+if petClasses[playerClass] then
     local f = CreateFrame("Frame")
     f:RegisterEvent("UNIT_PET")
 
@@ -137,7 +150,7 @@ if playerClass == "HUNTER" or playerClass == "WARLOCK" or playerClass == "DEATHK
             local pp = BetterBlizzPlatesDB.partyPointer and BetterBlizzPlatesDB.partyPointerShowPet
             local ci = BetterBlizzPlatesDB.classIndicator and BetterBlizzPlatesDB.classIndicatorShowPet
             if ci then
-                if playerClass == "HUNTER" or playerClass == "WARLOCK" then
+                if petClasses[playerClass] then
                     UpdateCurrentPetIcon()
                 end
                 C_Timer.After(0.5, function()
