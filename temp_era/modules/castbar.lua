@@ -43,7 +43,7 @@ local interruptSpellIDs = {}
 function BBP.InitializeInterruptSpellID()
     interruptSpellIDs = {}
     for spellID in pairs(interruptList) do
-        if IsSpellKnownOrOverridesKnown(spellID) then
+        if IsSpellKnownOrOverridesKnown(spellID) or IsPlayerSpell(spellID) then
             table.insert(interruptSpellIDs, spellID)
         end
     end
