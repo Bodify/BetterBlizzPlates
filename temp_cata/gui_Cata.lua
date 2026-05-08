@@ -1117,6 +1117,18 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         heightValue = 45 --BBP.isLargeNameplatesEnabled() and 64.125 or 40
                         C_NamePlate.SetNamePlateSelfSize(value, heightValue)
                     end
+                elseif element == "smallPetsWidth" then
+                    BetterBlizzPlatesDB.smallPetsWidth = value
+                    for _, np in pairs(C_NamePlate.GetNamePlates()) do
+                        local petFrame = np.UnitFrame
+                        if petFrame then
+                            BBP.SmallPetsInPvP(petFrame)
+                            if BetterBlizzPlatesDB.classicNameplates then
+                                BBP.AdjustClassicBorderWidth(petFrame)
+                                BBP.CreateBetterClassicCastbarBorders(petFrame)
+                            end
+                        end
+                    end
                 -- Cast bar emphasis height
                 elseif element == "castBarEmphasisHeightValue" then
                     BetterBlizzPlatesDB.castBarEmphasisHeightValue = value
@@ -3961,68 +3973,21 @@ local function guiGeneralTab()
     smallPetsInPvP:SetPoint("LEFT", healthNumbers.text, "RIGHT", 0, 0)
     CreateTooltipTwo(smallPetsInPvP, "Small Pets", "Reduce the width of all pet nameplates, and the width of all npc nameplates in PvP.\n\n|cff32f795Right-click to adjust width.|r", "Totem Indicator NPCs will stay full width unless specified otherwise in the Totem Indicator List section.")
 
-    -- Create slider frame when right-clicked
+    local smallPetsWidthSlider = CreateSlider(BetterBlizzPlates, "Small Pets Width", 2, 40, 1, "smallPetsWidth", nil, 120)
+    smallPetsWidthSlider:SetPoint("BOTTOMLEFT", smallPetsInPvP, "TOPLEFT", 5, 5)
+    smallPetsWidthSlider:Hide()
+    CreateTooltipTwo(smallPetsWidthSlider, "Small Pets Width", "Adjust the width used for small pet/npc nameplates.", "Right-click the slider to type a value outside the default range.")
+
     smallPetsInPvP:SetScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
             GameTooltip:Hide()
-            if not self.slider then
-                -- Create slider frame
-                local slider = CreateFrame("Slider", "SmallPetsWidthSlider", self:GetParent(), "OptionsSliderTemplate")
-                slider:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 0)
-                slider:SetWidth(120)
-                slider:SetMinMaxValues(2, 40)
-                slider:SetValue(BetterBlizzPlatesDB.smallPetsWidth or 20)
-                slider:SetValueStep(1)
-                slider:SetObeyStepOnDrag(true)
-
-                -- Customize the slider text
-                slider.Text:SetFontObject(GameFontHighlightSmall)
-                slider.Text:SetTextColor(1, 0.81, 0, 1)
-                slider.Low:SetText("")
-                slider.High:SetText("")
-
-                -- Set initial label
-                local initialValue = BetterBlizzPlatesDB.smallPetsWidth or 50
-                slider.Text:SetText("Small Pets Width: " .. initialValue)
-
-                -- Slider update logic
-                slider:SetScript("OnValueChanged", function(_, value)
-                    local roundedValue = math.floor(value + 0.5)
-                    BetterBlizzPlatesDB.smallPetsWidth = roundedValue
-                    slider.Text:SetText("Small Pets Width: " .. roundedValue)
-                    slider.adjusting = true
-                    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
-                        local frame = nameplate.UnitFrame
-                        if frame then
-                            BBP.SmallPetsInPvP(frame)
-                            if BetterBlizzPlatesDB.classicNameplates then
-                                BBP.AdjustClassicBorderWidth(frame)
-                                BBP.CreateBetterClassicCastbarBorders(frame)
-                            end
-                            --BBP.NameplateShadowAndMouseoverHighlight(frame)
-                        end
-                    end
-                end)
-
-                slider:SetScript("OnMouseUp", function(self)
-                    slider.adjusting = nil
-                    C_Timer.After(2, function()
-                        if not self.adjusting then
-                            self:Hide()
-                        end
-                    end)
-                end)
-                self.slider = slider
-            else
-                self.slider:SetShown(not self.slider:IsShown())
-            end
+            smallPetsWidthSlider:SetShown(not smallPetsWidthSlider:IsShown())
         end
     end)
 
-    -- Ensure slider hides if checkbox is unchecked
     smallPetsInPvP:HookScript("OnClick", function(self)
-        if not self:GetChecked() and self.slider then
-            self.slider:Hide()
+        if not self:GetChecked() then
+            smallPetsWidthSlider:Hide()
         end
     end)
 
