@@ -1,3 +1,12 @@
+# BetterBlizzPlates 2.0.1c
+## Midnight
+### Tweak
+- Fixup class indicator pet icons for water elemental, dk ghoul and warlock pets after Blizzard nuked old npc ID method.
+## All versions
+### Tweak
+- Interrupt logic: Replace IsSpellKnown API call with IsPlayerSpell because IsSpellKnown returns false on known spells on some clients causing interrupt logic to not detect an interrupt.
+- Small Pets right-click slider can now be right-clicked as well for value input (and allow values greater than the default).
+
 # BetterBlizzPlates 2.0.1b
 ## Midnight
 ### Bugfix
