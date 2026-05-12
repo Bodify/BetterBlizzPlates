@@ -5902,6 +5902,17 @@ local HEALER_SPEC_IDS = {
 -- Table to store localized specialization names -> spec ID
 local function GetLocalizedSpecs()
     local specs = {}
+    -- esMX uses "Class Spec" order in tooltips, opposite of others
+    local locale = GetLocale()
+    local classFirst = (locale == "esMX")
+
+    local function AddSpec(specName, className, specID)
+        if classFirst then
+            specs[string.format("%s %s", className, specName)] = specID
+        else
+            specs[string.format("%s %s", specName, className)] = specID
+        end
+    end
 
     for classID = 1, GetNumClasses() do
         local _, class = GetClassInfo(classID)
@@ -5912,10 +5923,10 @@ local function GetLocalizedSpecs()
             local specID, specName = GetSpecializationInfoForClassID(classID, specIndex)
 
             if classMale then
-                specs[string.format("%s %s", specName, classMale)] = specID
+                AddSpec(specName, classMale, specID)
             end
             if classFemale and classFemale ~= classMale then
-                specs[string.format("%s %s", specName, classFemale)] = specID
+                AddSpec(specName, classFemale, specID)
             end
         end
     end
@@ -5923,7 +5934,7 @@ local function GetLocalizedSpecs()
     -- Blizzard API poopoo. Not possible to get gendered specNames AFAIK.
     -- And some classes were even missing from LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_FEMALE
     -- Thanks to Dardo7 @ Discord for helping get all the correct Spanish data.
-    if GetLocale() == "esES" then
+    if locale == "esES" or locale == "esMX" then
         local esES_overrides = {
             ["Armas Guerrero"] = 71,
             ["Armas Guerrera"] = 71,
@@ -6008,7 +6019,44 @@ local function GetLocalizedSpecs()
             ["Aumento Evocador"] = 1473,
             ["Aumento Evocadora"] = 1473,
         }
+
+        local esClassNames = {
+            "Caballero de la Muerte", "Caballera de la Muerte",
+            "Cazador de demonios", "Cazadora de demonios",
+            "Sacerdotisa", "Sacerdote",
+            "Evocadora", "Evocador",
+            "Cazadora", "Cazador",
+            "Guerrera", "Guerrero",
+            "Paladín",
+            "Pícara", "Pícaro",
+            "Chamán",
+            "Maga", "Mago",
+            "Bruja", "Brujo",
+            "Monje",
+            "Druida",
+        }
+
         for k, v in pairs(esES_overrides) do
+            if classFirst then
+                -- Swap "Spec Class" -> "Class Spec" for esMX
+                local swapped
+                for _, className in ipairs(esClassNames) do
+                    local specPart = k:match("^(.-)%s+" .. className .. "$")
+                    if specPart then
+                        swapped = className .. " " .. specPart
+                        break
+                    end
+                end
+                specs[swapped or k] = v
+            else
+                specs[k] = v
+            end
+        end
+    elseif locale == "ruRU" then
+        local ruRU_overrides = {
+            ["Хранительница Пробудительница"] = 1468,
+        }
+        for k, v in pairs(ruRU_overrides) do
             specs[k] = v
         end
     end
