@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.0.1d
+## Midnight
+### Tweak
+- Update to fix specID stuff for mexican clients and missing female pres evoker on russian client.
+
 # BetterBlizzPlates 2.0.1c
 ## Midnight
 ### Tweak
