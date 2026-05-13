@@ -2,6 +2,8 @@
 ## Midnight
 ### New
 - New Vanguards profile (www.twitch.tv/VanguardsTV). Thank you for sharing!
+### Tweak
+- Update Jazggz profile (www.twitch.tv/jazggz). Thank you for sharing!
 
 # BetterBlizzPlates 2.0.1d
 ## Midnight
