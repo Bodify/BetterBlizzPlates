@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.0.1e
+## Midnight
+### New
+- New Vanguards profile (www.twitch.tv/VanguardsTV). Thank you for sharing!
+
 # BetterBlizzPlates 2.0.1d
 ## Midnight
 ### Tweak

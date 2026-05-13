@@ -4897,7 +4897,7 @@ local function guiProfiles()
 
     frame.infoText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 39)
-    frame.infoText:SetText("If you are missing and want to be here let me know :)")
+    frame.infoText:SetText("") --If you are missing and want to be here let me know :)
     frame.infoText:SetWidth(100)
 
     frame:SetSize(130, parent:GetHeight())
