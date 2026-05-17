@@ -8831,10 +8831,10 @@ function BBP.NameplateAuraTweaksTemp()
             auraFrame.bbpPixelBorderApplied = nil
         end
 
-        if auraFrame.Cooldown then
-            local r1 = auraFrame.Cooldown:GetRegions()
-            if r1 and r1.GetObjectType and r1:GetObjectType() == "FontString" then
-                r1:SetScale(cdTextSize)
+        if auraFrame.Cooldown and not auraFrame.Cooldown.tullaCTC then
+            local cdText = auraFrame.Cooldown:GetCountdownFontString()
+            if cdText then
+                cdText:SetScale(cdTextSize)
             end
         end
 

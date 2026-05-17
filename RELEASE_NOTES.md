@@ -1,3 +1,11 @@
+# BetterBlizzPlates 2.0.1f
+## Midnight
+### Tweak
+- Now checks for tullaCTC handling of aura cooldown text and ignores BBP setting if thats the case.
+## TBC
+### Tweak
+- Add some missing spell ids for interrupts for the nameplate aura interrupt icons (Earth Shocks and Pummels).
+
 # BetterBlizzPlates 2.0.1e
 ## Midnight
 ### New

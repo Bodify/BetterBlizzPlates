@@ -613,6 +613,16 @@ local interruptSpells = {
     [26090] = 2, -- Pummel (Gorilla)
     [50479] = 2, -- Nethershock
     [97547] = 5, -- Solar Beam
+
+    [6554] = 4, -- Pummel Rank 2 (Warrior)
+    [8042] = 2, -- Earth Shock (Shaman)
+    [8044] = 2, -- Earth Shock (Shaman)
+    [8045] = 2, -- Earth Shock (Shaman)
+    [8046] = 2, -- Earth Shock (Shaman)
+    [10412] = 2, -- Earth Shock (Shaman)
+    [10413] = 2, -- Earth Shock (Shaman)
+    [10414] = 2, -- Earth Shock (Shaman)
+    [25454] = 2, -- Earth Shock (Shaman)
 }
 
 
