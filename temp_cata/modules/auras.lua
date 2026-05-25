@@ -2233,6 +2233,36 @@ local function GetAuraDetails(spellName, spellId)
     end
     return false, false, false, false, false
 end
+
+local breakCCDotSpellReferences = {
+    172, 980, 2818, 12721, 2944, 8050, 703, 31803, 12654, 348, 5570,
+    33745, 8921, 11366, 1822, 772, 1079, 1943, 27243, 1978, 589, 47897,
+    18265, 30108, 34914,
+}
+
+local breakCCDotNameLookup = {}
+
+for _, spellID in ipairs(breakCCDotSpellReferences) do
+    local spellName = GetSpellInfo(spellID)
+    if spellName then
+        breakCCDotNameLookup[string.lower(spellName)] = true
+    end
+end
+
+local function IsBreakCCDotAura(spellName, spellId)
+    if BetterBlizzPlatesDB and BetterBlizzPlatesDB["auraWhitelist"] then
+        for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
+            if entry.flags and entry.flags.breakCCDot then
+                if entry.id == spellId or (entry.name and not entry.id and spellName and string.lower(entry.name) == string.lower(spellName)) then
+                    return true
+                end
+            end
+        end
+    end
+
+    return spellName and breakCCDotNameLookup[string.lower(spellName)] or false
+end
+
 local importantGlowOffset = 10 * (BetterBlizzPlatesDB.nameplateAuraEnlargedScale or 1)
 local trackedBuffs = {};
 local checkBuffsTimer = nil;
@@ -3729,11 +3759,14 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
             local filterLessMinite = db["otherNpdeBuffFilterLessMinite"]
             local filterOnlyMe = db["otherNpdeBuffFilterOnlyMe"]
             local filterCC = db["otherNpdeBuffFilterCC"]
+            local filterDotsOnly = db["otherNpdeBuffFilterDotsOnly"]
+            local isTrackedDot = IsBreakCCDotAura(spellName, spellId)
 
-            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe or filterCC
+            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe or filterCC or filterDotsOnly
 
             if filterAllOverride then return true end
             if onlyMine and not castByPlayer then return false end
+            if filterDotsOnly and not isTrackedDot then return false end
 
             if not anyFilter then
                 if filterWhitelist and not isInWhitelist then return false end
@@ -3993,6 +4026,8 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     local npAuraStackFontEnabled = db.npAuraStackFontEnabled
     local moveKeyAuras = db.nameplateAuraKeyAuraPositionEnabled
     local moveKeyAurasFriendly = db.nameplateAuraKeyAuraPositionFriendly
+    local showSingleBreakCCDot = db.nameplateBreakCCDotsSingleIcon and isEnemyUnit
+    local breakCCDotShown = false
     --local ccGLow = db.
 
     local longestCCAura = nil
@@ -4008,6 +4043,17 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
     self.auras:Iterate(function(auraInstanceID, aura)
         --if buffIndex > BBPMaxAuraNum then return true end
+        local spellName = aura.name
+        local spellId = aura.spellId
+        local isBreakCCDot = showSingleBreakCCDot and aura.isHarmful and IsBreakCCDotAura(spellName, spellId)
+
+        if isBreakCCDot then
+            if breakCCDotShown then
+                return
+            end
+            breakCCDotShown = true
+        end
+
         local buff = frame.BuffFrame.auraFrames[buffIndex]
         if not buff then
             buff = CreateFrame("Frame", nil, frame.BuffFrame)
@@ -4096,8 +4142,6 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
         buff.Icon:SetTexture(aura.icon);
 
-        local spellName = aura.name--FetchSpellName(aura.spellId)
-        local spellId = aura.spellId
         local caster = aura.sourceUnit
         local castByPlayer = (caster == "player" or caster == "pet")
 

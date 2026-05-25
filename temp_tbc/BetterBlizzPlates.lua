@@ -413,6 +413,7 @@ local defaultSettings = {
     importantCCSilence = true,
     defaultNpAuraCdSize = 0.5,
     onlyPandemicAuraMine = true,
+    nameplateBreakCCDotsSingleIcon = false,
     nameplateAuraEnlargedScale = 1,
     nameplateAuraCompactedScale = 1,
     nameplateAuraEnlargedSquare = true,
@@ -448,6 +449,7 @@ local defaultSettings = {
     otherNpdeBuffFilterWatchList = true,
     otherNpdeBuffFilterLessMinite = false,
     otherNpdeBuffFilterOnlyMe = true,  -- only true on Era/TBC cuz no defaults (each spell rank has separate id)
+    otherNpdeBuffFilterDotsOnly = false,
     otherNpdeBuffPandemicGlow = false,
 
     friendlyNpBuffEnable = false,
@@ -515,14 +517,31 @@ local defaultSettings = {
     hideCastbarWhitelist = {},
     colorNpcList = {},
     auraWhitelist = {
-        {["name"] = "Example Aura :3 (delete me)",
-        ["entryColors"] = {
-            ["text"] = {
-                ["b"] = 0,
-                ["g"] = 1,
-                ["r"] = 0,
-            },
-        },}
+        {name = "Corruption", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Curse of Agony", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Deadly Poison", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Deep Wounds", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Devouring Plague", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Flame Shock", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Garrote", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Holy Vengeance", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Ignite", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Immolate", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Insect Swarm", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Lacerate", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Moonfire", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Pyroblast", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Rake", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Rend", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Rip", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Rupture", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Seed of Corruption", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Serpent Sting", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Shadow Word: Pain", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Shadowflame", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Siphon Life", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Unstable Affliction", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Vampiric Touch", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
     },
     auraBlacklist = {},
     auraColorList = {},
@@ -554,6 +573,34 @@ local defaultSettings = {
     nameplateResourceYPos = 0,
 
 
+}
+
+local defaultBreakCCDotAuras = {
+    "Corruption",
+    "Curse of Agony",
+    "Deadly Poison",
+    "Deep Wounds",
+    "Devouring Plague",
+    "Flame Shock",
+    "Garrote",
+    "Holy Vengeance",
+    "Ignite",
+    "Immolate",
+    "Insect Swarm",
+    "Lacerate",
+    "Moonfire",
+    "Pyroblast",
+    "Rake",
+    "Rend",
+    "Rip",
+    "Rupture",
+    "Seed of Corruption",
+    "Serpent Sting",
+    "Shadow Word: Pain",
+    "Shadowflame",
+    "Siphon Life",
+    "Unstable Affliction",
+    "Vampiric Touch",
 }
 
 local version = GetBuildInfo()
@@ -1589,6 +1636,42 @@ local function AddAlphaValuesToAuraColors()
             else
                 entry.entryColors = { text = { r = 0, g = 1, b = 0, a = 1 } }
             end
+        end
+    end
+end
+
+local function FindAuraWhitelistEntryByName(spellName)
+    if not BetterBlizzPlatesDB or not BetterBlizzPlatesDB["auraWhitelist"] or not spellName then return nil end
+
+    local spellNameLower = string.lower(spellName)
+    for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
+        if entry.name and string.lower(entry.name) == spellNameLower then
+            return entry
+        end
+    end
+end
+
+local function AddBreakCCDotDefaultsToWhitelist()
+    if not BetterBlizzPlatesDB then return end
+
+    BetterBlizzPlatesDB.auraWhitelist = BetterBlizzPlatesDB.auraWhitelist or {}
+
+    for _, spellName in ipairs(defaultBreakCCDotAuras) do
+        local entry = FindAuraWhitelistEntryByName(spellName)
+        if not entry then
+            table.insert(BetterBlizzPlatesDB.auraWhitelist, {
+                name = spellName,
+                comment = "Break CC DoT",
+                entryColors = { text = { r = 0, g = 1, b = 0, a = 1 } },
+                flags = { breakCCDot = true },
+            })
+        else
+            entry.comment = entry.comment ~= "" and entry.comment or "Break CC DoT"
+            entry.entryColors = entry.entryColors or { text = { r = 0, g = 1, b = 0, a = 1 } }
+            entry.entryColors.text = entry.entryColors.text or { r = 0, g = 1, b = 0, a = 1 }
+            entry.entryColors.text.a = entry.entryColors.text.a or 1
+            entry.flags = entry.flags or {}
+            entry.flags.breakCCDot = true
         end
     end
 end
@@ -6736,6 +6819,11 @@ First:SetScript("OnEvent", function(_, event, addonName)
             if not BetterBlizzPlatesDB.auraWhitelistAlphaUpdated then
                 AddAlphaValuesToAuraColors()
                 BetterBlizzPlatesDB.auraWhitelistAlphaUpdated = true
+            end
+
+            if not BetterBlizzPlatesDB.breakCCDotWhitelistUpdated then
+                AddBreakCCDotDefaultsToWhitelist()
+                BetterBlizzPlatesDB.breakCCDotWhitelistUpdated = true
             end
 
             if BetterBlizzPlatesDB.castBarIconXPos and not BetterBlizzPlatesDB.castBarIconPosReset then
