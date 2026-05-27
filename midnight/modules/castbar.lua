@@ -1243,7 +1243,7 @@ function BBP.HookCastbarOnEvent(frame)
     frame.castBar:HookScript("OnEvent", function(castBar, event, eventUnit, castGUID, spellID, interruptedByOrCastBarID)
         if frame and not frame:IsForbidden() then
             if CastStopEvents[event] then
-                if event == "UNIT_SPELLCAST_INTERRUPTED" then
+                if event == "UNIT_SPELLCAST_INTERRUPTED" or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
                     castBar.stoppedCast = true
                     if interruptedByOrCastBarID ~= nil then
                         castBar.wasKicked = true
@@ -1252,7 +1252,7 @@ function BBP.HookCastbarOnEvent(frame)
                 if BetterBlizzPlatesDB.castbarQuickHide then
                     if not (castBar.interruptedBy or castBar.wasKicked) then
                         local cast = UnitCastingInfo(castBar.unit) or UnitChannelInfo(castBar.unit)
-                        if not cast and event ~= "UNIT_SPELLCAST_CHANNEL_STOP" then
+                        if not cast then
                             castBar:Hide()
                         end
                     end
