@@ -9002,9 +9002,9 @@ local function guiNameplateAuras()
     otherNpdeBuffFilterOnlyMe:SetPoint("TOPLEFT", otherNpdeBuffFilterLessMinite, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(otherNpdeBuffFilterOnlyMe, "Only show my debuffs. (Can select individual in whitelist too)\n\nThis filter allows auras from the Blizzard Default filter if it is enabled.")
 
-    local otherNpdeBuffFilterDotsOnly = CreateCheckbox("otherNpdeBuffFilterDotsOnly", "DoT only", otherNpdeBuffEnable)
+    local otherNpdeBuffFilterDotsOnly = CreateCheckbox("otherNpdeBuffFilterDotsOnly", "Break-CC DoTs only", otherNpdeBuffEnable)
     otherNpdeBuffFilterDotsOnly:SetPoint("TOPLEFT", otherNpdeBuffFilterOnlyMe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(otherNpdeBuffFilterDotsOnly, "DoT only", "Only show tracked damage-over-time debuffs on enemy nameplates.", "This hides utility debuffs like weakness effects and keeps only the tracked DoTs.")
+    CreateTooltipTwo(otherNpdeBuffFilterDotsOnly, "Break-CC DoTs only", "Only show tracked damage-over-time debuffs that can break crowd control on enemy nameplates.", "This hides utility debuffs like weakness effects and keeps only the tracked CC-breaking DoTs.")
 
 --[=[
     local otherNpdeBuffPandemicGlow = CreateCheckbox("otherNpdeBuffPandemicGlow", "Pandemic Glow", otherNpdeBuffEnable)

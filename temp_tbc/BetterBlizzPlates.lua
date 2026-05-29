@@ -518,17 +518,23 @@ local defaultSettings = {
     auraWhitelist = {
         {name = "Corruption", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Curse of Agony", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Curse of Doom", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Deadly Poison", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Deep Wounds", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Devouring Plague", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Fireball", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Flame Shock", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Flamestrike", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Garrote", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Holy Fire", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Holy Vengeance", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Ignite", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Immolate", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Immolation Trap", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Insect Swarm", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Lacerate", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Moonfire", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Pounce Bleed", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Pyroblast", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Rake", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Rend", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
@@ -539,6 +545,7 @@ local defaultSettings = {
         {name = "Shadow Word: Pain", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Shadowflame", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Siphon Life", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
+        {name = "Starshards", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Unstable Affliction", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
         {name = "Vampiric Touch", comment = "Break CC DoT", entryColors = {text = {r = 0, g = 1, b = 0}}, flags = {breakCCDot = true}},
     },
@@ -577,17 +584,23 @@ local defaultSettings = {
 local defaultBreakCCDotAuras = {
     "Corruption",
     "Curse of Agony",
+    "Curse of Doom",
     "Deadly Poison",
     "Deep Wounds",
     "Devouring Plague",
+    "Fireball",
     "Flame Shock",
+    "Flamestrike",
     "Garrote",
+    "Holy Fire",
     "Holy Vengeance",
     "Ignite",
     "Immolate",
+    "Immolation Trap",
     "Insect Swarm",
     "Lacerate",
     "Moonfire",
+    "Pounce Bleed",
     "Pyroblast",
     "Rake",
     "Rend",
@@ -598,6 +611,7 @@ local defaultBreakCCDotAuras = {
     "Shadow Word: Pain",
     "Shadowflame",
     "Siphon Life",
+    "Starshards",
     "Unstable Affliction",
     "Vampiric Touch",
 }
@@ -6823,6 +6837,11 @@ First:SetScript("OnEvent", function(_, event, addonName)
             if not BetterBlizzPlatesDB.breakCCDotWhitelistUpdated then
                 AddBreakCCDotDefaultsToWhitelist()
                 BetterBlizzPlatesDB.breakCCDotWhitelistUpdated = true
+            end
+
+            if not BetterBlizzPlatesDB.breakCCDotWhitelistExpanded then
+                AddBreakCCDotDefaultsToWhitelist()
+                BetterBlizzPlatesDB.breakCCDotWhitelistExpanded = true
             end
 
             if BetterBlizzPlatesDB.castBarIconXPos and not BetterBlizzPlatesDB.castBarIconPosReset then
