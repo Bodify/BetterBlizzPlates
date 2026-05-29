@@ -413,7 +413,6 @@ local defaultSettings = {
     importantCCSilence = true,
     defaultNpAuraCdSize = 0.5,
     onlyPandemicAuraMine = true,
-    nameplateBreakCCDotsSingleIcon = false,
     nameplateAuraEnlargedScale = 1,
     nameplateAuraCompactedScale = 1,
     nameplateAuraEnlargedSquare = true,

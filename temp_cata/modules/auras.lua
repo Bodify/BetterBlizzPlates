@@ -4026,8 +4026,6 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
     local npAuraStackFontEnabled = db.npAuraStackFontEnabled
     local moveKeyAuras = db.nameplateAuraKeyAuraPositionEnabled
     local moveKeyAurasFriendly = db.nameplateAuraKeyAuraPositionFriendly
-    local showSingleBreakCCDot = db.nameplateBreakCCDotsSingleIcon and isEnemyUnit
-    local breakCCDotShown = false
     --local ccGLow = db.
 
     local longestCCAura = nil
@@ -4045,14 +4043,6 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         --if buffIndex > BBPMaxAuraNum then return true end
         local spellName = aura.name
         local spellId = aura.spellId
-        local isBreakCCDot = showSingleBreakCCDot and aura.isHarmful and IsBreakCCDotAura(spellName, spellId)
-
-        if isBreakCCDot then
-            if breakCCDotShown then
-                return
-            end
-            breakCCDotShown = true
-        end
 
         local buff = frame.BuffFrame.auraFrames[buffIndex]
         if not buff then

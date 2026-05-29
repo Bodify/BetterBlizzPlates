@@ -9006,10 +9006,6 @@ local function guiNameplateAuras()
     otherNpdeBuffFilterDotsOnly:SetPoint("TOPLEFT", otherNpdeBuffFilterOnlyMe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(otherNpdeBuffFilterDotsOnly, "DoT only", "Only show tracked damage-over-time debuffs on enemy nameplates.", "This hides utility debuffs like weakness effects and keeps only the tracked DoTs.")
 
-    local nameplateBreakCCDotsSingleIcon = CreateCheckbox("nameplateBreakCCDotsSingleIcon", "1 Break-CC DoT", otherNpdeBuffEnable)
-    nameplateBreakCCDotsSingleIcon:SetPoint("TOPLEFT", otherNpdeBuffFilterDotsOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateBreakCCDotsSingleIcon, "1 Break-CC DoT", "For tracked DoTs that break CC, only show one icon on enemy nameplates at a time.", "Useful for sheep or blind checks: if any tracked DoT is still active, one remaining DoT icon stays visible.")
-
 --[=[
     local otherNpdeBuffPandemicGlow = CreateCheckbox("otherNpdeBuffPandemicGlow", "Pandemic Glow", otherNpdeBuffEnable)
     otherNpdeBuffPandemicGlow:SetPoint("TOPLEFT", otherNpdeBuffFilterOnlyMe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -9648,7 +9644,7 @@ local function guiNameplateAuras()
 
 
     local npColorAuraBorder = CreateCheckbox("npColorAuraBorder", "Color Border by Type", enableNameplateAuraCustomisation)
-    npColorAuraBorder:SetPoint("TOPLEFT", nameplateBreakCCDotsSingleIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    npColorAuraBorder:SetPoint("TOPLEFT", otherNpdeBuffFilterDotsOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(npColorAuraBorder, "Color Border by Type", "Color Border by Type")
 
     local npAuraBuffsRGB = CreateColorBox(npColorAuraBorder, "npAuraBuffsRGB", "Buffs")
