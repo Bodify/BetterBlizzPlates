@@ -9002,9 +9002,9 @@ local function guiNameplateAuras()
     otherNpdeBuffFilterOnlyMe:SetPoint("TOPLEFT", otherNpdeBuffFilterLessMinite, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(otherNpdeBuffFilterOnlyMe, "Only show my debuffs. (Can select individual in whitelist too)\n\nThis filter allows auras from the Blizzard Default filter if it is enabled.")
 
-    local otherNpdeBuffFilterDotsOnly = CreateCheckbox("otherNpdeBuffFilterDotsOnly", "Break-CC DoTs only", otherNpdeBuffEnable)
-    otherNpdeBuffFilterDotsOnly:SetPoint("TOPLEFT", otherNpdeBuffFilterOnlyMe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(otherNpdeBuffFilterDotsOnly, "Break-CC DoTs only", "Only show tracked damage-over-time debuffs that can break crowd control on enemy nameplates.", "This hides utility debuffs like weakness effects and keeps only the tracked CC-breaking DoTs.")
+    local otherNpdeBuffFilterBreakCCDots = CreateCheckbox("otherNpdeBuffFilterBreakCCDots", "Break-CC DoTs", otherNpdeBuffEnable)
+    otherNpdeBuffFilterBreakCCDots:SetPoint("TOPLEFT", otherNpdeBuffFilterOnlyMe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(otherNpdeBuffFilterBreakCCDots, "Break-CC DoTs", "Show tracked damage-over-time debuffs that can break crowd control on enemy nameplates.", "This uses an internal list and does not add these auras to the whitelist.")
 
 --[=[
     local otherNpdeBuffPandemicGlow = CreateCheckbox("otherNpdeBuffPandemicGlow", "Pandemic Glow", otherNpdeBuffEnable)
@@ -9644,7 +9644,7 @@ local function guiNameplateAuras()
 
 
     local npColorAuraBorder = CreateCheckbox("npColorAuraBorder", "Color Border by Type", enableNameplateAuraCustomisation)
-    npColorAuraBorder:SetPoint("TOPLEFT", otherNpdeBuffFilterDotsOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    npColorAuraBorder:SetPoint("TOPLEFT", otherNpdeBuffFilterBreakCCDots, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(npColorAuraBorder, "Color Border by Type", "Color Border by Type")
 
     local npAuraBuffsRGB = CreateColorBox(npColorAuraBorder, "npAuraBuffsRGB", "Buffs")

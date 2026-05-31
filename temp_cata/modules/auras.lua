@@ -2249,17 +2249,7 @@ for _, spellID in ipairs(breakCCDotSpellReferences) do
     end
 end
 
-local function IsBreakCCDotAura(spellName, spellId)
-    if BetterBlizzPlatesDB and BetterBlizzPlatesDB["auraWhitelist"] then
-        for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
-            if entry.flags and entry.flags.breakCCDot then
-                if entry.id == spellId or (entry.name and not entry.id and spellName and string.lower(entry.name) == string.lower(spellName)) then
-                    return true
-                end
-            end
-        end
-    end
-
+local function IsBreakCCDotAura(spellName)
     return spellName and breakCCDotNameLookup[string.lower(spellName)] or false
 end
 
@@ -3759,14 +3749,13 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
             local filterLessMinite = db["otherNpdeBuffFilterLessMinite"]
             local filterOnlyMe = db["otherNpdeBuffFilterOnlyMe"]
             local filterCC = db["otherNpdeBuffFilterCC"]
-            local filterDotsOnly = db["otherNpdeBuffFilterDotsOnly"]
-            local isTrackedDot = IsBreakCCDotAura(spellName, spellId)
+            local filterBreakCCDots = db["otherNpdeBuffFilterBreakCCDots"]
+            local isTrackedDot = IsBreakCCDotAura(spellName)
 
-            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe or filterCC or filterDotsOnly
+            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe or filterCC or filterBreakCCDots
 
             if filterAllOverride then return true end
             if onlyMine and not castByPlayer then return false end
-            if filterDotsOnly and not isTrackedDot then return false end
 
             if not anyFilter then
                 if filterWhitelist and not isInWhitelist then return false end
@@ -3779,17 +3768,20 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
                 if filterOnlyMe then
                     if castByPlayer then return true end
                     if filterCC and crowdControl[spellId] then return true end
+                    if filterBreakCCDots and isTrackedDot then return true end
                     if filterBlizzard then return BlizzardShouldShow end
                     return false
                 end
                 -- Filter to show only Blizzard recommended auras
                 if not BlizzardShouldShow and filterBlizzard then
                     if filterCC and crowdControl[spellId] then return true end
+                    if filterBreakCCDots and isTrackedDot then return true end
                     if filterLessMinite and lessThanOneMin then return true end
                     return false
                 end
 
                 if filterCC and not crowdControl[spellId] then
+                    if filterBreakCCDots and isTrackedDot then return true end
                     if filterLessMinite and lessThanOneMin then return true end
                     if filterBlizzard then return BlizzardShouldShow end
                     return false
