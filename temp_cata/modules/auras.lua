@@ -3766,7 +3766,14 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
                 if moreThanOneMin and filterLessMinite then return false end
                 -- Handle filter for only showing the player's auras and Blizzard's recommendations
                 if filterOnlyMe then
-                    if castByPlayer then return true end
+                    if castByPlayer then
+                        if filterBreakCCDots and not isTrackedDot then
+                            if filterCC and crowdControl[spellId] then return true end
+                            if filterBlizzard then return BlizzardShouldShow end
+                            return false
+                        end
+                        return true
+                    end
                     if filterCC and crowdControl[spellId] then return true end
                     if filterBreakCCDots and isTrackedDot then return true end
                     if filterBlizzard then return BlizzardShouldShow end
@@ -3786,6 +3793,13 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
                     if filterBlizzard then return BlizzardShouldShow end
                     return false
                 end
+
+                if filterBreakCCDots and not isTrackedDot then
+                    if filterCC and crowdControl[spellId] then return true end
+                    if filterBlizzard then return BlizzardShouldShow end
+                    return false
+                end
+
                 -- If none of the specific sub-filter conditions are met, show the aura
                 return true
             end
