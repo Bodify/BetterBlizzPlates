@@ -9111,6 +9111,7 @@ end
 
 -- Fix Blizzards nameplate auras bugging after MC.
 hooksecurefunc(NamePlateAurasMixin, "UpdateFriendPlayerAuraFrames", function(self)
+    if self:IsForbidden() then return end
     local unit = self:GetParent().unit
     if unit and UnitIsPlayer(unit) and not self.DebuffListFrame:IsShown() and UnitCanAttack("player", unit) and C_CVar.GetCVarBitfield("nameplateEnemyPlayerAuraDisplay", Enum.NamePlateEnemyPlayerAuraDisplay.Debuffs) then
         self.DebuffListFrame:Show()
