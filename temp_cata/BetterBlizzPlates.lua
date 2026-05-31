@@ -3753,6 +3753,7 @@ local function FixLevelFramePosition(frame)
         end
         frame.fixedLevelFrame = true
     end
+    frame.LevelFrame:SetScale(BetterBlizzPlatesDB.levelFrameScale or 1)
 end
 
 --  BBP.UpdateCastBarText

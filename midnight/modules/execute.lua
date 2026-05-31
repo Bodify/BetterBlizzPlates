@@ -112,7 +112,22 @@ function BBP.ExecuteIndicator(frame)
         if config.executeIndicatorUseTexture then
             if not frame.executeIndicatorTexture then
                 frame.executeIndicatorTexture = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
-                frame.executeIndicatorTexture:SetSize(1.5, frame.healthBar:GetHeight())
+                local hpHeight = frame.healthBar:GetHeight()
+                local height = not issecretvalue(hpHeight) and hpHeight or frame.lastKnownHpHeight or 16
+                if issecretvalue(height) and not frame.lastKnownHpHeight then
+                    frame.executeIndicator.needsTextureResize = true
+                end
+                frame.executeIndicatorTexture:SetSize(1.5, height)
+            end
+            if frame.executeIndicator.needsTextureResize then
+                local hpHeight = frame.healthBar:GetHeight()
+                if not issecretvalue(hpHeight) then
+                    frame.executeIndicatorTexture:SetHeight(hpHeight)
+                    frame.executeIndicator.needsTextureResize = nil
+                elseif frame.lastKnownHpHeight then
+                    frame.executeIndicatorTexture:SetHeight(frame.lastKnownHpHeight)
+                    frame.executeIndicator.needsTextureResize = nil
+                end
             end
             if info.isTarget then
                 frame.executeIndicatorTexture:SetColorTexture(unpack(BetterBlizzPlatesDB.npBorderTargetColorRGB))
@@ -128,7 +143,8 @@ function BBP.ExecuteIndicator(frame)
 
         if config.executeIndicatorTestMode then
             if config.executeIndicatorUseTexture then
-                local barWidth = frame.HealthBarsContainer:GetWidth()
+                local hpWidth = frame.HealthBarsContainer:GetWidth()
+                local barWidth = not issecretvalue(hpWidth) and hpWidth or frame.lastKnownHpWidth or BetterBlizzPlatesDB.nameplateEnemyWidth
                 local textureXPos = (config.executeIndicatorThreshold / 100) * barWidth
 
                 frame.executeIndicatorTexture:ClearAllPoints()
@@ -149,7 +165,8 @@ function BBP.ExecuteIndicator(frame)
         if config.executeIndicatorUseTexture then
             frame.executeIndicator:SetAlpha(0)
 
-            local barWidth = frame.healthBar:GetWidth()
+            local hpWidth = frame.healthBar:GetWidth()
+            local barWidth = not issecretvalue(hpWidth) and hpWidth or frame.lastKnownHpWidth or BetterBlizzPlatesDB.nameplateEnemyWidth
             local textureXPos = (config.executeIndicatorThreshold / 100) * barWidth
 
             frame.executeIndicatorTexture:ClearAllPoints()
@@ -245,6 +262,8 @@ function BBP.ToggleExecuteIndicator()
         executeEventFrame:UnregisterEvent("UNIT_HEALTH")
     end
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
-        BBP.ExecuteIndicator(nameplate.UnitFrame)
+        if not nameplate.UnitFrame:IsForbidden() then
+            BBP.ExecuteIndicator(nameplate.UnitFrame)
+        end
     end
 end

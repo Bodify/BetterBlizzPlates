@@ -57,6 +57,16 @@ local specIDToNameShort = {
     [71] = "Arms", [72] = "Fury", [73] = "Prot",
 }
 
+local healerSpecIDs = {
+    [65]   = true, -- Paladin: Holy
+    [105]  = true, -- Druid: Restoration
+    [256]  = true, -- Priest: Discipline
+    [257]  = true, -- Priest: Holy
+    [264]  = true, -- Shaman: Restoration
+    [270]  = true, -- Monk: Mistweaver
+    [1468] = true, -- Evoker: Preservation
+}
+
 local idCircleColor = {
     [1] = {0.9, 0.2, 0.2, 1}, -- Red
     [2] = {0.2, 0.9, 0.2, 1}, -- Green
@@ -79,6 +89,9 @@ local function GetFallbackClassName(unit)
 end
 
 local function GetSpecName(id, unit)
+    if BetterBlizzPlatesDB.healerSpecNameOnly then
+        if not healerSpecIDs[id] then return "" end
+    end
     if not id then return GetFallbackClassName(unit) end
     local short = BetterBlizzPlatesDB.shortArenaSpecName
     return (short and specIDToNameShort[id]) or specIDToName[id]

@@ -6238,8 +6238,12 @@ local function guiGeneralTab()
     shortArenaSpecName:SetPoint("LEFT", arenaSettingsText, "RIGHT", 5, 0)
     CreateTooltipTwo(shortArenaSpecName, "Short Spec Names", "Enable to use abbreviated specialization names. For instance, \"Assassination\" will be displayed as \"Assa\".", nil, "ANCHOR_LEFT")
 
+    local healerSpecNameOnly = CreateCheckbox("healerSpecNameOnly", "Heal", BetterBlizzPlates)
+    healerSpecNameOnly:SetPoint("LEFT", shortArenaSpecName.Text, "RIGHT", 5, 0)
+    CreateTooltipTwo(healerSpecNameOnly, "Healer Spec Only", "Only show the spec name for healers. Other names will be blank.", nil, "ANCHOR_LEFT")
+
     local arenaIndicatorBg = CreateCheckbox("arenaIndicatorBg", "BG", BetterBlizzPlates)
-    arenaIndicatorBg:SetPoint("LEFT", shortArenaSpecName.Text, "RIGHT", 5, 0)
+    arenaIndicatorBg:SetPoint("LEFT", healerSpecNameOnly.Text, "RIGHT", 5, 0)
     CreateTooltipTwo(arenaIndicatorBg, "Battleground Spec Names", "Show spec names on enemy nameplates in Battlegrounds", nil, "ANCHOR_LEFT")
 
     local arenaIndicatorTestMode = CreateCheckbox("arenaIndicatorTestMode", "Test", BetterBlizzPlates)
@@ -7507,6 +7511,7 @@ local function guiPositionAndScale()
                 BetterBlizzPlatesDB.friendlyNpdeBuffFilterCC = true
             end
         end
+        BBP.SetupClassIndicatorCCAuraListener()
     end)
 
     anchorSubClassIcon.classIndicatorShowPet = CreateCheckbox("classIndicatorShowPet", "Pet", contentFrame)
