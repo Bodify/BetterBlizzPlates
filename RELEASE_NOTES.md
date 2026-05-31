@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.0.2b
+## Midnight
+### Bugfix
+- Add missing forbidden check causing lua errors in PvE
+
 # BetterBlizzPlates 2.0.2
 ## Midnight
 ### New
