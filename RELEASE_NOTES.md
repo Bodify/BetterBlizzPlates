@@ -1,3 +1,11 @@
+# BetterBlizzPlates 2.0.2c
+## Midnight
+### Tweak
+- Update DailyShuffle profile (www.twitch.tv/dailyshuffle / www.youtube.com/@Dailydoseofsoloshuffle)
+### Bugfix
+- Fix Class Indicator CC icons getting stuck (and because of that also appearing on enemy nameplates unintentionally)
+- Fix Pre-Midnight Nameplates Pixel border color getting set to white on focus from a mistake.
+
 # BetterBlizzPlates 2.0.2b
 ## Midnight
 ### Bugfix
