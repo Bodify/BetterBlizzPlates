@@ -903,8 +903,24 @@ function BBP.SetupClassIndicatorCCAuraListener()
             local ccAuraFrame = CreateFrame("Frame")
             ccAuraFrame:SetScript("OnEvent", function(self, event, unit, updateInfo)
                 if not unit or not unit:find("nameplate") then return end
-                if not UnitIsPlayer(unit) then return end
-                if not UnitIsFriend("player", unit) then return end
+
+                if event == "NAME_PLATE_UNIT_REMOVED" then
+                    local _, frame = BBP.GetSafeNameplate(unit)
+                    if frame and frame.classIndicatorCC then
+                        frame.classIndicatorCC:Hide()
+                    end
+                    return
+                end
+
+                if not UnitIsPlayer(unit) or not UnitIsFriend("player", unit) then
+                    if event == "NAME_PLATE_UNIT_ADDED" then
+                        local _, frame = BBP.GetSafeNameplate(unit)
+                        if frame and frame.classIndicatorCC then
+                            frame.classIndicatorCC:Hide()
+                        end
+                    end
+                    return
+                end
 
                 if event == "UNIT_AURA" and not AurasChanged(updateInfo) then return end
                 UpdateCCOnClassIndicator(unit)
@@ -913,8 +929,10 @@ function BBP.SetupClassIndicatorCCAuraListener()
         end
         BBP.classIconCCAuraFrame:RegisterEvent("UNIT_AURA")
         BBP.classIconCCAuraFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+        BBP.classIconCCAuraFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
     elseif BBP.classIconCCAuraFrame then
         BBP.classIconCCAuraFrame:UnregisterEvent("UNIT_AURA")
         BBP.classIconCCAuraFrame:UnregisterEvent("NAME_PLATE_UNIT_ADDED")
+        BBP.classIconCCAuraFrame:UnregisterEvent("NAME_PLATE_UNIT_REMOVED")
     end
 end
