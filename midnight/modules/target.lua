@@ -814,7 +814,11 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
             if config.changeNameplateBorderColor then
                 BBP.ColorNameplateBorder(frame)
             else
-                frame.HealthBarsContainer:SetBorderColor(0, 0, 0, 1)
+                if UnitIsUnit("focus", "target") then
+                    frame.HealthBarsContainer:SetBorderColor(1, 1, 1, 1)
+                else
+                    frame.HealthBarsContainer:SetBorderColor(0, 0, 0, 1)
+                end
             end
         end
 
@@ -860,7 +864,11 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
             if config.changeNameplateBorderColor then
                 BBP.ColorNameplateBorder(frame)
             else
-                frame.HealthBarsContainer:SetBorderColor(1, 1, 1, 1)
+                if UnitIsUnit("focus", "target") then
+                    frame.HealthBarsContainer:SetBorderColor(1, 1, 1, 1)
+                else
+                    frame.HealthBarsContainer:SetBorderColor(0, 0, 0, 1)
+                end
             end
         end
 
