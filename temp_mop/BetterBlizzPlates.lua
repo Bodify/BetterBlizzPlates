@@ -1158,6 +1158,12 @@ local function TempRetailNpFix()
     C_CVar.SetCVar('nameplateShowOnlyNames', "0")
 end
 
+local defaultBitfieldSettings = {
+    nameplateCastBarDisplay = {
+        [tostring(Enum.NamePlateCastBarDisplay.SpellName)] = 1,
+    },
+}
+BBP.defaultBitfieldSettings = defaultBitfieldSettings
 
 
 local function InitializeSavedVariables()
@@ -1354,13 +1360,6 @@ local bitCVarList = {
 }
 
 BBP.bitCVarList = bitCVarList
-
-local defaultBitfieldSettings = {
-    nameplateCastBarDisplay = {
-        [tostring(Enum.NamePlateCastBarDisplay.SpellName)] = 1,
-    },
-}
-BBP.defaultBitfieldSettings = defaultBitfieldSettings
 
 function BBP.ResetNameplateCVars()
     if BBPCVarBackupsDB then
@@ -5659,14 +5658,18 @@ local function HandleNamePlateAdded(unit)
     BBP.RangeIndicator(frame)
 
     if BetterBlizzPlatesDB.changeNpHpBgColor then
+        if not frame.healthBar.bbfBackground then
+            frame.healthBar.bbfBackground = frame.healthBar:CreateTexture(nil, "BACKGROUND")
+            frame.healthBar.bbfBackground:SetAllPoints(frame.healthBar)
+        end
         if BetterBlizzPlatesDB.changeNpHpBgColorSolid then
-            frame.healthBar.background:SetTexture("Interface\\Buttons\\WHITE8x8")
+            frame.healthBar.bbfBackground:SetTexture("Interface\\Buttons\\WHITE8x8")
             frame.changedBgTexture = true
         elseif frame.changedBgTexture then
-            frame.healthBar.background:SetTexture(nil)
+            frame.healthBar.bbfBackground:SetTexture(nil)
             frame.changedBgTexture = nil
         end
-        frame.healthBar.background:SetVertexColor(unpack(BetterBlizzPlatesDB.npBgColorRGB))
+        frame.healthBar.bbfBackground:SetVertexColor(unpack(BetterBlizzPlatesDB.npBgColorRGB))
     end
 
     if info.isTarget then

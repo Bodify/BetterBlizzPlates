@@ -1,3 +1,9 @@
+# BetterBlizzPlates 2.0.3b
+## Mists of Pandaria
+- Fix multiple issues caused by new patch. Please continue reporting bugs as I navigate this new hell.
+## Midnight
+- Fix nil unit used causing a lua error in targeting logic.
+
 # BetterBlizzPlates 2.0.3
 ## Mists of Pandaria
 ### Note
