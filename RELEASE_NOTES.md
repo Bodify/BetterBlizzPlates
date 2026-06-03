@@ -1,3 +1,7 @@
+# BetterBlizzPlates 2.0.3c
+## Mists of Pandaria
+- Fix a few more issues with some settings that would completely brick addon.
+
 # BetterBlizzPlates 2.0.3b
 ## Mists of Pandaria
 - Fix multiple issues caused by new patch. Please continue reporting bugs as I navigate this new hell.

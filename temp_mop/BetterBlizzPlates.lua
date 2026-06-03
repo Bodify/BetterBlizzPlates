@@ -6194,7 +6194,7 @@ hooksecurefunc(NamePlateUnitFrameMixin, "OnUnitFactionChanged", function(self, u
     if self:IsForbidden() then return end
     HandleNamePlateAdded(self.unit)
     C_Timer.After(0.2, function()
-        if self then
+        if self and self.unit then
             local np, frame = BBP.GetSafeNameplate(self.unit)
             if frame then
                 HandleNamePlateAdded(frame.unit)
