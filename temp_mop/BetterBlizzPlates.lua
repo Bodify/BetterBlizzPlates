@@ -1130,9 +1130,9 @@ BBP.InitializeNameplateSettings = InitializeNameplateSettings
 local function TempRetailNpFix()
     local big = GetCVar("NamePlateHorizontalScale") == "1.4"
     local classic = BetterBlizzPlatesDB.classicNameplates
-    BetterBlizzPlatesDB.nameplateEnemyWidth, BetterBlizzPlatesDB.nameplateEnemyHeight = classic and 128 or 130, 32
-    BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = classic and 128 or 130, 32
-    BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight = classic and 128 or 130, 32
+    BetterBlizzPlatesDB.nameplateEnemyWidth, BetterBlizzPlatesDB.nameplateEnemyHeight = classic and 154 or 145, 32
+    BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = classic and 154 or 145, 32
+    BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight = classic and 154 or 145, 32
 
     BetterBlizzPlatesDB.nameplateHorizontalScale = big and 1.4 or 1
     BetterBlizzPlatesDB.NamePlateVerticalScale = 1
@@ -1449,9 +1449,9 @@ local function CVarFetcher()
         BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = 128, 32 -- C_NamePlate.GetNamePlateFriendlySize()
         BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight = 128, 32 -- C_NamePlate.GetNamePlateSelfSize()
 
-        BetterBlizzPlatesDB.nameplateEnemyWidth = classic and 128 or 130
-        BetterBlizzPlatesDB.nameplateFriendlyWidth = classic and 128 or 130
-        BetterBlizzPlatesDB.nameplateSelfWidth = classic and 128 or 130
+        BetterBlizzPlatesDB.nameplateEnemyWidth = classic and 154 or 145
+        BetterBlizzPlatesDB.nameplateFriendlyWidth = classic and 154 or 145
+        BetterBlizzPlatesDB.nameplateSelfWidth = classic and 154 or 145
 
         if not BBPCVarBackupsDB then
             BBPCVarBackupsDB = {}
@@ -1490,9 +1490,9 @@ local function CVarFetcher()
         BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = C_NamePlate.GetNamePlateSize()--C_NamePlate.GetNamePlateFriendlySize()
         BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight = C_NamePlate.GetNamePlateSize()--C_NamePlate.GetNamePlateSelfSize()
 
-        BetterBlizzPlatesDB.nameplateEnemyWidth = classic and 128 or 130
-        BetterBlizzPlatesDB.nameplateFriendlyWidth = classic and 128 or 130
-        BetterBlizzPlatesDB.nameplateSelfWidth = classic and 128 or 130
+        BetterBlizzPlatesDB.nameplateEnemyWidth = classic and 154 or 145
+        BetterBlizzPlatesDB.nameplateFriendlyWidth = classic and 154 or 145
+        BetterBlizzPlatesDB.nameplateSelfWidth = classic and 154 or 145
 
         if not BBPCVarBackupsDB then
             BBPCVarBackupsDB = {}
@@ -1693,9 +1693,9 @@ end
 local function ResetNameplates()
     local big = GetCVar("NamePlateHorizontalScale") == "1.4"
     local classic = BetterBlizzPlatesDB.classicNameplates
-    BetterBlizzPlatesDB.nameplateEnemyWidth, BetterBlizzPlatesDB.nameplateEnemyHeight = classic and 128 or 130, 32
-    BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = classic and 128 or 130, 32
-    BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight = classic and 128 or 130, 32
+    BetterBlizzPlatesDB.nameplateEnemyWidth, BetterBlizzPlatesDB.nameplateEnemyHeight = classic and 154 or 145, 32
+    BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = classic and 154 or 145, 32
+    BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight = classic and 154 or 145, 32
 
     BetterBlizzPlatesDB.nameplateOverlapH = 0.8
     BetterBlizzPlatesDB.nameplateOverlapV = 0.8
@@ -1847,7 +1847,7 @@ local function AddAlphaValuesToAuraColors()
 end
 
 StaticPopupDialogs["BBP_UPDATE_NOTIF"] = {
-    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates:\n\nMoP 5.5.4 is live and a big patch. BBP will need lots of fixes and I haven't had the time to address them yet.\n\nPlease be patient and use BBP at own risk atm.\n\nThis BBP patch is a very early version with probably only 30% of the fixes needed. Shit is likely to hit the fan. Give me a week or so and please report bugs (preferably detailed ones).",
+    text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates:\n\nMoP 5.5.4 is live and a big patch. BBP will need lots of fixes and I haven't had the time to address them yet.\n\nPlease be patient and use BBP at own risk atm.\n\nThis BBP patch is a very early version with probably only 30%% of the fixes needed. Shit is likely to hit the fan. Give me a week or so and please report bugs (preferably detailed ones).",
     button1 = "OK",
     timeout = 0,
     whileDead = true,
@@ -2956,18 +2956,11 @@ end
 --#################################################################################################
 -- Reset slider to default value function
 function BBP.ResetToDefaultWidth(slider, isFriendly, prd)
-    local heightValue = BBP.isLargeNameplatesEnabled() and BetterBlizzPlatesDB.nameplateDefaultLargeFriendlyHeight or BetterBlizzPlatesDB.nameplateDefaultFriendlyHeight
-     heightValue = heightValue + BetterBlizzPlatesDB.nameplateExtraClickHeight
-
-    if isFriendly and BetterBlizzPlatesDB.friendlyNameplateClickthrough then
-        heightValue = 1
-    end
-
     if not BBP.checkCombatAndWarn() then
-        local enemyWidth   = BetterBlizzPlatesDB.nameplateEnemyWidth or 172.5
-        local friendlyWidth = BetterBlizzPlatesDB.nameplateFriendlyWidth or 172.5
+        local classic = BetterBlizzPlatesDB.classicNameplates
+        local width = classic and 154 or 145
 
-        local widestBar = enemyWidth--math.max(enemyWidth, friendlyWidth) -- prefer friendly nameplates, idk if valid to consider friendly
+        local widestBar = width--math.max(enemyWidth, friendlyWidth) -- prefer friendly nameplates, idk if valid to consider friendly
         local healthBarHeight = 55--BetterBlizzPlatesDB.nameplateGeneralHeight or 65
 
         -- Set the nameplate size
@@ -3033,9 +3026,8 @@ function BBP.ResetToDefaultHeight2(slider)
     -- else
         --slider:SetValue(4)
         --BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 4
-        slider:SetValue(1)
-        BetterBlizzPlatesDB.NamePlateVerticalScale = "1"
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|aCVar NamePlateVerticalScale set to 1")
+        slider:SetValue(11)
+        BetterBlizzPlatesDB.nameplateGeneralHpHeight = "11"
     --end
 end
 
@@ -7286,7 +7278,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 BBP.CVarAdditionFetcher()
             end
             if not BetterBlizzPlatesDB.nameplateGeneralHpHeight then
-                BetterBlizzPlatesDB.nameplateGeneralHpHeight = ((BetterBlizzPlatesDB.NamePlateVerticalScale or 2.7) * 4) + 5.5
+                BetterBlizzPlatesDB.nameplateGeneralHpHeight = 11--((BetterBlizzPlatesDB.NamePlateVerticalScale or 2.7) * 4) + 5.5
             end
             if not db.old_defaultLargeNamePlateFont then
                 db.old_defaultLargeNamePlateFont = db.defaultLargeNamePlateFont
