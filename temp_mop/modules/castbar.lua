@@ -1087,70 +1087,7 @@ frame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
 local function ClassicCastbarAdjustments(self, event, frame)
     local castBarTexture = self:GetStatusBarTexture()
 
-    if event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_FAILED" then
-        if not self.colorActive then
-            if castBarTexture then
-                castBarTexture:SetDesaturated(false)
-            end
-            if classicFrames then
-                local color = castColors[self.barType] or castColors.default
-                self:SetStatusBarColor(unpack(color))
-            else
-                self:SetStatusBarColor(1,1,1)
-            end
-        end
-        --self.barType = "interrupted"
-        if event == "UNIT_SPELLCAST_FAILED" then --only change text when its actually interrupted, "STOP" events proc on finished casts
-            self.Text:SetText(interruptedText or "Interrupted")
-        end
-        return
-    end
-
-    if event == "UNIT_SPELLCAST_INTERRUPTED" then
-        --self.barType = "interrupted"
-        self.Text:SetText(interruptedText or "Interrupted")
-    else
-        --self.barType = nil
-    -- elseif event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
-    --     self.barType = "interrupted"
-    end
-
     local texture = textureTable[self.barType] or textureTable.default
-
-    if BetterBlizzPlatesDB.useCustomCastbarTexture then
-
-        local textureName = BetterBlizzPlatesDB.customCastbarTexture
-        local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
-        local bgTextureName = BetterBlizzPlatesDB.customCastbarBGTexture
-        local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, bgTextureName)
-        local changeBgTexture = BetterBlizzPlatesDB.useCustomCastbarBGTexture
-        local nonInterruptibleTextureName = BetterBlizzPlatesDB.customCastbarNonInterruptibleTexture
-        local nonInterruptibleTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, nonInterruptibleTextureName)
-        if self.barType == "uninterruptible" then
-            texture = nonInterruptibleTexturePath
-        else
-            texture = texturePath
-        end
-
-        self:SetStatusBarTexture(texture)
-        if castBarTexture then
-            castBarTexture:SetDesaturated(true)
-            if changeBgTexture and self.Background then
-                local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
-                self.Background:SetDesaturated(true)
-                self.Background:SetTexture(bgTexture)
-                self.Background:SetAllPoints(self)
-                if notInterruptible and BetterBlizzPlatesDB.redBgCastColor then
-                    self.Background:SetVertexColor(1,0,0,1)
-                else
-                    self.Background:SetVertexColor(unpack(bgColor))
-                end
-            end
-        end
-
-    end
-
-
     self:GetStatusBarTexture():SetDrawLayer("BORDER", 0)
 
     if BetterBlizzPlatesDB.castBarRecolor or BetterBlizzPlatesDB.useCustomCastbarTexture then
@@ -1189,20 +1126,82 @@ local function ClassicCastbarAdjustments(self, event, frame)
             end
         end
     end
+
+    if event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_FAILED" then
+        if not self.colorActive then
+            if castBarTexture then
+                castBarTexture:SetDesaturated(false)
+            end
+            if classicFrames then
+                local color = castColors[self.barType] or castColors.default
+                self:SetStatusBarColor(unpack(color))
+            else
+                self:SetStatusBarColor(1,1,1)
+            end
+        end
+        --self.barType = "interrupted"
+        if event == "UNIT_SPELLCAST_FAILED" then --only change text when its actually interrupted, "STOP" events proc on finished casts
+            self.Text:SetText(interruptedText or "Interrupted")
+        end
+        return
+    end
+
+    if event == "UNIT_SPELLCAST_INTERRUPTED" then
+        --self.barType = "interrupted"
+        self.Text:SetText(interruptedText or "Interrupted")
+    else
+        --self.barType = nil
+    -- elseif event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
+    --     self.barType = "interrupted"
+    end
+
+    if BetterBlizzPlatesDB.useCustomCastbarTexture then
+
+        local textureName = BetterBlizzPlatesDB.customCastbarTexture
+        local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
+        local bgTextureName = BetterBlizzPlatesDB.customCastbarBGTexture
+        local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, bgTextureName)
+        local changeBgTexture = BetterBlizzPlatesDB.useCustomCastbarBGTexture
+        local nonInterruptibleTextureName = BetterBlizzPlatesDB.customCastbarNonInterruptibleTexture
+        local nonInterruptibleTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, nonInterruptibleTextureName)
+        if self.barType == "uninterruptible" then
+            texture = nonInterruptibleTexturePath
+        else
+            texture = texturePath
+        end
+
+        self:SetStatusBarTexture(texture)
+        if castBarTexture then
+            castBarTexture:SetDesaturated(true)
+            if changeBgTexture and self.Background then
+                local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
+                self.Background:SetDesaturated(true)
+                self.Background:SetTexture(bgTexture)
+                self.Background:SetAllPoints(self)
+                if notInterruptible and BetterBlizzPlatesDB.redBgCastColor then
+                    self.Background:SetVertexColor(1,0,0,1)
+                else
+                    self.Background:SetVertexColor(unpack(bgColor))
+                end
+            end
+        end
+
+    end
 end
 
-frame:SetScript("OnEvent", function(self, event, unit, ...)
-    local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
-    local frame = nameplate and nameplate.UnitFrame
-    if frame then --FIGURE OUT BUG, -> INTERRUPT SHOWS ON MULTIPLE CASTBARS
+hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
+    if self.unit  then
+        local nameplate, frame = BBP.GetSafeNameplate(self.unit)
         if not frame then return end
-        if unit == "player" then return end
+        local unit = self.unit
+        if self.unit == "player" then return end
         local db = BetterBlizzPlatesDB
         local alwaysHideFriendlyCastbar = db.alwaysHideFriendlyCastbar
         local alwaysHideEnemyCastbar = db.alwaysHideEnemyCastbar
         local hideCastbar = db.hideCastbar
         local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
         local enableCastbarCustomization = db.enableCastbarCustomization
+        local classicFrames = BetterBlizzPlatesDB.classicNameplates
         local useCustomCastbarTexture = db.useCustomCastbarTexture
         local showNameplateTargetText = db.showNameplateTargetText
         local showNameplateCastbarTimer = db.showNameplateCastbarTimer
@@ -1211,15 +1210,6 @@ frame:SetScript("OnEvent", function(self, event, unit, ...)
 
         local name, notInterruptible
         local casting, channeling
-
-        castBar.Text:ClearAllPoints()
-        if db.castBarFullTextWidth then
-            castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", -70, 0)
-            castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", 70, 0)
-        else
-            castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", -2, 0)
-            castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", 2, 0)
-        end
 
         local castName, _, _, _, _, _, _, csNotInterruptible = UnitCastingInfo(unit)
         if castName then
