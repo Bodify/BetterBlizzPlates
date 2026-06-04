@@ -348,7 +348,7 @@ function BBP.ClassIndicator(frame, foundID)
             frame.classIndicatorCC.Glow = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 7)
             frame.classIndicatorCC.Glow:SetAtlas("charactercreate-ring-select")
             frame.classIndicatorCC.Glow:SetPoint("CENTER", frame.classIndicator, "CENTER", 0, 0)
-            frame.classIndicatorCC.Glow:SetDesaturated(true)
+            --frame.classIndicatorCC.Glow:SetDesaturated(true)
             frame.classIndicatorCC.Glow:SetSize(36, 36)
             frame.classIndicatorCC.Glow:SetDrawLayer("OVERLAY", 7)
         else
@@ -377,7 +377,7 @@ function BBP.ClassIndicator(frame, foundID)
             frame.classIndicatorCC.Glow = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 7)
             frame.classIndicatorCC.Glow:SetAtlas("newplayertutorial-drag-slotblue")
             frame.classIndicatorCC.Glow:SetPoint("CENTER", frame.classIndicator, "CENTER", 0, 0)
-            frame.classIndicatorCC.Glow:SetDesaturated(true)
+            --frame.classIndicatorCC.Glow:SetDesaturated(true)
             frame.classIndicatorCC.Glow:SetSize(38, 38)
             frame.classIndicatorCC.Glow:SetDrawLayer("OVERLAY", 7)
         end
@@ -711,6 +711,9 @@ function BBP.ClassIndicator(frame, foundID)
             frame.HealthBarsContainer:SetAlpha(0)
             frame.HealthBarsContainer.alphaZero = true
             frame.selectionHighlight:SetAlpha(0)
+            if isPet then
+                frame.AurasFrame:SetAlpha(0)
+            end
             frame.ciChange = true
         elseif frame.ciChange then
             frame.HealthBarsContainer:SetAlpha(1)
@@ -762,7 +765,6 @@ function BBP.ClassIndicatorTargetHighlight(frame)
 end
 
 function BBP.UpdateHealthText(frame)
-    if BBP.isMidnight then return end
     if not frame.classIndicator then
         return
     end
@@ -780,14 +782,9 @@ function BBP.UpdateHealthText(frame)
     local info = frame.BetterBlizzPlates.unitInfo
 
     if (info.isFriend and config.classIndicatorFriendly) or (info.isEnemy and config.classIndicatorEnemy) or (config.classIndicatorShowPet and info.isPet) then
-        local health = UnitHealth(frame.unit)
-        local maxHealth = UnitHealthMax(frame.unit)
-
-        if maxHealth and maxHealth > 0 then
-            local healthPercent = math.floor((health / maxHealth) * 100)
-            if frame.name:GetAlpha() ~= 0 then
-                frame.name:SetText(healthPercent)
-            end
+        local nameAlpha = frame.name:GetAlpha()
+        if not issecretvalue(nameAlpha) and nameAlpha ~= 0 then
+            frame.name:SetFormattedText("%0.f", UnitHealthPercent(frame.unit, nil, CurveConstants.ScaleTo100))
         end
     end
 end
@@ -795,7 +792,7 @@ end
 function BBP.SetupClassIndicatorHealthText()
     if BBP.healthTextFrame then
         return
-    end -- Prevent multiple registrations
+    end
 
     BBP.healthTextFrame = CreateFrame("Frame")
     BBP.healthTextFrame:RegisterEvent("UNIT_HEALTH")
@@ -856,4 +853,86 @@ function BBP.ToggleClassIndicatorPinMode(enable)
         BBP.alwaysHideFriendlyCastbar:SetChecked(db.alwaysHideFriendlyCastbar)
     end
     BBP.RefreshAllNameplates()
+end
+
+local function AurasChanged(updateInfo)
+    if not updateInfo then return true end
+    if updateInfo.isFullUpdate then return true end
+    if (updateInfo.addedAuras and #updateInfo.addedAuras > 0)
+        or (updateInfo.updatedAuraInstanceIDs and #updateInfo.updatedAuraInstanceIDs > 0)
+        or (updateInfo.removedAuraInstanceIDs and #updateInfo.removedAuraInstanceIDs > 0)
+    then
+        return true
+    end
+    return false
+end
+
+local function SortNewestFirst(a, b) return a.auraInstanceID > b.auraInstanceID end
+
+local function GetNewestCCAura(unit)
+    local auras = C_UnitAuras.GetUnitAuras(unit, "HARMFUL|CROWD_CONTROL", nil, Enum.UnitAuraSortRule.Unsorted, Enum.UnitAuraSortDirection.Reverse)
+    if not auras or #auras == 0 then return nil end
+    table.sort(auras, SortNewestFirst)
+    for _, auraData in ipairs(auras) do
+        local isValid = C_Spell.IsSpellCrowdControl(auraData.spellId)
+        if issecretvalue(isValid) or isValid then
+            return auraData
+        end
+    end
+    return nil
+end
+
+local function UpdateCCOnClassIndicator(unit)
+    if not BetterBlizzPlatesDB.classIndicator or not BetterBlizzPlatesDB.classIndicatorCCAuras then return end
+    local np, frame = BBP.GetSafeNameplate(unit)
+    if not frame or not frame.classIndicatorCC then return end
+    local aura = GetNewestCCAura(unit)
+    if aura then
+        local durationObj = C_UnitAuras.GetAuraDuration(unit, aura.auraInstanceID)
+        frame.classIndicatorCC.Cooldown:SetCooldownFromDurationObject(durationObj)
+        frame.classIndicatorCC.Icon:SetTexture(aura.icon)
+        frame.classIndicatorCC:Show()
+    else
+        frame.classIndicatorCC:Hide()
+    end
+end
+
+function BBP.SetupClassIndicatorCCAuraListener()
+    if BetterBlizzPlatesDB.classIndicator and BetterBlizzPlatesDB.classIndicatorCCAuras then
+        if not BBP.classIconCCAuraFrame then
+            local ccAuraFrame = CreateFrame("Frame")
+            ccAuraFrame:SetScript("OnEvent", function(self, event, unit, updateInfo)
+                if not unit or not unit:find("nameplate") then return end
+
+                if event == "NAME_PLATE_UNIT_REMOVED" then
+                    local _, frame = BBP.GetSafeNameplate(unit)
+                    if frame and frame.classIndicatorCC then
+                        frame.classIndicatorCC:Hide()
+                    end
+                    return
+                end
+
+                if not UnitIsPlayer(unit) or not UnitIsFriend("player", unit) then
+                    if event == "NAME_PLATE_UNIT_ADDED" then
+                        local _, frame = BBP.GetSafeNameplate(unit)
+                        if frame and frame.classIndicatorCC then
+                            frame.classIndicatorCC:Hide()
+                        end
+                    end
+                    return
+                end
+
+                if event == "UNIT_AURA" and not AurasChanged(updateInfo) then return end
+                UpdateCCOnClassIndicator(unit)
+            end)
+            BBP.classIconCCAuraFrame = ccAuraFrame
+        end
+        BBP.classIconCCAuraFrame:RegisterEvent("UNIT_AURA")
+        BBP.classIconCCAuraFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+        BBP.classIconCCAuraFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+    elseif BBP.classIconCCAuraFrame then
+        BBP.classIconCCAuraFrame:UnregisterEvent("UNIT_AURA")
+        BBP.classIconCCAuraFrame:UnregisterEvent("NAME_PLATE_UNIT_ADDED")
+        BBP.classIconCCAuraFrame:UnregisterEvent("NAME_PLATE_UNIT_REMOVED")
+    end
 end

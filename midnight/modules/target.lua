@@ -597,8 +597,6 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
                 if config.changeNameplateBorderColor then
                     BBP.ColorNameplateBorder(frame)
-                else
-                    selectedBorder:SetVertexColor(0, 0, 0, 1)
                 end
             end
 
@@ -682,104 +680,99 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
         -- info.isTarget = true
         -- info.wasTarget = nil
         --if not UnitIsUnit(frame.unit, "player") then
-        if true then--BBP.isMidnight
-        --if not info.isSelf then
 
-            if db.executeIndicator then
-                if frame.executeIndicatorTexture then
-                    frame.executeIndicatorTexture:SetColorTexture(unpack(db.npBorderTargetColorRGB))
-                end
-                if db.executeIndicatorTargetOnly or db.executeIndicatorInRangeColor then
-                    BBP.ExecuteIndicator(frame)
-                end
+        if db.executeIndicator then
+            if frame.executeIndicatorTexture then
+                frame.executeIndicatorTexture:SetColorTexture(unpack(db.npBorderTargetColorRGB))
             end
-
-            if db.changeNameplateBorderSize then
-                BBP.ChangeHealthbarBorderSize(frame)
+            if db.executeIndicatorTargetOnly or db.executeIndicatorInRangeColor then
+                BBP.ExecuteIndicator(frame)
             end
+        end
 
-            if frame.BBPmouseoverTex and db.keepNpShadowTargetHighlighted then
-                frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+        if db.changeNameplateBorderSize then
+            BBP.ChangeHealthbarBorderSize(frame)
+        end
+
+        if frame.BBPmouseoverTex and db.keepNpShadowTargetHighlighted then
+            frame.BBPmouseoverTex:SetVertexColor(1, 1, 1, 1)
+        end
+
+        BBP.ToggleNameplateAuras(frame)
+        BBP.TargetNameplateAuraSize(frame)
+        if config.targetIndicator then BBP.TargetIndicator(frame) end
+
+        if config.classicNameplates then
+            if config.changeNameplateBorderColor then
+                BBP.ColorNameplateBorder(frame)
             end
+        end
 
-            BBP.ToggleNameplateAuras(frame)
-            BBP.TargetNameplateAuraSize(frame)
-            if config.targetIndicator then BBP.TargetIndicator(frame) end
-
-            if config.classicNameplates then
-                if config.changeNameplateBorderColor then
-                    BBP.ColorNameplateBorder(frame)
-                end
+        if db.classicRetailNameplates and frame.HealthBarsContainer.newBorder then
+            if config.changeNameplateBorderColor then
+                BBP.ColorNameplateBorder(frame)
+            else
+                frame.HealthBarsContainer:SetBorderColor(1, 1, 1, 1)
             end
+        end
 
-            if db.classicRetailNameplates and frame.HealthBarsContainer.newBorder then
-                if config.changeNameplateBorderColor then
-                    BBP.ColorNameplateBorder(frame)
-                else
-                    frame.HealthBarsContainer:SetBorderColor(1, 1, 1, 1)
-                end
+        local selectedBorder = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar and frame.HealthBarsContainer.healthBar.selectedBorder
+        if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
+            if config.changeNameplateBorderColor then
+                BBP.ColorNameplateBorder(frame)
             end
+        end
 
-            local selectedBorder = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar and frame.HealthBarsContainer.healthBar.selectedBorder
-            if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
-                if config.changeNameplateBorderColor then
-                    BBP.ColorNameplateBorder(frame)
-                else
-                    selectedBorder:SetVertexColor(1, 1, 1, 1)
-                end
+        if config.fadeOutNPC then
+            BBP.FadeOutNPCs(frame)
+            if config.fadeAllButTarget then
+                BBP.FadeAllButTargetNameplates()
             end
+        end
+        --if config.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
 
-            if config.fadeOutNPC then
-                BBP.FadeOutNPCs(frame)
-                if config.fadeAllButTarget then
-                    BBP.FadeAllButTargetNameplates()
-                end
-            end
-            --if config.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
-
-            if config.healthNumbers and config.healthNumbersTargetOnly then
-                BBP.HealthNumbers(frame)
-            end
+        if config.healthNumbers and config.healthNumbersTargetOnly then
+            BBP.HealthNumbers(frame)
+        end
 
 
-            local alwaysHideFriendlyCastbar = db.alwaysHideFriendlyCastbar
-            local alwaysHideEnemyCastbar = db.alwaysHideEnemyCastbar
-            if alwaysHideFriendlyCastbar or alwaysHideEnemyCastbar or BBP.hideFriendlyCastbar then
-                local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction("target")
-                if ((alwaysHideFriendlyCastbar or BBP.hideFriendlyCastbar) and isFriend) or (alwaysHideEnemyCastbar and not isFriend) then
-                    local alwaysHideFriendlyCastbarShowTarget = db.alwaysHideFriendlyCastbarShowTarget
-                    local alwaysHideEnemyCastbarShowTarget = db.alwaysHideEnemyCastbarShowTarget
-                    if (alwaysHideFriendlyCastbarShowTarget and isFriend) or (alwaysHideEnemyCastbarShowTarget and not isFriend) then
-                        if UnitCastingInfo("target") or UnitChannelInfo("target") then
-                            frame.castBar:Show()
-                        end
+        local alwaysHideFriendlyCastbar = db.alwaysHideFriendlyCastbar
+        local alwaysHideEnemyCastbar = db.alwaysHideEnemyCastbar
+        if alwaysHideFriendlyCastbar or alwaysHideEnemyCastbar or BBP.hideFriendlyCastbar then
+            local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction("target")
+            if ((alwaysHideFriendlyCastbar or BBP.hideFriendlyCastbar) and isFriend) or (alwaysHideEnemyCastbar and not isFriend) then
+                local alwaysHideFriendlyCastbarShowTarget = db.alwaysHideFriendlyCastbarShowTarget
+                local alwaysHideEnemyCastbarShowTarget = db.alwaysHideEnemyCastbarShowTarget
+                if (alwaysHideFriendlyCastbarShowTarget and isFriend) or (alwaysHideEnemyCastbarShowTarget and not isFriend) then
+                    if UnitCastingInfo("target") or UnitChannelInfo("target") then
+                        frame.castBar:Show()
                     end
                 end
             end
-
-
-
-            if config.hideNPC then BBP.HideNPCs(frame, targetNameplate) end
-            if config.partyPointer then BBP.PartyPointer(frame) end
-
-            if db.friendlyHideHealthBar then
-                local showOnTarget = db.friendlyHideHealthBarShowTarget
-                if showOnTarget and (info.isPlayer and info.isFriend) then
-                    frame.HealthBarsContainer:SetAlpha(1)
-                    frame.HealthBarsContainer.alphaZero = false
-                    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
-                end
-            end
-
-            if (config.classIndicator and (config.classIndicatorHighlight or config.classIndicatorHighlightColor)) then BBP.ClassIndicatorTargetHighlight(frame) end
-
-            if config.showCastbarIfTarget then BBP.HideCastbar(frame, frame.unit) end
-
-            if config.petIndicatorHideSecondaryPets then
-                BBP.PetIndicator(frame)
-            end
-
         end
+
+
+
+        if config.hideNPC then BBP.HideNPCs(frame, targetNameplate) end
+        if config.partyPointer then BBP.PartyPointer(frame) end
+
+        if db.friendlyHideHealthBar then
+            local showOnTarget = db.friendlyHideHealthBarShowTarget
+            if showOnTarget and (info.isPlayer and info.isFriend) then
+                frame.HealthBarsContainer:SetAlpha(1)
+                frame.HealthBarsContainer.alphaZero = false
+                frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
+            end
+        end
+
+        if (config.classIndicator and (config.classIndicatorHighlight or config.classIndicatorHighlightColor)) then BBP.ClassIndicatorTargetHighlight(frame) end
+
+        if config.showCastbarIfTarget then BBP.HideCastbar(frame, frame.unit) end
+
+        if config.petIndicatorHideSecondaryPets then
+            BBP.PetIndicator(frame)
+        end
+
         BBP.previousTargetNameplate = frame
     end
 
@@ -792,6 +785,7 @@ local PlayerFocusChanged = CreateFrame("Frame")
 PlayerFocusChanged:RegisterEvent("PLAYER_FOCUS_CHANGED")
 PlayerFocusChanged:SetScript("OnEvent", function(self, event)
     local focusNameplate, frame = BBP.GetSafeNameplate("focus")
+    local db = BetterBlizzPlatesDB
     BBP.currentFocusNameplate = nil
 
     -- PREVIOUS FOCUS NAMEPLATE
@@ -809,6 +803,31 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
             --BBP.ApplyCustomTextureToNameplate(frame)
         end
         BBP.CompactUnitFrame_UpdateHealthColor(frame)
+
+        if config.classicNameplates then
+            if config.changeNameplateBorderColor then
+                BBP.ColorNameplateBorder(frame)
+            end
+        end
+
+        if db.classicRetailNameplates and frame.HealthBarsContainer.newBorder then
+            if config.changeNameplateBorderColor then
+                BBP.ColorNameplateBorder(frame)
+            else
+                if frame.unit and UnitIsUnit(frame.unit, "target") then
+                    frame.HealthBarsContainer:SetBorderColor(1, 1, 1, 1)
+                else
+                    frame.HealthBarsContainer:SetBorderColor(0, 0, 0, 1)
+                end
+            end
+        end
+
+        local selectedBorder = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar and frame.HealthBarsContainer.healthBar.selectedBorder
+        if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
+            if config.changeNameplateBorderColor then
+                BBP.ColorNameplateBorder(frame)
+            end
+        end
 
         if BetterBlizzPlatesDB.executeIndicator and BetterBlizzPlatesDB.executeIndicatorInRangeColor then
             BBP.ExecuteIndicator(frame)
@@ -834,6 +853,32 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
         if BetterBlizzPlatesDB.executeIndicator and BetterBlizzPlatesDB.executeIndicatorInRangeColor then
             BBP.ExecuteIndicator(frame)
         end
+
+        if config.classicNameplates then
+            if config.changeNameplateBorderColor then
+                BBP.ColorNameplateBorder(frame)
+            end
+        end
+
+        if db.classicRetailNameplates and frame.HealthBarsContainer.newBorder then
+            if config.changeNameplateBorderColor then
+                BBP.ColorNameplateBorder(frame)
+            else
+                if UnitIsUnit(frame.unit, "target") then
+                    frame.HealthBarsContainer:SetBorderColor(1, 1, 1, 1)
+                else
+                    frame.HealthBarsContainer:SetBorderColor(0, 0, 0, 1)
+                end
+            end
+        end
+
+        local selectedBorder = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar and frame.HealthBarsContainer.healthBar.selectedBorder
+        if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
+            if config.changeNameplateBorderColor then
+                BBP.ColorNameplateBorder(frame)
+            end
+        end
+
         BBP.previousFocusNameplate = frame
     end
     if BetterBlizzPlatesDB.enableNpNonTargetAlpha and BetterBlizzPlatesDB.enableNpNonFocusAlpha then NameplateTargetAlphaAllNps() end

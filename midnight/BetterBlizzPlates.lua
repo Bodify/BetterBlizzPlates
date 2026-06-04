@@ -1928,18 +1928,19 @@ end
 
 function BBP.HookNameplatePosition(frame, nameplate)
     if not BetterBlizzPlatesDB.enableNpVerticalPos then return end
-    if frame.verticalPositionTweak then return end
+    if BBP.verticalPositionTweak then return end
     --if UnitIsUnit(frame.unit, "player") then return end
-    frame.verticalPositionTweak = true
-    hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
+    BBP.verticalPositionTweak = true
+    hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
         if SettingsPanel:IsShown() then return end
         if self:IsForbidden() then return end
-        --if frame.unit and UnitIsUnit(frame.unit, "player") then return end
-        frame:ClearPoint("BOTTOMLEFT")
-        frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", BetterBlizzPlatesDB.nameplateHorizontalPosition or 0, BetterBlizzPlatesDB.nameplateVerticalPosition or 0)
+        --if self.unit and UnitIsUnit(self.unit, "player") then return end
+        --C_Timer.After(0, function()
+            if not frame or frame:IsForbidden() then return end
+            frame:ClearPoint("BOTTOMLEFT")
+            frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", BetterBlizzPlatesDB.nameplateHorizontalPosition or 0, BetterBlizzPlatesDB.nameplateVerticalPosition or 0)
+        --end)
     end)
-    -- if not SettingsPanel:IsShown() then
-    -- end
     frame:ClearPoint("BOTTOMLEFT")
     frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", BetterBlizzPlatesDB.nameplateHorizontalPosition or 0, BetterBlizzPlatesDB.nameplateVerticalPosition or 0)
 end
@@ -3704,6 +3705,14 @@ end
 
 --################################################################################################
 -- Color NPCs
+local casters = {
+    ["PRIEST"] = true,
+    ["MAGE"] = true,
+    ["WARLOCK"] = true,
+    ["SHAMAN"] = true,
+    ["PALADIN"] = true,
+    ["DRUID"] = true,
+}
 function BBP.ColorNpcHealthbar(frame)
     if not BBP.isInPvE and not BetterBlizzPlatesDB.colorNPCEverywhere then return end
     if not frame or not frame.unit then return end
@@ -3719,7 +3728,7 @@ function BBP.ColorNpcHealthbar(frame)
     if classification == "elite" then
         if lvl == playerLvl then
             local class = UnitClassBase(frame.unit)
-            if class == "PALADIN" then
+            if casters[class] then
                 config.npcHealthbarColor = db.npcColorCaster
             else
                 config.npcHealthbarColor = db.npcColorMelee
@@ -3733,7 +3742,7 @@ function BBP.ColorNpcHealthbar(frame)
                 config.npcHealthbarColor = db.npcColorBoss
             else
                 local class = UnitClassBase(frame.unit)
-                if class == "PALADIN" then
+                if casters[class] then
                     config.npcHealthbarColor = db.npcColorCaster
                 else
                     config.npcHealthbarColor = nil
@@ -5037,6 +5046,7 @@ local function HideFriendlyHealthbar(frame)
                 frame.HealthBarsContainer:SetAlpha(0)
                 frame.HealthBarsContainer.alphaZero = true
                 frame.selectionHighlight:SetAlpha(0)
+                frame.AurasFrame:SetAlpha(0)
             else
                 frame.HealthBarsContainer:SetAlpha(1)
                 frame.HealthBarsContainer.alphaZero = false
@@ -5681,6 +5691,7 @@ local function UpdateLevelFrame(frame)
         frame.bbfLevelFrame.text:SetTextColor(color.r, color.g, color.b)
 
         frame.bbfLevelFrame:Show()
+        frame.bbfLevelFrame:SetScale(BetterBlizzPlatesDB.levelFrameScale or 1)
         frame.bbfLevelFrame.text:Show()
 
         if unitLevel == -1 then
@@ -6396,7 +6407,6 @@ local function HandleNamePlateAdded(unit)
 
     --print("1: ", frame:GetFrameLevel(), nameplate:GetFrameLevel())
     -- Get settings and unitInfo
-    frame.HealthBarsContainer.healthBar.selectedBorder:SetVertexColor(0.98, 0.98, 0.98, 1)
     local config = InitializeNameplateSettings(frame)
     local info = GetNameplateUnitInfo(frame, unit)
     if not info then return end
@@ -6533,6 +6543,17 @@ local function HandleNamePlateAdded(unit)
                 frame.castBar:Hide()
             end
         end
+    end
+
+    SmallPetsInPvP(frame)
+
+    local hpWidth = frame.HealthBarsContainer:GetWidth()
+    local hpHeight = frame.healthBar:GetHeight()
+    if not issecretvalue(hpWidth) then
+        frame.lastKnownHpWidth = hpWidth
+    end
+    if not issecretvalue(hpHeight) then
+        frame.lastKnownHpHeight = hpHeight
     end
 
     if info.isFocus then
@@ -6687,6 +6708,10 @@ local function HandleNamePlateAdded(unit)
     -- Color NPC
     if config.colorNPC then BBP.ColorNpcHealthbar(frame) end
 
+    if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
+        BBP.ColorThreat(frame)
+    end
+
     -- Show main hunter/lock pet icon
     if config.petIndicator then BBP.PetIndicator(frame) end
 
@@ -6704,8 +6729,6 @@ local function HandleNamePlateAdded(unit)
 
     -- Show Focus Target Indicator
     if config.focusTargetIndicator then BBP.FocusTargetIndicator(frame) end
-
-    SmallPetsInPvP(frame)
 
     -- Name repositioning
     if config.useFakeName then BBP.RepositionName(frame) end
@@ -7878,6 +7901,8 @@ local function TurnOnEnabledFeaturesOnLogin()
     --BBP.DruidBlueComboPoints() isMidnight
     BBP.DruidAlwaysShowCombos()
     EnableMouseoverChecker()
+
+    BBP.SetupClassIndicatorCCAuraListener()
 end
 
 
@@ -9084,7 +9109,14 @@ function BBP.NameplateAuraTweaksTemp()
     end)
 end
 
-
+-- Fix Blizzards nameplate auras bugging after MC.
+hooksecurefunc(NamePlateAurasMixin, "UpdateFriendPlayerAuraFrames", function(self)
+    if self:IsForbidden() then return end
+    local unit = self:GetParent().unit
+    if unit and UnitIsPlayer(unit) and not self.DebuffListFrame:IsShown() and UnitCanAttack("player", unit) and C_CVar.GetCVarBitfield("nameplateEnemyPlayerAuraDisplay", Enum.NamePlateEnemyPlayerAuraDisplay.Debuffs) then
+        self.DebuffListFrame:Show()
+    end
+end)
 
 
 
