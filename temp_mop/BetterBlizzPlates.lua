@@ -4258,9 +4258,9 @@ local function TweakLevelFrame(frame)
     frame.LevelFrame.HighLevelTexture:SetDrawLayer("OVERLAY")
     frame.LevelFrame.LevelText:SetDrawLayer("OVERLAY")
     if not BetterBlizzPlatesDB.classicNameplates then
-        BBP.SetFontBasedOnOption(frame.LevelFrame.LevelText, BetterBlizzPlatesDB.levelFrameFontSize)
+        BBP.SetFontBasedOnOption(frame.LevelFrame.LevelText, BetterBlizzPlatesDB.levelFrameFontSize-2)
         frame.LevelFrame.LevelText:ClearAllPoints()
-        frame.LevelFrame.LevelText:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", -18.5, 0)
+        frame.LevelFrame.LevelText:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", 2, -0.5)
         frame.LevelFrame:SetFrameStrata("LOW")
     else
         frame.LevelFrame:SetFrameStrata("DIALOG")

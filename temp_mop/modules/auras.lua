@@ -4006,13 +4006,12 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         buff.isActive = false;
     end
 
-
     self.auras:Iterate(function(auraInstanceID, aura)
         --if buffIndex > BBPMaxAuraNum then return true end
         local buff = frame.BuffFrame.auraFrames[buffIndex]
         if not buff then
             buff = CreateFrame("Frame", nil, frame.BuffFrame)
-            buff.unit = unit
+            buff.unit = unit or UnitFrame.unit
             buff.isBuff = aura.isHelpful;
             buff.spellID = aura.spellId;
             buff:SetSize(20, 14)
@@ -4042,18 +4041,34 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             if BetterBlizzPlatesDB.nameplateAuraTooltip then
                 buff:SetScript("OnEnter", function(self)
                     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-                    local foundIndex = nil
-                    for i = 1, 255 do
-                        local aura = C_UnitAuras.GetAuraDataByIndex(self.unit, i, self.isBuff and "HELPFUL" or "HARMFUL")
-                        if not aura then break end
-                        if aura.auraInstanceID == self.auraInstanceID then
-                            foundIndex = i
-                            break
-                        end
+                    local unit = self.unit
+                    local auraInstanceID = self.auraInstanceID
+
+                    if GameTooltip.SetUnitAuraByAuraInstanceID then
+                        local auraData = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)
+                        local filter = auraData and (auraData.isHelpful and "HELPFUL" or "HARMFUL") or "HELPFUL"
+                        GameTooltip:SetUnitAuraByAuraInstanceID(unit, auraInstanceID, filter)
+                        GameTooltip:AddLine("Spell ID: " .. self.spellID, 1, 1, 1)
+                        GameTooltip:Show()
+                        return
                     end
-                    
+
+                    local foundIndex, foundFilter
+                    for _, filter in ipairs({"HELPFUL", "HARMFUL"}) do
+                        for i = 1, 255 do
+                            local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, filter)
+                            if not aura then break end
+                            if aura.auraInstanceID == auraInstanceID then
+                                foundIndex = i
+                                foundFilter = filter
+                                break
+                            end
+                        end
+                        if foundIndex then break end
+                    end
+
                     if foundIndex then
-                        GameTooltip:SetUnitAura(self.unit, foundIndex, self.isBuff and "HELPFUL" or "HARMFUL")
+                        GameTooltip:SetUnitAura(unit, foundIndex, foundFilter)
                         GameTooltip:AddLine("Spell ID: " .. self.spellID, 1, 1, 1)
                         GameTooltip:Show()
                     end
@@ -4064,7 +4079,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
                 end)
             end
         end
-        buff.unit = unit
+        buff.unit = self.unit
         buff.Border:SetVertexColor(0,0,0,1)
         buff.auraInstanceID = auraInstanceID;
         buff.isBuff = aura.isHelpful;
