@@ -1,3 +1,13 @@
+# BetterBlizzPlates 2.0.3d
+## Mists of Pandaria
+- More fires put out, slighly more working version:
+- Tweak name position values. "CENTER" relative anchor changed to "TOP". You will likely have to tweak things again.
+- Tweak nameplate font handling to be same as Midnight (yet another can of worms)
+- Tweak click areas.
+- Twick healthbar position stuff.
+- Some castbar fixes but a million more to go.
+- Lots more will see tweaks and there will be a stream of changes that will affect your settings.
+
 # BetterBlizzPlates 2.0.3c
 ## Mists of Pandaria
 - Fix a few more issues with some settings that would completely brick addon.

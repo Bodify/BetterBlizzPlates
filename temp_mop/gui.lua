@@ -4984,19 +4984,19 @@ local function guiGeneralTab()
         enemyNeutralColorNameButtonIcon:Hide()
     end
 
-    local ShowClassColorInNameplate = CreateCheckbox("ShowClassColorInNameplate", "Class color healthbar", BetterBlizzPlates, true, BBP.ApplyNameplateWidth)
-    ShowClassColorInNameplate:SetPoint("TOPLEFT", enemyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(ShowClassColorInNameplate, "Class Color Healthbar", "Class color enemy healthbars.", nil, nil, "ShowClassColorInNameplate")
-    if GetCVar("ShowClassColorInNameplate") == "1" and BetterBlizzPlatesDB.ShowClassColorInNameplate == nil then
-        BetterBlizzPlatesDB.ShowClassColorInNameplate = true
-        ShowClassColorInNameplate:SetChecked(true)
+    local nameplateShowClassColor = CreateCheckbox("nameplateShowClassColor", "Class color healthbar", BetterBlizzPlates, true, BBP.ApplyNameplateWidth)
+    nameplateShowClassColor:SetPoint("TOPLEFT", enemyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(nameplateShowClassColor, "Class Color Healthbar", "Class color enemy healthbars.", nil, nil, "nameplateShowClassColor")
+    if GetCVar("nameplateShowClassColor") == "1" and BetterBlizzPlatesDB.nameplateShowClassColor == nil then
+        BetterBlizzPlatesDB.nameplateShowClassColor = true
+        nameplateShowClassColor:SetChecked(true)
     end
-    ShowClassColorInNameplate:HookScript("OnClick", function()
+    nameplateShowClassColor:HookScript("OnClick", function()
         StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end)
 
     local enemyHealthBarColor = CreateCheckbox("enemyHealthBarColor", "Custom healthbar color", BetterBlizzPlates)
-    enemyHealthBarColor:SetPoint("TOPLEFT", ShowClassColorInNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    enemyHealthBarColor:SetPoint("TOPLEFT", nameplateShowClassColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(enemyHealthBarColor, "Custom Nameplate Color", "Color ALL enemy nameplates a color of your choice.", "Has sub-setting to color NPC's only")
 
     local alwaysHideEnemyCastbar = CreateCheckbox("alwaysHideEnemyCastbar", "Hide castbar", BetterBlizzPlates)
@@ -5210,19 +5210,19 @@ local function guiGeneralTab()
         friendlyColorNameIcon:Hide()
     end
 
-    local ShowClassColorInFriendlyNameplate = CreateCheckbox("ShowClassColorInFriendlyNameplate", "Class color healthbar", BetterBlizzPlates, true, BBP.ApplyNameplateWidth)
-    ShowClassColorInFriendlyNameplate:SetPoint("TOPLEFT", friendlyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(ShowClassColorInFriendlyNameplate, "Class color healthbar", "Class color friendly healthbars.", nil, nil, "ShowClassColorInFriendlyNameplate")
-    if GetCVar("ShowClassColorInFriendlyNameplate") == "1" and BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate == nil then
-        BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate = true
-        ShowClassColorInFriendlyNameplate:SetChecked(true)
+    local nameplateShowFriendlyClassColor = CreateCheckbox("nameplateShowFriendlyClassColor", "Class color healthbar", BetterBlizzPlates, true, BBP.ApplyNameplateWidth)
+    nameplateShowFriendlyClassColor:SetPoint("TOPLEFT", friendlyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(nameplateShowFriendlyClassColor, "Class color healthbar", "Class color friendly healthbars.", nil, nil, "nameplateShowFriendlyClassColor")
+    if GetCVar("nameplateShowFriendlyClassColor") == "1" and BetterBlizzPlatesDB.nameplateShowFriendlyClassColor == nil then
+        BetterBlizzPlatesDB.nameplateShowFriendlyClassColor = true
+        nameplateShowFriendlyClassColor:SetChecked(true)
     end
-    ShowClassColorInFriendlyNameplate:HookScript("OnClick", function()
+    nameplateShowFriendlyClassColor:HookScript("OnClick", function()
         StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end)
 
     local friendlyHealthBarColor = CreateCheckbox("friendlyHealthBarColor", "Custom healthbar color", BetterBlizzPlates)
-    friendlyHealthBarColor:SetPoint("TOPLEFT", ShowClassColorInFriendlyNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    friendlyHealthBarColor:SetPoint("TOPLEFT", nameplateShowFriendlyClassColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(friendlyHealthBarColor, "Custom Healthbar Color", "Color Friendly healthbars a color of your choice.")
 
     local friendlyHealthBarColorPlayer = CreateCheckbox("friendlyHealthBarColorPlayer", "Player", BetterBlizzPlates)
@@ -10208,12 +10208,12 @@ local function guiCVarControl()
     local nameplateOverlapH = CreateSlider(guiCVarControl, "Horizontal Overlap", 0.05, 1, 0.01, "nameplateOverlapH")
     nameplateOverlapH:SetPoint("TOPLEFT", nameplateStackingFriendly, "BOTTOMLEFT", 12, -10)
     CreateTooltipTwo(nameplateOverlapH, "Horizontal Overlap", "Space between nameplates horizontally", nil, nil, "nameplateOverlapH")
-    local nameplateOverlapHReset = CreateResetButton(nameplateOverlapH, "nameplateOverlapH", nameplateMotion)
+    local nameplateOverlapHReset = CreateResetButton(nameplateOverlapH, "nameplateOverlapH", nameplateOverlapH)
 
     local nameplateOverlapV = CreateSlider(guiCVarControl, "Vertical Overlap", 0.05, 1.1, 0.01, "nameplateOverlapV")
     nameplateOverlapV:SetPoint("TOPLEFT", nameplateOverlapH, "BOTTOMLEFT", 0, -17)
     CreateTooltipTwo(nameplateOverlapV, "Vertical Overlap", "Space between nameplates vertically", nil, nil, "nameplateOverlapV")
-    local nameplateOverlapVReset = CreateResetButton(nameplateOverlapV, "nameplateOverlapV", nameplateMotion)
+    local nameplateOverlapVReset = CreateResetButton(nameplateOverlapV, "nameplateOverlapV", nameplateOverlapV)
 
     -- local nameplateMotionSpeed = CreateSlider(guiCVarControl, "Nameplate Motion Speed", 0.01, 1, 0.01, "nameplateMotionSpeed")
     -- nameplateMotionSpeed:SetPoint("TOPLEFT", nameplateOverlapV, "BOTTOMLEFT", 0, -17)
@@ -10547,6 +10547,13 @@ local function guiCVarControl()
                 elseif sliderCVars[cvarName] then
                     --BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
                     sliderCVars[cvarName]:SetValue(tonumber(cvarValue))
+                elseif cvarName == "nameplateStackingTypes" then
+                    -- Sync bitfield checkbox UI
+                    local enemyVal = C_CVar.GetCVarBitfield("nameplateStackingTypes", Enum.NamePlateStackType.Enemy)
+                    local friendlyVal = C_CVar.GetCVarBitfield("nameplateStackingTypes", Enum.NamePlateStackType.Friendly)
+                    nameplateStackingEnemy:SetChecked(enemyVal and true or false)
+                    nameplateStackingFriendly:SetChecked(friendlyVal and true or false)
+                    CheckAndToggleCheckboxes(nameplateStackingEnemy)
                 end
             end
         end)
@@ -10817,11 +10824,6 @@ local function guiMisc()
         end
     end)
 
-    local nameplateGeneralHeight = CreateSlider(guiMisc, "Clickable Height", 1, 70, 1, "nameplateGeneralHeight")
-    nameplateGeneralHeight:SetPoint("TOPLEFT", hpHeightFriendly, "BOTTOMLEFT", 0, -37)
-    CreateTooltipTwo(nameplateGeneralHeight, "Clickable Height", "Adjust the clickable area of nameplates.")
-
-
     local customFontSizeEnabled = CreateCheckbox("customFontSizeEnabled", "Enable Custom Nameplate Font Size", guiMisc)
     customFontSizeEnabled:SetPoint("TOPLEFT", changeHealthbarHeight, "BOTTOMLEFT", 0, -120)
     CreateTooltipTwo(customFontSizeEnabled, "Custom Nameplate Font Size", "Change the font size on nameplates", "This setting will work in PvE for friendly name size while the font size settings on the general page adjust the scale (not allowed in PvE).\nUse this setting as a baseline for friendly name size and finetune with scale on general page for non-pve content.")
@@ -10836,9 +10838,6 @@ local function guiMisc()
             DisableElement(customFontSize)
         end
     end)
-
-    local nameplateGeneralHeightReset = CreateResetButton(nameplateGeneralHeight, "nameplateGeneralHeight", guiMisc)
-    CreateTooltipTwo(nameplateGeneralHeightReset, "Reset to default", "Default is 32")
 
     local changeNameplateBorderSize = CreateCheckbox("changeNameplateBorderSize", "Change Nameplate Border Size", guiMisc)
     changeNameplateBorderSize:SetPoint("TOPLEFT", showGuildNames, "BOTTOMLEFT", 340, -50)
@@ -10958,7 +10957,7 @@ local function guiMisc()
     end)
 
 
-   local enableNpVerticalPos = CreateCheckbox("enableNpVerticalPos", "Change Nameplate Position", guiMisc)
+    local enableNpVerticalPos = CreateCheckbox("enableNpVerticalPos", "Change Nameplate Position (5.5.4 broken, keep at 0 prob for now)", guiMisc)
     enableNpVerticalPos:SetPoint("TOPLEFT", customFontSizeEnabled, "BOTTOMLEFT", 0, -27)
     CreateTooltipTwo(enableNpVerticalPos, "Change Nameplate Position", "Change the position of nameplates.")
 
@@ -11261,25 +11260,40 @@ function BBP.CVarTracker()
             nameplateShowEnemyMinus = true,
             nameplateShowEnemyPets = true,
             nameplateShowEnemyTotems = true,
-            nameplateShowFriendlyMinions = true,
-            nameplateShowFriendlyGuardians = true,
-            nameplateShowFriendlyPets = true,
-            nameplateShowFriendlyTotems = true,
+            nameplateShowFriendlyPlayerMinions = true,
+            nameplateShowFriendlyPlayerGuardians = true,
+            nameplateShowFriendlyPlayerPets = true,
+            nameplateShowFriendlyNPCs = true,
+            nameplateShowFriendlyPlayerTotems = true,
             nameplateResourceOnTarget = true,
-            nameplateMotion = true,
             nameplateShowAll = true
         },
         sliders = {
             nameplateOverlapH = true,
             nameplateOverlapV = true,
-            nameplateMotionSpeed = true,
+            --nameplateMotionSpeed = true,
             nameplateMinAlpha = true,
             nameplateMinAlphaDistance = true,
             nameplateMaxAlpha = true,
             nameplateMaxAlphaDistance = true,
-            nameplateOccludedAlphaMult = true
+            nameplateOccludedAlphaMult = true,
+            -- Midnight
+            nameplateDebuffPadding = true,
+            nameplateAuraScale = true,
+            nameplateSimplifiedScale = true,
+        },
+        other = {
+            nameplateStyle = true,
+            nameplateSize = true,
         }
     }
+
+    local bitCVarNames = {}
+    if BBP.bitCVarList then
+        for cvarName, _ in pairs(BBP.bitCVarList) do
+            bitCVarNames[cvarName] = true
+        end
+    end
 
     local cvarListener = CreateFrame("Frame")
     cvarListener:RegisterEvent("CVAR_UPDATE")
@@ -11291,6 +11305,12 @@ function BBP.CVarTracker()
             BetterBlizzPlatesDB[cvarName] = cvarValue
         elseif cvarsToTrack.sliders[cvarName] then
             BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
+        elseif cvarsToTrack.other[cvarName] then
+            BetterBlizzPlatesDB[cvarName] = cvarValue
+        elseif bitCVarNames[cvarName] then
+            for _, index in ipairs(BBP.bitCVarList[cvarName]) do
+                BetterBlizzPlatesDB.bitfields[cvarName][tostring(index)] = C_CVar.GetCVarBitfield(cvarName, index)
+            end
         end
     end)
 end
