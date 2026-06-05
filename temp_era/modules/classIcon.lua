@@ -126,6 +126,11 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
         frame.classIndicator.border = frame.classIndicator:CreateTexture(nil, "OVERLAY")
         frame.classIndicator:SetFrameStrata("HIGH")
     end
+    if BetterBlizzPlatesDB.classIndicatorIgnoreScale then
+        frame.classIndicator:SetIgnoreParentScale(true)
+    else
+        frame.classIndicator:SetIgnoreParentScale(false)
+    end
 
     if (config.classIndicatorHighlight or config.classIndicatorHighlightColor) and not frame.classIndicator.highlightSelect then
         frame.classIndicator.highlightSelect = frame.classIndicator:CreateTexture(nil, "OVERLAY")

@@ -134,6 +134,25 @@ StaticPopupDialogs["BBP_TOTEMLIST_RESET"] = {
     hideOnEscape = true,
 }
 
+StaticPopupDialogs["BBP_NP_AURA_ENABLE"] = {
+    text = titleText.."You've enabled Nameplate Aura filters.\nThis requires a reload.\n\nDo you want to enable PvP filters showing all Important CC and Buffs larger and with a glow on them?",
+    button1 = "Yes",
+    button2 = "No",
+    OnAccept = function()
+        local db = BetterBlizzPlatesDB
+        db.otherNpBuffFilterImportantBuffs = true
+        db.otherNpdeBuffFilterCC = true
+        db.friendlyNpBuffFilterImportantBuffs = true
+        db.friendlyNpdeBuffFilterCC = true
+        StaticPopup_Show("BBF_CONFIRM_RELOAD")
+    end,
+    OnCancel = function()
+        StaticPopup_Show("BBF_CONFIRM_RELOAD")
+    end,
+    timeout = 0,
+    whileDead = true,
+}
+
 StaticPopupDialogs["BBP_UPDATE_NOTIF"] = {
     text = "|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates Cata Beta v0.1.1b:\n\nFixed Retail-look Nameplate Height Slider. You might have to re-adjust/reset it back to 1.",
     button1 = "OK",

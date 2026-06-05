@@ -120,6 +120,25 @@ StaticPopupDialogs["BBP_CONFIRM_PROFILE"] = {
     hideOnEscape = true,
 }
 
+StaticPopupDialogs["BBP_NP_AURA_ENABLE"] = {
+    text = titleText.."You've enabled Nameplate Aura filters.\nThis requires a reload.\n\nDo you want to enable PvP filters showing all Important CC and Buffs larger and with a glow on them?",
+    button1 = "Yes",
+    button2 = "No",
+    OnAccept = function()
+        local db = BetterBlizzPlatesDB
+        db.otherNpBuffFilterImportantBuffs = true
+        db.otherNpdeBuffFilterCC = true
+        db.friendlyNpBuffFilterImportantBuffs = true
+        db.friendlyNpdeBuffFilterCC = true
+        StaticPopup_Show("BBF_CONFIRM_RELOAD")
+    end,
+    OnCancel = function()
+        StaticPopup_Show("BBF_CONFIRM_RELOAD")
+    end,
+    timeout = 0,
+    whileDead = true,
+}
+
 StaticPopupDialogs["BBP_TOTEMLIST_RESET"] = {
     text = "This will delete the entire totem list and reset it back to its default state.\nA reload will be neccesary.\n\nAre you sure you want to continue?",
     button1 = "Yes",
@@ -1115,7 +1134,6 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         if petFrame then
                             BBP.SmallPetsInPvP(petFrame)
                             if BetterBlizzPlatesDB.classicNameplates then
-                                BBP.AdjustClassicBorderWidth(petFrame)
                                 BBP.CreateBetterClassicCastbarBorders(petFrame)
                             end
                         end
