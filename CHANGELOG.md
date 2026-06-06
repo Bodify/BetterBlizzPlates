@@ -1,4 +1,4 @@
-# BetterBlizzPlates 2.0.3e
+# BetterBlizzPlates 2.0.3f
 ## Mists of Pandaria
 ### Tweak
 - 2.0.3f: Improve default Click Area for Nameplates (still in shambles but hopefully better)
