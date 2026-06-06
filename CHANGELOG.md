@@ -1,4 +1,11 @@
 # BetterBlizzPlates 2.0.3e
+## Mists of Pandaria
+### Tweak
+- 2.0.3f: Improve default Click Area for Nameplates (still in shambles but hopefully better)
+### Bugfix
+- Fix nameplate tooltips from BBP.
+
+# BetterBlizzPlates 2.0.3e
 ## Midnight
 ### New
 - New Class Indicator setting: "Ignore Nameplate Scale". Keep icon same size always. In "More options" button in Advanced Settings section.
