@@ -2185,14 +2185,19 @@ function BBP.ApplyNameplateWidth()
         local halfExtraHeight = (BetterBlizzPlatesDB.nameplateExtraClickHeight or 0) / 2
         local halfVertAdj = (BetterBlizzPlatesDB.nameplateClickVerticalAdjustment or 0) / 2
 
+        local left   = -4 - halfExtraWidth - 20
+        local right  = -4 - halfExtraWidth
+        local top    = -35 - halfExtraHeight + halfVertAdj
+        local bottom = -15 - halfExtraHeight - halfVertAdj
+
         if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
             -- Collapse friendly nameplates to un-clickable (positive = shrink)
             C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Friendly, 10000, 10000, 10000, 10000)
         else
-            C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Friendly, 1 - halfExtraWidth - 20, 1 - halfExtraWidth, -10 - halfExtraHeight + halfVertAdj, -1 - halfExtraHeight - halfVertAdj)
+            C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Friendly, left, right, top, bottom)
         end
         -- Expand to full nameplate size (negative = expand to bounds)
-        C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Enemy, 1 - halfExtraWidth - 20, 1 - halfExtraWidth, -10 - halfExtraHeight + halfVertAdj, -1 - halfExtraHeight - halfVertAdj)
+        C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Enemy, left, right, top, bottom)
     end
 end
 
@@ -3326,7 +3331,7 @@ local function SetFriendlyBarWidthTemp(frame)
     local bbpClassic = db.classicNameplates
     local normalRightAnchor = not bbpClassic or (bbpClassic and db.hideLevelFrame)
     local hpCastSpacing = 0
-    --BBP.greenScreen(frame)
+    BBP.greenScreen(frame)
     frame.healthBar:ClearPoint("TOPLEFT")
     frame.healthBar:ClearPoint("BOTTOMRIGHT")
     frame.healthBar:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPLEFT", 0, 0)
