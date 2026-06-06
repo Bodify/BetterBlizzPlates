@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.0.3g
+## Mists of Pandaria
+### Tweak
+- Comment out debug frame (square colored nameplates)
+
 # BetterBlizzPlates 2.0.3f
 ## Mists of Pandaria
 ### Tweak
