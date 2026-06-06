@@ -3331,7 +3331,7 @@ local function SetFriendlyBarWidthTemp(frame)
     local bbpClassic = db.classicNameplates
     local normalRightAnchor = not bbpClassic or (bbpClassic and db.hideLevelFrame)
     local hpCastSpacing = 0
-    BBP.greenScreen(frame)
+    --BBP.greenScreen(frame)
     frame.healthBar:ClearPoint("TOPLEFT")
     frame.healthBar:ClearPoint("BOTTOMRIGHT")
     frame.healthBar:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPLEFT", 0, 0)
