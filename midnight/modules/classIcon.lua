@@ -382,6 +382,11 @@ function BBP.ClassIndicator(frame, foundID)
             frame.classIndicatorCC.Glow:SetDrawLayer("OVERLAY", 7)
         end
     end
+    if BetterBlizzPlatesDB.classIndicatorIgnoreScale then
+        frame.classIndicator:SetIgnoreParentScale(true)
+    else
+        frame.classIndicator:SetIgnoreParentScale(false)
+    end
     frame.classIndicator:SetFrameStrata(config.classIndicatorFrameStrataHigh and "HIGH" or "LOW")
     frame.classIndicator:SetAlpha(config.classIndicatorAlpha or 1)
 

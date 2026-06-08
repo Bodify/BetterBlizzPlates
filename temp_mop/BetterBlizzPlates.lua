@@ -2185,14 +2185,19 @@ function BBP.ApplyNameplateWidth()
         local halfExtraHeight = (BetterBlizzPlatesDB.nameplateExtraClickHeight or 0) / 2
         local halfVertAdj = (BetterBlizzPlatesDB.nameplateClickVerticalAdjustment or 0) / 2
 
+        local left   = -4 - halfExtraWidth - 20
+        local right  = -4 - halfExtraWidth
+        local top    = -35 - halfExtraHeight + halfVertAdj
+        local bottom = -15 - halfExtraHeight - halfVertAdj
+
         if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
             -- Collapse friendly nameplates to un-clickable (positive = shrink)
             C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Friendly, 10000, 10000, 10000, 10000)
         else
-            C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Friendly, 1 - halfExtraWidth - 20, 1 - halfExtraWidth, -10 - halfExtraHeight + halfVertAdj, -1 - halfExtraHeight - halfVertAdj)
+            C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Friendly, left, right, top, bottom)
         end
         -- Expand to full nameplate size (negative = expand to bounds)
-        C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Enemy, 1 - halfExtraWidth - 20, 1 - halfExtraWidth, -10 - halfExtraHeight + halfVertAdj, -1 - halfExtraHeight - halfVertAdj)
+        C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Enemy, left, right, top, bottom)
     end
 end
 
@@ -2386,9 +2391,9 @@ function BBP.ApplyCustomTextureToNameplate(frame)
     elseif BBP.needsUpdate then--or info.wasFocus or info.wasTarget then
         frame.healthBar:SetStatusBarTexture(defaultTex)
         textureExtraBars(frame, defaultTex)
-        if not config.useCustomTextureForSelfMana then
-            ClassNameplateManaBarFrame:SetStatusBarTexture(defaultTex)
-        end
+        -- if not config.useCustomTextureForSelfMana then
+        --     ClassNameplateManaBarFrame:SetStatusBarTexture(defaultTex)
+        -- end
     else
         frame.healthBar:SetStatusBarTexture(defaultTex)
         textureExtraBars(frame, defaultTex)
@@ -3947,13 +3952,6 @@ end
 --     end
 -- end
 
-local function AdjustClassicBorderWidth(frame)
-    local width = frame.healthBar:GetWidth() + 25
-    local extraWidth = BetterBlizzPlatesDB.hideLevelFrame and 6.5 or 0
-    frame.BetterBlizzPlates.bbpBorder.center:SetWidth((width - 40)+extraWidth)
-end
-BBP.AdjustClassicBorderWidth = AdjustClassicBorderWidth
-
 local function CreateBetterClassicHealthbarBorder(frame)
     local info = frame.BetterBlizzPlates.unitInfo
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
@@ -3968,21 +3966,24 @@ local function CreateBetterClassicHealthbarBorder(frame)
 
         local left = border:CreateTexture(nil, "OVERLAY", nil, -1)
         left:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderLeft")
-        left:SetPoint("BOTTOMLEFT", frame.healthBar, "BOTTOMLEFT", -28, -3)
-        left:SetPoint("TOPLEFT", frame.healthBar, "TOPLEFT", -28, 17)
+        left:SetPoint("BOTTOMLEFT", frame.HealthBarsContainer, "BOTTOMLEFT", -28, -3)
+        left:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPLEFT", -28, 17)
         border.left = left
 
         local center = border:CreateTexture(nil, "OVERLAY", nil, -1)
         center:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderCenter")
-        center:SetPoint("BOTTOMLEFT", left, "BOTTOMRIGHT", 0, 0)
-        center:SetPoint("TOPLEFT", left, "TOPRIGHT", 0, 0)
         border.center = center
 
         local right = border:CreateTexture(nil, "OVERLAY", nil, -1)
         right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRight")
-        right:SetPoint("BOTTOMLEFT", center, "BOTTOMRIGHT", 0, 0)
-        right:SetPoint("TOPLEFT", center, "TOPRIGHT", 0, 0)
+        right:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 28, -3)
+        right:SetPoint("TOPRIGHT", frame.HealthBarsContainer, "TOPRIGHT", 28, 17)
         border.right = right
+
+        center:SetPoint("BOTTOMLEFT", left, "BOTTOMRIGHT", 0, 0)
+        center:SetPoint("TOPLEFT", left, "TOPRIGHT", 0, 0)
+        center:SetPoint("TOPRIGHT", right, "TOPLEFT", 0, 0)
+        center:SetPoint("BOTTOMRIGHT", right, "BOTTOMLEFT", 0, 0)
 
         border:SetParent(frame.healthBar)
 
@@ -4030,6 +4031,10 @@ local function CreateBetterClassicHealthbarBorder(frame)
     frame.BetterBlizzPlates.bbpBorder.left:ClearAllPoints()
     frame.BetterBlizzPlates.bbpBorder.left:SetPoint("BOTTOMLEFT", frame.healthBar, "BOTTOMLEFT", -28, bottomOffset)
     frame.BetterBlizzPlates.bbpBorder.left:SetPoint("TOPLEFT", frame.healthBar, "TOPLEFT", -28, topOffset)
+
+    frame.BetterBlizzPlates.bbpBorder.right:ClearAllPoints()
+    frame.BetterBlizzPlates.bbpBorder.right:SetPoint("BOTTOMRIGHT", frame.healthBar, "BOTTOMRIGHT", config.hideLevelFrame and 28 or 20.5, bottomOffset)
+    frame.BetterBlizzPlates.bbpBorder.right:SetPoint("TOPRIGHT", frame.healthBar, "TOPRIGHT", config.hideLevelFrame and 28 or 20.5, topOffset)
 
     --local width = info.isFriend and BetterBlizzPlatesDB.nameplateFriendlyWidth or BetterBlizzPlatesDB.nameplateEnemyWidth
     -- local width = frame.healthBar:GetWidth() + 25
@@ -4258,9 +4263,9 @@ local function TweakLevelFrame(frame)
     frame.LevelFrame.HighLevelTexture:SetDrawLayer("OVERLAY")
     frame.LevelFrame.LevelText:SetDrawLayer("OVERLAY")
     if not BetterBlizzPlatesDB.classicNameplates then
-        BBP.SetFontBasedOnOption(frame.LevelFrame.LevelText, BetterBlizzPlatesDB.levelFrameFontSize)
+        BBP.SetFontBasedOnOption(frame.LevelFrame.LevelText, BetterBlizzPlatesDB.levelFrameFontSize-2)
         frame.LevelFrame.LevelText:ClearAllPoints()
-        frame.LevelFrame.LevelText:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", -18.5, 0)
+        frame.LevelFrame.LevelText:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", 2, -0.5)
         frame.LevelFrame:SetFrameStrata("LOW")
     else
         frame.LevelFrame:SetFrameStrata("DIALOG")
@@ -5878,27 +5883,34 @@ local function HandleNamePlateAdded(unit)
             end
         end
     end
-    if not BetterBlizzPlatesDB.hideEliteDragon then
-        if not frame.bbfClassificationIndicator then
-            frame.bbfClassificationIndicator = frame:CreateTexture(nil, "OVERLAY")
-            frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
-            frame.bbfClassificationIndicator:SetSize(13, 13)
-            frame.bbfClassificationIndicator:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", -2, 0)
-            frame.bbfClassificationIndicator:Hide()
-        end
+    -- if not BetterBlizzPlatesDB.hideEliteDragon then
+    --     if not frame.bbfClassificationIndicator then
+    --         frame.bbfClassificationIndicator = frame:CreateTexture(nil, "OVERLAY")
+    --         frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
+    --         frame.bbfClassificationIndicator:SetSize(13, 13)
+    --         frame.bbfClassificationIndicator:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", -2, 0)
+    --         frame.bbfClassificationIndicator:Hide()
+    --     end
 
-        local classification = UnitClassification(frame.unit)
-        if classification == "elite" then
-            frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
-            frame.bbfClassificationIndicator:Show()
-        elseif classification == "rareelite" then
-            frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-silver")
-            frame.bbfClassificationIndicator:Show()
+    --     local classification = UnitClassification(frame.unit)
+    --     if classification == "elite" then
+    --         frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
+    --         frame.bbfClassificationIndicator:Show()
+    --     elseif classification == "rareelite" then
+    --         frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-silver")
+    --         frame.bbfClassificationIndicator:Show()
+    --     else
+    --         frame.bbfClassificationIndicator:Hide()
+    --     end
+    -- elseif frame.bbfClassificationIndicator then
+    --     frame.bbfClassificationIndicator:Hide()
+    -- end
+    if frame.ClassificationFrame then
+        if BetterBlizzPlatesDB.hideEliteDragon then
+            frame.ClassificationFrame:SetAlpha(0)
         else
-            frame.bbfClassificationIndicator:Hide()
+            frame.ClassificationFrame:SetScale(0.7)
         end
-    elseif frame.bbfClassificationIndicator then
-        frame.bbfClassificationIndicator:Hide()
     end
     BBP.RepositionName(frame)
 
@@ -6053,14 +6065,7 @@ local function HandleNamePlateAdded(unit)
         end
     end
     if config.classicNameplates then
-        AdjustClassicBorderWidth(frame)
         CreateBetterClassicCastbarBorders(frame)
-        if not frame.classicBorderHook then
-            hooksecurefunc(frame.HealthBarsContainer, "SetPoint", function(self)
-                AdjustClassicBorderWidth(frame)
-            end)
-            frame.classicBorderHook = true
-        end
     end
 end
 
@@ -6122,12 +6127,6 @@ function BBP.RefreshAllNameplates()
             if BetterBlizzPlatesDB.classicNameplates then
                 if frame.BetterBlizzPlates.bbpBorder and frame.BetterBlizzPlates.bbpBorder.changed then
                     frame.BetterBlizzPlates.bbpBorder.right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRight")
-                    -- frame.HealthBarsContainer:ClearPoint("RIGHT")
-                    -- frame.HealthBarsContainer:ClearPoint("LEFT")
-                    -- frame.HealthBarsContainer:SetPoint("LEFT", frame, "LEFT", 4, 0)
-                    -- local xPos = BetterBlizzPlatesDB.hideLevelFrame and -4 or -21
-                    -- frame.HealthBarsContainer:SetPoint("RIGHT", frame, "RIGHT", xPos,0)
-                    AdjustClassicBorderWidth(frame)
                 end
                 frame.LevelFrame:SetAlpha(1)
             end
@@ -6300,7 +6299,6 @@ function BBP.RefreshAllNameplates()
 
         SmallPetsInPvP(frame)
         if BetterBlizzPlatesDB.classicNameplates then
-            AdjustClassicBorderWidth(frame)
             CreateBetterClassicCastbarBorders(frame)
 
             if frame.BetterBlizzPlates.bbpBorder.changed and not BetterBlizzPlatesDB.hideLevelFrame then

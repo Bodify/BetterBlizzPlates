@@ -194,6 +194,11 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
             frame.classIndicatorCC.Glow:SetDrawLayer("OVERLAY", 7)
         end
     end
+    if BetterBlizzPlatesDB.classIndicatorIgnoreScale then
+        frame.classIndicator:SetIgnoreParentScale(true)
+    else
+        frame.classIndicator:SetIgnoreParentScale(false)
+    end
     frame.classIndicator:SetAlpha(config.classIndicatorAlpha)
 
     if (config.classIndicatorHighlight or config.classIndicatorHighlightColor) and not frame.classIndicator.highlightSelect then
