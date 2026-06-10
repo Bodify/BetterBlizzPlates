@@ -61,6 +61,8 @@ local idCircleColor = {
     [1] = {0.9, 0.2, 0.2, 1}, -- Red
     [2] = {0.2, 0.9, 0.2, 1}, -- Green
     [3] = {0.2, 0.2, 0.9, 1}, -- Blue
+    [4] = {0.9, 0.9, 0.2, 1}, -- Yellow
+    [5] = {0.9, 0.2, 0.9, 1}, -- Magenta
 }
 
 local IsActiveBattlefieldArena = IsActiveBattlefieldArena

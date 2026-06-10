@@ -1549,3 +1549,18 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
         end
     end
 end)
+
+-- -- 
+-- hooksecurefunc(NamePlateCastingBarMixin, "ApplyStyleAndAnchoring", function(self)
+--     -- BorderShield needs texture update here
+-- end)
+
+
+-- -- function CastingBarMixin:SetLook(look)
+-- -- 	self.look = look;
+-- -- 	local modernStyle = not self.classicStyleCastBar;
+-- -- if ( look == "CLASSIC" ) then
+
+-- hooksecurefunc(CastingBarMixin, "SetLook", function(self)
+--     -- BorderShield size and position needs update here
+-- end)

@@ -958,7 +958,7 @@ function BBP.ToggleSpellCastEventRegistration()
         end
     end
     if BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarInterruptHighlighter and not castbarOnUpdateHooked then
-        hooksecurefunc("CastingBarFrame_OnUpdate", function(self, event, ...)
+        local function CastbarInterruptHighlighterOnUpdate(self, event, ...)
             if self.unit and self.unit:find("nameplate") then
                 if self:IsForbidden() then return end
                 local spellName, spellID, notInterruptible, endTime
@@ -1059,7 +1059,13 @@ function BBP.ToggleSpellCastEventRegistration()
                     end
                 end
             end
-        end)
+        end
+
+        if CastingBarFrame_OnUpdate then
+            hooksecurefunc("CastingBarFrame_OnUpdate", CastbarInterruptHighlighterOnUpdate)
+        elseif CastingBarMixin and CastingBarMixin.OnUpdate then
+            hooksecurefunc(CastingBarMixin, "OnUpdate", CastbarInterruptHighlighterOnUpdate)
+        end
         castbarOnUpdateHooked = true
     end
 end
