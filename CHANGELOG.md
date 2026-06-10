@@ -1,3 +1,11 @@
+# BetterBlizzPlates 2.0.3h
+## The Burning Crusade & MoP
+### Bugfix
+- Fix a nil error on TBC preventing opening settings.
+- Fix nil errors on arena names on MoP/TBC with arena id circle enabled.
+### Note
+- Just a quickfix now since settings were not available. More updates/fixes for MoP this weekend when I have time.
+
 # BetterBlizzPlates 2.0.3g
 ## Mists of Pandaria
 ### Tweak
