@@ -9042,7 +9042,7 @@ local function guiNameplateAuras()
 
     local otherNpdeBuffFilterBreakCCDots = CreateCheckbox("otherNpdeBuffFilterBreakCCDots", "Break-CC DoTs", otherNpdeBuffEnable)
     otherNpdeBuffFilterBreakCCDots:SetPoint("TOPLEFT", otherNpdeBuffFilterOnlyMe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(otherNpdeBuffFilterBreakCCDots, "Break-CC DoTs", "Show tracked damage-over-time debuffs that can break crowd control on enemy nameplates.", "This uses an internal list and does not add these auras to the whitelist.")
+    CreateTooltipTwo(otherNpdeBuffFilterBreakCCDots, "Break-CC DoTs", "Show common damage-over-time debuffs that can break crowd control")
 
 --[=[
     local otherNpdeBuffPandemicGlow = CreateCheckbox("otherNpdeBuffPandemicGlow", "Pandemic Glow", otherNpdeBuffEnable)

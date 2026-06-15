@@ -2245,12 +2245,12 @@ local breakCCDotNameLookup = {}
 for _, spellID in ipairs(breakCCDotSpellReferences) do
     local spellName = GetSpellInfo(spellID)
     if spellName then
-        breakCCDotNameLookup[string.lower(spellName)] = true
+        breakCCDotNameLookup[spellName] = true
     end
 end
 
 local function IsBreakCCDotAura(spellName)
-    return spellName and breakCCDotNameLookup[string.lower(spellName)] or false
+    return breakCCDotNameLookup[spellName]
 end
 
 local importantGlowOffset = 10 * (BetterBlizzPlatesDB.nameplateAuraEnlargedScale or 1)

@@ -448,7 +448,6 @@ local defaultSettings = {
     otherNpdeBuffFilterWatchList = true,
     otherNpdeBuffFilterLessMinite = false,
     otherNpdeBuffFilterOnlyMe = true,  -- only true on Era/TBC cuz no defaults (each spell rank has separate id)
-    otherNpdeBuffFilterBreakCCDots = false,
     otherNpdeBuffPandemicGlow = false,
 
     friendlyNpBuffEnable = false,
@@ -515,7 +514,16 @@ local defaultSettings = {
     hideCastbarList = {},
     hideCastbarWhitelist = {},
     colorNpcList = {},
-    auraWhitelist = {},
+    auraWhitelist = {
+        {["name"] = "Example Aura :3 (delete me)",
+        ["entryColors"] = {
+            ["text"] = {
+                ["b"] = 0,
+                ["g"] = 1,
+                ["r"] = 0,
+            },
+        },}
+    },
     auraBlacklist = {},
     auraColorList = {},
     friendlyColorNameRGB = {1, 1, 1},
