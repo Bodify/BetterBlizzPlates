@@ -10428,9 +10428,9 @@ local function guiCVarControl()
     nameplateShowFriendlyGuardians:SetPoint("TOP", nameplateShowFriendlyMinions, "BOTTOM", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateShowFriendlyGuardians, "Show Friendly Guardian Nameplates", "Guardians are usually \"semi controllable\" larger summoned pets, like Earth Elemental/Infernal.", nil, nil, "nameplateShowFriendlyGuardians")
 
-    local nameplateShowFriendlyNPCs = CreateCheckbox("nameplateShowFriendlyNPCs", "Show Friendly NPCs", guiCVarControl, true)
+    local nameplateShowFriendlyNPCs = CreateCheckbox("nameplateShowFriendlyNpcs", "Show Friendly NPCs", guiCVarControl, true)
     nameplateShowFriendlyNPCs:SetPoint("TOP", nameplateShowFriendlyGuardians, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateShowFriendlyNPCs, "Show Friendly NPC Nameplates", "Always show friendly NPC nameplates", nil, nil, "nameplateShowFriendlyNPCs")
+    CreateTooltipTwo(nameplateShowFriendlyNPCs, "Show Friendly NPC Nameplates", "Always show friendly NPC nameplates", nil, nil, "nameplateShowFriendlyNpcs")
 
     local nameplateShowFriendlyPets = CreateCheckbox("nameplateShowFriendlyPets", "Show Friendly Pets", guiCVarControl, true)
     nameplateShowFriendlyPets:SetPoint("TOP", nameplateShowFriendlyNPCs, "BOTTOM", 0, pixelsBetweenBoxes)
@@ -11281,7 +11281,7 @@ function BBP.CVarTracker()
             nameplateShowFriendlyPlayerMinions = true,
             nameplateShowFriendlyPlayerGuardians = true,
             nameplateShowFriendlyPlayerPets = true,
-            nameplateShowFriendlyNPCs = true,
+            nameplateShowFriendlyNpcs = true,
             nameplateShowFriendlyPlayerTotems = true,
             nameplateResourceOnTarget = true,
             nameplateShowAll = true

@@ -1317,7 +1317,7 @@ local cvarList = {
     "nameplateShowFriendlyPlayerMinions",
     "nameplateShowFriendlyPlayerPets",
     "nameplateShowFriendlyPlayerTotems",
-    "nameplateShowFriendlyNPCs",
+    "nameplateShowFriendlyNpcs",
     --"nameplateSelfTopInset",
     --"nameplateSelfBottomInset",
     --"nameplateSelfAlpha",
@@ -2631,6 +2631,11 @@ local function SetCVarsOnLogin()
         C_CVar.SetCVar("nameplateResourceOnTarget", BetterBlizzPlatesDB.nameplateResourceOnTarget)
         C_CVar.SetCVar("nameplateShowClassColor", BetterBlizzPlatesDB.nameplateShowClassColor)
         C_CVar.SetCVar("nameplateShowFriendlyClassColor", BetterBlizzPlatesDB.nameplateShowFriendlyClassColor)
+
+        if BetterBlizzPlatesDB.fixedNameplateStyle and BetterBlizzPlatesDB.nameplateStyle then
+            C_CVar.SetCVar("nameplateStyle", BetterBlizzPlatesDB.nameplateStyle)
+        end
+
         if BetterBlizzPlatesDB.nameplateSelectedAlpha then
             C_CVar.SetCVar("nameplateSelectedAlpha", BetterBlizzPlatesDB.nameplateSelectedAlpha)
             C_CVar.SetCVar("nameplateNotSelectedAlpha", BetterBlizzPlatesDB.nameplateNotSelectedAlpha)
@@ -2662,8 +2667,8 @@ local function SetCVarsOnLogin()
 
             C_CVar.SetCVar("nameplateShowFriendlyMinions", BetterBlizzPlatesDB.nameplateShowFriendlyMinions)
             C_CVar.SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
-            if BetterBlizzPlatesDB.nameplateShowFriendlyNPCs then
-                C_CVar.SetCVar("nameplateShowFriendlyNPCs", BetterBlizzPlatesDB.nameplateShowFriendlyNPCs)
+            if BetterBlizzPlatesDB.nameplateShowFriendlyNpcs then
+                C_CVar.SetCVar("nameplateShowFriendlyNpcs", BetterBlizzPlatesDB.nameplateShowFriendlyNpcs)
             end
             C_CVar.SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
             C_CVar.SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
@@ -4160,7 +4165,7 @@ local function CreateBetterClassicCastbarBorders(frame)
 
         frame.castBar.Icon:SetAlpha(0)
         local activeBorder
-        if frame.castBar.notInterruptible then
+        if frame.castBar.barType == "uninterruptable" then
             frame.castBar.bbpCastUninterruptibleBorder:Show()
             frame.castBar.bbpCastBorder:Hide()
             activeBorder = frame.castBar.bbpCastUninterruptibleBorder
@@ -4438,7 +4443,7 @@ local function CreateBetterRetailCastbar(frame)
     -- Update the filling texture based on cast type
     local function UpdateCastBarTextures(self)
         local texture
-        if self.notInterruptible then
+        if self.barType == "uninterruptable" then
             texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Uninterruptable"
             --self.bbpBorderShield:Show()
         elseif self.channeling then
@@ -4467,7 +4472,7 @@ local function CreateBetterRetailCastbar(frame)
 
             if spellName then
                 self.Text:SetText(spellName)
-                if not self.notInterruptible then
+                if self.barType ~= "uninterruptable" then
                     if channel then
                         texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
                     else
@@ -4475,7 +4480,7 @@ local function CreateBetterRetailCastbar(frame)
                     end
                 end
             else
-                if not self.notInterruptible then
+                if self.barType ~= "uninterruptable" then
                     if channel then
                         texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"
                     else
@@ -4654,14 +4659,22 @@ function BBP.SetupBorderOnFrame(frame)
         frame.border:Hide()
     end
     if frame.newBorder then return end
-    -- Create borders
-    local borderTop = CreateBorder(frame, 0, 0, 0, 1)  -- Black color
-    local borderBottom = CreateBorder(frame, 0, 0, 0, 1)
-    local borderLeft = CreateBorder(frame, 0, 0, 0, 1)
-    local borderRight = CreateBorder(frame, 0, 0, 0, 1)
 
-    -- Store borders in a table
-    frame["borders"] = {borderTop, borderBottom, borderLeft, borderRight}
+    -- Create a container frame for borders (SetAlpha on it hides/shows all children)
+    local bordersFrame
+    if frame.CreateTexture then
+        bordersFrame = CreateFrame("Frame", nil, frame)
+    else
+        bordersFrame = CreateFrame("Frame", nil, frame:GetParent())
+    end
+    bordersFrame:SetAllPoints(frame)
+    frame.borders = bordersFrame
+
+    -- Create borders as children of the container frame
+    local borderTop = CreateBorder(bordersFrame, 0, 0, 0, 1)  -- Black color
+    local borderBottom = CreateBorder(bordersFrame, 0, 0, 0, 1)
+    local borderLeft = CreateBorder(bordersFrame, 0, 0, 0, 1)
+    local borderRight = CreateBorder(bordersFrame, 0, 0, 0, 1)
 
     -- Initial border thickness
     local borderThickness = 1
@@ -4696,9 +4709,10 @@ function BBP.SetupBorderOnFrame(frame)
 
     -- Define method to set border color
     function frame:SetBorderColor(r, g, b, a)
-        for _, border in ipairs(self.borders) do
-            border:SetColorTexture(r, g, b, a)
-        end
+        borderTop:SetColorTexture(r, g, b, a)
+        borderBottom:SetColorTexture(r, g, b, a)
+        borderLeft:SetColorTexture(r, g, b, a)
+        borderRight:SetColorTexture(r, g, b, a)
     end
 
     -- Define method to set border size
@@ -4708,7 +4722,6 @@ function BBP.SetupBorderOnFrame(frame)
 
     frame.newBorder = true
 end
-
 
 local function SetNameplateHeight(frame, height)
     frame:SetHeight(height)
@@ -7249,6 +7262,10 @@ First:SetScript("OnEvent", function(_, event, addonName)
             end)
 
             C_Timer.After(3, function()
+                if not BetterBlizzPlatesDB.fixedNameplateStyle then
+                    BetterBlizzPlatesDB.nameplateStyle = C_CVar.GetCVar("nameplateStyle")
+                    BetterBlizzPlatesDB.fixedNameplateStyle = true
+                end
                 BBP.CVarTracker()
             end)
 
@@ -7348,6 +7365,9 @@ local function OnVariablesLoaded(self, event)
         if not BetterBlizzPlatesDB.nameplateSelectedAlpha then
             BetterBlizzPlatesDB.nameplateSelectedAlpha = GetCVar("nameplateSelectedAlpha")
             BetterBlizzPlatesDB.nameplateNotSelectedAlpha = GetCVar("nameplateNotSelectedAlpha")
+        end
+        if BetterBlizzPlatesDB.nameplateShowFriendlyNpcs == nil then
+            BetterBlizzPlatesDB.nameplateShowFriendlyNpcs = BetterBlizzPlatesDB.nameplateShowFriendlyNPCs or GetCVar("nameplateShowFriendlyNpcs")
         end
         BBP.variablesLoaded = true
     end

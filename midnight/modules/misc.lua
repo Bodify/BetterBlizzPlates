@@ -1,3 +1,5 @@
+local prdClassFrame = prdClassFrame or PersonalResourceDisplayFrame.classFrame
+
 function BBP.InstantComboPoints()
     if not BetterBlizzPlatesDB.instantComboPoints then return end
     if BBP.InstantComboPointsActive then return end

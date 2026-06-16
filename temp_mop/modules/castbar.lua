@@ -94,7 +94,7 @@ interruptSpellUpdate:SetScript("OnEvent", OnEvent)
 local textureTable = {
     casting = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard",
     channeling = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel",
-    uninterruptible = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Uninterruptable",
+    uninterruptable = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Uninterruptable",
     interrupted = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Interrupted",
     default = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Standard",
 }
@@ -103,8 +103,8 @@ local castColors = {
     casting = { 1.0, 0.7, 0.0 },         -- Orange (standard casting)
     channeling = { 0.0, 1.0, 0.0 },      -- Green (channeling)
     interrupted = { 1.0, 0.0, 0.0 },     -- Red (interrupted)
-    --uninterruptible = { 0.7, 0.7, 0.7 }, -- Gray (uninterruptible) (classic bars have massive gray border, ignore gray color here)
-    uninterruptible = { 1.0, 0.7, 0.0 },         -- Fallback to casting color
+    --uninterruptable = { 0.7, 0.7, 0.7 }, -- Gray (uninterruptable) (classic bars have massive gray border, ignore gray color here)
+    uninterruptable = { 1.0, 0.7, 0.0 },         -- Fallback to casting color
     default = { 1.0, 0.7, 0.0 },         -- Fallback to casting color
 }
 
@@ -222,26 +222,11 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     end
     if castBarIconPixelBorder then
         if not castBar.adjustedIcon then
-            castBar.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-            BBP.SetupBorderOnFrame(castBar.Icon)
-            castBar.Icon:HookScript("OnShow", function()
-                for _, border in ipairs(castBar.Icon.borders) do
-                    border:Show()
-                end
-            end)
-            castBar.Icon:HookScript("OnHide", function()
-                for _, border in ipairs(castBar.Icon.borders) do
-                    border:Hide()
-                end
-            end)
-            castBar.BorderShield:HookScript("OnShow", function()
-                for _, border in ipairs(castBar.Icon.borders) do
-                    border:Hide()
-                end
-                if not showCastBarIconWhenNoninterruptible then
-                    castBar.Icon:Hide()
-                end
-            end)
+            local iconTarget = frame.castBar.bbpRetailIcon
+            if iconTarget then
+                iconTarget:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+                BBP.SetupBorderOnFrame(iconTarget)
+            end
             castBar.adjustedIcon = true
         end
     end
@@ -958,7 +943,7 @@ function BBP.ToggleSpellCastEventRegistration()
         end
     end
     if BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarInterruptHighlighter and not castbarOnUpdateHooked then
-        hooksecurefunc(CastingBarMixin, "OnUpdate", function(self, event, ...)
+        hooksecurefunc(NamePlateCastingBarMixin, "OnUpdate", function(self, event, ...)
             if self.unit and self.unit:find("nameplate") then
                 if self:IsForbidden() then return end
                 local spellName, spellID, notInterruptible, endTime
@@ -1000,6 +985,7 @@ function BBP.ToggleSpellCastEventRegistration()
                             if castBarTexture then
                                 castBarTexture:SetDesaturated()
                             end
+                            castBar.colorActive = true
                             castBar:SetStatusBarColor(unpack(color)) -- Color for highlight (e.g., green)
                         else
                             local colorDontInterrupt = db.castBarInterruptHighlighterColorDontInterrupt
@@ -1008,8 +994,10 @@ function BBP.ToggleSpellCastEventRegistration()
                                 if castBarTexture then
                                     castBarTexture:SetDesaturated()
                                 end
+                                castBar.colorActive = true
                                 castBar:SetStatusBarColor(unpack(color)) -- Color for no interrupt (e.g., red)
                             else
+                                castBar.colorActive = false
                                 if castBarTexture then
                                     castBarTexture:SetDesaturated(false)
                                 end
@@ -1098,7 +1086,7 @@ local function ClassicCastbarAdjustments(self, event, frame)
             self:SetStatusBarTexture(texture)
         end
         if not self.colorActive then
-            if self.barType == "uninterruptible" then
+            if self.barType == "uninterruptable" then
                 self:SetStatusBarColor(unpack(BetterBlizzPlatesDB.castBarNoninterruptibleColor))
             elseif self.barType == "casting" then
                 self:SetStatusBarColor(unpack(BetterBlizzPlatesDB.castBarCastColor))
@@ -1164,7 +1152,7 @@ local function ClassicCastbarAdjustments(self, event, frame)
         local changeBgTexture = BetterBlizzPlatesDB.useCustomCastbarBGTexture
         local nonInterruptibleTextureName = BetterBlizzPlatesDB.customCastbarNonInterruptibleTexture
         local nonInterruptibleTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, nonInterruptibleTextureName)
-        if self.barType == "uninterruptible" then
+        if self.barType == "uninterruptable" then
             texture = nonInterruptibleTexturePath
         else
             texture = texturePath
@@ -1211,6 +1199,14 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
         local name, notInterruptible
         local casting, channeling
 
+        -- local useCustomFont = db.useCustomFont
+        -- if useCustomFont then
+        --     BBP.SetFontBasedOnOption(castBar.Text, 12, "OUTLINE")
+        -- else
+        --     local f = castBar.Text:GetFont()
+        --     castBar.Text:SetFont(f,12,"OUTLINE, SLUG")
+        -- end
+
         local castName, _, _, _, _, _, _, csNotInterruptible = UnitCastingInfo(unit)
         if castName then
             casting = true
@@ -1245,7 +1241,7 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
         end
 
         -- if notInterruptible then
-        --     castBar.barType = "uninterruptible"
+        --     castBar.barType = "uninterruptable"
         -- elseif casting then
         --     castBar.barType = "casting"
         -- elseif channeling then
@@ -1266,7 +1262,7 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
             -- Set barType immediately the first time
             -- local cb = frame.castBar
             -- if cb.BorderShield and cb.BorderShield:IsShown() then
-            --     cb.barType = "uninterruptible"
+            --     cb.barType = "uninterruptable"
             -- elseif cb.casting then
             --     cb.barType = "casting"
             -- elseif cb.channeling then
@@ -1289,7 +1285,7 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
             -- end)
 
             -- frame.castBar.BorderShield:HookScript("OnShow", function()
-            --     frame.castBar.barType = "uninterruptible"
+            --     frame.castBar.barType = "uninterruptable"
             --     if true then
             --         frame.castBar:SetStatusBarTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Uninterruptable")
             --     else
@@ -1302,7 +1298,7 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
                 if self.changing or self.colorActive then return end
                 self.changing = true
                 if self.recolor then
-                    if self.barType == "uninterruptible" then
+                    if self.barType == "uninterruptable" then
                         self:SetStatusBarColor(unpack(BetterBlizzPlatesDB.castBarNoninterruptibleColor))
                     elseif self.barType == "casting" then
                         self:SetStatusBarColor(unpack(BetterBlizzPlatesDB.castBarCastColor))
@@ -1330,7 +1326,7 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
 
         -- local cb = frame.castBar
         -- if classicFrames then
-        --     if cb.barType == "uninterruptible" then
+        --     if cb.barType == "uninterruptable" then
         --         cb:SetStatusBarColor(0.7, 0.7, 0.7, 1)
         --     elseif cb.casting then
         --         cb:SetStatusBarColor(1, 0.7, 0, 1)
@@ -1551,9 +1547,19 @@ hooksecurefunc(CastingBarMixin, "OnEvent", function(self, event, ...)
 end)
 
 -- -- 
--- hooksecurefunc(NamePlateCastingBarMixin, "ApplyStyleAndAnchoring", function(self)
---     -- BorderShield needs texture update here
--- end)
+hooksecurefunc(NamePlateCastingBarMixin, "ApplyStyleAndAnchoring", function(self)
+    -- BorderShield needs texture update here
+    if BetterBlizzPlatesDB.classicNameplates then return end
+    if BetterBlizzPlatesDB.hideCastbarBorderShield then
+        self.BorderShield:SetTexture(nil)
+    else
+        self.BorderShield:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Shield")
+    end
+    self.BorderShield:SetSize(31,31)
+    self.BorderShield:ClearAllPoints()
+    self.BorderShield:SetPoint("CENTER", self.bbpRetailIcon, "CENTER", 0, -1)
+    self.BorderShield:SetDrawLayer("OVERLAY", 5)
+end)
 
 
 -- -- function CastingBarMixin:SetLook(look)
@@ -1561,6 +1567,16 @@ end)
 -- -- 	local modernStyle = not self.classicStyleCastBar;
 -- -- if ( look == "CLASSIC" ) then
 
--- hooksecurefunc(CastingBarMixin, "SetLook", function(self)
---     -- BorderShield size and position needs update here
--- end)
+hooksecurefunc(CastingBarMixin, "SetLook", function(self)
+    -- BorderShield size and position needs update here
+    if BetterBlizzPlatesDB.classicNameplates then return end
+    if BetterBlizzPlatesDB.hideCastbarBorderShield then
+        self.BorderShield:SetTexture(nil)
+    else
+        self.BorderShield:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Shield")
+    end
+    self.BorderShield:SetSize(31,31)
+    self.BorderShield:ClearAllPoints()
+    self.BorderShield:SetPoint("CENTER", self.bbpRetailIcon, "CENTER", 0, -1)
+    self.BorderShield:SetDrawLayer("OVERLAY", 5)
+end)

@@ -236,41 +236,6 @@ local nameplateShowSelf
 local nameplateResourceUnderCastbar
 local nameplateResourceUnderCastbarEventFrame
 
-local classPadding = {
-    ["MONK"] = -8,
-    ["EVOKER"] = {
-        default = -9,
-        [3] = -12,  -- Augmentation
-    },
-    ["WARLOCK"] = -8,
-    --["DRUID"] = -11,
-}
-
-local function GetClassPadding(className)
-    local padding = classPadding[className]
-    if type(padding) == "table" then
-        local specIndex = GetSpecialization()
-        return padding[specIndex] or padding.default or 0
-    end
-    return padding or 0
-end
-
-local forcedClassPadding = {
-    ["EVOKER"] = {
-        default = 0,
-        [3] = -12,  -- Augmentation
-    },
-}
-
-local function GetForcedClassPadding(className)
-    local padding = forcedClassPadding[className]
-    if type(padding) == "table" then
-        local specIndex = GetSpecialization()
-        return padding[specIndex] or padding.default or 0
-    end
-    return padding or 0
-end
-
 local classResourceYOffsets = {
     PALADIN = 4,
     DEATHKNIGHT = -3,
@@ -282,9 +247,9 @@ local classResourceYOffsets = {
     EVOKER = -1,
 }
 local playerClass = select(2, UnitClass("player"))
+local prdClassFrame = prdClassFrame or PersonalResourceDisplayFrame.classFrame
 
 local function RepositionClassFrame(point, relativeTo, relativePoint, xOfs, yOfs)
-    local prdClassFrame = prdClassFrame
     if not prdClassFrame then return end
     if prdClassFrame.bbpChanging  then return end
 
@@ -303,8 +268,31 @@ local function RepositionClassFrame(point, relativeTo, relativePoint, xOfs, yOfs
     prdClassFrame.bbpChanging = false
 end
 
+local function GetPRDClassFrameAnchor(userYPos)
+    local prd = PersonalResourceDisplayFrame
+    local padding = prd:GetBarPadding()
+    local yOffset = (prd.ClassFrameContainer and prd.ClassFrameContainer.yOffset) or 0
+    local y = yOffset - padding + (userYPos or 0) + 10
+
+    if prd.AlternatePowerBar:IsShown() then
+        return "TOP", prd.AlternatePowerBar, "BOTTOM", y
+    elseif not prd.hidePower then
+        return "TOP", prd.PowerBar, "BOTTOM", y
+    elseif not prd.hideHealth then
+        return "TOP", prd.HealthBarsContainer, "BOTTOM", y
+    else
+        return "TOP", prd, "TOP", yOffset + (userYPos or 0)
+    end
+end
+
+if PersonalResourceDisplayFrame.UpdateAdditionalBarAnchors then
+    hooksecurefunc(PersonalResourceDisplayFrame, "UpdateAdditionalBarAnchors", function()
+        BBP.TargetResourceUpdater()
+    end)
+end
+
+
 function BBP.UpdateNameplateResourcePositionForCasting(nameplate, bypass)
-    local prdClassFrame = prdClassFrame
     if not prdClassFrame then return end
 
     local enabled = BetterBlizzPlatesDB.nameplateResourceOnTarget and (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true)
@@ -336,15 +324,13 @@ end
 
 function BBP.TargetResourceUpdater()
     if BetterBlizzPlatesDB.disablePrdMovement then return end
-    local _, className = UnitClass("player")
     nameplateResourceOnTarget = (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true)
     nameplateShowSelf = GetCVarBool("nameplateShowSelf") and not nameplateResourceOnTarget
     nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar and nameplateResourceOnTarget
 
-    local prdClassFrame = prdClassFrame
     if not prdClassFrame then return end
     -- Safe check this
-    prdClassFrame:SetScript("OnShow", function()end)
+    --prdClassFrame:SetScript("OnShow", function()end)
 
     if not nameplateResourceHooked then
         -- hooksecurefunc(prdClassFrame, "SetPoint", function(self)
@@ -384,18 +370,14 @@ function BBP.TargetResourceUpdater()
                     local hideResource = BetterBlizzPlatesDB.hideResourceFrame
                     local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7
                     prdClassFrame:SetScale(nameplateResourceScale)
-                    prdClassFrame:SetAlpha(1)
 
                     if BetterBlizzPlatesDB.changeResourceStrata then
                         prdClassFrame:SetFrameStrata("DIALOG")
                     end
 
-                    local padding = PersonalResourceDisplayFrame.ClassFrameContainer.yOffset or GetClassPadding(className)
-                    padding = padding + 52
-                    padding = padding + GetForcedClassPadding(className)
-                    padding = padding + (BBP.altBarMovedUp and 15 or 0)
                     prdClassFrame:SetAlpha(hideResource and 0 or 1)
-                    RepositionClassFrame("TOP", PersonalResourceDisplayFrame, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
+                    local point, relativeTo, relativePoint, finalY = GetPRDClassFrameAnchor(BetterBlizzPlatesDB.nameplateResourceYPos)
+                    RepositionClassFrame(point, relativeTo, relativePoint, BetterBlizzPlatesDB.nameplateResourceXPos or 0, finalY)
                 else
                     prdClassFrame:SetAlpha(0)
                 end
@@ -413,12 +395,9 @@ function BBP.TargetResourceUpdater()
                 prdClassFrame:SetFrameStrata("DIALOG")
             end
 
-            local padding = PersonalResourceDisplayFrame.ClassFrameContainer.yOffset or GetClassPadding(className)
-            padding = padding + 52
-            padding = padding + GetForcedClassPadding(className)
-            padding = padding + (BBP.altBarMovedUp and 15 or 0)
             prdClassFrame:SetAlpha(hideResource and 0 or 1)
-            RepositionClassFrame("TOP", PersonalResourceDisplayFrame, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
+            local point, relativeTo, relativePoint, finalY = GetPRDClassFrameAnchor(BetterBlizzPlatesDB.nameplateResourceYPos)
+            RepositionClassFrame(point, relativeTo, relativePoint, BetterBlizzPlatesDB.nameplateResourceXPos or 0, finalY)
         else
             prdClassFrame:SetAlpha(0)
         end
@@ -461,7 +440,6 @@ function BBP.RegisterTargetCastingEvents()
     end
 
     local nameplateForTarget = C_NamePlate.GetNamePlateForUnit("target")
-    local prdClassFrame = prdClassFrame
     if not prdClassFrame then return end
 
     if nameplateForTarget then

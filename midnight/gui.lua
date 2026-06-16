@@ -904,12 +904,12 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "hpHeightFriendly" then
                     BetterBlizzPlatesDB.hpHeightFriendly = value
                     BBP.RefreshAllNameplates()
-                elseif element == "hpHeightSelf" then
-                    BetterBlizzPlatesDB.hpHeightSelf = value
-                    BBP.ResizePRD()
-                elseif element == "hpHeightSelfMana" then
-                    BetterBlizzPlatesDB.hpHeightSelfMana = value
-                    BBP.ResizePRD()
+                -- elseif element == "hpHeightSelf" then
+                --     BetterBlizzPlatesDB.hpHeightSelf = value
+                --     BBP.ResizePRD()
+                -- elseif element == "hpHeightSelfMana" then
+                --     BetterBlizzPlatesDB.hpHeightSelfMana = value
+                --     BBP.ResizePRD()
                 elseif element == "healthNumbersScale" then
                     BetterBlizzPlatesDB.healthNumbersScale = value
                 elseif element == "healthNumbersXPos" then
@@ -1108,9 +1108,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         heightValue = BBP.isLargeNameplatesEnabled() and 64.125 or 40
                         C_NamePlate.SetNamePlateSize(value, heightValue)
                     end
-                elseif element == "nameplateSelfWidth" then
-                    BetterBlizzPlatesDB.nameplateSelfWidth = value
-                    BBP.ResizePRD()
+                -- elseif element == "nameplateSelfWidth" then
+                --     BetterBlizzPlatesDB.nameplateSelfWidth = value
+                --     BBP.ResizePRD()
                 elseif element == "smallPetsWidth" then
                     BetterBlizzPlatesDB.smallPetsWidth = value
                     for _, np in pairs(C_NamePlate.GetNamePlates()) do
@@ -2129,6 +2129,7 @@ end
 local function CreateCheckbox(option, label, parent, cvar, extraFunc, bitCVar)
     local checkBox = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
     checkBox.Text:SetText(label)
+    checkBox:SetSize(24,24)
     checkBox.option = option
     table.insert(checkBoxList, {checkbox = checkBox, label = label})
     if cvar then
@@ -4892,7 +4893,7 @@ local function guiProfiles()
     frame.coreText:SetText("Core")
 
     frame.streamerText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    frame.streamerText:SetPoint("TOP", frame.coreText, "BOTTOM", 0, -125)
+    frame.streamerText:SetPoint("TOP", frame.coreText, "BOTTOM", 0, -117)
     frame.streamerText:SetText("Streamers")
 
     frame.infoText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -5510,11 +5511,11 @@ local function guiGeneralTab()
     end)
     BBP.alwaysHideFriendlyCastbar = alwaysHideFriendlyCastbar
 
-    local classColorPersonalNameplate = CreateCheckbox("classColorPersonalNameplate", "Class color personal nameplate", BetterBlizzPlates)
-    classColorPersonalNameplate:SetPoint("TOPLEFT", alwaysHideFriendlyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    classColorPersonalNameplate:HookScript("OnClick", function(self)
-        BBP.ColorPRD()
-    end)
+    -- local classColorPersonalNameplate = CreateCheckbox("classColorPersonalNameplate", "Class color personal nameplate", BetterBlizzPlates)
+    -- classColorPersonalNameplate:SetPoint("TOPLEFT", alwaysHideFriendlyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    -- classColorPersonalNameplate:HookScript("OnClick", function(self)
+    --     BBP.ColorPRD()
+    -- end)
 
     -- local friendlyNameColor = CreateCheckbox("friendlyNameColor", "Name", BetterBlizzPlates)
     -- friendlyNameColor:SetPoint("LEFT", friendlyHealthBarColorNpc.Text, "RIGHT", -3, 0)
@@ -5680,7 +5681,7 @@ local function guiGeneralTab()
 
     local friendlyNpToggles = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     friendlyNpToggles:SetText("Toggles:")
-    friendlyNpToggles:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", -20, -70)
+    friendlyNpToggles:SetPoint("TOPLEFT", alwaysHideFriendlyCastbar, "BOTTOMLEFT", -20, -70)
     CreateTooltipTwo(friendlyNpToggles, "Toggle Friendly Nameplates", "Turn on friendly nameplates when you enter these types of content and off again when it changes.\n\nSelect where you want friendly nameplates enabled:")
 
     local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Arena", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
@@ -5714,7 +5715,7 @@ local function guiGeneralTab()
     friendlyNameplatesOnlyInWorld:SetSize(22,22)
 
     local friendlyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 3, 0.01, "friendlyNameScale")
-    friendlyNameScale:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", 0, -6)
+    friendlyNameScale:SetPoint("TOPLEFT", alwaysHideFriendlyCastbar, "BOTTOMLEFT", 0, -6)
     CreateTooltipTwo(friendlyNameScale, "Name Size", "Change Name size on Friendly nameplates.", "Note: This changes the scale of the name, not the font size itself and means this scale wont be active in PvE.\n\nHowever there is a setting in Misc to tweak the default font size setting and you can use that as a baseline for PvE name size and keep this slider at 1 and tweak the Enemy Size slider from there since thats allowed in PvE.\n\nIt was made this way to support different size names on Friendly vs Enemy but will eventually be reworked with new API available now.")
 
     local hideNameTooltip = "Hide Name on Friendly nameplates."
@@ -5917,31 +5918,31 @@ local function guiGeneralTab()
     focusTargetIndicatorIcon:SetSize(19, 19)
     focusTargetIndicatorIcon:SetPoint("RIGHT", focusTargetIndicator, "LEFT", 0, 0)
 
-    -- local totemIndicator = CreateCheckbox("totemIndicator", "Totem indicator", BetterBlizzPlates)
-    -- totemIndicator:SetPoint("TOPLEFT", focusTargetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    -- totemIndicator:HookScript("OnClick", function(self)
-    --     local function setTotemCVar()
-    --         if InCombatLockdown() then
-    --             C_Timer.After(1.5, setTotemCVar)
-    --         else
-    --             if self:GetChecked() and GetCVar("nameplateShowEnemyTotems") ~= "1" then
-    --                 BetterBlizzPlatesDB.nameplateShowEnemyTotems = 1
-    --                 C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
-    --                 DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"CVar Control\" section of the addon.")
-    --             end
-    --         end
-    --     end
-    --     setTotemCVar()
-    -- end)
+    local totemIndicator = CreateCheckbox("totemIndicator", "Totem indicator", BetterBlizzPlates)
+    totemIndicator:SetPoint("TOPLEFT", focusTargetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    totemIndicator:HookScript("OnClick", function(self)
+        local function setTotemCVar()
+            if InCombatLockdown() then
+                C_Timer.After(1.5, setTotemCVar)
+            else
+                if self:GetChecked() and GetCVar("nameplateShowEnemyTotems") ~= "1" then
+                    BetterBlizzPlatesDB.nameplateShowEnemyTotems = 1
+                    C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
+                    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"CVar Control\" section of the addon.")
+                end
+            end
+        end
+        setTotemCVar()
+    end)
 
-    -- CreateTooltipTwo(totemIndicator, "Totem Indicator |A:teleportationnetwork-ardenweald-32x32:17:17|a", "Show icon on and color important NPC nameplates.", "Full list available in \"Totem Indicator List\" section, designed for PvP.")
-    -- local totemsIcon = totemIndicator:CreateTexture(nil, "ARTWORK")
-    -- totemsIcon:SetAtlas("teleportationnetwork-ardenweald-32x32")
-    -- totemsIcon:SetSize(17, 17)
-    -- totemsIcon:SetPoint("RIGHT", totemIndicator, "LEFT", -1, 0)
+    CreateTooltipTwo(totemIndicator, "Totem Indicator |A:teleportationnetwork-ardenweald-32x32:17:17|a", "Show icon on and color Totem nameplates.\n\nIn Midnight only Grounding and Capacitor are shown as important (due to restrictions), other totems will just show as a default \"totem icon & color\" if enabled in Advanced Settings.\n\nIt also expects you to only have Pet and Totem Nameplates enabled in CVar Control section.")
+    local totemsIcon = totemIndicator:CreateTexture(nil, "ARTWORK")
+    totemsIcon:SetAtlas("teleportationnetwork-ardenweald-32x32")
+    totemsIcon:SetSize(17, 17)
+    totemsIcon:SetPoint("RIGHT", totemIndicator, "LEFT", -1, 0)
 
     local questIndicator = CreateCheckbox("questIndicator", "Quest indicator", BetterBlizzPlates)
-    questIndicator:SetPoint("TOPLEFT", focusTargetIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    questIndicator:SetPoint("TOPLEFT", totemIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(questIndicator, "Quest Indicator|A:smallquestbang:20:20|a", "Quest symbol on quest NPC's.")
     local questsIcon = questIndicator:CreateTexture(nil, "ARTWORK")
     questsIcon:SetAtlas("smallquestbang")
@@ -6053,7 +6054,7 @@ local function guiGeneralTab()
         "Select Texture",
         "customTextureSelf",
         function(arg1)
-            BBP.RefreshAllNameplates()
+            BBP.TexturePRD()
         end,
         { anchorFrame = useCustomTexture, x = 20, y = -55, label = "Personal" }
     )
@@ -6064,7 +6065,7 @@ local function guiGeneralTab()
         "Select Texture",
         "customTextureSelfMana",
         function(arg1)
-            BBP.RefreshAllNameplates()
+            BBP.TexturePRD()
         end,
         { anchorFrame = useCustomTexture, x = 20, y = -83, label = "Personal Mana" }
     )
@@ -6303,7 +6304,7 @@ local function guiGeneralTab()
     local resetBBPButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     resetBBPButton:SetText("Full Reset")
     resetBBPButton:SetWidth(104)
-    resetBBPButton:SetPoint("BOTTOM", profilesFrame, "BOTTOM", 2, 15)
+    resetBBPButton:SetPoint("BOTTOM", profilesFrame, "BOTTOM", 2, 10)
     resetBBPButton:SetScript("OnClick", function()
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     end)
@@ -6353,6 +6354,7 @@ local function guiPositionAndScale()
     local fourthLineX = 560
     local fourthLineY = -1010
     local fifthLineY = -1325
+    local sixthLineY = -1640
 
     local BetterBlizzPlatesSubPanel = CreateFrame("Frame")
     BetterBlizzPlatesSubPanel.name = "Advanced Settings"
@@ -8550,6 +8552,129 @@ local function guiPositionAndScale()
     -- anchorSubBlitzIndicator.c4:SetPoint("TOPLEFT", anchorSubBlitzIndicator.c2, "BOTTOMLEFT", 0, -50)
     -- anchorSubBlitzIndicator.c4:SetAlpha(0)
     -- anchorSubBlitzIndicator.c4:SetScript("OnClick", nil)
+
+
+
+    ----------------------
+    -- Totem Indicator
+    ----------------------
+    contentFrame.anchorSubTotem = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    contentFrame.anchorSubTotem:SetPoint("CENTER", mainGuiAnchor2, "CENTER", fourthLineX, sixthLineY)
+    contentFrame.anchorSubTotem:SetText("Totem Indicator")
+
+    CreateBorderBox(contentFrame.anchorSubTotem)
+
+    contentFrame.totemIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
+    contentFrame.totemIcon2:SetAtlas("teleportationnetwork-ardenweald-32x32")
+    contentFrame.totemIcon2:SetSize(34, 34)
+    contentFrame.totemIcon2:SetPoint("BOTTOM", contentFrame.anchorSubTotem, "TOP", 0, 0)
+
+    BBP.totemIndicatorScale = CreateSlider(contentFrame, "Size", 0.5, 3, 0.01, "totemIndicatorScale")
+    BBP.totemIndicatorScale:SetPoint("TOP", contentFrame.anchorSubTotem, "BOTTOM", 0, -15)
+    CreateTooltip( BBP.totemIndicatorScale, "This changes the scale of ALL icons.\n\nYou can adjust individual sizes in the \"Totem Indicator List\" tab.", "ANCHOR_LEFT")
+
+    contentFrame.totemIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "totemIndicatorXPos", "X")
+    contentFrame.totemIndicatorXPos:SetPoint("TOP",  BBP.totemIndicatorScale, "BOTTOM", 0, -15)
+
+    contentFrame.totemIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "totemIndicatorYPos", "Y")
+    contentFrame.totemIndicatorYPos:SetPoint("TOP", contentFrame.totemIndicatorXPos, "BOTTOM", 0, -15)
+
+    contentFrame.totemIndicatorDropdown = CreateAnchorDropdown(
+        "totemIndicatorDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "totemIndicatorAnchor",
+        function(arg1)
+        BBP.RefreshAllNameplates()
+    end,
+        { anchorFrame = contentFrame.totemIndicatorYPos, x = -16, y = -35, label = "Anchor" }
+    )
+
+    contentFrame.totemTestIcons2 = CreateCheckbox("totemIndicatorTestMode", "Test", contentFrame)
+    contentFrame.totemTestIcons2:SetPoint("TOPLEFT", contentFrame.totemIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
+
+    contentFrame.totemIndicatorEnemyOnly = CreateCheckbox("totemIndicatorEnemyOnly", "Enemies only", contentFrame)
+    contentFrame.totemIndicatorEnemyOnly:SetPoint("LEFT", contentFrame.totemTestIcons2.text, "RIGHT", 0, 0)
+    CreateTooltip(contentFrame.totemIndicatorEnemyOnly, "Show on enemy totems only")
+
+    contentFrame.totemIndicatorHideNameAndShiftIconDown = CreateCheckbox("totemIndicatorHideNameAndShiftIconDown", "Hide name", contentFrame)
+    contentFrame.totemIndicatorHideNameAndShiftIconDown:SetPoint("TOPLEFT", contentFrame.totemTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+    contentFrame.totemIndicatorHideHealthBar = CreateCheckbox("totemIndicatorHideHealthBar", "Hide hp", contentFrame)
+    contentFrame.totemIndicatorHideHealthBar:SetPoint("LEFT", contentFrame.totemIndicatorHideNameAndShiftIconDown.text, "RIGHT", 0, 0)
+    CreateTooltip(contentFrame.totemIndicatorHideHealthBar, "Hide the healthbar on totems.\nWill still show if targeted.")
+
+--[=[
+    local totemIndicatorDisplayCdText = CreateCheckbox("totemIndicatorDisplayCdText", "CD Text", contentFrame)
+    totemIndicatorDisplayCdText:SetPoint("TOPLEFT", totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(totemIndicatorDisplayCdText, "Display default Blizz CD Text\n\nWill not work with OmniCC.")
+]=]-- cant force use blizzards own countdown it seems, must make own soonTM
+
+    contentFrame.showTotemIndicatorCooldownSwipe = CreateCheckbox("showTotemIndicatorCooldownSwipe", "CD Swipe", contentFrame)
+    contentFrame.showTotemIndicatorCooldownSwipe:SetPoint("TOPLEFT", contentFrame.totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(contentFrame.showTotemIndicatorCooldownSwipe, "Show Cooldown Swipe Animation")
+
+    contentFrame.totemIndicatorColorName = CreateCheckbox("totemIndicatorColorName", "Color Name", contentFrame)
+    contentFrame.totemIndicatorColorName:SetPoint("TOPLEFT", contentFrame.showTotemIndicatorCooldownSwipe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(contentFrame.totemIndicatorColorName, "Color name text")
+
+    contentFrame.totemIndicatorHideAuras = CreateCheckbox("totemIndicatorHideAuras", "Hide auras", contentFrame)
+    contentFrame.totemIndicatorHideAuras:SetPoint("LEFT", contentFrame.totemIndicatorColorName.text, "RIGHT", 0, 0)
+    CreateTooltip(contentFrame.totemIndicatorHideAuras, "Hide Auras on totem nameplates")
+
+    contentFrame.totemIndicatorColorHealthBar = CreateCheckbox("totemIndicatorColorHealthBar", "Color HP", contentFrame)
+    contentFrame.totemIndicatorColorHealthBar:SetPoint("LEFT", contentFrame.showTotemIndicatorCooldownSwipe.text, "RIGHT", 0, 0)
+    CreateTooltip(contentFrame.totemIndicatorColorHealthBar, "Color healthbar")
+
+    contentFrame.totemIndicatorShowOtherIcons = CreateCheckbox("totemIndicatorShowOtherIcons", "Other icons", contentFrame)
+    contentFrame.totemIndicatorShowOtherIcons:SetPoint("TOPLEFT", contentFrame.totemIndicatorColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(contentFrame.totemIndicatorShowOtherIcons, "Show icon on non-important totems", "Show an icon on standard totems that cannot be detected specifically. Only detectable important totems atm are Grounding Totem and Capacitor Totem")
+
+    contentFrame.totemIndicatorColorOtherHealthBars = CreateCheckbox("totemIndicatorColorOtherHealthBars", "Color other HP", contentFrame)
+    contentFrame.totemIndicatorColorOtherHealthBars:SetPoint("LEFT", contentFrame.totemIndicatorShowOtherIcons.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(contentFrame.totemIndicatorColorOtherHealthBars, "Color healthbar of non-important totems", "This will be the standard totem color for totems that cannot be detected specifically. Only detectable important totems atm are Grounding Totem and Capacitor Totem\n\n|cff32f795Right-click to set a general \"Totem Nameplate Color\".|r")
+    local function OpenTotemNormalColorPicker()
+        BBP.needsUpdate = true
+        local r, g, b = unpack(BetterBlizzPlatesDB.totemIndicatorTotemColor or { 0.4, 0.34, 0.21 })
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b,
+            swatchFunc = function()
+                local r, g, b = ColorPickerFrame:GetColorRGB()
+                BetterBlizzPlatesDB.totemIndicatorTotemColor = { r, g, b }
+                BBP.RefreshAllNameplates()
+                contentFrame.totemIndicatorColorOtherHealthBars.Text:SetTextColor(r, g, b)
+            end,
+            cancelFunc = function(previousValues)
+                local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                BetterBlizzPlatesDB.totemIndicatorTotemColor = { r, g, b }
+                BBP.RefreshAllNameplates()
+                contentFrame.totemIndicatorColorOtherHealthBars.Text:SetTextColor(r, g, b)
+            end,
+        })
+    end
+    contentFrame.totemIndicatorColorOtherHealthBars:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            OpenTotemNormalColorPicker()
+        end
+    end)
+    if BetterBlizzPlatesDB.totemIndicatorTotemColor then
+        contentFrame.totemIndicatorColorOtherHealthBars.Text:SetTextColor(unpack(BetterBlizzPlatesDB.totemIndicatorTotemColor))
+    end
+
+    contentFrame.totemIndicatorColorNameOthers = CreateCheckbox("totemIndicatorColorNameOthers", "Color name (others)", contentFrame)
+    contentFrame.totemIndicatorColorNameOthers:SetPoint("LEFT", contentFrame.totemIndicatorColorOtherHealthBars.text, "RIGHT", 0, 0)
+    CreateTooltip(contentFrame.totemIndicatorColorNameOthers, "Color name text of non-important totems")
+
+    contentFrame.totemIndicatorDefaultCooldownTextSize = CreateSlider(contentFrame, "Default CD Size", 0.3, 2, 0.01, "totemIndicatorDefaultCooldownTextSize", nil, 95)
+    contentFrame.totemIndicatorDefaultCooldownTextSize:SetPoint("TOP", contentFrame.totemIndicatorHideNameAndShiftIconDown, "BOTTOM", 40, -68)
+    CreateTooltip(contentFrame.totemIndicatorDefaultCooldownTextSize, "Size of the default Blizz CD text.\n\nWill not work with OmniCC.")
+
+    contentFrame.totemIndicatorNoAnimation = CreateCheckbox("totemIndicatorNoAnimation", "Anim", contentFrame)
+    contentFrame.totemIndicatorNoAnimation:SetPoint("LEFT", contentFrame.totemIndicatorDefaultCooldownTextSize, "RIGHT", 0, 3)
+    CreateTooltipTwo(contentFrame.totemIndicatorNoAnimation, "No Animation", "Stops the pulsing animation on important npcs")
+
+
+
 
 
     ----
@@ -11566,9 +11691,9 @@ local function guiCVarControl()
     nameplateShowFriendlyPlayerGuardians:SetPoint("TOP", nameplateShowFriendlyPlayerMinions, "BOTTOM", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateShowFriendlyPlayerGuardians, "Show Friendly Guardian Nameplates", "Guardians are usually \"semi controllable\" larger summoned pets, like Earth Elemental/Infernal.", nil, nil, "nameplateShowFriendlyPlayerGuardians")
 
-    local nameplateShowFriendlyNPCs = CreateCheckbox("nameplateShowFriendlyNPCs", "Show Friendly NPCs", guiCVarControl, true)
+    local nameplateShowFriendlyNPCs = CreateCheckbox("nameplateShowFriendlyNpcs", "Show Friendly NPCs", guiCVarControl, true)
     nameplateShowFriendlyNPCs:SetPoint("TOP", nameplateShowFriendlyPlayerGuardians, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateShowFriendlyNPCs, "Show Friendly NPC Nameplates", "Always show friendly NPC nameplates", nil, nil, "nameplateShowFriendlyNPCs")
+    CreateTooltipTwo(nameplateShowFriendlyNPCs, "Show Friendly NPC Nameplates", "Always show friendly NPC nameplates", nil, nil, "nameplateShowFriendlyNpcs")
 
     local nameplateShowFriendlyPlayerPets = CreateCheckbox("nameplateShowFriendlyPlayerPets", "Show Friendly Pets", guiCVarControl, true)
     nameplateShowFriendlyPlayerPets:SetPoint("TOP", nameplateShowFriendlyNPCs, "BOTTOM", 0, pixelsBetweenBoxes)
@@ -11613,7 +11738,7 @@ local function guiCVarControl()
         ChangeCVarCheckboxBehaviour(nameplateShowFriendlyPlayerMinions, "nameplateShowFriendlyPlayerMinions", changeDB)
         ChangeCVarCheckboxBehaviour(nameplateShowFriendlyPlayerGuardians, "nameplateShowFriendlyPlayerGuardians", changeDB)
         ChangeCVarCheckboxBehaviour(nameplateShowFriendlyPlayerPets, "nameplateShowFriendlyPlayerPets", changeDB)
-        ChangeCVarCheckboxBehaviour(nameplateShowFriendlyNPCs, "nameplateShowFriendlyNPCs", changeDB)
+        ChangeCVarCheckboxBehaviour(nameplateShowFriendlyNPCs, "nameplateShowFriendlyNpcs", changeDB)
         ChangeCVarCheckboxBehaviour(nameplateShowFriendlyPlayerTotems, "nameplateShowFriendlyPlayerTotems", changeDB)
 
         if changeDB then
@@ -11626,7 +11751,7 @@ local function guiCVarControl()
             nameplateShowFriendlyPlayerGuardians:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyPlayerGuardians"]=="1")
             nameplateShowFriendlyPlayerPets:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyPlayerPets"]=="1")
             nameplateShowFriendlyPlayerTotems:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyPlayerTotems"]=="1")
-            nameplateShowFriendlyNPCs:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyNPCs"]=="1")
+            nameplateShowFriendlyNPCs:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyNpcs"]=="1")
         else
             nameplateShowEnemyMinions:SetChecked(GetCVar("nameplateShowEnemyMinions")=="1")
             nameplateShowEnemyGuardians:SetChecked(GetCVar("nameplateShowEnemyGuardians")=="1")
@@ -11637,7 +11762,7 @@ local function guiCVarControl()
             nameplateShowFriendlyPlayerGuardians:SetChecked(GetCVar("nameplateShowFriendlyPlayerGuardians")=="1")
             nameplateShowFriendlyPlayerPets:SetChecked(GetCVar("nameplateShowFriendlyPlayerPets")=="1")
             nameplateShowFriendlyPlayerTotems:SetChecked(GetCVar("nameplateShowFriendlyPlayerTotems")=="1")
-            nameplateShowFriendlyNPCs:SetChecked(GetCVar("nameplateShowFriendlyNPCs")=="1")
+            nameplateShowFriendlyNPCs:SetChecked(GetCVar("nameplateShowFriendlyNpcs")=="1")
         end
     end
 
@@ -11659,7 +11784,7 @@ local function guiCVarControl()
     cbCVars["nameplateShowFriendlyPlayerMinions"] = nameplateShowFriendlyPlayerMinions
     cbCVars["nameplateShowFriendlyPlayerGuardians"] = nameplateShowFriendlyPlayerGuardians
     cbCVars["nameplateShowFriendlyPlayerPets"] = nameplateShowFriendlyPlayerPets
-    cbCVars["nameplateShowFriendlyNPCs"] = nameplateShowFriendlyNPCs
+    cbCVars["nameplateShowFriendlyNpcs"] = nameplateShowFriendlyNPCs
     cbCVars["nameplateShowFriendlyPlayerTotems"] = nameplateShowFriendlyPlayerTotems
     --cbCVars["nameplateResourceOnTarget"] = nameplateResourceOnTarget
     cbCVars["nameplateShowAll"] = nameplateShowAll
@@ -12065,19 +12190,19 @@ local function guiMisc()
     -- nameplateResourceText:SetPoint("TOPLEFT", guiMisc, "TOPLEFT", 45, -250)
     -- nameplateResourceText:SetText("Nameplate Resource")
 
-    local nameplateSelfWidth = CreateSlider(guiMisc, "Personal Nameplate Width", 50, 200, 1, "nameplateSelfWidth")
-    nameplateSelfWidth:SetPoint("TOPLEFT", scaleNpNameWithParent, "BOTTOMLEFT", 10, -20)
+    -- local nameplateSelfWidth = CreateSlider(guiMisc, "Personal Nameplate Width", 50, 200, 1, "nameplateSelfWidth")
+    -- nameplateSelfWidth:SetPoint("TOPLEFT", scaleNpNameWithParent, "BOTTOMLEFT", 10, -20)
 
-    local hidePersonalBarManaFrame = CreateCheckbox("hidePersonalBarManaFrame", "Hide Personal Manabar", guiMisc, nil, BBP.PersonalBarSettings)
-    hidePersonalBarManaFrame:SetPoint("TOPLEFT", scaleNpNameWithParent, "BOTTOMLEFT", 0, -60)
-    CreateTooltipTwo(hidePersonalBarManaFrame, "Hide Personal Manabar", "Hide the manabar on personal resource.")
+    -- local hidePersonalBarManaFrame = CreateCheckbox("hidePersonalBarManaFrame", "Hide Personal Manabar", guiMisc, nil, BBP.PersonalBarSettings)
+    -- hidePersonalBarManaFrame:SetPoint("TOPLEFT", scaleNpNameWithParent, "BOTTOMLEFT", 0, -60)
+    -- CreateTooltipTwo(hidePersonalBarManaFrame, "Hide Personal Manabar", "Hide the manabar on personal resource.")
 
-    local hidePersonalBarExtraFrame = CreateCheckbox("hidePersonalBarExtraFrame", "Hide Extra Personal Bar", guiMisc, nil, BBP.PersonalBarSettings)
-    hidePersonalBarExtraFrame:SetPoint("LEFT", hidePersonalBarManaFrame.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(hidePersonalBarExtraFrame, "Hide Extra Personal Bar", "Hide the extra bar on personal resource for Ebon/Stagger.")
+    -- local hidePersonalBarExtraFrame = CreateCheckbox("hidePersonalBarExtraFrame", "Hide Extra Personal Bar", guiMisc, nil, BBP.PersonalBarSettings)
+    -- hidePersonalBarExtraFrame:SetPoint("LEFT", hidePersonalBarManaFrame.text, "RIGHT", 0, 0)
+    -- CreateTooltipTwo(hidePersonalBarExtraFrame, "Hide Extra Personal Bar", "Hide the extra bar on personal resource for Ebon/Stagger.")
 
     local changeHealthbarHeight = CreateCheckbox("changeHealthbarHeight", "Separate Friendly/Enemy Nameplate Height", guiMisc)
-    changeHealthbarHeight:SetPoint("TOPLEFT", hidePersonalBarManaFrame, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    changeHealthbarHeight:SetPoint("TOPLEFT", scaleNpNameWithParent, "BOTTOMLEFT", 0, -60)
     CreateTooltipTwo(changeHealthbarHeight, "Separate Nameplate Heights", "Change the height of nameplates individually depending if enemy, friendly or personal.")
 
     local hpHeightEnemy = CreateSlider(changeHealthbarHeight, "Enemy Height", 1, 35, 0.1, "hpHeightEnemy")
@@ -12092,30 +12217,30 @@ local function guiMisc()
     local hpHeightFriendlyReset = CreateResetButton(hpHeightFriendly, "hpHeightFriendly", guiMisc)
     CreateTooltipTwo(hpHeightFriendlyReset, "Reset to default", "Default is 4 * NamePlateVerticalScale")
 
-    local hpHeightSelf = CreateSlider(changeHealthbarHeight, "Personal Height", 1, 35, 0.1, "hpHeightSelf")
-    hpHeightSelf:SetPoint("TOPLEFT", hpHeightFriendly, "BOTTOMLEFT", 0, -17)
-    CreateTooltipTwo(hpHeightSelf, "Personal Height", "The height for Personal Resource Healthbar.")
-    local hpHeightSelfReset = CreateResetButton(hpHeightSelf, "hpHeightSelf", guiMisc)
-    CreateTooltipTwo(hpHeightSelfReset, "Reset to default", "Default is 4 * NamePlateVerticalScale")
+    -- local hpHeightSelf = CreateSlider(changeHealthbarHeight, "Personal Height", 1, 35, 0.1, "hpHeightSelf")
+    -- hpHeightSelf:SetPoint("TOPLEFT", hpHeightFriendly, "BOTTOMLEFT", 0, -17)
+    -- CreateTooltipTwo(hpHeightSelf, "Personal Height", "The height for Personal Resource Healthbar.")
+    -- local hpHeightSelfReset = CreateResetButton(hpHeightSelf, "hpHeightSelf", guiMisc)
+    -- CreateTooltipTwo(hpHeightSelfReset, "Reset to default", "Default is 4 * NamePlateVerticalScale")
 
-    local hpHeightSelfMana = CreateSlider(changeHealthbarHeight, "Personal Mana Height", 1, 35, 0.1, "hpHeightSelfMana")
-    hpHeightSelfMana:SetPoint("TOPLEFT", hpHeightSelf, "BOTTOMLEFT", 0, -17)
-    CreateTooltipTwo(hpHeightSelfMana, "Friendly Height", "The height Personal Resource Manabar.")
-    local hpHeightSelfManaReset = CreateResetButton(hpHeightSelfMana, "hpHeightSelfMana", guiMisc)
-    CreateTooltipTwo(hpHeightSelfManaReset, "Reset to default", "Default is 4 * NamePlateVerticalScale")
+    -- local hpHeightSelfMana = CreateSlider(changeHealthbarHeight, "Personal Mana Height", 1, 35, 0.1, "hpHeightSelfMana")
+    -- hpHeightSelfMana:SetPoint("TOPLEFT", hpHeightSelf, "BOTTOMLEFT", 0, -17)
+    -- CreateTooltipTwo(hpHeightSelfMana, "Friendly Height", "The height Personal Resource Manabar.")
+    -- local hpHeightSelfManaReset = CreateResetButton(hpHeightSelfMana, "hpHeightSelfMana", guiMisc)
+    -- CreateTooltipTwo(hpHeightSelfManaReset, "Reset to default", "Default is 4 * NamePlateVerticalScale")
 
     changeHealthbarHeight:HookScript("OnClick", function(self)
         if self:GetChecked() then
             BBP.HookHealthbarHeight()
             EnableElement(hpHeightEnemy)
             EnableElement(hpHeightFriendly)
-            EnableElement(hpHeightSelf)
-            EnableElement(hpHeightSelfMana)
+            -- EnableElement(hpHeightSelf)
+            -- EnableElement(hpHeightSelfMana)
         else
             DisableElement(hpHeightEnemy)
             DisableElement(hpHeightFriendly)
-            DisableElement(hpHeightSelf)
-            DisableElement(hpHeightSelfMana)
+            -- DisableElement(hpHeightSelf)
+            -- DisableElement(hpHeightSelfMana)
         end
         StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end)
@@ -12306,13 +12431,13 @@ local function guiMisc()
 
 
 
-    local nameplateSelfWidthResetButton = CreateFrame("Button", nil, guiMisc, "UIPanelButtonTemplate")
-    nameplateSelfWidthResetButton:SetText("Default")
-    nameplateSelfWidthResetButton:SetWidth(60)
-    nameplateSelfWidthResetButton:SetPoint("LEFT", nameplateSelfWidth, "RIGHT", 10, 0)
-    nameplateSelfWidthResetButton:SetScript("OnClick", function()
-        BBP.ResetToDefaultWidth(nameplateSelfWidth, false, true)
-    end)
+    -- local nameplateSelfWidthResetButton = CreateFrame("Button", nil, guiMisc, "UIPanelButtonTemplate")
+    -- nameplateSelfWidthResetButton:SetText("Default")
+    -- nameplateSelfWidthResetButton:SetWidth(60)
+    -- nameplateSelfWidthResetButton:SetPoint("LEFT", nameplateSelfWidth, "RIGHT", 10, 0)
+    -- nameplateSelfWidthResetButton:SetScript("OnClick", function()
+    --     BBP.ResetToDefaultWidth(nameplateSelfWidth, false, true)
+    -- end)
 end
 
 local function guiImportAndExport()
@@ -13017,7 +13142,7 @@ function BBP.CVarTracker()
             nameplateShowFriendlyPlayerMinions = true,
             nameplateShowFriendlyPlayerGuardians = true,
             nameplateShowFriendlyPlayerPets = true,
-            nameplateShowFriendlyNPCs = true,
+            nameplateShowFriendlyNpcs = true,
             nameplateShowFriendlyPlayerTotems = true,
             nameplateResourceOnTarget = true,
             nameplateShowAll = true

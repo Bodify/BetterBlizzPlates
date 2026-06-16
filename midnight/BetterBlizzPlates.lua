@@ -33,6 +33,7 @@ local UnitReaction = UnitReaction
 local InCombatLockdown = InCombatLockdown
 local IsInInstance = IsInInstance
 local IsActiveBattlefieldArena = IsActiveBattlefieldArena
+local prdClassFrame = prdClassFrame or PersonalResourceDisplayFrame.classFrame
 
 -- Cached font settings (populated by CacheFontSettings)
 local cachedFont
@@ -352,7 +353,10 @@ local defaultSettings = {
     -- Totem Indicator
     totemIndicator = false,
     totemIndicatorColorName = true,
+    totemIndicatorColorNameOthers = false,
     totemIndicatorColorHealthBar = true,
+    totemIndicatorShowOtherIcons = true,
+    totemIndicatorColorOtherHealthBars = true,
     totemIndicatorScale = 1,
     totemIndicatorXPos = 0,
     totemIndicatorYPos = 0,
@@ -364,6 +368,7 @@ local defaultSettings = {
     totemIndicatorDefaultCooldownTextSize = 0.85,
     showTotemIndicatorCooldownSwipe = true,
     totemIndicatorHideAuras = false,
+    totemIndicatorTotemColor = { 0.4, 0.34, 0.21 },
     -- totemIndicatorNpcList = {
     --     [59764] =   { name = "Healing Tide Totem", icon = C_Spell.GetSpellTexture(108280),              hideIcon = false, size = 30, duration = 10, color = {0, 1, 0.39}, important = true },
     --     [59712] =   { name = "Stone Bulwark Totem", icon = C_Spell.GetSpellTexture(108270),             hideIcon = false, size = 30, duration = 30, color = {0.98, 0.75, 0.17}, important = true },
@@ -371,13 +376,11 @@ local defaultSettings = {
     --     [53006] =   { name = "Spirit Link Totem", icon = C_Spell.GetSpellTexture(98008),                hideIcon = false, size = 30, duration = 6,  color = {0, 1, 0.78}, important = true },
     --     [5913] =    { name = "Tremor Totem", icon = C_Spell.GetSpellTexture(8143),                      hideIcon = false, size = 30, duration = 13, color = {0.49, 0.9, 0.08}, important = true },
     --     [104818] =  { name = "Ancestral Protection Totem", icon = C_Spell.GetSpellTexture(207399),      hideIcon = false, size = 30, duration = 33, color = {0, 1, 0.78}, important = true },
-    --     --11.1 removed [119052] =  { name = "War Banner", icon = C_Spell.GetSpellTexture(236320),                      hideIcon = false, size = 30, duration = 15, color = {1, 0, 1}, important = true },
     --     [61245] =   { name = "Capacitor Totem", icon = C_Spell.GetSpellTexture(192058),                 hideIcon = false, size = 30, duration = 2,  color = {1, 0.69, 0}, important = true },
     --     [105451] =  { name = "Counterstrike Totem", icon = C_Spell.GetSpellTexture(204331),             hideIcon = false, size = 30, duration = 15, color = {1, 0.27, 0.59}, important = true },
     --     [101398] =  { name = "Psyfiend", icon = C_Spell.GetSpellTexture(199824),                        hideIcon = false, size = 35, duration = 12, color = {0.49, 0, 1}, important = true },
     --     [225672] =  { name = "Shadow", icon = C_Spell.GetSpellTexture(8122),                            hideIcon = false, size = 35, duration = 4,  color = {0.78, 0.48, 1}, important = true },
     --     [100943] =  { name = "Earthen Wall Totem", icon = C_Spell.GetSpellTexture(198838),              hideIcon = false, size = 30, duration = 18, color = {0.78, 0.49, 0.35}, important = true },
-    --     --11.1 removed [107100] =  { name = "Observer", icon = C_Spell.GetSpellTexture(112869),                        hideIcon = false, size = 30, duration = 20, color = {1, 0.69, 0}, important = true },
     --     [135002] =  { name = "Tyrant", icon = C_Spell.GetSpellTexture(265187),                          hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
     --     [114565] =  { name = "Guardian of the Forgotten Queen", icon = C_Spell.GetSpellTexture(228049), hideIcon = false, size = 30, duration = 10, color = {1, 0, 1}, important = true },
     --     [107024] =  { name = "Fel Lord", icon = C_Spell.GetSpellTexture(212459),                        hideIcon = false, size = 30, duration = 15, color = {1, 0.69, 0}, important = true },
@@ -385,13 +388,10 @@ local defaultSettings = {
     --     [14465] =   { name = "Alliance Battle Standard", icon = 132486,                                 hideIcon = false, size = 24, duration = nil, color = {0, 0.22, 1}, important = true },
     --     [14466] =   { name = "Horde Battle Standard", icon = 132485,                                    hideIcon = false, size = 24, duration = nil, color = {1, 0, 0}, important = true },
     --     -- Less important
-    --     --[103673] =  { name = "Darkglare", icon = C_Spell.GetSpellTexture(205180),                       hideIcon = false, size = 24, duration = 20, color = {1, 0, 0}, important = false},
-    --     [224466] =  { name = "Voidwraith", icon = C_Spell.GetSpellTexture(451234),                      hideIcon = false, size = 24, duration = 15, color = {1, 0.69, 0}, important = false },
     --     [89] =      { name = "Infernal", icon = C_Spell.GetSpellTexture(1122),                          hideIcon = false, size = 24, duration = 30, color = {1, 0.69, 0}, important = false },
     --     [196111] =  { name = "Pit Lord", icon = C_Spell.GetSpellTexture(138789),                        hideIcon = false, size = 24, duration = 10, color = {1, 0.69, 0}, important = false },
     --     [3527] =    { name = "Healing Stream Totem", icon = C_Spell.GetSpellTexture(5394),              hideIcon = false, size = 24, duration = 18, color = {0, 1, 0.78}, important = false },
     --     [78001] =   { name = "Cloudburst Totem", icon = C_Spell.GetSpellTexture(157153),                hideIcon = false, size = 24, duration = 15, color = {0, 1, 0.39}, important = false },
-    --     --11.1 removed [10467] =   { name = "Mana Tide Totem", icon = C_Spell.GetSpellTexture(16191),                  hideIcon = false, size = 24, duration = 8,  color = {0.08, 0.82, 0.78}, important = false },
     --     [97285] =   { name = "Wind Rush Totem", icon = C_Spell.GetSpellTexture(192077),                 hideIcon = false, size = 24, duration = 18, color = {0.08, 0.82, 0.78}, important = false },
     --     [60561] =   { name = "Earthgrab Totem", icon = C_Spell.GetSpellTexture(51485),                  hideIcon = false, size = 24, duration = 30, color = {0.75, 0.31, 0.10}, important = false },
     --     [2630] =    { name = "Earthbind Totem", icon = C_Spell.GetSpellTexture(2484),                   hideIcon = false, size = 24, duration = 30, color = {0.78, 0.51, 0.39}, important = false },
@@ -1023,7 +1023,7 @@ local cvarList = {
     "nameplateShowFriendlyPlayerMinions",
     "nameplateShowFriendlyPlayerPets",
     "nameplateShowFriendlyPlayerTotems",
-    "nameplateShowFriendlyNPCs",
+    "nameplateShowFriendlyNpcs",
     --"nameplateSelfTopInset",
     --"nameplateSelfBottomInset",
     --"nameplateSelfAlpha",
@@ -2023,7 +2023,7 @@ local function InitializeNameplateSettings(frame)
             questIndicator = BetterBlizzPlatesDB.questIndicatorTestMode or BetterBlizzPlatesDB.questIndicator,
             targetIndicator = BetterBlizzPlatesDB.targetIndicator,
             absorbIndicator = BetterBlizzPlatesDB.absorbIndicatorTestMode or BetterBlizzPlatesDB.absorbIndicator,
-            --totemIndicator = BetterBlizzPlatesDB.totemIndicator,
+            totemIndicator = BetterBlizzPlatesDB.totemIndicator,
             arenaIndicators = not BetterBlizzPlatesDB.arenaIndicatorModeOff or not BetterBlizzPlatesDB.partyIndicatorModeOff or BetterBlizzPlatesDB.arenaIndicatorTestMode,
             executeIndicator = BetterBlizzPlatesDB.executeIndicator or BetterBlizzPlatesDB.executeIndicatorTestMode,
             fadeOutNPC = BetterBlizzPlatesDB.fadeOutNPC,
@@ -2108,6 +2108,36 @@ local function applyExtraBarTexture(tex, setting)
     tex.changingTexture = false
 end
 
+local function OverbarsReplacement(tex)
+    if not tex then return end
+    if not tex.bbpTextureHooked then
+        tex.bbpTextureHooked = true
+        hooksecurefunc(tex, "SetTexture", function(self)
+            if self.changingTexture then return end
+            if self.bbpTexture then
+                self.changingTexture = true
+                self:SetAtlas("UI-HUD-CoolDownManager-Bar")
+                self.changingTexture = false
+            end
+        end)
+    end
+    tex.changingTexture = true
+    tex:SetAtlas("UI-HUD-CoolDownManager-Bar")
+    tex:SetTexCoord(0, 1, 0, 1)
+    tex.changingTexture = false
+end
+
+local function RetextureDefaultOverbars()
+    local frame = PersonalResourceDisplayFrame.HealthBarsContainer.healthBar
+    OverbarsReplacement(frame.otherHealPrediction, setting)
+    OverbarsReplacement(frame.myHealPrediction, setting)
+    OverbarsReplacement(frame.totalAbsorb, setting)
+    local frame = PersonalResourceDisplayFrame.PowerBar
+    OverbarsReplacement(frame.ManaCostPredictionBar, setting)
+end
+
+--RetextureDefaultOverbars()
+
 local function textureExtraBars(frame, setting)
     local extraBars = BetterBlizzPlatesDB.useCustomTextureForExtraBars
     if extraBars then
@@ -2125,13 +2155,46 @@ local function textureExtraBars(frame, setting)
     end
 end
 
+local function ApplyPRDBarMask(bar, container)
+    if not bar or bar:IsForbidden() then return end
+    if not bar.bbpPRDMask then
+        bar.bbpPRDMask = bar:CreateMaskTexture()
+    end
+    local mask = bar.bbpPRDMask
+    mask:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\midnightNpMask.tga")
+    mask:ClearAllPoints()
+    mask:SetPoint("TOPLEFT", container, "TOPLEFT", -0.5, 1)
+    mask:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 0.5, -1)
+    mask:Show()
+    bar:GetStatusBarTexture():AddMaskTexture(mask)
+end
+
+local function ApplyPRDMasks()
+    --if BetterBlizzPlatesDB.classicNameplates or BetterBlizzPlatesDB.classicRetailNameplates then return end
+    local prd = PersonalResourceDisplayFrame
+    local healthBar = prd.HealthBarsContainer.healthBar
+    ApplyPRDBarMask(healthBar, prd.HealthBarsContainer)
+
+    if healthBar.totalAbsorb and not healthBar.totalAbsorb:IsForbidden() then
+        if not healthBar.totalAbsorb.bbpPRDMasked then
+            ApplyPRDBarMask(healthBar, prd.HealthBarsContainer)
+            healthBar.totalAbsorb:AddMaskTexture(healthBar.bbpPRDMask)
+            healthBar.totalAbsorb.bbpPRDMasked = true
+        end
+    end
+    ApplyPRDBarMask(prd.PowerBar, prd.PowerBar)
+    if prd.AlternatePowerBar and prd.AlternatePowerBar:IsShown() then
+        ApplyPRDBarMask(prd.AlternatePowerBar, prd.AlternatePowerBar)
+    end
+end
+
 function BBP.TexturePRD()
     local customTextureSelf = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.customTextureSelf)
     local customTextureSelfMana = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.customTextureSelfMana)
 
     local frame = PersonalResourceDisplayFrame
     if not frame then return end
-    if BetterBlizzPlatesDB.useCustomTextureForSelf then
+    if BetterBlizzPlatesDB.useCustomTextureForBars and BetterBlizzPlatesDB.useCustomTextureForSelf then
         frame.changedPrdHealthTexture = true
         frame.HealthBarsContainer.healthBar:SetStatusBarTexture(customTextureSelf)
         textureExtraBars(frame.HealthBarsContainer.healthBar, customTextureSelf)
@@ -2140,7 +2203,7 @@ function BBP.TexturePRD()
         textureExtraBars(frame.HealthBarsContainer.healthBar, "Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
         frame.changedPrdHealthTexture = nil
     end
-    if BetterBlizzPlatesDB.useCustomTextureForSelfMana then
+    if BetterBlizzPlatesDB.useCustomTextureForBars and BetterBlizzPlatesDB.useCustomTextureForSelfMana then
         frame.changedPrdManaTexture = true
         frame.PowerBar:SetStatusBarTexture(customTextureSelfMana)
         textureExtraBars(frame.PowerBar, customTextureSelfMana)
@@ -2149,6 +2212,8 @@ function BBP.TexturePRD()
         textureExtraBars(frame.PowerBar, "Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
         frame.changedPrdManaTexture = nil
     end
+
+    ApplyPRDMasks()
 
     -- fix borders
     local borderContainers = {
@@ -2344,22 +2409,22 @@ local function AdjustHealthBarHeight(frame)
             frame.HealthBarsContainer:SetHeight(config.hpHeightEnemy or 11)
         elseif not isEnemy(frame.unit) then
             frame.HealthBarsContainer:SetHeight(config.hpHeightFriendly or 11)
-        else
-            frame.HealthBarsContainer:SetHeight(config.hpHeightSelf or 11)
-            if ClassNameplateManaBarFrame then
-                ClassNameplateManaBarFrame:SetHeight(config.hpHeightSelfMana or 11)
-                ClassNameplateManaBarFrame.bbpHeight = config.hpHeightSelfMana
+        -- else
+        --     frame.HealthBarsContainer:SetHeight(config.hpHeightSelf or 11)
+        --     if ClassNameplateManaBarFrame then
+        --         ClassNameplateManaBarFrame:SetHeight(config.hpHeightSelfMana or 11)
+        --         ClassNameplateManaBarFrame.bbpHeight = config.hpHeightSelfMana
 
-                if not ClassNameplateManaBarFrame.bbpHooked then
-                    hooksecurefunc(ClassNameplateManaBarFrame, "SetHeight", function(self)
-                        if self.changing then return end
-                        self.changing = true
-                        self:SetHeight(self.bbpHeight or 11)
-                        self.changing = false
-                    end)
-                    ClassNameplateManaBarFrame.bbpHooked = true
-                end
-            end
+        --         if not ClassNameplateManaBarFrame.bbpHooked then
+        --             hooksecurefunc(ClassNameplateManaBarFrame, "SetHeight", function(self)
+        --                 if self.changing then return end
+        --                 self.changing = true
+        --                 self:SetHeight(self.bbpHeight or 11)
+        --                 self.changing = false
+        --             end)
+        --             ClassNameplateManaBarFrame.bbpHooked = true
+        --         end
+        --     end
         end
     else
         frame.HealthBarsContainer:SetHeight(BetterBlizzPlatesDB.nameplateGeneralHpHeight or 16)
@@ -2562,8 +2627,8 @@ local function SetCVarsOnLogin()
 
             C_CVar.SetCVar("nameplateShowFriendlyPlayerMinions", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerMinions)
             C_CVar.SetCVar("nameplateShowFriendlyPlayerGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerGuardians)
-            if BetterBlizzPlatesDB.nameplateShowFriendlyNPCs then
-                C_CVar.SetCVar("nameplateShowFriendlyNPCs", BetterBlizzPlatesDB.nameplateShowFriendlyNPCs)
+            if BetterBlizzPlatesDB.nameplateShowFriendlyNpcs then
+                C_CVar.SetCVar("nameplateShowFriendlyNpcs", BetterBlizzPlatesDB.nameplateShowFriendlyNpcs)
             end
             C_CVar.SetCVar("nameplateShowFriendlyPlayerPets", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerPets)
             C_CVar.SetCVar("nameplateShowFriendlyPlayerTotems", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerTotems)
@@ -2717,6 +2782,7 @@ function BBP.PersonalBarSettings()
             altBar.bbpMovingPRD = nil
         end
     end
+    ApplyPRDMasks()
 end
 
 --#################################################################################################
@@ -3293,19 +3359,27 @@ local function SetFriendlyBarWidthTemp(frame)
 end
 BBP.SetFriendlyBarWidthTemp = SetFriendlyBarWidthTemp
 
+local function ShouldBeSmallPet(frame)
+    if BetterBlizzPlatesDB.smallPetsInPvPAllNPCs then
+        return UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP and not UnitIsPlayer(frame.unit)) or UnitIsUnit(frame.unit, "pet")
+    else
+        return UnitIsOtherPlayersPet(frame.unit) or UnitIsUnit(frame.unit, "pet")
+    end
+end
+
 local function SmallPetsInPvP(frame)
     local config = frame.BetterBlizzPlates.config
     if not config.smallPetsInPvP then return end
     if BBP.IsInCompStomp then return end
 
-    if UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP and not UnitIsPlayer(frame.unit)) or UnitIsUnit(frame.unit, "pet") then
+    if ShouldBeSmallPet(frame) then
         local db = BetterBlizzPlatesDB
         if not frame.bbpWidthHook then
             hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
                 if self:IsForbidden() or not frame.unit or UnitIsPlayer(frame.unit) then return end
                 if BBP.IsInCompStomp then return end
 
-                if UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP and not UnitIsPlayer(frame.unit)) or UnitIsUnit(frame.unit, "pet") then
+                if ShouldBeSmallPet(frame) then
                     local db = BetterBlizzPlatesDB
                     frame.isSmallPet = true
                     SetBarWidth(frame, db.smallPetsWidth, false)
@@ -3999,34 +4073,22 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         end
     end
 
-    -- if config.totemIndicator and info.isNpc then
-    --     local totemColor = config.totemColorRGB or config.randomTotemColor
-    --     if totemColor then
-    --         local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
-    --         local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
-    --         if npcData or config.randomTotemColor then
-    --             if config.totemIndicatorEnemyOnly then
-    --                 if not info.isFriend then
-    --                     if config.totemIndicatorColorHealthBar then
-    --                         frame.healthBar:SetStatusBarColor(unpack(totemColor))
-    --                     end
-    --                     -- if config.totemIndicatorColorName then
-    --                     --     frame.name:SetVertexColor(unpack(totemColor))
-    --                     -- end
-    --                 end
-    --             else
-    --                 if config.totemIndicatorColorHealthBar then
-    --                     frame.healthBar:SetStatusBarColor(unpack(totemColor))
-    --                 end
-    --                 -- if config.totemIndicatorColorName then
-    --                 --     frame.name:SetVertexColor(unpack(totemColor))
-    --                 -- end
-    --             end
-    --         else
-    --             config.totemColorRGB = nil
-    --         end
-    --     end
-    -- end
+    if config.totemIndicator and info.isNpc then
+        local totemColor = config.totemColorRGB
+        if totemColor then
+            if config.totemIndicatorEnemyOnly then
+                if not info.isFriend then
+                    if config.totemIndicatorColorHealthBar then
+                        frame.healthBar:SetStatusBarColor(unpack(totemColor))
+                    end
+                end
+            else
+                if config.totemIndicatorColorHealthBar then
+                    frame.healthBar:SetStatusBarColor(unpack(totemColor))
+                end
+            end
+        end
+    end
 
     if frame.mainPetColor then
         frame.healthBar:SetStatusBarColor(unpack(frame.mainPetColor))
@@ -4054,6 +4116,9 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         config.focusTargetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB
         config.focusTargetIndicator = BetterBlizzPlatesDB.focusTargetIndicator
         config.targetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB
+        config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
+        config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
+        config.totemIndicatorColorNameOthers = BetterBlizzPlatesDB.totemIndicatorColorNameOthers
         config.colorNPC = BetterBlizzPlatesDB.colorNPC
         config.personalNpTRP3Color = BetterBlizzPlatesDB.personalNpTRP3Color
 
@@ -4155,75 +4220,76 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         end
     end
 
-    -- if config.totemIndicator and info.isNpc then
-    --     local totemColor = config.totemColorRGB or config.randomTotemColor
-    --     if totemColor then
-    --         if config.totemIndicatorEnemyOnly then
-    --             if not info.isFriend then
-    --                 if config.totemIndicatorColorHealthBar then
-    --                     frame.healthBar:SetStatusBarColor(unpack(totemColor))
-    --                 end
-    --                 if config.totemIndicatorColorName then
-    --                     frame.name:SetVertexColor(unpack(totemColor))
-    --                 end
-    --             end
-    --         else
-    --             if config.totemIndicatorColorHealthBar then
-    --                 frame.healthBar:SetStatusBarColor(unpack(totemColor))
-    --             end
-    --             if config.totemIndicatorColorName then
-    --                 frame.name:SetVertexColor(unpack(totemColor))
-    --             end
-    --         end
-    --     end
-    -- end
-end
-
-function BBP.ColorPRD()
-    local frame = PersonalResourceDisplayFrame and PersonalResourceDisplayFrame.HealthBarsContainer
-    if not frame then return end
-    _, playerClass = UnitClass("player")
-    playerClassColor = RAID_CLASS_COLORS[playerClass]
-
-    local function ColorPRD()
-        if BetterBlizzPlatesDB.personalNpTRP3Color then
-            local r,g,b = GetRPNameColor("player")
-            if r then
-                frame.healthBar:SetStatusBarColor(r, g, b)
-            elseif BetterBlizzPlatesDB.classColorPersonalNameplate then
-                frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
+    if config.totemIndicator and info.isNpc then
+        local totemColor = config.totemColorRGB
+        if totemColor then
+            local colorName = config.totemIsImportant and config.totemIndicatorColorName or config.totemIndicatorColorNameOthers
+            if config.totemIndicatorEnemyOnly then
+                if not info.isFriend then
+                    if config.totemIndicatorColorHealthBar then
+                        frame.healthBar:SetStatusBarColor(unpack(totemColor))
+                    end
+                    if colorName then
+                        frame.name:SetVertexColor(unpack(totemColor))
+                    end
+                end
+            else
+                if config.totemIndicatorColorHealthBar then
+                    frame.healthBar:SetStatusBarColor(unpack(totemColor))
+                end
+                if colorName then
+                    frame.name:SetVertexColor(unpack(totemColor))
+                end
             end
-        elseif BetterBlizzPlatesDB.classColorPersonalNameplate then
-            frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
-        else
-            frame.healthBar:SetStatusBarColor(0, 1, 0)
         end
     end
-
-    ColorPRD()
-
-    if not BBP.prdColorHook then
-        hooksecurefunc(frame.healthBar, "SetStatusBarColor", function(self)
-            if self.changingColor then return end
-            self.changingColor = true
-            ColorPRD()
-            self.changingColor = nil
-        end)
-        BBP.prdColorHook = true
-    end
 end
 
-function BBP.ResizePRD()
-    local frame = PersonalResourceDisplayFrame
-    if not frame then return end
-    frame:SetWidth(BetterBlizzPlatesDB.nameplateSelfWidth or 200)
-    frame.PowerBar:SetWidth(BetterBlizzPlatesDB.nameplateSelfWidth or 200)
-    frame.AlternatePowerBar:SetWidth(BetterBlizzPlatesDB.nameplateSelfWidth or 200)
-    if not BetterBlizzPlatesDB.changeHealthbarHeight then return end
-    frame.HealthBarsContainer:SetHeight(BetterBlizzPlatesDB.hpHeightSelf or 11)
-    frame.PowerBar:SetHeight(BetterBlizzPlatesDB.hpHeightSelfMana or 11)
-    frame.AlternatePowerBar:SetHeight(BetterBlizzPlatesDB.hpHeightSelfMana or 11)
-end
+-- function BBP.ColorPRD()
+--     local frame = PersonalResourceDisplayFrame and PersonalResourceDisplayFrame.HealthBarsContainer
+--     if not frame then return end
+--     _, playerClass = UnitClass("player")
+--     playerClassColor = RAID_CLASS_COLORS[playerClass]
+
+--     local function ColorPRD()
+--         if BetterBlizzPlatesDB.personalNpTRP3Color then
+--             local r,g,b = GetRPNameColor("player")
+--             if r then
+--                 frame.healthBar:SetStatusBarColor(r, g, b)
+--             elseif BetterBlizzPlatesDB.classColorPersonalNameplate then
+--                 frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
+--             end
+--         elseif BetterBlizzPlatesDB.classColorPersonalNameplate then
+--             frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
+--         else
+--             frame.healthBar:SetStatusBarColor(0, 1, 0)
+--         end
+--     end
+
+--     ColorPRD()
+
+--     if not BBP.prdColorHook then
+--         hooksecurefunc(frame.healthBar, "SetStatusBarColor", function(self)
+--             if self.changingColor then return end
+--             self.changingColor = true
+--             ColorPRD()
+--             self.changingColor = nil
+--         end)
+--         BBP.prdColorHook = true
+--     end
+-- end
+
+-- function BBP.ResizePRD()
+--     local frame = PersonalResourceDisplayFrame
+--     if not frame then return end
+--     frame:SetWidth(BetterBlizzPlatesDB.nameplateSelfWidth or 200)
+--     frame.PowerBar:SetWidth(BetterBlizzPlatesDB.nameplateSelfWidth or 200)
+--     frame.AlternatePowerBar:SetWidth(BetterBlizzPlatesDB.nameplateSelfWidth or 200)
+--     if not BetterBlizzPlatesDB.changeHealthbarHeight then return end
+--     frame.HealthBarsContainer:SetHeight(BetterBlizzPlatesDB.hpHeightSelf or 11)
+--     frame.PowerBar:SetHeight(BetterBlizzPlatesDB.hpHeightSelfMana or 11)
+--     frame.AlternatePowerBar:SetHeight(BetterBlizzPlatesDB.hpHeightSelfMana or 11)
+-- end
 
 local function NameplateShadowAndMouseoverHighlight(frame)
     local showShadow = BetterBlizzPlatesDB.showNameplateShadow
@@ -4494,7 +4560,13 @@ function BBP.ApplyRaidmarkerChanges(frame)
                 frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
                 frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.name, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos)
             else
-                local hiddenHealthbarOffset = (config.friendlyHideHealthBar and config.raidmarkIndicatorAnchor == "BOTTOM" and not issecretvalue(frame.HealthBarsContainer:GetAlpha()) and frame.HealthBarsContainer:GetAlpha() == 0) and frame.HealthBarsContainer:GetHeight() + 10 or 0
+                local hbcHeight = frame.HealthBarsContainer:GetHeight()
+                if not issecretvalue(hbcHeight) then
+                    frame.hpBarHeight = hbcHeight
+                else
+                    hbcHeight = frame.hpBarHeight or 13
+                end
+                local hiddenHealthbarOffset = (config.friendlyHideHealthBar and config.raidmarkIndicatorAnchor == "BOTTOM" and not issecretvalue(frame.HealthBarsContainer:GetAlpha()) and frame.HealthBarsContainer:GetAlpha() == 0) and hbcHeight + 10 or 0
                 frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
                 frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.healthBar, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos + hiddenHealthbarOffset)
             end
@@ -6737,6 +6809,9 @@ local function HandleNamePlateAdded(unit)
 
     if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
 
+    -- Show totem icons
+    if config.totemIndicator and info.isNpc then BBP.ApplyTotemIconsAndColorNameplate(frame) end
+
     -- Color nameplate depending on aura
     if config.auraColor then BBP.AuraColor(frame) end
 
@@ -6940,11 +7015,11 @@ function BBP.RefreshAllNameplates()
         end
 
         -- Reset nameplate scale after testing totems
-        -- if not BetterBlizzPlatesDB.totemIndicatorTestMode then
-        --     if frame then
-        --         frame:SetScale(1)
-        --     end
-        -- end
+        if not BetterBlizzPlatesDB.totemIndicatorTestMode then
+            if frame then
+                frame:SetScale(1)
+            end
+        end
         -- Always update the name
         --BBP.RestoreOriginalNameplateColors(frame)
         BBP.CompactUnitFrame_UpdateHealthColor(frame)
@@ -6973,19 +7048,24 @@ function BBP.RefreshAllNameplates()
             end
         end
         -- if BetterBlizzPlatesDB.totemIndicatorTestMode then
-        --     if hideHealthBar then
-        --         frame.HealthBarsContainer:SetAlpha(0)
-        --         frame.HealthBarsContainer.alphaZero = true
-        --         frame.selectionHighlight:SetAlpha(0)
-        --     else
-        --         local hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
-        --         frame.HealthBarsContainer:SetAlpha(1)
-        --         frame.HealthBarsContainer.alphaZero = false
-        --         if not hideTargetHighlight then
-        --             frame.selectionHighlight:SetAlpha(0.22)
-        --         end
-        --     end
-        -- end
+        if BetterBlizzPlatesDB.totemIndicatorTestMode then
+            if hideHealthBar then
+                frame.HealthBarsContainer:SetAlpha(0)
+                frame.HealthBarsContainer.alphaZero = true
+                frame.selectionHighlight:SetAlpha(0)
+            else
+                local hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
+                frame.HealthBarsContainer:SetAlpha(1)
+                frame.HealthBarsContainer.alphaZero = false
+                if not hideTargetHighlight then
+                    frame.selectionHighlight:SetAlpha(0.22)
+                end
+            end
+        end
+
+        if BetterBlizzPlatesDB.totemIndicator and info.isNpc then
+            BBP.ApplyTotemIconsAndColorNameplate(frame)
+        end
 
         if frame.castBar then
             if not BetterBlizzPlatesDB.useCustomCastbarBGTexture or not BetterBlizzPlatesDB.useCustomCastbarTexture then
@@ -7094,11 +7174,12 @@ function BBP.ConsolidatedUpdateName(frame)
         config.anonModeOn = BetterBlizzPlatesDB.anonMode
         config.pvpTitleModeOn = BetterBlizzPlatesDB.pvpTitleMode
         config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
-        --config.totemIndicatorHideNameAndShiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
+        config.totemIndicatorHideNameAndShiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
         config.useFakeName = BetterBlizzPlatesDB.useFakeName
-        --config.totemIndicator = BetterBlizzPlatesDB.totemIndicator
-        --config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
-        --config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
+        config.totemIndicator = BetterBlizzPlatesDB.totemIndicator
+        config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
+        config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
+        config.totemIndicatorColorNameOthers = BetterBlizzPlatesDB.totemIndicatorColorNameOthers
         config.showLastNameNpc = BetterBlizzPlatesDB.showLastNameNpc
         config.arenaIndicatorBg = BetterBlizzPlatesDB.arenaIndicatorBg
         config.removeRealmNames = BetterBlizzPlatesDB.removeRealmNames
@@ -7185,78 +7266,82 @@ function BBP.ConsolidatedUpdateName(frame)
     --if config.classIndicator then BBP.ClassIndicator(frame) end --and not info.isSelf then BBP.ClassIndicator(frame) end bodify not sure if this needs to run here
 
     -- Color nameplate and pick random name or hide name during totem tester
-    -- if config.totemIndicatorTest then
-    --     if config.totemIndicatorColorName then
-    --         frame.name:SetVertexColor(unpack(frame.randomColor))
-    --         if config.totemIndicatorHideNameAndShiftIconDown then
-    --             frame.name:SetText("")
-    --         else
-    --             frame.name:SetText(frame.randomName)
-    --         end
-    --     end
-    -- end
+    if config.totemIndicatorTest then
+        if config.totemIndicatorColorName then
+            frame.name:SetVertexColor(unpack(frame.randomColor))
+            if config.totemIndicatorHideNameAndShiftIconDown then
+                frame.name:SetText("")
+            else
+                frame.name:SetText(frame.randomName)
+            end
+        end
+    end
 
     -- Ensure totem nameplate color is correct
-    -- if config.totemIndicator and info.isNpc then
-    --     local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
-    --     local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
+    if config.totemIndicator and info.isNpc then
+        local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
+        local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
 
-    --     if npcData then
-    --         if not config.totemIndicatorInitialized or BBP.needsUpdate then
-    --             config.totemIndicatorXPos = BetterBlizzPlatesDB.totemIndicatorXPos
-    --             config.totemIndicatorYPos = BetterBlizzPlatesDB.totemIndicatorYPos
+        if npcData then
+            if not config.totemIndicatorInitialized or BBP.needsUpdate then
+                config.totemIndicatorXPos = BetterBlizzPlatesDB.totemIndicatorXPos
+                config.totemIndicatorYPos = BetterBlizzPlatesDB.totemIndicatorYPos
 
-    --             config.totemIndicatorHideNameAndShiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
-    --             config.totemIndicatorTestMode = BetterBlizzPlatesDB.totemIndicatorTestMode
-    --             config.totemIndicatorHideHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
-    --             config.totemIndicatorEnemyOnly = BetterBlizzPlatesDB.totemIndicatorEnemyOnly
-    --             config.hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
-    --             config.totemIndicatorAnchor = BetterBlizzPlatesDB.totemIndicatorAnchor
-    --             config.showTotemIndicatorCooldownSwipe = BetterBlizzPlatesDB.showTotemIndicatorCooldownSwipe
-    --             config.totemIndicatorScale = BetterBlizzPlatesDB.totemIndicatorScale
-    --             config.totemIndicatorTestMode = BetterBlizzPlatesDB.totemIndicatorTestMode
-    --             config.totemIndicatorDefaultCooldownTextSize = BetterBlizzPlatesDB.totemIndicatorDefaultCooldownTextSize
-    --             config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
-    --             config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
-    --             config.totemIndicatorHideAuras = BetterBlizzPlatesDB.totemIndicatorHideAuras
-    --             config.totemIndicatorWidthEnabled = BetterBlizzPlatesDB.totemIndicatorWidthEnabled
-    --             config.totemIndicatorUseNicknames = BetterBlizzPlatesDB.totemIndicatorUseNicknames
+                config.totemIndicatorHideNameAndShiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
+                config.totemIndicatorTestMode = BetterBlizzPlatesDB.totemIndicatorTestMode
+                config.totemIndicatorHideHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
+                config.totemIndicatorEnemyOnly = BetterBlizzPlatesDB.totemIndicatorEnemyOnly
+                config.hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
+                config.totemIndicatorAnchor = BetterBlizzPlatesDB.totemIndicatorAnchor
+                config.showTotemIndicatorCooldownSwipe = BetterBlizzPlatesDB.showTotemIndicatorCooldownSwipe
+                config.totemIndicatorScale = BetterBlizzPlatesDB.totemIndicatorScale
+                config.totemIndicatorTestMode = BetterBlizzPlatesDB.totemIndicatorTestMode
+                config.totemIndicatorDefaultCooldownTextSize = BetterBlizzPlatesDB.totemIndicatorDefaultCooldownTextSize
+                config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
+                config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
+                config.totemIndicatorHideAuras = BetterBlizzPlatesDB.totemIndicatorHideAuras
+                config.totemIndicatorWidthEnabled = BetterBlizzPlatesDB.totemIndicatorWidthEnabled
+                config.totemIndicatorUseNicknames = BetterBlizzPlatesDB.totemIndicatorUseNicknames
 
-    --             config.totemIndicatorInitialized = true
-    --         end
-    --         local color = npcData.color
+                config.totemIndicatorInitialized = true
+            end
+            local color = npcData.color
 
-    --         if not info.isFriend or (info.isFriend and not config.totemIndicatorEnemyOnly) then
-    --             if config.totemIndicatorColorHealthBar and color then
-    --                 frame.healthBar:SetStatusBarColor(unpack(color))
-    --             end
+            if not info.isFriend or (info.isFriend and not config.totemIndicatorEnemyOnly) then
+                if config.totemIndicatorColorHealthBar and color then
+                    frame.healthBar:SetStatusBarColor(unpack(color))
+                end
 
-    --             if config.totemIndicatorHideNameAndShiftIconDown then
-    --                 frame.name:SetText("")
-    --             elseif config.totemIndicatorColorName and color then
-    --                 frame.name:SetVertexColor(unpack(color))
-    --             end
+                if config.totemIndicatorHideNameAndShiftIconDown then
+                    frame.name:SetText("")
+                elseif config.totemIndicatorColorName and color then
+                    frame.name:SetVertexColor(unpack(color))
+                end
 
-    --             if config.totemIndicatorUseNicknames then
-    --                 frame.name:SetText(npcData.name)
-    --             end
-    --         end
+                if config.totemIndicatorUseNicknames then
+                    frame.name:SetText(npcData.name)
+                end
+            end
 
-    --         if npcData.iconOnly then
-    --             frame.name:SetText("")
-    --             frame.name:SetAlpha(0)
-    --         end
-    --     end
-    -- end
+            if npcData.iconOnly then
+                frame.name:SetText("")
+                frame.name:SetAlpha(0)
+            end
+        end
+    end
 
 
-    -- if frame.isBBPTotem then
-    --     if config.totemIndicatorColorName or config.totemIndicatorHideNameAndShiftIconDown then
-    --         frame.name:SetText("")
-    --     elseif frame.BBPTotemColor then
-    --         frame.name:SetVertexColor(unpack(frame.BBPTotemColor))
-    --     end
-    -- end
+    -- Re-apply totem name color last so nothing else stomps it
+    if config.totemIndicator and config.totemColorRGB then
+        if config.totemIndicatorHideNameAndShiftIconDown then
+            frame.name:SetText("")
+        else
+            local colorName = config.totemIsImportant and config.totemIndicatorColorName or config.totemIndicatorColorNameOthers
+            if colorName then
+                frame.name:SetVertexColor(unpack(config.totemColorRGB))
+            end
+        end
+    end
 
     if (config.hideFriendlyNameText and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
         frame.name:SetAlpha(0)
@@ -8108,6 +8193,40 @@ First:SetScript("OnEvent", function(_, event, addonName)
             UpdateLateAdditionSettings(db)
 
             InitializeSavedVariables()
+
+            if db.totemIndicator and not db.totemIndicatorUpdatedForMidnight then
+                if db.firstSaveComplete then
+                    -- Existing user from before Midnight: ask what to do
+                    StaticPopupDialogs["BBP_TOTEM_MIDNIGHT_UPDATE"] = {
+                        text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates:\n\nTotem Indicator is back for Midnight in a scuffed way.\n\nFor it to work correctly you need to have only \"Enemy Pets\" and \"Enemy Totems\" enabled in the CVar Control section.\n\nIt can only properly detect Grounding & Capacitor Totem, the rest will just be a general totem icon and color.\nTweak it in Advanced Settings.\n\nWhat would you like to do?",
+                        button1 = "Only keep Pets and Totems",
+                        button2 = "Turn off Totem Indicator",
+                        OnAccept = function()
+                            db.nameplateShowEnemyGuardians = "0"
+                            db.nameplateShowEnemyMinions = "0"
+                            db.nameplateShowEnemyPets = "1"
+                            db.nameplateShowEnemyTotems = "1"
+                            C_CVar.SetCVar("nameplateShowEnemyGuardians", "0")
+                            C_CVar.SetCVar("nameplateShowEnemyMinions", "0")
+                            --C_CVar.SetCVar("nameplateShowEnemyPets", "1")
+                            C_CVar.SetCVar("nameplateShowEnemyTotems", "1")
+                            db.totemIndicatorUpdatedForMidnight = true
+                        end,
+                        OnCancel = function()
+                            db.totemIndicator = false
+                            db.totemIndicatorUpdatedForMidnight = true
+                        end,
+                        timeout = 0,
+                        whileDead = true,
+                    }
+                    C_Timer.After(5, function()
+                        StaticPopup_Show("BBP_TOTEM_MIDNIGHT_UPDATE")
+                    end)
+                else
+                    db.totemIndicatorUpdatedForMidnight = true
+                end
+            end
+
             -- Fetch Blizzard default values
             if not db.firstSaveComplete then
                 db.defaultLargeNamePlateFont, db.defaultLargeFontSize, db.defaultLargeNamePlateFontFlags = SystemFont_LargeNamePlate:GetFont()
@@ -8159,9 +8278,9 @@ First:SetScript("OnEvent", function(_, event, addonName)
 
             C_Timer.After(1, function()
                 BBP.HidePersonalManabarFX()
-                BBP.ColorPRD()
+                --()
                 BBP.TexturePRD()
-                BBP.ResizePRD()
+                --BBP.ResizePRD()
                 BBP.PersonalBarSettings()
                 if db.changeNameplateBorderSize then
                     ChangeHealthbarBorderSize(PersonalResourceDisplayFrame)
@@ -8225,8 +8344,8 @@ end)
 
 local function OnVariablesLoaded(self, event)
     if event == "VARIABLES_LOADED" then
-        if BetterBlizzPlatesDB.nameplateShowFriendlyNPCs == nil then
-            BetterBlizzPlatesDB.nameplateShowFriendlyNPCs = GetCVar("nameplateShowFriendlyNPCs")
+        if BetterBlizzPlatesDB.nameplateShowFriendlyNpcs == nil then
+            BetterBlizzPlatesDB.nameplateShowFriendlyNpcs = BetterBlizzPlatesDB.nameplateShowFriendlyNPCs or GetCVar("nameplateShowFriendlyNpcs")
             BetterBlizzPlatesDB.nameplateShowAll = GetCVar("nameplateShowAll")
         end
         BBP.variablesLoaded = true
