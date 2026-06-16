@@ -9040,6 +9040,10 @@ local function guiNameplateAuras()
     otherNpdeBuffFilterOnlyMe:SetPoint("TOPLEFT", otherNpdeBuffFilterLessMinite, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(otherNpdeBuffFilterOnlyMe, "Only show my debuffs. (Can select individual in whitelist too)\n\nThis filter allows auras from the Blizzard Default filter if it is enabled.")
 
+    local otherNpdeBuffFilterBreakCCDots = CreateCheckbox("otherNpdeBuffFilterBreakCCDots", "Break-CC DoTs", otherNpdeBuffEnable)
+    otherNpdeBuffFilterBreakCCDots:SetPoint("TOPLEFT", otherNpdeBuffFilterOnlyMe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(otherNpdeBuffFilterBreakCCDots, "Break-CC DoTs", "Show common damage-over-time debuffs that can break crowd control")
+
 --[=[
     local otherNpdeBuffPandemicGlow = CreateCheckbox("otherNpdeBuffPandemicGlow", "Pandemic Glow", otherNpdeBuffEnable)
     otherNpdeBuffPandemicGlow:SetPoint("TOPLEFT", otherNpdeBuffFilterOnlyMe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -9678,7 +9682,7 @@ local function guiNameplateAuras()
 
 
     local npColorAuraBorder = CreateCheckbox("npColorAuraBorder", "Color Border by Type", enableNameplateAuraCustomisation)
-    npColorAuraBorder:SetPoint("RIGHT", enlargedAuraIcon, "LEFT", -10, 295)
+    npColorAuraBorder:SetPoint("TOPLEFT", otherNpdeBuffFilterBreakCCDots, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(npColorAuraBorder, "Color Border by Type", "Color Border by Type")
 
     local npAuraBuffsRGB = CreateColorBox(npColorAuraBorder, "npAuraBuffsRGB", "Buffs")
