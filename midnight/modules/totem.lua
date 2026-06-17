@@ -24,8 +24,11 @@ end
 
 local function GetTotemAura(unit)
     local auras = C_UnitAuras.GetUnitAuras(unit, "HELPFUL|IMPORTANT")
-    if auras and #auras > 0 and C_Spell.IsSpellImportant(auras[1].spellId) then
-        return auras[1].icon, true
+    if auras and #auras > 0 then
+        local isImportant = C_Spell.IsSpellImportant(auras[1].spellId)
+        if issecretvalue(isImportant) or isImportant then
+            return auras[1].icon, true
+        end
     end
     local auras = C_UnitAuras.GetUnitAuras(unit, "HELPFUL")
     if auras and #auras > 0 then
