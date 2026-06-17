@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.0.4b
+## Midnight
+### Bugfix
+- Add missing secret check in totem indicator.
+
 # BetterBlizzPlates 2.0.4
 ## Midnight
 ### New
