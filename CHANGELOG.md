@@ -1,3 +1,9 @@
+# BetterBlizzPlates 2.0.4c
+## Midnight
+### Bugfix
+- Fix "Druid: Always show combo points" setting.
+- Fix lua error from old totem indicator code that was left in by accident.
+
 # BetterBlizzPlates 2.0.4b
 ## Midnight
 ### Bugfix

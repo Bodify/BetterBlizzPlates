@@ -7277,61 +7277,6 @@ function BBP.ConsolidatedUpdateName(frame)
         end
     end
 
-    -- Ensure totem nameplate color is correct
-    if config.totemIndicator and info.isNpc then
-        local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
-        local npcData = BetterBlizzPlatesDB.totemIndicatorNpcList[npcID]
-
-        if npcData then
-            if not config.totemIndicatorInitialized or BBP.needsUpdate then
-                config.totemIndicatorXPos = BetterBlizzPlatesDB.totemIndicatorXPos
-                config.totemIndicatorYPos = BetterBlizzPlatesDB.totemIndicatorYPos
-
-                config.totemIndicatorHideNameAndShiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
-                config.totemIndicatorTestMode = BetterBlizzPlatesDB.totemIndicatorTestMode
-                config.totemIndicatorHideHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
-                config.totemIndicatorEnemyOnly = BetterBlizzPlatesDB.totemIndicatorEnemyOnly
-                config.hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
-                config.totemIndicatorAnchor = BetterBlizzPlatesDB.totemIndicatorAnchor
-                config.showTotemIndicatorCooldownSwipe = BetterBlizzPlatesDB.showTotemIndicatorCooldownSwipe
-                config.totemIndicatorScale = BetterBlizzPlatesDB.totemIndicatorScale
-                config.totemIndicatorTestMode = BetterBlizzPlatesDB.totemIndicatorTestMode
-                config.totemIndicatorDefaultCooldownTextSize = BetterBlizzPlatesDB.totemIndicatorDefaultCooldownTextSize
-                config.totemIndicatorColorHealthBar = BetterBlizzPlatesDB.totemIndicatorColorHealthBar
-                config.totemIndicatorColorName = BetterBlizzPlatesDB.totemIndicatorColorName
-                config.totemIndicatorHideAuras = BetterBlizzPlatesDB.totemIndicatorHideAuras
-                config.totemIndicatorWidthEnabled = BetterBlizzPlatesDB.totemIndicatorWidthEnabled
-                config.totemIndicatorUseNicknames = BetterBlizzPlatesDB.totemIndicatorUseNicknames
-
-                config.totemIndicatorInitialized = true
-            end
-            local color = npcData.color
-
-            if not info.isFriend or (info.isFriend and not config.totemIndicatorEnemyOnly) then
-                if config.totemIndicatorColorHealthBar and color then
-                    frame.healthBar:SetStatusBarColor(unpack(color))
-                end
-
-                if config.totemIndicatorHideNameAndShiftIconDown then
-                    frame.name:SetText("")
-                elseif config.totemIndicatorColorName and color then
-                    frame.name:SetVertexColor(unpack(color))
-                end
-
-                if config.totemIndicatorUseNicknames then
-                    frame.name:SetText(npcData.name)
-                end
-            end
-
-            if npcData.iconOnly then
-                frame.name:SetText("")
-                frame.name:SetAlpha(0)
-            end
-        end
-    end
-
-
-    -- Re-apply totem name color last so nothing else stomps it
     if config.totemIndicator and config.totemColorRGB then
         if config.totemIndicatorHideNameAndShiftIconDown then
             frame.name:SetText("")

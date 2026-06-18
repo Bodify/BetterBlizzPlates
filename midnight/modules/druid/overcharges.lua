@@ -1,9 +1,8 @@
-if not BBP.isMidnight then return end
 function BBP.DruidAlwaysShowCombos()
     if not BetterBlizzPlatesDB.druidAlwaysShowCombos then return end
     if select(2, UnitClass("player")) ~= "DRUID" then return end
     if BBP.DruidAlwaysShowCombosActive then return end
-    local frame = ClassNameplateBarFeralDruidFrame
+    local frame = PersonalResourceDisplayFrame.classFrame--ClassNameplateBarFeralDruidFrame
 
     local function CreateChargedPoints(comboPointFrame)
         if not comboPointFrame then return end
@@ -48,7 +47,7 @@ function BBP.DruidAlwaysShowCombos()
         local comboPoints = UnitPower("player", self.powerType)
 
         if comboPoints > 0 then
-            if GetCVarBool("nameplateResourceOnTarget") and not UnitExists("target") then
+            if (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true) and not UnitExists("target") then
                 self:Hide()
             else
                 self:Show()
@@ -70,13 +69,13 @@ function BBP.DruidAlwaysShowCombos()
     frame:HookScript("OnHide", function(self)
         if not self then return end
         if self:IsForbidden() then return end
-        -- if UnitPower("player", self.powerType) > 0 then --isMidnight
-        --     if (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true) and not UnitExists("target") then
-        --         self:Hide()
-        --     else
-        --         self:Show()
-        --     end
-        -- end
+        if UnitPower("player", ClassNameplateBarFeralDruidFrame.powerType) > 0 then
+            if (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true) and not UnitExists("target") then
+                self:Hide()
+            else
+                self:Show()
+            end
+        end
     end)
 
     local listener = CreateFrame("Frame")
