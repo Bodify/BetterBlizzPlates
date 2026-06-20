@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.0.5b
+## Midnight
+### Bugfix
+- Fix lua error in totem indicator.
+
 # BetterBlizzPlates 2.0.5
 ## Midnight
 ### New
