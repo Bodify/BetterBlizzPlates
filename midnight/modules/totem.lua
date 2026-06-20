@@ -279,12 +279,14 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         end
     end
 
-    frame.totemIndicator:ClearAllPoints()
-    if config.totemIndicatorHideNameAndShiftIconDown then
-        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, yPosAdjustment)
-        frame.name:SetText("")
-    else
-        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
+    if frame.totemIndicator then
+        frame.totemIndicator:ClearAllPoints()
+        if config.totemIndicatorHideNameAndShiftIconDown then
+            frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, yPosAdjustment)
+            frame.name:SetText("")
+        else
+            frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
+        end
     end
 end
 
@@ -307,12 +309,14 @@ function BBP.UpdateTotemPos(frame)
 
     local yPosAdjustment = config.totemIndicatorHideNameAndShiftIconDown and config.totemIndicatorYPos + 4 or config.totemIndicatorYPos
 
-    frame.totemIndicator:ClearAllPoints()
-    if config.totemIndicatorHideNameAndShiftIconDown then
-        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, yPosAdjustment)
-        frame.name:SetText("")
-    else
-        frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
+    if frame.totemIndicator then
+        frame.totemIndicator:ClearAllPoints()
+        if config.totemIndicatorHideNameAndShiftIconDown then
+            frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, yPosAdjustment)
+            frame.name:SetText("")
+        else
+            frame.totemIndicator:SetPoint(BBP.GetOppositeAnchor(config.totemIndicatorAnchor), totemIndicatorSwappingAnchor, config.totemIndicatorAnchor, config.totemIndicatorXPos, config.totemIndicatorYPos)
+        end
     end
 end
 
