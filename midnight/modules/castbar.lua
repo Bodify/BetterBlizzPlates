@@ -1031,8 +1031,6 @@ function BBP.CastbarOnEvent(frame, event)
         end
     end
 
-    
-
     if frame.hideCastbarOverride then
         frame.castBar:Hide()
         return
@@ -1080,7 +1078,7 @@ function BBP.CastbarOnEvent(frame, event)
             end)
         end
 
-        if useCustomCastbarTexture and not useCustomCastbarTextureHooked then
+        if useCustomCastbarTexture then
             if not self.hooked then
                 hooksecurefunc(self, "SetStatusBarTexture", function(self, texture)
                     if self.changing or self:IsForbidden() then return end
@@ -1144,9 +1142,15 @@ function BBP.CastbarOnEvent(frame, event)
                     --     self.changing = false
                     -- end)
                 end
+
+                hooksecurefunc(frame.castBar, "PlayFinishAnim", function()
+                    if frame.castBar:IsForbidden() then return end
+                    local textureName = BetterBlizzPlatesDB.customCastbarTexture
+                    local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
+                    frame.castBar:SetStatusBarTexture(texturePath)
+                end)
                 self.hooked = true
             end
-            useCustomCastbarTextureHooked = true
         end
 
         if BetterBlizzPlatesDB.normalCastbarForEmpoweredCasts then

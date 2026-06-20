@@ -1,3 +1,12 @@
+# BetterBlizzPlates 2.0.5
+## Midnight
+### New
+- New "Personal Resource Display: Legacy Look" setting (Misc) to make it how it used to be before 12.0.7. This gets auto enabled if you had "Pre-Midnight Nameplates" enabled.
+- New "Personal Resource Display: Fancy Alt Power Texture" setting (Misc) that re-textures alt power bar to Blizzards fancy textures for Astral Power, Insanity, etc.
+### Tweak
+- Fix texture change for manabar not also affecting alt mana bar.
+- Fix castbar texture change sometimes flashing wrong texture at a finished cast.
+
 # BetterBlizzPlates 2.0.4c
 ## Midnight
 ### Bugfix

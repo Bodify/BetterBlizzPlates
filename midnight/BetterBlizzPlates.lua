@@ -2154,85 +2154,7 @@ local function textureExtraBars(frame, setting)
         -- applyExtraBarTexture(frame.totalAbsorbOverlay, setting)
     end
 end
-
-local function ApplyPRDBarMask(bar, container)
-    if not bar or bar:IsForbidden() then return end
-    if not bar.bbpPRDMask then
-        bar.bbpPRDMask = bar:CreateMaskTexture()
-    end
-    local mask = bar.bbpPRDMask
-    mask:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\midnightNpMask.tga")
-    mask:ClearAllPoints()
-    mask:SetPoint("TOPLEFT", container, "TOPLEFT", -0.5, 1)
-    mask:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 0.5, -1)
-    mask:Show()
-    bar:GetStatusBarTexture():AddMaskTexture(mask)
-end
-
-local function ApplyPRDMasks()
-    --if BetterBlizzPlatesDB.classicNameplates or BetterBlizzPlatesDB.classicRetailNameplates then return end
-    local prd = PersonalResourceDisplayFrame
-    local healthBar = prd.HealthBarsContainer.healthBar
-    ApplyPRDBarMask(healthBar, prd.HealthBarsContainer)
-
-    if healthBar.totalAbsorb and not healthBar.totalAbsorb:IsForbidden() then
-        if not healthBar.totalAbsorb.bbpPRDMasked then
-            ApplyPRDBarMask(healthBar, prd.HealthBarsContainer)
-            healthBar.totalAbsorb:AddMaskTexture(healthBar.bbpPRDMask)
-            healthBar.totalAbsorb.bbpPRDMasked = true
-        end
-    end
-    ApplyPRDBarMask(prd.PowerBar, prd.PowerBar)
-    if prd.AlternatePowerBar and prd.AlternatePowerBar:IsShown() then
-        ApplyPRDBarMask(prd.AlternatePowerBar, prd.AlternatePowerBar)
-    end
-end
-
-function BBP.TexturePRD()
-    local customTextureSelf = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.customTextureSelf)
-    local customTextureSelfMana = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.customTextureSelfMana)
-
-    local frame = PersonalResourceDisplayFrame
-    if not frame then return end
-    if BetterBlizzPlatesDB.useCustomTextureForBars and BetterBlizzPlatesDB.useCustomTextureForSelf then
-        frame.changedPrdHealthTexture = true
-        frame.HealthBarsContainer.healthBar:SetStatusBarTexture(customTextureSelf)
-        textureExtraBars(frame.HealthBarsContainer.healthBar, customTextureSelf)
-    elseif frame.changedPrdHealthTexture then
-        frame.HealthBarsContainer.healthBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
-        textureExtraBars(frame.HealthBarsContainer.healthBar, "Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
-        frame.changedPrdHealthTexture = nil
-    end
-    if BetterBlizzPlatesDB.useCustomTextureForBars and BetterBlizzPlatesDB.useCustomTextureForSelfMana then
-        frame.changedPrdManaTexture = true
-        frame.PowerBar:SetStatusBarTexture(customTextureSelfMana)
-        textureExtraBars(frame.PowerBar, customTextureSelfMana)
-    elseif frame.changedPrdManaTexture then
-        frame.PowerBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
-        textureExtraBars(frame.PowerBar, "Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
-        frame.changedPrdManaTexture = nil
-    end
-
-    ApplyPRDMasks()
-
-    -- fix borders
-    local borderContainers = {
-        PersonalResourceDisplayFrame.HealthBarsContainer.border,
-        PersonalResourceDisplayFrame.PowerBar.Border,
-        PersonalResourceDisplayFrame.AlternatePowerBar.Border,
-    }
-
-    for _, borderContainer in ipairs(borderContainers) do
-        if borderContainer then
-            for _, child in ipairs({borderContainer:GetChildren()}) do
-                child:SetIgnoreParentAlpha(true)
-            end
-            for _, region in ipairs({borderContainer:GetRegions()}) do
-                region:SetIgnoreParentAlpha(true)
-            end
-        end
-    end
-end
+BBP.textureExtraBars = textureExtraBars
 
 function BBP.ApplyCustomTextureToNameplate(frame)
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
@@ -2712,78 +2634,78 @@ hooksecurefunc(NamePlateAuraItemMixin, "SetAura", function(self)
     self:SetMouseClickEnabled(false)
 end)
 
-function BBP.PersonalBarSettings()
-    local db = BetterBlizzPlatesDB
-    local function SetFrameAlpha(frame, shouldHide, hiddenVar)
-        if frame then
-            if shouldHide then
-                frame:SetAlpha(0)
-                BBP[hiddenVar] = true
-            elseif BBP[hiddenVar] then
-                frame:SetAlpha(1)
-                BBP[hiddenVar] = nil
-            end
-        end
-    end
+-- function BBP.PersonalBarSettings()
+--     local db = BetterBlizzPlatesDB
+--     local function SetFrameAlpha(frame, shouldHide, hiddenVar)
+--         if frame then
+--             if shouldHide then
+--                 frame:SetAlpha(0)
+--                 BBP[hiddenVar] = true
+--             elseif BBP[hiddenVar] then
+--                 frame:SetAlpha(1)
+--                 BBP[hiddenVar] = nil
+--             end
+--         end
+--     end
 
-    local function SetBorderIgnoreParentAlpha(borderContainer, shouldIgnore)
-        if borderContainer then
-            for _, child in ipairs({borderContainer:GetChildren()}) do
-                child:SetIgnoreParentAlpha(shouldIgnore)
-            end
-            for _, region in ipairs({borderContainer:GetRegions()}) do
-                region:SetIgnoreParentAlpha(shouldIgnore)
-            end
-        end
-    end
+--     local function SetBorderIgnoreParentAlpha(borderContainer, shouldIgnore)
+--         if borderContainer then
+--             for _, child in ipairs({borderContainer:GetChildren()}) do
+--                 child:SetIgnoreParentAlpha(shouldIgnore)
+--             end
+--             for _, region in ipairs({borderContainer:GetRegions()}) do
+--                 region:SetIgnoreParentAlpha(shouldIgnore)
+--             end
+--         end
+--     end
 
-    if not PersonalResourceDisplayFrame then return end
+--     if not PersonalResourceDisplayFrame then return end
 
-    -- Set border alpha behavior based on hide settings
-    SetBorderIgnoreParentAlpha(PersonalResourceDisplayFrame.PowerBar.Border, not db.hidePersonalBarManaFrame)
-    SetBorderIgnoreParentAlpha(PersonalResourceDisplayFrame.AlternatePowerBar.Border, not db.hidePersonalBarExtraFrame)
+--     -- Set border alpha behavior based on hide settings
+--     SetBorderIgnoreParentAlpha(PersonalResourceDisplayFrame.PowerBar.Border, not db.hidePersonalBarManaFrame)
+--     SetBorderIgnoreParentAlpha(PersonalResourceDisplayFrame.AlternatePowerBar.Border, not db.hidePersonalBarExtraFrame)
 
-    -- Handle Mana Bar
-    SetFrameAlpha(PersonalResourceDisplayFrame.PowerBar, db.hidePersonalBarManaFrame, "ClassNameplateManaBarFrameHidden")
+--     -- Handle Mana Bar
+--     SetFrameAlpha(PersonalResourceDisplayFrame.PowerBar, db.hidePersonalBarManaFrame, "ClassNameplateManaBarFrameHidden")
 
-    -- Handle Extra Frames (Ebon Might and Brewmaster)
-    SetFrameAlpha(PersonalResourceDisplayFrame.AlternatePowerBar, db.hidePersonalBarExtraFrame, "ClassNameplateEbonMightBarFrameHidden")
-    SetFrameAlpha(PersonalResourceDisplayFrame.AlternatePowerBar, db.hidePersonalBarExtraFrame, "ClassNameplateBrewmasterBarFrameHidden")
+--     -- Handle Extra Frames (Ebon Might and Brewmaster)
+--     SetFrameAlpha(PersonalResourceDisplayFrame.AlternatePowerBar, db.hidePersonalBarExtraFrame, "ClassNameplateEbonMightBarFrameHidden")
+--     SetFrameAlpha(PersonalResourceDisplayFrame.AlternatePowerBar, db.hidePersonalBarExtraFrame, "ClassNameplateBrewmasterBarFrameHidden")
 
-    -- Move AlternatePowerBar up when mana bar is hidden but alternate bar is visible
-    local altBar = PersonalResourceDisplayFrame.AlternatePowerBar
-    if altBar and db.hidePersonalBarManaFrame and not db.hidePersonalBarExtraFrame then
-        if not altBar.bbpSetPointHooked then
-            hooksecurefunc(altBar, "SetPoint", function(self)
-                if self.bbpMovingPRD then return end
-                if BBP.altBarMovedUp then
-                    self.bbpMovingPRD = true
-                    self:ClearAllPoints()
-                    self:SetPoint("TOP", PersonalResourceDisplayFrame.HealthBarsContainer, "BOTTOM", 0, 0)
-                    self.bbpMovingPRD = nil
-                end
-            end)
-            altBar.bbpSetPointHooked = true
-        end
+--     -- Move AlternatePowerBar up when mana bar is hidden but alternate bar is visible
+--     local altBar = PersonalResourceDisplayFrame.AlternatePowerBar
+--     if altBar and db.hidePersonalBarManaFrame and not db.hidePersonalBarExtraFrame then
+--         if not altBar.bbpSetPointHooked then
+--             hooksecurefunc(altBar, "SetPoint", function(self)
+--                 if self.bbpMovingPRD then return end
+--                 if BBP.altBarMovedUp then
+--                     self.bbpMovingPRD = true
+--                     self:ClearAllPoints()
+--                     self:SetPoint("TOP", PersonalResourceDisplayFrame.HealthBarsContainer, "BOTTOM", 0, 0)
+--                     self.bbpMovingPRD = nil
+--                 end
+--             end)
+--             altBar.bbpSetPointHooked = true
+--         end
 
-        if db.hidePersonalBarManaFrame and not db.hidePersonalBarExtraFrame then
-            if not BBP.altBarMovedUp then
-                BBP.altBarMovedUp = true
-                altBar.bbpMovingPRD = true
-                altBar:ClearAllPoints()
-                altBar:SetPoint("TOP", PersonalResourceDisplayFrame.HealthBarsContainer, "BOTTOM", 0, 0)
-                altBar.bbpMovingPRD = nil
-            end
-        elseif BBP.altBarMovedUp then
-            BBP.altBarMovedUp = nil
-            altBar.bbpMovingPRD = true
-            altBar:ClearAllPoints()
-            altBar:SetPoint("TOP", PersonalResourceDisplayFrame.HealthBarsContainer, "BOTTOM", 0, -15)
-            altBar.bbpMovingPRD = nil
-        end
-    end
-    ApplyPRDMasks()
-end
+--         if db.hidePersonalBarManaFrame and not db.hidePersonalBarExtraFrame then
+--             if not BBP.altBarMovedUp then
+--                 BBP.altBarMovedUp = true
+--                 altBar.bbpMovingPRD = true
+--                 altBar:ClearAllPoints()
+--                 altBar:SetPoint("TOP", PersonalResourceDisplayFrame.HealthBarsContainer, "BOTTOM", 0, 0)
+--                 altBar.bbpMovingPRD = nil
+--             end
+--         elseif BBP.altBarMovedUp then
+--             BBP.altBarMovedUp = nil
+--             altBar.bbpMovingPRD = true
+--             altBar:ClearAllPoints()
+--             altBar:SetPoint("TOP", PersonalResourceDisplayFrame.HealthBarsContainer, "BOTTOM", 0, -15)
+--             altBar.bbpMovingPRD = nil
+--         end
+--     end
+--     ApplyPRDMasks()
+-- end
 
 --#################################################################################################
 -- Class color and scale names
@@ -2865,6 +2787,21 @@ end
 function BBP.HideResourceFrames()
     local db = BetterBlizzPlatesDB
     if not db.hideResourceFrame then return end
+
+    local classIgnoreKeys = {
+        DRUID      = "hideResourceFrameNoDruid",
+        ROGUE      = "hideResourceFrameNoRogue",
+        WARLOCK    = "hideResourceFrameNoWarlock",
+        PALADIN    = "hideResourceFrameNoPaladin",
+        DEATHKNIGHT = "hideResourceFrameNoDeathKnight",
+        EVOKER     = "hideResourceFrameNoEvoker",
+        MONK       = "hideResourceFrameNoMonk",
+        MAGE       = "hideResourceFrameNoMage",
+    }
+
+    local ignoreKey = classIgnoreKeys[playerClass]
+    if ignoreKey and db[ignoreKey] then return end
+
     if prdClassFrame then
         prdClassFrame:SetAlpha(0)
     end
@@ -6477,6 +6414,10 @@ local function HandleNamePlateAdded(unit)
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
 
+    if not frame.castBar then
+        frame.castBar = frame.CastBarsContainer.castBar
+    end
+
     --print("1: ", frame:GetFrameLevel(), nameplate:GetFrameLevel())
     -- Get settings and unitInfo
     local config = InitializeNameplateSettings(frame)
@@ -8020,15 +7961,6 @@ local function UpdateLateAdditionSettings(db)
     end
 end
 
-function BBP.HidePersonalManabarFX()
-    if BetterBlizzPlatesDB.hidePersonalManaFX then
-        if PersonalResourceDisplayFrame then
-            PersonalResourceDisplayFrame.PowerBar.FullPowerFrame:SetParent(BBP.hiddenFrame)
-            PersonalResourceDisplayFrame.PowerBar.FeedbackFrame:SetParent(BBP.hiddenFrame)
-        end
-    end
-end
-
 function BBP.UseOldFonts()
     local db = BetterBlizzPlatesDB
     if not db.old_defaultLargeNamePlateFont then return end
@@ -8187,6 +8119,14 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 BetterBlizzPlatesDB.nameplateGeneralHpHeight = ((BetterBlizzPlatesDB.NamePlateVerticalScale or 2.7) * 4) + 5.5
             end
 
+            if BetterBlizzPlatesDB.prdLegacyLook == nil then
+                BetterBlizzPlatesDB.prdLegacyLook = BetterBlizzPlatesDB.classicRetailNameplates and true or false
+                BetterBlizzPlatesDB.prdSplitLines = true
+                C_Timer.After(6, function()
+                    BBP.Print("Legacy look for PRD has been enabled since you had Pre-Midnight nameplates setting enabled. If you want to turn it back off you can go to /bbp -> Misc section -> Personal Resource Display: Legacy Look and uncheck it.")
+                end)
+            end
+
             if db.bitfields and db.bitfields["namePlateSimplifiedTypes"] then
                 db.bitfields["namePlateSimplifiedTypes"] = nil
             end
@@ -8226,7 +8166,8 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 --()
                 BBP.TexturePRD()
                 --BBP.ResizePRD()
-                BBP.PersonalBarSettings()
+                --BBP.PersonalBarSettings()
+                BBP.LegacyPRDLook()
                 if db.changeNameplateBorderSize then
                     ChangeHealthbarBorderSize(PersonalResourceDisplayFrame)
                 end

@@ -32,6 +32,7 @@ midnight\modules\auras.lua
 retail\modules\profiles.lua
 retail\modules\importConvert.lua
 midnight\modules\misc.lua
+midnight\modules\prd.lua
 midnight\modules\totem.lua
 
 retail\modules\druid\overcharges.lua
