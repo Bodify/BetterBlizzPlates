@@ -353,13 +353,30 @@ function BBP.LegacyPRDLook()
     local function UpdatePRDBorderLayout()
         local db = BetterBlizzPlatesDB
         local th = (db.changeNameplateBorderSize and db.nameplatePersonalBorderSize) or 1
-        local altShown = altPowerBar:IsShown()
-        local lastBar = altShown and altPowerBar or powerBar
+        local hpShown    = prd.HealthBarsContainer:IsShown()
+        local powerShown = powerBar:IsShown()
+        local altShown   = altPowerBar:IsShown()
+
+        if not hpShown and not powerShown and not altShown then
+            prd.bbpBorderContainer:Hide()
+            prd.bbpBorderTop:Hide()
+            prd.bbpBorderBottom:Hide()
+            prd.bbpBorderLeft:Hide()
+            prd.bbpBorderRight:Hide()
+            prd.bbpSplitLine1:Hide()
+            prd.bbpSplitLine2:Hide()
+            return
+        end
+
+        prd.bbpBorderContainer:Show()
+
+        local topBar  = hpShown    and hpBar    or (powerShown and powerBar or altPowerBar)
+        local lastBar = altShown   and altPowerBar or (powerShown and powerBar or hpBar)
 
         local bTop = prd.bbpBorderTop
         bTop:ClearAllPoints()
-        bTop:SetPoint("TOPLEFT",  hpBar, "TOPLEFT",  -th, th)
-        bTop:SetPoint("TOPRIGHT", hpBar, "TOPRIGHT",  th, th)
+        bTop:SetPoint("TOPLEFT",  topBar, "TOPLEFT",  -th, th)
+        bTop:SetPoint("TOPRIGHT", topBar, "TOPRIGHT",  th, th)
         bTop:SetHeight(th)
         bTop:Show()
 
@@ -372,28 +389,32 @@ function BBP.LegacyPRDLook()
 
         local bLeft = prd.bbpBorderLeft
         bLeft:ClearAllPoints()
-        bLeft:SetPoint("TOPLEFT",    hpBar,   "TOPLEFT",    -th,  th)
+        bLeft:SetPoint("TOPLEFT",    topBar,  "TOPLEFT",    -th,  th)
         bLeft:SetPoint("BOTTOMLEFT", lastBar, "BOTTOMLEFT", -th, -th)
         bLeft:SetWidth(th)
         bLeft:Show()
 
         local bRight = prd.bbpBorderRight
         bRight:ClearAllPoints()
-        bRight:SetPoint("TOPRIGHT",    hpBar,   "TOPRIGHT",    th,  th)
+        bRight:SetPoint("TOPRIGHT",    topBar,  "TOPRIGHT",    th,  th)
         bRight:SetPoint("BOTTOMRIGHT", lastBar, "BOTTOMRIGHT", th, -th)
         bRight:SetWidth(th)
         bRight:Show()
 
         if db.prdSplitLines then
             local sl1 = prd.bbpSplitLine1
-            sl1:ClearAllPoints()
-            sl1:SetPoint("BOTTOMLEFT",  hpBar, "BOTTOMLEFT",  -th, 0)
-            sl1:SetPoint("BOTTOMRIGHT", hpBar, "BOTTOMRIGHT",  th, 0)
-            sl1:SetHeight(th)
-            sl1:Show()
+            if hpShown and powerShown then
+                sl1:ClearAllPoints()
+                sl1:SetPoint("BOTTOMLEFT",  hpBar, "BOTTOMLEFT",  -th, 0)
+                sl1:SetPoint("BOTTOMRIGHT", hpBar, "BOTTOMRIGHT",  th, 0)
+                sl1:SetHeight(th)
+                sl1:Show()
+            else
+                sl1:Hide()
+            end
 
             local sl2 = prd.bbpSplitLine2
-            if altShown then
+            if altShown and powerShown then
                 sl2:ClearAllPoints()
                 sl2:SetPoint("BOTTOMLEFT",  powerBar, "BOTTOMLEFT",  -th, 0)
                 sl2:SetPoint("BOTTOMRIGHT", powerBar, "BOTTOMRIGHT",  th, 0)
