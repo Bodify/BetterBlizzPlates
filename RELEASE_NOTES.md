@@ -1,3 +1,9 @@
+# BetterBlizzPlates 2.0.5c
+## Midnight
+### Bugfix
+- Fix PRD: Legacy Look showing borders when hp/mana was hidden.
+- Potential fix for error in castbar logic regarding a bad unit.
+
 # BetterBlizzPlates 2.0.5b
 ## Midnight
 ### Bugfix
