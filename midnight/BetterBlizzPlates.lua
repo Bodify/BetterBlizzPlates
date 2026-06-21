@@ -5188,6 +5188,7 @@ local function HandleNamePlateRemoved(unit)
     if frame.BetterBlizzPlates and frame.BetterBlizzPlates.config then
         local config = frame.BetterBlizzPlates.config
         config.totemColorRGB = nil
+        config.totemIsImportant = nil
         config.auraColorRGB = nil
         config.npcHealthbarColor = nil
         --bodify
