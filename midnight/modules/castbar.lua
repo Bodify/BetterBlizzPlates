@@ -1064,7 +1064,7 @@ function BBP.CastbarOnEvent(frame, event)
             frame.castBar:SetFrameStrata("HIGH")
         end
 
-        BBP.CustomizeCastbar(frame, self.unit, event)
+        BBP.CustomizeCastbar(frame, frame.unit, event)
 
         if not BBP.UnitTargetCastbarUpdate then --forget why i do this, maybe remove this bit?
             BBP.UnitTargetCastbarUpdate = CreateFrame("Frame")
@@ -1073,7 +1073,7 @@ function BBP.CastbarOnEvent(frame, event)
                 if string.match(unit, "arena") or string.match(unit, "boss") then return end
                 local np, frame = BBP.GetSafeNameplate(unit)
                 if frame and not UnitIsPlayer(unit) then
-                    BBP.CustomizeCastbar(frame, unit)
+                    BBP.CustomizeCastbar(frame, frame.unit)
                 end
             end)
         end
