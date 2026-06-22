@@ -1548,7 +1548,7 @@ end)
 
 -- -- 
 hooksecurefunc(NamePlateCastingBarMixin, "ApplyStyleAndAnchoring", function(self)
-    -- BorderShield needs texture update here
+    if self:IsForbidden() then return end
     if BetterBlizzPlatesDB.classicNameplates then return end
     if BetterBlizzPlatesDB.hideCastbarBorderShield then
         self.BorderShield:SetTexture(nil)
@@ -1568,7 +1568,7 @@ end)
 -- -- if ( look == "CLASSIC" ) then
 
 hooksecurefunc(CastingBarMixin, "SetLook", function(self)
-    -- BorderShield size and position needs update here
+    if self:IsForbidden() then return end
     if BetterBlizzPlatesDB.classicNameplates then return end
     if BetterBlizzPlatesDB.hideCastbarBorderShield then
         self.BorderShield:SetTexture(nil)

@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.0.5d
+## Mists of Pandaria
+### Bugfix
+- Fix lua errors in PvE due to missing forbidden check
+
 # BetterBlizzPlates 2.0.5c
 ## Midnight
 ### Bugfix
