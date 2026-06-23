@@ -23,9 +23,9 @@ local playerClassColor
 BBP.hiddenFrame = CreateFrame("Frame")
 BBP.hiddenFrame:Hide()
 
-C_Timer.After(5, function()
-     BBP.Print("Patch 5.5.4 is a big one and I was not ready. BBP needs a lot of work and is not expected to work without issues atm. Please be patient while I work on fixes. Report bugs if you can (preferably with details). Thank you for understanding.")
-end)
+-- C_Timer.After(5, function()
+--      BBP.Print("Patch 5.5.4 is a big one and I was not ready. BBP needs a lot of work and is not expected to work without issues atm. Please be patient while I work on fixes. Report bugs if you can (preferably with details). Thank you for understanding.")
+-- end)
 
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 local UnitName = UnitName
@@ -4381,14 +4381,14 @@ local function CreateBetterRetailCastbar(frame)
     --frame.castBar:SetWidth(width - 26)
 
     -- Create the background texture
-    if not frame.castBar.bbfBackground then
+    if not frame.castBar.bbpBackground then
         frame.castBar.retailCastbar = true
-        frame.castBar.bbfBackground = frame.castBar:CreateTexture(nil, "BORDER")
-        frame.castBar.bbfBackground:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Background")
-        -- frame.castBar.bbfBackground:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -11, 1)
-        -- frame.castBar.bbfBackground:SetPoint("BOTTOMRIGHT", frame.castBar, "BOTTOMRIGHT", 11, -1)
-        frame.castBar.bbfBackground:SetAllPoints()
-        frame.castBar.bbfBackground:SetDrawLayer("BORDER", -7)
+        frame.castBar.bbpBackground = frame.castBar:CreateTexture(nil, "BORDER")
+        frame.castBar.bbpBackground:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Background")
+        -- frame.castBar.bbpBackground:SetPoint("TOPLEFT", frame.castBar, "TOPLEFT", -11, 1)
+        -- frame.castBar.bbpBackground:SetPoint("BOTTOMRIGHT", frame.castBar, "BOTTOMRIGHT", 11, -1)
+        frame.castBar.bbpBackground:SetAllPoints()
+        frame.castBar.bbpBackground:SetDrawLayer("BORDER", -7)
     end
 
     if not frame.castBar.bbpSpark then
@@ -5724,6 +5724,8 @@ local function HandleNamePlateAdded(unit)
         frame.castBar = frame.CastBarsContainer.castBar
     end
 
+    BBP.HookCastbarOnEvent(frame)
+
     if BetterBlizzPlatesDB.hideDeselectNonTargetOverlay then
         frame.HealthBarsContainer.healthBar.deselectedOverlay:SetAlpha(0)
     end
@@ -5805,18 +5807,24 @@ local function HandleNamePlateAdded(unit)
     BBP.RangeIndicator(frame)
 
     if BetterBlizzPlatesDB.changeNpHpBgColor then
-        if not frame.healthBar.bbfBackground then
-            frame.healthBar.bbfBackground = frame.healthBar:CreateTexture(nil, "BACKGROUND")
-            frame.healthBar.bbfBackground:SetAllPoints(frame.healthBar)
+        if not frame.healthBar.bbpBackground then
+            frame.healthBar.bbpBackground = frame.healthBar:CreateTexture(nil, "BACKGROUND")
+            frame.healthBar.bbpBackground:SetAllPoints(frame.healthBar)
         end
         if BetterBlizzPlatesDB.changeNpHpBgColorSolid then
-            frame.healthBar.bbfBackground:SetTexture("Interface\\Buttons\\WHITE8x8")
+            frame.healthBar.bbpBackground:SetTexture("Interface\\Buttons\\WHITE8x8")
             frame.changedBgTexture = true
         elseif frame.changedBgTexture then
-            frame.healthBar.bbfBackground:SetTexture(nil)
+            frame.healthBar.bbpBackground:SetTexture(nil)
             frame.changedBgTexture = nil
         end
-        frame.healthBar.bbfBackground:SetVertexColor(unpack(BetterBlizzPlatesDB.npBgColorRGB))
+        frame.healthBar.bbpBackground:SetVertexColor(unpack(BetterBlizzPlatesDB.npBgColorRGB))
+    else
+        if not frame.healthBar.bbpBackground then
+            frame.healthBar.bbpBackground = frame.healthBar:CreateTexture(nil, "BACKGROUND")
+            frame.healthBar.bbpBackground:SetAllPoints(frame.healthBar)
+            frame.healthBar.bbpBackground:SetColorTexture(0,0,0,0.45)
+        end
     end
 
     if info.isTarget then
@@ -5897,26 +5905,26 @@ local function HandleNamePlateAdded(unit)
         end
     end
     -- if not BetterBlizzPlatesDB.hideEliteDragon then
-    --     if not frame.bbfClassificationIndicator then
-    --         frame.bbfClassificationIndicator = frame:CreateTexture(nil, "OVERLAY")
-    --         frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
-    --         frame.bbfClassificationIndicator:SetSize(13, 13)
-    --         frame.bbfClassificationIndicator:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", -2, 0)
-    --         frame.bbfClassificationIndicator:Hide()
+    --     if not frame.bbpClassificationIndicator then
+    --         frame.bbpClassificationIndicator = frame:CreateTexture(nil, "OVERLAY")
+    --         frame.bbpClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
+    --         frame.bbpClassificationIndicator:SetSize(13, 13)
+    --         frame.bbpClassificationIndicator:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", -2, 0)
+    --         frame.bbpClassificationIndicator:Hide()
     --     end
 
     --     local classification = UnitClassification(frame.unit)
     --     if classification == "elite" then
-    --         frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
-    --         frame.bbfClassificationIndicator:Show()
+    --         frame.bbpClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
+    --         frame.bbpClassificationIndicator:Show()
     --     elseif classification == "rareelite" then
-    --         frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-silver")
-    --         frame.bbfClassificationIndicator:Show()
+    --         frame.bbpClassificationIndicator:SetAtlas("nameplates-icon-elite-silver")
+    --         frame.bbpClassificationIndicator:Show()
     --     else
-    --         frame.bbfClassificationIndicator:Hide()
+    --         frame.bbpClassificationIndicator:Hide()
     --     end
-    -- elseif frame.bbfClassificationIndicator then
-    --     frame.bbfClassificationIndicator:Hide()
+    -- elseif frame.bbpClassificationIndicator then
+    --     frame.bbpClassificationIndicator:Hide()
     -- end
     if frame.ClassificationFrame then
         if BetterBlizzPlatesDB.hideEliteDragon then
@@ -7897,8 +7905,20 @@ end
 -- end)
 
 hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
-    if (BetterBlizzPlatesDB.useCustomTextureForBars or not BetterBlizzPlatesDB.classicNameplates) and not self:IsForbidden() then
+    if self:IsForbidden() then return end
+    if (BetterBlizzPlatesDB.useCustomTextureForBars or not BetterBlizzPlatesDB.classicNameplates) then
         BBP.ApplyCustomTextureToNameplate(self)
+    end
+    if BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.hideLevelFrame and self.unit then
+        TweakLevelFrame(self)
+        if ( UnitCanAttack("player", self.unit) ) then
+            local effectiveLevel = UnitLevel(self.unit);
+            local color = GetRelativeDifficultyColor(UnitLevel("player"), effectiveLevel);
+            self.LevelFrame.LevelText:SetVertexColor(color.r, color.g, color.b);
+        else
+            self.LevelFrame.LevelText:SetVertexColor(UNIT_LEVEL_NON_ATTACKABLE.r, UNIT_LEVEL_NON_ATTACKABLE.g, UNIT_LEVEL_NON_ATTACKABLE.b);
+        end
+        self.LevelFrame:Show()
     end
 end)
 

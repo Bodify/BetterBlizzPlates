@@ -5358,26 +5358,26 @@ local function HandleNamePlateAdded(unit)
         end
     end
     if not BetterBlizzPlatesDB.hideEliteDragon then
-        if not frame.bbfClassificationIndicator then
-            frame.bbfClassificationIndicator = frame:CreateTexture(nil, "OVERLAY")
-            frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
-            frame.bbfClassificationIndicator:SetSize(13, 13)
-            frame.bbfClassificationIndicator:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", -2, 0)
-            frame.bbfClassificationIndicator:Hide()
+        if not frame.bbpClassificationIndicator then
+            frame.bbpClassificationIndicator = frame:CreateTexture(nil, "OVERLAY")
+            frame.bbpClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
+            frame.bbpClassificationIndicator:SetSize(13, 13)
+            frame.bbpClassificationIndicator:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", -2, 0)
+            frame.bbpClassificationIndicator:Hide()
         end
 
         local classification = UnitClassification(frame.unit)
         if classification == "elite" then
-            frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
-            frame.bbfClassificationIndicator:Show()
+            frame.bbpClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
+            frame.bbpClassificationIndicator:Show()
         elseif classification == "rareelite" then
-            frame.bbfClassificationIndicator:SetAtlas("nameplates-icon-elite-silver")
-            frame.bbfClassificationIndicator:Show()
+            frame.bbpClassificationIndicator:SetAtlas("nameplates-icon-elite-silver")
+            frame.bbpClassificationIndicator:Show()
         else
-            frame.bbfClassificationIndicator:Hide()
+            frame.bbpClassificationIndicator:Hide()
         end
-    elseif frame.bbfClassificationIndicator then
-        frame.bbfClassificationIndicator:Hide()
+    elseif frame.bbpClassificationIndicator then
+        frame.bbpClassificationIndicator:Hide()
     end
     BBP.RepositionName(frame)
 

@@ -1,3 +1,10 @@
+# BetterBlizzPlates 2.0.5e
+## Mists of Pandaria
+### Bugfix
+- Fix healthbar background missing on MoP (this can still be tweaked in Misc though if youd like)
+- Fix more castbar issues.
+- Fix level frame not showing if "Classic" was not set as Nameplate Style in Blizzards settings (probably still recommend keeping that style Classic though)
+
 # BetterBlizzPlates 2.0.5d
 ## Mists of Pandaria
 ### Bugfix
