@@ -1,58 +1,29 @@
-# BetterBlizzPlates 2.0.5e
-## Mists of Pandaria
-### Bugfix
-- Fix healthbar background missing on MoP (this can still be tweaked in Misc though if youd like)
-- Fix more castbar issues.
-- Fix level frame not showing if "Classic" was not set as Nameplate Style in Blizzards settings (probably still recommend keeping that style Classic though)
-
-# BetterBlizzPlates 2.0.5d
-## Mists of Pandaria
-### Bugfix
-- Fix lua errors in PvE due to missing forbidden check
-
-# BetterBlizzPlates 2.0.5c
-## Midnight
-### Bugfix
-- Fix PRD: Legacy Look showing borders when hp/mana was hidden.
-- Potential fix for error in castbar logic regarding a bad unit.
-
-# BetterBlizzPlates 2.0.5b
-## Midnight
-### Bugfix
-- Fix lua error in totem indicator.
-
-# BetterBlizzPlates 2.0.5
+# BetterBlizzPlates 2.0.6
+## Important changes:
+- Midnight and MoP: Update click area logic. The click area preview should now be more accurate. You may want to tweak your click area settings (Misc) again after this update.
+- Midnight: Update font size logic for Blizzards nameplate healthbar value text. It now gets treated the same way as the name and should stay consistent with the name. The name size slider in BBP will also affect the healthbar value text now.
+## All versions
+### New
+- Healer Indicator: Color Enemy/Friendly Healthbar Color setting. (Advanced Settings for Healer Indicator)
 ## Midnight
 ### New
-- New "Personal Resource Display: Legacy Look" setting (Misc) to make it how it used to be before 12.0.7. This gets auto enabled if you had "Pre-Midnight Nameplates" enabled.
-- New "Personal Resource Display: Fancy Alt Power Texture" setting (Misc) that re-textures alt power bar to Blizzards fancy textures for Astral Power, Insanity, etc.
+- Update "Small Pets" settings logic and introduce a few more right-click settings: "Reduce widith of ALL npc nameplates in PvP" and "Ignore Totems" (ignoring totems requires only pets and totems enabled).
+- Totem Indicator: No Glow setting in advanced settings.
+- Target Text: "Inside Bar" setting that places the target text inside the castbar on casts similar to BBF and sArena Reloaded.
+- Enemy "Hide Name": Add a right-click option on "Hide Name" that keeps totem nameplate names shown.
+- New castbar setting that lets you set castbar text position left/right/center (Castbar section)
 ### Tweak
-- Fix texture change for manabar not also affecting alt mana bar.
-- Fix castbar texture change sometimes flashing wrong texture at a finished cast.
-
-# BetterBlizzPlates 2.0.4c
-## Midnight
-### Bugfix
-- Fix "Druid: Always show combo points" setting.
-- Fix lua error from old totem indicator code that was left in by accident.
-
-# BetterBlizzPlates 2.0.4b
-## Midnight
-### Bugfix
-- Add missing secret check in totem indicator.
-
-# BetterBlizzPlates 2.0.4
-## Midnight
-### New
-- Totem Indicator is kind of back. It only works well for Grounding and Capacitor totems the rest will mostly just show as a default totem icon and a default totem color if enabled. It also expects you to only have "Show Pets" and "Show Totems" enabled in CVar Control. Best that can be done atm.
-- In 12.0.7 lots of new Personal Resource Display settings have arrived in Edit Mode from Blizzard. Most of the settings in BBP for the PRD is now obsolete and have been removed so please re-adjust your PRD settings in Edit Mode from now on. And please also report any issues as I have not had a lot of time to play around with things.
-- New JFarm profile (www.twitch.tv/jfarm_ & www.youtube.com/@Jfarm_). Thank you for sharing.
-### Bugfix
-- Lots of PRD changes/fixes. Read above.
+- Totem Indicator: Add wonky workaround for Psyfiend showing as well (will be a tiny gap on Psyfiend summon but correct itself later).
+- Totem Indicator: All totems are now sized 30x30 by default (instead of 30x30 for important and 24x24 for others) due to new restrictions. Should also fix healing stream showing grounding color.
+- Totem Indicator: Fix it showing on your own pet. (Secondary pets seem more difficult though, for now I would recommend disabling totem indicator for friendly targets or disabling friendly pet nameplates if you dont use them)
+- Fix NPC Titles showing on players own pet and potentially other minion pets from other players too.
+- Update Nahj profile (www.twitch.tv/nahj)
+- Update Dissonance profile (www.twitch.tv/dissonancewow)
 ## Mists of Pandaria
 ### Bugfix
-- Fix Castbar Edge Highlight setting not working.
-- Fix some other issues with castbar like wrong color/texture/shield not showing etc. Please report if more issues.
-## The Burning Crusade
-### New
-- Add a new enemy nameplate debuff filter: "Break-CC DoTs". Adds common dots that can break CC. - By Romainjava@GitHub. Thank you for your contribution!
+- Fix lua error in pet indicator logic from Blizzard changes.
+- Fix castbar background change not working since 5.5.4. (Note that if you change the color here on MoP the alpha slider is upside down because Blizzard, so maybe also check that).
+- Fix an issue with vertical nameplate position setting.
+## Classics
+### Bugfix
+- Fix an issue with hiding friendly npc healthbars on targeting despite that setting not being on.

@@ -208,6 +208,10 @@ local defaultSettings = {
     healerIndicatorEnemyYPos = 0,
     healerIndicatorEnemyAnchor = "TOPRIGHT",
     healerIndicatorEnemyScale = 1,
+    healerIndicatorColorEnemyHealthbar = false,
+    healerIndicatorColorFriendlyHealthbar = false,
+    healerIndicatorColorEnemyHealthbarRGB = {0, 1, 0},
+    healerIndicatorColorFriendlyHealthbarRGB = {0, 1, 0},
     -- Class Icon
     classIndicator = false,
     classIndicatorXPos = 0,
@@ -658,7 +662,7 @@ local function InitializeNameplateSettings(frame)
             useCustomTextureForBars = BetterBlizzPlatesDB.useCustomTextureForBars,
             focusTargetIndicator = BetterBlizzPlatesDB.focusTargetIndicator or BetterBlizzPlatesDB.focusTargetIndicatorTestMode,
             friendlyHideHealthBar = BetterBlizzPlatesDB.friendlyHideHealthBar,
-            friendlyHideHealthBarNpc = BetterBlizzPlatesDB.friendlyHideHealthBar and BetterBlizzPlatesDB.friendlyHideHealthBar,
+            friendlyHideHealthBarNpc = BetterBlizzPlatesDB.friendlyHideHealthBar and BetterBlizzPlatesDB.friendlyHideHealthBarNpc,
             classIndicator = BetterBlizzPlatesDB.classIndicator,
             auraColor = BetterBlizzPlatesDB.auraColor,
             friendIndicator = BetterBlizzPlatesDB.friendIndicator,
@@ -4183,6 +4187,9 @@ local function HandleNamePlateRemoved(unit)
     -- Hide healer icon
     if frame.healerIndicator then
         frame.healerIndicator:Hide()
+    end
+    if frame.mainHealerColor then
+        frame.mainHealerColor = nil
     end
     -- Hide out of combat icon
     if frame.combatIndicatorSap then

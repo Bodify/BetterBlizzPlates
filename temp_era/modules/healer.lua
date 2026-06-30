@@ -14,6 +14,8 @@ function BBP.HealerIndicator(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
+    frame.mainHealerColor = nil
+
     if info.isSelf then
         if frame.healerIndicator then
             frame.healerIndicator:Hide()
@@ -31,6 +33,10 @@ function BBP.HealerIndicator(frame)
         config.healerIndicatorRedCrossEnemy = BetterBlizzPlatesDB.healerIndicatorRedCrossEnemy
         config.healerIndicatorScale = BetterBlizzPlatesDB.healerIndicatorScale
         config.healerIndicatorEnemyOnly = BetterBlizzPlatesDB.healerIndicatorEnemyOnly
+        config.healerIndicatorColorEnemyHealthbar = BetterBlizzPlatesDB.healerIndicatorColorEnemyHealthbar
+        config.healerIndicatorColorFriendlyHealthbar = BetterBlizzPlatesDB.healerIndicatorColorFriendlyHealthbar
+        config.healerIndicatorColorEnemyHealthbarRGB = BetterBlizzPlatesDB.healerIndicatorColorEnemyHealthbarRGB
+        config.healerIndicatorColorFriendlyHealthbarRGB = BetterBlizzPlatesDB.healerIndicatorColorFriendlyHealthbarRGB
 
         config.healerIndicatorInitialized = true
     end
@@ -106,6 +112,15 @@ function BBP.HealerIndicator(frame)
         else
             frame.healerIndicator:SetDesaturated(false)
             frame.healerIndicator:SetVertexColor(1,1,1)
+        end
+        if config.healerIndicatorColorEnemyHealthbar and not info.isFriend then
+            frame.mainHealerColor = config.healerIndicatorColorEnemyHealthbarRGB
+            frame.healthBar:SetStatusBarColor(unpack(frame.mainHealerColor))
+            frame.needsRecolor = true
+        elseif config.healerIndicatorColorFriendlyHealthbar and info.isFriend then
+            frame.mainHealerColor = config.healerIndicatorColorFriendlyHealthbarRGB
+            frame.healthBar:SetStatusBarColor(unpack(frame.mainHealerColor))
+            frame.needsRecolor = true
         end
         frame.healerIndicator:Show()
     else

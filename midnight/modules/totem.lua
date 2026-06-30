@@ -3,6 +3,8 @@ local TOTEM_ICON_IMPORTANT = "Interface\\Icons\\Spell_Nature_Groundingtotem"
 
 local TOTEM_COLOR_GROUNDING = { 1,   0,   1   }
 local TOTEM_COLOR_CAP       = { 1,   0.69, 0  }
+local TOTEM_COLOR_PSYFIEND  = { 0.49, 0, 1 }
+local TOTEM_ICON_PSYFIEND   = C_Spell.GetSpellTexture(199824)
 
 function BBP.SetupUnifiedAnimation(frameWithAnimations)
     local animationGroup = frameWithAnimations:CreateAnimationGroup()
@@ -23,18 +25,12 @@ function BBP.SetupUnifiedAnimation(frameWithAnimations)
 end
 
 local function GetTotemAura(unit)
-    local auras = C_UnitAuras.GetUnitAuras(unit, "HELPFUL|IMPORTANT")
-    if auras and #auras > 0 then
-        local isImportant = C_Spell.IsSpellImportant(auras[1].spellId)
-        if issecretvalue(isImportant) or isImportant then
-            return auras[1].icon, true
-        end
-    end
     local auras = C_UnitAuras.GetUnitAuras(unit, "HELPFUL")
     if auras and #auras > 0 then
-        return auras[1].icon, false
+        local isImportant = C_Spell.IsSpellImportant(auras[1].spellId)
+        return auras[1].icon, isImportant
     end
-    return nil, false
+    return nil, nil
 end
 
 function BBP.CreateTotemComponents(frame, size)
@@ -75,7 +71,7 @@ function BBP.CreateTotemComponents(frame, size)
     )
 end
 
-local function ApplyGlow(frame, size, color)
+local function ApplyGlow(frame, size, color, auraIcon, isImportant)
     if not frame.glowTexture then
         frame.glowTexture = frame.totemIndicator:CreateTexture(nil, "OVERLAY", nil, 7)
         frame.glowTexture:SetBlendMode("ADD")
@@ -95,22 +91,49 @@ local function ApplyGlow(frame, size, color)
     frame.glowTexture:ClearAllPoints()
     frame.glowTexture:SetPoint("TOPLEFT",     frame.totemIndicator, "TOPLEFT",     -offset,  offset)
     frame.glowTexture:SetPoint("BOTTOMRIGHT", frame.totemIndicator, "BOTTOMRIGHT",  offset, -offset)
-    frame.glowTexture:SetVertexColor(unpack(color))
-    frame.glowTexture:Show()
+    if auraIcon then
+        frame.glowTexture:Show()
+        frame.glowTexture:SetVertexColorFromBoolean(
+            isImportant,
+            CreateColor(unpack(TOTEM_COLOR_GROUNDING)),
+            CreateColor(unpack(BetterBlizzPlatesDB.totemIndicatorTotemColor))
+        )
+        frame.glowTexture:SetAlphaFromBoolean(isImportant, 1, 0)
+    else
+        frame.glowTexture:SetVertexColor(unpack(color))
+        frame.glowTexture:Show()
+    end
 
     if not BetterBlizzPlatesDB.totemIndicatorNoAnimation then
         frame.animationGroup:Play()
     end
 end
 
-function BBP.ApplyTotemAttributes(frame, iconTexture, color, size)
+function BBP.ApplyTotemAttributes(frame, iconTexture, color, size, duration, auraIcon, isImportantAura)
     BBP.CreateTotemComponents(frame, size)
 
     frame.customIcon:SetTexture(iconTexture)
     frame.customIcon:Show()
 
-    if color then
-        ApplyGlow(frame, size, color)
+    if duration then
+        if not frame.customCooldown then
+            frame.customCooldown = CreateFrame("Cooldown", nil, frame.totemIndicator, "CooldownFrameTemplate")
+            frame.customCooldown:SetPoint("TOPLEFT", frame.totemIndicator, "TOPLEFT", 1, -1)
+            frame.customCooldown:SetPoint("BOTTOMRIGHT", frame.totemIndicator, "BOTTOMRIGHT", -1, 1)
+            frame.customCooldown:SetReverse(true)
+        end
+        frame.customCooldown:Show()
+        frame.customCooldown:SetCooldown(GetTime(), duration)
+        if not BetterBlizzPlatesDB.showTotemIndicatorCooldownSwipe then
+            frame.customCooldown:SetDrawSwipe(false)
+            frame.customCooldown:SetDrawEdge(false)
+        end
+    elseif frame.customCooldown then
+        frame.customCooldown:Hide()
+    end
+
+    if (color or auraIcon) and not BetterBlizzPlatesDB.totemIndicatorNoGlow then
+        ApplyGlow(frame, size, color, auraIcon, isImportantAura)
     else
         if frame.animationGroup then frame.animationGroup:Stop() end
         if frame.glowTexture then frame.glowTexture:Hide() end
@@ -143,7 +166,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
     end
 
     local unit = frame.unit
-    local isProbablyTotem = UnitIsMinion(unit) and not UnitIsOtherPlayersPet(unit)
+    local isProbablyTotem = UnitIsMinion(unit) and (not UnitIsOtherPlayersPet(unit) and not UnitIsUnit(unit, "pet"))
 
     local totemIndicatorSwappingAnchor
     if config.totemIndicatorHideNameAndShiftIconDown then
@@ -159,6 +182,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
     if not config.totemIndicatorTestMode and not isProbablyTotem then
         config.totemColorRGB = nil
         config.totemIsImportant = nil
+        config.totemIsImportantAura = nil
         return
     end
 
@@ -179,11 +203,12 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             totemColor = BetterBlizzPlatesDB.totemIndicatorTotemColor
             icon = TOTEM_ICON_GENERIC
         end
-        local size = isImportant and 30 or 24
+        local size = 30--isImportant and 30 or 24
         BBP.ApplyTotemAttributes(frame, icon, isImportant and totemColor or nil, size)
         config.totemColorRGB = totemColor
 
         frame.healthBar:SetStatusBarColor(unpack(totemColor))
+        frame.needsRecolor = true
         frame.name:SetVertexColor(unpack(totemColor))
 
         if config.totemIndicatorHideNameAndShiftIconDown then
@@ -213,39 +238,69 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             return
         end
 
-        local auraIcon, isImportantAura = GetTotemAura(unit)
+        local auraIcon, isImportantAura
         local isCapTotem = UnitCastingInfo(unit)
+        local isPsyfiend = UnitChannelInfo(unit)
         local totemColor
-        if isImportantAura then
-            totemColor = TOTEM_COLOR_GROUNDING
+        if isPsyfiend then
+            totemColor = TOTEM_COLOR_PSYFIEND
         elseif isCapTotem then
             totemColor = TOTEM_COLOR_CAP
         else
+            auraIcon, isImportantAura = GetTotemAura(unit)
             totemColor = BetterBlizzPlatesDB.totemIndicatorTotemColor
+            C_Timer.After(0.25, function()
+                if frame and frame.unit and UnitChannelInfo(frame.unit) then
+                    BBP.ApplyTotemIconsAndColorNameplate(frame)
+                end
+            end)
         end
-        local isImportant = isImportantAura or isCapTotem
+        local isImportant = isCapTotem or isPsyfiend
         config.totemColorRGB = totemColor
         config.totemIsImportant = isImportant
+        config.totemIsImportantAura = isImportantAura
+        config.totemAuraColorImportant = TOTEM_COLOR_GROUNDING
+        config.totemAuraColorNormal = BetterBlizzPlatesDB.totemIndicatorTotemColor
 
         if config.totemIndicatorHideAuras then
             frame.AurasFrame:SetAlpha(0)
         end
 
-        local showIcon = isImportant or config.totemIndicatorShowOtherIcons
+        local showIcon = auraIcon or isImportant or config.totemIndicatorShowOtherIcons
         local colorHp = isImportant or config.totemIndicatorColorOtherHealthBars
 
-        if colorHp and config.totemIndicatorColorHealthBar then
-            frame.healthBar:SetStatusBarColor(unpack(totemColor))
-        end
-        local colorName = isImportant and config.totemIndicatorColorName or config.totemIndicatorColorNameOthers
-        if colorName then
-            frame.name:SetVertexColor(unpack(totemColor))
+        if auraIcon then
+            if config.totemIndicatorColorHealthBar then
+                frame.healthBar:GetStatusBarTexture():SetVertexColorFromBoolean(
+                    isImportantAura,
+                    CreateColor(unpack(TOTEM_COLOR_GROUNDING)),
+                    CreateColor(unpack(BetterBlizzPlatesDB.totemIndicatorTotemColor))
+                )
+                frame.needsRecolor = true
+            end
+            if config.totemIndicatorColorName or config.totemIndicatorColorNameOthers then
+                frame.name:SetVertexColorFromBoolean(
+                    isImportantAura,
+                    CreateColor(unpack(TOTEM_COLOR_GROUNDING)),
+                    CreateColor(unpack(BetterBlizzPlatesDB.totemIndicatorTotemColor))
+                )
+            end
+        else
+            if colorHp and config.totemIndicatorColorHealthBar then
+                frame.healthBar:SetStatusBarColor(unpack(totemColor))
+                frame.needsRecolor = true
+            end
+            local colorName = isImportant and config.totemIndicatorColorName or config.totemIndicatorColorNameOthers
+            if colorName then
+                frame.name:SetVertexColor(unpack(totemColor))
+            end
         end
 
-        local size = isImportant and 30 or 24
-        local icon = auraIcon or (isCapTotem and C_Spell.GetSpellTexture(192058)) or TOTEM_ICON_GENERIC
+        local size = 30--isImportant and 30 or 24
+        local duration = isPsyfiend and 12 or isCapTotem and 2 or nil
+        local icon = auraIcon or (isPsyfiend and TOTEM_ICON_PSYFIEND) or (isCapTotem and C_Spell.GetSpellTexture(192058)) or TOTEM_ICON_GENERIC
         if showIcon then
-            BBP.ApplyTotemAttributes(frame, icon, isImportant and totemColor or nil, size)
+            BBP.ApplyTotemAttributes(frame, icon, isImportant and totemColor or nil, size, duration, auraIcon, isImportantAura)
         else
             if frame.totemIndicator then frame.totemIndicator:Hide() end
         end
@@ -266,6 +321,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
 
     else
         config.totemColorRGB = nil
+        config.totemIsImportantAura = nil
         if frame.animationGroup then
             frame.animationGroup:Stop()
         end

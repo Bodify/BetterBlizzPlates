@@ -263,6 +263,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", -2, 0)
         castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", 2, 0)
     end
+    castBar.Text:SetJustifyH(db.castBarTextJustify or "CENTER")
 
     if castBar.casting then
         _, _, _, _, _, _, _, notInterruptible = UnitCastingInfo(unitToken)
@@ -638,6 +639,39 @@ local bottomAnchors = {
     BOTTOMRIGHT = true,
 }
 
+local function GetCastbarTargetName(unit)
+    local name = UnitSpellTargetName(unit)
+    local class = UnitSpellTargetClass(unit)
+    return name, class
+end
+
+local function GetColoredTargetString(name, class)
+    if not name then return nil end
+    if class then
+        local color = C_ClassColor.GetClassColor(class)
+        if color then
+            return color:WrapTextInColorCode(name)
+        end
+    end
+    return name
+end
+
+function BBP.CastbarTargetText(castBar)
+    castBar:HookScript("OnEvent", function(self, event)
+        if not BetterBlizzPlatesDB.showNameplateTargetText or not BetterBlizzPlatesDB.castbarTargetTextInsideBar then return end
+        if not CastStartEvents[event] then return end
+        local spell = UnitCastingInfo(self.unit) or UnitChannelInfo(self.unit)
+        if not spell then return end
+
+        local name, class = GetCastbarTargetName(self.unit)
+        local coloredName = GetColoredTargetString(name, class)
+
+        if coloredName then
+            castBar.Text:SetText(spell .. ": " .. coloredName)
+        end
+    end)
+end
+
 function BBP.UpdateNameplateTargetText(frame, unit)
     if not unit then return end
     local db = BetterBlizzPlatesDB
@@ -646,6 +680,11 @@ function BBP.UpdateNameplateTargetText(frame, unit)
         frame.TargetText = BBP.OverlayFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.TargetText:SetJustifyH("CENTER")
         frame.TargetText:SetIgnoreParentScale(true)
+    end
+
+    if db.castbarTargetTextInsideBar then
+        frame.TargetText:SetText("")
+        return
     end
 
     local isFriend = not UnitCanAttack("player", unit)
@@ -1268,6 +1307,7 @@ function BBP.HookCastbarOnEvent(frame)
             BBP.CastbarOnEvent(frame, event)
         end
     end)
+    BBP.CastbarTargetText(frame.castBar)
     BBP.CastbarOnEvent(frame)
     frame.hookedCastbarOnEvent = true
 end

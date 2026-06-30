@@ -1154,15 +1154,15 @@ local function ClassicCastbarAdjustments(self, event, frame)
         self:SetStatusBarTexture(texture)
         if castBarTexture then
             castBarTexture:SetDesaturated(true)
-            if changeBgTexture and self.Background then
+            if changeBgTexture and self.bbpBackground then
                 local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
-                self.Background:SetDesaturated(true)
-                self.Background:SetTexture(bgTexture)
-                self.Background:SetAllPoints(self)
+                self.bbpBackground:SetDesaturated(true)
+                self.bbpBackground:SetTexture(bgTexture)
+                self.bbpBackground:SetAllPoints(self)
                 if notInterruptible and BetterBlizzPlatesDB.redBgCastColor then
-                    self.Background:SetVertexColor(1,0,0,1)
+                    self.bbpBackground:SetVertexColor(1,0,0,1)
                 else
-                    self.Background:SetVertexColor(unpack(bgColor))
+                    self.bbpBackground:SetVertexColor(unpack(bgColor))
                 end
             end
         end

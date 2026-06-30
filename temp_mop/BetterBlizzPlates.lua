@@ -53,6 +53,8 @@ local cachedActiveNameOutline
 
 BBP.variablesLoaded = false
 BBP.OverlayFrame = CreateFrame("Frame")
+local ClickAreaFramePool = CreateFramePool("Frame")
+local NameplateClickAreas = {}
 
 local defaultSettings = {
     version = addonVersion,
@@ -129,7 +131,9 @@ local defaultSettings = {
     npBgColorRGB = {1, 1, 1, 1},
     levelFrameFontSize = 12,
     nameplateExtraClickHeight = 0,
+    nameplateExtraClickWidth = 0,
     nameplateVerticalPosition = 0,
+    nameplateClickVerticalAdjustment = 0,
     smallPetsWidth = 20,
     nameplateNonTargetAlpha = 0.5,
 
@@ -231,6 +235,10 @@ local defaultSettings = {
     healerIndicatorEnemyYPos = 0,
     healerIndicatorEnemyAnchor = "TOPRIGHT",
     healerIndicatorEnemyScale = 1,
+    healerIndicatorColorEnemyHealthbar = false,
+    healerIndicatorColorFriendlyHealthbar = false,
+    healerIndicatorColorEnemyHealthbarRGB = {0, 1, 0},
+    healerIndicatorColorFriendlyHealthbarRGB = {0, 1, 0},
     -- Class Icon
     classIndicatorCCAuras = true,
     classIndicator = false,
@@ -1079,7 +1087,7 @@ local function InitializeNameplateSettings(frame)
             useCustomTextureForBars = BetterBlizzPlatesDB.useCustomTextureForBars,
             focusTargetIndicator = BetterBlizzPlatesDB.focusTargetIndicator or BetterBlizzPlatesDB.focusTargetIndicatorTestMode,
             friendlyHideHealthBar = BetterBlizzPlatesDB.friendlyHideHealthBar,
-            friendlyHideHealthBarNpc = BetterBlizzPlatesDB.friendlyHideHealthBar and BetterBlizzPlatesDB.friendlyHideHealthBar,
+            friendlyHideHealthBarNpc = BetterBlizzPlatesDB.friendlyHideHealthBar and BetterBlizzPlatesDB.friendlyHideHealthBarNpc,
             classIndicator = BetterBlizzPlatesDB.classIndicator,
             auraColor = BetterBlizzPlatesDB.auraColor,
             friendIndicator = BetterBlizzPlatesDB.friendIndicator,
@@ -2181,93 +2189,115 @@ function BBP.ApplyNameplateWidth()
         -- Set the nameplate size
         C_NamePlate.SetNamePlateSize(widestBar, healthBarHeight)
 
-        local halfExtraWidth = (BetterBlizzPlatesDB.nameplateExtraClickWidth or 0) / 2
-        local halfExtraHeight = (BetterBlizzPlatesDB.nameplateExtraClickHeight or 0) / 2
-        local halfVertAdj = (BetterBlizzPlatesDB.nameplateClickVerticalAdjustment or 0) / 2
-
-        local left   = -4 - halfExtraWidth - 20
-        local right  = -4 - halfExtraWidth
-        local top    = -35 - halfExtraHeight + halfVertAdj
-        local bottom = -15 - halfExtraHeight - halfVertAdj
-
         if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
-            -- Collapse friendly nameplates to un-clickable (positive = shrink)
             C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Friendly, 10000, 10000, 10000, 10000)
         else
-            C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Friendly, left, right, top, bottom)
+            C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Friendly, 0, 0, 0, 0)
         end
-        -- Expand to full nameplate size (negative = expand to bounds)
-        C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Enemy, left, right, top, bottom)
+        C_NamePlateManager.SetNamePlateHitTestInsets(Enum.NamePlateType.Enemy, 0, 0, 0, 0)
+        BBP.UpdateAllClickRegions()
     end
 end
 
 function BBP.ClickableArea(nameplate)
     if not nameplate then return end
     local frame = nameplate.UnitFrame
+    if not frame or frame:IsForbidden() then return end
+
+    BBP.UpdateClickRegion(nameplate)
+
+    local clickableArea = NameplateClickAreas[nameplate:GetName()]
+    if not clickableArea then return end
+
+    if not clickableArea.clickableAreaOverlay then
+        clickableArea.clickableAreaOverlay = clickableArea:CreateTexture(nil, "OVERLAY")
+        clickableArea.clickableAreaOverlay:SetColorTexture(math.random(), math.random(), math.random(), 0.5)
+        clickableArea.clickableAreaOverlay:SetAllPoints()
+
+        local mask = clickableArea:CreateMaskTexture()
+        mask:SetTexture("interface\\masks\\squaremask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        mask:SetPoint("TOPLEFT",     nameplate, "TOPLEFT",     0, 0)
+        mask:SetPoint("BOTTOMRIGHT", nameplate, "BOTTOMRIGHT", 0, 0)
+        clickableArea.clickableAreaOverlay:AddMaskTexture(mask)
+
+        clickableArea.clickableAreaText = clickableArea:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        clickableArea.clickableAreaText:SetPoint("BOTTOM", clickableArea, "TOP", 0, 2)
+    end
+
     local isClickthroughFriend = UnitIsFriend("player", frame.unit) and BetterBlizzPlatesDB.friendlyNameplateClickthrough
+    clickableArea.clickableAreaText:SetText(isClickthroughFriend and "Un-clickable" or "Clickable Area")
+    clickableArea.clickableAreaOverlay:Show()
+    clickableArea.clickableAreaText:Show()
 
-    if not nameplate.clickableAreaOverlay then
-        local texture = nameplate:CreateTexture(nil, "BACKGROUND")
-        local text = nameplate:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        text:SetPoint("BOTTOM", texture, "TOP", 0, 2)
+    nameplate.clickableAreaOverlay = clickableArea.clickableAreaOverlay
+    nameplate.clickableAreaText    = clickableArea.clickableAreaText
 
-        local r = math.random()
-        local g = math.random()
-        local b = math.random()
-
-        texture:SetColorTexture(r, g, b, 0.5)
-
-        nameplate.clickableAreaOverlay = texture
-        nameplate.clickableAreaText = text
-    end
-
-    local texture = nameplate.clickableAreaOverlay
-    texture:ClearAllPoints()
-
-    if isClickthroughFriend then
-        -- Collapse to un-clickable
-        texture:SetPoint("TOPLEFT", frame.HealthBarsContainer, "CENTER", 0, 0)
-        texture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "CENTER", 0, 0)
-        nameplate.clickableAreaText:SetText("Un-clickable")
-    else
-        local halfExtraHeight = (BetterBlizzPlatesDB.nameplateExtraClickHeight or 0) / 2
-        local halfExtraWidth = (BetterBlizzPlatesDB.nameplateExtraClickWidth or 0) / 2
-        local halfVertAdj = (BetterBlizzPlatesDB.nameplateClickVerticalAdjustment or 0) / 2
-
-        texture:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPLEFT", -9 - halfExtraWidth, 16 + halfExtraHeight + halfVertAdj)
-        texture:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 9 + halfExtraWidth, -8 - halfExtraHeight + halfVertAdj)
-        nameplate.clickableAreaText:SetText("Clickable Area")
-    end
-
-    return texture
+    return clickableArea.clickableAreaOverlay
 end
 
 function BBP.AdjustClickableNameplateSize()
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = nameplate.UnitFrame
-        --if not UnitIsUnit(frame.unit, "player") then
+        if frame and not frame:IsForbidden() and frame.unit then
             BBP.ClickableArea(nameplate)
-        --end
+        end
     end
-    BBP.ApplyNameplateWidth()
+end
+
+function BBP.UpdateClickRegion(nameplate)
+    if not (nameplate and nameplate:CanChangeHitTestPoints()) then return end
+
+    local frame = nameplate.UnitFrame
+
+    local clickableArea = NameplateClickAreas[nameplate:GetName()]
+    if not clickableArea then
+        clickableArea = ClickAreaFramePool:Acquire()
+        clickableArea:SetParent(nameplate)
+        NameplateClickAreas[nameplate:GetName()] = clickableArea
+    end
+
+    clickableArea:Show()
+    clickableArea:ClearAllPoints()
+
+    local isClickthroughFriend = UnitIsFriend("player", frame.unit) and BetterBlizzPlatesDB.friendlyNameplateClickthrough
+    local halfExtraWidth  = (BetterBlizzPlatesDB.nameplateExtraClickWidth or 0) / 2
+    local halfExtraHeight = (BetterBlizzPlatesDB.nameplateExtraClickHeight or 0) / 2
+    local halfVertAdj     = (BetterBlizzPlatesDB.nameplateClickVerticalAdjustment or 0) / 2
+
+    if isClickthroughFriend then
+        clickableArea:SetPoint("TOPLEFT",     frame.HealthBarsContainer, "CENTER", 0, 0)
+        clickableArea:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "CENTER", 0, 0)
+    else
+        clickableArea:SetPoint("TOPLEFT",     frame.HealthBarsContainer, "TOPLEFT",     -9 - halfExtraWidth,  16 + halfExtraHeight + halfVertAdj)
+        clickableArea:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT",  9 + halfExtraWidth,  -8 - halfExtraHeight + halfVertAdj)
+    end
+
+    nameplate:SetAllHitTestPoints(clickableArea)
+end
+
+function BBP.UpdateAllClickRegions()
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        if frame and not frame:IsForbidden() and frame.unit then
+            BBP.UpdateClickRegion(nameplate)
+        end
+    end
 end
 
 function BBP.AdjustNameplateVerticalPosition()
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = nameplate.UnitFrame
-        if not UnitIsUnit(frame.unit, "player") then
-            BBP.ClickableArea(nameplate)
-            if not frame.verticalPositionTweak then
-                hooksecurefunc(frame.healthBar, "SetHeight", function(self)
-                    if self:IsForbidden() then return end
-                    frame:ClearPoint("BOTTOMLEFT")
-                    frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", 0, (BetterBlizzPlatesDB.nameplateVerticalPosition or 0)+9)
-                end)
-                frame.verticalPositionTweak = true
-            end
-            frame:ClearPoint("BOTTOMLEFT")
-            frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", 0, (BetterBlizzPlatesDB.nameplateVerticalPosition or 0)+9)
+        BBP.ClickableArea(nameplate)
+        if not frame.verticalPositionTweak then
+            hooksecurefunc(frame.healthBar, "SetHeight", function(self)
+                if self:IsForbidden() then return end
+                frame:ClearPoint("BOTTOMLEFT")
+                frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", 0, (BetterBlizzPlatesDB.nameplateVerticalPosition or 0))
+            end)
+            frame.verticalPositionTweak = true
         end
+        frame:ClearPoint("BOTTOMLEFT")
+        frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", 0, (BetterBlizzPlatesDB.nameplateVerticalPosition or 0))
     end
 end
 
@@ -3390,11 +3420,21 @@ local function SetBarWidth(frame, width, useOffsets)
 end
 BBP.SetBarWidth = SetBarWidth
 
+local function ShouldBeSmallPet(frame)
+    if BetterBlizzPlatesDB.smallPetsInPvPAllNPCs then
+        return UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP and not UnitIsPlayer(frame.unit)) or UnitIsUnit(frame.unit, "pet")
+    elseif BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems then
+        return (UnitIsMinion(frame.unit) and not UnitIsOtherPlayersPet(frame.unit)) or UnitIsUnit(frame.unit, "pet")
+    else
+        return UnitIsMinion(frame.unit) or UnitIsUnit(frame.unit, "pet")
+    end
+end
+
 local function SmallPetsInPvP(frame)
     if not BetterBlizzPlatesDB.smallPetsInPvP then return end
     if BBP.IsInCompStomp then return end
 
-    if UnitIsOtherPlayersPet(frame.unit) or (BBP.isInPvP and not UnitIsPlayer(frame.unit)) or UnitIsUnit(frame.unit, "pet") then
+    if ShouldBeSmallPet(frame) then
         local db = BetterBlizzPlatesDB
         if db.totemIndicator then
             local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
@@ -5471,6 +5511,9 @@ local function HandleNamePlateRemoved(unit)
     if frame.healerIndicator then
         frame.healerIndicator:Hide()
     end
+    if frame.mainHealerColor then
+        frame.mainHealerColor = nil
+    end
     -- Hide out of combat icon
     if frame.combatIndicatorSap then
         frame.combatIndicatorSap:Hide()
@@ -5778,12 +5821,12 @@ local function HandleNamePlateAdded(unit)
                 if self:IsForbidden() then return end
                 if frame.unit and UnitIsUnit(frame.unit, "player") then return end
                 frame:ClearPoint("BOTTOMLEFT")
-                frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", 0, (BetterBlizzPlatesDB.nameplateVerticalPosition or 0)+9)
+                frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", 0, (BetterBlizzPlatesDB.nameplateVerticalPosition or 0))
             end)
             frame.verticalPositionTweak = true
         end
         frame:ClearPoint("BOTTOMLEFT")
-        frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", 0, (BetterBlizzPlatesDB.nameplateVerticalPosition or 0)+9)
+        frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", 0, (BetterBlizzPlatesDB.nameplateVerticalPosition or 0))
     end
 
 
@@ -6088,6 +6131,8 @@ local function HandleNamePlateAdded(unit)
     if config.classicNameplates then
         CreateBetterClassicCastbarBorders(frame)
     end
+
+    BBP.UpdateClickRegion(nameplate)
 end
 
 

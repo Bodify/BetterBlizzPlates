@@ -1555,6 +1555,17 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
                 tooltipText = tooltipText .. "\nReverse sorting|A:ParagonReputation_Checkmark:15:15|a"
             end
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Small Pets in PvP" then
+            local tooltipText = "\n|cffc084f7Shift + Right-click to resize ALL npc nameplates in PvP.|r"
+            if BetterBlizzPlatesDB.smallPetsInPvPAllNPCs then
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+            tooltipText = tooltipText .. "\n\n|cff32f795Ctrl + Right-click to ignore totem nameplates.|r"
+            if BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems then
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+            tooltipText = tooltipText .. "\n|cFFFFD100Note: This only works if you only have Totems and Pets enabled. Guardians etc would also be ignored if enabled.|r"
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         elseif title == "Purgeable" then
             local tooltipText = "\n|cff32f795Right-click to only show Purgeable in PvE.|r"
             if BetterBlizzPlatesDB.otherNpBuffFilterPurgeablePvEOnly then
@@ -4828,7 +4839,7 @@ local function guiGeneralTab()
 
     local smallPetsInPvP = CreateCheckbox("smallPetsInPvP", "Small Pets", BetterBlizzPlates)
     smallPetsInPvP:SetPoint("LEFT", healthNumbers.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(smallPetsInPvP, "Small Pets", "Reduce the width of all pet nameplates, and the width of all npc nameplates in PvP.\n\n|cff32f795Right-click to adjust width.|r", "Totem Indicator NPCs will stay full width unless specified otherwise in the Totem Indicator List section.")
+    CreateTooltipTwo(smallPetsInPvP, "Small Pets in PvP", "Reduce the width of all pet nameplates, and the width of all npc nameplates in PvP.\n\n|cff32f795Right-click to adjust width.|r", "Totem Indicator NPCs will stay full width unless specified otherwise in the Totem Indicator List section.")
 
     local smallPetsWidthSlider = CreateSlider(BetterBlizzPlates, "Small Pets Width", 2, 40, 1, "smallPetsWidth", nil, 120)
     smallPetsWidthSlider:SetPoint("BOTTOMLEFT", smallPetsInPvP, "TOPLEFT", 5, 5)
@@ -4837,8 +4848,25 @@ local function guiGeneralTab()
 
     smallPetsInPvP:SetScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
-            GameTooltip:Hide()
-            smallPetsWidthSlider:SetShown(not smallPetsWidthSlider:IsShown())
+            if IsShiftKeyDown() then
+                BetterBlizzPlatesDB.smallPetsInPvPAllNPCs = not BetterBlizzPlatesDB.smallPetsInPvPAllNPCs
+                if BetterBlizzPlatesDB.smallPetsInPvPAllNPCs then
+                    BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems = false
+                end
+                BBP.RefreshAllNameplates()
+                if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                    self:GetScript("OnEnter")(self)
+                end
+            elseif IsControlKeyDown() then
+                BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems = not BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems
+                BBP.RefreshAllNameplates()
+                if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                    self:GetScript("OnEnter")(self)
+                end
+            else
+                GameTooltip:Hide()
+                smallPetsWidthSlider:SetShown(not smallPetsWidthSlider:IsShown())
+            end
         end
     end)
 
@@ -6108,16 +6136,82 @@ local function guiPositionAndScale()
     healerIndicatorTestMode2:SetPoint("TOPLEFT", healerIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
     local healerIndicatorEnemyOnly2 = CreateCheckbox("healerIndicatorEnemyOnly", "Enemies only", contentFrame)
-    healerIndicatorEnemyOnly2:SetPoint("TOPLEFT", healerIndicatorTestMode2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    healerIndicatorEnemyOnly2:SetPoint("LEFT", healerIndicatorTestMode2.text, "RIGHT", 0, 0)
 
     local healerIndicatorArenaOnly = CreateCheckbox("healerIndicatorArenaOnly", "Arena only", contentFrame)
-    healerIndicatorArenaOnly:SetPoint("TOPLEFT", healerIndicatorEnemyOnly2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    healerIndicatorArenaOnly:SetPoint("TOPLEFT", healerIndicatorTestMode2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
     local healerIndicatorBgOnly = CreateCheckbox("healerIndicatorBgOnly", "Battleground only", contentFrame)
     healerIndicatorBgOnly:SetPoint("TOPLEFT", healerIndicatorArenaOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
     local healerIndicatorRedCrossEnemy = CreateCheckbox("healerIndicatorRedCrossEnemy", "Red Cross for Enemy", contentFrame)
     healerIndicatorRedCrossEnemy:SetPoint("TOPLEFT", healerIndicatorBgOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+    anchorSubHeal.healerIndicatorColorEnemyHealthbar = CreateCheckbox("healerIndicatorColorEnemyHealthbar", "Color Enemy Healer HP", contentFrame)
+    anchorSubHeal.healerIndicatorColorEnemyHealthbar:SetPoint("TOPLEFT", healerIndicatorRedCrossEnemy, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubHeal.healerIndicatorColorEnemyHealthbar, "Color Enemy Healer Healthbar", "Color the healthbar of enemy healers.\n\n|cff32f795Right-click to change color.|r")
+
+    anchorSubHeal.healerIndicatorColorFriendlyHealthbar = CreateCheckbox("healerIndicatorColorFriendlyHealthbar", "Color Friendly Healer HP", contentFrame)
+    anchorSubHeal.healerIndicatorColorFriendlyHealthbar:SetPoint("TOPLEFT", anchorSubHeal.healerIndicatorColorEnemyHealthbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubHeal.healerIndicatorColorFriendlyHealthbar, "Color Friendly Healer Healthbar", "Color the healthbar of friendly healers.\n\n|cff32f795Right-click to change color.|r")
+
+    local function OpenHealerEnemyColorPicker()
+        BBP.needsUpdate = true
+        local r, g, b = unpack(BetterBlizzPlatesDB.healerIndicatorColorEnemyHealthbarRGB or {0, 1, 0})
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b,
+            swatchFunc = function()
+                local r, g, b = ColorPickerFrame:GetColorRGB()
+                BetterBlizzPlatesDB.healerIndicatorColorEnemyHealthbarRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+                anchorSubHeal.healerIndicatorColorEnemyHealthbar.Text:SetTextColor(unpack(BetterBlizzPlatesDB.healerIndicatorColorEnemyHealthbarRGB))
+            end,
+            cancelFunc = function(previousValues)
+                local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                BetterBlizzPlatesDB.healerIndicatorColorEnemyHealthbarRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+                anchorSubHeal.healerIndicatorColorEnemyHealthbar.Text:SetTextColor(unpack(BetterBlizzPlatesDB.healerIndicatorColorEnemyHealthbarRGB))
+            end,
+        })
+    end
+
+    local function OpenHealerFriendlyColorPicker()
+        BBP.needsUpdate = true
+        local r, g, b = unpack(BetterBlizzPlatesDB.healerIndicatorColorFriendlyHealthbarRGB or {0, 1, 0})
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b,
+            swatchFunc = function()
+                local r, g, b = ColorPickerFrame:GetColorRGB()
+                BetterBlizzPlatesDB.healerIndicatorColorFriendlyHealthbarRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+                anchorSubHeal.healerIndicatorColorFriendlyHealthbar.Text:SetTextColor(unpack(BetterBlizzPlatesDB.healerIndicatorColorFriendlyHealthbarRGB))
+            end,
+            cancelFunc = function(previousValues)
+                local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                BetterBlizzPlatesDB.healerIndicatorColorFriendlyHealthbarRGB = { r, g, b }
+                BBP.RefreshAllNameplates()
+                anchorSubHeal.healerIndicatorColorFriendlyHealthbar.Text:SetTextColor(unpack(BetterBlizzPlatesDB.healerIndicatorColorFriendlyHealthbarRGB))
+            end,
+        })
+    end
+
+    anchorSubHeal.healerIndicatorColorEnemyHealthbar:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            OpenHealerEnemyColorPicker()
+        end
+    end)
+    anchorSubHeal.healerIndicatorColorFriendlyHealthbar:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            OpenHealerFriendlyColorPicker()
+        end
+    end)
+
+    if BetterBlizzPlatesDB.healerIndicatorColorEnemyHealthbar then
+        anchorSubHeal.healerIndicatorColorEnemyHealthbar.Text:SetTextColor(unpack(BetterBlizzPlatesDB.healerIndicatorColorEnemyHealthbarRGB or {0, 1, 0}))
+    end
+    if BetterBlizzPlatesDB.healerIndicatorColorFriendlyHealthbar then
+        anchorSubHeal.healerIndicatorColorFriendlyHealthbar.Text:SetTextColor(unpack(BetterBlizzPlatesDB.healerIndicatorColorFriendlyHealthbarRGB or {0, 1, 0}))
+    end
 
     ----------------------
     -- Combat indicator
@@ -10975,7 +11069,7 @@ local function guiMisc()
     end)
 
 
-    local enableNpVerticalPos = CreateCheckbox("enableNpVerticalPos", "Change Nameplate Position (5.5.4 broken, keep at 0 prob for now)", guiMisc)
+    local enableNpVerticalPos = CreateCheckbox("enableNpVerticalPos", "Change Nameplate Position", guiMisc)
     enableNpVerticalPos:SetPoint("TOPLEFT", customFontSizeEnabled, "BOTTOMLEFT", 0, -27)
     CreateTooltipTwo(enableNpVerticalPos, "Change Nameplate Position", "Change the position of nameplates.")
 
