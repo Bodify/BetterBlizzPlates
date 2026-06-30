@@ -3629,6 +3629,7 @@ function BBP.ShowMurloc(frame)
     frame.selectionHighlight:SetAlpha(0)
     frame.AurasFrame:SetAlpha(0)
     frame.name:SetAlpha(0)
+    frame.nameHidden = true
     frame.murlocMode:Show()
     frame.castBar:Hide()
     frame.hideNameOverride = true
@@ -4478,7 +4479,7 @@ local function ShowFriendlyGuildName(frame, unit)
         end
 
         local guildName, guildRankName, guildRankIndex = GetGuildInfo(unit)
-        if guildName and (frame.name:GetAlpha() ~= 0) then
+        if guildName and not frame.nameHidden then
             local hasNameText = not issecretvalue(frame.name:GetText()) and frame.name:GetText() ~= ""
             if hasNameText then
                 if BBP.needsUpdate then
@@ -5217,6 +5218,7 @@ local function HandleNamePlateRemoved(unit)
     frame:SetScale(1)
     frame:SetAlpha(1)
     frame.name:SetAlpha(1)
+    frame.nameHidden = nil
     if frame.HealthBarsContainer then
         frame.HealthBarsContainer:SetAlpha(1)
         frame.HealthBarsContainer.alphaZero = false
@@ -6877,6 +6879,7 @@ local function HandleNamePlateAdded(unit)
     end
     if ((config.hideFriendlyNameText or (config.partyPointerHideAll and frame.partyPointer and frame.partyPointer:IsShown())) and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
         frame.name:SetAlpha(0)
+        frame.nameHidden = true
     end
 
     if config.showGuildNames then ShowFriendlyGuildName(frame, frame.unit) end
@@ -7219,6 +7222,7 @@ function BBP.ConsolidatedUpdateName(frame)
     if frame.castHiddenName then
         -- frame.name:SetText("")
         frame.name:SetAlpha(0)
+        frame.nameHidden = true
         return
     end
 
@@ -7327,14 +7331,17 @@ function BBP.ConsolidatedUpdateName(frame)
 
     if frame.hideNameOverride then
         frame.name:SetAlpha(0)
+        frame.nameHidden = true
     else
         if frame.partyPointer and config.partyPointerHideAll and frame.partyPointer:IsShown() then
             frame.name:SetAlpha(0)
+            frame.nameHidden = true
         end
     end
 
     if frame.classIndicatorHideName then
         frame.name:SetText("")
+        frame.nameHidden = true
     elseif config.classIndicator and config.classIconHealthNumbers then
         BBP.UpdateHealthText(frame)
     end
@@ -9212,11 +9219,21 @@ function BBP.NameplateAuraTweaksTemp()
 end
 
 -- Fix Blizzards nameplate auras bugging after MC.
+-- Varied reports of success:
+-- All debuffs show afterwards instead of none, still an improvement.
+-- Some reported it not working at all, no idea why that would be.
 hooksecurefunc(NamePlateAurasMixin, "UpdateFriendPlayerAuraFrames", function(self)
     if self:IsForbidden() then return end
     local unit = self:GetParent().unit
     if unit and UnitIsPlayer(unit) and not self.DebuffListFrame:IsShown() and UnitCanAttack("player", unit) and C_CVar.GetCVarBitfield("nameplateEnemyPlayerAuraDisplay", Enum.NamePlateEnemyPlayerAuraDisplay.Debuffs) then
         self.DebuffListFrame:Show()
+    end
+end)
+
+hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
+    if self:IsForbidden() then return end
+    if (BetterBlizzPlatesDB.useCustomTextureForBars or BetterBlizzPlatesDB.classicRetailNameplates) then
+        BBP.ApplyCustomTextureToNameplate(self)
     end
 end)
 
