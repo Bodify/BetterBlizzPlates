@@ -167,6 +167,7 @@ local defaultSettings = {
     targetTextTestMode = false,
     targetTextStatic = false,
     -- Enemy
+    forceClassColors = false,
     enemyClassColorName = false,
     enemyNameScale = 1,
     nameplateEnemyWidth = nil,
@@ -2310,6 +2311,26 @@ function BBP.ChangeStrataOfResourceFrame()
     resourceFrame:SetFrameStrata("HIGH")
 end
 
+local function ClassColorPlayerNameplate(frame)
+    if not BetterBlizzPlatesDB.forceClassColors then return end
+    if not UnitIsPlayer(frame.unit) then return end
+    if isEnemy(frame.unit) and (BetterBlizzPlatesDB.nameplateShowClassColor or GetCVarBool("nameplateShowClassColor")) then
+        local class = UnitClassBase(frame.unit)
+        local classColor = RAID_CLASS_COLORS[class]
+        if classColor then
+            frame.healthBar:SetStatusBarColor(classColor.r, classColor.g, classColor.b)
+            frame.needsRecolor = true
+        end
+    elseif (BetterBlizzPlatesDB.nameplateShowFriendlyClassColor or GetCVarBool("nameplateShowFriendlyClassColor")) then
+        local class = UnitClassBase(frame.unit)
+        local classColor = RAID_CLASS_COLORS[class]
+        if classColor then
+            frame.healthBar:SetStatusBarColor(classColor.r, classColor.g, classColor.b)
+            frame.needsRecolor = true
+        end
+    end
+end
+
 --###############################################
 local function ColorNameplateByReaction(frame)
     local config = frame.BetterBlizzPlates.config
@@ -4034,6 +4055,8 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         config.updateHealthColorInitialized = true
     end
 
+    ClassColorPlayerNameplate(frame)
+
     if config.friendlyHealthBarColor or config.enemyHealthBarColor then
         ColorNameplateByReaction(frame)
     end
@@ -4161,7 +4184,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 				-- Use color based on the type of unit (neutral, etc.)
 				if ( frame.optionTable.considerSelectionInCombatAsHostile and CompactUnitFrame_IsOnThreatListWithPlayer(frame.displayedUnit) and not UnitIsFriend("player", frame.unit) ) then
 					r, g, b = 1.0, 0.0, 0.0;
-				elseif ( UnitIsPlayer(frame.displayedUnit) and UnitIsFriend("player", frame.displayedUnit) ) then
+				elseif ( frame.optionTable.brightenFriendlyPlayerHealth and UnitIsHumanPlayer(frame.displayedUnit) and UnitIsFriend("player", frame.displayedUnit) ) then
 					-- We don't want to use the selection color for friendly player nameplates because
 					-- it doesn't show player health clearly enough.
 					r, g, b = 0.667, 0.667, 1.0;
@@ -6503,6 +6526,8 @@ local function HandleNamePlateAdded(unit)
     if not info then return end
     local hooks = GetNameplateHookTable(frame)
 
+    ClassColorPlayerNameplate(frame)
+
     if info.isTarget then
         BBP.previousTargetNameplate = frame
         if BetterBlizzPlatesDB.nameplateResourceOnTarget then
@@ -7172,8 +7197,9 @@ end
 function BBP.ConsolidatedUpdateName(frame)
     if issecretvalue(frame) then return end --???
     if not frame or frame:IsForbidden() or not frame.unit then return end
+    local unit = frame.unit
     -- Further processing only for nameplate units
-    if not frame.unit:find("nameplate") then return end
+    if not unit:find("nameplate") then return end
 
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     --local info = GetNameplateUnitInfo(frame) --frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)

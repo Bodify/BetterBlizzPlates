@@ -139,6 +139,7 @@ local defaultSettings = {
 
     mopUpdated = true,
     -- Enemy
+    forceClassColors = false,
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
     showNameplateTargetText = false,
@@ -2041,6 +2042,26 @@ local function isEnemy(unit)
     local reaction = UnitReaction(unit, "player")
     if reaction and reaction <= 4 then
         return true
+    end
+end
+
+local function ClassColorPlayerNameplate(frame)
+    if not BetterBlizzPlatesDB.forceClassColors then return end
+    if not UnitIsPlayer(frame.unit) then return end
+    if isEnemy(frame.unit) and (BetterBlizzPlatesDB.nameplateShowClassColor or GetCVarBool("nameplateShowClassColor")) then
+        local class = UnitClassBase(frame.unit)
+        local classColor = RAID_CLASS_COLORS[class]
+        if classColor then
+            frame.healthBar:SetStatusBarColor(classColor.r, classColor.g, classColor.b)
+            frame.needsRecolor = true
+        end
+    elseif (BetterBlizzPlatesDB.nameplateShowFriendlyClassColor or GetCVarBool("nameplateShowFriendlyClassColor")) then
+        local class = UnitClassBase(frame.unit)
+        local classColor = RAID_CLASS_COLORS[class]
+        if classColor then
+            frame.healthBar:SetStatusBarColor(classColor.r, classColor.g, classColor.b)
+            frame.needsRecolor = true
+        end
     end
 end
 
@@ -4842,6 +4863,8 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         config.updateHealthColorInitialized = true
     end
 
+    ClassColorPlayerNameplate(frame)
+
     if info.isSelf then
         if config.classColorPersonalNameplate then
             frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
@@ -5835,6 +5858,8 @@ local function HandleNamePlateAdded(unit)
     local info = GetNameplateUnitInfo(frame, unit)
     if not info then return end
     local hooks = GetNameplateHookTable(frame)
+
+    ClassColorPlayerNameplate(frame)
 
     if not frame.BuffFrame then
         if not config.nameplateAurasYPos then

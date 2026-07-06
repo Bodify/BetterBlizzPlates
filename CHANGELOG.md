@@ -1,3 +1,12 @@
+# BetterBlizzPlates 2.0.6b
+## All versions
+### New
+- Add a "Force Class Colors" setting to Misc. This setting is intended to fix Blizzards bug of failing to class color nameplates properly after Mind Control or other similar effects. This will probably be enabled by default later on but I have not tested it enough to rule out any potential unintentional changes. Please test it, especially if you are running into that MC bug (which is usually because you dont have class color friendly nameplates enabled and Blizzard fails to properly evaluate if the nameplate is friendly or not but still considers that CVar).
+## Midnight
+### Bugfix
+- Fix an issue causing friendly nameplates that was targeted then un-targeted to get a brighter color than supposed to with class color setting off.
+- Fix a typo in the "Hide name (but ignore totems)" setting causing it to error.
+
 # BetterBlizzPlates 2.0.6
 ## Important changes:
 - Midnight and MoP: Update click area logic. The click area preview should now be more accurate. You may want to tweak your click area settings (Misc) again after this update.

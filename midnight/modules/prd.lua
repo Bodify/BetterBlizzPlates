@@ -43,6 +43,9 @@ local function ApplyPRDBarMask(bar, container)
     mask:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 0.5, -1)
     mask:Show()
     bar:GetStatusBarTexture():AddMaskTexture(mask)
+    if bar.bbfPRDMask then
+        bar:GetStatusBarTexture():AddMaskTexture(bar.bbfPRDMask)
+    end
 end
 BBP.ApplyPRDBarMask = ApplyPRDBarMask
 
@@ -66,7 +69,7 @@ local function ApplyPRDMasks()
 end
 
 function BBP.TexturePRD()
-    if BetterBlizzFramesDB and BetterBlizzFramesDB.useCustomTextureForBars then
+    if BetterBlizzFramesDB and (BetterBlizzFramesDB.useCustomTextureForBars or BetterBlizzFramesDB.changePrdTextures) then
         BBPrint("BetterBlizzFrames is handling PRD: TexturePRD. Skipping.")
         return
     end
@@ -500,5 +503,12 @@ function BBP.LegacyPRDLook()
 
     hooksecurefunc(PersonalResourceDisplayMixin, "UpdatePowerBarAnchor", TweakPowerBarAnchor)
     hooksecurefunc(PersonalResourceDisplayMixin, "UpdateAdditionalBarAnchors", TweakAdditionalBarAnchors)
+    hooksecurefunc(EditModeManagerFrame, "ExitEditMode", function()
+        C_Timer.After(0, function()
+            UpdatePRDBorderLayout()
+            TweakPowerBarAnchor(PersonalResourceDisplayFrame)
+            TweakAdditionalBarAnchors(PersonalResourceDisplayFrame)
+        end)
+    end)
     BBP.FancyPRDAltTexture()
 end

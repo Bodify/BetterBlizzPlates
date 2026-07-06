@@ -129,6 +129,7 @@ local defaultSettings = {
     normalCastbarForEmpoweredCasts = true,
     interruptedByIndicator = true,
     -- Enemy
+    forceClassColors = false,
     enemyClassColorName = false,
     showNameplateCastbarTimer = false,
     showNameplateTargetText = false,
@@ -1369,6 +1370,26 @@ local function isEnemy(unit)
     local reaction = UnitReaction(unit, "player")
     if reaction and reaction <= 4 then
         return true
+    end
+end
+
+local function ClassColorPlayerNameplate(frame)
+    if not BetterBlizzPlatesDB.forceClassColors then return end
+    if not UnitIsPlayer(frame.unit) then return end
+    if isEnemy(frame.unit) and (BetterBlizzPlatesDB.ShowClassColorInNameplate or GetCVarBool("ShowClassColorInNameplate")) then
+        local class = UnitClassBase(frame.unit)
+        local classColor = RAID_CLASS_COLORS[class]
+        if classColor then
+            frame.healthBar:SetStatusBarColor(classColor.r, classColor.g, classColor.b)
+            frame.needsRecolor = true
+        end
+    elseif (BetterBlizzPlatesDB.ShowClassColorInFriendlyNameplate or GetCVarBool("ShowClassColorInFriendlyNameplate")) then
+        local class = UnitClassBase(frame.unit)
+        local classColor = RAID_CLASS_COLORS[class]
+        if classColor then
+            frame.healthBar:SetStatusBarColor(classColor.r, classColor.g, classColor.b)
+            frame.needsRecolor = true
+        end
     end
 end
 
@@ -3471,6 +3492,8 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         config.updateHealthColorInitialized = true
     end
 
+    ClassColorPlayerNameplate(frame)
+
     if info.isSelf then
         if config.personalNpTRP3Color then
             local r,g,b = GetRPNameColor("player")
@@ -5397,6 +5420,8 @@ local function HandleNamePlateAdded(unit)
     local info = GetNameplateUnitInfo(frame, unit)
     if not info then return end
     local hooks = GetNameplateHookTable(frame)
+
+    ClassColorPlayerNameplate(frame)
 
     if info.isTarget then
         BBP.previousTargetNameplate = frame
