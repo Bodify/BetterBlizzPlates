@@ -2221,6 +2221,15 @@ function BBP.ApplyCustomTextureToNameplate(frame)
         config.customTextureSelf = LSM:Fetch(LSM.MediaType.STATUSBAR, customTextureSelf)
         config.customTextureSelfMana = LSM:Fetch(LSM.MediaType.STATUSBAR, customTextureSelfMana)
 
+        config.targetIndicatorChangeTexture = BetterBlizzPlatesDB.targetIndicatorChangeTexture
+        config.focusTargetIndicatorChangeTexture = BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture
+        if config.targetIndicatorChangeTexture then
+            config.targetIndicatorTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.targetIndicatorTexture)
+        end
+        if config.focusTargetIndicatorChangeTexture then
+            config.focusTargetIndicatorTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.focusTargetIndicatorTexture)
+        end
+
         config.customTextureInitialized = true
     end
 
@@ -2290,6 +2299,7 @@ function BBP.ApplyCustomTextureToNameplate(frame)
         frame.healthBar:SetStatusBarTexture(defaultTex)
         textureExtraBars(frame, "Interface/TargetingFrame/UI-TargetingFrame-BarFill")
     end
+
 end
 
 --#################################################
@@ -9257,9 +9267,17 @@ hooksecurefunc(NamePlateAurasMixin, "UpdateFriendPlayerAuraFrames", function(sel
 end)
 
 hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
-    if self:IsForbidden() then return end
+    if self:IsForbidden() or not self.unit then return end
     if (BetterBlizzPlatesDB.useCustomTextureForBars or BetterBlizzPlatesDB.classicRetailNameplates) then
         BBP.ApplyCustomTextureToNameplate(self)
+    end
+    if not self.BetterBlizzPlates then return end
+    local config = self.BetterBlizzPlates.config
+    if not config then return end
+    if config.targetIndicator and config.targetIndicatorChangeTexture and UnitIsUnit(self.unit, "target") then
+        self.healthBar:SetStatusBarTexture(config.targetIndicatorTexturePath)
+    elseif config.focusTargetIndicator and config.focusTargetIndicatorChangeTexture and UnitIsUnit(self.unit, "focus") then
+        self.healthBar:SetStatusBarTexture(config.focusTargetIndicatorTexturePath)
     end
 end)
 

@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.0.6c
+## Midnight & MoP
+### Bugfix
+- Fix Target/Focus Indicator's Texture Change settings resetting on target/focus.
+
 # BetterBlizzPlates 2.0.6b
 ## All versions
 ### New

@@ -2407,6 +2407,15 @@ function BBP.ApplyCustomTextureToNameplate(frame)
         config.customTextureSelfMana = LSM:Fetch(LSM.MediaType.STATUSBAR, customTextureSelfMana)
         --frame.HealthBarsContainer.healthBar.bgTexture:SetDrawLayer("HIGH")
 
+        config.targetIndicatorChangeTexture = BetterBlizzPlatesDB.targetIndicatorChangeTexture
+        config.focusTargetIndicatorChangeTexture = BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture
+        if config.targetIndicatorChangeTexture then
+            config.targetIndicatorTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.targetIndicatorTexture)
+        end
+        if config.focusTargetIndicatorChangeTexture then
+            config.focusTargetIndicatorTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.focusTargetIndicatorTexture)
+        end
+
         config.customTextureInitialized = true
     end
 
@@ -7978,6 +7987,15 @@ hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
     if self:IsForbidden() then return end
     if (BetterBlizzPlatesDB.useCustomTextureForBars or not BetterBlizzPlatesDB.classicNameplates) then
         BBP.ApplyCustomTextureToNameplate(self)
+    end
+    if not self.BetterBlizzPlates then return end
+    local config = self.BetterBlizzPlates.config
+    if not config then return end
+    if config.targetIndicator and config.targetIndicatorChangeTexture and UnitIsUnit(self.unit, "target") then
+        self.healthBar:SetStatusBarTexture(config.targetIndicatorTexturePath)
+    end
+    if config.focusTargetIndicator and config.focusTargetIndicatorChangeTexture and UnitIsUnit(self.unit, "focus") then
+        self.healthBar:SetStatusBarTexture(config.focusTargetIndicatorTexturePath)
     end
     if BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.hideLevelFrame and self.unit then
         TweakLevelFrame(self)
