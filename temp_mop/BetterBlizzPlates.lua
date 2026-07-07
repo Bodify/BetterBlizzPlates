@@ -23,9 +23,11 @@ local playerClassColor
 BBP.hiddenFrame = CreateFrame("Frame")
 BBP.hiddenFrame:Hide()
 
--- C_Timer.After(5, function()
---      BBP.Print("Patch 5.5.4 is a big one and I was not ready. BBP needs a lot of work and is not expected to work without issues atm. Please be patient while I work on fixes. Report bugs if you can (preferably with details). Thank you for understanding.")
--- end)
+if BBP.isTBC then
+    C_Timer.After(5, function()
+        BBP.Print("Midnight nameplates have arrived in TBC too now. This means A LOT has changed and there is too much stuff to go over. You may have to tweak your settings to get sizes/positions back how you had it. If you run into bugs or issues or other things please let me know on Discord! Link in support section.")
+    end)
+end
 
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 local UnitName = UnitName
@@ -471,10 +473,10 @@ local defaultSettings = {
 
     otherNpdeBuffEnable = true,
     otherNpdeBuffFilterAll = false,
-    otherNpdeBuffFilterBlizzard = true,
+    otherNpdeBuffFilterBlizzard = BBP.isMoP and true or false,
     otherNpdeBuffFilterWatchList = true,
     otherNpdeBuffFilterLessMinite = false,
-    otherNpdeBuffFilterOnlyMe = false,
+    otherNpdeBuffFilterOnlyMe = BBP.isMoP and false or true,
     otherNpdeBuffPandemicGlow = false,
 
     friendlyNpBuffEnable = false,
