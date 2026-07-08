@@ -7986,7 +7986,7 @@ end
 -- end)
 
 hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
-    if self:IsForbidden() then return end
+    if self:IsForbidden() or not self.unit then return end
     if (BetterBlizzPlatesDB.useCustomTextureForBars or not BetterBlizzPlatesDB.classicNameplates) then
         BBP.ApplyCustomTextureToNameplate(self)
     end
