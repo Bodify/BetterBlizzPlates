@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.0.6e
+## MoP + TBC
+### Bugfix
+- Fix lua error in a hook.
+
 # BetterBlizzPlates 2.0.6d
 ## The Burning Crusade
 - Updated for WoW 2.5.6. Midnight nameplates have arrived in TBC too now. This means A LOT has changed and there is too much stuff to go over. You may have to tweak your settings to get sizes/positions back how you had it. If you run into bugs or issues or other things please let me know on Discord! Link in support section.
