@@ -13,6 +13,7 @@
 - Fix friendly nameplate width in PvE for Blizzards "Classic" style.
 - Fix some castbar settings like icon size, icon position, etc.
 - Fix various nameplate color issues.
+- 2.0.6g: Add temporary fix for giant castbar icon when using classic nameplates option in BBP.
 ## Note
 - Thank you for all the reports and please continue reporting bugs! Changes like these mess with BBP hard as I have to rework around all the new Blizzard changes (BBP is just tweaks to the default nameplates)
 
