@@ -12349,7 +12349,7 @@ local function guiMisc()
 
     local scaleNpNameWithParent = CreateCheckbox("scaleNpNameWithParent", "Scale names with the nameplate", guiMisc)
     scaleNpNameWithParent:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(scaleNpNameWithParent, "Scale names with the nameplate", "This setting makes it so nameplate names scale up/down with the nameplate size. If not enabled the name will always stay one consistent size.\n\nBy default from Blizzard (since Midnight) this is on. If you want to keep that default behaviour enable this.")
+    CreateTooltipTwo(scaleNpNameWithParent, "Scale names with the nameplate", "This setting makes it so nameplate names scale up/down with the nameplate size. The \"Name Size\" slider in general will still adjust the general size.\n\nIf not enabled the name will always stay one consistent size.\n\nSince Midnight this has been on by default from Blizzard but not in BBP. If you want to keep that default behaviour enable this.")
 
     local prdLegacyLook = CreateCheckbox("prdLegacyLook", "PRD: Legacy Look", guiMisc)
     prdLegacyLook:SetPoint("TOPLEFT", scaleNpNameWithParent, "BOTTOMLEFT", 0, pixelsBetweenBoxes)

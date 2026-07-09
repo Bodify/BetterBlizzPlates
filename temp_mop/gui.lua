@@ -864,11 +864,18 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                                 local yOffset = BetterBlizzPlatesDB.castBarDragonflightShield and -2 or 0
                                 castBar.Icon:ClearAllPoints()
                                 castBar.Icon:SetPoint("CENTER", castBar, "LEFT", xPos, yPos)
+                                if castBar.bbpRetailIcon then
+                                    castBar.bbpRetailIcon:ClearAllPoints()
+                                    castBar.bbpRetailIcon:SetPoint("CENTER", castBar, "LEFT", xPos, yPos)
+                                end
                                 castBar.BorderShield:ClearAllPoints()
-                                castBar.BorderShield:SetPoint("CENTER", castBar.Icon, "CENTER", 0, 0)
+                                castBar.BorderShield:SetPoint("CENTER", castBar.bbpRetailIcon or castBar.Icon, "CENTER", 0, 0)
                             else
                                 BetterBlizzPlatesDB.castBarIconScale = value
                                 castBar.Icon:SetScale(value)
+                                if castBar.bbpRetailIcon then
+                                    castBar.bbpRetailIcon:SetScale(value)
+                                end
                                 castBar.BorderShield:SetScale(value)
                             end
                         -- Cast bar height
@@ -880,7 +887,12 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                             end
                         elseif element == "castBarTextScale" then
                             local castBar = frame.CastBar or frame.castBar
-                            castBar.castText:SetScale(value)
+                            if castBar.castText then
+                                castBar.castText:SetScale(value)
+                            end
+                            if castBar.Text then
+                                castBar.Text:SetScale(value)
+                            end
                         -- Cast bar emphasis icon pos and scale
                         elseif element == "castBarEmphasisIconXPos" or element == "castBarEmphasisIconYPos" then
                             if axis then
@@ -5145,9 +5157,9 @@ local function guiGeneralTab()
     hideEliteDragon:SetPoint("LEFT", showNameplateTargetText.text, "RIGHT", 0, 0)
     CreateTooltipTwo(hideEliteDragon, "Hide Elite Icon", "Hide the elite dragon icon on nameplates")
 
-    local enemyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 1.5, 0.01, "enemyNameScale")
+    local enemyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 3, 0.01, "enemyNameScale")
     enemyNameScale:SetPoint("TOPLEFT", showNameplateTargetText, "BOTTOMLEFT", 12, -10)
-    CreateTooltipTwo(enemyNameScale, "Name Size", "Change Name size on Enemy nameplates", "While adjusting this setting names can get 20% larger/smaller due to Blizzard scaling issues. Reload between adjustments to make sure the size is what you want.")
+    CreateTooltipTwo(enemyNameScale, "Name Size", "Change Name size on Enemy nameplates")
 
     local hideEnemyNameText = CreateCheckbox("hideEnemyNameText", "Hide name", BetterBlizzPlates)
     hideEnemyNameText:SetPoint("LEFT", enemyNameScale, "RIGHT", 2, 0)
@@ -5453,7 +5465,7 @@ local function guiGeneralTab()
 
     local friendlyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 3, 0.01, "friendlyNameScale")
     friendlyNameScale:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", 0, -6)
-    CreateTooltipTwo(friendlyNameScale, "Name Size", "Change Name size on Friendly nameplates.", "While adjusting this setting names can get 20% larger/smaller due to Blizzard scaling issues. Reload between adjustments to make sure the size is what you want.")
+    CreateTooltipTwo(friendlyNameScale, "Name Size", "Change Name size on Friendly nameplates.")
 
     local hideFriendlyNameText = CreateCheckbox("hideFriendlyNameText", "Hide name", BetterBlizzPlates)
     hideFriendlyNameText:SetPoint("LEFT", friendlyNameScale, "RIGHT", 2, 0)
@@ -6263,13 +6275,13 @@ local function guiPositionAndScale()
     combatIndicatorSap:SetPoint("TOPLEFT", combatIndicatorArenaOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     combatIndicatorSap:HookScript("OnClick", function(self)
         if self:GetChecked() then
-            combatIconSub:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\ABILITY_SAP")
-            combatIconSub:SetSize(38, 38)
-            combatIconSub:SetPoint("BOTTOM", anchorSubOutOfCombat, "TOP", 0, 0)
+            anchorSubOutOfCombat.icon:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\ABILITY_SAP")
+            anchorSubOutOfCombat.icon:SetSize(38, 38)
+            anchorSubOutOfCombat.icon:SetPoint("BOTTOM", anchorSubOutOfCombat, "TOP", 0, 0)
         else
-            combatIconSub:SetAtlas("food")
-            combatIconSub:SetSize(42, 42)
-            combatIconSub:SetPoint("BOTTOM", anchorSubOutOfCombat, "TOP", -1, 0)
+            anchorSubOutOfCombat.icon:SetAtlas("food")
+            anchorSubOutOfCombat.icon:SetSize(40, 40)
+            anchorSubOutOfCombat.icon:SetPoint("BOTTOM", anchorSubOutOfCombat, "TOP", -1, 0)
         end
     end)
 
@@ -10900,6 +10912,10 @@ local function guiMisc()
     forceClassColors:SetPoint("TOPLEFT", showLastNameNpc, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(forceClassColors, "Force Class Colors", "Force BBP to class color player nameplates.\n\nNormally Blizzard class colors nameplates but due to too many bugs of it failing to color properly (like on Mind Control) this setting exists so BBP does the class coloring instead (without bugs).")
 
+    local scaleNpNameWithParent = CreateCheckbox("scaleNpNameWithParent", "Scale names with the nameplate", guiMisc)
+    scaleNpNameWithParent:SetPoint("TOPLEFT", forceClassColors, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(scaleNpNameWithParent, "Scale names with the nameplate", "This setting makes it so nameplate names scale up/down with the nameplate size. The \"Name Size\" slider in general will still adjust the general size.\n\nIf not enabled the name will always stay one consistent size.\n\nSince Midnight this has been on by default from Blizzard but not in BBP. If you want to keep that default behaviour enable this.")
+
     -- local nameplateResourceText = guiMisc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     -- nameplateResourceText:SetPoint("TOPLEFT", guiMisc, "TOPLEFT", 45, -250)
     -- nameplateResourceText:SetText("Nameplate Resource")
@@ -10912,7 +10928,7 @@ local function guiMisc()
 
 
     local changeHealthbarHeight = CreateCheckbox("changeHealthbarHeight", "Separate Friendly/Enemy Nameplate Height", guiMisc)
-    changeHealthbarHeight:SetPoint("TOPLEFT", doNotHideFriendlyHealthbarInPve, "BOTTOMLEFT", 0, -50)
+    changeHealthbarHeight:SetPoint("TOPLEFT", doNotHideFriendlyHealthbarInPve, "BOTTOMLEFT", 0, -60)
     CreateTooltipTwo(changeHealthbarHeight, "Separate Nameplate Heights", "Change the height of nameplates individually depending if enemy or friendly.", "This setting runs a lot and I am unsure just how much of a performance impact it has. Use at own risk.")
 
 

@@ -1,3 +1,21 @@
+# BetterBlizzPlates 2.0.6f
+## Midnight
+### Bugfix
+- Fix nameplate vertical position setting not sticking.
+## MoP/TBC
+### New
+- Add new "Scale names with the nameplate" option in Misc. This will keep the name proportionally scaled with the nameplate and grow/shrink with it.
+### Tweak
+- Sort out some scaling issues on nameplate names. Size might have changed slightly.
+- Hide level on friendly nameplates in PvE if healthbar is hidden when using Blizzard's Classic nameplate style in their nameplate setting (recommended one atm due to issues).
+### Bugfix
+- Fix lua error in gui.
+- Fix friendly nameplate width in PvE for Blizzards "Classic" style.
+- Fix some castbar settings like icon size, icon position, etc.
+- Fix various nameplate color issues.
+## Note
+- Thank you for all the reports and please continue reporting bugs! Changes like these mess with BBP hard as I have to rework around all the new Blizzard changes (BBP is just tweaks to the default nameplates)
+
 # BetterBlizzPlates 2.0.6e
 ## MoP + TBC
 ### Bugfix

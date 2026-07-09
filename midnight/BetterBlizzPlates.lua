@@ -993,11 +993,6 @@ function BBP.ResetTotemList()
     BetterBlizzPlatesDB.totemIndicatorNpcList = defaultSettings.totemIndicatorNpcList
 end
 
-
-function BBPrint(msg)
-    print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: "..msg)
-end
-
 local cvarList = {
     "nameplateShowAll",
     "nameplateOverlapH",
@@ -1969,19 +1964,20 @@ end
 
 function BBP.HookNameplatePosition(frame, nameplate)
     if not BetterBlizzPlatesDB.enableNpVerticalPos then return end
-    if BBP.verticalPositionTweak then return end
-    --if UnitIsUnit(frame.unit, "player") then return end
-    BBP.verticalPositionTweak = true
-    hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
-        if SettingsPanel:IsShown() then return end
-        if self:IsForbidden() then return end
-        --if self.unit and UnitIsUnit(self.unit, "player") then return end
-        --C_Timer.After(0, function()
-            if not frame or frame:IsForbidden() then return end
-            frame:ClearPoint("BOTTOMLEFT")
-            frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", BetterBlizzPlatesDB.nameplateHorizontalPosition or 0, BetterBlizzPlatesDB.nameplateVerticalPosition or 0)
-        --end)
-    end)
+    if not BBP.verticalPositionTweak then
+        --if UnitIsUnit(frame.unit, "player") then return end
+        BBP.verticalPositionTweak = true
+        hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
+            if SettingsPanel:IsShown() then return end
+            if self:IsForbidden() then return end
+            --if self.unit and UnitIsUnit(self.unit, "player") then return end
+            --C_Timer.After(0, function()
+                if not frame or frame:IsForbidden() then return end
+                frame:ClearPoint("BOTTOMLEFT")
+                frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", BetterBlizzPlatesDB.nameplateHorizontalPosition or 0, BetterBlizzPlatesDB.nameplateVerticalPosition or 0)
+            --end)
+        end)
+    end
     frame:ClearPoint("BOTTOMLEFT")
     frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", BetterBlizzPlatesDB.nameplateHorizontalPosition or 0, BetterBlizzPlatesDB.nameplateVerticalPosition or 0)
 end
@@ -6601,6 +6597,7 @@ local function HandleNamePlateAdded(unit)
         end
         SetFriendlyBarWidthTemp(frame)
         AdjustHealthBarHeight(frame)
+        BBP.HookNameplatePosition(frame, nameplate)
 
         BBP.SetupMidnightCastbarIcon(frame)
 

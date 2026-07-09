@@ -178,6 +178,22 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     if not castBar then return end
     if castBar:IsForbidden() then return end
 
+    if not frame.castBar.bbpRetailIcon then
+        local bbpIcon = frame.castBar:CreateTexture(nil, "OVERLAY", nil, 7)
+        bbpIcon:SetTexture(frame.castBar.Icon:GetTexture())
+        frame.castBar.bbpRetailIcon = bbpIcon
+        hooksecurefunc(frame.castBar.Icon, "SetTexture", function(self, tex)
+            if frame:IsForbidden() then return end
+            frame.castBar.bbpRetailIcon:SetTexture(tex)
+        end)
+    end
+
+    -- Keep bbpRetailIcon position in sync with castBarIconXPos/YPos settings
+    local iconXPos = db.castBarIconXPos or 0
+    local iconYPos = db.castBarIconYPos or 0
+    castBar.bbpRetailIcon:ClearAllPoints()
+    castBar.bbpRetailIcon:SetPoint("CENTER", castBar, "LEFT", iconXPos, iconYPos)
+
     -- if frame.ogParent then
     --     frame:SetParent(frame.ogParent)
     --     frame.ogParent = nil
@@ -222,6 +238,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         BBP.CompactUnitFrame_UpdateHealthColor(frame)
         castBar:SetHeight(castBarHeight)
         castBar.Icon:SetScale(castBarIconScale)
+        castBar.bbpRetailIcon:SetScale(castBarIconScale)
         castBar.Spark:SetSize(4, castBarHeight + 5)
         castBar.Text:SetScale(castBarTextScale)
         castBar.BorderShield:SetScale(borderShieldSize)
@@ -374,6 +391,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     end
 
     castBar.Icon:SetScale(castBarIconScale)
+    castBar.bbpRetailIcon:SetScale(castBarIconScale)
     castBar.BorderShield:SetScale(borderShieldSize)
     castBar:SetHeight(castBarHeight)
     castBar.Spark:SetSize(4, castBarHeight) --4 width, 5 height original
@@ -444,6 +462,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
         if castBarEmphasisIcon then
             castBar.Icon:SetScale(castBarEmphasisIconScale)
+            castBar.bbpRetailIcon:SetScale(castBarEmphasisIconScale)
             castBar.BorderShield:SetScale(castBarEmphasisIconScale - 0.4)
         end
 
@@ -1069,7 +1088,9 @@ local function ClassicCastbarAdjustments(self, event, frame)
     local castBarTexture = self:GetStatusBarTexture()
 
     local texture = textureTable[self.barType] or textureTable.default
-    self:GetStatusBarTexture():SetDrawLayer("BORDER", 0)
+    if castBarTexture then
+        castBarTexture:SetDrawLayer("BORDER", 0)
+    end
 
     if BetterBlizzPlatesDB.castBarRecolor or BetterBlizzPlatesDB.useCustomCastbarTexture then
         if castBarTexture then
@@ -1586,7 +1607,8 @@ hooksecurefunc(NamePlateCastingBarMixin, "ApplyStyleAndAnchoring", function(self
     end
     self.BorderShield:SetSize(31,31)
     self.BorderShield:ClearAllPoints()
-    self.BorderShield:SetPoint("CENTER", self.bbpRetailIcon, "CENTER", 0, -1)
+    local iconAnchor = (BetterBlizzPlatesDB.enableCastbarCustomization and self.bbpRetailIcon) or self.Icon
+    self.BorderShield:SetPoint("CENTER", iconAnchor, "CENTER", 0, -1)
     self.BorderShield:SetDrawLayer("OVERLAY", 5)
 end)
 
@@ -1606,6 +1628,7 @@ hooksecurefunc(CastingBarMixin, "SetLook", function(self)
     end
     self.BorderShield:SetSize(31,31)
     self.BorderShield:ClearAllPoints()
-    self.BorderShield:SetPoint("CENTER", self.bbpRetailIcon, "CENTER", 0, -1)
+    local iconAnchor = (BetterBlizzPlatesDB.enableCastbarCustomization and self.bbpRetailIcon) or self.Icon
+    self.BorderShield:SetPoint("CENTER", iconAnchor, "CENTER", 0, -1)
     self.BorderShield:SetDrawLayer("OVERLAY", 5)
 end)

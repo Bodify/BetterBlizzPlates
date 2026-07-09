@@ -903,11 +903,6 @@ function BBP.ResetTotemList()
     BetterBlizzPlatesDB.totemIndicatorNpcList = defaultSettings.totemIndicatorNpcList
 end
 
-
-function BBPrint(msg)
-    print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: "..msg)
-end
-
 local cvarList = {
     "nameplateShowAll",
     "nameplateOverlapH",

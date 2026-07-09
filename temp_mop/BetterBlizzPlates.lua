@@ -1179,7 +1179,7 @@ local function TempRetailNpFix()
     C_CVar.SetCVar("nameplateMinAlphaDistance", BetterBlizzPlatesDB.nameplateMinAlphaDistance)
     C_CVar.SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
     C_CVar.SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
-    C_CVar.SetCVar('nameplateShowOnlyNames', "0")
+    C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', "0")
 end
 
 local defaultBitfieldSettings = {
@@ -1775,7 +1775,7 @@ local function ResetNameplates()
     C_CVar.SetCVar("nameplateShowFriendlyGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyGuardians)
     C_CVar.SetCVar("nameplateShowFriendlyPets", BetterBlizzPlatesDB.nameplateShowFriendlyPets)
     C_CVar.SetCVar("nameplateShowFriendlyTotems", BetterBlizzPlatesDB.nameplateShowFriendlyTotems)
-    C_CVar.SetCVar('nameplateShowOnlyNames', "0")
+    C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', "0")
     C_CVar.SetCVar("nameplateShowAll", "1")
 
     ReloadUI()
@@ -2200,14 +2200,31 @@ end
 
 --#################################################################################################
 -- Set nameplate width
+local warningPrint
 function BBP.ApplyNameplateWidth()
     if not BBP.checkCombatAndWarn() then
         if InCombatLockdown() then return end
         local enemyWidth   = BetterBlizzPlatesDB.nameplateEnemyWidth or 172.5
         local friendlyWidth = BetterBlizzPlatesDB.nameplateFriendlyWidth or 172.5
 
-        local widestBar = enemyWidth--math.max(enemyWidth, friendlyWidth) -- prefer friendly nameplates, idk if valid to consider friendly
+        local widestBar = math.max(enemyWidth, friendlyWidth)
         local healthBarHeight = 55--BetterBlizzPlatesDB.nameplateGeneralHeight or 65
+        local isBlizzardClassicStyle = tonumber(GetCVar("nameplateStyle")) == Enum.NamePlateStyle.Classic
+
+        if isBlizzardClassicStyle and BBP.isInPvE
+           and (C_CVar.GetCVarBool("nameplateShowFriendlyPlayers") or C_CVar.GetCVarBool("nameplateShowFriendlyNpcs"))
+           and (not C_CVar.GetCVarBool("nameplateShowOnlyNameForFriendlyPlayerUnits") or C_CVar.GetCVarBool("nameplateShowFriendlyNpcs"))
+           and not BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve then
+            if widestBar > 151 then
+                if not warningPrint then
+                    warningPrint = true
+                    C_Timer.After(3, function()
+                        BBP.Print("|cffff0000Warning:|r Due to Blizzard's Classic nameplate style the nameplate width is capped at 151 to fit friendly nameplate healthbar borders. This will cause any width beyond 151 to be un-clickable on enemy nameplates. The left and right edges of the enemy nameplate may not be clickable with your current settings.")
+                    end)
+                end
+            end
+            widestBar = 151
+        end
 
         -- Set the nameplate size
         C_NamePlate.SetNamePlateSize(widestBar, healthBarHeight)
@@ -2842,14 +2859,16 @@ end
 --#################################################################################################
 -- Class color and scale names 
 function BBP.ClassColorAndScaleNames(frame)
+    if not frame.unit then return end
     local isPlayer = UnitIsPlayer(frame.unit)
     local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(frame.unit)
-    local enemyScale = BetterBlizzPlatesDB.enemyNameScale
-    local friendlyScale = BetterBlizzPlatesDB.friendlyNameScale
-    local enemyColorName = BetterBlizzPlatesDB.enemyColorName
-    local friendlyColorName = BetterBlizzPlatesDB.friendlyColorName
-    local enemyClassColorName = BetterBlizzPlatesDB.enemyClassColorName
-    local friendlyClassColorName = BetterBlizzPlatesDB.friendlyClassColorName
+    local db = BetterBlizzPlatesDB
+    local enemyScale = db.enemyNameScale
+    local friendlyScale = db.friendlyNameScale
+    local enemyColorName = db.enemyColorName
+    local friendlyColorName = db.friendlyColorName
+    local enemyClassColorName = db.enemyClassColorName
+    local friendlyClassColorName = db.friendlyClassColorName
 
     -- Set the name's color based on unit relation and options
     if isPlayer then
@@ -2858,11 +2877,11 @@ function BBP.ClassColorAndScaleNames(frame)
             local classColor = RAID_CLASS_COLORS[class]
             frame.name:SetVertexColor(classColor.r, classColor.g, classColor.b)
         elseif ((isEnemy or isNeutral) and enemyColorName) or (isFriend and friendlyColorName) then
-            local color = isEnemy and BetterBlizzPlatesDB.enemyColorNameRGB or BetterBlizzPlatesDB.friendlyColorNameRGB
+            local color = isEnemy and db.enemyColorNameRGB or db.friendlyColorNameRGB
             frame.name:SetVertexColor(unpack(color))
         end
     elseif ((isEnemy or isNeutral) and enemyColorName) or (isFriend and friendlyColorName) then
-        local color = ((isEnemy or (isNeutral and UnitAffectingCombat(frame.unit))) and BetterBlizzPlatesDB.enemyColorNameRGB) or (isNeutral and BetterBlizzPlatesDB.enemyNeutralColorNameRGB) or (isFriend and BetterBlizzPlatesDB.friendlyColorNameRGB)
+        local color = ((isEnemy or (isNeutral and UnitAffectingCombat(frame.unit))) and db.enemyColorNameRGB) or (isNeutral and db.enemyNeutralColorNameRGB) or (isFriend and db.friendlyColorNameRGB)
         frame.name:SetVertexColor(unpack(color))
     end
 
@@ -2873,8 +2892,23 @@ function BBP.ClassColorAndScaleNames(frame)
     else
         scale = enemyScale or 1
     end
-    frame.name:SetIgnoreParentScale(true)
-    frame.name:SetScale(scale)
+    -- 2xSetIgnoreParentScale fixes size jumping to wrong size when adjusting. Absolutely no idea why or what would be a better fix.
+    if db.useFakeName and db.fakeNameScaleWithParent then
+        frame.name:SetIgnoreParentScale(true)
+        frame.HealthBarsContainer.healthBar.TextString:SetIgnoreParentScale(true)
+        frame.name:SetScale(scale)
+        frame.HealthBarsContainer.healthBar.TextString:SetScale(scale)
+        frame.name:SetIgnoreParentScale(false)
+        frame.HealthBarsContainer.healthBar.TextString:SetIgnoreParentScale(false)
+    else
+        local scaleWithNp = (db.scaleNpNameWithParent and true) or false
+        frame.name:SetIgnoreParentScale(scaleWithNp)
+        frame.HealthBarsContainer.healthBar.TextString:SetIgnoreParentScale(scaleWithNp)
+        frame.name:SetScale(scale)
+        frame.HealthBarsContainer.healthBar.TextString:SetScale(scale)
+        frame.name:SetIgnoreParentScale(not scaleWithNp)
+        frame.HealthBarsContainer.healthBar.TextString:SetIgnoreParentScale(not scaleWithNp)
+    end
 end
 
 
@@ -4959,11 +4993,6 @@ end)
 
 
 function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
-    if true then return end
-	if frame.UpdateHealthColorOverride and frame:UpdateHealthColorOverride() then
-		return;
-	end
-
     if not frame or not frame.unit then return end
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     --local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
@@ -6746,15 +6775,15 @@ local function SetNameplateBehavior()
     else
         if BBP.isInPvE then
             if BetterBlizzPlatesDB.friendlyHideHealthBar and not BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve then
-                C_CVar.SetCVar('nameplateShowOnlyNames', 1)
+                C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 1)
             else
-                C_CVar.SetCVar('nameplateShowOnlyNames', 0)
+                C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 0)
             end
             if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then C_CVar.SetCVar("UnitNameFriendlyPlayerName", 0) end
             BBP.ApplyNameplateWidth()
         else
-            --if BetterBlizzPlatesDB.friendlyHideHealthBar then C_CVar.SetCVar('nameplateShowOnlyNames', 0) end
-            C_CVar.SetCVar('nameplateShowOnlyNames', 0)
+            --if BetterBlizzPlatesDB.friendlyHideHealthBar then C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 0) end
+            C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 0)
             if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then C_CVar.SetCVar("UnitNameFriendlyPlayerName", 1) end
             BBP.ApplyNameplateWidth()
         end
@@ -6853,7 +6882,7 @@ hooksecurefunc (NamePlateDriverFrame, "UpdateNamePlateOptions", function()
     if BBP.isInPvE and hideFriendlyCastbar then
         for _, plateFrame in pairs(C_NamePlate.GetNamePlates(true)) do
             if (plateFrame) then
-                if GetCVarBool ("nameplateShowOnlyNames") then
+                if GetCVarBool ("nameplateShowOnlyNameForFriendlyPlayerUnits") then
                     TextureLoadingGroupMixin.RemoveTexture({ textures = plateFrame.UnitFrame.castBar }, "showCastbar")
                 else
                     TextureLoadingGroupMixin.AddTexture({ textures = plateFrame.UnitFrame.castBar }, "showCastbar")
@@ -8028,6 +8057,9 @@ NameplatePostCombatUpdater:SetScript("OnEvent", ApplyNameplateUpdates)
 hooksecurefunc(NamePlateDriverFrame, "UpdateNamePlateOptions", function()
     if (BetterBlizzPlatesDB and BetterBlizzPlatesDB.removeRealmNames) then
         setNil(NamePlateFriendlyFrameOptions, "updateNameUsesGetUnitName")
+    end
+    if C_CVar.GetCVarBool("nameplateShowOnlyNameForFriendlyPlayerUnits") then
+        setNil(NamePlateFriendlyFrameOptions, "showLevel")
     end
     if InCombatLockdown() then
         if not needsNameplateUpdate then
