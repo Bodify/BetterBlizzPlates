@@ -7626,18 +7626,17 @@ function BBP.HideHealthbarInPvEMagicCaller()
 end
 
 local function HookNpFlagUpdates()
-    -- BBP.isMidnight -- Fix this to get texture from the old arena frames, they might have orb texture? or at least do unitisunit then add flag/orb texture
-    -- if BetterBlizzPlatesDB.classIndicator or BetterBlizzPlatesDB.bgIndicator then
-    --     hooksecurefunc("CompactUnitFrame_UpdatePvPClassificationIndicator", function(frame)
-    --         if frame:IsForbidden() or not BBP.isInPvP or not UnitIsPlayer(frame.unit) or UnitPvpClassification(frame.unit) then return end
-    --         if frame.classIndicator and frame.classIndicator.flagActive then
-    --             BBP.ClassIndicator(frame)
-    --         end
-    --         if frame.bgIndicator and frame.bgIndicator.flagActive then
-    --             BBP.BgIndicator(frame)
-    --         end
-    --     end)
-    -- end
+    if BetterBlizzPlatesDB.classIndicator or BetterBlizzPlatesDB.bgIndicator then
+        hooksecurefunc(NamePlateClassificationFrameMixin, "ShouldShowPvPClassificationIndicator", function(frame)
+            if frame:IsForbidden() or not BBP.isInPvP or not UnitIsPlayer(frame.unit) or UnitPvpClassification(frame.unit) then return end
+            if frame.classIndicator and frame.classIndicator.flagActive then
+                BBP.ClassIndicator(frame)
+            end
+            if frame.bgIndicator and frame.bgIndicator.flagActive then
+                BBP.BgIndicator(frame)
+            end
+        end)
+    end
 end
 
 local function MoveableSettingsPanel()
