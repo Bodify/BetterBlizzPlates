@@ -6,8 +6,9 @@
 - Quest Indicator: If friendly npc healthbars are hidden quest indicator on friendly npcs now still shows and attaches to name instead.
 - Fix stacking nameplates checkboxes not properly displaying their state as enabled when they were on Midnight, TBC and MoP.
 ## Midnight
-### TWeak
+### Tweak
 - Update Disc (JustDiscipline) profile (www.youtube.com/@JustDiscipline)
+- Tweak nameplate vertical position update call to hopefully avoid lua error.
 ### Bugfix
 - Fix execute indicator color warping the nameplate texture.
 ## TBC/MoP
