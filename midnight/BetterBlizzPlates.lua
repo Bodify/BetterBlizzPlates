@@ -7759,10 +7759,10 @@ local function HookNpFlagUpdates()
     if BetterBlizzPlatesDB.classIndicator or BetterBlizzPlatesDB.bgIndicator then
         hooksecurefunc(NamePlateClassificationFrameMixin, "ShouldShowPvPClassificationIndicator", function(frame)
             if frame:IsForbidden() or not BBP.isInPvP or not UnitIsPlayer(frame.unit) or UnitPvpClassification(frame.unit) then return end
-            if frame.classIndicator and frame.classIndicator.flagActive then
+            if frame.classIndicator then
                 BBP.ClassIndicator(frame)
             end
-            if frame.bgIndicator and frame.bgIndicator.flagActive then
+            if frame.bgIndicator then
                 BBP.BgIndicator(frame)
             end
         end)

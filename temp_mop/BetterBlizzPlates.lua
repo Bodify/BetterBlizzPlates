@@ -6976,6 +6976,23 @@ function BBP.HideHealthbarInPvEMagicCaller()
     HideHealthbarInPvEMagic()
 end
 
+local function HookNpFlagUpdates()
+    if BetterBlizzPlatesDB.classIndicator or BetterBlizzPlatesDB.bgIndicator then
+        if not NamePlateClassificationFrameMixin or not NamePlateClassificationFrameMixin.ShouldShowPvPClassificationIndicator then
+            return
+        end
+        hooksecurefunc(NamePlateClassificationFrameMixin, "ShouldShowPvPClassificationIndicator", function(frame)
+            if frame:IsForbidden() or not BBP.isInPvP or not UnitIsPlayer(frame.unit) or UnitPvpClassification(frame.unit) then return end
+            if frame.classIndicator then
+                BBP.ClassIndicator(frame)
+            end
+            if frame.bgIndicator then
+                BBP.BgIndicator(frame)
+            end
+        end)
+    end
+end
+
 -- Event registration for PLAYER_LOGIN
 local Frame = CreateFrame("Frame")
 Frame:RegisterEvent("PLAYER_LOGIN")
@@ -7003,6 +7020,7 @@ Frame:SetScript("OnEvent", function(...)
     if BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true or GetCVarBool("nameplateShowSelf") then
         BBP.TargetResourceUpdater()
     end
+    HookNpFlagUpdates()
 
     -- local useCustomFont = BetterBlizzPlatesDB.useCustomFont
     -- if useCustomFont then
