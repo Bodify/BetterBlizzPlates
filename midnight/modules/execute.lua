@@ -214,8 +214,19 @@ function BBP.ExecuteIndicator(frame)
 
     if config.executeIndicatorInRangeColor and config.executeIndicatorInRangeColorRGB then
         if not frame.executeColorOverlay then
-            frame.executeColorOverlay = frame.healthBar:CreateTexture(nil, "ARTWORK", nil, 1)
-            frame.executeColorOverlay:SetAllPoints(frame.healthBar:GetStatusBarTexture())
+            frame.executeColorOverlay = CreateFrame("StatusBar", nil, frame.healthBar)
+            frame.executeColorOverlay:SetAllPoints(frame.healthBar)
+            frame.executeColorOverlay:SetFrameLevel(frame.healthBar:GetFrameLevel() + 1)
+            frame.executeColorOverlay:SetMinMaxValues(frame.healthBar:GetMinMaxValues())
+            frame.executeColorOverlay:SetValue(frame.healthBar:GetValue())
+            frame.healthBar:HookScript("OnValueChanged", function(_, value)
+                if frame:IsForbidden() then return end
+                frame.executeColorOverlay:SetValue(value)
+            end)
+            frame.healthBar:HookScript("OnMinMaxChanged", function(_, min, max)
+                if frame:IsForbidden() then return end
+                frame.executeColorOverlay:SetMinMaxValues(min, max)
+            end)
         end
         local db = BetterBlizzPlatesDB
         local overrideTex
@@ -225,18 +236,20 @@ function BBP.ExecuteIndicator(frame)
             overrideTex = LSM:Fetch(LSM.MediaType.STATUSBAR, db.focusTargetIndicatorTexture)
         end
         if overrideTex then
-            frame.executeColorOverlay:SetTexture(overrideTex)
+            frame.executeColorOverlay:SetStatusBarTexture(overrideTex)
         elseif db.useCustomTextureForBars then
-            frame.executeColorOverlay:SetTexture(frame.healthBar:GetStatusBarTexture():GetTexture())
+            frame.executeColorOverlay:SetStatusBarTexture(frame.healthBar:GetStatusBarTexture():GetTexture())
         else
-            frame.executeColorOverlay:SetAtlas(frame.healthBar:GetStatusBarTexture():GetAtlas())
+            local atlas = frame.healthBar:GetStatusBarTexture():GetAtlas()
+            frame.executeColorOverlay:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
+            frame.executeColorOverlay:GetStatusBarTexture():SetAtlas(atlas)
         end
         local r, g, b = unpack(config.executeIndicatorInRangeColorRGB)
-        frame.executeColorOverlay:SetVertexColor(r, g, b, 1)
+        frame.executeColorOverlay:SetStatusBarColor(r, g, b, 1)
         frame.executeColorOverlay:SetAlpha(belowThreshold)
 
         if not BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.classicRetailNameplates then
-            BBP.ApplyMidnightMask(frame, frame.executeColorOverlay)
+            BBP.ApplyMidnightMask(frame, frame.executeColorOverlay:GetStatusBarTexture())
         end
     else
         if frame.executeColorOverlay then

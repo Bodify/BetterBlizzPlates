@@ -5708,6 +5708,36 @@ local function guiPositionAndScale()
     local questTestIcons2 = CreateCheckbox("questIndicatorTestMode", "Test", contentFrame)
     questTestIcons2:SetPoint("TOPLEFT", questIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
+    anchorSubquest.questIndicatorColorNpc = CreateCheckbox("questIndicatorColorNpc", "Color NPC", contentFrame)
+    anchorSubquest.questIndicatorColorNpc:SetPoint("TOPLEFT", questTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubquest.questIndicatorColorNpc, "Color Quest NPC", "Color the healthbar of quest NPCs.\n\n|cff32f795Right-click to change color.|r")
+
+    anchorSubquest.questIndicatorColorNpc:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            BBP.needsUpdate = true
+            local r, g, b = unpack(BetterBlizzPlatesDB.questIndicatorColorNpcRGB or {1, 0.502, 0})
+            ColorPickerFrame:SetupColorPickerAndShow({
+                r = r, g = g, b = b,
+                swatchFunc = function()
+                    local r, g, b = ColorPickerFrame:GetColorRGB()
+                    BetterBlizzPlatesDB.questIndicatorColorNpcRGB = { r, g, b }
+                    BBP.RefreshAllNameplates()
+                    anchorSubquest.questIndicatorColorNpc.Text:SetTextColor(unpack(BetterBlizzPlatesDB.questIndicatorColorNpcRGB))
+                end,
+                cancelFunc = function(previousValues)
+                    local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                    BetterBlizzPlatesDB.questIndicatorColorNpcRGB = { r, g, b }
+                    BBP.RefreshAllNameplates()
+                    anchorSubquest.questIndicatorColorNpc.Text:SetTextColor(unpack(BetterBlizzPlatesDB.questIndicatorColorNpcRGB))
+                end,
+            })
+        end
+    end)
+
+    if BetterBlizzPlatesDB.questIndicatorColorNpc then
+        anchorSubquest.questIndicatorColorNpc.Text:SetTextColor(unpack(BetterBlizzPlatesDB.questIndicatorColorNpcRGB or {1, 0.502, 0}))
+    end
+
     ----------------------
     -- Focus Target Indicator
     ----------------------

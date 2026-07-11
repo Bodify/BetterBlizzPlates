@@ -4853,7 +4853,7 @@ local function guiGeneralTab()
     smallPetsInPvP:SetPoint("LEFT", healthNumbers.text, "RIGHT", 0, 0)
     CreateTooltipTwo(smallPetsInPvP, "Small Pets in PvP", "Reduce the width of all pet nameplates, and the width of all npc nameplates in PvP.\n\n|cff32f795Right-click to adjust width.|r", "Totem Indicator NPCs will stay full width unless specified otherwise in the Totem Indicator List section.")
 
-    local smallPetsWidthSlider = CreateSlider(BetterBlizzPlates, "Small Pets Width", 2, 40, 1, "smallPetsWidth", nil, 120)
+    local smallPetsWidthSlider = CreateSlider(BetterBlizzPlates, "Small Pets Width", 2, 70, 1, "smallPetsWidth", nil, 120)
     smallPetsWidthSlider:SetPoint("BOTTOMLEFT", smallPetsInPvP, "TOPLEFT", 5, 5)
     smallPetsWidthSlider:Hide()
     CreateTooltipTwo(smallPetsWidthSlider, "Small Pets Width", "Adjust the width used for small pet/npc nameplates.", "Right-click the slider to type a value outside the default range.")
@@ -6773,6 +6773,36 @@ local function guiPositionAndScale()
 
     local questTestIcons2 = CreateCheckbox("questIndicatorTestMode", "Test", contentFrame)
     questTestIcons2:SetPoint("TOPLEFT", questIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
+
+    anchorSubquest.questIndicatorColorNpc = CreateCheckbox("questIndicatorColorNpc", "Color NPC", contentFrame)
+    anchorSubquest.questIndicatorColorNpc:SetPoint("TOPLEFT", questTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubquest.questIndicatorColorNpc, "Color Quest NPC", "Color the healthbar of quest NPCs.\n\n|cff32f795Right-click to change color.|r")
+
+    anchorSubquest.questIndicatorColorNpc:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            BBP.needsUpdate = true
+            local r, g, b = unpack(BetterBlizzPlatesDB.questIndicatorColorNpcRGB or {1, 0.502, 0})
+            ColorPickerFrame:SetupColorPickerAndShow({
+                r = r, g = g, b = b,
+                swatchFunc = function()
+                    local r, g, b = ColorPickerFrame:GetColorRGB()
+                    BetterBlizzPlatesDB.questIndicatorColorNpcRGB = { r, g, b }
+                    BBP.RefreshAllNameplates()
+                    anchorSubquest.questIndicatorColorNpc.Text:SetTextColor(unpack(BetterBlizzPlatesDB.questIndicatorColorNpcRGB))
+                end,
+                cancelFunc = function(previousValues)
+                    local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                    BetterBlizzPlatesDB.questIndicatorColorNpcRGB = { r, g, b }
+                    BBP.RefreshAllNameplates()
+                    anchorSubquest.questIndicatorColorNpc.Text:SetTextColor(unpack(BetterBlizzPlatesDB.questIndicatorColorNpcRGB))
+                end,
+            })
+        end
+    end)
+
+    if BetterBlizzPlatesDB.questIndicatorColorNpc then
+        anchorSubquest.questIndicatorColorNpc.Text:SetTextColor(unpack(BetterBlizzPlatesDB.questIndicatorColorNpcRGB or {1, 0.502, 0}))
+    end
 
     ----------------------
     -- Focus Target Indicator
@@ -10239,6 +10269,10 @@ local function guiNameplateAuras()
     CreateTooltipTwo(nameplateAuraTooltip, "Show Tooltip", "Show tooltip on nameplate auras.")
     nameplateAuraTooltip:HookScript("OnClick", function() StaticPopup_Show("BBP_CONFIRM_RELOAD")end)
 
+    local hideNpAurasOnUnattackableEnemies = CreateCheckbox("hideNpAurasOnUnattackableEnemies", "Hide Auras on Unattackable Enemies", enableNameplateAuraCustomisation)
+    hideNpAurasOnUnattackableEnemies:SetPoint("TOPLEFT", nameplateAuraTooltip, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(hideNpAurasOnUnattackableEnemies, "Hide Auras on Unattackable Enemies", "Hide nameplate auras on enemies you cannot attack.")
+
     local nameplateAuraTypeGap = CreateSlider(enableNameplateAuraCustomisation, "Gap between Buffs and Debuffs", -100, 100, 0.5, "nameplateAuraTypeGap")
     nameplateAuraTypeGap:SetPoint("LEFT", separateAuraBuffRow.text,  "RIGHT", 0, 0)
     CreateTooltipTwo(nameplateAuraTypeGap, "Gap between Buffs and Debuffs", "The vertical gap between Buffs and Debuffs (0 is default).\n\nOnly works if \"Separate Buff Row\" is enabled.", nil, "ANCHOR_LEFT")
@@ -10362,6 +10396,14 @@ local function guiCVarControl()
         if not BBP.variablesLoaded then
             C_Timer.After(0.1, InitStackingSliders)
             return
+        end
+        local bf = BetterBlizzPlatesDB.bitfields and BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"]
+        if bf then
+            nameplateStackingEnemy:SetChecked(bf[tostring(Enum.NamePlateStackType.Enemy)] and true or false)
+            nameplateStackingFriendly:SetChecked(bf[tostring(Enum.NamePlateStackType.Friendly)] and true or false)
+        else
+            nameplateStackingEnemy:SetChecked(C_CVar.GetCVarBitfield("nameplateStackingTypes", Enum.NamePlateStackType.Enemy) and true or false)
+            nameplateStackingFriendly:SetChecked(C_CVar.GetCVarBitfield("nameplateStackingTypes", Enum.NamePlateStackType.Friendly) and true or false)
         end
         ToggleStackingSliders()
     end

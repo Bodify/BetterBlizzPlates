@@ -245,6 +245,8 @@ local defaultSettings = {
     combatIndicatorXPos = 0,
     combatIndicatorYPos = 0,
     combatIndicatorAnchor = "CENTER",
+    -- HP Bar End Line
+    hpEndLine = false,
     -- Execute Indicator
     executeIndicator = false,
     executeIndicatorTestMode = false,
@@ -421,6 +423,8 @@ local defaultSettings = {
     questIndicatorYPos = 0,
     questIndicatorAnchor = "LEFT",
     questIndicatorTestMode = false,
+    questIndicatorColorNpc = false,
+    questIndicatorColorNpcRGB = {1, 0.502, 0, 1},
     -- Font and texture
     customFontSizeEnabled = false,
     customFontSize = 12,
@@ -815,7 +819,9 @@ local defaultSettings = {
     ccIconYPos = 0,
     buffIconAnchor = "LEFT",
     buffIconXPos = 0,
-    buffIconYPos = 0
+    buffIconYPos = 0,
+
+    hideNameShowTarget = false
 
 }
 
@@ -1971,11 +1977,11 @@ function BBP.HookNameplatePosition(frame, nameplate)
             if SettingsPanel:IsShown() then return end
             if self:IsForbidden() then return end
             --if self.unit and UnitIsUnit(self.unit, "player") then return end
-            --C_Timer.After(0, function()
+            C_Timer.After(0, function()
                 if not frame or frame:IsForbidden() then return end
                 frame:ClearPoint("BOTTOMLEFT")
                 frame:SetPoint("BOTTOMLEFT", nameplate, "BOTTOMLEFT", BetterBlizzPlatesDB.nameplateHorizontalPosition or 0, BetterBlizzPlatesDB.nameplateVerticalPosition or 0)
-            --end)
+            end)
         end)
     end
     frame:ClearPoint("BOTTOMLEFT")
@@ -2094,6 +2100,7 @@ local function InitializeNameplateSettings(frame)
             useFakeName = BetterBlizzPlatesDB.useFakeName,
             hideEnemyNameText = BetterBlizzPlatesDB.hideEnemyNameText,
             hideFriendlyNameText = BetterBlizzPlatesDB.hideFriendlyNameText,
+            hideNameShowTarget = BetterBlizzPlatesDB.hideNameShowTarget,
             anonModeOn = BetterBlizzPlatesDB.anonMode,
             pvpTitleModeOn = BetterBlizzPlatesDB.pvpTitleMode,
             changeHealthbarHeight = BetterBlizzPlatesDB.changeHealthbarHeight,
@@ -2113,6 +2120,7 @@ local function InitializeNameplateSettings(frame)
             smallPetsInPvP = BetterBlizzPlatesDB.smallPetsInPvP,
             hideEliteDragon = BetterBlizzPlatesDB.hideEliteDragon,
             personalBarTweaks = BetterBlizzPlatesDB.personalBarTweaks,
+            hpEndLine = BetterBlizzPlatesDB.hpEndLine,
         }
         if frame.BetterBlizzPlates.config.changeHealthbarHeight then
             frame.BetterBlizzPlates.config.hpHeightEnemy = BetterBlizzPlatesDB.hpHeightEnemy
@@ -3354,7 +3362,7 @@ local function SetBarWidth(frame, width, useOffsets)
 end
 
 local function SetFriendlyBarWidthTemp(frame)
-    if frame:IsForbidden() or not frame.unit or UnitCanAttack("player", frame.unit) then return end
+    if frame:IsForbidden() or not frame.unit or isEnemy(frame.unit) then return end
     local width = (BetterBlizzPlatesDB.nameplateFriendlyWidth or 172.5)/2
 
     frame.HealthBarsContainer:ClearPoint("RIGHT")
@@ -4067,6 +4075,10 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         ColorNameplateByReaction(frame)
     end
 
+    if frame.isQuestNpc then
+        frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
+    end
+
     if config.colorNPC then--and config.npcHealthbarColor then --bodify need npc check here since it can run before np added
         --frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
         BBP.ColorNpcHealthbar(frame)
@@ -4228,6 +4240,10 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 
     if config.colorNPC and config.npcHealthbarColor then
         frame.healthBar:SetStatusBarColor(unpack(config.npcHealthbarColor))
+    end
+
+    if frame.isQuestNpc then
+        frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
     end
 
     if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
@@ -5243,6 +5259,7 @@ local function HandleNamePlateRemoved(unit)
     if not frame then return end
 
     frame.bbpHiddenNPC = nil
+    frame.isQuestNpc = nil
     frame.ciChange = nil
     frame:SetScale(1)
     frame:SetAlpha(1)
@@ -6804,6 +6821,9 @@ local function HandleNamePlateAdded(unit)
     -- Show absorb amount
     if config.absorbIndicator then BBP.AbsorbIndicator(frame) end
 
+    -- Show HP Bar End Line
+    if config.hpEndLine then BBP.HpBarEndLine(frame) end
+
     -- Show Execute Indicator
     if config.executeIndicator then BBP.ExecuteIndicator(frame) end
 
@@ -7218,6 +7238,7 @@ function BBP.ConsolidatedUpdateName(frame)
         config.colorNPCName = BetterBlizzPlatesDB.colorNPCName
         config.hideFriendlyNameText = BetterBlizzPlatesDB.hideFriendlyNameText
         config.hideEnemyNameText = BetterBlizzPlatesDB.hideEnemyNameText
+        config.hideNameShowTarget = BetterBlizzPlatesDB.hideNameShowTarget
         config.colorTargetName = BetterBlizzPlatesDB.targetIndicatorColorName and BetterBlizzPlatesDB.targetIndicator
         config.targetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB
         config.colorFocusName = BetterBlizzPlatesDB.focusTargetIndicatorColorName and BetterBlizzPlatesDB.focusTargetIndicator
@@ -7253,10 +7274,12 @@ function BBP.ConsolidatedUpdateName(frame)
     end
 
     if frame.castHiddenName then
-        -- frame.name:SetText("")
-        frame.name:SetAlpha(0)
-        frame.nameHidden = true
-        return
+        if not (config.hideNameShowTarget and UnitIsUnit(frame.unit, "target")) then
+            -- frame.name:SetText("")
+            frame.name:SetAlpha(0)
+            frame.nameHidden = true
+            return
+        end
     end
 
     --frame.name:SetFontHeight(cachedNameSize)
@@ -7377,6 +7400,9 @@ function BBP.ConsolidatedUpdateName(frame)
         frame.nameHidden = true
     elseif config.classIndicator and config.classIconHealthNumbers then
         BBP.UpdateHealthText(frame)
+    end
+    if config.hideNameShowTarget and UnitIsUnit(frame.unit, "target") then
+        frame.name:SetAlpha(1)
     end
 end
 -- Use the consolidated function to hook into CompactUnitFrame_UpdateName
@@ -7547,6 +7573,110 @@ function BBP.CheckIfInInstanceCaller()
 end
 
 local hookedGetNamePlateTypeFromUnit = false
+
+local hpEndLineCurve
+local function GetHpEndLineCurve()
+    if not hpEndLineCurve then
+        hpEndLineCurve = C_CurveUtil.CreateCurve()
+        hpEndLineCurve:SetType(Enum.LuaCurveType.Linear)
+        hpEndLineCurve:AddPoint(0.0, 1)
+        hpEndLineCurve:AddPoint(0.98, 1)
+        hpEndLineCurve:AddPoint(0.981, 0)
+        hpEndLineCurve:AddPoint(1.0, 0)
+    end
+    return hpEndLineCurve
+end
+
+function BBP.HpBarEndLine(frame)
+    local config = frame.BetterBlizzPlates.config
+    local info = frame.BetterBlizzPlates.unitInfo
+
+    if not config.hpEndLine then
+        if frame.hpEndLineContainer then frame.hpEndLineContainer:SetAlpha(0) end
+        return
+    end
+
+    -- Load border color settings if needed
+    if not config.hpEndLineInitialized or BBP.needsUpdate then
+        config.npBorderTargetColor = BetterBlizzPlatesDB.npBorderTargetColor
+        config.npBorderFriendFoeColor = BetterBlizzPlatesDB.npBorderFriendFoeColor
+        config.npBorderTargetColorRGB = BetterBlizzPlatesDB.npBorderTargetColorRGB
+        config.npBorderFocusColorRGB = BetterBlizzPlatesDB.npBorderFocusColorRGB
+        config.npBorderEnemyColorRGB = BetterBlizzPlatesDB.npBorderEnemyColorRGB
+        config.npBorderFriendlyColorRGB = BetterBlizzPlatesDB.npBorderFriendlyColorRGB
+        config.npBorderNeutralColorRGB = BetterBlizzPlatesDB.npBorderNeutralColorRGB
+        config.hpEndLineInitialized = true
+    end
+
+    if not frame.hpEndLineContainer then
+        frame.hpEndLineContainer = CreateFrame("Frame", nil, frame.healthBar)
+        frame.hpEndLineContainer:SetFrameLevel(frame.healthBar:GetFrameLevel())
+        frame.hpEndLineContainer:SetAllPoints(frame.healthBar)
+        frame.hpEndLineContainer:SetAlpha(0)
+
+        local hpTex = frame.healthBar:GetStatusBarTexture()
+
+        frame.hpEndLine = frame.hpEndLineContainer:CreateTexture(nil, "ARTWORK", nil, 7)
+        frame.hpEndLine:SetWidth(10.5)
+        frame.hpEndLine:SetAtlas("AnimaChannel-Line-Mask")
+        frame.hpEndLine:SetPoint("TOP", hpTex, "TOPRIGHT", -0.5, 2.7)
+        frame.hpEndLine:SetPoint("BOTTOM", hpTex, "BOTTOMRIGHT", -0.5, -2)
+
+        frame.hpEndLineBg = frame.hpEndLineContainer:CreateTexture(nil, "ARTWORK", nil, 6)
+        frame.hpEndLineBg:SetWidth(7.5)
+        frame.hpEndLineBg:SetAtlas("VAS-charList-arrow-line-beam")
+        frame.hpEndLineBg:SetTexCoord(1, 0, 0, 1)
+        frame.hpEndLineBg:SetPoint("TOPRIGHT", hpTex, "TOPRIGHT", 1, 3)
+        frame.hpEndLineBg:SetPoint("BOTTOMRIGHT", hpTex, "BOTTOMRIGHT", 1, -2)
+        frame.hpEndLineBg:SetVertexColor(0, 0, 0, 1)
+
+        frame.healthBar:HookScript("OnValueChanged", function()
+            if frame:IsForbidden() then return end
+            if not frame.hpEndLineContainer then return end
+            local cfg = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config
+            if not cfg or not cfg.hpEndLine then
+                frame.hpEndLineContainer:SetAlpha(0)
+                return
+            end
+            local unit = frame.displayedUnit or frame.unit
+            if not unit then return end
+            local belowThreshold = UnitHealthPercent(unit, true, GetHpEndLineCurve())
+            local nfo = frame.BetterBlizzPlates.unitInfo
+            frame.hpEndLineContainer:SetAlpha(nfo and nfo.isTarget and belowThreshold or 0)
+        end)
+    end
+
+    local r, g, b, a = 1, 1, 1, 1
+    if config.changeNameplateBorderColor then
+        if info.isTarget and config.npBorderTargetColor then
+            r, g, b, a = unpack(config.npBorderTargetColorRGB)
+        elseif info.isFocus and config.npBorderTargetColor then
+            r, g, b, a = unpack(config.npBorderFocusColorRGB)
+        elseif config.npBorderFriendFoeColor then
+            if info.isEnemy then
+                r, g, b, a = unpack(config.npBorderEnemyColorRGB)
+            elseif info.isNeutral then
+                r, g, b, a = unpack(config.npBorderNeutralColorRGB)
+            elseif info.isFriend then
+                r, g, b, a = unpack(config.npBorderFriendlyColorRGB)
+            end
+        end
+    end
+
+    frame.hpEndLine:SetVertexColor(r, g, b, a)
+
+    local unit = frame.displayedUnit or frame.unit
+    local belowThreshold = UnitHealthPercent(unit, true, GetHpEndLineCurve())
+    frame.hpEndLineContainer:SetAlpha(info.isTarget and belowThreshold or 0)
+end
+
+function BBP.ToggleHpEndLine()
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        if not nameplate.UnitFrame:IsForbidden() then
+            BBP.HpBarEndLine(nameplate.UnitFrame)
+        end
+    end
+end
 
 function BBP.ToggleHideHealthbar()
     BetterBlizzPlatesDB.friendlyHideHealthBar = not BetterBlizzPlatesDB.friendlyHideHealthBar
@@ -7997,6 +8127,7 @@ local function TurnOnEnabledFeaturesOnLogin()
     BBP.ToggleAbsorbIndicator()
     BBP.ToggleCombatIndicator()
     BBP.ToggleExecuteIndicator()
+    BBP.ToggleHpEndLine()
     BBP.ToggleFactionIndicator()
     BBP:RegisterTargetCastingEvents()
     BBP.ToggleHealthNumbers()

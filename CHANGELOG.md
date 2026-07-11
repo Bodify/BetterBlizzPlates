@@ -1,3 +1,23 @@
+# BetterBlizzPlates 2.0.7
+## All versions
+### New
+- Quest Indicator: Now has a "Color" option in Advanced Settings that also colors the healthbar of the nameplate.
+### Tweak
+- Quest Indicator: If friendly npc healthbars are hidden quest indicator on friendly npcs now still shows and attaches to name instead.
+- Fix stacking nameplates checkboxes not properly displaying their state as enabled when they were on Midnight, TBC and MoP.
+## Midnight
+### TWeak
+- Update Disc (JustDiscipline) profile (www.youtube.com/@JustDiscipline)
+### Bugfix
+- Fix execute indicator color warping the nameplate texture.
+## TBC/MoP
+### New
+- New setting that hides nameplate auras for unattackable enemies (Nameplate Auras). On by default to reduce clutter.
+### Tweak
+- Adjust friend/foe detecting in the new nameplate width stuff. Should solve issues in cities.
+- The "Small Pets" width has been increase a little bit and the slider now also lets you go up to 70. Reminder that ALL sliders can be right clicked to input a custom value, even one outside of the default range. Tell your friends.
+- Sort some font issues. Should hopefully be more consistent now.
+
 # BetterBlizzPlates 2.0.6f
 ## Midnight
 ### Bugfix

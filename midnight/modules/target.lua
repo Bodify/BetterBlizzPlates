@@ -639,6 +639,8 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
 
+            if db.hpEndLine then BBP.HpBarEndLine(frame) end
+
             BBP.ToggleNameplateAuras(frame)
             BBP.TargetNameplateAuraSize(frame)
         end
@@ -750,6 +752,8 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
         if config.petIndicatorHideSecondaryPets then
             BBP.PetIndicator(frame)
         end
+
+        if db.hpEndLine then BBP.HpBarEndLine(frame) end
 
         BBP.previousTargetNameplate = frame
     end

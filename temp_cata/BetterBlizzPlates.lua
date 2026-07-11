@@ -114,6 +114,7 @@ local defaultSettings = {
     nameplateVerticalPosition = 0,
     smallPetsWidth = 20,
     nameplateNonTargetAlpha = 0.5,
+    hideNpAurasOnUnattackableEnemies = true,
 
     mopUpdated = true,
     -- Enemy
@@ -302,6 +303,8 @@ local defaultSettings = {
     questIndicatorYPos = 0,
     questIndicatorAnchor = "LEFT",
     questIndicatorTestMode = false,
+    questIndicatorColorNpc = false,
+    questIndicatorColorNpcRGB = {1, 0.502, 0, 1},
     -- Font and texture
     customFontSizeEnabled = false,
     customFontSize = 12,
@@ -4265,6 +4268,10 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         ColorNameplateByReaction(frame)
     end
 
+    if frame.isQuestNpc then
+        frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
+    end
+
     if config.colorNPC then--and config.npcHealthbarColor then --bodify need npc check here since it can run before np added
         --frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
         BBP.ColorNpcHealthbar(frame)
@@ -4404,6 +4411,10 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 
     if config.friendlyHealthBarColor or config.enemyHealthBarColor then
         ColorNameplateByReaction(frame)
+    end
+
+    if frame.isQuestNpc then
+        frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
     end
 
     if config.colorNPC and config.npcHealthbarColor then
@@ -4820,6 +4831,7 @@ local function HandleNamePlateRemoved(unit)
     if not frame then return end
 
     frame.bbpHiddenNPC = nil
+    frame.isQuestNpc = nil
     frame:SetAlpha(1)
     frame:SetScale(1)
     frame.name:SetAlpha(1)

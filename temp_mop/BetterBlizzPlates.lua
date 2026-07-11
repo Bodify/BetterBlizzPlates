@@ -138,6 +138,7 @@ local defaultSettings = {
     nameplateClickVerticalAdjustment = 0,
     smallPetsWidth = 20,
     nameplateNonTargetAlpha = 0.5,
+    hideNpAurasOnUnattackableEnemies = true,
 
     mopUpdated = true,
     -- Enemy
@@ -326,6 +327,8 @@ local defaultSettings = {
     questIndicatorYPos = 0,
     questIndicatorAnchor = "LEFT",
     questIndicatorTestMode = false,
+    questIndicatorColorNpc = false,
+    questIndicatorColorNpcRGB = {1, 0.502, 0, 1},
     -- Font and texture
     customFontSizeEnabled = false,
     customFontSize = 12,
@@ -2198,6 +2201,18 @@ function BBP.GetOppositeAnchor(anchor)
     return opposites[anchor] or "CENTER"
 end
 
+local function setNil(table, member)
+    TextureLoadingGroupMixin.RemoveTexture(
+        { textures = table }, member
+    )
+end
+
+local function setTrue(table, member)
+    TextureLoadingGroupMixin.AddTexture(
+        { textures = table }, member
+    )
+end
+
 --#################################################################################################
 -- Set nameplate width
 local warningPrint
@@ -2211,6 +2226,12 @@ function BBP.ApplyNameplateWidth()
         local healthBarHeight = 55--BetterBlizzPlatesDB.nameplateGeneralHeight or 65
         local isBlizzardClassicStyle = tonumber(GetCVar("nameplateStyle")) == Enum.NamePlateStyle.Classic
 
+        if C_CVar.GetCVarBool("nameplateShowOnlyNameForFriendlyPlayerUnits") then
+            setNil(NamePlateFriendlyFrameOptions, "showLevel")
+        elseif not BBP.isInPvE and isBlizzardClassicStyle then
+            setTrue(NamePlateFriendlyFrameOptions, "showLevel")
+        end
+
         if isBlizzardClassicStyle and BBP.isInPvE
            and (C_CVar.GetCVarBool("nameplateShowFriendlyPlayers") or C_CVar.GetCVarBool("nameplateShowFriendlyNpcs"))
            and (not C_CVar.GetCVarBool("nameplateShowOnlyNameForFriendlyPlayerUnits") or C_CVar.GetCVarBool("nameplateShowFriendlyNpcs"))
@@ -2219,7 +2240,7 @@ function BBP.ApplyNameplateWidth()
                 if not warningPrint then
                     warningPrint = true
                     C_Timer.After(3, function()
-                        BBP.Print("|cffff0000Warning:|r Due to Blizzard's Classic nameplate style the nameplate width is capped at 151 to fit friendly nameplate healthbar borders. This will cause any width beyond 151 to be un-clickable on enemy nameplates. The left and right edges of the enemy nameplate may not be clickable with your current settings.")
+                        BBP.Print("|cffff0000Warning:|r Due to Blizzard's Classic nameplate style the nameplate width is capped at 151 to fit friendly nameplate healthbar borders. Your enemy width is set above that. This will cause any width beyond 151 to be un-clickable on enemy nameplates. The left and right edges of the enemy nameplate may not be clickable with your current settings.")
                     end)
                 end
             end
@@ -3437,7 +3458,7 @@ local function SetFriendlyBarWidthTemp(frame)
     frame.healthBar:ClearPoint("BOTTOMRIGHT")
     frame.healthBar:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPLEFT", 0, 0)
     frame.healthBar:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", 0, 0)
-    if not frame.unit or UnitCanAttack("player", frame.unit) then
+    if not frame.unit or isEnemy(frame.unit) then
         --if frame.bbpWidthAdjusted then
             local width = frame.bbpForcedWidth or ((db.nameplateEnemyWidth or 172.5)/2)
 
@@ -3514,10 +3535,10 @@ local function SmallPetsInPvP(frame)
                     end
                 end
             else
-                SetBarWidth(frame, db.smallPetsWidth, false)
+                SetBarWidth(frame, db.smallPetsWidth + (db.classicNameplates and 45 or 15), false)
             end
         else
-            SetBarWidth(frame, db.smallPetsWidth, false)
+            SetBarWidth(frame, db.smallPetsWidth + (db.classicNameplates and 45 or 15), false)
         end
     end
 end
@@ -4935,6 +4956,10 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         ColorNameplateByReaction(frame)
     end
 
+    if frame.isQuestNpc then
+        frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
+    end
+
     if config.colorNPC then--and config.npcHealthbarColor then --bodify need npc check here since it can run before np added
         --frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
         BBP.ColorNpcHealthbar(frame)
@@ -5070,6 +5095,10 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 
     if config.friendlyHealthBarColor or config.enemyHealthBarColor then
         ColorNameplateByReaction(frame)
+    end
+
+    if frame.isQuestNpc then
+        frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
     end
 
     if config.colorNPC and config.npcHealthbarColor then
@@ -5485,6 +5514,7 @@ local function HandleNamePlateRemoved(unit)
     if not frame then return end
 
     frame.bbpHiddenNPC = nil
+    frame.isQuestNpc = nil
     frame:SetAlpha(1)
     frame:SetScale(1)
     frame.name:SetAlpha(1)
@@ -5831,6 +5861,10 @@ local function HandleNamePlateAdded(unit)
     end
 
     BBP.HookCastbarOnEvent(frame)
+
+    if BetterBlizzPlatesDB.useCustomFont then
+        frame.name:SetFont(cachedFont, cachedNameSize, cachedNameOutline)
+    end
 
     if BetterBlizzPlatesDB.hideDeselectNonTargetOverlay then
         frame.HealthBarsContainer.healthBar.deselectedOverlay:SetAlpha(0)
@@ -6247,6 +6281,9 @@ function BBP.RefreshAllNameplates()
         if not frame or frame:IsForbidden() or frame:IsProtected() then return end
         local unitToken = frame.unit
         if not frame.unit then return end
+        if BetterBlizzPlatesDB.useCustomFont then
+            frame.name:SetFont(cachedFont, cachedNameSize, cachedNameOutline)
+        end
 
         --local config = InitializeNameplateSettings(frame)
         local info = GetNameplateUnitInfo(frame)
@@ -6664,18 +6701,6 @@ function BBP.ConsolidatedUpdateName(frame)
 end
 -- Use the consolidated function to hook into CompactUnitFrame_UpdateName
 hooksecurefunc("CompactUnitFrame_UpdateName", BBP.ConsolidatedUpdateName)
-
-local function setNil(table, member)
-    TextureLoadingGroupMixin.RemoveTexture(
-        { textures = table }, member
-    )
-end
-
-local function setTrue(table, member)
-    TextureLoadingGroupMixin.AddTexture(
-        { textures = table }, member
-    )
-end
 
 -- Function to update the instance status
 local function UpdateInstanceStatus()
@@ -8060,6 +8085,8 @@ hooksecurefunc(NamePlateDriverFrame, "UpdateNamePlateOptions", function()
     end
     if C_CVar.GetCVarBool("nameplateShowOnlyNameForFriendlyPlayerUnits") then
         setNil(NamePlateFriendlyFrameOptions, "showLevel")
+    elseif not BBP.isInPvE and tonumber(GetCVar("nameplateStyle")) == Enum.NamePlateStyle.Classic then
+        setTrue(NamePlateFriendlyFrameOptions, "showLevel")
     end
     if InCombatLockdown() then
         if not needsNameplateUpdate then

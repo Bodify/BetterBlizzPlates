@@ -9,7 +9,7 @@ function BBP.QuestIndicator(frame)
 
     -- Initialize
     if not frame.questIndicator then
-        frame.questIndicator = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
+        frame.questIndicator = frame:CreateTexture(nil, "OVERLAY")
         frame.questIndicator:SetAtlas("smallquestbang")
         frame.questIndicator:SetSize(22, 22)
     end
@@ -19,27 +19,63 @@ function BBP.QuestIndicator(frame)
     local yPos = BetterBlizzPlatesDB.questIndicatorYPos or 0
     local testMode = BetterBlizzPlatesDB.questIndicatorTestMode
     local questIndicator = BetterBlizzPlatesDB.questIndicator
+    local anchorToName = BetterBlizzPlatesDB.friendlyHideHealthBar and BetterBlizzPlatesDB.friendlyHideHealthBarNpc and UnitIsFriend(frame.unit, "player")
+    local colorQuestNpc = BetterBlizzPlatesDB.questIndicatorColorNpc
 
     -- Set position and scale dynamically
+    frame.questIndicator:ClearAllPoints()
     if anchorPoint == "LEFT" then
-        frame.questIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos +-8, yPos)
+        if anchorToName then
+            frame.questIndicator:SetPoint("CENTER", frame.name, anchorPoint, xPos +-8, yPos)
+        else
+            frame.questIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos +-8, yPos)
+        end
     else
-        frame.questIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
+        if anchorToName then
+            frame.questIndicator:SetPoint("CENTER", frame.name, anchorPoint, xPos, yPos)
+        else
+            frame.questIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
+        end
     end
     frame.questIndicator:SetScale(BetterBlizzPlatesDB.questIndicatorScale or 1)
 
     -- Test mode
     if testMode then
         frame.questIndicator:Show()
+        if colorQuestNpc then
+            local color = BetterBlizzPlatesDB.questIndicatorColorNpcRGB
+            frame.healthBar:SetStatusBarColor(unpack(color))
+            frame.needsRecolor = true
+            frame.isQuestNpc = color
+        elseif frame.needsRecolor then
+            frame.needsRecolor = nil
+            frame.isQuestNpc = nil
+            BBP.CompactUnitFrame_UpdateHealthColor(frame)
+        end
         return
     end
 
     local inInstance, instanceType = IsInInstance()
     if not inInstance and BBP.IsQuestUnit(frame.unit) and questIndicator then
         frame.questIndicator:Show()
+        if colorQuestNpc then
+            local color = BetterBlizzPlatesDB.questIndicatorColorNpcRGB
+            frame.healthBar:SetStatusBarColor(unpack(color))
+            frame.needsRecolor = true
+            frame.isQuestNpc = color
+        elseif frame.needsRecolor then
+            frame.needsRecolor = nil
+            frame.isQuestNpc = nil
+            BBP.CompactUnitFrame_UpdateHealthColor(frame)
+        end
         return
     end
     frame.questIndicator:Hide()
+    if frame.needsRecolor then
+        frame.needsRecolor = nil
+        frame.isQuestNpc = nil
+        BBP.CompactUnitFrame_UpdateHealthColor(frame)
+    end
 end
 
 

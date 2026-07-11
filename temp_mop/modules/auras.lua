@@ -3472,6 +3472,10 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
 
 
     local BlizzardShouldShowCC = spellsForAllCata[spellId] or spellsForAllMoP[spellId]
+    local hideOnUnattackableEnemies = db["hideNpAurasOnUnattackableEnemies"] and not UnitCanAttack("player", unit) and not isFriend
+    if hideOnUnattackableEnemies then
+        return
+    end
 
     -- PLAYER
     if UnitIsUnit(unit, "player") then
