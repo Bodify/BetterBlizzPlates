@@ -480,6 +480,7 @@ local defaultSettings = {
     otherNpdeBuffFilterWatchList = true,
     otherNpdeBuffFilterLessMinite = false,
     otherNpdeBuffFilterOnlyMe = BBP.isMoP and false or true,
+    otherNpdeBuffFilterBreakCCDots = false,
     otherNpdeBuffPandemicGlow = false,
 
     friendlyNpBuffEnable = false,

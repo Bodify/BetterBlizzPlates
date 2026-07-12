@@ -2233,6 +2233,26 @@ local function GetAuraDetails(spellName, spellId)
     end
     return false, false, false, false, false
 end
+
+local breakCCDotSpellReferences = {
+    172, 980, 603, 2818, 12721, 2944, 133, 8050, 2120, 703, 14914,
+    31803, 12654, 348, 13797, 5570, 33745, 8921, 9007, 11366, 1822,
+    772, 1079, 1943, 27243, 1978, 589, 47897, 18265, 10797, 30108, 34914,
+}
+
+local breakCCDotNameLookup = {}
+
+for _, spellID in ipairs(breakCCDotSpellReferences) do
+    local spellName = GetSpellInfo(spellID)
+    if spellName then
+        breakCCDotNameLookup[spellName] = true
+    end
+end
+
+local function IsBreakCCDotAura(spellName)
+    return breakCCDotNameLookup[spellName]
+end
+
 local importantGlowOffset = 10 * (BetterBlizzPlatesDB.nameplateAuraEnlargedScale or 1)
 local trackedBuffs = {};
 local checkBuffsTimer = nil;
@@ -3733,11 +3753,13 @@ local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride,
             local filterLessMinite = db["otherNpdeBuffFilterLessMinite"]
             local filterOnlyMe = db["otherNpdeBuffFilterOnlyMe"]
             local filterCC = db["otherNpdeBuffFilterCC"]
+            local filterBreakCCDots = db["otherNpdeBuffFilterBreakCCDots"]
 
             local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe or filterCC
 
             if filterAllOverride then return true end
             if onlyMine and not castByPlayer then return false end
+            if filterBreakCCDots and IsBreakCCDotAura(spellName) then return true end
 
             if not anyFilter then
                 if filterWhitelist and not isInWhitelist then return false end
