@@ -104,6 +104,7 @@ local petSpellIcons = {
     [264360] = 132202, -- Wind Serpent — Winged Agility
     [263840] = 132203, -- Wolf — Furious Bite
     [263446] = 236197, -- Worm — Acid Spit
+    [1247058] = 6966389, -- Whiptails — Serrated Strike
 
     -- Warlock pet abilities
     [3110]   = 136218, -- Imp — Firebolt
