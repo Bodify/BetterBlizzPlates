@@ -1103,6 +1103,45 @@ local function InitializeSavedVariables()
     end
 end
 
+-- Profiles engine hooks (see temp_shared/Profiles.lua).
+BBP.defaultSettings = defaultSettings
+BBP.InitializeSavedVariables = InitializeSavedVariables
+
+-- Pre-mark this flavor's one-shot bootstrap/migration flags "done" on a freshly
+-- created/reset profile so the post-switch reload does NOT snapshot CVars,
+-- capture client fonts, run destructive DB cleans, or replay onboarding popups
+-- (the MoP/Cata update popup, totem-list updates); then carry client-descriptive
+-- font captures from the source profile.
+function BBP.FinalizeNewProfile(profile, source)
+    source = source or {}
+    profile.firstSaveComplete = true
+    profile.hasSaved = true
+    profile.mopUpdated = true
+    profile.mopBetaUpdated2 = true
+    profile.mopBetaUpdated3 = true
+    profile.totemListUpdateMop1 = true
+    profile.totemListUpdateMop2 = true
+    profile.totemListUpdateMop3 = true
+    profile.friendlyNameplateTogglesUpdated = true
+    profile.auraWhitelistColorsUpdated = true
+    profile.auraWhitelistAlphaUpdated = true
+    profile.castBarIconPosReset = true
+    profile.cleanedScaleScale = true
+    profile.nameplateResourcePositionFix = true
+    for _, k in ipairs({
+        "defaultLargeNamePlateFont", "defaultLargeFontSize", "defaultLargeNamePlateFontFlags",
+        "defaultNamePlateFont", "defaultFontSize", "defaultNamePlateFontFlags",
+        "defaultNamePlateOutlinedFont", "defaultOutlinedFontSize", "defaultNamePlateOutlinedFontFlags",
+        "old_defaultLargeNamePlateFont", "old_defaultLargeFontSize", "old_defaultLargeNamePlateFontFlags",
+        "old_defaultNamePlateFont", "old_defaultFontSize", "old_defaultNamePlateFontFlags",
+        "nameplateStyle",
+    }) do
+        if source[k] ~= nil then
+            profile[k] = source[k]
+        end
+    end
+end
+
 function BBP.ResetTotemList()
     BetterBlizzPlatesDB.totemIndicatorNpcList = {}
     BetterBlizzPlatesDB.totemIndicatorNpcList = defaultSettings.totemIndicatorNpcList
@@ -1381,7 +1420,9 @@ local function ResetNameplates()
 end
 
 local function ResetBBP()
-    BetterBlizzPlatesDB = {}
+    -- Wipe the active profile in place (do NOT rebind the global: the logout
+    -- swap would discard a new table and the reset would silently no-op).
+    for k in pairs(BetterBlizzPlatesDB) do BetterBlizzPlatesDB[k] = nil end
 
     ResetNameplates()
 

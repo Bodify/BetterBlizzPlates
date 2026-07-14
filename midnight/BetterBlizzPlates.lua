@@ -994,6 +994,55 @@ local function InitializeSavedVariables()
     end
 end
 
+-- Profiles engine hooks (see temp_shared/Profiles.lua).
+-- Expose this flavor's defaults + additive merge so the engine can deep-copy a
+-- pristine profile and re-run the merge on the correct profile at PLAYER_LOGIN.
+BBP.defaultSettings = defaultSettings
+BBP.InitializeSavedVariables = InitializeSavedVariables
+
+-- Finalize a freshly created/reset profile (already a deep copy of defaults):
+-- pre-mark every one-shot bootstrap/migration flag in this flavor's
+-- ADDON_LOADED handler as "done" so the post-switch reload does NOT snapshot
+-- CVars, capture client fonts, run destructive DB cleans, or replay onboarding
+-- popups; then carry client-descriptive captures (Blizzard font defaults,
+-- nameplateStyle) from the source profile. These describe the client install,
+-- not user settings.
+function BBP.FinalizeNewProfile(profile, source)
+    source = source or {}
+    -- One-shot guard flags (setting them "done" => skip on next load).
+    profile.firstSaveComplete = true
+    profile.hasSaved = true
+    profile.dbCleanMidnight = true
+    profile.cleanedScaleScale = true
+    profile.clickAreaMidnightFix = true
+    profile.fixedNameplateStyle = true
+    profile.totemIndicatorUpdatedForMidnight = true
+    profile.classIndicatorUpdated2 = true
+    profile.partyPointerUpdated2 = true
+    profile.nameplateResourceScaleUpdated = true
+    profile.fixedFriendlyHealthbarHide = true
+    profile.castBarIconPosReset = true
+    profile.nameplateResourcePositionFix = true
+    profile.friendlyNameplateTogglesUpdated = true
+    -- prdLegacyLook is not in defaultSettings; a nil value triggers a one-time
+    -- onboarding print + mutation on load. A fresh profile is never "legacy".
+    profile.prdLegacyLook = false
+    profile.prdSplitLines = true
+    -- Client-descriptive captures carried from the source profile.
+    for _, k in ipairs({
+        "defaultLargeNamePlateFont", "defaultLargeFontSize", "defaultLargeNamePlateFontFlags",
+        "defaultNamePlateFont", "defaultFontSize", "defaultNamePlateFontFlags",
+        "defaultNamePlateOutlinedFont", "defaultOutlinedFontSize", "defaultNamePlateOutlinedFontFlags",
+        "old_defaultLargeNamePlateFont", "old_defaultLargeFontSize", "old_defaultLargeNamePlateFontFlags",
+        "old_defaultNamePlateFont", "old_defaultFontSize", "old_defaultNamePlateFontFlags",
+        "nameplateStyle",
+    }) do
+        if source[k] ~= nil then
+            profile[k] = source[k]
+        end
+    end
+end
+
 function BBP.ResetTotemList()
     BetterBlizzPlatesDB.totemIndicatorNpcList = {}
     BetterBlizzPlatesDB.totemIndicatorNpcList = defaultSettings.totemIndicatorNpcList
@@ -1444,7 +1493,9 @@ local function ResetNameplates()
 end
 
 local function ResetBBP()
-    BetterBlizzPlatesDB = {}
+    -- Wipe the active profile in place (do NOT rebind the global: the logout
+    -- swap would discard a new table and the reset would silently no-op).
+    for k in pairs(BetterBlizzPlatesDB) do BetterBlizzPlatesDB[k] = nil end
 
     ResetNameplates()
 
