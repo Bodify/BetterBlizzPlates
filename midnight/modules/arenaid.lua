@@ -336,7 +336,9 @@ function BBP.ArenaIndicator5(frame)
             frame.name:SetAlpha(0)
             frame.specNameText:SetText(specName .. " " .. i)
             frame.specNameText:SetTextColor(r, g, b, 1)
+            frame.specNameText:SetIgnoreParentScale(false)
             frame.specNameText:SetScale(arenaSpecScale)
+            frame.specNameText:SetIgnoreParentScale(true)
             frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
             break
         end
@@ -477,7 +479,9 @@ function BBP.PartyIndicator5(frame)
             frame.name:SetText("")
             frame.specNameText:SetText(specName .. " " .. i)
             frame.specNameText:SetTextColor(r, g, b, 1)
+            frame.specNameText:SetIgnoreParentScale(false)
             frame.specNameText:SetScale(partySpecScale)
+            frame.specNameText:SetIgnoreParentScale(true)
             frame.specNameText:SetPoint(anchorPoint, frame.healthBar, arenaSpecAnchor, arenaSpecXPos, arenaSpecYPos + 3)
             break
         end
@@ -645,7 +649,9 @@ function BBP.TestArenaIndicator5(frame)
                 frame.specNameText:SetText("Affliction" .. " " .. "3")
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
+            frame.specNameText:SetIgnoreParentScale(false)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
+            frame.specNameText:SetIgnoreParentScale(true)
             frame.specNameText:SetPoint(anchorPoint, frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
             break
         end
@@ -775,7 +781,9 @@ function BBP.TestPartyIndicator5(frame)
                 frame.specNameText:SetText("Affliction" .. " " .. "3")
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
+            frame.specNameText:SetIgnoreParentScale(false)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.partySpecScale)
+            frame.specNameText:SetIgnoreParentScale(true)
             frame.specNameText:SetPoint(anchorPoint, frame.healthBar, BetterBlizzPlatesDB.arenaSpecAnchor, BetterBlizzPlatesDB.arenaSpecXPos, BetterBlizzPlatesDB.arenaSpecYPos + 3)
             break
         end
