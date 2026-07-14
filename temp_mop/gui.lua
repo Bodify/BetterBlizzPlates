@@ -9152,7 +9152,7 @@ local function guiNameplateAuras()
     if BBP.isTBC then
         local otherNpdeBuffFilterBreakCCDots = CreateCheckbox("otherNpdeBuffFilterBreakCCDots", "Break-CC DoTs", otherNpdeBuffEnable)
         otherNpdeBuffFilterBreakCCDots:SetPoint("TOPLEFT", otherNpdeBuffFilterOnlyMe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-        CreateTooltipTwo(otherNpdeBuffFilterBreakCCDots, "Break-CC DoTs", "Also show common damage-over-time debuffs that can break crowd control.")
+        CreateTooltipTwo(otherNpdeBuffFilterBreakCCDots, "Break-CC DoTs", "Show common damage-over-time debuffs that can break crowd control")
     end
 
 --[=[
