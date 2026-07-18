@@ -1288,6 +1288,16 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "nameplateBoxHeight" then
                     BetterBlizzPlatesDB.nameplateBoxHeight = value
                     BBP.AdjustAllCickAndStackAreas("space")
+                elseif element == "nameplateOverlapH" then
+                    if not BBP.checkCombatAndWarn() then
+                        C_CVar.SetCVar("nameplateOverlapH", value)
+                    end
+                    BetterBlizzPlatesDB.nameplateOverlapH = value
+                elseif element == "nameplateOverlapV" then
+                    if not BBP.checkCombatAndWarn() then
+                        C_CVar.SetCVar("nameplateOverlapV", value)
+                    end
+                    BetterBlizzPlatesDB.nameplateOverlapV = value
                 elseif element == "nameplateMinAlpha" then
                     if not BBP.checkCombatAndWarn() then
                         C_CVar.SetCVar("nameplateMinAlpha", value)
