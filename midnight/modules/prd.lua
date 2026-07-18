@@ -19,11 +19,11 @@ local monkStaggerAtlasMap = {
 }
 
 function BBP.HidePersonalManabarFX()
-    if BetterBlizzFramesDB and BetterBlizzFramesDB.hidePersonalManaFX then
-        BBP.Print("BetterBlizzFrames is handling PRD: HidePersonalManabarFX. Skipping.")
-        return
-    end
     if BetterBlizzPlatesDB.hidePersonalManaFX then
+        if BetterBlizzFramesDB and BetterBlizzFramesDB.hidePersonalManaFX then
+            BBP.Print("BetterBlizzFrames is handling PRD: HidePersonalManabarFX. Skipping.")
+            return
+        end
         if PersonalResourceDisplayFrame then
             PersonalResourceDisplayFrame.PowerBar.FullPowerFrame:SetParent(BBP.hiddenFrame)
             PersonalResourceDisplayFrame.PowerBar.FeedbackFrame:SetParent(BBP.hiddenFrame)
@@ -70,7 +70,9 @@ end
 
 function BBP.TexturePRD()
     if BetterBlizzFramesDB and (BetterBlizzFramesDB.useCustomTextureForBars or BetterBlizzFramesDB.changePrdTextures) then
-        BBP.Print("BetterBlizzFrames is handling PRD: TexturePRD. Skipping.")
+        if BetterBlizzPlatesDB.useCustomTextureForBars and (BetterBlizzPlatesDB.useCustomTextureForSelf or BetterBlizzPlatesDB.useCustomTextureForSelfMana) then
+            BBP.Print("BetterBlizzFrames is handling PRD: TexturePRD. Skipping.")
+        end
         return
     end
     local customTextureSelf = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.customTextureSelf)
@@ -125,7 +127,7 @@ end
 
 function BBP.FancyPRDAltTexture()
     if BBP.fancyPRDAltTextureRunning then return end
-    if BetterBlizzFramesDB and BetterBlizzFramesDB.fancyPrdAltTexture then
+    if BetterBlizzFramesDB and BetterBlizzFramesDB.fancyPrdAltTexture and BetterBlizzPlatesDB.fancyPrdAltTexture then
         BBP.Print("BetterBlizzFrames is handling PRD: FancyPRDAltTexture. Skipping.")
         return
     end
@@ -244,7 +246,7 @@ function BBP.FancyPRDAltTexture()
 end
 
 function BBP.LegacyPRDLook()
-    if BetterBlizzFramesDB and BetterBlizzFramesDB.prdLegacyLook then
+    if BetterBlizzFramesDB and BetterBlizzFramesDB.prdLegacyLook and BetterBlizzPlatesDB.prdLegacyLook then
         BBP.Print("BetterBlizzFrames is handling PRD: LegacyPRDLook. Skipping.")
         return
     end

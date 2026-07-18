@@ -168,7 +168,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     local showCastBarIconWhenNoninterruptible = db.showCastBarIconWhenNoninterruptible
     local castBarIconScale = db.castBarIconScale
-    local borderShieldSize = showCastBarIconWhenNoninterruptible and (castBarIconScale + 0.45) or castBarIconScale
+    --local borderShieldSize = showCastBarIconWhenNoninterruptible and (castBarIconScale + 0.45) or castBarIconScale
     local castBarTexture = castBar:GetStatusBarTexture()
     local castBarRecolor = db.castBarRecolor
     local castBarDragonflightShield = db.castBarDragonflightShield
@@ -205,10 +205,17 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     if frame.castbarEmphasisActive then
         BBP.CompactUnitFrame_UpdateHealthColor(frame)
         castBar:SetHeight(castBarHeight)
+        frame.CastBarsContainer:SetHeight(castBarHeight)
         castBar.Icon:SetScale(castBarIconScale)
+        if frame.castBarIconFrame then
+            frame.castBarIconFrame:SetScale(castBarIconScale)
+        end
+        if castBar.bbpClassicIcon then
+            castBar.bbpClassicIcon:SetScale(castBarIconScale)
+        end
         castBar.Spark:SetSize(4, castBarHeight + 5)
         castBar.Text:SetScale(castBarTextScale)
-        castBar.BorderShield:SetScale(borderShieldSize)
+        --castBar.BorderShield:SetScale(borderShieldSize)
         --frame:GetParent():SetParent(WorldFrame)
         frame.castbarEmphasisActive = false
         frame.emphasizedCast = nil
@@ -256,14 +263,15 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     end
 
     castBar.Text:ClearAllPoints()
+    local castBarTextJustify = db.castBarTextJustify or "CENTER"
     if db.castBarFullTextWidth then
         castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", -70, 0)
         castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", 70, 0)
     else
-        castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", -2, 0)
-        castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", 2, 0)
+        castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", castBarTextJustify == "LEFT" and 4 or -2, 0)
+        castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", castBarTextJustify == "RIGHT" and -4 or 2, 0)
     end
-    castBar.Text:SetJustifyH(db.castBarTextJustify or "CENTER")
+    castBar.Text:SetJustifyH(castBarTextJustify)
 
     if castBar.casting then
         _, _, _, _, _, _, _, notInterruptible = UnitCastingInfo(unitToken)
@@ -380,7 +388,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 castBarTexture:SetVertexColor(unpack(castBarCastColor))
             end
         end
-        if castBar.stoppedCast then
+        if castBar.stoppedCast and not (castBar.casting or castBar.channeling) then
             castBarTexture:SetDesaturated(false)
             castBar:SetStatusBarColor(1, 0, 0, 1)
         end
@@ -400,7 +408,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 castBarTexture:SetVertexColor(1,1,1)
             end
         end
-        if castBar.stoppedCast then
+        if castBar.stoppedCast and not (castBar.casting or castBar.channeling) then
             if castBarTexture then
                 castBarTexture:SetDesaturated(false)
             end
@@ -461,8 +469,16 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     end
 
     castBar.Icon:SetScale(castBarIconScale)
-    castBar.BorderShield:SetScale(borderShieldSize)
+    if castBar.bbpClassicIcon then
+        castBar.bbpClassicIcon:SetScale(castBarIconScale)
+    end
+    if frame.castBarIconFrame then
+        frame.castBarIconFrame:SetScale(castBarIconScale)
+    end
+    --castBar.BorderShield:SetScale(borderShieldSize)
     castBar:SetHeight(castBarHeight)
+    BBP.CreateCastbarContainer(frame)
+    frame.CastBarsContainer:SetHeight(castBarHeight)
     castBar.Spark:SetSize(4, castBarHeight) --4 width, 5 height original
     castBar.Text:SetScale(castBarTextScale)
 
@@ -825,7 +841,7 @@ function BBP.UpdateCastTimer(frame, unit)
         frame.CastTimer = frame.CastTimerFrame:CreateFontString(nil, "BACKGROUND", "GameFontNormalSmall")
         --nameplate.CastTimer:SetPoint("LEFT", nameplate, "BOTTOMRIGHT", -10, 15)
         frame.CastTimer:SetPoint("LEFT", frame.castBar, "RIGHT", 5, 0)
-        local npTextSize = BetterBlizzPlatesDB.npTargetTextSize
+        local npTextSize = BetterBlizzPlatesDB.npCastTimerSize or BetterBlizzPlatesDB.npTargetTextSize
         BBP.SetFontBasedOnOption(frame.CastTimer, npTextSize or 12, "OUTLINE, SLUG")
         frame.CastTimer:SetTextColor(1, 1, 1)
     end
@@ -1064,6 +1080,8 @@ function BBP.CastbarOnEvent(frame, event)
     local showNameplateTargetText = db.showNameplateTargetText
     local showNameplateCastbarTimer = db.showNameplateCastbarTimer
 
+    BBP.CreateCastbarContainer(frame)
+
     if db.enableNpNonTargetAlpha and db.enableNpNonTargetAlphaFullAlphaCasting then
         if frame.BetterBlizzPlates then
             BBP.NameplateTargetAlpha(frame)
@@ -1101,6 +1119,19 @@ function BBP.CastbarOnEvent(frame, event)
         if db.castbarAlwaysOnTop then
             frame.castBar:SetParent(BBP.OverlayFrame)
             frame.castBar:SetFrameStrata("HIGH")
+        end
+
+        if not BetterBlizzPlatesDB.useCustomCastbarBGTexture and BetterBlizzPlatesDB.castBarPixelBorder then -- if castbar customization, but not 
+            local sbt = frame.castBar:GetStatusBarTexture()
+            sbt:SetTexCoord(0.05, 0.95, 0.05, 0.95)
+            if frame.castBar.Background then
+                local tex = frame.castBar.Background
+                if tex then
+                    frame.castBar.Background:SetTexCoord(0.05, 0.95, 0.05, 0.95)
+                    frame.castBar.Background:ClearAllPoints()
+                    frame.castBar.Background:SetAllPoints(frame.castBar)
+                end
+            end
         end
 
         BBP.CustomizeCastbar(frame, frame.unit, event)
@@ -1187,6 +1218,9 @@ function BBP.CastbarOnEvent(frame, event)
                     local textureName = BetterBlizzPlatesDB.customCastbarTexture
                     local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
                     frame.castBar:SetStatusBarTexture(texturePath)
+                    if frame.castBar.lastColor then
+                        frame.castBar:SetStatusBarColor(unpack(frame.castBar.lastColor))
+                    end
                 end)
                 self.hooked = true
             end
@@ -1243,7 +1277,7 @@ function BBP.CastbarOnEvent(frame, event)
             if event == "UNIT_SPELLCAST_INTERRUPTED" then
                 local castBarRecolor = BetterBlizzPlatesDB.castBarRecolor
                 local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
-                if (castBarRecolor or useCustomCastbarTexture) and frame.castBar then
+                if (castBarRecolor or useCustomCastbarTexture) and not (frame.castBar.casting or frame.castBar.channeling) then
                     frame.castBar:SetStatusBarColor(1, 0, 0)
                 end
                 if BetterBlizzPlatesDB.castBarInterruptHighlighter then
@@ -1275,6 +1309,8 @@ function BBP.CastbarOnEvent(frame, event)
             end
         end)
     end
+
+    frame.castBar.lastColor = {frame.castBar:GetStatusBarColor()}
 
     -- if hideCastbar then
     --     BBP.HideCastbar(frame, self.unit)

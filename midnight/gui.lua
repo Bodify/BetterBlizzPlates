@@ -372,9 +372,11 @@ local function CreateResetButton(relativeTo, settingKey, parent)
     local resetButton = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     resetButton:SetText("Default")
     resetButton:SetWidth(60)
-    resetButton:SetPoint("LEFT", relativeTo, "RIGHT", 10, 0)
+    resetButton:SetScale(0.85)
+    resetButton:SetPoint("LEFT", relativeTo, "RIGHT", 10, 1)
     resetButton:SetScript("OnClick", function()
         BBP.ResetToDefaultValue(relativeTo, settingKey)
+        BBP.RefreshAllNameplates()
         BBP.needsUpdate = true
     end)
     return resetButton
@@ -847,13 +849,42 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     end
                 elseif element == "nameplateExtraClickHeight" then
                     BetterBlizzPlatesDB.nameplateExtraClickHeight = value
-                    BBP.AdjustClickableNameplateSize()
+                    BBP.AdjustAllCickAndStackAreas()
                 elseif element == "nameplateExtraClickWidth" then
                     BetterBlizzPlatesDB.nameplateExtraClickWidth = value
-                    BBP.AdjustClickableNameplateSize()
+                    BBP.AdjustAllCickAndStackAreas()
                 elseif element == "nameplateClickVerticalAdjustment" then
                     BetterBlizzPlatesDB.nameplateClickVerticalAdjustment = value
-                    BBP.AdjustClickableNameplateSize()
+                    BBP.AdjustAllCickAndStackAreas()
+                elseif element == "enemyCastbarExtraWidth" or element == "friendlyCastbarExtraWidth" or element == "spacingBetweenCastAndHealthbar" or element == "castBarXPos" then
+                    BetterBlizzPlatesDB[element] = value
+                    BBP.nameplateCastBarTestMode()
+                    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+                        local frame = nameplate.UnitFrame
+                        if not frame:IsForbidden() then
+                            BBP.SetNameplateBarSizes(frame)
+                            if frame.castBar.UpdateBorders then
+                                BBP.CreateBetterClassicCastbarBorders(frame)
+                            end
+                        end
+                    end
+                -- elseif element == "friendlyCastbarExtraWidth" then
+                --     BetterBlizzPlatesDB.friendlyCastbarExtraWidth = value
+                --     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+                --         local frame = nameplate.UnitFrame
+                --         if not frame:IsForbidden() then
+                --             BBP.SetNameplateBarSizes(frame)
+                --         end
+                --     end
+
+                -- elseif element == "spacingBetweenCastAndHealthbar" then
+                --     BetterBlizzPlatesDB.spacingBetweenCastAndHealthbar = value
+                --     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+                --         local frame = nameplate.UnitFrame
+                --         if not frame:IsForbidden() then
+                --             BBP.SetNameplateBarSizes(frame)
+                --         end
+                --     end
                 elseif element == "ccIconScale" then
                     BetterBlizzPlatesDB.ccIconScale = value
                     if BBP.UpdateAllNameplatesAuras then
@@ -878,10 +909,10 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     if BBP.UpdateAllNameplatesAuras then BBP.UpdateAllNameplatesAuras() end
                 elseif element == "nameplateVerticalPosition" then
                     BetterBlizzPlatesDB.nameplateVerticalPosition = value
-                    BBP.AdjustNameplatePosition()
+                    BBP.AdjustAllCickAndStackAreas()
                 elseif element == "nameplateHorizontalPosition" then
                     BetterBlizzPlatesDB.nameplateHorizontalPosition = value
-                    BBP.AdjustNameplatePosition()
+                    BBP.AdjustAllCickAndStackAreas()
                 elseif element == "partyPointerScale" then
                     BetterBlizzPlatesDB.partyPointerScale = value
                 elseif element == "partyPointerHealerScale" then
@@ -1085,28 +1116,22 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BetterBlizzPlatesDB.classIndicatorBackgroundSize = value
                     -- Nameplate Widths
                 elseif element == "nameplateFriendlyWidth" then
-                    -- if not BBP.checkCombatAndWarn() then
-                        BetterBlizzPlatesDB.nameplateFriendlyWidth = value
-                        for _, np in pairs(C_NamePlate.GetNamePlates()) do
-                            local frame = np.UnitFrame
-                            if frame then
-                                BBP.SetFriendlyBarWidthTemp(frame, BetterBlizzPlatesDB.nameplateFriendlyWidth/2)
-                            end
+                    BetterBlizzPlatesDB.nameplateFriendlyWidth = value
+                    BBP.ApplyNameplateWidth()
+                    for _, np in pairs(C_NamePlate.GetNamePlates()) do
+                        local frame = np.UnitFrame
+                        if frame then
+                            BBP.SetNameplateBarSizes(frame)
                         end
-                    --     local heightValue
-                    --     if BetterBlizzPlatesDB.friendlyNameplateClickthrough then
-                    --         heightValue = 1
-                    --     else
-                    --         heightValue = BBP.isLargeNameplatesEnabled() and 64.125 or 40
-                    --     end
-                    --     C_NamePlate.SetNamePlateFriendlySize(value, heightValue)
-                    -- end
+                    end
                 elseif element == "nameplateEnemyWidth" then
-                    if not BBP.checkCombatAndWarn() then
-                        BetterBlizzPlatesDB.nameplateEnemyWidth = value
-                        local heightValue
-                        heightValue = BBP.isLargeNameplatesEnabled() and 64.125 or 40
-                        C_NamePlate.SetNamePlateSize(value, heightValue)
+                    BetterBlizzPlatesDB.nameplateEnemyWidth = value
+                    BBP.ApplyNameplateWidth()
+                    for _, np in pairs(C_NamePlate.GetNamePlates()) do
+                        local frame = np.UnitFrame
+                        if frame then
+                            BBP.SetNameplateBarSizes(frame)
+                        end
                     end
                 -- elseif element == "nameplateSelfWidth" then
                 --     BetterBlizzPlatesDB.nameplateSelfWidth = value
@@ -1243,24 +1268,12 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         C_CVar.SetCVar("nameplateSelectedScale", value)
                         BetterBlizzPlatesDB.nameplateSelectedScale = value
                     end
-                -- Nameplate Horizontal Overlap
-                elseif element == "nameplateOverlapH" then
-                    if not BBP.checkCombatAndWarn() then
-                        C_CVar.SetCVar("nameplateOverlapH", value)
-                        BetterBlizzPlatesDB.nameplateOverlapH = value
-                    end
-                -- Nameplate Vertical Overlap
-                elseif element == "nameplateOverlapV" then
-                    if not BBP.checkCombatAndWarn() then
-                        C_CVar.SetCVar("nameplateOverlapV", value)
-                        BetterBlizzPlatesDB.nameplateOverlapV = value
-                    end
-                -- Nameplate Motion Speed
-                -- elseif element == "nameplateMotionSpeed" then
-                --     if not BBP.checkCombatAndWarn() then
-                --         C_CVar.SetCVar("nameplateMotionSpeed", value)
-                --         BetterBlizzPlatesDB.nameplateMotionSpeed = value
-                --     end
+                elseif element == "stackingVerticalAdjustmentOffset" or element == "stackingHorizontalOffset" or element == "stackingVerticalOffset" then
+                    BetterBlizzPlatesDB[element] = value
+                    BBP.AdjustAllCickAndStackAreas("zone")
+                elseif element == "nameplateBoxHeight" then
+                    BetterBlizzPlatesDB.nameplateBoxHeight = value
+                    BBP.AdjustAllCickAndStackAreas("space")
                 elseif element == "nameplateMinAlpha" then
                     if not BBP.checkCombatAndWarn() then
                         C_CVar.SetCVar("nameplateMinAlpha", value)
@@ -1462,14 +1475,26 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                                 frame.castBarIconFrame:SetPoint("CENTER", frame.castBar, "LEFT", -2 + BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
                                 frame.castBar.BorderShield:ClearAllPoints()
                                 frame.castBar.BorderShield:SetPoint("CENTER", frame.castBarIconFrame, "CENTER", 0, 0)
+                                if frame.castBar.bbpClassicIcon then
+                                    frame.castBar.bbpClassicIcon:ClearAllPoints()
+                                    frame.castBar.bbpClassicIcon:SetPoint("RIGHT", frame.CastBarsContainer.castBar, "LEFT", xPos-2, yPos)
+                                end
                             else
                                 BetterBlizzPlatesDB.castBarIconScale = value
                                 frame.castBarIconFrame:SetScale(value)
-                                frame.castBar.BorderShield:SetScale(value)
+                                --frame.castBar.BorderShield:SetScale(value)
+                                if frame.castBar.bbpClassicIcon then
+                                    frame.castBar.bbpClassicIcon:SetScale(value)
+                                end
                             end
                         -- Cast bar height
                         elseif element == "castBarHeight" then
                             frame.castBar:SetHeight(value)
+                            frame.CastBarsContainer:SetHeight(value)
+                            if BetterBlizzPlatesDB.classicNameplates then
+                                frame.castBar.UpdateBorders()
+                            end
+                            BBP.SetNameplateBarSizes(frame)
                         elseif element == "castBarTextScale" then
                             frame.castBar.Text:SetScale(value)
                         -- Cast bar emphasis icon pos and scale
@@ -5180,7 +5205,9 @@ local function guiGeneralTab()
     nameplateGeneralHpHeightResetButton:SetWidth(60)
     nameplateGeneralHpHeightResetButton:SetPoint("LEFT", nameplateGeneralHpHeight, "RIGHT", 10, 0)
     nameplateGeneralHpHeightResetButton:SetScript("OnClick", function()
-        BBP.ResetToDefaultHeight2(nameplateGeneralHpHeight)
+        local value = (BetterBlizzPlatesDB.classicNameplates or BetterBlizzPlatesDB.classicRetailNameplates) and 12 or 16
+        nameplateGeneralHpHeight:SetValue(value)
+        BetterBlizzPlatesDB.nameplateGeneralHpHeight = value
     end)
     CreateTooltipTwo(nameplateGeneralHpHeightResetButton, "Reset Nameplate Height", "Midnight default is 16. Pre-midnight is ~12.", nil, "ANCHOR_TOP")
     ----------------------
@@ -8993,6 +9020,10 @@ local function guiCastbar()
     local castBarIconYPos = CreateSlider(enableCastbarCustomization, "Icon y offset", -50, 50, 1, "castBarIconYPos", "Y", 100)
     castBarIconYPos:SetPoint("TOP", castBarIconXPos, "BOTTOM", 0, -15)
 
+    local anchorCastIconOnRight = CreateCheckbox("anchorCastIconOnRight", "Anchor Icon Right", enableCastbarCustomization)
+    anchorCastIconOnRight:SetPoint("LEFT", castBarIconYPos, "RIGHT", 5, 16)
+    CreateTooltipTwo(anchorCastIconOnRight, "Anchor Cast Icon on Right", "Anchor the cast icon to the right side of the castbar instead of left. Do this if you want it on the right side.")
+
 --[=[
     local castBarIconXPos = CreateSlider(enableCastbarCustomization, "Icon x offset", -50, 50, 1, "castBarIconXPos", "X")
     castBarIconXPos:SetPoint("TOPLEFT", castBarIconScale, "BOTTOMLEFT", 0, -15)
@@ -9588,6 +9619,252 @@ local function guiCastbar()
         end
     end
     TogglePanel()
+end
+
+local function guiClickingAndStacking()
+    local sliderStartNumber = #sliderList + 1
+    local guiClickNStack = CreateFrame("Frame")
+    guiClickNStack.name = "|A:plunderstorm-pickup-mouseclick-left:16:16|aLook & Behaviour"
+    guiClickNStack.parent = BetterBlizzPlates.name
+    local guiClickNStackCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiClickNStack, guiClickNStack.name, guiClickNStack.name)
+    CreateTitle(guiClickNStack)
+
+    local bgImg = guiClickNStack:CreateTexture(nil, "BACKGROUND")
+    bgImg:SetAtlas("professions-recipe-background")
+    bgImg:SetPoint("CENTER", guiClickNStack, "CENTER", -8, 4)
+    bgImg:SetSize(680, 610)
+    bgImg:SetAlpha(0.4)
+    bgImg:SetVertexColor(0,0,0)
+
+    local settingsText = guiClickNStack:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    settingsText:SetPoint("TOPLEFT", guiClickNStack, "TOPLEFT", 20, 0)
+    settingsText:SetText("General")
+    local icon = guiClickNStack:CreateTexture(nil, "ARTWORK")
+    icon:SetAtlas("optionsicon-brown")
+    icon:SetSize(22, 22)
+    icon:SetPoint("RIGHT", settingsText, "LEFT", -3, -1)
+
+    local info = guiClickNStack:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    info:SetPoint("TOPLEFT", guiClickNStack, "TOPLEFT", 300, 0)
+    info:SetWidth(270)
+    info:SetText("|cff6699ffBlue: Nameplate Box Height|r\nThe invisible nameplate size. This will be the max area allowed to click, the size that stacking nameplates care about (+- overlap values), and what some addons anchor their stuff to (some anchor directly to the healthbar instead).\n\n\n|cffff6666Red: Stacking Zone|r\nWhen the stacking zone of two nameplates touch they will begin to stack.\n\n\n|cff66cc66Green: Valid Click Area|r\nYour click area has to be inside of the |cff6699ffblue|r nameplate box. If you do not see |cff66cc66green|r you've moved the healthbar outside of the allowed click area and nothing will be clickable.")
+
+    local nameplateBoxHeight = CreateSlider(guiClickNStack, "Nameplate Box Height", 12, 70, 1, "nameplateBoxHeight")
+    nameplateBoxHeight:SetPoint("TOPLEFT", settingsText, "BOTTOMLEFT", 8, -12)
+    CreateTooltipTwo(nameplateBoxHeight, "Nameplate Box Height", "Adjusts the invisible nameplate box height.\n\nThis height matters for two things:\n1) The height Blizzard considers a nameplate to be and affects CVar settings like how close to the edge a nameplate can get. This will also impact some addons anchoring things to the nameplate as they anchor to this box. Some addons anchor to the nameplate directly other addons anchor to the nameplate's healthbar.\n2) The maximum clickable height for a nameplate.")
+    local nameplateBoxHeightReset = CreateResetButton(nameplateBoxHeight, "nameplateBoxHeight", nameplateBoxHeight)
+
+    local nameplateVerticalPosition = CreateSlider(guiClickNStack, "Nameplate Vertical Position", -190, 70, 1, "nameplateVerticalPosition", "Y")
+    nameplateVerticalPosition:SetPoint("TOPLEFT", nameplateBoxHeight, "BOTTOMLEFT", 0, -17)
+    CreateResetButton(nameplateVerticalPosition, "nameplateVerticalPosition", guiClickNStack)
+
+    local stackingText = guiClickNStack:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    stackingText:SetPoint("TOPLEFT", guiClickNStack, "TOPLEFT", 20, -80)
+    stackingText:SetText("Stacking")
+    local icon = guiClickNStack:CreateTexture(nil, "ARTWORK")
+    icon:SetAtlas("MiniMap-PositionArrows")
+    icon:SetSize(17, 25)
+    icon:SetPoint("RIGHT", stackingText, "LEFT", -3, -1)
+
+    local nameplateStackingEnemy = CreateCheckbox("nameplateStackingTypes_Enemy", "Stacking enemy nameplates", guiClickNStack, nil, nil, {cvarName = "nameplateStackingTypes", index = Enum.NamePlateStackType.Enemy})
+    nameplateStackingEnemy:SetPoint("TOPLEFT", stackingText, "BOTTOMLEFT", -4, -pixelsOnFirstBox)
+    CreateTooltipTwo(nameplateStackingEnemy, "Stacking Enemy Nameplates", "Turn on stacking for enemy nameplates.", nil, nil, "nameplateStackingTypes")
+    nameplateStackingEnemy:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            if BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP == nil then
+                BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP = true
+                if not nameplateStackingEnemy:GetChecked() then
+                    nameplateStackingEnemy:Click()
+                    nameplateStackingEnemy:SetChecked(true)
+                end
+            else
+                BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP = nil
+            end
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+            BBP.SetNameplateBehavior()
+        end
+    end)
+
+    local nameplateStackingFriendly = CreateCheckbox("nameplateStackingTypes_Friendly", "Stacking friendly nameplates", guiClickNStack, nil, nil, {cvarName = "nameplateStackingTypes", index = Enum.NamePlateStackType.Friendly})
+    nameplateStackingFriendly:SetPoint("TOPLEFT", nameplateStackingEnemy, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(nameplateStackingFriendly, "Stacking Friendly Nameplates", "Turn on stacking for friendly nameplates.", nil, nil, "nameplateStackingTypes")
+
+    local stackingHorizontalOffset = CreateSlider(guiClickNStack, "Stacking Zone Width", -60, 60, 1, "stackingHorizontalOffset", "X")
+    stackingHorizontalOffset:SetPoint("TOPLEFT", nameplateStackingFriendly, "BOTTOMLEFT", 12, -10)
+    CreateTooltipTwo(stackingHorizontalOffset, "Stacking Zone Width", "Adjusts the zone width for stackable nameplates.\n\nWhen the zones of two nameplates hit each other the nameplates will start stacking.")
+    local stackingHorizontalOffsetReset = CreateResetButton(stackingHorizontalOffset, "stackingHorizontalOffset", stackingHorizontalOffset)
+
+    local stackingVerticalOffset = CreateSlider(guiClickNStack, "Stacking Zone Height", -60, 60, 1, "stackingVerticalOffset", "Y")
+    stackingVerticalOffset:SetPoint("TOPLEFT", stackingHorizontalOffset, "BOTTOMLEFT", 0, -17)
+    CreateTooltipTwo(stackingVerticalOffset, "Stacking Zone Height", "Adjusts the zone height for stackable nameplates.\n\nWhen the zones of two nameplates hit each other the nameplates will start stacking.")
+    local stackingVerticalOffsetReset = CreateResetButton(stackingVerticalOffset, "stackingVerticalOffset", stackingVerticalOffset)
+
+    local stackingVerticalAdjustmentOffset = CreateSlider(guiClickNStack, "Stacking Zone Y Offset", -60, 60, 1, "stackingVerticalAdjustmentOffset", "Y")
+    stackingVerticalAdjustmentOffset:SetPoint("TOPLEFT", stackingVerticalOffset, "BOTTOMLEFT", 0, -17)
+    CreateTooltipTwo(stackingVerticalAdjustmentOffset, "Stacking Zone Y Offset", "Adjust where the stacking zone sits vertically.\n\nWhen the zones of two nameplates hit each other the nameplates will start stacking.")
+    local stackingVerticalAdjustmentOffsetReset = CreateResetButton(stackingVerticalAdjustmentOffset, "stackingVerticalAdjustmentOffset", stackingVerticalAdjustmentOffset)
+
+    local nameplateOverlapH = CreateSlider(guiClickNStack, "Horizontal Stacking Overlap", 0.3, 1.2, 0.01, "nameplateOverlapH")
+    nameplateOverlapH:SetPoint("TOPLEFT", stackingVerticalAdjustmentOffset, "BOTTOMLEFT", 0, -17)
+    CreateTooltipTwo(nameplateOverlapH, "Horizontal Stacking Overlap", "|cff00ff00TLDR:|r Lower values makes nameplates stack closer to eachother but too low increases risk of vibrating nameplates.\n\nOverlap values are based on your nameplate size (blue box). 1 = 100% of the nameplate's width/height. Higher values increase spacing, lower values allow more overlap. The actual distance between nameplates changes depending on your nameplate size and this overlap setting.\n\nToo low values can cause the nameplates to start \"vibrating\". Recommended range 0.85 to 1 but your milage may vary depending on nameplate size.\n\nThe nameplates will only start stacking once the red stacking box comes into contact with another one.")
+    local nameplateOverlapHReset = CreateResetButton(nameplateOverlapH, "nameplateOverlapH", nameplateOverlapH)
+
+    local nameplateOverlapV = CreateSlider(guiClickNStack, "Vertical Stacking Overlap", 0.3, 1.2, 0.01, "nameplateOverlapV")
+    nameplateOverlapV:SetPoint("TOPLEFT", nameplateOverlapH, "BOTTOMLEFT", 0, -17)
+    CreateTooltipTwo(nameplateOverlapV, "Vertical Stacking Overlap", "|cff00ff00TLDR:|r Lower values makes nameplates stack closer to eachother but too low increases risk of vibrating nameplates.\n\nOverlap values are based on your nameplate size (blue box). 1 = 100% of the nameplate's width/height. Higher values increase spacing, lower values allow more overlap. The actual distance between nameplates changes depending on your nameplate size and this overlap setting.\n\nToo low values can cause the nameplates to start \"vibrating\". Recommended range 0.85 to 1 but your milage may vary depending on nameplate size.\n\nThe nameplates will only start stacking once the red stacking box comes into contact with another one.")
+    local nameplateOverlapVReset = CreateResetButton(nameplateOverlapV, "nameplateOverlapV", nameplateOverlapV)
+
+    local stackingSliders = {stackingHorizontalOffset, stackingVerticalOffset, stackingHorizontalOffsetReset, stackingVerticalOffsetReset,stackingVerticalAdjustmentOffset,stackingVerticalAdjustmentOffsetReset, nameplateOverlapH, nameplateOverlapHReset, nameplateOverlapV, nameplateOverlapVReset}
+    local function ToggleStackingSliders()
+        local eitherChecked = nameplateStackingEnemy:GetChecked() or nameplateStackingFriendly:GetChecked()
+        for _, element in ipairs(stackingSliders) do
+            if eitherChecked then
+                element:Enable()
+                element:SetAlpha(1)
+            else
+                element:Disable()
+                element:SetAlpha(0.5)
+            end
+        end
+    end
+
+    local function InitStackingSliders()
+        if not BBP.variablesLoaded then
+            C_Timer.After(0.1, InitStackingSliders)
+            return
+        end
+        local bf = BetterBlizzPlatesDB.bitfields and BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"]
+        if bf then
+            nameplateStackingEnemy:SetChecked(bf[tostring(Enum.NamePlateStackType.Enemy)] and true or false)
+            nameplateStackingFriendly:SetChecked(bf[tostring(Enum.NamePlateStackType.Friendly)] and true or false)
+        else
+            nameplateStackingEnemy:SetChecked(C_CVar.GetCVarBitfield("nameplateStackingTypes", Enum.NamePlateStackType.Enemy) and true or false)
+            nameplateStackingFriendly:SetChecked(C_CVar.GetCVarBitfield("nameplateStackingTypes", Enum.NamePlateStackType.Friendly) and true or false)
+        end
+        ToggleStackingSliders()
+    end
+    InitStackingSliders()
+
+    nameplateStackingEnemy:HookScript("OnClick", function(self)
+        local isChecked = self:GetChecked()
+        BBP.RunAfterCombat(function()
+            if not BetterBlizzPlatesDB.bitfields then BetterBlizzPlatesDB.bitfields = {} end
+            if not BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"] then BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"] = {} end
+            BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"][tostring(Enum.NamePlateStackType.Enemy)] = isChecked
+            C_CVar.SetCVarBitfield("nameplateStackingTypes", Enum.NamePlateStackType.Enemy, isChecked)
+        end)
+        ToggleStackingSliders()
+    end)
+    nameplateStackingFriendly:HookScript("OnClick", function(self)
+        local isChecked = self:GetChecked()
+        BBP.RunAfterCombat(function()
+            if not BetterBlizzPlatesDB.bitfields then BetterBlizzPlatesDB.bitfields = {} end
+            if not BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"] then BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"] = {} end
+            BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"][tostring(Enum.NamePlateStackType.Friendly)] = isChecked
+            C_CVar.SetCVarBitfield("nameplateStackingTypes", Enum.NamePlateStackType.Friendly, isChecked)
+        end)
+        ToggleStackingSliders()
+    end)
+
+    local clickingText = guiClickNStack:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    clickingText:SetPoint("TOPLEFT", guiClickNStack, "TOPLEFT", 20, -295)
+    clickingText:SetText("Clicking")
+    local icon = guiClickNStack:CreateTexture(nil, "ARTWORK")
+    icon:SetAtlas("plunderstorm-pickup-mouseclick-left")
+    icon:SetSize(24, 26)
+    icon:SetPoint("RIGHT", clickingText, "LEFT", -3, -1)
+
+    local friendlyNameplateClickthrough = CreateCheckbox("friendlyNameplateClickthrough", "Friendly Clickthrough", guiClickNStack, nil, BBP.ApplyNameplateWidth)
+    friendlyNameplateClickthrough:SetPoint("TOPLEFT", clickingText, "BOTTOMLEFT", -4, -pixelsOnFirstBox)
+    CreateTooltipTwo(friendlyNameplateClickthrough, "Clickthrough Friendly Nameplate", "Make friendly nameplates clickthrough")
+
+    local nameplateExtraClickWidth = CreateSlider(guiClickNStack, "Nameplate Extra Click Width", -60, 6, 1, "nameplateExtraClickWidth", "X")
+    nameplateExtraClickWidth:SetPoint("TOPLEFT", friendlyNameplateClickthrough, "BOTTOMLEFT", 12, -10)
+    CreateResetButton(nameplateExtraClickWidth, "nameplateExtraClickWidth", guiClickNStack)
+
+    local nameplateExtraClickHeight = CreateSlider(guiClickNStack, "Nameplate Extra Click Height", -38, 30, 1, "nameplateExtraClickHeight", "Y")
+    nameplateExtraClickHeight:SetPoint("TOPLEFT", nameplateExtraClickWidth, "BOTTOMLEFT", 0, -16)
+    CreateResetButton(nameplateExtraClickHeight, "nameplateExtraClickHeight", guiClickNStack)
+
+    local nameplateClickVerticalAdjustment = CreateSlider(guiClickNStack, "Nameplate Click Area Y Offset", -20, 20, 1, "nameplateClickVerticalAdjustment", "Y")
+    nameplateClickVerticalAdjustment:SetPoint("TOPLEFT", nameplateExtraClickHeight, "BOTTOMLEFT", 0, -16)
+    CreateTooltipTwo(nameplateClickVerticalAdjustment, "Clickable Vertical Position", "Tweak the vertical position of the clickable area.")
+    CreateResetButton(nameplateClickVerticalAdjustment, "nameplateClickVerticalAdjustment", guiClickNStack)
+
+    local castbarText = guiClickNStack:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    castbarText:SetPoint("TOPLEFT", guiClickNStack, "TOPLEFT", 20, -430)
+    castbarText:SetText("Castbar Adjustments")
+    local icon = guiClickNStack:CreateTexture(nil, "ARTWORK")
+    icon:SetAtlas("UI-CastingBar-Pip")
+    icon:SetSize(22, 22)
+    icon:SetPoint("RIGHT", castbarText, "LEFT", -3, -1)
+
+
+    local fitCastIconLeftOfCast
+    local classic = BetterBlizzPlatesDB.classicNameplates
+    if not classic then
+        fitCastIconLeftOfCast = CreateCheckbox("fitCastIconLeftOfCast", "Fit Cast Icon on the left", guiClickNStack)
+        fitCastIconLeftOfCast:SetPoint("TOPLEFT", castbarText, "BOTTOMLEFT", -4, -pixelsOnFirstBox)
+        CreateTooltipTwo(fitCastIconLeftOfCast, "Fit Cast Icon on the left", "Position the castbar icon on the left side of the castbar and push the castbar to the right so everything fits under the healthbar.")
+    end
+
+    -- local fitCastIconLeftOfCastAndHp = CreateCheckbox("fitCastIconLeftOfCastAndHp", "Fit Cast Icon Left of Bars", guiClickNStack)
+    -- fitCastIconLeftOfCastAndHp:SetPoint("TOPLEFT", fitCastIconLeftOfCast, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    -- CreateTooltipTwo(fitCastIconLeftOfCastAndHp, "Fit Cast Icon Left of Bars", "Position the castbar icon on the left side of the health bar and cast bar, stretching from the bottom of the cast bar to the top of the health bar.")
+
+    local xPos, yPos
+    if classic then
+        xPos, yPos = 8, -12
+    else
+        xPos, yPos = 12, -10
+    end
+
+    local enemyCastbarExtraWidth = CreateSlider(guiClickNStack, "Castbar Width (Enemy)", -60, 60, 1, "enemyCastbarExtraWidth", "X")
+    enemyCastbarExtraWidth:SetPoint("TOPLEFT", fitCastIconLeftOfCast or castbarText, "BOTTOMLEFT", xPos, yPos)
+    CreateTooltipTwo(enemyCastbarExtraWidth, "Enemy Castbar Extra Width", "Adjust the extra width of the enemy castbar.")
+    CreateResetButton(enemyCastbarExtraWidth, "enemyCastbarExtraWidth", guiClickNStack)
+
+    local friendlyCastbarExtraWidth = CreateSlider(guiClickNStack, "Castbar Width (Friendly)", -60, 60, 1, "friendlyCastbarExtraWidth", "X")
+    friendlyCastbarExtraWidth:SetPoint("TOPLEFT", enemyCastbarExtraWidth, "BOTTOMLEFT", 0, -16)
+    CreateTooltipTwo(friendlyCastbarExtraWidth, "Friendly Castbar Extra Width", "Adjust the extra width of the friendly castbar.")
+    CreateResetButton(friendlyCastbarExtraWidth, "friendlyCastbarExtraWidth", guiClickNStack)
+
+    local castBarXPos = CreateSlider(guiClickNStack, "Castbar Horizontal Position", -50, 50, 1, "castBarXPos", "X")
+    castBarXPos:SetPoint("TOPLEFT", friendlyCastbarExtraWidth, "BOTTOMLEFT", 0, -16)
+    CreateTooltipTwo(castBarXPos, "Castbar Horizontal Position", "Adjust the horizontal position of the castbar.")
+    CreateResetButton(castBarXPos, "castBarXPos", guiClickNStack)
+
+    local spacingBetweenCastAndHealthbar = CreateSlider(guiClickNStack, "Castbar Vertical Position", -50, 50, 1, "spacingBetweenCastAndHealthbar", "Y")
+    spacingBetweenCastAndHealthbar:SetPoint("TOPLEFT", castBarXPos, "BOTTOMLEFT", 0, -16)
+    CreateTooltipTwo(spacingBetweenCastAndHealthbar, "Castbar Vertical Position", "Adjust the vertical position of the castbar.")
+    CreateResetButton(spacingBetweenCastAndHealthbar, "spacingBetweenCastAndHealthbar", guiClickNStack)
+
+    local clickAndStackTestButton = CreateFrame("Button", nil, guiClickNStack, "GameMenuButtonTemplate")
+    clickAndStackTestButton:SetSize(110, 25)
+    clickAndStackTestButton:SetText("Test")
+    clickAndStackTestButton:SetNormalFontObject("GameFontNormal")
+    clickAndStackTestButton:SetHighlightFontObject("GameFontHighlight")
+    clickAndStackTestButton:SetPoint("TOP", info, "BOTTOM", 0, -10)
+    CreateTooltipTwo(clickAndStackTestButton, "Test Click & Stacking", "Preview the stacking zone (red), nameplate box (blue) and clickable area (green) overlays on all nameplates.\n\nAlso runs the castbar test mode.", nil, "ANCHOR_LEFT")
+
+    local testModeActive = false
+    clickAndStackTestButton:SetScript("OnClick", function(self)
+        testModeActive = not testModeActive
+        if testModeActive then
+            self:SetText("Stop Testing")
+            BBP.ClickAndStackTestMode(true)
+        else
+            self:SetText("Test")
+            BBP.ClickAndStackTestMode(false)
+        end
+    end)
+
+    for i = sliderStartNumber, #sliderList do
+        sliderList[i].slider:SetScale(0.9)
+    end
+
 end
 
 local function guiHideCastbar()
@@ -11515,93 +11792,9 @@ local function guiCVarControl()
     moreBlizzSettings:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 0, 0)
     moreBlizzSettings:SetText("Blizzard CVar settings not available in base UI")
 
-    local stackingNameplatesText = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    stackingNameplatesText:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 20, -35)
-    stackingNameplatesText:SetText("Stacking nameplate overlap amount")
-
-    local nameplateStackingEnemy = CreateCheckbox("nameplateStackingTypes_Enemy", "Stacking enemy nameplates", guiCVarControl, nil, nil, {cvarName = "nameplateStackingTypes", index = Enum.NamePlateStackType.Enemy})
-    nameplateStackingEnemy:SetPoint("TOPLEFT", stackingNameplatesText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
-    CreateTooltipTwo(nameplateStackingEnemy, "Stacking Enemy Nameplates", "Turn on stacking for enemy nameplates.", nil, nil, "nameplateStackingTypes")
-    nameplateStackingEnemy:HookScript("OnMouseDown", function(self, button)
-        if button == "RightButton" then
-            if BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP == nil then
-                BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP = true
-                if not nameplateStackingEnemy:GetChecked() then
-                    nameplateStackingEnemy:Click()
-                    nameplateStackingEnemy:SetChecked(true)
-                end
-            else
-                BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP = nil
-            end
-            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
-                self:GetScript("OnEnter")(self)
-            end
-            BBP.SetNameplateBehavior()
-        end
-    end)
-
-    local nameplateStackingFriendly = CreateCheckbox("nameplateStackingTypes_Friendly", "Stacking friendly nameplates", guiCVarControl, nil, nil, {cvarName = "nameplateStackingTypes", index = Enum.NamePlateStackType.Friendly})
-    nameplateStackingFriendly:SetPoint("TOPLEFT", nameplateStackingEnemy, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateStackingFriendly, "Stacking Friendly Nameplates", "Turn on stacking for friendly nameplates.", nil, nil, "nameplateStackingTypes")
-
-    local nameplateOverlapH = CreateSlider(guiCVarControl, "Horizontal Overlap", 0.05, 1, 0.01, "nameplateOverlapH")
-    nameplateOverlapH:SetPoint("TOPLEFT", nameplateStackingFriendly, "BOTTOMLEFT", 12, -10)
-    CreateTooltipTwo(nameplateOverlapH, "Horizontal Overlap", "Space between nameplates horizontally", nil, nil, "nameplateOverlapH")
-    local nameplateOverlapHReset = CreateResetButton(nameplateOverlapH, "nameplateOverlapH", guiCVarControl)
-
-    local nameplateOverlapV = CreateSlider(guiCVarControl, "Vertical Overlap", 0.05, 1.1, 0.01, "nameplateOverlapV")
-    nameplateOverlapV:SetPoint("TOPLEFT", nameplateOverlapH, "BOTTOMLEFT", 0, -17)
-    CreateTooltipTwo(nameplateOverlapV, "Vertical Overlap", "Space between nameplates vertically", nil, nil, "nameplateOverlapV")
-    local nameplateOverlapVReset = CreateResetButton(nameplateOverlapV, "nameplateOverlapV", guiCVarControl)
-
-    -- local nameplateMotionSpeed = CreateSlider(guiCVarControl, "Nameplate Motion Speed", 0.01, 1, 0.01, "nameplateMotionSpeed")
-    -- nameplateMotionSpeed:SetPoint("TOPLEFT", nameplateOverlapV, "BOTTOMLEFT", 0, -17)
-    -- CreateTooltipTwo(nameplateMotionSpeed, "Nameplate Motion Speed", "The speed at which nameplates move into their new position", nil, nil, "nameplateMotionSpeed")
-    -- local nameplateMotionSpeedReset = CreateResetButton(nameplateMotionSpeed, "nameplateMotionSpeed", guiCVarControl)
-
-    local stackingSliders = {nameplateOverlapH, nameplateOverlapV, nameplateOverlapHReset, nameplateOverlapVReset}
-    local function ToggleStackingSliders()
-        local eitherChecked = nameplateStackingEnemy:GetChecked() or nameplateStackingFriendly:GetChecked()
-        for _, element in ipairs(stackingSliders) do
-            if eitherChecked then
-                element:Enable()
-                element:SetAlpha(1)
-            else
-                element:Disable()
-                element:SetAlpha(0.5)
-            end
-        end
-    end
-
-    local function InitStackingSliders()
-        if not BBP.variablesLoaded then
-            C_Timer.After(0.1, InitStackingSliders)
-            return
-        end
-        local bf = BetterBlizzPlatesDB.bitfields and BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"]
-        if bf then
-            nameplateStackingEnemy:SetChecked(bf[tostring(Enum.NamePlateStackType.Enemy)] and true or false)
-            nameplateStackingFriendly:SetChecked(bf[tostring(Enum.NamePlateStackType.Friendly)] and true or false)
-        else
-            nameplateStackingEnemy:SetChecked(C_CVar.GetCVarBitfield("nameplateStackingTypes", Enum.NamePlateStackType.Enemy) and true or false)
-            nameplateStackingFriendly:SetChecked(C_CVar.GetCVarBitfield("nameplateStackingTypes", Enum.NamePlateStackType.Friendly) and true or false)
-        end
-        ToggleStackingSliders()
-    end
-    InitStackingSliders()
-
-    nameplateStackingEnemy:HookScript("OnClick", function()
-        ToggleStackingSliders()
-    end)
-    nameplateStackingFriendly:HookScript("OnClick", function()
-        ToggleStackingSliders()
-    end)
-
-
-
 
     local comboPointsText = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    comboPointsText:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 20, -210)
+    comboPointsText:SetPoint("TOPLEFT", guiCVarControl, "TOPLEFT", 20, -25)
     comboPointsText:SetText("Resource Settings (Combo points etc)")
     local comboPointIcon = guiCVarControl:CreateTexture(nil, "ARTWORK")
     comboPointIcon:SetAtlas("ClassOverlay-ComboPoint")
@@ -12324,7 +12517,7 @@ local function guiMisc()
         end
     end)
 
-    local highlightNpShadowOnMouseover = CreateCheckbox("highlightNpShadowOnMouseover", "Highlight Shadow on Mouseover", guiMisc)
+    local highlightNpShadowOnMouseover = CreateCheckbox("highlightNpShadowOnMouseover", "Highlight Mouseover", guiMisc)
     highlightNpShadowOnMouseover:SetPoint("LEFT", showNameplateShadow.text, "RIGHT", 0, 6)
     CreateTooltipTwo(highlightNpShadowOnMouseover, "Highlight Shadow on Mouseover", "Highlight the Shadow white on Mouseover.\n\n|cff32f795Right-click to change Color.|r")
     highlightNpShadowOnMouseover:HookScript("OnClick", function()
@@ -12336,8 +12529,12 @@ local function guiMisc()
         end
     end)
 
+    local showNameplateShadowClassColor = CreateCheckbox("showNameplateShadowClassColor", "Class Color", guiMisc)
+    showNameplateShadowClassColor:SetPoint("LEFT", highlightNpShadowOnMouseover.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(showNameplateShadowClassColor, "Class Color", "Class color the shadow on players.")
+
     local showNameplateShadowOnlyTarget = CreateCheckbox("showNameplateShadowOnlyTarget", "Target", guiMisc)
-    showNameplateShadowOnlyTarget:SetPoint("LEFT", highlightNpShadowOnMouseover.text, "RIGHT", 0, 0)
+    showNameplateShadowOnlyTarget:SetPoint("LEFT", showNameplateShadowClassColor.text, "RIGHT", 0, 0)
     CreateTooltipTwo(showNameplateShadowOnlyTarget, "Target Only", "Only show Nameplate Shadow on current Target.")
 
     local onlyShowHighlightedNpShadow = CreateCheckbox("onlyShowHighlightedNpShadow", "Highlighted Only", guiMisc)
@@ -12613,41 +12810,8 @@ local function guiMisc()
     end)
 
 
-    local enableNpVerticalPos = CreateCheckbox("enableNpVerticalPos", "Change Nameplate Position", guiMisc)
-    enableNpVerticalPos:SetPoint("TOPLEFT", customFontSizeEnabled, "BOTTOMLEFT", 0, -27)
-    CreateTooltipTwo(enableNpVerticalPos, "Change Nameplate Position", "Change the position of nameplates.")
-
-    -- local nameplateHorizontalPosition = CreateSlider(enableNpVerticalPos, "Nameplate Horizontal Position", -70, 70, 1, "nameplateHorizontalPosition", "X")
-    -- nameplateHorizontalPosition:SetPoint("TOPLEFT", enableNpVerticalPos, "BOTTOMLEFT", 10, -10)
-
-    local nameplateVerticalPosition = CreateSlider(enableNpVerticalPos, "Nameplate Vertical Position", -190, 70, 1, "nameplateVerticalPosition", "Y")
-    --nameplateVerticalPosition:SetPoint("TOPLEFT", nameplateHorizontalPosition, "BOTTOMLEFT", 0, -16)
-    nameplateVerticalPosition:SetPoint("TOPLEFT", enableNpVerticalPos, "BOTTOMLEFT", 10, -10)
-
-    enableNpVerticalPos:HookScript("OnClick", function(self)
-        if self:GetChecked() then
-            EnableElement(nameplateVerticalPosition)
-            --EnableElement(nameplateHorizontalPosition)
-        else
-            DisableElement(nameplateVerticalPosition)
-            --DisableElement(nameplateHorizontalPosition)
-            StaticPopup_Show("BBP_CONFIRM_RELOAD")
-        end
-    end)
-
-    local nameplateExtraClickHeight = CreateSlider(guiMisc, "Nameplate Extra Click Height", -38, 30, 1, "nameplateExtraClickHeight", "Y")
-    nameplateExtraClickHeight:SetPoint("TOPLEFT", nameplateVerticalPosition, "BOTTOMLEFT", 0, -16)
-
-    local nameplateClickVerticalAdjustment = CreateSlider(guiMisc, "Y Offset", -10, 10, 1, "nameplateClickVerticalAdjustment", "Y", 70)
-    nameplateClickVerticalAdjustment:SetPoint("LEFT", nameplateExtraClickHeight, "RIGHT", 20, 0)
-    CreateTooltipTwo(nameplateClickVerticalAdjustment, "Clickable Vertical Position", "Tweak the vertical position of the clickable area.")
-
-    local nameplateExtraClickWidth = CreateSlider(guiMisc, "Nameplate Extra Click Width", -60, 6, 1, "nameplateExtraClickWidth", "X")
-    nameplateExtraClickWidth:SetPoint("TOPLEFT", nameplateExtraClickHeight, "BOTTOMLEFT", 0, -16)
-
-
     local personalNpTRP3Color = CreateCheckbox("personalNpTRP3Color", "TRP3: Personal Bar Color", guiMisc)
-    personalNpTRP3Color:SetPoint("TOPLEFT", enableNpVerticalPos, "BOTTOMLEFT", -160, -90)
+    personalNpTRP3Color:SetPoint("TOPLEFT", customFontSizeEnabled, "BOTTOMLEFT", -160, -90)
     CreateTooltipTwo(personalNpTRP3Color, "TRP3: Personal Bar Color", "Color the Personal Resource Display healthbar your TRP3 Color.")
 
     local personalBarTweaks = CreateCheckbox("personalBarTweaks", "Personal Bar Tweaks", guiMisc)
@@ -13100,6 +13264,7 @@ function BBP.LoadGUI()
     guiTemp()
     guiPositionAndScale()
     guiCastbar()
+    guiClickingAndStacking()
     --guiHideCastbar()
     --guiFadeNPC()
     --guiHideNPC()

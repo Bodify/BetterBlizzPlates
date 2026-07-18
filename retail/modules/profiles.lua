@@ -215,6 +215,7 @@ function BBP.ApplyProfile(profileName)
                 EditModeManagerFrame.AccountSettings:RefreshPersonalResourceDisplay()
             end
         end
+        BetterBlizzPlatesDB.avoidPopups = true
         ReloadUI()
     end
 end

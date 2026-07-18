@@ -587,6 +587,7 @@ local activeInterrupts = {}
 
 local interruptSpells = {
     [1766] = 5,  -- Kick (Rogue)
+    [38768] = 5, -- Kick (Rogue, Rank 5)
     [2139] = 6,  -- Counterspell (Mage)
     [6552] = 4,  -- Pummel (Warrior)
     [132409] = 6, -- Spell Lock (Warlock)
@@ -3813,7 +3814,7 @@ function BBP.OnUnitAuraUpdate(self, unit, unitAuraUpdateInfo)
 
     local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure());
     if (nameplate) then
-        BBP.UpdateBuffs(nameplate.UnitFrame.BuffFrame, nameplate.namePlateUnitToken, unitAuraUpdateInfo, auraSettings, nameplate.UnitFrame);
+        BBP.UpdateBuffs(nameplate.UnitFrame.BuffFrame, nameplate.UnitFrame.unit, unitAuraUpdateInfo, auraSettings, nameplate.UnitFrame);
     end
 end
 
