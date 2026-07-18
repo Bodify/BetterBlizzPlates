@@ -8687,13 +8687,13 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 db.nameplateResourcePositionFix = true
             end
 
-            if not db.nameplateMidnightStackingFixRel then -- release = nonbeta
+            if not db.nameplateMidnightStackingFixFinalRel then -- release = nonbeta
                 if not db.nameplateMidnightStackingFix then
                     db.nameplateVerticalPosition = 0 --reset so no crazy stale values are now auto on
                 end
                 db.nameplateOverlapH = 1
                 db.nameplateOverlapV = 1
-                db.nameplateMidnightStackingFixRel = true
+                db.nameplateMidnightStackingFixFinalRel = true
 
                 if not firstLaunch then
                     local extraMention = db.enableNpVerticalPos and "\n\nNameplate vertical position adjustment is now on by default and the value has been reset to 0 to work properly with the new system, its in the new section now." or ""
