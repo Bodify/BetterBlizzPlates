@@ -19,6 +19,7 @@
 - Fix Small Pets setting being wrong and ending up with way wider nameplates than intended.
 - Fix potential lua error in castbar code when it sometimes doesnt have a texture.
 - Add back missing TBC "Break-CC DoT" filter. PR by Romainjava ty!
+- 2.0.8b: Fix the Overlap Sliders in the new "Look and Behaviour" section not changing values.
 ## Midnight
 ### Tweak
 - Class Icon "Pet": Added Whiptails icon. Ty Stroold for helping.
