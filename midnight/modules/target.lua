@@ -546,7 +546,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, 1)
             end
 
-            if db.castbarAlwaysOnTop then
+            if db.castbarAlwaysOnTop and db.enableCastbarCustomization then
                 frame.castBar:SetParent(BBP.OverlayFrame)
             end
 
@@ -674,7 +674,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             end
         end
 
-        if db.castbarAlwaysOnTop then
+        if db.castbarAlwaysOnTop and db.enableCastbarCustomization then
             frame.castBar:SetParent(BBP.OverlayFrameTarget)
         end
 
