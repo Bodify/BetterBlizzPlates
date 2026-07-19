@@ -1,3 +1,10 @@
+# BetterBlizzPlates 2.0.8c
+## All versions (except Era, comes next week)
+### Tweak
+- Tweak Classic Nameplates' top name anchor a bit and move it a bit over to the right so its more centered on the nameplate when level is shown.
+### Bugfix
+- Fix castbar "Always on top" setting causing some issues with the new nameplate rework. Should hopefully work better now but please report any issues.
+
 # BetterBlizzPlates 2.0.8
 ## All versions (except Era, comes next week)
 ### New
