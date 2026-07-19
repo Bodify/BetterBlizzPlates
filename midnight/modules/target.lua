@@ -546,6 +546,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, 1)
             end
 
+            if db.castbarAlwaysOnTop then
+                frame.castBar:SetParent(BBP.OverlayFrame)
+            end
+
             -- info.isTarget = false
             -- info.wasTarget = true
 
@@ -668,6 +672,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             if db.executeIndicatorTargetOnly or db.executeIndicatorInRangeColor then
                 BBP.ExecuteIndicator(frame)
             end
+        end
+
+        if db.castbarAlwaysOnTop then
+            frame.castBar:SetParent(BBP.OverlayFrameTarget)
         end
 
         if db.changeNameplateBorderSize then

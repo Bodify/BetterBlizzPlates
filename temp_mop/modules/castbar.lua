@@ -1458,7 +1458,11 @@ function BBP.CastbarOnEvent(frame, event)
     if enableCastbarCustomization then
 
         if db.castbarAlwaysOnTop then
-            --castBar:SetParent(BBP.OverlayFrame)
+            if UnitIsUnit(frame.unit, "target") then
+                frame.castBar:SetParent(BBP.OverlayFrameTarget)
+            else
+                frame.castBar:SetParent(BBP.OverlayFrame)
+            end
             castBar:SetFrameStrata("HIGH")
         end
 

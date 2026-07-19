@@ -494,6 +494,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 end
             end
 
+            if db.castbarAlwaysOnTop then
+                frame.castBar:SetParent(BBP.OverlayFrame)
+            end
+
             if db.changeNameplateBorderSize then
                 if frame.healthBar.SetBorderSize then
                     frame.healthBar:SetBorderSize(db.nameplateBorderSize)
@@ -589,6 +593,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 if db.executeIndicatorTargetOnly then
                     BBP.ExecuteIndicator(frame)
                 end
+            end
+
+            if db.castbarAlwaysOnTop then
+                frame.castBar:SetParent(BBP.OverlayFrameTarget)
             end
 
             if config.changeNameplateBorderColor then

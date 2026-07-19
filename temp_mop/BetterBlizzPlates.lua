@@ -50,7 +50,8 @@ local cachedOutlinedOutline
 local cachedActiveNameOutline
 
 BBP.variablesLoaded = false
-BBP.OverlayFrame = CreateFrame("Frame")
+BBP.OverlayFrame = CreateFrame("Frame", nil, WorldFrame)
+BBP.OverlayFrameTarget = CreateFrame("Frame", nil, WorldFrame)
 local ClickAreaFramePool = CreateFramePool("Frame")
 local NameplateClickAreas = {}
 local ClickStackPreviews = {}
@@ -7589,6 +7590,9 @@ First:SetScript("OnEvent", function(_, event, addonName)
 
             C_Timer.After(1, function()
                 MoveableSettingsPanel()
+                local uiScaleMult = (C_CVar.GetCVar("useUiScale") and C_CVar.GetCVar("uiScale")) or 1
+                BBP.OverlayFrame:SetScale(C_CVar.GetCVar("nameplateMinScale") * uiScaleMult)
+                BBP.OverlayFrameTarget:SetScale(C_CVar.GetCVar("nameplateSelectedScale") * uiScaleMult)
             end)
 
             C_Timer.After(3, function()

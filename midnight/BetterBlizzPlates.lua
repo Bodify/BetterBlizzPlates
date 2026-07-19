@@ -52,6 +52,7 @@ local cachedActiveNameOutline
 
 BBP.variablesLoaded = false
 BBP.OverlayFrame = CreateFrame("Frame", nil, WorldFrame)
+BBP.OverlayFrameTarget = CreateFrame("Frame", nil, WorldFrame)
 -- BBP.OverlayFrame:SetFrameStrata("DIALOG")
 -- BBP.OverlayFrame:SetFrameLevel(50000)
 local ClickAreaFramePool = CreateFramePool("Frame")
@@ -8656,6 +8657,10 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 if db.changeNameplateBorderSize then
                     ChangeHealthbarBorderSize(PersonalResourceDisplayFrame)
                 end
+
+                local uiScaleMult = (C_CVar.GetCVar("useUiScale") and C_CVar.GetCVar("uiScale")) or 1
+                BBP.OverlayFrame:SetScale(C_CVar.GetCVar("nameplateMinScale") * uiScaleMult)
+                BBP.OverlayFrameTarget:SetScale(C_CVar.GetCVar("nameplateSelectedScale") * uiScaleMult)
             end)
 
             if not db.cleanedScaleScale then
