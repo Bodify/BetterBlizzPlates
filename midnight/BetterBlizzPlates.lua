@@ -6160,7 +6160,7 @@ local function CreateBetterClassicHealthbarBorder(frame)
     if config.hideLevelFrame then
         frame.healthBar.topNameAnchor:SetPoint("TOPRIGHT", frame.healthBar, "TOPRIGHT", 0, 0)
     else
-        frame.healthBar.topNameAnchor:SetPoint("TOPRIGHT", frame.BetterBlizzPlates.bbpBorder.right, "TOPRIGHT", -14, -2)
+        frame.healthBar.topNameAnchor:SetPoint("TOPRIGHT", frame.BetterBlizzPlates.bbpBorder.right, "TOPRIGHT", -3, -2)
     end
 
     if (info.isSelf and not config.personalBarTweaks) then
