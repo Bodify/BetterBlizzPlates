@@ -2450,8 +2450,8 @@ function BBP.ChangeStrataOfResourceFrame()
     resourceFrame:SetFrameStrata("HIGH")
 end
 
-local function ClassColorPlayerNameplate(frame)
-    if not BetterBlizzPlatesDB.forceClassColors then return end
+local function ClassColorPlayerNameplate(frame, force)
+    if not BetterBlizzPlatesDB.forceClassColors and not force then return end
     if not UnitIsPlayer(frame.unit) then return end
     if isEnemy(frame.unit) and (BetterBlizzPlatesDB.nameplateShowClassColor or GetCVarBool("nameplateShowClassColor")) then
         local class = UnitClassBase(frame.unit)
@@ -7158,6 +7158,7 @@ local function HandleNamePlateAdded(unit)
 
     SetNameplateBarSizes(frame)
 end
+BBP.HA = HandleNamePlateAdded
 
 --#################################################################################################
 -- Event Listener
@@ -7413,6 +7414,19 @@ hooksecurefunc(NamePlateUnitFrameMixin, "OnUnitFactionChanged", function(self)
             HandleNamePlateAdded(self.unit)
         end)
     end
+end)
+
+local unitFaction = CreateFrame("Frame")
+unitFaction:RegisterEvent("UNIT_FACTION")
+unitFaction:SetScript("OnEvent", function(self, event, unit)
+    if not BBP.isInPvP then return end
+    C_Timer.After(0.2, function()
+        HandleNamePlateAdded(unit)
+        local np, frame = BBP.GetSafeNameplate(unit)
+        if frame then
+            ClassColorPlayerNameplate(frame, true)
+        end
+    end)
 end)
 
 function BBP.RefreshAllNameplatesLightVer()
