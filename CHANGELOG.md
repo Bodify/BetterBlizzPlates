@@ -1,3 +1,11 @@
+# BetterBlizzPlates 2.0.8d
+## All versions (except Era, comes next week)
+### Tweak
+- Improve handling of Blizzards Mind Control bug. Should now properly set width and class color after a MC. Auras are still not worked out entirely yet but I wont be able to get it 100% there either. I wish Blizzard fixed this bug.
+## Midnight
+### Tweak
+- Update JustDiscipline's profile (www.youtube.com/@JustDiscipline)
+
 # BetterBlizzPlates 2.0.8c
 ## All versions (except Era, comes next week)
 ### Tweak
