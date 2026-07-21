@@ -1,4 +1,4 @@
-## Interface: 11508
+## Interface: 11509, 11508
 ## Title: Better|cff00c0ffBlizz|rPlates
 ## Notes: Default Blizzard Nameplates with more features added to them with easy settings.
 ## Author: Bodify
@@ -13,24 +13,23 @@ embeds.xml
 init.lua
 temp_shared\ImportExport.lua
 
-temp_era\modules\combat.lua
-temp_era\modules\castbar.lua
-temp_era\modules\totem.lua
-temp_era\modules\arenaid.lua
-temp_era\modules\execute.lua
-temp_era\modules\healthNumbers.lua
-temp_era\modules\target.lua
-temp_era\modules\healer.lua
-temp_era\modules\absorb.lua
-temp_era\modules\classIcon.lua
-temp_era\modules\partyPointer.lua
-temp_era\modules\pet.lua
-temp_era\modules\range.lua
-temp_era\modules\quest.lua
-temp_era\modules\auras_extra_era.lua
-temp_era\modules\auras.lua
-temp_era\modules\profiles.lua
+temp_cata\modules\combat.lua
+temp_mop\modules\castbar.lua
+temp_cata\modules\totem.lua
+temp_cata\modules\arenaid.lua
+temp_cata\modules\execute.lua
+temp_cata\modules\healthNumbers.lua
+temp_cata\modules\target.lua
+temp_cata\modules\healer.lua
+temp_cata\modules\absorb.lua
+temp_cata\modules\classIcon.lua
+temp_cata\modules\partyPointer.lua
+temp_cata\modules\pet.lua
+temp_cata\modules\range.lua
+temp_cata\modules\quest.lua
+temp_mop\modules\auras.lua
+temp_cata\modules\profiles.lua
 retail\modules\importConvert.lua
 
-temp_era\gui.lua
-temp_era\BetterBlizzPlates.lua
+temp_mop\gui.lua
+temp_mop\BetterBlizzPlates.lua

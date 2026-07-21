@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.0.9
+## Classic Era/SoD
+### New/Bugfix
+- Update Classic version of addon to TBC version for compatibility. Not everything is fixed on TBC yet either; You are recommended to keep Blizzards "Nameplate Style" setting to "Classic" otherwise errors are likely. Era might need some Era specific tweaks we'll see. Report issues please.
+
 # BetterBlizzPlates 2.0.8d
 ## All versions (except Era, comes next week)
 ### Tweak
