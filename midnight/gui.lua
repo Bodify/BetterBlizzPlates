@@ -1944,7 +1944,7 @@ local function ShowProfileConfirmation(profileName, class, profileFunction, addi
     local color = CLASS_COLORS[class] or "|cffffffff"
     local icon = CLASS_ICONS[class] or "groupfinder-icon-role-leader"
     local profileText = string.format("|A:%s:16:16|a %s%s|r", icon, color, profileName.." Profile")
-    local confirmationText = titleText .. "This action will delete all settings and apply\nthe " .. profileText .. " and reload the UI.\n\n" .. noteText .. "Are you sure you want to continue?"
+    local confirmationText = titleText .. "This action will overwrite your current profile\n(|cffffd700" .. BBP.GetCurrentProfileName() .. "|r) and apply\nthe " .. profileText .. " and reload the UI.\n\n" .. noteText .. "Are you sure you want to continue?"
 
     StaticPopupDialogs["BBP_CONFIRM_PROFILE"].text = confirmationText
     StaticPopup_Show("BBP_CONFIRM_PROFILE", nil, nil, { func = profileFunction })
@@ -2092,7 +2092,7 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
     wipeButton:SetScript("OnMouseDown", function(self, button)
         if button == "RightButton" and IsShiftKeyDown() and IsAltKeyDown() then
             if title == "Full Profile" then
-                BetterBlizzPlatesDB = nil
+                for k in pairs(BetterBlizzPlatesDB) do BetterBlizzPlatesDB[k] = nil end
             else
                 BetterBlizzPlatesDB[tableName] = nil
             end
@@ -12840,6 +12840,193 @@ local function guiMisc()
     -- end)
 end
 
+--#########################################
+-- Profiles subpanel (user-managed database profiles; engine in temp_shared/Profiles.lua)
+local function guiProfilesPanel()
+    local guiProfiles = CreateFrame("Frame")
+    guiProfiles.name = "Profiles"
+    guiProfiles.parent = BetterBlizzPlates.name
+    local guiProfilesCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiProfiles, guiProfiles.name, guiProfiles.name)
+    CreateTitle(guiProfiles)
+
+    local bgImg = guiProfiles:CreateTexture(nil, "BACKGROUND")
+    bgImg:SetAtlas("professions-recipe-background")
+    bgImg:SetPoint("CENTER", guiProfiles, "CENTER", -8, 4)
+    bgImg:SetSize(680, 610)
+    bgImg:SetAlpha(0.4)
+    bgImg:SetVertexColor(0, 0, 0)
+
+    -- Intro / reset explanation
+    local introText = guiProfiles:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    introText:SetPoint("TOPLEFT", guiProfiles, "TOPLEFT", 30, -80)
+    introText:SetJustifyH("LEFT")
+    introText:SetText("You can change the active database profile, so you can have\ndifferent settings for every character.")
+
+    local resetText = guiProfiles:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    resetText:SetPoint("TOPLEFT", introText, "BOTTOMLEFT", 0, -12)
+    resetText:SetJustifyH("LEFT")
+    resetText:SetText("Reset the current profile back to its default values, in case\nyour configuration is broken, or you simply want to start over.")
+
+    -- Reset Profile button + Current Profile label
+    local resetButton = CreateFrame("Button", nil, guiProfiles, "UIPanelButtonTemplate")
+    resetButton:SetSize(120, 24)
+    resetButton:SetText("Reset Profile")
+    resetButton:SetPoint("TOPLEFT", resetText, "BOTTOMLEFT", 0, -16)
+    -- Deliberately "dangerous" look (bright red + outline) instead of the dim red
+    -- that read as a disabled/greyed button. The OUTLINE matches the intro window's
+    -- "Exit, No Profile" idiom for making button text pop; hover/pushed states are
+    -- texture-based on UIPanelButtonTemplate and stay normal.
+    resetButton:GetFontString():SetTextColor(1, 0.3, 0.3)
+    local resetFont, resetSize = resetButton:GetFontString():GetFont()
+    resetButton:GetFontString():SetFont(resetFont, resetSize, "OUTLINE")
+    resetButton:SetScript("OnClick", function()
+        BBP.ResetProfile()
+    end)
+
+    local currentProfileLabel = guiProfiles:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    currentProfileLabel:SetPoint("LEFT", resetButton, "RIGHT", 16, 0)
+    currentProfileLabel:SetJustifyH("LEFT")
+
+    -- Create / choose explanation
+    local createText = guiProfiles:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    createText:SetPoint("TOPLEFT", resetButton, "BOTTOMLEFT", 0, -24)
+    createText:SetJustifyH("LEFT")
+    createText:SetText("You can either create a new profile by entering a name in the\neditbox, or choose one of the already existing profiles.")
+
+    -- New profile editbox
+    local newLabel = guiProfiles:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    newLabel:SetPoint("TOPLEFT", createText, "BOTTOMLEFT", 4, -16)
+    newLabel:SetText("New")
+
+    local newEditBox = CreateFrame("EditBox", nil, guiProfiles, "InputBoxTemplate")
+    newEditBox:SetSize(150, 20)
+    newEditBox:SetPoint("TOPLEFT", newLabel, "BOTTOMLEFT", 2, -4)
+    newEditBox:SetAutoFocus(false)
+    newEditBox:SetFontObject("ChatFontNormal")
+    newEditBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    -- Shared create handler so the "Add" button and pressing Enter do the same thing.
+    local function submitNewProfile()
+        local text = newEditBox:GetText()
+        newEditBox:ClearFocus()
+        if text and text:gsub("%s", "") ~= "" then
+            newEditBox:SetText("")
+            BBP.CreateProfile(text) -- engine trims, rejects empty/duplicate, then switches (popup -> reload)
+        end
+    end
+    newEditBox:SetScript("OnEnterPressed", submitNewProfile)
+
+    -- "Add" button: same create action as Enter. Matches the list-panel editbox+button
+    -- idiom (UIPanelButtonTemplate, 60x24, "Add", anchored to the right of the editbox).
+    local newAddButton = CreateFrame("Button", nil, guiProfiles, "UIPanelButtonTemplate")
+    newAddButton:SetSize(60, 24)
+    newAddButton:SetText("Add")
+    newAddButton:SetPoint("LEFT", newEditBox, "RIGHT", 10, 0)
+    newAddButton:SetScript("OnClick", submitNewProfile)
+
+    -- Dropdown factory: menu contents rebuild live on each open via BBP.GetProfiles().
+    local function CreateProfilesDropdown(dropdownName, width, excludeCurrent, markCurrent, onSelect, excludeDefault)
+        local dropdown = LibDD:Create_UIDropDownMenu(dropdownName, guiProfiles)
+        LibDD:UIDropDownMenu_SetWidth(dropdown, width)
+        LibDD:UIDropDownMenu_Initialize(dropdown, function(self, level)
+            local info = LibDD:UIDropDownMenu_CreateInfo()
+            local current = BBP.GetCurrentProfileName()
+            for _, pname in ipairs(BBP.GetProfiles()) do
+                if not (excludeCurrent and pname == current) and not (excludeDefault and pname == "Default") then
+                    info.text = pname
+                    info.arg1 = pname
+                    info.checked = (markCurrent and pname == current)
+                    info.colorCode = "|cFFFFFF00"
+                    info.func = function(_, arg1)
+                        onSelect(arg1)
+                    end
+                    LibDD:UIDropDownMenu_AddButton(info)
+                end
+            end
+        end)
+        return dropdown
+    end
+
+    -- Existing Profiles dropdown (switch active profile)
+    local existingLabel = guiProfiles:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    -- Shifted right by the "Add" button width + gap so it stays above the dropdown.
+    existingLabel:SetPoint("BOTTOMLEFT", newEditBox, "TOPLEFT", 260, 18)
+    existingLabel:SetText("Existing Profiles")
+
+    local existingDropdown = CreateProfilesDropdown("BBPExistingProfilesDropdown", 160, false, true, function(name)
+        BBP.SetProfile(name) -- confirm popup -> reload (engine no-ops if already active)
+    end)
+    -- Anchored to the "Add" button (not the editbox) so it clears the new button.
+    existingDropdown:SetPoint("LEFT", newAddButton, "RIGHT", 14, -2)
+
+    -- Copy From dropdown (copies into the active profile)
+    local copyText = guiProfiles:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    copyText:SetPoint("TOPLEFT", newEditBox, "BOTTOMLEFT", -2, -42)
+    copyText:SetJustifyH("LEFT")
+    copyText:SetText("Copy the settings from one existing profile into the currently\nactive profile.")
+
+    local copyLabel = guiProfiles:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    copyLabel:SetPoint("TOPLEFT", copyText, "BOTTOMLEFT", 4, -16)
+    copyLabel:SetText("Copy From")
+
+    local copyDropdown = CreateProfilesDropdown("BBPCopyProfileDropdown", 160, true, false, function(name)
+        BBP.CopyProfile(name) -- confirm popup -> reload
+    end)
+    copyDropdown:SetPoint("TOPLEFT", copyLabel, "BOTTOMLEFT", -16, -4)
+
+    -- Delete a Profile dropdown
+    local deleteText = guiProfiles:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    deleteText:SetPoint("TOPLEFT", copyDropdown, "BOTTOMLEFT", 16, -20)
+    deleteText:SetJustifyH("LEFT")
+    deleteText:SetText("Delete existing and unused profiles from the database to save\nspace, and cleanup the SavedVariables file.")
+
+    local deleteLabel = guiProfiles:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    deleteLabel:SetPoint("TOPLEFT", deleteText, "BOTTOMLEFT", 4, -16)
+    deleteLabel:SetText("Delete a Profile")
+
+    local refreshProfilesUI
+
+    -- excludeDefault (last arg) keeps "Default" out of the delete list: the engine
+    -- hard-blocks deleting Default, and it must never be offered in the UI.
+    local deleteDropdown = CreateProfilesDropdown("BBPDeleteProfileDropdown", 160, true, false, function(name)
+        BBP.pendingProfileDelete = name
+        StaticPopup_Show("BBP_CONFIRM_PROFILE_DELETE", name)
+    end, true)
+    deleteDropdown:SetPoint("TOPLEFT", deleteLabel, "BOTTOMLEFT", -16, -4)
+
+    -- Delete confirmation. The engine's BBP.DeleteProfile deletes immediately (no
+    -- popup and no reload), so the GUI owns the confirm + refresh here.
+    StaticPopupDialogs["BBP_CONFIRM_PROFILE_DELETE"] = {
+        text = "Delete the BetterBlizzPlates profile \"%s\"?\n\nThis cannot be undone.",
+        button1 = "Delete",
+        button2 = "Cancel",
+        OnAccept = function()
+            local name = BBP.pendingProfileDelete
+            BBP.pendingProfileDelete = nil
+            if name then
+                BBP.DeleteProfile(name)
+                if refreshProfilesUI then refreshProfilesUI() end
+            end
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+    }
+
+    -- Refresh the labels/selected-text that don't auto-update (dropdown menu
+    -- contents themselves rebuild on open). Runs on build, on panel show, and
+    -- after a delete (switch/copy/reset reload the UI, so they don't need it).
+    refreshProfilesUI = function()
+        currentProfileLabel:SetText("Current Profile: |cffffd700" .. BBP.GetCurrentProfileName() .. "|r")
+        LibDD:UIDropDownMenu_SetText(existingDropdown, BBP.GetCurrentProfileName())
+        LibDD:UIDropDownMenu_SetText(copyDropdown, "Copy From...")
+        LibDD:UIDropDownMenu_SetText(deleteDropdown, "Delete a Profile...")
+    end
+
+    refreshProfilesUI()
+    guiProfiles:HookScript("OnShow", refreshProfilesUI)
+end
+
 local function guiImportAndExport()
     local guiImportAndExport = CreateFrame("Frame")
     guiImportAndExport.name = "Import & Export"--"|A:GarrMission_CurrencyIcon-Material:19:19|a Misc"
@@ -13284,6 +13471,7 @@ function BBP.LoadGUI()
     guiCVarControl()
     guiMisc()
     guiImportAndExport()
+    guiProfilesPanel()
     --guiTotemList()
     guiSupport()
     BetterBlizzPlates.guiLoaded = true
