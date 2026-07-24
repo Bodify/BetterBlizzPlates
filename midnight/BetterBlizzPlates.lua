@@ -5047,8 +5047,10 @@ local function ColorNameplateBorder(self, frame)
 
         if config.npBorderClassColor then
             if info.isPlayer then
-                local classColor = RAID_CLASS_COLORS[info.class]
-                self:SetVertexColor(classColor.r, classColor.g, classColor.b, 1)
+                local classColor = C_ClassColor.GetClassColor(info.class)
+                if classColor then
+                    self:SetVertexColor(classColor.r, classColor.g, classColor.b, 1)
+                end
             else
                 self:SetVertexColor(unpack(config.npBorderNpcColorRGB))
             end
@@ -5170,18 +5172,20 @@ function BBP.ColorNameplateBorder(frame) --classic border
 
         if config.npBorderClassColor then
             if info.isPlayer then
-                local classColor = RAID_CLASS_COLORS[info.class]
-                if border then
-                    border:SetDesaturated(true)
-                    border:SetBorderColor(classColor.r, classColor.g, classColor.b, 1)
-                elseif not nonMidnightBorder then
-                    midnightBgBorder:SetVertexColor(classColor.r, classColor.g, classColor.b, 1)
-                end
-                if newBorder and db.classicRetailNameplates then
-                    frame.HealthBarsContainer:SetBorderColor(classColor.r, classColor.g, classColor.b, 1)
-                end
-                if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
-                    selectedBorder:SetVertexColor(classColor.r, classColor.g, classColor.b, 1)
+                local classColor = C_ClassColor.GetClassColor(info.class)
+                if classColor then
+                    if border then
+                        border:SetDesaturated(true)
+                        border:SetBorderColor(classColor.r, classColor.g, classColor.b, 1)
+                    elseif not nonMidnightBorder then
+                        midnightBgBorder:SetVertexColor(classColor.r, classColor.g, classColor.b, 1)
+                    end
+                    if newBorder and db.classicRetailNameplates then
+                        frame.HealthBarsContainer:SetBorderColor(classColor.r, classColor.g, classColor.b, 1)
+                    end
+                    if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
+                        selectedBorder:SetVertexColor(classColor.r, classColor.g, classColor.b, 1)
+                    end
                 end
             elseif not config.npBorderFriendFoeColor then
                 if border then
@@ -5377,8 +5381,8 @@ local function HookNameplateBorder(frame)
             ColorNameplateBorder(self, frame)
         end)
         frame.BetterBlizzPlates.hooks.nameplateBorderColor = true
-        ColorNameplateBorder(frame.HealthBarsContainer.border, frame)
     end
+    ColorNameplateBorder(frame.HealthBarsContainer.border, frame)
 end
 
 local function HookSelectedBorder(frame)
@@ -5393,8 +5397,8 @@ local function HookSelectedBorder(frame)
             self.changing = false
         end)
         frame.BetterBlizzPlates.hooks.selectedBorderColor = true
-        BBP.ColorNameplateBorder(frame)
     end
+    BBP.ColorNameplateBorder(frame)
 end
 
 local function HookNameplateCastbarHide(frame)
