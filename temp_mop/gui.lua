@@ -10446,9 +10446,6 @@ local function guiCVarControl()
     nameplateResourceOnTarget:HookScript("OnClick", function()
         CheckAndToggleCheckboxes(nameplateResourceOnTarget)
     end)
-    if not BBP.isMoP then
-        notWorking(nameplateResourceUnderCastbar)
-    end
 
     local hideResourceOnFriend = CreateCheckbox("hideResourceOnFriend", "Hide resource on friendly nameplates", guiCVarControl)
     hideResourceOnFriend:SetPoint("TOP", nameplateResourceUnderCastbar, "BOTTOM", 0, pixelsBetweenBoxes)
