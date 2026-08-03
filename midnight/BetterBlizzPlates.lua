@@ -157,6 +157,7 @@ local defaultSettings = {
     dpsOrHealNoAggroColorRGB = {0, 1, 0, 1},
     npBgColorRGB = {1, 1, 1, 1},
     smallPetsWidth = 20,
+    smallPetsHeight = 6,
     enlargeAllImportantBuffs = true,
     enlargeAllCC = true,
     normalCastbarForEmpoweredCasts = true,
@@ -1048,6 +1049,7 @@ local cvarList = {
     "nameplateShowFriendlyPlayerPets",
     "nameplateShowFriendlyPlayerTotems",
     "nameplateShowFriendlyNpcs",
+    "nameplateShowOnlyNameForFriendlyPlayerUnits",
     --"nameplateSelfTopInset",
     --"nameplateSelfBottomInset",
     --"nameplateSelfAlpha",
@@ -2243,6 +2245,7 @@ local function InitializeNameplateSettings(frame)
             classicNameplates = BetterBlizzPlatesDB.classicNameplates,
             hideLevelFrame = BetterBlizzPlatesDB.hideLevelFrame,
             smallPetsInPvP = BetterBlizzPlatesDB.smallPetsInPvP,
+            smallPetsInPvPHeight = BetterBlizzPlatesDB.smallPetsInPvPHeight,
             hideEliteDragon = BetterBlizzPlatesDB.hideEliteDragon,
             personalBarTweaks = BetterBlizzPlatesDB.personalBarTweaks,
             hpEndLine = BetterBlizzPlatesDB.hpEndLine,
@@ -2521,11 +2524,22 @@ local function ColorNameplateByReaction(frame)
     end
 end
 
+local function AdjustSmallPetHeight(frame)
+    local heightKey = frame.bbpSmallPetWidthKey == "smallPetsSmallerWidth" and "smallPetsSmallerHeight" or "smallPetsHeight"
+    frame.HealthBarsContainer:SetHeight(BetterBlizzPlatesDB[heightKey] or 6)
+end
+
 local function AdjustHealthBarHeight(frame)
     if frame:IsForbidden() then return end
     if not frame.unit then return end
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config
     if not config then return end
+
+    if frame.isSmallPet and config.smallPetsInPvPHeight then
+        AdjustSmallPetHeight(frame)
+        return
+    end
+
     if BetterBlizzPlatesDB.changeHealthbarHeight then
         if isEnemy(frame.unit) then
             frame.HealthBarsContainer:SetHeight(config.hpHeightEnemy or 11)
@@ -2706,6 +2720,10 @@ local function SetCVarsOnLogin()
         C_CVar.SetCVar("nameplateShowClassColor", BetterBlizzPlatesDB.nameplateShowClassColor)
         C_CVar.SetCVar("nameplateShowFriendlyClassColor", BetterBlizzPlatesDB.nameplateShowFriendlyClassColor)
 
+        local overrideOnlyName = BetterBlizzPlatesDB.nameplateShowOnlyNameForFriendlyPlayerUnits
+        if overrideOnlyName == "1" or overrideOnlyName == 1 or overrideOnlyName == true then
+            C_CVar.SetCVar("nameplateShowOnlyNameForFriendlyPlayerUnits", "1")
+        end
 
         if BetterBlizzPlatesDB.nameplateDebuffPadding then
             C_CVar.SetCVar("nameplateDebuffPadding", BetterBlizzPlatesDB.nameplateDebuffPadding)
@@ -3646,6 +3664,7 @@ local function SmallPetsInPvP(frame)
                 if wk then
                     local db = BetterBlizzPlatesDB
                     frame.isSmallPet = true
+                    frame.bbpSmallPetWidthKey = wk
                     SetBarWidth(frame, db[wk], false)
                 else
                     frame.isSmallPet = false
@@ -3655,7 +3674,11 @@ local function SmallPetsInPvP(frame)
         end
 
         frame.isSmallPet = true
+        frame.bbpSmallPetWidthKey = widthKey
         SetBarWidth(frame, db[widthKey], false)
+        if config.smallPetsInPvPHeight then
+            AdjustSmallPetHeight(frame)
+        end
 
     end
 end
@@ -7737,11 +7760,17 @@ local function SetNameplateBehavior()
             InstanceChecker:RegisterEvent("PLAYER_REGEN_ENABLED")
         end
     else
+        local overrideOnlyName = BetterBlizzPlatesDB.nameplateShowOnlyNameForFriendlyPlayerUnits
+        local isOnlyNameOverrideEnabled = overrideOnlyName == "1" or overrideOnlyName == 1 or overrideOnlyName == true
         if BBP.isInPvE then
-            if BetterBlizzPlatesDB.friendlyHideHealthBar and not BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve then
-                C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 1)
-            else
-                C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 0)
+            if not isOnlyNameOverrideEnabled then
+                BBP.CVarTrackingDisabled = true
+                if BetterBlizzPlatesDB.friendlyHideHealthBar and not BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve then
+                    C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 1)
+                else
+                    C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 0)
+                end
+                BBP.CVarTrackingDisabled = nil
             end
             if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then C_CVar.SetCVar("UnitNameFriendlyPlayerName", 0) end
             local enemyStacking = BetterBlizzPlatesDB.bitfields and BetterBlizzPlatesDB.bitfields.nameplateStackingTypes
@@ -7751,8 +7780,11 @@ local function SetNameplateBehavior()
             end
             BBP.ApplyNameplateWidth()
         else
-            --if BetterBlizzPlatesDB.friendlyHideHealthBar then C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 0) end
-            C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 0)
+            if not isOnlyNameOverrideEnabled then
+                BBP.CVarTrackingDisabled = true
+                C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 0)
+                BBP.CVarTrackingDisabled = nil
+            end
             if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then C_CVar.SetCVar("UnitNameFriendlyPlayerName", 1) end
             local enemyStacking = BetterBlizzPlatesDB.bitfields and BetterBlizzPlatesDB.bitfields.nameplateStackingTypes
                 and BetterBlizzPlatesDB.bitfields.nameplateStackingTypes[tostring(Enum.NamePlateStackType.Enemy)]
@@ -8384,6 +8416,10 @@ local function UpdateLateAdditionSettings(db)
         db.smallPetsSmallerWidth = db.smallPetsWidth
     end
 
+    if db.smallPetsSmallerHeight == nil then
+        db.smallPetsSmallerHeight = db.smallPetsHeight
+    end
+
     if db.classIndicator and db.classIconAlwaysShowHealer == nil then
         db.classIconAlwaysShowHealer = false
         db.classIconAlwaysShowTank = false
@@ -8785,6 +8821,19 @@ local nameplates = {}
 local timers = {}
 local temporaryNpCastTest = CreateFrame("Frame")
 
+local function GetTestCastbarText(spellName)
+    if BetterBlizzPlatesDB.showNameplateTargetText and BetterBlizzPlatesDB.castbarTargetTextInsideBar then
+        local name = GetUnitName("player")
+        local _, classIdentifier = UnitClass("player")
+        local color = classIdentifier and C_ClassColor.GetClassColor(classIdentifier)
+        if color then
+            name = color:WrapTextInColorCode(name)
+        end
+        return spellName .. ": " .. name
+    end
+    return spellName
+end
+
 local function NamePlateCastBarTestMode(frame)
     local castBar = frame.castBar
     if castBar then
@@ -8880,7 +8929,7 @@ local function NamePlateCastBarTestMode(frame)
                     end
                 end
 
-                if targetText and not BetterBlizzPlatesDB.targetTextTestMode then
+                if targetText and not BetterBlizzPlatesDB.targetTextTestMode and not BetterBlizzPlatesDB.castbarTargetTextInsideBar then
                     if not frame.dummyNameText then
                         frame.dummyNameText = frame.healthBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
                         frame.dummyNameText:SetJustifyH("CENTER")
@@ -8943,7 +8992,7 @@ local function NamePlateCastBarTestMode(frame)
                             castBarTexture:SetDesaturated(false)
                             castBar:SetStatusBarColor(1,1,1,1)
                         end
-                        castBar.Text:SetText("Frostbolt")
+                        castBar.Text:SetText(GetTestCastbarText("Frostbolt"))
                         if customCastbar and BetterBlizzPlatesDB.hideCastbarIcon then
                             castBar.Icon:Hide()
                         else
@@ -8987,7 +9036,7 @@ local function NamePlateCastBarTestMode(frame)
                                 castBar.bbpTestUninterruptable = true
                                 castBar.UpdateBorders()
                             end
-                            castBar.Text:SetText("Shattering Throw")
+                            castBar.Text:SetText(GetTestCastbarText("Shattering Throw"))
                             castBar.Icon:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\ability_warrior_shatteringthrow")
                             if showCastBarIconWhenNoninterruptible then
                                 castBar.BorderShield:SetDrawLayer("OVERLAY", 1)
@@ -9014,7 +9063,7 @@ local function NamePlateCastBarTestMode(frame)
                                 castBarTexture:SetDesaturated(false)
                                 castBar:SetStatusBarColor(1,1,1,1)
                             end
-                            castBar.Text:SetText("Soothing Mist")
+                            castBar.Text:SetText(GetTestCastbarText("Soothing Mist"))
                             if customCastbar and BetterBlizzPlatesDB.hideCastbarIcon then
                                 castBar.Icon:Hide()
                             else
@@ -9040,7 +9089,7 @@ local function NamePlateCastBarTestMode(frame)
                                 castBarTexture:SetDesaturated(false)
                                 castBar:SetStatusBarColor(1,1,1,1)
                             end
-                            castBar.Text:SetText("Frostbolt")
+                            castBar.Text:SetText(GetTestCastbarText("Frostbolt"))
                             if customCastbar and BetterBlizzPlatesDB.hideCastbarIcon then
                                 castBar.Icon:Hide()
                             else

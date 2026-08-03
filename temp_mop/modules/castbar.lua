@@ -807,45 +807,197 @@ function BBP.HideCastbar(frame, unitToken)
     end
 end
 
+local bottomAnchors = {
+    BOTTOMLEFT = true,
+    BOTTOM = true,
+    BOTTOMRIGHT = true,
+}
+
+local function GetCastbarTargetName(unit)
+    local name = UnitSpellTargetName(unit)
+    local class = UnitSpellTargetClass(unit)
+    return name, class
+end
+
+local function GetColoredTargetString(name, class)
+    if not name then return nil end
+    if class then
+        local color = C_ClassColor.GetClassColor(class)
+        if color then
+            return color:WrapTextInColorCode(name)
+        end
+    end
+    return name
+end
+
+function BBP.CastbarTargetText(castBar)
+    castBar:HookScript("OnEvent", function(self, event)
+        if not BetterBlizzPlatesDB.showNameplateTargetText or not BetterBlizzPlatesDB.castbarTargetTextInsideBar then return end
+        if not CastStartEvents[event] then return end
+        local spell = UnitCastingInfo(self.unit) or UnitChannelInfo(self.unit)
+        if not spell then return end
+
+        local coloredName
+        if BetterBlizzPlatesDB.targetTextTestMode then
+            local _, classIdentifier = UnitClass("player")
+            coloredName = GetColoredTargetString(GetUnitName("player"), classIdentifier)
+        else
+            local name, class = GetCastbarTargetName(self.unit)
+            coloredName = GetColoredTargetString(name, class)
+        end
+
+        if coloredName then
+            castBar.Text:SetText(spell .. ": " .. coloredName)
+        end
+    end)
+end
+
 -- Update text and color based on the target
 function BBP.UpdateNameplateTargetText(frame, unit)
+    if not unit then return end
+    local db = BetterBlizzPlatesDB
     local castBar = frame.CastBar or frame.castBar or frame.CastBarsContainer.castBar
+
     if not frame.TargetText then
         frame.TargetText = BBP.OverlayFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.TargetText:SetJustifyH("CENTER")
-        frame.TargetText:SetParent(castBar)
         frame.TargetText:SetIgnoreParentScale(true)
-        -- fix me (make it appear above resource when higher strata resource) bodify
     end
 
-    local isCasting = UnitCastingInfo(unit) or UnitChannelInfo(unit)
+    if db.castbarTargetTextInsideBar then
+        frame.TargetText:SetText("")
+        return
+    end
 
-    frame.TargetText:SetText("")
+    local isFriend = not UnitCanAttack("player", unit)
 
-    if isCasting and UnitExists(unit.."target") and castBar:IsShown() and not frame.hideCastInfo then
-        local targetOfTarget = unit.."target"
-        local name = UnitName(targetOfTarget)
-        local _, class = UnitClass(targetOfTarget)
-        local color = RAID_CLASS_COLORS[class]
-        local useCustomFont = BetterBlizzPlatesDB.useCustomFont
+    -- Test mode: show player's name as target on all nameplates
+    if db.targetTextTestMode then
+        local anchor, relativeAnchor, xPos, yPos, fontSize
+        if isFriend then
+            anchor = db.targetTextFriendlyAnchor or "TOP"
+            relativeAnchor = db.targetTextFriendlyRelativeAnchor or anchor
+            xPos = db.npTargetTextFriendlyXPos or 0
+            yPos = (db.npTargetTextFriendlyYPos or 0) - 1
+            fontSize = db.npTargetTextFriendlySize or db.npTargetTextSize or 12
+        else
+            anchor = db.targetTextAnchor or "TOP"
+            relativeAnchor = db.targetTextRelativeAnchor or anchor
+            xPos = db.npTargetTextXPos or 0
+            yPos = (db.npTargetTextYPos or 0) - 1
+            fontSize = db.npTargetTextSize or 12
+        end
+        local useCastbarAnchor = not db.targetTextStatic and bottomAnchors[relativeAnchor]
+        local castBarVisible = castBar and castBar:IsShown() and not frame.hideCastInfo
+        local anchorTo = (useCastbarAnchor and castBarVisible) and castBar or frame.HealthBarsContainer
+        frame.TargetText:SetParent((useCastbarAnchor and castBarVisible) and castBar or (frame.bbpOverlay or frame.healthBar))
+
+        local name = GetUnitName("player")
+        local _, classIdentifier = UnitClass("player")
+        if classIdentifier then
+            local color = C_ClassColor.GetClassColor(classIdentifier)
+            if color then
+                name = color:WrapTextInColorCode(name)
+            end
+        end
 
         frame.TargetText:SetText(name)
-        frame.TargetText:SetTextColor(color.r, color.g, color.b)
         frame.TargetText:ClearAllPoints()
-        if UnitCanAttack("player", unit) then
-            frame.TargetText:SetPoint("TOPRIGHT", castBar, "BOTTOMRIGHT", -4, 0)  -- Set anchor point for enemy
-        else
-            frame.TargetText:SetPoint("TOP", castBar, "BOTTOM", 0, 0)  -- Set anchor point for friendly
-        end
-        local npTextSize = BetterBlizzPlatesDB.npTargetTextSize
-        if useCustomFont then
-            BBP.SetFontBasedOnOption(frame.TargetText, (useCustomFont and (npTextSize or 11)) or (npTextSize or 12))
-        else
-            local f,s,o = frame.TargetText:GetFont()
-            frame.TargetText:SetFont(f,12,"OUTLINE, SLUG")
-        end
-    else
+        frame.TargetText:SetPoint(anchor, anchorTo, relativeAnchor, xPos, yPos)
+        BBP.SetFontBasedOnOption(frame.TargetText, fontSize)
+        frame.TargetText:Show()
+        return
+    end
+
+    if (isFriend and not db.targetTextFriendly) or (not isFriend and not db.targetTextEnemy) then
         frame.TargetText:SetText("")
+        return
+    end
+
+    local anchor, relativeAnchor, xPos, yPos, fontSize
+    if isFriend then
+        anchor = db.targetTextFriendlyAnchor or "TOP"
+        relativeAnchor = db.targetTextFriendlyRelativeAnchor or anchor
+        xPos = db.npTargetTextFriendlyXPos or 0
+        yPos = (db.npTargetTextFriendlyYPos or 0) - 1
+        fontSize = db.npTargetTextFriendlySize or db.npTargetTextSize or 12
+    else
+        anchor = db.targetTextAnchor or "TOP"
+        relativeAnchor = db.targetTextRelativeAnchor or anchor
+        xPos = db.npTargetTextXPos or 0
+        yPos = (db.npTargetTextYPos or 0) - 1
+        fontSize = db.npTargetTextSize or 12
+    end
+    local useCastbarAnchor = not db.targetTextStatic and bottomAnchors[relativeAnchor]
+
+    local isCasting = castBar and (castBar.casting or castBar.channeling)
+    local castBarVisible = isCasting and castBar:IsShown() and not frame.hideCastInfo
+
+    if castBarVisible then
+        local name = UnitSpellTargetName(unit)
+        if name then
+            local class = UnitSpellTargetClass(unit)
+            if class then
+                local color = C_ClassColor.GetClassColor(class)
+                if color then
+                    name = color:WrapTextInColorCode(name)
+                end
+            end
+
+            local anchorTo = useCastbarAnchor and castBar or frame.HealthBarsContainer
+            frame.TargetText:SetParent(useCastbarAnchor and castBar or (frame.bbpOverlay or frame.healthBar))
+            frame.TargetText:SetText(name)
+            frame.TargetText:ClearAllPoints()
+            frame.TargetText:SetPoint(anchor, anchorTo, relativeAnchor, xPos, yPos)
+            BBP.SetFontBasedOnOption(frame.TargetText, fontSize)
+            frame.TargetText:Show()
+            return
+        end
+    end
+
+    if db.targetTextAlwaysShow then
+        local targetUnit = unit .. "target"
+        if UnitExists(targetUnit) then
+            local name = UnitName(targetUnit)
+            if name then
+                local class
+                if UnitIsPlayer(targetUnit) then
+                    _, class = UnitClass(targetUnit)
+                end
+                if class then
+                    local color = C_ClassColor.GetClassColor(class)
+                    if color then
+                        name = color:WrapTextInColorCode(name)
+                    end
+                end
+                local anchorTo = (useCastbarAnchor and castBarVisible) and castBar or frame.HealthBarsContainer
+                frame.TargetText:SetParent((useCastbarAnchor and castBarVisible) and castBar or (frame.bbpOverlay or frame.healthBar))
+                frame.TargetText:SetText(name)
+                frame.TargetText:ClearAllPoints()
+                frame.TargetText:SetPoint(anchor, anchorTo, relativeAnchor, xPos, yPos)
+                BBP.SetFontBasedOnOption(frame.TargetText, fontSize)
+                frame.TargetText:Show()
+                return
+            end
+        end
+    end
+
+    frame.TargetText:SetText("")
+end
+
+local targetTextEventFrame = CreateFrame("Frame")
+function BBP.ToggleTargetTextAlwaysShow()
+    if BetterBlizzPlatesDB.targetTextAlwaysShow then
+        targetTextEventFrame:RegisterEvent("UNIT_TARGET")
+        targetTextEventFrame:SetScript("OnEvent", function(_, _, unit)
+            if not string.match(unit, "nameplate") then return end
+            local np, frame = BBP.GetSafeNameplate(unit)
+            if frame then
+                BBP.UpdateNameplateTargetText(frame, unit)
+            end
+        end)
+    else
+        targetTextEventFrame:UnregisterEvent("UNIT_TARGET")
     end
 end
 
@@ -857,41 +1009,26 @@ function BBP.UpdateCastTimer(frame, unit)
         --nameplate.CastTimer:SetPoint("LEFT", nameplate, "BOTTOMRIGHT", -10, 15)
         frame.CastTimer:SetPoint("LEFT", castBar, "RIGHT", 5, 0)
         local npTextSize = BetterBlizzPlatesDB.npCastTimerSize or BetterBlizzPlatesDB.npTargetTextSize
-        BBP.SetFontBasedOnOption(frame.CastTimer, npTextSize or 12, "OUTLINE")
+        BBP.SetFontBasedOnOption(frame.CastTimer, npTextSize or 12, "OUTLINE, SLUG")
         frame.CastTimer:SetTextColor(1, 1, 1)
     end
 
-    local name, temp_, temp__, startTime, endTime = UnitCastingInfo(unit)
-    if not name then
-        name, temp_, temp__, startTime, endTime = UnitChannelInfo(unit)
+    local duration = UnitCastingDuration(unit)
+    if not duration then
+        duration = UnitChannelDuration(unit)
     end
 
-    if name and endTime and startTime and frame and frame.healthBar and frame.healthBar:IsShown() and not frame.hideCastInfo then
-        -- local enableCastbarCustomization = BetterBlizzPlatesDB.enableCastbarCustomization
-
-        -- if enableCastbarCustomization then
-        --     BBP.CustomizeCastbar(unit)
-        -- end
-        frame.CastTimer.endTime = endTime / 1000
-        local currentTime = GetTime()
-        local timeLeft = frame.CastTimer.endTime - currentTime
-        if timeLeft <= 0 then
-            frame.CastTimer:SetText("")
-            if frame.TargetText then
-                frame.TargetText:SetText("")
-            end
-        else
-            frame.CastTimerFrame:Show()
-            frame.CastTimer:SetText(string.format("%.1f", timeLeft))
-            C_Timer.After(0.05, function()
-                BBP.UpdateCastTimer(frame, unit)
-                --BBP.HideCastbar(unit) -- this worked well but could pop up short between casts
-            end)
-        end
+    if duration and frame and frame.healthBar and frame.healthBar:IsShown() and not frame.hideCastInfo then
+        frame.CastTimerFrame:Show()
+        frame.CastTimer:SetText(string.format("%.1f", duration:GetRemainingDuration()))
+        C_Timer.After(0.1, function()
+            BBP.UpdateCastTimer(frame, unit)
+        end)
     else
+        frame.CastTimerFrame:Hide()
         frame.CastTimer:SetText("")
-        if frame.TargetText then
-            frame.TargetText:SetText("")
+        if BetterBlizzPlatesDB.showNameplateTargetText and frame.unit then
+            BBP.UpdateNameplateTargetText(frame, frame.unit)
         end
     end
 end
@@ -1254,6 +1391,7 @@ function BBP.HookCastbarOnEvent(frame)
                 BBP.CastbarOnEvent(frame, event)
             end
         end)
+        BBP.CastbarTargetText(frame.castBar)
         frame.hookedCastbarOnEvent = true
     end
     BBP.CastbarOnEvent(frame)

@@ -1154,6 +1154,24 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                             BBP.NameplateShadowAndMouseoverHighlight(petFrame)
                         end
                     end
+                elseif element == "smallPetsHeight" then
+                    BetterBlizzPlatesDB.smallPetsHeight = value
+                    for _, np in pairs(C_NamePlate.GetNamePlates()) do
+                        local petFrame = np.UnitFrame
+                        if petFrame then
+                            BBP.SmallPetsInPvP(petFrame)
+                            BBP.NameplateShadowAndMouseoverHighlight(petFrame)
+                        end
+                    end
+                elseif element == "smallPetsSmallerHeight" then
+                    BetterBlizzPlatesDB.smallPetsSmallerHeight = value
+                    for _, np in pairs(C_NamePlate.GetNamePlates()) do
+                        local petFrame = np.UnitFrame
+                        if petFrame then
+                            BBP.SmallPetsInPvP(petFrame)
+                            BBP.NameplateShadowAndMouseoverHighlight(petFrame)
+                        end
+                    end
                 -- Cast bar emphasis height
                 elseif element == "castBarEmphasisHeightValue" then
                     BetterBlizzPlatesDB.castBarEmphasisHeightValue = value
@@ -1743,17 +1761,6 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
                 tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
             end
 
-            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
-        elseif title == "Small Pets in PvP" then
-            local tooltipText = "\n|cffc084f7Shift + Right-click to resize ALL npc nameplates in PvP.|r"
-            if BetterBlizzPlatesDB.smallPetsInPvPAllNPCs then
-                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
-            end
-            tooltipText = tooltipText .. "\n\n|cff32f795Ctrl + Right-click to ignore totem nameplates.|r"
-            if BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems then
-                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
-            end
-            tooltipText = tooltipText .. "\n|cFFFFD100Note: Ignoring Totems only works if you only have Totems and Pets enabled. Guardians etc would also be ignored if enabled.|r"
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         elseif title == "Color Focus Nameplate Healthbar" then
             local tooltipText = "\n|cff32f795Right-click to disable while in PvP.|r"
@@ -5075,47 +5082,91 @@ local function guiGeneralTab()
 
     local smallPetsInPvP = CreateCheckbox("smallPetsInPvP", "Small Pets", BetterBlizzPlates)
     smallPetsInPvP:SetPoint("LEFT", healthNumbers.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(smallPetsInPvP, "Small Pets in PvP", "Reduce the width of all pet nameplates, and the width of all npc nameplates in PvP.\n\n|cff32f795Right-click to adjust width.|r", "Totem Indicator NPCs will stay full width unless specified otherwise in the Totem Indicator List section.")
+    CreateTooltipTwo(smallPetsInPvP, "Small Pets in PvP", "Reduce the width (and optionally height) of pet nameplates, and small NPC nameplates in PvP.\n\n|cff32f795Right-click for options.|r")
 
-    local smallPetsWidthSlider = CreateSlider(BetterBlizzPlates, "Pets Width", 2, 40, 1, "smallPetsWidth", nil, 65)
-    smallPetsWidthSlider:SetPoint("BOTTOMLEFT", smallPetsInPvP, "TOPLEFT", -8, -2)
-    smallPetsWidthSlider:Hide()
-    CreateTooltipTwo(smallPetsWidthSlider, "Pets Width", "Adjust the width used for pet nameplates.", "Right-click the slider to type a value outside the default range.")
+    local smallPetsOptionsFrame
+    local function OpenSmallPetsOptionsWindow()
+        if not smallPetsOptionsFrame then
+            smallPetsOptionsFrame = CreateFrame("Frame", "BBPSmallPetsOptionsFrame", UIParent, "BasicFrameTemplateWithInset")
+            smallPetsOptionsFrame:SetSize(180, 240)
+            smallPetsOptionsFrame:SetPoint("CENTER")
+            smallPetsOptionsFrame:SetFrameStrata("HIGH")
+            smallPetsOptionsFrame:SetMovable(true)
+            smallPetsOptionsFrame:EnableMouse(true)
+            smallPetsOptionsFrame:RegisterForDrag("LeftButton")
+            smallPetsOptionsFrame:SetScript("OnDragStart", smallPetsOptionsFrame.StartMoving)
+            smallPetsOptionsFrame:SetScript("OnDragStop", smallPetsOptionsFrame.StopMovingOrSizing)
+            smallPetsOptionsFrame.title = smallPetsOptionsFrame:CreateFontString(nil, "OVERLAY")
+            smallPetsOptionsFrame.title:SetFontObject("GameFontHighlight")
+            smallPetsOptionsFrame.title:SetPoint("LEFT", smallPetsOptionsFrame.TitleBg, "LEFT", 5, 0)
+            smallPetsOptionsFrame.title:SetText("Small Pets Options")
 
-    local smallPetsSmallerWidthSlider = CreateSlider(BetterBlizzPlates, "Smaller Pets", 2, 40, 1, "smallPetsSmallerWidth", nil, 65)
-    smallPetsSmallerWidthSlider:SetPoint("LEFT", smallPetsWidthSlider, "RIGHT", 15, 0)
-    smallPetsSmallerWidthSlider:Hide()
-    CreateTooltipTwo(smallPetsSmallerWidthSlider, "Smaller Pets Width", "Adjust the width used for smaller pet nameplates like guardians and toems etc.", "Right-click the slider to type a value outside the default range.")
+            local smallPetsAllNPCs = CreateCheckbox("smallPetsInPvPAllNPCs", "Shrink All NPCs in PvP", smallPetsOptionsFrame)
+            smallPetsAllNPCs:SetPoint("TOPLEFT", smallPetsOptionsFrame, "TOPLEFT", 10, -26)
+            CreateTooltipTwo(smallPetsAllNPCs, "Shrink All NPCs in PvP", "Also shrink all NPC nameplates while in PvP, not just pets/minions.")
+
+            local smallPetsIgnoreTotems = CreateCheckbox("smallPetsInPvPIgnoreTotems", "Ignore Totems", smallPetsOptionsFrame)
+            smallPetsIgnoreTotems:SetPoint("TOPLEFT", smallPetsAllNPCs, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+            CreateTooltipTwo(smallPetsIgnoreTotems, "Ignore Totems", "Keep totems at full width/height instead of shrinking them.", "|cFFFFD100Note: Only works if you only have Totems and Pets enabled. Guardians etc would also be ignored if enabled.|r")
+
+            smallPetsAllNPCs:HookScript("OnClick", function(self)
+                if self:GetChecked() then
+                    BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems = false
+                    smallPetsIgnoreTotems:SetChecked(false)
+                end
+            end)
+            smallPetsIgnoreTotems:HookScript("OnClick", function(self)
+                if self:GetChecked() then
+                    BetterBlizzPlatesDB.smallPetsInPvPAllNPCs = false
+                    smallPetsAllNPCs:SetChecked(false)
+                end
+            end)
+
+            local smallPetsWidthSlider = CreateSlider(smallPetsOptionsFrame, "Pets Width", 2, 40, 1, "smallPetsWidth", nil, 150)
+            smallPetsWidthSlider:SetPoint("TOPLEFT", smallPetsIgnoreTotems, "BOTTOMLEFT", 2, -10)
+            CreateTooltipTwo(smallPetsWidthSlider, "Pets Width", "Adjust the width used for pet nameplates.", "Right-click the slider to type a value outside the default range.")
+
+            local smallPetsSmallerWidthSlider = CreateSlider(smallPetsOptionsFrame, "Smaller Pets Width", 2, 40, 1, "smallPetsSmallerWidth", nil, 150)
+            smallPetsSmallerWidthSlider:SetPoint("TOPLEFT", smallPetsWidthSlider, "BOTTOMLEFT", 0, -17)
+            CreateTooltipTwo(smallPetsSmallerWidthSlider, "Smaller Pets Width", "Adjust the width used for smaller pet nameplates like guardians and totems etc.", "Right-click the slider to type a value outside the default range.")
+
+            local smallPetsInPvPHeight = CreateCheckbox("smallPetsInPvPHeight", "Also Adjust Height", smallPetsOptionsFrame)
+            smallPetsInPvPHeight:SetPoint("TOPLEFT", smallPetsSmallerWidthSlider, "BOTTOMLEFT", -2, -10)
+            CreateTooltipTwo(smallPetsInPvPHeight, "Also Adjust Height", "Also shrink the height of pet/small nameplates, not just the width.")
+
+            local smallPetsHeightSlider = CreateSlider(smallPetsOptionsFrame, "Pets Height", 1, 35, 0.1, "smallPetsHeight", nil, 150)
+            smallPetsHeightSlider:SetPoint("TOPLEFT", smallPetsInPvPHeight, "BOTTOMLEFT", 2, -10)
+            CreateTooltipTwo(smallPetsHeightSlider, "Pets Height", "Adjust the height used for pet nameplates.", "Right-click the slider to type a value outside the default range.")
+
+            local smallPetsSmallerHeightSlider = CreateSlider(smallPetsOptionsFrame, "Smaller Pets Height", 1, 35, 0.1, "smallPetsSmallerHeight", nil, 150)
+            smallPetsSmallerHeightSlider:SetPoint("TOPLEFT", smallPetsHeightSlider, "BOTTOMLEFT", 0, -17)
+            CreateTooltipTwo(smallPetsSmallerHeightSlider, "Smaller Pets Height", "Adjust the height used for smaller pet nameplates like guardians and totems etc.", "Right-click the slider to type a value outside the default range.")
+
+            if not BetterBlizzPlatesDB.smallPetsInPvPHeight then
+                DisableElement(smallPetsHeightSlider)
+                DisableElement(smallPetsSmallerHeightSlider)
+            end
+
+            smallPetsInPvPHeight:HookScript("OnClick", function(self)
+                if self:GetChecked() then
+                    EnableElement(smallPetsHeightSlider)
+                    EnableElement(smallPetsSmallerHeightSlider)
+                else
+                    DisableElement(smallPetsHeightSlider)
+                    DisableElement(smallPetsSmallerHeightSlider)
+                end
+            end)
+
+            smallPetsOptionsFrame:Show()
+        else
+            smallPetsOptionsFrame:SetShown(not smallPetsOptionsFrame:IsShown())
+        end
+    end
 
     smallPetsInPvP:SetScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
-            if IsShiftKeyDown() then
-                BetterBlizzPlatesDB.smallPetsInPvPAllNPCs = not BetterBlizzPlatesDB.smallPetsInPvPAllNPCs
-                if BetterBlizzPlatesDB.smallPetsInPvPAllNPCs then
-                    BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems = false
-                end
-                BBP.RefreshAllNameplates()
-                if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
-                    self:GetScript("OnEnter")(self)
-                end
-            elseif IsControlKeyDown() then
-                BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems = not BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems
-                BBP.RefreshAllNameplates()
-                if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
-                    self:GetScript("OnEnter")(self)
-                end
-            else
-                GameTooltip:Hide()
-                smallPetsWidthSlider:SetShown(not smallPetsWidthSlider:IsShown())
-                smallPetsSmallerWidthSlider:SetShown(not smallPetsSmallerWidthSlider:IsShown())
-            end
-        end
-    end)
-
-    smallPetsInPvP:HookScript("OnClick", function(self)
-        if not self:GetChecked() then
-            smallPetsWidthSlider:Hide()
-            smallPetsSmallerWidthSlider:Hide()
+            GameTooltip:Hide()
+            OpenSmallPetsOptionsWindow()
         end
     end)
 
@@ -12065,8 +12116,12 @@ local function guiCVarControl()
     nameplateShowAll:SetPoint("TOP", setCVarAcrossAllCharacters, "BOTTOM", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateShowAll, "Always show nameplates", "Always show nameplates (if not targeted)", nil, nil, "nameplateShowAll")
 
+    local nameplateShowOnlyNameForFriendlyPlayerUnits = CreateCheckbox("nameplateShowOnlyNameForFriendlyPlayerUnits", "Show Only Friendly NP Names", guiCVarControl, true, BBP.SetNameplateBehavior)
+    nameplateShowOnlyNameForFriendlyPlayerUnits:SetPoint("TOP", nameplateShowAll, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(nameplateShowOnlyNameForFriendlyPlayerUnits, "Show Only Friendly NP Names", "Only show Name on Nameplates and hide healthbar & castbar. This enables Blizzards new CVar for this.", nil, nil, "nameplateShowOnlyNameForFriendlyPlayerUnits")
+
     local nameplateShowEnemyMinions = CreateCheckbox("nameplateShowEnemyMinions", "Show Enemy Minions", guiCVarControl, true)
-    nameplateShowEnemyMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", -127, -40)
+    nameplateShowEnemyMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", -127, -56)
     CreateTooltipTwo(nameplateShowEnemyMinions, "Show Enemy Minion Nameplates", "Minions are stuff like extra BM hunter pets but Observer is also a minion", nil, nil, "nameplateShowEnemyMinions")
 
     local nameplateShowEnemyGuardians = CreateCheckbox("nameplateShowEnemyGuardians", "Show Enemy Guardians", guiCVarControl, true)
@@ -12086,7 +12141,7 @@ local function guiCVarControl()
     CreateTooltipTwo(nameplateShowEnemyTotems, "Show Enemy Totem Nameplates", "Totems are totems.. and Psyfiend", nil, nil, "nameplateShowEnemyTotems")
 
     local nameplateShowFriendlyPlayerMinions = CreateCheckbox("nameplateShowFriendlyPlayerMinions", "Show Friendly Minions", guiCVarControl, true)
-    nameplateShowFriendlyPlayerMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", 25, -40)
+    nameplateShowFriendlyPlayerMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", 25, -56)
     CreateTooltipTwo(nameplateShowFriendlyPlayerMinions, "Show Friendly Minion Nameplates", "Minions are stuff like extra BM hunter pets but Observer is also a minion", nil, nil, "nameplateShowFriendlyPlayerMinions")
 
     local nameplateShowFriendlyPlayerGuardians = CreateCheckbox("nameplateShowFriendlyPlayerGuardians", "Show Friendly Guardians", guiCVarControl, true)
@@ -12190,6 +12245,7 @@ local function guiCVarControl()
     cbCVars["nameplateShowFriendlyPlayerTotems"] = nameplateShowFriendlyPlayerTotems
     --cbCVars["nameplateResourceOnTarget"] = nameplateResourceOnTarget
     cbCVars["nameplateShowAll"] = nameplateShowAll
+    cbCVars["nameplateShowOnlyNameForFriendlyPlayerUnits"] = nameplateShowOnlyNameForFriendlyPlayerUnits
 
     local sliderCVars = {}
     sliderCVars["nameplateOverlapH"] = nameplateOverlapH
@@ -13357,7 +13413,8 @@ function BBP.CVarTracker()
             nameplateShowFriendlyNpcs = true,
             nameplateShowFriendlyPlayerTotems = true,
             nameplateResourceOnTarget = true,
-            nameplateShowAll = true
+            nameplateShowAll = true,
+            nameplateShowOnlyNameForFriendlyPlayerUnits = true
         },
         sliders = {
             nameplateOverlapH = true,

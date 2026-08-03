@@ -679,8 +679,14 @@ function BBP.CastbarTargetText(castBar)
         local spell = UnitCastingInfo(self.unit) or UnitChannelInfo(self.unit)
         if not spell then return end
 
-        local name, class = GetCastbarTargetName(self.unit)
-        local coloredName = GetColoredTargetString(name, class)
+        local coloredName
+        if BetterBlizzPlatesDB.targetTextTestMode then
+            local _, classIdentifier = UnitClass("player")
+            coloredName = GetColoredTargetString(GetUnitName("player"), classIdentifier)
+        else
+            local name, class = GetCastbarTargetName(self.unit)
+            coloredName = GetColoredTargetString(name, class)
+        end
 
         if coloredName then
             castBar.Text:SetText(spell .. ": " .. coloredName)

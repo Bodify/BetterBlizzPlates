@@ -637,6 +637,7 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
     if textColor then
         dropdownText:SetTextColor(unpack(textColor))
     end
+    dropdown.label = dropdownText
 
     -- Enable or disable the dropdown based on the parent's check state
     if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
@@ -1093,6 +1094,25 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BetterBlizzPlatesDB.raidmarkIndicatorYPos = value
                 elseif element == "raidmarkIndicatorScale" then
                     BetterBlizzPlatesDB.raidmarkIndicatorScale = value
+                -- Target Text
+                elseif element == "npTargetTextXPos" then
+                    BetterBlizzPlatesDB.npTargetTextXPos = value
+                    BBP.RefreshAllNameplates()
+                elseif element == "npTargetTextYPos" then
+                    BetterBlizzPlatesDB.npTargetTextYPos = value
+                    BBP.RefreshAllNameplates()
+                elseif element == "npTargetTextSize" then
+                    BetterBlizzPlatesDB.npTargetTextSize = value
+                    BBP.RefreshAllNameplates()
+                elseif element == "npTargetTextFriendlyXPos" then
+                    BetterBlizzPlatesDB.npTargetTextFriendlyXPos = value
+                    BBP.RefreshAllNameplates()
+                elseif element == "npTargetTextFriendlyYPos" then
+                    BetterBlizzPlatesDB.npTargetTextFriendlyYPos = value
+                    BBP.RefreshAllNameplates()
+                elseif element == "npTargetTextFriendlySize" then
+                    BetterBlizzPlatesDB.npTargetTextFriendlySize = value
+                    BBP.RefreshAllNameplates()
                 -- Totem Indicator Pos and Scale
                 elseif element == "totemIndicatorXPos" then
                     BetterBlizzPlatesDB.totemIndicatorXPos = value
@@ -1165,6 +1185,14 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                             if BetterBlizzPlatesDB.classicNameplates then
                                 BBP.CreateBetterClassicCastbarBorders(petFrame)
                             end
+                        end
+                    end
+                elseif element == "smallPetsHeight" then
+                    BetterBlizzPlatesDB.smallPetsHeight = value
+                    for _, np in pairs(C_NamePlate.GetNamePlates()) do
+                        local petFrame = np.UnitFrame
+                        if petFrame then
+                            BBP.SmallPetsInPvP(petFrame)
                         end
                     end
                 -- Cast bar emphasis height
@@ -1583,17 +1611,6 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             if BetterBlizzPlatesDB.sortDurationAurasReverse then
                 tooltipText = tooltipText .. "\nReverse sorting|A:ParagonReputation_Checkmark:15:15|a"
             end
-            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
-        elseif title == "Small Pets in PvP" then
-            local tooltipText = "\n|cffc084f7Shift + Right-click to resize ALL npc nameplates in PvP.|r"
-            if BetterBlizzPlatesDB.smallPetsInPvPAllNPCs then
-                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
-            end
-            tooltipText = tooltipText .. "\n\n|cff32f795Ctrl + Right-click to ignore totem nameplates.|r"
-            if BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems then
-                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
-            end
-            tooltipText = tooltipText .. "\n|cFFFFD100Note: This only works if you only have Totems and Pets enabled. Guardians etc would also be ignored if enabled.|r"
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         elseif title == "Purgeable" then
             local tooltipText = "\n|cff32f795Right-click to only show Purgeable in PvE.|r"
@@ -4949,40 +4966,80 @@ local function guiGeneralTab()
 
     local smallPetsInPvP = CreateCheckbox("smallPetsInPvP", "Small Pets", BetterBlizzPlates)
     smallPetsInPvP:SetPoint("LEFT", healthNumbers.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(smallPetsInPvP, "Small Pets in PvP", "Reduce the width of all pet nameplates, and the width of all npc nameplates in PvP.\n\n|cff32f795Right-click to adjust width.|r", "Totem Indicator NPCs will stay full width unless specified otherwise in the Totem Indicator List section.")
+    CreateTooltipTwo(smallPetsInPvP, "Small Pets in PvP", "Reduce the width (and optionally height) of pet nameplates, and small NPC nameplates in PvP.\n\n|cff32f795Right-click for options.|r")
 
-    local smallPetsWidthSlider = CreateSlider(BetterBlizzPlates, "Small Pets Width", 2, 70, 1, "smallPetsWidth", nil, 120)
-    smallPetsWidthSlider:SetPoint("BOTTOMLEFT", smallPetsInPvP, "TOPLEFT", 5, 5)
-    smallPetsWidthSlider:Hide()
-    CreateTooltipTwo(smallPetsWidthSlider, "Small Pets Width", "Adjust the width used for small pet/npc nameplates.", "Right-click the slider to type a value outside the default range.")
+    local smallPetsOptionsFrame
+    local function OpenSmallPetsOptionsWindow()
+        if not smallPetsOptionsFrame then
+            smallPetsOptionsFrame = CreateFrame("Frame", "BBPSmallPetsOptionsFrame", UIParent, "BasicFrameTemplateWithInset")
+            smallPetsOptionsFrame:SetSize(192, 220)
+            smallPetsOptionsFrame:SetPoint("CENTER")
+            smallPetsOptionsFrame:SetFrameStrata("HIGH")
+            smallPetsOptionsFrame:SetMovable(true)
+            smallPetsOptionsFrame:EnableMouse(true)
+            smallPetsOptionsFrame:RegisterForDrag("LeftButton")
+            smallPetsOptionsFrame:SetScript("OnDragStart", smallPetsOptionsFrame.StartMoving)
+            smallPetsOptionsFrame:SetScript("OnDragStop", smallPetsOptionsFrame.StopMovingOrSizing)
+            smallPetsOptionsFrame.title = smallPetsOptionsFrame:CreateFontString(nil, "OVERLAY")
+            smallPetsOptionsFrame.title:SetFontObject("GameFontHighlight")
+            smallPetsOptionsFrame.title:SetPoint("LEFT", smallPetsOptionsFrame.TitleBg, "LEFT", 5, 0)
+            smallPetsOptionsFrame.title:SetText("Small Pets Options")
+
+            local smallPetsAllNPCs = CreateCheckbox("smallPetsInPvPAllNPCs", "Shrink All NPCs in PvP", smallPetsOptionsFrame)
+            smallPetsAllNPCs:SetPoint("TOPLEFT", smallPetsOptionsFrame, "TOPLEFT", 10, -26)
+            CreateTooltipTwo(smallPetsAllNPCs, "Shrink All NPCs in PvP", "Also shrink all NPC nameplates while in PvP, not just pets/minions.")
+
+            local smallPetsIgnoreTotems = CreateCheckbox("smallPetsInPvPIgnoreTotems", "Ignore Totems", smallPetsOptionsFrame)
+            smallPetsIgnoreTotems:SetPoint("TOPLEFT", smallPetsAllNPCs, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+            CreateTooltipTwo(smallPetsIgnoreTotems, "Ignore Totems", "Keep totems at full width/height instead of shrinking them.")
+
+            smallPetsAllNPCs:HookScript("OnClick", function(self)
+                if self:GetChecked() then
+                    BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems = false
+                    smallPetsIgnoreTotems:SetChecked(false)
+                end
+            end)
+            smallPetsIgnoreTotems:HookScript("OnClick", function(self)
+                if self:GetChecked() then
+                    BetterBlizzPlatesDB.smallPetsInPvPAllNPCs = false
+                    smallPetsAllNPCs:SetChecked(false)
+                end
+            end)
+
+            local smallPetsWidthSlider = CreateSlider(smallPetsOptionsFrame, "Small Pets Width", 2, 70, 1, "smallPetsWidth", nil, 150)
+            smallPetsWidthSlider:SetPoint("TOPLEFT", smallPetsIgnoreTotems, "BOTTOMLEFT", 2, -10)
+            CreateTooltipTwo(smallPetsWidthSlider, "Small Pets Width", "Adjust the width used for small pet/npc nameplates.", "Right-click the slider to type a value outside the default range.")
+
+            local smallPetsInPvPHeight = CreateCheckbox("smallPetsInPvPHeight", "Also Adjust Height", smallPetsOptionsFrame)
+            smallPetsInPvPHeight:SetPoint("TOPLEFT", smallPetsWidthSlider, "BOTTOMLEFT", -2, -10)
+            CreateTooltipTwo(smallPetsInPvPHeight, "Also Adjust Height", "Also shrink the height of small pet/npc nameplates, not just the width.")
+
+            local smallPetsHeightSlider = CreateSlider(smallPetsOptionsFrame, "Small Pets Height", 1, 35, 0.1, "smallPetsHeight", nil, 150)
+            smallPetsHeightSlider:SetPoint("TOPLEFT", smallPetsInPvPHeight, "BOTTOMLEFT", 2, -10)
+            CreateTooltipTwo(smallPetsHeightSlider, "Small Pets Height", "Adjust the height used for small pet/npc nameplates.", "Right-click the slider to type a value outside the default range.")
+
+            if not BetterBlizzPlatesDB.smallPetsInPvPHeight then
+                DisableElement(smallPetsHeightSlider)
+            end
+
+            smallPetsInPvPHeight:HookScript("OnClick", function(self)
+                if self:GetChecked() then
+                    EnableElement(smallPetsHeightSlider)
+                else
+                    DisableElement(smallPetsHeightSlider)
+                end
+            end)
+
+            smallPetsOptionsFrame:Show()
+        else
+            smallPetsOptionsFrame:SetShown(not smallPetsOptionsFrame:IsShown())
+        end
+    end
 
     smallPetsInPvP:SetScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
-            if IsShiftKeyDown() then
-                BetterBlizzPlatesDB.smallPetsInPvPAllNPCs = not BetterBlizzPlatesDB.smallPetsInPvPAllNPCs
-                if BetterBlizzPlatesDB.smallPetsInPvPAllNPCs then
-                    BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems = false
-                end
-                BBP.RefreshAllNameplates()
-                if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
-                    self:GetScript("OnEnter")(self)
-                end
-            elseif IsControlKeyDown() then
-                BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems = not BetterBlizzPlatesDB.smallPetsInPvPIgnoreTotems
-                BBP.RefreshAllNameplates()
-                if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
-                    self:GetScript("OnEnter")(self)
-                end
-            else
-                GameTooltip:Hide()
-                smallPetsWidthSlider:SetShown(not smallPetsWidthSlider:IsShown())
-            end
-        end
-    end)
-
-    smallPetsInPvP:HookScript("OnClick", function(self)
-        if not self:GetChecked() then
-            smallPetsWidthSlider:Hide()
+            GameTooltip:Hide()
+            OpenSmallPetsOptionsWindow()
         end
     end)
 
@@ -5247,9 +5304,9 @@ local function guiGeneralTab()
     local showNameplateCastbarTimer = CreateCheckbox("showNameplateCastbarTimer", "Cast timer next to castbar", BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
     showNameplateCastbarTimer:SetPoint("LEFT", alwaysHideEnemyCastbar.text, "RIGHT", 0, 0)
 
-    local showNameplateTargetText = CreateCheckbox("showNameplateTargetText", "Show target underneath castbar", BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
+    local showNameplateTargetText = CreateCheckbox("showNameplateTargetText", "Show Target Text", BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
     showNameplateTargetText:SetPoint("TOPLEFT", alwaysHideEnemyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(showNameplateTargetText, "Nameplate Target Text", "Show the nameplate's current target underneath the castbar while casting")
+    CreateTooltipTwo(showNameplateTargetText, "Nameplate Target Text", "Show the nameplates current target underneath the castbar while casting.", "More settings in the Advanced Settings section like position, size and \"Always show\" etc.")
 
     local hideEliteDragon = CreateCheckbox("hideEliteDragon", "Hide elite icon", BetterBlizzPlates)
     hideEliteDragon:SetPoint("LEFT", showNameplateTargetText.text, "RIGHT", 0, 0)
@@ -6109,6 +6166,7 @@ local function guiPositionAndScale()
     local thirdLineY = -695
     local fourthLineX = 560
     local fourthLineY = -1010
+    local fifthLineY = -1325
 
     local BetterBlizzPlatesSubPanel = CreateFrame("Frame")
     BetterBlizzPlatesSubPanel.name = "Advanced Settings"
@@ -7773,6 +7831,210 @@ local function guiPositionAndScale()
     anchorThreatColor.enemyColorThreatHideSolo = CreateCheckbox("enemyColorThreatHideSolo", "Turn off while Solo", contentFrame)
     anchorThreatColor.enemyColorThreatHideSolo:SetPoint("TOPLEFT", anchorThreatColor.enemyColorThreatCombatOnlyPlayer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorThreatColor.enemyColorThreatHideSolo, "Turn off while Solo", "Don't show threat colors when I am not in a group.")
+
+
+    ----------------------
+    -- Target Text
+    ----------------------
+    local anchorSubTargetText = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubTargetText:SetPoint("CENTER", mainGuiAnchor2, "CENTER", thirdLineX, fifthLineY)
+    anchorSubTargetText:SetText("Target Text")
+
+    anchorSubTargetText.border = CreateBorderBox(anchorSubTargetText)
+
+    anchorSubTargetText.t = contentFrame:CreateTexture(nil, "ARTWORK")
+    anchorSubTargetText.t:SetAtlas("TargetCrosshairs")
+    anchorSubTargetText.t:SetSize(60, 60)
+    anchorSubTargetText.t:SetPoint("BOTTOM", anchorSubTargetText, "TOP", 11, -23)
+
+    anchorSubTargetText.s1 = CreateSlider(contentFrame, "Font Size", 4, 20, 1, "npTargetTextSize", false, 72)
+    anchorSubTargetText.s1:SetPoint("TOP", anchorSubTargetText, "BOTTOM", -36, -15)
+    anchorSubTargetText.s1.Text:SetTextColor(1,0,0)
+    CreateTooltip(anchorSubTargetText.s1, "Enemy Font Size")
+
+    anchorSubTargetText.s2 = CreateSlider(contentFrame, "x offset", -50, 50, 1, "npTargetTextXPos", "X", 72)
+    anchorSubTargetText.s2:SetPoint("TOP", anchorSubTargetText.s1, "BOTTOM", 0, -15)
+    anchorSubTargetText.s2.Text:SetTextColor(1,0,0)
+    CreateTooltip(anchorSubTargetText.s2, "Enemy X Offset")
+
+    anchorSubTargetText.s3 = CreateSlider(contentFrame, "y offset", -50, 50, 1, "npTargetTextYPos", "Y", 72)
+    anchorSubTargetText.s3:SetPoint("TOP", anchorSubTargetText.s2, "BOTTOM", 0, -15)
+    anchorSubTargetText.s3.Text:SetTextColor(1,0,0)
+    CreateTooltip(anchorSubTargetText.s3, "Enemy Y Offset")
+
+    anchorSubTargetText.fs1 = CreateSlider(contentFrame, "Font Size", 4, 20, 1, "npTargetTextFriendlySize", false, 72)
+    anchorSubTargetText.fs1:SetPoint("TOP", anchorSubTargetText, "BOTTOM", 36, -15)
+    anchorSubTargetText.fs1.Text:SetTextColor(0.04, 0.76, 1)
+    CreateTooltip(anchorSubTargetText.fs1, "Friendly Font Size")
+
+    anchorSubTargetText.fs2 = CreateSlider(contentFrame, "x offset", -50, 50, 1, "npTargetTextFriendlyXPos", "X", 72)
+    anchorSubTargetText.fs2:SetPoint("TOP", anchorSubTargetText.fs1, "BOTTOM", 0, -15)
+    anchorSubTargetText.fs2.Text:SetTextColor(0.04, 0.76, 1)
+    CreateTooltip(anchorSubTargetText.fs2, "Friendly X Offset")
+
+    anchorSubTargetText.fs3 = CreateSlider(contentFrame, "y offset", -50, 50, 1, "npTargetTextFriendlyYPos", "Y", 72)
+    anchorSubTargetText.fs3:SetPoint("TOP", anchorSubTargetText.fs2, "BOTTOM", 0, -15)
+    anchorSubTargetText.fs3.Text:SetTextColor(0.04, 0.76, 1)
+    CreateTooltip(anchorSubTargetText.fs3, "Friendly Y Offset")
+
+    anchorSubTargetText.dropdown = CreateAnchorDropdown(
+        "targetTextAnchorDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "targetTextAnchor",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = anchorSubTargetText.fs3, x = -90, y = -35, label = "Enemy" },
+        55,
+        {1, 0, 0, 1}
+    )
+    CreateTooltipTwo(anchorSubTargetText.dropdown, "Enemy Anchor Point", "The anchor point of the Target Text itself.")
+    CreateTooltipTwo(anchorSubTargetText.dropdown.label, "Enemy Anchor Point", "The anchor point of the Target Text itself.")
+
+    anchorSubTargetText.dropdownFriendly = CreateAnchorDropdown(
+        "targetTextFriendlyAnchorDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "targetTextFriendlyAnchor",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = anchorSubTargetText.fs3, x = -16, y = -35, label = "Friendly" },
+        55,
+        {0.04, 0.76, 1, 1}
+    )
+    CreateTooltipTwo(anchorSubTargetText.dropdownFriendly, "Friendly Anchor Point", "The anchor point of the Target Text itself.")
+    CreateTooltipTwo(anchorSubTargetText.dropdownFriendly.label, "Friendly Anchor Point", "The anchor point of the Target Text itself.")
+
+    anchorSubTargetText.dropdownRelative = CreateAnchorDropdown(
+        "targetTextRelativeAnchorDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "targetTextRelativeAnchor",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = anchorSubTargetText.dropdown, x = 0, y = -45, label = "Relative" },
+        55,
+        {1, 0, 0, 1}
+    )
+    CreateTooltipTwo(anchorSubTargetText.dropdownRelative, "Enemy Relative Point", "The point where the Target Text attaches to the nameplate. If any of the bottom ones are selected it will anchor underneath castbar instead of healthbar when castbar is shown unless \"Static\" is selected.")
+    CreateTooltipTwo(anchorSubTargetText.dropdownRelative.label, "Enemy Relative Point", "The point where the Target Text attaches to the nameplate. If any of the bottom ones are selected it will anchor underneath castbar instead of healthbar when castbar is shown unless \"Static\" is selected.")
+
+    anchorSubTargetText.dropdownFriendlyRelative = CreateAnchorDropdown(
+        "targetTextFriendlyRelativeAnchorDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "targetTextFriendlyRelativeAnchor",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = anchorSubTargetText.dropdownFriendly, x = 0, y = -45, label = "Relative" },
+        55,
+        {0.04, 0.76, 1, 1}
+    )
+    CreateTooltipTwo(anchorSubTargetText.dropdownFriendlyRelative, "Friendly Relative Point", "The point where the Target Text attaches to the nameplate. If any of the bottom ones are selected it will anchor underneath castbar instead of healthbar when castbar is shown unless \"Static\" is selected.")
+    CreateTooltipTwo(anchorSubTargetText.dropdownFriendlyRelative.label, "Friendly Relative Point", "The point where the Target Text attaches to the nameplate. If any of the bottom ones are selected it will anchor underneath castbar instead of healthbar when castbar is shown unless \"Static\" is selected.")
+
+    anchorSubTargetText.c1 = CreateCheckbox("targetTextAlwaysShow", "Always on", contentFrame, nil, function()
+        BBP.ToggleTargetTextAlwaysShow()
+        BBP.RefreshAllNameplates()
+    end)
+    anchorSubTargetText.c1:SetPoint("TOPLEFT", anchorSubTargetText.dropdownRelative, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubTargetText.c1, "Always show Target Text", "When not casting, shows who the unit is targeting.\nWhen casting, cast target always has priority.")
+
+    anchorSubTargetText.static = CreateCheckbox("targetTextStatic", "Static", contentFrame)
+    anchorSubTargetText.static:SetPoint("LEFT", anchorSubTargetText.c1.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(anchorSubTargetText.static, "Static Position", "Enable this to keep the text in one place and not move it up/down depending on castbar shown or not")
+
+    anchorSubTargetText.c1pvp = CreateCheckbox("targetTextAlwaysShowPvP", "PvP", contentFrame, nil, function()
+        BBP.RefreshAllNameplates()
+    end)
+    anchorSubTargetText.c1pvp:SetPoint("TOPLEFT", anchorSubTargetText.c1, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(anchorSubTargetText.c1pvp, "Always on mode active in PvP")
+
+    anchorSubTargetText.c1pve = CreateCheckbox("targetTextAlwaysShowPvE", "PvE", contentFrame, nil, function()
+        BBP.RefreshAllNameplates()
+    end)
+    anchorSubTargetText.c1pve:SetPoint("LEFT", anchorSubTargetText.c1pvp.text, "RIGHT", 0, 0)
+    CreateTooltip(anchorSubTargetText.c1pve, "Always on mode active in PvE instances (Dungeons, Raids)")
+
+    anchorSubTargetText.c1world = CreateCheckbox("targetTextAlwaysShowWorld", "World", contentFrame, nil, function()
+        BBP.RefreshAllNameplates()
+    end)
+    anchorSubTargetText.c1world:SetPoint("LEFT", anchorSubTargetText.c1pve.text, "RIGHT", 0, 0)
+    CreateTooltip(anchorSubTargetText.c1world, "Always on mode active in the open world")
+
+    local function ToggleTargetTextAlwaysShowSubSettings()
+        local enabled = BetterBlizzPlatesDB.targetTextAlwaysShow
+        if enabled then
+            EnableElement(anchorSubTargetText.c1pvp)
+            EnableElement(anchorSubTargetText.c1pve)
+            EnableElement(anchorSubTargetText.c1world)
+        else
+            DisableElement(anchorSubTargetText.c1pvp)
+            DisableElement(anchorSubTargetText.c1pve)
+            DisableElement(anchorSubTargetText.c1world)
+        end
+    end
+    ToggleTargetTextAlwaysShowSubSettings()
+
+    anchorSubTargetText.c1:HookScript("OnClick", function()
+        ToggleTargetTextAlwaysShowSubSettings()
+    end)
+
+    anchorSubTargetText.c3 = CreateCheckbox("targetTextEnemy", "Enemy", contentFrame, nil, function()
+        BBP.RefreshAllNameplates()
+    end)
+    anchorSubTargetText.c3:SetPoint("TOPLEFT", anchorSubTargetText.c1pvp, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltip(anchorSubTargetText.c3, "Show target text on enemy nameplates")
+
+    anchorSubTargetText.c4 = CreateCheckbox("targetTextFriendly", "Friendly", contentFrame, nil, function()
+        BBP.RefreshAllNameplates()
+    end)
+    anchorSubTargetText.c4:SetPoint("LEFT", anchorSubTargetText.c3.text, "RIGHT", 0, 0)
+    CreateTooltip(anchorSubTargetText.c4, "Show target text on friendly nameplates")
+
+    anchorSubTargetText.testMode = CreateCheckbox("targetTextTestMode", "Test", contentFrame)
+    anchorSubTargetText.testMode:SetPoint("TOPLEFT", anchorSubTargetText.c3, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    anchorSubTargetText.testMode:SetScript("OnClick", function(self)
+        if self:GetChecked() then
+            BetterBlizzPlatesDB.targetTextTestMode = true
+            BBP.RefreshAllNameplates()
+        else
+            BetterBlizzPlatesDB.targetTextTestMode = false
+            BBP.RefreshAllNameplates()
+        end
+    end)
+    anchorSubTargetText.testMode:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            if not BetterBlizzPlatesDB.nameplateCastbarTestMode then
+                BetterBlizzPlatesDB.nameplateCastbarTestMode = true
+                BBP.nameplateCastBarTestMode()
+                BBP.nameplateCastBarTestMode()
+            else
+                BetterBlizzPlatesDB.nameplateCastbarTestMode = false
+                BBP.cancelTimers()
+            end
+            C_Timer.After(0.05, function()
+                BBP.RefreshAllNameplates()
+            end)
+        end
+    end)
+    CreateTooltipTwo(anchorSubTargetText.testMode, "Test Target Text", "Shows your name as the target on all nameplates.\n\n|cff32f795Right-click to toggle Castbar Test Mode.|r")
+
+    anchorSubTargetText.insideBar = CreateCheckbox("castbarTargetTextInsideBar", "Inside Bar", contentFrame, nil, function()
+        BBP.RefreshAllNameplates()
+    end)
+    anchorSubTargetText.insideBar:SetPoint("LEFT", anchorSubTargetText.testMode.text, "RIGHT", 0, 0)
+    do
+        local playerName = UnitName("player") or "Player"
+        local _, playerClass = UnitClass("player")
+        local classColor = playerClass and C_ClassColor.GetClassColor(playerClass)
+        local coloredName = classColor and classColor:WrapTextInColorCode(playerName) or playerName
+        CreateTooltipTwo(anchorSubTargetText.insideBar, "Target text inside castbar", "Put the target text inside the castbar on casts so it appears like \"Polymorph: " .. coloredName .. "\"")
+    end
 
 
     ----
@@ -10539,8 +10801,12 @@ local function guiCVarControl()
     nameplateShowAll:SetPoint("TOP", setCVarAcrossAllCharacters, "BOTTOM", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateShowAll, "Always show nameplates", "Always show nameplates (if not targeted)", nil, nil, "nameplateShowAll")
 
+    local nameplateShowOnlyNameForFriendlyPlayerUnits = CreateCheckbox("nameplateShowOnlyNameForFriendlyPlayerUnits", "Show Only Friendly NP Names", guiCVarControl, true, BBP.SetNameplateBehavior)
+    nameplateShowOnlyNameForFriendlyPlayerUnits:SetPoint("TOP", nameplateShowAll, "BOTTOM", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(nameplateShowOnlyNameForFriendlyPlayerUnits, "Show Only Friendly NP Names", "Only show Name on Nameplates and hide healthbar & castbar. This enables Blizzards new CVar for this.", nil, nil, "nameplateShowOnlyNameForFriendlyPlayerUnits")
+
     local nameplateShowEnemyMinions = CreateCheckbox("nameplateShowEnemyMinions", "Show Enemy Minions", guiCVarControl, true)
-    nameplateShowEnemyMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", -127, -40)
+    nameplateShowEnemyMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", -127, -56)
     CreateTooltipTwo(nameplateShowEnemyMinions, "Show Enemy Minion Nameplates", "Minions are stuff like extra BM hunter pets but Observer is also a minion", nil, nil, "nameplateShowEnemyMinions")
 
     local nameplateShowEnemyGuardians = CreateCheckbox("nameplateShowEnemyGuardians", "Show Enemy Guardians", guiCVarControl, true)
@@ -10560,7 +10826,7 @@ local function guiCVarControl()
     CreateTooltipTwo(nameplateShowEnemyTotems, "Show Enemy Totem Nameplates", "Totems are totems.. and Psyfiend", nil, nil, "nameplateShowEnemyTotems")
 
     local nameplateShowFriendlyPlayerMinions = CreateCheckbox("nameplateShowFriendlyPlayerMinions", "Show Friendly Minions", guiCVarControl, true)
-    nameplateShowFriendlyPlayerMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", 25, -40)
+    nameplateShowFriendlyPlayerMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", 25, -56)
     CreateTooltipTwo(nameplateShowFriendlyPlayerMinions, "Show Friendly Minion Nameplates", "Minions are stuff like extra BM hunter pets but Observer is also a minion", nil, nil, "nameplateShowFriendlyPlayerMinions")
 
     local nameplateShowFriendlyPlayerGuardians = CreateCheckbox("nameplateShowFriendlyPlayerGuardians", "Show Friendly Guardians", guiCVarControl, true)
@@ -10658,8 +10924,11 @@ local function guiCVarControl()
     cbCVars["nameplateShowFriendlyPlayerGuardians"] = nameplateShowFriendlyPlayerGuardians
     cbCVars["nameplateShowFriendlyPlayerPets"] = nameplateShowFriendlyPlayerPets
     cbCVars["nameplateShowFriendlyPlayerTotems"] = nameplateShowFriendlyPlayerTotems
+    cbCVars["nameplateShowFriendlyNpcs"] = nameplateShowFriendlyNPCs
     cbCVars["nameplateResourceOnTarget"] = nameplateResourceOnTarget
     cbCVars["nameplateMotion"] = nameplateMotion
+    cbCVars["nameplateShowAll"] = nameplateShowAll
+    cbCVars["nameplateShowOnlyNameForFriendlyPlayerUnits"] = nameplateShowOnlyNameForFriendlyPlayerUnits
 
     local sliderCVars = {}
     sliderCVars["nameplateMotionSpeed"] = nameplateMotionSpeed
@@ -11635,7 +11904,8 @@ function BBP.CVarTracker()
             nameplateShowFriendlyNpcs = true,
             nameplateShowFriendlyPlayerTotems = true,
             nameplateResourceOnTarget = true,
-            nameplateShowAll = true
+            nameplateShowAll = true,
+            nameplateShowOnlyNameForFriendlyPlayerUnits = true
         },
         sliders = {
             nameplateOverlapH = true,
