@@ -11,6 +11,7 @@
 embeds.xml
 
 init.lua
+temp_shared\Profiles.lua
 retail\temp_tww.lua
 temp_shared\ImportExport.lua
 
