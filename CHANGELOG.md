@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.1.0b
+## All versions
+### Bugfix
+- Fix the new Small Pets height setting missing a few updates causing some issues.
+
 # BetterBlizzPlates 2.1.0
 ## All versions
 ### New
