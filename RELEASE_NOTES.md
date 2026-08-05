@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.1.0c
+## Wrath Titan
+### Bugfix
+- Make Wrath Titan client load the same files as Era/TBC/MoP so addon works.
+
 # BetterBlizzPlates 2.1.0b
 ## All versions
 ### Bugfix
