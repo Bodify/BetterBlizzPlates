@@ -3659,13 +3659,19 @@ local function SmallPetsInPvP(frame)
             hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
                 if self:IsForbidden() or not frame.unit or UnitIsPlayer(frame.unit) then return end
                 if BBP.IsInCompStomp then return end
+                if frame.bbpAdjustingSmallPet then return end
 
                 local wk = ShouldBeSmallPet(frame)
                 if wk then
                     local db = BetterBlizzPlatesDB
                     frame.isSmallPet = true
                     frame.bbpSmallPetWidthKey = wk
+                    frame.bbpAdjustingSmallPet = true
                     SetBarWidth(frame, db[wk], false)
+                    if db.smallPetsInPvPHeight then
+                        AdjustSmallPetHeight(frame)
+                    end
+                    frame.bbpAdjustingSmallPet = false
                 else
                     frame.isSmallPet = false
                 end
@@ -5547,6 +5553,8 @@ local function HandleNamePlateRemoved(unit)
 
     frame.bbpHiddenNPC = nil
     frame.isQuestNpc = nil
+    frame.isSmallPet = nil
+    frame.bbpAdjustingSmallPet = nil
     frame.ciChange = nil
     frame:SetScale(1)
     frame:SetAlpha(1)

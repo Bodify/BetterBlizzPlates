@@ -3678,31 +3678,19 @@ local function ShouldBeSmallPet(frame)
     end
 end
 
-local function SmallPetsInPvP(frame)
-    if not BetterBlizzPlatesDB.smallPetsInPvP then return end
-    if BBP.IsInCompStomp then return end
+local function ApplySmallPetSizing(frame)
+    local db = BetterBlizzPlatesDB
+    if db.totemIndicator then
+        local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
+        local npcData = db.totemIndicatorNpcList[npcID]
 
-    if ShouldBeSmallPet(frame) then
-        local db = BetterBlizzPlatesDB
-        if db.totemIndicator then
-            local npcID = BBP.GetNPCIDFromGUID(UnitGUID(frame.unit))
-            local db = BetterBlizzPlatesDB
-            local npcData = db.totemIndicatorNpcList[npcID]
-
-            if npcData then
-                if db.totemIndicatorWidthEnabled then
-                    if npcData.widthOn and npcData.hpWidth then
-                        SetBarWidth(frame, npcData.hpWidth, true)
-                    end
-                end
-                frame.isSmallPet = false
-            else
-                SetBarWidth(frame, db.smallPetsWidth + 10, false)
-                frame.isSmallPet = true
-                if db.smallPetsInPvPHeight then
-                    AdjustSmallPetHeight(frame)
+        if npcData then
+            if db.totemIndicatorWidthEnabled then
+                if npcData.widthOn and npcData.hpWidth then
+                    SetBarWidth(frame, npcData.hpWidth, true)
                 end
             end
+            frame.isSmallPet = false
         else
             SetBarWidth(frame, db.smallPetsWidth + 10, false)
             frame.isSmallPet = true
@@ -3710,6 +3698,39 @@ local function SmallPetsInPvP(frame)
                 AdjustSmallPetHeight(frame)
             end
         end
+    else
+        SetBarWidth(frame, db.smallPetsWidth + 10, false)
+        frame.isSmallPet = true
+        if db.smallPetsInPvPHeight then
+            AdjustSmallPetHeight(frame)
+        end
+    end
+end
+
+local function SmallPetsInPvP(frame)
+    if not BetterBlizzPlatesDB.smallPetsInPvP then return end
+    if BBP.IsInCompStomp then return end
+
+    if not frame.bbpWidthHook then
+        hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
+            if self:IsForbidden() or not frame.unit or UnitIsPlayer(frame.unit) then return end
+            if BBP.IsInCompStomp then return end
+            if frame.bbpAdjustingSmallPet then return end
+            if not BetterBlizzPlatesDB.smallPetsInPvP then return end
+
+            if ShouldBeSmallPet(frame) then
+                frame.bbpAdjustingSmallPet = true
+                ApplySmallPetSizing(frame)
+                frame.bbpAdjustingSmallPet = false
+            else
+                frame.isSmallPet = false
+            end
+        end)
+        frame.bbpWidthHook = true
+    end
+
+    if ShouldBeSmallPet(frame) then
+        ApplySmallPetSizing(frame)
     else
         frame.isSmallPet = false
     end
@@ -5688,6 +5709,8 @@ local function HandleNamePlateRemoved(unit)
 
     frame.bbpHiddenNPC = nil
     frame.isQuestNpc = nil
+    frame.isSmallPet = nil
+    frame.bbpAdjustingSmallPet = nil
     frame:SetAlpha(1)
     frame:SetScale(1)
     frame.name:SetAlpha(1)
