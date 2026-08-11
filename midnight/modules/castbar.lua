@@ -150,6 +150,50 @@ C_Timer.After(1, function()
     end
 end)
 
+function BBP.UpdateCastbarTextPosition(castBar)
+    local db = BetterBlizzPlatesDB
+    local castBarTextJustify = db.castBarTextJustify or "CENTER"
+    castBar.Text:ClearAllPoints()
+    if db.castBarFullTextWidth then
+        castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", -70, 0)
+        castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", 70, 0)
+    else
+        castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", castBarTextJustify == "LEFT" and 4 or -2, 0)
+        castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", castBarTextJustify == "RIGHT" and -4 or 2, 0)
+    end
+    castBar.Text:SetJustifyH(castBarTextJustify)
+end
+
+function BBP.UpdateCastbarBorderShieldTexture(castBar)
+    local db = BetterBlizzPlatesDB
+    if db.hideCastbarBorderShield then
+        castBar.BorderShield:SetTexture(nil)
+    elseif db.castBarDragonflightShield then
+        castBar.BorderShield:SetTexture(nil)
+        castBar.BorderShield:SetAtlas("ui-castingbar-shield")
+    else
+        castBar.BorderShield:SetAtlas("nameplates-InterruptShield")
+    end
+end
+
+local castbarStyleHooked
+function BBP.HookCastbarStyleAndAnchoring()
+    if castbarStyleHooked then return end
+    if not BetterBlizzPlatesDB.enableCastbarCustomization then return end
+    if not NamePlateCastingBarMixin then return end
+    castbarStyleHooked = true
+
+    hooksecurefunc(NamePlateCastingBarMixin, "ApplyStyleAndAnchoring", function(self)
+        if self:IsForbidden() then return end
+        if not BetterBlizzPlatesDB.enableCastbarCustomization then return end
+        local container = self:GetParent()
+        local frame = container and container:GetParent()
+        if frame and frame.unit == "player" then return end
+        BBP.UpdateCastbarTextPosition(self)
+        BBP.UpdateCastbarBorderShieldTexture(self)
+    end)
+end
+
 -- Cast emphasis
 function BBP.CustomizeCastbar(frame, unitToken, event)
     local db = BetterBlizzPlatesDB
@@ -171,7 +215,6 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     --local borderShieldSize = showCastBarIconWhenNoninterruptible and (castBarIconScale + 0.45) or castBarIconScale
     local castBarTexture = castBar:GetStatusBarTexture()
     local castBarRecolor = db.castBarRecolor
-    local castBarDragonflightShield = db.castBarDragonflightShield
     local castBarHeight = db.castBarHeight
     local castBarTextScale = db.castBarTextScale
     local castBarCastColor = db.castBarCastColor
@@ -180,7 +223,6 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     local castBarChanneledColor = db.castBarChanneledColor
     local useCustomCastbarTexture = db.useCustomCastbarTexture
     local hideCastbarText = db.hideCastbarText
-    local hideCastbarBorderShield = db.hideCastbarBorderShield
     local hideCastbarIcon = db.hideCastbarIcon
     local castBarIconPixelBorder = db.castBarIconPixelBorder
     local castBarPixelBorder = db.castBarPixelBorder
@@ -262,16 +304,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
     end
 
-    castBar.Text:ClearAllPoints()
-    local castBarTextJustify = db.castBarTextJustify or "CENTER"
-    if db.castBarFullTextWidth then
-        castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", -70, 0)
-        castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", 70, 0)
-    else
-        castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", castBarTextJustify == "LEFT" and 4 or -2, 0)
-        castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", castBarTextJustify == "RIGHT" and -4 or 2, 0)
-    end
-    castBar.Text:SetJustifyH(castBarTextJustify)
+    BBP.UpdateCastbarTextPosition(castBar)
 
     if castBar.casting then
         _, _, _, _, _, _, _, notInterruptible = UnitCastingInfo(unitToken)
@@ -459,14 +492,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     end
 
-    if hideCastbarBorderShield then
-        castBar.BorderShield:SetTexture(nil)
-    elseif castBarDragonflightShield then
-        castBar.BorderShield:SetTexture(nil)
-        castBar.BorderShield:SetAtlas("ui-castingbar-shield")
-    else
-        castBar.BorderShield:SetAtlas("nameplates-InterruptShield")
-    end
+    BBP.UpdateCastbarBorderShieldTexture(castBar)
 
     castBar.Icon:SetScale(castBarIconScale)
     if castBar.bbpClassicIcon then
@@ -683,6 +709,8 @@ function BBP.CastbarTargetText(castBar)
         if BetterBlizzPlatesDB.targetTextTestMode then
             local _, classIdentifier = UnitClass("player")
             coloredName = GetColoredTargetString(GetUnitName("player"), classIdentifier)
+        elseif BetterBlizzPlatesDB.npTargetTextHideOnNpcs and not UnitIsPlayer(self.unit) then
+            return
         else
             local name, class = GetCastbarTargetName(self.unit)
             coloredName = GetColoredTargetString(name, class)
@@ -705,6 +733,11 @@ function BBP.UpdateNameplateTargetText(frame, unit)
     end
 
     if db.castbarTargetTextInsideBar then
+        frame.TargetText:SetText("")
+        return
+    end
+
+    if db.npTargetTextHideOnNpcs and not db.targetTextTestMode and not UnitIsPlayer(unit) then
         frame.TargetText:SetText("")
         return
     end
@@ -956,6 +989,7 @@ function BBP.ToggleSpellCastEventRegistration()
             interruptCombatLog = false
         end
     end
+    BBP.HookCastbarStyleAndAnchoring()
     if BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.castBarInterruptHighlighter and not castbarOnUpdateHooked then
         hooksecurefunc(CastingBarMixin, "OnUpdate", function(self, event, ...)
             if self.unit and self.unit:find("nameplate") then

@@ -1,17 +1,16 @@
-# BetterBlizzPlates 2.1.0b
-## All versions
-### Bugfix
-- Fix the new Small Pets height setting missing a few updates causing some issues.
-
-# BetterBlizzPlates 2.1.0
-## All versions
+# BetterBlizzPlates 2.1.1
+## Midnight
 ### New
-- Small Pets setting now has more right click options to also change the height of small pet nameplates.
-- "Show Only Friendly NP Names" new setting in CVar Control. This enables Blizzards new CVar that hides healthbar and castbar and only leaves name. BBP was turning this on/off depending on your settings before but now you can force it on with this setting if youd like.
+- New Nameplate Auras with filters, glows, etc. You will likely have to re-do your aura settings a bit.
 ### Tweak
-- Some minor tweaks and fixes to castbar test mode
-### Bugfix
-- Fix some issues with border color setting.
-## Classics (Era, TBC, MoP)
+- Tons of things to make things work on 12.1. Too many to mention x.x
+### Notes
+- I want to thank Verz and Muleyo for helping me understand some of the new 12.1 API with examples and stuff. Thank you<3
+- Please report any issues as always.
+## All versions
 ### New
-- Ported Retail's "Show Target Text" setting to classics (under Enemy Nameplates in /bbp) with more settings for it in Advanced Settings. This has replaced the normal "Show target underneat castbar". It lets you see true target of the cast (who the spell is actually being cast on, no macro bait) and you can set it to always show target etc. You may have to tweak your settings again here now.
+- Target Text setting now has a setting to hide it for npcs.
+## Classics
+### Bugfix
+- Fix an issue with "Always on Top" castbar setting causing castbars that shouldve been hidden to still show.
+- For Wrath enable the same unified classic version of the addon as Wrath still loaded older version files.

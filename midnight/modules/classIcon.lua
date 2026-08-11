@@ -192,6 +192,103 @@ local function BackgroundType(frame, bg)
     end
 end
 
+local function InitClassIndicatorCCSlot(auraFrame, frame)
+    local square = BetterBlizzPlatesDB.classIconSquareBorderFriendly
+
+    auraFrame:SetSize(square and 27 or 26, square and 27 or 26)
+    auraFrame:SetPoint("CENTER", frame.classIndicator)
+
+    local icon = auraFrame:CreateTexture(nil, "OVERLAY", nil, 6)
+    icon:SetPoint("CENTER", auraFrame)
+    icon:SetSize(square and 20.5 or 26, square and 20.5 or 26)
+    auraFrame:SetIcon(icon)
+
+    local mask = auraFrame:CreateMaskTexture()
+    if square then
+        mask:SetAtlas("UI-Frame-IconMask")
+        mask:SetSize(21, 21)
+    else
+        mask:SetTexture("Interface/Masks/CircleMaskScalable")
+        mask:SetSize(27, 27)
+    end
+    mask:SetPoint("CENTER", icon)
+    icon:AddMaskTexture(mask)
+
+    local cooldown = CreateFrame("Cooldown", nil, auraFrame, "CooldownFrameTemplate")
+    cooldown:SetAllPoints(icon)
+    cooldown:SetDrawEdge(false)
+    cooldown:SetDrawSwipe(true)
+    cooldown:SetSwipeColor(0, 0, 0, 0.7)
+    if square then
+        cooldown:SetSwipeTexture("Interface\\Common\\common-iconmask")
+    else
+        cooldown:SetSwipeTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
+        cooldown:SetUseCircularEdge(true)
+    end
+    cooldown:SetReverse(true)
+    auraFrame:SetDurationCooldown(cooldown)
+
+    local glow = auraFrame:CreateTexture(nil, "OVERLAY", nil, 7)
+    glow:SetAtlas(square and "newplayertutorial-drag-slotblue" or "charactercreate-ring-select")
+    glow:SetPoint("CENTER", auraFrame)
+    glow:SetSize(square and 38 or 36, square and 38 or 36)
+
+    auraFrame:SetCancelAuraButtons(nil)
+    auraFrame:SetHideTooltipInCombat(true)
+    if not InCombatLockdown() then
+        auraFrame:SetMouseMotionEnabled(false)
+    end
+
+    frame.classIndicatorCC = auraFrame
+end
+
+local function CreateClassIndicatorCCContainer(frame)
+    if frame.classIndicatorCCContainer then return end
+
+    local container = CreateFrame("AuraContainer", nil, frame.classIndicator, "CustomAuraContainerTemplate")
+    container:SetSize(1, 1)
+    container:SetFrameStrata("HIGH")
+    container:SetPoint("CENTER", frame.classIndicator)
+    container:SetEnabled(false)
+    container:Hide()
+    frame.classIndicatorCCContainer = container
+
+    container:AddAuraSlot("CC", AuraUtil.CreateFilterString(
+        AuraUtil.AuraFilters.Harmful, AuraUtil.AuraFilters.CrowdControl), {
+        sortMethod = AuraContainerSortMethod.AuraInstanceIDOnly,
+        sortDirection = AuraContainerSortDirection.Reverse,
+        initializeFrame = function(auraFrame)
+            InitClassIndicatorCCSlot(auraFrame, frame)
+        end,
+    })
+end
+
+local function ShouldShowClassIndicatorCC(frame)
+    local db = BetterBlizzPlatesDB
+    if not db.classIndicator or not db.classIndicatorCCAuras then return false end
+
+    local unit = frame.unit
+    if not unit or not unit:find("nameplate") then return false end
+    if not UnitIsPlayer(unit) or not UnitIsFriend("player", unit) then return false end
+    return true
+end
+
+function BBP.UpdateClassIndicatorCC(frame)
+    local container = frame and frame.classIndicatorCCContainer
+    if not container then return end
+
+    if not ShouldShowClassIndicatorCC(frame) then
+        container:SetEnabled(false)
+        container:Hide()
+        return
+    end
+
+    container:SetUnit(frame.unit)
+    container:SetEnabled(true)
+    container:Show()
+    container:UpdateAllAuras()
+end
+
 -- Class Indicator
 function BBP.ClassIndicator(frame, foundID)
     local config = frame.BetterBlizzPlates.config
@@ -312,6 +409,11 @@ function BBP.ClassIndicator(frame, foundID)
         frame.classIndicator = CreateFrame("Frame", nil, frame)
         frame.classIndicator:HookScript("OnHide", function()
             frame.classIndicatorHideName = false
+            local container = frame.classIndicatorCCContainer
+            if container then
+                container:SetEnabled(false)
+                container:Hide()
+            end
         end)
         frame.classIndicator:SetSize(24, 24)
         --frame.classIndicator:SetScale(scale)
@@ -322,66 +424,7 @@ function BBP.ClassIndicator(frame, foundID)
         frame.classIndicator.border = frame.classIndicator:CreateTexture(nil, "OVERLAY", nil, 6)
         frame.classIndicator:SetIgnoreParentAlpha(true)
 
-        if not config.classIconSquareBorderFriendly then
-            frame.classIndicatorCC = CreateFrame("Frame", nil, frame.classIndicator)
-            frame.classIndicatorCC:SetSize(26, 26)
-            frame.classIndicatorCC:SetFrameStrata("HIGH")
-            frame.classIndicatorCC:Hide()
-
-            frame.classIndicatorCC.Icon = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 6)
-            frame.classIndicatorCC.Icon:SetPoint("CENTER", frame.classIndicator)
-            frame.classIndicatorCC.mask = frame.classIndicatorCC:CreateMaskTexture()
-            frame.classIndicatorCC.mask:SetTexture("Interface/Masks/CircleMaskScalable")
-            frame.classIndicatorCC.mask:SetSize(27, 27)
-            frame.classIndicatorCC.mask:SetPoint("CENTER", frame.classIndicator.icon)
-            frame.classIndicatorCC.Icon:AddMaskTexture(frame.classIndicatorCC.mask)
-            frame.classIndicatorCC.Icon:SetSize(26, 26)
-
-            frame.classIndicatorCC.Cooldown = CreateFrame("Cooldown", nil, frame.classIndicatorCC, "CooldownFrameTemplate")
-            frame.classIndicatorCC.Cooldown:SetAllPoints(frame.classIndicatorCC.Icon)
-            frame.classIndicatorCC.Cooldown:SetDrawEdge(false)
-            frame.classIndicatorCC.Cooldown:SetDrawSwipe(true)
-            frame.classIndicatorCC.Cooldown:SetSwipeColor(0, 0, 0, 0.7)
-            frame.classIndicatorCC.Cooldown:SetSwipeTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
-            frame.classIndicatorCC.Cooldown:SetUseCircularEdge(true)
-            frame.classIndicatorCC.Cooldown:SetReverse(true)
-
-            frame.classIndicatorCC.Glow = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 7)
-            frame.classIndicatorCC.Glow:SetAtlas("charactercreate-ring-select")
-            frame.classIndicatorCC.Glow:SetPoint("CENTER", frame.classIndicator, "CENTER", 0, 0)
-            --frame.classIndicatorCC.Glow:SetDesaturated(true)
-            frame.classIndicatorCC.Glow:SetSize(36, 36)
-            frame.classIndicatorCC.Glow:SetDrawLayer("OVERLAY", 7)
-        else
-            frame.classIndicatorCC = CreateFrame("Frame", nil, frame.classIndicator)
-            frame.classIndicatorCC:SetSize(27, 27)
-            frame.classIndicatorCC:SetFrameStrata("HIGH")
-            frame.classIndicatorCC:Hide()
-
-            frame.classIndicatorCC.Icon = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 6)
-            frame.classIndicatorCC.Icon:SetPoint("CENTER", frame.classIndicator)
-            frame.classIndicatorCC.mask = frame.classIndicatorCC:CreateMaskTexture()
-            frame.classIndicatorCC.mask:SetAtlas("UI-Frame-IconMask")
-            frame.classIndicatorCC.mask:SetSize(21, 21)
-            frame.classIndicatorCC.mask:SetPoint("CENTER", frame.classIndicator.icon)
-            frame.classIndicatorCC.Icon:AddMaskTexture(frame.classIndicatorCC.mask)
-            frame.classIndicatorCC.Icon:SetSize(20.5, 20.5)
-
-            frame.classIndicatorCC.Cooldown = CreateFrame("Cooldown", nil, frame.classIndicatorCC, "CooldownFrameTemplate")
-            frame.classIndicatorCC.Cooldown:SetAllPoints(frame.classIndicatorCC.Icon)
-            frame.classIndicatorCC.Cooldown:SetDrawEdge(false)
-            frame.classIndicatorCC.Cooldown:SetDrawSwipe(true)
-            frame.classIndicatorCC.Cooldown:SetSwipeColor(0, 0, 0, 0.7)
-            frame.classIndicatorCC.Cooldown:SetSwipeTexture("Interface\\Common\\common-iconmask")
-            frame.classIndicatorCC.Cooldown:SetReverse(true)
-
-            frame.classIndicatorCC.Glow = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 7)
-            frame.classIndicatorCC.Glow:SetAtlas("newplayertutorial-drag-slotblue")
-            frame.classIndicatorCC.Glow:SetPoint("CENTER", frame.classIndicator, "CENTER", 0, 0)
-            --frame.classIndicatorCC.Glow:SetDesaturated(true)
-            frame.classIndicatorCC.Glow:SetSize(38, 38)
-            frame.classIndicatorCC.Glow:SetDrawLayer("OVERLAY", 7)
-        end
+        CreateClassIndicatorCCContainer(frame)
     end
     if BetterBlizzPlatesDB.classIndicatorIgnoreScale then
         frame.classIndicator:SetIgnoreParentScale(true)
@@ -556,8 +599,8 @@ function BBP.ClassIndicator(frame, foundID)
 
     -- -- Get class icon texture and coordinates
     -- local classIcon = "Interface/GLUES/CHARACTERCREATE/UI-CHARACTERCREATE-CLASSES"
-    local classAtlas = "classicon-" .. string.lower(class)
-    local classColor = RAID_CLASS_COLORS[class]
+    local classAtlas = GetClassAtlas(class)
+    local classColor = C_ClassColor.GetClassColor(class)
     if config.classIndicatorBackground then
         if not frame.classIndicator.bg then
             frame.classIndicator.bg = frame.classIndicator:CreateTexture(nil, "BACKGROUND", nil, 1)
@@ -718,7 +761,7 @@ function BBP.ClassIndicator(frame, foundID)
             frame.HealthBarsContainer.alphaZero = true
             frame.selectionHighlight:SetAlpha(0)
             if isPet then
-                frame.AurasFrame:SetAlpha(0)
+                BBP.SetNameplateAurasShown(frame, false)
             end
             frame.ciChange = true
         elseif frame.ciChange then
@@ -730,6 +773,7 @@ function BBP.ClassIndicator(frame, foundID)
     end
 
     frame.classIndicator:Show()
+    BBP.UpdateClassIndicatorCC(frame)
     if config.classIndicatorHideName and info.isFriend then
         frame.classIndicatorHideName = true
         frame.name:SetText("")
@@ -755,7 +799,7 @@ function BBP.ClassIndicatorTargetHighlight(frame)
                 end
             )
             if info.class and config.classIndicatorHighlightColor then
-                local classColor = RAID_CLASS_COLORS[info.class] --BBP.isMidnight
+                local classColor = C_ClassColor.GetClassColor(info.class)
                 frame.classIndicator.highlightSelect:SetDesaturated(true)
                 frame.classIndicator.highlightSelect:SetVertexColor(classColor.r, classColor.g, classColor.b)
                 frame.classIndicator.highlightSelect.classColored = true
@@ -861,84 +905,11 @@ function BBP.ToggleClassIndicatorPinMode(enable)
     BBP.RefreshAllNameplates()
 end
 
-local function AurasChanged(updateInfo)
-    if not updateInfo then return true end
-    if updateInfo.isFullUpdate then return true end
-    if (updateInfo.addedAuras and #updateInfo.addedAuras > 0)
-        or (updateInfo.updatedAuraInstanceIDs and #updateInfo.updatedAuraInstanceIDs > 0)
-        or (updateInfo.removedAuraInstanceIDs and #updateInfo.removedAuraInstanceIDs > 0)
-    then
-        return true
-    end
-    return false
-end
-
-local function SortNewestFirst(a, b) return a.auraInstanceID > b.auraInstanceID end
-
-local function GetNewestCCAura(unit)
-    local auras = C_UnitAuras.GetUnitAuras(unit, "HARMFUL|CROWD_CONTROL", nil, Enum.UnitAuraSortRule.Unsorted, Enum.UnitAuraSortDirection.Reverse)
-    if not auras or #auras == 0 then return nil end
-    table.sort(auras, SortNewestFirst)
-    for _, auraData in ipairs(auras) do
-        local isValid = C_Spell.IsSpellCrowdControl(auraData.spellId)
-        if issecretvalue(isValid) or isValid then
-            return auraData
-        end
-    end
-    return nil
-end
-
-local function UpdateCCOnClassIndicator(unit)
-    if not BetterBlizzPlatesDB.classIndicator or not BetterBlizzPlatesDB.classIndicatorCCAuras then return end
-    local np, frame = BBP.GetSafeNameplate(unit)
-    if not frame or not frame.classIndicatorCC then return end
-    local aura = GetNewestCCAura(unit)
-    if aura then
-        local durationObj = C_UnitAuras.GetAuraDuration(unit, aura.auraInstanceID)
-        frame.classIndicatorCC.Cooldown:SetCooldownFromDurationObject(durationObj)
-        frame.classIndicatorCC.Icon:SetTexture(aura.icon)
-        frame.classIndicatorCC:Show()
-    else
-        frame.classIndicatorCC:Hide()
-    end
-end
-
 function BBP.SetupClassIndicatorCCAuraListener()
-    if BetterBlizzPlatesDB.classIndicator and BetterBlizzPlatesDB.classIndicatorCCAuras then
-        if not BBP.classIconCCAuraFrame then
-            local ccAuraFrame = CreateFrame("Frame")
-            ccAuraFrame:SetScript("OnEvent", function(self, event, unit, updateInfo)
-                if not unit or not unit:find("nameplate") then return end
-
-                if event == "NAME_PLATE_UNIT_REMOVED" then
-                    local _, frame = BBP.GetSafeNameplate(unit)
-                    if frame and frame.classIndicatorCC then
-                        frame.classIndicatorCC:Hide()
-                    end
-                    return
-                end
-
-                if not UnitIsPlayer(unit) or not UnitIsFriend("player", unit) then
-                    if event == "NAME_PLATE_UNIT_ADDED" then
-                        local _, frame = BBP.GetSafeNameplate(unit)
-                        if frame and frame.classIndicatorCC then
-                            frame.classIndicatorCC:Hide()
-                        end
-                    end
-                    return
-                end
-
-                if event == "UNIT_AURA" and not AurasChanged(updateInfo) then return end
-                UpdateCCOnClassIndicator(unit)
-            end)
-            BBP.classIconCCAuraFrame = ccAuraFrame
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        if frame and not frame:IsForbidden() then
+            BBP.UpdateClassIndicatorCC(frame)
         end
-        BBP.classIconCCAuraFrame:RegisterEvent("UNIT_AURA")
-        BBP.classIconCCAuraFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
-        BBP.classIconCCAuraFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
-    elseif BBP.classIconCCAuraFrame then
-        BBP.classIconCCAuraFrame:UnregisterEvent("UNIT_AURA")
-        BBP.classIconCCAuraFrame:UnregisterEvent("NAME_PLATE_UNIT_ADDED")
-        BBP.classIconCCAuraFrame:UnregisterEvent("NAME_PLATE_UNIT_REMOVED")
     end
 end

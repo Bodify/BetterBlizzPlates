@@ -3930,6 +3930,9 @@ function BBP.ShowFrame(frame)
     if frame.bbpHiddenNPC then
         frame.bbpHiddenNPC = nil
         frame:SetAlpha(1)
+        if frame.castBar then
+            frame.castBar:SetAlpha(1)
+        end
     end
     frame.hideCastInfo = false
     if frame.murlocMode then
@@ -3945,6 +3948,9 @@ function BBP.ShowMurloc(frame)
     if frame.bbpHiddenNPC then
         frame.bbpHiddenNPC = nil
         frame:SetAlpha(1)
+        if frame.castBar then
+            frame.castBar:SetAlpha(1)
+        end
     end
     frame.murlocModeActive = true
     frame.healthBar:SetAlpha(0)
@@ -3963,6 +3969,9 @@ end
 function BBP.HideNameplate(frame)
     frame.bbpHiddenNPC = true
     frame:SetAlpha(0)
+    if frame.castBar then
+        frame.castBar:SetAlpha(0)
+    end
 end
 
 local function ShowLastNameOnlyNpc(frame)
@@ -5714,6 +5723,9 @@ local function HandleNamePlateRemoved(unit)
     frame:SetAlpha(1)
     frame:SetScale(1)
     frame.name:SetAlpha(1)
+    if frame.castBar then
+        frame.castBar:SetAlpha(1)
+    end
     frame.bbpForcedWidth = nil
     frame.bbpForcedWidthUseOffsets = nil
     if frame.healthBar then
@@ -6040,6 +6052,18 @@ local function HandleNamePlateAdded(unit)
 
     if not frame.castBar then
         frame.castBar = frame.CastBarsContainer.castBar
+    end
+
+    if not frame.bbpCastbarAlphaHook and BetterBlizzPlatesDB.castbarAlwaysOnTop and BetterBlizzPlatesDB.enableCastbarCustomization then
+        hooksecurefunc(frame.castBar, "SetAlpha", function(self)
+            if not frame.bbpHiddenNPC or self.changingAlpha or self:IsForbidden() then return end
+            self.changingAlpha = true
+            if frame.unit and not UnitIsUnit(frame.unit, "target") then
+                self:SetAlpha(0)
+            end
+            self.changingAlpha = nil
+        end)
+        frame.bbpCastbarAlphaHook = true
     end
 
     BBP.HookCastbarOnEvent(frame)

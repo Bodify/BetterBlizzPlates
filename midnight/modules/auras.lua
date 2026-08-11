@@ -1,3273 +1,2577 @@
-----------------------------------------------------
----- Aura Function Copied From RSPlates and edited by me
-----------------------------------------------------
-
-local function FetchSpellName(spellId)
-    local spellName, _, _ = BBP.TWWGetSpellInfo(spellId)
-    return spellName
-end
-
 local LSM = LibStub("LibSharedMedia-3.0")
 
-local fakeAuras = {
-    -- 6 Fake Debuffs
-    {
-        auraInstanceID = 777,
-        spellId = 201,
-        icon = "interface/icons/spell_shadow_shadowwordpain",
-        duration = 30,
-        isHarmful = true,
-        applications = 1,
-        dispelName = "Magic",
-    },
-    {
-        auraInstanceID = 778,
-        spellId = 202,
-        icon = "interface/icons/spell_shadow_curseofsargeras",
-        duration = 18,
-        isHarmful = true,
-        applications = 18,
-        dispelName = "Curse",
-    },
-    {
-        auraInstanceID = 779,
-        spellId = 203,
-        icon = "interface/icons/spell_frost_frostnova",
-        duration = 10,
-        isHarmful = true,
-        applications = 1,
-        dispelName = "Magic",
-    },
-    {
-        auraInstanceID = 780,
-        spellId = 69420,
-        icon = 132092,
-        duration = 22,
-        applications = 1,
-        isHarmful = true,
-        dispelName = "Physical",
-    },
-    {
-        auraInstanceID = 781,
-        spellId = 205,
-        icon = 135978,
-        duration = 24,
-        isHarmful = true,
-        applications = 1,
-        dispelName = "Magic",
-    },
-    {
-        auraInstanceID = 782,
-        spellId = 206,
-        icon = "interface/icons/spell_shadow_plaguecloud",
-        duration = 16,
-        isHarmful = true,
-        applications = 3,
-        dispelName = "Disease",
-    },
-    -- 5 Fake Buffs
-    {
-        auraInstanceID = 666,
-        spellId = 101,
-        icon = "interface/icons/spell_nature_regeneration",
-        duration = 20,
-        isHelpful = true,
-        applications = 1,
-        isStealable = true,
-        dispelName = "Magic",
-    },
-    {
-        auraInstanceID = 667,
-        spellId = 102,
-        icon = 132341,
-        duration = 0,
-        expirationTime = 0,
-        isHelpful = true,
-        applications = 1,
-        dispelName = "Magic",
-    },
-    {
-        auraInstanceID = 668,
-        spellId = 103,
-        icon = "interface/icons/spell_holy_flashheal",
-        duration = 25,
-        isHelpful = true,
-        applications = 2,
-        dispelName = "Magic",
-    },
-    {
-        auraInstanceID = 669,
-        spellId = 104,
-        icon = 132144,
-        duration = 0,
-        expirationTime = 0,
-        isHelpful = true,
-        applications = 1,
-        dispelName = "Magic",
-    },
-    {
-        auraInstanceID = 670,
-        spellId = 105,
-        icon = 135939,
-        duration = 15,
-        isHelpful = true,
-        applications = 1,
-        isStealable = true,
-        dispelName = "Magic",
-    },
-}
+local AF = AuraUtil.AuraFilters
+local CreateFilterString = AuraUtil.CreateFilterString
+local FlowDirection = AnchorUtil.FlowDirection
+local FlowLayoutAxis = AnchorUtil.FlowLayoutAxis
+local DispelStyle = Enum.CustomAuraButtonDispelTypeTextureStyle
 
-local activeInterrupts = {}
+local strsub = string.sub
 
-local interruptSpells = {
-    [1766] = 3,  -- Kick (Rogue)
-    [2139] = 5,  -- Counterspell (Mage)
-    [6552] = 3,  -- Pummel (Warrior)
-    [132409] = 5, -- Spell Lock (Warlock)
-    [19647] = 5, -- Spell Lock (Warlock, pet)
-    [47528] = 3,  -- Mind Freeze (Death Knight)
-    [57994] = 2,  -- Wind Shear (Shaman)
-    [91807] = 2,  -- Shambling Rush (Death Knight)
-    [96231] = 3,  -- Rebuke (Paladin)
-    [93985] = 3,  -- Skull Bash (Druid)
-    [116705] = 3, -- Spear Hand Strike (Monk)
-    [147362] = 3, -- Counter Shot (Hunter)
-    [183752] = 3, -- Disrupt (Demon Hunter)
-    [187707] = 3, -- Muzzle (Hunter)
-    [212619] = 5, -- Call Felhunter (Warlock)
-    [31935] = 3,  -- Avenger's Shield (Paladin)
-    [217824] = 4, -- Shield of Virtue (Protection PvP Talent)
-    [351338] = 4, -- Quell (Evoker)
-}
+local CDM_MASK          = "UI-HUD-CoolDownManager-Mask"
+local CDM_BEZEL         = "UI-HUD-CoolDownManager-IconOverlay"
+local CDM_SWIPE         = "Interface\\HUD\\UI-HUD-CoolDownManager-Icon-Swipe"
+local CDM_EDGE          = "Interface\\Cooldown\\UI-HUD-ActionBar-SecondaryCooldown"
+local FLAT_SWIPE        = "Interface\\Buttons\\WHITE8X8"
 
--- Buffs that reduce interrupt duration
-local spellLockReducer = {
-    [317920] = 0.7, -- Concentration Aura
-    [234084] = 0.5, -- Moon and Stars
-    [383020] = 0.5, -- Tranquil Air
-}
+local BEZEL_BASE        = 25
+local BEZEL_INSET_X     = 6
+local BEZEL_INSET_Y     = 5
+local BEZEL_TRIM_LEFT   = 0.5
+local BEZEL_TRIM_RIGHT  = 0.5
 
-local interruptEvents = {
-    ["SPELL_INTERRUPT"] = true,
-    ["SPELL_CAST_SUCCESS"] = true,
-}
+local BORDER_THICKNESS  = 1
+local MILLISECOND_THRESHOLD = 6
+local EDGE_SCALE        = 1.4142
+local COUNTDOWN_FONT    = "GameFontHighlightOutline"
 
-function BBP.SetUpAuraInterrupts()
-    if not BetterBlizzPlatesDB.showInterruptsOnNameplateAuras then return end
-    if BBP.interruptTrackerFrame then return end
-    local interruptTrackerFrame = CreateFrame("Frame")
-    interruptTrackerFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-    interruptTrackerFrame:SetScript("OnEvent", function()
-        local _, event, _, sourceGUID, _, _, _, destGUID, _, _, _, spellId, spellName = CombatLogGetCurrentEventInfo()
+local GLOW_ATLAS        = "newplayertutorial-drag-slotgreen"
+local PURGE_ATLAS       = "newplayertutorial-drag-slotblue"
+local PANDEMIC_ATLAS    = GLOW_ATLAS
 
-        if not interruptEvents[event] then return end
+local AURA_ITEM_SIZE    = 25
 
-        local duration = interruptSpells[spellId]
-        if not duration then return end
-
-        local interruptedNp, wasCasting, isInterruptible = nil, false, false
-        local interruptedUnit
-
-        if BBP.isInArena then
-            for i = 1, 3 do
-                local unit = "arena" .. i
-                if UnitGUID(unit) == destGUID then
-                    interruptedUnit = true
-
-                    local np, frame = BBP.GetSafeNameplate(unit)
-                    if frame then
-                        interruptedNp = frame
-                    end
-
-                    if event == "SPELL_CAST_SUCCESS" then
-                        -- Check if the unit was casting or channeling AND if it was interruptible
-                        local _, _, _, _, _, _, notInterruptibleChannel = UnitChannelInfo(unit)
-                        if notInterruptibleChannel ~= false then -- nil when not channeling
-                            return
-                        end
-                    end
-
-                    -- Apply interrupt duration reductions based on active buffs
-                    AuraUtil.ForEachAura(unit, "HELPFUL", nil, function(_, _, _, _, _, _, _, _, _, spellId)
-                        local mult = spellLockReducer[spellId]
-                        if mult then
-                            duration = duration * mult
-                        end
-                    end)
-
-                    break
-                end
-            end
-        end
-
-        if not interruptedUnit then
-            for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
-                local frame = nameplate.UnitFrame
-                if frame and UnitGUID(frame.unit) == destGUID then
-                    interruptedNp = frame
-
-                    if event == "SPELL_CAST_SUCCESS" then
-                        -- Check if the unit was casting or channeling AND if it was interruptible
-                        local _, _, _, _, _, _, notInterruptibleChannel = UnitChannelInfo(frame.unit)
-                        if notInterruptibleChannel ~= false then -- nil when not channeling
-                            return
-                        end
-                    end
-
-                    -- Apply interrupt duration reductions based on active buffs
-                    AuraUtil.ForEachAura(frame.unit, "HELPFUL", nil, function(_, _, _, _, _, _, _, _, _, spellId)
-                        local mult = spellLockReducer[spellId]
-                        if mult then
-                            duration = duration * mult
-                        end
-                    end)
-
-                    break
-                end
-            end
-        end
-
-        local expires = GetTime() + duration
-
-        activeInterrupts[destGUID] = {
-            spellId = spellId,
-            name = spellName,
-            duration = duration,
-            expirationTime = expires,
-            icon = C_Spell.GetSpellTexture(spellId),
-        }
-
-        -- Update the interrupted unit's nameplate buffs
-        if interruptedNp then
-            BBP.UpdateBuffs(interruptedNp.BuffFrame, interruptedNp.unit, nil, {harmful = true}, interruptedNp)
-        end
-
-        -- Clear the interrupt after its duration
-        C_Timer.After(duration, function()
-            if activeInterrupts[destGUID] and activeInterrupts[destGUID].expirationTime <= GetTime() then
-                activeInterrupts[destGUID] = nil
-
-                -- Refresh the nameplate to remove the expired interrupt aura
-                for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
-                    local frame = nameplate.UnitFrame
-                    if frame and UnitGUID(frame.unit) == destGUID then
-                        BBP.UpdateBuffs(frame.AurasFrame, frame.unit, nil, {harmful = true}, frame)
-                        break
-                    end
-                end
-            end
-        end)
-    end)
-    BBP.interruptTrackerFrame = interruptTrackerFrame
+local DEBUFFS, BUFFS, BUFFROW, CC = "debuffs", "buffs", "buffrow", "cc"
+local CONTAINER_KINDS = { DEBUFFS, BUFFS, BUFFROW, CC }
+local function IsBuffKind(kind)
+    return kind == BUFFS or kind == BUFFROW
 end
 
-local opBarriers = {
-    [235313] = true, -- Blazing Barrier
-    [11426] = true, -- Ice Barrier
-    [235450] = true, -- Prismatic Barrier
+local DEBUFF_GROUPS = { "CC", "Important", "WatchPandemic", "WatchImportantMine", "WatchImportant",
+                        "Watch", "WatchMine", "Mine", "Others" }
+local BUFF_GROUPS   = { "DefBig", "DefExt", "Important" }
+local BUFFROW_GROUPS = { "WatchPandemic", "WatchImportantMine", "WatchImportant",
+                         "Watch", "WatchMine", "Purgeable", "Mine", "Others" }
+local CC_GROUPS     = { "CC" }
+
+local GROUPS_BY_KIND = {
+    [DEBUFFS] = DEBUFF_GROUPS,
+    [BUFFS]   = BUFF_GROUPS,
+    [BUFFROW] = BUFFROW_GROUPS,
+    [CC]      = CC_GROUPS,
 }
 
-local importantColor = {r = 0, g = 1, b = 0, a = 1}
+local GLOW_TIERS = {
+    [DEBUFFS] = { CC = "cc", Important = "important",
+                  WatchImportant = "important", WatchImportantMine = "important" },
+    [BUFFS]   = { DefBig = "defensive", DefExt = "defensive", Important = "important" },
+    [BUFFROW] = { WatchImportant = "important", WatchImportantMine = "important" },
+    [CC]      = { CC = "cc" },
+}
 
-local importantBuffs = {}
+local WHITELIST_GLOW_GROUPS = { WatchImportant = true, WatchImportantMine = true }
+
+local BUFF_STACK_LEVELS = { Important = 3, DefBig = 2, DefExt = 1 }
+
+local PANDEMIC_GROUPS = {
+    [DEBUFFS] = { Mine = true, WatchMine = true, WatchPandemic = true },
+    [BUFFROW] = { Mine = true, WatchMine = true, WatchPandemic = true },
+}
+
+local SORT_METHODS = {
+    default   = { AuraContainerSortMethod.Default,        AuraContainerSortDirection.Normal },
+    expires   = { AuraContainerSortMethod.ExpirationOnly, AuraContainerSortDirection.Normal },
+    lastest   = { AuraContainerSortMethod.ExpirationOnly, AuraContainerSortDirection.Reverse },
+}
+
+local DISPEL_KEYS = { "None", "Magic", "Curse", "Disease", "Poison", "Bleed" }
+
+local S = {}
+BBP.auraSettings = S
+
+local GetDurationCurve
+
+local function GetColor(key, r, g, b, a)
+    local c = BetterBlizzPlatesDB[key]
+    if type(c) == "table" then
+        return c[1] or c.r or r, c[2] or c.g or g, c[3] or c.b or b, c[4] or c.a or a
+    end
+    return r, g, b, a
+end
+
 local importantGeneralBuffs = {
-    [156621] = {r = 0.207, g = 0.662, b = 1, a = 1}, --true, -- Alliance Flag
-    [434339] = {r = 0.207, g = 0.662, b = 1, a = 1}, --true, -- Deephaul Crystal
-    [156618] = {r = 1, g = 0, b = 0, a = 1}, --true, -- Horde Flag
-    [34976] = importantColor, --true, -- Netherstorm Flag
-    [188501] = importantColor,
+    [156621] = true, -- Alliance Flag
+    [434339] = true, -- Deephaul Crystal
+    [156618] = true, -- Horde Flag
+    [34976]  = true, -- Netherstorm Flag
+    [188501] = true, -- Spectral Sight
 }
 local importantGeneralDebuffs = {
-    [121164] = {r = 0, g = 1, b = 0.94, a = 1}, --true, -- Orb of Power
-    [121175] = {r = 0.095, g = 0.121, b = 1, a = 1}, --true, -- Orb of Power
-    [121176] = {r = 0.553, g = 1, b = 0.16, a = 1}, --true, -- Orb of Power
-    [121177] = {r = 1, g = 0.36, b = 0.03, a = 1}, --true, -- Orb of Power
-    [372048] = {r = 0, g = 1, b = 0, a = 1}, -- Oppressing Roar
-    [212182] = {r = 1, g = 1, b = 1, a = 1}, -- Smoke Bomb
-    [359053] = {r = 1, g = 1, b = 1, a = 1}, -- Smoke Bomb
-    [383005] = {r = 0, g = 1, b = 0, a = 1}, -- Chrono Loop (Debuff)
+    [121164] = true, -- Orb of Power
+    [121175] = true, -- Orb of Power
+    [121176] = true, -- Orb of Power
+    [121177] = true, -- Orb of Power
+    [372048] = true, -- Oppressing Roar
+    [212182] = true, -- Smoke Bomb
+    [359053] = true, -- Smoke Bomb
+    [383005] = true, -- Chrono Loop
 }
 
-local ogKeyAuraList = {
-    [204018] = "defensiveColor",
-    [212800] = "defensiveColor",
-    [31224] = "defensiveColor",
-    [1022] = "defensiveColor",
-    [642] = "defensiveColor",
-    [8178] = "defensiveColor",
-    [5277] = "defensiveColor",
-    [213664] = "defensiveColor",
-    [409293] = "defensiveColor",
-    [116849] = "defensiveColor",
-    [186265] = "defensiveColor",
-    [228050] = "defensiveColor",
-    [446035] = "offensiveColor",
-    [389794] = "offensiveColor",
-    [227847] = "offensiveColor",
-    [115192] = "offensiveColor",
-    [45438] = "importantColor",
-    [378078] = "importantColor",
-    [473909] = "importantColor",
-    [209584] = "importantColor",
-    [1221107] = "importantColor",
-    [48707] = "importantColor",
-    [378441] = "importantColor",
-    [213610] = "importantColor",
-    [212295] = "importantColor",
-    [456499] = "importantColor",
-    [408558] = "importantColor",
-    [196555] = "importantColor",
-    [23920] = "importantColor",
-    [378464] = "importantColor",
-    [410358] = "importantColor",
-    [377362] = "importantColor",
-    [444741] = "importantColor",
-    [248519] = "importantColor",
-    [354610] = "importantColor",
-    [353319] = "importantColor",
-    [454863] = "importantColor",
-    [359816] = "importantColor",
-    [212704] = true,
-    [69420] = true,
-
-    [342246] = true, -- alter
-    [1219209] = true,
-    [18499] = true,
-    [384100] = true,
-    [1044] = true,
-    [6940] = true,
-    [210256] = "importantColor",
-    [45182] = true,
-    [383005] = true,
-    [444347] = true,
-    [209426] = true,
-    [357210] = true,
-    [433874] = true,
-    [118038] = true,
-    [1222783] = true,
-    [47585] = true,
-    [370960] = true,
-    [86659] = true,
-    [47788] = true,
-    [198144] = true,
-    [48792] = true,
-    [147833] = true,
-    [54216] = true,
-    [62305] = true,
-    [132158] = true, -- ns
-    [378081] = true, -- ns
-    [53480] = true,
-    [289655] = true,
-    [387633] = true,
-    [199545] = true,
-    [125174] = true,
-    [199450] = true,
-    [212552] = true,
-
-    [32612] = true,
-    [5215] = true,
-    [58984] = true,
-    [110960] = true,
-    [199483] = true,
-    [414664] = true,
-
-    [212182] = true, -- smoke
-    [359053] = true, -- smoke
-}
-
-local keyAuraList = {}
-
-local importantOffensives = {
-    [190261] = true, -- death wish
-    [80353] = true,
-    [194249] = true,
-    [389794] = true,
-    [216468] = true,
-    [264667] = true,
-    [198144] = true,
-    [204362] = true,
-    [32182] = true,
-    [466904] = true,
-    [390386] = true,
-    [47568] = true,
-    [231895] = true,
-    [114051] = true,
-    [90355] = true,
-    [1218128] = true,
-    [115192] = true,
-    [357210] = true,
-    [395152] = true,
-    [106951] = true,
-    [10060] = true,
-    [1719] = true,
-    [375986] = true,
-    [395296] = true,
-    [390414] = true,
-    [51271] = true,
-    [359844] = true,
-    [107574] = true,
-    [2825] = true,
-    [384352] = true,
-    [391109] = true,
-    [207289] = true,
-    [191634] = true,
-    [190319] = true,
-    [19574] = true,
-    [114052] = true,
-    [442726] = true,
-    [102543] = true,
-    [433874] = true,
-    [114050] = true,
-    [360952] = true,
-    [186289] = true,
-    [12472] = true,
-    [288613] = true,
-    [121471] = true,
-    [187827] = true,
-    [446035] = true,
-    [394758] = true,
-    [162264] = true,
-    [383269] = true,
-    [205025] = true,
-    [365362] = true,
-    [384631] = true,
-    [50334] = true,
-    [13750] = true,
-    [200851] = true,
-    [31884] = true,
-    [102560] = true,
-    [204361] = true,
-    [227847] = true,
-    [137639] = true,
-    [185422] = true,
-    [454351] = true,
-    --[252071] = true, incarn no dur
-    [375087] = true,
-}
-local importantMobility = {
-    [199545] = true,
-    [205629] = true,
-    [206572] = true,
-    [221885] = true,
-    [294133] = true,
-    [254474] = true,
-    [62305] = true,
-    [54216] = true,
-    [48265] = true,
-    [221886] = true,
-    [254471] = true,
-    [221883] = true,
-    [221887] = true,
-    [254472] = true,
-    [444347] = true,
-    [276111] = true,
-    [1044] = true,
-    [212552] = true,
-    [276112] = true,
-    [453804] = true,
-    [387633] = true,
-    [254473] = true,
-    [363608] = true,
-}
-local importantDefensives = {
-    [117679] = true,
-    [161495] = true,
-    [132578] = true,
-    [29166] = true,
-    [102558] = true,
-    [212641] = true,
-    [443026] = importantColor,
-    [462823] = importantColor,
-    [359816] = importantColor,
-    [390239] = true,
-    [213871] = true,
-    [384100] = true,
-    [216331] = true,
-    [317929] = importantColor,
-    [456499] = importantColor, -- Absolute Serenity
-    [473909] = importantColor, -- tree
-    [213664] = importantColor,
-    [269513] = importantColor,
-    [1221107] = true,
-    [31224] = true,
-    [118038] = true,
-    [45182] = true,
-    [31230] = true,
-    [125174] = true,
-    [424655] = true,
-    [408558] = importantColor, -- Phase Shift
-    [145629] = true,
-    [289655] = importantColor, -- Sanctified Ground
-    [202748] = true,
-    [378081] = true,
-    [5277] = true,
-    [122278] = true,
-    [264735] = true,
-    [48707] = true,
-    [378464] = importantColor, -- Nullifying Shroud
-    [353319] = importantColor, -- Peaceweaver
-    [974] = true,
-    [48743] = true,
-    [871] = true,
-    [232707] = true,
-    [212800] = true,
-    [61336] = true,
-    [81782] = true,
-    [213610] = importantColor, -- Holy Ward
-    [6940] = true,
-    [199450] = importantColor, -- Ultimate Sacrifice
-    [120954] = true,
-    [385391] = true,
-    [18499] = true,
-    [642] = true,
-    [33206] = true,
-    [210294] = true,
-    [212704] = true,
-    [31850] = true,
-    [305497] = true,
-    [454863] = true,
-    [383648] = true,
-    [132158] = true,
-    [345231] = true,
-    [45438] = true,
-    [108271] = true,
-    [498] = true,
-    [357170] = true,
-    [23920] = importantColor, -- Spell Reflection
-    [212295] = importantColor, -- Nether Ward
-    [102342] = true,
-    [22842] = true,
-    [374348] = true,
-    [97463] = true,
-    [403876] = true,
-    [184364] = true,
-    [374349] = true,
-    [378078] = importantColor, -- Spiritwalker's Aegis
-    [48792] = true,
-    [319454] = true,
-    [47585] = true,
-    [47788] = true,
-    [86659] = true,
-    [443609] = true,
-    [147833] = true,
-    [444741] = true,
-    [1219209] = true,
-    [232708] = true,
-    [370889] = true,
-    [116849] = true,
-    [378441] = importantColor, -- Time Stop
-    [209584] = importantColor, -- Zen Focus Tea
-    [53480] = true,
-    [196555] = true,
-    [410358] = true,
-    [1022] = true,
-    [210256] = importantColor,
-    [209426] = true,
-    [414658] = true,
-    [79206] = true,
-    [377362] = importantColor, -- precog
-    [122783] = true,
-    [186265] = true,
-    [108416] = true,
-    [104773] = true,
-    [184662] = true,
-    [204018] = true,
-    [8178] = true,
-    [49039] = true,
-    [370960] = true,
-    [201633] = true,
-    [22812] = true,
-    [342246] = true,
-    [113862] = true,
-    [354610] = importantColor, -- Glimpse
-    [432180] = true, --dance wind
-    [248519] = importantColor, -- Interlope
-    [15286] = true,
-    [228050] = true,
-    [202162] = true,
-    [199507] = true,
-    [421453] = true,
-    [232559] = true,
-    [363534] = true,
-    [363916] = true,
-    [409293] = true,
-}
-
-local enlargeAllCCsFilter
-local enlargeAllImportantBuffsFilter
-
-
-local crowdControl = {}
-local ccFull = {
-    [427773] = true,
-    [32752] = true,
-    [277778] = true,
-    [353084] = true,
-    [853] = true,
-    [115268] = true,
-    [221527] = true,
-    [91797] = true,
-    [20066] = true,
-    [115078] = true,
-    [207685] = true,
-    [24394] = true,
-    [385954] = true,
-    [5211] = true,
-    [198909] = true,
-    [211010] = true,
-    [213688] = true,
-    [10326] = true,
-    [211004] = true,
-    [89766] = true,
-    [61780] = true,
-    [22703] = true,
-    [119381] = true,
-    [203337] = true,
-    [31661] = true,
-    [389831] = true,
-    [118905] = true,
-    [9484] = true,
-    [202274] = true,
-    [1098] = true,
-    [130616] = true,
-    [126819] = true,
-    [217832] = true,
-    [118699] = true,
-    [710] = true,
-    [377048] = true,
-    [360806] = true,
-    [61721] = true,
-    [3355] = true,
-    [372245] = true,
-    [107079] = true,
-    [200196] = true,
-    [202244] = true,
-    [199085] = true,
-    [28272] = true,
-    [82691] = true,
-    [108194] = true,
-    [316595] = true,
-    [87204] = true,
-    [211881] = true,
-    [5484] = true,
-    [213691] = true,
-    [277792] = true,
-    [316593] = true,
-    [287254] = true,
-    [105421] = true,
-    [20549] = true,
-    [51514] = true,
-    [77505] = true,
-    [5246] = true,
-    [61305] = true,
-    [2094] = true,
-    [1833] = true,
-    [200166] = true,
-    [385149] = true,
-    [255723] = true,
-    [161353] = true,
-    [197214] = true,
-    [163505] = true,
-    [6358] = true,
-    [33786] = true,
-    [221562] = true,
-    [334693] = true,
-    [200200] = true,
-    [2637] = true,
-    [460392] = true,
-    [261589] = true,
-    [391622] = true,
-    [64044] = true,
-    [205630] = true,
-    [305485] = true,
-    [8122] = true,
-    [6770] = true,
-    [118345] = true,
-    [255941] = true,
-    [309328] = true,
-    [132168] = true,
-    [132169] = true,
-    [179057] = true,
-    [203123] = true,
-    [161354] = true,
-    [161372] = true,
-    [388673] = true,
-    [321395] = true,
-    [605] = true,
-    [196942] = true,
-    [202346] = true,
-    [358861] = true,
-    [269352] = true,
-    [210141] = true,
-    [99] = true,
-    [91800] = true,
-    [213491] = true,
-    [357021] = true,
-    [408] = true,
-    [277784] = true,
-    [211015] = true,
-    [208618] = true,
-    [287712] = true,
-    [383121] = true,
-    [205364] = true,
-    [207167] = true,
-    [277787] = true,
-    [210873] = true,
-    [1776] = true,
-    [28271] = true,
-    [1513] = true,
-    [61025] = true,
-    [161355] = true,
-    [118] = true,
-    [6789] = true,
-    [30283] = true,
-    [117526] = true,
-}
-local ccDisarm = {
-    [236077] = true,
-    [407032] = true,
-    [410201] = true,
-    [209749] = true,
-    [207777] = true,
-    [445134] = true,
-    [236236] = true,
-    [407031] = true,
-    [233759] = true,
-}
-local ccRoot = {
-    [122] = true,
-    [356738] = true,
-    [157997] = true,
-    [376080] = true,
-    [199042] = true,
-    [198121] = true,
-    [323996] = true,
-    [378760] = true,
-    [393456] = true,
-    [105771] = true,
-    [307871] = true,
-    [190925] = true,
-    [233395] = true,
-    [355689] = true,
-    [116706] = true,
-    [228600] = true,
-    [212638] = true,
-    [45334] = true,
-    [247564] = true,
-    [370970] = true,
-    [201787] = true,
-    [324382] = true,
-    [451517] = true,
-    [64695] = true,
-    [356356] = true,
-    [204085] = true,
-    [102359] = true,
-    [386770] = true,
-    [460614] = true,
-    [114404] = true,
-    [235963] = true,
-    [170855] = true,
-    [339] = true,
-    [127797] = true,
-    [285515] = true,
-    [33395] = true,
-    [454787] = true,
-}
-local ccSilence = {
-    [410065] = true,
-    [31935] = true,
-    [47476] = true,
-    [214459] = true,
-    [1330] = true,
-    [356727] = true,
-    [204490] = true,
-    [15487] = true,
-    [196364] = true,
-    [217824] = true,
-    [81261] = true,
-    [392061] = true,
-    [374776] = true,
+local defaultOwnDebuffs = {
+    [257284] = true, -- Hunter's Mark
 }
 
 
-local importantOffensivesColor = {r = 1, g = 0.5, b = 0, a = 1}
-local importantMobilityColor = {r = 0, g = 1, b = 1, a = 1}
-local importantDefensivesColor = {r = 1, g = 0.662, b = 0.945, a = 1}
-local ccFullColor = {r = 1, g = 0.874, b = 0, a = 1}
-local ccDisarmColor = {r = 1, g = 0.874, b = 0, a = 1}
-local ccRootColor = {r = 1, g = 0.874, b = 0, a = 1}
-local ccSilenceColor = {r = 1, g = 0.874, b = 0, a = 1}
-local importantColor = {r = 0, g = 1, b = 0, a = 1}
+local categorySets = {
+    watchBuff = {},
+    watchDebuff = {},
+    ownDebuff = {},
+}
+local categorySafe = {
+    watchBuff = {},
+    watchDebuff = {},
+    ownDebuff = {},
+}
+BBP.auraCategorySets = categorySets
 
+local function FillSet(dst, src)
+    for spellID in pairs(src) do dst[spellID] = true end
+end
 
+local function EntrySpellID(entry)
+    if type(entry) ~= "table" then return nil end
+    if entry.id then return entry.id end
+    if entry.name then
+        local info = C_Spell.GetSpellInfo(entry.name)
+        return info and info.spellID or nil
+    end
+    return nil
+end
+
+local listUnresolved = false
+
+local function CollectList(listName, into, onlyMineInto, pandemicInto, importantInto, importantMineInto)
+    local list = BetterBlizzPlatesDB[listName]
+    if type(list) ~= "table" then return end
+    for _, entry in pairs(list) do
+        local spellID = EntrySpellID(entry)
+        if not spellID then listUnresolved = true end
+        if spellID then
+            local flags = entry.flags
+            local onlyMine = flags and flags.onlyMine
+            local important = importantInto and flags and flags.important
+
+            if important then
+                if onlyMine then
+                    importantMineInto[spellID] = true
+                else
+                    importantInto[spellID] = true
+                end
+            elseif onlyMineInto and onlyMine then
+                onlyMineInto[spellID] = true
+            else
+                into[spellID] = true
+            end
+
+            if pandemicInto and not important and flags and flags.pandemic then
+                pandemicInto[spellID] = true
+            end
+        end
+    end
+end
 
 function BBP.UpdateImportantBuffsAndCCTables()
-    -- Clear the importantBuffs and crowdControl tables before updating
-    wipe(importantBuffs)
-    wipe(crowdControl)
+    for _, set in pairs(categorySets) do wipe(set) end
 
+    FillSet(categorySets.watchBuff, importantGeneralBuffs)
+    FillSet(categorySets.watchDebuff, importantGeneralDebuffs)
+    FillSet(categorySets.ownDebuff, defaultOwnDebuffs)
+end
+
+local function IsNeverSecret(spellID)
+    local ok, level = pcall(C_Secrets.GetSpellAuraSecrecy, spellID)
+    return ok and level == Enum.SecrecyLevel.NeverSecret
+end
+
+local mergeCache = {}
+
+local function MergeSets(...)
+    local n = select("#", ...)
+    if n == 1 then return (select(1, ...)) end
+
+    local node = mergeCache
+    for i = 1, n do
+        local src = select(i, ...) or false
+        local nxt = node[src]
+        if not nxt then nxt = {}; node[src] = nxt end
+        node = nxt
+    end
+    if not node.result then
+        local merged = {}
+        for i = 1, n do
+            local src = select(i, ...)
+            if src then for k in pairs(src) do merged[k] = true end end
+        end
+        node.result = merged
+    end
+    return node.result
+end
+
+local subtractCache = {}
+
+local function SubtractSets(from, taken)
+    if not taken or next(taken) == nil then return from end
+
+    local byTaken = subtractCache[from]
+    if not byTaken then byTaken = {}; subtractCache[from] = byTaken end
+
+    local out = byTaken[taken]
+    if not out then
+        out = {}
+        for id in pairs(from) do
+            if not taken[id] then out[id] = true end
+        end
+        byTaken[taken] = out
+    end
+    return out
+end
+
+local function SetIsEmpty(set)
+    return next(set) == nil
+end
+
+local function RefillSafeSubset(dst, src)
+    wipe(dst)
+    local any = false
+    for spellID in pairs(src) do
+        if IsNeverSecret(spellID) then dst[spellID] = true; any = true end
+    end
+    return any
+end
+
+local function ReadFilterBlock(prefix)
     local db = BetterBlizzPlatesDB
-    local importantBuffsEnabled = (db.otherNpBuffEnable and db.otherNpBuffFilterImportantBuffs) or (db.friendlyNpBuffEnable and db.friendlyNpBuffFilterImportantBuffs) or (db.personalNpBuffEnable and db.personalNpBuffFilterImportantBuffs)
-    local importantCCEnabled = (db.otherNpdeBuffEnable and db.otherNpdeBuffFilterCC) or (db.friendlyNpdeBuffEnable and db.friendlyNpdeBuffFilterCC) or (db.personalNpdeBuffEnable and db.personalNpdeBuffFilterCC)
-    local moveKeyAuras = db.nameplateAuraKeyAuraPositionEnabled
-
-    enlargeAllImportantBuffsFilter = importantBuffsEnabled
-    enlargeAllCCsFilter = importantCCEnabled
-
-    if importantBuffsEnabled then
-        local color = db.importantColor or importantColor
-        for spellID, value in pairs (importantGeneralBuffs) do
-            importantBuffs[spellID] = value
-        end
-        for spellID, value in pairs (importantGeneralDebuffs) do
-            crowdControl[spellID] = value
-        end
-
-        -- Add offensives if enabled
-        if db.importantBuffsOffensives then
-            local color = not db.importantBuffsOffensivesGlow and true or db.importantBuffsOffensivesGlowRGB or importantOffensivesColor
-            for spellID, value in pairs(importantOffensives) do
-                importantBuffs[spellID] = value == true and color or value
-            end
-        end
-
-        -- Add defensives if enabled
-        if db.importantBuffsDefensives then
-            local color = not db.importantBuffsDefensivesGlow and true or db.importantBuffsDefensivesGlowRGB or importantDefensivesColor
-            for spellID, value in pairs(importantDefensives) do
-                importantBuffs[spellID] = value == true and color or value
-            end
-        end
-
-        -- Add mobility if enabled
-        if db.importantBuffsMobility then
-            local color = not db.importantBuffsMobilityGlow and true or db.importantBuffsMobilityGlowRGB or importantMobilityColor
-            for spellID, value in pairs(importantMobility) do
-                importantBuffs[spellID] = value == true and color or value
-            end
-        end
-    end
-
-    if moveKeyAuras then
-        local checkColors = db.otherNpBuffFilterImportantBuffs or db.friendlyNpBuffFilterImportantBuffs or db.personalNpBuffFilterImportantBuffs
-        if db.keyAurasImportantBuffsEnabled then
-            for spellID, colorType in pairs(ogKeyAuraList) do
-                local color
-                if checkColors then
-                    if colorType == "defensiveColor" then
-                        color = db.importantBuffsDefensives and db.importantBuffsDefensivesGlow and db.importantBuffsDefensivesGlowRGB or true
-                    elseif colorType == "offensiveColor" then
-                        color = db.importantBuffsOffensives and db.importantBuffsOffensivesGlow and db.importantBuffsOffensivesGlowRGB or true
-                    elseif colorType == "importantColor" then
-                        color = db.keyAurasImportantGlowOn and importantColor or true
-                    else
-                        color = true
-                    end
-                else
-                    if colorType == "importantColor" then
-                        color = db.keyAurasImportantGlowOn and importantColor or true
-                    else
-                        color = true
-                    end
-                end
-
-                keyAuraList[spellID] = color
-            end
-        else
-            for spellID, colorType in pairs(keyAuraList) do
-                keyAuraList[spellID] = nil
-            end
-        end
-
-        for spellID, value in pairs(interruptSpells) do
-            keyAuraList[spellID] = true
-        end
-        keyAuraList[96231] = nil -- Rebuke is an aura now? for no fucking reason? ok i guess
-
-        if not importantCCEnabled then
-            --local color = (not db.importantCCFullGlow and true) or (db.importantCCFull and db.importantCCFullGlowRGB) or true
-            for spellID, value in pairs(ccFull) do
-                keyAuraList[spellID] = true --value == true and color or value
-            end
-            --local color = (not db.importantCCDisarmGlow and true) or (db.importantCCDisarm and db.importantCCDisarmGlowRGB) or true
-            for spellID, value in pairs(ccDisarm) do
-                keyAuraList[spellID] = true--value == true and color or value
-            end
-            --local color = (not db.importantCCRootGlow and true) or (db.importantCCRoot and db.importantCCRootGlowRGB) or true
-            for spellID, value in pairs(ccRoot) do
-                keyAuraList[spellID] = true--value == true and color or value
-            end
-            --local color = (not db.importantCCSilenceGlow and true) or (db.importantCCSilence and db.importantCCSilenceGlowRGB) or true
-            for spellID, value in pairs(ccSilence) do
-                keyAuraList[spellID] = true--value == true and color or value
-            end
-        end
-
-        -- temp custom
-        if db.customKeyAuras and type(db.customKeyAuras) == "table" then
-            for spellID, value in pairs(db.customKeyAuras) do
-                keyAuraList[spellID] = value
-            end
-        end
-    end
-
-    if importantCCEnabled then
-
-        -- Add CC categories based on settings
-        if db.importantCCFull then
-            local color = not db.importantCCFullGlow and true or db.importantCCFullGlowRGB or ccFullColor
-            for spellID, value in pairs(ccFull) do
-                crowdControl[spellID] = value == true and color or value
-            end
-        end
-
-        if db.importantCCDisarm then
-            local color = not db.importantCCDisarmGlow and true or db.importantCCDisarmGlowRGB or ccDisarmColor
-            for spellID, value in pairs(ccDisarm) do
-                crowdControl[spellID] = value == true and color or value
-            end
-        end
-
-        if db.importantCCRoot then
-            local color = not db.importantCCRootGlow and true or db.importantCCRootGlowRGB or ccRootColor
-            for spellID, value in pairs(ccRoot) do
-                crowdControl[spellID] = value == true and color or value
-            end
-        end
-
-        if db.importantCCSilence then
-            local color = not db.importantCCSilenceGlow and true or db.importantCCSilenceGlowRGB or ccSilenceColor
-            for spellID, value in pairs(ccSilence) do
-                crowdControl[spellID] = value == true and color or value
-            end
-            for spellID, value in pairs(interruptSpells) do
-                crowdControl[spellID] = color
-            end
-        end
-    end
-end
-
-
-local castToAuraMap = {
-    [212182] = 212183, -- Smoke Bomb
-    [359053] = 212183, -- Smoke Bomb
-    [198838] = 201633, -- Earthen Wall Totem
-    [62618]  = 81782,  -- Power Word: Barrier
-    [204336] = 8178,   -- Grounding Totem
-    [443028] = 456499, -- Celestial Conduit (Absolute Serenity)
-    [289655] = 289655, -- Sanctified Ground
-    [34861] = 289655, -- Sanctified Ground
-}
-
-local trackedAuras = {
-    [212183] = {duration = 5, helpful = false, texture = 458733},  -- Smoke Bomb
-    [201633] = {duration = 18, helpful = true, texture = 136098},  -- Earthen Wall
-    [81782]  = {duration = 10, helpful = true, texture = 253400},  -- Barrier
-    [8178]   = {duration = 3,  helpful = true, texture = 136039},  -- Grounding
-    [456499] = {duration = 4, helpful = true, texture = 988197}, -- Absolute Serenity
-    [289655] = {duration = 5, helpful = true, texture = 237544}, -- Sanctified Ground
-}
-
-
-local activeNonDurationAuras = {}
-BBP.ActiveAuraCheck = CreateFrame("Frame")
-
-
-local function AddAuraCooldownTimer(frame, auraID)
-    local unit = frame.unit
-    local aura = trackedAuras[auraID]
-    if not aura then return end
-
-    local castTime = activeNonDurationAuras[auraID] or GetTime()
-    local duration = aura.duration
-    local textureID = aura.texture
-
-    if frame.BigDebuffs then
-        if not frame.BigDebuffs.CooldownSB then
-            local cooldownFrame = CreateFrame("Cooldown", nil, frame.BigDebuffs, "CooldownFrameTemplate")
-            cooldownFrame:SetAllPoints(frame.BigDebuffs.icon)
-            cooldownFrame:SetDrawEdge(false)
-            cooldownFrame:SetDrawSwipe(true)
-            cooldownFrame:SetReverse(true)
-            frame.BigDebuffs.CooldownSB = cooldownFrame
-        end
-
-        frame.BigDebuffs.CooldownSB:SetCooldown(castTime, duration)
-        frame.BigDebuffs.CooldownSB:SetScript("OnUpdate", function(self, elapsed)
-            local currentTexture = frame.BigDebuffs.icon:GetTexture()
-            if currentTexture ~= textureID then
-                self:SetCooldown(0, 0)
-                self:SetScript("OnUpdate", nil)
-            end
-        end)
-    end
-
-    if C_AddOns.IsAddOnLoaded("OmniAuras") and unit and string.find(unit, "nameplate") then
-        local nameplateUnit = unit:sub(1, 1):upper() .. unit:sub(2, 4):lower() .. unit:sub(5, 5):upper() .. unit:sub(6):lower()
-        local oaFrame = _G[nameplateUnit.."Icon"]
-        if oaFrame then
-            if not oaFrame.CooldownSB then
-                local cooldownFrame = CreateFrame("Cooldown", nil, oaFrame:GetParent(), "CooldownFrameTemplate")
-                cooldownFrame:SetAllPoints(oaFrame)
-                cooldownFrame:SetDrawEdge(false)
-                cooldownFrame:SetDrawSwipe(true)
-                cooldownFrame:SetReverse(true)
-                oaFrame.CooldownSB = cooldownFrame
-            end
-
-            oaFrame.CooldownSB:SetCooldown(castTime, duration)
-            oaFrame.CooldownSB:SetScript("OnUpdate", function(self, elapsed)
-                local currentTexture = oaFrame:GetTexture()
-                if currentTexture ~= textureID then
-                    self:SetCooldown(0, 0)
-                    self:SetScript("OnUpdate", nil)
-                end
-            end)
-        end
-    end
-end
-
-function BBP.CheckNameplateForTrackedAuras(unit, frame)
-    if not unit then return end
-    if not string.find(unit, "nameplate") then
-        local _, f = BBP.GetSafeNameplate(unit)
-        if not f then return end
-        frame = f
-    end
-    if not frame or not frame.unit then return end
-
-    -- Step 1: Determine which aura types are currently active
-    local neededAuraTypes = {}
-    for auraID in pairs(activeNonDurationAuras) do
-        local auraInfo = trackedAuras[auraID]
-        if auraInfo then
-            local auraType = auraInfo.helpful and "HELPFUL" or "HARMFUL"
-            neededAuraTypes[auraType] = true
-        end
-    end
-
-    -- Step 2: Check only the required aura types
-    for auraType in pairs(neededAuraTypes) do
-        for i = 1, 40 do
-            local _, _, _, _, _, _, _, _, _, spellID = BBP.TWWUnitAura(frame.unit, i, auraType)
-            if not spellID then break end
-
-            local tracked = trackedAuras[spellID]
-            if tracked then
-                AddAuraCooldownTimer(frame, spellID)
-            end
-        end
-    end
-end
-
-
-function BBP.CheckAllNameplatesForTrackedAuras()
-    for _, nameplate in ipairs(C_NamePlate.GetNamePlates()) do
-        local frame = nameplate.UnitFrame
-        if frame and frame.unit then
-            BBP.CheckNameplateForTrackedAuras(frame.unit, frame)
-        end
-    end
-end
-
-BBP.ActiveAuraCheck:SetScript("OnEvent", function(_, event, unit)
-    BBP.CheckNameplateForTrackedAuras(unit)
-end)
-
-
-local function TrackAuraAfterCast()
-    local _, subEvent, _, _, _, _, _, _, _, _, _, spellID = CombatLogGetCurrentEventInfo()
-    if subEvent ~= "SPELL_CAST_SUCCESS" then return end
-    if not castToAuraMap[spellID] then return end
-    local auraID = castToAuraMap[spellID]
-
-    activeNonDurationAuras[auraID] = GetTime()
-
-    -- Register UNIT_AURA if not already registered
-    if not BBP.ActiveAuraCheck.isRegistered then
-        BBP.ActiveAuraCheck:RegisterEvent("UNIT_AURA")
-        BBP.ActiveAuraCheck.isRegistered = true
-    end
-
-    C_Timer.After(0.1, function()
-        BBP.CheckAllNameplatesForTrackedAuras()
-        BBP.RefreshBuffFrame()
-    end)
-
-    local duration = trackedAuras[auraID].duration or 0
-    C_Timer.NewTimer(duration, function()
-        activeNonDurationAuras[auraID] = nil
-
-        -- Check if any other auras are still active
-        local anyActive = false
-        for _, activeTime in pairs(activeNonDurationAuras) do
-            if activeTime then
-                anyActive = true
-                break
-            end
-        end
-
-        -- If none are active, unregister UNIT_AURA
-        if not anyActive and BBP.ActiveAuraCheck.isRegistered then
-            BBP.ActiveAuraCheck:UnregisterAllEvents()
-            BBP.ActiveAuraCheck.isRegistered = false
-        end
-    end)
-end
-
-local function isInWhitelist(spellName, spellId)
-    for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
-        if entry.id == spellId or (entry.name and not entry.id and spellName and string.lower(entry.name) == string.lower(spellName)) then
-            return true
-        end
-    end
-    return false
-end
-
-local function isInBlacklist(spellName, spellId)
-    for _, entry in pairs(BetterBlizzPlatesDB["auraBlacklist"]) do
-        if entry.id == spellId or (entry.name and not entry.id and spellName and string.lower(entry.name) == string.lower(spellName)) then
-            return true
-        end
-    end
-    return false
-end
-
-local function GetAuraDetails(spellName, spellId)
-    for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
-        if entry.id == spellId or (entry.name and not entry.id and spellName and string.lower(entry.name) == string.lower(spellName)) then
-            local isImportant = entry.flags and entry.flags.important or false
-            local isPandemic = entry.flags and entry.flags.pandemic or false
-            local auraColor = entry.entryColors and entry.entryColors.text or nil
-            local onlyMine = entry.flags and entry.flags.onlyMine or false
-            local isEnlarged = entry.flags and entry.flags.enlarged or false
-            local isCompacted = entry.flags and entry.flags.compacted or false
-            return true, isImportant, isPandemic, auraColor, onlyMine, isEnlarged, isCompacted
-        end
-    end
-    return
-end
-local importantGlowOffset = 10 * (BetterBlizzPlatesDB.nameplateAuraEnlargedScale or 1)
-local trackedBuffs = {};
-local checkBuffsTimer = nil;
-
-local function StopCheckBuffsTimer()
-    if checkBuffsTimer then
-        checkBuffsTimer:Cancel();
-        checkBuffsTimer = nil;
-    end
-end
-
-local pandemicSpells = {
-    -- Death Knight
-        -- Blood
-        [55078] = 24,  -- Blood Plague
-        -- Frost
-        [55095] = 24,  -- Frost Fever
-        -- Unholy
-        [191587] = 21, -- Virulent Plague
-
-    -- Demon Hunter
-        -- Havoc
-        [390181] = 6,  -- Soulscar
-
-    -- Druid
-        -- Feral
-        [1079] = 24,   -- Rip
-        [155722] = 15, -- Rake
-        [106830] = 15, -- Thrash
-        [155625] = 18, -- Moonfire
-        -- Balance
-        [164815] = 18, -- Sunfire
-        [202347] = 24, -- Stellar Flare
-        -- Resto
-        [774] = 12,    -- Rejuvenation
-        [33763] = 15,  -- Lifebloom
-        [8936] = 6,    -- Regrowth
-
-    -- Evoker
-        -- Preservation
-        [355941] = 8, -- Dream Breath
-        -- Augmentation
-        [395152] = 10, -- Ebon Might
-
-    -- Hunter
-        -- Survival
-        [259491] = 12, -- Serpent Sting
-        -- Marksman
-        [271788] = 18, -- Serpent Sting (Aimed Shot)
-
-    -- Monk
-        -- Brewmaster
-        [116847] = 6,  -- Rushing Jade Wind
-        -- Mistweaver
-        [119611] = 20, -- Renewing Mist
-        [124682] = 6,  -- Enveloping Mist
-
-    -- Priest
-        [139] = 15,    -- Renew
-        [589] = 16,    -- Shadow Word: Pain
-        -- Discipline
-        [204213] = 20, -- Purge the Wicked
-        -- Shadow
-        [34914] = 21,  -- Vampiric Touch
-        [335467] = 6,  -- Devouring Plague
-
-    -- Rogue
-        [1943] = 32,   -- Rupture
-        [315496] = 12, -- Slice and Dice
-        -- Assassination
-        [703] = 18,    -- Garrote
-        [121411] = 18, -- Crimson Tempest
-
-    -- Shaman
-        [188389] = 18, -- Flame Shock
-        -- Restoration
-        [382024] = 12, -- Earthliving Weapon
-        [61295] = 18,  -- Riptide
-
-    -- Warlock
-        [445474] = 15.3, -- Wither
-        -- Destruction
-        [157736] = 21, -- Immolate
-        -- Demonology
-        [460553] = 20, -- Doom
-        -- Affliction
-        [146739] = 14, -- Corruption
-        [980] = 18,    -- Agony
-        [316099] = 21, -- Unstable Affliction
-
-    -- Warrior
-        [388539] = 15, -- Rend
-        -- Arms
-        [262115] = 12, -- Deep Wounds
-}
-
-
-local nonPandemic = 5
-local defaultPandemic = 0.3
-local uaPandemic = 8
-local agonyPandemic = 10
-
-local function GetPandemicThresholds(buff)
-    local minBaseDuration = pandemicSpells[buff.spellID] or buff.duration
-
-    -- Specific pandemic logic for Agony with talent
-    if buff.spellID == 980 and IsPlayerSpell(453034) then
-        -- For Agony with talent, return special threshold
-        return agonyPandemic, minBaseDuration * defaultPandemic
-    elseif buff.spellID == 316099 and IsPlayerSpell(459376) then
-        -- Unstable Affliction with talent
-        return uaPandemic, minBaseDuration * defaultPandemic
-    elseif pandemicSpells[buff.spellID] then
-        -- Use 30% of the greater value (dynamic or minimum) for Pandemic spells
-        return nil, minBaseDuration * defaultPandemic
-    else
-        -- Default non-pandemic (5 seconds)
-        return nil, nonPandemic
-    end
-end
-
-local function CreatePandemicGlow(buff, orange)
-    local db = BetterBlizzPlatesDB
-    local nameplateAuraSquare = db.nameplateAuraSquare
-    local nameplateAuraTaller = db.nameplateAuraTaller
-    local buffScale = db.nameplateAuraBuffScale
-    local debuffScale = db.nameplateAuraDebuffScale
-    --local nameplateAuraScale = db.nameplateAuraScale
-
-    if not buff.PandemicGlow then
-        buff.PandemicGlow = buff.GlowFrame:CreateTexture(nil, "OVERLAY")
-        buff.PandemicGlow:SetAtlas("newplayertutorial-drag-slotgreen")
-        buff.PandemicGlow:SetDesaturated(true)
-    end
-
-    if buff.isKeyAura then
-        local scale = db.nameplateKeyAuraScale
-        local ten = 16 * scale
-        buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
-        buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
-    elseif buff.isEnlarged then
-        local scale = db.nameplateAuraEnlargedScale
-        if db.nameplateAuraEnlargedSquare then
-            local ten = 10 * scale
-            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
-            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
-        else
-            if nameplateAuraSquare then
-                local ten = 10 * scale
-                buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten);
-                buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten);
-            elseif nameplateAuraTaller then
-                local tenfive = 10 * scale
-                local eight = 7.5 * scale
-                buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight);
-                buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight);
-            else
-                local tenfive = 9.4 * scale
-                local sevenfive = 6.4 * scale
-                buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, sevenfive);
-                buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -sevenfive);
-            end
-        end
-    elseif buff.isCompacted then
-        local scale = db.nameplateAuraCompactedScale
-        if db.nameplateAuraCompactedSquare then
-            local fourfive = 4.5 * scale
-            local fivefive = 6.4 * scale
-            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -fourfive, fivefive)
-            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", fourfive, -fivefive)
-        else
-            if nameplateAuraSquare then
-                local ten = 10 * scale
-                buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten);
-                buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten);
-            elseif nameplateAuraTaller then
-                local tenfive = 10.5 * scale
-                local eight = 8 * scale
-                buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight);
-                buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight);
-            else
-                local tenfive = 10.5 * scale
-                local sevenfive = 7.5 * scale
-                buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, sevenfive);
-                buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -sevenfive);
-            end
-        end
-    elseif nameplateAuraSquare then
-        if buff.isBuff then
-            local ten = 10 * buffScale
-            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
-            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
-        else
-            local ten = 10 * debuffScale
-            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
-            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
-        end
-    elseif nameplateAuraTaller then
-        if buff.isBuff then
-            local ten = 10 * buffScale
-            local eight = 7.5 * buffScale
-            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, eight)
-            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -eight)
-        else
-            local ten = 10 * debuffScale
-            local eight = 7.5 * debuffScale
-            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, eight)
-            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -eight)
-        end
-    else
-        if buff.isBuff then
-            local tenfive = 9.4 * buffScale
-            local eight = 6.4 * buffScale
-            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
-            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
-        else
-            local tenfive = 9.4 * debuffScale
-            local eight = 6.4 * debuffScale
-            buff.PandemicGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
-            buff.PandemicGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
-        end
-    end
-
-    if not orange then
-        buff.PandemicGlow:SetVertexColor(1, 0, 0)
-    else
-        buff.PandemicGlow:SetVertexColor(1, 0.25, 0)
-    end
-
-    buff.Border:Hide()
-    buff.PandemicGlow:Show()
-
-    buff.isPandemicActive = true
-end
-
-local function CheckBuffs()
-    local currentGameTime = GetTime()
-    for auraInstanceID, buff in pairs(trackedBuffs) do
-        if buff.isPandemic and buff.expirationTime then
-            local remainingDuration = buff.expirationTime - currentGameTime
-            local specialPandemicThreshold, defaultPandemicThreshold = GetPandemicThresholds(buff)
-
-            if remainingDuration <= 0 then
-                -- Buff expired, remove it and hide the glow
-                trackedBuffs[auraInstanceID] = nil
-                if buff.PandemicGlow then
-                    buff.Border:Show()
-                    buff.PandemicGlow:Hide()
-                end
-                buff.isPandemicActive = false
-            else
-                -- Check for the default pandemic threshold (red)
-                if remainingDuration <= defaultPandemicThreshold then
-                    CreatePandemicGlow(buff)
-                elseif specialPandemicThreshold and remainingDuration <= specialPandemicThreshold and remainingDuration > defaultPandemicThreshold then
-                    CreatePandemicGlow(buff, true)
-                else
-                    -- Outside the pandemic window, hide the glow
-                    if buff.PandemicGlow then
-                        buff.PandemicGlow:Hide()
-                    end
-                    buff.Border:Show()
-                    buff.isPandemicActive = false
-                end
-            end
-        else
-            buff.Border:Show()
-            buff.isPandemicActive = false
-            trackedBuffs[auraInstanceID] = nil
-        end
-    end
-
-    -- Stop the timer if no tracked buffs remain
-    if next(trackedBuffs) == nil then
-        StopCheckBuffsTimer()
-    end
-end
-
-local function StartCheckBuffsTimer()
-    if not checkBuffsTimer then
-        checkBuffsTimer = C_Timer.NewTicker(0.05, CheckBuffs);
-    end
-end
-
-local function defaultComparator(a, b)
-    return a.auraInstanceID < b.auraInstanceID
-end
-
-local function durationComparator(a, b)
-    if a.isCC ~= b.isCC then
-        return a.isCC
-    end
-
-    if a.isEnlarged ~= b.isEnlarged then
-        return a.isEnlarged
-    end
-
-    if a.duration == 0 and b.duration == 0 then
-        return a.auraInstanceID < b.auraInstanceID
-    elseif a.duration == 0 then
-        return false
-    elseif b.duration == 0 then
-        return true
-    end
-
-    local now = GetTime()
-    local timeLeftA = (a.expirationTime or 0) - now
-    local timeLeftB = (b.expirationTime or 0) - now
-
-    if timeLeftA < 0 then timeLeftA = 0 end
-    if timeLeftB < 0 then timeLeftB = 0 end
-
-    if timeLeftA ~= timeLeftB then
-        return timeLeftA < timeLeftB
-    end
-
-    return a.auraInstanceID < b.auraInstanceID
-end
-
-local function reverseDurationComparator(a, b)
-    if a.isCC ~= b.isCC then
-        return b.isCC
-    end
-
-    if a.isEnlarged ~= b.isEnlarged then
-        return b.isEnlarged
-    end
-
-    if a.duration == 0 and b.duration == 0 then
-        return a.auraInstanceID > b.auraInstanceID
-    elseif a.duration == 0 then
-        return true
-    elseif b.duration == 0 then
-        return false
-    end
-
-    local now = GetTime()
-    local timeLeftA = (a.expirationTime or 0) - now
-    local timeLeftB = (b.expirationTime or 0) - now
-
-    if timeLeftA < 0 then timeLeftA = 0 end
-    if timeLeftB < 0 then timeLeftB = 0 end
-
-    if timeLeftA ~= timeLeftB then
-        return timeLeftA > timeLeftB
-    end
-
-    return a.auraInstanceID > b.auraInstanceID
-end
-
-local function largeSmallAuraComparator(a, b)
-    if a.isCC ~= b.isCC then
-        return a.isCC
-    end
-
-    if a.isEnlarged or b.isEnlarged then
-        if a.isEnlarged and not b.isEnlarged then
-            return true
-        elseif not a.isEnlarged and b.isEnlarged then
-            return false
-        else
-            return defaultComparator(a, b)
-        end
-    end
-
-    if a.isImportant or b.isImportant then
-        if a.isImportant and not b.isImportant then
-            return true
-        elseif not a.isImportant and b.isImportant then
-            return false
-        else
-            return defaultComparator(a, b)
-        end
-    end
-
-    if a.isCompacted or b.isCompacted then
-        if a.isCompacted and not b.isCompacted then
-            return false
-        elseif not a.isCompacted and b.isCompacted then
-            return true
-        else
-            return defaultComparator(a, b)
-        end
-    end
-
-    return defaultComparator(a, b)
-end
-
-local function smallLargeAuraComparator(a, b)
-    if a.isCompacted or b.isCompacted then
-        if a.isCompacted and not b.isCompacted then
-            return true
-        elseif not a.isCompacted and b.isCompacted then
-            return false
-        else
-            return defaultComparator(a, b)
-        end
-    end
-
-    if a.isImportant or b.isImportant then
-        if a.isImportant and not b.isImportant then
-            return true
-        elseif not a.isImportant and b.isImportant then
-            return false
-        else
-            return defaultComparator(a, b)
-        end
-    end
-
-    if a.isEnlarged or b.isEnlarged then
-        if a.isEnlarged and not b.isEnlarged then
-            return false
-        elseif not a.isEnlarged and b.isEnlarged then
-            return true
-        else
-            return defaultComparator(a, b)
-        end
-    end
-
-    return defaultComparator(a, b)
-end
-
-local function CapForLayout(frames, maxCount)
-    local visible = {}
-    local consumed = 0
-    for _, f in ipairs(frames) do
-        local consumes = not (f.isKeyAura or f.pinIcon)  -- key/pinned don't count
-        if consumes then
-            if consumed < maxCount then
-                table.insert(visible, f)
-                consumed = consumed + 1
-            else
-                f:Hide()
-            end
-        else
-            table.insert(visible, f) -- always show key/pinned
-        end
-    end
-    return visible
-end
-
-
-function BBP.CustomBuffLayoutChildren(container, children, isEnemyUnit, frame)
-    -- Obtain the health bar details
-    local healthBar = frame.healthBar
-    local healthBarWidth = healthBar:GetWidth()
-    -- if not container.GreenOverlay then
-    --     local greenOverlay = container:CreateTexture("GreenOverlay", "OVERLAY")
-    --     greenOverlay:SetColorTexture(0, 1, 0, 0.5)  -- RGBA: Solid green with 50% opacity
-    --     greenOverlay:SetAllPoints(container)  -- Make the texture cover the entire container
-    --     container.GreenOverlay = greenOverlay  -- Assign the texture to the container for future reference
-    -- end
-    -- Define the spacing and row parameters
-    local db = BetterBlizzPlatesDB
-    local horizontalSpacing = db.nameplateAuraWidthGap
-    local nameplateKeyAurasHorizontalGap = db.nameplateKeyAurasHorizontalGap
-    local verticalSpacing = -db.nameplateAuraHeightGap or 0-- + (db.nameplateAuraSquare and 12 or 0) + (db.nameplateAuraTaller and 3 or 0)
-    local maxBuffsPerRow = (isEnemyUnit and db.nameplateAuraRowAmount) or (not isEnemyUnit and db.nameplateAuraRowFriendlyAmount)
-    --local maxRowHeight = 0
-    local rowWidths = {}
-    local totalChildrenHeight = 0
-    local maxBuffsPerRowAdjusted = maxBuffsPerRow
-    local nameplateAuraSquare = db.nameplateAuraSquare
-    local nameplateAuraTaller = db.nameplateAuraTaller
-    local auraHeightSetting = (nameplateAuraSquare and 20) or (nameplateAuraTaller and 15.5) or 14
-    local square = db.nameplateAuraEnlargedSquare
-    local compactSquare = db.nameplateAuraCompactedSquare
-    local auraSize = square and 20 or auraHeightSetting
-    local compactSize = compactSquare and 10 or 20
-    local nameplateAuraEnlargedScale = db.nameplateAuraEnlargedScale
-    local nameplateAuraCompactedScale = db.nameplateAuraCompactedScale
-    local auraSizeScaled = auraSize * nameplateAuraEnlargedScale
-    local sizeMultiplier = 20 * nameplateAuraEnlargedScale
-    local keyAuraSize = 30 * db.nameplateKeyAuraScale
-    local texCoord = nameplateAuraSquare and {0.1, 0.9, 0.1, 0.9} or nameplateAuraTaller and {0.05, 0.95, 0.15, 0.82} or {0.05, 0.95, 0.1, 0.6}
-    local compactTexCoord = not compactSquare and texCoord or nameplateAuraSquare and {0.25, 0.75, 0.05, 0.95} or nameplateAuraTaller and {0.3, 0.7, 0.15, 0.82} or {0.3, 0.7, 0.15, 0.80}
-    local nameplateAuraScale = db.nameplateAuraScale
-    local nameplateAuraCountScale = db.nameplateAuraCountScale
-    local sortEnlargedAurasFirst = db.sortEnlargedAurasFirst
-    local sortCompactedAurasFirst = db.sortCompactedAurasFirst
-    local sortDurationAuras = db.sortDurationAuras
-    local sortDurationAurasReverse = db.sortDurationAurasReverse
-    local keyAuraXPos = db.nameplateKeyAurasXPos
-    local keyAuraYPos = db.nameplateKeyAurasYPos
-    local keyAuraAnchor = db.nameplateAuraKeyAuraPositionEnabled and db.nameplateKeyAurasAnchor
-    local totalChildrenWidth, hasExpandableChild
-
-    local scaledCompactWidth = compactSize * nameplateAuraCompactedScale
-    local scaledCompactHeight = auraHeightSetting * nameplateAuraCompactedScale
-
-    local nameplateAuraBuffScale = db.nameplateAuraBuffScale
-    local nameplateAuraDebuffScale = db.nameplateAuraDebuffScale
-    local scaledBuffWidth = 20 * nameplateAuraBuffScale
-    local scaledBuffHeight = auraHeightSetting * nameplateAuraBuffScale
-    local scaledDebuffWidth = 20 * nameplateAuraDebuffScale
-    local scaledDebuffHeight = auraHeightSetting * nameplateAuraDebuffScale
-
-    local unit = frame.unit
-    local isSelf
-    if unit then
-        isSelf = UnitIsUnit(unit, "player")
-    end
-
-    -- Separate buffs and debuffs if needed
-    local buffs = {}
-    local debuffs = {}
-    if db.separateAuraBuffRow then
-        for _, buff in ipairs(children) do
-            if buff.isBuff then
-                table.insert(buffs, buff)
-            else
-                table.insert(debuffs, buff)
-            end
-        end
-    else
-        buffs = children  -- Treat all as buffs for the unified layout
-        debuffs = {}  -- No debuffs in this mode
-    end
-
-    -- Calculate the width of each row
-    local function CalculateRowWidths(auras)
-        local widths = {}
-        widths[1] = 0
-        local compactTracker = 0
-        local keyAuras = 0
-        local isPinAura = 0
-        local hasRealAuras
-        for index, buff in ipairs(auras) do
-            buff:SetScale(nameplateAuraScale)
-            buff.CountFrame:SetScale(nameplateAuraCountScale)
-            local buffWidth
-            if buff.pinIcon then
-                isPinAura = isPinAura + 1
-                buffWidth = 0
-            elseif buff.isKeyAura then
-                keyAuras = keyAuras + 1
-                buff:SetSize(keyAuraSize, keyAuraSize)
-                buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-                buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-                buff.Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-                buffWidth = sizeMultiplier
-                compactTracker = 0
-            elseif buff.isEnlarged then
-                buff:SetSize(sizeMultiplier, auraSizeScaled)
-                buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-                buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-                if not square then
-                    buff.Icon:SetTexCoord(unpack(texCoord))
-                else
-                    buff.Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-                end
-                buffWidth = sizeMultiplier
-                --buffHeight = sizeMultiplier
-                compactTracker = 0
-            elseif buff.isCompacted then
-                buff:SetSize(scaledCompactWidth, scaledCompactHeight)
-                buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-                buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-                buff.Icon:SetTexCoord(unpack(compactTexCoord))
-                buffWidth = scaledCompactWidth
-                --buffHeight = 14
-                compactTracker = compactTracker + 1
-            elseif buff.isBuff then
-                buff:SetSize(scaledBuffWidth, scaledBuffHeight)
-                buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-                buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-                buff.Icon:SetTexCoord(unpack(texCoord))
-                buffWidth = scaledBuffWidth
-                --buffHeight = 14
-                compactTracker = 0
-            else--debuff
-                buff:SetSize(scaledDebuffWidth, scaledDebuffHeight)
-                buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-                buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-                buff.Icon:SetTexCoord(unpack(texCoord))
-                buffWidth = scaledDebuffWidth
-                --buffHeight = 14
-                compactTracker = 0
-            end
-
-            local extraOffset = 0
-            if compactSquare and compactTracker == 2 and buff.isCompacted then
-                extraOffset = horizontalSpacing
-                maxBuffsPerRowAdjusted = maxBuffsPerRowAdjusted + 1
-                compactTracker = 0
-            end
-
-            --if container.respectChildScale then
-                local buffScale = buff:GetScale()
-                buffWidth = buffWidth * buffScale
-            --end
-
-            local noKeyAuraIndex = index - keyAuras - isPinAura
-
-            local rowIndex = math.floor((noKeyAuraIndex - 1) / maxBuffsPerRowAdjusted) + 1
-            if not buff.isKeyAura and not buff.pinIcon then
-                hasRealAuras = true
-                widths[rowIndex] = (widths[rowIndex] or 0) + buffWidth -extraOffset
-            end
-
-            if noKeyAuraIndex % maxBuffsPerRowAdjusted ~= 1 then
-                widths[rowIndex] = (widths[rowIndex] or 0) + horizontalSpacing
-            end
-        end
-        return widths, hasRealAuras
-    end
-
-    local function CalculateRowWidths2(auras)
-        local widths = {}
-        local compactTracker = 0
-
-        local nameplateAuraSelfScale = db.nameplateAuraSelfScale
-
-        local npAurasSelfEnlargedEnabled = not db.disableEnlargedAurasOnSelf
-        local npAurasSelfCompactedEnabled = not db.disableCompactedAurasOnSelf
-
-        local nameplateAuraBuffScale = db.nameplateAuraBuffSelfScale
-        local nameplateAuraDebuffScale = db.nameplateAuraDebuffSelfScale
-        local scaledBuffWidth = 20 * nameplateAuraBuffScale
-        local scaledBuffHeight = auraHeightSetting * nameplateAuraBuffScale
-        local scaledDebuffWidth = 20 * nameplateAuraDebuffScale
-        local scaledDebuffHeight = auraHeightSetting * nameplateAuraDebuffScale
-
-        for index, buff in ipairs(auras) do
-            buff:SetScale(nameplateAuraSelfScale)
-            buff.CountFrame:SetScale(nameplateAuraCountScale)
-            local buffWidth
-            if buff.isEnlarged and npAurasSelfEnlargedEnabled then
-                buff:SetSize(sizeMultiplier, auraSizeScaled)
-                buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-                buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-                if not square then
-                    buff.Icon:SetTexCoord(unpack(texCoord))
-                else
-                    buff.Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-                end
-                buffWidth = sizeMultiplier
-                --buffHeight = sizeMultiplier
-                compactTracker = 0
-            elseif buff.isCompacted and npAurasSelfCompactedEnabled then
-                buff:SetSize(scaledCompactWidth, scaledCompactHeight)
-                buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-                buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-                buff.Icon:SetTexCoord(unpack(compactTexCoord))
-                buffWidth = scaledCompactWidth
-                --buffHeight = 14
-                compactTracker = compactTracker + 1
-            elseif buff.isBuff then
-                buff:SetSize(scaledBuffWidth, scaledBuffHeight)
-                buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-                buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-                buff.Icon:SetTexCoord(unpack(texCoord))
-                buffWidth = scaledBuffWidth
-                --buffHeight = 14
-                compactTracker = 0
-            else--debuff
-                buff:SetSize(scaledDebuffWidth, scaledDebuffHeight)
-                buff.Icon:SetPoint("TOPLEFT", buff, "TOPLEFT", 1, -1)
-                buff.Icon:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", -1, 1)
-                buff.Icon:SetTexCoord(unpack(texCoord))
-                buffWidth = scaledDebuffWidth
-                --buffHeight = 14
-                compactTracker = 0
-            end
-
-            local extraOffset = 0
-            if compactSquare and compactTracker == 2 and buff.isCompacted then
-                extraOffset = horizontalSpacing
-                maxBuffsPerRowAdjusted = maxBuffsPerRowAdjusted + 1
-                compactTracker = 0
-            end
-
-            --if container.respectChildScale then
-                local buffScale = buff:GetScale()
-                buffWidth = buffWidth * buffScale
-            --end
-
-            local rowIndex = math.floor((index - 1) / maxBuffsPerRowAdjusted) + 1
-            widths[rowIndex] = (widths[rowIndex] or 0) + buffWidth -extraOffset
-
-            if index % maxBuffsPerRowAdjusted ~= 1 then
-                widths[rowIndex] = widths[rowIndex] + horizontalSpacing
-            end
-        end
-        return widths
-    end
-
-    -- Function to layout auras. ALl of this is scuffed and needs a rework. If one enlarged aura every row gets higher instead of only the row immediately after like intentional.
-    local maxRowHeight = 0
-    local maxDebuffHeight = 0
-    local maxBuffHeight = 0
-    local keyAuraOffset = 5
-    local function LayoutAuras(auras, startRow, isBuffs)
-        local currentRow = startRow
-        local horizontalOffset = 0
-        local firstRowFirstAuraOffset = nil  -- Variable to store the horizontal offset of the first aura in the first row
-        local nameplateAurasFriendlyCenteredAnchor = db.nameplateAurasFriendlyCenteredAnchor and not isEnemyUnit and not isSelf
-        local nameplateAurasEnemyCenteredAnchor = db.nameplateAurasEnemyCenteredAnchor and isEnemyUnit and (not db.nameplateCenterOnlyBuffs or isBuffs)
-        local nameplateAurasPersonalCenteredAnchor = db.nameplateAurasPersonalCenteredAnchor and isSelf
-        local nameplateCenterAllRows = db.nameplateCenterAllRows and (nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor)
-        local xPos = db.nameplateAurasXPos
-        local nameplateAuraTypeGap = db.nameplateAuraTypeGap
-        local rightToLeft = db.nameplateAuraRightToLeft
-
-        local compactTracker = 0
-        local indexTracker = 0
-
-        local totalKeyAuraWidth = 0
-        local keyAuraCount = 0
-
-        if keyAuraAnchor and keyAuraAnchor == "CENTER" then
-            for _, buff in ipairs(auras) do
-                if buff.isKeyAura then
-                    local w, _ = buff:GetSize()
-                    local s = buff:GetScale()
-                    totalKeyAuraWidth = totalKeyAuraWidth + (w * s)
-                    keyAuraCount = keyAuraCount + 1
-                end
-            end
-            if keyAuraCount > 1 then
-                totalKeyAuraWidth = totalKeyAuraWidth + ((keyAuraCount - 1) * nameplateKeyAurasHorizontalGap)
-            end
-        end
-
-        local keyAuraHorizontalOffset = 0
-        local keyAuraFirstRowOffset = 0
-
-        -- local keyAuraXPos = db.nameplateKeyAurasXPos
-        -- local keyAuraYPos = db.nameplateKeyAurasYPos
-
-        for index, buff in ipairs(auras) do
-            local buffWidth, buffHeight = buff:GetSize()
-            local buffScale = buff:GetScale()
-
-            if buff.pinIcon then
-                buff:Hide()
-            elseif buff.isKeyAura then
-                -- buff:ClearAllPoints()
-                -- buff:SetPoint("LEFT", healthBar, "RIGHT", keyAuraOffset + keyAuraXPos, keyAuraYPos)
-                -- keyAuraOffset = keyAuraOffset + (buffWidth * buffScale) + nameplateKeyAurasHorizontalGap
-                buff:ClearAllPoints()
-
-                local anchor = keyAuraAnchor or "RIGHT" -- Default to RIGHT if not set
-
-                if anchor == "RIGHT" then
-                    buff:SetPoint("LEFT", healthBar, "RIGHT", keyAuraOffset + keyAuraXPos, keyAuraYPos)
-                    keyAuraOffset = keyAuraOffset + buffWidth + nameplateKeyAurasHorizontalGap
-                elseif anchor == "LEFT" then
-                    buff:SetPoint("RIGHT", healthBar, "LEFT", -(keyAuraOffset + keyAuraXPos), keyAuraYPos)
-                    keyAuraOffset = keyAuraOffset + buffWidth + nameplateKeyAurasHorizontalGap
-                elseif anchor == "CENTER" then
-                    if keyAuraHorizontalOffset == 0 then
-                        keyAuraFirstRowOffset = (healthBarWidth - totalKeyAuraWidth) / 2
-                    end
-                    buff:SetPoint("BOTTOMLEFT", healthBar, "LEFT", (keyAuraFirstRowOffset + keyAuraHorizontalOffset + keyAuraXPos)/buffScale, keyAuraYPos + 45)
-                    keyAuraHorizontalOffset = keyAuraHorizontalOffset + buffWidth + nameplateKeyAurasHorizontalGap
-                end
-            else
-                indexTracker = indexTracker + 1
-                if buff.isEnlarged then
-                    compactTracker = 0
-                elseif buff.isCompacted then
-                    compactTracker = compactTracker + 1
-                else
-                    compactTracker = 0
-                end
-
-
-                -- Update the maximum row height
-                maxRowHeight = math.max(maxRowHeight, buffHeight)
-
-                -- Determine if it's the start of a new row
-                if indexTracker % maxBuffsPerRowAdjusted == 1 then
-                    local rowIndex = math.floor((indexTracker - 1) / maxBuffsPerRowAdjusted) + 1
-                    if buff.isCompacted then
-                        compactTracker = 1
-                    else
-                        compactTracker = 0
-                    end
-
-                    if nameplateCenterAllRows then
-                        horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2
-                    elseif nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor or nameplateAurasPersonalCenteredAnchor then
-                        if rowIndex == 1 then
-                            horizontalOffset = (healthBarWidth - rowWidths[rowIndex]) / 2
-                            firstRowFirstAuraOffset = horizontalOffset  -- Save this offset for the first aura
-                        else
-                            horizontalOffset = firstRowFirstAuraOffset or 0  -- Use the saved offset for the first aura of subsequent rows
-                        end
-                    else
-                        horizontalOffset = 0  -- or any other default starting offset
-                    end
-
-                    if indexTracker > 1 then
-                        currentRow = currentRow + 1  -- Move to the next row
-                    end
-                end
-
-                -- Position the buff on the nameplate
-                buff:ClearAllPoints()
-                local verticalOffset
-                if not isBuffs then
-                    maxDebuffHeight = maxRowHeight
-                    verticalOffset = -currentRow * (-maxRowHeight + (currentRow > 0 and verticalSpacing or 0))
-                else
-                    maxBuffHeight = maxRowHeight
-                    verticalOffset = (-currentRow * (-maxDebuffHeight + (currentRow > 0 and verticalSpacing or 0))) + nameplateAuraTypeGap
-                end
-
-                local extraOffset = 0
-                if compactSquare and compactTracker == 2 and buff.isCompacted then
-                    extraOffset = BetterBlizzPlatesDB.nameplateAuraWidthGap
-                    compactTracker = 0
-                end
-
-                if isSelf then
-                    if nameplateAurasPersonalCenteredAnchor then
-                        if rightToLeft then
-                            buff:SetPoint("BOTTOMRIGHT", container, "TOPRIGHT", -((horizontalOffset/buffScale) + (db.nameplateAurasPersonalXPos + 1 - (extraOffset/buffScale))), verticalOffset - 13)
-                        else
-                            buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + (db.nameplateAurasPersonalXPos + 1 - extraOffset/buffScale), verticalOffset - 13)
-                        end
-                    else
-                        if rightToLeft then
-                            buff:SetPoint("BOTTOMRIGHT", container, "TOPRIGHT", -((horizontalOffset/buffScale) + (xPos + 1 - (extraOffset/buffScale))), verticalOffset - 13)
-                        else
-                            buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + db.nameplateAurasPersonalXPos - extraOffset/buffScale, verticalOffset - 13)
-                        end
-                    end
-                else
-                    if nameplateAurasFriendlyCenteredAnchor or nameplateAurasEnemyCenteredAnchor then
-                        if rightToLeft then
-                            buff:SetPoint("BOTTOMRIGHT", container, "TOPRIGHT", -((horizontalOffset/buffScale) + (xPos + 1 - (extraOffset/buffScale))), verticalOffset - 13)
-                        else
-                            buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + (xPos + 1 - extraOffset/buffScale), verticalOffset - 13)
-                        end
-                    else
-                        if rightToLeft then
-                            buff:SetPoint("BOTTOMRIGHT", container, "TOPRIGHT", -((horizontalOffset/buffScale) + (xPos - (extraOffset/buffScale))), verticalOffset - 13)
-                        else
-                            buff:SetPoint("BOTTOMLEFT", container, "TOPLEFT", (horizontalOffset/buffScale) + xPos - extraOffset/buffScale, verticalOffset - 13)
-                        end
-                    end
-                end
-                horizontalOffset = horizontalOffset + ((buffWidth)*buffScale) + horizontalSpacing-extraOffset
-            end
-        end
-
-        return currentRow
-    end
-
-    -- Layout logic
-    local lastRow = 0
-    if db.separateAuraBuffRow then
-        local hasNormalDebuff
-        if #debuffs > 0 then
-            if sortDurationAurasReverse then
-                table.sort(debuffs, reverseDurationComparator)
-            elseif sortDurationAuras then
-                table.sort(debuffs, durationComparator)
-            elseif sortEnlargedAurasFirst then
-                table.sort(debuffs, largeSmallAuraComparator)
-            elseif sortCompactedAurasFirst then
-                table.sort(debuffs, smallLargeAuraComparator)
-            end
-            debuffs = CapForLayout(debuffs, BetterBlizzPlatesDB.maxAurasOnNameplate)
-            if isSelf then
-                rowWidths, hasNormalDebuff = CalculateRowWidths2(debuffs)
-            else
-                rowWidths, hasNormalDebuff = CalculateRowWidths(debuffs)
-            end
-            lastRow = LayoutAuras(debuffs, 0)
-        end
-
-        if sortDurationAurasReverse then
-            table.sort(buffs, reverseDurationComparator)
-        elseif sortDurationAuras then
-            table.sort(buffs, durationComparator)
-        elseif sortEnlargedAurasFirst then
-            table.sort(buffs, largeSmallAuraComparator)
-        elseif sortCompactedAurasFirst then
-            table.sort(buffs, smallLargeAuraComparator)
-        end
-        buffs = CapForLayout(buffs, BetterBlizzPlatesDB.maxAurasOnNameplate)
-        rowWidths = isSelf and CalculateRowWidths2(buffs) or CalculateRowWidths(buffs)
-        LayoutAuras(buffs, lastRow + ((#debuffs > 0 and hasNormalDebuff) and 1 or 0), true)
-    else
-        if sortDurationAurasReverse then
-            table.sort(buffs, reverseDurationComparator)
-        elseif sortDurationAuras then
-            table.sort(buffs, durationComparator)
-        elseif sortEnlargedAurasFirst then
-            table.sort(buffs, largeSmallAuraComparator)
-        elseif sortCompactedAurasFirst then
-            table.sort(buffs, smallLargeAuraComparator)
-        end
-        buffs = CapForLayout(buffs, BetterBlizzPlatesDB.maxAurasOnNameplate)
-        rowWidths = isSelf and CalculateRowWidths2(buffs) or CalculateRowWidths(buffs)
-        lastRow = LayoutAuras(buffs, 0)
-    end
-
-    -- Calculate total children height
-    totalChildrenHeight = (lastRow + 1) * (maxRowHeight + verticalSpacing)
-
-    return totalChildrenWidth, totalChildrenHeight, hasExpandableChild
-end
-
-local cachedDebuffColors
-function BBP.UpdateAuraTypeColors()
-    local db = BetterBlizzPlatesDB
-    cachedDebuffColors = {
-        Magic = db.npAuraMagicRGB,
-        Poison = db.npAuraPoisonRGB,
-        Curse = db.npAuraCurseRGB,
-        Disease = db.npAuraDiseaseRGB,
+    return {
+        enable        = db[prefix .. "Enable"],
+        blacklist     = db[prefix .. "FilterBlacklist"],
+        watchlist     = db[prefix .. "FilterWatchList"],
+        important     = db[prefix .. "FilterImportantBuffs"],
+        cc            = db[prefix .. "FilterCC"],
+        purgeable     = db[prefix .. "FilterPurgeable"],
+        blizzard      = db[prefix .. "FilterBlizzard"],
+        lessThanMin   = db[prefix .. "FilterLessMinite"],
+        onlyMine      = db[prefix .. "FilterOnlyMe"],
     }
 end
 
-local function SetAuraBorderColorByType(buff, aura, db)
-    if not db.npColorAuraBorder then return end
-
-    local debuffColors = cachedDebuffColors
-
-    if aura.isHelpful then
-        buff.Border:SetColorTexture(unpack(db.npAuraBuffsRGB))
-    else
-        local color = debuffColors[aura.dispelName] or db.npAuraOtherRGB
-        buff.Border:SetColorTexture(unpack(color))
-    end
-end
-
-local function SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
-    local otherNpBuffPurgeGlow = BetterBlizzPlatesDB.otherNpBuffPurgeGlow
-    local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
-    local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
-
-    if otherNpBuffPurgeGlow then
-        if not isPlayerUnit and isEnemyUnit then
-            local alwaysShowPurgeTexture = BetterBlizzPlatesDB.alwaysShowPurgeTexture
-            if aura.isHelpful and (aura.isStealable or (alwaysShowPurgeTexture and aura.dispelName == "Magic" and aura.isHelpful)) then
-                buff.Icon:SetScale(0.5)
-
-                if not buff.buffBorderPurge then
-                    buff.buffBorderPurge = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
-                    buff.buffBorderPurge:SetTexture(BBP.squareBlueGlow)
-                    buff.buffBorderPurge:SetScale(2.25)
-                end
-
-                if buff.isKeyAura then
-                    local ten = 16 * BetterBlizzPlatesDB.nameplateKeyAuraScale
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
-
-                elseif buff.isEnlarged then
-                    if BetterBlizzPlatesDB.nameplateAuraEnlargedSquare then
-                        local ten = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
-                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
-                    else
-                        if nameplateAuraSquare then
-                            local ten = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
-                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
-                        elseif nameplateAuraTaller then
-                            local tenfive = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                            local eight = 7.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
-                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
-                        else
-                            local tenfive = 9.4 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                            local sevenfive = 6.4 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, sevenfive)
-                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -sevenfive)
-                        end
-                    end
-
-                elseif buff.isCompacted then
-                    if BetterBlizzPlatesDB.nameplateAuraCompactedSquare then
-                        local scale = BetterBlizzPlatesDB.nameplateAuraCompactedScale
-                        local fourfive = 4.5 * scale
-                        local fivefive = 6.4 * scale
-                        buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -fourfive, fivefive)
-                        buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", fourfive, -fivefive)
-                    else
-                        if nameplateAuraSquare then
-                            local ten = 10 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
-                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
-                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
-                        elseif nameplateAuraTaller then
-                            local tenfive = 10 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
-                            local eight = 7.5 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
-                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
-                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
-                        else
-                            local tenfive = 9.4 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
-                            local sevenfive = 6.4 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
-                            buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, sevenfive)
-                            buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -sevenfive)
-                        end
-                    end
-
-                elseif nameplateAuraSquare then
-                    -- Purge only applies to helpful auras, so treat as buff
-                    local buffScale = BetterBlizzPlatesDB.nameplateAuraBuffScale
-                    local tenfive = 10 * buffScale
-                    local eight = 10 * buffScale
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
-
-                elseif nameplateAuraTaller then
-                    local buffScale = BetterBlizzPlatesDB.nameplateAuraBuffScale
-                    local tenfive = 10 * buffScale
-                    local eight = 7.5 * buffScale
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
-
-                else
-                    local buffScale = BetterBlizzPlatesDB.nameplateAuraBuffScale
-                    local tenfive = 9.4 * buffScale
-                    local eight = 6.4 * buffScale
-                    buff.buffBorderPurge:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
-                    buff.buffBorderPurge:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
-                end
-
-                buff.buffBorderPurge:Show()
-                buff.Border:Hide()
-            else
-                if buff.buffBorderPurge then
-                    buff.buffBorderPurge:Hide()
-                    buff.Border:Show()
-                end
-            end
-        else
-            if buff.buffBorderPurge then
-                buff.buffBorderPurge:Hide()
-                buff.Border:Show()
-            end
-        end
-    else
-        buff.Icon:SetScale(1)
-        if buff.buffBorderPurge then
-            buff.buffBorderPurge:Hide()
-            buff.Border:Show()
-        end
-    end
-end
-
-
-local function SetPandemicGlow(buff, aura, isPandemic)
-    if aura.duration and buff and aura.expirationTime and isPandemic then
-        buff.isPandemic = true
-        buff.expirationTime = aura.expirationTime;
-        trackedBuffs[aura.auraInstanceID] = buff;
-        StartCheckBuffsTimer();
-    else
-        if buff.PandemicGlow then
-            buff.PandemicGlow:Hide()
-        end
-        buff.isPandemic = false
-    end
-end
-
-local function SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
-    local nameplateAuraSquare = BetterBlizzPlatesDB.nameplateAuraSquare
-    local nameplateAuraTaller = BetterBlizzPlatesDB.nameplateAuraTaller
-
-    if isImportant then
-        local buffScale = BetterBlizzPlatesDB.nameplateAuraBuffScale
-        local debuffScale = BetterBlizzPlatesDB.nameplateAuraDebuffScale
-        if isPlayerUnit then
-            buffScale = BetterBlizzPlatesDB.nameplateAuraBuffSelfScale
-            debuffScale = BetterBlizzPlatesDB.nameplateAuraDebuffSelfScale
-        end
-        buff.Icon:SetScale(0.5)
-        --if not isPlayerUnit then
-            if not buff.ImportantGlow then
-                buff.ImportantGlow = buff.GlowFrame:CreateTexture(nil, "ARTWORK")
-                buff.ImportantGlow:SetAtlas("newplayertutorial-drag-slotgreen")
-                buff.ImportantGlow:SetDesaturated(true)
-            end
-            if buff.isKeyAura then
-                local ten = 16 * BetterBlizzPlatesDB.nameplateKeyAuraScale
-                buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
-                buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
-            elseif buff.isEnlarged then
-                if BetterBlizzPlatesDB.nameplateAuraEnlargedSquare then
-                    local ten = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                    buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten)
-                    buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten)
-                else
-                    if nameplateAuraSquare then
-                        local ten = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten);
-                        buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten);
-                    elseif nameplateAuraTaller then
-                        local tenfive = 10 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        local eight = 7.5 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight);
-                        buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight);
-                    else
-                        local tenfive = 9.4 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        local sevenfive = 6.4 * BetterBlizzPlatesDB.nameplateAuraEnlargedScale
-                        buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, sevenfive);
-                        buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -sevenfive);
-                    end
-                end
-            elseif buff.isCompacted then
-                if BetterBlizzPlatesDB.nameplateAuraCompactedSquare then
-                    local scale = BetterBlizzPlatesDB.nameplateAuraCompactedScale
-                    local fourfive = 4.5 * scale
-                    local fivefive = 6.4 * scale
-                    buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -fourfive, fivefive)
-                    buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", fourfive, -fivefive)
-                else
-                    if nameplateAuraSquare then
-                        local ten = 10 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
-                        buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -ten, ten);
-                        buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", ten, -ten);
-                    elseif nameplateAuraTaller then
-                        local tenfive = 10 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
-                        local eight = 7.5 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
-                        buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight);
-                        buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight);
-                    else
-                        local tenfive = 9.4 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
-                        local sevenfive = 6.4 * BetterBlizzPlatesDB.nameplateAuraCompactedScale
-                        buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, sevenfive);
-                        buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -sevenfive);
-                    end
-                end
-            elseif nameplateAuraSquare then
-                if buff.isBuff then
-                    local tenfive = 10 * buffScale
-                    local eight = 10 * buffScale
-                    buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
-                    buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
-                else
-                    local tenfive = 10 * debuffScale
-                    local eight = 10 * debuffScale
-                    buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
-                    buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
-                end
-            elseif nameplateAuraTaller then
-                if buff.isBuff then
-                    local tenfive = 10 * buffScale
-                    local eight = 7.5 * buffScale
-                    buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
-                    buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
-                else
-                    local tenfive = 10 * debuffScale
-                    local eight = 7.5 * debuffScale
-                    buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
-                    buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
-                end
-            else
-                if buff.isBuff then
-                    local tenfive = 9.4 * buffScale
-                    local eight = 6.4 * buffScale
-                    buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
-                    buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
-                else
-                    local tenfive = 9.4 * debuffScale
-                    local eight = 6.4 * debuffScale
-                    buff.ImportantGlow:SetPoint("TOPLEFT", buff, "TOPLEFT", -tenfive, eight)
-                    buff.ImportantGlow:SetPoint("BOTTOMRIGHT", buff, "BOTTOMRIGHT", tenfive, -eight)
-                end
-            end
-            -- If extra glow for purge
-            if buff.buffBorderPurge then
-                buff.buffBorderPurge:Hide()
-            end
-            if auraColor then
-                buff.ImportantGlow:SetVertexColor(auraColor.r, auraColor.g, auraColor.b, auraColor.a)
-            else
-                buff.ImportantGlow:SetVertexColor(0, 1, 0)
-            end
-            buff.ImportantGlow:Show()
-            buff.Border:Hide()
-        --else
-            -- if buff.ImportantGlow then
-            --     buff.ImportantGlow:Hide()
-            --     buff.Border:Show()
-            -- end
-        --end
-    else
-        buff.Icon:SetScale(1)
-        if buff.ImportantGlow then
-            buff.ImportantGlow:Hide()
-            buff.Border:Show()
-        end
-    end
-end
-
-local function ShouldShowBuff(unit, aura, BlizzardShouldShow, filterAllOverride, interrupt)
-    if not aura then return false end
-    local spellName = aura.name
-    local spellId = aura.spellId
-    local duration = aura.duration
-    local expirationTime = aura.expirationTime
-    local caster = aura.sourceUnit
+function BBP.UpdateUserAuraSettings()
     local db = BetterBlizzPlatesDB
-    local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
-    local isPurgeable = aura.isStealable or (aura.dispelName == "Magic" and aura.isHelpful and (not db.otherNpBuffFilterPurgeableHasPurge and not isFriend))
-    local castByPlayer = (caster == "player" or caster == "pet")
-    local moreThanOneMin = (duration > 60 or duration == 0 or expirationTime == 0)
-    local lessThanOneMin = duration < 61 or duration == 0 or expirationTime == 0
 
+    S.enabled = db.enableNameplateAuraCustomisation and true or false
 
-    -- PLAYER
-    if UnitIsUnit(unit, "player") then
-        -- Buffs
-        if db["personalNpBuffEnable"] and aura.isHelpful then
-            local isInBlacklist = db["personalNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
-            if isInBlacklist then return false end
-
-            local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
-
-            local filterWhitelist = db["personalNpBuffFilterWatchList"]
-            local auraWhitelisted = filterWhitelist and isInWhitelist
-            local filterLessMinite = db["personalNpBuffFilterLessMinite"]
-            local filterOnlyMe = db["personalNpBuffFilterOnlyMe"]
-            local filterBlizzard = db["personalNpBuffFilterBlizzard"]
-            local filterImportantBuffs = db["personalNpBuffFilterImportantBuffs"]
-
-            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe or filterImportantBuffs
-
-            if filterAllOverride then return true end
-            if onlyMine and not castByPlayer then return false end
-
-            if not anyFilter then
-                if filterWhitelist and not isInWhitelist then return false end
-                return true
-            else
-                if auraWhitelisted then return true end
-                -- Filter to hide long duration auras
-                if moreThanOneMin and filterLessMinite then return false end
-                -- Handle filter for only showing the player's auras and Blizzard's recommendations
-                if filterOnlyMe then
-                    if castByPlayer then return true end
-                    if filterImportantBuffs and importantBuffs[spellId] then return true end
-                    if filterBlizzard then return BlizzardShouldShow end
-                    return false
-                end
-                -- Filter to show only Blizzard recommended auras
-                if not BlizzardShouldShow and filterBlizzard then
-                    if filterImportantBuffs and importantBuffs[spellId] then return true end
-                    if filterLessMinite and lessThanOneMin then return true end
-                    return false
-                end
-
-                if filterImportantBuffs and not importantBuffs[spellId] then
-                    if filterLessMinite and lessThanOneMin then return true end
-                    if filterBlizzard then return BlizzardShouldShow end
-                    return false
-                end
-                -- If none of the specific sub-filter conditions are met, show the aura
-                return true
-            end
-        end
-        -- Debuffs
-        if db["personalNpdeBuffEnable"] and aura.isHarmful then
-            local isInBlacklist = db["personalNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
-            if isInBlacklist then return end
-            if interrupt then return true end
-
-            local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
-
-            local filterWhitelist = db["personalNpdeBuffFilterWatchList"]
-            local auraWhitelisted = filterWhitelist and isInWhitelist
-            local filterLessMinite = db["personalNpdeBuffFilterLessMinite"]
-            local filterCC = db["personalNpdeBuffFilterCC"]
-
-            local anyFilter = filterLessMinite or filterCC
-
-            if filterAllOverride then return true end
-            if onlyMine and not castByPlayer then return false end
-            if not anyFilter then
-                if filterWhitelist and not isInWhitelist then return false end
-                return true
-            else
-                if filterCC and not crowdControl[spellId] then
-                    if filterLessMinite and lessThanOneMin then return true end
-                    return false
-                end
-                -- Filter to hide long duration auras
-                if moreThanOneMin and filterLessMinite then if not auraWhitelisted then return false end end
-                return true
-            end
-        end
-
-    -- FRIENDLY
-    elseif isFriend then
-        -- Buffs
-        if db["friendlyNpBuffEnable"] and aura.isHelpful then
-            local isInBlacklist = db["friendlyNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
-            if isInBlacklist then return end
-
-            local showKeyAuras = db["nameplateAuraKeyAuraPositionEnabled"] and db["nameplateAuraKeyAuraPositionFriendly"]
-            if showKeyAuras and keyAuraList[spellId] then
-                return true
-            end
-
-            local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
-
-            local filterWhitelist = db["friendlyNpBuffFilterWatchList"]
-            local auraWhitelisted = filterWhitelist and isInWhitelist
-            local filterLessMinite = db["friendlyNpBuffFilterLessMinite"]
-            local filterOnlyMe = db["friendlyNpBuffFilterOnlyMe"]
-            local filterImportantBuffs = db["friendlyNpBuffFilterImportantBuffs"]
-
-            local anyFilter = filterLessMinite or filterOnlyMe or filterImportantBuffs
-
-            if filterAllOverride then return true end
-            if onlyMine and not castByPlayer then return false end
-
-            if not anyFilter then
-                if filterWhitelist and not isInWhitelist then return false end
-                return true
-            else
-                if auraWhitelisted then return true end
-                -- Filter to hide long duration auras
-                if moreThanOneMin and filterLessMinite then return false end
-                -- Handle filter for only showing the player's auras and Blizzard's recommendations
-                if filterOnlyMe then
-                    if castByPlayer then return true end
-                    if filterImportantBuffs and importantBuffs[spellId] then return true end
-                    if filterBlizzard then return BlizzardShouldShow end
-                    return false
-                end
-
-                if filterImportantBuffs and not importantBuffs[spellId] then
-                    if filterLessMinite and lessThanOneMin then return true end
-                    if filterBlizzard then return BlizzardShouldShow end
-                    return false
-                end
-                -- If none of the specific sub-filter conditions are met, show the aura
-                return true
-            end
-        end
-        -- Debuffs
-        if db["friendlyNpdeBuffEnable"] and aura.isHarmful then
-            local isInBlacklist = db["friendlyNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
-            if isInBlacklist then return end
-            if interrupt then return true end
-
-            local showKeyAuras = db["nameplateAuraKeyAuraPositionEnabled"] and db["nameplateAuraKeyAuraPositionFriendly"]
-            if showKeyAuras and keyAuraList[spellId] then
-                return true
-            end
-
-            local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
-
-            local filterWhitelist = db["friendlyNpdeBuffFilterWatchList"]
-            local auraWhitelisted = filterWhitelist and isInWhitelist
-            local filterBlizzard = db["friendlyNpdeBuffFilterBlizzard"]
-            local filterLessMinite = db["friendlyNpdeBuffFilterLessMinite"]
-            local filterOnlyMe = db["friendlyNpdeBuffFilterOnlyMe"]
-            local filterCC = db["friendlyNpdeBuffFilterCC"] or (db["classIndicator"] and db["classIndicatorCCAuras"] and db["friendlyHideHealthBar"])
-
-            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe or filterCC
-
-            if filterAllOverride then return true end
-            if onlyMine and not castByPlayer then return false end
-
-            if not anyFilter then
-                if filterWhitelist and not isInWhitelist then return false end
-                return true
-            else
-                if auraWhitelisted then return true end
-                -- Filter to hide long duration auras
-                if moreThanOneMin and filterLessMinite then return false end
-                -- Handle filter for only showing the player's auras and Blizzard's recommendations
-                if filterOnlyMe then
-                    if castByPlayer then return true end
-                    if filterCC and crowdControl[spellId] then return true end
-                    if filterBlizzard then return BlizzardShouldShow end
-                    return false
-                end
-                -- Filter to show only Blizzard recommended auras
-                if not BlizzardShouldShow and filterBlizzard then
-                    if filterLessMinite and lessThanOneMin then return true end
-                    if filterCC and crowdControl[spellId] then return true end
-                    if filterOnlyMe then return true end
-                    return false
-                end
-
-                if filterCC and not crowdControl[spellId] then
-                    if filterLessMinite and lessThanOneMin then return true end
-                    if filterBlizzard then return BlizzardShouldShow end
-                    return false
-                end
-                -- If none of the specific sub-filter conditions are met, show the aura
-                return true
-            end
-        end
-    -- ENEMY
+    if db.nameplateAuraSquare == nil then db.nameplateAuraSquare = true end
+    if db.nameplateAuraSquare then
+        S.debuffWidth, S.debuffHeight = AURA_ITEM_SIZE, AURA_ITEM_SIZE
+        S.debuffTexCoord = { 0.10, 0.90, 0.10, 0.90 }
+    elseif db.nameplateAuraTaller then
+        S.debuffWidth, S.debuffHeight = 20, 15.5
+        S.debuffTexCoord = { 0.05, 0.95, 0.15, 0.82 }
     else
-        -- Buffs
-        if db["otherNpBuffEnable"] and aura.isHelpful then
-            local isInBlacklist = db["otherNpBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
-            if isInBlacklist then return end
-
-            local showKeyAuras = db["nameplateAuraKeyAuraPositionEnabled"]
-            if showKeyAuras and keyAuraList[spellId] then
-                return true
-            end
-
-            local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
-
-            local filterWhitelist = db["otherNpBuffFilterWatchList"]
-            local auraWhitelisted = filterWhitelist and isInWhitelist
-            local filterLessMinite = db["otherNpBuffFilterLessMinite"]
-            local filterPurgeable = db["otherNpBuffFilterPurgeable"] and not (db.otherNpBuffFilterPurgeablePvEOnly and BBP.isInPvE)
-            local filterImportantBuffs = db["otherNpBuffFilterImportantBuffs"]
-
-            local anyFilter = filterLessMinite or filterPurgeable or filterImportantBuffs
-
-            if filterAllOverride then return true end
-            if onlyMine and not castByPlayer then return false end
-
-            if not anyFilter then
-                if filterWhitelist and not isInWhitelist then return false end
-                return true
-            else
-                if auraWhitelisted then return true end
-
-                if filterImportantBuffs then
-                    if importantBuffs[spellId] then
-                        return true
-                    else
-                        if filterPurgeable then
-                            if isPurgeable then return true else return false end
-                        end
-                        if moreThanOneMin and filterLessMinite then return false end
-                        return false
-                    end
-                end
-
-                -- Filter to hide long duration auras
-                if filterPurgeable and not isPurgeable then return false end
-                if moreThanOneMin and filterLessMinite then return false end
-                -- If none of the specific sub-filter conditions are met, show the aura
-                return true
-            end
-        end
-        -- Debuffs
-        if db["otherNpdeBuffEnable"] and aura.isHarmful then
-            local isInBlacklist = db["otherNpdeBuffFilterBlacklist"] and isInBlacklist(spellName, spellId)
-            if isInBlacklist then return end
-            if interrupt then return true end
-
-            local showKeyAuras = db["nameplateAuraKeyAuraPositionEnabled"]
-            if showKeyAuras and keyAuraList[spellId] then
-                return true
-            end
-
-            local isInWhitelist, isImportant, isPandemic, auraColor, onlyMine = GetAuraDetails(spellName, spellId)
-
-            local filterWhitelist = db["otherNpdeBuffFilterWatchList"]
-            local auraWhitelisted = filterWhitelist and isInWhitelist
-            local filterBlizzard = db["otherNpdeBuffFilterBlizzard"]
-            local filterLessMinite = db["otherNpdeBuffFilterLessMinite"]
-            local filterOnlyMe = db["otherNpdeBuffFilterOnlyMe"]
-            local filterCC = db["otherNpdeBuffFilterCC"]
-
-            local anyFilter = filterBlizzard or filterLessMinite or filterOnlyMe or filterCC
-
-            if filterAllOverride then return true end
-            if onlyMine and not castByPlayer then return false end
-
-            if not anyFilter then
-                if filterWhitelist and not isInWhitelist then return false end
-                return true
-            else
-                if auraWhitelisted then return true end
-                -- Filter to hide long duration auras
-                if moreThanOneMin and filterLessMinite then return false end
-                -- Handle filter for only showing the player's auras and Blizzard's recommendations
-                if filterOnlyMe then
-                    if castByPlayer then return true end
-                    if filterCC and crowdControl[spellId] then return true end
-                    if filterBlizzard then return BlizzardShouldShow end
-                    return false
-                end
-                -- Filter to show only Blizzard recommended auras
-                if not BlizzardShouldShow and filterBlizzard then
-                    if filterCC and crowdControl[spellId] then return true end
-                    if filterLessMinite and lessThanOneMin then return true end
-                    return false
-                end
-
-                if filterCC and not crowdControl[spellId] then
-                    if filterLessMinite and lessThanOneMin then return true end
-                    if filterBlizzard then return BlizzardShouldShow end
-                    return false
-                end
-                -- If none of the specific sub-filter conditions are met, show the aura
-                return true
-            end
-        end
+        S.debuffWidth, S.debuffHeight = 20, 14
+        S.debuffTexCoord = { 0.05, 0.95, 0.10, 0.60 }
     end
+
+    S.pixelBorder = db.nameplateAuraPixelBorder
+
+    S.buffWidth, S.buffHeight = AURA_ITEM_SIZE, AURA_ITEM_SIZE
+    S.buffTexCoord = { 0.10, 0.90, 0.10, 0.90 }
+
+    S.gapX = db.nameplateAuraWidthGap or 4
+    S.gapY = db.nameplateAuraHeightGap or 4
+    S.perRowEnemy = db.nameplateAuraRowAmount or 5
+    S.perRowFriendly = db.nameplateAuraRowFriendlyAmount or S.perRowEnemy
+    S.debuffLimit = db.maxAurasOnNameplate or 12
+    S.buffLimit = db.nameplateAuraBuffLimit or 3
+    S.ccLimit = db.ccIconLimit or 2
+
+    S.debuffPadX = db.nameplateDebuffXPadding or 0
+    S.centerEnemy = db.nameplateAurasEnemyCenteredAnchor
+    S.centerFriendly = db.nameplateAurasFriendlyCenteredAnchor
+    S.rightToLeft = db.nameplateAuraRightToLeft
+
+    S.scale = db.nameplateAuraScale or 1
+    S.buffScale = db.nameplateAuraBuffScale or 1
+    S.debuffScale = db.nameplateAuraDebuffScale or 1
+    S.countScale = db.nameplateAuraCountScale or 1
+    S.targetScaleOn = db.targetNameplateAuraScaleEnabled
+    S.targetScale = db.targetNameplateAuraScale or 1
+
+    S.ccIconScale = db.ccIconScale or 1.35
+    S.ccIconAnchor = db.ccIconAnchor or "RIGHT"
+    S.ccIconX = db.ccIconXPos or 0
+    S.ccIconY = db.ccIconYPos or 0
+    S.separateCC = db.nameplateAuraSeparateCCIcon ~= false
+
+    S.buffIconScale = db.buffIconScale or 1.35
+    S.buffIconAnchor = db.buffIconAnchor or "LEFT"
+    S.buffIconX = db.buffIconXPos or 0
+    S.buffIconY = db.buffIconYPos or 0
+
+    if db.separateAuraBuffRow == nil then db.separateAuraBuffRow = true end
+    S.buffRow = db.separateAuraBuffRow and true or false
+
+    S.showCdText = db.showDefaultCooldownNumbersOnNpAuras ~= false
+    S.cdTextScale = db.defaultNpAuraCdSize or 0.6
+    S.hideSwipe = db.hideNpAuraSwipe
+    S.blizzardCdText = db.nameplateAuraUseBlizzardCdText
+    S.timerColor = db.nameplateAuraTimerColor ~= false
+    S.timerBase = { GetColor("nameplateAuraTimerBaseColor", 1, 0.82, 0, 1) }
+    S.timerLow = { GetColor("nameplateAuraTimerLowColor", 1, 0.1, 0.1, 1) }
+    S.timerThreshold = db.nameplateAuraTimerLowThreshold or 6
+    S.hideLongTimers = db.nameplateAuraHideLongDurationText ~= false
+
+    S.buffsOnNpcs = db.nameplateAuraBuffsOnNpcs ~= false
+    S.buffsOnPlayers = db.nameplateAuraBuffsOnPlayers ~= false
+    S.ccOnNpcs = db.nameplateAuraCCOnNpcs ~= false
+    S.ccOnPlayers = db.nameplateAuraCCOnPlayers ~= false
+
+    S.msBuffs = db.nameplateAuraMillisecondsBuffs ~= false
+    S.msCC = db.nameplateAuraMillisecondsCC ~= false
+
+    S.debuffPadding = tonumber(db.nameplateDebuffPadding) or 0
+
+    S.classIconCC = (db.classIndicator and db.classIndicatorCCAuras) and true or false
+
+    S.hideTooltips = db.hideNameplateAuraTooltip
+    S.colorBorderByType = db.npColorAuraBorder
+    S.purgeGlow = db.otherNpBuffPurgeGlow
+    S.purgeGlowAlways = db.alwaysShowPurgeTexture
+    S.pandemicGlow = db.otherNpdeBuffPandemicGlow and true or false
+    S.pandemicColor = { GetColor("nameplateAuraPandemicGlowRGB", 1, 0, 0, 1) }
+    S.splitPandemic = false
+
+    S.sort = SORT_METHODS.default
+    if db.sortDurationAurasReverse then S.sort = SORT_METHODS.lastest
+    elseif db.sortDurationAuras then S.sort = SORT_METHODS.expires end
+
+    S.playersOnly = db.nameplateAuraPlayersOnly
+    S.playersOnlyShowTarget = db.nameplateAuraPlayersOnlyShowTarget
+
+    S.glow = {
+        defensive = { db.nameplateAuraDefensiveGlow and true or false, { GetColor("nameplateAuraDefensiveGlowRGB", 1, 0.662, 0.945, 1) } },
+        important = { db.nameplateAuraImportantGlow and true or false, { GetColor("nameplateAuraImportantGlowRGB", 0, 1, 0, 1) } },
+        cc        = { db.nameplateAuraCCGlow and true or false,        { GetColor("nameplateAuraCCGlowRGB", 1, 0.874, 0, 1) } },
+    }
+
+    S.enemy = { buff = ReadFilterBlock("otherNpBuff"), debuff = ReadFilterBlock("otherNpdeBuff") }
+    S.friendly = { buff = ReadFilterBlock("friendlyNpBuff"), debuff = ReadFilterBlock("friendlyNpdeBuff") }
+    S.blizzardOnlyMine = db.blizzardDefaultFilterOnlyMine
+
+    S.prdEnabled = S.enabled and db.prdAurasEnabled and true or false
+    S.prdScale = db.prdAuraScale or 1
+    S.prdX = db.prdAuraXPos or 0
+    S.prdY = db.prdAuraYPos or 0
+    S.prdPerRow = db.prdAuraRowAmount or 6
+    S.prdLimit = db.prdAuraLimit or 6
+
+    S.stackFont = db.npAuraStackFontEnabled and LSM:Fetch(LSM.MediaType.FONT, db.npAuraStackFont) or nil
+
+    BBP.UpdateImportantBuffsAndCCTables()
+    BBP.RefreshSpellLists()
+    S.splitPandemic = (not S.pandemicGlow) and BBP.auraLists.anyPandemic and true or false
+    BBP.UpdateAuraTypeColors()
+    GetDurationCurve()
 end
 
-function BBP.OnUnitAuraUpdate(self, unit, unitAuraUpdateInfo)
-    local filter;
-    local showAll = false;
+local listGeneration = 0
 
-    local isPlayer = UnitIsUnit("player", unit);
-    local isEnemy, isFriend, isNeutral = BBP.GetUnitReaction(unit)
-    isEnemy = isEnemy or isNeutral
-    local showDebuffsOnFriendly = self.showDebuffsOnFriendly;
-
-    local auraSettings =
-    {
-        helpful = false;
-        harmful = false;
-        raid = false;
-        includeNameplateOnly = false;
-        showAll = false;
-        hideAll = false;
-    };
-
-    if isPlayer then
-        auraSettings.helpful = true;
-        auraSettings.includeNameplateOnly = true;
-        auraSettings.showPersonalCooldowns = self.showPersonalCooldowns;
-    else
-        if isEnemy then
-            auraSettings.harmful = true;
-            auraSettings.includeNameplateOnly = true;
-        else
-            if (showDebuffsOnFriendly) then
-                -- dispellable debuffs
-                auraSettings.harmful = true;
-                auraSettings.raid = true;
-                auraSettings.showAll = true;
-            else
-                auraSettings.hideAll = false; -- changed to false (would sometimes hide buffs on friendly targets if buff setting was on, TODO figure out more)
-            end
-        end
-    end
-
-    local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure());
-    if (nameplate) then
-        BBP.UpdateBuffs(nameplate.Unitframe.AurasFrame, nameplate.namePlateUnitToken, unitAuraUpdateInfo, auraSettings, nameplate.UnitFrame);
-    end
-end
-
-function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame)
-    local filters = {};
-    if auraSettings.helpful then
-        table.insert(filters, AuraUtil.AuraFilters.Helpful);
-    end
-    if auraSettings.harmful then
-        table.insert(filters, AuraUtil.AuraFilters.Harmful);
-    end
-    if auraSettings.raid then
-        table.insert(filters, AuraUtil.AuraFilters.Raid);
-    end
-    if auraSettings.includeNameplateOnly then
-        table.insert(filters, AuraUtil.AuraFilters.IncludeNameplateOnly);
-    end
-    local filterString = AuraUtil.CreateFilterString(unpack(filters));
-
-    local previousFilter = self.filter;
-    local previousUnit = self.unit;
-    self.unit = unit;
-    self.filter = filterString;
-    self.showFriendlyBuffs = auraSettings.showFriendlyBuffs;
-
-    local aurasChanged = false;
-    if unitAuraUpdateInfo == nil or unitAuraUpdateInfo.isFullUpdate or unit ~= previousUnit or self.auras == nil or filterString ~= previousFilter then
-        BBP.ParseAllAuras(self, auraSettings.showAll, UnitFrame);
-        aurasChanged = true;
-    else
-        if unitAuraUpdateInfo.addedAuras ~= nil then
-            for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
-                local BlizzardShouldShow = self:ShouldShowBuff(aura, auraSettings.showAll) and not C_UnitAuras.IsAuraFilteredOutByInstanceID(unit, aura.auraInstanceID, filterString) and not (BetterBlizzPlatesDB.blizzardDefaultFilterOnlyMine and (aura.sourceUnit ~= "player" and aura.sourceUnit~= "pet"))
-                if ShouldShowBuff(unit, aura, BlizzardShouldShow) then
-                    self.auras[aura.auraInstanceID] = aura;
-                    aurasChanged = true;
-                end
-            end
-        end
-
-        if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
-            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
-                if self.auras[auraInstanceID] ~= nil then
-                    local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(self.unit, auraInstanceID);
-                    self.auras[auraInstanceID] = newAura;
-                    aurasChanged = true;
-                end
-            end
-        end
-
-        if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
-            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
-                if self.auras[auraInstanceID] ~= nil then
-                    self.auras[auraInstanceID] = nil;
-                    aurasChanged = true;
-                end
-            end
-        end
-    end
-
-    self:UpdateAnchor();
-
-    if not aurasChanged then
-        return;
-    end
-
-    self.buffPool:ReleaseAll();
-
-    --if auraSettings.hideAll or not self.isActive then
-    if not self.isActive then
-        return;
-    end
-
-    local db = BetterBlizzPlatesDB
-    local buffIndex = 1;
-    local BBPMaxAuraNum = db.maxAurasOnNameplate
-    local isPlayerUnit = UnitIsUnit("player", self.unit)
-    local isEnemyUnit, isFriend, isNeutral = BBP.GetUnitReaction(self.unit)
-    isEnemyUnit = isEnemyUnit or isNeutral
-    self.isEnemyUnit = isEnemyUnit
-    local shouldShowAura, isImportant, isPandemic, auraColor, onlyMine, isEnlarged, isCompacted
-    local onlyPandemicMine = db.onlyPandemicAuraMine
-    local showDefaultCooldownNumbersOnNpAuras = db.showDefaultCooldownNumbersOnNpAuras
-    local hideNpAuraSwipe = db.hideNpAuraSwipe
-    local enlargeAllImportantBuffs = db.enlargeAllImportantBuffs
-    local enlargeAllCC = db.enlargeAllCC
-    local opBarriersOn = db.opBarriersEnabled
-    local npAuraStackFontEnabled = db.npAuraStackFontEnabled
-    local moveKeyAuras = db.nameplateAuraKeyAuraPositionEnabled
-    local moveKeyAurasFriendly = db.nameplateAuraKeyAuraPositionFriendly
-    --local ccGLow = db.
-
-    local longestCCAura = nil
-    local longestCCDuration = 0
-    local pinnedAuras = isFriend and ((db["classIndicator"] and db["classIndicatorCCAuras"]) or (db["partyPointer"] and db["partyPointerCCAuras"])) and not (moveKeyAuras and moveKeyAurasFriendly)
-
-    self.auras:Iterate(function(auraInstanceID, aura)
-        --if buffIndex > BBPMaxAuraNum then return true end
-        local buff = self.buffPool:Acquire();
-        buff.auraInstanceID = auraInstanceID;
-        buff.isBuff = aura.isHelpful;
-        buff.layoutIndex = buffIndex;
-        buff.spellID = aura.spellId;
-        buff.duration = aura.duration;
-        buff.expirationTime = aura.expirationTime
-
-        buff.Icon:SetTexture(aura.icon);
-
-        local spellName = aura.name--FetchSpellName(aura.spellId)
-        local spellId = aura.spellId
-        local caster = aura.sourceUnit
-        local castByPlayer = (caster == "player" or caster == "pet")
-
-        shouldShowAura, isImportant, isPandemic, auraColor, onlyMine, isEnlarged, isCompacted = GetAuraDetails(spellName, spellId)
-        if onlyPandemicMine and not castByPlayer then
-            isPandemic = false
-        end
-
-        if buff.Cooldown._occ_display then
-            buff.Cooldown._occ_display:SetFrameStrata("FULLSCREEN")
-        end
-        buff.isKeyAura = nil
-        buff.isCC = nil
-        buff.pinIcon = nil
-
-        buff:SetFrameStrata("HIGH")
-
-        if moveKeyAuras then
-            local isKeyAura = keyAuraList[spellId]
-            if isKeyAura then
-                if isEnemyUnit then
-                    buff:SetFrameStrata("DIALOG")
-                    buff.isKeyAura = true
-                    isEnlarged = true
-                    if isKeyAura ~= true and not isImportant then
-                        isImportant = true
-                        auraColor = isKeyAura
-                    end
-                else
-                    if moveKeyAurasFriendly then
-                        buff:SetFrameStrata("DIALOG")
-                        buff.isKeyAura = true
-                        isEnlarged = true
-                        if isKeyAura ~= true and not isImportant then
-                            isImportant = true
-                            auraColor = isKeyAura
-                        end
-                    end
-                end
-            end
-        end
-
-        local isImportantBuff = importantBuffs[spellId]
-        if isImportantBuff then
-            if enlargeAllImportantBuffs and enlargeAllImportantBuffsFilter then
-                if not isCompacted then
-                    isEnlarged = true
-                end
-            end
-            if isImportantBuff ~= true and not isImportant then
-                isImportant = true
-                auraColor = isImportantBuff
-            end
-            if buff.spellID == 432180 and not shouldShowAura and aura.applications < 5 then
-                buff.pinIcon = true
-            end
-        end
-
-        local isCC = crowdControl[spellId]
-        if isCC then
-            buff.isCC = true
-            if isEnemyUnit then
-                if db.otherNpdeBuffFilterCC then
-                    if moveKeyAuras and ((moveKeyAurasFriendly and not isEnemyUnit) or isEnemyUnit) then
-                        buff.isKeyAura = true
-                    end
-                    if enlargeAllCC and enlargeAllCCsFilter then
-                        isEnlarged = true
-                    end
-                    if isCC ~= true and not isImportant then
-                        isImportant = true
-                        auraColor = isCC
-                    end
-                end
-            else
-                if moveKeyAuras and ((moveKeyAurasFriendly and not isEnemyUnit) or isEnemyUnit) then
-                    buff.isKeyAura = true
-                end
-                if enlargeAllCC and enlargeAllCCsFilter then
-                    isEnlarged = true
-                end
-                if isCC ~= true and not isImportant then
-                    isImportant = true
-                    auraColor = isCC
-                end
-            end
-
-            if pinnedAuras and UnitFrame.classIndicatorCC then
-                if buff.duration and buff.expirationTime and buff.expirationTime > longestCCDuration then
-                    longestCCDuration = buff.expirationTime
-                    local ciColor
-                    if isCC ~= true then
-                        -- if not isImportant then
-                        --     if aura.dispelName == "Curse" then
-                        --         ciColor = {r = 0.6, g = 0, b = 1.0, a = 1}
-                        --     elseif aura.dispelName == "Magic" then
-                        --         ciColor = {r = 0.2, g = 0.6, b = 1.0, a = 1}
-                        --     else
-                        --         ciColor = auraColor
-                        --     end
-                        -- else
-                            ciColor = auraColor or ccFullColor
-                        --end
-                    else
-                        -- if aura.dispelName == "Curse" then
-                        --     ciColor = {r = 0.6, g = 0, b = 1.0, a = 1}
-                        -- elseif aura.dispelName == "Magic" then
-                        --     ciColor = {r = 0.2, g = 0.6, b = 1.0, a = 1}
-                        -- else
-                            ciColor = ccFullColor
-                        --end
-                    end
-                    if type(ciColor) ~= "table" then
-                        ciColor = ccFullColor
-                    end
-                    longestCCAura = {
-                        icon = aura.icon,
-                        expirationTime = buff.expirationTime,
-                        duration = buff.duration,
-                        color = ciColor,
-                        spellId = spellId,
-                        dispelName = aura.dispelName,
-                    }
-                end
-                buff.pinIcon = true
-            end
-        end
-
-        if opBarriersOn and opBarriers[spellId] and buff.duration ~= 5 then
-            isImportant = nil
-            isEnlarged = nil
-        end
-
-        if isPlayerUnit then
-            buff.isKeyAura = nil
-            if isEnlarged then
-                if not db.disableEnlargedAurasOnSelf then
-                    buff.isEnlarged = true
-                else
-                    buff.isEnlarged = false
-                end
-            else
-                buff.isEnlarged = false
-            end
-
-            if isCompacted then
-                if not db.disableEnlargedAurasOnSelf then
-                    buff.isCompacted = true
-                else
-                    buff.isCompacted = false
-                end
-            else
-                buff.isCompacted = false
-            end
-
-            if isImportant then
-                if db.disableImportantAurasOnSelf then
-                    isImportant = false
-                end
-            end
-        else
-            if isEnlarged then
-                buff.isEnlarged = true
-            else
-                buff.isEnlarged = false
-            end
-            if isCompacted then
-                buff.isCompacted = true
-            else
-                buff.isCompacted = false
-            end
-        end
-
-        if not buff.GlowFrame then
-            buff.CountFrame:SetFrameStrata("DIALOG")
-            buff.GlowFrame = CreateFrame("Frame", nil, buff)
-            buff.GlowFrame:SetFrameStrata("HIGH")
-            buff.GlowFrame:SetFrameLevel(9000)
-            buff.CountFrame:SetFrameLevel(9999)
-
-            if npAuraStackFontEnabled then
-                local npAuraStackFontPath = LSM:Fetch(LSM.MediaType.FONT, BetterBlizzPlatesDB.npAuraStackFont)
-                buff.CountFrame.Count:SetFont(npAuraStackFontPath, 12, "OUTLINE")
-            end
-        end
-
-        local data = trackedAuras[aura.spellId]
-        if data then
-            if not buff.CooldownSB then
-                local cooldownFrame = CreateFrame("Cooldown", nil, buff, "CooldownFrameTemplate")
-                cooldownFrame:SetAllPoints(buff.Icon)
-                cooldownFrame:SetDrawEdge(false)
-                cooldownFrame:SetDrawSwipe(true)
-                cooldownFrame:SetReverse(true)
-                buff.CooldownSB = cooldownFrame
-            end
-            buff.CooldownSB:Show()
-            buff.CooldownSB:SetCooldown(activeNonDurationAuras[aura.spellId] or 0, data.duration)
-        elseif buff.CooldownSB then
-            buff.CooldownSB:Hide()
-        end
-
-
-        SetAuraBorderColorByType(buff, aura, db)
-
-        -- Pandemic Glow
-        SetPandemicGlow(buff, aura, isPandemic)
-
-        -- temp
-        if BBP.sotfWA then
-            if BBP.sotfAurasAreActive then
-                local unitGUID = UnitGUID(self.unit)
-                local germAuraID = BBP.sotfGerm[unitGUID]
-                local rejuvAuraID = BBP.sotfRejuv[unitGUID]
-                if buff.spellID == germAuraID or buff.spellID == rejuvAuraID then
-                    isImportant = true
-                else
-                    if not germAuraID or not rejuvAuraID then
-                        if buff.spellID == 155777 or buff.spellID == 774 then
-                            buff.pinIcon = true
-                        end
-                    end
-                end
-            else
-                if buff.spellID == 155777 or buff.spellID == 774 then
-                    buff.pinIcon = true
-                end
-            end
-        end
-
-        SetImportantGlow(buff, isPlayerUnit, isImportant, auraColor)
-
-        -- Purge Glow
-        SetPurgeGlow(buff, isPlayerUnit, isEnemyUnit, aura)
-
-        if isPlayerUnit then
-            if buff.Border then
-                buff.Border:Show()
-            end
-            if buff.buffBorder then
-                buff.buffBorder:Hide()
-            end
-            if buff.BorderEmphasis then
-                buff.BorderEmphasis:Hide()
-            end
-            if buff.buffBorderPurge then
-                buff.buffBorderPurge:Hide()
-            end
-        end
-
-        if (aura.applications > 1) then
-            buff.CountFrame.Count:SetText(aura.applications);
-            buff.CountFrame.Count:Show();
-        else
-            buff.CountFrame.Count:Hide();
-        end
-        CooldownFrame_Set(buff.Cooldown, aura.expirationTime - aura.duration, aura.duration, aura.duration > 0, true);
-
-        if hideNpAuraSwipe then
-            if buff.Cooldown then
-                buff.Cooldown:SetDrawSwipe(false)
-                buff.Cooldown:SetDrawEdge(false)
-            end
-        end
-
-        if showDefaultCooldownNumbersOnNpAuras then
-            if buff.Cooldown then
-                buff.Cooldown:SetHideCountdownNumbers(false)
-                local cdText = buff.Cooldown and buff.Cooldown:GetRegions()
-                if cdText then
-                    cdText:SetScale(BetterBlizzPlatesDB.defaultNpAuraCdSize)
-                end
-            end
-        end
-
-        buff:Show();
-        buff:SetMouseClickEnabled(false)
-
-        if not buff.isKeyAura then
-            buffIndex = buffIndex + 1;
-        end
-        return buffIndex >= BUFF_MAX_DISPLAY;
-    end);
-
-    if UnitFrame.classIndicatorCC then
-        if longestCCAura then
-            UnitFrame.pinIconActive = true
-            UnitFrame.ccIconTexture = longestCCAura.icon
-            UnitFrame.pinBuffColor = longestCCAura.color
-            UnitFrame.ccDispelName = longestCCAura.dispelName
-
-            UnitFrame.classIndicatorCC.Glow:SetVertexColor(
-                longestCCAura.color.r,
-                longestCCAura.color.g,
-                longestCCAura.color.b
-            )
-
-            local start = longestCCAura.expirationTime - longestCCAura.duration
-            UnitFrame.classIndicatorCC.Cooldown:SetCooldown(start, longestCCAura.duration)
-            UnitFrame.classIndicatorCC.Icon:SetTexture(longestCCAura.icon)
-            UnitFrame.classIndicatorCC:Show()
-        else
-            UnitFrame.classIndicatorCC:Hide()
-            UnitFrame.pinIconActive = nil
-            UnitFrame.ccIconTexture = nil
-            UnitFrame.pinBuffColor = nil
-            UnitFrame.ccDispelName = nil
-        end
-    end
-
-    self:Layout();
-end
-
-function BBP.ParseAllAuras(self, forceAll, UnitFrame)
-    if self.auras == nil then
-        self.auras = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable);
-    else
-        self.auras:Clear();
-    end
-
-    local mirrorImgFrostbolt = false
-
-    local function HandleAura(aura, isTestModeEnabled, interrupt)
-        if aura.spellId == 59638 then
-            if mirrorImgFrostbolt then
-                return false -- Already added one, skip
-            end
-            mirrorImgFrostbolt = true -- Allow this one, skip others later
-        end
-        local BlizzardShouldShow = self:ShouldShowBuff(aura, forceAll) and not (BetterBlizzPlatesDB.blizzardDefaultFilterOnlyMine and (aura.sourceUnit ~= "player" and aura.sourceUnit~= "pet"))
-        local shouldShowAura, isImportant, isPandemic = ShouldShowBuff(self.unit, aura, BlizzardShouldShow, isTestModeEnabled, interrupt)
-        if shouldShowAura then
-            self.auras[aura.auraInstanceID] = aura;
-        end
-
-        return false;
-    end
-
-    local batchCount = nil;
-    local usePackedAura = true;
-    AuraUtil.ForEachAura(self.unit, "HARMFUL", batchCount, HandleAura, usePackedAura);
-    if UnitIsUnit(self.unit, "player") then
-        AuraUtil.ForEachAura(self.unit, "HELPFUL|INCLUDE_NAME_PLATE_ONLY", batchCount, HandleAura, usePackedAura);
-    else
-        AuraUtil.ForEachAura(self.unit, "HELPFUL", batchCount, HandleAura, usePackedAura);
-    end
-
-    local destGUID = UnitGUID(self.unit)
-    if destGUID and activeInterrupts[destGUID] then
-        local interruptData = activeInterrupts[destGUID]
-        local currentTime = GetTime()
-        if interruptData.expirationTime > currentTime then
-            local interruptAura = {
-                auraInstanceID = 1,
-                spellId = interruptData.spellId,
-                icon = interruptData.icon,
-                name = interruptData.name,
-                duration = interruptData.duration,
-                expirationTime = interruptData.expirationTime,
-                isHarmful = true,
-                applications = 1,
-                dispelName = "Physical",
-            }
-            HandleAura(interruptAura, false, true)
-        end
-    end
-
-    -- Injecting fake auras for testing
-    local isTestModeEnabled = BetterBlizzPlatesDB.nameplateAuraTestMode
-    if isTestModeEnabled then
-        local currentTime = GetTime()
-        for _, fakeAura in ipairs(fakeAuras) do
-            fakeAura.expirationTime = currentTime + fakeAura.duration
-            HandleAura(fakeAura, isTestModeEnabled)
-        end
-    end
-end
-
--- Table of classes and their specs that have a nameplate resource
-local specsForResource = {
-    [62] = true,  -- Arcane Mage
-    [259] = true, -- Assassination Rogue
-    [260] = true, -- Outlaw Rogue
-    [261] = true, -- Subtlety Rogue
-    [250] = true, -- Blood DK
-    [251] = true, -- Frost DK
-    [252] = true, -- Unholy DK
-    --[102] = true, -- Balance Druid (has combopoints but not used)
-    [105] = true, -- Resto Druid (doubtful but potentially)
-    [104] = true, -- Guardian Druid
-    [103] = true, -- Feral Druid
-    [1467] = true, -- Devoker
-    [1468] = true, -- Prevoker
-    [269] = true, -- Windwalker Monk
-    [65] = true, -- Holy Pala
-    [66] = true, -- Prot Pala
-    [70] = true, -- Ret Pala
-    [265] = true, -- Aff Lock
-    [266] = true, -- Demo Lock
-    [267] = true, -- Destro Lock
+local lists = {
+    blacklist = {},
+    blacklistSafe = {},
+    watch = {},
+    watchSafe = {},
+    watchMine = {},
+    watchMineSafe = {},
+    watchPandemic = {},
+    watchPandemicSafe = {},
+    watchImportant = {},
+    watchImportantSafe = {},
+    watchImportantMine = {},
+    watchImportantMineSafe = {},
 }
--- Function to check if the current player's class spec has a nameplate resource
-function BBP.PlayerSpecHasResource()
-    local specID, _, _, _, _, _, _ = GetSpecializationInfo(GetSpecialization())
-    return specsForResource[specID] or false
-end
+BBP.auraLists = lists
 
-function BBP:UpdateAnchor()
-    local frame = self:GetParent()
-
-    local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
-    local info = frame.BetterBlizzPlates.unitInfo or BBP.GetNameplateUnitInfo(frame)
-
-    local isTarget = frame.unit and UnitIsUnit(frame.unit, "target")
-    local isSelf = frame.unit and UnitIsUnit(frame.unit, "player")
-    --local reaction = frame.unit and UnitReaction(frame.unit, "player")
-    --local isFriend = reaction and reaction >= 5
-
-    local shouldNotOffset = config.nameplateResourceDoNotRaiseAuras or config.nameplateResourceUnderCastbar or not BBP.PlayerSpecHasResource()
-    local targetYOffset = self:GetBaseYOffset() + (isTarget and not shouldNotOffset and self:GetTargetYOffset() or 0.0)
-
-    if not config.buffAnchorInitalized or BBP.needsUpdate then
-        config.friendlyNameplateNonstackable = BetterBlizzPlatesDB.friendlyNameplateNonstackable
-        config.nameplateAurasYPos = BetterBlizzPlatesDB.nameplateAurasYPos
-        config.nameplateAurasNoNameYPos = BetterBlizzPlatesDB.nameplateAurasNoNameYPos
-        config.nameplateAuraScale = BetterBlizzPlatesDB.nameplateAuraScale
-        config.nameplateAuraSelfScale = BetterBlizzPlatesDB.nameplateAuraSelfScale
-
-        config.buffAnchorInitalized = true
-    end
-
-    if frame.unit and ShouldShowName(frame) then
-        -- if config.friendlyNameplateNonstackable and isFriend then
-        --     self:SetPoint("BOTTOM", frame.healthBar, "TOP", 0, 24.5 + targetYOffset + config.nameplateAurasYPos + 63)
-        -- else
-            self:SetPoint("BOTTOM", frame.healthBar, "TOP", 0, 24.5 + targetYOffset + config.nameplateAurasYPos)
-        --end
-    else
-        local additionalYOffset
-        if isSelf then
-            additionalYOffset = (15 * (isSelf and config.nameplateAuraSelfScale - 1)) + BetterBlizzPlatesDB.nameplateAurasPersonalYPos
-        else
-            additionalYOffset = 15 * (config.nameplateAuraScale - 1) + config.nameplateAurasNoNameYPos
+local function ListSignature(listName, parts)
+    local list = BetterBlizzPlatesDB[listName]
+    if type(list) ~= "table" then return end
+    for _, entry in pairs(list) do
+        if type(entry) == "table" then
+            local flags = entry.flags
+            parts[#parts + 1] = tostring(entry.id or entry.name)
+            parts[#parts + 1] = ((flags and flags.onlyMine) and "m" or "")
+                .. ((flags and flags.pandemic) and "p" or "")
+                .. ((flags and flags.important) and "i" or "")
         end
-        self:SetPoint("BOTTOM", frame.healthBar, "TOP", 0, 4 + targetYOffset + 1 + additionalYOffset)
     end
 end
 
-function BBP.RefreshBuffFrame()
+local listSignature
 
+function BBP.RefreshSpellLists()
+    local parts = { "bl" }
+    ListSignature("auraBlacklist", parts)
+    parts[#parts + 1] = "wl"
+    ListSignature("auraWhitelist", parts)
+    local signature = table.concat(parts, ":")
+
+    if listSignature == signature and not listUnresolved then return end
+    listSignature = signature
+    listGeneration = listGeneration + 1
+    wipe(mergeCache)
+    wipe(subtractCache)
+
+    listUnresolved = false
+    wipe(lists.blacklist); wipe(lists.watch); wipe(lists.watchMine); wipe(lists.watchPandemic)
+    wipe(lists.watchImportant); wipe(lists.watchImportantMine)
+    CollectList("auraBlacklist", lists.blacklist)
+    CollectList("auraWhitelist", lists.watch, lists.watchMine, lists.watchPandemic,
+        lists.watchImportant, lists.watchImportantMine)
+    lists.anyPandemic = next(lists.watchPandemic) ~= nil
+
+    RefillSafeSubset(lists.blacklistSafe, lists.blacklist)
+    RefillSafeSubset(lists.watchSafe, lists.watch)
+    RefillSafeSubset(lists.watchMineSafe, lists.watchMine)
+    RefillSafeSubset(lists.watchPandemicSafe, lists.watchPandemic)
+    RefillSafeSubset(lists.watchImportantSafe, lists.watchImportant)
+    RefillSafeSubset(lists.watchImportantMineSafe, lists.watchImportantMine)
+    for key, set in pairs(categorySets) do
+        RefillSafeSubset(categorySafe[key], set)
+    end
 end
+
+local dispelColorMapHarmful, dispelColorMapHelpful
+
+function BBP.UpdateAuraTypeColors()
+    local db = BetterBlizzPlatesDB
+    if not db.npColorAuraBorder then
+        dispelColorMapHarmful, dispelColorMapHelpful = nil, nil
+        return
+    end
+
+    local function C(key, r, g, b)
+        local cr, cg, cb, ca = GetColor(key, r, g, b, 1)
+        return CreateColor(cr, cg, cb, ca or 1)
+    end
+
+    dispelColorMapHarmful = {
+        Magic   = C("npAuraMagicRGB",   0.13, 0.44, 1),
+        Poison  = C("npAuraPoisonRGB",  0,    0.52, 0.031),
+        Curse   = C("npAuraCurseRGB",   0.47, 0,    0.78),
+        Disease = C("npAuraDiseaseRGB", 1,    0.53, 0.14),
+        Bleed   = C("npAuraBleedRGB",   0.8,  0.1,  0.1),
+        None    = C("npAuraOtherRGB",   0,    0,    0),
+    }
+
+    local buff = C("npAuraBuffsRGB", 0, 0.67, 1)
+    dispelColorMapHelpful = {}
+    for _, key in ipairs(DISPEL_KEYS) do dispelColorMapHelpful[key] = buff end
+end
+
+local HIDE_LONG_TIMER_FROM = 61
+
+local durationCurve, durationCurveSignature
+
+function GetDurationCurve()
+    local base, low = S.timerBase, S.timerLow
+    local hideFrom = HIDE_LONG_TIMER_FROM
+    local threshold = math.min(S.timerThreshold, hideFrom - 1)
+
+    local signature = string.format("%s|%.2f|%s|%s|%s",
+        tostring(S.timerColor), threshold, tostring(S.hideLongTimers),
+        table.concat(base, ","), table.concat(low, ","))
+
+    if not durationCurve then
+        durationCurve = C_CurveUtil.CreateColorCurve()
+        durationCurve:SetType(Enum.LuaCurveType.Step)
+    elseif durationCurveSignature == signature then
+        return durationCurve
+    else
+        durationCurve:ClearPoints()
+    end
+    durationCurveSignature = signature
+
+    local baseColor = CreateColor(base[1], base[2], base[3], base[4] or 1)
+    if S.timerColor then
+        durationCurve:AddPoint(0, CreateColor(low[1], low[2], low[3], low[4] or 1))
+        durationCurve:AddPoint(threshold, baseColor)
+    else
+        durationCurve:AddPoint(0, baseColor)
+    end
+
+    if S.hideLongTimers then
+        durationCurve:AddPoint(hideFrom, CreateColor(base[1], base[2], base[3], 0))
+    end
+
+    return durationCurve
+end
+
+local durationFormatters = {}
+
+local function GetDurationFormatter(showMilliseconds, hideLong)
+    local key = (showMilliseconds and "ms" or "plain") .. (hideLong and "+hide" or "")
+    if durationFormatters[key] then return durationFormatters[key] end
+
+    local f = C_StringUtil.CreateNumericRuleFormatter()
+    local breakpoints = {}
+    if showMilliseconds then
+        breakpoints[#breakpoints + 1] = { threshold = 0, format = "%.1f" }
+    end
+    breakpoints[#breakpoints + 1] = {
+        threshold = showMilliseconds and MILLISECOND_THRESHOLD or 0,
+        format = "%d",
+        step = 1,
+        rounding = Enum.NumericRuleFormatRounding.Up,
+    }
+    if hideLong then
+        breakpoints[#breakpoints + 1] = { threshold = HIDE_LONG_TIMER_FROM, format = " " }
+    end
+    f:SetBreakpoints(breakpoints)
+
+    durationFormatters[key] = f
+    return f
+end
+
+local function CreateBorderEdges(host)
+    local edges = {}
+    for i = 1, 4 do
+        local t = host:CreateTexture(nil, "OVERLAY", nil, 4)
+        t:SetColorTexture(1, 1, 1, 1)
+        edges[i] = t
+    end
+    return edges
+end
+
+local function ApplyBorderEdgeGeometry(edges, anchor, thickness)
+    local top, bottom, left, right = edges[1], edges[2], edges[3], edges[4]
+    top:ClearAllPoints()
+    top:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", -thickness, 0)
+    top:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", thickness, 0)
+    top:SetHeight(thickness)
+
+    bottom:ClearAllPoints()
+    bottom:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", -thickness, 0)
+    bottom:SetPoint("TOPRIGHT", anchor, "BOTTOMRIGHT", thickness, 0)
+    bottom:SetHeight(thickness)
+
+    left:ClearAllPoints()
+    left:SetPoint("TOPRIGHT", anchor, "TOPLEFT", 0, 0)
+    left:SetPoint("BOTTOMRIGHT", anchor, "BOTTOMLEFT", 0, 0)
+    left:SetWidth(thickness)
+
+    right:ClearAllPoints()
+    right:SetPoint("TOPLEFT", anchor, "TOPRIGHT", 0, 0)
+    right:SetPoint("BOTTOMLEFT", anchor, "BOTTOMRIGHT", 0, 0)
+    right:SetWidth(thickness)
+end
+
+local function SetBorderEdges(edges, shown, r, g, b)
+    for i = 1, 4 do
+        if r then edges[i]:SetColorTexture(r, g, b, 1) end
+        edges[i]:SetShown(shown)
+    end
+end
+
+local function SetIconMasked(icon, mask, masked)
+    if mask.bbpAttached == masked then return end
+    mask.bbpAttached = masked
+    if masked then
+        icon:AddMaskTexture(mask)
+    else
+        icon:RemoveMaskTexture(mask)
+    end
+    mask:SetShown(masked)
+end
+
+local function ApplyBezelGeometry(bezel, button, width, height)
+    local scale = math.max(width, height) / BEZEL_BASE
+    bezel:ClearAllPoints()
+    bezel:SetPoint("TOPLEFT", button, "TOPLEFT", -(BEZEL_INSET_X - BEZEL_TRIM_LEFT) * scale, BEZEL_INSET_Y * scale)
+    bezel:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", (BEZEL_INSET_X - BEZEL_TRIM_RIGHT) * scale, -BEZEL_INSET_Y * scale)
+end
+
+local GLOW_PAD = 2
+
+local function GlowPad(style)
+    if not style.pixelBorder and (style.kind == BUFFS or style.kind == CC
+        or (style.kind == BUFFROW and not S.buffRow)) then
+        return 0
+    end
+    return GLOW_PAD
+end
+
+local function ApplyGlowGeometry(glow, button, width, height, pad)
+    pad = pad or 0
+    glow:ClearAllPoints()
+    glow:SetPoint("TOPLEFT", button, "TOPLEFT", -(width * 0.47 + pad), height * 0.46 + pad)
+    glow:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", width * 0.47 + pad, -(height * 0.46 + pad))
+end
+
+local purgeAsset       = { asset = PURGE_ATLAS }
+local purgeAssetMagic  = { Magic = purgeAsset }
+local purgeAssetAll    = { Magic = purgeAsset, Curse = purgeAsset,
+                           Disease = purgeAsset, Poison = purgeAsset }
+
+local borderDispelOptions = {
+    style = DispelStyle.PreserveAsset,
+    showWithoutDispelType = true,
+}
+
+local purgeDispelOptions = {
+    style = DispelStyle.CustomAsset,
+    showWhenHarmful = false,
+    showWhenHelpful = true,
+    showWithoutDispelType = false,
+}
+
+local function ApplyDispelRegistrations(button, style)
+    local signature = 0
+    if style.harmful            then signature = signature + 1 end
+    if style.colorBorderByType  then signature = signature + 2 end
+    if style.purgeGlow          then signature = signature + 4 end
+    if style.purgeGlowAlways    then signature = signature + 8 end
+    if style.glow               then signature = signature + 16 end
+
+    local colorMap = style.harmful and dispelColorMapHarmful or dispelColorMapHelpful
+
+    if button.bbpDispelSignature == signature and button.bbpDispelColorMap == colorMap then
+        return
+    end
+    button.bbpDispelSignature = signature
+    button.bbpDispelColorMap = colorMap
+
+    button:ClearDispelTypeTextures()
+
+    if button.bbpBorderEdges and style.colorBorderByType and not style.glow then
+        borderDispelOptions.showWhenHarmful = style.harmful and true or false
+        borderDispelOptions.showWhenHelpful = style.harmful and false or true
+        borderDispelOptions.customDispelColorMap = colorMap
+        for i = 1, 4 do
+            button:AddDispelTypeTexture(button.bbpBorderEdges[i], borderDispelOptions)
+        end
+    end
+
+    if button.bbpPurgeGlow then
+        if style.purgeGlow then
+            purgeDispelOptions.customDispelAssetMap =
+                style.purgeGlowAlways and purgeAssetAll or purgeAssetMagic
+            button:AddDispelTypeTexture(button.bbpPurgeGlow, purgeDispelOptions)
+        else
+            button.bbpPurgeGlow:Hide()
+        end
+    end
+end
+
+local function ApplyPandemicRegistration(button, style)
+    local pandemic = button.bbpPandemicGlow
+    if not pandemic then return end
+
+    if style.pandemicGlow then
+        local c = style.pandemicColor
+        if c then pandemic:SetVertexColor(c[1], c[2], c[3], c[4] or 1) end
+        pandemic:SetAlpha(1)
+        if not button.bbpPandemicRegistered then
+            button.bbpPandemicRegistered = true
+            button:AddPandemicRegion(pandemic)
+        end
+    elseif button.bbpPandemicRegistered then
+        pandemic:SetAlpha(0)
+    end
+end
+
+local function ApplyMutableStyle(button, style)
+    local w, h = style.width, style.height
+    button:SetSize(w, h)
+
+    if button.bbpIcon then
+        local tc = style.texCoord
+        button.bbpIcon:SetTexCoord(tc[1], tc[2], tc[3], tc[4])
+        button.bbpIcon:SetShown(true)
+    end
+
+    if button.bbpMask then
+        SetIconMasked(button.bbpIcon, button.bbpMask, not style.pixelBorder)
+    end
+    if button.bbpBezel then
+        button.bbpBezel:SetShown(not style.pixelBorder and not (style.glow and true or false))
+        ApplyBezelGeometry(button.bbpBezel, button, w, h)
+    end
+
+    local glowing = style.glow and true or false
+
+    if button.bbpBorderEdges then
+        ApplyBorderEdgeGeometry(button.bbpBorderEdges, button, BORDER_THICKNESS)
+        if not style.colorBorderByType or glowing then
+            SetBorderEdges(button.bbpBorderEdges, style.pixelBorder and not glowing, 0, 0, 0)
+        end
+    end
+
+    if button.bbpCooldown then
+        button.bbpCooldown:SetDrawSwipe(not style.hideSwipe)
+        button.bbpCooldown:SetDrawEdge(not style.hideSwipe)
+        button.bbpCooldown:SetSwipeTexture(style.pixelBorder and FLAT_SWIPE or CDM_SWIPE)
+        button.bbpCooldown:SetSwipeColor(0, 0, 0, 0.5)
+        button.bbpCooldown:SetEdgeScale(EDGE_SCALE)
+
+        if style.blizzardCdText then
+            local countdown = button.bbpCooldown.GetCountdownFontString
+                and button.bbpCooldown:GetCountdownFontString()
+            if countdown then countdown:SetScale(style.cdTextScale or 0.6) end
+            if button.bbpCooldown.SetCountdownFormatter then
+                button.bbpCooldown:SetCountdownFormatter(
+                    GetDurationFormatter(style.showMilliseconds, style.hideLongTimers))
+            end
+        end
+        button.bbpCooldown:SetHideCountdownNumbers(not (style.showCdText and style.blizzardCdText))
+    end
+
+    if style.stackLevel then
+        local parent = button:GetParent()
+        if parent then
+            button:SetFrameLevel(parent:GetFrameLevel() + style.stackLevel)
+        end
+    end
+
+    if button.bbpCount then
+        button.bbpCount:SetScale(style.countScale or 1)
+        if style.stackFont then
+            button.bbpCount:SetFont(style.stackFont, 12, "OUTLINE")
+        end
+    end
+
+    if button.bbpTimer then
+        button.bbpTimer:SetScale(style.cdTextScale or 0.6)
+        button.bbpTimer:SetShown(style.showCdText and not style.blizzardCdText)
+
+        local wantMs = style.showMilliseconds and true or false
+        if button.bbpMilliseconds ~= wantMs then
+            button.bbpMilliseconds = wantMs
+            button:SetDurationText(button.bbpTimer, {
+                textFormatter = GetDurationFormatter(wantMs),
+                textColor = {
+                    curve = GetDurationCurve(),
+                    property = Enum.DurationTextBindingProperty.RemainingDuration,
+                },
+            })
+        end
+    end
+
+    local glowPad = GlowPad(style)
+
+    if button.bbpGlow then
+        ApplyGlowGeometry(button.bbpGlow, button, w, h, glowPad)
+        local c = style.glowColor
+        if c then button.bbpGlow:SetVertexColor(c[1], c[2], c[3], c[4] or 1) end
+        button.bbpGlow:SetShown(style.glow and true or false)
+    end
+
+    if button.bbpPurgeGlow then ApplyGlowGeometry(button.bbpPurgeGlow, button, w, h, glowPad) end
+
+    if button.bbpPandemicGlow then
+        ApplyGlowGeometry(button.bbpPandemicGlow, button, w, h, glowPad)
+        ApplyPandemicRegistration(button, style)
+    end
+
+    ApplyDispelRegistrations(button, style)
+
+    button:SetHideTooltipInCombat(style.hideTooltips and true or false)
+    if not InCombatLockdown() then
+        button:SetMouseMotionEnabled(not style.hideTooltips)
+    end
+end
+
+local function InitAuraButton(button, style)
+    button:SetSize(style.width, style.height)
+    button:SetFlattensRenderLayers(true)
+
+    local icon = button:CreateTexture(nil, "ARTWORK")
+    icon:SetAllPoints(button)
+    button.bbpIcon = icon
+    button:SetIcon(icon)
+
+    local mask = button:CreateMaskTexture()
+    mask:SetAllPoints(button)
+    mask:SetAtlas(CDM_MASK)
+    icon:AddMaskTexture(mask)
+    mask.bbpAttached = true
+    button.bbpMask = mask
+
+    local cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+    cooldown:SetAllPoints(button)
+    cooldown:SetReverse(true)
+    cooldown:SetDrawBling(false)
+    cooldown:SetEdgeTexture(CDM_EDGE)
+    button.bbpCooldown = cooldown
+    button:SetDurationCooldown(cooldown)
+
+    local overlay = CreateFrame("Frame", nil, button)
+    overlay:SetAllPoints(button)
+    overlay:SetFrameLevel(cooldown:GetFrameLevel() + 1)
+    button.bbpOverlay = overlay
+
+    local bezel = overlay:CreateTexture(nil, "OVERLAY", nil, 3)
+    bezel:SetAtlas(CDM_BEZEL)
+    button.bbpBezel = bezel
+
+    button.bbpBorderEdges = CreateBorderEdges(overlay)
+
+    if style.purgeTier then
+        local purge = overlay:CreateTexture(nil, "OVERLAY", nil, 7)
+        purge:SetAtlas(PURGE_ATLAS)
+        purge:Hide()
+        button.bbpPurgeGlow = purge
+    end
+
+    if style.pandemicTier then
+        local pandemic = overlay:CreateTexture(nil, "OVERLAY", nil, 7)
+        pandemic:SetAtlas(PANDEMIC_ATLAS)
+        pandemic:SetDesaturated(true)
+        pandemic:Hide()
+        button.bbpPandemicGlow = pandemic
+    end
+
+    local count = overlay:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+    count:SetJustifyH("RIGHT")
+    count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 3, -2)
+    button.bbpCount = count
+    button:SetApplicationCount(count)
+
+    if style.glowTier then
+        local glow = overlay:CreateTexture(nil, "OVERLAY", nil, 5)
+        glow:SetAtlas(GLOW_ATLAS)
+        glow:SetDesaturated(true)
+        button.bbpGlow = glow
+    end
+
+    local timer = overlay:CreateFontString(nil, "OVERLAY", COUNTDOWN_FONT)
+    timer:SetPoint("CENTER", button, "CENTER", 0, 0)
+    button.bbpTimer = timer
+    button.bbpMilliseconds = style.showMilliseconds and true or false
+    button:SetDurationText(timer, {
+        textFormatter = GetDurationFormatter(button.bbpMilliseconds),
+        textColor = {
+            curve = GetDurationCurve(),
+            property = Enum.DurationTextBindingProperty.RemainingDuration,
+        },
+    })
+
+    button:SetTooltipAnchorPoint("ANCHOR_BOTTOMLEFT", 0, 0)
+    button:SetCancelAuraButtons(nil)
+
+    ApplyMutableStyle(button, style)
+end
+
+local unzoomedTexCoords = setmetatable({}, { __mode = "k" })
+
+local function UnzoomTexCoord(tc)
+    local cached = unzoomedTexCoords[tc]
+    if cached then return cached end
+
+    local w, h = tc[2] - tc[1], tc[4] - tc[3]
+    if w <= 0 or h <= 0 then return tc end
+
+    local grow = math.min(1 / w, 1 / h)
+    local halfW, halfH = w * grow / 2, h * grow / 2
+    local left, right = (tc[1] + tc[2]) / 2 - halfW, (tc[1] + tc[2]) / 2 + halfW
+    local top, bottom = (tc[3] + tc[4]) / 2 - halfH, (tc[3] + tc[4]) / 2 + halfH
+
+    if left < 0 then right, left = right - left, 0
+    elseif right > 1 then left, right = left - (right - 1), 1 end
+    if top < 0 then bottom, top = bottom - top, 0
+    elseif bottom > 1 then top, bottom = top - (bottom - 1), 1 end
+
+    cached = { left, right, top, bottom }
+    unzoomedTexCoords[tc] = cached
+    return cached
+end
+
+local function BuildStyle(kind, groupKey, standalone)
+    local harmful = not IsBuffKind(kind)
+    local tier = GLOW_TIERS[kind] and GLOW_TIERS[kind][groupKey]
+    local glowCfg = tier and S.glow[tier]
+
+    local categoryGroup = tier and true or false
+
+    local pandemicTier = (not categoryGroup)
+        and (PANDEMIC_GROUPS[kind] and PANDEMIC_GROUPS[kind][groupKey]) and true or false
+    local pandemicOn = (not categoryGroup)
+        and ((groupKey == "WatchPandemic") or (pandemicTier and S.pandemicGlow))
+
+    local inRow = (kind == DEBUFFS) or (kind == BUFFROW and S.buffRow and not standalone)
+
+    local width, height, texCoord
+    if inRow then
+        width, height, texCoord = S.debuffWidth, S.debuffHeight, S.debuffTexCoord
+    else
+        width, height, texCoord = S.buffWidth, S.buffHeight, S.buffTexCoord
+    end
+
+    local glowing = (glowCfg and glowCfg[1] or WHITELIST_GLOW_GROUPS[groupKey]) and true or false
+    if glowing and not inRow then texCoord = UnzoomTexCoord(texCoord) end
+
+    local isCC = (kind == CC) or (kind == DEBUFFS and groupKey == "CC")
+
+    return {
+        kind = kind,
+        groupKey = groupKey,
+        harmful = harmful,
+        width = width,
+        height = height,
+        texCoord = texCoord,
+        pixelBorder = S.pixelBorder,
+        hideSwipe = S.hideSwipe,
+        showCdText = S.showCdText,
+        blizzardCdText = S.blizzardCdText,
+        hideLongTimers = S.hideLongTimers,
+        cdTextScale = S.cdTextScale,
+        showMilliseconds = (IsBuffKind(kind) and S.msBuffs) or (isCC and S.msCC) or false,
+        countScale = S.countScale,
+        stackFont = S.stackFont,
+        hideTooltips = S.hideTooltips,
+        colorBorderByType = S.colorBorderByType,
+        purgeTier = (groupKey == "Purgeable"),
+        purgeGlow = (groupKey == "Purgeable") and S.purgeGlow or false,
+        purgeGlowAlways = S.purgeGlowAlways,
+        pandemicTier = pandemicTier,
+        pandemicGlow = pandemicOn and true or false,
+        pandemicColor = S.pandemicColor,
+        stackLevel = (kind == BUFFS) and BUFF_STACK_LEVELS[groupKey] or nil,
+        glowTier = tier,
+        glow = glowing,
+        glowColor = glowCfg and glowCfg[2] or nil,
+    }
+end
+
+local function ReplaceStyleInPlace(style, fresh)
+    local changed = false
+    for k, v in pairs(fresh) do
+        local old = style[k]
+        if type(v) == "table" and type(old) == "table" then
+            for i = 1, math.max(#v, #old) do
+                if old[i] ~= v[i] then changed = true; break end
+            end
+            if changed then style[k] = v end
+        elseif old ~= v then
+            style[k] = v
+            changed = true
+        end
+    end
+    return changed
+end
+
+local profiles = {}
+BBP.auraProfiles = profiles
+
+local function ProfileKey(isFriend)
+    return isFriend and "friendly" or "enemy"
+end
+
+local function IncludeOrZero(set, safeSet, canFilter, limit)
+    if canFilter then
+        return set, SetIsEmpty(set) and 0 or limit
+    end
+    return safeSet, SetIsEmpty(safeSet) and 0 or limit
+end
+
+local function ExcludeSet(set, safeSet, canFilter)
+    return canFilter and set or safeSet
+end
+
+local function BuildProfile(isFriend)
+    local cfg = isFriend and S.friendly or S.enemy
+    local buffCfg, debuffCfg = cfg.buff, cfg.debuff
+
+    local canFilterHelpful = isFriend and true or false
+    local canFilterHarmful = not canFilterHelpful
+
+    local blacklistD = ExcludeSet(lists.blacklist, lists.blacklistSafe, canFilterHarmful)
+    local blacklistB = ExcludeSet(lists.blacklist, lists.blacklistSafe, canFilterHelpful)
+
+    local watchD = MergeSets(lists.watch, categorySets.watchDebuff)
+    local watchDSafe = MergeSets(lists.watchSafe, categorySafe.watchDebuff)
+    local watchB = MergeSets(lists.watch, categorySets.watchBuff)
+    local watchBSafe = MergeSets(lists.watchSafe, categorySafe.watchBuff)
+
+    local out = { debuffs = {}, buffs = {}, buffrow = {}, cc = {} }
+
+    local dEnabled = debuffCfg.enable
+    local dLimit = dEnabled and S.debuffLimit or 0
+    local noCC = S.separateCC and ("!" .. AF.CrowdControl) or nil
+
+    local ccWanted = debuffCfg.cc and not (isFriend and S.classIconCC)
+
+    local watchLiveD = (dEnabled and debuffCfg.watchlist) and true or false
+    local plainLiveD = dEnabled
+        and (debuffCfg.blizzard or not (debuffCfg.cc or debuffCfg.watchlist))
+        and true or false
+
+    local function DebuffFilter(...)
+        local parts = { AF.Harmful, AF.IncludeNameplateOnly, ... }
+        if noCC then parts[#parts + 1] = noCC end
+        return CreateFilterString(unpack(parts))
+    end
+
+    local watchSet, watchMax = IncludeOrZero(watchD, watchDSafe, canFilterHarmful, dLimit)
+    out.debuffs.Watch = {
+        filter = DebuffFilter("!" .. AF.Player),
+        filters = { includeSpellIDs = watchSet, excludeSpellIDs = blacklistD },
+        max = watchLiveD and watchMax or 0,
+    }
+
+    local importantMineD = MergeSets(lists.watchImportant, lists.watchImportantMine)
+    local importantMineDSafe = MergeSets(lists.watchImportantSafe, lists.watchImportantMineSafe)
+
+    local impSet, impMax = IncludeOrZero(lists.watchImportant, lists.watchImportantSafe,
+        canFilterHarmful, dLimit)
+    out.debuffs.WatchImportant = {
+        filter = DebuffFilter("!" .. AF.Player),
+        filters = { includeSpellIDs = impSet, excludeSpellIDs = blacklistD },
+        max = dEnabled and impMax or 0,
+    }
+
+    local impMineSet, impMineMax = IncludeOrZero(importantMineD, importantMineDSafe,
+        canFilterHarmful, dLimit)
+    out.debuffs.WatchImportantMine = {
+        filter = DebuffFilter(AF.Player),
+        filters = { includeSpellIDs = impMineSet, excludeSpellIDs = blacklistD },
+        max = dEnabled and impMineMax or 0,
+    }
+
+    local mineTracked = MergeSets(lists.watch, lists.watchMine,
+        categorySets.watchDebuff, categorySets.ownDebuff)
+    local mineTrackedSafe = MergeSets(lists.watchSafe, lists.watchMineSafe,
+        categorySafe.watchDebuff, categorySafe.ownDebuff)
+
+    local pandemicTracked = ExcludeSet(lists.watchPandemic, lists.watchPandemicSafe, canFilterHarmful)
+    local splitPandemicD = S.splitPandemic and not SetIsEmpty(pandemicTracked)
+    if splitPandemicD then
+        mineTracked = SubtractSets(mineTracked, lists.watchPandemic)
+        mineTrackedSafe = SubtractSets(mineTrackedSafe, lists.watchPandemic)
+    end
+
+    local mineSet, mineMax = IncludeOrZero(mineTracked, mineTrackedSafe, canFilterHarmful, dLimit)
+    out.debuffs.WatchMine = {
+        filter = DebuffFilter(AF.Player),
+        filters = {
+            includeSpellIDs = mineSet,
+            excludeSpellIDs = blacklistD,
+        },
+        max = watchLiveD and mineMax or 0,
+    }
+
+    out.debuffs.WatchPandemic = {
+        filter = DebuffFilter(AF.Player),
+        filters = { includeSpellIDs = pandemicTracked, excludeSpellIDs = blacklistD },
+        max = (dEnabled and splitPandemicD) and dLimit or 0,
+    }
+
+    local watchAllD = MergeSets(watchD, lists.watchMine,
+        lists.watchImportant, lists.watchImportantMine)
+    local watchAllDSafe = MergeSets(watchDSafe, lists.watchMineSafe,
+        lists.watchImportantSafe, lists.watchImportantMineSafe)
+
+    local flaggedD = MergeSets(lists.watchImportant, lists.watchImportantMine)
+    local flaggedDSafe = MergeSets(lists.watchImportantSafe, lists.watchImportantMineSafe)
+    if splitPandemicD then
+        flaggedD = MergeSets(flaggedD, lists.watchPandemic)
+        flaggedDSafe = MergeSets(flaggedDSafe, lists.watchPandemicSafe)
+    end
+
+    local claimedD, claimedDSafe = flaggedD, flaggedDSafe
+    if watchLiveD then
+        claimedD = MergeSets(watchAllD, categorySets.ownDebuff)
+        claimedDSafe = MergeSets(watchAllDSafe, categorySafe.ownDebuff)
+    end
+
+    local normalExclude = ExcludeSet(MergeSets(blacklistD, claimedD),
+        MergeSets(lists.blacklistSafe, claimedDSafe), canFilterHarmful)
+
+    out.debuffs.CC = {
+        filter = CreateFilterString(AF.Harmful, AF.IncludeNameplateOnly, AF.CrowdControl),
+        filters = { excludeSpellIDs = normalExclude },
+        max = (dEnabled and ccWanted and not S.separateCC) and dLimit or 0,
+    }
+
+    local normalFilters = {
+        excludeSpellIDs = normalExclude,
+        maxDuration = debuffCfg.lessThanMin and 60 or nil,
+        nameplateShowPersonal = debuffCfg.blizzard and true or nil,
+    }
+
+    out.debuffs.Important = {
+        filter = DebuffFilter(AF.Important),
+        filters = { excludeSpellIDs = normalExclude },
+        max = plainLiveD and dLimit or 0,
+    }
+
+    local NOT_IMPORTANT = "!" .. AF.Important
+    out.debuffs.Mine = {
+        filter = DebuffFilter(AF.Player, NOT_IMPORTANT),
+        filters = normalFilters,
+        max = plainLiveD and dLimit or 0,
+    }
+    out.debuffs.Others = {
+        filter = DebuffFilter("!" .. AF.Player, NOT_IMPORTANT),
+        filters = normalFilters,
+        max = (plainLiveD and isFriend and not debuffCfg.onlyMine
+            and not (debuffCfg.blizzard and S.blizzardOnlyMine)) and dLimit or 0,
+    }
+
+    local bEnabled = buffCfg.enable
+    local bLimit = bEnabled and S.buffLimit or 0
+    local rowLimit = bEnabled and S.debuffLimit or 0
+    local NOT_BIG, NOT_EXT = "!" .. AF.BigDefensive, "!" .. AF.ExternalDefensive
+
+    local watchAllB = MergeSets(watchB, lists.watchMine,
+        lists.watchImportant, lists.watchImportantMine)
+    local watchAllBSafe = MergeSets(watchBSafe, lists.watchMineSafe,
+        lists.watchImportantSafe, lists.watchImportantMineSafe)
+    local buffExclude = ExcludeSet(MergeSets(blacklistB, watchAllB),
+        MergeSets(lists.blacklistSafe, watchAllBSafe), canFilterHelpful)
+
+    local watchLive = (bEnabled and buffCfg.watchlist) and true or false
+    local plainLive = bEnabled
+        and not (buffCfg.important or buffCfg.purgeable or buffCfg.watchlist)
+    local buffsMineOnly = buffCfg.onlyMine and true or false
+
+    local defOn = bEnabled and buffCfg.important
+    local defExclude = ExcludeSet(blacklistB, lists.blacklistSafe, canFilterHelpful)
+
+    local function CategoryFilter(...)
+        local parts = { AF.Helpful, AF.IncludeNameplateOnly, ... }
+        if buffsMineOnly then parts[#parts + 1] = AF.Player end
+        return CreateFilterString(unpack(parts))
+    end
+
+    out.buffs.DefBig = {
+        filter = CategoryFilter(AF.BigDefensive),
+        filters = { excludeSpellIDs = defExclude },
+        max = defOn and bLimit or 0,
+    }
+    out.buffs.DefExt = {
+        filter = CategoryFilter(NOT_BIG, AF.ExternalDefensive),
+        filters = { excludeSpellIDs = defExclude },
+        max = defOn and bLimit or 0,
+    }
+
+    local function BuffFilter(...)
+        return CreateFilterString(AF.Helpful, AF.IncludeNameplateOnly, NOT_BIG, NOT_EXT, ...)
+    end
+
+    local watchBSet, watchBMax = IncludeOrZero(watchB, watchBSafe, canFilterHelpful, rowLimit)
+    out.buffrow.Watch = {
+        filter = BuffFilter("!" .. AF.Player),
+        filters = { includeSpellIDs = watchBSet, excludeSpellIDs = blacklistB },
+        max = (watchLive and not buffsMineOnly) and watchBMax or 0,
+    }
+
+    local mineTrackedB = MergeSets(lists.watch, lists.watchMine, categorySets.watchBuff)
+    local mineTrackedBSafe = MergeSets(lists.watchSafe, lists.watchMineSafe, categorySafe.watchBuff)
+    local pandemicTrackedB = ExcludeSet(lists.watchPandemic, lists.watchPandemicSafe, canFilterHelpful)
+    local splitPandemicB = S.splitPandemic and not SetIsEmpty(pandemicTrackedB)
+    if splitPandemicB then
+        mineTrackedB = SubtractSets(mineTrackedB, lists.watchPandemic)
+        mineTrackedBSafe = SubtractSets(mineTrackedBSafe, lists.watchPandemic)
+    end
+
+    local impBSet, impBMax = IncludeOrZero(lists.watchImportant, lists.watchImportantSafe,
+        canFilterHelpful, rowLimit)
+    out.buffrow.WatchImportant = {
+        filter = BuffFilter("!" .. AF.Player),
+        filters = { includeSpellIDs = impBSet, excludeSpellIDs = blacklistB },
+        max = (bEnabled and not buffsMineOnly) and impBMax or 0,
+    }
+
+    local impBMineSet, impBMineMax = IncludeOrZero(
+        MergeSets(lists.watchImportant, lists.watchImportantMine),
+        MergeSets(lists.watchImportantSafe, lists.watchImportantMineSafe),
+        canFilterHelpful, rowLimit)
+    out.buffrow.WatchImportantMine = {
+        filter = BuffFilter(AF.Player),
+        filters = { includeSpellIDs = impBMineSet, excludeSpellIDs = blacklistB },
+        max = bEnabled and impBMineMax or 0,
+    }
+
+    local watchBMineSet, watchBMineMax = IncludeOrZero(mineTrackedB, mineTrackedBSafe, canFilterHelpful, rowLimit)
+    out.buffrow.WatchMine = {
+        filter = BuffFilter(AF.Player),
+        filters = { includeSpellIDs = watchBMineSet, excludeSpellIDs = blacklistB },
+        max = watchLive and watchBMineMax or 0,
+    }
+
+    out.buffrow.WatchPandemic = {
+        filter = BuffFilter(AF.Player),
+        filters = { includeSpellIDs = pandemicTrackedB, excludeSpellIDs = blacklistB },
+        max = (bEnabled and splitPandemicB) and rowLimit or 0,
+    }
+
+    local claimedB = watchLive and buffExclude or defExclude
+
+    out.buffs.Important = {
+        filter = CategoryFilter(NOT_BIG, NOT_EXT, AF.Important),
+        filters = {
+            excludeSpellIDs = claimedB,
+            maxDuration = buffCfg.lessThanMin and 60 or nil,
+        },
+        max = (bEnabled and buffCfg.important) and bLimit or 0,
+    }
+
+    out.buffrow.Purgeable = {
+        filter = CategoryFilter(NOT_BIG, NOT_EXT, AF.RaidPlayerDispellable, "!" .. AF.Important),
+        filters = {
+            excludeSpellIDs = claimedB,
+            maxDuration = buffCfg.lessThanMin and 60 or nil,
+        },
+        max = (bEnabled and buffCfg.purgeable) and rowLimit or 0,
+    }
+
+    local function PlainBuffFilter(caster)
+        return CreateFilterString(AF.Helpful, AF.IncludeNameplateOnly, caster)
+    end
+
+    local flaggedB = MergeSets(lists.watchImportant, lists.watchImportantMine)
+    local flaggedBSafe = MergeSets(lists.watchImportantSafe, lists.watchImportantMineSafe)
+    if splitPandemicB then
+        flaggedB = MergeSets(flaggedB, lists.watchPandemic)
+        flaggedBSafe = MergeSets(flaggedBSafe, lists.watchPandemicSafe)
+    end
+
+    local plainFilters = {
+        excludeSpellIDs = ExcludeSet(MergeSets(blacklistB, flaggedB),
+            MergeSets(lists.blacklistSafe, flaggedBSafe), canFilterHelpful),
+        maxDuration = buffCfg.lessThanMin and 60 or nil,
+    }
+
+    out.buffrow.Mine = {
+        filter = PlainBuffFilter(AF.Player),
+        filters = plainFilters,
+        max = plainLive and rowLimit or 0,
+    }
+
+    out.buffrow.Others = {
+        filter = PlainBuffFilter("!" .. AF.Player),
+        filters = plainFilters,
+        max = (plainLive and isFriend and not buffsMineOnly) and rowLimit or 0,
+    }
+
+    out.cc.CC = {
+        filter = CreateFilterString(AF.Harmful, AF.IncludeNameplateOnly, AF.CrowdControl),
+        filters = {
+            excludeSpellIDs = ExcludeSet(blacklistD, lists.blacklistSafe, canFilterHarmful),
+        },
+        max = (S.separateCC and dEnabled and ccWanted) and S.ccLimit or 0,
+    }
+
+    out.debuffsLive = false
+    for _, groupCfg in pairs(out.debuffs) do
+        if groupCfg.max > 0 then
+            out.debuffsLive = true
+            break
+        end
+    end
+
+    out.buffsLive = false
+    for _, groupCfg in pairs(out.buffs) do
+        if groupCfg.max > 0 then
+            out.buffsLive = true
+            break
+        end
+    end
+
+    return out
+end
+
+local profileGeneration = 0
+
+local liveGroups = {}
+for _, kind in ipairs(CONTAINER_KINDS) do liveGroups[kind] = {} end
+
+local function RebuildLiveGroups()
+    for _, kind in ipairs(CONTAINER_KINDS) do
+        local live = liveGroups[kind]
+        wipe(live)
+        for _, groupKey in ipairs(GROUPS_BY_KIND[kind]) do
+            for _, profile in pairs(profiles) do
+                local cfg = profile[kind] and profile[kind][groupKey]
+                if cfg and cfg.max > 0 then
+                    live[groupKey] = true
+                    break
+                end
+            end
+        end
+    end
+end
+
+local function RebuildProfiles()
+    wipe(profiles)
+    profiles.enemy    = BuildProfile(false)
+    profiles.friendly = BuildProfile(true)
+    RebuildLiveGroups()
+    profileGeneration = profileGeneration + 1
+end
+
+local function GetCell(kind)
+    if kind == DEBUFFS or (kind == BUFFROW and S.buffRow) then
+        return S.debuffWidth, S.debuffHeight
+    end
+    return S.buffWidth, S.buffHeight
+end
+
+local function CreateContainer(kind)
+    local container = CreateFrame("AuraContainer", nil, UIParent, "CustomAuraContainerTemplate")
+    container:SetEnabled(false)
+    container:Hide()
+    container.bbpKind = kind
+    container.bbpStyles = {}
+    container.bbpApplied = {}
+    container.bbpHasGroup = {}
+    container:SetFlattensRenderLayers(true)
+    local growsUp = (kind == DEBUFFS) or (kind == BUFFROW and S.buffRow)
+    container:SetFlowLayoutAnchorPoint(growsUp and "BOTTOMLEFT" or "TOPLEFT")
+    container:SetFlowLayoutGrowthDirection(FlowDirection.Right,
+        growsUp and FlowDirection.Up or FlowDirection.Down)
+    return container
+end
+
+local function AddContainerGroup(container, groupKey, index)
+    local kind = container.bbpKind
+    local style = BuildStyle(kind, groupKey)
+    container.bbpStyles[groupKey] = style
+
+    local cellW, cellH = GetCell(kind)
+    container:AddAuraGroup(groupKey, CreateFilterString(IsBuffKind(kind) and AF.Helpful or AF.Harmful), {
+        maxFrameCount = 0,
+        sortMethod = S.sort[1],
+        sortDirection = S.sort[2],
+        initializeFrame = function(button)
+            InitAuraButton(button, container.bbpStyles[groupKey])
+        end,
+        layout = {
+            elementSpacing = S.gapX,
+            lineSpacing = S.gapY,
+            elementWidth = cellW,
+            elementHeight = cellH,
+            layoutIndex = index,
+        },
+    })
+    container.bbpApplied[groupKey] = {}
+    container.bbpHasGroup[groupKey] = true
+end
+
+local function AddContainerGroups(container)
+    local kind = container.bbpKind
+    local live = liveGroups[kind]
+    for index, groupKey in ipairs(GROUPS_BY_KIND[kind]) do
+        if live[groupKey] then
+            AddContainerGroup(container, groupKey, index)
+        end
+    end
+end
+
+local function EnsureContainerGroups(container)
+    local kind = container.bbpKind
+    local live = liveGroups[kind]
+    local has = container.bbpHasGroup
+    for index, groupKey in ipairs(GROUPS_BY_KIND[kind]) do
+        if live[groupKey] and not has[groupKey] then
+            AddContainerGroup(container, groupKey, index)
+        end
+    end
+end
+
+local function ApplyGroupCandidateFilters(container, groupKey, filters)
+    local applied = container.bbpApplied[groupKey]
+    local include = filters and filters.includeSpellIDs or false
+    local exclude = filters and filters.excludeSpellIDs or false
+    local maxDur = filters and filters.maxDuration or false
+    local personal = filters and filters.nameplateShowPersonal or false
+    if applied.generation == listGeneration
+        and applied.include == include and applied.exclude == exclude
+        and applied.maxDuration == maxDur and applied.personal == personal then
+        return
+    end
+    applied.generation = listGeneration
+    applied.include, applied.exclude = include, exclude
+    applied.maxDuration, applied.personal = maxDur, personal
+    container:SetAuraGroupCandidateFilters(groupKey, filters)
+end
+
+local function ApplyGroupLayout(container, groupKey, spacingX, spacingY, cellW, cellH, index)
+    local applied = container.bbpApplied[groupKey]
+    if applied.spacingX == spacingX and applied.spacingY == spacingY
+        and applied.cellW == cellW and applied.cellH == cellH then
+        return
+    end
+    applied.spacingX, applied.spacingY = spacingX, spacingY
+    applied.cellW, applied.cellH = cellW, cellH
+    container:SetAuraGroupLayout(groupKey, {
+        elementSpacing = spacingX,
+        lineSpacing = spacingY,
+        elementWidth = cellW,
+        elementHeight = cellH,
+        layoutIndex = index,
+    })
+end
+
+local function ApplyGroupSort(container, groupKey, method, direction)
+    local applied = container.bbpApplied[groupKey]
+    if applied.sortMethod == method and applied.sortDirection == direction then return end
+    applied.sortMethod, applied.sortDirection = method, direction
+    container:SetAuraGroupSortMethod(groupKey, method, direction)
+end
+
+local function ApplyProfile(container, profileKey, perRow)
+    if container.bbpProfileKey == profileKey
+        and container.bbpPerRow == perRow
+        and container.bbpProfileGen == profileGeneration then
+        return
+    end
+    container.bbpProfileKey, container.bbpPerRow = profileKey, perRow
+    container.bbpProfileGen = profileGeneration
+
+    EnsureContainerGroups(container)
+
+    local kind = container.bbpKind
+    local profile = profiles[profileKey]
+    if not profile then return end
+    local groupCfgs = profile[kind]
+    local groups = GROUPS_BY_KIND[kind]
+    local has = container.bbpHasGroup
+
+    local cellW, cellH = GetCell(kind)
+    local overlap = (kind == BUFFS) and S.buffLimit == 1
+    local wrap = (kind == DEBUFFS or (kind == BUFFROW and S.buffRow))
+        and (perRow * cellW + (perRow - 1) * S.gapX)
+        or math.huge
+    container:SetFlowLayoutMaximumLineSize(wrap)
+
+    local parkFilter
+    for _, groupKey in ipairs(groups) do
+        local cfg = groupCfgs[groupKey]
+        if cfg and cfg.max > 0 then
+            parkFilter = cfg.filter
+            break
+        end
+    end
+    if not parkFilter then
+        local first = groupCfgs[groups[1]]
+        parkFilter = first and first.filter
+    end
+
+    for index, groupKey in ipairs(groups) do
+        local cfg = groupCfgs[groupKey]
+        if cfg and has[groupKey] then
+            container:SetAuraGroupMaxFrameCount(groupKey, cfg.max)
+            if cfg.max > 0 then
+                container:SetAuraGroupFilterString(groupKey, cfg.filter)
+                ApplyGroupCandidateFilters(container, groupKey, cfg.filters)
+                if overlap then
+                    ApplyGroupLayout(container, groupKey, 0, 0, 0, 0, index)
+                else
+                    ApplyGroupLayout(container, groupKey, S.gapX, S.gapY, cellW, cellH, index)
+                end
+                ApplyGroupSort(container, groupKey, S.sort[1], S.sort[2])
+            elseif parkFilter then
+                container:SetAuraGroupFilterString(groupKey, parkFilter)
+            end
+        end
+    end
+end
+
+local function SetContainerPoint(container, point, relTo, relPoint, x, y)
+    if container.bbpPoint == point and container.bbpRelTo == relTo
+        and container.bbpRelPoint == relPoint and container.bbpX == x and container.bbpY == y then
+        return
+    end
+    container.bbpPoint, container.bbpRelTo = point, relTo
+    container.bbpRelPoint, container.bbpX, container.bbpY = relPoint, x, y
+    container:ClearAllPoints()
+    container:SetPoint(point, relTo, relPoint, x, y)
+end
+
+local DEBUFF_ROW_LIFT = 4
+
+local function GetDebuffVerticalOffset()
+    local pad = (S.debuffPadding or 0) + DEBUFF_ROW_LIFT
+    local opts = NamePlateSetupOptions
+    if not opts then return pad end
+
+    local styles = NamePlateConstants.NAME_ANCHOR_STYLES
+    if not styles or opts.unitNameAnchorStyle == styles.InsideHealthBar then
+        return pad
+    end
+    return pad + (opts.healthBarFontHeight or 16) + (opts.healthBarToNameAboveSpacing or 2)
+end
+
+local function GetDebuffAnchor(frame, centered)
+    local healthBar = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar
+    if not healthBar then return end
+
+    local y = GetDebuffVerticalOffset()
+    local x = S.debuffPadX
+
+    if centered then
+        return "BOTTOM", healthBar, "TOP", x, y
+    elseif S.rightToLeft then
+        return "BOTTOMRIGHT", healthBar, "TOPRIGHT", x, y
+    end
+    return "BOTTOMLEFT", healthBar, "TOPLEFT", x, y
+end
+
+local function GetSideAnchor(frame, anchor, xPos, yPos)
+    local healthBar = frame.HealthBarsContainer
+    if not healthBar then return end
+
+    if anchor == "LEFT" then
+        return "RIGHT", healthBar, "LEFT", -5 + xPos, yPos
+    elseif anchor == "TOP" then
+        return "BOTTOM", healthBar, "TOP", xPos, (S.debuffPadding or 0) + 15 + yPos
+    end
+    return "LEFT", healthBar, "RIGHT", 5 + xPos, yPos
+end
+
+local function AnchorDebuffContainer(container, frame, centered)
+    if S.rightToLeft and not centered then
+        container:SetFlowLayoutAnchorPoint("BOTTOMRIGHT")
+        container:SetFlowLayoutGrowthDirection(FlowDirection.Left, FlowDirection.Up)
+    else
+        container:SetFlowLayoutAnchorPoint("BOTTOMLEFT")
+        container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Up)
+    end
+
+    local point, relTo, relPoint, x, y = GetDebuffAnchor(frame, centered)
+    if not relTo then return end
+    SetContainerPoint(container, point, relTo, relPoint, x, y)
+end
+
+local function AnchorSideContainer(container, frame, anchor, xPos, yPos)
+    if anchor == "LEFT" then
+        container:SetFlowLayoutAnchorPoint("TOPRIGHT")
+        container:SetFlowLayoutGrowthDirection(FlowDirection.Left, FlowDirection.Down)
+    elseif anchor == "TOP" then
+        container:SetFlowLayoutAnchorPoint("BOTTOMLEFT")
+        container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Up)
+    else
+        container:SetFlowLayoutAnchorPoint("TOPLEFT")
+        container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Down)
+    end
+
+    local point, relTo, relPoint, x, y = GetSideAnchor(frame, anchor, xPos, yPos)
+    if not relTo then return end
+    SetContainerPoint(container, point, relTo, relPoint, x, y)
+end
+
+local function AnchorChainedSideContainer(container, frame, anchor, xPos, yPos, lead, leadLive)
+    if not (lead and leadLive) then
+        AnchorSideContainer(container, frame, anchor, xPos, yPos)
+        return
+    end
+
+    local point, relPoint, gapX = nil, nil, S.gapX
+    if anchor == "LEFT" then
+        container:SetFlowLayoutAnchorPoint("TOPRIGHT")
+        container:SetFlowLayoutGrowthDirection(FlowDirection.Left, FlowDirection.Down)
+        point, relPoint, gapX = "TOPRIGHT", "TOPLEFT", -gapX
+    elseif anchor == "TOP" then
+        container:SetFlowLayoutAnchorPoint("BOTTOMLEFT")
+        container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Up)
+        point, relPoint = "BOTTOMLEFT", "BOTTOMRIGHT"
+    else
+        container:SetFlowLayoutAnchorPoint("TOPLEFT")
+        container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Down)
+        point, relPoint = "TOPLEFT", "TOPRIGHT"
+    end
+
+    SetContainerPoint(container, point, lead, relPoint, gapX, 0)
+end
+
+local function AnchorBuffRowContainer(container, frame, debuffContainer, centered, debuffsLive, scaleRatio)
+    if S.rightToLeft and not centered then
+        container:SetFlowLayoutAnchorPoint("BOTTOMRIGHT")
+        container:SetFlowLayoutGrowthDirection(FlowDirection.Left, FlowDirection.Up)
+    else
+        container:SetFlowLayoutAnchorPoint("BOTTOMLEFT")
+        container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Up)
+    end
+
+    if not (debuffsLive and debuffContainer) then
+        local point, relTo, relPoint, x, y = GetDebuffAnchor(frame, centered)
+        if not relTo then return end
+        local ratio = scaleRatio or 1
+        SetContainerPoint(container, point, relTo, relPoint, x * ratio, y * ratio)
+        return
+    end
+
+    local point, relPoint
+    if centered then
+        point, relPoint = "BOTTOM", "TOP"
+    elseif S.rightToLeft then
+        point, relPoint = "BOTTOMRIGHT", "TOPRIGHT"
+    else
+        point, relPoint = "BOTTOMLEFT", "TOPLEFT"
+    end
+
+    SetContainerPoint(container, point, debuffContainer, relPoint, 0, S.gapY)
+end
+
+local function ContainerScale(kind, isTarget)
+    local scale = S.scale
+    if kind == DEBUFFS then scale = scale * S.debuffScale
+    elseif kind == BUFFS then scale = scale * S.buffIconScale
+    elseif kind == BUFFROW then scale = scale * (S.buffRow and S.buffScale or S.buffIconScale)
+    else scale = scale * S.ccIconScale end
+    if isTarget and S.targetScaleOn then scale = scale * S.targetScale end
+    return scale
+end
+
+local AurasAreSecret, RestyleSet
+
+local MAX_NAMEPLATES = 40
+local BUDGET_NORMAL = 1
+local BUDGET_LOADING = 8
+
+local pool = { sets = {}, queue = {}, queued = {}, target = 0 }
+BBP.auraPool = pool
+
+local builder = CreateFrame("Frame")
+builder:Hide()
+
+local function BuildSet(token)
+    local set = pool.sets[token]
+    if not set then
+        set = { token = token }
+        pool.sets[token] = set
+    end
+    for _, kind in ipairs(CONTAINER_KINDS) do
+        local container = set[kind]
+        if container then
+            EnsureContainerGroups(container)
+        elseif next(liveGroups[kind]) then
+            container = CreateContainer(kind)
+            AddContainerGroups(container)
+            set[kind] = container
+        end
+    end
+    set.groupGen = profileGeneration
+    set.ready = true
+    return set
+end
+
+local function EnqueueSets(count)
+    pool.target = math.max(pool.target, math.min(count, MAX_NAMEPLATES))
+    for i = 1, pool.target do
+        local token = "nameplate" .. i
+        local set = pool.sets[token]
+        if (not set or set.groupGen ~= profileGeneration) and not pool.queued[token] then
+            pool.queued[token] = true
+            pool.queue[#pool.queue + 1] = token
+        end
+    end
+    if #pool.queue > 0 then builder:Show() end
+end
+
+builder:SetScript("OnUpdate", function(self)
+    if InCombatLockdown() then return end
+
+    local budget = BetterBlizzPlatesDB.wasOnLoadingScreen and BUDGET_LOADING or BUDGET_NORMAL
+    local start = debugprofilestop()
+
+    while #pool.queue > 0 and (debugprofilestop() - start) < budget do
+        local token = table.remove(pool.queue, 1)
+        pool.queued[token] = nil
+        local set = pool.sets[token]
+        if not set or set.groupGen ~= profileGeneration then BuildSet(token) end
+    end
+
+    if #pool.queue == 0 then self:Hide() end
+end)
+
+local function AcquireSet(token)
+    local set = pool.sets[token]
+    if set and set.ready and set.groupGen == profileGeneration then return set end
+    pool.queued[token] = nil
+    return BuildSet(token)
+end
+
+local BLIZZARD_AURA_BITS = {
+    [NamePlateConstants.ENEMY_NPC_AURA_DISPLAY_CVAR] = {
+        Enum.NamePlateEnemyNpcAuraDisplay.Buffs,
+        Enum.NamePlateEnemyNpcAuraDisplay.Debuffs,
+        Enum.NamePlateEnemyNpcAuraDisplay.CrowdControl,
+    },
+    [NamePlateConstants.ENEMY_PLAYER_AURA_DISPLAY_CVAR] = {
+        Enum.NamePlateEnemyPlayerAuraDisplay.Buffs,
+        Enum.NamePlateEnemyPlayerAuraDisplay.Debuffs,
+    },
+    [NamePlateConstants.FRIENDLY_PLAYER_AURA_DISPLAY_CVAR] = {
+        Enum.NamePlateFriendlyPlayerAuraDisplay.Buffs,
+        Enum.NamePlateFriendlyPlayerAuraDisplay.Debuffs,
+    },
+}
+
+local cvarsPending = nil
+
+function BBP.IsSuppressedAuraBit(cvarName, index)
+    if not BetterBlizzPlatesDB.bbpAuraCVarsSuppressed then return false end
+    local indices = BLIZZARD_AURA_BITS[cvarName]
+    if not indices then return false end
+    for _, i in ipairs(indices) do
+        if i == index then return true end
+    end
+    return false
+end
+
+local function CaptureAuraCVarBackup()
+    local snapshot = {
+        bitfields = {},
+        showDebuffsOnFriendly = C_CVar.GetCVar(NamePlateConstants.SHOW_DEBUFFS_ON_FRIENDLY_CVAR),
+    }
+    for cvarName, indices in pairs(BLIZZARD_AURA_BITS) do
+        local into = {}
+        snapshot.bitfields[cvarName] = into
+        for _, index in ipairs(indices) do
+            into[tostring(index)] = C_CVar.GetCVarBitfield(cvarName, index)
+        end
+    end
+    return snapshot
+end
+
+function BBP.GetStoredAuraBit(cvarName, index)
+    local db = BetterBlizzPlatesDB
+    local key = tostring(index)
+
+    local snapshot = db.bbpAuraCVarBackup and db.bbpAuraCVarBackup.bitfields
+    local saved = snapshot and snapshot[cvarName] and snapshot[cvarName][key]
+    if saved ~= nil then return saved end
+
+    saved = db.bitfields and db.bitfields[cvarName] and db.bitfields[cvarName][key]
+    if saved ~= nil then return saved end
+
+    local backup = BBPCVarBackupsDB and BBPCVarBackupsDB.bitfields
+    saved = backup and backup[cvarName] and backup[cvarName][key]
+    if saved ~= nil then return saved end
+
+    return true
+end
+
+function BBP.GetPlayerNameplateBit(cvarName, index)
+    if BBP.IsSuppressedAuraBit(cvarName, index) then
+        return BBP.GetStoredAuraBit(cvarName, index)
+    end
+    return C_CVar.GetCVarBitfield(cvarName, index)
+end
+
+local function ApplyBlizzardAuraCVars(enabled)
+    if InCombatLockdown() then
+        cvarsPending = enabled and true or false
+        return
+    end
+    cvarsPending = nil
+
+    local db = BetterBlizzPlatesDB
+
+    if not enabled and not db.bbpAuraCVarsSuppressed then
+        db.bbpAuraCVarBackup = CaptureAuraCVarBackup()
+    end
+
+    local wasTracking = BBP.CVarTrackingDisabled
+    BBP.CVarTrackingDisabled = true
+
+    db.bbpAuraCVarsSuppressed = (not enabled) or nil
+
+    for cvarName, indices in pairs(BLIZZARD_AURA_BITS) do
+        for _, index in ipairs(indices) do
+            local value = false
+            if enabled then value = BBP.GetStoredAuraBit(cvarName, index) end
+            C_CVar.SetCVarBitfield(cvarName, index, value)
+        end
+    end
+
+    local friendly = "0"
+    if enabled then
+        friendly = (db.bbpAuraCVarBackup and db.bbpAuraCVarBackup.showDebuffsOnFriendly) or "1"
+    end
+    C_CVar.SetCVar(NamePlateConstants.SHOW_DEBUFFS_ON_FRIENDLY_CVAR, friendly)
+
+    BBP.CVarTrackingDisabled = wasTracking
+
+    if enabled then
+        db.bbpAuraCVarBackup = nil
+    end
+end
+
+local function AdoptExternalAuraCVarChange(cvarName)
+    local backup = BetterBlizzPlatesDB.bbpAuraCVarBackup
+    if not BetterBlizzPlatesDB.bbpAuraCVarsSuppressed or not backup then return end
+
+    local changed = false
+    local indices = BLIZZARD_AURA_BITS[cvarName]
+    if indices then
+        local into = backup.bitfields and backup.bitfields[cvarName]
+        for _, index in ipairs(indices) do
+            if C_CVar.GetCVarBitfield(cvarName, index) then
+                if into then into[tostring(index)] = true end
+                changed = true
+            end
+        end
+    elseif cvarName == NamePlateConstants.SHOW_DEBUFFS_ON_FRIENDLY_CVAR then
+        if C_CVar.GetCVarBool(cvarName) then
+            backup.showDebuffsOnFriendly = "1"
+            changed = true
+        end
+    end
+
+    if changed then ApplyBlizzardAuraCVars(false) end
+end
+
+function BBP.RestoreBlizzardNameplateAuras()
+    if not BetterBlizzPlatesDB.bbpAuraCVarsSuppressed then
+        if cvarsPending == false then cvarsPending = nil end
+        return
+    end
+    ApplyBlizzardAuraCVars(true)
+end
+
+function BBP.ReassertBlizzardAuraCVars()
+    if not BetterBlizzPlatesDB.bbpAuraCVarsSuppressed then return end
+    ApplyBlizzardAuraCVars(false)
+end
+
+local boundTokens = {}
+
+local function ShouldShowAuras(info, unit)
+    if BetterBlizzPlatesDB.hideNameplateAuras then return false end
+    if not S.playersOnly then return true end
+    if info.isPlayer then return true end
+    return S.playersOnlyShowTarget and UnitIsUnit(unit, "target") and true or false
+end
+
+local function ShouldShowKind(kind, info)
+    if kind == BUFFS or (kind == BUFFROW and not S.buffRow) then
+        return info.isPlayer and S.buffsOnPlayers or (not info.isPlayer and S.buffsOnNpcs)
+    elseif kind == CC then
+        return info.isPlayer and S.ccOnPlayers or (not info.isPlayer and S.ccOnNpcs)
+    end
+    return true
+end
+
+function BBP.SetNameplateAurasShown(frame, shown)
+    local set = frame and frame.bbpAuraSet
+    if not set then return end
+    set.bbpFrame = nil
+    for _, kind in ipairs(CONTAINER_KINDS) do
+        local container = set[kind]
+        if container then
+            container:SetShown(shown and container.bbpWanted or false)
+        end
+    end
+end
+
+function BBP.BindNameplateAuras(unit, frame, info)
+    if not BetterBlizzPlatesDB.enableNameplateAuraCustomisation then return end
+    if not unit or not frame then return end
+    if strsub(unit, 1, 9) ~= "nameplate" then return end
+
+    local set = AcquireSet(unit)
+    if set.styleDirty and not AurasAreSecret() then RestyleSet(set) end
+    local show = ShouldShowAuras(info, unit)
+    local profileKey = ProfileKey(info.isFriend and true or false)
+    local perRow = info.isFriend and S.perRowFriendly or S.perRowEnemy
+    local isTarget = info.isTarget
+    local level = frame:GetFrameLevel() + 10
+
+    if set.bbpFrame == frame and set.bbpUnit == unit
+        and set.bbpProfileKey == profileKey and set.bbpPerRow == perRow
+        and set.bbpIsTarget == isTarget and set.bbpShow == show
+        and set.bbpGen == profileGeneration and set.bbpLevel == level then
+        return
+    end
+    set.bbpFrame, set.bbpUnit = frame, unit
+    set.bbpProfileKey, set.bbpPerRow = profileKey, perRow
+    set.bbpIsTarget, set.bbpShow = isTarget, show
+    set.bbpGen, set.bbpLevel = profileGeneration, level
+
+    for _, kind in ipairs(CONTAINER_KINDS) do
+        local container = set[kind]
+        if container then
+            if container.bbpParent ~= frame then
+                container:SetParent(frame)
+                container.bbpParent = frame
+                container.bbpRelTo = nil
+            end
+            if container.bbpLevel ~= level then
+                container:SetFrameLevel(level)
+                container.bbpLevel = level
+            end
+
+            if kind == DEBUFFS then
+                AnchorDebuffContainer(container, frame,
+                    info.isFriend and S.centerFriendly or S.centerEnemy)
+            elseif kind == BUFFS then
+                AnchorSideContainer(container, frame, S.buffIconAnchor, S.buffIconX, S.buffIconY)
+            elseif kind == BUFFROW then
+                local profile = profiles[profileKey]
+                if S.buffRow then
+                    AnchorBuffRowContainer(container, frame, set[DEBUFFS],
+                        info.isFriend and S.centerFriendly or S.centerEnemy,
+                        profile and profile.debuffsLive,
+                        ContainerScale(DEBUFFS, isTarget) / ContainerScale(BUFFROW, isTarget))
+                else
+                    AnchorChainedSideContainer(container, frame, S.buffIconAnchor,
+                        S.buffIconX, S.buffIconY, set[BUFFS], profile and profile.buffsLive)
+                end
+            else
+                AnchorSideContainer(container, frame, S.ccIconAnchor, S.ccIconX, S.ccIconY)
+            end
+
+            local scale = ContainerScale(kind, isTarget)
+            if container.bbpScale ~= scale then
+                container:SetScale(scale)
+                container.bbpScale = scale
+            end
+
+            local kindShown = show and ShouldShowKind(kind, info)
+            container.bbpWanted = kindShown
+            if kindShown then
+                ApplyProfile(container, profileKey, perRow)
+                container:SetUnit(unit)
+                container:SetEnabled(true)
+                container:Show()
+                if container.bbpEnabled then container:UpdateAllAuras() end
+                container.bbpEnabled = true
+            else
+                container:SetEnabled(false)
+                container:Hide()
+                container.bbpEnabled = false
+            end
+        end
+    end
+
+    set.profileKey = profileKey
+    frame.bbpAuraSet = set
+    boundTokens[unit] = frame
+
+    if BBP.UpdateAuraPreview then BBP.UpdateAuraPreview(frame, info) end
+end
+
+function BBP.UnbindNameplateAuras(unit)
+    local set = unit and pool.sets[unit]
+    local frame = boundTokens[unit]
+    if frame then frame.bbpAuraSet = nil end
+    boundTokens[unit] = nil
+    if not set or not set.ready then return end
+    set.bbpFrame = nil
+
+    for _, kind in ipairs(CONTAINER_KINDS) do
+        local container = set[kind]
+        if container then
+            container:SetEnabled(false)
+            container:Hide()
+            container:ClearAllPoints()
+            container:SetParent(UIParent)
+            container.bbpEnabled = false
+            container.bbpParent, container.bbpRelTo, container.bbpLevel = nil, nil, nil
+        end
+    end
+end
+
+function AurasAreSecret()
+    return C_Secrets.ShouldAurasBeSecret()
+end
+
+local restyleQueued = false
+
+function RestyleSet(set, force)
+    for _, kind in ipairs(CONTAINER_KINDS) do
+        local container = set[kind]
+        if container then
+            local has = container.bbpHasGroup
+            local dirty = force
+            for _, groupKey in ipairs(GROUPS_BY_KIND[kind]) do
+                if has[groupKey] then
+                    local style = container.bbpStyles[groupKey]
+                    if ReplaceStyleInPlace(style, BuildStyle(kind, groupKey)) then dirty = true end
+                end
+            end
+            if dirty then
+                for _, groupKey in ipairs(GROUPS_BY_KIND[kind]) do
+                    if has[groupKey] then
+                        local style = container.bbpStyles[groupKey]
+                        for i = 1, container:GetAuraGroupFrameCount(groupKey) do
+                            local button = container:GetAuraGroupFrame(groupKey, i)
+                            if button then ApplyMutableStyle(button, style) end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    set.styleDirty = nil
+end
+
+function BBP.RestyleAuraButtons(force)
+    if AurasAreSecret() then
+        restyleQueued = true
+        return
+    end
+    restyleQueued = false
+
+    local seen = {}
+    for token, frame in pairs(boundTokens) do
+        local set = frame and frame.bbpAuraSet
+        if set and set.ready and not seen[set] then
+            seen[set] = true
+            RestyleSet(set, force)
+        end
+    end
+
+    for _, set in pairs(pool.sets) do
+        if set.ready and not seen[set] then set.styleDirty = true end
+    end
+
+    if BBP.prdAuraContainer then BBP.RestylePRDAuraButtons(force) end
+end
+
+local refreshPending = false
+
+local function DoRefresh()
+    refreshPending = false
+    BBP.UpdateUserAuraSettings()
+    RebuildProfiles()
+
+    EnqueueSets(pool.target)
+
+    for token, frame in pairs(boundTokens) do
+        if frame and frame.unit then
+            local info = BBP.GetNameplateUnitInfo(frame, frame.unit)
+            if info then BBP.BindNameplateAuras(token, frame, info) end
+        end
+    end
+
+    BBP.RestyleAuraButtons()
+    BBP.RefreshPRDAuras()
+end
+
+function BBP.RefreshAllNameplateAuras()
+    if refreshPending then return end
+    refreshPending = true
+    C_Timer.After(0, DoRefresh)
+end
+
+BBP.UpdateAllNameplatesAuras = BBP.RefreshAllNameplateAuras
+BBP.RefreshBuffFrame = BBP.RefreshAllNameplateAuras
+
+local PRD_GROUPS = { "DefBig", "DefExt", "Important" }
+
+function BBP.SetupPRDAuras()
+    if not S.prdEnabled then
+        if BBP.prdAuraContainer then
+            BBP.prdAuraContainer:SetEnabled(false)
+            BBP.prdAuraContainer:Hide()
+        end
+        return
+    end
+    if not PersonalResourceDisplayFrame then return end
+
+    local container = BBP.prdAuraContainer
+    if not container then
+        container = CreateFrame("AuraContainer", nil, PersonalResourceDisplayFrame, "CustomAuraContainerTemplate")
+        container:SetEnabled(false)
+        container.bbpKind = BUFFS
+        container.bbpStyles = {}
+        container.bbpApplied = {}
+        container:SetFlattensRenderLayers(true)
+        container:SetFlowLayoutAxis(FlowLayoutAxis.Horizontal)
+
+        for index, groupKey in ipairs(PRD_GROUPS) do
+            local style = BuildStyle(BUFFS, groupKey, true)
+            container.bbpStyles[groupKey] = style
+            container:AddAuraGroup(groupKey, AF.Helpful, {
+                maxFrameCount = 0,
+                initializeFrame = function(button)
+                    InitAuraButton(button, container.bbpStyles[groupKey])
+                end,
+                layout = {
+                    elementSpacing = S.gapX,
+                    lineSpacing = S.gapY,
+                    elementWidth = S.buffWidth,
+                    elementHeight = S.buffHeight,
+                    layoutIndex = index,
+                },
+            })
+            container.bbpApplied[groupKey] = {}
+        end
+        BBP.prdAuraContainer = container
+    end
+
+    BBP.RefreshPRDAuras()
+end
+
+function BBP.RefreshPRDAuras()
+    local container = BBP.prdAuraContainer
+    if not container then
+        if S.prdEnabled then BBP.SetupPRDAuras() end
+        return
+    end
+
+    if not S.prdEnabled then
+        container:SetEnabled(false)
+        container:Hide()
+        return
+    end
+
+    local NOT_BIG, NOT_EXT = "!" .. AF.BigDefensive, "!" .. AF.ExternalDefensive
+    local filters = {
+        DefBig    = CreateFilterString(AF.Helpful, AF.BigDefensive),
+        DefExt    = CreateFilterString(AF.Helpful, NOT_BIG, AF.ExternalDefensive),
+        Important = CreateFilterString(AF.Helpful, AF.Important, NOT_BIG, NOT_EXT),
+    }
+
+    local exclude = lists.blacklist
+
+    local anchor = PersonalResourceDisplayFrame.HealthBarsContainer or PersonalResourceDisplayFrame
+    container:ClearAllPoints()
+    container:SetFlowLayoutAnchorPoint("BOTTOMLEFT")
+    container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Up)
+    container:SetPoint("BOTTOM", anchor, "TOP", S.prdX, 6 + S.prdY)
+    container:SetScale(S.prdScale)
+    container:SetFlowLayoutMaximumLineSize(S.prdPerRow * S.buffWidth + (S.prdPerRow - 1) * S.gapX)
+
+    for index, groupKey in ipairs(PRD_GROUPS) do
+        container:SetAuraGroupFilterString(groupKey, filters[groupKey])
+        container:SetAuraGroupMaxFrameCount(groupKey, S.prdLimit)
+        ApplyGroupCandidateFilters(container, groupKey, { excludeSpellIDs = exclude })
+        ApplyGroupLayout(container, groupKey, S.gapX, S.gapY, S.buffWidth, S.buffHeight, index)
+    end
+
+    container:SetUnit("player")
+    container:SetEnabled(true)
+    container:Show()
+end
+
+function BBP.RestylePRDAuraButtons(force)
+    local container = BBP.prdAuraContainer
+    if not container then return end
+    for _, groupKey in ipairs(PRD_GROUPS) do
+        local style = container.bbpStyles[groupKey]
+        local changed = ReplaceStyleInPlace(style, BuildStyle(BUFFS, groupKey, true))
+        if changed or force then
+            for i = 1, container:GetAuraGroupFrameCount(groupKey) do
+                local button = container:GetAuraGroupFrame(groupKey, i)
+                if button then ApplyMutableStyle(button, style) end
+            end
+        end
+    end
+end
+
+local SAMPLE_ICONS = {
+    [DEBUFFS] = {
+        "interface/icons/spell_shadow_shadowwordpain",
+        "interface/icons/spell_shadow_curseofsargeras",
+        "interface/icons/spell_shadow_unstableaffliction_3",
+        "interface/icons/spell_fire_immolation",
+        "interface/icons/ability_rogue_rupture",
+        "interface/icons/spell_nature_faeriefire",
+        "interface/icons/spell_shadow_plaguecloud",
+        "interface/icons/ability_druid_disembowel",
+    },
+    [BUFFS] = {
+        "interface/icons/ability_shaman_astralshift",
+        "interface/icons/spell_holy_painsupression",
+        "interface/icons/spell_fire_sealoffire",
+    },
+    [BUFFROW] = {
+        "interface/icons/spell_nature_rejuvenation",
+        "interface/icons/spell_holy_renew",
+        "interface/icons/spell_nature_healingtouch",
+    },
+    [CC] = {
+        "interface/icons/spell_nature_polymorph",
+        "interface/icons/spell_shadow_psychicscream",
+        "interface/icons/ability_rogue_kidneyshot",
+        "interface/icons/spell_holy_prayerofhealing",
+    },
+}
+
+local PREVIEW_TIERS = {
+    [DEBUFFS] = { "Mine", "Others" },
+    [BUFFS]   = { "DefBig", "DefExt", "Important" },
+    [BUFFROW] = { "Mine", "Others" },
+    [CC]      = { "CC" },
+}
+
+local previews = {}
+
+local function DrawMockButton(button, style, index)
+    button:SetSize(style.width, style.height)
+
+    if not button.bbpIcon then
+        button.bbpIcon = button:CreateTexture(nil, "ARTWORK")
+        button.bbpIcon:SetAllPoints(button)
+
+        button.bbpMask = button:CreateMaskTexture()
+        button.bbpMask:SetAllPoints(button)
+        button.bbpMask:SetAtlas(CDM_MASK)
+        button.bbpIcon:AddMaskTexture(button.bbpMask)
+        button.bbpMask.bbpAttached = true
+
+        button.bbpOverlay = CreateFrame("Frame", nil, button)
+        button.bbpOverlay:SetAllPoints(button)
+        button.bbpOverlay:SetFrameLevel(button:GetFrameLevel() + 2)
+        button.bbpBorderEdges = CreateBorderEdges(button.bbpOverlay)
+        button.bbpGlow = button.bbpOverlay:CreateTexture(nil, "OVERLAY", nil, 5)
+        button.bbpGlow:SetAtlas(GLOW_ATLAS)
+        button.bbpGlow:SetDesaturated(true)
+        button.bbpPandemicGlow = button.bbpOverlay:CreateTexture(nil, "OVERLAY", nil, 7)
+        button.bbpPandemicGlow:SetAtlas(PANDEMIC_ATLAS)
+        button.bbpPandemicGlow:SetDesaturated(true)
+        button.bbpPandemicGlow:Hide()
+        button.bbpBezel = button.bbpOverlay:CreateTexture(nil, "OVERLAY", nil, 3)
+        button.bbpBezel:SetAtlas(CDM_BEZEL)
+
+        button.bbpCooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+        button.bbpCooldown:SetAllPoints(button)
+        button.bbpCooldown:SetReverse(true)
+        button.bbpCooldown:SetDrawBling(false)
+        button.bbpCooldown:SetEdgeTexture(CDM_EDGE)
+        button.bbpCooldown:SetEdgeScale(EDGE_SCALE)
+        button.bbpTimer = button.bbpOverlay:CreateFontString(nil, "OVERLAY", COUNTDOWN_FONT)
+        button.bbpTimer:SetPoint("CENTER")
+        button.bbpCount = button.bbpOverlay:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+        button.bbpCount:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 3, -2)
+    end
+
+    local icons = SAMPLE_ICONS[style.kind] or SAMPLE_ICONS[DEBUFFS]
+    button.bbpIcon:SetTexture(icons[((index - 1) % #icons) + 1])
+    local tc = style.texCoord
+    button.bbpIcon:SetTexCoord(tc[1], tc[2], tc[3], tc[4])
+    SetIconMasked(button.bbpIcon, button.bbpMask, not style.pixelBorder)
+
+    local glowing = style.glow and true or false
+
+    button.bbpBezel:SetShown(not style.pixelBorder and not glowing)
+    ApplyBezelGeometry(button.bbpBezel, button, style.width, style.height)
+
+    ApplyBorderEdgeGeometry(button.bbpBorderEdges, button, BORDER_THICKNESS)
+    local borderColor = style.colorBorderByType and dispelColorMapHarmful
+        and dispelColorMapHarmful.Magic
+    SetBorderEdges(button.bbpBorderEdges,
+        not glowing and (style.pixelBorder or style.colorBorderByType or false),
+        borderColor and borderColor.r or 0,
+        borderColor and borderColor.g or 0,
+        borderColor and borderColor.b or 0)
+
+    local glowPad = GlowPad(style)
+
+    ApplyGlowGeometry(button.bbpGlow, button, style.width, style.height, glowPad)
+    if style.glow and style.glowColor then
+        local c = style.glowColor
+        button.bbpGlow:SetVertexColor(c[1], c[2], c[3], c[4] or 1)
+        button.bbpGlow:Show()
+    else
+        button.bbpGlow:Hide()
+    end
+
+    ApplyGlowGeometry(button.bbpPandemicGlow, button, style.width, style.height, glowPad)
+    button.bbpPandemicPreview = style.pandemicGlow and true or false
+    if button.bbpPandemicPreview and style.pandemicColor then
+        local c = style.pandemicColor
+        button.bbpPandemicGlow:SetVertexColor(c[1], c[2], c[3], c[4] or 1)
+    end
+    button.bbpPandemicGlow:Hide()
+
+    button.bbpCount:SetScale(style.countScale or 1)
+    button.bbpCount:SetText(index % 3 == 0 and index or "")
+
+    button.bbpCooldown:SetDrawSwipe(not style.hideSwipe)
+    button.bbpCooldown:SetDrawEdge(not style.hideSwipe)
+    button.bbpCooldown:SetSwipeTexture(style.pixelBorder and FLAT_SWIPE or CDM_SWIPE)
+    button.bbpCooldown:SetSwipeColor(0, 0, 0, 0.5)
+    button.bbpCooldown:SetHideCountdownNumbers(not (style.showCdText and style.blizzardCdText))
+
+    button.bbpTimer:SetScale(style.cdTextScale or 0.6)
+    button.bbpTimer:SetShown(style.showCdText and not style.blizzardCdText)
+
+    local duration = (index == 1) and 5 or (6 + index * 4)
+    button.bbpDuration = duration
+    button.bbpExpires = GetTime() + duration
+    button.bbpFormatter = GetDurationFormatter(style.showMilliseconds)
+    button.bbpTimerColor = style.timerColor
+    CooldownFrame_Set(button.bbpCooldown, GetTime(), duration, true, true)
+
+    if not button.bbpTicking then
+        button.bbpTicking = true
+        button:SetScript("OnUpdate", function(self)
+            local remaining = (self.bbpExpires or 0) - GetTime()
+            if remaining <= 0 then
+                self.bbpExpires = GetTime() + (self.bbpDuration or 10)
+                CooldownFrame_Set(self.bbpCooldown, GetTime(), self.bbpDuration or 10, true, true)
+                self.bbpPandemicGlow:Hide()
+                return
+            end
+            self.bbpPandemicGlow:SetShown(self.bbpPandemicPreview
+                and remaining <= (self.bbpDuration or 10) * 0.3)
+            if self.bbpTimer:IsShown() and self.bbpFormatter then
+                self.bbpTimer:SetText(self.bbpFormatter:FormatNumber(remaining))
+                local c = (self.bbpTimerColor and remaining < S.timerThreshold)
+                    and S.timerLow or S.timerBase
+                self.bbpTimer:SetTextColor(c[1], c[2], c[3], c[4] or 1)
+            end
+        end)
+    end
+
+    button:Show()
+end
+
+local function LayoutMockRow(host, buttons, kind, perRow, centered, sideAnchor)
+    local cellW, cellH = GetCell(kind)
+    local gapX, gapY = S.gapX, S.gapY
+    local count = #buttons
+    if count == 0 then return end
+
+    local rowMode = (kind == DEBUFFS) or (kind == BUFFROW and S.buffRow)
+
+    if not rowMode then
+        for i, button in ipairs(buttons) do
+            local step = (i - 1) * (cellW + gapX)
+            button:ClearAllPoints()
+            if sideAnchor == "LEFT" then
+                button:SetPoint("RIGHT", host, "RIGHT", -step, 0)
+            elseif sideAnchor == "TOP" then
+                local rowWidth = count * cellW + (count - 1) * gapX
+                button:SetPoint("BOTTOMLEFT", host, "BOTTOM", -rowWidth / 2 + step, 0)
+            else
+                button:SetPoint("LEFT", host, "LEFT", step, 0)
+            end
+        end
+        return
+    end
+
+    for i, button in ipairs(buttons) do
+        local row = math.floor((i - 1) / perRow)
+        local col = (i - 1) % perRow
+        local inRow = math.min(perRow, count - row * perRow)
+        local rowWidth = inRow * cellW + (inRow - 1) * gapX
+        button:ClearAllPoints()
+        local y = row * (cellH + gapY)
+        if centered then
+            button:SetPoint("BOTTOMLEFT", host, "BOTTOM", -rowWidth / 2 + col * (cellW + gapX), y)
+        elseif S.rightToLeft then
+            button:SetPoint("BOTTOMRIGHT", host, "BOTTOMRIGHT", -col * (cellW + gapX), y)
+        else
+            button:SetPoint("BOTTOMLEFT", host, "BOTTOMLEFT", col * (cellW + gapX), y)
+        end
+    end
+end
+
+local previewStyles = {}
+local previewStyleGen = nil
+
+local function PreviewStyle(kind, groupKey)
+    if previewStyleGen ~= profileGeneration then
+        previewStyleGen = profileGeneration
+        wipe(previewStyles)
+    end
+    local key = kind .. groupKey
+    local style = previewStyles[key]
+    if not style then
+        style = BuildStyle(kind, groupKey)
+        previewStyles[key] = style
+    end
+    return style
+end
+
+local previewTiers = {}
+
+local function PreviewTiers(profile, kind)
+    local groups = profile and profile[kind]
+    if not groups then return nil end
+
+    wipe(previewTiers)
+    for _, tier in ipairs(PREVIEW_TIERS[kind]) do
+        local cfg = groups[tier]
+        if cfg and cfg.max > 0 then previewTiers[#previewTiers + 1] = tier end
+    end
+    if #previewTiers > 0 then return previewTiers end
+
+    local wanted = #PREVIEW_TIERS[kind]
+    for _, groupKey in ipairs(GROUPS_BY_KIND[kind]) do
+        local cfg = groups[groupKey]
+        if cfg and cfg.max > 0 and not PreviewStyle(kind, groupKey).glow then
+            previewTiers[#previewTiers + 1] = groupKey
+            if #previewTiers >= wanted then break end
+        end
+    end
+    return #previewTiers > 0 and previewTiers or nil
+end
+
+local function GetPreview(frame, kind)
+    previews[frame] = previews[frame] or {}
+    local p = previews[frame][kind]
+    if not p then
+        p = { host = CreateFrame("Frame", nil, frame), buttons = {} }
+        p.host:SetSize(1, 1)
+        p.host:SetFrameLevel(frame:GetFrameLevel() + 12)
+        previews[frame][kind] = p
+    end
+    return p
+end
+
+local function UpdatePreviewFor(frame, info)
+    local on = BetterBlizzPlatesDB.nameplateAuraTestMode
+    if not on and not previews[frame] then return end
+    local set = frame.bbpAuraSet
+    local profile = profiles[ProfileKey(info.isFriend and true or false)]
+    for _, kind in ipairs(CONTAINER_KINDS) do
+        local p = previews[frame] and previews[frame][kind]
+        if on then
+            p = GetPreview(frame, kind)
+            local container = set and set[kind]
+            local wanted = container and container.bbpWanted
+            local tiers = wanted and PreviewTiers(profile, kind)
+            if tiers then
+                local centered = info.isFriend and S.centerFriendly or S.centerEnemy
+                local point, relTo, relPoint, x, y
+                if kind == DEBUFFS then
+                    point, relTo, relPoint, x, y = GetDebuffAnchor(frame, centered)
+                elseif kind == BUFFROW and S.buffRow then
+                    point, relTo, relPoint, x, y = GetDebuffAnchor(frame, centered)
+                    if relTo then
+                        local ratio = ContainerScale(DEBUFFS, info.isTarget) / ContainerScale(BUFFROW, info.isTarget)
+                        if profile and profile.debuffsLive then
+                            local perRow = info.isFriend and S.perRowFriendly or S.perRowEnemy
+                            local rows = math.ceil(math.min(S.debuffLimit, 8) / perRow)
+                            local _, debuffCellH = GetCell(DEBUFFS)
+                            local block = rows * debuffCellH + (rows - 1) * S.gapY
+                            y = y + block + S.gapY / ratio
+                        end
+                        x, y = x * ratio, y * ratio
+                    end
+                elseif kind == BUFFROW then
+                    point, relTo, relPoint, x, y = GetSideAnchor(frame, S.buffIconAnchor, S.buffIconX, S.buffIconY)
+                    if relTo and profile and profile.buffsLive then
+                        local cellW = select(1, GetCell(BUFFS))
+                        local step = math.min(S.buffLimit, 3) * (cellW + S.gapX)
+                        if S.buffIconAnchor == "LEFT" then
+                            x = x - step
+                        else
+                            x = x + step
+                        end
+                    end
+                elseif kind == BUFFS then
+                    point, relTo, relPoint, x, y = GetSideAnchor(frame, S.buffIconAnchor, S.buffIconX, S.buffIconY)
+                else
+                    point, relTo, relPoint, x, y = GetSideAnchor(frame, S.ccIconAnchor, S.ccIconX, S.ccIconY)
+                end
+                if not relTo then
+                    p.host:Hide()
+                else
+                    p.host:ClearAllPoints()
+                    p.host:SetPoint(point, relTo, relPoint, x, y)
+                    p.host:SetScale(ContainerScale(kind, info.isTarget))
+
+                    local limit = (kind == DEBUFFS and math.min(S.debuffLimit, 8))
+                        or (IsBuffKind(kind) and math.min(S.buffLimit, 3))
+                        or math.min(S.ccLimit, 2)
+                    for i = 1, limit do
+                        p.buttons[i] = p.buttons[i] or CreateFrame("Frame", nil, p.host)
+                        local tier = tiers[((i - 1) % #tiers) + 1]
+                        DrawMockButton(p.buttons[i], PreviewStyle(kind, tier), i)
+                    end
+                    for i = limit + 1, #p.buttons do p.buttons[i]:Hide() end
+
+                    local live = {}
+                    for i = 1, limit do live[i] = p.buttons[i] end
+                    LayoutMockRow(p.host, live, kind,
+                        info.isFriend and S.perRowFriendly or S.perRowEnemy,
+                        (kind == DEBUFFS or (kind == BUFFROW and S.buffRow)) and centered,
+                        ((kind == BUFFS or (kind == BUFFROW and not S.buffRow)) and S.buffIconAnchor)
+                            or (kind == CC and S.ccIconAnchor) or nil)
+                    p.host:Show()
+                end
+            elseif p then
+                p.host:Hide()
+            end
+        elseif p then
+            p.host:Hide()
+            for _, button in ipairs(p.buttons) do
+                button:SetScript("OnUpdate", nil)
+                button.bbpTicking = nil
+            end
+        end
+    end
+end
+
+BBP.UpdateAuraPreview = UpdatePreviewFor
 
 function BBP.HideNameplateAuraTooltip()
-    if BetterBlizzPlatesDB.hideNameplateAuraTooltip and not BBP.hookedNameplateAuraTooltip then
-        hooksecurefunc(NamePlateAuraItemMixin, "OnEnter", function(self)
-            if self:IsForbidden() then return end
-            self:EnableMouse(false)
-        end)
-        BBP.hookedNameplateAuraTooltip = true
-    end
+    BBP.RefreshAllNameplateAuras()
 end
 
-function BBP.SmokeCheckBootup()
-    -- if not BBP.NoDurationAuraCheck then
-    --     BBP.NoDurationAuraCheck = CreateFrame("Frame")
-    --     BBP.NoDurationAuraCheck:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-    --     BBP.NoDurationAuraCheck:SetScript("OnEvent", TrackAuraAfterCast)
-    -- end
+local hooked = false
+
+function BBP.DisableNameplateAuras()
+    for token in pairs(boundTokens) do
+        BBP.UnbindNameplateAuras(token)
+    end
+
+    if BBP.prdAuraContainer then
+        BBP.prdAuraContainer:SetEnabled(false)
+        BBP.prdAuraContainer:Hide()
+    end
+
+    BBP.UpdateUserAuraSettings()
+    BBP.RestoreBlizzardNameplateAuras()
+end
+
+function BBP.SetupNameplateAuras()
+    if not BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
+        BBP.DisableNameplateAuras()
+        return
+    end
+
+    ApplyBlizzardAuraCVars(false)
+
+    if hooked then
+        BBP.RefreshAllNameplateAuras()
+        return
+    end
+    hooked = true
+
+    BBP.UpdateUserAuraSettings()
+    RebuildProfiles()
+
+    hooksecurefunc(NamePlateUnitFrameMixin, "OnUnitFactionChanged", function(self)
+        if self:IsForbidden() or not self.unit then return end
+        local frame = self
+        local info = BBP.GetNameplateUnitInfo(frame, frame.unit)
+        if info then BBP.BindNameplateAuras(frame.unit, frame, info) end
+    end)
+
+    local events = CreateFrame("Frame")
+    events:RegisterEvent("PLAYER_ENTERING_WORLD")
+    events:RegisterEvent("PLAYER_REGEN_ENABLED")
+    events:RegisterEvent("CVAR_UPDATE")
+    events:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED")
+
+    local TRACKED_CVARS = {
+        nameplateAuraScale = true,
+        nameplateStyle = true,
+        nameplateShowSelf = true,
+    }
+
+    events:SetScript("OnEvent", function(_, event, arg1)
+        if event == "PLAYER_ENTERING_WORLD" then
+            if not BetterBlizzPlatesDB.enableNameplateAuraCustomisation then return end
+            EnqueueSets(MAX_NAMEPLATES)
+            BBP.SetupPRDAuras()
+        elseif event == "CVAR_UPDATE" then
+            if TRACKED_CVARS[arg1] then BBP.RefreshAllNameplateAuras() end
+            AdoptExternalAuraCVarChange(arg1)
+        else
+            if restyleQueued then BBP.RestyleAuraButtons() end
+            if cvarsPending ~= nil then ApplyBlizzardAuraCVars(cvarsPending) end
+        end
+    end)
+
+    EnqueueSets(MAX_NAMEPLATES)
 end

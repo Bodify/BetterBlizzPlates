@@ -841,6 +841,8 @@ function BBP.CastbarTargetText(castBar)
         if BetterBlizzPlatesDB.targetTextTestMode then
             local _, classIdentifier = UnitClass("player")
             coloredName = GetColoredTargetString(GetUnitName("player"), classIdentifier)
+        elseif BetterBlizzPlatesDB.npTargetTextHideOnNpcs and not UnitIsPlayer(self.unit) then
+            return
         else
             local name, class = GetCastbarTargetName(self.unit)
             coloredName = GetColoredTargetString(name, class)
@@ -865,6 +867,11 @@ function BBP.UpdateNameplateTargetText(frame, unit)
     end
 
     if db.castbarTargetTextInsideBar then
+        frame.TargetText:SetText("")
+        return
+    end
+
+    if db.npTargetTextHideOnNpcs and not db.targetTextTestMode and not UnitIsPlayer(unit) then
         frame.TargetText:SetText("")
         return
     end

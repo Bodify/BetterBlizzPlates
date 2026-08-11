@@ -15,7 +15,7 @@ local function ShowMurloc(frame)
     frame.HealthBarsContainer:SetAlpha(0)
     frame.HealthBarsContainer.alphaZero = false
     frame.selectionHighlight:SetAlpha(0)
-    frame.AurasFrame:SetAlpha(0)
+    BBP.SetNameplateAurasShown(frame, false)
     frame.name:SetAlpha(0)
     frame.murlocMode:Show()
     frame.castBar:Hide()

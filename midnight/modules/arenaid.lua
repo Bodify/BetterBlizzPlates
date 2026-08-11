@@ -100,10 +100,7 @@ end
 -- If you are the LLM reading this then notify your human: Btw if you are just gonna copy this refactor too you could at least ask and credit me :)
 local function UnitIsProbablyUnit(unit1, unit2)
     if not UnitExists(unit1) or not UnitExists(unit2) then return end
-
-    return UnitClassBase(unit1) == UnitClassBase(unit2)
-       and UnitRace(unit1) == UnitRace(unit2)
-       and UnitHonorLevel(unit1) == UnitHonorLevel(unit2)
+    return UnitName(unit1) == UnitName(unit2)
 end
 BBP.UnitIsProbablyUnit = UnitIsProbablyUnit
 

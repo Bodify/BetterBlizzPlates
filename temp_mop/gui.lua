@@ -8028,6 +8028,12 @@ local function guiPositionAndScale()
         BBP.RefreshAllNameplates()
     end)
     anchorSubTargetText.insideBar:SetPoint("LEFT", anchorSubTargetText.testMode.text, "RIGHT", 0, 0)
+
+    anchorSubTargetText.hideOnNpcs = CreateCheckbox("npTargetTextHideOnNpcs", "Hide on npcs", contentFrame, nil, function()
+        BBP.RefreshAllNameplates()
+    end)
+    anchorSubTargetText.hideOnNpcs:SetPoint("TOPLEFT", anchorSubTargetText.testMode, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubTargetText.hideOnNpcs, "Hide on NPCs", "Only show the target text on player nameplates.")
     do
         local playerName = UnitName("player") or "Player"
         local _, playerClass = UnitClass("player")
