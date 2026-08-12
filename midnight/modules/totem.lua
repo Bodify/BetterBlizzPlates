@@ -103,10 +103,10 @@ BBP.ClearPsyfiendIconAlpha = ClearPsyfiendIconAlpha
 local AF = AuraUtil.AuraFilters
 local TOTEM_AURA_SIZE = 30
 
-local function InitTotemAuraIcon(auraFrame, container, important, level)
+local function InitTotemAuraIcon(auraFrame, container)
     auraFrame:SetSize(TOTEM_AURA_SIZE, TOTEM_AURA_SIZE)
     auraFrame:SetPoint("CENTER", container, "CENTER", 0, 0)
-    auraFrame:SetFrameLevel(container:GetFrameLevel() + level)
+    auraFrame:SetFrameLevel(container:GetFrameLevel() + 2)
 
     local icon = auraFrame:CreateTexture(nil, "ARTWORK")
     icon:SetAllPoints(auraFrame)
@@ -118,10 +118,7 @@ local function InitTotemAuraIcon(auraFrame, container, important, level)
     mask:SetAllPoints(icon)
     icon:AddMaskTexture(mask)
 
-    local color = important and TOTEM_COLOR_GROUNDING
-        or BetterBlizzPlatesDB.totemIndicatorTotemColor
-
-    if not BetterBlizzPlatesDB.totemIndicatorNoGlow and color then
+    if not BetterBlizzPlatesDB.totemIndicatorNoGlow then
         local offset = TOTEM_AURA_SIZE * 0.41
         local glow = auraFrame:CreateTexture(nil, "OVERLAY", nil, 7)
         glow:SetAtlas("clickcast-highlight-spellbook")
@@ -129,7 +126,7 @@ local function InitTotemAuraIcon(auraFrame, container, important, level)
         glow:SetDesaturated(true)
         glow:SetPoint("TOPLEFT", auraFrame, "TOPLEFT", -offset, offset)
         glow:SetPoint("BOTTOMRIGHT", auraFrame, "BOTTOMRIGHT", offset, -offset)
-        glow:SetVertexColor(color[1], color[2], color[3])
+        glow:SetVertexColor(TOTEM_COLOR_GROUNDING[1], TOTEM_COLOR_GROUNDING[2], TOTEM_COLOR_GROUNDING[3])
     end
 
     auraFrame:SetCancelAuraButtons(nil)
@@ -174,12 +171,7 @@ local function CreateTotemAuraContainers(frame)
 
         container:AddAuraSlot("Important", HELPFUL_IMPORTANT, {
             initializeFrame = function(auraFrame)
-                InitTotemAuraIcon(auraFrame, container, true, 2)
-            end,
-        })
-        container:AddAuraSlot("Others", AuraUtil.CreateFilterString(AF.Helpful, "!" .. AF.Important), {
-            initializeFrame = function(auraFrame)
-                InitTotemAuraIcon(auraFrame, container, false, 1)
+                InitTotemAuraIcon(auraFrame, container)
             end,
         })
     end
@@ -203,29 +195,14 @@ local function SetTotemAuraContainerEnabled(container, unit)
     if not container then return end
 
     if not unit then
-        if not container.bbpTotemEnabled then return end
-        container.bbpTotemEnabled = nil
-        container.bbpTotemUnit = nil
         container:SetEnabled(false)
         container:Hide()
         return
     end
 
-    local changed = false
-    if container.bbpTotemUnit ~= unit then
-        container.bbpTotemUnit = unit
-        container:SetUnit(unit)
-        changed = true
-    end
-    if not container.bbpTotemEnabled then
-        container.bbpTotemEnabled = true
-        container:SetEnabled(true)
-        container:Show()
-        changed = true
-    end
-    if changed then
-        container:UpdateAllAuras()
-    end
+    container:SetUnit(unit)
+    container:SetEnabled(true)
+    container:Show()
 end
 
 local function ScheduleTotemCastRecheck(frame)
@@ -242,6 +219,7 @@ end
 
 local function DisableTotemAuraContainer(frame)
     frame.totemRecheckArmed = nil
+    if not frame.totemAuraContainer and not frame.totemTintContainer then return end
     SetTotemAuraContainerEnabled(frame.totemAuraContainer, nil)
     SetTotemAuraContainerEnabled(frame.totemTintContainer, nil)
 end
@@ -325,6 +303,7 @@ end
 function BBP.ApplyTotemAttributes(frame, iconTexture, color, size, duration)
     BBP.CreateTotemComponents(frame, size)
 
+    frame.totemIndicator:Show()
     frame.customIcon:SetTexture(iconTexture)
     frame.customIcon:Show()
 
@@ -539,8 +518,12 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
                     frame.customCooldown:SetAlphaFromBoolean(uninterruptible, 1, 0)
                 end
             end
-        else
-            if frame.totemIndicator then frame.totemIndicator:Hide() end
+        elseif frame.totemIndicator then
+            frame.customIcon:Hide()
+            if frame.glowTexture then frame.glowTexture:Hide() end
+            if frame.customCooldown then frame.customCooldown:Hide() end
+            if frame.animationGroup then frame.animationGroup:Stop() end
+            frame.totemIndicator:Show()
         end
 
         if config.totemIndicatorHideHealthBar then

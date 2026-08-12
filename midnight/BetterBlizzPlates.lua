@@ -483,6 +483,8 @@ local defaultSettings = {
     nameplateAuraBuffsOnPlayers = true,
     nameplateAuraCCOnNpcs = true,
     nameplateAuraCCOnPlayers = true,
+    nameplateAuraBuffsBlizzardInPvE = false,
+    nameplateAuraCCBlizzardInPvE = false,
 
     nameplateAuraMillisecondsBuffs = true,
     nameplateAuraMillisecondsCC = true,
@@ -793,7 +795,6 @@ local defaultSettings = {
     nameplateAuraBuffLimit = 3,
     ccIconLimit = 2,
     nameplateAuraSeparateCCIcon = true,
-    separateAuraBuffRow = true,
 
     nameplateAuraTimerColor = true,
     nameplateAuraTimerBaseColor = {1, 0.82, 0, 1},
@@ -992,12 +993,14 @@ local NAMEPLATE_AURA_SETTINGS = {
 
     "otherNpBuffEnable", "otherNpBuffFilterBlacklist", "otherNpBuffFilterWatchList",
     "otherNpBuffFilterImportantBuffs", "otherNpBuffFilterPurgeable",
+    "otherNpBuffFilterPurgeableAny",
     "otherNpBuffFilterLessMinite", "otherNpBuffFilterOnlyMe", "otherNpBuffPurgeGlow",
     "otherNpdeBuffEnable", "otherNpdeBuffFilterBlacklist", "otherNpdeBuffFilterWatchList",
     "otherNpdeBuffFilterCC", "otherNpdeBuffFilterBlizzard", "otherNpdeBuffFilterLessMinite",
     "otherNpdeBuffFilterOnlyMe", "otherNpdeBuffPandemicGlow", "blizzardDefaultFilterOnlyMine",
     "friendlyNpBuffEnable", "friendlyNpBuffFilterBlacklist", "friendlyNpBuffFilterWatchList",
     "friendlyNpBuffFilterImportantBuffs", "friendlyNpBuffFilterPurgeable",
+    "friendlyNpBuffFilterPurgeableAny",
     "friendlyNpBuffFilterLessMinite", "friendlyNpBuffFilterOnlyMe",
     "friendlyNpdeBuffEnable", "friendlyNpdeBuffFilterBlacklist", "friendlyNpdeBuffFilterWatchList",
     "friendlyNpdeBuffFilterCC", "friendlyNpdeBuffFilterBlizzard",
@@ -1009,7 +1012,7 @@ local NAMEPLATE_AURA_SETTINGS = {
     "nameplateAuraPandemicGlowRGB", "alwaysShowPurgeTexture",
 
     "nameplateAuraSquare", "nameplateAuraTaller", "nameplateAuraPixelBorder",
-    "npColorAuraBorder", "nameplateAuraSeparateCCIcon", "separateAuraBuffRow",
+    "npColorAuraBorder", "nameplateAuraSeparateCCIcon",
     "nameplateAuraRightToLeft", "nameplateAurasEnemyCenteredAnchor",
     "nameplateAurasFriendlyCenteredAnchor",
     "npAuraMagicRGB", "npAuraPoisonRGB", "npAuraCurseRGB", "npAuraDiseaseRGB",
@@ -1024,9 +1027,9 @@ local NAMEPLATE_AURA_SETTINGS = {
     "nameplateDebuffPadding", "sortDurationAuras", "sortDurationAurasReverse",
     "targetNameplateAuraScaleEnabled", "targetNameplateAuraScale",
 
-    "nameplateAuraCCOnPlayers", "nameplateAuraCCOnNpcs",
+    "nameplateAuraCCOnPlayers", "nameplateAuraCCOnNpcs", "nameplateAuraCCBlizzardInPvE",
     "ccIconScale", "ccIconXPos", "ccIconYPos", "ccIconAnchor",
-    "nameplateAuraBuffsOnPlayers", "nameplateAuraBuffsOnNpcs",
+    "nameplateAuraBuffsOnPlayers", "nameplateAuraBuffsOnNpcs", "nameplateAuraBuffsBlizzardInPvE",
     "buffIconScale", "buffIconXPos", "buffIconYPos", "buffIconAnchor",
 
     "showDefaultCooldownNumbersOnNpAuras", "hideNpAuraSwipe",
@@ -1576,33 +1579,6 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
     hideOnEscape = true,
     preferredIndex = 3,
 }
-
-local function UpdateAuraColorsToGreen()
-    if BetterBlizzPlatesDB and BetterBlizzPlatesDB["auraWhitelist"] then
-        for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
-            if entry.entryColors and entry.entryColors.text then
-                -- Update to green color
-                entry.entryColors.text.r = 0
-                entry.entryColors.text.g = 1
-                entry.entryColors.text.b = 0
-            else
-                entry.entryColors = { text = { r = 0, g = 1, b = 0 } }
-            end
-        end
-    end
-end
-
-local function AddAlphaValuesToAuraColors()
-    if BetterBlizzPlatesDB and BetterBlizzPlatesDB["auraWhitelist"] then
-        for _, entry in pairs(BetterBlizzPlatesDB["auraWhitelist"]) do
-            if entry.entryColors and entry.entryColors.text then
-                entry.entryColors.text.a = 1
-            else
-                entry.entryColors = { text = { r = 0, g = 1, b = 0, a = 1 } }
-            end
-        end
-    end
-end
 
 -- Update message
 local function SendUpdateMessage()
@@ -5547,6 +5523,7 @@ local function HandleNamePlateRemoved(unit)
     end
 
     frame.totemRecheckArmed = nil
+    BBP.DisableTotemAuraContainer(frame)
 
     if frame.BetterBlizzPlates and frame.BetterBlizzPlates.config then
         local config = frame.BetterBlizzPlates.config
@@ -7089,7 +7066,11 @@ local function HandleNamePlateAdded(unit)
     if config.showLastNameNpc then ShowLastNameOnlyNpc(frame) end
 
     -- Show totem icons
-    if config.totemIndicator and info.isNpc then BBP.ApplyTotemIconsAndColorNameplate(frame) end
+    if config.totemIndicator and info.isNpc then
+        BBP.ApplyTotemIconsAndColorNameplate(frame)
+    else
+        BBP.DisableTotemAuraContainer(frame)
+    end
 
     -- Color nameplate depending on aura
     if config.auraColor then BBP.AuraColor(frame) end
@@ -7349,6 +7330,8 @@ function BBP.RefreshAllNameplates()
 
             if BetterBlizzPlatesDB.totemIndicator and info.isNpc then
                 BBP.ApplyTotemIconsAndColorNameplate(frame)
+            else
+                BBP.DisableTotemAuraContainer(frame)
             end
 
             if frame.castBar then
@@ -8801,6 +8784,35 @@ First:SetScript("OnEvent", function(_, event, addonName)
                         StaticPopup_Show("BBP_STACKFIX")
                     end)
                 end
+            end
+
+            if not db.midnightAuraListsCleaned then
+                local removedNameEntries = 0
+                for _, listName in ipairs({ "auraBlacklist", "auraWhitelist" }) do
+                    local list = db[listName]
+                    if type(list) == "table" then
+                        for i = #list, 1, -1 do
+                            local entry = list[i]
+                            if type(entry) ~= "table" or not tonumber(entry.id) then
+                                table.remove(list, i)
+                                removedNameEntries = removedNameEntries + 1
+                            end
+                        end
+                    end
+                end
+
+                db.midnightAuraListsCleaned = true
+                if removedNameEntries > 0 then
+                    BBP.auraListNeedsUpdate = true
+                end
+            end
+
+            if not db.optimizedAuraLists then
+                for _, listName in ipairs({ "auraBlacklist", "auraWhitelist" }) do
+                    db[listName] = BBP.NormalizeAuraList(db[listName])
+                end
+                db.optimizedAuraLists = true
+                BBP.auraListNeedsUpdate = true
             end
 
             if db.nameplateMinScale and db.nameplateMaxScale then

@@ -79,6 +79,17 @@ local DISPEL_KEYS = { "None", "Magic", "Curse", "Disease", "Poison", "Bleed" }
 local S = {}
 BBP.auraSettings = S
 
+local inPvEInstance = false
+
+local function RefreshPvEState()
+    local inInstance, instanceType = IsInInstance()
+    local now = (inInstance and (instanceType == "party" or instanceType == "raid"
+        or instanceType == "scenario")) and true or false
+    if now == inPvEInstance then return false end
+    inPvEInstance = now
+    return true
+end
+
 local GetDurationCurve
 
 local function GetColor(key, r, g, b, a)
@@ -128,28 +139,64 @@ local function FillSet(dst, src)
     for spellID in pairs(src) do dst[spellID] = true end
 end
 
-local function EntrySpellID(entry)
-    if type(entry) ~= "table" then return nil end
-    if entry.id then return entry.id end
-    if entry.name then
-        local info = C_Spell.GetSpellInfo(entry.name)
-        return info and info.spellID or nil
+local AURA_LIST_FLAGS = { "onlyMine", "pandemic", "important" }
+
+function BBP.NormalizeAuraList(list)
+    local normalized = {}
+    if type(list) ~= "table" then return normalized end
+
+    local keysAreSpellIDs = #list == 0
+
+    for key, entry in pairs(list) do
+        if type(entry) == "table" then
+            local spellID = tonumber(entry.id) or (keysAreSpellIDs and tonumber(key)) or nil
+            if spellID then
+                local flags = type(entry.flags) == "table" and entry.flags or entry
+                local newEntry = { id = spellID }
+
+                if type(entry.name) == "string" and entry.name ~= "" then
+                    newEntry.name = entry.name
+                end
+                if type(entry.comment) == "string" and entry.comment ~= "" then
+                    newEntry.comment = entry.comment
+                end
+                for _, flag in ipairs(AURA_LIST_FLAGS) do
+                    if flags[flag] then newEntry[flag] = true end
+                end
+
+                normalized[spellID] = newEntry
+            end
+        end
     end
-    return nil
+
+    return normalized
 end
 
-local listUnresolved = false
+function BBP.EnsureAuraListsKeyed()
+    local converted = false
+    for _, listName in ipairs({ "auraBlacklist", "auraWhitelist" }) do
+        local list = BetterBlizzPlatesDB[listName]
+        if type(list) ~= "table" then
+            BetterBlizzPlatesDB[listName] = {}
+        elseif #list > 0 then
+            BetterBlizzPlatesDB[listName] = BBP.NormalizeAuraList(list)
+            converted = true
+        end
+    end
+    if converted then
+        BBP.auraListNeedsUpdate = true
+    end
+    return converted
+end
 
 local function CollectList(listName, into, onlyMineInto, pandemicInto, importantInto, importantMineInto)
     local list = BetterBlizzPlatesDB[listName]
     if type(list) ~= "table" then return end
-    for _, entry in pairs(list) do
-        local spellID = EntrySpellID(entry)
-        if not spellID then listUnresolved = true end
+    for key, entry in pairs(list) do
+        local spellID = type(entry) == "table" and (tonumber(entry.id) or tonumber(key))
         if spellID then
-            local flags = entry.flags
-            local onlyMine = flags and flags.onlyMine
-            local important = importantInto and flags and flags.important
+            local onlyMine = entry.onlyMine
+            local important = importantInto and entry.important
 
             if important then
                 if onlyMine then
@@ -163,7 +210,7 @@ local function CollectList(listName, into, onlyMineInto, pandemicInto, important
                 into[spellID] = true
             end
 
-            if pandemicInto and not important and flags and flags.pandemic then
+            if pandemicInto and not important and entry.pandemic then
                 pandemicInto[spellID] = true
             end
         end
@@ -248,6 +295,7 @@ local function ReadFilterBlock(prefix)
         important     = db[prefix .. "FilterImportantBuffs"],
         cc            = db[prefix .. "FilterCC"],
         purgeable     = db[prefix .. "FilterPurgeable"],
+        anyDispel     = db[prefix .. "FilterPurgeableAny"],
         blizzard      = db[prefix .. "FilterBlizzard"],
         lessThanMin   = db[prefix .. "FilterLessMinite"],
         onlyMine      = db[prefix .. "FilterOnlyMe"],
@@ -307,9 +355,6 @@ function BBP.UpdateUserAuraSettings()
     S.buffIconX = db.buffIconXPos or 0
     S.buffIconY = db.buffIconYPos or 0
 
-    if db.separateAuraBuffRow == nil then db.separateAuraBuffRow = true end
-    S.buffRow = db.separateAuraBuffRow and true or false
-
     S.showCdText = db.showDefaultCooldownNumbersOnNpAuras ~= false
     S.cdTextScale = db.defaultNpAuraCdSize or 0.6
     S.hideSwipe = db.hideNpAuraSwipe
@@ -325,12 +370,18 @@ function BBP.UpdateUserAuraSettings()
     S.ccOnNpcs = db.nameplateAuraCCOnNpcs ~= false
     S.ccOnPlayers = db.nameplateAuraCCOnPlayers ~= false
 
+    S.inPvE = inPvEInstance
+    S.blizzardCCInPvE = db.nameplateAuraCCBlizzardInPvE and true or false
+    S.blizzardBuffsInPvE = db.nameplateAuraBuffsBlizzardInPvE and true or false
+
     S.msBuffs = db.nameplateAuraMillisecondsBuffs ~= false
     S.msCC = db.nameplateAuraMillisecondsCC ~= false
 
     S.debuffPadding = tonumber(db.nameplateDebuffPadding) or 0
 
     S.classIconCC = (db.classIndicator and db.classIndicatorCCAuras) and true or false
+    S.ccOverlay = (S.classIconCC or (db.partyPointer and db.partyPointerCCAuras)) and true or false
+    S.ccOverlayReplacesIcon = S.ccOverlay and not inPvEInstance
 
     S.hideTooltips = db.hideNameplateAuraTooltip
     S.colorBorderByType = db.npColorAuraBorder
@@ -394,13 +445,12 @@ BBP.auraLists = lists
 local function ListSignature(listName, parts)
     local list = BetterBlizzPlatesDB[listName]
     if type(list) ~= "table" then return end
-    for _, entry in pairs(list) do
+    for key, entry in pairs(list) do
         if type(entry) == "table" then
-            local flags = entry.flags
-            parts[#parts + 1] = tostring(entry.id or entry.name)
-            parts[#parts + 1] = ((flags and flags.onlyMine) and "m" or "")
-                .. ((flags and flags.pandemic) and "p" or "")
-                .. ((flags and flags.important) and "i" or "")
+            parts[#parts + 1] = tostring(entry.id or key)
+            parts[#parts + 1] = (entry.onlyMine and "m" or "")
+                .. (entry.pandemic and "p" or "")
+                .. (entry.important and "i" or "")
         end
     end
 end
@@ -408,19 +458,20 @@ end
 local listSignature
 
 function BBP.RefreshSpellLists()
+    BBP.EnsureAuraListsKeyed()
+
     local parts = { "bl" }
     ListSignature("auraBlacklist", parts)
     parts[#parts + 1] = "wl"
     ListSignature("auraWhitelist", parts)
     local signature = table.concat(parts, ":")
 
-    if listSignature == signature and not listUnresolved then return end
+    if listSignature == signature then return end
     listSignature = signature
     listGeneration = listGeneration + 1
     wipe(mergeCache)
     wipe(subtractCache)
 
-    listUnresolved = false
     wipe(lists.blacklist); wipe(lists.watch); wipe(lists.watchMine); wipe(lists.watchPandemic)
     wipe(lists.watchImportant); wipe(lists.watchImportantMine)
     CollectList("auraBlacklist", lists.blacklist)
@@ -592,8 +643,7 @@ end
 local GLOW_PAD = 2
 
 local function GlowPad(style)
-    if not style.pixelBorder and (style.kind == BUFFS or style.kind == CC
-        or (style.kind == BUFFROW and not S.buffRow)) then
+    if not style.pixelBorder and (style.kind == BUFFS or style.kind == CC) then
         return 0
     end
     return GLOW_PAD
@@ -896,7 +946,7 @@ local function BuildStyle(kind, groupKey, standalone)
     local pandemicOn = (not categoryGroup)
         and ((groupKey == "WatchPandemic") or (pandemicTier and S.pandemicGlow))
 
-    local inRow = (kind == DEBUFFS) or (kind == BUFFROW and S.buffRow and not standalone)
+    local inRow = (kind == DEBUFFS) or (kind == BUFFROW and not standalone)
 
     local width, height, texCoord
     if inRow then
@@ -997,7 +1047,7 @@ local function BuildProfile(isFriend)
     local dLimit = dEnabled and S.debuffLimit or 0
     local noCC = S.separateCC and ("!" .. AF.CrowdControl) or nil
 
-    local ccWanted = debuffCfg.cc and not (isFriend and S.classIconCC)
+    local ccWanted = debuffCfg.cc and not (isFriend and S.ccOverlayReplacesIcon)
 
     local watchLiveD = (dEnabled and debuffCfg.watchlist) and true or false
     local plainLiveD = dEnabled
@@ -1125,21 +1175,19 @@ local function BuildProfile(isFriend)
         lists.watchImportant, lists.watchImportantMine)
     local watchAllBSafe = MergeSets(watchBSafe, lists.watchMineSafe,
         lists.watchImportantSafe, lists.watchImportantMineSafe)
-    local buffExclude = ExcludeSet(MergeSets(blacklistB, watchAllB),
-        MergeSets(lists.blacklistSafe, watchAllBSafe), canFilterHelpful)
 
     local watchLive = (bEnabled and buffCfg.watchlist) and true or false
-    local plainLive = bEnabled
-        and not (buffCfg.important or buffCfg.purgeable or buffCfg.watchlist)
+    local purgeOn = (bEnabled and buffCfg.purgeable) and true or false
+    local underMin = (bEnabled and buffCfg.lessThanMin) and true or false
+    local purgeToken = buffCfg.anyDispel and AF.Dispellable or AF.RaidPlayerDispellable
+    local plainLive = bEnabled and (underMin or not (watchLive or purgeOn))
     local buffsMineOnly = buffCfg.onlyMine and true or false
-
-    local defOn = bEnabled and buffCfg.important
+    local defOn = (bEnabled and buffCfg.important) and true or false
     local defExclude = ExcludeSet(blacklistB, lists.blacklistSafe, canFilterHelpful)
 
+
     local function CategoryFilter(...)
-        local parts = { AF.Helpful, AF.IncludeNameplateOnly, ... }
-        if buffsMineOnly then parts[#parts + 1] = AF.Player end
-        return CreateFilterString(unpack(parts))
+        return CreateFilterString(AF.Helpful, AF.IncludeNameplateOnly, ...)
     end
 
     out.buffs.DefBig = {
@@ -1161,7 +1209,7 @@ local function BuildProfile(isFriend)
     out.buffrow.Watch = {
         filter = BuffFilter("!" .. AF.Player),
         filters = { includeSpellIDs = watchBSet, excludeSpellIDs = blacklistB },
-        max = (watchLive and not buffsMineOnly) and watchBMax or 0,
+        max = watchLive and watchBMax or 0,
     }
 
     local mineTrackedB = MergeSets(lists.watch, lists.watchMine, categorySets.watchBuff)
@@ -1178,7 +1226,7 @@ local function BuildProfile(isFriend)
     out.buffrow.WatchImportant = {
         filter = BuffFilter("!" .. AF.Player),
         filters = { includeSpellIDs = impBSet, excludeSpellIDs = blacklistB },
-        max = (bEnabled and not buffsMineOnly) and impBMax or 0,
+        max = bEnabled and impBMax or 0,
     }
 
     local impBMineSet, impBMineMax = IncludeOrZero(
@@ -1204,30 +1252,6 @@ local function BuildProfile(isFriend)
         max = (bEnabled and splitPandemicB) and rowLimit or 0,
     }
 
-    local claimedB = watchLive and buffExclude or defExclude
-
-    out.buffs.Important = {
-        filter = CategoryFilter(NOT_BIG, NOT_EXT, AF.Important),
-        filters = {
-            excludeSpellIDs = claimedB,
-            maxDuration = buffCfg.lessThanMin and 60 or nil,
-        },
-        max = (bEnabled and buffCfg.important) and bLimit or 0,
-    }
-
-    out.buffrow.Purgeable = {
-        filter = CategoryFilter(NOT_BIG, NOT_EXT, AF.RaidPlayerDispellable, "!" .. AF.Important),
-        filters = {
-            excludeSpellIDs = claimedB,
-            maxDuration = buffCfg.lessThanMin and 60 or nil,
-        },
-        max = (bEnabled and buffCfg.purgeable) and rowLimit or 0,
-    }
-
-    local function PlainBuffFilter(caster)
-        return CreateFilterString(AF.Helpful, AF.IncludeNameplateOnly, caster)
-    end
-
     local flaggedB = MergeSets(lists.watchImportant, lists.watchImportantMine)
     local flaggedBSafe = MergeSets(lists.watchImportantSafe, lists.watchImportantMineSafe)
     if splitPandemicB then
@@ -1235,10 +1259,43 @@ local function BuildProfile(isFriend)
         flaggedBSafe = MergeSets(flaggedBSafe, lists.watchPandemicSafe)
     end
 
+    local claimedB, claimedBSafe = flaggedB, flaggedBSafe
+    if watchLive then
+        claimedB = MergeSets(claimedB, watchAllB)
+        claimedBSafe = MergeSets(claimedBSafe, watchAllBSafe)
+    end
+
+    local rowExclude = ExcludeSet(MergeSets(blacklistB, claimedB),
+        MergeSets(lists.blacklistSafe, claimedBSafe), canFilterHelpful)
+
+    out.buffs.Important = {
+        filter = CategoryFilter(NOT_BIG, NOT_EXT, AF.Important),
+        filters = { excludeSpellIDs = rowExclude },
+        max = defOn and bLimit or 0,
+    }
+
+    out.buffrow.Purgeable = {
+        filter = defOn
+            and CategoryFilter(NOT_BIG, NOT_EXT, NOT_IMPORTANT, purgeToken)
+            or CategoryFilter(purgeToken),
+        filters = { excludeSpellIDs = rowExclude },
+        max = purgeOn and rowLimit or 0,
+    }
+
+    local function PlainBuffFilter(caster)
+        local parts = { AF.Helpful, AF.IncludeNameplateOnly, caster }
+        if defOn then
+            parts[#parts + 1] = NOT_BIG
+            parts[#parts + 1] = NOT_EXT
+            parts[#parts + 1] = NOT_IMPORTANT
+        end
+        if purgeOn then parts[#parts + 1] = "!" .. purgeToken end
+        return CreateFilterString(unpack(parts))
+    end
+
     local plainFilters = {
-        excludeSpellIDs = ExcludeSet(MergeSets(blacklistB, flaggedB),
-            MergeSets(lists.blacklistSafe, flaggedBSafe), canFilterHelpful),
-        maxDuration = buffCfg.lessThanMin and 60 or nil,
+        excludeSpellIDs = rowExclude,
+        maxDuration = underMin and 60 or nil,
     }
 
     out.buffrow.Mine = {
@@ -1250,7 +1307,7 @@ local function BuildProfile(isFriend)
     out.buffrow.Others = {
         filter = PlainBuffFilter("!" .. AF.Player),
         filters = plainFilters,
-        max = (plainLive and isFriend and not buffsMineOnly) and rowLimit or 0,
+        max = (plainLive and not buffsMineOnly) and rowLimit or 0,
     }
 
     out.cc.CC = {
@@ -1310,7 +1367,7 @@ local function RebuildProfiles()
 end
 
 local function GetCell(kind)
-    if kind == DEBUFFS or (kind == BUFFROW and S.buffRow) then
+    if kind == DEBUFFS or kind == BUFFROW then
         return S.debuffWidth, S.debuffHeight
     end
     return S.buffWidth, S.buffHeight
@@ -1325,7 +1382,7 @@ local function CreateContainer(kind)
     container.bbpApplied = {}
     container.bbpHasGroup = {}
     container:SetFlattensRenderLayers(true)
-    local growsUp = (kind == DEBUFFS) or (kind == BUFFROW and S.buffRow)
+    local growsUp = (kind == DEBUFFS) or (kind == BUFFROW)
     container:SetFlowLayoutAnchorPoint(growsUp and "BOTTOMLEFT" or "TOPLEFT")
     container:SetFlowLayoutGrowthDirection(FlowDirection.Right,
         growsUp and FlowDirection.Up or FlowDirection.Down)
@@ -1439,7 +1496,7 @@ local function ApplyProfile(container, profileKey, perRow)
 
     local cellW, cellH = GetCell(kind)
     local overlap = (kind == BUFFS) and S.buffLimit == 1
-    local wrap = (kind == DEBUFFS or (kind == BUFFROW and S.buffRow))
+    local wrap = (kind == DEBUFFS or kind == BUFFROW)
         and (perRow * cellW + (perRow - 1) * S.gapX)
         or math.huge
     container:SetFlowLayoutMaximumLineSize(wrap)
@@ -1560,30 +1617,6 @@ local function AnchorSideContainer(container, frame, anchor, xPos, yPos)
     SetContainerPoint(container, point, relTo, relPoint, x, y)
 end
 
-local function AnchorChainedSideContainer(container, frame, anchor, xPos, yPos, lead, leadLive)
-    if not (lead and leadLive) then
-        AnchorSideContainer(container, frame, anchor, xPos, yPos)
-        return
-    end
-
-    local point, relPoint, gapX = nil, nil, S.gapX
-    if anchor == "LEFT" then
-        container:SetFlowLayoutAnchorPoint("TOPRIGHT")
-        container:SetFlowLayoutGrowthDirection(FlowDirection.Left, FlowDirection.Down)
-        point, relPoint, gapX = "TOPRIGHT", "TOPLEFT", -gapX
-    elseif anchor == "TOP" then
-        container:SetFlowLayoutAnchorPoint("BOTTOMLEFT")
-        container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Up)
-        point, relPoint = "BOTTOMLEFT", "BOTTOMRIGHT"
-    else
-        container:SetFlowLayoutAnchorPoint("TOPLEFT")
-        container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Down)
-        point, relPoint = "TOPLEFT", "TOPRIGHT"
-    end
-
-    SetContainerPoint(container, point, lead, relPoint, gapX, 0)
-end
-
 local function AnchorBuffRowContainer(container, frame, debuffContainer, centered, debuffsLive, scaleRatio)
     if S.rightToLeft and not centered then
         container:SetFlowLayoutAnchorPoint("BOTTOMRIGHT")
@@ -1617,7 +1650,7 @@ local function ContainerScale(kind, isTarget)
     local scale = S.scale
     if kind == DEBUFFS then scale = scale * S.debuffScale
     elseif kind == BUFFS then scale = scale * S.buffIconScale
-    elseif kind == BUFFROW then scale = scale * (S.buffRow and S.buffScale or S.buffIconScale)
+    elseif kind == BUFFROW then scale = scale * S.buffScale
     else scale = scale * S.ccIconScale end
     if isTarget and S.targetScaleOn then scale = scale * S.targetScale end
     return scale
@@ -1701,12 +1734,32 @@ local BLIZZARD_AURA_BITS = {
     [NamePlateConstants.ENEMY_PLAYER_AURA_DISPLAY_CVAR] = {
         Enum.NamePlateEnemyPlayerAuraDisplay.Buffs,
         Enum.NamePlateEnemyPlayerAuraDisplay.Debuffs,
+        Enum.NamePlateEnemyPlayerAuraDisplay.LossOfControl,
     },
     [NamePlateConstants.FRIENDLY_PLAYER_AURA_DISPLAY_CVAR] = {
         Enum.NamePlateFriendlyPlayerAuraDisplay.Buffs,
         Enum.NamePlateFriendlyPlayerAuraDisplay.Debuffs,
+        Enum.NamePlateFriendlyPlayerAuraDisplay.LossOfControl,
     },
 }
+
+local BLIZZARD_PVE_CVAR = NamePlateConstants.FRIENDLY_PLAYER_AURA_DISPLAY_CVAR
+local BLIZZARD_PVE_BUFF_BIT = Enum.NamePlateFriendlyPlayerAuraDisplay.Buffs
+local BLIZZARD_PVE_CC_BIT = Enum.NamePlateFriendlyPlayerAuraDisplay.LossOfControl
+
+local function BlizzardBitForcedOn(cvarName, index)
+    if not inPvEInstance then return false end
+    if cvarName ~= BLIZZARD_PVE_CVAR then return false end
+    local db = BetterBlizzPlatesDB
+    if db.nameplateAuraCCBlizzardInPvE and index == BLIZZARD_PVE_CC_BIT then return true end
+    if db.nameplateAuraBuffsBlizzardInPvE and index == BLIZZARD_PVE_BUFF_BIT then return true end
+    return false
+end
+
+local function BlizzardFriendlyMasterForcedOn()
+    return BlizzardBitForcedOn(BLIZZARD_PVE_CVAR, BLIZZARD_PVE_CC_BIT)
+        or BlizzardBitForcedOn(BLIZZARD_PVE_CVAR, BLIZZARD_PVE_BUFF_BIT)
+end
 
 local cvarsPending = nil
 
@@ -1781,7 +1834,11 @@ local function ApplyBlizzardAuraCVars(enabled)
     for cvarName, indices in pairs(BLIZZARD_AURA_BITS) do
         for _, index in ipairs(indices) do
             local value = false
-            if enabled then value = BBP.GetStoredAuraBit(cvarName, index) end
+            if enabled then
+                value = BBP.GetStoredAuraBit(cvarName, index)
+            elseif BlizzardBitForcedOn(cvarName, index) then
+                value = true
+            end
             C_CVar.SetCVarBitfield(cvarName, index, value)
         end
     end
@@ -1789,6 +1846,9 @@ local function ApplyBlizzardAuraCVars(enabled)
     local friendly = "0"
     if enabled then
         friendly = (db.bbpAuraCVarBackup and db.bbpAuraCVarBackup.showDebuffsOnFriendly) or "1"
+    elseif BlizzardFriendlyMasterForcedOn() then
+        -- Friendly debuff bit stays off, so only the handed back icons come back.
+        friendly = "1"
     end
     C_CVar.SetCVar(NamePlateConstants.SHOW_DEBUFFS_ON_FRIENDLY_CVAR, friendly)
 
@@ -1808,13 +1868,13 @@ local function AdoptExternalAuraCVarChange(cvarName)
     if indices then
         local into = backup.bitfields and backup.bitfields[cvarName]
         for _, index in ipairs(indices) do
-            if C_CVar.GetCVarBitfield(cvarName, index) then
+            if not BlizzardBitForcedOn(cvarName, index) and C_CVar.GetCVarBitfield(cvarName, index) then
                 if into then into[tostring(index)] = true end
                 changed = true
             end
         end
     elseif cvarName == NamePlateConstants.SHOW_DEBUFFS_ON_FRIENDLY_CVAR then
-        if C_CVar.GetCVarBool(cvarName) then
+        if not BlizzardFriendlyMasterForcedOn() and C_CVar.GetCVarBool(cvarName) then
             backup.showDebuffsOnFriendly = "1"
             changed = true
         end
@@ -1836,6 +1896,12 @@ function BBP.ReassertBlizzardAuraCVars()
     ApplyBlizzardAuraCVars(false)
 end
 
+function BBP.RefreshBlizzardAuraCVarOverrides()
+    if not BetterBlizzPlatesDB.enableNameplateAuraCustomisation then return end
+    RefreshPvEState()
+    ApplyBlizzardAuraCVars(false)
+end
+
 local boundTokens = {}
 
 local function ShouldShowAuras(info, unit)
@@ -1846,9 +1912,13 @@ local function ShouldShowAuras(info, unit)
 end
 
 local function ShouldShowKind(kind, info)
-    if kind == BUFFS or (kind == BUFFROW and not S.buffRow) then
+    local handback = S.inPvE and info.isPlayer and info.isFriend
+    if kind == BUFFS then
+        if handback and S.blizzardBuffsInPvE then return false end
         return info.isPlayer and S.buffsOnPlayers or (not info.isPlayer and S.buffsOnNpcs)
     elseif kind == CC then
+        if handback and S.blizzardCCInPvE then return false end
+        if info.isPlayer and info.isFriend and S.ccOverlayReplacesIcon then return false end
         return info.isPlayer and S.ccOnPlayers or (not info.isPlayer and S.ccOnNpcs)
     end
     return true
@@ -1910,15 +1980,10 @@ function BBP.BindNameplateAuras(unit, frame, info)
                 AnchorSideContainer(container, frame, S.buffIconAnchor, S.buffIconX, S.buffIconY)
             elseif kind == BUFFROW then
                 local profile = profiles[profileKey]
-                if S.buffRow then
-                    AnchorBuffRowContainer(container, frame, set[DEBUFFS],
-                        info.isFriend and S.centerFriendly or S.centerEnemy,
-                        profile and profile.debuffsLive,
-                        ContainerScale(DEBUFFS, isTarget) / ContainerScale(BUFFROW, isTarget))
-                else
-                    AnchorChainedSideContainer(container, frame, S.buffIconAnchor,
-                        S.buffIconX, S.buffIconY, set[BUFFS], profile and profile.buffsLive)
-                end
+                AnchorBuffRowContainer(container, frame, set[DEBUFFS],
+                    info.isFriend and S.centerFriendly or S.centerEnemy,
+                    profile and profile.debuffsLive,
+                    ContainerScale(DEBUFFS, isTarget) / ContainerScale(BUFFROW, isTarget))
             else
                 AnchorSideContainer(container, frame, S.ccIconAnchor, S.ccIconX, S.ccIconY)
             end
@@ -2328,7 +2393,7 @@ local function LayoutMockRow(host, buttons, kind, perRow, centered, sideAnchor)
     local count = #buttons
     if count == 0 then return end
 
-    local rowMode = (kind == DEBUFFS) or (kind == BUFFROW and S.buffRow)
+    local rowMode = (kind == DEBUFFS) or (kind == BUFFROW)
 
     if not rowMode then
         for i, button in ipairs(buttons) do
@@ -2433,7 +2498,7 @@ local function UpdatePreviewFor(frame, info)
                 local point, relTo, relPoint, x, y
                 if kind == DEBUFFS then
                     point, relTo, relPoint, x, y = GetDebuffAnchor(frame, centered)
-                elseif kind == BUFFROW and S.buffRow then
+                elseif kind == BUFFROW then
                     point, relTo, relPoint, x, y = GetDebuffAnchor(frame, centered)
                     if relTo then
                         local ratio = ContainerScale(DEBUFFS, info.isTarget) / ContainerScale(BUFFROW, info.isTarget)
@@ -2445,17 +2510,6 @@ local function UpdatePreviewFor(frame, info)
                             y = y + block + S.gapY / ratio
                         end
                         x, y = x * ratio, y * ratio
-                    end
-                elseif kind == BUFFROW then
-                    point, relTo, relPoint, x, y = GetSideAnchor(frame, S.buffIconAnchor, S.buffIconX, S.buffIconY)
-                    if relTo and profile and profile.buffsLive then
-                        local cellW = select(1, GetCell(BUFFS))
-                        local step = math.min(S.buffLimit, 3) * (cellW + S.gapX)
-                        if S.buffIconAnchor == "LEFT" then
-                            x = x - step
-                        else
-                            x = x + step
-                        end
                     end
                 elseif kind == BUFFS then
                     point, relTo, relPoint, x, y = GetSideAnchor(frame, S.buffIconAnchor, S.buffIconX, S.buffIconY)
@@ -2483,8 +2537,8 @@ local function UpdatePreviewFor(frame, info)
                     for i = 1, limit do live[i] = p.buttons[i] end
                     LayoutMockRow(p.host, live, kind,
                         info.isFriend and S.perRowFriendly or S.perRowEnemy,
-                        (kind == DEBUFFS or (kind == BUFFROW and S.buffRow)) and centered,
-                        ((kind == BUFFS or (kind == BUFFROW and not S.buffRow)) and S.buffIconAnchor)
+                        (kind == DEBUFFS or kind == BUFFROW) and centered,
+                        (kind == BUFFS and S.buffIconAnchor)
                             or (kind == CC and S.ccIconAnchor) or nil)
                     p.host:Show()
                 end
@@ -2529,6 +2583,7 @@ function BBP.SetupNameplateAuras()
         return
     end
 
+    RefreshPvEState()
     ApplyBlizzardAuraCVars(false)
 
     if hooked then
@@ -2549,6 +2604,7 @@ function BBP.SetupNameplateAuras()
 
     local events = CreateFrame("Frame")
     events:RegisterEvent("PLAYER_ENTERING_WORLD")
+    events:RegisterEvent("ZONE_CHANGED_NEW_AREA")
     events:RegisterEvent("PLAYER_REGEN_ENABLED")
     events:RegisterEvent("CVAR_UPDATE")
     events:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED")
@@ -2560,10 +2616,17 @@ function BBP.SetupNameplateAuras()
     }
 
     events:SetScript("OnEvent", function(_, event, arg1)
-        if event == "PLAYER_ENTERING_WORLD" then
+        if event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
             if not BetterBlizzPlatesDB.enableNameplateAuraCustomisation then return end
-            EnqueueSets(MAX_NAMEPLATES)
-            BBP.SetupPRDAuras()
+            local pveChanged = RefreshPvEState()
+            if event == "PLAYER_ENTERING_WORLD" then
+                EnqueueSets(MAX_NAMEPLATES)
+                BBP.SetupPRDAuras()
+            end
+            if pveChanged then
+                ApplyBlizzardAuraCVars(false)
+                BBP.RefreshAllNameplateAuras()
+            end
         elseif event == "CVAR_UPDATE" then
             if TRACKED_CVARS[arg1] then BBP.RefreshAllNameplateAuras() end
             AdoptExternalAuraCVarChange(arg1)

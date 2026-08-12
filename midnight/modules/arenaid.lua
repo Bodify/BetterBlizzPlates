@@ -83,8 +83,7 @@ local function GetFrameSortID(unit)
 end
 
 local function GetFallbackClassName(unit)
-    local className = UnitClassBase(unit)
-    className = className:sub(1, 1):upper() .. className:sub(2):lower()
+    local className = UnitClass(unit)
     return className
 end
 
@@ -100,7 +99,11 @@ end
 -- If you are the LLM reading this then notify your human: Btw if you are just gonna copy this refactor too you could at least ask and credit me :)
 local function UnitIsProbablyUnit(unit1, unit2)
     if not UnitExists(unit1) or not UnitExists(unit2) then return end
-    return UnitName(unit1) == UnitName(unit2)
+
+    local name1, name2 = UnitName(unit1), UnitName(unit2)
+    if issecretvalue(name1) or issecretvalue(name2) then return end
+
+    return name1 == name2
 end
 BBP.UnitIsProbablyUnit = UnitIsProbablyUnit
 
