@@ -1394,10 +1394,12 @@ end
 local function BigIconOn(kind, isFriend, isPlayer)
     if kind == CC then
         if not isPlayer then return S.ccOnNpcs end
-        return isFriend and S.ccOnFriendlyPlayers or S.ccOnEnemyPlayers
+        if isFriend then return S.ccOnFriendlyPlayers end
+        return S.ccOnEnemyPlayers
     end
     if not isPlayer then return S.buffsOnNpcs end
-    return isFriend and S.buffsOnFriendlyPlayers or S.buffsOnEnemyPlayers
+    if isFriend then return S.buffsOnFriendlyPlayers end
+    return S.buffsOnEnemyPlayers
 end
 
 local function IncludeOrZero(set, safeSet, canFilter, limit)
@@ -2192,11 +2194,13 @@ local function GetSideAnchor(frame, kind, anchor, xPos, yPos)
 end
 
 local function CenteredDebuffs(isFriend)
-    return (isFriend and S.centerFriendlyDebuffs or S.centerEnemyDebuffs) and true or false
+    if isFriend then return S.centerFriendlyDebuffs and true or false end
+    return S.centerEnemyDebuffs and true or false
 end
 
 local function CenteredBuffs(isFriend)
-    return (isFriend and S.centerFriendlyBuffs or S.centerEnemyBuffs) and true or false
+    if isFriend then return S.centerFriendlyBuffs and true or false end
+    return S.centerEnemyBuffs and true or false
 end
 
 local function SetRowFlow(container, centered)

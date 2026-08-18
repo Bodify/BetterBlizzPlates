@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.1.2b
+## Midnight
+### Bugfix
+- Fix oopsie on friend check for Big CC/Buff Icon showing them when turned off.
+
 # BetterBlizzPlates 2.1.2
 ## Midnight
 ### New
