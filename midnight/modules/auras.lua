@@ -8,22 +8,23 @@ local DispelStyle = Enum.CustomAuraButtonDispelTypeTextureStyle
 
 local strsub = string.sub
 
-local CDM_MASK          = "UI-HUD-CoolDownManager-Mask"
-local CDM_BEZEL         = "UI-HUD-CoolDownManager-IconOverlay"
-local CDM_SWIPE         = "Interface\\HUD\\UI-HUD-CoolDownManager-Icon-Swipe"
-local CDM_EDGE          = "Interface\\Cooldown\\UI-HUD-ActionBar-SecondaryCooldown"
-local FLAT_SWIPE        = "Interface\\Buttons\\WHITE8X8"
+local CDM = {
+    mask      = "UI-HUD-CoolDownManager-Mask",
+    bezel     = "UI-HUD-CoolDownManager-IconOverlay",
+    swipe     = "Interface\\HUD\\UI-HUD-CoolDownManager-Icon-Swipe",
+    edge      = "Interface\\Cooldown\\UI-HUD-ActionBar-SecondaryCooldown",
+    flatSwipe = "Interface\\Buttons\\WHITE8X8",
+}
 
-local BEZEL_BASE        = 25
-local BEZEL_INSET_X     = 6
-local BEZEL_INSET_Y     = 5
-local BEZEL_TRIM_LEFT   = 0.5
-local BEZEL_TRIM_RIGHT  = 0.5
+local BEZEL = { base = 25, insetX = 6, insetY = 5, trimLeft = 0.5, trimRight = 0.5, trim = 0.5 }
 
 local BORDER_THICKNESS  = 1
 local MILLISECOND_THRESHOLD = 6
 local EDGE_SCALE        = 1.4142
 local COUNTDOWN_FONT    = "GameFontHighlightOutline"
+local COUNTDOWN_FONT_SIZE = 12
+local DISPEL_BORDER_ATLAS = "orderhalltalents-spellborder-yellow"
+local DISPEL_BORDER_INSET = 0.05
 
 local GLOW_ATLAS        = "newplayertutorial-drag-slotgreen"
 local PURGE_ATLAS       = "newplayertutorial-drag-slotblue"
@@ -37,12 +38,26 @@ local function IsBuffKind(kind)
     return kind == BUFFS or kind == BUFFROW
 end
 
-local DEBUFF_GROUPS = { "CC", "Important", "WatchPandemic", "WatchImportantMine", "WatchImportant",
-                        "Watch", "WatchMine", "Mine", "Others" }
+local ENLARGED_GROUPS = {
+    EnlargedImportant = true, EnlargedImportantMine = true,
+    Enlarged = true, EnlargedMine = true,
+}
+
+local DEBUFF_GROUPS = { "CC", "OtherCC", "Important",
+                        "WatchPandemic", "WatchImportantMine", "WatchImportant",
+                        "Watch", "WatchMine", "Purgeable", "Mine", "Others",
+                        "EnlargedImportant", "EnlargedImportantMine", "Enlarged", "EnlargedMine" }
 local BUFF_GROUPS   = { "DefBig", "DefExt", "Important" }
-local BUFFROW_GROUPS = { "WatchPandemic", "WatchImportantMine", "WatchImportant",
-                         "Watch", "WatchMine", "Purgeable", "Mine", "Others" }
-local CC_GROUPS     = { "CC" }
+local BUFFROW_GROUPS = { "DefBig", "DefExt", "Important",
+                         "WatchPandemic", "WatchImportantMine", "WatchImportant",
+                         "Watch", "WatchMine", "Purgeable", "Mine", "Others",
+                         "EnlargedImportant", "EnlargedImportantMine", "Enlarged", "EnlargedMine" }
+local CC_GROUPS     = { "CC", "OtherCC" }
+
+local function IsCCGroup(kind, groupKey)
+    if kind == CC then return true end
+    return kind == DEBUFFS and (groupKey == "CC" or groupKey == "OtherCC")
+end
 
 local GROUPS_BY_KIND = {
     [DEBUFFS] = DEBUFF_GROUPS,
@@ -51,21 +66,73 @@ local GROUPS_BY_KIND = {
     [CC]      = CC_GROUPS,
 }
 
-local GLOW_TIERS = {
-    [DEBUFFS] = { CC = "cc", Important = "important",
-                  WatchImportant = "important", WatchImportantMine = "important" },
-    [BUFFS]   = { DefBig = "defensive", DefExt = "defensive", Important = "important" },
-    [BUFFROW] = { WatchImportant = "important", WatchImportantMine = "important" },
-    [CC]      = { CC = "cc" },
+local DRAW_ORDER = {
+    [DEBUFFS] = {
+        enlarged = { "EnlargedImportant", "EnlargedImportantMine", "Enlarged", "EnlargedMine" },
+        rest     = { "CC", "OtherCC", "Important",
+                     "WatchImportant", "WatchImportantMine", "WatchPandemic", "Watch", "WatchMine",
+                     "Purgeable", "Mine", "Others" },
+    },
+    [BUFFROW] = {
+        enlarged = { "EnlargedImportant", "EnlargedImportantMine", "Enlarged", "EnlargedMine" },
+        rest     = { "Important", "DefBig", "DefExt",
+                     "WatchImportant", "WatchImportantMine", "WatchPandemic", "Watch", "WatchMine",
+                     "Purgeable", "Mine", "Others" },
+    },
+    [BUFFS] = { rest = BUFF_GROUPS },
+    [CC]    = { rest = CC_GROUPS },
 }
 
-local WHITELIST_GLOW_GROUPS = { WatchImportant = true, WatchImportantMine = true }
+local function BuildLayoutIndex(enlargedFirst)
+    local out = {}
+    for kind, spec in pairs(DRAW_ORDER) do
+        local map, index = {}, 1
+
+        local function Append(list)
+            if not list then return end
+            for _, groupKey in ipairs(list) do
+                map[groupKey] = index
+                index = index + 1
+            end
+        end
+
+        if enlargedFirst then Append(spec.enlarged) end
+        Append(spec.rest)
+        if not enlargedFirst then Append(spec.enlarged) end
+
+        out[kind] = map
+    end
+    return out
+end
+
+local LAYOUT_INDEX = {
+    [true]  = BuildLayoutIndex(true),
+    [false] = BuildLayoutIndex(false),
+}
+
+local GLOW_TIERS = {
+    [DEBUFFS] = { CC = "cc", OtherCC = "cc", Important = "important",
+                  WatchImportant = "important", WatchImportantMine = "important",
+                  EnlargedImportant = "enlarged", EnlargedImportantMine = "enlarged" },
+    [BUFFS]   = { DefBig = "defensive", DefExt = "defensive", Important = "important" },
+    [BUFFROW] = { DefBig = "defensive", DefExt = "defensive", Important = "important",
+                  WatchImportant = "important", WatchImportantMine = "important",
+                  EnlargedImportant = "enlarged", EnlargedImportantMine = "enlarged" },
+    [CC]      = { CC = "cc", OtherCC = "cc" },
+}
+
+local WHITELIST_GLOW_GROUPS = {
+    WatchImportant = true, WatchImportantMine = true,
+    EnlargedImportant = true, EnlargedImportantMine = true,
+}
 
 local BUFF_STACK_LEVELS = { Important = 3, DefBig = 2, DefExt = 1 }
-
+local CC_STACK_LEVELS = { CC = 2, OtherCC = 1 }
 local PANDEMIC_GROUPS = {
-    [DEBUFFS] = { Mine = true, WatchMine = true, WatchPandemic = true },
-    [BUFFROW] = { Mine = true, WatchMine = true, WatchPandemic = true },
+    [DEBUFFS] = { Mine = true, WatchMine = true, WatchPandemic = true,
+                  WatchImportantMine = true, EnlargedMine = true, EnlargedImportantMine = true },
+    [BUFFROW] = { Mine = true, WatchMine = true, WatchPandemic = true,
+                  WatchImportantMine = true, EnlargedMine = true, EnlargedImportantMine = true },
 }
 
 local SORT_METHODS = {
@@ -75,6 +142,45 @@ local SORT_METHODS = {
 }
 
 local DISPEL_KEYS = { "None", "Magic", "Curse", "Disease", "Poison", "Bleed" }
+local PURGE = {
+    dispels = {
+        { spell = 370,    types = { "Magic" } },                -- Purge (Shaman)
+        { spell = 528,    types = { "Magic" } },                -- Dispel Magic (Priest)
+        { spell = 30449,  types = { "Magic" } },                -- Spellsteal (Mage)
+        { spell = 278326, types = { "Magic" } },                -- Consume Magic (Demon Hunter)
+        { spell = 19505,  types = { "Magic" }, pet = true },    -- Devour Magic (Felhunter)
+        { spell = 19801,  types = { "Magic", "Enrage" } },      -- Tranquilizing Shot (Hunter)
+        { spell = 2908,   types = { "Enrage" } },               -- Soothe (Druid)
+        { spell = 5938,   types = { "Enrage" } },               -- Shiv (Rogue)
+    },
+    types = { "Magic", "Enrage" },
+    asset = { asset = PURGE_ATLAS },
+    own = {},
+    signature = "",
+}
+PURGE.all = { Magic = PURGE.asset, Enrage = PURGE.asset }
+
+local function RefreshOffensiveDispels()
+    local own, parts = {}, {}
+
+    for _, entry in ipairs(PURGE.dispels) do
+        if IsSpellKnownOrOverridesKnown(entry.spell, entry.pet) then
+            for _, dispelType in ipairs(entry.types) do own[dispelType] = true end
+        end
+    end
+
+    for _, dispelType in ipairs(PURGE.types) do
+        if own[dispelType] then parts[#parts + 1] = dispelType end
+    end
+
+    local signature = table.concat(parts, ",")
+    if signature == PURGE.signature then return false end
+    PURGE.signature = signature
+
+    wipe(PURGE.own)
+    for _, dispelType in ipairs(parts) do PURGE.own[dispelType] = PURGE.asset end
+    return true
+end
 
 local S = {}
 BBP.auraSettings = S
@@ -122,16 +228,28 @@ local defaultOwnDebuffs = {
     [257284] = true, -- Hunter's Mark
 }
 
+local defaultOtherCC = {
+    -- CC
+    [383005] = true, -- Chrono Loop (Mage)
+    -- Disarms
+    [207777] = true, -- Dismantle (Rogue)
+    [236077] = true, -- Disarm (Warrior)
+    [233759] = true, -- Grapple Weapon (Monk)
+    [407028] = true, -- Sticky Tar Bomb (Hunter)
+    [209749] = true, -- Faerie Swarm (Druid)
+}
 
 local categorySets = {
     watchBuff = {},
     watchDebuff = {},
     ownDebuff = {},
+    otherCC = {},
 }
 local categorySafe = {
     watchBuff = {},
     watchDebuff = {},
     ownDebuff = {},
+    otherCC = {},
 }
 BBP.auraCategorySets = categorySets
 
@@ -139,7 +257,7 @@ local function FillSet(dst, src)
     for spellID in pairs(src) do dst[spellID] = true end
 end
 
-local AURA_LIST_FLAGS = { "onlyMine", "pandemic", "important" }
+local AURA_LIST_FLAGS = { "onlyMine", "pandemic", "important", "enlarged" }
 
 function BBP.NormalizeAuraList(list)
     local normalized = {}
@@ -189,29 +307,38 @@ function BBP.EnsureAuraListsKeyed()
     return converted
 end
 
-local function CollectList(listName, into, onlyMineInto, pandemicInto, importantInto, importantMineInto)
+local function CollectList(listName, into, dst)
     local list = BetterBlizzPlatesDB[listName]
     if type(list) ~= "table" then return end
     for key, entry in pairs(list) do
         local spellID = type(entry) == "table" and (tonumber(entry.id) or tonumber(key))
         if spellID then
-            local onlyMine = entry.onlyMine
-            local important = importantInto and entry.important
-
-            if important then
-                if onlyMine then
-                    importantMineInto[spellID] = true
-                else
-                    importantInto[spellID] = true
-                end
-            elseif onlyMineInto and onlyMine then
-                onlyMineInto[spellID] = true
-            else
+            if not dst then
                 into[spellID] = true
-            end
+            else
+                local onlyMine = entry.onlyMine
+                local important = entry.important
+                local enlarged = entry.enlarged
 
-            if pandemicInto and not important and entry.pandemic then
-                pandemicInto[spellID] = true
+                local bucket
+                if enlarged then
+                    if important then
+                        bucket = onlyMine and dst.enlargedImportantMine or dst.enlargedImportant
+                    else
+                        bucket = onlyMine and dst.enlargedMine or dst.enlarged
+                    end
+                elseif important then
+                    bucket = onlyMine and dst.importantMine or dst.important
+                elseif onlyMine then
+                    bucket = dst.mine
+                else
+                    bucket = into
+                end
+                bucket[spellID] = true
+
+                if not important and not enlarged and entry.pandemic then
+                    dst.pandemic[spellID] = true
+                end
             end
         end
     end
@@ -223,6 +350,7 @@ function BBP.UpdateImportantBuffsAndCCTables()
     FillSet(categorySets.watchBuff, importantGeneralBuffs)
     FillSet(categorySets.watchDebuff, importantGeneralDebuffs)
     FillSet(categorySets.ownDebuff, defaultOwnDebuffs)
+    FillSet(categorySets.otherCC, defaultOtherCC)
 end
 
 local function IsNeverSecret(spellID)
@@ -294,6 +422,7 @@ local function ReadFilterBlock(prefix)
         watchlist     = db[prefix .. "FilterWatchList"],
         important     = db[prefix .. "FilterImportantBuffs"],
         cc            = db[prefix .. "FilterCC"],
+        defensives    = db[prefix .. "FilterDefensives"],
         purgeable     = db[prefix .. "FilterPurgeable"],
         anyDispel     = db[prefix .. "FilterPurgeableAny"],
         blizzard      = db[prefix .. "FilterBlizzard"],
@@ -302,8 +431,18 @@ local function ReadFilterBlock(prefix)
     }
 end
 
+function BBP.ApplyAuraTooltipSpellID(allowOff)
+    local want = BetterBlizzPlatesDB.auraTooltipSpellID and "1" or "0"
+    if want == "0" and not allowOff then return end
+    if C_CVar.GetCVar("tooltipShowAuraSpellIDs") ~= want then
+        C_CVar.SetCVar("tooltipShowAuraSpellIDs", want)
+    end
+end
+
 function BBP.UpdateUserAuraSettings()
     local db = BetterBlizzPlatesDB
+
+    BBP.ApplyAuraTooltipSpellID()
 
     S.enabled = db.enableNameplateAuraCustomisation and true or false
 
@@ -320,43 +459,56 @@ function BBP.UpdateUserAuraSettings()
     end
 
     S.pixelBorder = db.nameplateAuraPixelBorder
-
     S.buffWidth, S.buffHeight = AURA_ITEM_SIZE, AURA_ITEM_SIZE
     S.buffTexCoord = { 0.10, 0.90, 0.10, 0.90 }
-
     S.gapX = db.nameplateAuraWidthGap or 4
     S.gapY = db.nameplateAuraHeightGap or 4
     S.perRowEnemy = db.nameplateAuraRowAmount or 5
     S.perRowFriendly = db.nameplateAuraRowFriendlyAmount or S.perRowEnemy
     S.debuffLimit = db.maxAurasOnNameplate or 12
+    S.buffRowLimit = db.maxBuffsOnNameplate or S.debuffLimit
     S.buffLimit = db.nameplateAuraBuffLimit or 3
     S.ccLimit = db.ccIconLimit or 2
-
     S.debuffPadX = db.nameplateDebuffXPadding or 0
-    S.centerEnemy = db.nameplateAurasEnemyCenteredAnchor
-    S.centerFriendly = db.nameplateAurasFriendlyCenteredAnchor
+    S.centerEnemyBuffs = db.nameplateAurasEnemyCenteredBuffs
+    S.centerEnemyDebuffs = db.nameplateAurasEnemyCenteredDebuffs
+    S.centerFriendlyBuffs = db.nameplateAurasFriendlyCenteredBuffs
+    S.centerFriendlyDebuffs = db.nameplateAurasFriendlyCenteredDebuffs
+    S.blueBuffBorder = db.otherNpBuffBlueBorder and true or false
     S.rightToLeft = db.nameplateAuraRightToLeft
-
-    S.scale = db.nameplateAuraScale or 1
+    S.growDown = db.nameplateAuraGrowDownwards and true or false
+    S.enlargedScale = db.nameplateAuraEnlargedScale or 1
+    S.enlargedSquare = db.nameplateAuraEnlargedSquare ~= false
+    S.sortEnlargedFirst = db.sortEnlargedAurasFirst ~= false
+    S.enlargeAllCC = db.enlargeAllCC and true or false
+    S.enlargeAllImportantBuffs = db.enlargeAllImportantBuffs and true or false
+    S.scale = db.bbpAuraScale or 1
     S.buffScale = db.nameplateAuraBuffScale or 1
     S.debuffScale = db.nameplateAuraDebuffScale or 1
     S.countScale = db.nameplateAuraCountScale or 1
+    S.showStack = db.npAuraShowStackText ~= false
+    S.stackX = db.npAuraStackTextXPos or 0
+    S.stackY = db.npAuraStackTextYPos or 0
+    S.stackAlign = db.npAuraStackTextAlign or "RIGHT"
+    S.stackColor = { GetColor("npAuraStackTextColor", 1, 1, 1, 1) }
     S.targetScaleOn = db.targetNameplateAuraScaleEnabled
     S.targetScale = db.targetNameplateAuraScale or 1
-
     S.ccIconScale = db.ccIconScale or 1.35
     S.ccIconAnchor = db.ccIconAnchor or "RIGHT"
     S.ccIconX = db.ccIconXPos or 0
     S.ccIconY = db.ccIconYPos or 0
-    S.separateCC = db.nameplateAuraSeparateCCIcon ~= false
-
     S.buffIconScale = db.buffIconScale or 1.35
     S.buffIconAnchor = db.buffIconAnchor or "LEFT"
     S.buffIconX = db.buffIconXPos or 0
     S.buffIconY = db.buffIconYPos or 0
-
+    S.combineBigIcons = db.combineBigAuraIcons and true or false
+    S.combinedAnchor = db.combinedBigIconAnchor or "RIGHT"
+    S.moveBuffRow = db.moveNormalBuffs and true or false
+    S.buffRowAnchor = db.moveNormalBuffsAnchor or "LEFT"
     S.showCdText = db.showDefaultCooldownNumbersOnNpAuras ~= false
     S.cdTextScale = db.defaultNpAuraCdSize or 0.6
+    S.cdTextScaleBig = db.bigNpAuraCdSize or 0.6
+    S.cdTextBigOnly = db.npAuraCdTextBigOnly and true or false
     S.hideSwipe = db.hideNpAuraSwipe
     S.blizzardCdText = db.nameplateAuraUseBlizzardCdText
     S.timerColor = db.nameplateAuraTimerColor ~= false
@@ -364,29 +516,39 @@ function BBP.UpdateUserAuraSettings()
     S.timerLow = { GetColor("nameplateAuraTimerLowColor", 1, 0.1, 0.1, 1) }
     S.timerThreshold = db.nameplateAuraTimerLowThreshold or 6
     S.hideLongTimers = db.nameplateAuraHideLongDurationText ~= false
-
     S.buffsOnNpcs = db.nameplateAuraBuffsOnNpcs ~= false
-    S.buffsOnPlayers = db.nameplateAuraBuffsOnPlayers ~= false
+    S.buffsOnEnemyPlayers = db.nameplateAuraBuffsOnEnemyPlayers ~= false
+    S.buffsOnFriendlyPlayers = db.nameplateAuraBuffsOnFriendlyPlayers ~= false
     S.ccOnNpcs = db.nameplateAuraCCOnNpcs ~= false
-    S.ccOnPlayers = db.nameplateAuraCCOnPlayers ~= false
-
+    S.ccOnEnemyPlayers = db.nameplateAuraCCOnEnemyPlayers ~= false
+    S.ccOnFriendlyPlayers = db.nameplateAuraCCOnFriendlyPlayers ~= false
     S.inPvE = inPvEInstance
     S.blizzardCCInPvE = db.nameplateAuraCCBlizzardInPvE and true or false
     S.blizzardBuffsInPvE = db.nameplateAuraBuffsBlizzardInPvE and true or false
-
     S.msBuffs = db.nameplateAuraMillisecondsBuffs ~= false
     S.msCC = db.nameplateAuraMillisecondsCC ~= false
-
-    S.debuffPadding = tonumber(db.nameplateDebuffPadding) or 0
-
-    S.classIconCC = (db.classIndicator and db.classIndicatorCCAuras) and true or false
-    S.ccOverlay = (S.classIconCC or (db.partyPointer and db.partyPointerCCAuras)) and true or false
+    S.debuffPadding = tonumber(db.bbpDebuffPadding) or 0
+    S.ccOverlay = (db.partyPointer and db.partyPointerCCAuras) and true or false
     S.ccOverlayReplacesIcon = S.ccOverlay and not inPvEInstance
-
     S.hideTooltips = db.hideNameplateAuraTooltip
     S.colorBorderByType = db.npColorAuraBorder
     S.purgeGlow = db.otherNpBuffPurgeGlow
     S.purgeGlowAlways = db.alwaysShowPurgeTexture
+    S.purgeColor = db.npAuraPurgeGlowColorEnabled and { GetColor("npAuraPurgeGlowRGB", 0.2, 0.6, 1, 1) } or false
+
+    PURGE.asset.asset = S.purgeColor and GLOW_ATLAS or PURGE_ATLAS
+
+    if S.purgeColor then
+        local c = S.purgeColor
+        local color = CreateColor(c[1], c[2], c[3], c[4] or 1)
+        PURGE.colorMap = {}
+        for _, dispelType in ipairs(PURGE.types) do PURGE.colorMap[dispelType] = color end
+    else
+        PURGE.colorMap = nil
+    end
+
+    RefreshOffensiveDispels()
+    S.purgeTypes = PURGE.signature
     S.pandemicGlow = db.otherNpdeBuffPandemicGlow and true or false
     S.pandemicColor = { GetColor("nameplateAuraPandemicGlowRGB", 1, 0, 0, 1) }
     S.splitPandemic = false
@@ -402,7 +564,9 @@ function BBP.UpdateUserAuraSettings()
         defensive = { db.nameplateAuraDefensiveGlow and true or false, { GetColor("nameplateAuraDefensiveGlowRGB", 1, 0.662, 0.945, 1) } },
         important = { db.nameplateAuraImportantGlow and true or false, { GetColor("nameplateAuraImportantGlowRGB", 0, 1, 0, 1) } },
         cc        = { db.nameplateAuraCCGlow and true or false,        { GetColor("nameplateAuraCCGlowRGB", 1, 0.874, 0, 1) } },
+        enlarged  = { true,                                            { GetColor("nameplateAuraEnlargedGlowRGB", 1, 0.5, 0, 1) } },
     }
+    S.ccGlowDispelColor = db.nameplateAuraCCGlowDispelColor and true or false
 
     S.enemy = { buff = ReadFilterBlock("otherNpBuff"), debuff = ReadFilterBlock("otherNpdeBuff") }
     S.friendly = { buff = ReadFilterBlock("friendlyNpBuff"), debuff = ReadFilterBlock("friendlyNpdeBuff") }
@@ -416,6 +580,7 @@ function BBP.UpdateUserAuraSettings()
     S.prdLimit = db.prdAuraLimit or 6
 
     S.stackFont = db.npAuraStackFontEnabled and LSM:Fetch(LSM.MediaType.FONT, db.npAuraStackFont) or nil
+    S.cdFont = db.npAuraCdFontEnabled and LSM:Fetch(LSM.MediaType.FONT, db.npAuraCdFont) or nil
 
     BBP.UpdateImportantBuffsAndCCTables()
     BBP.RefreshSpellLists()
@@ -439,8 +604,32 @@ local lists = {
     watchImportantSafe = {},
     watchImportantMine = {},
     watchImportantMineSafe = {},
+    watchEnlarged = {},
+    watchEnlargedSafe = {},
+    watchEnlargedMine = {},
+    watchEnlargedMineSafe = {},
+    watchEnlargedImportant = {},
+    watchEnlargedImportantSafe = {},
+    watchEnlargedImportantMine = {},
+    watchEnlargedImportantMineSafe = {},
 }
 BBP.auraLists = lists
+
+local WHITELIST_BUCKETS = {
+    mine                   = "watchMine",
+    pandemic               = "watchPandemic",
+    important              = "watchImportant",
+    importantMine          = "watchImportantMine",
+    enlarged               = "watchEnlarged",
+    enlargedMine           = "watchEnlargedMine",
+    enlargedImportant      = "watchEnlargedImportant",
+    enlargedImportantMine  = "watchEnlargedImportantMine",
+}
+
+local whitelistDst = {}
+for field, listKey in pairs(WHITELIST_BUCKETS) do
+    whitelistDst[field] = lists[listKey]
+end
 
 local function ListSignature(listName, parts)
     local list = BetterBlizzPlatesDB[listName]
@@ -451,6 +640,7 @@ local function ListSignature(listName, parts)
             parts[#parts + 1] = (entry.onlyMine and "m" or "")
                 .. (entry.pandemic and "p" or "")
                 .. (entry.important and "i" or "")
+                .. (entry.enlarged and "e" or "")
         end
     end
 end
@@ -472,30 +662,31 @@ function BBP.RefreshSpellLists()
     wipe(mergeCache)
     wipe(subtractCache)
 
-    wipe(lists.blacklist); wipe(lists.watch); wipe(lists.watchMine); wipe(lists.watchPandemic)
-    wipe(lists.watchImportant); wipe(lists.watchImportantMine)
+    wipe(lists.blacklist)
+    wipe(lists.watch)
+    for _, listKey in pairs(WHITELIST_BUCKETS) do wipe(lists[listKey]) end
     CollectList("auraBlacklist", lists.blacklist)
-    CollectList("auraWhitelist", lists.watch, lists.watchMine, lists.watchPandemic,
-        lists.watchImportant, lists.watchImportantMine)
+    CollectList("auraWhitelist", lists.watch, whitelistDst)
     lists.anyPandemic = next(lists.watchPandemic) ~= nil
 
     RefillSafeSubset(lists.blacklistSafe, lists.blacklist)
     RefillSafeSubset(lists.watchSafe, lists.watch)
-    RefillSafeSubset(lists.watchMineSafe, lists.watchMine)
-    RefillSafeSubset(lists.watchPandemicSafe, lists.watchPandemic)
-    RefillSafeSubset(lists.watchImportantSafe, lists.watchImportant)
-    RefillSafeSubset(lists.watchImportantMineSafe, lists.watchImportantMine)
+    for _, listKey in pairs(WHITELIST_BUCKETS) do
+        RefillSafeSubset(lists[listKey .. "Safe"], lists[listKey])
+    end
     for key, set in pairs(categorySets) do
         RefillSafeSubset(categorySafe[key], set)
     end
 end
 
-local dispelColorMapHarmful, dispelColorMapHelpful
+local dispelColorMapHarmful, dispelColorMapHelpful, ccGlowDispelColorMap
 
 function BBP.UpdateAuraTypeColors()
     local db = BetterBlizzPlatesDB
-    if not db.npColorAuraBorder then
-        dispelColorMapHarmful, dispelColorMapHelpful = nil, nil
+    local wantBorder = db.npColorAuraBorder and true or false
+    local wantCCGlow = (db.nameplateAuraCCGlow and db.nameplateAuraCCGlowDispelColor) and true or false
+    if not wantBorder and not wantCCGlow then
+        dispelColorMapHarmful, dispelColorMapHelpful, ccGlowDispelColorMap = nil, nil, nil
         return
     end
 
@@ -504,7 +695,7 @@ function BBP.UpdateAuraTypeColors()
         return CreateColor(cr, cg, cb, ca or 1)
     end
 
-    dispelColorMapHarmful = {
+    local harmful = {
         Magic   = C("npAuraMagicRGB",   0.13, 0.44, 1),
         Poison  = C("npAuraPoisonRGB",  0,    0.52, 0.031),
         Curse   = C("npAuraCurseRGB",   0.47, 0,    0.78),
@@ -512,6 +703,26 @@ function BBP.UpdateAuraTypeColors()
         Bleed   = C("npAuraBleedRGB",   0.8,  0.1,  0.1),
         None    = C("npAuraOtherRGB",   0,    0,    0),
     }
+
+    if wantCCGlow then
+        local gr, gg, gb, ga = GetColor("nameplateAuraCCGlowRGB", 1, 0.874, 0, 1)
+        ga = ga or 1
+        ccGlowDispelColorMap = {}
+        for _, key in ipairs(DISPEL_KEYS) do
+            local c = harmful[key]
+            ccGlowDispelColorMap[key] = CreateColor(c.r, c.g, c.b, ga)
+        end
+        ccGlowDispelColorMap.None = CreateColor(gr, gg, gb, ga)
+    else
+        ccGlowDispelColorMap = nil
+    end
+
+    if not wantBorder then
+        dispelColorMapHarmful, dispelColorMapHelpful = nil, nil
+        return
+    end
+
+    dispelColorMapHarmful = harmful
 
     local buff = C("npAuraBuffsRGB", 0, 0.67, 1)
     dispelColorMapHelpful = {}
@@ -622,6 +833,36 @@ local function SetBorderEdges(edges, shown, r, g, b)
     end
 end
 
+local BLACK_BORDER = { 0, 0, 0 }
+local BLUE_BUFF_BORDER = { 0.2, 0.2, 1 }
+
+local function BlueBorderOn(style)
+    return (style.blueBorder and not style.glow and not style.colorBorderByType) and true or false
+end
+
+local function ColorsEdgesByType(style)
+    return (style.colorBorderByType and style.pixelBorder and not style.glow) and true or false
+end
+
+local function ColorsDispelBorderByType(style)
+    return (style.colorBorderByType and not style.pixelBorder and not style.glow) and true or false
+end
+
+local function CreateDispelBorder(host)
+    local border = host:CreateTexture(nil, "OVERLAY", nil, 4)
+    border:SetAtlas(DISPEL_BORDER_ATLAS, TextureKitConstants.IgnoreAtlasSize)
+    border:SetDesaturated(true)
+    border:Hide()
+    return border
+end
+
+local function ApplyDispelBorderGeometry(border, button, width, height)
+    local inset = math.max(width, height) * DISPEL_BORDER_INSET
+    border:ClearAllPoints()
+    border:SetPoint("TOPLEFT", button, "TOPLEFT", -inset, inset)
+    border:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", inset, -inset)
+end
+
 local function SetIconMasked(icon, mask, masked)
     if mask.bbpAttached == masked then return end
     mask.bbpAttached = masked
@@ -634,19 +875,25 @@ local function SetIconMasked(icon, mask, masked)
 end
 
 local function ApplyBezelGeometry(bezel, button, width, height)
-    local scale = math.max(width, height) / BEZEL_BASE
+    local scale = math.max(width, height) / BEZEL.base
     bezel:ClearAllPoints()
-    bezel:SetPoint("TOPLEFT", button, "TOPLEFT", -(BEZEL_INSET_X - BEZEL_TRIM_LEFT) * scale, BEZEL_INSET_Y * scale)
-    bezel:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", (BEZEL_INSET_X - BEZEL_TRIM_RIGHT) * scale, -BEZEL_INSET_Y * scale)
+    local insetY = (BEZEL.insetY - BEZEL.trim) * scale
+    bezel:SetPoint("TOPLEFT", button, "TOPLEFT",
+        -(BEZEL.insetX - BEZEL.trimLeft - BEZEL.trim) * scale, insetY)
+    bezel:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT",
+        (BEZEL.insetX - BEZEL.trimRight - BEZEL.trim) * scale, -insetY)
 end
 
-local GLOW_PAD = 2
+local GLOW_PAD = { row = 2, big = 0, round = 0 }
 
 local function GlowPad(style)
-    if not style.pixelBorder and (style.kind == BUFFS or style.kind == CC) then
-        return 0
+    if not style.pixelBorder then
+        return GLOW_PAD.round
     end
-    return GLOW_PAD
+    if style.kind == BUFFS or style.kind == CC then
+        return GLOW_PAD.big
+    end
+    return GLOW_PAD.row
 end
 
 local function ApplyGlowGeometry(glow, button, width, height, pad)
@@ -656,12 +903,12 @@ local function ApplyGlowGeometry(glow, button, width, height, pad)
     glow:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", width * 0.47 + pad, -(height * 0.46 + pad))
 end
 
-local purgeAsset       = { asset = PURGE_ATLAS }
-local purgeAssetMagic  = { Magic = purgeAsset }
-local purgeAssetAll    = { Magic = purgeAsset, Curse = purgeAsset,
-                           Disease = purgeAsset, Poison = purgeAsset }
-
 local borderDispelOptions = {
+    style = DispelStyle.PreserveAsset,
+    showWithoutDispelType = true,
+}
+
+local glowDispelOptions = {
     style = DispelStyle.PreserveAsset,
     showWithoutDispelType = true,
 }
@@ -680,30 +927,61 @@ local function ApplyDispelRegistrations(button, style)
     if style.purgeGlow          then signature = signature + 4 end
     if style.purgeGlowAlways    then signature = signature + 8 end
     if style.glow               then signature = signature + 16 end
+    if style.glowDispelColor    then signature = signature + 32 end
+    if style.pixelBorder        then signature = signature + 64 end
 
     local colorMap = style.harmful and dispelColorMapHarmful or dispelColorMapHelpful
+    local glowMap = style.glowDispelColor and ccGlowDispelColorMap or nil
+    local purgeKey = style.purgeGlow
+        and (style.purgeGlowAlways and "all" or (style.purgeTypes or "")) or ""
+    local purgeColorMap = style.purgeGlow and PURGE.colorMap or nil
 
-    if button.bbpDispelSignature == signature and button.bbpDispelColorMap == colorMap then
+    if button.bbpDispelSignature == signature and button.bbpDispelColorMap == colorMap
+        and button.bbpDispelGlowMap == glowMap and button.bbpPurgeKey == purgeKey
+        and button.bbpPurgeColorMap == purgeColorMap then
         return
     end
+    button.bbpPurgeKey = purgeKey
     button.bbpDispelSignature = signature
     button.bbpDispelColorMap = colorMap
+    button.bbpDispelGlowMap = glowMap
+    button.bbpPurgeColorMap = purgeColorMap
 
     button:ClearDispelTypeTextures()
 
-    if button.bbpBorderEdges and style.colorBorderByType and not style.glow then
+    if button.bbpGlow and glowMap then
+        glowDispelOptions.showWhenHarmful = style.harmful and true or false
+        glowDispelOptions.showWhenHelpful = style.harmful and false or true
+        glowDispelOptions.customDispelColorMap = glowMap
+        button:AddDispelTypeTexture(button.bbpGlow, glowDispelOptions)
+    end
+
+    local tintEdges = ColorsEdgesByType(style) and button.bbpBorderEdges
+    local tintBorder = ColorsDispelBorderByType(style) and button.bbpDispelBorder
+
+    if tintEdges or tintBorder then
         borderDispelOptions.showWhenHarmful = style.harmful and true or false
         borderDispelOptions.showWhenHelpful = style.harmful and false or true
         borderDispelOptions.customDispelColorMap = colorMap
-        for i = 1, 4 do
-            button:AddDispelTypeTexture(button.bbpBorderEdges[i], borderDispelOptions)
+        if tintEdges then
+            for i = 1, 4 do
+                button:AddDispelTypeTexture(button.bbpBorderEdges[i], borderDispelOptions)
+            end
+        else
+            button:AddDispelTypeTexture(button.bbpDispelBorder, borderDispelOptions)
         end
     end
 
+    if button.bbpDispelBorder and not tintBorder then
+        button.bbpDispelBorder:Hide()
+    end
+
     if button.bbpPurgeGlow then
-        if style.purgeGlow then
-            purgeDispelOptions.customDispelAssetMap =
-                style.purgeGlowAlways and purgeAssetAll or purgeAssetMagic
+        local purgeMap = style.purgeGlow
+            and (style.purgeGlowAlways and PURGE.all or PURGE.own) or nil
+        if purgeMap and next(purgeMap) then
+            purgeDispelOptions.customDispelAssetMap = purgeMap
+            purgeDispelOptions.customDispelColorMap = purgeColorMap
             button:AddDispelTypeTexture(button.bbpPurgeGlow, purgeDispelOptions)
         else
             button.bbpPurgeGlow:Hide()
@@ -728,6 +1006,47 @@ local function ApplyPandemicRegistration(button, style)
     end
 end
 
+local function ApplyCountdownFont(fontString, font)
+    local wanted = font or false
+    if fontString.bbpFont == wanted then return end
+    fontString.bbpFont = wanted
+    if font then
+        fontString:SetFont(font, COUNTDOWN_FONT_SIZE, "OUTLINE")
+    else
+        fontString:SetFontObject(COUNTDOWN_FONT)
+    end
+end
+
+local STACK_ANCHORS = {
+    LEFT   = { "BOTTOMLEFT",  -3, -2 },
+    CENTER = { "BOTTOM",       0, -2 },
+    RIGHT  = { "BOTTOMRIGHT",  3, -2 },
+}
+
+local STACK_FONT_SIZE = 12
+
+local function ApplyStackText(count, button, style)
+    local anchor = STACK_ANCHORS[style.stackAlign] or STACK_ANCHORS.RIGHT
+
+    count:SetScale(style.countScale or 1)
+    count:ClearAllPoints()
+    count:SetPoint(anchor[1], button, anchor[1],
+        anchor[2] + (style.stackX or 0), anchor[3] + (style.stackY or 0))
+    count:SetJustifyH(style.stackAlign or "RIGHT")
+
+    if style.stackFont then
+        count:SetFont(style.stackFont, STACK_FONT_SIZE, "OUTLINE")
+    else
+        count:SetFontObject("NumberFontNormalSmall")
+    end
+
+    local c = style.stackColor
+    if c then count:SetTextColor(c[1], c[2], c[3], c[4] or 1) end
+
+    count:SetShown(style.showStack)
+    count:SetAlpha(style.showStack and 1 or 0)
+end
+
 local function ApplyMutableStyle(button, style)
     local w, h = style.width, style.height
     button:SetSize(w, h)
@@ -741,24 +1060,31 @@ local function ApplyMutableStyle(button, style)
     if button.bbpMask then
         SetIconMasked(button.bbpIcon, button.bbpMask, not style.pixelBorder)
     end
-    if button.bbpBezel then
-        button.bbpBezel:SetShown(not style.pixelBorder and not (style.glow and true or false))
-        ApplyBezelGeometry(button.bbpBezel, button, w, h)
-    end
 
     local glowing = style.glow and true or false
 
+    if button.bbpBezel then
+        button.bbpBezel:SetShown(not style.pixelBorder and not glowing)
+        ApplyBezelGeometry(button.bbpBezel, button, w, h)
+    end
+
+    if button.bbpDispelBorder then
+        ApplyDispelBorderGeometry(button.bbpDispelBorder, button, w, h)
+    end
+
     if button.bbpBorderEdges then
         ApplyBorderEdgeGeometry(button.bbpBorderEdges, button, BORDER_THICKNESS)
-        if not style.colorBorderByType or glowing then
-            SetBorderEdges(button.bbpBorderEdges, style.pixelBorder and not glowing, 0, 0, 0)
+        if not ColorsEdgesByType(style) then
+            local edge = BlueBorderOn(style) and BLUE_BUFF_BORDER or BLACK_BORDER
+            SetBorderEdges(button.bbpBorderEdges, style.pixelBorder and not glowing,
+                edge[1], edge[2], edge[3])
         end
     end
 
     if button.bbpCooldown then
         button.bbpCooldown:SetDrawSwipe(not style.hideSwipe)
         button.bbpCooldown:SetDrawEdge(not style.hideSwipe)
-        button.bbpCooldown:SetSwipeTexture(style.pixelBorder and FLAT_SWIPE or CDM_SWIPE)
+        button.bbpCooldown:SetSwipeTexture(style.pixelBorder and CDM.flatSwipe or CDM.swipe)
         button.bbpCooldown:SetSwipeColor(0, 0, 0, 0.5)
         button.bbpCooldown:SetEdgeScale(EDGE_SCALE)
 
@@ -782,15 +1108,13 @@ local function ApplyMutableStyle(button, style)
     end
 
     if button.bbpCount then
-        button.bbpCount:SetScale(style.countScale or 1)
-        if style.stackFont then
-            button.bbpCount:SetFont(style.stackFont, 12, "OUTLINE")
-        end
+        ApplyStackText(button.bbpCount, button, style)
     end
 
     if button.bbpTimer then
         button.bbpTimer:SetScale(style.cdTextScale or 0.6)
         button.bbpTimer:SetShown(style.showCdText and not style.blizzardCdText)
+        ApplyCountdownFont(button.bbpTimer, style.cdFont)
 
         local wantMs = style.showMilliseconds and true or false
         if button.bbpMilliseconds ~= wantMs then
@@ -814,7 +1138,17 @@ local function ApplyMutableStyle(button, style)
         button.bbpGlow:SetShown(style.glow and true or false)
     end
 
-    if button.bbpPurgeGlow then ApplyGlowGeometry(button.bbpPurgeGlow, button, w, h, glowPad) end
+    if button.bbpPurgeGlow then
+        ApplyGlowGeometry(button.bbpPurgeGlow, button, w, h, glowPad)
+        local c = style.purgeColor
+        button.bbpPurgeGlow:SetAtlas(c and GLOW_ATLAS or PURGE_ATLAS)
+        button.bbpPurgeGlow:SetDesaturated(c and true or false)
+        if c then
+            button.bbpPurgeGlow:SetVertexColor(c[1], c[2], c[3], c[4] or 1)
+        else
+            button.bbpPurgeGlow:SetVertexColor(1, 1, 1, 1)
+        end
+    end
 
     if button.bbpPandemicGlow then
         ApplyGlowGeometry(button.bbpPandemicGlow, button, w, h, glowPad)
@@ -822,6 +1156,15 @@ local function ApplyMutableStyle(button, style)
     end
 
     ApplyDispelRegistrations(button, style)
+
+    if button.bbpDispelBorder and not ColorsDispelBorderByType(style) then
+        local blue = BlueBorderOn(style) and not style.pixelBorder
+        if blue then
+            button.bbpDispelBorder:SetVertexColor(
+                BLUE_BUFF_BORDER[1], BLUE_BUFF_BORDER[2], BLUE_BUFF_BORDER[3])
+        end
+        button.bbpDispelBorder:SetShown(blue)
+    end
 
     button:SetHideTooltipInCombat(style.hideTooltips and true or false)
     if not InCombatLockdown() then
@@ -840,7 +1183,7 @@ local function InitAuraButton(button, style)
 
     local mask = button:CreateMaskTexture()
     mask:SetAllPoints(button)
-    mask:SetAtlas(CDM_MASK)
+    mask:SetAtlas(CDM.mask)
     icon:AddMaskTexture(mask)
     mask.bbpAttached = true
     button.bbpMask = mask
@@ -849,7 +1192,7 @@ local function InitAuraButton(button, style)
     cooldown:SetAllPoints(button)
     cooldown:SetReverse(true)
     cooldown:SetDrawBling(false)
-    cooldown:SetEdgeTexture(CDM_EDGE)
+    cooldown:SetEdgeTexture(CDM.edge)
     button.bbpCooldown = cooldown
     button:SetDurationCooldown(cooldown)
 
@@ -859,10 +1202,11 @@ local function InitAuraButton(button, style)
     button.bbpOverlay = overlay
 
     local bezel = overlay:CreateTexture(nil, "OVERLAY", nil, 3)
-    bezel:SetAtlas(CDM_BEZEL)
+    bezel:SetAtlas(CDM.bezel)
     button.bbpBezel = bezel
 
     button.bbpBorderEdges = CreateBorderEdges(overlay)
+    button.bbpDispelBorder = CreateDispelBorder(overlay)
 
     if style.purgeTier then
         local purge = overlay:CreateTexture(nil, "OVERLAY", nil, 7)
@@ -880,8 +1224,6 @@ local function InitAuraButton(button, style)
     end
 
     local count = overlay:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
-    count:SetJustifyH("RIGHT")
-    count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 3, -2)
     button.bbpCount = count
     button:SetApplicationCount(count)
 
@@ -934,17 +1276,20 @@ local function UnzoomTexCoord(tc)
     return cached
 end
 
+local function IsEnlargedGroup(kind, groupKey)
+    if ENLARGED_GROUPS[groupKey] then return true end
+    if S.enlargeAllCC and kind == DEBUFFS and IsCCGroup(kind, groupKey) then return true end
+    if S.enlargeAllImportantBuffs and kind == BUFFROW and groupKey == "Important" then return true end
+    return false
+end
+
 local function BuildStyle(kind, groupKey, standalone)
     local harmful = not IsBuffKind(kind)
     local tier = GLOW_TIERS[kind] and GLOW_TIERS[kind][groupKey]
     local glowCfg = tier and S.glow[tier]
 
-    local categoryGroup = tier and true or false
-
-    local pandemicTier = (not categoryGroup)
-        and (PANDEMIC_GROUPS[kind] and PANDEMIC_GROUPS[kind][groupKey]) and true or false
-    local pandemicOn = (not categoryGroup)
-        and ((groupKey == "WatchPandemic") or (pandemicTier and S.pandemicGlow))
+    local pandemicTier = (PANDEMIC_GROUPS[kind] and PANDEMIC_GROUPS[kind][groupKey]) and true or false
+    local pandemicOn = (groupKey == "WatchPandemic") or (pandemicTier and S.pandemicGlow)
 
     local inRow = (kind == DEBUFFS) or (kind == BUFFROW and not standalone)
 
@@ -955,10 +1300,17 @@ local function BuildStyle(kind, groupKey, standalone)
         width, height, texCoord = S.buffWidth, S.buffHeight, S.buffTexCoord
     end
 
+    if inRow and IsEnlargedGroup(kind, groupKey) then
+        local scale = S.enlargedScale
+        height = (S.enlargedSquare and S.debuffWidth or S.debuffHeight) * scale
+        width = S.debuffWidth * scale
+        if S.enlargedSquare then texCoord = S.buffTexCoord end
+    end
+
     local glowing = (glowCfg and glowCfg[1] or WHITELIST_GLOW_GROUPS[groupKey]) and true or false
     if glowing and not inRow then texCoord = UnzoomTexCoord(texCoord) end
 
-    local isCC = (kind == CC) or (kind == DEBUFFS and groupKey == "CC")
+    local isCC = IsCCGroup(kind, groupKey)
 
     return {
         kind = kind,
@@ -968,26 +1320,37 @@ local function BuildStyle(kind, groupKey, standalone)
         height = height,
         texCoord = texCoord,
         pixelBorder = S.pixelBorder,
+        blueBorder = (kind == BUFFROW) and S.blueBuffBorder or false,
         hideSwipe = S.hideSwipe,
-        showCdText = S.showCdText,
+        showCdText = S.showCdText and not (S.cdTextBigOnly and inRow),
         blizzardCdText = S.blizzardCdText,
         hideLongTimers = S.hideLongTimers,
-        cdTextScale = S.cdTextScale,
+        cdTextScale = inRow and S.cdTextScale or S.cdTextScaleBig,
+        cdFont = S.cdFont,
         showMilliseconds = (IsBuffKind(kind) and S.msBuffs) or (isCC and S.msCC) or false,
+        showStack = S.showStack,
         countScale = S.countScale,
         stackFont = S.stackFont,
+        stackX = S.stackX,
+        stackY = S.stackY,
+        stackAlign = S.stackAlign,
+        stackColor = S.stackColor,
         hideTooltips = S.hideTooltips,
         colorBorderByType = S.colorBorderByType,
-        purgeTier = (groupKey == "Purgeable"),
-        purgeGlow = (groupKey == "Purgeable") and S.purgeGlow or false,
+        purgeTier = (kind == BUFFROW) and true or false,
+        purgeGlow = (kind == BUFFROW) and S.purgeGlow or false,
         purgeGlowAlways = S.purgeGlowAlways,
+        purgeColor = S.purgeColor,
+        purgeTypes = S.purgeTypes,
         pandemicTier = pandemicTier,
         pandemicGlow = pandemicOn and true or false,
         pandemicColor = S.pandemicColor,
-        stackLevel = (kind == BUFFS) and BUFF_STACK_LEVELS[groupKey] or nil,
+        stackLevel = ((kind == BUFFS) and BUFF_STACK_LEVELS[groupKey])
+            or ((kind == CC) and CC_STACK_LEVELS[groupKey]) or nil,
         glowTier = tier,
         glow = glowing,
         glowColor = glowCfg and glowCfg[2] or nil,
+        glowDispelColor = (glowing and tier == "cc" and S.ccGlowDispelColor) and true or false,
     }
 end
 
@@ -1011,8 +1374,30 @@ end
 local profiles = {}
 BBP.auraProfiles = profiles
 
-local function ProfileKey(isFriend)
-    return isFriend and "friendly" or "enemy"
+local function ProfileKey(isFriend, isPlayer, classIconCC)
+    if isFriend then
+        if isPlayer then
+            return classIconCC and "friendlyPlayerClassIconCC" or "friendlyPlayer"
+        end
+        return "friendlyNpc"
+    end
+    return isPlayer and "enemyPlayer" or "enemyNpc"
+end
+
+local function ClassIconTakesCC(frame, isFriend, isPlayer)
+    if not (frame and isFriend and isPlayer) then return false end
+    local db = BetterBlizzPlatesDB
+    if not db.classIndicator or not db.classIndicatorCCAuras then return false end
+    return (BBP.ClassIconShowsCC and BBP.ClassIconShowsCC(frame)) and true or false
+end
+
+local function BigIconOn(kind, isFriend, isPlayer)
+    if kind == CC then
+        if not isPlayer then return S.ccOnNpcs end
+        return isFriend and S.ccOnFriendlyPlayers or S.ccOnEnemyPlayers
+    end
+    if not isPlayer then return S.buffsOnNpcs end
+    return isFriend and S.buffsOnFriendlyPlayers or S.buffsOnEnemyPlayers
 end
 
 local function IncludeOrZero(set, safeSet, canFilter, limit)
@@ -1026,15 +1411,29 @@ local function ExcludeSet(set, safeSet, canFilter)
     return canFilter and set or safeSet
 end
 
-local function BuildProfile(isFriend)
+local function AppendTokens(parts, ...)
+    for i = 1, select("#", ...) do
+        local token = select(i, ...)
+        if token then parts[#parts + 1] = token end
+    end
+end
+
+local function BuildProfile(isFriend, isPlayer, classIconCC)
     local cfg = isFriend and S.friendly or S.enemy
     local buffCfg, debuffCfg = cfg.buff, cfg.debuff
 
     local canFilterHelpful = isFriend and true or false
     local canFilterHarmful = not canFilterHelpful
+    local blacklistOnD = (debuffCfg.blacklist or not canFilterHarmful) and true or false
+    local blacklistOnB = (buffCfg.blacklist or not canFilterHelpful) and true or false
 
-    local blacklistD = ExcludeSet(lists.blacklist, lists.blacklistSafe, canFilterHarmful)
-    local blacklistB = ExcludeSet(lists.blacklist, lists.blacklistSafe, canFilterHelpful)
+    local blD     = blacklistOnD and lists.blacklist or nil
+    local blDSafe = blacklistOnD and lists.blacklistSafe or nil
+    local blB     = blacklistOnB and lists.blacklist or nil
+    local blBSafe = blacklistOnB and lists.blacklistSafe or nil
+
+    local blacklistD = ExcludeSet(blD, blDSafe, canFilterHarmful)
+    local blacklistB = ExcludeSet(blB, blBSafe, canFilterHelpful)
 
     local watchD = MergeSets(lists.watch, categorySets.watchDebuff)
     local watchDSafe = MergeSets(lists.watchSafe, categorySafe.watchDebuff)
@@ -1045,51 +1444,119 @@ local function BuildProfile(isFriend)
 
     local dEnabled = debuffCfg.enable
     local dLimit = dEnabled and S.debuffLimit or 0
-    local noCC = S.separateCC and ("!" .. AF.CrowdControl) or nil
 
-    local ccWanted = debuffCfg.cc and not (isFriend and S.ccOverlayReplacesIcon)
+    local ccBigWanted = BigIconOn(CC, isFriend, isPlayer)
+        and not (isFriend and isPlayer and S.ccOverlayReplacesIcon)
+        and not (S.inPvE and isFriend and isPlayer and S.blizzardCCInPvE)
+        and true or false
+    local ccInRowWanted = (not ccBigWanted) and dEnabled and debuffCfg.cc and true or false
+    local ccBig = (ccBigWanted and not classIconCC) and true or false
+    local ccInRow = (ccInRowWanted and not classIconCC) and true or false
+    local ccClaimed = (ccBig or ccInRow or classIconCC) and true or false
+    local otherCCClaimed = (ccBigWanted or ccInRowWanted) and true or false
+    local noCC = (not ccInRow) and ("!" .. AF.CrowdControl) or nil
 
-    local watchLiveD = (dEnabled and debuffCfg.watchlist) and true or false
+    local watchOnD = (debuffCfg.watchlist and canFilterHarmful) and true or false
+    local watchLiveD = (dEnabled and watchOnD) and true or false
+    local debuffsMineOnly = (debuffCfg.onlyMine and not isFriend) and true or false
+    local dispelOnD = (debuffCfg.purgeable and isFriend) and true or false
+    local dispelTokenD = debuffCfg.anyDispel and AF.Dispellable or AF.RaidPlayerDispellable
+
     local plainLiveD = dEnabled
-        and (debuffCfg.blizzard or not (debuffCfg.cc or debuffCfg.watchlist))
+        and (debuffCfg.blizzard or debuffCfg.lessThanMin
+            or not (debuffCfg.cc or watchOnD or dispelOnD))
         and true or false
 
     local function DebuffFilter(...)
-        local parts = { AF.Harmful, AF.IncludeNameplateOnly, ... }
+        local parts = { AF.Harmful, AF.IncludeNameplateOnly }
+        AppendTokens(parts, ...)
         if noCC then parts[#parts + 1] = noCC end
         return CreateFilterString(unpack(parts))
     end
 
-    local watchSet, watchMax = IncludeOrZero(watchD, watchDSafe, canFilterHarmful, dLimit)
+    local function DebuffFilterKeepCC(...)
+        local parts = { AF.Harmful, AF.IncludeNameplateOnly }
+        AppendTokens(parts, ...)
+        return CreateFilterString(unpack(parts))
+    end
+
+    local flagClaimed = MergeSets(lists.watchImportant, lists.watchImportantMine,
+        lists.watchEnlarged, lists.watchEnlargedMine,
+        lists.watchEnlargedImportant, lists.watchEnlargedImportantMine)
+    local flagClaimedSafe = MergeSets(lists.watchImportantSafe, lists.watchImportantMineSafe,
+        lists.watchEnlargedSafe, lists.watchEnlargedMineSafe,
+        lists.watchEnlargedImportantSafe, lists.watchEnlargedImportantMineSafe)
+
+    local importantMineD = MergeSets(lists.watchImportant, lists.watchImportantMine,
+        lists.watchEnlargedImportant, lists.watchEnlargedImportantMine)
+    local importantMineDSafe = MergeSets(lists.watchImportantSafe, lists.watchImportantMineSafe,
+        lists.watchEnlargedImportantSafe, lists.watchEnlargedImportantMineSafe)
+
+    local watchSet, watchMax = IncludeOrZero(
+        SubtractSets(watchD, flagClaimed), SubtractSets(watchDSafe, flagClaimedSafe),
+        canFilterHarmful, dLimit)
     out.debuffs.Watch = {
         filter = DebuffFilter("!" .. AF.Player),
         filters = { includeSpellIDs = watchSet, excludeSpellIDs = blacklistD },
-        max = watchLiveD and watchMax or 0,
+        max = (watchLiveD and not debuffsMineOnly) and watchMax or 0,
     }
 
-    local importantMineD = MergeSets(lists.watchImportant, lists.watchImportantMine)
-    local importantMineDSafe = MergeSets(lists.watchImportantSafe, lists.watchImportantMineSafe)
+    local mineClause = debuffsMineOnly and AF.Player or nil
 
     local impSet, impMax = IncludeOrZero(lists.watchImportant, lists.watchImportantSafe,
         canFilterHarmful, dLimit)
     out.debuffs.WatchImportant = {
-        filter = DebuffFilter("!" .. AF.Player),
+        filter = DebuffFilterKeepCC(mineClause),
         filters = { includeSpellIDs = impSet, excludeSpellIDs = blacklistD },
         max = dEnabled and impMax or 0,
     }
 
-    local impMineSet, impMineMax = IncludeOrZero(importantMineD, importantMineDSafe,
-        canFilterHarmful, dLimit)
+    local impMineSet, impMineMax = IncludeOrZero(
+        lists.watchImportantMine, lists.watchImportantMineSafe, canFilterHarmful, dLimit)
     out.debuffs.WatchImportantMine = {
-        filter = DebuffFilter(AF.Player),
+        filter = DebuffFilterKeepCC(AF.Player),
         filters = { includeSpellIDs = impMineSet, excludeSpellIDs = blacklistD },
         max = dEnabled and impMineMax or 0,
+    }
+
+    local bigImpSet, bigImpMax = IncludeOrZero(lists.watchEnlargedImportant,
+        lists.watchEnlargedImportantSafe, canFilterHarmful, dLimit)
+    out.debuffs.EnlargedImportant = {
+        filter = DebuffFilterKeepCC(mineClause),
+        filters = { includeSpellIDs = bigImpSet, excludeSpellIDs = blacklistD },
+        max = dEnabled and bigImpMax or 0,
+    }
+
+    local bigImpMineSet, bigImpMineMax = IncludeOrZero(lists.watchEnlargedImportantMine,
+        lists.watchEnlargedImportantMineSafe, canFilterHarmful, dLimit)
+    out.debuffs.EnlargedImportantMine = {
+        filter = DebuffFilterKeepCC(AF.Player),
+        filters = { includeSpellIDs = bigImpMineSet, excludeSpellIDs = blacklistD },
+        max = dEnabled and bigImpMineMax or 0,
+    }
+
+    local bigSet, bigMax = IncludeOrZero(lists.watchEnlarged, lists.watchEnlargedSafe,
+        canFilterHarmful, dLimit)
+    out.debuffs.Enlarged = {
+        filter = DebuffFilter(mineClause),
+        filters = { includeSpellIDs = bigSet, excludeSpellIDs = blacklistD },
+        max = (dEnabled and watchLiveD) and bigMax or 0,
+    }
+
+    local bigMineSet, bigMineMax = IncludeOrZero(lists.watchEnlargedMine,
+        lists.watchEnlargedMineSafe, canFilterHarmful, dLimit)
+    out.debuffs.EnlargedMine = {
+        filter = DebuffFilter(AF.Player),
+        filters = { includeSpellIDs = bigMineSet, excludeSpellIDs = blacklistD },
+        max = (dEnabled and watchLiveD) and bigMineMax or 0,
     }
 
     local mineTracked = MergeSets(lists.watch, lists.watchMine,
         categorySets.watchDebuff, categorySets.ownDebuff)
     local mineTrackedSafe = MergeSets(lists.watchSafe, lists.watchMineSafe,
         categorySafe.watchDebuff, categorySafe.ownDebuff)
+    mineTracked = SubtractSets(mineTracked, flagClaimed)
+    mineTrackedSafe = SubtractSets(mineTrackedSafe, flagClaimedSafe)
 
     local pandemicTracked = ExcludeSet(lists.watchPandemic, lists.watchPandemicSafe, canFilterHarmful)
     local splitPandemicD = S.splitPandemic and not SetIsEmpty(pandemicTracked)
@@ -1114,13 +1581,11 @@ local function BuildProfile(isFriend)
         max = (dEnabled and splitPandemicD) and dLimit or 0,
     }
 
-    local watchAllD = MergeSets(watchD, lists.watchMine,
-        lists.watchImportant, lists.watchImportantMine)
-    local watchAllDSafe = MergeSets(watchDSafe, lists.watchMineSafe,
-        lists.watchImportantSafe, lists.watchImportantMineSafe)
+    local watchAllD = MergeSets(watchD, lists.watchMine, flagClaimed)
+    local watchAllDSafe = MergeSets(watchDSafe, lists.watchMineSafe, flagClaimedSafe)
 
-    local flaggedD = MergeSets(lists.watchImportant, lists.watchImportantMine)
-    local flaggedDSafe = MergeSets(lists.watchImportantSafe, lists.watchImportantMineSafe)
+    local flaggedD = flagClaimed
+    local flaggedDSafe = flagClaimedSafe
     if splitPandemicD then
         flaggedD = MergeSets(flaggedD, lists.watchPandemic)
         flaggedDSafe = MergeSets(flaggedDSafe, lists.watchPandemicSafe)
@@ -1132,13 +1597,26 @@ local function BuildProfile(isFriend)
         claimedDSafe = MergeSets(watchAllDSafe, categorySafe.ownDebuff)
     end
 
-    local normalExclude = ExcludeSet(MergeSets(blacklistD, claimedD),
-        MergeSets(lists.blacklistSafe, claimedDSafe), canFilterHarmful)
+    local otherCCExclude = ExcludeSet(MergeSets(blD, claimedD),
+        MergeSets(blDSafe, claimedDSafe), canFilterHarmful)
+    local excludeWithOtherCC = ExcludeSet(
+        MergeSets(blD, claimedD, categorySets.otherCC),
+        MergeSets(blDSafe, claimedDSafe, categorySafe.otherCC), canFilterHarmful)
+
+    local normalExclude = (not ccInRowWanted) and excludeWithOtherCC or otherCCExclude
 
     out.debuffs.CC = {
         filter = CreateFilterString(AF.Harmful, AF.IncludeNameplateOnly, AF.CrowdControl),
         filters = { excludeSpellIDs = normalExclude },
-        max = (dEnabled and ccWanted and not S.separateCC) and dLimit or 0,
+        max = ccInRow and dLimit or 0,
+    }
+
+    local otherCCRowSet, otherCCRowMax = IncludeOrZero(categorySets.otherCC, categorySafe.otherCC,
+        canFilterHarmful, dLimit)
+    out.debuffs.OtherCC = {
+        filter = DebuffFilterKeepCC(),
+        filters = { includeSpellIDs = otherCCRowSet, excludeSpellIDs = otherCCExclude },
+        max = ccInRowWanted and otherCCRowMax or 0,
     }
 
     local normalFilters = {
@@ -1154,66 +1632,93 @@ local function BuildProfile(isFriend)
     }
 
     local NOT_IMPORTANT = "!" .. AF.Important
+
+    local function DispelFilter()
+        local parts = { AF.Harmful, AF.IncludeNameplateOnly, dispelTokenD }
+        if ccClaimed then parts[#parts + 1] = "!" .. AF.CrowdControl end
+        return CreateFilterString(unpack(parts))
+    end
+
+    out.debuffs.Purgeable = {
+        filter = DispelFilter(),
+        filters = {
+            excludeSpellIDs = otherCCClaimed and excludeWithOtherCC or normalExclude,
+        },
+        max = (dEnabled and dispelOnD) and dLimit or 0,
+    }
+
+    local function PlainDebuffFilter(caster)
+        local parts = { AF.Harmful, AF.IncludeNameplateOnly, caster, NOT_IMPORTANT }
+        if noCC then parts[#parts + 1] = noCC end
+        if dispelOnD then parts[#parts + 1] = "!" .. dispelTokenD end
+        return CreateFilterString(unpack(parts))
+    end
+
     out.debuffs.Mine = {
-        filter = DebuffFilter(AF.Player, NOT_IMPORTANT),
+        filter = PlainDebuffFilter(AF.Player),
         filters = normalFilters,
         max = plainLiveD and dLimit or 0,
     }
     out.debuffs.Others = {
-        filter = DebuffFilter("!" .. AF.Player, NOT_IMPORTANT),
+        filter = PlainDebuffFilter("!" .. AF.Player),
         filters = normalFilters,
-        max = (plainLiveD and isFriend and not debuffCfg.onlyMine
+        max = (plainLiveD and isFriend and not debuffsMineOnly
             and not (debuffCfg.blizzard and S.blizzardOnlyMine)) and dLimit or 0,
     }
 
     local bEnabled = buffCfg.enable
-    local bLimit = bEnabled and S.buffLimit or 0
-    local rowLimit = bEnabled and S.debuffLimit or 0
+    local bLimit = S.buffLimit
+    local rowLimit = bEnabled and S.buffRowLimit or 0
     local NOT_BIG, NOT_EXT = "!" .. AF.BigDefensive, "!" .. AF.ExternalDefensive
 
-    local watchAllB = MergeSets(watchB, lists.watchMine,
-        lists.watchImportant, lists.watchImportantMine)
-    local watchAllBSafe = MergeSets(watchBSafe, lists.watchMineSafe,
-        lists.watchImportantSafe, lists.watchImportantMineSafe)
-
-    local watchLive = (bEnabled and buffCfg.watchlist) and true or false
+    local watchAllB = MergeSets(watchB, lists.watchMine, flagClaimed)
+    local watchAllBSafe = MergeSets(watchBSafe, lists.watchMineSafe, flagClaimedSafe)
+    local watchLive = (bEnabled and buffCfg.watchlist and canFilterHelpful) and true or false
     local purgeOn = (bEnabled and buffCfg.purgeable) and true or false
     local underMin = (bEnabled and buffCfg.lessThanMin) and true or false
+    local defOn = (bEnabled and buffCfg.defensives) and true or false
+    local impOn = (bEnabled and buffCfg.important) and true or false
     local purgeToken = buffCfg.anyDispel and AF.Dispellable or AF.RaidPlayerDispellable
-    local plainLive = bEnabled and (underMin or not (watchLive or purgeOn))
-    local buffsMineOnly = buffCfg.onlyMine and true or false
-    local defOn = (bEnabled and buffCfg.important) and true or false
-    local defExclude = ExcludeSet(blacklistB, lists.blacklistSafe, canFilterHelpful)
-
+    local plainLive = bEnabled and (underMin or not (watchLive or purgeOn or defOn or impOn))
+    local buffsMineOnly = (buffCfg.onlyMine and isFriend) and true or false
+    local buffBig = BigIconOn(BUFFS, isFriend, isPlayer)
+        and not (S.inPvE and isFriend and isPlayer and S.blizzardBuffsInPvE)
+        and true or false
+    local defRow = (not buffBig) and defOn
+    local impRow = (not buffBig) and impOn
+    local bigClaimed = buffBig or defRow
+    local impClaimed = buffBig or impRow
 
     local function CategoryFilter(...)
-        return CreateFilterString(AF.Helpful, AF.IncludeNameplateOnly, ...)
+        local parts = { AF.Helpful, AF.IncludeNameplateOnly }
+        AppendTokens(parts, ...)
+        return CreateFilterString(unpack(parts))
     end
-
-    out.buffs.DefBig = {
-        filter = CategoryFilter(AF.BigDefensive),
-        filters = { excludeSpellIDs = defExclude },
-        max = defOn and bLimit or 0,
-    }
-    out.buffs.DefExt = {
-        filter = CategoryFilter(NOT_BIG, AF.ExternalDefensive),
-        filters = { excludeSpellIDs = defExclude },
-        max = defOn and bLimit or 0,
-    }
 
     local function BuffFilter(...)
-        return CreateFilterString(AF.Helpful, AF.IncludeNameplateOnly, NOT_BIG, NOT_EXT, ...)
+        local parts = { AF.Helpful, AF.IncludeNameplateOnly }
+        AppendTokens(parts, ...)
+        if bigClaimed then
+            parts[#parts + 1] = NOT_BIG
+            parts[#parts + 1] = NOT_EXT
+        end
+        if impClaimed then parts[#parts + 1] = NOT_IMPORTANT end
+        return CreateFilterString(unpack(parts))
     end
 
-    local watchBSet, watchBMax = IncludeOrZero(watchB, watchBSafe, canFilterHelpful, rowLimit)
+    local watchBSet, watchBMax = IncludeOrZero(
+        SubtractSets(watchB, flagClaimed), SubtractSets(watchBSafe, flagClaimedSafe),
+        canFilterHelpful, rowLimit)
     out.buffrow.Watch = {
         filter = BuffFilter("!" .. AF.Player),
         filters = { includeSpellIDs = watchBSet, excludeSpellIDs = blacklistB },
-        max = watchLive and watchBMax or 0,
+        max = (watchLive and not buffsMineOnly) and watchBMax or 0,
     }
 
     local mineTrackedB = MergeSets(lists.watch, lists.watchMine, categorySets.watchBuff)
     local mineTrackedBSafe = MergeSets(lists.watchSafe, lists.watchMineSafe, categorySafe.watchBuff)
+    mineTrackedB = SubtractSets(mineTrackedB, flagClaimed)
+    mineTrackedBSafe = SubtractSets(mineTrackedBSafe, flagClaimedSafe)
     local pandemicTrackedB = ExcludeSet(lists.watchPandemic, lists.watchPandemicSafe, canFilterHelpful)
     local splitPandemicB = S.splitPandemic and not SetIsEmpty(pandemicTrackedB)
     if splitPandemicB then
@@ -1221,22 +1726,54 @@ local function BuildProfile(isFriend)
         mineTrackedBSafe = SubtractSets(mineTrackedBSafe, lists.watchPandemic)
     end
 
+    local mineClauseB = buffsMineOnly and AF.Player or nil
+
     local impBSet, impBMax = IncludeOrZero(lists.watchImportant, lists.watchImportantSafe,
         canFilterHelpful, rowLimit)
     out.buffrow.WatchImportant = {
-        filter = BuffFilter("!" .. AF.Player),
+        filter = CategoryFilter(mineClauseB),
         filters = { includeSpellIDs = impBSet, excludeSpellIDs = blacklistB },
         max = bEnabled and impBMax or 0,
     }
 
     local impBMineSet, impBMineMax = IncludeOrZero(
-        MergeSets(lists.watchImportant, lists.watchImportantMine),
-        MergeSets(lists.watchImportantSafe, lists.watchImportantMineSafe),
-        canFilterHelpful, rowLimit)
+        lists.watchImportantMine, lists.watchImportantMineSafe, canFilterHelpful, rowLimit)
     out.buffrow.WatchImportantMine = {
-        filter = BuffFilter(AF.Player),
+        filter = CategoryFilter(AF.Player),
         filters = { includeSpellIDs = impBMineSet, excludeSpellIDs = blacklistB },
         max = bEnabled and impBMineMax or 0,
+    }
+
+    local bigImpBSet, bigImpBMax = IncludeOrZero(lists.watchEnlargedImportant,
+        lists.watchEnlargedImportantSafe, canFilterHelpful, rowLimit)
+    out.buffrow.EnlargedImportant = {
+        filter = CategoryFilter(mineClauseB),
+        filters = { includeSpellIDs = bigImpBSet, excludeSpellIDs = blacklistB },
+        max = bEnabled and bigImpBMax or 0,
+    }
+
+    local bigImpBMineSet, bigImpBMineMax = IncludeOrZero(lists.watchEnlargedImportantMine,
+        lists.watchEnlargedImportantMineSafe, canFilterHelpful, rowLimit)
+    out.buffrow.EnlargedImportantMine = {
+        filter = CategoryFilter(AF.Player),
+        filters = { includeSpellIDs = bigImpBMineSet, excludeSpellIDs = blacklistB },
+        max = bEnabled and bigImpBMineMax or 0,
+    }
+
+    local bigBSet, bigBMax = IncludeOrZero(lists.watchEnlarged, lists.watchEnlargedSafe,
+        canFilterHelpful, rowLimit)
+    out.buffrow.Enlarged = {
+        filter = BuffFilter(mineClauseB),
+        filters = { includeSpellIDs = bigBSet, excludeSpellIDs = blacklistB },
+        max = watchLive and bigBMax or 0,
+    }
+
+    local bigBMineSet, bigBMineMax = IncludeOrZero(lists.watchEnlargedMine,
+        lists.watchEnlargedMineSafe, canFilterHelpful, rowLimit)
+    out.buffrow.EnlargedMine = {
+        filter = BuffFilter(AF.Player),
+        filters = { includeSpellIDs = bigBMineSet, excludeSpellIDs = blacklistB },
+        max = watchLive and bigBMineMax or 0,
     }
 
     local watchBMineSet, watchBMineMax = IncludeOrZero(mineTrackedB, mineTrackedBSafe, canFilterHelpful, rowLimit)
@@ -1252,8 +1789,8 @@ local function BuildProfile(isFriend)
         max = (bEnabled and splitPandemicB) and rowLimit or 0,
     }
 
-    local flaggedB = MergeSets(lists.watchImportant, lists.watchImportantMine)
-    local flaggedBSafe = MergeSets(lists.watchImportantSafe, lists.watchImportantMineSafe)
+    local flaggedB = flagClaimed
+    local flaggedBSafe = flagClaimedSafe
     if splitPandemicB then
         flaggedB = MergeSets(flaggedB, lists.watchPandemic)
         flaggedBSafe = MergeSets(flaggedBSafe, lists.watchPandemicSafe)
@@ -1265,30 +1802,65 @@ local function BuildProfile(isFriend)
         claimedBSafe = MergeSets(claimedBSafe, watchAllBSafe)
     end
 
-    local rowExclude = ExcludeSet(MergeSets(blacklistB, claimedB),
-        MergeSets(lists.blacklistSafe, claimedBSafe), canFilterHelpful)
+    local rowExclude = ExcludeSet(MergeSets(blB, claimedB),
+        MergeSets(blBSafe, claimedBSafe), canFilterHelpful)
 
+    local impLiveB = (bEnabled and (impBMax > 0 or impBMineMax > 0
+        or bigImpBMax > 0 or bigImpBMineMax > 0)) and true or false
+    local catExclude = impLiveB
+        and ExcludeSet(MergeSets(blB, importantMineD),
+            MergeSets(blBSafe, importantMineDSafe), canFilterHelpful)
+        or blacklistB
+
+    local DEF_BIG_FILTER = CategoryFilter(AF.BigDefensive)
+    local DEF_EXT_FILTER = CategoryFilter(NOT_BIG, AF.ExternalDefensive)
+    local IMPORTANT_FILTER = CategoryFilter(NOT_BIG, NOT_EXT, AF.Important)
+
+    out.buffs.DefBig = {
+        filter = DEF_BIG_FILTER,
+        filters = { excludeSpellIDs = catExclude },
+        max = buffBig and bLimit or 0,
+    }
+    out.buffs.DefExt = {
+        filter = DEF_EXT_FILTER,
+        filters = { excludeSpellIDs = catExclude },
+        max = buffBig and bLimit or 0,
+    }
     out.buffs.Important = {
-        filter = CategoryFilter(NOT_BIG, NOT_EXT, AF.Important),
-        filters = { excludeSpellIDs = rowExclude },
-        max = defOn and bLimit or 0,
+        filter = IMPORTANT_FILTER,
+        filters = { excludeSpellIDs = catExclude },
+        max = buffBig and bLimit or 0,
+    }
+
+    out.buffrow.DefBig = {
+        filter = DEF_BIG_FILTER,
+        filters = { excludeSpellIDs = catExclude },
+        max = defRow and rowLimit or 0,
+    }
+    out.buffrow.DefExt = {
+        filter = DEF_EXT_FILTER,
+        filters = { excludeSpellIDs = catExclude },
+        max = defRow and rowLimit or 0,
+    }
+    out.buffrow.Important = {
+        filter = IMPORTANT_FILTER,
+        filters = { excludeSpellIDs = catExclude },
+        max = impRow and rowLimit or 0,
     }
 
     out.buffrow.Purgeable = {
-        filter = defOn
-            and CategoryFilter(NOT_BIG, NOT_EXT, NOT_IMPORTANT, purgeToken)
-            or CategoryFilter(purgeToken),
+        filter = BuffFilter(purgeToken),
         filters = { excludeSpellIDs = rowExclude },
         max = purgeOn and rowLimit or 0,
     }
 
     local function PlainBuffFilter(caster)
         local parts = { AF.Helpful, AF.IncludeNameplateOnly, caster }
-        if defOn then
+        if bigClaimed then
             parts[#parts + 1] = NOT_BIG
             parts[#parts + 1] = NOT_EXT
-            parts[#parts + 1] = NOT_IMPORTANT
         end
+        if impClaimed then parts[#parts + 1] = NOT_IMPORTANT end
         if purgeOn then parts[#parts + 1] = "!" .. purgeToken end
         return CreateFilterString(unpack(parts))
     end
@@ -1310,12 +1882,24 @@ local function BuildProfile(isFriend)
         max = (plainLive and not buffsMineOnly) and rowLimit or 0,
     }
 
+    local impLiveD = (dEnabled and (impMax > 0 or impMineMax > 0
+        or bigImpMax > 0 or bigImpMineMax > 0)) and true or false
+    local ccExclude = impLiveD
+        and ExcludeSet(MergeSets(blD, importantMineD),
+            MergeSets(blDSafe, importantMineDSafe), canFilterHarmful)
+        or blacklistD
     out.cc.CC = {
         filter = CreateFilterString(AF.Harmful, AF.IncludeNameplateOnly, AF.CrowdControl),
-        filters = {
-            excludeSpellIDs = ExcludeSet(blacklistD, lists.blacklistSafe, canFilterHarmful),
-        },
-        max = (S.separateCC and dEnabled and ccWanted) and S.ccLimit or 0,
+        filters = { excludeSpellIDs = ccExclude },
+        max = ccBig and S.ccLimit or 0,
+    }
+
+    local otherCCSet, otherCCMax = IncludeOrZero(categorySets.otherCC, categorySafe.otherCC,
+        canFilterHarmful, S.ccLimit)
+    out.cc.OtherCC = {
+        filter = CreateFilterString(AF.Harmful, AF.IncludeNameplateOnly),
+        filters = { includeSpellIDs = otherCCSet, excludeSpellIDs = ccExclude },
+        max = ccBigWanted and otherCCMax or 0,
     }
 
     out.debuffsLive = false
@@ -1333,6 +1917,8 @@ local function BuildProfile(isFriend)
             break
         end
     end
+
+    out.ccLive = (out.cc.CC.max > 0 or out.cc.OtherCC.max > 0) and true or false
 
     return out
 end
@@ -1360,17 +1946,30 @@ end
 
 local function RebuildProfiles()
     wipe(profiles)
-    profiles.enemy    = BuildProfile(false)
-    profiles.friendly = BuildProfile(true)
+    profiles.enemyPlayer    = BuildProfile(false, true)
+    profiles.enemyNpc       = BuildProfile(false, false)
+    profiles.friendlyPlayer = BuildProfile(true, true)
+    profiles.friendlyNpc    = BuildProfile(true, false)
+    profiles.friendlyPlayerClassIconCC = BuildProfile(true, true, true)
     RebuildLiveGroups()
     profileGeneration = profileGeneration + 1
 end
 
-local function GetCell(kind)
+local function GetCell(kind, groupKey)
     if kind == DEBUFFS or kind == BUFFROW then
+        if groupKey and IsEnlargedGroup(kind, groupKey) then
+            local scale = S.enlargedScale
+            return S.debuffWidth * scale,
+                (S.enlargedSquare and S.debuffWidth or S.debuffHeight) * scale
+        end
         return S.debuffWidth, S.debuffHeight
     end
     return S.buffWidth, S.buffHeight
+end
+
+local function LayoutIndex(kind, groupKey)
+    local map = LAYOUT_INDEX[S.sortEnlargedFirst and true or false][kind]
+    return (map and map[groupKey]) or 99
 end
 
 local function CreateContainer(kind)
@@ -1382,19 +1981,19 @@ local function CreateContainer(kind)
     container.bbpApplied = {}
     container.bbpHasGroup = {}
     container:SetFlattensRenderLayers(true)
-    local growsUp = (kind == DEBUFFS) or (kind == BUFFROW)
+    local growsUp = ((kind == DEBUFFS) or (kind == BUFFROW)) and not S.growDown
     container:SetFlowLayoutAnchorPoint(growsUp and "BOTTOMLEFT" or "TOPLEFT")
     container:SetFlowLayoutGrowthDirection(FlowDirection.Right,
         growsUp and FlowDirection.Up or FlowDirection.Down)
     return container
 end
 
-local function AddContainerGroup(container, groupKey, index)
+local function AddContainerGroup(container, groupKey)
     local kind = container.bbpKind
     local style = BuildStyle(kind, groupKey)
     container.bbpStyles[groupKey] = style
 
-    local cellW, cellH = GetCell(kind)
+    local cellW, cellH = GetCell(kind, groupKey)
     container:AddAuraGroup(groupKey, CreateFilterString(IsBuffKind(kind) and AF.Helpful or AF.Harmful), {
         maxFrameCount = 0,
         sortMethod = S.sort[1],
@@ -1407,7 +2006,7 @@ local function AddContainerGroup(container, groupKey, index)
             lineSpacing = S.gapY,
             elementWidth = cellW,
             elementHeight = cellH,
-            layoutIndex = index,
+            layoutIndex = LayoutIndex(kind, groupKey),
         },
     })
     container.bbpApplied[groupKey] = {}
@@ -1417,9 +2016,9 @@ end
 local function AddContainerGroups(container)
     local kind = container.bbpKind
     local live = liveGroups[kind]
-    for index, groupKey in ipairs(GROUPS_BY_KIND[kind]) do
+    for _, groupKey in ipairs(GROUPS_BY_KIND[kind]) do
         if live[groupKey] then
-            AddContainerGroup(container, groupKey, index)
+            AddContainerGroup(container, groupKey)
         end
     end
 end
@@ -1428,9 +2027,9 @@ local function EnsureContainerGroups(container)
     local kind = container.bbpKind
     local live = liveGroups[kind]
     local has = container.bbpHasGroup
-    for index, groupKey in ipairs(GROUPS_BY_KIND[kind]) do
+    for _, groupKey in ipairs(GROUPS_BY_KIND[kind]) do
         if live[groupKey] and not has[groupKey] then
-            AddContainerGroup(container, groupKey, index)
+            AddContainerGroup(container, groupKey)
         end
     end
 end
@@ -1455,11 +2054,13 @@ end
 local function ApplyGroupLayout(container, groupKey, spacingX, spacingY, cellW, cellH, index)
     local applied = container.bbpApplied[groupKey]
     if applied.spacingX == spacingX and applied.spacingY == spacingY
-        and applied.cellW == cellW and applied.cellH == cellH then
+        and applied.cellW == cellW and applied.cellH == cellH
+        and applied.layoutIndex == index then
         return
     end
     applied.spacingX, applied.spacingY = spacingX, spacingY
     applied.cellW, applied.cellH = cellW, cellH
+    applied.layoutIndex = index
     container:SetAuraGroupLayout(groupKey, {
         elementSpacing = spacingX,
         lineSpacing = spacingY,
@@ -1494,10 +2095,10 @@ local function ApplyProfile(container, profileKey, perRow)
     local groups = GROUPS_BY_KIND[kind]
     local has = container.bbpHasGroup
 
-    local cellW, cellH = GetCell(kind)
-    local overlap = (kind == BUFFS) and S.buffLimit == 1
+    local baseW = GetCell(kind)
+    local overlap = (kind == BUFFS and S.buffLimit == 1) or (kind == CC and S.ccLimit == 1)
     local wrap = (kind == DEBUFFS or kind == BUFFROW)
-        and (perRow * cellW + (perRow - 1) * S.gapX)
+        and (perRow * baseW + (perRow - 1) * S.gapX)
         or math.huge
     container:SetFlowLayoutMaximumLineSize(wrap)
 
@@ -1514,16 +2115,18 @@ local function ApplyProfile(container, profileKey, perRow)
         parkFilter = first and first.filter
     end
 
-    for index, groupKey in ipairs(groups) do
+    for _, groupKey in ipairs(groups) do
         local cfg = groupCfgs[groupKey]
         if cfg and has[groupKey] then
             container:SetAuraGroupMaxFrameCount(groupKey, cfg.max)
             if cfg.max > 0 then
                 container:SetAuraGroupFilterString(groupKey, cfg.filter)
                 ApplyGroupCandidateFilters(container, groupKey, cfg.filters)
+                local index = LayoutIndex(kind, groupKey)
                 if overlap then
                     ApplyGroupLayout(container, groupKey, 0, 0, 0, 0, index)
                 else
+                    local cellW, cellH = GetCell(kind, groupKey)
                     ApplyGroupLayout(container, groupKey, S.gapX, S.gapY, cellW, cellH, index)
                 end
                 ApplyGroupSort(container, groupKey, S.sort[1], S.sort[2])
@@ -1574,26 +2177,58 @@ local function GetDebuffAnchor(frame, centered)
     return "BOTTOMLEFT", healthBar, "TOPLEFT", x, y
 end
 
-local function GetSideAnchor(frame, anchor, xPos, yPos)
+local function GetSideAnchor(frame, kind, anchor, xPos, yPos)
     local healthBar = frame.HealthBarsContainer
     if not healthBar then return end
+    local _, cellH = GetCell(kind)
+    local lift = cellH / 2
 
     if anchor == "LEFT" then
-        return "RIGHT", healthBar, "LEFT", -5 + xPos, yPos
+        return "TOPRIGHT", healthBar, "LEFT", -5 + xPos, yPos + lift
     elseif anchor == "TOP" then
         return "BOTTOM", healthBar, "TOP", xPos, (S.debuffPadding or 0) + 15 + yPos
     end
-    return "LEFT", healthBar, "RIGHT", 5 + xPos, yPos
+    return "TOPLEFT", healthBar, "RIGHT", 5 + xPos, yPos + lift
+end
+
+local function CenteredDebuffs(isFriend)
+    return (isFriend and S.centerFriendlyDebuffs or S.centerEnemyDebuffs) and true or false
+end
+
+local function CenteredBuffs(isFriend)
+    return (isFriend and S.centerFriendlyBuffs or S.centerEnemyBuffs) and true or false
+end
+
+local function SetRowFlow(container, centered)
+    local right = S.rightToLeft and not centered
+    if S.growDown then
+        container:SetFlowLayoutAnchorPoint(right and "TOPRIGHT" or "TOPLEFT")
+        container:SetFlowLayoutGrowthDirection(right and FlowDirection.Left or FlowDirection.Right,
+            FlowDirection.Down)
+    else
+        container:SetFlowLayoutAnchorPoint(right and "BOTTOMRIGHT" or "BOTTOMLEFT")
+        container:SetFlowLayoutGrowthDirection(right and FlowDirection.Left or FlowDirection.Right,
+            FlowDirection.Up)
+    end
+end
+
+local function SetSideFlow(container, anchor)
+    if anchor == "LEFT" then
+        container:SetFlowLayoutAnchorPoint("TOPRIGHT")
+        container:SetFlowLayoutGrowthDirection(FlowDirection.Left, FlowDirection.Down)
+        return "TOPRIGHT", "TOPLEFT", -1
+    elseif anchor == "TOP" then
+        container:SetFlowLayoutAnchorPoint("BOTTOMLEFT")
+        container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Up)
+        return "BOTTOMLEFT", "BOTTOMRIGHT", 1
+    end
+    container:SetFlowLayoutAnchorPoint("TOPLEFT")
+    container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Down)
+    return "TOPLEFT", "TOPRIGHT", 1
 end
 
 local function AnchorDebuffContainer(container, frame, centered)
-    if S.rightToLeft and not centered then
-        container:SetFlowLayoutAnchorPoint("BOTTOMRIGHT")
-        container:SetFlowLayoutGrowthDirection(FlowDirection.Left, FlowDirection.Up)
-    else
-        container:SetFlowLayoutAnchorPoint("BOTTOMLEFT")
-        container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Up)
-    end
+    SetRowFlow(container, centered)
 
     local point, relTo, relPoint, x, y = GetDebuffAnchor(frame, centered)
     if not relTo then return end
@@ -1601,30 +2236,42 @@ local function AnchorDebuffContainer(container, frame, centered)
 end
 
 local function AnchorSideContainer(container, frame, anchor, xPos, yPos)
-    if anchor == "LEFT" then
-        container:SetFlowLayoutAnchorPoint("TOPRIGHT")
-        container:SetFlowLayoutGrowthDirection(FlowDirection.Left, FlowDirection.Down)
-    elseif anchor == "TOP" then
-        container:SetFlowLayoutAnchorPoint("BOTTOMLEFT")
-        container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Up)
-    else
-        container:SetFlowLayoutAnchorPoint("TOPLEFT")
-        container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Down)
-    end
+    SetSideFlow(container, anchor)
 
-    local point, relTo, relPoint, x, y = GetSideAnchor(frame, anchor, xPos, yPos)
+    local point, relTo, relPoint, x, y = GetSideAnchor(frame, container.bbpKind, anchor, xPos, yPos)
     if not relTo then return end
     SetContainerPoint(container, point, relTo, relPoint, x, y)
 end
 
-local function AnchorBuffRowContainer(container, frame, debuffContainer, centered, debuffsLive, scaleRatio)
-    if S.rightToLeft and not centered then
-        container:SetFlowLayoutAnchorPoint("BOTTOMRIGHT")
-        container:SetFlowLayoutGrowthDirection(FlowDirection.Left, FlowDirection.Up)
-    else
-        container:SetFlowLayoutAnchorPoint("BOTTOMLEFT")
-        container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Up)
-    end
+local function AnchorChainedContainer(container, frame, relContainer, anchor, xPos, yPos, ratio)
+    local point, relPoint, direction = SetSideFlow(container, anchor)
+
+    local leadKind = relContainer.bbpKind
+    local leadYPos = (leadKind == CC) and S.ccIconY or S.buffIconY
+    local _, relTo, _, _, ownY = GetSideAnchor(frame, container.bbpKind, anchor, 0, yPos)
+    if not relTo then return end
+    local leadY = select(5, GetSideAnchor(frame, leadKind, anchor, 0, leadYPos))
+
+    SetContainerPoint(container, point, relContainer, relPoint,
+        direction * S.gapX + xPos, ownY - leadY * (ratio or 1))
+end
+
+local function AlignFraction(centered)
+    if centered then return 0.5 end
+    if S.rightToLeft then return 1 end
+    return 0
+end
+
+local function HealthBarWidth(frame)
+    local healthBar = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar
+    local width = healthBar and healthBar:GetWidth()
+    if issecretvalue(width) then width = frame.lastKnownHpWidth end
+    return (width and not issecretvalue(width) and width > 0) and width or 0
+end
+
+local function AnchorBuffRowContainer(container, frame, debuffContainer, centered, debuffsCentered,
+                                      debuffsLive, scaleRatio, buffScale)
+    SetRowFlow(container, centered)
 
     if not (debuffsLive and debuffContainer) then
         local point, relTo, relPoint, x, y = GetDebuffAnchor(frame, centered)
@@ -1636,14 +2283,29 @@ local function AnchorBuffRowContainer(container, frame, debuffContainer, centere
 
     local point, relPoint
     if centered then
-        point, relPoint = "BOTTOM", "TOP"
+        point = "BOTTOM"
     elseif S.rightToLeft then
-        point, relPoint = "BOTTOMRIGHT", "TOPRIGHT"
+        point = "BOTTOMRIGHT"
     else
-        point, relPoint = "BOTTOMLEFT", "TOPLEFT"
+        point = "BOTTOMLEFT"
     end
 
-    SetContainerPoint(container, point, debuffContainer, relPoint, 0, S.gapY)
+    if debuffsCentered then
+        relPoint = "TOP"
+    elseif S.rightToLeft then
+        relPoint = "TOPRIGHT"
+    else
+        relPoint = "TOPLEFT"
+    end
+
+    local x = 0
+    local shift = AlignFraction(centered) - AlignFraction(debuffsCentered)
+    if shift ~= 0 then
+        local width = HealthBarWidth(frame)
+        if width > 0 then x = width * shift / (buffScale or 1) end
+    end
+
+    SetContainerPoint(container, point, debuffContainer, relPoint, x, S.gapY)
 end
 
 local function ContainerScale(kind, isTarget)
@@ -1756,11 +2418,6 @@ local function BlizzardBitForcedOn(cvarName, index)
     return false
 end
 
-local function BlizzardFriendlyMasterForcedOn()
-    return BlizzardBitForcedOn(BLIZZARD_PVE_CVAR, BLIZZARD_PVE_CC_BIT)
-        or BlizzardBitForcedOn(BLIZZARD_PVE_CVAR, BLIZZARD_PVE_BUFF_BIT)
-end
-
 local cvarsPending = nil
 
 function BBP.IsSuppressedAuraBit(cvarName, index)
@@ -1773,30 +2430,32 @@ function BBP.IsSuppressedAuraBit(cvarName, index)
     return false
 end
 
-local function CaptureAuraCVarBackup()
-    local snapshot = {
-        bitfields = {},
-        showDebuffsOnFriendly = C_CVar.GetCVar(NamePlateConstants.SHOW_DEBUFFS_ON_FRIENDLY_CVAR),
-    }
+local function StoreBlizzardAuraBit(cvarName, index, value)
+    local db = BetterBlizzPlatesDB
+    db.bitfields = db.bitfields or {}
+    db.bitfields[cvarName] = db.bitfields[cvarName] or {}
+    db.bitfields[cvarName][tostring(index)] = value
+end
+
+local function SeedBlizzardAuraStore()
+    local db = BetterBlizzPlatesDB
+    if db.bbpAuraCVarsSuppressed then return end
+
     for cvarName, indices in pairs(BLIZZARD_AURA_BITS) do
-        local into = {}
-        snapshot.bitfields[cvarName] = into
+        local saved = db.bitfields and db.bitfields[cvarName]
         for _, index in ipairs(indices) do
-            into[tostring(index)] = C_CVar.GetCVarBitfield(cvarName, index)
+            if not saved or saved[tostring(index)] == nil then
+                StoreBlizzardAuraBit(cvarName, index, C_CVar.GetCVarBitfield(cvarName, index))
+            end
         end
     end
-    return snapshot
 end
 
 function BBP.GetStoredAuraBit(cvarName, index)
     local db = BetterBlizzPlatesDB
     local key = tostring(index)
 
-    local snapshot = db.bbpAuraCVarBackup and db.bbpAuraCVarBackup.bitfields
-    local saved = snapshot and snapshot[cvarName] and snapshot[cvarName][key]
-    if saved ~= nil then return saved end
-
-    saved = db.bitfields and db.bitfields[cvarName] and db.bitfields[cvarName][key]
+    local saved = db.bitfields and db.bitfields[cvarName] and db.bitfields[cvarName][key]
     if saved ~= nil then return saved end
 
     local backup = BBPCVarBackupsDB and BBPCVarBackupsDB.bitfields
@@ -1822,8 +2481,8 @@ local function ApplyBlizzardAuraCVars(enabled)
 
     local db = BetterBlizzPlatesDB
 
-    if not enabled and not db.bbpAuraCVarsSuppressed then
-        db.bbpAuraCVarBackup = CaptureAuraCVarBackup()
+    if not enabled then
+        SeedBlizzardAuraStore()
     end
 
     local wasTracking = BBP.CVarTrackingDisabled
@@ -1843,39 +2502,38 @@ local function ApplyBlizzardAuraCVars(enabled)
         end
     end
 
-    local friendly = "0"
-    if enabled then
-        friendly = (db.bbpAuraCVarBackup and db.bbpAuraCVarBackup.showDebuffsOnFriendly) or "1"
-    elseif BlizzardFriendlyMasterForcedOn() then
-        -- Friendly debuff bit stays off, so only the handed back icons come back.
-        friendly = "1"
-    end
-    C_CVar.SetCVar(NamePlateConstants.SHOW_DEBUFFS_ON_FRIENDLY_CVAR, friendly)
+    C_CVar.SetCVar(NamePlateConstants.SHOW_DEBUFFS_ON_FRIENDLY_CVAR, "0")
 
     BBP.CVarTrackingDisabled = wasTracking
-
-    if enabled then
-        db.bbpAuraCVarBackup = nil
-    end
 end
 
-local function AdoptExternalAuraCVarChange(cvarName)
-    local backup = BetterBlizzPlatesDB.bbpAuraCVarBackup
-    if not BetterBlizzPlatesDB.bbpAuraCVarsSuppressed or not backup then return end
+local function RememberBlizzardAuraCVarChange(cvarName)
+    local db = BetterBlizzPlatesDB
+
+    if cvarName == NamePlateConstants.SHOW_DEBUFFS_ON_FRIENDLY_CVAR then
+        if C_CVar.GetCVarBool(cvarName) then
+            local wasTracking = BBP.CVarTrackingDisabled
+            BBP.CVarTrackingDisabled = true
+            C_CVar.SetCVar(cvarName, "0")
+            BBP.CVarTrackingDisabled = wasTracking
+        end
+        return
+    end
+
+    local indices = BLIZZARD_AURA_BITS[cvarName]
+    if not indices then return end
+
+    if not db.bbpAuraCVarsSuppressed then
+        for _, index in ipairs(indices) do
+            StoreBlizzardAuraBit(cvarName, index, C_CVar.GetCVarBitfield(cvarName, index))
+        end
+        return
+    end
 
     local changed = false
-    local indices = BLIZZARD_AURA_BITS[cvarName]
-    if indices then
-        local into = backup.bitfields and backup.bitfields[cvarName]
-        for _, index in ipairs(indices) do
-            if not BlizzardBitForcedOn(cvarName, index) and C_CVar.GetCVarBitfield(cvarName, index) then
-                if into then into[tostring(index)] = true end
-                changed = true
-            end
-        end
-    elseif cvarName == NamePlateConstants.SHOW_DEBUFFS_ON_FRIENDLY_CVAR then
-        if not BlizzardFriendlyMasterForcedOn() and C_CVar.GetCVarBool(cvarName) then
-            backup.showDebuffsOnFriendly = "1"
+    for _, index in ipairs(indices) do
+        if not BlizzardBitForcedOn(cvarName, index) and C_CVar.GetCVarBitfield(cvarName, index) then
+            StoreBlizzardAuraBit(cvarName, index, true)
             changed = true
         end
     end
@@ -1885,6 +2543,7 @@ end
 
 function BBP.RestoreBlizzardNameplateAuras()
     if not BetterBlizzPlatesDB.bbpAuraCVarsSuppressed then
+        SeedBlizzardAuraStore()
         if cvarsPending == false then cvarsPending = nil end
         return
     end
@@ -1911,17 +2570,27 @@ local function ShouldShowAuras(info, unit)
     return S.playersOnlyShowTarget and UnitIsUnit(unit, "target") and true or false
 end
 
-local function ShouldShowKind(kind, info)
-    local handback = S.inPvE and info.isPlayer and info.isFriend
-    if kind == BUFFS then
-        if handback and S.blizzardBuffsInPvE then return false end
-        return info.isPlayer and S.buffsOnPlayers or (not info.isPlayer and S.buffsOnNpcs)
-    elseif kind == CC then
-        if handback and S.blizzardCCInPvE then return false end
-        if info.isPlayer and info.isFriend and S.ccOverlayReplacesIcon then return false end
-        return info.isPlayer and S.ccOnPlayers or (not info.isPlayer and S.ccOnNpcs)
-    end
+local function ShouldShowKind(kind, profile)
+    if not profile then return kind ~= BUFFS and kind ~= CC end
+    if kind == BUFFS then return profile.buffsLive end
+    if kind == CC then return profile.ccLive end
     return true
+end
+
+local function BigIconSide(kind, set, profile)
+    if not (profile and set[kind]) then return nil end
+    if kind == CC then
+        if not profile.ccLive then return nil end
+        return S.combineBigIcons and S.combinedAnchor or S.ccIconAnchor
+    end
+    if not profile.buffsLive then return nil end
+    return S.combineBigIcons and S.combinedAnchor or S.buffIconAnchor
+end
+
+local function SideChainTail(set, profile, side)
+    if BigIconSide(BUFFS, set, profile) == side then return set[BUFFS] end
+    if BigIconSide(CC, set, profile) == side then return set[CC] end
+    return nil
 end
 
 function BBP.SetNameplateAurasShown(frame, shown)
@@ -1944,7 +2613,9 @@ function BBP.BindNameplateAuras(unit, frame, info)
     local set = AcquireSet(unit)
     if set.styleDirty and not AurasAreSecret() then RestyleSet(set) end
     local show = ShouldShowAuras(info, unit)
-    local profileKey = ProfileKey(info.isFriend and true or false)
+    local isFriend, isPlayer = info.isFriend and true or false, info.isPlayer and true or false
+    local profileKey = ProfileKey(isFriend, isPlayer, ClassIconTakesCC(frame, isFriend, isPlayer))
+    local profile = profiles[profileKey]
     local perRow = info.isFriend and S.perRowFriendly or S.perRowEnemy
     local isTarget = info.isTarget
     local level = frame:GetFrameLevel() + 10
@@ -1974,18 +2645,37 @@ function BBP.BindNameplateAuras(unit, frame, info)
             end
 
             if kind == DEBUFFS then
-                AnchorDebuffContainer(container, frame,
-                    info.isFriend and S.centerFriendly or S.centerEnemy)
+                AnchorDebuffContainer(container, frame, CenteredDebuffs(info.isFriend))
             elseif kind == BUFFS then
-                AnchorSideContainer(container, frame, S.buffIconAnchor, S.buffIconX, S.buffIconY)
+                local anchor = S.combineBigIcons and S.combinedAnchor or S.buffIconAnchor
+                if S.combineBigIcons and BigIconSide(CC, set, profile) == anchor then
+                    AnchorChainedContainer(container, frame, set[CC], anchor,
+                        S.buffIconX, S.buffIconY,
+                        ContainerScale(CC, isTarget) / ContainerScale(BUFFS, isTarget))
+                else
+                    AnchorSideContainer(container, frame, anchor, S.buffIconX, S.buffIconY)
+                end
             elseif kind == BUFFROW then
-                local profile = profiles[profileKey]
-                AnchorBuffRowContainer(container, frame, set[DEBUFFS],
-                    info.isFriend and S.centerFriendly or S.centerEnemy,
-                    profile and profile.debuffsLive,
-                    ContainerScale(DEBUFFS, isTarget) / ContainerScale(BUFFROW, isTarget))
+                if S.moveBuffRow then
+                    local tail = SideChainTail(set, profile, S.buffRowAnchor)
+                    if tail then
+                        AnchorChainedContainer(container, frame, tail, S.buffRowAnchor, 0, 0,
+                            ContainerScale(tail.bbpKind, isTarget)
+                                / ContainerScale(BUFFROW, isTarget))
+                    else
+                        AnchorSideContainer(container, frame, S.buffRowAnchor, 0, 0)
+                    end
+                else
+                    local buffScale = ContainerScale(BUFFROW, isTarget)
+                    AnchorBuffRowContainer(container, frame, set[DEBUFFS],
+                        CenteredBuffs(info.isFriend), CenteredDebuffs(info.isFriend),
+                        profile and profile.debuffsLive,
+                        ContainerScale(DEBUFFS, isTarget) / buffScale, buffScale)
+                end
             else
-                AnchorSideContainer(container, frame, S.ccIconAnchor, S.ccIconX, S.ccIconY)
+                AnchorSideContainer(container, frame,
+                    S.combineBigIcons and S.combinedAnchor or S.ccIconAnchor,
+                    S.ccIconX, S.ccIconY)
             end
 
             local scale = ContainerScale(kind, isTarget)
@@ -1994,7 +2684,7 @@ function BBP.BindNameplateAuras(unit, frame, info)
                 container.bbpScale = scale
             end
 
-            local kindShown = show and ShouldShowKind(kind, info)
+            local kindShown = show and ShouldShowKind(kind, profile)
             container.bbpWanted = kindShown
             if kindShown then
                 ApplyProfile(container, profileKey, perRow)
@@ -2114,6 +2804,7 @@ local function DoRefresh()
 
     BBP.RestyleAuraButtons()
     BBP.RefreshPRDAuras()
+    if BBP.RefreshClassIndicatorCCStyle then BBP.RefreshClassIndicatorCCStyle() end
 end
 
 function BBP.RefreshAllNameplateAuras()
@@ -2257,6 +2948,8 @@ local SAMPLE_ICONS = {
     },
 }
 
+local PREVIEW_DISPEL_KEYS = { "Magic", "None", "Curse", "Poison" }
+
 local PREVIEW_TIERS = {
     [DEBUFFS] = { "Mine", "Others" },
     [BUFFS]   = { "DefBig", "DefExt", "Important" },
@@ -2275,7 +2968,7 @@ local function DrawMockButton(button, style, index)
 
         button.bbpMask = button:CreateMaskTexture()
         button.bbpMask:SetAllPoints(button)
-        button.bbpMask:SetAtlas(CDM_MASK)
+        button.bbpMask:SetAtlas(CDM.mask)
         button.bbpIcon:AddMaskTexture(button.bbpMask)
         button.bbpMask.bbpAttached = true
 
@@ -2283,6 +2976,7 @@ local function DrawMockButton(button, style, index)
         button.bbpOverlay:SetAllPoints(button)
         button.bbpOverlay:SetFrameLevel(button:GetFrameLevel() + 2)
         button.bbpBorderEdges = CreateBorderEdges(button.bbpOverlay)
+        button.bbpDispelBorder = CreateDispelBorder(button.bbpOverlay)
         button.bbpGlow = button.bbpOverlay:CreateTexture(nil, "OVERLAY", nil, 5)
         button.bbpGlow:SetAtlas(GLOW_ATLAS)
         button.bbpGlow:SetDesaturated(true)
@@ -2291,18 +2985,17 @@ local function DrawMockButton(button, style, index)
         button.bbpPandemicGlow:SetDesaturated(true)
         button.bbpPandemicGlow:Hide()
         button.bbpBezel = button.bbpOverlay:CreateTexture(nil, "OVERLAY", nil, 3)
-        button.bbpBezel:SetAtlas(CDM_BEZEL)
+        button.bbpBezel:SetAtlas(CDM.bezel)
 
         button.bbpCooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
         button.bbpCooldown:SetAllPoints(button)
         button.bbpCooldown:SetReverse(true)
         button.bbpCooldown:SetDrawBling(false)
-        button.bbpCooldown:SetEdgeTexture(CDM_EDGE)
+        button.bbpCooldown:SetEdgeTexture(CDM.edge)
         button.bbpCooldown:SetEdgeScale(EDGE_SCALE)
         button.bbpTimer = button.bbpOverlay:CreateFontString(nil, "OVERLAY", COUNTDOWN_FONT)
         button.bbpTimer:SetPoint("CENTER")
         button.bbpCount = button.bbpOverlay:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
-        button.bbpCount:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 3, -2)
     end
 
     local icons = SAMPLE_ICONS[style.kind] or SAMPLE_ICONS[DEBUFFS]
@@ -2313,24 +3006,47 @@ local function DrawMockButton(button, style, index)
 
     local glowing = style.glow and true or false
 
+    local dispelColor = style.colorBorderByType and dispelColorMapHarmful
+        and dispelColorMapHarmful.Magic
+
     button.bbpBezel:SetShown(not style.pixelBorder and not glowing)
     ApplyBezelGeometry(button.bbpBezel, button, style.width, style.height)
 
+    local blueBorder = BlueBorderOn(style)
+
+    local dispelBorderColor = ColorsDispelBorderByType(style) and dispelColor
+    ApplyDispelBorderGeometry(button.bbpDispelBorder, button, style.width, style.height)
+    if dispelBorderColor then
+        button.bbpDispelBorder:SetVertexColor(
+            dispelBorderColor.r, dispelBorderColor.g, dispelBorderColor.b, 1)
+    elseif blueBorder and not style.pixelBorder then
+        button.bbpDispelBorder:SetVertexColor(
+            BLUE_BUFF_BORDER[1], BLUE_BUFF_BORDER[2], BLUE_BUFF_BORDER[3], 1)
+    end
+    button.bbpDispelBorder:SetShown((dispelBorderColor or (blueBorder and not style.pixelBorder))
+        and true or false)
+
     ApplyBorderEdgeGeometry(button.bbpBorderEdges, button, BORDER_THICKNESS)
-    local borderColor = style.colorBorderByType and dispelColorMapHarmful
-        and dispelColorMapHarmful.Magic
+    local borderColor = ColorsEdgesByType(style) and dispelColor
+    local edge = blueBorder and BLUE_BUFF_BORDER or BLACK_BORDER
     SetBorderEdges(button.bbpBorderEdges,
-        not glowing and (style.pixelBorder or style.colorBorderByType or false),
-        borderColor and borderColor.r or 0,
-        borderColor and borderColor.g or 0,
-        borderColor and borderColor.b or 0)
+        style.pixelBorder and not glowing,
+        borderColor and borderColor.r or edge[1],
+        borderColor and borderColor.g or edge[2],
+        borderColor and borderColor.b or edge[3])
 
     local glowPad = GlowPad(style)
 
     ApplyGlowGeometry(button.bbpGlow, button, style.width, style.height, glowPad)
     if style.glow and style.glowColor then
-        local c = style.glowColor
-        button.bbpGlow:SetVertexColor(c[1], c[2], c[3], c[4] or 1)
+        local dispel = style.glowDispelColor and ccGlowDispelColorMap
+            and ccGlowDispelColorMap[PREVIEW_DISPEL_KEYS[((index - 1) % #PREVIEW_DISPEL_KEYS) + 1]]
+        if dispel then
+            button.bbpGlow:SetVertexColor(dispel.r, dispel.g, dispel.b, dispel.a or 1)
+        else
+            local c = style.glowColor
+            button.bbpGlow:SetVertexColor(c[1], c[2], c[3], c[4] or 1)
+        end
         button.bbpGlow:Show()
     else
         button.bbpGlow:Hide()
@@ -2344,17 +3060,18 @@ local function DrawMockButton(button, style, index)
     end
     button.bbpPandemicGlow:Hide()
 
-    button.bbpCount:SetScale(style.countScale or 1)
+    ApplyStackText(button.bbpCount, button, style)
     button.bbpCount:SetText(index % 3 == 0 and index or "")
 
     button.bbpCooldown:SetDrawSwipe(not style.hideSwipe)
     button.bbpCooldown:SetDrawEdge(not style.hideSwipe)
-    button.bbpCooldown:SetSwipeTexture(style.pixelBorder and FLAT_SWIPE or CDM_SWIPE)
+    button.bbpCooldown:SetSwipeTexture(style.pixelBorder and CDM.flatSwipe or CDM.swipe)
     button.bbpCooldown:SetSwipeColor(0, 0, 0, 0.5)
     button.bbpCooldown:SetHideCountdownNumbers(not (style.showCdText and style.blizzardCdText))
 
     button.bbpTimer:SetScale(style.cdTextScale or 0.6)
     button.bbpTimer:SetShown(style.showCdText and not style.blizzardCdText)
+    ApplyCountdownFont(button.bbpTimer, style.cdFont)
 
     local duration = (index == 1) and 5 or (6 + index * 4)
     button.bbpDuration = duration
@@ -2387,7 +3104,8 @@ local function DrawMockButton(button, style, index)
     button:Show()
 end
 
-local function LayoutMockRow(host, buttons, kind, perRow, centered, sideAnchor)
+local function LayoutMockRow(host, buttons, kind, perRow, centered, sideAnchor, rightAlign,
+                             fromTop, invert)
     local cellW, cellH = GetCell(kind)
     local gapX, gapY = S.gapX, S.gapY
     local count = #buttons
@@ -2400,16 +3118,19 @@ local function LayoutMockRow(host, buttons, kind, perRow, centered, sideAnchor)
             local step = (i - 1) * (cellW + gapX)
             button:ClearAllPoints()
             if sideAnchor == "LEFT" then
-                button:SetPoint("RIGHT", host, "RIGHT", -step, 0)
+                button:SetPoint("TOPRIGHT", host, "TOPRIGHT", -step, 0)
             elseif sideAnchor == "TOP" then
                 local rowWidth = count * cellW + (count - 1) * gapX
                 button:SetPoint("BOTTOMLEFT", host, "BOTTOM", -rowWidth / 2 + step, 0)
             else
-                button:SetPoint("LEFT", host, "LEFT", step, 0)
+                button:SetPoint("TOPLEFT", host, "TOPLEFT", step, 0)
             end
         end
         return
     end
+
+    local rows = math.ceil(count / perRow)
+    local edge = fromTop and "TOP" or "BOTTOM"
 
     for i, button in ipairs(buttons) do
         local row = math.floor((i - 1) / perRow)
@@ -2417,13 +3138,14 @@ local function LayoutMockRow(host, buttons, kind, perRow, centered, sideAnchor)
         local inRow = math.min(perRow, count - row * perRow)
         local rowWidth = inRow * cellW + (inRow - 1) * gapX
         button:ClearAllPoints()
-        local y = row * (cellH + gapY)
+        local y = (invert and (rows - 1 - row) or row) * (cellH + gapY)
+        if fromTop then y = -y end
         if centered then
-            button:SetPoint("BOTTOMLEFT", host, "BOTTOM", -rowWidth / 2 + col * (cellW + gapX), y)
-        elseif S.rightToLeft then
-            button:SetPoint("BOTTOMRIGHT", host, "BOTTOMRIGHT", -col * (cellW + gapX), y)
+            button:SetPoint(edge .. "LEFT", host, edge, -rowWidth / 2 + col * (cellW + gapX), y)
+        elseif rightAlign then
+            button:SetPoint(edge .. "RIGHT", host, edge .. "RIGHT", -col * (cellW + gapX), y)
         else
-            button:SetPoint("BOTTOMLEFT", host, "BOTTOMLEFT", col * (cellW + gapX), y)
+            button:SetPoint(edge .. "LEFT", host, edge .. "LEFT", col * (cellW + gapX), y)
         end
     end
 end
@@ -2459,12 +3181,15 @@ local function PreviewTiers(profile, kind)
     if #previewTiers > 0 then return previewTiers end
 
     local wanted = #PREVIEW_TIERS[kind]
-    for _, groupKey in ipairs(GROUPS_BY_KIND[kind]) do
-        local cfg = groups[groupKey]
-        if cfg and cfg.max > 0 and not PreviewStyle(kind, groupKey).glow then
-            previewTiers[#previewTiers + 1] = groupKey
-            if #previewTiers >= wanted then break end
+    for pass = 1, 2 do
+        for _, groupKey in ipairs(GROUPS_BY_KIND[kind]) do
+            local cfg = groups[groupKey]
+            if cfg and cfg.max > 0 and (pass == 2 or not PreviewStyle(kind, groupKey).glow) then
+                previewTiers[#previewTiers + 1] = groupKey
+                if #previewTiers >= wanted then break end
+            end
         end
+        if #previewTiers > 0 then break end
     end
     return #previewTiers > 0 and previewTiers or nil
 end
@@ -2481,11 +3206,42 @@ local function GetPreview(frame, kind)
     return p
 end
 
+local function MockSideWidth(kind)
+    local count = (kind == BUFFS) and math.min(S.buffLimit, 3) or math.min(S.ccLimit, 2)
+    local cellW = GetCell(kind)
+    return count * cellW + (count - 1) * S.gapX
+end
+
+local function MockChainOffset(kind, anchor, set, profile, isTarget)
+    local scale = ContainerScale(kind, isTarget)
+    local run = 0
+
+    local function Add(leader)
+        run = run + (MockSideWidth(leader) + S.gapX)
+            * (ContainerScale(leader, isTarget) / scale)
+    end
+
+    if kind == BUFFS then
+        if S.combineBigIcons and BigIconSide(CC, set, profile) == anchor then Add(CC) end
+    else
+        local tail = SideChainTail(set, profile, anchor)
+        if tail == set[BUFFS] then
+            Add(BUFFS)
+            if S.combineBigIcons and BigIconSide(CC, set, profile) == anchor then Add(CC) end
+        elseif tail == set[CC] then
+            Add(CC)
+        end
+    end
+
+    return (anchor == "LEFT") and -run or run
+end
+
 local function UpdatePreviewFor(frame, info)
     local on = BetterBlizzPlatesDB.nameplateAuraTestMode
     if not on and not previews[frame] then return end
     local set = frame.bbpAuraSet
-    local profile = profiles[ProfileKey(info.isFriend and true or false)]
+    local profile = profiles[(set and set.bbpProfileKey)
+        or ProfileKey(info.isFriend and true or false, info.isPlayer and true or false)]
     for _, kind in ipairs(CONTAINER_KINDS) do
         local p = previews[frame] and previews[frame][kind]
         if on then
@@ -2494,10 +3250,24 @@ local function UpdatePreviewFor(frame, info)
             local wanted = container and container.bbpWanted
             local tiers = wanted and PreviewTiers(profile, kind)
             if tiers then
-                local centered = info.isFriend and S.centerFriendly or S.centerEnemy
+                local centered
+                if kind == BUFFROW then
+                    centered = CenteredBuffs(info.isFriend)
+                else
+                    centered = CenteredDebuffs(info.isFriend)
+                end
                 local point, relTo, relPoint, x, y
+                local sideAnchor, fromTop
                 if kind == DEBUFFS then
                     point, relTo, relPoint, x, y = GetDebuffAnchor(frame, centered)
+                elseif kind == BUFFROW and S.moveBuffRow then
+                    sideAnchor = S.buffRowAnchor
+                    point, relTo, relPoint, x, y = GetSideAnchor(frame, BUFFROW, sideAnchor, 0, 0)
+                    if relTo then
+                        x = x + MockChainOffset(BUFFROW, sideAnchor, set, profile, info.isTarget)
+                    end
+                    fromTop = sideAnchor ~= "TOP"
+                    centered = sideAnchor == "TOP"
                 elseif kind == BUFFROW then
                     point, relTo, relPoint, x, y = GetDebuffAnchor(frame, centered)
                     if relTo then
@@ -2512,9 +3282,16 @@ local function UpdatePreviewFor(frame, info)
                         x, y = x * ratio, y * ratio
                     end
                 elseif kind == BUFFS then
-                    point, relTo, relPoint, x, y = GetSideAnchor(frame, S.buffIconAnchor, S.buffIconX, S.buffIconY)
+                    sideAnchor = S.combineBigIcons and S.combinedAnchor or S.buffIconAnchor
+                    point, relTo, relPoint, x, y =
+                        GetSideAnchor(frame, BUFFS, sideAnchor, S.buffIconX, S.buffIconY)
+                    if relTo then
+                        x = x + MockChainOffset(BUFFS, sideAnchor, set, profile, info.isTarget)
+                    end
                 else
-                    point, relTo, relPoint, x, y = GetSideAnchor(frame, S.ccIconAnchor, S.ccIconX, S.ccIconY)
+                    sideAnchor = S.combineBigIcons and S.combinedAnchor or S.ccIconAnchor
+                    point, relTo, relPoint, x, y =
+                        GetSideAnchor(frame, CC, sideAnchor, S.ccIconX, S.ccIconY)
                 end
                 if not relTo then
                     p.host:Hide()
@@ -2524,7 +3301,8 @@ local function UpdatePreviewFor(frame, info)
                     p.host:SetScale(ContainerScale(kind, info.isTarget))
 
                     local limit = (kind == DEBUFFS and math.min(S.debuffLimit, 8))
-                        or (IsBuffKind(kind) and math.min(S.buffLimit, 3))
+                        or (kind == BUFFROW and math.min(S.buffRowLimit, 8))
+                        or (kind == BUFFS and math.min(S.buffLimit, 3))
                         or math.min(S.ccLimit, 2)
                     for i = 1, limit do
                         p.buttons[i] = p.buttons[i] or CreateFrame("Frame", nil, p.host)
@@ -2535,11 +3313,15 @@ local function UpdatePreviewFor(frame, info)
 
                     local live = {}
                     for i = 1, limit do live[i] = p.buttons[i] end
+                    local rowMode = (kind == DEBUFFS or kind == BUFFROW)
                     LayoutMockRow(p.host, live, kind,
                         info.isFriend and S.perRowFriendly or S.perRowEnemy,
-                        (kind == DEBUFFS or kind == BUFFROW) and centered,
-                        (kind == BUFFS and S.buffIconAnchor)
-                            or (kind == CC and S.ccIconAnchor) or nil)
+                        rowMode and centered,
+                        not rowMode and sideAnchor or nil,
+                        rowMode and (sideAnchor == "LEFT"
+                            or (not sideAnchor and S.rightToLeft and not centered)),
+                        fromTop,
+                        rowMode and not sideAnchor and S.growDown)
                     p.host:Show()
                 end
             elseif p then
@@ -2608,9 +3390,10 @@ function BBP.SetupNameplateAuras()
     events:RegisterEvent("PLAYER_REGEN_ENABLED")
     events:RegisterEvent("CVAR_UPDATE")
     events:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED")
+    events:RegisterEvent("SPELLS_CHANGED")
+    events:RegisterUnitEvent("UNIT_PET", "player")
 
     local TRACKED_CVARS = {
-        nameplateAuraScale = true,
         nameplateStyle = true,
         nameplateShowSelf = true,
     }
@@ -2628,8 +3411,14 @@ function BBP.SetupNameplateAuras()
                 BBP.RefreshAllNameplateAuras()
             end
         elseif event == "CVAR_UPDATE" then
+            if BBP.CVarTrackingDisabled then return end
             if TRACKED_CVARS[arg1] then BBP.RefreshAllNameplateAuras() end
-            AdoptExternalAuraCVarChange(arg1)
+            RememberBlizzardAuraCVarChange(arg1)
+        elseif event == "SPELLS_CHANGED" or event == "UNIT_PET" then
+            if RefreshOffensiveDispels() then
+                S.purgeTypes = PURGE.signature
+                BBP.RefreshAllNameplateAuras()
+            end
         else
             if restyleQueued then BBP.RestyleAuraButtons() end
             if cvarsPending ~= nil then ApplyBlizzardAuraCVars(cvarsPending) end

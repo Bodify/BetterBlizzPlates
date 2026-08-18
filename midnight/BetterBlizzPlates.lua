@@ -107,6 +107,8 @@ local defaultSettings = {
     fakeNameFriendlyYPos = 0,
     fakeNameAnchor = "BOTTOM",
     fakeNameAnchorRelative = "TOP",
+    fakeNameAnchorFriendly = "BOTTOM",
+    fakeNameAnchorRelativeFriendly = "TOP",
     fakeNameScaleWithParent = false,
     fakeNameRaiseStrata = false,
     fakeNameMaxWidth = 250,
@@ -125,7 +127,7 @@ local defaultSettings = {
     hideLevelFrame = true,
     druidOverstacks = true,
     personalBarPosition = 0.5,
-    alwaysShowPurgeTexture = true,
+    alwaysShowPurgeTexture = false,
     levelFrameFontSize = 12,
     nameplateExtraClickHeight = 0,
     nameplateClickVerticalAdjustment = 0,
@@ -477,12 +479,24 @@ local defaultSettings = {
     nameplateAuraImportantGlowRGB = {0, 1, 0, 1},
     nameplateAuraCCGlow = false,
     nameplateAuraCCGlowRGB = {1, 0.874, 0, 1},
+    nameplateAuraCCGlowDispelColor = false,
     nameplateAuraPandemicGlowRGB = {1, 0, 0, 1},
+    nameplateAuraEnlargedGlowRGB = {1, 0.5, 0, 1},
+
+    nameplateAuraEnlargedScale = 1,
+    nameplateAuraEnlargedSquare = true,
+    sortEnlargedAurasFirst = true,
+    enlargeAllCC = true,
+    enlargeAllImportantBuffs = true,
+
+    auraTooltipSpellID = false,
 
     nameplateAuraBuffsOnNpcs = true,
-    nameplateAuraBuffsOnPlayers = true,
+    nameplateAuraBuffsOnEnemyPlayers = true,
+    nameplateAuraBuffsOnFriendlyPlayers = true,
     nameplateAuraCCOnNpcs = true,
-    nameplateAuraCCOnPlayers = true,
+    nameplateAuraCCOnEnemyPlayers = true,
+    nameplateAuraCCOnFriendlyPlayers = true,
     nameplateAuraBuffsBlizzardInPvE = false,
     nameplateAuraCCBlizzardInPvE = false,
 
@@ -517,6 +531,7 @@ local defaultSettings = {
     -- Nameplate aura settings
     enableNameplateAuraCustomisation = true,
     maxAurasOnNameplate = 12,
+    maxBuffsOnNameplate = 12,
     nameplateAuraRowAmount = 5,
     targetNameplateAuraScale = 1,
     nameplateAuraCountScale = 1,
@@ -526,10 +541,16 @@ local defaultSettings = {
     nameplateAurasYPos = 0,
     nameplateAurasXPos = 0,
     nameplateDebuffXPadding = 0,
-    nameplateDebuffPadding = 0,
-    nameplateAuraScale = 1,
+    bbpDebuffPadding = 0,
+    bbpAuraScale = 1,
     showDefaultCooldownNumbersOnNpAuras = true,
-    defaultNpAuraCdSize = 0.9,
+    defaultNpAuraCdSize = 0.7,
+    bigNpAuraCdSize = 0.9,
+    npAuraCdTextBigOnly = false,
+    npAuraCdFont = "Yanone (BBP)",
+    npAuraCdFontEnabled = false,
+    npAuraStackFont = "Yanone (BBP)",
+    npAuraStackFontEnabled = false,
     nameplateAuraBuffScale = 1,
     nameplateAuraDebuffScale = 1,
     npAuraDiseaseRGB = {1,0.53,0.14},
@@ -540,11 +561,11 @@ local defaultSettings = {
     npAuraMagicRGB = {0.13,0.44,1},
 
 
-    otherNpBuffEnable = true,
+    otherNpBuffEnable = false,
     otherNpBuffFilterAll = false,
-    otherNpBuffFilterImportantBuffs = true,
+    otherNpBuffFilterImportantBuffs = false,
+    otherNpBuffFilterDefensives = false,
     otherNpBuffFilterPurgeable = false,
-    otherNpBuffFilterWatchList = true,
     otherNpBuffFilterLessMinite = false,
     otherNpBuffPurgeGlow = false,
     otherNpBuffBlueBorder = false,
@@ -555,6 +576,7 @@ local defaultSettings = {
     otherNpdeBuffFilterBlizzard = true,
     otherNpdeBuffFilterCC = true,
     otherNpdeBuffFilterWatchList = true,
+    otherNpdeBuffFilterOnlyMe = false,
     otherNpdeBuffFilterLessMinite = false,
     otherNpdeBuffPandemicGlow = false,
 
@@ -562,23 +584,22 @@ local defaultSettings = {
     friendlyNpBuffFilterAll = false,
     friendlyNpBuffFilterWatchList = false,
     friendlyNpBuffFilterLessMinite = false,
-    friendlyNpBuffFilterImportantBuffs = true,
+    friendlyNpBuffFilterImportantBuffs = false,
+    friendlyNpBuffFilterDefensives = false,
     friendlyNpBuffFilterOnlyMe = true,
     friendlyNpBuffPurgeGlow = false,
     friendlyNpBuffBlueBorder = false,
     friendlyNpBuffEmphasisedBorder = false,
 
-    friendlyNpdeBuffEnable = true,
+    friendlyNpdeBuffEnable = false,
     friendlyNpdeBuffFilterAll = false,
     friendlyNpdeBuffFilterBlizzard = false,
-    friendlyNpdeBuffFilterWatchList = false,
     friendlyNpdeBuffFilterLessMinite = false,
-    friendlyNpdeBuffFilterOnlyMe = false,
     friendlyNpdeBuffFilterCC = true,
+    friendlyNpdeBuffFilterPurgeable = false,
+    friendlyNpdeBuffFilterPurgeableAny = false,
 
     friendlyNpBuffFilterBlacklist = true,
-    friendlyNpdeBuffFilterBlacklist = true,
-    otherNpBuffFilterBlacklist = true,
     otherNpdeBuffFilterBlacklist = true,
 
     testAllEnabledFeatures = false,
@@ -786,15 +807,33 @@ local defaultSettings = {
     buffIconXPos = 0,
     buffIconYPos = 0,
 
+    combineBigAuraIcons = false,
+    combinedBigIconAnchor = "RIGHT",
+    moveNormalBuffs = false,
+    moveNormalBuffsAnchor = "LEFT",
+    nameplateAuraGrowDownwards = false,
+
     hideNameShowTarget = false,
 
     nameplateAuraSquare = true,
     nameplateAuraTaller = false,
     nameplateAuraPixelBorder = false,
+    nameplateAurasEnemyCenteredBuffs = false,
+    nameplateAurasEnemyCenteredDebuffs = false,
+    nameplateAurasFriendlyCenteredBuffs = false,
+    nameplateAurasFriendlyCenteredDebuffs = false,
 
     nameplateAuraBuffLimit = 3,
     ccIconLimit = 2,
-    nameplateAuraSeparateCCIcon = true,
+
+    npAuraPurgeGlowColorEnabled = false,
+    npAuraPurgeGlowRGB = {0.2, 0.6, 1, 1},
+
+    npAuraShowStackText = true,
+    npAuraStackTextXPos = 0,
+    npAuraStackTextYPos = 0,
+    npAuraStackTextAlign = "RIGHT",
+    npAuraStackTextColor = {1, 1, 1, 1},
 
     nameplateAuraTimerColor = true,
     nameplateAuraTimerBaseColor = {1, 0.82, 0, 1},
@@ -932,7 +971,7 @@ local function InitializeSavedVariables()
                 end
             end
         end
-        db.version = addonVersion  -- Update the version number in the database
+        db.version = addonVersion
     end
 
     if not db.classIndicatorFriendlyYPos then
@@ -940,6 +979,14 @@ local function InitializeSavedVariables()
         db.classIndicatorFriendlyYPos = db.classIndicatorYPos
         db.classIndicatorFriendlyAnchor = db.classIndicatorAnchor
         db.classIndicatorFriendlyScale = db.classIndicatorScale
+    end
+
+    if db.fakeNameAnchorFriendly == nil then
+        db.fakeNameAnchorFriendly = db.fakeNameAnchor
+    end
+
+    if db.fakeNameAnchorRelativeFriendly == nil then
+        db.fakeNameAnchorRelativeFriendly = db.fakeNameAnchorRelative
     end
 
     if not db.healerIndicatorEnemyXPos then
@@ -959,7 +1006,7 @@ local function InitializeSavedVariables()
     end
 
     if db.nameplateAurasYPos and db.nameplateAurasYPos ~= 0 then
-        db.nameplateDebuffPadding = (db.nameplateDebuffPadding or 0) + db.nameplateAurasYPos
+        db.bbpDebuffPadding = (db.bbpDebuffPadding or 0) + db.nameplateAurasYPos
         db.nameplateAurasYPos = 0
     end
 
@@ -991,56 +1038,71 @@ end
 local NAMEPLATE_AURA_SETTINGS = {
     "enableNameplateAuraCustomisation",
 
-    "otherNpBuffEnable", "otherNpBuffFilterBlacklist", "otherNpBuffFilterWatchList",
-    "otherNpBuffFilterImportantBuffs", "otherNpBuffFilterPurgeable",
+    "otherNpBuffEnable",
+    "otherNpBuffFilterImportantBuffs", "otherNpBuffFilterDefensives", "otherNpBuffFilterPurgeable",
     "otherNpBuffFilterPurgeableAny",
-    "otherNpBuffFilterLessMinite", "otherNpBuffFilterOnlyMe", "otherNpBuffPurgeGlow",
+    "otherNpBuffFilterLessMinite", "otherNpBuffPurgeGlow",
     "otherNpdeBuffEnable", "otherNpdeBuffFilterBlacklist", "otherNpdeBuffFilterWatchList",
     "otherNpdeBuffFilterCC", "otherNpdeBuffFilterBlizzard", "otherNpdeBuffFilterLessMinite",
     "otherNpdeBuffFilterOnlyMe", "otherNpdeBuffPandemicGlow", "blizzardDefaultFilterOnlyMine",
     "friendlyNpBuffEnable", "friendlyNpBuffFilterBlacklist", "friendlyNpBuffFilterWatchList",
-    "friendlyNpBuffFilterImportantBuffs", "friendlyNpBuffFilterPurgeable",
+    "friendlyNpBuffFilterImportantBuffs", "friendlyNpBuffFilterDefensives",
+    "friendlyNpBuffFilterPurgeable",
     "friendlyNpBuffFilterPurgeableAny",
     "friendlyNpBuffFilterLessMinite", "friendlyNpBuffFilterOnlyMe",
-    "friendlyNpdeBuffEnable", "friendlyNpdeBuffFilterBlacklist", "friendlyNpdeBuffFilterWatchList",
+    "friendlyNpdeBuffEnable",
     "friendlyNpdeBuffFilterCC", "friendlyNpdeBuffFilterBlizzard",
-    "friendlyNpdeBuffFilterLessMinite", "friendlyNpdeBuffFilterOnlyMe",
+    "friendlyNpdeBuffFilterPurgeable", "friendlyNpdeBuffFilterPurgeableAny",
+    "friendlyNpdeBuffFilterLessMinite",
 
     "nameplateAuraDefensiveGlow", "nameplateAuraDefensiveGlowRGB",
     "nameplateAuraImportantGlow", "nameplateAuraImportantGlowRGB",
-    "nameplateAuraCCGlow", "nameplateAuraCCGlowRGB",
+    "nameplateAuraCCGlow", "nameplateAuraCCGlowRGB", "nameplateAuraCCGlowDispelColor",
     "nameplateAuraPandemicGlowRGB", "alwaysShowPurgeTexture",
+    "npAuraPurgeGlowColorEnabled", "npAuraPurgeGlowRGB",
+    "nameplateAuraEnlargedGlowRGB",
 
     "nameplateAuraSquare", "nameplateAuraTaller", "nameplateAuraPixelBorder",
-    "npColorAuraBorder", "nameplateAuraSeparateCCIcon",
-    "nameplateAuraRightToLeft", "nameplateAurasEnemyCenteredAnchor",
-    "nameplateAurasFriendlyCenteredAnchor",
+    "npColorAuraBorder",
+    "nameplateAuraRightToLeft", "nameplateAuraGrowDownwards",
+    "nameplateAurasEnemyCenteredBuffs", "nameplateAurasEnemyCenteredDebuffs",
+    "nameplateAurasFriendlyCenteredBuffs", "nameplateAurasFriendlyCenteredDebuffs",
+    "otherNpBuffBlueBorder",
     "npAuraMagicRGB", "npAuraPoisonRGB", "npAuraCurseRGB", "npAuraDiseaseRGB",
     "npAuraBleedRGB", "npAuraOtherRGB", "npAuraBuffsRGB",
     "npAuraStackFont", "npAuraStackFontEnabled",
+    "npAuraShowStackText", "npAuraStackTextXPos", "npAuraStackTextYPos",
+    "npAuraStackTextAlign", "npAuraStackTextColor",
+    "npAuraCdFont", "npAuraCdFontEnabled",
 
-    "nameplateAuraScale", "nameplateAuraDebuffScale", "nameplateAuraBuffScale",
+    "bbpAuraScale", "nameplateAuraDebuffScale", "nameplateAuraBuffScale",
     "nameplateAuraCountScale", "nameplateAuraWidthGap", "nameplateAuraHeightGap",
     "nameplateAuraRowAmount", "nameplateAuraRowFriendlyAmount",
-    "maxAurasOnNameplate", "nameplateAuraBuffLimit", "ccIconLimit",
+    "maxAurasOnNameplate", "maxBuffsOnNameplate", "nameplateAuraBuffLimit", "ccIconLimit",
     "nameplateAurasXPos", "nameplateAurasYPos", "nameplateDebuffXPadding",
-    "nameplateDebuffPadding", "sortDurationAuras", "sortDurationAurasReverse",
+    "bbpDebuffPadding", "sortDurationAuras", "sortDurationAurasReverse",
     "targetNameplateAuraScaleEnabled", "targetNameplateAuraScale",
+    "nameplateAuraEnlargedScale", "nameplateAuraEnlargedSquare",
+    "sortEnlargedAurasFirst", "enlargeAllCC", "enlargeAllImportantBuffs",
 
-    "nameplateAuraCCOnPlayers", "nameplateAuraCCOnNpcs", "nameplateAuraCCBlizzardInPvE",
+    "nameplateAuraCCOnEnemyPlayers", "nameplateAuraCCOnFriendlyPlayers",
+    "nameplateAuraCCOnNpcs", "nameplateAuraCCBlizzardInPvE",
     "ccIconScale", "ccIconXPos", "ccIconYPos", "ccIconAnchor",
-    "nameplateAuraBuffsOnPlayers", "nameplateAuraBuffsOnNpcs", "nameplateAuraBuffsBlizzardInPvE",
+    "nameplateAuraBuffsOnEnemyPlayers", "nameplateAuraBuffsOnFriendlyPlayers",
+    "nameplateAuraBuffsOnNpcs", "nameplateAuraBuffsBlizzardInPvE",
     "buffIconScale", "buffIconXPos", "buffIconYPos", "buffIconAnchor",
+    "combineBigAuraIcons", "combinedBigIconAnchor",
+    "moveNormalBuffs", "moveNormalBuffsAnchor",
 
     "showDefaultCooldownNumbersOnNpAuras", "hideNpAuraSwipe",
     "nameplateAuraHideLongDurationText", "nameplateAuraUseBlizzardCdText",
     "nameplateAuraMillisecondsBuffs", "nameplateAuraMillisecondsCC",
     "nameplateAuraTimerColor", "nameplateAuraTimerBaseColor",
     "nameplateAuraTimerLowColor", "nameplateAuraTimerLowThreshold",
-    "defaultNpAuraCdSize",
+    "defaultNpAuraCdSize", "bigNpAuraCdSize", "npAuraCdTextBigOnly",
 
     "nameplateAuraPlayersOnly", "nameplateAuraPlayersOnlyShowTarget",
-    "hideNameplateAuraTooltip", "nameplateAuraTestMode",
+    "hideNameplateAuraTooltip", "auraTooltipSpellID", "nameplateAuraTestMode",
     "prdAurasEnabled", "prdAuraScale", "prdAuraXPos", "prdAuraYPos",
     "prdAuraRowAmount", "prdAuraLimit",
 }
@@ -1072,11 +1134,6 @@ function BBP.ResetNameplateAuraSettings(keep)
                 db[key] = default
             end
         end
-    end
-
-    local cvarDefault = C_CVar.GetCVarDefault("nameplateDebuffPadding")
-    if cvarDefault then
-        C_CVar.SetCVar("nameplateDebuffPadding", cvarDefault)
     end
 end
 
@@ -1120,6 +1177,7 @@ local cvarList = {
     -- Midnights
     "nameplateStyle",
     "nameplateAuraScale",
+    "nameplateDebuffPadding",
     "nameplateSimplifiedScale",
 }
 
@@ -1230,10 +1288,6 @@ local function CVarDefaultOnLogout()
         end
     end
 
-    local auraBackup = BetterBlizzPlatesDB.bbpAuraCVarBackup
-    if auraBackup and auraBackup.showDebuffsOnFriendly then
-        C_CVar.SetCVar(NamePlateConstants.SHOW_DEBUFFS_ON_FRIENDLY_CVAR, auraBackup.showDebuffsOnFriendly)
-    end
 end
 
 local frame = CreateFrame("Frame")
@@ -1583,6 +1637,11 @@ StaticPopupDialogs["BETTERBLIZZPLATES_COMBAT_WARNING"] = {
 -- Update message
 local function SendUpdateMessage()
     if sendUpdate then
+        if BetterBlizzPlatesDB.skipUpdateMsg then
+            BetterBlizzPlatesDB.skipUpdateMsg = nil
+            BBP.skippedUpdateMsg = true
+            return
+        end
         if not BetterBlizzPlatesDB.scStart then
             C_Timer.After(7, function()
                 --bbp news
@@ -2776,9 +2835,17 @@ local function SetCVarsOnLogin()
             C_CVar.SetCVar("nameplateStyle", BetterBlizzPlatesDB.nameplateStyle)
         end
 
-        if BetterBlizzPlatesDB.nameplateAuraScale then
-            C_CVar.SetCVar("nameplateAuraScale", BetterBlizzPlatesDB.nameplateAuraScale)
+        if not BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
+            if BetterBlizzPlatesDB.nameplateAuraScale then
+                C_CVar.SetCVar("nameplateAuraScale", BetterBlizzPlatesDB.nameplateAuraScale)
+            end
+
+            if BetterBlizzPlatesDB.nameplateDebuffPadding then
+                C_CVar.SetCVar("nameplateDebuffPadding", BetterBlizzPlatesDB.nameplateDebuffPadding)
+            end
         end
+
+        C_CVar.SetCVar(NamePlateConstants.SHOW_DEBUFFS_ON_FRIENDLY_CVAR, "0")
 
         if BetterBlizzPlatesDB.NamePlateVerticalScale then
             local verticalScale = tonumber(BetterBlizzPlatesDB.NamePlateVerticalScale)
@@ -2791,6 +2858,10 @@ local function SetCVarsOnLogin()
 
         if BetterBlizzPlatesDB.friendlyClassColorName then
             C_CVar.SetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames", "1")
+        end
+
+        if BetterBlizzPlatesDB.forceShowTotemNames then
+            C_CVar.SetCVar("UnitNameEnemyTotemName", "1")
         end
 
         if BetterBlizzPlatesDB.setCVarAcrossAllCharacters then
@@ -5715,6 +5786,8 @@ function BBP.RepositionName(frame)
         config.useFakeNameAnchorBottom = BetterBlizzPlatesDB.useFakeNameAnchorBottom
         config.fakeNameAnchor = BetterBlizzPlatesDB.fakeNameAnchor
         config.fakeNameAnchorRelative = BetterBlizzPlatesDB.fakeNameAnchorRelative
+        config.fakeNameAnchorFriendly = BetterBlizzPlatesDB.fakeNameAnchorFriendly
+        config.fakeNameAnchorRelativeFriendly = BetterBlizzPlatesDB.fakeNameAnchorRelativeFriendly
         config.fakeNameScaleWithParent = BetterBlizzPlatesDB.fakeNameScaleWithParent
         config.fakeNameRaiseStrata = BetterBlizzPlatesDB.fakeNameRaiseStrata
         config.fakeNameMaxWidthOn = BetterBlizzPlatesDB.fakeNameMaxWidthOn
@@ -5724,20 +5797,22 @@ function BBP.RepositionName(frame)
         if frame:IsForbidden() or not frame.unit or frame.name.changing then return end
         frame.name.changing = true
         local db = BetterBlizzPlatesDB
-        --frame.name:ClearPoint("BOTTOM")
+        local isfriend = isFriend(frame.unit)
+        local usedBottomAnchor = false
         frame.name:ClearAllPoints()
-        if isFriend(frame.unit) then
+        if isfriend then
             if db.useFakeNameAnchorBottom then
+                usedBottomAnchor = true
                 frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 27)
             else
-                frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 4)
+                frame.name:SetPoint(db.fakeNameAnchorFriendly, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelativeFriendly, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 4)
             end
         else
             frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameXPos, db.fakeNameYPos + 4)
         end
-        if BetterBlizzPlatesDB.fakeNameMaxWidthOn then
-            frame.name:SetWidth(BetterBlizzPlatesDB.fakeNameMaxWidth)
-            frame.name:SetJustifyH(nameJustify[BetterBlizzPlatesDB.fakeNameAnchor] or "CENTER")
+        if db.fakeNameMaxWidthOn then
+            frame.name:SetWidth(db.fakeNameMaxWidth)
+            frame.name:SetJustifyH(usedBottomAnchor and "CENTER" or (nameJustify[isfriend and db.fakeNameAnchorFriendly or db.fakeNameAnchor] or "CENTER"))
         end
         frame.name.changing = false
     end
@@ -7120,8 +7195,10 @@ local function HandleNamePlateAdded(unit)
         BBP.UpdateNameplateTargetText(frame, frame.unit)
     end
     if ((config.hideFriendlyNameText or (config.partyPointerHideAll and frame.partyPointer and frame.partyPointer:IsShown())) and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
-        frame.name:SetAlpha(0)
-        frame.nameHidden = true
+        if not (BetterBlizzPlatesDB.forceShowTotemNames and BBP.IsProbablyTotem(frame.unit)) then
+            frame.name:SetAlpha(0)
+            frame.nameHidden = true
+        end
     end
 
     if config.showGuildNames then ShowFriendlyGuildName(frame, frame.unit) end
@@ -7581,11 +7658,9 @@ function BBP.ConsolidatedUpdateName(frame)
     end
 
     if (config.hideFriendlyNameText and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
-        if BetterBlizzPlatesDB.forceShowTotemNames then
-            local isProbablyTotem = UnitIsMinion(unit) and (not UnitIsOtherPlayersPet(unit) and not UnitIsUnit(unit, "pet"))
-            if not isProbablyTotem then
-                frame.name:SetAlpha(0)
-            end
+        if BetterBlizzPlatesDB.forceShowTotemNames and BBP.IsProbablyTotem(unit) then
+            frame.name:SetAlpha(1)
+            frame.nameHidden = nil
         else
             frame.name:SetAlpha(0)
         end
@@ -8501,12 +8576,9 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     "nameplateAurasPersonalCenteredAnchor", "hideDefaultPersonalNameplateAuras",
                     "nameplateAuraSelfScale", "nameplateAuraBuffSelfScale", "nameplateAuraDebuffSelfScale",
                     "disableEnlargedAurasOnSelf", "disableCompactedAurasOnSelf", "disableImportantAurasOnSelf",
-                    "nameplateAuraEnlargedScale", "nameplateAuraEnlargedSquare",
                     "nameplateAuraCompactedScale", "nameplateAuraCompactedSquare",
-                    "sortEnlargedAurasFirst", "sortCompactedAurasFirst",
-                    "enlargeAllImportantBuffs", "enlargeAllCC",
+                    "sortCompactedAurasFirst",
                     "onlyPandemicAuraMine",
-                    "otherNpdeBuffFilterOnlyMe",
                     "showInterruptsOnNameplateAuras", "separateAuraBuffRow", "nameplateAuraTypeGap",
                     "nameplateAurasNoNameYPos",
                     "importantCCFull", "importantCCDisarm", "importantCCRoot", "importantCCSilence",
@@ -8527,6 +8599,120 @@ First:SetScript("OnEvent", function(_, event, addonName)
             if not db.dbAuraSettingsRefreshed then
                 db.dbAuraSettingsRefreshed = true
                 BBP.ResetNameplateAuraSettings(AURA_LOOK_SETTINGS)
+            end
+
+            if not db.midnightAuraOverhaul then
+                db.midnightAuraOverhaul = true
+
+                local AURA_FILTERS = {
+                    otherNpBuff      = { "FilterWatchList", "FilterOnlyMe", "FilterDefensives",
+                                         "FilterImportantBuffs", "FilterPurgeable", "FilterLessMinite" },
+                    otherNpdeBuff    = { "FilterWatchList", "FilterOnlyMe", "FilterCC",
+                                         "FilterBlizzard", "FilterLessMinite" },
+                    friendlyNpBuff   = { "FilterWatchList", "FilterOnlyMe", "FilterDefensives",
+                                         "FilterImportantBuffs", "FilterPurgeable", "FilterLessMinite" },
+                    friendlyNpdeBuff = { "FilterWatchList", "FilterOnlyMe", "FilterCC", "FilterPurgeable",
+                                         "FilterBlizzard", "FilterLessMinite" },
+                }
+                local function AnyFilterOn(prefix)
+                    for _, filter in ipairs(AURA_FILTERS[prefix]) do
+                        if db[prefix .. filter] then return true end
+                    end
+                    return false
+                end
+                local hadFilter = {}
+                for prefix in pairs(AURA_FILTERS) do
+                    hadFilter[prefix] = AnyFilterOn(prefix)
+                end
+
+                local bigCCIcon = db.nameplateAuraSeparateCCIcon ~= false
+                local ccOnPlayers = bigCCIcon and db.nameplateAuraCCOnPlayers ~= false
+                local ccOnNpcs = bigCCIcon and db.nameplateAuraCCOnNpcs ~= false
+                db.nameplateAuraCCOnEnemyPlayers = ccOnPlayers
+                db.nameplateAuraCCOnFriendlyPlayers = ccOnPlayers
+                db.nameplateAuraCCOnNpcs = ccOnNpcs
+                if not (ccOnPlayers or ccOnNpcs) then
+                    db.otherNpdeBuffFilterCC = false
+                    db.friendlyNpdeBuffFilterCC = false
+                end
+
+                local buffsOnPlayers = db.nameplateAuraBuffsOnPlayers ~= false
+                local buffsOnNpcs = db.nameplateAuraBuffsOnNpcs ~= false
+                db.nameplateAuraBuffsOnEnemyPlayers = buffsOnPlayers
+                db.nameplateAuraBuffsOnFriendlyPlayers = buffsOnPlayers
+                db.nameplateAuraBuffsOnNpcs = buffsOnNpcs
+                for _, prefix in ipairs({ "otherNpBuff", "friendlyNpBuff" }) do
+                    if not (buffsOnPlayers or buffsOnNpcs) then
+                        db[prefix .. "FilterImportantBuffs"] = false
+                        db[prefix .. "FilterDefensives"] = false
+                    elseif db[prefix .. "FilterDefensives"] == nil then
+                        db[prefix .. "FilterDefensives"] = db[prefix .. "FilterImportantBuffs"] and true or false
+                    end
+                end
+
+                db.nameplateAuraSeparateCCIcon = nil
+                db.nameplateAuraCCOnPlayers = nil
+                db.nameplateAuraBuffsOnPlayers = nil
+
+                db.otherNpBuffFilterWatchList = nil
+                db.friendlyNpdeBuffFilterWatchList = nil
+                db.otherNpBuffFilterBlacklist = nil
+                db.friendlyNpdeBuffFilterBlacklist = nil
+                db.friendlyNpdeBuffFilterOnlyMe = nil
+                db.otherNpBuffFilterOnlyMe = nil
+
+                for prefix in pairs(AURA_FILTERS) do
+                    if hadFilter[prefix] and db[prefix .. "Enable"] and not AnyFilterOn(prefix) then
+                        db[prefix .. "Enable"] = false
+                    end
+                end
+
+                local enemyCentered = db.nameplateAurasEnemyCenteredAnchor
+                local friendlyCentered = db.nameplateAurasFriendlyCenteredAnchor
+                db.nameplateAurasEnemyCenteredBuffs = enemyCentered and true or false
+                db.nameplateAurasEnemyCenteredDebuffs = enemyCentered and true or false
+                db.nameplateAurasFriendlyCenteredBuffs = friendlyCentered and true or false
+                db.nameplateAurasFriendlyCenteredDebuffs = friendlyCentered and true or false
+                db.nameplateAurasEnemyCenteredAnchor = nil
+                db.nameplateAurasFriendlyCenteredAnchor = nil
+
+                db.bbpDebuffPadding = tonumber(db.nameplateDebuffPadding) or 0
+                db.bbpAuraScale = tonumber(db.nameplateAuraScale) or 1
+
+                local auraBackup = db.bbpAuraCVarBackup
+                if auraBackup then
+                    if auraBackup.bitfields then
+                        db.bitfields = db.bitfields or {}
+                        for cvarName, indices in pairs(auraBackup.bitfields) do
+                            db.bitfields[cvarName] = db.bitfields[cvarName] or {}
+                            for key, value in pairs(indices) do
+                                db.bitfields[cvarName][key] = value
+                            end
+                        end
+                    end
+                    db.bbpAuraCVarBackup = nil
+                end
+                db.blizzShowDebuffsOnFriendly = nil
+
+                local useDefaults = db.enableNameplateAuraCustomisation
+                for _, cvar in ipairs({ "nameplateDebuffPadding", "nameplateAuraScale" }) do
+                    local value = useDefaults and C_CVar.GetCVarDefault(cvar) or C_CVar.GetCVar(cvar)
+                    db[cvar] = value
+                    if BBPCVarBackupsDB then BBPCVarBackupsDB[cvar] = value end
+                end
+
+                local skipUpdateMsg = db.skipUpdateMsg or BBP.skippedUpdateMsg or db.scStart
+                if db.firstSaveComplete and not skipUpdateMsg then
+                    StaticPopupDialogs["BBP_MIDNIGHT_AURA_OVERHAUL"] = {
+                        text = BBP.ICON_NAME.."\n\n|A:services-icon-warning:20:20|a |cffff8800IMPORTANT READ:|r |A:services-icon-warning:20:20|a\n\nLots of nameplate aura issues fixed and you will likely have to tweak your settings a bit. For a full overview read patch notes. Apologies for the inconvenience.\n\n- Lots of issues with nameplate auras have been fixed and tweaked. A lot of filters were not working as intended and not displaying properly.\n\n- The handling of Important/Defensives filters is changed; These filters now add those auras at the top of the nameplate how they used to before Midnight UNLESS the \"Big Buffs Icon\" is enabled, then it goes on the side of healthbar or wherever you have the Big Icon anchored.\n\n- Lots of new settings and filters for nameplate auras. Check patch notes for more and look around.",
+                        button1 = "Okay",
+                        timeout = 0,
+                        whileDead = true,
+                    }
+                    C_Timer.After(6, function()
+                        StaticPopup_Show("BBP_MIDNIGHT_AURA_OVERHAUL")
+                    end)
+                end
             end
 
             if db.nameplateShowFriendlyGuardians and db.nameplateShowFriendlyPlayerGuardians == nil then

@@ -4441,6 +4441,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
             )
 
             local start = longestCCAura.expirationTime - longestCCAura.duration
+            UnitFrame.classIndicatorCC.Cooldown:SetHideCountdownNumbers(db.classIndicatorCCHideCdText and true or false)
             UnitFrame.classIndicatorCC.Cooldown:SetCooldown(start, longestCCAura.duration)
             UnitFrame.classIndicatorCC.Icon:SetTexture(longestCCAura.icon)
             UnitFrame.classIndicatorCC:Show()

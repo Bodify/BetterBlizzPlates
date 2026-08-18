@@ -192,6 +192,15 @@ local function BackgroundType(frame, bg)
     end
 end
 
+local function GetCCGlowColor()
+    local db = BetterBlizzPlatesDB
+    if db.enableNameplateAuraCustomisation and db.nameplateAuraCCGlow then
+        local c = db.nameplateAuraCCGlowRGB
+        return c[1], c[2], c[3], c[4]
+    end
+    return 1, 0.874, 0, 1
+end
+
 local function InitClassIndicatorCCSlot(auraFrame, frame)
     local square = BetterBlizzPlatesDB.classIconSquareBorderFriendly
 
@@ -226,12 +235,17 @@ local function InitClassIndicatorCCSlot(auraFrame, frame)
         cooldown:SetUseCircularEdge(true)
     end
     cooldown:SetReverse(true)
+    cooldown:SetHideCountdownNumbers(BetterBlizzPlatesDB.classIndicatorCCHideCdText and true or false)
     auraFrame:SetDurationCooldown(cooldown)
+    auraFrame.bbpCooldown = cooldown
 
     local glow = auraFrame:CreateTexture(nil, "OVERLAY", nil, 7)
     glow:SetAtlas(square and "newplayertutorial-drag-slotblue" or "charactercreate-ring-select")
     glow:SetPoint("CENTER", auraFrame)
     glow:SetSize(square and 38 or 36, square and 38 or 36)
+    glow:SetDesaturated(true)
+    glow:SetVertexColor(GetCCGlowColor())
+    auraFrame.bbpGlow = glow
 
     auraFrame:SetCancelAuraButtons(nil)
     auraFrame:SetHideTooltipInCombat(true)
@@ -273,6 +287,89 @@ local function ShouldShowClassIndicatorCC(frame)
     return true
 end
 
+function BBP.ClassIconShowsCC(frame)
+    if not frame or not ShouldShowClassIndicatorCC(frame) then return false end
+
+    local db = BetterBlizzPlatesDB
+    local unit = frame.unit
+
+    local specID, specChecked
+    local function SpecID()
+        if not specChecked then
+            specChecked = true
+            specID = BBP.GetSpecID(frame)
+        end
+        return specID
+    end
+
+    local alwaysShowHealer = db.classIconAlwaysShowHealer and HealerSpecs[SpecID()]
+    local alwaysShowTank = db.classIconAlwaysShowTank and TankSpecs[SpecID()]
+    local flagIcon = BBP.isInBg and (db.classIndicatorFriendly or db.classIconAlwaysShowBgObj)
+        and GetAuraIcon(frame) or nil
+
+    if not db.classIndicatorFriendly and not flagIcon and not alwaysShowHealer and not alwaysShowTank then
+        return false
+    end
+    if db.classIndicatorOnlyHealer and not HealerSpecs[SpecID()]
+        and not flagIcon and not alwaysShowHealer and not alwaysShowTank then
+        return false
+    end
+    if db.classIndicatorOnlyParty and not UnitInParty(unit) then return false end
+    if db.classIndicatorOnlyFriends
+        and not (BBP.isFriendlistFriend(unit) or BBP.isUnitBNetFriend(unit) or BBP.isUnitGuildmate(unit)) then
+        return false
+    end
+
+    if ((db.classIconArenaOnly and not BBP.isInArena) or (db.classIconBgOnly and not BBP.isInBg))
+        and not (db.classIconAlwaysShowBgObj and flagIcon) then
+        if db.classIconArenaOnly and db.classIconBgOnly then
+            if not BBP.isInPvP then return false end
+        elseif not ((alwaysShowHealer or alwaysShowTank) and BBP.isInPvP) then
+            return false
+        end
+    end
+
+    return true
+end
+
+local ccStyleQueued = false
+local function CCObjectAccessible(object)
+    if object.CanBeAccessedInContext and not object:CanBeAccessedInContext() then
+        return false
+    end
+    return not C_Secrets.ShouldAurasBeSecret()
+end
+
+local function ApplyClassIndicatorCCStyle(frame)
+    local ccFrame = frame.classIndicatorCC
+    if not ccFrame then return end
+
+    local cooldown, glow = ccFrame.bbpCooldown, ccFrame.bbpGlow
+    if not cooldown and not glow then return end
+
+    if (cooldown and not CCObjectAccessible(cooldown))
+        or (glow and not CCObjectAccessible(glow)) then
+        ccStyleQueued = true
+        return
+    end
+
+    if glow then
+        glow:SetVertexColor(GetCCGlowColor())
+    end
+    if cooldown then
+        cooldown:SetHideCountdownNumbers(BetterBlizzPlatesDB.classIndicatorCCHideCdText and true or false)
+    end
+end
+
+function BBP.RefreshClassIndicatorCCStyle()
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        if frame and not frame:IsForbidden() and frame.classIndicatorCC then
+            ApplyClassIndicatorCCStyle(frame)
+        end
+    end
+end
+
 function BBP.UpdateClassIndicatorCC(frame)
     local container = frame and frame.classIndicatorCCContainer
     if not container then return end
@@ -282,6 +379,8 @@ function BBP.UpdateClassIndicatorCC(frame)
         container:Hide()
         return
     end
+
+    ApplyClassIndicatorCCStyle(frame)
 
     container:SetUnit(frame.unit)
     container:SetEnabled(true)
@@ -570,7 +669,8 @@ function BBP.ClassIndicator(frame, foundID)
         if config.nameplateResourceOnTarget == "1" and not config.nameplateResourceUnderCastbar and info.isTarget and not (config.hideResourceOnFriend and info.isFriend) then
             resourceAnchor = frame:GetParent().driverFrame.classNamePlateMechanicFrame
         end
-        local attachPoint = (BetterBlizzPlatesDB.useFakeName and BetterBlizzPlatesDB.fakeNameAnchorRelative == "TOP" and frame.name) or resourceAnchor or frame.healthBar
+        local nameAnchorRelative = (info.isFriend and BetterBlizzPlatesDB.fakeNameAnchorRelativeFriendly) or BetterBlizzPlatesDB.fakeNameAnchorRelative
+        local attachPoint = (BetterBlizzPlatesDB.useFakeName and nameAnchorRelative == "TOP" and frame.name) or resourceAnchor or frame.healthBar
         frame.classIndicator:SetPoint(oppositeAnchor, attachPoint, anchorPoint, xPos, yPos + 7)
     else
         frame.classIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos)
@@ -906,6 +1006,7 @@ function BBP.ToggleClassIndicatorPinMode(enable)
 end
 
 function BBP.SetupClassIndicatorCCAuraListener()
+    ccStyleQueued = false
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         local frame = nameplate.UnitFrame
         if frame and not frame:IsForbidden() then
@@ -913,3 +1014,12 @@ function BBP.SetupClassIndicatorCCAuraListener()
         end
     end
 end
+
+local ccRestrictionListener = CreateFrame("Frame")
+ccRestrictionListener:RegisterEvent("PLAYER_REGEN_ENABLED")
+ccRestrictionListener:RegisterEvent("PLAYER_ENTERING_WORLD")
+ccRestrictionListener:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED")
+ccRestrictionListener:SetScript("OnEvent", function()
+    if not ccStyleQueued or C_Secrets.ShouldAurasBeSecret() then return end
+    BBP.SetupClassIndicatorCCAuraListener()
+end)

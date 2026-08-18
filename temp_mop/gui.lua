@@ -1626,6 +1626,14 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Show Crowd Control" then
+            local tooltipText = "\n|cff32f795Right-click to hide the cooldown duration text on the CC.|r"
+
+            if BetterBlizzPlatesDB.classIndicatorCCHideCdText then
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
 
         if category then
@@ -7392,6 +7400,19 @@ local function guiPositionAndScale()
             else
                 BetterBlizzPlatesDB.friendlyNpdeBuffEnable = true
                 BetterBlizzPlatesDB.friendlyNpdeBuffFilterCC = true
+            end
+        end
+    end)
+    anchorSubClassIcon.classIndicatorCCAuras:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            if not BetterBlizzPlatesDB.classIndicatorCCHideCdText then
+                BetterBlizzPlatesDB.classIndicatorCCHideCdText = true
+            else
+                BetterBlizzPlatesDB.classIndicatorCCHideCdText = nil
+            end
+            BBP.RefreshAllNameplates()
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
             end
         end
     end)

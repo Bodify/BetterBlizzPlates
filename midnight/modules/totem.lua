@@ -37,18 +37,18 @@ local function PaintTotemHealthbarFromBoolean(frame, uninterruptible, r, g, b)
     local texture = bar and bar.GetStatusBarTexture and bar:GetStatusBarTexture()
     if not texture or not texture.SetVertexColorFromBoolean then return false end
 
-    local base = CaptureBaseColor(texture, frame.totemHealthbarBaseColor, frame.totemHealthbarTinted)
+    local base = CaptureBaseColor(texture, frame.totemHealthbarBaseColor, frame.totemHealthbarOverlaid)
     frame.totemHealthbarBaseColor = base
-    frame.totemHealthbarTinted = texture
+    frame.totemHealthbarOverlaid = texture
 
-    local tint = frame.totemHealthbarTintColor
-    if not tint then
-        tint = CreateColor(1, 1, 1, 1)
-        frame.totemHealthbarTintColor = tint
+    local overlay = frame.totemHealthbarOverlayColor
+    if not overlay then
+        overlay = CreateColor(1, 1, 1, 1)
+        frame.totemHealthbarOverlayColor = overlay
     end
-    tint:SetRGBA(r, g, b, base.a)
+    overlay:SetRGBA(r, g, b, base.a)
 
-    texture:SetVertexColorFromBoolean(uninterruptible, tint, base)
+    texture:SetVertexColorFromBoolean(uninterruptible, overlay, base)
     return true
 end
 
@@ -56,33 +56,33 @@ local function PaintTotemNameFromBoolean(frame, uninterruptible, r, g, b)
     local name = frame.name
     if not name or not name.SetVertexColorFromBoolean then return false end
 
-    local base = CaptureBaseColor(name, frame.totemNameBaseColor, frame.totemNameTinted)
+    local base = CaptureBaseColor(name, frame.totemNameBaseColor, frame.totemNameOverlaid)
     frame.totemNameBaseColor = base
-    frame.totemNameTinted = name
+    frame.totemNameOverlaid = name
 
-    local tint = frame.totemNameTintColor
-    if not tint then
-        tint = CreateColor(1, 1, 1, 1)
-        frame.totemNameTintColor = tint
+    local overlay = frame.totemNameOverlayColor
+    if not overlay then
+        overlay = CreateColor(1, 1, 1, 1)
+        frame.totemNameOverlayColor = overlay
     end
-    tint:SetRGBA(r, g, b, base.a)
+    overlay:SetRGBA(r, g, b, base.a)
 
-    name:SetVertexColorFromBoolean(uninterruptible, tint, base)
+    name:SetVertexColorFromBoolean(uninterruptible, overlay, base)
     return true
 end
 
 local function ClearTotemBooleanColors(frame)
-    local texture = frame.totemHealthbarTinted
+    local texture = frame.totemHealthbarOverlaid
     local base    = frame.totemHealthbarBaseColor
-    frame.totemHealthbarTinted   = nil
+    frame.totemHealthbarOverlaid   = nil
     frame.totemHealthbarBaseColor = nil
     if texture and base then
         texture:SetVertexColor(base.r, base.g, base.b, base.a)
     end
 
-    local name     = frame.totemNameTinted
+    local name     = frame.totemNameOverlaid
     local nameBase = frame.totemNameBaseColor
-    frame.totemNameTinted    = nil
+    frame.totemNameOverlaid    = nil
     frame.totemNameBaseColor = nil
     if name and nameBase then
         name:SetVertexColor(nameBase.r, nameBase.g, nameBase.b, nameBase.a)
@@ -136,16 +136,25 @@ local function InitTotemAuraIcon(auraFrame, container)
     end
 end
 
-local function InitTotemTintSlot(auraFrame, frame)
+local function InitTotemOverlaySlot(auraFrame, frame)
     auraFrame:SetSize(1, 1)
 
-    local bar = frame.healthBar
+    local bar = frame.HealthBarsContainer.healthBar
     local fill = bar and bar.GetStatusBarTexture and bar:GetStatusBarTexture()
     if fill then
-        local tint = auraFrame:CreateTexture(nil, "ARTWORK")
-        tint:SetAllPoints(fill)
-        tint:SetColorTexture(TOTEM_COLOR_GROUNDING[1], TOTEM_COLOR_GROUNDING[2],
-            TOTEM_COLOR_GROUNDING[3], 1)
+        local overlay = auraFrame:CreateTexture(nil, "ARTWORK")
+        overlay:SetAllPoints(fill)
+        local atlas = fill:GetAtlas()
+        if atlas then
+            overlay:SetAtlas(atlas)
+        else
+            overlay:SetTexture(fill:GetTexture())
+        end
+        overlay:SetVertexColor(TOTEM_COLOR_GROUNDING[1], TOTEM_COLOR_GROUNDING[2], TOTEM_COLOR_GROUNDING[3], 1)
+
+        if not BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.classicRetailNameplates then
+            BBP.ApplyMidnightMask(frame, overlay)
+        end
     end
 
     auraFrame:SetCancelAuraButtons(nil)
@@ -176,17 +185,17 @@ local function CreateTotemAuraContainers(frame)
         })
     end
 
-    if not frame.totemTintContainer then
-        local tintContainer = CreateFrame("AuraContainer", nil, frame.healthBar, "CustomAuraContainerTemplate")
-        tintContainer:SetSize(1, 1)
-        tintContainer:SetFrameLevel(frame.healthBar:GetFrameLevel() + 1)
-        tintContainer:SetPoint("CENTER", frame.healthBar, "CENTER", 0, 0)
-        tintContainer:SetEnabled(false)
-        tintContainer:Hide()
-        frame.totemTintContainer = tintContainer
+    if not frame.totemOverlayContainer then
+        local overlayContainer = CreateFrame("AuraContainer", nil, frame.healthBar, "CustomAuraContainerTemplate")
+        overlayContainer:SetSize(1, 1)
+        overlayContainer:SetFrameLevel(frame.healthBar:GetFrameLevel() + 1)
+        overlayContainer:SetPoint("CENTER", frame.healthBar, "CENTER", 0, 0)
+        overlayContainer:SetEnabled(false)
+        overlayContainer:Hide()
+        frame.totemOverlayContainer = overlayContainer
 
-        tintContainer:AddAuraSlot("Tint", HELPFUL_IMPORTANT, {
-            initializeFrame = function(auraFrame) InitTotemTintSlot(auraFrame, frame) end,
+        overlayContainer:AddAuraSlot("Overlay", HELPFUL_IMPORTANT, {
+            initializeFrame = function(auraFrame) InitTotemOverlaySlot(auraFrame, frame) end,
         })
     end
 end
@@ -219,15 +228,15 @@ end
 
 local function DisableTotemAuraContainer(frame)
     frame.totemRecheckArmed = nil
-    if not frame.totemAuraContainer and not frame.totemTintContainer then return end
+    if not frame.totemAuraContainer and not frame.totemOverlayContainer then return end
     SetTotemAuraContainerEnabled(frame.totemAuraContainer, nil)
-    SetTotemAuraContainerEnabled(frame.totemTintContainer, nil)
+    SetTotemAuraContainerEnabled(frame.totemOverlayContainer, nil)
 end
 
 local function UpdateTotemAuraContainer(frame)
     ScheduleTotemCastRecheck(frame)
     SetTotemAuraContainerEnabled(frame.totemAuraContainer, frame.unit)
-    SetTotemAuraContainerEnabled(frame.totemTintContainer,
+    SetTotemAuraContainerEnabled(frame.totemOverlayContainer,
         BetterBlizzPlatesDB.totemIndicatorColorHealthBar and frame.unit or nil)
 end
 
@@ -353,6 +362,10 @@ local function RollTestTotemType(config)
     end
 end
 
+function BBP.IsProbablyTotem(unit)
+    return UnitIsMinion(unit) and (not UnitIsOtherPlayersPet(unit) and not UnitIsUnit(unit, "pet"))
+end
+
 function BBP.ApplyTotemIconsAndColorNameplate(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
@@ -379,7 +392,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
     end
 
     local unit = frame.unit
-    local isProbablyTotem = UnitIsMinion(unit) and (not UnitIsOtherPlayersPet(unit) and not UnitIsUnit(unit, "pet"))
+    local isProbablyTotem = BBP.IsProbablyTotem(unit)
 
     local totemIndicatorSwappingAnchor
     if config.totemIndicatorHideNameAndShiftIconDown then

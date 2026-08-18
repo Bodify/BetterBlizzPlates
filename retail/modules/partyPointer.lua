@@ -30,8 +30,6 @@ local pointerOffsets = {
     [5] = -2,
 }
 
-local RAID_CLASS_COLORS = RAID_CLASS_COLORS
-
 local playerClass = select(2, UnitClass("player"))
 
 -- Class Indicator
@@ -224,7 +222,7 @@ function BBP.PartyPointer(frame)
         end
 
         if config.partyPointerClassColor then
-            local classColor = RAID_CLASS_COLORS[class]
+            local classColor = C_ClassColor.GetClassColor(class)
             local r, g, b = classColor.r, classColor.g, classColor.b
 
             if isOthersPet then
@@ -307,7 +305,7 @@ function BBP.PartyPointer(frame)
     end
 
     if config.partyPointerClassColor then
-        local classColor = RAID_CLASS_COLORS[class]
+        local classColor = C_ClassColor.GetClassColor(class)
         local r, g, b = classColor.r, classColor.g, classColor.b
 
         if isOthersPet then
