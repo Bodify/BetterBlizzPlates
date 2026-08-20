@@ -2524,7 +2524,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
 
         local important = GetFlag(npc, "important")
         local enlarged = GetFlag(npc, "enlarged")
-        button.bbpEnlargedSwatch:SetShown(important and true or false)
+        button.bbpEnlargedSwatch:SetShown((important and enlarged) and true or false)
         button.checkBoxOnlyMine:SetChecked(GetFlag(npc, "onlyMine") and true or false)
         button.checkBoxPandemic:SetChecked(GetFlag(npc, "pandemic") and true or false)
         button.checkBoxImportant:SetChecked(important and true or false)

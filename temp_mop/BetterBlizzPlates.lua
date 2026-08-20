@@ -2064,23 +2064,29 @@ local function GetHealthbarHeight(unit)
 end
 BBP.GetHealthbarHeight = GetHealthbarHeight
 
+local function ClassColorCVarEnabled(cvar)
+    local value = BetterBlizzPlatesDB[cvar]
+    if value == nil then
+        return C_CVar.GetCVarBool(cvar)
+    end
+    return value == "1" or value == 1 or value == true
+end
+
 local function ClassColorPlayerNameplate(frame, force)
     if not BetterBlizzPlatesDB.forceClassColors and not force then return end
     if not UnitIsPlayer(frame.unit) then return end
-    if isEnemy(frame.unit) and (BetterBlizzPlatesDB.nameplateShowClassColor or GetCVarBool("nameplateShowClassColor")) then
-        local class = UnitClassBase(frame.unit)
-        local classColor = RAID_CLASS_COLORS[class]
-        if classColor then
-            frame.healthBar:SetStatusBarColor(classColor.r, classColor.g, classColor.b)
-            frame.needsRecolor = true
-        end
-    elseif (BetterBlizzPlatesDB.nameplateShowFriendlyClassColor or GetCVarBool("nameplateShowFriendlyClassColor")) then
-        local class = UnitClassBase(frame.unit)
-        local classColor = RAID_CLASS_COLORS[class]
-        if classColor then
-            frame.healthBar:SetStatusBarColor(classColor.r, classColor.g, classColor.b)
-            frame.needsRecolor = true
-        end
+
+    if isEnemy(frame.unit) then
+        if not ClassColorCVarEnabled("nameplateShowClassColor") then return end
+    else
+        if not ClassColorCVarEnabled("nameplateShowFriendlyClassColor") then return end
+    end
+
+    local class = UnitClassBase(frame.unit)
+    local classColor = class and RAID_CLASS_COLORS[class]
+    if classColor then
+        frame.healthBar:SetStatusBarColor(classColor.r, classColor.g, classColor.b)
+        frame.needsRecolor = true
     end
 end
 
@@ -5295,6 +5301,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 	-- Update whether healthbar is hidden due to being dead - only applies to non-player nameplates
 	-- local hideHealthBecauseDead = unitIsDead and not unitIsPlayer;
 	-- CompactUnitFrame_SetHideHealth(frame, hideHealthBecauseDead, HEALTH_BAR_HIDE_REASON_UNIT_DEAD);
+    ClassColorPlayerNameplate(frame)
 
     if config.friendlyHealthBarColor or config.enemyHealthBarColor then
         ColorNameplateByReaction(frame)
@@ -5903,9 +5910,12 @@ function BBP.RepositionName(frame)
         frame.name.changing = true
         local db = BetterBlizzPlatesDB
         --frame.name:ClearPoint("BOTTOM")
+        local usedBottomAnchor = false
         frame.name:ClearAllPoints()
         if isFriend(frame.unit) then
-            if db.useFakeNameAnchorBottom then
+            local onlyName = UnitIsPlayer(frame.unit) and C_CVar.GetCVarBool("nameplateShowOnlyNameForFriendlyPlayerUnits")
+            if db.useFakeNameAnchorBottom or onlyName then
+                usedBottomAnchor = true
                 frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 27)
             else
                 frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 5)
@@ -5915,7 +5925,7 @@ function BBP.RepositionName(frame)
         end
         if BetterBlizzPlatesDB.fakeNameMaxWidthOn then
             frame.name:SetWidth(BetterBlizzPlatesDB.fakeNameMaxWidth)
-            frame.name:SetJustifyH(nameJustify[BetterBlizzPlatesDB.fakeNameAnchor] or "CENTER")
+            frame.name:SetJustifyH(usedBottomAnchor and "CENTER" or (nameJustify[BetterBlizzPlatesDB.fakeNameAnchor] or "CENTER"))
         end
         frame.name.changing = false
     end
@@ -6714,6 +6724,11 @@ unitFaction:SetScript("OnEvent", function(self, event, unit)
         local np, frame = BBP.GetSafeNameplate(unit)
         if frame then
             ClassColorPlayerNameplate(frame, true)
+            local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config
+            if config and frame.BetterBlizzPlates.unitInfo
+                and (config.friendlyHealthBarColor or config.enemyHealthBarColor) then
+                ColorNameplateByReaction(frame)
+            end
         end
     end)
 end)

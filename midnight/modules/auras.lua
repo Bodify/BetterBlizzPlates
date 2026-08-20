@@ -221,7 +221,6 @@ local importantGeneralDebuffs = {
     [372048] = true, -- Oppressing Roar
     [212182] = true, -- Smoke Bomb
     [359053] = true, -- Smoke Bomb
-    [383005] = true, -- Chrono Loop
 }
 
 local defaultOwnDebuffs = {
@@ -1403,10 +1402,8 @@ local function BigIconOn(kind, isFriend, isPlayer)
 end
 
 local function IncludeOrZero(set, safeSet, canFilter, limit)
-    if canFilter then
-        return set, SetIsEmpty(set) and 0 or limit
-    end
-    return safeSet, SetIsEmpty(safeSet) and 0 or limit
+    if not canFilter then return safeSet, 0 end
+    return set, SetIsEmpty(set) and 0 or limit
 end
 
 local function ExcludeSet(set, safeSet, canFilter)
@@ -1560,8 +1557,9 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
     mineTracked = SubtractSets(mineTracked, flagClaimed)
     mineTrackedSafe = SubtractSets(mineTrackedSafe, flagClaimedSafe)
 
-    local pandemicTracked = ExcludeSet(lists.watchPandemic, lists.watchPandemicSafe, canFilterHarmful)
-    local splitPandemicD = S.splitPandemic and not SetIsEmpty(pandemicTracked)
+    local pandemicTracked, pandemicMaxD = IncludeOrZero(lists.watchPandemic,
+        lists.watchPandemicSafe, canFilterHarmful, dLimit)
+    local splitPandemicD = S.splitPandemic and pandemicMaxD > 0
     if splitPandemicD then
         mineTracked = SubtractSets(mineTracked, lists.watchPandemic)
         mineTrackedSafe = SubtractSets(mineTrackedSafe, lists.watchPandemic)
@@ -1721,8 +1719,9 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
     local mineTrackedBSafe = MergeSets(lists.watchSafe, lists.watchMineSafe, categorySafe.watchBuff)
     mineTrackedB = SubtractSets(mineTrackedB, flagClaimed)
     mineTrackedBSafe = SubtractSets(mineTrackedBSafe, flagClaimedSafe)
-    local pandemicTrackedB = ExcludeSet(lists.watchPandemic, lists.watchPandemicSafe, canFilterHelpful)
-    local splitPandemicB = S.splitPandemic and not SetIsEmpty(pandemicTrackedB)
+    local pandemicTrackedB, pandemicMaxB = IncludeOrZero(lists.watchPandemic,
+        lists.watchPandemicSafe, canFilterHelpful, rowLimit)
+    local splitPandemicB = S.splitPandemic and pandemicMaxB > 0
     if splitPandemicB then
         mineTrackedB = SubtractSets(mineTrackedB, lists.watchPandemic)
         mineTrackedBSafe = SubtractSets(mineTrackedBSafe, lists.watchPandemic)

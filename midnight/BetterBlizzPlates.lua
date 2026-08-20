@@ -1822,6 +1822,14 @@ local function isEnemy(unit)
 end
 BBP.isEnemy = isEnemy
 
+local function isPlayerUnit(unit)
+    if not unit then return false end
+    if UnitIsPlayer(unit) then return true end
+    if BBP.isInPvP and UnitIsNPCAsPlayer and UnitIsNPCAsPlayer(unit) then return true end
+    return false
+end
+BBP.isPlayerUnit = isPlayerUnit
+
 local function GetCastbarHeight()
     local setupOptions = NamePlateSetupOptions
     local customCastbar = BetterBlizzPlatesDB.enableCastbarCustomization
@@ -1864,6 +1872,7 @@ local function GetNameplateUnitInfo(frame, unit)
     info.isFocus = UnitIsUnit("focus", unit)
     info.isPet = UnitIsUnit("pet", unit)
     info.isPlayer = UnitIsPlayer(unit)
+    info.isNpcAsPlayer = not info.isPlayer and BBP.isInPvP and UnitIsNPCAsPlayer and UnitIsNPCAsPlayer(unit) or false
     info.isNpc = not info.isPlayer
     info.unitGUID = 0--UnitGUID(unit)
     info.class = info.isPlayer and UnitClassBase(unit) or nil
@@ -2555,23 +2564,29 @@ function BBP.ChangeStrataOfResourceFrame()
     resourceFrame:SetFrameStrata("HIGH")
 end
 
+local function ClassColorCVarEnabled(cvar)
+    local value = BetterBlizzPlatesDB[cvar]
+    if value == nil then
+        return C_CVar.GetCVarBool(cvar)
+    end
+    return value == "1" or value == 1 or value == true
+end
+
 local function ClassColorPlayerNameplate(frame, force)
     if not BetterBlizzPlatesDB.forceClassColors and not force then return end
-    if not UnitIsPlayer(frame.unit) then return end
-    if isEnemy(frame.unit) and (BetterBlizzPlatesDB.nameplateShowClassColor or GetCVarBool("nameplateShowClassColor")) then
-        local class = UnitClassBase(frame.unit)
-        local classColor = C_ClassColor.GetClassColor(class)
-        if classColor then
-            frame.healthBar:SetStatusBarColor(classColor.r, classColor.g, classColor.b)
-            frame.needsRecolor = true
-        end
-    elseif (BetterBlizzPlatesDB.nameplateShowFriendlyClassColor or GetCVarBool("nameplateShowFriendlyClassColor")) then
-        local class = UnitClassBase(frame.unit)
-        local classColor = C_ClassColor.GetClassColor(class)
-        if classColor then
-            frame.healthBar:SetStatusBarColor(classColor.r, classColor.g, classColor.b)
-            frame.needsRecolor = true
-        end
+    if not isPlayerUnit(frame.unit) then return end
+
+    if isEnemy(frame.unit) then
+        if not ClassColorCVarEnabled("nameplateShowClassColor") then return end
+    else
+        if not ClassColorCVarEnabled("nameplateShowFriendlyClassColor") then return end
+    end
+
+    local class = UnitClassBase(frame.unit)
+    local classColor = class and C_ClassColor.GetClassColor(class)
+    if classColor then
+        frame.healthBar:SetStatusBarColor(classColor.r, classColor.g, classColor.b)
+        frame.needsRecolor = true
     end
 end
 
@@ -2591,6 +2606,10 @@ local function ColorNameplateByReaction(frame)
         config.friendlyHealthBarColorInitalized = true
     end
 
+    -- NPCs that are treated as players in PvP get class colored by Blizzard, so they have to
+    -- follow the player rules here as well or the two keep overwriting each other.
+    local isPlayer = info.isPlayer or info.isNpcAsPlayer
+
     if info.isSelf then
         if frame.needsRecolor then
             BBP.CompactUnitFrame_UpdateHealthColor(frame, true)
@@ -2598,13 +2617,13 @@ local function ColorNameplateByReaction(frame)
         return
     elseif info.isFriend and config.friendlyHealthBarColor then
         -- Friendly NPC
-        if (info.isPlayer and config.friendlyHealthBarColorPlayer) or (info.isNpc and config.friendlyHealthBarColorNpc) then
+        if (isPlayer and config.friendlyHealthBarColorPlayer) or (not isPlayer and config.friendlyHealthBarColorNpc) then
             frame.healthBar:SetStatusBarColor(unpack(config.friendlyHealthBarColorRGB))
             frame.needsRecolor = true
         end
     elseif not info.isFriend and config.enemyHealthBarColor then
         -- Handling enemy health bars
-        if (not config.enemyHealthBarColorNpcOnly) or (config.enemyHealthBarColorNpcOnly and not info.isPlayer) then
+        if (not config.enemyHealthBarColorNpcOnly) or (config.enemyHealthBarColorNpcOnly and not isPlayer) then
             if UnitIsTapDenied(frame.unit) then
                 frame.healthBar:SetStatusBarColor(0.9,0.9,0.9)
                 return
@@ -4570,6 +4589,8 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 	-- 	frame.background:SetVertexColor(CompactUnitFrame_GetOptionCustomHealthBarColorBG(frame):GetRGB());
 	-- end
 
+    ClassColorPlayerNameplate(frame)
+
     if config.friendlyHealthBarColor or config.enemyHealthBarColor then
         if not exitLoop then
             ColorNameplateByReaction(frame)
@@ -5801,7 +5822,8 @@ function BBP.RepositionName(frame)
         local usedBottomAnchor = false
         frame.name:ClearAllPoints()
         if isfriend then
-            if db.useFakeNameAnchorBottom then
+            local onlyName = frame.IsShowOnlyName and frame:IsShowOnlyName()
+            if db.useFakeNameAnchorBottom or onlyName then
                 usedBottomAnchor = true
                 frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 27)
             else
@@ -7488,6 +7510,10 @@ unitFaction:SetScript("OnEvent", function(self, event, unit)
         local np, frame = BBP.GetSafeNameplate(unit)
         if frame then
             ClassColorPlayerNameplate(frame, true)
+            local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config
+            if config and (config.friendlyHealthBarColor or config.enemyHealthBarColor) then
+                ColorNameplateByReaction(frame)
+            end
         end
     end)
 end)

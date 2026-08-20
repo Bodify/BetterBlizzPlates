@@ -1,3 +1,11 @@
+# BetterBlizzPlates 2.1.2c
+## Midnight
+### New
+- New Kaaaz profile (www.twitch.tv/KaaazTTV). Thank you for sharing!
+### Bugfix
+- Fix Name Reposition setting in BBP + the Hide Friendly Player Healthbar CVar causing names to not get anchored properly and float about.
+- Healthbar color flicker fix attempt.
+
 # BetterBlizzPlates 2.1.2b
 ## Midnight
 ### Bugfix

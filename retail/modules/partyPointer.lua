@@ -309,7 +309,7 @@ function BBP.PartyPointer(frame)
         local r, g, b = classColor.r, classColor.g, classColor.b
 
         if isOthersPet then
-            r, g, b = r * 0.5, g * 0.5, b * 0.5
+            --r, g, b = r * 0.5, g * 0.5, b * 0.5
             frame.partyPointer:SetScale(config.partyPointerScale * 0.6)
         end
 

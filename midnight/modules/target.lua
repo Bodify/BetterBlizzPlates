@@ -182,8 +182,7 @@ function BBP.FocusTargetIndicator(frame)
             local color = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB or {1, 1, 1}
             frame.healthBar:SetStatusBarColor(unpack(color))
         else
-            local exitLoop = true
-            BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
+            BBP.CompactUnitFrame_UpdateHealthColor(frame)
         end
         return
     end
