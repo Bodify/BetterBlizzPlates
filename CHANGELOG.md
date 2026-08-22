@@ -1,3 +1,12 @@
+# BetterBlizzPlates 2.1.2d
+## Midnight
+### New
+- New Ceit profile (www.twitch.tv/ceitxd). Thank you for sharing!
+### Tweak
+- Add a temporary mc bugfix solution attempt.
+### Bugfix
+- Fix an issue with npc colors being active in PvP content.
+
 # BetterBlizzPlates 2.1.2c
 ## Midnight
 ### New

@@ -4188,6 +4188,7 @@ end
 -- Color NPCs
 function BBP.ColorNpcHealthbar(frame)
     if not BBP.isInPvE and not BetterBlizzPlatesDB.colorNPCEverywhere then return end
+    if BBP.isInPvP then return end
     if not frame or not frame.unit then return end
     if UnitIsPlayer(frame.unit) or not isEnemy(frame.unit) then return end
 
@@ -5532,7 +5533,7 @@ local function FriendIndicator(frame)
     local isGuildmate = BBP.isUnitGuildmate(frame.unit)
 
     if not frame.friendIndicator then
-        frame.friendIndicator = frame:CreateTexture(nil, "OVERLAY")
+        frame.friendIndicator = (frame.bbpOverlay or frame):CreateTexture(nil, "OVERLAY")
         frame.friendIndicator:SetAtlas("groupfinder-icon-friend")
         frame.friendIndicator:SetSize(20, 21)
     end
@@ -7514,6 +7515,12 @@ unitFaction:SetScript("OnEvent", function(self, event, unit)
             if config and (config.friendlyHealthBarColor or config.enemyHealthBarColor) then
                 ColorNameplateByReaction(frame)
             end
+        elseif unit:match("^arena[1-3]$") then
+            if self.refreshTimer then self.refreshTimer:Cancel() end
+            self.refreshTimer = C_Timer.NewTimer(0.3, function()
+                self.refreshTimer = nil
+                BBP.RefreshAllNameplates()
+            end)
         end
     end)
 end)
