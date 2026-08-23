@@ -6505,6 +6505,13 @@ function BBP.RefreshAllNameplates()
         local info = GetNameplateUnitInfo(frame)
         if not info then return end
 
+        -- Fix Blizzard bug with healthbar getting stuck hidden
+        -- because of nameplateShowOnlyNameForFriendlyPlayerUnits CVar on enemy players on Mind Control 
+        local enemyBarHidden = not frame.HealthBarsContainer.healthBar:IsShown()
+        if not issecretvalue(enemyBarHidden) and enemyBarHidden and not info.isFriend then
+            frame.HealthBarsContainer.healthBar:Show()
+        end
+
         if BetterBlizzPlatesDB.hideLevelFrame and BetterBlizzPlatesDB.classicNameplates then
             HideLevelFrameOnClassicNameplate(frame)
         else

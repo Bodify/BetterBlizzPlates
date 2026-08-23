@@ -1,3 +1,11 @@
+# BetterBlizzPlates 2.1.2e
+## Midnight
+### Tweak
+- Update Jazggz profile (www.twitch.tv/jazggz). Thank you for sharing!
+- Update Dissonance profile (www.twitch.tv/dissonancewow). Thank you for sharing!
+### Bugfix
+- Another bugfix for Blizzards nameplates failing to update on Mind Control events; if the friendly CVar nameplateShowOnlyNameForFriendlyPlayerUnits was enabled it hid healthbars and this failed to update on MC events as everything else. Also fixed now. Two more decades and Blizzard will fix this themselves I am sure.
+
 # BetterBlizzPlates 2.1.2d
 ## Midnight
 ### New

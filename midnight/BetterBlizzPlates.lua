@@ -7297,6 +7297,13 @@ function BBP.RefreshAllNameplates()
             frame.name:SetText(UnitName(frame.unit))
             --nameplate:OnSizeChanged()
 
+            -- Fix Blizzard bug with healthbar getting stuck hidden
+            -- because of nameplateShowOnlyNameForFriendlyPlayerUnits CVar on enemy players on Mind Control 
+            local enemyBarHidden = not frame.HealthBarsContainer.healthBar:IsShown()
+            if not issecretvalue(enemyBarHidden) and enemyBarHidden and not info.isFriend then
+                frame.HealthBarsContainer.healthBar:Show()
+            end
+
             if nameplate.clickableAreaText then
                 local isClickthroughFriend = UnitIsFriend("player", frame.unit) and BetterBlizzPlatesDB.friendlyNameplateClickthrough
                 nameplate.clickableAreaText:SetText(isClickthroughFriend and "Un-clickable" or "Clickable Area")
