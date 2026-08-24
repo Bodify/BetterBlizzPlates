@@ -1,3 +1,7 @@
+# BetterBlizzPlates 2.1.2f
+## All Classics
+- Fix Target Text setting for casts sometimes being overwritten by just the spell name instead of also target name due to some older Classic hooks.
+
 # BetterBlizzPlates 2.1.2e
 ## Midnight
 ### Tweak

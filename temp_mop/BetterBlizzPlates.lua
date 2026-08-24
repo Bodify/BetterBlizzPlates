@@ -4807,7 +4807,7 @@ local function CreateBetterRetailCastbar(frame)
             end
 
             if spellName then
-                self.Text:SetText(spellName)
+                BBP.SetCastbarSpellText(self, spellName, self.unit)
                 if self.barType ~= "uninterruptable" then
                     if channel then
                         texture = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Filling-Channel"

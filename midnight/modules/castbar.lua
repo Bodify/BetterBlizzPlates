@@ -698,27 +698,46 @@ local function GetColoredTargetString(name, class)
     return name
 end
 
+local function GetCastbarTargetSuffix(unit)
+    if not unit then return end
+    if BetterBlizzPlatesDB.targetTextTestMode then
+        local class = UnitClassBase("player")
+        return GetColoredTargetString(GetUnitName("player"), class)
+    end
+    if BetterBlizzPlatesDB.npTargetTextHideOnNpcs and not UnitIsPlayer(unit) then
+        return
+    end
+    local name, class = GetCastbarTargetName(unit)
+    if not name and BetterBlizzPlatesDB.targetTextAlwaysShow then
+        local targetUnit = unit .. "target"
+        if UnitExists(targetUnit) then
+            name = UnitName(targetUnit)
+            if UnitIsPlayer(targetUnit) then
+                class = UnitClassBase(targetUnit)
+            end
+        end
+    end
+    return GetColoredTargetString(name, class)
+end
+
+function BBP.UpdateCastbarSpellText(castBar, unit)
+    if not castBar then return end
+    if not BetterBlizzPlatesDB.showNameplateTargetText or not BetterBlizzPlatesDB.castbarTargetTextInsideBar then return end
+    unit = unit or castBar.unit
+    if not unit then return end
+    if castBar.interruptedBy or castBar.wasKicked or castBar.stoppedCast then return end
+    local spell = UnitCastingInfo(unit) or UnitChannelInfo(unit)
+    if not spell then return end
+    local coloredName = GetCastbarTargetSuffix(unit)
+    if coloredName then
+        castBar.Text:SetText(spell .. ": " .. coloredName)
+    end
+end
+
 function BBP.CastbarTargetText(castBar)
     castBar:HookScript("OnEvent", function(self, event)
-        if not BetterBlizzPlatesDB.showNameplateTargetText or not BetterBlizzPlatesDB.castbarTargetTextInsideBar then return end
-        if not CastStartEvents[event] then return end
-        local spell = UnitCastingInfo(self.unit) or UnitChannelInfo(self.unit)
-        if not spell then return end
-
-        local coloredName
-        if BetterBlizzPlatesDB.targetTextTestMode then
-            local _, classIdentifier = UnitClass("player")
-            coloredName = GetColoredTargetString(GetUnitName("player"), classIdentifier)
-        elseif BetterBlizzPlatesDB.npTargetTextHideOnNpcs and not UnitIsPlayer(self.unit) then
-            return
-        else
-            local name, class = GetCastbarTargetName(self.unit)
-            coloredName = GetColoredTargetString(name, class)
-        end
-
-        if coloredName then
-            castBar.Text:SetText(spell .. ": " .. coloredName)
-        end
+        if event and (CastStopEvents[event] or event == "UNIT_SPELLCAST_FAILED") then return end
+        BBP.UpdateCastbarSpellText(self, self.unit)
     end)
 end
 
@@ -766,9 +785,9 @@ function BBP.UpdateNameplateTargetText(frame, unit)
         frame.TargetText:SetParent((useCastbarAnchor and castBarVisible) and frame.castBar or (frame.bbpOverlay or frame.healthBar))
 
         local name = GetUnitName("player")
-        local _, classIdentifier = UnitClass("player")
-        if classIdentifier then
-            local color = C_ClassColor.GetClassColor(classIdentifier)
+        local class = UnitClassBase("player")
+        if class then
+            local color = C_ClassColor.GetClassColor(class)
             if color then
                 name = color:WrapTextInColorCode(name)
             end
@@ -835,7 +854,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
             if name then
                 local class
                 if UnitIsPlayer(targetUnit) then
-                    _, class = UnitClass(targetUnit)
+                    class = UnitClassBase(targetUnit)
                 end
                 if class then
                     local color = C_ClassColor.GetClassColor(class)
@@ -1153,6 +1172,7 @@ function BBP.CastbarOnEvent(frame, event)
 
     if showNameplateTargetText then
         BBP.UpdateNameplateTargetText(frame, self.unit)
+        BBP.UpdateCastbarSpellText(self, self.unit)
     end
 
     if enableCastbarCustomization then
