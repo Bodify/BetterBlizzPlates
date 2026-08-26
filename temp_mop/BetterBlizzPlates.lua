@@ -8518,12 +8518,19 @@ hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
         TweakLevelFrame(self)
         if ( UnitCanAttack("player", self.unit) ) then
             local effectiveLevel = UnitLevel(self.unit);
-            local color = GetRelativeDifficultyColor(UnitLevel("player"), effectiveLevel);
-            self.LevelFrame.LevelText:SetVertexColor(color.r, color.g, color.b);
-            self.LevelFrame.LevelText:SetText(effectiveLevel);
+            if ( effectiveLevel > 0 ) then
+                local color = GetRelativeDifficultyColor(UnitLevel("player"), effectiveLevel);
+                self.LevelFrame.LevelText:SetVertexColor(color.r, color.g, color.b);
+                self.LevelFrame.LevelText:SetText(effectiveLevel);
+                self.LevelFrame.HighLevelTexture:Hide();
+            else
+                self.LevelFrame.LevelText:SetText("");
+                self.LevelFrame.HighLevelTexture:Show();
+            end
         else
-            self.LevelFrame.LevelText:SetVertexColor(UNIT_LEVEL_NON_ATTACKABLE.r, UNIT_LEVEL_NON_ATTACKABLE.g, UNIT_LEVEL_NON_ATTACKABLE.b);
+            --self.LevelFrame.LevelText:SetVertexColor(UNIT_LEVEL_NON_ATTACKABLE.r, UNIT_LEVEL_NON_ATTACKABLE.g, UNIT_LEVEL_NON_ATTACKABLE.b);
             self.LevelFrame.LevelText:SetText("");
+            self.LevelFrame.HighLevelTexture:Hide();
         end
         self.LevelFrame:Show()
     end

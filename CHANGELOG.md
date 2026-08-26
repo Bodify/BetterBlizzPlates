@@ -1,3 +1,12 @@
+# BetterBlizzPlates 2.1.2g
+## Midnight
+### Tweak
+- Update Saul profile (www.twitch.tv/saul)
+- Update Snupy profile (www.twitch.tv/snupy)
+## Classics
+### Bugfix
+- Fix level text perma showing 60 after the "midnight nameplates" update for classics.
+
 # BetterBlizzPlates 2.1.2f
 ## All Classics
 - Fix Target Text setting for casts sometimes being overwritten by just the spell name instead of also target name due to some older Classic hooks.
