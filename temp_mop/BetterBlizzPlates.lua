@@ -8514,14 +8514,16 @@ hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
     if config.focusTargetIndicator and config.focusTargetIndicatorChangeTexture and UnitIsUnit(self.unit, "focus") then
         self.healthBar:SetStatusBarTexture(config.focusTargetIndicatorTexturePath)
     end
-    if BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.hideLevelFrame and self.unit then
+    if not BetterBlizzPlatesDB.hideLevelFrame and self.unit then
         TweakLevelFrame(self)
         if ( UnitCanAttack("player", self.unit) ) then
             local effectiveLevel = UnitLevel(self.unit);
             local color = GetRelativeDifficultyColor(UnitLevel("player"), effectiveLevel);
             self.LevelFrame.LevelText:SetVertexColor(color.r, color.g, color.b);
+            self.LevelFrame.LevelText:SetText(effectiveLevel);
         else
             self.LevelFrame.LevelText:SetVertexColor(UNIT_LEVEL_NON_ATTACKABLE.r, UNIT_LEVEL_NON_ATTACKABLE.g, UNIT_LEVEL_NON_ATTACKABLE.b);
+            self.LevelFrame.LevelText:SetText("");
         end
         self.LevelFrame:Show()
     end
