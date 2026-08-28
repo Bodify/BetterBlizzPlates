@@ -1919,7 +1919,7 @@ local function CreateClassButton(parent, class, name, twitchName, onClickFunc, y
     local btnWidth, btnHeight = bbpParent and 110 or (coreProfile and 150 or 114), bbpParent and 22 or 30
     local button = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
     button:SetSize(btnWidth, btnHeight)
-    button:SetScale(bbpParent and 0.9 or 0.95)
+    button:SetScale(bbpParent and 0.88 or 0.95)
 
     local dontIncludeProfileText = (bbpParent or not coreProfile) and "" or " Profile"
     local color = CLASS_COLORS[class] or "|cffffffff"
@@ -5040,7 +5040,7 @@ local function guiProfiles()
     frame.coreText:SetText("Core")
 
     frame.streamerText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    frame.streamerText:SetPoint("TOP", frame.coreText, "BOTTOM", 0, -110)
+    frame.streamerText:SetPoint("TOP", frame.coreText, "BOTTOM", 0, -108)
     frame.streamerText:SetText("Streamers")
 
     frame.infoText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -5051,7 +5051,13 @@ local function guiProfiles()
     frame:SetSize(130, parent:GetHeight())
     frame:SetPoint("TOPRIGHT", parent, "TOPLEFT", 7, 0)
     frame:SetFrameStrata("BACKGROUND")
-    frame.ClosePanelButton:Hide()
+    frame.ClosePanelButton:SetAlpha(0)
+    frame.ClosePanelButton:HookScript("OnEnter", function(self)
+        self:SetAlpha(1)
+    end)
+    frame.ClosePanelButton:HookScript("OnLeave", function(self)
+        self:SetAlpha(0)
+    end)
 
     local function CopyNineSliceColors(fromFrame, toFrame)
         if not (fromFrame and toFrame and fromFrame.NineSlice and toFrame.NineSlice) then
@@ -5081,6 +5087,36 @@ local function guiProfiles()
     end
 
     CopyNineSliceColors(SettingsPanel, frame)
+
+    local plusButton = CreateFrame("Button", nil, BetterBlizzPlates)
+    plusButton:SetSize(frame.ClosePanelButton:GetSize())
+    plusButton:SetPoint("TOPRIGHT", parent, "TOPLEFT", 7, 0)
+    plusButton:SetNormalAtlas("128-RedButton-Plus")
+    plusButton:SetHighlightAtlas("128-RedButton-Plus", "ADD")
+    plusButton:SetAlpha(0)
+    plusButton:HookScript("OnEnter", function(self)
+        self:SetAlpha(1)
+    end)
+    plusButton:HookScript("OnLeave", function(self)
+        self:SetAlpha(0)
+    end)
+    plusButton:SetScript("OnClick", function(self)
+        BetterBlizzPlatesDB.profilesPanelClosed = false
+        frame:Show()
+        self:Hide()
+    end)
+    frame.PlusButton = plusButton
+
+    frame.ClosePanelButton:HookScript("OnClick", function()
+        BetterBlizzPlatesDB.profilesPanelClosed = true
+        plusButton:Show()
+    end)
+
+    if BetterBlizzPlatesDB.profilesPanelClosed then
+        frame:Hide()
+    else
+        plusButton:Hide()
+    end
 
     BetterBlizzPlates.profilesFrame = frame
     return frame
@@ -6182,6 +6218,9 @@ local function guiGeneralTab()
                     C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
                     DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"CVar Control\" section of the addon.")
                 end
+                if self:GetChecked() then
+                    BBP.ForceTotemIndicatorCVars()
+                end
             end
         end
         setTotemCVar()
@@ -6538,12 +6577,14 @@ local function guiGeneralTab()
     local btnGap = -1
     local lastCoreButton = profilesFrame.coreText
     local lastStreamerButton = profilesFrame.streamerText
+    local profileButtons = {}
 
     for _, profile in ipairs(BBP.ProfileData) do
         local additionalNote = profile.name == "Starter" and "|cff808080(If you want to completely reset BBP there\nis a button in Advanced Settings)|r\n\n" or nil
         local button = CreateClassButton(BetterBlizzPlates, profile.class, profile.name, profile.twitchName, function()
             ShowProfileConfirmation(profile.name, profile.class, function() BBP.ApplyProfile(profile.name) end, additionalNote)
         end, profile.youtubeName)
+        table.insert(profileButtons, button)
         if profile.core then
             button:SetPoint("TOP", lastCoreButton, "BOTTOM", 0, lastCoreButton == profilesFrame.coreText and -3 or btnGap)
             lastCoreButton = button
@@ -6561,6 +6602,25 @@ local function guiGeneralTab()
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     end)
     CreateTooltip(resetBBPButton, "Reset ALL BetterBlizzPlates settings.", "ANCHOR_TOP")
+    table.insert(profileButtons, resetBBPButton)
+
+    profilesFrame:HookScript("OnShow", function()
+        for _, button in ipairs(profileButtons) do
+            button:Show()
+        end
+    end)
+    profilesFrame:HookScript("OnHide", function()
+        for _, button in ipairs(profileButtons) do
+            button:Hide()
+        end
+    end)
+
+    if BetterBlizzPlatesDB.profilesPanelClosed then
+        profilesFrame:Hide()
+        for _, button in ipairs(profileButtons) do
+            button:Hide()
+        end
+    end
 
 
 
@@ -11993,6 +12053,9 @@ local function guiTotemList()
                         BetterBlizzPlatesDB.nameplateShowEnemyTotems = 1
                         C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
                         DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"CVar Control\" section of the addon.")
+                    end
+                    if self:GetChecked() then
+                        BBP.ForceTotemIndicatorCVars()
                     end
                 end
             end

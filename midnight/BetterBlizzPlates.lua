@@ -8442,6 +8442,157 @@ function BBP.TurnOnFocusBorderColor()
     BBP.focusBorderColor = true
 end
 
+StaticPopupDialogs["BBP_TOTEM_INDICATOR_CVAR_CONFLICT"] = {
+    text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates:\n\nTotem Indicator does not work properly with other nameplate types than Totems and Pets enabled. The others have been disabled.\n\nYou will have to pick either Totem Indicator on or the other nameplate types in CVar Control bottom right.",
+    button1 = "OK",
+    timeout = 0,
+    whileDead = true,
+}
+
+function BBP.ForceTotemIndicatorCVars(silent)
+    local db = BetterBlizzPlatesDB
+    if not db or not db.totemIndicator then return false end
+
+    local unsupported = {
+        "nameplateShowEnemyMinions",
+        "nameplateShowEnemyGuardians",
+        "nameplateShowEnemyMinus",
+    }
+
+    local keepEnabled = {
+        "nameplateShowEnemyPets",
+        "nameplateShowEnemyTotems",
+    }
+
+    local function IsOn(value)
+        return value == "1" or value == 1 or value == true
+    end
+
+    local conflict = false
+    for _, cvar in ipairs(unsupported) do
+        if C_CVar.GetCVar(cvar) == "1" or IsOn(db[cvar]) then
+            conflict = true
+            break
+        end
+    end
+    if not conflict then return false end
+
+    local keep = {}
+    for _, cvar in ipairs(keepEnabled) do
+        local dbValue = db[cvar]
+        if dbValue ~= nil then
+            keep[cvar] = IsOn(dbValue) and "1" or "0"
+        else
+            keep[cvar] = C_CVar.GetCVar(cvar) == "1" and "1" or "0"
+        end
+    end
+
+    local function SaveToDB()
+        for _, cvar in ipairs(unsupported) do
+            db[cvar] = "0"
+        end
+        for _, cvar in ipairs(keepEnabled) do
+            db[cvar] = keep[cvar]
+        end
+    end
+
+    SaveToDB()
+
+    BBP.RunAfterCombat(function()
+        for _, cvar in ipairs(unsupported) do
+            C_CVar.SetCVar(cvar, "0")
+        end
+        for _, cvar in ipairs(keepEnabled) do
+            C_CVar.SetCVar(cvar, keep[cvar])
+        end
+        SaveToDB()
+    end)
+
+    if not silent then
+        StaticPopup_Show("BBP_TOTEM_INDICATOR_CVAR_CONFLICT")
+    end
+
+    return true
+end
+
+function BBP.MiniAurasOnNameplates()
+    if not C_AddOns.IsAddOnLoaded("MiniAuras") then return false end
+
+    local module = MiniAurasDB and MiniAurasDB.Modules and MiniAurasDB.Modules.Nameplates
+    if not module then return false end
+
+    local enabled = module.Enabled
+    if enabled then
+        local anyContext = false
+        for _, context in ipairs({ "Always", "World", "Arena", "BattleGrounds", "Dungeons", "Raid" }) do
+            if enabled[context] then
+                anyContext = true
+                break
+            end
+        end
+        if not anyContext then return false end
+    end
+
+    for _, faction in ipairs({ "Friendly", "Enemy" }) do
+        local bars = module[faction]
+        if bars then
+            for _, bar in ipairs({ "Bar1", "Bar2" }) do
+                if bars[bar] and bars[bar].Enabled then
+                    return true
+                end
+            end
+        end
+    end
+
+    return false
+end
+
+function BBP.DisableBigAuraIconsForMiniAuras()
+    local db = BetterBlizzPlatesDB
+
+    for _, setting in ipairs({
+        "otherNpdeBuffFilterCC",
+        "friendlyNpdeBuffFilterCC",
+        "otherNpBuffFilterImportantBuffs",
+        "friendlyNpBuffFilterImportantBuffs",
+        "otherNpBuffFilterDefensives",
+        "friendlyNpBuffFilterDefensives",
+        "nameplateAuraCCOnEnemyPlayers",
+        "nameplateAuraCCOnFriendlyPlayers",
+        "nameplateAuraCCOnNpcs",
+        "nameplateAuraCCBlizzardInPvE",
+        "nameplateAuraBuffsOnEnemyPlayers",
+        "nameplateAuraBuffsOnFriendlyPlayers",
+        "nameplateAuraBuffsOnNpcs",
+        "nameplateAuraBuffsBlizzardInPvE",
+    }) do
+        db[setting] = false
+    end
+
+    BBP.RefreshBlizzardAuraCVarOverrides()
+    BBP.RefreshAllNameplateAuras()
+end
+
+StaticPopupDialogs["BBP_MINIAURAS_OVERLAP"] = {
+    text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates:\n\nMiniAuras detected. Do you want to disable BetterBlizzPlates' Big Buffs/CC icon to avoid an overlap on nameplates?",
+    button1 = "Yes, disable in BBP",
+    button2 = "No, I'll fix myself",
+    OnAccept = function()
+        BBP.DisableBigAuraIconsForMiniAuras()
+    end,
+    timeout = 0,
+    whileDead = true,
+}
+
+function BBP.CheckMiniAurasOverlap()
+    local db = BetterBlizzPlatesDB
+    if not db.enableNameplateAuraCustomisation then return end
+    if not BBP.MiniAurasOnNameplates() then return end
+
+    StaticPopup_Show("BBP_MINIAURAS_OVERLAP")
+end
+
+
 local function TurnOnEnabledFeaturesOnLogin()
     local db = BetterBlizzPlatesDB
     if db.raidmarkIndicator then
@@ -8842,15 +8993,15 @@ First:SetScript("OnEvent", function(_, event, addonName)
                         button1 = "Only keep Pets and Totems",
                         button2 = "Turn off Totem Indicator",
                         OnAccept = function()
-                            db.nameplateShowEnemyGuardians = "0"
-                            db.nameplateShowEnemyMinions = "0"
                             db.nameplateShowEnemyPets = "1"
                             db.nameplateShowEnemyTotems = "1"
-                            C_CVar.SetCVar("nameplateShowEnemyGuardians", "0")
-                            C_CVar.SetCVar("nameplateShowEnemyMinions", "0")
-                            --C_CVar.SetCVar("nameplateShowEnemyPets", "1")
-                            C_CVar.SetCVar("nameplateShowEnemyTotems", "1")
                             db.totemIndicatorUpdatedForMidnight = true
+                            if not BBP.ForceTotemIndicatorCVars(true) then
+                                BBP.RunAfterCombat(function()
+                                    C_CVar.SetCVar("nameplateShowEnemyPets", "1")
+                                    C_CVar.SetCVar("nameplateShowEnemyTotems", "1")
+                                end)
+                            end
                         end,
                         OnCancel = function()
                             db.totemIndicator = false
@@ -8865,6 +9016,10 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 else
                     db.totemIndicatorUpdatedForMidnight = true
                 end
+            elseif db.totemIndicator then
+                C_Timer.After(4, function()
+                    BBP.ForceTotemIndicatorCVars()
+                end)
             end
 
             if not db.midnight121AuraUpdateMsg then
@@ -9065,6 +9220,10 @@ First:SetScript("OnEvent", function(_, event, addonName)
             end
             BBP.HideResourceFrames()
             BBP.InitializeOptions()
+
+            C_Timer.After(5, function()
+                BBP.CheckMiniAurasOverlap()
+            end)
         end
     end
 end)
