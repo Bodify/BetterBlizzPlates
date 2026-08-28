@@ -1271,12 +1271,23 @@ function BBP.ResetNameplateCVars()
     BBP.ReassertBlizzardAuraCVars()
 end
 
+BBP.totemIndicatorCVars = {
+    nameplateShowEnemyMinions = true,
+    nameplateShowEnemyGuardians = true,
+    nameplateShowEnemyMinus = true,
+    nameplateShowEnemyPets = true,
+    nameplateShowEnemyTotems = true,
+}
+
 local function CVarDefaultOnLogout()
     if not BBPCVarBackupsDB then return end
     if InCombatLockdown() or BetterBlizzPlatesDB.disableCVarForceOnLogin then return end
+    local keepTotemIndicatorCVars = BetterBlizzPlatesDB.totemIndicator
     for cvar, value in pairs(BBPCVarBackupsDB) do
         if cvar ~= "nameplateStyle" and cvar ~= "bitfields" then -- Midnight style, skip for now
-            C_CVar.SetCVar(cvar, value)
+            if not (keepTotemIndicatorCVars and BBP.totemIndicatorCVars[cvar]) then
+                C_CVar.SetCVar(cvar, value)
+            end
         end
     end
 
@@ -8547,25 +8558,35 @@ function BBP.MiniAurasOnNameplates()
     return false
 end
 
+BBP.bigAuraIconSettings = {
+    "otherNpdeBuffFilterCC",
+    "friendlyNpdeBuffFilterCC",
+    "otherNpBuffFilterImportantBuffs",
+    "friendlyNpBuffFilterImportantBuffs",
+    "otherNpBuffFilterDefensives",
+    "friendlyNpBuffFilterDefensives",
+    "nameplateAuraCCOnEnemyPlayers",
+    "nameplateAuraCCOnFriendlyPlayers",
+    "nameplateAuraCCOnNpcs",
+    "nameplateAuraCCBlizzardInPvE",
+    "nameplateAuraBuffsOnEnemyPlayers",
+    "nameplateAuraBuffsOnFriendlyPlayers",
+    "nameplateAuraBuffsOnNpcs",
+    "nameplateAuraBuffsBlizzardInPvE",
+}
+
+function BBP.BigAuraIconsEnabled()
+    local db = BetterBlizzPlatesDB
+    for _, setting in ipairs(BBP.bigAuraIconSettings) do
+        if db[setting] then return true end
+    end
+    return false
+end
+
 function BBP.DisableBigAuraIconsForMiniAuras()
     local db = BetterBlizzPlatesDB
 
-    for _, setting in ipairs({
-        "otherNpdeBuffFilterCC",
-        "friendlyNpdeBuffFilterCC",
-        "otherNpBuffFilterImportantBuffs",
-        "friendlyNpBuffFilterImportantBuffs",
-        "otherNpBuffFilterDefensives",
-        "friendlyNpBuffFilterDefensives",
-        "nameplateAuraCCOnEnemyPlayers",
-        "nameplateAuraCCOnFriendlyPlayers",
-        "nameplateAuraCCOnNpcs",
-        "nameplateAuraCCBlizzardInPvE",
-        "nameplateAuraBuffsOnEnemyPlayers",
-        "nameplateAuraBuffsOnFriendlyPlayers",
-        "nameplateAuraBuffsOnNpcs",
-        "nameplateAuraBuffsBlizzardInPvE",
-    }) do
+    for _, setting in ipairs(BBP.bigAuraIconSettings) do
         db[setting] = false
     end
 
@@ -8577,8 +8598,12 @@ StaticPopupDialogs["BBP_MINIAURAS_OVERLAP"] = {
     text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates:\n\nMiniAuras detected. Do you want to disable BetterBlizzPlates' Big Buffs/CC icon to avoid an overlap on nameplates?",
     button1 = "Yes, disable in BBP",
     button2 = "No, I'll fix myself",
+    button3 = "I'll fix myself, never show again",
     OnAccept = function()
         BBP.DisableBigAuraIconsForMiniAuras()
+    end,
+    OnAlt = function()
+        BetterBlizzPlatesDB.miniAurasOverlapNeverShow = true
     end,
     timeout = 0,
     whileDead = true,
@@ -8586,7 +8611,9 @@ StaticPopupDialogs["BBP_MINIAURAS_OVERLAP"] = {
 
 function BBP.CheckMiniAurasOverlap()
     local db = BetterBlizzPlatesDB
+    if db.miniAurasOverlapNeverShow then return end
     if not db.enableNameplateAuraCustomisation then return end
+    if not BBP.BigAuraIconsEnabled() then return end
     if not BBP.MiniAurasOnNameplates() then return end
 
     StaticPopup_Show("BBP_MINIAURAS_OVERLAP")
@@ -9018,7 +9045,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 end
             elseif db.totemIndicator then
                 C_Timer.After(4, function()
-                    BBP.ForceTotemIndicatorCVars()
+                    BBP.ForceTotemIndicatorCVars(true)
                 end)
             end
 

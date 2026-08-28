@@ -1,5 +1,10 @@
 # BetterBlizzPlates 2.1.2g
 ## Midnight
+### Bugfix
+- Fix popups appearing on every login/reload.
+
+# BetterBlizzPlates 2.1.2g
+## Midnight
 ### New
 - Add new Jaybeezy profile (www.twitch.tv/jaybeezy). Thank you for sharing!
 ### Tweak
