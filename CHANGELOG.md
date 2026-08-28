@@ -1,4 +1,4 @@
-# BetterBlizzPlates 2.1.2g
+# BetterBlizzPlates 2.1.2h
 ## Midnight
 ### Bugfix
 - Fix popups appearing on every login/reload.
