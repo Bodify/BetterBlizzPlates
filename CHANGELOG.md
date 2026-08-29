@@ -1,3 +1,11 @@
+# BetterBlizzPlates 2.1.2i
+## Midnight
+### Tweak
+- Tweak the popup handling for the MiniAuras overlap so it doesnt leave only "Show Buffs" enabled causing every single buff to show.
+## Classics
+### Bugfix
+- Fix the level being hidden on friendly nameplates for classic nameplates style.
+
 # BetterBlizzPlates 2.1.2h
 ## Midnight
 ### Bugfix

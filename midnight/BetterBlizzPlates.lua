@@ -8583,11 +8583,32 @@ function BBP.BigAuraIconsEnabled()
     return false
 end
 
+BBP.auraNarrowingFilters = {
+    otherNpBuff      = { "FilterDefensives", "FilterImportantBuffs", "FilterPurgeable", "FilterLessMinite" },
+    otherNpdeBuff    = { "FilterWatchList", "FilterOnlyMe", "FilterCC", "FilterBlizzard", "FilterLessMinite" },
+    friendlyNpBuff   = { "FilterWatchList", "FilterOnlyMe", "FilterDefensives", "FilterImportantBuffs", "FilterPurgeable", "FilterLessMinite" },
+    friendlyNpdeBuff = { "FilterCC", "FilterPurgeable", "FilterBlizzard", "FilterLessMinite" },
+}
+
+function BBP.AnyAuraFilterOn(prefix)
+    local db = BetterBlizzPlatesDB
+    for _, filter in ipairs(BBP.auraNarrowingFilters[prefix]) do
+        if db[prefix .. filter] then return true end
+    end
+    return false
+end
+
 function BBP.DisableBigAuraIconsForMiniAuras()
     local db = BetterBlizzPlatesDB
 
     for _, setting in ipairs(BBP.bigAuraIconSettings) do
         db[setting] = false
+    end
+
+    for prefix in pairs(BBP.auraNarrowingFilters) do
+        if db[prefix .. "Enable"] and not BBP.AnyAuraFilterOn(prefix) then
+            db[prefix .. "Enable"] = false
+        end
     end
 
     BBP.RefreshBlizzardAuraCVarOverrides()

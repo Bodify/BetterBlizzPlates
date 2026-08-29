@@ -8516,11 +8516,21 @@ hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
     end
     if not BetterBlizzPlatesDB.hideLevelFrame and self.unit then
         TweakLevelFrame(self)
-        if ( UnitCanAttack("player", self.unit) ) then
+        local canAttack = UnitCanAttack("player", self.unit);
+        local showLevel = canAttack;
+        if ( not showLevel and BetterBlizzPlatesDB.classicNameplates ) then
+            showLevel = not UnitIsUnit(self.unit, "player") and not (UnitIsPlayer(self.unit) and C_CVar.GetCVarBool("nameplateShowOnlyNameForFriendlyPlayerUnits"));
+        end
+        if ( showLevel ) then
             local effectiveLevel = UnitLevel(self.unit);
             if ( effectiveLevel > 0 ) then
-                local color = GetRelativeDifficultyColor(UnitLevel("player"), effectiveLevel);
-                self.LevelFrame.LevelText:SetVertexColor(color.r, color.g, color.b);
+                if ( canAttack ) then
+                    local color = GetRelativeDifficultyColor(UnitLevel("player"), effectiveLevel);
+                    self.LevelFrame.LevelText:SetVertexColor(color.r, color.g, color.b);
+                else
+                    local color = UNIT_LEVEL_NON_ATTACKABLE or GRAY_FONT_COLOR;
+                    self.LevelFrame.LevelText:SetVertexColor(color.r, color.g, color.b);
+                end
                 self.LevelFrame.LevelText:SetText(effectiveLevel);
                 self.LevelFrame.HighLevelTexture:Hide();
             else
@@ -8528,7 +8538,6 @@ hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
                 self.LevelFrame.HighLevelTexture:Show();
             end
         else
-            --self.LevelFrame.LevelText:SetVertexColor(UNIT_LEVEL_NON_ATTACKABLE.r, UNIT_LEVEL_NON_ATTACKABLE.g, UNIT_LEVEL_NON_ATTACKABLE.b);
             self.LevelFrame.LevelText:SetText("");
             self.LevelFrame.HighLevelTexture:Hide();
         end
