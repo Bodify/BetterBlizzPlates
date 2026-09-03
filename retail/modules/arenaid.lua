@@ -485,7 +485,7 @@ function BBP.TestArenaIndicator0(frame)
 
             frame.name:SetText("")
             frame.arenaNumberText:SetPoint("BOTTOM", frame.name or frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
-            frame.arenaNumberText:SetText("Select a mode to test (enemy)")
+            frame.arenaNumberText:SetText(BBP.L("Select a mode to test (enemy)"))
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
             break
@@ -562,9 +562,9 @@ function BBP.TestArenaIndicator3(frame)
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
             if shortArenaSpecName then
-                frame.specNameText:SetText("Aff")
+                frame.specNameText:SetText(BBP.L("Aff"))
             else
-                frame.specNameText:SetText("Affliction")
+                frame.specNameText:SetText(BBP.L("Affliction"))
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
@@ -589,9 +589,9 @@ function BBP.TestArenaIndicator4(frame)
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
             if shortArenaSpecName then
-                frame.specNameText:SetText("Aff")
+                frame.specNameText:SetText(BBP.L("Aff"))
             else
-                frame.specNameText:SetText("Affliction")
+                frame.specNameText:SetText(BBP.L("Affliction"))
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
@@ -626,9 +626,9 @@ function BBP.TestArenaIndicator5(frame)
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
             if shortArenaSpecName then
-                frame.specNameText:SetText("Aff" .. " " .. "3")
+                frame.specNameText:SetText(BBP.L("Aff") .. " " .. "3")
             else
-                frame.specNameText:SetText("Affliction" .. " " .. "3")
+                frame.specNameText:SetText(BBP.L("Affliction") .. " " .. "3")
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
@@ -649,7 +649,7 @@ function BBP.TestPartyIndicator0(frame)
 
             frame.name:SetText("")
             frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
-            frame.arenaNumberText:SetText("Select a mode to test (friendly)")
+            frame.arenaNumberText:SetText(BBP.L("Select a mode to test (friendly)"))
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.partySpecScale)
             break
@@ -704,9 +704,9 @@ function BBP.TestPartyIndicator3(frame)
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
             if shortArenaSpecName then
-                frame.specNameText:SetText("Aff")
+                frame.specNameText:SetText(BBP.L("Aff"))
             else
-                frame.specNameText:SetText("Affliction")
+                frame.specNameText:SetText(BBP.L("Affliction"))
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.partySpecScale)
@@ -729,9 +729,9 @@ function BBP.TestPartyIndicator4(frame)
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
             if shortArenaSpecName then
-                frame.specNameText:SetText("Aff")
+                frame.specNameText:SetText(BBP.L("Aff"))
             else
-                frame.specNameText:SetText("Affliction")
+                frame.specNameText:SetText(BBP.L("Affliction"))
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.partySpecScale)
@@ -756,9 +756,9 @@ function BBP.TestPartyIndicator5(frame)
             frame.name:SetText("")
             local shortArenaSpecName = BetterBlizzPlatesDB.shortArenaSpecName
             if shortArenaSpecName then
-                frame.specNameText:SetText("Aff" .. " " .. "3")
+                frame.specNameText:SetText(BBP.L("Aff") .. " " .. "3")
             else
-                frame.specNameText:SetText("Affliction" .. " " .. "3")
+                frame.specNameText:SetText(BBP.L("Affliction") .. " " .. "3")
             end
             frame.specNameText:SetTextColor(r, g, b, 1)
             frame.specNameText:SetScale(BetterBlizzPlatesDB.partySpecScale)
