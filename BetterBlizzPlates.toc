@@ -1,6 +1,7 @@
 ## Interface: 120007, 120005
 ## Title: Better|cff00c0ffBlizz|rPlates
 ## Notes: Default Blizzard Nameplates with more features added to them with easy settings.
+## Notes-zhCN: 在暴雪默认姓名板上增加更多功能，并提供简便设置。
 ## Author: Bodify
 ## Version: @project-version@
 ## SavedVariables: BetterBlizzPlatesDB, BBPCVarBackupsDB
@@ -9,6 +10,10 @@
 ## X-Wago-ID: b6mb47KP
 
 embeds.xml
+
+Locales\enUS.lua
+Locales\zhCN.lua
+Locales\localization.lua
 
 init.lua
 retail\temp_tww.lua
