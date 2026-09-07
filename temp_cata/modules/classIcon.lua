@@ -149,6 +149,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
             frame.classIndicatorCC.Icon:SetSize(26, 26)
 
             frame.classIndicatorCC.Cooldown = CreateFrame("Cooldown", nil, frame.classIndicatorCC, "CooldownFrameTemplate")
+            frame.classIndicatorCC.Cooldown:SetMinimumCountdownDuration(0)
             frame.classIndicatorCC.Cooldown:SetAllPoints(frame.classIndicatorCC.Icon)
             frame.classIndicatorCC.Cooldown:SetDrawEdge(false)
             frame.classIndicatorCC.Cooldown:SetDrawSwipe(true)
@@ -179,6 +180,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
             frame.classIndicatorCC.Icon:SetSize(20.5, 20.5)
 
             frame.classIndicatorCC.Cooldown = CreateFrame("Cooldown", nil, frame.classIndicatorCC, "CooldownFrameTemplate")
+            frame.classIndicatorCC.Cooldown:SetMinimumCountdownDuration(0)
             frame.classIndicatorCC.Cooldown:SetAllPoints(frame.classIndicatorCC.Icon)
             frame.classIndicatorCC.Cooldown:SetDrawEdge(false)
             frame.classIndicatorCC.Cooldown:SetDrawSwipe(true)
@@ -320,7 +322,7 @@ function BBP.ClassIndicator(frame, fetchedSpecID)
 
     -- Get class icon texture and coordinates
     local classIcon = "Interface/GLUES/CHARACTERCREATE/UI-CHARACTERCREATE-CLASSES"
-    local classColor = RAID_CLASS_COLORS[info.class]
+    local classColor = BBP.GetClassColor(info.class)
     local coords = CLASS_ICON_TCOORDS[info.class]
     if not coords then
         frame.classIndicator:Hide()
@@ -428,7 +430,7 @@ function BBP.ClassIndicatorTargetHighlight(frame)
         if frame.classIndicator and frame.classIndicator.highlightSelect then
             frame.classIndicator.highlightSelect:Show()
             if info.class and config.classIndicatorHighlightColor then
-                local classColor = RAID_CLASS_COLORS[info.class]
+                local classColor = BBP.GetClassColor(info.class)
                 frame.classIndicator.highlightSelect:SetDesaturated(true)
                 frame.classIndicator.highlightSelect:SetVertexColor(classColor.r, classColor.g, classColor.b)
             end

@@ -822,7 +822,7 @@ end
 local function GetColoredTargetString(name, class)
     if not name then return nil end
     if class then
-        local color = C_ClassColor.GetClassColor(class)
+        local color = BBP.GetClassColor(class)
         if color then
             return color:WrapTextInColorCode(name)
         end
@@ -933,7 +933,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
         local name = GetUnitName("player")
         local classIdentifier = UnitClassBase("player")
         if classIdentifier then
-            local color = C_ClassColor.GetClassColor(classIdentifier)
+            local color = BBP.GetClassColor(classIdentifier)
             if color then
                 name = color:WrapTextInColorCode(name)
             end
@@ -976,7 +976,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
         if name then
             local class = UnitSpellTargetClass(unit)
             if class then
-                local color = C_ClassColor.GetClassColor(class)
+                local color = BBP.GetClassColor(class)
                 if color then
                     name = color:WrapTextInColorCode(name)
                 end
@@ -1003,7 +1003,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
                     class = UnitClassBase(targetUnit)
                 end
                 if class then
-                    local color = C_ClassColor.GetClassColor(class)
+                    local color = BBP.GetClassColor(class)
                     if color then
                         name = color:WrapTextInColorCode(name)
                     end
@@ -1099,7 +1099,7 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
 
                     if C_PlayerInfo.GUIDIsPlayer(sourceGUID) then
                         local localizedClass, englishClass, localizedRace, englishRace, sex, _name, realm = GetPlayerInfoByGUID(sourceGUID)
-                        colorStr = RAID_CLASS_COLORS[englishClass].colorStr
+                        colorStr = BBP.GetClassColor(englishClass).colorStr
                     end
                     local interruptedByName = string.format("|c%s[%s]|r", colorStr, name)
                     local castBar = frame.CastBar or frame.castBar or frame.CastBarsContainer.castBar

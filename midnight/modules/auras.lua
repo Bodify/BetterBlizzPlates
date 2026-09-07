@@ -243,14 +243,17 @@ local categorySets = {
     watchDebuff = {},
     ownDebuff = {},
     otherCC = {},
+    ccBlacklist = {},
 }
 local categorySafe = {
     watchBuff = {},
     watchDebuff = {},
     ownDebuff = {},
     otherCC = {},
+    ccBlacklist = {},
 }
 BBP.auraCategorySets = categorySets
+BBP.auraCategorySafe = categorySafe
 
 local function FillSet(dst, src)
     for spellID in pairs(src) do dst[spellID] = true end
@@ -350,6 +353,8 @@ function BBP.UpdateImportantBuffsAndCCTables()
     FillSet(categorySets.watchDebuff, importantGeneralDebuffs)
     FillSet(categorySets.ownDebuff, defaultOwnDebuffs)
     FillSet(categorySets.otherCC, defaultOtherCC)
+
+    categorySets.ccBlacklist[1280457] = true -- Mind Flay (Priest)
 end
 
 local function IsNeverSecret(spellID)
@@ -1188,6 +1193,7 @@ local function InitAuraButton(button, style)
     button.bbpMask = mask
 
     local cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+    cooldown:SetMinimumCountdownDuration(0)
     cooldown:SetAllPoints(button)
     cooldown:SetReverse(true)
     cooldown:SetDrawBling(false)
@@ -1605,9 +1611,11 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
 
     local normalExclude = (not ccInRowWanted) and excludeWithOtherCC or otherCCExclude
 
+    local ccBlacklist = ExcludeSet(categorySets.ccBlacklist, categorySafe.ccBlacklist, canFilterHarmful)
+
     out.debuffs.CC = {
         filter = CreateFilterString(AF.Harmful, AF.IncludeNameplateOnly, AF.CrowdControl),
-        filters = { excludeSpellIDs = normalExclude },
+        filters = { excludeSpellIDs = MergeSets(normalExclude, ccBlacklist) },
         max = ccInRow and dLimit or 0,
     }
 
@@ -1891,7 +1899,7 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
         or blacklistD
     out.cc.CC = {
         filter = CreateFilterString(AF.Harmful, AF.IncludeNameplateOnly, AF.CrowdControl),
-        filters = { excludeSpellIDs = ccExclude },
+        filters = { excludeSpellIDs = MergeSets(ccExclude, ccBlacklist) },
         max = ccBig and S.ccLimit or 0,
     }
 
@@ -2991,6 +2999,7 @@ local function DrawMockButton(button, style, index)
         button.bbpBezel:SetAtlas(CDM.bezel)
 
         button.bbpCooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+        button.bbpCooldown:SetMinimumCountdownDuration(0)
         button.bbpCooldown:SetAllPoints(button)
         button.bbpCooldown:SetReverse(true)
         button.bbpCooldown:SetDrawBling(false)

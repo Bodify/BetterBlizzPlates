@@ -9,7 +9,7 @@ local HealerSpecs = {
     [1468] = true,  --> preservation evoker  
 }
 
-local RAID_CLASS_COLORS = RAID_CLASS_COLORS
+local GetClassColor = BBP.GetClassColor
 
 -- Class Indicator
 function BBP.PartyPointer(frame, fetchedSpecID)
@@ -139,7 +139,7 @@ function BBP.PartyPointer(frame, fetchedSpecID)
     end
 
     if config.partyPointerClassColor then
-        local classColor = RAID_CLASS_COLORS[info.class]
+        local classColor = GetClassColor(info.class)
         frame.partyPointer.icon:SetVertexColor(classColor.r, classColor.g, classColor.b)
     else
         frame.partyPointer.icon:SetVertexColor(0.04, 0.76, 1)

@@ -266,6 +266,7 @@ local defaultSettings = {
     targetIndicatorAnchor = "TOP",
     targetIndicatorTestMode = false,
     targetIndicatorColorNameplateRGB = {1, 0, 0.44},
+    targetIndicatorRGB = {1, 0, 0.44},
     targetIndicatorTexture = "Checkered (BBP)",
     -- Focus Target Indicator
     focusTargetIndicator = false,
@@ -4960,6 +4961,9 @@ local function HandleNamePlateRemoved(unit)
     -- Target indicator
     if frame.targetIndicator then
         frame.targetIndicator:Hide()
+    end
+    if frame.targetIndicatorMirror then
+        frame.targetIndicatorMirror:Hide()
     end
     -- Execute indicator
     if frame.executeIndicator then

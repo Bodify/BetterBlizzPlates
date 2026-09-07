@@ -146,6 +146,7 @@ function BBP.PartyPointer(frame)
             frame.classIndicatorCC.Icon:SetSize(39, 39)
 
             frame.classIndicatorCC.Cooldown = CreateFrame("Cooldown", nil, frame.classIndicatorCC, "CooldownFrameTemplate")
+            frame.classIndicatorCC.Cooldown:SetMinimumCountdownDuration(0)
             frame.classIndicatorCC.Cooldown:SetAllPoints(frame.classIndicatorCC.Icon)
             frame.classIndicatorCC.Cooldown:SetDrawEdge(false)
             frame.classIndicatorCC.Cooldown:SetDrawSwipe(true)

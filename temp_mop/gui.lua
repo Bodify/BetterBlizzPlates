@@ -5500,8 +5500,8 @@ local function guiGeneralTab()
         local nameplate, frame = BBP.GetSafeNameplate("player")
         if frame then
             if self:GetChecked() then
-                local localizedClass, englishClass = UnitClass(frame.unit);
-                local playerClassColor = RAID_CLASS_COLORS[englishClass];
+                local englishClass = UnitClassBase(frame.unit);
+                local playerClassColor = BBP.GetClassColor(englishClass);
                 frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
             else
                 frame.healthBar:SetStatusBarColor(0,1,0)
@@ -6712,7 +6712,7 @@ local function guiPositionAndScale()
     anchorSubTarget:SetPoint("CENTER", mainGuiAnchor2, "CENTER", secondLineX, thirdLineY)
     anchorSubTarget:SetText("Target Indicator")
 
-    CreateBorderBox(anchorSubTarget)
+    anchorSubTarget.border = CreateBorderBox(anchorSubTarget)
 
     anchorSubTarget.icon = contentFrame:CreateTexture(nil, "ARTWORK")
     anchorSubTarget.icon:SetTexture(BBP.targetIndicatorIconReplacement)
@@ -6743,10 +6743,61 @@ local function guiPositionAndScale()
     local targetIndicatorHideIcon = CreateCheckbox("targetIndicatorHideIcon", "Hide Target Marker", contentFrame)
     targetIndicatorHideIcon:SetPoint("TOPLEFT", targetIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
-    local targetIndicatorColorNameplate = CreateCheckbox("targetIndicatorColorNameplate", "Color healthbar", contentFrame)
-    targetIndicatorColorNameplate:SetPoint("TOPLEFT", targetIndicatorHideIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    anchorSubTarget.double = CreateCheckbox("targetIndicatorDouble", "Double Markers", contentFrame)
+    anchorSubTarget.double:SetPoint("TOPLEFT", targetIndicatorHideIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubTarget.double, "Double Markers", "Show target marker on both sides.")
 
-    local targetIndicatorColorName = CreateCheckbox("targetIndicatorColorName", "Color name", contentFrame)
+    anchorSubTarget.UpdateDoubleState = function()
+        if targetIndicatorHideIcon:GetChecked() then
+            anchorSubTarget.double:Disable()
+            anchorSubTarget.double:SetAlpha(0.5)
+        else
+            anchorSubTarget.double:Enable()
+            anchorSubTarget.double:SetAlpha(1)
+        end
+    end
+    anchorSubTarget.UpdateDoubleState()
+    targetIndicatorHideIcon:HookScript("OnClick", anchorSubTarget.UpdateDoubleState)
+
+    -- Extended Settings Button
+    anchorSubTarget.extendedSettingsButton = CreateFrame("Button", nil, contentFrame, "UIPanelButtonTemplate")
+    anchorSubTarget.extendedSettingsButton:SetSize(120, 25)
+    anchorSubTarget.extendedSettingsButton:SetPoint("TOPLEFT", anchorSubTarget.double, "BOTTOMLEFT", 12, -8)
+    anchorSubTarget.extendedSettingsButton:SetText("More options")
+    CreateTooltip(anchorSubTarget.extendedSettingsButton, "Open more settings for Target Indicator")
+
+    -- Extended Settings Frame
+    anchorSubTarget.extendedSettings = CreateFrame("Frame", nil, BetterBlizzPlatesSubPanel, "DefaultPanelFlatTemplate")
+    anchorSubTarget.extendedSettings:SetSize(anchorSubTarget.border:GetHeight()+60, 250)
+    anchorSubTarget.extendedSettings:SetPoint("BOTTOMRIGHT", anchorSubTarget.border, "BOTTOMLEFT", 87, -65)
+    anchorSubTarget.extendedSettings:SetFrameStrata("DIALOG")
+    anchorSubTarget.extendedSettings:SetIgnoreParentAlpha(true)
+    anchorSubTarget.extendedSettings:EnableMouse(true)
+    anchorSubTarget.extendedSettings:Hide()
+    anchorSubTarget.extendedSettings.name = "Advanced Settings"
+    anchorSubTarget.extendedSettings:SetTitle("Target Indicator")
+
+    anchorSubTarget.closeButton = CreateFrame("Button", nil, anchorSubTarget.extendedSettings, "UIPanelCloseButton")
+    anchorSubTarget.closeButton:SetPoint("TOPRIGHT", anchorSubTarget.extendedSettings, "TOPRIGHT", 0, 0)
+    anchorSubTarget.closeButton:SetScript("OnClick", function()
+        anchorSubTarget.extendedSettings:Hide()
+        contentFrame:SetAlpha(1)
+    end)
+
+    anchorSubTarget.bg = anchorSubTarget.extendedSettings:CreateTexture(nil, "BACKGROUND")
+    anchorSubTarget.bg:SetPoint("TOPLEFT", anchorSubTarget.extendedSettings, "TOPLEFT", 7, -3)
+    anchorSubTarget.bg:SetPoint("BOTTOMRIGHT", anchorSubTarget.extendedSettings, "BOTTOMRIGHT", -3, 3)
+    anchorSubTarget.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
+
+    anchorSubTarget.extendedSettingsButton:HookScript("OnClick", function(self)
+        anchorSubTarget.extendedSettings:SetShown(not anchorSubTarget.extendedSettings:IsShown())
+        contentFrame:SetAlpha(anchorSubTarget.extendedSettings:IsShown() and 0.5 or 1)
+    end)
+
+    local targetIndicatorColorNameplate = CreateCheckbox("targetIndicatorColorNameplate", "Color healthbar", anchorSubTarget.extendedSettings)
+    targetIndicatorColorNameplate:SetPoint("TOPLEFT", anchorSubTarget.extendedSettings, "TOPLEFT", 10, -23)
+
+    local targetIndicatorColorName = CreateCheckbox("targetIndicatorColorName", "Color name", anchorSubTarget.extendedSettings)
     targetIndicatorColorName:SetPoint("TOPLEFT", targetIndicatorColorNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
     if BetterBlizzPlatesDB.targetIndicatorColorNameplate then
@@ -6758,6 +6809,7 @@ local function guiPositionAndScale()
     end
 
     local function OpenColorPicker()
+        BBP.needsUpdate = true
         local r, g, b = unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB or {1, 1, 1})
 
         ColorPickerFrame:SetupColorPickerAndShow({
@@ -6783,7 +6835,7 @@ local function guiPositionAndScale()
         })
     end
 
-    local targetColorButton = CreateFrame("Button", nil, contentFrame, "UIPanelButtonTemplate")
+    local targetColorButton = CreateFrame("Button", nil, anchorSubTarget.extendedSettings, "UIPanelButtonTemplate")
     targetColorButton:SetText("Color")
     targetColorButton:SetPoint("LEFT", targetIndicatorColorNameplate.text, "RIGHT", -1, 0)
     targetColorButton:SetSize(43, 18)
@@ -6835,13 +6887,74 @@ local function guiPositionAndScale()
         targetColorButton:SetAlpha(0.5)
     end
 
-    local targetIndicatorChangeTexture = CreateCheckbox("targetIndicatorChangeTexture", "Re-texture healthbar", contentFrame)
-    targetIndicatorChangeTexture:SetPoint("TOPLEFT", targetIndicatorColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    anchorSubTarget.recolorMarker = CreateCheckbox("targetIndicatorRecolor", "Change Marker Color", anchorSubTarget.extendedSettings)
+    anchorSubTarget.recolorMarker:SetPoint("TOPLEFT", targetIndicatorColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubTarget.recolorMarker, "Change Marker Color", "Desaturate the target marker and tint it with a color of your choice.")
+
+    if BetterBlizzPlatesDB.targetIndicatorRecolor then
+        anchorSubTarget.recolorMarker.Text:SetTextColor(unpack(BetterBlizzPlatesDB.targetIndicatorRGB))
+    end
+
+    anchorSubTarget.OpenMarkerColorPicker = function()
+        BBP.needsUpdate = true
+        local r, g, b = unpack(BetterBlizzPlatesDB.targetIndicatorRGB or {1, 1, 1})
+
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b,
+            swatchFunc = function()
+                local r, g, b = ColorPickerFrame:GetColorRGB()
+                BetterBlizzPlatesDB.targetIndicatorRGB = { r, g, b }
+                BBP.needsUpdate = true
+                BBP.RefreshAllNameplates()
+                if BetterBlizzPlatesDB.targetIndicatorRecolor then
+                    anchorSubTarget.recolorMarker.Text:SetTextColor(r, g, b)
+                end
+            end,
+            cancelFunc = function(previousValues)
+                local r, g, b = previousValues.r, previousValues.g, previousValues.b
+                BetterBlizzPlatesDB.targetIndicatorRGB = { r, g, b }
+                BBP.needsUpdate = true
+                BBP.RefreshAllNameplates()
+                if BetterBlizzPlatesDB.targetIndicatorRecolor then
+                    anchorSubTarget.recolorMarker.Text:SetTextColor(r, g, b)
+                end
+            end,
+        })
+    end
+
+    anchorSubTarget.markerColorButton = CreateFrame("Button", nil, anchorSubTarget.extendedSettings, "UIPanelButtonTemplate")
+    anchorSubTarget.markerColorButton:SetText("Color")
+    anchorSubTarget.markerColorButton:SetPoint("LEFT", anchorSubTarget.recolorMarker.text, "RIGHT", -1, 0)
+    anchorSubTarget.markerColorButton:SetSize(43, 18)
+    anchorSubTarget.markerColorButton:SetScript("OnClick", anchorSubTarget.OpenMarkerColorPicker)
+
+    anchorSubTarget.recolorMarker:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            anchorSubTarget.recolorMarker.Text:SetTextColor(unpack(BetterBlizzPlatesDB.targetIndicatorRGB))
+            anchorSubTarget.markerColorButton:Enable()
+            anchorSubTarget.markerColorButton:SetAlpha(1)
+        else
+            anchorSubTarget.recolorMarker.Text:SetTextColor(1, 0.819607, 0)
+            anchorSubTarget.markerColorButton:Disable()
+            anchorSubTarget.markerColorButton:SetAlpha(0.5)
+        end
+    end)
+
+    if BetterBlizzPlatesDB.targetIndicatorRecolor then
+        anchorSubTarget.markerColorButton:Enable()
+        anchorSubTarget.markerColorButton:SetAlpha(1)
+    else
+        anchorSubTarget.markerColorButton:Disable()
+        anchorSubTarget.markerColorButton:SetAlpha(0.5)
+    end
+
+    local targetIndicatorChangeTexture = CreateCheckbox("targetIndicatorChangeTexture", "Re-texture healthbar", anchorSubTarget.extendedSettings)
+    targetIndicatorChangeTexture:SetPoint("TOPLEFT", anchorSubTarget.recolorMarker, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(targetIndicatorChangeTexture, "Re-texture the healthbar of your current target.")
 
     local targetIndicatorTexture = CreateTextureDropdown(
         "targetIndicatorTexture",
-        targetIndicatorChangeTexture,
+        anchorSubTarget.extendedSettings,
         "Select Texture",
         "targetIndicatorTexture",
         function(arg1)
@@ -6858,6 +6971,31 @@ local function guiPositionAndScale()
             LibDD:UIDropDownMenu_DisableDropDown(targetIndicatorTexture)
         end
     end)
+
+    anchorSubTarget.iconDropdown = LibDD:Create_UIDropDownMenu("targetIndicatorIconDropdown", anchorSubTarget.extendedSettings)
+    LibDD:UIDropDownMenu_SetWidth(anchorSubTarget.iconDropdown, 125)
+    LibDD:UIDropDownMenu_SetText(anchorSubTarget.iconDropdown, BBP.GetTargetIndicatorIconText(BBP.GetTargetIndicatorTexture()))
+    LibDD:UIDropDownMenu_Initialize(anchorSubTarget.iconDropdown, function(self, level, menuList)
+        local info = LibDD:UIDropDownMenu_CreateInfo()
+        for _, entry in ipairs(BBP.targetIndicatorTextures) do
+            info.text = BBP.GetTargetIndicatorIconText(entry)
+            info.arg1 = entry.key
+            info.func = function(_, arg1)
+                BetterBlizzPlatesDB.targetIndicatorIcon = arg1
+                LibDD:UIDropDownMenu_SetText(anchorSubTarget.iconDropdown, BBP.GetTargetIndicatorIconText(entry))
+                BBP.needsUpdate = true
+                BBP.RefreshAllNameplates()
+            end
+            info.checked = (BBP.GetTargetIndicatorTexture().key == entry.key)
+            LibDD:UIDropDownMenu_AddButton(info)
+        end
+    end)
+
+    anchorSubTarget.iconDropdown:SetPoint("TOPLEFT", targetIndicatorTexture, "TOPLEFT", 0, -43)
+
+    anchorSubTarget.iconLabel = anchorSubTarget.extendedSettings:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubTarget.iconLabel:SetPoint("BOTTOM", anchorSubTarget.iconDropdown, "TOP", 0, 3)
+    anchorSubTarget.iconLabel:SetText("Icon select")
 
 
     ----------------------
@@ -8113,9 +8251,9 @@ local function guiPositionAndScale()
     anchorSubTargetText.hideOnNpcs:SetPoint("TOPLEFT", anchorSubTargetText.testMode, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubTargetText.hideOnNpcs, "Hide on NPCs", "Only show the target text on player nameplates.")
     do
-        local playerName = UnitName("player") or "Player"
-        local _, playerClass = UnitClass("player")
-        local classColor = playerClass and C_ClassColor.GetClassColor(playerClass)
+        local playerName = UnitName("player")
+        local playerClass = UnitClassBase("player")
+        local classColor = BBP.GetClassColor(playerClass)
         local coloredName = classColor and classColor:WrapTextInColorCode(playerName) or playerName
         CreateTooltipTwo(anchorSubTargetText.insideBar, "Target text inside castbar", "Put the target text inside the castbar on casts so it appears like \"Polymorph: " .. coloredName .. "\"")
     end
@@ -9672,8 +9810,8 @@ local function guiNameplateAuras()
     personalBarIcon:SetSize(28, 28)
     personalBarIcon:SetPoint("RIGHT", personalBarText, "LEFT", -3, 0)
     personalBarIcon:SetDesaturated(1)
-    local _, playerClass = UnitClass("player")
-    local classColor = RAID_CLASS_COLORS[playerClass]
+    local playerClass = UnitClassBase("player")
+    local classColor = BBP.GetClassColor(playerClass)
     if classColor then
         personalBarIcon:SetVertexColor(classColor.r, classColor.g, classColor.b)
     else
@@ -10889,126 +11027,76 @@ local function guiCVarControl()
     nameplateShowOnlyNameForFriendlyPlayerUnits:SetPoint("TOP", nameplateShowAll, "BOTTOM", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateShowOnlyNameForFriendlyPlayerUnits, "Show Only Friendly NP Names", "Only show Name on Nameplates and hide healthbar & castbar. This enables Blizzards new CVar for this.", nil, nil, "nameplateShowOnlyNameForFriendlyPlayerUnits")
 
-    local nameplateShowEnemyMinions = CreateCheckbox("nameplateShowEnemyMinions", "Show Enemy Minions", guiCVarControl, true)
-    nameplateShowEnemyMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", -127, -56)
-    CreateTooltipTwo(nameplateShowEnemyMinions, "Show Enemy Minion Nameplates", "Minions are stuff like extra BM hunter pets but Observer is also a minion", nil, nil, "nameplateShowEnemyMinions")
+    guiCVarControl.contextRows = {
+        { "nameplateShowEnemyMinions",   "Enemy Minions",    "nameplateShowFriendlyPlayerMinions",   "Friendly Minions"   },
+        { "nameplateShowEnemyGuardians", "Enemy Guardians",  "nameplateShowFriendlyPlayerGuardians", "Friendly Guardians" },
+        { "nameplateShowEnemyPets",      "Enemy Pets",       "nameplateShowFriendlyPlayerPets",      "Friendly Pets"      },
+        { "nameplateShowEnemyTotems",    "Enemy Totems",     "nameplateShowFriendlyPlayerTotems",    "Friendly Totems"    },
+        { "nameplateShowEnemyMinus",     "Enemy Minus",      "nameplateShowFriendlyNpcs",            "Friendly NPCs"      },
+    }
 
-    local nameplateShowEnemyGuardians = CreateCheckbox("nameplateShowEnemyGuardians", "Show Enemy Guardians", guiCVarControl, true)
-    nameplateShowEnemyGuardians:SetPoint("TOP", nameplateShowEnemyMinions, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateShowEnemyGuardians, "Show Enemy Guardian Nameplates", "Guardians are usually \"semi controllable\" larger summoned pets, like Earth Elemental/Infernal.", nil, nil, "nameplateShowEnemyGuardians")
-
-    local nameplateShowEnemyMinus = CreateCheckbox("nameplateShowEnemyMinus", "Show Enemy Minus", guiCVarControl, true)
-    nameplateShowEnemyMinus:SetPoint("TOP", nameplateShowEnemyGuardians, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateShowEnemyMinus, "Show Enemy Minus Nameplates", "Minus are usually uncontrollable very small summoned pets with little hp, like Warlock Imps.", nil, nil, "nameplateShowEnemyMinus")
-
-    local nameplateShowEnemyPets = CreateCheckbox("nameplateShowEnemyPets", "Show Enemy Pets", guiCVarControl, true)
-    nameplateShowEnemyPets:SetPoint("TOP", nameplateShowEnemyMinus, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateShowEnemyPets, "Show Enemy Pets Nameplates", "Pets are the main controllable pets like Hunter Pet, Warlock Pet etc.", nil, nil, "nameplateShowEnemyPets")
-
-    local nameplateShowEnemyTotems = CreateCheckbox("nameplateShowEnemyTotems", "Show Enemy Totems", guiCVarControl, true)
-    nameplateShowEnemyTotems:SetPoint("TOP", nameplateShowEnemyPets, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateShowEnemyTotems, "Show Enemy Totem Nameplates", "Totems are totems.. and Psyfiend", nil, nil, "nameplateShowEnemyTotems")
-
-    local nameplateShowFriendlyPlayerMinions = CreateCheckbox("nameplateShowFriendlyPlayerMinions", "Show Friendly Minions", guiCVarControl, true)
-    nameplateShowFriendlyPlayerMinions:SetPoint("TOP", nameplateCVarText, "BOTTOM", 25, -56)
-    CreateTooltipTwo(nameplateShowFriendlyPlayerMinions, "Show Friendly Minion Nameplates", "Minions are stuff like extra BM hunter pets but Observer is also a minion", nil, nil, "nameplateShowFriendlyPlayerMinions")
-
-    local nameplateShowFriendlyPlayerGuardians = CreateCheckbox("nameplateShowFriendlyPlayerGuardians", "Show Friendly Guardians", guiCVarControl, true)
-    nameplateShowFriendlyPlayerGuardians:SetPoint("TOP", nameplateShowFriendlyPlayerMinions, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateShowFriendlyPlayerGuardians, "Show Friendly Guardian Nameplates", "Guardians are usually \"semi controllable\" larger summoned pets, like Earth Elemental/Infernal.", nil, nil, "nameplateShowFriendlyPlayerGuardians")
-
-    local nameplateShowFriendlyNPCs = CreateCheckbox("nameplateShowFriendlyNpcs", "Show Friendly NPCs", guiCVarControl, true)
-    nameplateShowFriendlyNPCs:SetPoint("TOP", nameplateShowFriendlyPlayerGuardians, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateShowFriendlyNPCs, "Show Friendly NPC Nameplates", "Always show friendly NPC nameplates", nil, nil, "nameplateShowFriendlyNpcs")
-
-    local nameplateShowFriendlyPlayerPets = CreateCheckbox("nameplateShowFriendlyPlayerPets", "Show Friendly Pets", guiCVarControl, true)
-    nameplateShowFriendlyPlayerPets:SetPoint("TOP", nameplateShowFriendlyNPCs, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateShowFriendlyPlayerPets, "Show Friendly Pets Nameplates", "Pets are the main controllable pets like Hunter Pet, Warlock Pet etc.", nil, nil, "nameplateShowFriendlyPlayerPets")
-
-    local nameplateShowFriendlyPlayerTotems = CreateCheckbox("nameplateShowFriendlyPlayerTotems", "Show Friendly Totems", guiCVarControl, true)
-    nameplateShowFriendlyPlayerTotems:SetPoint("TOP", nameplateShowFriendlyPlayerPets, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateShowFriendlyPlayerTotems, "Show Friendly Totem Nameplates", "Totems are totem... and Psyfiend", nil, nil, "nameplateShowFriendlyPlayerTotems")
-
-    local function ChangeCVarCheckboxBehaviour(checkbox, cvarName, changeDB)
-        checkbox:SetScript("OnClick", function(self)
-            local value = self:GetChecked() and "1" or "0"
-            if changeDB then
-                BetterBlizzPlatesDB[cvarName] = value
+    local function BuildContextDropdown(setKey, dropdown)
+        dropdown:SetupMenu(function(owner, rootDescription)
+            rootDescription:SetGridMode(MenuConstants.HorizontalGridDirection, 2, 0)
+            for _, row in ipairs(guiCVarControl.contextRows) do
+                for index = 1, 3, 2 do
+                    local cvar, label = row[index], row[index + 1]
+                    rootDescription:CreateCheckbox(label,
+                        function()
+                            local set = BetterBlizzPlatesDB[setKey]
+                            return set and set[cvar] == true
+                        end,
+                        function()
+                            local set = BetterBlizzPlatesDB[setKey]
+                            if not set then set = {}; BetterBlizzPlatesDB[setKey] = set end
+                            set[cvar] = not set[cvar]
+                            BBP.UpdateContextCVars()
+                        end)
+                end
             end
-            BBP.RunAfterCombat(function()
-                C_CVar.SetCVar(cvarName, value)
-                if cvarName == "nameplateShowEnemyMinions" then
-                    if changeDB then
-                        C_CVar.SetCVar("nameplateShowEnemyGuardians", BetterBlizzPlatesDB.nameplateShowEnemyGuardians)
-                        C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
-                        C_CVar.SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
-                        C_CVar.SetCVar("nameplateShowEnemyPets", BetterBlizzPlatesDB.nameplateShowEnemyPets)
-                    end
-                elseif cvarName == "nameplateShowFriendlyPlayerMinions" then
-                    if changeDB then
-                        C_CVar.SetCVar("nameplateShowFriendlyPlayerGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerGuardians)
-                        C_CVar.SetCVar("nameplateShowFriendlyPlayerTotems", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerTotems)
-                        C_CVar.SetCVar("nameplateShowFriendlyPlayerPets", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerPets)
+        end)
+        dropdown:SetDefaultText("None")
+        dropdown:SetSelectionText(function()
+            local set = BetterBlizzPlatesDB[setKey]
+            if not set then return "None" end
+            local names = {}
+            for _, row in ipairs(guiCVarControl.contextRows) do
+                for index = 1, 3, 2 do
+                    if set[row[index]] then
+                        names[#names + 1] = row[index + 1]
                     end
                 end
-            end)
+            end
+            if #names == 0 then return "None" end
+            local text = table.concat(names, ", ")
+            if #text > 32 then
+                text = text:sub(1, 32):gsub("%s*,?%s*$", "") .. "..."
+            end
+            return text
         end)
     end
 
-    local function ChangeMinionCheckboxes(changeDB)
-        ChangeCVarCheckboxBehaviour(nameplateShowEnemyMinions, "nameplateShowEnemyMinions", changeDB)
-        ChangeCVarCheckboxBehaviour(nameplateShowEnemyGuardians, "nameplateShowEnemyGuardians", changeDB)
-        ChangeCVarCheckboxBehaviour(nameplateShowEnemyMinus, "nameplateShowEnemyMinus", changeDB)
-        ChangeCVarCheckboxBehaviour(nameplateShowEnemyPets, "nameplateShowEnemyPets", changeDB)
-        ChangeCVarCheckboxBehaviour(nameplateShowEnemyTotems, "nameplateShowEnemyTotems", changeDB)
-        ChangeCVarCheckboxBehaviour(nameplateShowFriendlyPlayerMinions, "nameplateShowFriendlyPlayerMinions", changeDB)
-        ChangeCVarCheckboxBehaviour(nameplateShowFriendlyPlayerGuardians, "nameplateShowFriendlyPlayerGuardians", changeDB)
-        ChangeCVarCheckboxBehaviour(nameplateShowFriendlyPlayerPets, "nameplateShowFriendlyPlayerPets", changeDB)
-        ChangeCVarCheckboxBehaviour(nameplateShowFriendlyPlayerTotems, "nameplateShowFriendlyPlayerTotems", changeDB)
+    guiCVarControl.pvpLabel = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    guiCVarControl.pvpLabel:SetPoint("TOP", nameplateCVarText, "BOTTOM", -72, -73)
+    guiCVarControl.pvpLabel:SetText("In PvP show:")
 
-        if changeDB then
-            nameplateShowEnemyMinions:SetChecked(BetterBlizzPlatesDB["nameplateShowEnemyMinions"]=="1")
-            nameplateShowEnemyGuardians:SetChecked(BetterBlizzPlatesDB["nameplateShowEnemyGuardians"]=="1")
-            nameplateShowEnemyMinus:SetChecked(BetterBlizzPlatesDB["nameplateShowEnemyMinus"]=="1")
-            nameplateShowEnemyPets:SetChecked(BetterBlizzPlatesDB["nameplateShowEnemyPets"]=="1")
-            nameplateShowEnemyTotems:SetChecked(BetterBlizzPlatesDB["nameplateShowEnemyTotems"]=="1")
-            nameplateShowFriendlyPlayerMinions:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyPlayerMinions"]=="1")
-            nameplateShowFriendlyPlayerGuardians:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyPlayerGuardians"]=="1")
-            nameplateShowFriendlyPlayerPets:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyPlayerPets"]=="1")
-            nameplateShowFriendlyPlayerTotems:SetChecked(BetterBlizzPlatesDB["nameplateShowFriendlyPlayerTotems"]=="1")
-        else
-            nameplateShowEnemyMinions:SetChecked(GetCVar("nameplateShowEnemyMinions")=="1")
-            nameplateShowEnemyGuardians:SetChecked(GetCVar("nameplateShowEnemyGuardians")=="1")
-            nameplateShowEnemyMinus:SetChecked(GetCVar("nameplateShowEnemyMinus")=="1")
-            nameplateShowEnemyPets:SetChecked(GetCVar("nameplateShowEnemyPets")=="1")
-            nameplateShowEnemyTotems:SetChecked(GetCVar("nameplateShowEnemyTotems")=="1")
-            nameplateShowFriendlyPlayerMinions:SetChecked(GetCVar("nameplateShowFriendlyPlayerMinions")=="1")
-            nameplateShowFriendlyPlayerGuardians:SetChecked(GetCVar("nameplateShowFriendlyPlayerGuardians")=="1")
-            nameplateShowFriendlyPlayerPets:SetChecked(GetCVar("nameplateShowFriendlyPlayerPets")=="1")
-            nameplateShowFriendlyPlayerTotems:SetChecked(GetCVar("nameplateShowFriendlyPlayerTotems")=="1")
-        end
-    end
+    guiCVarControl.pvpDropdown = CreateFrame("DropdownButton", nil, guiCVarControl, "WowStyle1DropdownTemplate")
+    guiCVarControl.pvpDropdown:SetPoint("TOPLEFT", guiCVarControl.pvpLabel, "BOTTOMLEFT", 0, -4)
+    guiCVarControl.pvpDropdown:SetWidth(220)
+    BuildContextDropdown("cvarContextPvP", guiCVarControl.pvpDropdown)
+    CreateTooltipTwo(guiCVarControl.pvpDropdown, "In PvP show", "Nameplate types shown inside arenas and battlegrounds.")
 
+    guiCVarControl.pveLabel = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    guiCVarControl.pveLabel:SetPoint("TOPLEFT", guiCVarControl.pvpDropdown, "BOTTOMLEFT", 0, -12)
+    guiCVarControl.pveLabel:SetText("In PvE show:")
 
-    setCVarAcrossAllCharacters:HookScript("OnClick", function(self)
-        if self:GetChecked() then
-            ChangeMinionCheckboxes(true)
-        else
-            ChangeMinionCheckboxes(false)
-        end
-    end)
+    guiCVarControl.pveDropdown = CreateFrame("DropdownButton", nil, guiCVarControl, "WowStyle1DropdownTemplate")
+    guiCVarControl.pveDropdown:SetPoint("TOPLEFT", guiCVarControl.pveLabel, "BOTTOMLEFT", 0, -4)
+    guiCVarControl.pveDropdown:SetWidth(220)
+    BuildContextDropdown("cvarContextPvE", guiCVarControl.pveDropdown)
+    CreateTooltipTwo(guiCVarControl.pveDropdown, "In PvE show", "Nameplate types shown everywhere that is not an arena or battleground, including the open world.")
 
     local cbCVars = {}
-    cbCVars["nameplateShowEnemyMinions"] = nameplateShowEnemyMinions
-    cbCVars["nameplateShowEnemyGuardians"] = nameplateShowEnemyGuardians
-    cbCVars["nameplateShowEnemyMinus"] = nameplateShowEnemyMinus
-    cbCVars["nameplateShowEnemyPets"] = nameplateShowEnemyPets
-    cbCVars["nameplateShowEnemyTotems"] = nameplateShowEnemyTotems
-    cbCVars["nameplateShowFriendlyPlayerMinions"] = nameplateShowFriendlyPlayerMinions
-    cbCVars["nameplateShowFriendlyPlayerGuardians"] = nameplateShowFriendlyPlayerGuardians
-    cbCVars["nameplateShowFriendlyPlayerPets"] = nameplateShowFriendlyPlayerPets
-    cbCVars["nameplateShowFriendlyPlayerTotems"] = nameplateShowFriendlyPlayerTotems
-    cbCVars["nameplateShowFriendlyNpcs"] = nameplateShowFriendlyNPCs
     cbCVars["nameplateResourceOnTarget"] = nameplateResourceOnTarget
     cbCVars["nameplateMotion"] = nameplateMotion
     cbCVars["nameplateShowAll"] = nameplateShowAll
@@ -11023,23 +11111,6 @@ local function guiCVarControl()
     sliderCVars["nameplateOccludedAlphaMult"] = nameplateOccludedAlphaMult
     sliderCVars["nameplateSelectedAlpha"] = nameplateSelectedAlpha
     sliderCVars["nameplateNotSelectedAlpha"] = nameplateNotSelectedAlpha
-
-    -- Re-check checkboxes late cuz its all a mess and needs to be done and at this point more bandaid is all the effort i will put in until TWW maybe
-    if not BetterBlizzPlatesDB.hasSaved then
-        C_Timer.After(3, function()
-            if BetterBlizzPlatesDB.setCVarAcrossAllCharacters then
-                ChangeMinionCheckboxes(true)
-            else
-                ChangeMinionCheckboxes(false)
-            end
-            -- local children = {guiCVarControl:GetChildren()}
-            -- for _, child in ipairs(children) do
-            --     if child:IsObjectType("CheckButton") and child.option then
-            --         LateUpdateCheckboxState(child, child.option)
-            --     end
-            -- end
-        end)
-    end
 
     C_Timer.After(0.5, function()
         local cvarListener = CreateFrame("Frame")
@@ -11977,16 +12048,6 @@ end
 function BBP.CVarTracker()
     local cvarsToTrack = {
         checkboxes = {
-            nameplateShowEnemyMinions = true,
-            nameplateShowEnemyGuardians = true,
-            nameplateShowEnemyMinus = true,
-            nameplateShowEnemyPets = true,
-            nameplateShowEnemyTotems = true,
-            nameplateShowFriendlyPlayerMinions = true,
-            nameplateShowFriendlyPlayerGuardians = true,
-            nameplateShowFriendlyPlayerPets = true,
-            nameplateShowFriendlyNpcs = true,
-            nameplateShowFriendlyPlayerTotems = true,
             nameplateResourceOnTarget = true,
             nameplateShowAll = true,
             nameplateShowOnlyNameForFriendlyPlayerUnits = true
@@ -12024,7 +12085,9 @@ function BBP.CVarTracker()
         if BBP.CVarTrackingDisabled then return end
         if BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return end
 
-        if cvarsToTrack.checkboxes[cvarName] then
+        if BBP.SaveContextCVar(cvarName, cvarValue) then
+            -- handled: stored against the active PvP/PvE set
+        elseif cvarsToTrack.checkboxes[cvarName] then
             BetterBlizzPlatesDB[cvarName] = cvarValue
         elseif cvarsToTrack.sliders[cvarName] then
             BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)

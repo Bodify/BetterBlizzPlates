@@ -60,6 +60,7 @@ end
 
 BBP.interruptIcon = CreateFrame("Frame")
 BBP.interruptIcon.cooldown = CreateFrame("Cooldown", nil, BBP.interruptIcon, "CooldownFrameTemplate")
+BBP.interruptIcon.cooldown:SetMinimumCountdownDuration(0)
 BBP.interruptIcon.cooldown:HookScript("OnCooldownDone", function()
     BBP.interruptReady = true
     BBP.UpdateCastbarInterruptStatus()

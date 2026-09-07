@@ -2041,6 +2041,7 @@ local function AddAuraCooldownTimer(frame, auraID)
     if frame.BigDebuffs then
         if not frame.BigDebuffs.CooldownSB then
             local cooldownFrame = CreateFrame("Cooldown", nil, frame.BigDebuffs, "CooldownFrameTemplate")
+            cooldownFrame:SetMinimumCountdownDuration(0)
             cooldownFrame:SetAllPoints(frame.BigDebuffs.icon)
             cooldownFrame:SetDrawEdge(false)
             cooldownFrame:SetDrawSwipe(true)
@@ -2064,6 +2065,7 @@ local function AddAuraCooldownTimer(frame, auraID)
         if oaFrame then
             if not oaFrame.CooldownSB then
                 local cooldownFrame = CreateFrame("Cooldown", nil, oaFrame:GetParent(), "CooldownFrameTemplate")
+                cooldownFrame:SetMinimumCountdownDuration(0)
                 cooldownFrame:SetAllPoints(oaFrame)
                 cooldownFrame:SetDrawEdge(false)
                 cooldownFrame:SetDrawSwipe(true)
@@ -4063,6 +4065,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
             -- Create cooldown frame
             buff.Cooldown = CreateFrame("Cooldown", nil, buff, "CooldownFrameTemplate")
+            buff.Cooldown:SetMinimumCountdownDuration(0)
             buff.Cooldown:SetAllPoints(true)
             buff.Cooldown:SetHideCountdownNumbers(showDefaultCooldownNumbersOnNpAuras and false or true)
 
@@ -4323,6 +4326,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
         if data then
             if not buff.CooldownSB then
                 local cooldownFrame = CreateFrame("Cooldown", nil, buff, "CooldownFrameTemplate")
+                cooldownFrame:SetMinimumCountdownDuration(0)
                 cooldownFrame:SetAllPoints(buff.Icon)
                 cooldownFrame:SetDrawEdge(false)
                 cooldownFrame:SetDrawSwipe(true)

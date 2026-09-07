@@ -361,6 +361,7 @@ local defaultSettings = {
     targetIndicatorAnchor = "TOP",
     targetIndicatorTestMode = false,
     targetIndicatorColorNameplateRGB = {1, 0, 0.44},
+    targetIndicatorRGB = {1, 0, 0.44},
     petIndicatorColorHealthbarRGB = {0.03,0.35,0},
     targetIndicatorTexture = "Checkered (BBP)",
     -- Focus Target Indicator
@@ -390,8 +391,14 @@ local defaultSettings = {
     totemIndicatorEnemyOnly = true,
     totemIndicatorDefaultCooldownTextSize = 0.85,
     showTotemIndicatorCooldownSwipe = true,
+    totemIndicatorHideCountdownNumbers = false,
     totemIndicatorHideAuras = false,
+    totemIndicatorHideCastbar = false,
     totemIndicatorTotemColor = { 0.4, 0.34, 0.21 },
+    totemIndicatorColorGrounding = { 1, 0, 1 },
+    totemIndicatorColorCapacitor = { 1, 0.69, 0 },
+    totemIndicatorColorPsyfiend = { 0.49, 0, 1 },
+    totemIndicatorColorHealingStream = { 0, 1, 0.78 },
     -- totemIndicatorNpcList = {
     --     [59764] =   { name = "Healing Tide Totem", icon = C_Spell.GetSpellTexture(108280),              hideIcon = false, size = 30, duration = 10, color = {0, 1, 0.39}, important = true },
     --     [59712] =   { name = "Stone Bulwark Totem", icon = C_Spell.GetSpellTexture(108270),             hideIcon = false, size = 30, duration = 30, color = {0.98, 0.75, 0.17}, important = true },
@@ -1028,6 +1035,47 @@ local function InitializeSavedVariables()
             db[key] = defaultValue
         end
     end
+
+    BBP.InitContextCVarSets()
+end
+
+local contextCVarDefaults = {
+    nameplateShowEnemyMinions = true,
+    nameplateShowEnemyGuardians = true,
+    nameplateShowEnemyMinus = false,
+    nameplateShowEnemyPets = true,
+    nameplateShowEnemyTotems = true,
+    nameplateShowFriendlyPlayerMinions = false,
+    nameplateShowFriendlyPlayerGuardians = false,
+    nameplateShowFriendlyNpcs = false,
+    nameplateShowFriendlyPlayerPets = false,
+    nameplateShowFriendlyPlayerTotems = false,
+}
+
+function BBP.InitContextCVarSets(resetToDefaults)
+    local db = BetterBlizzPlatesDB
+    if not db then return end
+
+    for _, setKey in ipairs({ "cvarContextPvP", "cvarContextPvE" }) do
+        if type(db[setKey]) ~= "table" then db[setKey] = {} end
+        for cvar, fallback in pairs(contextCVarDefaults) do
+            if resetToDefaults then
+                db[setKey][cvar] = fallback
+            elseif db[setKey][cvar] == nil then
+                local previous = db[cvar]
+                if previous ~= nil then
+                    db[setKey][cvar] = previous == "1" or previous == 1 or previous == true
+                else
+                    local live = C_CVar.GetCVar(cvar)
+                    if live ~= nil then
+                        db[setKey][cvar] = live == "1"
+                    else
+                        db[setKey][cvar] = fallback
+                    end
+                end
+            end
+        end
+    end
 end
 
 function BBP.ResetTotemList()
@@ -1271,23 +1319,12 @@ function BBP.ResetNameplateCVars()
     BBP.ReassertBlizzardAuraCVars()
 end
 
-BBP.totemIndicatorCVars = {
-    nameplateShowEnemyMinions = true,
-    nameplateShowEnemyGuardians = true,
-    nameplateShowEnemyMinus = true,
-    nameplateShowEnemyPets = true,
-    nameplateShowEnemyTotems = true,
-}
-
 local function CVarDefaultOnLogout()
     if not BBPCVarBackupsDB then return end
     if InCombatLockdown() or BetterBlizzPlatesDB.disableCVarForceOnLogin then return end
-    local keepTotemIndicatorCVars = BetterBlizzPlatesDB.totemIndicator
     for cvar, value in pairs(BBPCVarBackupsDB) do
         if cvar ~= "nameplateStyle" and cvar ~= "bitfields" then -- Midnight style, skip for now
-            if not (keepTotemIndicatorCVars and BBP.totemIndicatorCVars[cvar]) then
-                C_CVar.SetCVar(cvar, value)
-            end
+            C_CVar.SetCVar(cvar, value)
         end
     end
 
@@ -1547,16 +1584,7 @@ local function ResetNameplates()
     BetterBlizzPlatesDB.nameplateShowClassColor = "1"
     BetterBlizzPlatesDB.nameplateShowFriendlyClassColor = "1"
 
-    BetterBlizzPlatesDB.nameplateShowEnemyGuardians = "1"
-    BetterBlizzPlatesDB.nameplateShowEnemyMinions = "1"
-    BetterBlizzPlatesDB.nameplateShowEnemyMinus = "0"
-    BetterBlizzPlatesDB.nameplateShowEnemyPets = "1"
-    BetterBlizzPlatesDB.nameplateShowEnemyTotems = "1"
-
-    BetterBlizzPlatesDB.nameplateShowFriendlyPlayerGuardians = "0"
-    BetterBlizzPlatesDB.nameplateShowFriendlyPlayerMinions = "0"
-    BetterBlizzPlatesDB.nameplateShowFriendlyPlayerPets = "0"
-    BetterBlizzPlatesDB.nameplateShowFriendlyPlayerTotems = "0"
+    BBP.InitContextCVarSets(true)
 
     BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
     BetterBlizzPlatesDB.castBarHeight = 18.8
@@ -1580,15 +1608,7 @@ local function ResetNameplates()
     C_CVar.SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
     C_CVar.SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
     C_CVar.SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
-    C_CVar.SetCVar("nameplateShowEnemyMinions", BetterBlizzPlatesDB.nameplateShowEnemyMinions)
-    C_CVar.SetCVar("nameplateShowEnemyGuardians", BetterBlizzPlatesDB.nameplateShowEnemyGuardians)
-    C_CVar.SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
-    C_CVar.SetCVar("nameplateShowEnemyPets", BetterBlizzPlatesDB.nameplateShowEnemyPets)
-    C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
-    C_CVar.SetCVar("nameplateShowFriendlyPlayerMinions", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerMinions)
-    C_CVar.SetCVar("nameplateShowFriendlyPlayerGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerGuardians)
-    C_CVar.SetCVar("nameplateShowFriendlyPlayerPets", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerPets)
-    C_CVar.SetCVar("nameplateShowFriendlyPlayerTotems", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerTotems)
+    BBP.UpdateContextCVars()
     C_CVar.SetCVar("nameplateShowClassColor", BetterBlizzPlatesDB.nameplateShowClassColor)
     C_CVar.SetCVar("nameplateShowFriendlyClassColor", BetterBlizzPlatesDB.nameplateShowFriendlyClassColor)
     C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', "0")
@@ -2475,15 +2495,6 @@ function BBP.ApplyCustomTextureToNameplate(frame)
         config.customTextureSelf = LSM:Fetch(LSM.MediaType.STATUSBAR, customTextureSelf)
         config.customTextureSelfMana = LSM:Fetch(LSM.MediaType.STATUSBAR, customTextureSelfMana)
 
-        config.targetIndicatorChangeTexture = BetterBlizzPlatesDB.targetIndicatorChangeTexture
-        config.focusTargetIndicatorChangeTexture = BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture
-        if config.targetIndicatorChangeTexture then
-            config.targetIndicatorTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.targetIndicatorTexture)
-        end
-        if config.focusTargetIndicatorChangeTexture then
-            config.focusTargetIndicatorTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.focusTargetIndicatorTexture)
-        end
-
         config.customTextureInitialized = true
     end
 
@@ -2899,19 +2910,6 @@ local function SetCVarsOnLogin()
                 C_CVar.SetCVar("nameplateShowAll", BetterBlizzPlatesDB.nameplateShowAll)
             end
 
-            C_CVar.SetCVar("nameplateShowEnemyMinions", BetterBlizzPlatesDB.nameplateShowEnemyMinions)
-            C_CVar.SetCVar("nameplateShowEnemyGuardians", BetterBlizzPlatesDB.nameplateShowEnemyGuardians)
-            C_CVar.SetCVar("nameplateShowEnemyMinus", BetterBlizzPlatesDB.nameplateShowEnemyMinus)
-            C_CVar.SetCVar("nameplateShowEnemyPets", BetterBlizzPlatesDB.nameplateShowEnemyPets)
-            C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
-
-            C_CVar.SetCVar("nameplateShowFriendlyPlayerMinions", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerMinions)
-            C_CVar.SetCVar("nameplateShowFriendlyPlayerGuardians", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerGuardians)
-            if BetterBlizzPlatesDB.nameplateShowFriendlyNpcs then
-                C_CVar.SetCVar("nameplateShowFriendlyNpcs", BetterBlizzPlatesDB.nameplateShowFriendlyNpcs)
-            end
-            C_CVar.SetCVar("nameplateShowFriendlyPlayerPets", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerPets)
-            C_CVar.SetCVar("nameplateShowFriendlyPlayerTotems", BetterBlizzPlatesDB.nameplateShowFriendlyPlayerTotems)
         end
 
         if BetterBlizzPlatesDB.bitfields then
@@ -5731,6 +5729,9 @@ local function HandleNamePlateRemoved(unit)
     if frame.targetIndicator then
         frame.targetIndicator:Hide()
     end
+    if frame.targetIndicatorMirror then
+        frame.targetIndicatorMirror:Hide()
+    end
     -- Execute indicator
     if frame.executeIndicator then
         frame.executeIndicator:SetText("")
@@ -7890,6 +7891,7 @@ local function CheckIfInInstance(self, event, ...)
     -- SetNameplateBehavior()
     if event ~= "PLAYER_REGEN_ENABLED" then
         UpdateInstanceStatus()
+        BBP.UpdateContextCVars()
         if event ~= "ZONE_CHANGED" then
             SpecCache = {}
             SetNameplateBehavior()
@@ -7902,6 +7904,7 @@ local function CheckIfInInstance(self, event, ...)
         end
     elseif event == "PLAYER_REGEN_ENABLED" then
         SetNameplateBehavior()
+        BBP.UpdateContextCVars()
         InstanceChecker:UnregisterEvent("PLAYER_REGEN_ENABLED")
     end
 end
@@ -8453,77 +8456,109 @@ function BBP.TurnOnFocusBorderColor()
     BBP.focusBorderColor = true
 end
 
-StaticPopupDialogs["BBP_TOTEM_INDICATOR_CVAR_CONFLICT"] = {
-    text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates:\n\nTotem Indicator does not work properly with other nameplate types than Totems and Pets enabled. The others have been disabled.\n\nYou will have to pick either Totem Indicator on or the other nameplate types in CVar Control bottom right.",
-    button1 = "OK",
-    timeout = 0,
-    whileDead = true,
+BBP.contextCVarList = {
+    "nameplateShowEnemyMinions",
+    "nameplateShowEnemyGuardians",
+    "nameplateShowEnemyMinus",
+    "nameplateShowEnemyPets",
+    "nameplateShowEnemyTotems",
+    "nameplateShowFriendlyPlayerMinions",
+    "nameplateShowFriendlyPlayerGuardians",
+    "nameplateShowFriendlyNpcs",
+    "nameplateShowFriendlyPlayerPets",
+    "nameplateShowFriendlyPlayerTotems",
 }
 
-function BBP.ForceTotemIndicatorCVars(silent)
-    local db = BetterBlizzPlatesDB
-    if not db or not db.totemIndicator then return false end
-
-    local unsupported = {
-        "nameplateShowEnemyMinions",
+local contextMinionChildren = {
+    {
         "nameplateShowEnemyGuardians",
         "nameplateShowEnemyMinus",
-    }
-
-    local keepEnabled = {
         "nameplateShowEnemyPets",
         "nameplateShowEnemyTotems",
-    }
+    },
+    {
+        "nameplateShowFriendlyPlayerGuardians",
+        "nameplateShowFriendlyPlayerPets",
+        "nameplateShowFriendlyPlayerTotems",
+    },
+}
 
-    local function IsOn(value)
-        return value == "1" or value == 1 or value == true
-    end
+BBP.totemIndicatorPvPCVars = {
+    nameplateShowEnemyPets = true,
+    nameplateShowEnemyTotems = true,
+}
 
-    local conflict = false
-    for _, cvar in ipairs(unsupported) do
-        if C_CVar.GetCVar(cvar) == "1" or IsOn(db[cvar]) then
-            conflict = true
-            break
-        end
-    end
-    if not conflict then return false end
+BBP.contextCVarLookup = {}
+for _, cvar in ipairs(BBP.contextCVarList) do
+    BBP.contextCVarLookup[cvar] = true
+end
 
-    local keep = {}
-    for _, cvar in ipairs(keepEnabled) do
-        local dbValue = db[cvar]
-        if dbValue ~= nil then
-            keep[cvar] = IsOn(dbValue) and "1" or "0"
-        else
-            keep[cvar] = C_CVar.GetCVar(cvar) == "1" and "1" or "0"
-        end
-    end
+function BBP.GetActiveContextSetKey()
+    return BBP.isInPvP and "cvarContextPvP" or "cvarContextPvE"
+end
 
-    local function SaveToDB()
-        for _, cvar in ipairs(unsupported) do
-            db[cvar] = "0"
-        end
-        for _, cvar in ipairs(keepEnabled) do
-            db[cvar] = keep[cvar]
-        end
-    end
+local function ContextCVarIsOn(value)
+    return value == "1" or value == 1 or value == true
+end
 
-    SaveToDB()
-
-    BBP.RunAfterCombat(function()
-        for _, cvar in ipairs(unsupported) do
-            C_CVar.SetCVar(cvar, "0")
-        end
-        for _, cvar in ipairs(keepEnabled) do
-            C_CVar.SetCVar(cvar, keep[cvar])
-        end
-        SaveToDB()
-    end)
-
-    if not silent then
-        StaticPopup_Show("BBP_TOTEM_INDICATOR_CVAR_CONFLICT")
-    end
-
+function BBP.SaveContextCVar(cvarName, value)
+    local db = BetterBlizzPlatesDB
+    if not db or not BBP.contextCVarLookup[cvarName] then return false end
+    local setKey = BBP.GetActiveContextSetKey()
+    if type(db[setKey]) ~= "table" then db[setKey] = {} end
+    db[setKey][cvarName] = ContextCVarIsOn(value)
     return true
+end
+
+local function ApplyContextCVars(target)
+    BBP.CVarTrackingDisabled = true
+    for _, cvar in ipairs(BBP.contextCVarList) do
+        C_CVar.SetCVar(cvar, target[cvar] and "1" or "0")
+    end
+    for _, children in ipairs(contextMinionChildren) do
+        for _, cvar in ipairs(children) do
+            C_CVar.SetCVar(cvar, target[cvar] and "1" or "0")
+        end
+    end
+    BBP.CVarTrackingDisabled = nil
+end
+
+local totemPvPCVarNoticeShown
+local function AnnounceTotemPvPCVars()
+    if totemPvPCVarNoticeShown then return end
+    totemPvPCVarNoticeShown = true
+    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Totem Indicator only works with Enemy Pets and Enemy Totems shown, so your nameplate visibility CVars were changed for PvP. They are put back when you leave.")
+end
+
+function BBP.UpdateContextCVars()
+    local db = BetterBlizzPlatesDB
+    if not db or not BBP.variablesLoaded then return end
+
+    if InCombatLockdown() then
+        if not InstanceChecker:IsEventRegistered("PLAYER_REGEN_ENABLED") then
+            InstanceChecker:RegisterEvent("PLAYER_REGEN_ENABLED")
+        end
+        return
+    end
+
+    local inPvP = BBP.isInPvP
+    local source = db[BBP.GetActiveContextSetKey()] or {}
+    local target = {}
+    for _, cvar in ipairs(BBP.contextCVarList) do
+        target[cvar] = source[cvar] and true or false
+    end
+
+    if inPvP and db.totemIndicator then
+        local differs = false
+        for _, cvar in ipairs(BBP.contextCVarList) do
+            local wanted = BBP.totemIndicatorPvPCVars[cvar] and true or false
+            if target[cvar] ~= wanted then differs = true end
+            target[cvar] = wanted
+        end
+        if differs then AnnounceTotemPvPCVars() end
+    end
+
+    ApplyContextCVars(target)
 end
 
 function BBP.MiniAurasOnNameplates()
@@ -8662,7 +8697,7 @@ local function TurnOnEnabledFeaturesOnLogin()
     BBP.ToggleFactionIndicator()
     BBP:RegisterTargetCastingEvents()
     BBP.ToggleHealthNumbers()
-    --BBP.DruidBlueComboPoints() isMidnight
+    BBP.DruidBlueComboPoints()
     BBP.DruidAlwaysShowCombos()
     EnableMouseoverChecker()
 
@@ -9037,19 +9072,12 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 if db.firstSaveComplete then
                     -- Existing user from before Midnight: ask what to do
                     StaticPopupDialogs["BBP_TOTEM_MIDNIGHT_UPDATE"] = {
-                        text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates:\n\nTotem Indicator is back for Midnight in a scuffed way.\n\nFor it to work correctly you need to have only \"Enemy Pets\" and \"Enemy Totems\" enabled in the CVar Control section.\n\nIt can only properly detect Grounding & Capacitor Totem, the rest will just be a general totem icon and color.\nTweak it in Advanced Settings.\n\nWhat would you like to do?",
-                        button1 = "Only keep Pets and Totems",
+                        text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates:\n\nTotem Indicator is back for Midnight in a scuffed way.\n\nFor it to work correctly only \"Enemy Pets\" and \"Enemy Totems\" can be shown. BBP now only does that inside arenas and battlegrounds, and puts your own CVars back when you leave.\n\nIt can only properly detect Grounding, Capacitor, Psyfiend & Healing Stream, the rest will just be a general totem icon and color.\nTweak it in Advanced Settings.\n\nWhat would you like to do?",
+                        button1 = "Keep Totem Indicator on",
                         button2 = "Turn off Totem Indicator",
                         OnAccept = function()
-                            db.nameplateShowEnemyPets = "1"
-                            db.nameplateShowEnemyTotems = "1"
                             db.totemIndicatorUpdatedForMidnight = true
-                            if not BBP.ForceTotemIndicatorCVars(true) then
-                                BBP.RunAfterCombat(function()
-                                    C_CVar.SetCVar("nameplateShowEnemyPets", "1")
-                                    C_CVar.SetCVar("nameplateShowEnemyTotems", "1")
-                                end)
-                            end
+                            BBP.UpdateContextCVars()
                         end,
                         OnCancel = function()
                             db.totemIndicator = false
@@ -9066,7 +9094,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 end
             elseif db.totemIndicator then
                 C_Timer.After(4, function()
-                    BBP.ForceTotemIndicatorCVars(true)
+                    BBP.UpdateContextCVars()
                 end)
             end
 
@@ -9897,10 +9925,14 @@ hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
     if not self.BetterBlizzPlates then return end
     local config = self.BetterBlizzPlates.config
     if not config then return end
-    if config.targetIndicator and config.targetIndicatorChangeTexture and UnitIsUnit(self.unit, "target") then
-        self.healthBar:SetStatusBarTexture(config.targetIndicatorTexturePath)
-    elseif config.focusTargetIndicator and config.focusTargetIndicatorChangeTexture and UnitIsUnit(self.unit, "focus") then
-        self.healthBar:SetStatusBarTexture(config.focusTargetIndicatorTexturePath)
+    local texture
+    if config.targetIndicator and BetterBlizzPlatesDB.targetIndicatorChangeTexture and UnitIsUnit(self.unit, "target") then
+        texture = config.targetIndicatorTextureLSM or LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.targetIndicatorTexture)
+    elseif config.focusTargetIndicator and BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture and UnitIsUnit(self.unit, "focus") then
+        texture = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.focusTargetIndicatorTexture)
+    end
+    if texture then
+        self.healthBar:SetStatusBarTexture(texture)
     end
 end)
 

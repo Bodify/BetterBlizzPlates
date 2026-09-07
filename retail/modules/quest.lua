@@ -9,7 +9,12 @@ function BBP.QuestIndicator(frame)
 
     -- Initialize
     if not frame.questIndicator then
-        frame.questIndicator = frame:CreateTexture(nil, "OVERLAY")
+        if not frame.bbpPlateOverlay then
+            frame.bbpPlateOverlay = CreateFrame("Frame", nil, frame)
+            frame.bbpPlateOverlay:SetFrameStrata("DIALOG")
+            frame.bbpPlateOverlay:SetFrameLevel(9000)
+        end
+        frame.questIndicator = frame.bbpPlateOverlay:CreateTexture(nil, "OVERLAY")
         frame.questIndicator:SetAtlas("smallquestbang")
         frame.questIndicator:SetSize(22, 22)
     end

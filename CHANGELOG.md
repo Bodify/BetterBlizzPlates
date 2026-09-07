@@ -1,3 +1,22 @@
+# BetterBlizzPlates 2.1.3
+## All versions
+### New
+- Target Indicator: Now has options to change the icon, color the icon, and also to have the icon appear on both sides. In Advanced Settings.
+- CVar Control: The nameplate visibility CVars now has PvP and PvE dropdowns to select which nameplate types you want to see in which content.
+### Bugfix
+- Fix classic nameplates border overlaying some things like healer indicator icon and more.
+### Tweak
+- Classic Era: Fix pink shamans, now blue again. Changes in the "midnight patches" for classics made this tweak lost.
+## Midnight
+### New
+- Totem Indicator: New options to change colors for the different types of detectable totems again.
+- Totem Indicator: New setting to hide castbars on totems.
+- Totem Indicator: Setting to hide the duration number.
+### Tweak
+- Totem Indicator: Last big patch caused some headache with CVars resetting due to the Totem Indicator (as intended to function properly). It still does this but now only during PvP and with the new CVar Control PvP/PvE visibility settings it should be much smoother to control this.
+- Totem Indicator: Show healing stream separate again.
+- Update JFarm profile (www.twitch.tv/jfarm_)
+
 # BetterBlizzPlates 2.1.2i
 ## Midnight
 ### Tweak

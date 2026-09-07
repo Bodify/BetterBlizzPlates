@@ -27,6 +27,125 @@ local function GetRotationForAnchor(anchorPoint)
     return rotation
 end
 
+local mirroredAnchors = {
+    TOP = "BOTTOM",
+    BOTTOM = "TOP",
+    LEFT = "RIGHT",
+    RIGHT = "LEFT",
+    TOPLEFT = "BOTTOMRIGHT",
+    TOPRIGHT = "BOTTOMLEFT",
+    BOTTOMLEFT = "TOPRIGHT",
+    BOTTOMRIGHT = "TOPLEFT",
+}
+
+local rightSideAnchors = {
+    RIGHT = true,
+    TOPRIGHT = true,
+    BOTTOMRIGHT = true,
+}
+
+local anchorAxis = {
+    TOP         = { h =  0, v =  1 },
+    BOTTOM      = { h =  0, v = -1 },
+    LEFT        = { h = -1, v =  0 },
+    RIGHT       = { h =  1, v =  0 },
+    TOPLEFT     = { h = -1, v =  1 },
+    TOPRIGHT    = { h =  1, v =  1 },
+    BOTTOMLEFT  = { h = -1, v = -1 },
+    BOTTOMRIGHT = { h =  1, v = -1 },
+}
+
+local function GetMirroredOffsets(anchorPoint, mirrorAnchor, xPos, yPos)
+    local from, to = anchorAxis[anchorPoint], anchorAxis[mirrorAnchor]
+    if not from or not to then return -xPos, -yPos end
+    return (from.h ~= to.h) and -xPos or xPos, (from.v ~= to.v) and -yPos or yPos
+end
+
+local function GetClassicLevelOffset(anchorPoint)
+    if not rightSideAnchors[anchorPoint] then return 0 end
+    if not BetterBlizzPlatesDB.classicNameplates or BetterBlizzPlatesDB.hideLevelFrame then return 0 end
+    return 9
+end
+
+local targetIndicatorTextures = {
+    { key = "default",         name = "Default",        file = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\Navigation-Tracked-Arrow.tga", size = {18, 13}, points = "UP" },
+    { key = "uiWorldMapArrow", name = "Map Arrow",      atlas = "UI-WorldMapArrow",                            size = {10, 9},    points = "UP" },
+    { key = "adventures",      name = "Adventures",     atlas = "Adventures-Target-Indicator",                 size = {53, 56},   points = "DOWN" },
+    { key = "azerite",         name = "Azerite",        atlas = "Azerite-PointingArrow",                       size = {62, 44},   points = "DOWN" },
+    { key = "bagsGreenArrow",  name = "Green Arrow",    atlas = "bags-greenarrow",                             size = {20, 22},   points = "UP" },
+    { key = "shopArrow",       name = "Shop Arrow",     atlas = "shop-header-arrow-pressed",                   size = {24, 21},   points = "LEFT" },
+    { key = "requiredArrow",   name = "Required Arrow", atlas = "charactercreate-icon-requiredarrow",          size = {40, 35},   points = "DOWN" },
+    { key = "offscreen",       name = "Offscreen",      atlas = "common-icon-offscreen",                       size = {200, 200}, points = "LEFT" },
+    { key = "helpTip",         name = "Help Tip",       atlas = "ItemUpgrade_HelpTipArrow",                    size = {28, 28},   points = "RIGHT" },
+    { key = "delveArrow",      name = "Delve Arrow",    atlas = "UI-Journeys-Delve-Arrow-Small-Left-pressed",  size = {25, 30},   points = "LEFT" },
+    { key = "levelUp",         name = "Level Up",       atlas = "LevelUp-Icon-Arrow",                          size = {30, 34},   points = "UP" },
+    { key = "characterSelect", name = "Char Select",    atlas = "glues-characterSelect-icon-arrowDown",        size = {32, 32},   points = "DOWN" },
+    { key = "corpseArrow",     name = "Corpse Arrow",   atlas = "UI-HUD-Minimap-Arrow-Corpse",                 size = {29, 29},   points = "UP" },
+    { key = "questPin",        name = "Quest Pin",      atlas = "UI-QuestPoiImportant-QuestNumber-SuperTracked", size = {32, 36}, points = "DOWN" },
+}
+local pointRotations = {
+    UP = 0,
+    DOWN = 180,
+    LEFT = -90,
+    RIGHT = 90,
+}
+
+local maxIconSize = 14
+local previewIconSize = 16
+
+local targetIndicatorTextureByKey = {}
+BBP.targetIndicatorTextures = {}
+for _, entry in ipairs(targetIndicatorTextures) do
+    if not entry.atlas or C_Texture.GetAtlasInfo(entry.atlas) then
+        local degrees = pointRotations[entry.points] or 0
+        local width, height = entry.size[1], entry.size[2]
+        if degrees == 90 or degrees == -90 then
+            width, height = height, width
+        end
+        local scale = math.min(1, maxIconSize / math.max(width, height))
+        entry.rotation = math.rad(degrees)
+        entry.width = width * scale
+        entry.height = height * scale
+        targetIndicatorTextureByKey[entry.key] = entry
+        table.insert(BBP.targetIndicatorTextures, entry)
+    end
+end
+
+function BBP.GetTargetIndicatorTexture()
+    return targetIndicatorTextureByKey[BetterBlizzPlatesDB.targetIndicatorIcon]
+        or targetIndicatorTextureByKey.default
+        or BBP.targetIndicatorTextures[1]
+end
+
+function BBP.GetTargetIndicatorIconText(entry)
+    local scale = previewIconSize / math.max(entry.size[1], entry.size[2])
+    local w = math.floor(entry.size[1] * scale + 0.5)
+    local h = math.floor(entry.size[2] * scale + 0.5)
+    if entry.atlas then
+        return "|A:"..entry.atlas..":"..h..":"..w.."|a "..entry.name
+    end
+    return "|T"..entry.file..":"..h..":"..w.."|t "..entry.name
+end
+
+local function ApplyTargetIndicatorTexture(texture, entry)
+    if entry.atlas then
+        texture:SetAtlas(entry.atlas)
+    else
+        texture:SetTexture(entry.file)
+    end
+    texture:SetSize(entry.width, entry.height)
+end
+
+local function ApplyTargetIndicatorColor(texture, config)
+    if config.targetIndicatorRecolor then
+        texture:SetDesaturated(true)
+        texture:SetVertexColor(unpack(config.targetIndicatorRGB or {1, 1, 1}))
+    else
+        texture:SetDesaturated(false)
+        texture:SetVertexColor(1, 1, 1)
+    end
+end
+
 -- Target Indicator
 function BBP.TargetIndicator(frame)
     --if not frame or not frame.unit then return end
@@ -35,9 +154,7 @@ function BBP.TargetIndicator(frame)
 
     -- Initialize
     if not frame.targetIndicator then
-        frame.targetIndicator = frame.healthBar:CreateTexture(nil, "OVERLAY")
-        frame.targetIndicator:SetSize(18, 13)
-        frame.targetIndicator:SetTexture(BBP.targetIndicatorIconReplacement)
+        frame.targetIndicator = frame.bbpOverlay:CreateTexture(nil, "OVERLAY", nil, -1)
         frame.targetIndicator:Hide()
         frame.targetIndicator:SetDrawLayer("OVERLAY", 7)
         frame.targetIndicator:SetVertexColor(1,1,1)
@@ -52,7 +169,11 @@ function BBP.TargetIndicator(frame)
         config.targetIndicatorHideIcon = BetterBlizzPlatesDB.targetIndicatorHideIcon
         config.targetIndicatorColorNameplate = BetterBlizzPlatesDB.targetIndicatorColorNameplate
         config.targetIndicatorColorName = BetterBlizzPlatesDB.targetIndicatorColorName
-        config.targetIndicatorRotation = GetRotationForAnchor(config.targetIndicatorAnchor)
+        config.targetIndicatorDouble = BetterBlizzPlatesDB.targetIndicatorDouble
+        config.targetIndicatorIcon = BBP.GetTargetIndicatorTexture()
+        config.targetIndicatorRecolor = BetterBlizzPlatesDB.targetIndicatorRecolor
+        config.targetIndicatorRGB = BetterBlizzPlatesDB.targetIndicatorRGB
+        config.targetIndicatorRotation = GetRotationForAnchor(config.targetIndicatorAnchor) + config.targetIndicatorIcon.rotation
         config.targetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB
         config.targetIndicatorChangeTexture = BetterBlizzPlatesDB.targetIndicatorChangeTexture
         if config.targetIndicatorChangeTexture then
@@ -60,10 +181,31 @@ function BBP.TargetIndicator(frame)
             config.targetIndicatorTextureLSM = LSM:Fetch(LSM.MediaType.STATUSBAR, targetIndicatorTexture)
         end
 
-        frame.targetIndicator:SetPoint("CENTER", frame.healthBar, config.targetIndicatorAnchor, config.targetIndicatorXPos, config.targetIndicatorYPos)
+        ApplyTargetIndicatorTexture(frame.targetIndicator, config.targetIndicatorIcon)
+        ApplyTargetIndicatorColor(frame.targetIndicator, config)
+        frame.targetIndicator:SetPoint("CENTER", frame.healthBar, config.targetIndicatorAnchor, config.targetIndicatorXPos + GetClassicLevelOffset(config.targetIndicatorAnchor), config.targetIndicatorYPos)
         --frame.targetIndicator:SetPoint("CENTER", frame, config.targetIndicatorAnchor, config.targetIndicatorXPos, config.targetIndicatorYPos-17)
         frame.targetIndicator:SetScale( config.targetIndicatorScale)
         frame.targetIndicator:SetRotation(config.targetIndicatorRotation)
+
+        if config.targetIndicatorDouble then
+            if not frame.targetIndicatorMirror then
+                frame.targetIndicatorMirror = frame.bbpOverlay:CreateTexture(nil, "OVERLAY", nil, -1)
+                frame.targetIndicatorMirror:Hide()
+                frame.targetIndicatorMirror:SetDrawLayer("OVERLAY", 7)
+                frame.targetIndicatorMirror:SetVertexColor(1,1,1)
+            end
+            local mirrorAnchor = mirroredAnchors[config.targetIndicatorAnchor] or config.targetIndicatorAnchor
+            ApplyTargetIndicatorTexture(frame.targetIndicatorMirror, config.targetIndicatorIcon)
+            ApplyTargetIndicatorColor(frame.targetIndicatorMirror, config)
+            frame.targetIndicatorMirror:ClearAllPoints()
+            local mirrorXPos, mirrorYPos = GetMirroredOffsets(config.targetIndicatorAnchor, mirrorAnchor, config.targetIndicatorXPos, config.targetIndicatorYPos)
+            frame.targetIndicatorMirror:SetPoint("CENTER", frame.healthBar, mirrorAnchor, mirrorXPos + GetClassicLevelOffset(mirrorAnchor), mirrorYPos)
+            frame.targetIndicatorMirror:SetScale(config.targetIndicatorScale)
+            frame.targetIndicatorMirror:SetRotation(GetRotationForAnchor(mirrorAnchor) + config.targetIndicatorIcon.rotation)
+        elseif frame.targetIndicatorMirror then
+            frame.targetIndicatorMirror:Hide()
+        end
 
         config.targetIndicatorInitialized = true
     end
@@ -73,6 +215,9 @@ function BBP.TargetIndicator(frame)
         if frame.targetIndicator then
             frame.targetIndicator:Hide()
         end
+        if frame.targetIndicatorMirror then
+            frame.targetIndicatorMirror:Hide()
+        end
         --return
     end
 
@@ -80,6 +225,9 @@ function BBP.TargetIndicator(frame)
     if UnitIsUnit(frame.unit, "target") then
         if not config.targetIndicatorHideIcon then
             frame.targetIndicator:Show()
+            if config.targetIndicatorDouble and frame.targetIndicatorMirror then
+                frame.targetIndicatorMirror:Show()
+            end
         end
         if config.targetIndicatorChangeTexture then
             frame.healthBar:SetStatusBarTexture(config.targetIndicatorTextureLSM)
@@ -101,6 +249,9 @@ function BBP.TargetIndicator(frame)
         end
     else
         frame.targetIndicator:Hide()
+        if frame.targetIndicatorMirror then
+            frame.targetIndicatorMirror:Hide()
+        end
         if config.targetIndicatorChangeTexture then
             BBP.ApplyCustomTextureToNameplate(frame)
         end
@@ -145,7 +296,7 @@ function BBP.FocusTargetIndicator(frame)
 
     -- Initialize
     if not frame.focusTargetIndicator then
-        frame.focusTargetIndicator = frame.healthBar:CreateTexture(nil, "OVERLAY")
+        frame.focusTargetIndicator = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
         frame.focusTargetIndicator:SetSize(22, 22)
         frame.focusTargetIndicator:SetTexture(BBP.focusIndicatorIconReplacement)
         frame.focusTargetIndicator:Hide()

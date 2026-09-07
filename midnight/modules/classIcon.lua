@@ -224,6 +224,7 @@ local function InitClassIndicatorCCSlot(auraFrame, frame)
     icon:AddMaskTexture(mask)
 
     local cooldown = CreateFrame("Cooldown", nil, auraFrame, "CooldownFrameTemplate")
+    cooldown:SetMinimumCountdownDuration(0)
     cooldown:SetAllPoints(icon)
     cooldown:SetDrawEdge(false)
     cooldown:SetDrawSwipe(true)
@@ -271,6 +272,7 @@ local function CreateClassIndicatorCCContainer(frame)
         AuraUtil.AuraFilters.Harmful, AuraUtil.AuraFilters.CrowdControl), {
         sortMethod = AuraContainerSortMethod.AuraInstanceIDOnly,
         sortDirection = AuraContainerSortDirection.Reverse,
+        candidateFilters = { excludeSpellIDs = BBP.auraCategorySafe.ccBlacklist },
         initializeFrame = function(auraFrame)
             InitClassIndicatorCCSlot(auraFrame, frame)
         end,

@@ -104,6 +104,7 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, duration, color, size, hid
         if duration then
             if not frame.customCooldown then
                 frame.customCooldown = CreateFrame("Cooldown", "totemIndicator", frame.totemIndicator, "CooldownFrameTemplate")
+                frame.customCooldown:SetMinimumCountdownDuration(0)
                 frame.customCooldown:SetPoint('TOPLEFT', frame.totemIndicator, 'TOPLEFT', 1, -1)
                 frame.customCooldown:SetPoint('BOTTOMRIGHT', frame.totemIndicator, 'BOTTOMRIGHT', -1, 1)
             end
