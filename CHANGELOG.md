@@ -165,6 +165,11 @@
 - Fix an issue with "Always on Top" castbar setting causing castbars that shouldve been hidden to still show.
 - For Wrath enable the same unified classic version of the addon as Wrath still loaded older version files.
 
+# BetterBlizzPlates 2.1.0c
+## Wrath Titan
+### Bugfix
+- Make Wrath Titan client load the same files as Era/TBC/MoP so addon works.
+
 # BetterBlizzPlates 2.1.0b
 ## All versions
 ### Bugfix
