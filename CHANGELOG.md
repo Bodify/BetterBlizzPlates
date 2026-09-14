@@ -1,14 +1,22 @@
 # BetterBlizzPlates 2.1.3
+## Highlights
+- New Target Indicator options and icons for all versions.
+- Retail Combo Points for Enhancement Shamans Mealstrom and Hunters Tip of the Spear buffs.
+![bbpTargetIndicatorOptions](https://github.com/user-attachments/assets/7fec8e58-eb1c-4cd2-80c7-6146edcaee1a)
 ## All versions
 ### New
 - Target Indicator: Now has options to change the icon, color the icon, and also to have the icon appear on both sides. In Advanced Settings.
+- CVar Control: Shaman: Maelstrom Weapon Combo Points. Enhancement now gets a Rogue-style combo point bar for Maelstrom Weapon stacks on PRD/Target Nameplate.
+- CVar Control: Hunter: Tip of the Spear Combo Points. Survival now gets a Rogue-style combo point bar for tracking Tip of the spear stacks on PRD/Target Nameplate.
 - CVar Control: The nameplate visibility CVars now has PvP and PvE dropdowns to select which nameplate types you want to see in which content.
+- Nameplate Auras: New setting to center auras on themselves (so enlarged square aura and a rectangle smaller one stays centered instead of aligned at top or bottom)
+- Castbar Quick Hide: New right click option to always hide the castbar instantly, also when the cast was successfully interrupted (normally the castbar is kept up in that case to show the interrupt).
 ### Bugfix
 - Fix classic nameplates border overlaying some things like healer indicator icon and more.
-### Tweak
-- Classic Era: Fix pink shamans, now blue again. Changes in the "midnight patches" for classics made this tweak lost.
+- Fix CC auras showing up twice with some filter settings when not using the Big CC Icon setting.
 ## Midnight
 ### New
+- Nameplate Auras: "Center Align Auras" setting. Instead of aligning auras at top/bottom of the icon it now aligns center, so that a large and small aura next to eachother stay centered on the center.
 - Totem Indicator: New options to change colors for the different types of detectable totems again.
 - Totem Indicator: New setting to hide castbars on totems.
 - Totem Indicator: Setting to hide the duration number.
@@ -16,6 +24,11 @@
 - Totem Indicator: Last big patch caused some headache with CVars resetting due to the Totem Indicator (as intended to function properly). It still does this but now only during PvP and with the new CVar Control PvP/PvE visibility settings it should be much smoother to control this.
 - Totem Indicator: Show healing stream separate again.
 - Update JFarm profile (www.twitch.tv/jfarm_)
+### Bugfix
+- Fix an issue with the "Non-Target Alpha" setting causing nameplates to sometimes become full alpha when not target due to changes from Blizzard.
+## Classic Era
+### New
+- Fix pink shamans and introduce a new "Color Shamans Blue" setting (Misc). Colors Shamans their blue color. On Era and only Era they are the same pink as paladin, this setting avoids that. Enabled by default, uncheck it to keep the pink Blizzard color.
 
 # BetterBlizzPlates 2.1.2i
 ## Midnight

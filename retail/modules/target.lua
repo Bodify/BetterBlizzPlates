@@ -234,7 +234,7 @@ local classResourceYOffsets = {
     WARLOCK = 2,
     EVOKER = -1,
 }
-local playerClass = select(2, UnitClass("player"))
+local playerClass = UnitClassBase("player")
 
 -- Table holding references to class-specific resource frames
 local resourceFrames = {
@@ -286,7 +286,6 @@ local classPadding = {
 local adjusted
 local msgPrinted
 function BBP.TargetResourceUpdater()
-    local _, className = UnitClass("player")
     nameplateResourceOnTarget = (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true) and not BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf
     nameplateShowSelf = GetCVarBool("nameplateShowSelf")
     nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar
@@ -371,7 +370,7 @@ function BBP.TargetResourceUpdater()
                     resourceFrame:SetFrameStrata("DIALOG")
                 end
                 resourceFrame:ClearAllPoints();
-                local padding = resourceFrame.paddingOverride or classPadding[className] or 0
+                local padding = resourceFrame.paddingOverride or classPadding[playerClass] or 0
                 PixelUtil.SetPoint(resourceFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
             end
         end
@@ -457,7 +456,7 @@ function BBP.TargetResourceUpdater()
                             end
                             resourceFrame:ClearAllPoints();
 
-                            local padding = resourceFrame.paddingOverride or classPadding[className] or 0
+                            local padding = resourceFrame.paddingOverride or classPadding[playerClass] or 0
                             PixelUtil.SetPoint(resourceFrame, "TOP", nameplatePlayer.driverFrame.classNamePlatePowerBar, "BOTTOM", BetterBlizzPlatesDB.nameplateResourceXPos, padding + BetterBlizzPlatesDB.nameplateResourceYPos or -4 + BetterBlizzPlatesDB.nameplateResourceYPos)
 
                             local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7

@@ -358,8 +358,7 @@ function BBP.UpdateImportantBuffsAndCCTables()
 end
 
 local function IsNeverSecret(spellID)
-    local ok, level = pcall(C_Secrets.GetSpellAuraSecrecy, spellID)
-    return ok and level == Enum.SecrecyLevel.NeverSecret
+    return C_Secrets.GetSpellAuraSecrecy(spellID) == Enum.SecrecyLevel.NeverSecret
 end
 
 local mergeCache = {}
@@ -483,6 +482,12 @@ function BBP.UpdateUserAuraSettings()
     S.growDown = db.nameplateAuraGrowDownwards and true or false
     S.enlargedScale = db.nameplateAuraEnlargedScale or 1
     S.enlargedSquare = db.nameplateAuraEnlargedSquare ~= false
+    S.centerAlign = db.nameplateAuraCenterAlign and true or false
+    S.rowPad = 0
+    if S.centerAlign then
+        local tallest = (S.enlargedSquare and S.debuffWidth or S.debuffHeight) * S.enlargedScale
+        if tallest > S.debuffHeight then S.rowPad = (tallest - S.debuffHeight) / 2 end
+    end
     S.sortEnlargedFirst = db.sortEnlargedAurasFirst ~= false
     S.enlargeAllCC = db.enlargeAllCC and true or false
     S.enlargeAllImportantBuffs = db.enlargeAllImportantBuffs and true or false
@@ -867,6 +872,13 @@ local function ApplyDispelBorderGeometry(border, button, width, height)
     border:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", inset, -inset)
 end
 
+local function SetIconRect(region, button, pad)
+    if not region then return end
+    region:ClearAllPoints()
+    region:SetPoint("TOPLEFT", button, "TOPLEFT", 0, -pad)
+    region:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 0, pad)
+end
+
 local function SetIconMasked(icon, mask, masked)
     if mask.bbpAttached == masked then return end
     mask.bbpAttached = masked
@@ -1053,7 +1065,17 @@ end
 
 local function ApplyMutableStyle(button, style)
     local w, h = style.width, style.height
-    button:SetSize(w, h)
+    local pad = style.padY or 0
+    local rect = button.bbpOverlay or button
+    button:SetSize(w, h + pad * 2)
+
+    if button.bbpPad ~= pad then
+        button.bbpPad = pad
+        SetIconRect(button.bbpIcon, button, pad)
+        SetIconRect(button.bbpMask, button, pad)
+        SetIconRect(button.bbpCooldown, button, pad)
+        SetIconRect(button.bbpOverlay, button, pad)
+    end
 
     if button.bbpIcon then
         local tc = style.texCoord
@@ -1069,15 +1091,15 @@ local function ApplyMutableStyle(button, style)
 
     if button.bbpBezel then
         button.bbpBezel:SetShown(not style.pixelBorder and not glowing)
-        ApplyBezelGeometry(button.bbpBezel, button, w, h)
+        ApplyBezelGeometry(button.bbpBezel, rect, w, h)
     end
 
     if button.bbpDispelBorder then
-        ApplyDispelBorderGeometry(button.bbpDispelBorder, button, w, h)
+        ApplyDispelBorderGeometry(button.bbpDispelBorder, rect, w, h)
     end
 
     if button.bbpBorderEdges then
-        ApplyBorderEdgeGeometry(button.bbpBorderEdges, button, BORDER_THICKNESS)
+        ApplyBorderEdgeGeometry(button.bbpBorderEdges, rect, BORDER_THICKNESS)
         if not ColorsEdgesByType(style) then
             local edge = BlueBorderOn(style) and BLUE_BUFF_BORDER or BLACK_BORDER
             SetBorderEdges(button.bbpBorderEdges, style.pixelBorder and not glowing,
@@ -1112,7 +1134,7 @@ local function ApplyMutableStyle(button, style)
     end
 
     if button.bbpCount then
-        ApplyStackText(button.bbpCount, button, style)
+        ApplyStackText(button.bbpCount, rect, style)
     end
 
     if button.bbpTimer then
@@ -1136,14 +1158,14 @@ local function ApplyMutableStyle(button, style)
     local glowPad = GlowPad(style)
 
     if button.bbpGlow then
-        ApplyGlowGeometry(button.bbpGlow, button, w, h, glowPad)
+        ApplyGlowGeometry(button.bbpGlow, rect, w, h, glowPad)
         local c = style.glowColor
         if c then button.bbpGlow:SetVertexColor(c[1], c[2], c[3], c[4] or 1) end
         button.bbpGlow:SetShown(style.glow and true or false)
     end
 
     if button.bbpPurgeGlow then
-        ApplyGlowGeometry(button.bbpPurgeGlow, button, w, h, glowPad)
+        ApplyGlowGeometry(button.bbpPurgeGlow, rect, w, h, glowPad)
         local c = style.purgeColor
         button.bbpPurgeGlow:SetAtlas(c and GLOW_ATLAS or PURGE_ATLAS)
         button.bbpPurgeGlow:SetDesaturated(c and true or false)
@@ -1155,7 +1177,7 @@ local function ApplyMutableStyle(button, style)
     end
 
     if button.bbpPandemicGlow then
-        ApplyGlowGeometry(button.bbpPandemicGlow, button, w, h, glowPad)
+        ApplyGlowGeometry(button.bbpPandemicGlow, rect, w, h, glowPad)
         ApplyPandemicRegistration(button, style)
     end
 
@@ -1312,6 +1334,11 @@ local function BuildStyle(kind, groupKey, standalone)
         if S.enlargedSquare then texCoord = S.buffTexCoord end
     end
 
+    local padY = 0
+    if inRow and S.rowPad > 0 then
+        padY = math.max(0, (S.debuffHeight + S.rowPad * 2 - height) / 2)
+    end
+
     local glowing = (glowCfg and glowCfg[1] or WHITELIST_GLOW_GROUPS[groupKey]) and true or false
     if glowing and not inRow then texCoord = UnzoomTexCoord(texCoord) end
 
@@ -1323,6 +1350,7 @@ local function BuildStyle(kind, groupKey, standalone)
         harmful = harmful,
         width = width,
         height = height,
+        padY = padY,
         texCoord = texCoord,
         pixelBorder = S.pixelBorder,
         blueBorder = (kind == BUFFROW) and S.blueBuffBorder or false,
@@ -1458,7 +1486,6 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
     local ccBig = (ccBigWanted and not classIconCC) and true or false
     local ccInRow = (ccInRowWanted and not classIconCC) and true or false
     local ccClaimed = (ccBig or ccInRow or classIconCC) and true or false
-    local otherCCClaimed = (ccBigWanted or ccInRowWanted) and true or false
     local noCC = (not ccInRow) and ("!" .. AF.CrowdControl) or nil
 
     local watchOnD = (debuffCfg.watchlist and canFilterHarmful) and true or false
@@ -1609,13 +1636,11 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
         MergeSets(blD, claimedD, categorySets.otherCC),
         MergeSets(blDSafe, claimedDSafe, categorySafe.otherCC), canFilterHarmful)
 
-    local normalExclude = (not ccInRowWanted) and excludeWithOtherCC or otherCCExclude
-
     local ccBlacklist = ExcludeSet(categorySets.ccBlacklist, categorySafe.ccBlacklist, canFilterHarmful)
 
     out.debuffs.CC = {
         filter = CreateFilterString(AF.Harmful, AF.IncludeNameplateOnly, AF.CrowdControl),
-        filters = { excludeSpellIDs = MergeSets(normalExclude, ccBlacklist) },
+        filters = { excludeSpellIDs = MergeSets(excludeWithOtherCC, ccBlacklist) },
         max = ccInRow and dLimit or 0,
     }
 
@@ -1628,14 +1653,14 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
     }
 
     local normalFilters = {
-        excludeSpellIDs = normalExclude,
+        excludeSpellIDs = excludeWithOtherCC,
         maxDuration = debuffCfg.lessThanMin and 60 or nil,
         nameplateShowPersonal = debuffCfg.blizzard and true or nil,
     }
 
     out.debuffs.Important = {
-        filter = DebuffFilter(AF.Important),
-        filters = { excludeSpellIDs = normalExclude },
+        filter = DebuffFilterKeepCC(AF.Important, "!" .. AF.CrowdControl),
+        filters = { excludeSpellIDs = excludeWithOtherCC },
         max = plainLiveD and dLimit or 0,
     }
 
@@ -1650,14 +1675,14 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
     out.debuffs.Purgeable = {
         filter = DispelFilter(),
         filters = {
-            excludeSpellIDs = otherCCClaimed and excludeWithOtherCC or normalExclude,
+            excludeSpellIDs = excludeWithOtherCC,
         },
         max = (dEnabled and dispelOnD) and dLimit or 0,
     }
 
     local function PlainDebuffFilter(caster)
-        local parts = { AF.Harmful, AF.IncludeNameplateOnly, caster, NOT_IMPORTANT }
-        if noCC then parts[#parts + 1] = noCC end
+        local parts = { AF.Harmful, AF.IncludeNameplateOnly, caster, NOT_IMPORTANT,
+            "!" .. AF.CrowdControl }
         if dispelOnD then parts[#parts + 1] = "!" .. dispelTokenD end
         return CreateFilterString(unpack(parts))
     end
@@ -1971,7 +1996,7 @@ local function GetCell(kind, groupKey)
             return S.debuffWidth * scale,
                 (S.enlargedSquare and S.debuffWidth or S.debuffHeight) * scale
         end
-        return S.debuffWidth, S.debuffHeight
+        return S.debuffWidth, S.debuffHeight + S.rowPad * 2
     end
     return S.buffWidth, S.buffHeight
 end
@@ -2175,7 +2200,7 @@ local function GetDebuffAnchor(frame, centered)
     local healthBar = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar
     if not healthBar then return end
 
-    local y = GetDebuffVerticalOffset()
+    local y = GetDebuffVerticalOffset() - S.rowPad
     local x = S.debuffPadX
 
     if centered then
@@ -2191,11 +2216,12 @@ local function GetSideAnchor(frame, kind, anchor, xPos, yPos)
     if not healthBar then return end
     local _, cellH = GetCell(kind)
     local lift = cellH / 2
+    local pad = (kind == DEBUFFS or kind == BUFFROW) and S.rowPad or 0
 
     if anchor == "LEFT" then
         return "TOPRIGHT", healthBar, "LEFT", -5 + xPos, yPos + lift
     elseif anchor == "TOP" then
-        return "BOTTOM", healthBar, "TOP", xPos, (S.debuffPadding or 0) + 15 + yPos
+        return "BOTTOM", healthBar, "TOP", xPos, (S.debuffPadding or 0) + 15 + yPos - pad
     end
     return "TOPLEFT", healthBar, "RIGHT", 5 + xPos, yPos + lift
 end
@@ -2316,7 +2342,8 @@ local function AnchorBuffRowContainer(container, frame, debuffContainer, centere
         if width > 0 then x = width * shift / (buffScale or 1) end
     end
 
-    SetContainerPoint(container, point, debuffContainer, relPoint, x, S.gapY)
+    SetContainerPoint(container, point, debuffContainer, relPoint, x,
+        S.gapY - S.rowPad * (1 + (scaleRatio or 1)))
 end
 
 local function ContainerScale(kind, isTarget)
@@ -2971,7 +2998,8 @@ local PREVIEW_TIERS = {
 local previews = {}
 
 local function DrawMockButton(button, style, index)
-    button:SetSize(style.width, style.height)
+    local pad = style.padY or 0
+    button:SetSize(style.width, style.height + pad * 2)
 
     if not button.bbpIcon then
         button.bbpIcon = button:CreateTexture(nil, "ARTWORK")
@@ -3010,6 +3038,16 @@ local function DrawMockButton(button, style, index)
         button.bbpCount = button.bbpOverlay:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
     end
 
+    if button.bbpPad ~= pad then
+        button.bbpPad = pad
+        SetIconRect(button.bbpIcon, button, pad)
+        SetIconRect(button.bbpMask, button, pad)
+        SetIconRect(button.bbpCooldown, button, pad)
+        SetIconRect(button.bbpOverlay, button, pad)
+    end
+
+    local rect = button.bbpOverlay
+
     local icons = SAMPLE_ICONS[style.kind] or SAMPLE_ICONS[DEBUFFS]
     button.bbpIcon:SetTexture(icons[((index - 1) % #icons) + 1])
     local tc = style.texCoord
@@ -3022,12 +3060,12 @@ local function DrawMockButton(button, style, index)
         and dispelColorMapHarmful.Magic
 
     button.bbpBezel:SetShown(not style.pixelBorder and not glowing)
-    ApplyBezelGeometry(button.bbpBezel, button, style.width, style.height)
+    ApplyBezelGeometry(button.bbpBezel, rect, style.width, style.height)
 
     local blueBorder = BlueBorderOn(style)
 
     local dispelBorderColor = ColorsDispelBorderByType(style) and dispelColor
-    ApplyDispelBorderGeometry(button.bbpDispelBorder, button, style.width, style.height)
+    ApplyDispelBorderGeometry(button.bbpDispelBorder, rect, style.width, style.height)
     if dispelBorderColor then
         button.bbpDispelBorder:SetVertexColor(
             dispelBorderColor.r, dispelBorderColor.g, dispelBorderColor.b, 1)
@@ -3038,7 +3076,7 @@ local function DrawMockButton(button, style, index)
     button.bbpDispelBorder:SetShown((dispelBorderColor or (blueBorder and not style.pixelBorder))
         and true or false)
 
-    ApplyBorderEdgeGeometry(button.bbpBorderEdges, button, BORDER_THICKNESS)
+    ApplyBorderEdgeGeometry(button.bbpBorderEdges, rect, BORDER_THICKNESS)
     local borderColor = ColorsEdgesByType(style) and dispelColor
     local edge = blueBorder and BLUE_BUFF_BORDER or BLACK_BORDER
     SetBorderEdges(button.bbpBorderEdges,
@@ -3049,7 +3087,7 @@ local function DrawMockButton(button, style, index)
 
     local glowPad = GlowPad(style)
 
-    ApplyGlowGeometry(button.bbpGlow, button, style.width, style.height, glowPad)
+    ApplyGlowGeometry(button.bbpGlow, rect, style.width, style.height, glowPad)
     if style.glow and style.glowColor then
         local dispel = style.glowDispelColor and ccGlowDispelColorMap
             and ccGlowDispelColorMap[PREVIEW_DISPEL_KEYS[((index - 1) % #PREVIEW_DISPEL_KEYS) + 1]]
@@ -3064,7 +3102,7 @@ local function DrawMockButton(button, style, index)
         button.bbpGlow:Hide()
     end
 
-    ApplyGlowGeometry(button.bbpPandemicGlow, button, style.width, style.height, glowPad)
+    ApplyGlowGeometry(button.bbpPandemicGlow, rect, style.width, style.height, glowPad)
     button.bbpPandemicPreview = style.pandemicGlow and true or false
     if button.bbpPandemicPreview and style.pandemicColor then
         local c = style.pandemicColor
@@ -3072,7 +3110,7 @@ local function DrawMockButton(button, style, index)
     end
     button.bbpPandemicGlow:Hide()
 
-    ApplyStackText(button.bbpCount, button, style)
+    ApplyStackText(button.bbpCount, rect, style)
     button.bbpCount:SetText(index % 3 == 0 and index or "")
 
     button.bbpCooldown:SetDrawSwipe(not style.hideSwipe)
@@ -3289,7 +3327,7 @@ local function UpdatePreviewFor(frame, info)
                             local rows = math.ceil(math.min(S.debuffLimit, 8) / perRow)
                             local _, debuffCellH = GetCell(DEBUFFS)
                             local block = rows * debuffCellH + (rows - 1) * S.gapY
-                            y = y + block + S.gapY / ratio
+                            y = y + block + (S.gapY - S.rowPad * (1 + ratio)) / ratio
                         end
                         x, y = x * ratio, y * ratio
                     end

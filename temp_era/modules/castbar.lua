@@ -669,7 +669,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
     if isCasting and UnitExists(unit.."target") and frame.healthBar:IsShown() and not frame.hideCastInfo then
         local targetOfTarget = unit.."target"
         local name = UnitName(targetOfTarget)
-        local _, class = UnitClass(targetOfTarget)
+        local class = UnitClassBase(targetOfTarget)
         local color = RAID_CLASS_COLORS[class]
         if class == "SHAMAN" then
             -- Specific color override for Shaman
@@ -754,9 +754,9 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                     local colorStr = "ffFFFFFF"
 
                     if C_PlayerInfo.GUIDIsPlayer(sourceGUID) then
-                        local localizedClass, englishClass, localizedRace, englishRace, sex, _name, realm = GetPlayerInfoByGUID(sourceGUID)
-                        colorStr = RAID_CLASS_COLORS[englishClass].colorStr
-                        if englishClass == "SHAMAN" then
+                        local localizedClass, class, localizedRace, englishRace, sex, _name, realm = GetPlayerInfoByGUID(sourceGUID)
+                        colorStr = RAID_CLASS_COLORS[class].colorStr
+                        if class == "SHAMAN" then
                             -- Specific color override for Shaman
                             colorStr = "ff0070dd"
                         end

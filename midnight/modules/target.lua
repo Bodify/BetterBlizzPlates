@@ -389,12 +389,29 @@ local classResourceYOffsets = {
     ROGUE = -4,
     WARLOCK = 0,
     EVOKER = -1,
+    SHAMAN = 6,
+    HUNTER = 6,
 }
-local playerClass = select(2, UnitClass("player"))
+
+local classResourcePrdYOffsets = {
+    SHAMAN = -1,
+    HUNTER = -1,
+}
+local playerClass = UnitClassBase("player")
 local prdClassFrame = prdClassFrame or PersonalResourceDisplayFrame.classFrame
 
+local function BBFOwnsPrdResource()
+    return BetterBlizzFramesDB and BetterBlizzFramesDB.prdResourceAdjust and true or false
+end
+
+local function ResolveClassFrame()
+    prdClassFrame = prdClassFrame or PersonalResourceDisplayFrame.classFrame
+        or BBP.MaelstromBar or BBP.TipOfSpearBar
+    return prdClassFrame
+end
+
 local function RepositionClassFrame(point, relativeTo, relativePoint, xOfs, yOfs)
-    if not prdClassFrame then return end
+    if not ResolveClassFrame() then return end
     if prdClassFrame.bbpChanging  then return end
 
     if playerClass == "ROGUE" then
@@ -416,7 +433,8 @@ local function GetPRDClassFrameAnchor(userYPos)
     local prd = PersonalResourceDisplayFrame
     local padding = prd:GetBarPadding()
     local yOffset = (prd.ClassFrameContainer and prd.ClassFrameContainer.yOffset) or 0
-    local y = yOffset - padding + (userYPos or 0) + 10
+    local classOffset = classResourcePrdYOffsets[playerClass] or 0
+    local y = yOffset - padding + (userYPos or 0) + classOffset + 10
 
     if prd.AlternatePowerBar:IsShown() then
         return "TOP", prd.AlternatePowerBar, "BOTTOM", y
@@ -425,7 +443,7 @@ local function GetPRDClassFrameAnchor(userYPos)
     elseif not prd.hideHealth then
         return "TOP", prd.HealthBarsContainer, "BOTTOM", y
     else
-        return "TOP", prd, "TOP", yOffset + (userYPos or 0)
+        return "TOP", prd, "TOP", yOffset + (userYPos or 0) + classOffset
     end
 end
 
@@ -438,6 +456,7 @@ end
 
 function BBP.UpdateNameplateResourcePositionForCasting(nameplate, bypass)
     if not prdClassFrame then return end
+    if BBFOwnsPrdResource() then return end
 
     local enabled = BetterBlizzPlatesDB.nameplateResourceOnTarget and (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true)
 
@@ -468,11 +487,12 @@ end
 
 function BBP.TargetResourceUpdater()
     if BetterBlizzPlatesDB.disablePrdMovement then return end
+    if BBFOwnsPrdResource() then return end
     nameplateResourceOnTarget = (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true)
     nameplateShowSelf = GetCVarBool("nameplateShowSelf") and not nameplateResourceOnTarget
     nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceUnderCastbar and nameplateResourceOnTarget
 
-    if not prdClassFrame then return end
+    if not ResolveClassFrame() then return end
     -- Safe check this
     --prdClassFrame:SetScript("OnShow", function()end)
 

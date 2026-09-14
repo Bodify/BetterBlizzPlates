@@ -2431,7 +2431,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             checkBoxP.texture:SetVertexColor(1, 0, 0)
             checkBoxP.texture:SetSize(27, 27)
             checkBoxP.texture:SetPoint("CENTER", checkBoxP, "CENTER", -0.5, 0.5)
-            local isWarlock = select(2, UnitClass("player")) == "WARLOCK"
+            local isWarlock = UnitClassBase("player") == "WARLOCK"
             local extraText = isWarlock and "\n\nIf Agony or Unstable Affliction refresh talents are specced it will first glow orange when entering this window then switch to red once it enters the pandemic window as well." or ""
             CreateTooltipTwo(checkBoxP, "Pandemic Glow |A:elementalstorm-boss-air:22:22|a", "Check for a red glow when the aura has less than 30% of its duration remaining.\nOr last 5sec if the aura has no pandemic effect."..extraText, nil, "ANCHOR_TOPRIGHT")
 
@@ -5421,8 +5421,8 @@ local function guiGeneralTab()
         local nameplate, frame = BBP.GetSafeNameplate("player")
         if frame then
             if self:GetChecked() then
-                local localizedClass, englishClass = UnitClass(frame.unit);
-                local playerClassColor = RAID_CLASS_COLORS[englishClass];
+                local class = UnitClassBase(frame.unit);
+                local playerClassColor = RAID_CLASS_COLORS[class];
                 frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
             else
                 frame.healthBar:SetStatusBarColor(0,1,0)
@@ -6032,7 +6032,7 @@ local function guiGeneralTab()
 
     local function SetClassAndPowerColor()
         -- Retrieve the player's class information
-        local _, class = UnitClass("player")
+        local class = UnitClassBase("player")
         local classColor = RAID_CLASS_COLORS[class]
         -- Retrieve the player's primary power type
         local powerType, powerToken = UnitPowerType("player")
@@ -9811,7 +9811,7 @@ local function guiNameplateAuras()
     personalBarIcon:SetSize(28, 28)
     personalBarIcon:SetPoint("RIGHT", personalBarText, "LEFT", -3, 0)
     personalBarIcon:SetDesaturated(1)
-    local _, playerClass = UnitClass("player")
+    local playerClass = UnitClassBase("player")
     local classColor = RAID_CLASS_COLORS[playerClass]
     if classColor then
         personalBarIcon:SetVertexColor(classColor.r, classColor.g, classColor.b)

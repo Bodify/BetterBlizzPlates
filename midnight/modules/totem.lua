@@ -196,7 +196,31 @@ local function RaiseTotemNameplateName(frame)
     frame.name:SetDrawLayer("OVERLAY", 7)
 end
 
-local function InitTotemAuraIcon(auraFrame, container, colorKey, useGlow)
+local function InitTotemAuraOverlay(auraFrame, frame, color)
+    local anchor = frame.totemOverlayAnchor
+    local bar = frame.healthBar
+    if not anchor or not bar then return end
+
+    local host = CreateFrame("Frame", nil, auraFrame)
+    host:SetFrameStrata(bar:GetFrameStrata())
+    host:SetFrameLevel(bar:GetFrameLevel() + 1)
+    host:SetAllPoints(anchor)
+
+    local overlay = host:CreateTexture(nil, "ARTWORK")
+    overlay:SetAllPoints(anchor)
+    if frame.totemOverlayAtlas then
+        overlay:SetAtlas(frame.totemOverlayAtlas)
+    elseif frame.totemOverlayTexture then
+        overlay:SetTexture(frame.totemOverlayTexture)
+    end
+    overlay:SetVertexColor(color[1], color[2], color[3], 1)
+
+    if not BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.classicRetailNameplates then
+        BBP.ApplyMidnightMask(frame, overlay)
+    end
+end
+
+local function InitTotemAuraIcon(auraFrame, frame, container, colorKey, useGlow)
     auraFrame:SetSize(TOTEM_AURA_SIZE, TOTEM_AURA_SIZE)
     auraFrame:SetPoint("CENTER", container, "CENTER", 0, 0)
     auraFrame:SetFrameLevel(container:GetFrameLevel() + 2)
@@ -211,7 +235,16 @@ local function InitTotemAuraIcon(auraFrame, container, colorKey, useGlow)
     mask:SetAllPoints(icon)
     icon:AddMaskTexture(mask)
 
+    local cooldown = CreateFrame("Cooldown", nil, auraFrame, "CooldownFrameTemplate")
+    cooldown:ClearAllPoints()
+    cooldown:SetPoint("TOPLEFT", auraFrame, "TOPLEFT", 1, -1)
+    cooldown:SetPoint("BOTTOMRIGHT", auraFrame, "BOTTOMRIGHT", -1, 1)
+    ConfigureTotemCooldown(cooldown)
+    auraFrame:SetDurationCooldown(cooldown)
+
     local color = GetTotemColor(colorKey)
+
+    InitTotemAuraOverlay(auraFrame, frame, color)
 
     if useGlow and not BetterBlizzPlatesDB.totemIndicatorNoGlow then
         local offset = TOTEM_AURA_SIZE * 0.41
@@ -235,79 +268,32 @@ local function InitTotemAuraIcon(auraFrame, container, colorKey, useGlow)
     end
 end
 
-local function InitTotemOverlaySlot(auraFrame, frame, colorKey)
-    auraFrame:SetSize(1, 1)
-
-    local anchor = frame.totemOverlayAnchor
-    if not anchor then return end
-
-    local overlay = auraFrame:CreateTexture(nil, "ARTWORK")
-    overlay:SetAllPoints(anchor)
-    if frame.totemOverlayAtlas then
-        overlay:SetAtlas(frame.totemOverlayAtlas)
-    elseif frame.totemOverlayTexture then
-        overlay:SetTexture(frame.totemOverlayTexture)
-    end
-
-    local color = GetTotemColor(colorKey)
-    overlay:SetVertexColor(color[1], color[2], color[3], 1)
-
-    if not BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.classicRetailNameplates then
-        BBP.ApplyMidnightMask(frame, overlay)
-    end
-
-    auraFrame:SetCancelAuraButtons(nil)
-    auraFrame:SetHideTooltipInCombat(true)
-    if not InCombatLockdown() then
-        auraFrame:SetMouseMotionEnabled(false)
-    end
-end
-
-local function CreateTotemAuraContainers(frame)
+local function CreateTotemAuraContainer(frame)
     if not frame.healthBar or not frame.totemIndicator then return end
+    if frame.totemAuraContainer then return end
 
-    if not frame.totemAuraContainer then
-        local container = CreateFrame("AuraContainer", nil, frame.totemIndicator, "CustomAuraContainerTemplate")
-        container:SetSize(1, 1)
-        container:SetFrameLevel(frame.totemIndicator:GetFrameLevel() + 5)
-        container:SetPoint("CENTER", frame.totemIndicator, "CENTER", 0, 0)
-        container:SetEnabled(false)
-        container:Hide()
-        frame.totemAuraContainer = container
+    RaiseTotemNameplateName(frame)
+    CreateTotemOverlayAnchor(frame)
 
-        container:AddAuraSlot("Important", HELPFUL_IMPORTANT, {
-            initializeFrame = function(auraFrame)
-                InitTotemAuraIcon(auraFrame, container, "grounding", true)
-            end,
-        })
+    local container = CreateFrame("AuraContainer", nil, frame.totemIndicator, "CustomAuraContainerTemplate")
+    container:SetSize(1, 1)
+    container:SetFrameLevel(frame.totemIndicator:GetFrameLevel() + 5)
+    container:SetPoint("CENTER", frame.totemIndicator, "CENTER", 0, 0)
+    container:SetEnabled(false)
+    container:Hide()
+    frame.totemAuraContainer = container
 
-        container:AddAuraSlot("Others", HELPFUL_NOT_IMPORTANT, {
-            initializeFrame = function(auraFrame)
-                InitTotemAuraIcon(auraFrame, container, "healingStream", false)
-            end,
-        })
-    end
+    container:AddAuraSlot("Important", HELPFUL_IMPORTANT, {
+        initializeFrame = function(auraFrame)
+            InitTotemAuraIcon(auraFrame, frame, container, "grounding", true)
+        end,
+    })
 
-    if not frame.totemOverlayContainer then
-        RaiseTotemNameplateName(frame)
-        CreateTotemOverlayAnchor(frame)
-
-        local overlayContainer = CreateFrame("AuraContainer", nil, frame.healthBar, "CustomAuraContainerTemplate")
-        overlayContainer:SetSize(1, 1)
-        overlayContainer:SetFrameLevel(frame.healthBar:GetFrameLevel() + 1)
-        overlayContainer:SetPoint("CENTER", frame.healthBar, "CENTER", 0, 0)
-        overlayContainer:SetEnabled(false)
-        overlayContainer:Hide()
-        frame.totemOverlayContainer = overlayContainer
-
-        overlayContainer:AddAuraSlot("Overlay", HELPFUL_IMPORTANT, {
-            initializeFrame = function(auraFrame) InitTotemOverlaySlot(auraFrame, frame, "grounding") end,
-        })
-
-        overlayContainer:AddAuraSlot("OverlayOthers", HELPFUL_NOT_IMPORTANT, {
-            initializeFrame = function(auraFrame) InitTotemOverlaySlot(auraFrame, frame, "healingStream") end,
-        })
-    end
+    container:AddAuraSlot("Others", HELPFUL_NOT_IMPORTANT, {
+        initializeFrame = function(auraFrame)
+            InitTotemAuraIcon(auraFrame, frame, container, "healingStream", false)
+        end,
+    })
 end
 
 local function SetTotemAuraContainerEnabled(container, unit)
@@ -338,16 +324,14 @@ end
 
 local function DisableTotemAuraContainer(frame)
     frame.totemRecheckArmed = nil
-    if not frame.totemAuraContainer and not frame.totemOverlayContainer then return end
+    if not frame.totemAuraContainer then return end
     SetTotemAuraContainerEnabled(frame.totemAuraContainer, nil)
-    SetTotemAuraContainerEnabled(frame.totemOverlayContainer, nil)
 end
 
 local function UpdateTotemAuraContainer(frame)
     ScheduleTotemCastRecheck(frame)
     RefreshTotemOverlayAnchor(frame)
     SetTotemAuraContainerEnabled(frame.totemAuraContainer, frame.unit)
-    SetTotemAuraContainerEnabled(frame.totemOverlayContainer, frame.unit)
 end
 
 BBP.DisableTotemAuraContainer = DisableTotemAuraContainer
@@ -619,7 +603,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             DisableTotemAuraContainer(frame)
         else
             BBP.CreateTotemComponents(frame, 30)
-            CreateTotemAuraContainers(frame)
+            CreateTotemAuraContainer(frame)
             UpdateTotemAuraContainer(frame)
             totemColor = GetTotemColor("others")
         end

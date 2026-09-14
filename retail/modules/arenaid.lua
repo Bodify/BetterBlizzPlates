@@ -74,9 +74,9 @@ local function GetFrameSortID(unit)
 end
 
 local function GetFallbackClassName(unit)
-    local className = UnitClassBase(unit)
-    className = className:sub(1, 1):upper() .. className:sub(2):lower()
-    return className
+    local class = UnitClassBase(unit)
+    class = class:sub(1, 1):upper() .. class:sub(2):lower()
+    return class
 end
 
 local function GetSpecName(id, unit)

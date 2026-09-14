@@ -127,7 +127,7 @@ local petClasses = {
     ["WARLOCK"] = true,
 }
 
-local playerClass = select(2, UnitClass("player"))
+local playerClass = UnitClassBase("player")
 local currentPetIcon = nil
 
 if petClasses[playerClass] then
@@ -457,7 +457,7 @@ function BBP.ClassIndicator(frame, foundID)
                 for i = 1, 2 do
                     local partyPet = "partypet"..i
                     if UnitExists(partyPet) and UnitIsUnit(partyPet, frame.unit) then
-                        local _, partyClass = UnitClass("party"..i)
+                        local partyClass = UnitClassBase("party"..i)
                         if partyClass then
                             class = partyClass
                         end

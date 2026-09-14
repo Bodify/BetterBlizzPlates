@@ -760,7 +760,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
     if isCasting and UnitExists(unit.."target") and frame.castBar:IsShown() and not frame.hideCastInfo then
         local targetOfTarget = unit.."target"
         local name = UnitName(targetOfTarget)
-        local _, class = UnitClass(targetOfTarget)
+        local class = UnitClassBase(targetOfTarget)
         local color = RAID_CLASS_COLORS[class]
         local useCustomFont = BetterBlizzPlatesDB.useCustomFont
 
@@ -845,8 +845,8 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                     local colorStr = "ffFFFFFF"
 
                     if C_PlayerInfo.GUIDIsPlayer(sourceGUID) then
-                        local localizedClass, englishClass, localizedRace, englishRace, sex, _name, realm = GetPlayerInfoByGUID(sourceGUID)
-                        colorStr = RAID_CLASS_COLORS[englishClass].colorStr
+                        local localizedClass, class, localizedRace, englishRace, sex, _name, realm = GetPlayerInfoByGUID(sourceGUID)
+                        colorStr = RAID_CLASS_COLORS[class].colorStr
                     end
                     frame.castBar.Text:SetText(string.format("|c%s[%s]|r", colorStr, name))
                     local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture

@@ -124,7 +124,7 @@ local petSpellIcons = {
     [263446] = 236197, -- Worm — Acid Spit
 }
 
-local playerClass = select(2, UnitClass("player"))
+local playerClass = UnitClassBase("player")
 local currentPetIcon = nil
 
 if playerClass == "HUNTER" or playerClass == "WARLOCK" or playerClass == "DEATHKNIGHT" or playerClass == "MAGE" then
@@ -276,7 +276,7 @@ function BBP.ClassIndicator(frame, foundID)
                 for i = 1, 2 do
                     local partyPet = "partypet"..i
                     if UnitExists(partyPet) and UnitIsUnit(partyPet, frame.unit) then
-                        local _, partyClass = UnitClass("party"..i)
+                        local partyClass = UnitClassBase("party"..i)
                         if partyClass then
                             class = partyClass
                         end

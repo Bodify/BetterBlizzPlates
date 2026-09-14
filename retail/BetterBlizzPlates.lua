@@ -1835,8 +1835,7 @@ end
 
 --#################################################
 function BBP.ChangeStrataOfResourceFrame()
-    local playerClass = select(2, UnitClass("player"))
-    -- Table holding references to class-specific resource frames
+    local playerClass = UnitClassBase("player")
     local resourceFrames = {
         ["WARLOCK"] = ClassNameplateBarWarlockFrame,
         ["DEATHKNIGHT"] = DeathKnightResourceOverlayFrame,
@@ -2233,10 +2232,9 @@ function BBP.ClassColorAndScaleNames(frame)
     local enemyClassColorName = BetterBlizzPlatesDB.enemyClassColorName
     local friendlyClassColorName = BetterBlizzPlatesDB.friendlyClassColorName
 
-    -- Set the name's color based on unit relation and options
     if isPlayer then
         if ((isEnemy or isNeutral) and enemyClassColorName) or (isFriend and friendlyClassColorName) then
-            local _, class = UnitClass(frame.unit)
+            local class = UnitClassBase(frame.unit)
             local classColor = RAID_CLASS_COLORS[class]
             frame.name:SetVertexColor(classColor.r, classColor.g, classColor.b)
         elseif ((isEnemy or isNeutral) and enemyColorName) or (isFriend and friendlyColorName) then
@@ -2248,8 +2246,7 @@ function BBP.ClassColorAndScaleNames(frame)
         frame.name:SetVertexColor(unpack(color))
     end
 
-    -- Set the name's scale based on unit relation
-    local scale = 1 -- Default scale
+    local scale = 1
     if isFriend then
         scale = friendlyScale or 1
     else
@@ -3629,8 +3626,8 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 			r, g, b = healthBarColorOverride.r, healthBarColorOverride.g, healthBarColorOverride.b;
 		else
 			--Try to color it by class.
-			local localizedClass, englishClass = UnitClass(frame.unit);
-			local classColor = RAID_CLASS_COLORS[englishClass];
+			local class = UnitClassBase(frame.unit);
+			local classColor = RAID_CLASS_COLORS[class];
 			--debug
 			--classColor = RAID_CLASS_COLORS["PRIEST"];
 			local useClassColors = CompactUnitFrame_GetOptionUseClassColors(frame, frame.optionTable);
@@ -6070,7 +6067,7 @@ function BBP.ConsolidatedUpdateName(frame)
                         local friendlyColorName = BetterBlizzPlatesDB.friendlyColorName
                         local friendlyClassColorName = BetterBlizzPlatesDB.friendlyClassColorName
                         if friendlyClassColorName then
-                            local _, class = UnitClass(frame.unit)
+                            local class = UnitClassBase(frame.unit)
                             local classColor = RAID_CLASS_COLORS[class]
                             frame.name:SetVertexColor(classColor.r, classColor.g, classColor.b)
                         elseif friendlyColorName then
@@ -6529,7 +6526,7 @@ Frame:SetScript("OnEvent", function(...)
 
     CheckForUpdate()
 
-    _, playerClass = UnitClass("player")
+    playerClass = UnitClassBase("player")
     playerClassColor = RAID_CLASS_COLORS[playerClass]
 
     BBP.ToggleSpellCastEventRegistration()
@@ -6641,7 +6638,7 @@ nameplateWidthOnEnterWorld:SetScript("OnEvent", function()
                     if BetterBlizzPlatesDB.darkModeNameplateResource then
                         local unitID = ...
                         if unitID == "player" then
-                            local playerClass = select(2, UnitClass("player"))
+                            local playerClass = UnitClassBase("player")
 
                             if playerClass == "ROGUE" or playerClass == "MONK" then
                                 BBP.DarkModeNameplateResources()
@@ -7329,20 +7326,20 @@ local function NamePlateCastBarTestMode(frame)
                         frame.dummyNameText = frame.healthBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
                         frame.dummyNameText:SetJustifyH("CENTER")
 
-                        local _, classIdentifier = UnitClass("player") -- Capture both localized name and class identifier
-                        local color = RAID_CLASS_COLORS[classIdentifier] -- Use the class identifier to get the color
+                        local class = UnitClassBase("player")
+                        local color = RAID_CLASS_COLORS[class]
 
-                        if color then -- Check if color is not nil
+                        if color then
                             frame.dummyNameText:SetText(GetUnitName("player"))
                             frame.dummyNameText:SetTextColor(color.r, color.g, color.b)
                             frame.dummyNameText:ClearAllPoints()
                             if UnitCanAttack("player", frame.unit) then
-                                frame.dummyNameText:SetPoint("TOPRIGHT", frame.castBar, "BOTTOMRIGHT", -4, 0)  -- Set anchor point for enemy
+                                frame.dummyNameText:SetPoint("TOPRIGHT", frame.castBar, "BOTTOMRIGHT", -4, 0)
                             else
-                                frame.dummyNameText:SetPoint("TOP", frame.castBar, "BOTTOM", 0, 0)  -- Set anchor point for friendly
+                                frame.dummyNameText:SetPoint("TOP", frame.castBar, "BOTTOM", 0, 0)
                             end
-                        else -- Fallback color in case something goes wrong
-                            frame.dummyNameText:SetTextColor(1, 1, 1) -- Set to white or any default color
+                        else
+                            frame.dummyNameText:SetTextColor(1, 1, 1)
                         end
                     end
 
@@ -7380,11 +7377,8 @@ local function NamePlateCastBarTestMode(frame)
                     end
                 else
                     currentValue = currentValue + stepValue
-                    -- Check if the cast is completed
                     if currentValue >= maxValue then
-                        -- Reset current value
                         currentValue = minValue
-                        -- Determine if the cast type should change
                         if math.random() <= uninterruptibleChance then
                             castType = "uninterruptible"
                         elseif math.random() <= channeledChance then
@@ -7459,7 +7453,6 @@ local function NamePlateCastBarTestMode(frame)
                 end
                 castBar:SetValue(currentValue)
             end)
-            -- Store the timer object
             table.insert(timers, castBar.tickTimer)
         end
     end
@@ -7471,20 +7464,17 @@ local function OnEvent(self, event, unit)
         local frame = namePlateFrame.UnitFrame
         if frame then
             NamePlateCastBarTestMode(frame)
-            -- Add this nameplate to the tracking table
             table.insert(nameplates, namePlateFrame)
         end
     end
 end
 
 function BBP.nameplateCastBarTestMode()
-    -- Clear existing nameplates
     wipe(nameplates)
 
     temporaryNpCastTest:RegisterEvent("NAME_PLATE_UNIT_ADDED")
     temporaryNpCastTest:SetScript("OnEvent", OnEvent)
 
-    -- Populate nameplates table
     nameplates = C_NamePlate.GetNamePlates()
 
     for _, nameplate in ipairs(nameplates) do
@@ -7498,9 +7488,8 @@ function BBP.cancelTimers()
         timer:Cancel()
         timer = nil
     end
-    -- Clear the timers table
     wipe(timers)
-    -- Hide cast bars when canceling timers
+
     for _, nameplate in ipairs(nameplates) do
         local frame = nameplate.UnitFrame
         if frame then

@@ -11,6 +11,7 @@
 embeds.xml
 
 init.lua
+shared\functions_classics.lua
 retail\temp_tww.lua
 temp_shared\ImportExport.lua
 
@@ -35,6 +36,8 @@ midnight\modules\misc.lua
 midnight\modules\prd.lua
 midnight\modules\totem.lua
 midnight\modules\druid\overcharges.lua
+midnight\modules\shaman\maelstrom.lua
+midnight\modules\hunter\tipofthespear.lua
 
 midnight\gui.lua
 midnight\BetterBlizzPlates.lua

@@ -3,7 +3,7 @@ function BBP.InstantComboPoints()
     if not BetterBlizzPlatesDB.instantComboPoints then return end
     if BBP.InstantComboPointsActive then return end
     -- Call the function for each frame
-    local _, class = UnitClass("player")
+    local class = UnitClassBase("player")
 
     local function UpdateRogueComboPoints(self)
         if not self or self:IsForbidden() then return end

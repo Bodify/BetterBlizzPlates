@@ -14,19 +14,6 @@ BBP.isCata = gameVersion:match("^4%.")
 BBP.isTBC = gameVersion:match("^2%.")
 BBP.isEra = gameVersion:match("^1%.")
 
-local eraShamanColor
-if BBP.isEra then
-    eraShamanColor = CreateColor(0, 0.44, 0.87)
-    eraShamanColor.colorStr = eraShamanColor:GenerateHexColor()
-end
-
-function BBP.GetClassColor(class)
-    if eraShamanColor and class == "SHAMAN" then
-        return eraShamanColor
-    end
-    return RAID_CLASS_COLORS[class]
-end
-
 function BBP.Print(msg, noColon)
 	if msg then
 		local suffix = noColon and " " or ": "

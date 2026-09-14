@@ -940,8 +940,8 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                     local colorStr = "ffFFFFFF"
 
                     if C_PlayerInfo.GUIDIsPlayer(sourceGUID) then
-                        local localizedClass, englishClass, localizedRace, englishRace, sex, _name, realm = GetPlayerInfoByGUID(sourceGUID)
-                        colorStr = RAID_CLASS_COLORS[englishClass].colorStr
+                        local localizedClass, class, localizedRace, englishRace, sex, _name, realm = GetPlayerInfoByGUID(sourceGUID)
+                        colorStr = RAID_CLASS_COLORS[class].colorStr
                     end
                     frame.castBar.Text:SetText(string.format("|c%s[%s]|r", colorStr, name))
                     local useCustomCastbarTexture = BetterBlizzPlatesDB.useCustomCastbarTexture
@@ -955,7 +955,8 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                     end
 
                     local castbarQuickHide = BetterBlizzPlatesDB.castbarQuickHide
-                    if castbarQuickHide or BetterBlizzPlatesDB.hideCastbar then
+                    local castbarQuickHideAlways = castbarQuickHide and BetterBlizzPlatesDB.castbarQuickHideAlways
+                    if (castbarQuickHide or BetterBlizzPlatesDB.hideCastbar) and not castbarQuickHideAlways then
                         local nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" and BetterBlizzPlatesDB.nameplateResourceUnderCastbar
                         frame.castBar:Show()
 
@@ -1394,7 +1395,7 @@ function BBP.HookCastbarOnEvent(frame)
                     end
                 end
                 if BetterBlizzPlatesDB.castbarQuickHide then
-                    if not (castBar.interruptedBy or castBar.wasKicked) then
+                    if BetterBlizzPlatesDB.castbarQuickHideAlways or not (castBar.interruptedBy or castBar.wasKicked) then
                         local cast = UnitCastingInfo(castBar.unit) or UnitChannelInfo(castBar.unit)
                         if not cast then
                             castBar:Hide()

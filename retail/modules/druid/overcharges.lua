@@ -1,7 +1,7 @@
 if BBP.isMidnight then return end
 function BBP.DruidBlueComboPoints()
     if not BetterBlizzPlatesDB.druidOverstacks then return end
-    if select(2, UnitClass("player")) ~= "DRUID" then return end
+    if UnitClassBase("player") ~= "DRUID" then return end
     local druidNp = _G.ClassNameplateBarFeralDruidFrame
     local msgPrinted
 
@@ -133,7 +133,7 @@ end
 
 function BBP.DruidAlwaysShowCombos()
     if not BetterBlizzPlatesDB.druidAlwaysShowCombos then return end
-    if select(2, UnitClass("player")) ~= "DRUID" then return end
+    if UnitClassBase("player") ~= "DRUID" then return end
     if BBP.DruidAlwaysShowCombosActive then return end
     local frame = ClassNameplateBarFeralDruidFrame
 

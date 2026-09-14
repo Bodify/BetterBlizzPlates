@@ -55,7 +55,8 @@ function BBP.ExecuteIndicator(frame)
         config.executeIndicatorInitialized = true
     end
 
-    local unit = frame.displayedUnit
+    local unit = frame.displayedUnit or frame.unit
+    if not unit then return end
 
     if config.executeIndicatorTargetOnly and not UnitIsUnit("target", unit) then
         if frame.executeIndicator then

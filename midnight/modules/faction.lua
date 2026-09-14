@@ -84,7 +84,8 @@ function BBP.FactionIndicator(frame)
         config.factionIndicatorInitialized = true
     end
 
-    local unit = frame.displayedUnit
+    local unit = frame.displayedUnit or frame.unit
+    if not unit then return end
 
     if not info.isPlayer and not config.factionIndicatorTestMode then
         if frame.factionIndicator then

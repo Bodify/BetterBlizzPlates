@@ -1,7 +1,7 @@
 if BBP.isMidnight then return end
 local activeCooldowns = {}
 
-local playerClass = select(2, UnitClass("player"))
+local playerClass = UnitClassBase("player")
 
 local resourceFrames = {
     ["WARLOCK"] = ClassNameplateBarWarlockFrame,

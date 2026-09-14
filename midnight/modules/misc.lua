@@ -3,8 +3,8 @@ local prdClassFrame = prdClassFrame or PersonalResourceDisplayFrame.classFrame
 function BBP.InstantComboPoints()
     if not BetterBlizzPlatesDB.instantComboPoints then return end
     if BBP.InstantComboPointsActive then return end
-    -- Call the function for each frame
-    local _, class = UnitClass("player")
+
+    local class = UnitClassBase("player")
 
     local function UpdateRogueComboPoints(self)
         if not self or self:IsForbidden() then return end
@@ -15,12 +15,10 @@ function BBP.InstantComboPoints()
             local isFull = i <= comboPoints
             local isCharged = tContains(chargedPowerPoints, i)
 
-            -- Stop all animations to enforce instant update
             for _, transitionAnim in ipairs(point.transitionAnims) do
                 transitionAnim:Stop()
             end
 
-            -- Directly set textures and visibility
             point.IconUncharged:SetAlpha(isFull and not isCharged and 1 or 0)
             point.IconCharged:SetAlpha(isFull and isCharged and 1 or 0)
             point.BGActive:SetAlpha(isFull and 1 or 0)
@@ -28,17 +26,15 @@ function BBP.InstantComboPoints()
             point.FXUncharged:SetAlpha(isFull and not isCharged and 1 or 0)
             point.FXCharged:SetAlpha(isFull and isCharged and 1 or 0)
 
-            -- ChargedFrame logic:
             if isCharged then
                 if isFull then
-                    point.ChargedFrameActive:SetAlpha(1)  -- Show Active only if both charged and filled
-                    point.ChargedFrameInactive:SetAlpha(0) -- Hide Inactive since it's full
+                    point.ChargedFrameActive:SetAlpha(1)
+                    point.ChargedFrameInactive:SetAlpha(0)
                 else
-                    point.ChargedFrameActive:SetAlpha(0)  -- Hide Active since no combo point is in it
-                    point.ChargedFrameInactive:SetAlpha(1) -- Show Inactive since it's charged but empty
+                    point.ChargedFrameActive:SetAlpha(0)
+                    point.ChargedFrameInactive:SetAlpha(1)
                 end
             else
-                -- If not charged, hide both charged frames
                 point.ChargedFrameActive:SetAlpha(0)
                 point.ChargedFrameInactive:SetAlpha(0)
             end
@@ -52,11 +48,9 @@ function BBP.InstantComboPoints()
         for i, point in ipairs(self.classResourceButtonTable) do
             local isFull = i <= comboPoints
 
-            -- Stop animations for instant update
             if point.activateAnim then point.activateAnim:Stop() end
             if point.deactivateAnim then point.deactivateAnim:Stop() end
 
-            -- Directly set textures and visibility
             point.Point_Icon:SetAlpha(isFull and 1 or 0)
             point.BG_Active:SetAlpha(isFull and 1 or 0)
             point.BG_Inactive:SetAlpha(isFull and 0 or 1)
@@ -72,11 +66,9 @@ function BBP.InstantComboPoints()
         for i, point in ipairs(self.classResourceButtonTable) do
             local isFull = i <= numChi
 
-            -- Stop animations for instant updates
             if point.activate then point.activate:Stop() end
             if point.deactivate then point.deactivate:Stop() end
 
-            -- Directly update textures and visibility
             point.Chi_Icon:SetAlpha(isFull and 1 or 0)
             point.Chi_BG_Active:SetAlpha(isFull and 1 or 0)
             point.Chi_BG:SetAlpha(isFull and 0 or 1)
@@ -94,11 +86,9 @@ function BBP.InstantComboPoints()
         for i, point in ipairs(self.classResourceButtonTable) do
             local isFull = i <= numCharges
 
-            -- Stop animations for instant updates
             if point.activateAnim then point.activateAnim:Stop() end
             if point.deactivateAnim then point.deactivateAnim:Stop() end
 
-            -- Directly update textures and visibility
             point.ArcaneIcon:SetAlpha(isFull and 1 or 0)
             point.ArcaneBG:SetAlpha(isFull and 1 or 0)
             point.Orb:SetAlpha(isFull and 0 or 1)
@@ -122,19 +112,16 @@ function BBP.InstantComboPoints()
         for i = 1, maxHolyPower do
             local rune = self["rune"..i]
             if rune then
-                -- Stop all animations
                 if rune.activateAnim then rune.activateAnim:Stop() end
                 if rune.readyAnim then rune.readyAnim:Stop() end
                 if rune.readyLoopAnim then rune.readyLoopAnim:Stop() end
                 if rune.depleteAnim then rune.depleteAnim:Stop() end
 
-                -- Hide all FX
                 if rune.FX then rune.FX:SetAlpha(0) end
                 if rune.Blur then rune.Blur:SetAlpha(0) end
                 if rune.Glow then rune.Glow:SetAlpha(0) end
                 if rune.DepleteFlipbook then rune.DepleteFlipbook:SetAlpha(0) end
 
-                -- Set active state
                 if i <= numHolyPower then
                     if rune.ActiveTexture then rune.ActiveTexture:SetAlpha(1) end
                 else
@@ -143,13 +130,11 @@ function BBP.InstantComboPoints()
             end
         end
 
-        -- Stop main bar animations
         self.activateAnim:Stop()
         self.readyAnim:Stop()
         self.readyLoopAnim:Stop()
         self.depleteAnim:Stop()
 
-        -- Update bar visuals
         self.ActiveTexture:SetAlpha(numHolyPower > 0 and 1 or 0)
         self.ThinGlow:SetAlpha(numHolyPower > 2 and 1 or 0)
         self.Glow:SetAlpha(numHolyPower == 5 and 1 or 0)

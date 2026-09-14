@@ -234,7 +234,7 @@ local classResourceYOffsets = {
     WARLOCK = 2,
     EVOKER = -1,
 }
-local playerClass = select(2, UnitClass("player"))
+local playerClass = UnitClassBase("player")
 
 -- Function to update the position based on casting state and settings
 function BBP.UpdateNameplateResourcePositionForCasting(nameplate, bypass)

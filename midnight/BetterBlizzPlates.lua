@@ -126,6 +126,8 @@ local defaultSettings = {
     hpHeightSelfMana = 4 * 2.7,--tonumber(GetCVar("NamePlateVerticalScale")),
     hideLevelFrame = true,
     druidOverstacks = true,
+    shamanMaelstromCombos = true,
+    hunterTipOfSpearCombos = false,
     personalBarPosition = 0.5,
     alwaysShowPurgeTexture = false,
     levelFrameFontSize = 12,
@@ -581,7 +583,7 @@ local defaultSettings = {
     otherNpdeBuffEnable = true,
     otherNpdeBuffFilterAll = false,
     otherNpdeBuffFilterBlizzard = true,
-    otherNpdeBuffFilterCC = true,
+    otherNpdeBuffFilterCC = false,
     otherNpdeBuffFilterWatchList = true,
     otherNpdeBuffFilterOnlyMe = false,
     otherNpdeBuffFilterLessMinite = false,
@@ -602,7 +604,7 @@ local defaultSettings = {
     friendlyNpdeBuffFilterAll = false,
     friendlyNpdeBuffFilterBlizzard = false,
     friendlyNpdeBuffFilterLessMinite = false,
-    friendlyNpdeBuffFilterCC = true,
+    friendlyNpdeBuffFilterCC = false,
     friendlyNpdeBuffFilterPurgeable = false,
     friendlyNpdeBuffFilterPurgeableAny = false,
 
@@ -819,6 +821,7 @@ local defaultSettings = {
     moveNormalBuffs = false,
     moveNormalBuffsAnchor = "LEFT",
     nameplateAuraGrowDownwards = false,
+    nameplateAuraCenterAlign = false,
 
     hideNameShowTarget = false,
 
@@ -1112,7 +1115,7 @@ local NAMEPLATE_AURA_SETTINGS = {
 
     "nameplateAuraSquare", "nameplateAuraTaller", "nameplateAuraPixelBorder",
     "npColorAuraBorder",
-    "nameplateAuraRightToLeft", "nameplateAuraGrowDownwards",
+    "nameplateAuraRightToLeft", "nameplateAuraGrowDownwards", "nameplateAuraCenterAlign",
     "nameplateAurasEnemyCenteredBuffs", "nameplateAurasEnemyCenteredDebuffs",
     "nameplateAurasFriendlyCenteredBuffs", "nameplateAurasFriendlyCenteredDebuffs",
     "otherNpBuffBlueBorder",
@@ -2569,7 +2572,7 @@ end
 
 --#################################################
 function BBP.ChangeStrataOfResourceFrame()
-    local playerClass = select(2, UnitClass("player"))
+    local playerClass = UnitClassBase("player")
     -- Table holding references to class-specific resource frames
     local resourceFrames = {
         ["WARLOCK"] = ClassNameplateBarWarlockFrame,
@@ -3061,10 +3064,9 @@ function BBP.ClassColorAndScaleNames(frame)
     local enemyClassColorName = db.enemyClassColorName
     local friendlyClassColorName = db.friendlyClassColorName
 
-    -- Set the name's color based on unit relation and options
     if isPlayer then
         if ((isEnemy or isNeutral) and enemyClassColorName) or (isFriend and friendlyClassColorName) then
-            local _, class = UnitClass(frame.unit)
+            local class = UnitClassBase(frame.unit)
             local classColor = C_ClassColor.GetClassColor(class)
             frame.name:SetVertexColor(classColor.r, classColor.g, classColor.b)
         elseif ((isEnemy or isNeutral) and enemyColorName) or (isFriend and friendlyColorName) then
@@ -3076,8 +3078,7 @@ function BBP.ClassColorAndScaleNames(frame)
         frame.name:SetVertexColor(unpack(color))
     end
 
-    -- Set the name's scale based on unit relation
-    local scale = 1 -- Default scale
+    local scale = 1
     if isFriend then
         scale = friendlyScale or 1
     else
@@ -3107,11 +3108,11 @@ end
 -- Dark Mode for Nameplate Resources
 local function applySettings(frame, desaturate, colorValue, hook)
     if frame then
-        if desaturate ~= nil and frame.SetDesaturated then -- Check if SetDesaturated is available
+        if desaturate ~= nil and frame.SetDesaturated then
             frame:SetDesaturated(desaturate)
         end
         if frame.SetVertexColor then
-            frame:SetVertexColor(colorValue, colorValue, colorValue) -- Alpha set to 1
+            frame:SetVertexColor(colorValue, colorValue, colorValue)
             if hook then
                 if not frame.bbpHooked then
                     frame.bbpHooked = true
@@ -3143,13 +3144,16 @@ function BBP.HideResourceFrames()
         EVOKER     = "hideResourceFrameNoEvoker",
         MONK       = "hideResourceFrameNoMonk",
         MAGE       = "hideResourceFrameNoMage",
+        SHAMAN     = "hideResourceFrameNoShaman",
+        HUNTER     = "hideResourceFrameNoHunter",
     }
 
     local ignoreKey = classIgnoreKeys[playerClass]
     if ignoreKey and db[ignoreKey] then return end
 
-    if prdClassFrame then
-        prdClassFrame:SetAlpha(0)
+    local resourceFrame = prdClassFrame or BBP.MaelstromBar or BBP.TipOfSpearBar
+    if resourceFrame then
+        resourceFrame:SetAlpha(0)
     end
 end
 
@@ -3196,6 +3200,23 @@ function BBP.DarkModeNameplateResources()
             if BetterBlizzPlatesDB.druidOverstacks then
                 applySettings(v.ChargedFrameActive, desaturationValue, druidComboPointActive, true)
             end
+        end
+    end
+
+    local maelstromPointsNameplate = BBP.MaelstromBar
+    if maelstromPointsNameplate and playerClass == "SHAMAN" then
+        for _, v in pairs({maelstromPointsNameplate:GetChildren()}) do
+            applySettings(v.BGInactive, darkModeNpSatVal, rogueCombo or 1)
+            applySettings(v.BGActive, darkModeNpSatVal, rogueComboActive or 1)
+            applySettings(v.ChargedFrameActive, darkModeNpSatVal, rogueComboActive or 1)
+        end
+    end
+
+    local tipOfSpearPointsNameplate = BBP.TipOfSpearBar
+    if tipOfSpearPointsNameplate and playerClass == "HUNTER" then
+        for _, v in pairs({tipOfSpearPointsNameplate:GetChildren()}) do
+            applySettings(v.BGInactive, darkModeNpSatVal, rogueCombo or 1)
+            applySettings(v.BGActive, darkModeNpSatVal, rogueComboActive or 1)
         end
     end
 
@@ -4555,8 +4576,8 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 			r, g, b = healthBarColorOverride.r, healthBarColorOverride.g, healthBarColorOverride.b;
 		else
 			--Try to color it by class.
-			local localizedClass, englishClass = UnitClass(frame.unit);
-			local classColor = C_ClassColor.GetClassColor(englishClass)
+			local class = UnitClassBase(frame.unit);
+			local classColor = C_ClassColor.GetClassColor(class)
 			--debug
 			local useClassColors = CompactUnitFrame_GetOptionUseClassColors(frame, frame.optionTable);
 			if ( (frame.optionTable.allowClassColorsForNPCs or UnitIsPlayer(frame.unit) or UnitTreatAsPlayerForDisplay(frame.unit)) and classColor and useClassColors ) then
@@ -4990,6 +5011,21 @@ function BBP.NameplateTargetAlpha(frame)
     else
         frame:SetAlpha(1)
     end
+end
+
+function BBP.ToggleNpNonTargetAlphaHook()
+    if not BetterBlizzPlatesDB.enableNpNonTargetAlpha or BBP.enableNpNonTargetAlpha then return end
+    BBP.enableNpNonTargetAlpha = true
+
+    hooksecurefunc("CompactUnitFrame_UpdateCenterStatusIcon", function(frame)
+        if issecretvalue(frame) then return end
+        if not frame.unit or not frame.unit:find("nameplate") then return end
+        if frame:IsForbidden() then return end
+        if not BetterBlizzPlatesDB.enableNpNonTargetAlpha then return end
+        if not frame.BetterBlizzPlates or not frame.BetterBlizzPlates.config then return end
+
+        BBP.NameplateTargetAlpha(frame)
+    end)
 end
 
 --################################################################################################
@@ -8182,7 +8218,7 @@ Frame:SetScript("OnEvent", function(...)
 
     CheckForUpdate()
 
-    _, playerClass = UnitClass("player")
+    playerClass = UnitClassBase("player")
     playerClassColor = C_ClassColor.GetClassColor(playerClass)
 
     --BBP.ToggleSpellCastEventRegistration()
@@ -8291,7 +8327,7 @@ nameplateWidthOnEnterWorld:SetScript("OnEvent", function()
                     if BetterBlizzPlatesDB.darkModeNameplateResource then
                         local unitID = ...
                         if unitID == "player" then
-                            local playerClass = select(2, UnitClass("player"))
+                            local playerClass = UnitClassBase("player")
 
                             if playerClass == "ROGUE" or playerClass == "MONK" then
                                 BBP.DarkModeNameplateResources()
@@ -8695,10 +8731,13 @@ local function TurnOnEnabledFeaturesOnLogin()
     BBP.ToggleExecuteIndicator()
     BBP.ToggleHpEndLine()
     BBP.ToggleFactionIndicator()
+    BBP.ToggleNpNonTargetAlphaHook()
     BBP:RegisterTargetCastingEvents()
     BBP.ToggleHealthNumbers()
     BBP.DruidBlueComboPoints()
     BBP.DruidAlwaysShowCombos()
+    BBP.MaelstromWeaponCombos()
+    BBP.TipOfSpearCombos()
     EnableMouseoverChecker()
 
     BBP.SetupClassIndicatorCCAuraListener()
@@ -9331,8 +9370,8 @@ local temporaryNpCastTest = CreateFrame("Frame")
 local function GetTestCastbarText(spellName)
     if BetterBlizzPlatesDB.showNameplateTargetText and BetterBlizzPlatesDB.castbarTargetTextInsideBar then
         local name = GetUnitName("player")
-        local _, classIdentifier = UnitClass("player")
-        local color = classIdentifier and C_ClassColor.GetClassColor(classIdentifier)
+        local class = UnitClassBase("player")
+        local color = class and C_ClassColor.GetClassColor(class)
         if color then
             name = color:WrapTextInColorCode(name)
         end
@@ -9441,8 +9480,8 @@ local function NamePlateCastBarTestMode(frame)
                         frame.dummyNameText = frame.healthBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
                         frame.dummyNameText:SetJustifyH("CENTER")
 
-                        local _, classIdentifier = UnitClass("player")
-                        local color = C_ClassColor.GetClassColor(classIdentifier)
+                        local class = UnitClassBase("player")
+                        local color = C_ClassColor.GetClassColor(class)
 
                         if color then
                             frame.dummyNameText:SetText(GetUnitName("player"))

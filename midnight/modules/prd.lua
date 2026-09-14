@@ -138,7 +138,7 @@ function BBP.FancyPRDAltTexture()
     local db = BetterBlizzPlatesDB
     local powerBar = prd.PowerBar
     local altPowerBar = prd.AlternatePowerBar
-    local _, playerClass = UnitClass("player")
+    local playerClass = UnitClassBase("player")
 
     if not BBP.fancyPRDColorHooked then
         hooksecurefunc(powerBar, "SetStatusBarColor", function(self, r, g, b, a)

@@ -148,6 +148,7 @@ local defaultSettings = {
     smallPetsHeight = 6,
     nameplateNonTargetAlpha = 0.5,
     hideNpAurasOnUnattackableEnemies = true,
+    colorShamansBlue = true,
 
     mopUpdated = true,
     -- Enemy
@@ -2993,7 +2994,7 @@ function BBP.ClassColorAndScaleNames(frame)
     -- Set the name's color based on unit relation and options
     if isPlayer then
         if ((isEnemy or isNeutral) and enemyClassColorName) or (isFriend and friendlyClassColorName) then
-            local _, class = UnitClass(frame.unit)
+            local class = UnitClassBase(frame.unit)
             local classColor = GetClassColor(class)
             frame.name:SetVertexColor(classColor.r, classColor.g, classColor.b)
         elseif ((isEnemy or isNeutral) and enemyColorName) or (isFriend and friendlyColorName) then
@@ -5247,8 +5248,8 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 			r, g, b = healthBarColorOverride.r, healthBarColorOverride.g, healthBarColorOverride.b;
 		else
 			--Try to color it by class.
-			local localizedClass, englishClass = UnitClass(frame.unit);
-			local classColor = GetClassColor(englishClass);
+			local class = UnitClassBase(frame.unit);
+			local classColor = GetClassColor(class);
 			if ( (frame.optionTable.allowClassColorsForNPCs or UnitIsPlayer(frame.unit)) and classColor and frame.optionTable.useClassColors ) or (unitIsPlayer and (UnitCanAttack("player", frame.unit) and BetterBlizzPlatesDB.nameplateShowClassColor == "1") or (unitIsPlayer and not UnitCanAttack("player", frame.unit) and BetterBlizzPlatesDB.nameplateShowFriendlyClassColor == "1")) then
 				-- Use class colors for players if class color option is turned on
 				r, g, b = classColor.r, classColor.g, classColor.b;
@@ -6725,6 +6726,54 @@ unitFaction:SetScript("OnEvent", function(self, event, unit)
     end)
 end)
 
+--#################################################################################################
+-- Arena late nameplate refresh
+local arenaMatchStartMessages = {
+    ["The Arena battle has begun!"] = true,
+    ["¡La batalla en arena ha comenzado!"] = true,
+    ["A batalha na Arena começou!"] = true,
+    ["Der Arenakampf hat begonnen!"] = true,
+    ["Le combat d'arène commence\194\160!"] = true,
+    ["Бой начался!"] = true,
+    ["투기장 전투가 시작되었습니다!"] = true,
+    ["竞技场战斗开始了！"] = true,
+    ["竞技场的战斗开始了！"] = true,
+    ["競技場戰鬥開始了！"] = true,
+}
+
+local arenaNpcRefreshPending
+
+local function RefreshAllNpcNameplates()
+    arenaNpcRefreshPending = nil
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        if frame and not frame:IsForbidden() and frame.unit and not UnitIsPlayer(frame.unit) then
+            HandleNamePlateAdded(frame.unit)
+        end
+    end
+end
+BBP.RefreshAllNpcNameplates = RefreshAllNpcNameplates
+
+local function QueueArenaNpcRefresh()
+    if arenaNpcRefreshPending then return end
+    arenaNpcRefreshPending = true
+    C_Timer.After(1, RefreshAllNpcNameplates)
+end
+
+local arenaNpcRefresh = CreateFrame("Frame")
+arenaNpcRefresh:RegisterEvent("CHAT_MSG_BG_SYSTEM_NEUTRAL")
+arenaNpcRefresh:RegisterEvent("UNIT_PET")
+arenaNpcRefresh:SetScript("OnEvent", function(self, event, arg1)
+    if not BBP.isInArena then return end
+    if event == "CHAT_MSG_BG_SYSTEM_NEUTRAL" then
+        if not arenaMatchStartMessages[arg1] then return end
+        QueueArenaNpcRefresh()
+    elseif event == "UNIT_PET" then
+        if not arg1 or not arg1:match("^arena%d") then return end
+        QueueArenaNpcRefresh()
+    end
+end)
+
 function BBP.RefreshAllNameplatesLightVer()
     CacheFontSettings()
     if not BetterBlizzPlatesDB.skipAdjustingFixedFonts then
@@ -6952,7 +7001,7 @@ local function UpdateClassRoleStatus(self, event)
         local role = specIndex and GetSpecializationRole(specIndex)
         isTank = role == "TANK"
     else
-        local _, class = UnitClass("player")
+        local class = UnitClassBase("player")
 
         -- Check the player's talent tree to infer if they are a tank
         local spec1, _, _, _, pointsSpent1 = GetTalentTabInfo(1)
@@ -6980,7 +7029,7 @@ local function UpdateClassRoleStatus(self, event)
 
     offTanks = GetGroupTanks()
 
-    BBP.isRoleTank = isTank
+    BBP.isRoleTank = BBP.forceTankRole or isTank
 end
 
 local ClassRoleChecker = CreateFrame("Frame")
@@ -7326,7 +7375,7 @@ Frame:SetScript("OnEvent", function(...)
 
     CheckForUpdate()
 
-    _, playerClass = UnitClass("player")
+    playerClass = UnitClassBase("player")
     playerClassColor = GetClassColor(playerClass)
 
     if db.enableNameplateAuraCustomisation then
@@ -7939,8 +7988,8 @@ local temporaryNpCastTest = CreateFrame("Frame")
 local function GetTestCastbarText(spellName)
     if BetterBlizzPlatesDB.showNameplateTargetText and BetterBlizzPlatesDB.castbarTargetTextInsideBar then
         local name = GetUnitName("player")
-        local _, classIdentifier = UnitClass("player")
-        local color = classIdentifier and GetClassColor(classIdentifier)
+        local class = UnitClassBase("player")
+        local color = class and GetClassColor(class)
         if color then
             name = color:WrapTextInColorCode(name)
         end
@@ -8040,8 +8089,8 @@ local function NamePlateCastBarTestMode(frame)
                         frame.dummyNameText = frame.healthBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
                         frame.dummyNameText:SetJustifyH("CENTER")
 
-                        local _, classIdentifier = UnitClass("player")
-                        local color = GetClassColor(classIdentifier)
+                        local class = UnitClassBase("player")
+                        local color = GetClassColor(class)
 
                         if color then
                             frame.dummyNameText:SetText(GetUnitName("player"))

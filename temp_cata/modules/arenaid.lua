@@ -284,9 +284,9 @@ function BBP.ArenaIndicator3(frame)
                 local r, g, b, a = frame.name:GetTextColor()
 
                 if not specName then
-                    local _, className = UnitClass(frame.unit)
-                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                    specName = className
+                    local class = UnitClassBase(frame.unit)
+                    class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                    specName = class
                 end
 
                 local anchorPoint = createSpexText(frame)
@@ -319,9 +319,9 @@ function BBP.ArenaIndicator3(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not specName then
-                local _, className = UnitClass("arena" .. i)
-                className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                specName = className
+                local class = UnitClassBase("arena" .. i)
+                class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                specName = class
             end
 
             local anchorPoint = createSpexText(frame)
@@ -371,9 +371,9 @@ function BBP.ArenaIndicator4(frame)
                 end
 
                 if not specName then
-                    local _, className = UnitClass(frame.unit)
-                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                    specName = className
+                    local class = UnitClassBase(frame.unit)
+                    class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                    specName = class
                 end
 
                 local anchorPoint = createSpexText(frame)
@@ -421,9 +421,9 @@ function BBP.ArenaIndicator4(frame)
             end
 
             if not specName then
-                local _, className = UnitClass("arena" .. i)
-                className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                specName = className
+                local class = UnitClassBase("arena" .. i)
+                class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                specName = class
             end
 
             local anchorPoint = createSpexText(frame)
@@ -481,9 +481,9 @@ function BBP.ArenaIndicator5(frame)
                 end
 
                 if not specName then
-                    local _, className = UnitClass(frame.unit)
-                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                    specName = className
+                    local class = UnitClassBase(frame.unit)
+                    class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                    specName = class
                 end
 
                 local anchorPoint = createSpexText(frame)
@@ -511,9 +511,9 @@ function BBP.ArenaIndicator5(frame)
             end
 
             if not specName then
-                local _, className = UnitClass("arena" .. i)
-                className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                specName = className
+                local class = UnitClassBase("arena" .. i)
+                class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                specName = class
             end
 
             local anchorPoint = createSpexText(frame)
@@ -646,9 +646,9 @@ function BBP.PartyIndicator3(frame)
                 local r, g, b, a = frame.name:GetTextColor()
 
                 if not specName then
-                    local _, className = UnitClass(frame.unit)
-                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                    specName = className
+                    local class = UnitClassBase(frame.unit)
+                    class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                    specName = class
                 end
 
                 local anchorPoint = createSpexText(frame)
@@ -675,9 +675,9 @@ function BBP.PartyIndicator3(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not specName then
-                local _, className = UnitClass("party" .. i)
-                className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                specName = className
+                local class = UnitClassBase("party" .. i)
+                class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                specName = class
             end
 
             local anchorPoint = createSpexText(frame)
@@ -719,9 +719,9 @@ function BBP.PartyIndicator4(frame)
                 end
 
                 if not specName then
-                    local _, className = UnitClass(frame.unit)
-                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                    specName = className
+                    local class = UnitClassBase(frame.unit)
+                    class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                    specName = class
                 end
 
                 local anchorPoint = createSpexText(frame)
@@ -759,9 +759,9 @@ function BBP.PartyIndicator4(frame)
             end
 
             if not specName then
-                local _, className = UnitClass("party" .. i)
-                className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                specName = className
+                local class = UnitClassBase("party" .. i)
+                class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                specName = class
             end
 
             local anchorPoint = createSpexText(frame)
@@ -806,9 +806,9 @@ function BBP.PartyIndicator5(frame)
                 end
 
                 if not specName then
-                    local _, className = UnitClass(frame.unit)
-                    className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                    specName = className
+                    local class = UnitClassBase(frame.unit)
+                    class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                    specName = class
                 end
 
                 local anchorPoint = createSpexText(frame)
@@ -839,9 +839,9 @@ function BBP.PartyIndicator5(frame)
             end
 
             if not specName then
-                local _, className = UnitClass("party" .. i)
-                className = className:sub(1, 1):upper() .. className:sub(2):lower()
-                specName = className
+                local class = UnitClassBase("party" .. i)
+                class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                specName = class
             end
 
             local anchorPoint = createSpexText(frame)

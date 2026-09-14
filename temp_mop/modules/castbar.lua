@@ -833,8 +833,8 @@ end
 local function GetCastbarTargetSuffix(unit)
     if not unit then return end
     if BetterBlizzPlatesDB.targetTextTestMode then
-        local classIdentifier = UnitClassBase("player")
-        return GetColoredTargetString(GetUnitName("player"), classIdentifier)
+        local class = UnitClassBase("player")
+        return GetColoredTargetString(GetUnitName("player"), class)
     end
     if BetterBlizzPlatesDB.npTargetTextHideOnNpcs and not UnitIsPlayer(unit) then
         return
@@ -931,9 +931,9 @@ function BBP.UpdateNameplateTargetText(frame, unit)
         frame.TargetText:SetParent((useCastbarAnchor and castBarVisible) and castBar or (frame.bbpOverlay or frame.healthBar))
 
         local name = GetUnitName("player")
-        local classIdentifier = UnitClassBase("player")
-        if classIdentifier then
-            local color = BBP.GetClassColor(classIdentifier)
+        local class = UnitClassBase("player")
+        if class then
+            local color = BBP.GetClassColor(class)
             if color then
                 name = color:WrapTextInColorCode(name)
             end
@@ -1098,8 +1098,8 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                     local colorStr = "ffFFFFFF"
 
                     if C_PlayerInfo.GUIDIsPlayer(sourceGUID) then
-                        local localizedClass, englishClass, localizedRace, englishRace, sex, _name, realm = GetPlayerInfoByGUID(sourceGUID)
-                        colorStr = BBP.GetClassColor(englishClass).colorStr
+                        local localizedClass, class, localizedRace, englishRace, sex, _name, realm = GetPlayerInfoByGUID(sourceGUID)
+                        colorStr = BBP.GetClassColor(class).colorStr
                     end
                     local interruptedByName = string.format("|c%s[%s]|r", colorStr, name)
                     local castBar = frame.CastBar or frame.castBar or frame.CastBarsContainer.castBar
@@ -1122,7 +1122,8 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                     end
 
                     local castbarQuickHide = BetterBlizzPlatesDB.castbarQuickHide
-                    if castbarQuickHide or BetterBlizzPlatesDB.hideCastbar then
+                    local castbarQuickHideAlways = castbarQuickHide and BetterBlizzPlatesDB.castbarQuickHideAlways
+                    if (castbarQuickHide or BetterBlizzPlatesDB.hideCastbar) and not castbarQuickHideAlways then
                         local nameplateResourceUnderCastbar = BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" and BetterBlizzPlatesDB.nameplateResourceUnderCastbar
                         castBar:Show()
 
@@ -1415,7 +1416,7 @@ function BBP.HookCastbarOnEvent(frame)
                         end
                     end
                     if BetterBlizzPlatesDB.castbarQuickHide then
-                        if not (castBar.interruptedBy or castBar.wasKicked) then
+                        if BetterBlizzPlatesDB.castbarQuickHideAlways or not (castBar.interruptedBy or castBar.wasKicked) then
                             local cast = UnitCastingInfo(castBar.unit) or UnitChannelInfo(castBar.unit)
                             if not cast then
                                 castBar:Hide()
@@ -1743,7 +1744,7 @@ function BBP.CastbarOnEvent(frame, event)
             --     end
             -- end
             if castbarQuickHide then
-                if castBar.interruptedBy then
+                if castBar.interruptedBy and not BetterBlizzPlatesDB.castbarQuickHideAlways then
                     castBar:Show()
                 else
                     castBar:Hide()

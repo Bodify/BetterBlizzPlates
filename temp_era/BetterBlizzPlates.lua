@@ -1995,7 +1995,7 @@ function BBP.ClassColorAndScaleNames(frame)
     -- Set the name's color based on unit relation and options
     if isPlayer then
         if ((isEnemy or isNeutral) and enemyClassColorName) or (isFriend and friendlyClassColorName) then
-            local _, class = UnitClass(frame.unit)
+            local class = UnitClassBase(frame.unit)
             local classColor = RAID_CLASS_COLORS[class]
             if class == "SHAMAN" then
                 -- Specific color override for Shaman
@@ -3807,9 +3807,9 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 			r, g, b = healthBarColorOverride.r, healthBarColorOverride.g, healthBarColorOverride.b;
 		else
 			--Try to color it by class.
-			local localizedClass, englishClass = UnitClass(frame.unit);
-			local classColor = RAID_CLASS_COLORS[englishClass];
-            if englishClass == "SHAMAN" then
+			local class = UnitClassBase(frame.unit);
+			local classColor = RAID_CLASS_COLORS[class];
+            if class == "SHAMAN" then
                 -- Specific color override for Shaman
                 classColor = {r = 0.00, g = 0.44, b = 0.87}
             end
@@ -5264,7 +5264,7 @@ end
 
 -- Function to update the current class role
 local function UpdateClassRoleStatus(self, event)
-    local _, class = UnitClass("player")
+    local class = UnitClassBase("player")
     local isTank = false
 
     -- Check the player's talent tree to infer if they are a tank
@@ -5518,7 +5518,7 @@ Frame:SetScript("OnEvent", function(...)
 
     CheckForUpdate()
 
-    _, playerClass = UnitClass("player")
+    playerClass = UnitClassBase("player")
     playerClassColor = RAID_CLASS_COLORS[playerClass]
     if playerClass == "SHAMAN" then
         playerClassColor = {r = 0.00, g = 0.44, b = 0.87}
@@ -5918,9 +5918,9 @@ local function NamePlateCastBarTestMode(frame)
                         frame.dummyNameText = frame.healthBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
                         frame.dummyNameText:SetJustifyH("CENTER")
 
-                        local _, classIdentifier = UnitClass("player") -- Capture both localized name and class identifier
-                        local color = RAID_CLASS_COLORS[classIdentifier] -- Use the class identifier to get the color
-                        if classIdentifier == "SHAMAN" then
+                        local class = UnitClassBase("player")
+                        local color = RAID_CLASS_COLORS[class]
+                        if class == "SHAMAN" then
                             -- Specific color override for Shaman
                             color = {r = 0.00, g = 0.44, b = 0.87}
                         end

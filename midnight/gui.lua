@@ -1815,6 +1815,14 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Castbar Quick Hide" then
+            local tooltipText = "\n|cff32f795Right click to always hide instantly, also when successfully interrupted.|r"
+
+            if BetterBlizzPlatesDB.castbarQuickHideAlways then
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
 
         -- Set the subtext
@@ -3329,26 +3337,29 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
 
 
         local function CreateEditFrame()
-            npcEditFrame = CreateFrame("Frame", "NPC_EditFrame", UIParent, "BasicFrameTemplateWithInset")
+            npcEditFrame = CreateFrame("Frame", "NPC_EditFrame", UIParent, "DefaultPanelFlatTemplate")
             npcEditFrame:SetSize(350, 250)
             npcEditFrame:SetPoint("CENTER")
             npcEditFrame:SetFrameStrata("HIGH")
-
-            -- Make the frame movable
-            npcEditFrame:SetMovable(true)
+            npcEditFrame:SetIgnoreParentAlpha(true)
+            npcEditFrame:SetTitle("Edit NPC Details")
             npcEditFrame:EnableMouse(true)
+            npcEditFrame:SetMovable(true)
+            npcEditFrame:SetClampedToScreen(true)
             npcEditFrame:RegisterForDrag("LeftButton")
-            npcEditFrame:SetScript("OnDragStart", npcEditFrame.StartMoving)
-            npcEditFrame:SetScript("OnDragStop", function(self)
-                self:StopMovingOrSizing()
+            npcEditFrame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+            npcEditFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+
+            npcEditFrame.closeButton = CreateFrame("Button", nil, npcEditFrame, "UIPanelCloseButton")
+            npcEditFrame.closeButton:SetPoint("TOPRIGHT", npcEditFrame, "TOPRIGHT", 0, 0)
+            npcEditFrame.closeButton:SetScript("OnClick", function()
+                npcEditFrame:Hide()
             end)
 
-            -- Creating a custom title for the frame
-            local title = npcEditFrame:CreateFontString(nil, "OVERLAY")
-            title:SetFontObject("GameFontHighlight")
-            title:SetPoint("TOPLEFT", npcEditFrame, "TOPLEFT", 7, -7)
-            title:SetText("Edit NPC Details")
-            npcEditFrame.title = title
+            npcEditFrame.bg = npcEditFrame:CreateTexture(nil, "BACKGROUND")
+            npcEditFrame.bg:SetPoint("TOPLEFT", npcEditFrame, "TOPLEFT", 7, -3)
+            npcEditFrame.bg:SetPoint("BOTTOMRIGHT", npcEditFrame, "BOTTOMRIGHT", -3, 3)
+            npcEditFrame.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
 
             -- Icon
             local iconTexture = npcEditFrame:CreateTexture(nil, "ARTWORK")
@@ -4083,26 +4094,29 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
 
 
         local function CreateEditFrame()
-            npcEditFrame = CreateFrame("Frame", "NPC_EditFrame", UIParent, "BasicFrameTemplateWithInset")
+            npcEditFrame = CreateFrame("Frame", "NPC_EditFrame", UIParent, "DefaultPanelFlatTemplate")
             npcEditFrame:SetSize(350, 250)
             npcEditFrame:SetPoint("CENTER")
             npcEditFrame:SetFrameStrata("HIGH")
-
-            -- Make the frame movable
-            npcEditFrame:SetMovable(true)
+            npcEditFrame:SetIgnoreParentAlpha(true)
+            npcEditFrame:SetTitle("Edit NPC Details")
             npcEditFrame:EnableMouse(true)
+            npcEditFrame:SetMovable(true)
+            npcEditFrame:SetClampedToScreen(true)
             npcEditFrame:RegisterForDrag("LeftButton")
-            npcEditFrame:SetScript("OnDragStart", npcEditFrame.StartMoving)
-            npcEditFrame:SetScript("OnDragStop", function(self)
-                self:StopMovingOrSizing()
+            npcEditFrame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+            npcEditFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+
+            npcEditFrame.closeButton = CreateFrame("Button", nil, npcEditFrame, "UIPanelCloseButton")
+            npcEditFrame.closeButton:SetPoint("TOPRIGHT", npcEditFrame, "TOPRIGHT", 0, 0)
+            npcEditFrame.closeButton:SetScript("OnClick", function()
+                npcEditFrame:Hide()
             end)
 
-            -- Creating a custom title for the frame
-            local title = npcEditFrame:CreateFontString(nil, "OVERLAY")
-            title:SetFontObject("GameFontHighlight")
-            title:SetPoint("TOPLEFT", npcEditFrame, "TOPLEFT", 7, -7)
-            title:SetText("Edit NPC Details")
-            npcEditFrame.title = title
+            npcEditFrame.bg = npcEditFrame:CreateTexture(nil, "BACKGROUND")
+            npcEditFrame.bg:SetPoint("TOPLEFT", npcEditFrame, "TOPLEFT", 7, -3)
+            npcEditFrame.bg:SetPoint("BOTTOMRIGHT", npcEditFrame, "BOTTOMRIGHT", -3, 3)
+            npcEditFrame.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
 
             -- Icon
             local iconTexture = npcEditFrame:CreateTexture(nil, "ARTWORK")
@@ -5208,19 +5222,29 @@ local function guiGeneralTab()
     local smallPetsOptionsFrame
     local function OpenSmallPetsOptionsWindow()
         if not smallPetsOptionsFrame then
-            smallPetsOptionsFrame = CreateFrame("Frame", "BBPSmallPetsOptionsFrame", UIParent, "BasicFrameTemplateWithInset")
+            smallPetsOptionsFrame = CreateFrame("Frame", "BBPSmallPetsOptionsFrame", UIParent, "DefaultPanelFlatTemplate")
             smallPetsOptionsFrame:SetSize(180, 240)
             smallPetsOptionsFrame:SetPoint("CENTER")
             smallPetsOptionsFrame:SetFrameStrata("HIGH")
-            smallPetsOptionsFrame:SetMovable(true)
+            smallPetsOptionsFrame:SetIgnoreParentAlpha(true)
+            smallPetsOptionsFrame:SetTitle("Small Pets Options")
             smallPetsOptionsFrame:EnableMouse(true)
+            smallPetsOptionsFrame:SetMovable(true)
+            smallPetsOptionsFrame:SetClampedToScreen(true)
             smallPetsOptionsFrame:RegisterForDrag("LeftButton")
-            smallPetsOptionsFrame:SetScript("OnDragStart", smallPetsOptionsFrame.StartMoving)
-            smallPetsOptionsFrame:SetScript("OnDragStop", smallPetsOptionsFrame.StopMovingOrSizing)
-            smallPetsOptionsFrame.title = smallPetsOptionsFrame:CreateFontString(nil, "OVERLAY")
-            smallPetsOptionsFrame.title:SetFontObject("GameFontHighlight")
-            smallPetsOptionsFrame.title:SetPoint("LEFT", smallPetsOptionsFrame.TitleBg, "LEFT", 5, 0)
-            smallPetsOptionsFrame.title:SetText("Small Pets Options")
+            smallPetsOptionsFrame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+            smallPetsOptionsFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+
+            smallPetsOptionsFrame.closeButton = CreateFrame("Button", nil, smallPetsOptionsFrame, "UIPanelCloseButton")
+            smallPetsOptionsFrame.closeButton:SetPoint("TOPRIGHT", smallPetsOptionsFrame, "TOPRIGHT", 0, 0)
+            smallPetsOptionsFrame.closeButton:SetScript("OnClick", function()
+                smallPetsOptionsFrame:Hide()
+            end)
+
+            smallPetsOptionsFrame.bg = smallPetsOptionsFrame:CreateTexture(nil, "BACKGROUND")
+            smallPetsOptionsFrame.bg:SetPoint("TOPLEFT", smallPetsOptionsFrame, "TOPLEFT", 7, -3)
+            smallPetsOptionsFrame.bg:SetPoint("BOTTOMRIGHT", smallPetsOptionsFrame, "BOTTOMRIGHT", -3, 3)
+            smallPetsOptionsFrame.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
 
             local smallPetsAllNPCs = CreateCheckbox("smallPetsInPvPAllNPCs", "Shrink All NPCs in PvP", smallPetsOptionsFrame)
             smallPetsAllNPCs:SetPoint("TOPLEFT", smallPetsOptionsFrame, "TOPLEFT", 10, -26)
@@ -6441,7 +6465,7 @@ local function guiGeneralTab()
 
     local function SetClassAndPowerColor()
         -- Retrieve the player's class information
-        local _, class = UnitClass("player")
+        local class = UnitClassBase("player")
         local classColor = RAID_CLASS_COLORS[class]
         -- Retrieve the player's primary power type
         local powerType, powerToken = UnitPowerType("player")
@@ -7224,7 +7248,7 @@ local function guiPositionAndScale()
 
     anchorSubTarget.double = CreateCheckbox("targetIndicatorDouble", "Double Markers", contentFrame)
     anchorSubTarget.double:SetPoint("TOPLEFT", targetIndicatorHideIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(anchorSubTarget.double, "Double Markers", "Show target marker on both sides.")
+    CreateTooltipTwo(anchorSubTarget.double, "Double Markers", "Show target marker on both sides.\n\nChange Anchor to LEFT/RIGHT to have them on the sides.")
 
     anchorSubTarget.UpdateDoubleState = function()
         if targetIndicatorHideIcon:GetChecked() then
@@ -7255,6 +7279,11 @@ local function guiPositionAndScale()
     anchorSubTarget.extendedSettings:Hide()
     anchorSubTarget.extendedSettings.name = "Advanced Settings"
     anchorSubTarget.extendedSettings:SetTitle("Target Indicator")
+    anchorSubTarget.extendedSettings:SetMovable(true)
+    anchorSubTarget.extendedSettings:SetClampedToScreen(true)
+    anchorSubTarget.extendedSettings:RegisterForDrag("LeftButton")
+    anchorSubTarget.extendedSettings:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    anchorSubTarget.extendedSettings:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
     anchorSubTarget.closeButton = CreateFrame("Button", nil, anchorSubTarget.extendedSettings, "UIPanelCloseButton")
     anchorSubTarget.closeButton:SetPoint("TOPRIGHT", anchorSubTarget.extendedSettings, "TOPRIGHT", 0, 0)
@@ -8111,6 +8140,11 @@ local function guiPositionAndScale()
     anchorSubClassIcon.extendedSettings.name = "Advanced Settings"
     anchorSubClassIcon.extendedSettings:SetTitle("Class Indicator")
     anchorSubClassIcon.extendedSettings:EnableMouse(true)
+    anchorSubClassIcon.extendedSettings:SetMovable(true)
+    anchorSubClassIcon.extendedSettings:SetClampedToScreen(true)
+    anchorSubClassIcon.extendedSettings:RegisterForDrag("LeftButton")
+    anchorSubClassIcon.extendedSettings:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    anchorSubClassIcon.extendedSettings:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
     anchorSubClassIcon.closeButton = CreateFrame("Button", nil, anchorSubClassIcon.extendedSettings, "UIPanelCloseButton")
     anchorSubClassIcon.closeButton:SetPoint("TOPRIGHT", anchorSubClassIcon.extendedSettings, "TOPRIGHT", 0, 0)
@@ -8758,6 +8792,11 @@ local function guiPositionAndScale()
     anchorSubHealthNumbers.extendedSettings:Hide()
     anchorSubHealthNumbers.extendedSettings.name = "Advanced Settings"
     anchorSubHealthNumbers.extendedSettings:SetTitle("Health Numbers")
+    anchorSubHealthNumbers.extendedSettings:SetMovable(true)
+    anchorSubHealthNumbers.extendedSettings:SetClampedToScreen(true)
+    anchorSubHealthNumbers.extendedSettings:RegisterForDrag("LeftButton")
+    anchorSubHealthNumbers.extendedSettings:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    anchorSubHealthNumbers.extendedSettings:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
     anchorSubHealthNumbers.closeButton = CreateFrame("Button", nil, anchorSubHealthNumbers.extendedSettings, "UIPanelCloseButton")
     anchorSubHealthNumbers.closeButton:SetPoint("TOPRIGHT", anchorSubHealthNumbers.extendedSettings, "TOPRIGHT", 0, 0)
@@ -9113,7 +9152,7 @@ local function guiPositionAndScale()
     CreateTooltipTwo(anchorSubTargetText.hideOnNpcs, "Hide on NPCs", "Only show the target text on player nameplates.")
     do
         local playerName = UnitName("player") or "Player"
-        local _, playerClass = UnitClass("player")
+        local playerClass = UnitClassBase("player")
         local classColor = playerClass and C_ClassColor.GetClassColor(playerClass)
         local coloredName = classColor and classColor:WrapTextInColorCode(playerName) or playerName
         CreateTooltipTwo(anchorSubTargetText.insideBar, "Target text inside castbar", "Put the target text inside the castbar on casts so it appears like \"Polymorph: " .. coloredName .. "\"")
@@ -9267,6 +9306,11 @@ local function guiPositionAndScale()
     contentFrame.anchorSubTotem.extendedSettings:Hide()
     contentFrame.anchorSubTotem.extendedSettings.name = "Advanced Settings"
     contentFrame.anchorSubTotem.extendedSettings:SetTitle("Totem Indicator")
+    contentFrame.anchorSubTotem.extendedSettings:SetMovable(true)
+    contentFrame.anchorSubTotem.extendedSettings:SetClampedToScreen(true)
+    contentFrame.anchorSubTotem.extendedSettings:RegisterForDrag("LeftButton")
+    contentFrame.anchorSubTotem.extendedSettings:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    contentFrame.anchorSubTotem.extendedSettings:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
     contentFrame.anchorSubTotem.closeButton = CreateFrame("Button", nil, contentFrame.anchorSubTotem.extendedSettings, "UIPanelCloseButton")
     contentFrame.anchorSubTotem.closeButton:SetPoint("TOPRIGHT", contentFrame.anchorSubTotem.extendedSettings, "TOPRIGHT", 0, 0)
@@ -9313,7 +9357,7 @@ local function guiPositionAndScale()
 
     contentFrame.totemIndicatorHideCountdownNumbers = CreateCheckbox("totemIndicatorHideCountdownNumbers", "No CD Text", contentFrame.anchorSubTotem.extendedSettings)
     contentFrame.totemIndicatorHideCountdownNumbers:SetPoint("LEFT", contentFrame.totemIndicatorColorHealthBar.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(contentFrame.totemIndicatorHideCountdownNumbers, "Hide countdown numbers", "Hide the cooldown countdown text on totem icons.", "|cFFFFD100Note: The \"Default CD Size\" slider below has no effect while this is on.|r")
+    CreateTooltipTwo(contentFrame.totemIndicatorHideCountdownNumbers, "Hide countdown numbers", "Hide the cooldown countdown text on totem icons.")
 
     contentFrame.totemIndicatorColorName = CreateCheckbox("totemIndicatorColorName", "Color Name", contentFrame.anchorSubTotem.extendedSettings)
     contentFrame.totemIndicatorColorName:SetPoint("TOPLEFT", contentFrame.showTotemIndicatorCooldownSwipe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -9465,7 +9509,19 @@ local function guiCastbar()
 
     local castbarQuickHide = CreateCheckbox("castbarQuickHide", "Castbar Quick Hide", enableCastbarCustomization)
     castbarQuickHide:SetPoint("TOPLEFT", enableCastbarCustomization, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(castbarQuickHide, "Hide the castbar instantly when a cast is finished/interrupted\n\nIf \"Show who interrupted\" is turned on the castbar will\nnot be immediately hidden under those circumstances.")
+    CreateTooltipTwo(castbarQuickHide, "Castbar Quick Hide", "Hide the castbar instantly when a cast is finished/interrupted\n\nIf \"Show who interrupted\" is turned on the castbar will\nnot be immediately hidden under those circumstances.")
+    castbarQuickHide:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            if not BetterBlizzPlatesDB.castbarQuickHideAlways then
+                BetterBlizzPlatesDB.castbarQuickHideAlways = true
+            else
+                BetterBlizzPlatesDB.castbarQuickHideAlways = nil
+            end
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+        end
+    end)
 
     local hideCastbarBorderShield = CreateCheckbox("hideCastbarBorderShield", "Hide Shield", enableCastbarCustomization)
     hideCastbarBorderShield:SetPoint("LEFT", castbarQuickHide.text, "RIGHT", -1, 0)
@@ -11235,7 +11291,7 @@ local function guiNameplateAuras()
         col.y = col.y - 2
     end
 
-    local _, playerClass = UnitClass("player")
+    local playerClass = UnitClassBase("player")
     local classColor = RAID_CLASS_COLORS[playerClass]
     GroupHeader(personal, "Personal Bar",
         classColor and classColor.r or 1, classColor and classColor.g or 0.5,
@@ -11483,6 +11539,9 @@ local function guiNameplateAuras()
     Check(mid, "nameplateAuraGrowDownwards", "Grow Auras Top to Bottom", nil, 0,
         "Grow Auras Top to Bottom",
         "Fill extra rows downwards instead of upwards.")
+    Check(mid, "nameplateAuraCenterAlign", "Center Align Auras", nil, 0,
+        "Center Align Auras",
+        "Instead of auras being aligned at either the top or bottom of the aura align them all at the center so for example enlarged square auras and smaller rectangle auras stay centered.")
     Check(mid, "otherNpBuffBlueBorder", "Blue Border for Buffs", nil, 0, "Blue Border for Buffs",
         "Adds a blue border for buffs on the normal buff row above the nameplate (not Big Buffs).")
     Check(mid, "nameplateAurasEnemyCenteredDebuffs", "Center Debuffs On Enemies", nil, 0,
@@ -11572,19 +11631,29 @@ local function guiNameplateAuras()
     local timerColorOptionsFrame
     local function OpenTimerColorOptionsWindow()
         if not timerColorOptionsFrame then
-            timerColorOptionsFrame = CreateFrame("Frame", "BBPAuraTimerColorOptionsFrame", UIParent, "BasicFrameTemplateWithInset")
+            timerColorOptionsFrame = CreateFrame("Frame", "BBPAuraTimerColorOptionsFrame", UIParent, "DefaultPanelFlatTemplate")
             timerColorOptionsFrame:SetSize(200, 155)
             timerColorOptionsFrame:SetPoint("CENTER")
             timerColorOptionsFrame:SetFrameStrata("HIGH")
-            timerColorOptionsFrame:SetMovable(true)
+            timerColorOptionsFrame:SetIgnoreParentAlpha(true)
+            timerColorOptionsFrame:SetTitle("Timer Text Colors")
             timerColorOptionsFrame:EnableMouse(true)
+            timerColorOptionsFrame:SetMovable(true)
+            timerColorOptionsFrame:SetClampedToScreen(true)
             timerColorOptionsFrame:RegisterForDrag("LeftButton")
-            timerColorOptionsFrame:SetScript("OnDragStart", timerColorOptionsFrame.StartMoving)
-            timerColorOptionsFrame:SetScript("OnDragStop", timerColorOptionsFrame.StopMovingOrSizing)
-            timerColorOptionsFrame.title = timerColorOptionsFrame:CreateFontString(nil, "OVERLAY")
-            timerColorOptionsFrame.title:SetFontObject("GameFontHighlight")
-            timerColorOptionsFrame.title:SetPoint("LEFT", timerColorOptionsFrame.TitleBg, "LEFT", 5, 0)
-            timerColorOptionsFrame.title:SetText("Timer Text Colors")
+            timerColorOptionsFrame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+            timerColorOptionsFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+
+            timerColorOptionsFrame.closeButton = CreateFrame("Button", nil, timerColorOptionsFrame, "UIPanelCloseButton")
+            timerColorOptionsFrame.closeButton:SetPoint("TOPRIGHT", timerColorOptionsFrame, "TOPRIGHT", 0, 0)
+            timerColorOptionsFrame.closeButton:SetScript("OnClick", function()
+                timerColorOptionsFrame:Hide()
+            end)
+
+            timerColorOptionsFrame.bg = timerColorOptionsFrame:CreateTexture(nil, "BACKGROUND")
+            timerColorOptionsFrame.bg:SetPoint("TOPLEFT", timerColorOptionsFrame, "TOPLEFT", 7, -3)
+            timerColorOptionsFrame.bg:SetPoint("BOTTOMRIGHT", timerColorOptionsFrame, "BOTTOMRIGHT", -3, 3)
+            timerColorOptionsFrame.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
 
             local lowThreshold = CreateSlider(timerColorOptionsFrame, "Low Threshold (sec)", 1, 30, 1,
                 "nameplateAuraTimerLowThreshold", nil, 150)
@@ -11732,6 +11801,8 @@ local function guiCVarControl()
     nameplateResourceOnTarget:HookScript("OnClick", function()
         BBP.RegisterTargetCastingEvents()
         BBP.ApplyNameplateWidth()
+        BBP.MaelstromWeaponCombos()
+        BBP.TipOfSpearCombos()
     end)
 
     nameplateResourceOnTarget:HookScript("OnMouseDown", function(self, button)
@@ -11750,14 +11821,18 @@ local function guiCVarControl()
                     BetterBlizzPlatesDB.nameplateResourceOnTarget = "1"
                 end
                 BBP.TargetResourceUpdater()
+                BBP.MaelstromWeaponCombos()
+                BBP.TipOfSpearCombos()
             end
         end
     end)
 
     local instantComboPoints = CreateCheckbox("instantComboPoints", "Instant Combo Points", guiCVarControl, nil, BBP.InstantComboPoints)
     instantComboPoints:SetPoint("TOPLEFT", nameplateResourceOnTarget, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(instantComboPoints, "Instant Combo Points", "Remove the combo point animations for instant feedback. Currently works for:\n|cFFFFF569Rogue|r\n|cFFFF7D0ADruid|r\n|cFF00FF96Monk|r\n|cFF3FC7EBMage|r\n|cFFF58CBAPaladin|r")
+    CreateTooltipTwo(instantComboPoints, "Instant Combo Points", "Remove the combo point animations for instant feedback. Currently works for:\n|cFFFFF569Rogue|r\n|cFFFF7D0ADruid|r\n|cFF00FF96Monk|r\n|cFF3FC7EBMage|r\n|cFFF58CBAPaladin|r\n|cFF0070DEShaman|r\n|cFFAAD372Hunter|r")
     instantComboPoints:HookScript("OnClick", function(self)
+        BBP.MaelstromWeaponCombos()
+        BBP.TipOfSpearCombos()
         if not self:GetChecked() then
             StaticPopup_Show("BBP_CONFIRM_RELOAD")
             if BetterBlizzFramesDB then
@@ -11780,22 +11855,30 @@ local function guiCVarControl()
     local classOptionsFrame
     local function OpenClassSpecificWindow()
         if not classOptionsFrame then
-            -- Create a new frame if it doesn't exist
-            classOptionsFrame = CreateFrame("Frame", "ClassOptionsFrame", UIParent, "BasicFrameTemplateWithInset")
-            classOptionsFrame:SetSize(185, 210)
+            classOptionsFrame = CreateFrame("Frame", "ClassOptionsFrame", UIParent, "DefaultPanelFlatTemplate")
+            classOptionsFrame:SetSize(185, 252)
             classOptionsFrame:SetPoint("CENTER")
             classOptionsFrame:SetFrameStrata("HIGH")
-            classOptionsFrame:SetMovable(true)
+            classOptionsFrame:SetIgnoreParentAlpha(true)
+            classOptionsFrame:SetTitle("Class Specific Options")
             classOptionsFrame:EnableMouse(true)
+            classOptionsFrame:SetMovable(true)
+            classOptionsFrame:SetClampedToScreen(true)
             classOptionsFrame:RegisterForDrag("LeftButton")
-            classOptionsFrame:SetScript("OnDragStart", classOptionsFrame.StartMoving)
-            classOptionsFrame:SetScript("OnDragStop", classOptionsFrame.StopMovingOrSizing)
-            classOptionsFrame.title = classOptionsFrame:CreateFontString(nil, "OVERLAY")
-            classOptionsFrame.title:SetFontObject("GameFontHighlight")
-            classOptionsFrame.title:SetPoint("LEFT", classOptionsFrame.TitleBg, "LEFT", 5, 0)
-            classOptionsFrame.title:SetText("Class Specific Options")
+            classOptionsFrame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+            classOptionsFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
-            -- Create checkboxes for each class
+            classOptionsFrame.closeButton = CreateFrame("Button", nil, classOptionsFrame, "UIPanelCloseButton")
+            classOptionsFrame.closeButton:SetPoint("TOPRIGHT", classOptionsFrame, "TOPRIGHT", 0, 0)
+            classOptionsFrame.closeButton:SetScript("OnClick", function()
+                classOptionsFrame:Hide()
+            end)
+
+            classOptionsFrame.bg = classOptionsFrame:CreateTexture(nil, "BACKGROUND")
+            classOptionsFrame.bg:SetPoint("TOPLEFT", classOptionsFrame, "TOPLEFT", 7, -3)
+            classOptionsFrame.bg:SetPoint("BOTTOMRIGHT", classOptionsFrame, "BOTTOMRIGHT", -3, 3)
+            classOptionsFrame.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
+
             local classes = {
                 { class = "Druid", var = "hideResourceFrameNoDruid", color = RAID_CLASS_COLORS["DRUID"] },
                 { class = "Rogue", var = "hideResourceFrameNoRogue", color = RAID_CLASS_COLORS["ROGUE"] },
@@ -11805,6 +11888,8 @@ local function guiCVarControl()
                 { class = "Evoker", var = "hideResourceFrameNoEvoker", color = RAID_CLASS_COLORS["EVOKER"] },
                 { class = "Monk", var = "hideResourceFrameNoMonk", color = RAID_CLASS_COLORS["MONK"] },
                 { class = "Mage", var = "hideResourceFrameNoMage", color = RAID_CLASS_COLORS["MAGE"] },
+                { class = "Shaman", var = "hideResourceFrameNoShaman", color = RAID_CLASS_COLORS["SHAMAN"] },
+                { class = "Hunter", var = "hideResourceFrameNoHunter", color = RAID_CLASS_COLORS["HUNTER"] },
             }
 
             local previousCheckbox
@@ -11813,21 +11898,17 @@ local function guiCVarControl()
                 classCheckbox:SetSize(24, 24)
                 classCheckbox.Text:SetText("Ignore " .. classData.class)
 
-                -- Set the color of the checkbox label to the class color
                 local r, g, b = classData.color.r, classData.color.g, classData.color.b
                 classCheckbox.Text:SetTextColor(r, g, b)
 
-                -- Position the checkboxes
                 if i == 1 then
                     classCheckbox:SetPoint("TOPLEFT", classOptionsFrame, "TOPLEFT", 10, -30)
                 else
                     classCheckbox:SetPoint("TOPLEFT", previousCheckbox, "BOTTOMLEFT", 0, 3)
                 end
 
-                -- Set the state from the DB
                 classCheckbox:SetChecked(BetterBlizzPlatesDB[classData.var])
 
-                -- Save the state back to the DB when toggled
                 classCheckbox:SetScript("OnClick", function(self)
                     BetterBlizzPlatesDB[classData.var] = self:GetChecked() or nil
                     BBP.HideResourceFrames()
@@ -11837,7 +11918,6 @@ local function guiCVarControl()
             end
             classOptionsFrame:Show()
         else
-            -- Toggle visibility of the frame when the function is called
             if classOptionsFrame:IsShown() then
                 classOptionsFrame:Hide()
             else
@@ -11860,8 +11940,22 @@ local function guiCVarControl()
     druidAlwaysShowCombos:SetPoint("TOPLEFT", druidOverstacks, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(druidAlwaysShowCombos, "Druid: Always Show Combo Points", "Alway show the combo points regardless of what form you are in if you have active combo points.")
 
+    local shamanMaelstromCombos = CreateCheckbox("shamanMaelstromCombos", "Shaman: Maelstrom Weapon Combo Points", guiCVarControl)
+    shamanMaelstromCombos:SetPoint("TOPLEFT", druidAlwaysShowCombos, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(shamanMaelstromCombos, "Shaman: Maelstrom Weapon Combo Points", "Show Enhancement Shaman's Maelstrom Weapon stacks as combo points on the Personal Resource Display.")
+    shamanMaelstromCombos:HookScript("OnClick", function()
+        BBP.MaelstromWeaponCombos()
+    end)
+
+    local hunterTipOfSpearCombos = CreateCheckbox("hunterTipOfSpearCombos", "Hunter: Tip of the Spear Combo Points", guiCVarControl)
+    hunterTipOfSpearCombos:SetPoint("TOPLEFT", shamanMaelstromCombos, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(hunterTipOfSpearCombos, "Hunter: Tip of the Spear Combo Points", "Show Survival Hunter's Tip of the Spear stacks as combo points on the Personal Resource Display.")
+    hunterTipOfSpearCombos:HookScript("OnClick", function()
+        BBP.TipOfSpearCombos()
+    end)
+
     local changeResourceStrata = CreateCheckbox("changeResourceStrata", "Increase resource layer level", guiCVarControl, nil, BBP.ChangeStrataOfResourceFrame)
-    changeResourceStrata:SetPoint("TOP", druidAlwaysShowCombos, "BOTTOM", 0, pixelsBetweenBoxes)
+    changeResourceStrata:SetPoint("TOP", hunterTipOfSpearCombos, "BOTTOM", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(changeResourceStrata, "Increase resource layer level", "Increases the frame strata of the resource frame making it show on top of nameplate instead of under (z-axis)")
 
     local nameplateResourceUnderCastbar = CreateCheckbox("nameplateResourceUnderCastbar", "Anchor resource underneath healthbar/castbar", nameplateResourceOnTarget, nil, BBP.RegisterTargetCastingEvents)
@@ -11941,7 +12035,7 @@ local function guiCVarControl()
     CreateTooltipTwo(nameplateOccludedAlphaMult, "Occluded Alpha", "The alpha value of nameplates that are not in line of sight.", nil, nil, "nameplateOccludedAlphaMult")
     CreateResetButton(nameplateOccludedAlphaMult, "nameplateOccludedAlphaMult", guiCVarControl)
 
-    local enableNpNonTargetAlpha = CreateCheckbox("enableNpNonTargetAlpha", "Enable", guiCVarControl)
+    local enableNpNonTargetAlpha = CreateCheckbox("enableNpNonTargetAlpha", "Enable", guiCVarControl, nil, BBP.ToggleNpNonTargetAlphaHook)
     CreateTooltipTwo(enableNpNonTargetAlpha, "Enable Non-Target Alpha")
 
     local enableNpNonFocusAlpha = CreateCheckbox("enableNpNonFocusAlpha", "Focus", enableNpNonTargetAlpha)

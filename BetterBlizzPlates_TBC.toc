@@ -11,6 +11,7 @@
 embeds.xml
 
 init.lua
+shared\functions_classics.lua
 temp_shared\ImportExport.lua
 
 temp_cata\modules\combat.lua

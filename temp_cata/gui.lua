@@ -1602,6 +1602,14 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == "Castbar Quick Hide" then
+            local tooltipText = "\n|cff32f795Right click to always hide instantly, also when successfully interrupted.|r"
+
+            if BetterBlizzPlatesDB.castbarQuickHideAlways then
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
 
         if category then
@@ -5288,8 +5296,8 @@ local function guiGeneralTab()
         local nameplate, frame = BBP.GetSafeNameplate("player")
         if frame then
             if self:GetChecked() then
-                local localizedClass, englishClass = UnitClass(frame.unit);
-                local playerClassColor = RAID_CLASS_COLORS[englishClass];
+                local class = UnitClassBase(frame.unit);
+                local playerClassColor = RAID_CLASS_COLORS[class];
                 frame.healthBar:SetStatusBarColor(playerClassColor.r, playerClassColor.g, playerClassColor.b)
             else
                 frame.healthBar:SetStatusBarColor(0,1,0)
@@ -6519,7 +6527,7 @@ local function guiPositionAndScale()
     anchorSubTarget.icon:SetSize(48, 32)
     anchorSubTarget.icon:SetPoint("BOTTOM", anchorSubTarget, "TOP", -1, 2)
 
-    local targetIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 1.9, 0.01, "targetIndicatorScale")
+    local targetIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 3, 0.01, "targetIndicatorScale")
     targetIndicatorScale:SetPoint("TOP", anchorSubTarget, "BOTTOM", 0, -15)
 
     local targetIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "targetIndicatorXPos", "X")
@@ -7787,7 +7795,19 @@ local function guiCastbar()
 
     local castbarQuickHide = CreateCheckbox("castbarQuickHide", "Castbar Quick Hide", enableCastbarCustomization)
     castbarQuickHide:SetPoint("TOPLEFT", enableCastbarCustomization, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(castbarQuickHide, "Hide the castbar instantly when a cast is finished/interrupted\n\nIf \"Show who interrupted\" is turned on the castbar will\nnot be immediately hidden under those circumstances.")
+    CreateTooltipTwo(castbarQuickHide, "Castbar Quick Hide", "Hide the castbar instantly when a cast is finished/interrupted\n\nIf \"Show who interrupted\" is turned on the castbar will\nnot be immediately hidden under those circumstances.")
+    castbarQuickHide:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            if not BetterBlizzPlatesDB.castbarQuickHideAlways then
+                BetterBlizzPlatesDB.castbarQuickHideAlways = true
+            else
+                BetterBlizzPlatesDB.castbarQuickHideAlways = nil
+            end
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+        end
+    end)
 
     local hideCastbarBorderShield = CreateCheckbox("hideCastbarBorderShield", "Hide Shield", enableCastbarCustomization)
     hideCastbarBorderShield:SetPoint("LEFT", castbarQuickHide.text, "RIGHT", -1, 0)
@@ -9242,7 +9262,7 @@ local function guiNameplateAuras()
     personalBarIcon:SetSize(28, 28)
     personalBarIcon:SetPoint("RIGHT", personalBarText, "LEFT", -3, 0)
     personalBarIcon:SetDesaturated(1)
-    local _, playerClass = UnitClass("player")
+    local playerClass = UnitClassBase("player")
     local classColor = RAID_CLASS_COLORS[playerClass]
     if classColor then
         personalBarIcon:SetVertexColor(classColor.r, classColor.g, classColor.b)
