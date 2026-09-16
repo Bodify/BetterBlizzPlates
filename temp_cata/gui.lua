@@ -163,10 +163,10 @@ StaticPopupDialogs["BBP_NP_AURA_ENABLE"] = {
                 end
             end
         end
-        StaticPopup_Show("BBF_CONFIRM_RELOAD")
+        StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end,
     OnCancel = function()
-        StaticPopup_Show("BBF_CONFIRM_RELOAD")
+        StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end,
     timeout = 0,
     whileDead = true,

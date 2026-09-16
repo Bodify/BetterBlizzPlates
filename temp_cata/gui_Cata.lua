@@ -144,10 +144,10 @@ StaticPopupDialogs["BBP_NP_AURA_ENABLE"] = {
         db.otherNpdeBuffFilterCC = true
         db.friendlyNpBuffFilterImportantBuffs = true
         db.friendlyNpdeBuffFilterCC = true
-        StaticPopup_Show("BBF_CONFIRM_RELOAD")
+        StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end,
     OnCancel = function()
-        StaticPopup_Show("BBF_CONFIRM_RELOAD")
+        StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end,
     timeout = 0,
     whileDead = true,
