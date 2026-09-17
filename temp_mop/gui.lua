@@ -5847,12 +5847,10 @@ local function guiGeneralTab()
         local function setTotemCVar()
             if InCombatLockdown() then
                 C_Timer.After(1.5, setTotemCVar)
+            elseif self:GetChecked() then
+                BBP.EnableTotemIndicatorCVars()
             else
-                if self:GetChecked() and GetCVar("nameplateShowEnemyTotems") ~= "1" then
-                    BetterBlizzPlatesDB.nameplateShowEnemyTotems = 1
-                    C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
-                    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"CVar Control\" section of the addon.")
-                end
+                BBP.UpdateContextCVars(true, true)
             end
         end
         setTotemCVar()
@@ -11070,7 +11068,7 @@ local function guiCVarControl()
                             local set = BetterBlizzPlatesDB[setKey]
                             if not set then set = {}; BetterBlizzPlatesDB[setKey] = set end
                             set[cvar] = not set[cvar]
-                            BBP.UpdateContextCVars()
+                            BBP.UpdateContextCVars(true, true)
                         end)
                 end
             end
@@ -11487,12 +11485,10 @@ local function guiTotemList()
             local function setTotemCVar()
                 if InCombatLockdown() then
                     C_Timer.After(1.5, setTotemCVar)
+                elseif self:GetChecked() then
+                    BBP.EnableTotemIndicatorCVars()
                 else
-                    if self:GetChecked() and GetCVar("nameplateShowEnemyTotems") ~= "1" then
-                        BetterBlizzPlatesDB.nameplateShowEnemyTotems = 1
-                        C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
-                        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"CVar Control\" section of the addon.")
-                    end
+                    BBP.UpdateContextCVars(true, true)
                 end
             end
             setTotemCVar()
@@ -12072,6 +12068,9 @@ function BBP.LoadGUI()
 end
 
 function BBP.CVarTracker()
+    if BBP.cvarTrackerRegistered then return end
+    BBP.cvarTrackerRegistered = true
+
     local cvarsToTrack = {
         checkboxes = {
             nameplateResourceOnTarget = true,
@@ -12120,8 +12119,11 @@ function BBP.CVarTracker()
         elseif cvarsToTrack.other[cvarName] then
             BetterBlizzPlatesDB[cvarName] = cvarValue
         elseif bitCVarNames[cvarName] then
-            for _, index in ipairs(BBP.bitCVarList[cvarName]) do
-                BetterBlizzPlatesDB.bitfields[cvarName][tostring(index)] = C_CVar.GetCVarBitfield(cvarName, index)
+            local bitfields = BetterBlizzPlatesDB.bitfields
+            if bitfields and bitfields[cvarName] then
+                for _, index in ipairs(BBP.bitCVarList[cvarName]) do
+                    bitfields[cvarName][tostring(index)] = C_CVar.GetCVarBitfield(cvarName, index)
+                end
             end
         end
     end)

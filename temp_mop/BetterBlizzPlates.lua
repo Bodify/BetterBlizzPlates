@@ -1360,6 +1360,8 @@ function BBP.InitContextCVarSets(resetToDefaults)
             end
         end
     end
+
+    BBP.lastAppliedContext = nil
 end
 
 function BBP.ResetTotemList()
@@ -1460,14 +1462,31 @@ local bitCVarList = {
 
 BBP.bitCVarList = bitCVarList
 
+local function SyncContextSetsFromLiveCVars()
+    local db = BetterBlizzPlatesDB
+    if not db or not BBP.contextCVarList then return end
+    for _, setKey in ipairs({ "cvarContextPvP", "cvarContextPvE" }) do
+        if type(db[setKey]) ~= "table" then db[setKey] = {} end
+        for _, cvar in ipairs(BBP.contextCVarList) do
+            db[setKey][cvar] = C_CVar.GetCVar(cvar) == "1"
+        end
+    end
+    BBP.lastAppliedContext = nil
+end
+
 function BBP.ResetNameplateCVars()
+    local wasTracking = BBP.CVarTrackingDisabled
+    BBP.CVarTrackingDisabled = true
+
     if BBPCVarBackupsDB then
         for cvar, value in pairs(BBPCVarBackupsDB) do
-            if cvar == "nameplateMinScale" or cvar == "nameplateMaxScale" then
-                value = 0.9
+            if cvar ~= "bitfields" and type(value) ~= "table" then
+                if cvar == "nameplateMinScale" or cvar == "nameplateMaxScale" then
+                    value = 0.9
+                end
+                C_CVar.SetCVar(cvar, value)
+                BetterBlizzPlatesDB[cvar] = value
             end
-            C_CVar.SetCVar(cvar, value)
-            BetterBlizzPlatesDB[cvar] = value
         end
     else
         for _, cvar in ipairs(cvarList) do
@@ -1479,6 +1498,9 @@ function BBP.ResetNameplateCVars()
             BetterBlizzPlatesDB[cvar] = defaultValue
         end
     end
+
+    SyncContextSetsFromLiveCVars()
+    BBP.CVarTrackingDisabled = wasTracking
 
     if BBPCVarBackupsDB and BBPCVarBackupsDB.bitfields then
         for cvarName, indices in pairs(BBPCVarBackupsDB.bitfields) do
@@ -1790,7 +1812,7 @@ local function ResetNameplates()
     C_CVar.SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
     C_CVar.SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
     C_CVar.SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
-    BBP.UpdateContextCVars()
+    BBP.UpdateContextCVars(true, true)
     C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', "0")
     C_CVar.SetCVar("nameplateShowAll", "1")
 
@@ -7113,12 +7135,13 @@ local function CheckIfInInstance(self, event, ...)
     -- SetNameplateBehavior()
     if event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
         UpdateInstanceStatus()
-        BBP.UpdateContextCVars()
+        -- Force past the throttle after a loading screen
+        BBP.UpdateContextCVars(event == "PLAYER_ENTERING_WORLD")
         SetNameplateBehavior()
         BBP.fistweaverFound = nil
     elseif event == "PLAYER_REGEN_ENABLED" then
         SetNameplateBehavior()
-        BBP.UpdateContextCVars()
+        BBP.UpdateContextCVars(true)
         InstanceChecker:UnregisterEvent("PLAYER_REGEN_ENABLED")
     end
 end
@@ -7140,23 +7163,28 @@ BBP.contextCVarList = {
     "nameplateShowFriendlyPlayerTotems",
 }
 
+-- Minion CVars re-asserted after their parent CVar, since setting the parent can reset them.
 local contextMinionChildren = {
-    {
-        "nameplateShowEnemyGuardians",
-        "nameplateShowEnemyMinus",
-        "nameplateShowEnemyPets",
-        "nameplateShowEnemyTotems",
-    },
-    {
-        "nameplateShowFriendlyPlayerGuardians",
-        "nameplateShowFriendlyPlayerPets",
-        "nameplateShowFriendlyPlayerTotems",
-    },
+    "nameplateShowEnemyGuardians",
+    "nameplateShowEnemyMinus",
+    "nameplateShowEnemyPets",
+    "nameplateShowEnemyTotems",
+    "nameplateShowFriendlyPlayerGuardians",
+    "nameplateShowFriendlyPlayerPets",
+    "nameplateShowFriendlyPlayerTotems",
 }
 
 BBP.contextCVarLookup = {}
 for _, cvar in ipairs(BBP.contextCVarList) do
     BBP.contextCVarLookup[cvar] = true
+end
+
+function BBP.ContextCVarsDisabled()
+    local db = BetterBlizzPlatesDB
+    if not db then return true end
+    if db.disableCVarForceOnLogin then return true end
+    if db.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return true end
+    return false
 end
 
 function BBP.GetActiveContextSetKey()
@@ -7173,25 +7201,27 @@ function BBP.SaveContextCVar(cvarName, value)
     local setKey = BBP.GetActiveContextSetKey()
     if type(db[setKey]) ~= "table" then db[setKey] = {} end
     db[setKey][cvarName] = ContextCVarIsOn(value)
+    BBP.lastAppliedContext = nil
     return true
 end
 
 local function ApplyContextCVars(target)
+    local wasTracking = BBP.CVarTrackingDisabled
     BBP.CVarTrackingDisabled = true
     for _, cvar in ipairs(BBP.contextCVarList) do
         C_CVar.SetCVar(cvar, target[cvar] and "1" or "0")
     end
-    for _, children in ipairs(contextMinionChildren) do
-        for _, cvar in ipairs(children) do
-            C_CVar.SetCVar(cvar, target[cvar] and "1" or "0")
-        end
+    for _, cvar in ipairs(contextMinionChildren) do
+        C_CVar.SetCVar(cvar, target[cvar] and "1" or "0")
     end
-    BBP.CVarTrackingDisabled = nil
+    BBP.CVarTrackingDisabled = wasTracking
 end
 
-function BBP.UpdateContextCVars()
+function BBP.UpdateContextCVars(force, explicit)
     local db = BetterBlizzPlatesDB
     if not db or not BBP.variablesLoaded then return end
+    if not explicit and BBP.ContextCVarsDisabled() then return end
+    if explicit then force = true end
 
     if InCombatLockdown() then
         if not InstanceChecker:IsEventRegistered("PLAYER_REGEN_ENABLED") then
@@ -7206,7 +7236,35 @@ function BBP.UpdateContextCVars()
         target[cvar] = source[cvar] and true or false
     end
 
+    local signature = BBP.isInPvP and "pvp" or "pve"
+    for _, cvar in ipairs(BBP.contextCVarList) do
+        signature = signature .. (target[cvar] and "1" or "0")
+    end
+    if not force and BBP.lastAppliedContext == signature then return end
+    BBP.lastAppliedContext = signature
+
     ApplyContextCVars(target)
+end
+
+function BBP.EnableTotemIndicatorCVars()
+    local db = BetterBlizzPlatesDB
+    if not db then return end
+
+    local changed = false
+    for _, setKey in ipairs({ "cvarContextPvP", "cvarContextPvE" }) do
+        if type(db[setKey]) ~= "table" then db[setKey] = {} end
+        if not db[setKey].nameplateShowEnemyTotems then
+            db[setKey].nameplateShowEnemyTotems = true
+            changed = true
+        end
+    end
+
+    if changed then
+        BBP.lastAppliedContext = nil
+        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \"Enemy Totems\" nameplates turned on for both PvE and PvP. You can change that in the \"CVar Control\" section of the addon.")
+    end
+
+    BBP.UpdateContextCVars(true, true)
 end
 
 function BBP.CheckIfInInstanceCaller()

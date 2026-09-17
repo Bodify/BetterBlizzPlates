@@ -6252,19 +6252,16 @@ local function guiGeneralTab()
         local function setTotemCVar()
             if InCombatLockdown() then
                 C_Timer.After(1.5, setTotemCVar)
+            elseif self:GetChecked() then
+                BBP.EnableTotemIndicatorCVars()
             else
-                if self:GetChecked() and GetCVar("nameplateShowEnemyTotems") ~= "1" then
-                    BetterBlizzPlatesDB.nameplateShowEnemyTotems = 1
-                    C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
-                    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"CVar Control\" section of the addon.")
-                end
-                BBP.UpdateContextCVars()
+                BBP.UpdateContextCVars(true, true)
             end
         end
         setTotemCVar()
     end)
 
-    CreateTooltipTwo(totemIndicator, "Totem Indicator |A:teleportationnetwork-ardenweald-32x32:17:17|a", "Show icon on and color Totem nameplates.\n\nIn Midnight only Grounding and Capacitor are shown as important (due to restrictions), other totems will just show as a default \"totem icon & color\" if enabled in Advanced Settings.\n\nIn arenas and battlegrounds BBP switches your nameplate visibility CVars to Enemy Pets + Enemy Totems only (this is required) and restores your own settings when you leave.")
+    CreateTooltipTwo(totemIndicator, "Totem Indicator |A:teleportationnetwork-ardenweald-32x32:17:17|a", "Show icon on and color Totem nameplates.\n\nIn Midnight only Grounding and Capacitor are shown as important (due to restrictions), other totems will just show as a default \"totem icon & color\" if enabled in Advanced Settings.\n\nIn arenas and battlegrounds BBP forces Enemy Totems on and Enemy Minions, Guardians and Minus off (this is required) and restores your own settings when you leave. Enemy Pets and all friendly nameplate settings follow your CVar Control settings.")
     local totemsIcon = totemIndicator:CreateTexture(nil, "ARTWORK")
     totemsIcon:SetAtlas("teleportationnetwork-ardenweald-32x32")
     totemsIcon:SetSize(17, 17)
@@ -12101,7 +12098,7 @@ local function guiCVarControl()
                             local set = BetterBlizzPlatesDB[setKey]
                             if not set then set = {}; BetterBlizzPlatesDB[setKey] = set end
                             set[cvar] = not set[cvar]
-                            BBP.UpdateContextCVars()
+                            BBP.UpdateContextCVars(true, true)
                         end)
                 end
             end
@@ -12135,7 +12132,7 @@ local function guiCVarControl()
     guiCVarControl.pvpDropdown:SetPoint("TOPLEFT", guiCVarControl.pvpLabel, "BOTTOMLEFT", 0, -4)
     guiCVarControl.pvpDropdown:SetWidth(220)
     BuildContextDropdown("cvarContextPvP", guiCVarControl.pvpDropdown)
-    CreateTooltipTwo(guiCVarControl.pvpDropdown, "In PvP show", "Nameplate types shown inside arenas and battlegrounds.", "|cFFFFD100Totem Indicator overrides this while in PvP because it needs to have Guardians, Minus and Minions disabled to function properly.|r")
+    CreateTooltipTwo(guiCVarControl.pvpDropdown, "In PvP show", "Nameplate types shown inside arenas and battlegrounds.", "|cFFFFD100Totem Indicator overrides the enemy options while in PvP because it needs Guardians, Minus and Minions disabled to function properly. The friendly options are left alone.|r")
 
     guiCVarControl.pveLabel = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     guiCVarControl.pveLabel:SetPoint("TOPLEFT", guiCVarControl.pvpDropdown, "BOTTOMLEFT", 0, -12)
@@ -12295,13 +12292,10 @@ local function guiTotemList()
             local function setTotemCVar()
                 if InCombatLockdown() then
                     C_Timer.After(1.5, setTotemCVar)
+                elseif self:GetChecked() then
+                    BBP.EnableTotemIndicatorCVars()
                 else
-                    if self:GetChecked() and GetCVar("nameplateShowEnemyTotems") ~= "1" then
-                        BetterBlizzPlatesDB.nameplateShowEnemyTotems = 1
-                        C_CVar.SetCVar("nameplateShowEnemyTotems", BetterBlizzPlatesDB.nameplateShowEnemyTotems)
-                        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: CVar \"nameplateShowEnemyTotems\" set to 1. Make sure your CVar settings are correct in the \"CVar Control\" section of the addon.")
-                    end
-                    BBP.UpdateContextCVars()
+                    BBP.UpdateContextCVars(true, true)
                 end
             end
             setTotemCVar()
@@ -13088,6 +13082,9 @@ end
 -- slider.MaxText:Show()
 
 function BBP.CVarTracker()
+    if BBP.cvarTrackerRegistered then return end
+    BBP.cvarTrackerRegistered = true
+
     local cvarsToTrack = {
         checkboxes = {
             nameplateResourceOnTarget = true,
@@ -13135,8 +13132,11 @@ function BBP.CVarTracker()
         elseif cvarsToTrack.other[cvarName] then
             BetterBlizzPlatesDB[cvarName] = cvarValue
         elseif bitCVarNames[cvarName] then
-            for _, index in ipairs(BBP.bitCVarList[cvarName]) do
-                BetterBlizzPlatesDB.bitfields[cvarName][tostring(index)] = BBP.GetPlayerNameplateBit(cvarName, index)
+            local bitfields = BetterBlizzPlatesDB.bitfields
+            if bitfields and bitfields[cvarName] then
+                for _, index in ipairs(BBP.bitCVarList[cvarName]) do
+                    bitfields[cvarName][tostring(index)] = BBP.GetPlayerNameplateBit(cvarName, index)
+                end
             end
         end
     end)
