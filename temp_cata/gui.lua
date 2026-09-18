@@ -5209,7 +5209,14 @@ local function guiGeneralTab()
 
     local friendlyClassColorName = CreateCheckbox("friendlyClassColorName", "Class color name", BetterBlizzPlates)
     friendlyClassColorName:SetPoint("TOPLEFT", friendlyNameplateClickthrough, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(friendlyClassColorName, "Class Color Name", "Class color the Friendly name text on nameplates")
+    CreateTooltipTwo(friendlyClassColorName, "Class Color Name", "Class color the Friendly name text on nameplates", nil, nil, C_CVar.GetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames") and "nameplateUseClassColorForFriendlyPlayerUnitNames")
+    friendlyClassColorName:HookScript("OnClick", function(self)
+        local value = self:GetChecked() and "1" or "0"
+        if not C_CVar.GetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames") then return end
+        BBP.RunAfterCombat(function()
+            C_CVar.SetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames", value)
+        end)
+    end)
 
     local friendlyColorName = CreateCheckbox("friendlyColorName", "Color name", BetterBlizzPlates)
     friendlyColorName:SetPoint("LEFT", friendlyClassColorName.text, "RIGHT", 0, 0)

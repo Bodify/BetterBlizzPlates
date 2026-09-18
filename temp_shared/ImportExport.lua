@@ -19,7 +19,7 @@ function BBP.ExportProfile(profileTable, dataType)
     if dataType == "fullProfile" then
         local wowVersion = GetBuildInfo()
         BetterBlizzPlatesDB.exportVersion = "BBP: "..BBP.VersionNumber.." WoW: "..wowVersion
-        BetterBlizzPlatesDB.retailExport = BBP.isMidnight or BBP.isRetail
+        BetterBlizzPlatesDB.retailExport = BBP.isMainline or BBP.isRetail
         BetterBlizzPlatesDB.classicExport = BBP.isMoP or BBP.isCata or BBP.isTBC or BBP.isEra
     end
     BetterBlizzPlatesDB.friendlyNameplatesEnabledOnExport = C_CVar.GetCVarBool("nameplateShowFriends")

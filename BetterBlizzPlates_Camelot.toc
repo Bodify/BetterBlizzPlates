@@ -1,0 +1,44 @@
+## Interface: 16001
+## Title: Better|cff00c0ffBlizz|rPlates
+## Notes: Default Blizzard Nameplates with more features added to them with easy settings.
+## Author: Bodify
+## Version: @project-version@
+## SavedVariables: BetterBlizzPlatesDB, BBPCVarBackupsDB
+## IconAtlas: gmchat-icon-blizz
+## X-Curse-Project-ID: 913377
+## X-Wago-ID: b6mb47KP
+
+embeds.xml
+
+init.lua
+shared\functions_classics.lua
+forever\temp_tww.lua
+temp_shared\ImportExport.lua
+forever\modules\camelotFrames.lua
+
+forever\modules\combat.lua
+forever\modules\castbar.lua
+forever\modules\arenaid.lua
+forever\modules\execute.lua
+forever\modules\faction.lua
+forever\modules\healthNumbers.lua
+forever\modules\target.lua
+forever\modules\healer.lua
+forever\modules\absorb.lua
+forever\modules\classIcon.lua
+forever\modules\partyPointer.lua
+forever\modules\pet.lua
+forever\modules\bgIndicator.lua
+forever\modules\quest.lua
+forever\modules\auras.lua
+forever\modules\profiles.lua
+forever\modules\importConvert.lua
+forever\modules\misc.lua
+forever\modules\prd.lua
+forever\modules\totem.lua
+forever\modules\druid\overcharges.lua
+forever\modules\shaman\maelstrom.lua
+forever\modules\hunter\tipofthespear.lua
+
+forever\gui.lua
+forever\BetterBlizzPlates.lua

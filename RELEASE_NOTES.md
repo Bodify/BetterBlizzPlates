@@ -1,3 +1,10 @@
+# BetterBlizzPlates 2.1.4
+## WoW Forever
+- BetterBlizzPlates early patch for WoW Forever. Should be good enough for Beta usage but many tweaks inc so don't expect things to stay 100% the same when updating.
+- New "Forever" profile to select that has a classic feel to it.
+## PSA
+- There is a Blizzard Bug on WoW Forever Beta with addons atm making them fail to save/load settings. Nothing I can do. Deleting your saved variable files while logged out seems to fix it, at least for a while. Blizz pls.
+
 # BetterBlizzPlates 2.1.3
 ## Highlights
 - New Target Indicator options and icons for all versions.
