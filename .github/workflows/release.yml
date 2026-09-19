@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Package and Release
-        uses: BigWigsMods/packager@v2.5.0
+        uses: BigWigsMods/packager@v2.6.1
         env:
           GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
           CF_API_KEY: ${{ secrets.CF_API_KEY }}        # TOC: ## X-Curse-Project-ID: 1234
