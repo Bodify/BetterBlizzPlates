@@ -3538,6 +3538,15 @@ local function CreateBetterClassicHealthbarBorder(frame)
 
         border:SetParent(frame.healthBar)
 
+        if frame.name and frame.name:GetParent() == frame then
+            if not frame.classicNameParent then
+                frame.classicNameParent = CreateFrame("Frame", nil, frame)
+                frame.classicNameParent:SetAllPoints(frame)
+            end
+            frame.classicNameParent:SetFrameLevel(border:GetFrameLevel() + 1)
+            frame.name:SetParent(frame.classicNameParent)
+        end
+
         function border:SetBorderColor(r, g, b, a)
             if BetterBlizzPlatesDB.npBorderDesaturate then
                 self.left:SetDesaturated(true)

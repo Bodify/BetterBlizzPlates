@@ -1,3 +1,20 @@
+# BetterBlizzPlates 2.1.5
+## WoW Forever
+### New
+- New "Level Options" dropdown under General in /bbp.
+- Level Options: "Hide Level Background" setting. Hides the level background texture and just shows the level text.
+- Level Options: "Show Elite Icon Around Level" setting. Shows a rare dragon texture around the level on elite mobs. If "Hide Level" is also enabled it is shown on the side of the healthbar instead.
+- "Hide Level" moved into the new Level Options dropdown.
+- Elite mobs now always show the elite dragon icon on the left side of the healthbar. Hidden with "Hide elite icon" or when "Show Elite Icon Around Level" is enabled.
+- Enabling "Classic Nameplates" setting will now ask you if you want to change a few other settings as well to hit that classic look on first try and not just the borders.
+### Tweak
+- The Pre-Midnight nameplate look no longer shows the level background, only the level text.
+- "Hide Realm Names" removed in favour of "Hide 2nd Name" setting instead. This was causing names to only show first name. The setting is now reset and off by default.
+- Tweak level font size on classic nameplates.
+## All versions
+### Tweak
+- Fix classic nameplates border showing above name.
+
 # BetterBlizzPlates 2.1.4
 ## WoW Forever
 - BetterBlizzPlates early patch for WoW Forever. Should be good enough for Beta usage but many tweaks inc so don't expect things to stay 100% the same when updating.

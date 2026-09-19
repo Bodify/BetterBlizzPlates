@@ -33,6 +33,7 @@ local titleText = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \
 
 local checkBoxList = {}
 local sliderList = {}
+local dropdownList = {}
 
 local tooltips = {
     ["5: Replace name with spec + ID on same row"] = "Shows as for example \"Frost 2\"",
@@ -68,6 +69,33 @@ StaticPopupDialogs["BBP_CONFIRM_RELOAD"] = {
     OnAccept = function()
         BetterBlizzPlatesDB.reopenOptions = true
         ReloadUI()
+    end,
+    timeout = 0,
+    whileDead = true,
+}
+
+StaticPopupDialogs["BBP_CLASSIC_NAMEPLATES_SETUP"] = {
+    text = titleText.."Classic Nameplates toggle only enables the classic borders. Do you want to also automatically enable a few other settings that make them look more similar to classic nameplates?",
+    button1 = "Yes, fix it up",
+    button2 = "No, I'll sort it",
+    OnAccept = function()
+        local db = BetterBlizzPlatesDB
+        db.nameplateGeneralHpHeight = 14.5
+        if db.changeHealthbarHeight then
+            db.hpHeightEnemy = 14.5
+            db.hpHeightFriendly = 14.5
+        end
+        db.useCustomTextureForBars = true
+        db.useCustomTextureForEnemy = true
+        db.useCustomTextureForFriendly = true
+        db.customTexture = "Blizzard DF"
+        db.customTextureFriendly = "Blizzard DF"
+        db.useFakeName = true
+        db.reopenOptions = true
+        ReloadUI()
+    end,
+    OnCancel = function()
+        StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end,
     timeout = 0,
     whileDead = true,
@@ -849,6 +877,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 if AURA_SLIDER_ELEMENTS[element] then
                     BetterBlizzPlatesDB[element] = value
                     BBP.RefreshAllNameplateAuras()
+                elseif element == "levelEliteIconWidth" or element == "levelEliteIconHeight" or element == "levelEliteIconXPos" or element == "levelEliteIconYPos" then
+                    BetterBlizzPlatesDB[element] = value
+                    BBP.UpdateAllLevelOverlays()
                 elseif element == "nameplateGeneralHpHeight" then
                     BetterBlizzPlatesDB.nameplateGeneralHpHeight = value
                     if not BBP.checkCombatAndWarn() then
@@ -1718,15 +1749,6 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
-        elseif title == "Hide Level" and BetterBlizzPlatesDB.classicNameplates then
-            local showInPvP = BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP
-            local tooltipText = "\n|cff32f795Right-click to show Level in PvP |r"
-
-            if showInPvP then
-                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
-            end
-
-            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         elseif title == "Color Focus Nameplate Healthbar" then
             local tooltipText = "\n|cff32f795Right-click to disable while in PvP.|r"
             if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateNotPvP then
@@ -2316,6 +2338,74 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc, bitCVar)
     end)
 
     return checkBox
+end
+
+local function CreateMultiSelectDropdown(label, parent, options, width, onChange)
+    local dropdown = CreateFrame("DropdownButton", nil, parent, "WowStyle1DropdownTemplate")
+    dropdown:SetWidth(width or 120)
+    dropdown.options = options
+
+    local category = parent.name
+    if category == "Better|cff00c0ffBlizz|rPlates |A:gmchat-icon-blizz:16:16|a" then
+        category = "General"
+    end
+    dropdown.searchCategory = category
+
+    function dropdown:ToggleOption(option)
+        BetterBlizzPlatesDB[option.key] = not BetterBlizzPlatesDB[option.key]
+        if onChange then
+            onChange(option.key, BetterBlizzPlatesDB[option.key])
+        end
+        if not BetterBlizzPlatesDB.wasOnLoadingScreen then
+            BBP.needsUpdate = true
+            BBP.RefreshAllNameplates()
+        end
+    end
+
+    dropdown:SetupMenu(function(owner, rootDescription)
+        for _, option in ipairs(options) do
+            local checkbox = rootDescription:CreateCheckbox(option.label,
+                function() return (BetterBlizzPlatesDB[option.key] or (option.isForced and option.isForced())) and true or false end,
+                function(_, inputData)
+                    if option.onRightClick and inputData and inputData.buttonName == "RightButton" then
+                        option.onRightClick()
+                        return MenuResponse.CloseAll
+                    end
+                    dropdown:ToggleOption(option)
+                end)
+            if option.onRightClick then
+                checkbox:AddInitializer(function(button)
+                    button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+                end)
+                checkbox:AddResetter(function(button)
+                    button:RegisterForClicks("LeftButtonUp")
+                end)
+            end
+            if option.isEnabled or option.isForced then
+                checkbox:SetEnabled(function()
+                    if option.isForced and option.isForced() then return false end
+                    return not option.isEnabled or option.isEnabled()
+                end)
+            end
+            if option.tooltip then
+                checkbox:SetTooltip(function(tooltip)
+                    GameTooltip_SetTitle(tooltip, option.tooltipTitle or option.label)
+                    GameTooltip_AddNormalLine(tooltip, option.tooltip, true)
+                    local note = option.tooltipNote and option.tooltipNote()
+                    if note then
+                        GameTooltip_AddBlankLineToTooltip(tooltip)
+                        GameTooltip_AddNormalLine(tooltip, note, true)
+                    end
+                end)
+            end
+        end
+    end)
+    dropdown:SetDefaultText(label)
+    dropdown:SetSelectionText(function() return label end)
+
+    table.insert(dropdownList, {dropdown = dropdown, label = label})
+
+    return dropdown
 end
 
 local KEYED_LISTS = {
@@ -4904,6 +4994,8 @@ local function CreateSearchFrame()
                     resultCheckBox.Text:SetText(data.checkbox.tooltipTitle)
                 end
                 resultCheckBox:SetChecked(data.checkbox:GetChecked())
+                resultCheckBox:SetEnabled(true)
+                resultCheckBox:SetAlpha(1)
 
                 -- Link the result checkbox to the main checkbox
                 resultCheckBox:SetScript("OnClick", function()
@@ -4925,6 +5017,54 @@ local function CreateSearchFrame()
 
                 -- Move down for the next checkbox
                 yOffsetCheckbox = yOffsetCheckbox - 24
+            end
+        end
+
+        for _, data in ipairs(dropdownList) do
+            local dropdown = data.dropdown
+            local dropdownMatches = matchesQuery(data.label or "") or matchesQuery(dropdown.tooltipTitle or "") or matchesQuery(dropdown.tooltipMainText or "")
+            for _, option in ipairs(dropdown.options) do
+                if checkboxCount >= 20 then break end
+                if dropdownMatches or matchesQuery(option.label) or matchesQuery(option.tooltip or "") then
+                    checkboxCount = checkboxCount + 1
+
+                    local resultCheckBox = checkboxPool[checkboxCount]
+                    if not resultCheckBox then
+                        resultCheckBox = CreateFrame("CheckButton", nil, resultsList, "InterfaceOptionsCheckButtonTemplate")
+                        resultCheckBox:SetSize(24, 24)
+                        checkboxPool[checkboxCount] = resultCheckBox
+                    end
+
+                    resultCheckBox:ClearAllPoints()
+                    resultCheckBox:SetPoint("TOPLEFT", searchIcon, "TOPLEFT", 27, yOffsetCheckbox)
+                    resultCheckBox.Text:SetText(option.label)
+                    local forced = option.isForced and option.isForced()
+                    resultCheckBox:SetChecked((BetterBlizzPlatesDB[option.key] or forced) and true or false)
+                    resultCheckBox:SetScript("OnClick", function(self)
+                        dropdown:ToggleOption(option)
+                        self:SetChecked(BetterBlizzPlatesDB[option.key] and true or false)
+                    end)
+                    if option.onRightClick then
+                        resultCheckBox:SetScript("OnMouseDown", function(_, button)
+                            if button == "RightButton" then
+                                GameTooltip:Hide()
+                                option.onRightClick()
+                            end
+                        end)
+                    else
+                        resultCheckBox:SetScript("OnMouseDown", nil)
+                    end
+
+                    local enabled = not forced and (not option.isEnabled or option.isEnabled())
+                    resultCheckBox:SetEnabled(enabled)
+                    resultCheckBox:SetAlpha(enabled and 1 or 0.5)
+
+                    local note = option.tooltipNote and option.tooltipNote()
+                    CreateTooltipTwo(resultCheckBox, option.label, note and (option.tooltip .. "\n\n" .. note) or option.tooltip, "Found in the \"" .. data.label .. "\" dropdown.", nil, nil, nil, dropdown.searchCategory)
+
+                    resultCheckBox:Show()
+                    yOffsetCheckbox = yOffsetCheckbox - 24
+                end
             end
         end
 
@@ -5225,9 +5365,9 @@ local function guiGeneralTab()
     generalSettingsIcon:SetSize(22, 22)
     generalSettingsIcon:SetPoint("RIGHT", settingsText, "LEFT", -3, -1)
 
-    local removeRealmNames = CreateCheckbox("removeRealmNames", "Hide realm", BetterBlizzPlates)
+    local removeRealmNames = CreateCheckbox("removeRealmNames", "Hide 2nd name", BetterBlizzPlates)
     removeRealmNames:SetPoint("TOPLEFT", settingsText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
-    CreateTooltipTwo(removeRealmNames, "Hide Realm Name", "Hide the realm name from Player names on nameplates.")
+    CreateTooltipTwo(removeRealmNames, "Hide 2nd Name", "Hide the 2nd name (surname) from Player names on nameplates.")
 
     local healthNumbers = CreateCheckbox("healthNumbers", "Health numbers", BetterBlizzPlates, nil, BBP.ToggleHealthNumbers)
     healthNumbers:SetPoint("LEFT", removeRealmNames.text, "RIGHT", 0, 0)
@@ -5358,33 +5498,95 @@ local function guiGeneralTab()
     classicNameplates:SetPoint("TOPLEFT", hideTargetHighlight, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(classicNameplates, "Classic Nameplates", "Enable to use a classic nameplate look for your nameplates.", "Only healthbar for now, might add classic castbar in a later patch.\nYou can enable castbar customization and change the texture to the old texture which will basically be the old classic castbars.")
     classicNameplates:HookScript("OnClick", function(self)
-        StaticPopup_Show("BBP_CONFIRM_RELOAD")
-    end)
-
-    local hideLevelFrame = CreateCheckbox("hideLevelFrame", "Hide Lvl", BetterBlizzPlates)
-    hideLevelFrame:SetPoint("LEFT", classicNameplates.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(hideLevelFrame, "Hide Level", "Hide the level display.")
-    hideLevelFrame:HookScript("OnMouseDown", function(self, button)
-        if button == "RightButton" then
-            if not BetterBlizzPlatesDB.classicNameplates then return end
-            if BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP == nil then
-                BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP = true
-            else
-                BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP = not BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP
-            end
-            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
-                self:GetScript("OnEnter")(self)
-            end
+        if self:GetChecked() then
+            StaticPopup_Show("BBP_CLASSIC_NAMEPLATES_SETUP")
+        else
+            StaticPopup_Show("BBP_CONFIRM_RELOAD")
         end
     end)
 
+    local levelEliteIconOptionsFrame
+    local function OpenLevelEliteIconOptionsWindow()
+        if not levelEliteIconOptionsFrame then
+            levelEliteIconOptionsFrame = CreateFrame("Frame", "BBPLevelEliteIconOptionsFrame", UIParent, "DefaultPanelFlatTemplate")
+            levelEliteIconOptionsFrame:SetSize(180, 265)
+            levelEliteIconOptionsFrame:SetPoint("CENTER")
+            levelEliteIconOptionsFrame:SetFrameStrata("HIGH")
+            levelEliteIconOptionsFrame:SetIgnoreParentAlpha(true)
+            levelEliteIconOptionsFrame:SetTitle("Elite Icon Options")
+            levelEliteIconOptionsFrame:EnableMouse(true)
+            levelEliteIconOptionsFrame:SetMovable(true)
+            levelEliteIconOptionsFrame:SetClampedToScreen(true)
+            levelEliteIconOptionsFrame:RegisterForDrag("LeftButton")
+            levelEliteIconOptionsFrame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+            levelEliteIconOptionsFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+
+            levelEliteIconOptionsFrame.closeButton = CreateFrame("Button", nil, levelEliteIconOptionsFrame, "UIPanelCloseButton")
+            levelEliteIconOptionsFrame.closeButton:SetPoint("TOPRIGHT", levelEliteIconOptionsFrame, "TOPRIGHT", 0, 0)
+            levelEliteIconOptionsFrame.closeButton:SetScript("OnClick", function()
+                levelEliteIconOptionsFrame:Hide()
+            end)
+
+            levelEliteIconOptionsFrame.bg = levelEliteIconOptionsFrame:CreateTexture(nil, "BACKGROUND")
+            levelEliteIconOptionsFrame.bg:SetPoint("TOPLEFT", levelEliteIconOptionsFrame, "TOPLEFT", 7, -3)
+            levelEliteIconOptionsFrame.bg:SetPoint("BOTTOMRIGHT", levelEliteIconOptionsFrame, "BOTTOMRIGHT", -3, 3)
+            levelEliteIconOptionsFrame.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
+
+            local levelEliteIconWidth = CreateSlider(levelEliteIconOptionsFrame, "Width", -30, 40, 1, "levelEliteIconWidth", nil, 150)
+            levelEliteIconWidth:SetPoint("TOPLEFT", levelEliteIconOptionsFrame, "TOPLEFT", 14, -45)
+            CreateTooltipTwo(levelEliteIconWidth, "Elite Icon Width", "Adjust the width of the elite icon around the level.", "Right-click the slider to type a value outside the default range.")
+
+            local levelEliteIconHeight = CreateSlider(levelEliteIconOptionsFrame, "Height", -30, 40, 1, "levelEliteIconHeight", nil, 150)
+            levelEliteIconHeight:SetPoint("TOPLEFT", levelEliteIconWidth, "BOTTOMLEFT", 0, -17)
+            CreateTooltipTwo(levelEliteIconHeight, "Elite Icon Height", "Adjust the height of the elite icon around the level.\n\nThe icon is anchored to the top and bottom of the healthbar so it already scales with healthbar height, this adds or removes extra height on top of that.", "Right-click the slider to type a value outside the default range.")
+
+            local levelEliteIconXPos = CreateSlider(levelEliteIconOptionsFrame, "x offset", -30, 30, 0.5, "levelEliteIconXPos", nil, 150)
+            levelEliteIconXPos:SetPoint("TOPLEFT", levelEliteIconHeight, "BOTTOMLEFT", 0, -17)
+            CreateTooltipTwo(levelEliteIconXPos, "Elite Icon X Offset", "Move the elite icon horizontally.", "Right-click the slider to type a value outside the default range.")
+
+            local levelEliteIconYPos = CreateSlider(levelEliteIconOptionsFrame, "y offset", -30, 30, 0.5, "levelEliteIconYPos", nil, 150)
+            levelEliteIconYPos:SetPoint("TOPLEFT", levelEliteIconXPos, "BOTTOMLEFT", 0, -17)
+            CreateTooltipTwo(levelEliteIconYPos, "Elite Icon Y Offset", "Move the elite icon vertically.", "Right-click the slider to type a value outside the default range.")
+
+            local levelEliteIconLeftSide = CreateCheckbox("levelEliteIconLeftSide", "Attach Elite Icon Left Side", levelEliteIconOptionsFrame, nil, BBP.UpdateAllLevelOverlays)
+            levelEliteIconLeftSide:SetPoint("TOPLEFT", levelEliteIconYPos, "BOTTOMLEFT", -4, -12)
+            CreateTooltipTwo(levelEliteIconLeftSide, "Attach Elite Icon Left Side", "Move the elite icon to the left side of healthbar instead when level is hidden.")
+
+            local levelEliteIconReset = CreateFrame("Button", nil, levelEliteIconOptionsFrame, "UIPanelButtonTemplate")
+            levelEliteIconReset:SetText("Reset")
+            levelEliteIconReset:SetSize(80, 22)
+            levelEliteIconReset:SetPoint("BOTTOM", levelEliteIconOptionsFrame, "BOTTOM", 2, 12)
+            levelEliteIconReset:SetScript("OnClick", function()
+                levelEliteIconWidth:SetValue(0)
+                levelEliteIconHeight:SetValue(0)
+                levelEliteIconXPos:SetValue(0)
+                levelEliteIconYPos:SetValue(0)
+                if levelEliteIconLeftSide:GetChecked() then
+                    levelEliteIconLeftSide:Click()
+                end
+            end)
+            CreateTooltipTwo(levelEliteIconReset, "Reset", "Reset to default values")
+
+            levelEliteIconOptionsFrame:Show()
+        else
+            levelEliteIconOptionsFrame:SetShown(not levelEliteIconOptionsFrame:IsShown())
+        end
+    end
+
+    local levelOptions = CreateMultiSelectDropdown("Level Options", BetterBlizzPlates, {
+        { key = "hideLevelFrame", label = "Hide Level", tooltip = "Hide the level display." },
+        { key = "hideLevelFrameBackground", label = "Hide Level Background", tooltip = "Hide the level background texture and just show level text.", tooltipNote = function() return BetterBlizzPlatesDB.classicRetailNameplates and "Always on with the Pre-Midnight Nameplate look." or nil end, isForced = function() return BetterBlizzPlatesDB.classicRetailNameplates end },
+        { key = "levelFrameEliteIcon", label = "Show Elite Icon Around Level", tooltip = "Show a rare dragon texture around the level on elite mobs.\n\nIf Hide Level is also enabled the ring is shown on the right side of the healthbar instead.\n\n|cff32f795Right-click for options.|r", onRightClick = OpenLevelEliteIconOptionsWindow },
+    }, 150)
+    levelOptions:SetPoint("LEFT", classicNameplates.text, "RIGHT", 5, 0)
+    levelOptions:SetScale(0.7)
+    CreateTooltipTwo(levelOptions, "Level Options", "Settings for the level display next to the healthbar.", "Hide Level, Hide Level Background and Show Elite Icon Around Level.")
+
     classicNameplates:HookScript("OnClick", function(self)
         if self:GetChecked() then
-            hideLevelFrame:SetChecked(false)
             BetterBlizzPlatesDB.hideLevelFrame = false
             BetterBlizzPlatesDB.classicRetailNameplates = nil
         else
-            hideLevelFrame:SetChecked(true)
             BetterBlizzPlatesDB.hideLevelFrame = true
         end
         BBP.RefreshAllNameplates()

@@ -66,7 +66,7 @@ local function GetClassicLevelOffset(anchorPoint, frame)
     local db = BetterBlizzPlatesDB
     if db.hideLevelFrame then return 0 end
     if db.classicNameplates then
-        if BBP.isInPvP and not db.hideLevelFrameForceOnInPvP then return 0 end
+        if BBP.HideMaxLevelInPvP(frame and frame.unit) then return 0 end
         return 17.5
     end
     local _, levelBadgeCenter = BBP.GetLevelBadgeSpace(frame)

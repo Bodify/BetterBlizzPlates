@@ -159,7 +159,7 @@ local function RestoreBlizzardLevelBadgeLayout(frame)
     frame.name:SetPoint("BOTTOMLEFT", frame.HealthBarsContainer, "TOPLEFT", 0, nameSpacing)
     if not followsHealthBar then
         local classicLevel = frame.ClassicLevelFrame
-        local levelShown = classicLevel and ((classicLevel.text and classicLevel.text:IsShown()) or (classicLevel.skull and classicLevel.skull:IsShown()))
+        local levelShown = not BetterBlizzPlatesDB.hideLevelFrameBackground and classicLevel and ((classicLevel.text and classicLevel.text:IsShown()) or (classicLevel.skull and classicLevel.skull:IsShown()))
         frame.name:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "TOPRIGHT", levelShown and CLASSIC_LEVEL_NAME_NUDGE or 0, nameSpacing)
     elseif badgeSpace > 0 then
         frame.name:SetPoint("RIGHT", levelFrame, "RIGHT", 0, 0)
@@ -199,12 +199,196 @@ local function RefreshLevelBadgeSpace(frame)
     BBP.UpdateStackingZone(nameplate)
 end
 
+function BBP.GetNameplateLevel(unit, effective)
+    local getLevel = effective and UnitEffectiveLevel or UnitLevel
+    local level = getLevel(unit)
+    if not level then return level end
+    if level > 0 and UnitCanAttack("player", unit) then
+        local playerLevel = getLevel("player")
+        if playerLevel and level >= playerLevel + 10 then
+            return -1
+        end
+    end
+    return level
+end
+
+function BBP.HideMaxLevelInPvP(unit)
+    if not BBP.isInPvP or not unit then return false end
+    local level = UnitLevel(unit)
+    if not level then return false end
+    return level >= GetMaxLevelForPlayerExpansion()
+end
+
+local ELITE_CLASSIFICATIONS = { elite = true, rareelite = true, worldboss = true }
+local ELITE_RING_LEVEL_X = 1
+local ELITE_RING_HEALTHBAR_X = -8
+local ELITE_RING_ATLAS = "Adventures-Ring-Gold-Dragon"
+local ELITE_RING_CLASSIC_X = 8.5
+local ELITE_RING_Y = -1
+local ELITE_RING_WIDTH = 38
+local ELITE_RING_PADDING = 13
+
+local function GetLevelOverlay(frame, levelFrame)
+    local overlay = frame.bbpLevelOverlay
+    if overlay then return overlay end
+    overlay = CreateFrame("Frame", nil, levelFrame)
+    overlay:SetAllPoints(levelFrame)
+    overlay:SetFrameLevel(levelFrame:GetFrameLevel() + 1)
+    overlay.onHealthBar = false
+
+    overlay.eliteRing = overlay:CreateTexture(nil, "ARTWORK")
+    local ringInfo = C_Texture.GetAtlasInfo(ELITE_RING_ATLAS)
+    if ringInfo then
+        overlay.eliteRing:SetTexture(ringInfo.file or ringInfo.filename)
+        overlay.eliteRing.atlasInfo = ringInfo
+    else
+        overlay.eliteRing:SetAtlas(ELITE_RING_ATLAS)
+    end
+
+    overlay.text = overlay:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    overlay.text:SetFont("Fonts\\FRIZQT__.TTF", 10)
+    overlay.text:SetJustifyH("CENTER")
+    overlay.text:SetPoint("CENTER", overlay, "CENTER", 0, 0)
+    overlay.text:SetShadowColor(0, 0, 0, 1)
+    overlay.text:SetShadowOffset(1, -1)
+
+    overlay.skull = overlay:CreateTexture(nil, "OVERLAY")
+    overlay.skull:SetTexture("Interface\\TargetingFrame\\UI-TargetingFrame-Skull")
+    overlay.skull:SetPoint("CENTER", overlay, "CENTER", 0, 0)
+    overlay.skull:SetSize(16, 16)
+
+    frame.bbpLevelOverlay = overlay
+    return overlay
+end
+
+local function UpdateLevelOverlayText(frame)
+    local overlay = frame.bbpLevelOverlay
+    local unit = frame.unit
+    if not overlay or not unit then return end
+    if not overlay.showText then
+        overlay.text:Hide()
+        overlay.skull:Hide()
+        return
+    end
+
+    local level = BBP.GetNameplateLevel(unit, true)
+    if level <= 0 then
+        overlay.text:Hide()
+        overlay.skull:Show()
+        return
+    end
+
+    local color = UNIT_LEVEL_NON_ATTACKABLE
+    if UnitCanAttack("player", unit) then
+        color = frame.PlayerLevelDiffFrame:GetDifficultyColor(level - UnitEffectiveLevel("player"))
+    end
+    if color then
+        overlay.text:SetTextColor(color:GetRGB())
+    end
+    overlay.text:SetText(level)
+    overlay.text:Show()
+    overlay.skull:Hide()
+end
+
+local levelDiffHooked
+local function HookLevelDiffUpdates()
+    if levelDiffHooked or not CompactUnitFrame_UpdatePlayerLevelDiff then return end
+    levelDiffHooked = true
+    hooksecurefunc("CompactUnitFrame_UpdatePlayerLevelDiff", function(frame)
+        if not frame or frame:IsForbidden() or not frame.bbpLevelOverlay then return end
+        UpdateLevelOverlayText(frame)
+    end)
+end
+
+local function UpdateLevelOverlay(frame, levelFrame, db, levelHidden)
+    local hideBackground = (db.hideLevelFrameBackground or db.classicRetailNameplates) and not levelHidden
+    local ringOnHealthBar = levelHidden and frame.HealthBarsContainer and true or false
+    local showRing = false
+    local classification
+    if db.levelFrameEliteIcon and (not levelHidden or ringOnHealthBar) and frame.unit then
+        classification = UnitClassification(frame.unit)
+        showRing = ELITE_CLASSIFICATIONS[classification] or false
+    end
+
+    local blizzardAlpha = hideBackground and 0 or 1
+    if levelFrame.playerLevelDiffIcon then levelFrame.playerLevelDiffIcon:SetAlpha(blizzardAlpha) end
+    if levelFrame.playerLevelDiffText then levelFrame.playerLevelDiffText:SetAlpha(blizzardAlpha) end
+    if levelFrame.highLevelTexture then levelFrame.highLevelTexture:SetAlpha(blizzardAlpha) end
+    if levelFrame.selectedBorder then levelFrame.selectedBorder:SetAlpha(blizzardAlpha) end
+
+    if not hideBackground and not showRing and not frame.bbpLevelOverlay then return end
+
+    HookLevelDiffUpdates()
+    local overlay = GetLevelOverlay(frame, levelFrame)
+    overlay.showText = hideBackground
+    if overlay.onHealthBar ~= ringOnHealthBar then
+        overlay.onHealthBar = ringOnHealthBar
+        overlay:ClearAllPoints()
+        if ringOnHealthBar then
+            overlay:SetParent(frame.HealthBarsContainer)
+            overlay:SetSize(20, 20)
+            overlay:SetPoint("CENTER", frame.HealthBarsContainer, "RIGHT", 0, 0)
+        else
+            overlay:SetParent(levelFrame)
+            overlay:SetAllPoints(levelFrame)
+        end
+        overlay:SetFrameLevel(math.max(overlay:GetParent():GetFrameLevel(), levelFrame:GetFrameLevel()) + 1)
+    end
+    overlay.eliteRing:SetShown(showRing)
+    overlay.eliteRing:SetDesaturated(classification == "rareelite")
+    local healthBar = frame.HealthBarsContainer
+    if healthBar then
+        local x
+        local side = "RIGHT"
+        if db.hideLevelFrame then
+            if db.levelEliteIconLeftSide then
+                side = "LEFT"
+                x = -ELITE_RING_HEALTHBAR_X
+            else
+                x = ELITE_RING_HEALTHBAR_X
+            end
+        elseif db.classicNameplates then
+            x = ELITE_RING_CLASSIC_X
+        else
+            x = select(2, BBP.GetLevelBadgeSpace(frame)) + ELITE_RING_LEVEL_X
+        end
+        x = x + (db.levelEliteIconXPos or 0)
+        local y = ELITE_RING_Y + (db.levelEliteIconYPos or 0)
+        local padding = ELITE_RING_PADDING + (db.levelEliteIconHeight or 0) / 2
+        local info = overlay.eliteRing.atlasInfo
+        if info then
+            if side == "LEFT" then
+                overlay.eliteRing:SetTexCoord(info.rightTexCoord, info.leftTexCoord, info.topTexCoord, info.bottomTexCoord)
+            else
+                overlay.eliteRing:SetTexCoord(info.leftTexCoord, info.rightTexCoord, info.topTexCoord, info.bottomTexCoord)
+            end
+        end
+        overlay.eliteRing:ClearAllPoints()
+        overlay.eliteRing:SetPoint("TOP", healthBar, "TOP" .. side, x, y + padding)
+        overlay.eliteRing:SetPoint("BOTTOM", healthBar, "BOTTOM" .. side, x, y - padding)
+        overlay.eliteRing:SetWidth(ELITE_RING_WIDTH + (db.levelEliteIconWidth or 0))
+    end
+    UpdateLevelOverlayText(frame)
+end
+
+function BBP.UpdateAllLevelOverlays()
+    local db = BetterBlizzPlatesDB
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        local levelFrame = frame and frame.PlayerLevelDiffFrame
+        if levelFrame and not frame:IsForbidden() and not levelFrame:IsForbidden() then
+            UpdateLevelOverlay(frame, levelFrame, db, db.hideLevelFrame or db.classicNameplates)
+        end
+    end
+end
+
 function BBP.UpdateBlizzardLevelFrame(frame)
     local levelFrame = frame and frame.PlayerLevelDiffFrame
     if not levelFrame or levelFrame:IsForbidden() then return end
     local db = BetterBlizzPlatesDB
 
-    levelFrame:SetAlpha((db.hideLevelFrame or db.classicNameplates) and 0 or 1)
+    local levelHidden = db.hideLevelFrame or db.classicNameplates
+    levelFrame:SetAlpha(levelHidden and 0 or 1)
     SetUpLevelBadgeArt(levelFrame)
 
     if frame.HealthBarsContainer and not frame.bbpLevelFrameHooked then
@@ -221,4 +405,5 @@ function BBP.UpdateBlizzardLevelFrame(frame)
     SyncLevelBadge(frame)
     RestoreBlizzardLevelBadgeLayout(frame)
     RefreshLevelBadgeSpace(frame)
+    UpdateLevelOverlay(frame, levelFrame, db, levelHidden)
 end
