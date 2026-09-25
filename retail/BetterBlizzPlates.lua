@@ -3172,7 +3172,10 @@ function BBP.ColorThreat(frame)
     if not frame or not frame.unit then return end
     if UnitIsPlayer(frame.unit) then return end
     if UnitIsFriend(frame.unit, "player") then return end
-    if UnitIsTapDenied(frame.unit) then return end
+    if UnitIsTapDenied(frame.unit) then
+        frame.healthBar:SetStatusBarColor(0.9, 0.9, 0.9)
+        return
+    end
 
     local hideSolo = BetterBlizzPlatesDB.enemyColorThreatHideSolo and not IsInGroup()
     if hideSolo then return end
@@ -3265,6 +3268,15 @@ function BBP.ColorNpcHealthbar(frame)
         return
     end
     if not info.unitGUID then return end
+
+    if UnitIsTapDenied(frame.unit) then
+        if config.npcHealthbarColor then
+            config.npcHealthbarColor = nil
+            CompactUnitFrame_UpdateName(frame)
+        end
+        frame.healthBar:SetStatusBarColor(0.9, 0.9, 0.9)
+        return
+    end
 
     local npcID = select(6, strsplit("-", info.unitGUID))
     local npcName = UnitName(frame.unit)
@@ -3677,7 +3689,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
     end
 
-    if config.colorNPC and config.npcHealthbarColor then
+    if config.colorNPC and config.npcHealthbarColor and not UnitIsTapDenied(frame.unit) then
         frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 
@@ -6101,7 +6113,7 @@ function BBP.ConsolidatedUpdateName(frame)
     BBP.ClassColorAndScaleNames(frame)
 
     -- Color NPC
-    if config.colorNPC and config.colorNPCName and config.npcHealthbarColor then
+    if config.colorNPC and config.colorNPCName and config.npcHealthbarColor and not UnitIsTapDenied(frame.unit) then
         frame.name:SetVertexColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 
@@ -6279,7 +6291,7 @@ local function UpdateClassRoleStatus(self, event)
     if not BetterBlizzPlatesDB.enemyColorThreat then return end
     local specIndex = GetSpecialization()
     local role = specIndex and GetSpecializationRole(specIndex)
-    BBP.isRoleTank = role == "TANK"
+    BBP.isRoleTank = BBP.forceTankRole or role == "TANK"
 
     offTanks = GetGroupTanks()
 end

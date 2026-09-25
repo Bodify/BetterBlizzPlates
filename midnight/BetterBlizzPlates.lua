@@ -4173,7 +4173,10 @@ function BBP.ColorThreat(frame)
     if not frame or not frame.unit then return end
     if UnitIsPlayer(frame.unit) then return end
     if UnitIsFriend(frame.unit, "player") then return end
-    if UnitIsTapDenied(frame.unit) then return end
+    if UnitIsTapDenied(frame.unit) then
+        frame.healthBar:SetStatusBarColor(0.9, 0.9, 0.9)
+        return
+    end
 
     local hideSolo = BetterBlizzPlatesDB.enemyColorThreatHideSolo and not IsInGroup()
     if hideSolo then return end
@@ -4257,6 +4260,12 @@ function BBP.ColorNpcHealthbar(frame)
     if UnitIsPlayer(frame.unit) or not isEnemy(frame.unit) then return end
 
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
+
+    if UnitIsTapDenied(frame.unit) then
+        config.npcHealthbarColor = nil
+        frame.healthBar:SetStatusBarColor(0.9, 0.9, 0.9)
+        return
+    end
 
     local db = BetterBlizzPlatesDB
     local lvl = UnitEffectiveLevel(frame.unit)
@@ -4662,7 +4671,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         end
     end
 
-    if config.colorNPC and config.npcHealthbarColor then
+    if config.colorNPC and config.npcHealthbarColor and not UnitIsTapDenied(frame.unit) then
         frame.healthBar:SetStatusBarColor(unpack(config.npcHealthbarColor))
     end
 
@@ -5679,6 +5688,7 @@ local function HandleNamePlateRemoved(unit)
     if frame.executeColorOverlay then
         frame.executeColorOverlay:SetAlpha(0)
     end
+    BBP.RestoreExecuteHealthBarTexture(frame)
 
     frame.arenaID = nil
 
@@ -6345,6 +6355,12 @@ local function CreateBetterClassicHealthbarBorder(frame)
     if frame.ClassicLevelFrame and not config.hideLevelFrame then
         local unitLevel = UnitLevel(frame.unit)
         frame.ClassicLevelFrame.text:SetText(unitLevel ~= -1 and unitLevel or "")
+        if UnitCanAttack("player", frame.unit) then
+            local levelColor = GetDifficultyColor(C_PlayerInfo.GetContentDifficultyCreatureForPlayer(frame.unit))
+            frame.ClassicLevelFrame.text:SetTextColor(levelColor.r, levelColor.g, levelColor.b)
+        else
+            frame.ClassicLevelFrame.text:SetTextColor(1, 0.82, 0)
+        end
         if unitLevel == -1 then
             frame.ClassicLevelFrame.skull:Show()
             frame.ClassicLevelFrame.text:Hide()
@@ -7703,7 +7719,7 @@ function BBP.ConsolidatedUpdateName(frame)
     --frame.name:SetPoint("BOTTOMLEFT", frame.HealthBarsContainer, "TOPLEFT", 4.2, 2)
 
     -- Color NPC
-    if config.colorNPC and config.colorNPCName and config.npcHealthbarColor then
+    if config.colorNPC and config.colorNPCName and config.npcHealthbarColor and not UnitIsTapDenied(frame.unit) then
         local r,g,b = unpack(config.npcHealthbarColor)
         frame.name:SetVertexColor(r, g, b)
     end
@@ -7856,7 +7872,7 @@ local function UpdateClassRoleStatus(self, event)
     if not BetterBlizzPlatesDB.enemyColorThreat then return end
     local specIndex = GetSpecialization()
     local role = specIndex and GetSpecializationRole(specIndex)
-    BBP.isRoleTank = role == "TANK"
+    BBP.isRoleTank = BBP.forceTankRole or role == "TANK"
 
     offTanks = GetGroupTanks()
 end

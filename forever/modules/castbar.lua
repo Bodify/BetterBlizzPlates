@@ -782,7 +782,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
         end
         local useCastbarAnchor = not db.targetTextStatic and bottomAnchors[relativeAnchor]
         local castBarVisible = frame.castBar and frame.castBar:IsShown() and not frame.hideCastInfo
-        local anchorTo = (useCastbarAnchor and castBarVisible) and frame.castBar or frame.HealthBarsContainer
+        local anchorTo = (useCastbarAnchor and castBarVisible) and frame.castBar or BBP.GetLevelSpanAnchor(frame, relativeAnchor)
         frame.TargetText:SetParent((useCastbarAnchor and castBarVisible) and frame.castBar or (frame.bbpOverlay or frame.healthBar))
 
         local name = GetUnitName("player")
@@ -837,7 +837,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
                 end
             end
 
-            local anchorTo = useCastbarAnchor and frame.castBar or frame.HealthBarsContainer
+            local anchorTo = useCastbarAnchor and frame.castBar or BBP.GetLevelSpanAnchor(frame, relativeAnchor)
             frame.TargetText:SetParent(useCastbarAnchor and frame.castBar or (frame.bbpOverlay or frame.healthBar))
             frame.TargetText:SetText(name)
             frame.TargetText:ClearAllPoints()
@@ -863,7 +863,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
                         name = color:WrapTextInColorCode(name)
                     end
                 end
-                local anchorTo = (useCastbarAnchor and castBarVisible) and frame.castBar or frame.HealthBarsContainer
+                local anchorTo = (useCastbarAnchor and castBarVisible) and frame.castBar or BBP.GetLevelSpanAnchor(frame, relativeAnchor)
                 frame.TargetText:SetParent((useCastbarAnchor and castBarVisible) and frame.castBar or (frame.bbpOverlay or frame.healthBar))
                 frame.TargetText:SetText(name)
                 frame.TargetText:ClearAllPoints()
@@ -1112,21 +1112,6 @@ function BBP.ToggleSpellCastEventRegistration()
     end
 end
 
-local empowerEvents = {
-    ["UNIT_SPELLCAST_EMPOWER_START"] = true,
-    ["UNIT_SPELLCAST_EMPOWER_UPDATE"] = true,
-    ["UNIT_SPELLCAST_EMPOWER_STOP"] = true,
-}
-
-local function HideChargeTiers(castBar)
-    for _, child in ipairs({castBar:GetChildren()}) do
-        if child.BasePip or (child.Normal and child.Disabled) then
-            child:SetAlpha(0)
-            castBar.empowerHidden = true
-        end
-    end
-end
-
 -- quickfix for now
 function BBP.CastbarOnEvent(frame, event)
     local self = frame.castBar
@@ -1290,34 +1275,6 @@ function BBP.CastbarOnEvent(frame, event)
                 end)
                 self.hooked = true
             end
-        end
-
-        if BetterBlizzPlatesDB.normalCastbarForEmpoweredCasts then
-            if empowerEvents[event] then
-                if not self.empowerSpark then
-                    self.empowerSpark = self:CreateTexture(nil, "OVERLAY")
-                    self.empowerSpark:SetAtlas("UI-CastingBar-Pip")
-                    self.empowerSpark:SetSize(6, 16)
-                    self.empowerSpark:SetPoint("CENTER", self.Spark, "CENTER", 0, -4.5)
-                    self.empowerSpark:Hide()
-                end
-                if not self.empowerHidden then
-                    HideChargeTiers(self)
-                end
-                if not useCustomCastbarTexture then
-                    self:SetStatusBarTexture("UI-CastingBar-Filling-Standard")
-                end
-                self.Spark:Hide()
-                self.empowerSparkShown = true
-                self.empowerSpark:Show()
-            else
-                if self.empowerSparkShown then
-                    self.empowerSpark:Hide()
-                    self.Spark:Show()
-                    self.empowerSparkShown = false
-                end
-            end
-
         end
 
         if not self.hooked then

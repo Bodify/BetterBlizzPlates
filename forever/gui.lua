@@ -5324,17 +5324,6 @@ local function guiGeneralTab()
         midnightBeta:Hide()
     end)
 
-    BetterBlizzPlates.settingsBugText = BetterBlizzPlates:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
-    BetterBlizzPlates.settingsBugText:SetPoint("TOP", SettingsPanel, "BOTTOM", 0, -4)
-    BetterBlizzPlates.settingsBugText:SetText("|cffff4040Blizzard Bug: Settings not saving. Check FOREVER section for info.|r")
-    BetterBlizzPlates.settingsBugText:SetFont("Fonts\\FRIZQT__.TTF", 32, "THINOUTLINE")
-    BetterBlizzPlates.settingsBugText:Hide()
-    BetterBlizzPlates:HookScript("OnShow", function()
-        BetterBlizzPlates.settingsBugText:Show()
-    end)
-    BetterBlizzPlates:HookScript("OnHide", function()
-        BetterBlizzPlates.settingsBugText:Hide()
-    end)
 
     local bgImg = BetterBlizzPlates:CreateTexture(nil, "BACKGROUND")
     bgImg:SetAtlas("professions-recipe-background")
@@ -6942,19 +6931,8 @@ local function guiForever()
     bodyText:SetSpacing(6)
     bodyText:SetText("The WoW: Forever version of BetterBlizzPlates is under heavy development. Expect bugs and please report them so I can more easily fix em! Thank you!\n\n- Bodify")
 
-    local bugTitle = guiForever:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
-    bugTitle:SetPoint("TOP", bodyText, "BOTTOM", 0, -30)
-    bugTitle:SetText("|cffff4040Blizzard Bug:|r")
-
-    local bugText = guiForever:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
-    bugText:SetPoint("TOP", bugTitle, "BOTTOM", 0, -12)
-    bugText:SetWidth(500)
-    bugText:SetJustifyH("CENTER")
-    bugText:SetSpacing(6)
-    bugText:SetText("There's a Blizzard bug on the Forever Beta with settings not saving/loading properly. Some people are reporting (temporary?) success by logging out and deleting their Saved Variables files and trying again. We will just have to wait for Blizzard to fix this one.\n\nJoin the Discord for more updates and info on the situation:")
-
     local discordLinkEditBox = CreateFrame("EditBox", nil, guiForever, "InputBoxTemplate")
-    discordLinkEditBox:SetPoint("TOP", bugText, "BOTTOM", 0, -12)
+    discordLinkEditBox:SetPoint("TOP", bodyText, "BOTTOM", 0, -30)
     discordLinkEditBox:SetSize(180, 20)
     discordLinkEditBox:SetAutoFocus(false)
     discordLinkEditBox:SetFontObject("ChatFontNormal")
@@ -10097,21 +10075,8 @@ local function guiCastbar()
     interruptedByIndicator:SetPoint("TOPLEFT", useCustomCastbarTexture, "BOTTOMLEFT", 0, -84)
     CreateTooltip(interruptedByIndicator, "Show the name of who interrupted the cast\ninstead of just the standard \"Interrupted\" text.")
 
-    local normalCastbarForEmpoweredCasts = CreateCheckbox("normalCastbarForEmpoweredCasts", "Normal empowered cast", enableCastbarCustomization)
-    normalCastbarForEmpoweredCasts:SetPoint("LEFT", interruptedByIndicator.text, "RIGHT", -1, 0)
-    CreateTooltip(normalCastbarForEmpoweredCasts, "Instead of the jank tiered castbar that always kinda looks uninterruptible,\nchange the empowered castbars to just look like normal ones.", "ANCHOR_LEFT")
-    normalCastbarForEmpoweredCasts:HookScript("OnClick", function(self)
-        if BetterBlizzFramesDB then
-            if self:GetChecked() then
-                BetterBlizzFramesDB.normalCastbarForEmpoweredCasts = true
-            else
-                BetterBlizzFramesDB.normalCastbarForEmpoweredCasts = false
-            end
-        end
-    end)
-
     local hideCastbarText = CreateCheckbox("hideCastbarText", "Hide Castbar Text", enableCastbarCustomization)
-    hideCastbarText:SetPoint("TOPLEFT", normalCastbarForEmpoweredCasts, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    hideCastbarText:SetPoint("TOPLEFT", interruptedByIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(hideCastbarText, "Hide Castbar Text", "Hides castbar text except for the \"Interrupted\" text\nor if \"Show who interrupted\" is on.", nil, "ANCHOR_LEFT")
     hideCastbarText:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
@@ -12086,8 +12051,7 @@ local function guiCVarControl()
     nameplateResourceOnTarget:HookScript("OnClick", function()
         BBP.RegisterTargetCastingEvents()
         BBP.ApplyNameplateWidth()
-        BBP.MaelstromWeaponCombos()
-        BBP.TipOfSpearCombos()
+        BBP.ForeverComboPoints()
     end)
 
     nameplateResourceOnTarget:HookScript("OnMouseDown", function(self, button)
@@ -12106,18 +12070,16 @@ local function guiCVarControl()
                     BetterBlizzPlatesDB.nameplateResourceOnTarget = "1"
                 end
                 BBP.TargetResourceUpdater()
-                BBP.MaelstromWeaponCombos()
-                BBP.TipOfSpearCombos()
+                BBP.ForeverComboPoints()
             end
         end
     end)
 
     local instantComboPoints = CreateCheckbox("instantComboPoints", "Instant Combo Points", guiCVarControl, nil, BBP.InstantComboPoints)
     instantComboPoints:SetPoint("TOPLEFT", nameplateResourceOnTarget, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(instantComboPoints, "Instant Combo Points", "Remove the combo point animations for instant feedback. Currently works for:\n|cFFFFF569Rogue|r\n|cFFFF7D0ADruid|r\n|cFF00FF96Monk|r\n|cFF3FC7EBMage|r\n|cFFF58CBAPaladin|r\n|cFF0070DEShaman|r\n|cFFAAD372Hunter|r")
+    CreateTooltipTwo(instantComboPoints, "Instant Combo Points", "Remove the combo point animations for instant feedback. Currently works for:\n|cFFFFF569Rogue|r\n|cFFFF7D0ADruid|r\n|cFF00FF96Monk|r\n|cFF3FC7EBMage|r\n|cFFF58CBAPaladin|r")
     instantComboPoints:HookScript("OnClick", function(self)
-        BBP.MaelstromWeaponCombos()
-        BBP.TipOfSpearCombos()
+        BBP.ForeverComboPoints()
         if not self:GetChecked() then
             StaticPopup_Show("BBP_CONFIRM_RELOAD")
             if BetterBlizzFramesDB then
@@ -12130,8 +12092,9 @@ local function guiCVarControl()
     hideResourceFrame:SetPoint("TOPLEFT", instantComboPoints, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     hideResourceFrame:HookScript("OnClick", function(self)
         if not self:GetChecked() then
-            if prdClassFrame then
-                prdClassFrame:SetAlpha(1)
+            local resourceFrame = (PersonalResourceDisplayFrame and PersonalResourceDisplayFrame.classFrame) or BBP.ComboPointBar
+            if resourceFrame then
+                resourceFrame:SetAlpha(1)
             end
         end
     end)
@@ -12217,30 +12180,23 @@ local function guiCVarControl()
         end
     end)
 
-    local druidOverstacks = CreateCheckbox("druidOverstacks", "Druid: Color Berserk Overstack Combo Points Blue", guiCVarControl)
-    druidOverstacks:SetPoint("TOPLEFT", hideResourceFrame, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(druidOverstacks, "Druid: Color Berserk Overstack Combo Points Blue", "Color the Druid Berserk Overstack Combo Points blue similar to Rogue's Echoing Reprimand.")
-
     local druidAlwaysShowCombos = CreateCheckbox("druidAlwaysShowCombos", "Druid: Always Show Combo Points", guiCVarControl)
-    druidAlwaysShowCombos:SetPoint("TOPLEFT", druidOverstacks, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    druidAlwaysShowCombos:SetPoint("TOPLEFT", hideResourceFrame, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(druidAlwaysShowCombos, "Druid: Always Show Combo Points", "Alway show the combo points regardless of what form you are in if you have active combo points.")
-
-    local shamanMaelstromCombos = CreateCheckbox("shamanMaelstromCombos", "Shaman: Maelstrom Weapon Combo Points", guiCVarControl)
-    shamanMaelstromCombos:SetPoint("TOPLEFT", druidAlwaysShowCombos, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(shamanMaelstromCombos, "Shaman: Maelstrom Weapon Combo Points", "Show Enhancement Shaman's Maelstrom Weapon stacks as combo points on the Personal Resource Display.")
-    shamanMaelstromCombos:HookScript("OnClick", function()
-        BBP.MaelstromWeaponCombos()
+    druidAlwaysShowCombos:HookScript("OnClick", function()
+        BBP.ForeverComboPoints()
     end)
 
-    local hunterTipOfSpearCombos = CreateCheckbox("hunterTipOfSpearCombos", "Hunter: Tip of the Spear Combo Points", guiCVarControl)
-    hunterTipOfSpearCombos:SetPoint("TOPLEFT", shamanMaelstromCombos, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(hunterTipOfSpearCombos, "Hunter: Tip of the Spear Combo Points", "Show Survival Hunter's Tip of the Spear stacks as combo points on the Personal Resource Display.")
-    hunterTipOfSpearCombos:HookScript("OnClick", function()
-        BBP.TipOfSpearCombos()
+    local foreverComboPoints = CreateCheckbox("foreverComboPoints", "Rogue & Druid: Retail Combo Points", guiCVarControl)
+    foreverComboPoints:SetPoint("TOPLEFT", druidAlwaysShowCombos, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(foreverComboPoints, "Rogue & Druid: Retail Combo Points", "Show Rogue and Druid combo points as the modern retail-style combo point bar on the Personal Resource Display and the target nameplate")
+    foreverComboPoints:HookScript("OnClick", function()
+        BBP.ForeverComboPoints()
+        StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end)
 
     local changeResourceStrata = CreateCheckbox("changeResourceStrata", "Increase resource layer level", guiCVarControl, nil, BBP.ChangeStrataOfResourceFrame)
-    changeResourceStrata:SetPoint("TOP", hunterTipOfSpearCombos, "BOTTOM", 0, pixelsBetweenBoxes)
+    changeResourceStrata:SetPoint("TOP", foreverComboPoints, "BOTTOM", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(changeResourceStrata, "Increase resource layer level", "Increases the frame strata of the resource frame making it show on top of nameplate instead of under (z-axis)")
 
     local nameplateResourceUnderCastbar = CreateCheckbox("nameplateResourceUnderCastbar", "Anchor resource underneath healthbar/castbar", nameplateResourceOnTarget, nil, BBP.RegisterTargetCastingEvents)

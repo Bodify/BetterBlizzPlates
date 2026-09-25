@@ -87,7 +87,7 @@ local function SizeLevelBadgeArt(levelFrame, height)
     local width = levelFrame:GetWidth()
     height = height or levelFrame:GetHeight()
     if not width or not height then return end
-    if issecretvalue and (issecretvalue(width) or issecretvalue(height)) then return end
+    if issecretvalue(width) or issecretvalue(height) then return end
     if height <= 0 then return end
     if levelFrame.playerLevelDiffIcon then
         levelFrame.playerLevelDiffIcon:SetSize(width, height)
@@ -97,18 +97,23 @@ local function SizeLevelBadgeArt(levelFrame, height)
     end
 end
 
+local function LevelBadgeFollowsHealthBar()
+    local db = BetterBlizzPlatesDB
+    return not (db.classicNameplates or db.classicRetailNameplates)
+end
+
 local function SyncLevelBadge(frame, height)
     local levelFrame = frame.PlayerLevelDiffFrame
     if not levelFrame or levelFrame:IsForbidden() then return end
     local db = BetterBlizzPlatesDB
 
-    local followHealthBar = not (db.classicNameplates or db.classicRetailNameplates)
+    local followHealthBar = LevelBadgeFollowsHealthBar()
 
     if followHealthBar then
         levelFrame:SetWidth(GetLevelBadgeWidth())
         levelFrame.bbpWidthOverridden = true
         height = height or frame.HealthBarsContainer:GetHeight()
-        if height and not (issecretvalue and issecretvalue(height)) then
+        if height and not issecretvalue(height) then
             local squish = GetLevelBadgeSquish(height)
             AnchorLevelBadge(frame, levelFrame, true, squish)
             SizeLevelBadgeArt(levelFrame, height - LEVEL_BADGE_BOTTOM_INSET - squish * 2)
@@ -128,7 +133,27 @@ local function SyncLevelBadge(frame, height)
     end
 end
 
-local function RestoreBlizzardLevelBadgeLayout(frame)
+local function NameRowHealthText(frame)
+    local healthBar = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar
+    local text = healthBar and healthBar.Text
+    if not text or not text.IsShown then return nil end
+    local shown = text:IsShown()
+    if issecretvalue(shown) or not shown then return nil end
+    return text
+end
+
+local RestoreBlizzardLevelBadgeLayout
+
+local function RefreshNameRow(frame, healthBar)
+    local text = healthBar and healthBar.Text
+    local shown = (text and text.IsShown and text:IsShown()) or false
+    if issecretvalue(shown) then return end
+    if healthBar.bbpNameRowShown == shown then return end
+    healthBar.bbpNameRowShown = shown
+    RestoreBlizzardLevelBadgeLayout(frame)
+end
+
+function RestoreBlizzardLevelBadgeLayout(frame)
     local levelFrame = frame.PlayerLevelDiffFrame
     if not levelFrame or levelFrame:IsForbidden() or not frame.unit then return end
     local followsHealthBar = levelFrame.bbpFollowsHealthBar
@@ -155,12 +180,15 @@ local function RestoreBlizzardLevelBadgeLayout(frame)
     if style == styles.InsideHealthBar or style == styles.CenteredAboveHealthBar then return end
 
     local nameSpacing = setupOptions.healthBarToNameAboveSpacing or 0
+    local healthText = NameRowHealthText(frame)
     frame.name:ClearAllPoints()
     frame.name:SetPoint("BOTTOMLEFT", frame.HealthBarsContainer, "TOPLEFT", 0, nameSpacing)
     if not followsHealthBar then
         local classicLevel = frame.ClassicLevelFrame
         local levelShown = not BetterBlizzPlatesDB.hideLevelFrameBackground and classicLevel and ((classicLevel.text and classicLevel.text:IsShown()) or (classicLevel.skull and classicLevel.skull:IsShown()))
         frame.name:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "TOPRIGHT", levelShown and CLASSIC_LEVEL_NAME_NUDGE or 0, nameSpacing)
+    elseif healthText then
+        frame.name:SetPoint("RIGHT", healthText, "LEFT", -2, 0)
     elseif badgeSpace > 0 then
         frame.name:SetPoint("RIGHT", levelFrame, "RIGHT", 0, 0)
     else
@@ -168,30 +196,110 @@ local function RestoreBlizzardLevelBadgeLayout(frame)
     end
 end
 
-function BBP.GetLevelBadgeSpace(frame)
+local function LevelBadgeFrame(frame)
     local db = BetterBlizzPlatesDB
-    if db.classicNameplates or db.hideLevelFrame then return 0, 0 end
+    if db.classicNameplates or db.hideLevelFrame then return nil end
     local levelFrame = frame and frame.PlayerLevelDiffFrame
-    if not levelFrame or levelFrame:IsForbidden() or not frame.unit then return 0, 0 end
-    if not levelFrame:ShouldDisplay(frame.unit) then return 0, 0 end
+    if not levelFrame or levelFrame:IsForbidden() or not frame.unit then return nil end
+    if levelFrame.bbpClassicAnchor then return nil end
+    if not levelFrame:ShouldDisplay(frame.unit) then return nil end
+    return levelFrame
+end
 
+function BBP.GetLevelBadgeSpace(frame)
+    local levelFrame = LevelBadgeFrame(frame)
+    if not levelFrame then return 0, 0 end
+
+    local followsHealthBar = LevelBadgeFollowsHealthBar()
     local width
-    if levelFrame.bbpFollowsHealthBar then
+    if followsHealthBar then
         width = GetLevelBadgeWidth()
     else
         width = levelFrame:GetWidth()
-        if not width or (issecretvalue and issecretvalue(width)) or width <= 0 then
+        if not width or issecretvalue(width) or width <= 0 then
             width = NamePlateSetupOptions and NamePlateSetupOptions.playerLevelDiffWidth or 0
         end
     end
-    local offset = levelFrame.bbpFollowsHealthBar and LEVEL_BADGE_X_OFFSET or 0
+    local offset = followsHealthBar and LEVEL_BADGE_X_OFFSET or 0
     return width + offset, offset + width / 2
+end
+
+local CLASSIC_LEVEL_SPACE = 17
+
+local function ClassicLevelSpace()
+    local db = BetterBlizzPlatesDB
+    return (db.classicNameplates and not (db.hideLevelFrame or db.hideLevelFrameBackground)) and CLASSIC_LEVEL_SPACE or 0
+end
+
+function BBP.GetLevelSpace(frame)
+    return BBP.GetLevelBadgeSpace(frame) + ClassicLevelSpace()
+end
+
+function BBP.UpdateLevelSpan(frame, space)
+    local span = frame.bbpLevelSpan
+    local healthBar = frame.HealthBarsContainer
+    if not span or not healthBar then return end
+
+    local levelFrame = LevelBadgeFrame(frame)
+    space = space or BBP.GetLevelSpace(frame)
+    local relTo = levelFrame or healthBar
+    if span.bbpRelTo == relTo and span.bbpSpace == space then return end
+    span.bbpRelTo, span.bbpSpace = relTo, space
+
+    span:ClearAllPoints()
+    span:SetPoint("TOPLEFT", healthBar, "TOPLEFT", 0, 0)
+    if levelFrame then
+        span:SetPoint("BOTTOMRIGHT", levelFrame, "BOTTOMRIGHT", 0, 0)
+    else
+        span:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", space, 0)
+    end
+end
+
+local centeredAnchors = { TOP = true, BOTTOM = true, CENTER = true }
+
+function BBP.GetLevelSpanAnchor(frame, anchorPoint)
+    if not centeredAnchors[anchorPoint] or not frame.HealthBarsContainer then return frame.healthBar end
+    if not frame.bbpLevelSpan then
+        frame.bbpLevelSpan = CreateFrame("Frame", nil, frame)
+        BBP.UpdateLevelSpan(frame)
+    end
+    return frame.bbpLevelSpan
+end
+
+local function ClassicLevelRowSpace(frame)
+    if BBP.HideMaxLevelInPvP(frame and frame.unit) then return 0 end
+    return ClassicLevelSpace()
+end
+
+function BBP.UpdateLevelRow(frame, space)
+    local row = frame.bbpLevelRow
+    local healthBar = frame.HealthBarsContainer
+    if not row or not healthBar then return end
+
+    space = (space or BBP.GetLevelBadgeSpace(frame)) + ClassicLevelRowSpace(frame)
+    if row.bbpSpace == space then return end
+    row.bbpSpace = space
+
+    row:ClearAllPoints()
+    row:SetPoint("BOTTOMLEFT", healthBar, "BOTTOMLEFT", 0, 0)
+    row:SetPoint("TOPRIGHT", healthBar, "TOPRIGHT", space, 0)
+end
+
+function BBP.GetLevelRowAnchor(frame)
+    if not frame.HealthBarsContainer then return frame.healthBar end
+    if not frame.bbpLevelRow then
+        frame.bbpLevelRow = CreateFrame("Frame", nil, frame)
+    end
+    BBP.UpdateLevelRow(frame)
+    return frame.bbpLevelRow
 end
 
 local function RefreshLevelBadgeSpace(frame)
     local space = BBP.GetLevelBadgeSpace(frame)
     local previous = frame.bbpLevelBadgeSpace
     frame.bbpLevelBadgeSpace = space
+    BBP.UpdateLevelSpan(frame, space + ClassicLevelSpace())
+    BBP.UpdateLevelRow(frame, space)
     if previous == nil or previous == space then return end
     local nameplate = frame:GetParent()
     if not nameplate then return end
@@ -219,7 +327,8 @@ function BBP.HideMaxLevelInPvP(unit)
     return level >= GetMaxLevelForPlayerExpansion()
 end
 
-local ELITE_CLASSIFICATIONS = { elite = true, rareelite = true, worldboss = true }
+local ELITE_CLASSIFICATIONS = { elite = true, rareelite = true, worldboss = true, rare = true }
+local SILVER_CLASSIFICATIONS = { rareelite = true, rare = true }
 local ELITE_RING_LEVEL_X = 1
 local ELITE_RING_HEALTHBAR_X = -8
 local ELITE_RING_ATLAS = "Adventures-Ring-Gold-Dragon"
@@ -278,16 +387,21 @@ local function UpdateLevelOverlayText(frame)
         return
     end
 
-    local color = UNIT_LEVEL_NON_ATTACKABLE
-    if UnitCanAttack("player", unit) then
-        color = frame.PlayerLevelDiffFrame:GetDifficultyColor(level - UnitEffectiveLevel("player"))
-    end
+    local color = BBP.GetNameplateLevelColor(frame, level)
     if color then
         overlay.text:SetTextColor(color:GetRGB())
     end
     overlay.text:SetText(level)
     overlay.text:Show()
     overlay.skull:Hide()
+end
+
+function BBP.GetNameplateLevelColor(frame, level)
+    local unit = frame.unit
+    if not unit or not UnitCanAttack("player", unit) then return UNIT_LEVEL_NON_ATTACKABLE end
+    local levelFrame = frame.PlayerLevelDiffFrame
+    if not levelFrame or not levelFrame.GetDifficultyColor then return nil end
+    return levelFrame:GetDifficultyColor((level or UnitEffectiveLevel(unit)) - UnitEffectiveLevel("player"))
 end
 
 local levelDiffHooked
@@ -335,7 +449,7 @@ local function UpdateLevelOverlay(frame, levelFrame, db, levelHidden)
         overlay:SetFrameLevel(math.max(overlay:GetParent():GetFrameLevel(), levelFrame:GetFrameLevel()) + 1)
     end
     overlay.eliteRing:SetShown(showRing)
-    overlay.eliteRing:SetDesaturated(classification == "rareelite")
+    overlay.eliteRing:SetDesaturated(SILVER_CLASSIFICATIONS[classification] or false)
     local healthBar = frame.HealthBarsContainer
     if healthBar then
         local x
@@ -399,6 +513,12 @@ function BBP.UpdateBlizzardLevelFrame(frame)
         if frame.UpdateAnchors then
             hooksecurefunc(frame, "UpdateAnchors", function()
                 RestoreBlizzardLevelBadgeLayout(frame)
+            end)
+        end
+        local healthBar = frame.HealthBarsContainer.healthBar
+        if healthBar and healthBar.UpdateTextString then
+            hooksecurefunc(healthBar, "UpdateTextString", function(self)
+                RefreshNameRow(frame, self)
             end)
         end
     end

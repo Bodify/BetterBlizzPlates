@@ -3251,7 +3251,10 @@ function BBP.ColorThreat(frame)
     if not frame or not frame.unit then return end
     if UnitIsPlayer(frame.unit) then return end
     if UnitIsFriend(frame.unit, "player") then return end
-    if UnitIsTapDenied(frame.unit) then return end
+    if UnitIsTapDenied(frame.unit) then
+        frame.healthBar:SetStatusBarColor(0.9, 0.9, 0.9)
+        return
+    end
 
     local hideSolo = BetterBlizzPlatesDB.enemyColorThreatHideSolo and not IsInGroup()
     if hideSolo then return end
@@ -3331,6 +3334,12 @@ function BBP.ColorNpcHealthbar(frame)
     -- Skip if the unit is a player
     if info.isPlayer then return end
     if not info.unitGUID then return end
+
+    if UnitIsTapDenied(frame.unit) then
+        config.npcHealthbarColor = nil
+        frame.healthBar:SetStatusBarColor(0.9, 0.9, 0.9)
+        return
+    end
 
     local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
     local npcName = UnitName(frame.unit)
@@ -4427,7 +4436,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
     end
 
-    if config.colorNPC and config.npcHealthbarColor then
+    if config.colorNPC and config.npcHealthbarColor and not UnitIsTapDenied(frame.unit) then
         frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 
@@ -5288,10 +5297,10 @@ local function HandleNamePlateAdded(unit)
         end
 
         local classification = UnitClassification(frame.unit)
-        if classification == "elite" then
+        if classification == "elite" or classification == "worldboss" then
             frame.classificationIndicator:SetAtlas("nameplates-icon-elite-gold")
             frame.classificationIndicator:Show()
-        elseif classification == "rareelite" then
+        elseif classification == "rareelite" or classification == "rare" then
             frame.classificationIndicator:SetAtlas("nameplates-icon-elite-silver")
             frame.classificationIndicator:Show()
         else
@@ -5843,7 +5852,7 @@ function BBP.ConsolidatedUpdateName(frame)
     if config.classIndicator then BBP.ClassIndicator(frame) end --and not info.isSelf then BBP.ClassIndicator(frame) end bodify not sure if this needs to run here
 
     -- Color NPC
-    if config.colorNPC and config.colorNPCName and config.npcHealthbarColor then
+    if config.colorNPC and config.colorNPCName and config.npcHealthbarColor and not UnitIsTapDenied(frame.unit) then
         frame.name:SetVertexColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 

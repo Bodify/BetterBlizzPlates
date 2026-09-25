@@ -675,7 +675,7 @@ function BBP.ClassIndicator(frame, foundID)
         local attachPoint = (BetterBlizzPlatesDB.useFakeName and nameAnchorRelative == "TOP" and frame.name) or resourceAnchor or frame.healthBar
         frame.classIndicator:SetPoint(oppositeAnchor, attachPoint, anchorPoint, xPos, yPos + 7)
     else
-        frame.classIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos)
+        frame.classIndicator:SetPoint(oppositeAnchor, BBP.GetLevelSpanAnchor(frame, anchorPoint), anchorPoint, xPos, yPos)
     end
     frame.classIndicator:SetScale((flagIcon and scale * 1.15) or (isOthersPet and scale * 0.7) or scale)
 

@@ -138,7 +138,7 @@ function BBP.FactionIndicator(frame)
         local testData = iconSet[testFaction]
         ApplyFactionIcon(frame.factionIndicator, testData)
         frame.factionIndicator:ClearAllPoints()
-        frame.factionIndicator:SetPoint(oppositeAnchor, frame.healthBar, config.factionIndicatorAnchor, config.factionIndicatorXPos, config.factionIndicatorYPos)
+        frame.factionIndicator:SetPoint(oppositeAnchor, BBP.GetLevelSpanAnchor(frame, config.factionIndicatorAnchor), config.factionIndicatorAnchor, config.factionIndicatorXPos, config.factionIndicatorYPos)
         frame.factionIndicator:SetScale(config.factionIndicatorScale or 1)
         frame.factionIndicator:Show()
         return
@@ -153,7 +153,7 @@ function BBP.FactionIndicator(frame)
 
     ApplyFactionIcon(frame.factionIndicator, iconData)
     frame.factionIndicator:ClearAllPoints()
-    frame.factionIndicator:SetPoint(oppositeAnchor, frame.healthBar, config.factionIndicatorAnchor, config.factionIndicatorXPos, config.factionIndicatorYPos)
+    frame.factionIndicator:SetPoint(oppositeAnchor, BBP.GetLevelSpanAnchor(frame, config.factionIndicatorAnchor), config.factionIndicatorAnchor, config.factionIndicatorXPos, config.factionIndicatorYPos)
     frame.factionIndicator:SetScale(config.factionIndicatorScale or 1)
     frame.factionIndicator:Show()
 end

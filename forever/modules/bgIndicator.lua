@@ -117,7 +117,7 @@ function BBP.BgIndicator(frame)
 
         frame.bgIndicator:SetScale(config.bgIndicatorScale or 1)
         frame.bgIndicator:ClearAllPoints()
-        frame.bgIndicator:SetPoint(config.bgIndicatorAnchor, frame.HealthBarsContainer, config.bgIndicatorOppositeAnchor, config.bgIndicatorXPos, config.bgIndicatorYPos - 3)
+        frame.bgIndicator:SetPoint(config.bgIndicatorAnchor, BBP.GetLevelSpanAnchor(frame, config.bgIndicatorOppositeAnchor), config.bgIndicatorOppositeAnchor, config.bgIndicatorXPos, config.bgIndicatorYPos - 3)
         frame.bgIndicator:Show()
     else
         frame.bgIndicator:Hide()

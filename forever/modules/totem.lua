@@ -506,11 +506,11 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
 
     local totemIndicatorSwappingAnchor
     if config.totemIndicatorHideNameAndShiftIconDown then
-        totemIndicatorSwappingAnchor = frame.healthBar
+        totemIndicatorSwappingAnchor = BBP.GetLevelSpanAnchor(frame, config.totemIndicatorAnchor)
     elseif config.totemIndicatorAnchor == "TOP" then
         totemIndicatorSwappingAnchor = frame.name
     else
-        totemIndicatorSwappingAnchor = frame.healthBar
+        totemIndicatorSwappingAnchor = BBP.GetLevelSpanAnchor(frame, config.totemIndicatorAnchor)
     end
 
     local yPosAdjustment = config.totemIndicatorHideNameAndShiftIconDown and config.totemIndicatorYPos + 4 or config.totemIndicatorYPos
@@ -709,11 +709,11 @@ function BBP.UpdateTotemPos(frame)
 
     local totemIndicatorSwappingAnchor
     if config.totemIndicatorHideNameAndShiftIconDown then
-        totemIndicatorSwappingAnchor = frame.healthBar
+        totemIndicatorSwappingAnchor = BBP.GetLevelSpanAnchor(frame, config.totemIndicatorAnchor)
     elseif config.totemIndicatorAnchor == "TOP" then
         totemIndicatorSwappingAnchor = frame.name
     else
-        totemIndicatorSwappingAnchor = frame.healthBar
+        totemIndicatorSwappingAnchor = BBP.GetLevelSpanAnchor(frame, config.totemIndicatorAnchor)
     end
 
     local yPosAdjustment = config.totemIndicatorHideNameAndShiftIconDown and config.totemIndicatorYPos + 4 or config.totemIndicatorYPos

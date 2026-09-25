@@ -61,16 +61,11 @@ local function GetMirroredOffsets(anchorPoint, mirrorAnchor, xPos, yPos)
     return (from.h ~= to.h) and -xPos or xPos, (from.v ~= to.v) and -yPos or yPos
 end
 
-local function GetClassicLevelOffset(anchorPoint, frame)
-    if not rightSideAnchors[anchorPoint] then return 0 end
-    local db = BetterBlizzPlatesDB
-    if db.hideLevelFrame then return 0 end
-    if db.classicNameplates then
-        if BBP.HideMaxLevelInPvP(frame and frame.unit) then return 0 end
-        return 17.5
+local function GetTargetIndicatorAnchor(frame, anchorPoint)
+    if rightSideAnchors[anchorPoint] then
+        return BBP.GetLevelRowAnchor(frame)
     end
-    local _, levelBadgeCenter = BBP.GetLevelBadgeSpace(frame)
-    return levelBadgeCenter or 0
+    return BBP.GetLevelSpanAnchor(frame, anchorPoint)
 end
 
 local targetIndicatorTextures = {
@@ -189,7 +184,8 @@ function BBP.TargetIndicator(frame)
 
         ApplyTargetIndicatorTexture(frame.targetIndicator, config.targetIndicatorIcon)
         ApplyTargetIndicatorColor(frame.targetIndicator, config)
-        frame.targetIndicator:SetPoint("CENTER", frame.healthBar, config.targetIndicatorAnchor, config.targetIndicatorXPos + GetClassicLevelOffset(config.targetIndicatorAnchor, frame), config.targetIndicatorYPos)
+        frame.targetIndicator:ClearAllPoints()
+        frame.targetIndicator:SetPoint("CENTER", GetTargetIndicatorAnchor(frame, config.targetIndicatorAnchor), config.targetIndicatorAnchor, config.targetIndicatorXPos, config.targetIndicatorYPos)
         frame.targetIndicator:SetScale( config.targetIndicatorScale)
         frame.targetIndicator:SetRotation(config.targetIndicatorRotation)
 
@@ -205,7 +201,7 @@ function BBP.TargetIndicator(frame)
             ApplyTargetIndicatorColor(frame.targetIndicatorMirror, config)
             frame.targetIndicatorMirror:ClearAllPoints()
             local mirrorXPos, mirrorYPos = GetMirroredOffsets(config.targetIndicatorAnchor, mirrorAnchor, config.targetIndicatorXPos, config.targetIndicatorYPos)
-            frame.targetIndicatorMirror:SetPoint("CENTER", frame.healthBar, mirrorAnchor, mirrorXPos + GetClassicLevelOffset(mirrorAnchor, frame), mirrorYPos)
+            frame.targetIndicatorMirror:SetPoint("CENTER", GetTargetIndicatorAnchor(frame, mirrorAnchor), mirrorAnchor, mirrorXPos, mirrorYPos)
             frame.targetIndicatorMirror:SetScale(config.targetIndicatorScale)
             frame.targetIndicatorMirror:SetRotation(GetRotationForAnchor(mirrorAnchor) + config.targetIndicatorIcon.rotation)
         elseif frame.targetIndicatorMirror then
@@ -314,7 +310,7 @@ function BBP.FocusTargetIndicator(frame)
         frame.focusTargetIndicator:SetVertexColor(1, 1, 1)
     end
 
-    frame.focusTargetIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
+    frame.focusTargetIndicator:SetPoint("CENTER", BBP.GetLevelSpanAnchor(frame, anchorPoint), anchorPoint, xPos, yPos)
     frame.focusTargetIndicator:SetScale(dbScale)
 
     -- Test mode
@@ -399,9 +395,17 @@ local classResourceYOffsets = {
     HUNTER = 6,
 }
 
+local classResourceXOffsets = {
+    WARLOCK = -2,
+}
+
+local FOREVER_COMBO_NAMEPLATE_Y = 11
+
 local classResourcePrdYOffsets = {
     SHAMAN = -1,
     HUNTER = -1,
+    ROGUE = -1,
+    DRUID = 1,
 }
 local playerClass = UnitClassBase("player")
 local prdClassFrame = prdClassFrame or PersonalResourceDisplayFrame.classFrame
@@ -412,7 +416,7 @@ end
 
 local function ResolveClassFrame()
     prdClassFrame = prdClassFrame or PersonalResourceDisplayFrame.classFrame
-        or BBP.MaelstromBar or BBP.TipOfSpearBar
+        or BBP.ComboPointBar
     return prdClassFrame
 end
 
@@ -426,6 +430,12 @@ local function RepositionClassFrame(point, relativeTo, relativePoint, xOfs, yOfs
             xOfs = xOfs + 20
         elseif maxComboPoints == 6 then
             xOfs = xOfs + 10
+        end
+    end
+
+    if prdClassFrame.bbpForeverComboBar then
+        if not BBP.UpdateComboPointBarParent(relativeTo) then
+            yOfs = yOfs + FOREVER_COMBO_NAMEPLATE_Y
         end
     end
 
@@ -475,15 +485,16 @@ function BBP.UpdateNameplateResourcePositionForCasting(nameplate, bypass)
         local xPos = BetterBlizzPlatesDB.nameplateResourceXPos or 0
         local isCasting = UnitCastingInfo("target") or UnitChannelInfo("target")
         local classOffset = classResourceYOffsets[playerClass] or 0
+        xPos = xPos + (classResourceXOffsets[playerClass] or 0)
 
         -- Adjust position based on casting state and setting
         if bypass then
-            RepositionClassFrame("TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset + classOffset)
+            RepositionClassFrame("TOP", BBP.GetLevelSpanAnchor(nameplate.UnitFrame, "BOTTOM"), "BOTTOM", xPos, yOffset + classOffset)
         elseif isCasting then
             RepositionClassFrame("TOP", nameplate.UnitFrame.castBar, "BOTTOM", xPos, yOffset + classOffset)
         else
             if not nameplate.UnitFrame.castBar:IsShown() then
-                RepositionClassFrame("TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset + classOffset)
+                RepositionClassFrame("TOP", BBP.GetLevelSpanAnchor(nameplate.UnitFrame, "BOTTOM"), "BOTTOM", xPos, yOffset + classOffset)
             else
                 RepositionClassFrame("TOP", nameplate.UnitFrame.castBar, "BOTTOM", xPos, yOffset + classOffset)
             end
@@ -532,7 +543,7 @@ function BBP.TargetResourceUpdater()
             if nameplateResourceUnderCastbar then
                 BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
             else
-                RepositionClassFrame("BOTTOM", nameplateForTarget.UnitFrame.healthBar, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos + 30)
+                RepositionClassFrame("BOTTOM", BBP.GetLevelSpanAnchor(nameplateForTarget.UnitFrame, "TOP"), "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos + 30)
             end
         else
             if BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf then
@@ -616,7 +627,7 @@ function BBP.RegisterTargetCastingEvents()
         if nameplateResourceUnderCastbar then
             BBP.UpdateNameplateResourcePositionForCasting(nameplateForTarget)
         elseif nameplateResourceOnTarget then
-            RepositionClassFrame("BOTTOM", nameplateForTarget.UnitFrame.healthBar, "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos)
+            RepositionClassFrame("BOTTOM", BBP.GetLevelSpanAnchor(nameplateForTarget.UnitFrame, "TOP"), "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos)
         end
     end
 end

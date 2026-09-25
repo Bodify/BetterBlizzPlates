@@ -37,8 +37,9 @@ forever\modules\misc.lua
 forever\modules\prd.lua
 forever\modules\totem.lua
 forever\modules\druid\overcharges.lua
-forever\modules\shaman\maelstrom.lua
-forever\modules\hunter\tipofthespear.lua
+forever\modules\combopoints\templates.lua
+forever\modules\combopoints\templates.xml
+forever\modules\combopoints\combopoints.lua
 
 forever\gui.lua
 forever\BetterBlizzPlates.lua

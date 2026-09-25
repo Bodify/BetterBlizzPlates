@@ -17,6 +17,28 @@ local function GetExecuteCurve(threshold)
     return executeCurve
 end
 
+local executeAlphaCurves = {}
+local executeAlphaCurvesThreshold
+
+local function GetExecuteAlphaCurve(threshold, alpha)
+    if executeAlphaCurvesThreshold ~= threshold then
+        executeAlphaCurves = {}
+        executeAlphaCurvesThreshold = threshold
+    end
+    local curve = executeAlphaCurves[alpha]
+    if not curve then
+        curve = C_CurveUtil.CreateCurve()
+        curve:SetType(Enum.LuaCurveType.Linear)
+        local t = threshold / 100
+        curve:AddPoint(0.0, 0)
+        curve:AddPoint(t, 0)
+        curve:AddPoint(t + 0.001, alpha)
+        curve:AddPoint(1.0, alpha)
+        executeAlphaCurves[alpha] = curve
+    end
+    return curve
+end
+
 local notFullCurve
 local function GetNotFullCurve()
     if not notFullCurve then
@@ -27,6 +49,60 @@ local function GetNotFullCurve()
     end
     return notFullCurve
 end
+
+local function RestoreHealthBarTexture(frame)
+    if not frame.executeHidHealthBar then return end
+    frame.executeHidHealthBar = nil
+    local hpTexture = frame.healthBar and frame.healthBar:GetStatusBarTexture()
+    if hpTexture then
+        hpTexture:SetAlpha(frame.executeBaseAlpha or 1)
+    end
+end
+
+local function ApplyExecuteHealthBarAlpha(frame)
+    local hpTexture = frame.healthBar and frame.healthBar:GetStatusBarTexture()
+    if not hpTexture then return end
+    local unit = frame.displayedUnit or frame.unit
+    if not unit then return end
+    local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config
+    local threshold = config and config.executeIndicatorThreshold
+    if not threshold then return end
+    hpTexture:SetAlpha(UnitHealthPercent(unit, true, GetExecuteAlphaCurve(threshold, frame.executeBaseAlpha or 1)))
+    frame.executeHidHealthBar = true
+end
+
+local function HookHealthBarColor(frame)
+    local healthBar = frame.healthBar
+    if not healthBar or healthBar.bbpExecuteAlphaHook then return end
+    healthBar.bbpExecuteAlphaHook = true
+    hooksecurefunc(healthBar, "SetStatusBarColor", function(self, r, g, b, a)
+        if frame:IsForbidden() then return end
+        if issecretvalue(a) or a == nil then
+            frame.executeBaseAlpha = 1
+        else
+            frame.executeBaseAlpha = a
+        end
+        if frame.executeHidHealthBar then
+            ApplyExecuteHealthBarAlpha(frame)
+        end
+    end)
+end
+
+local function HideExecuteIndicator(frame)
+    if frame.executeIndicator then
+        frame.executeIndicator:SetAlpha(0)
+    end
+    if frame.executeIndicatorTexture then
+        frame.executeIndicatorTexture:SetAlpha(0)
+    end
+    if frame.executeColorOverlay then
+        frame.executeColorOverlay:SetAlpha(0)
+    end
+    RestoreHealthBarTexture(frame)
+end
+
+BBP.HideExecuteIndicator = HideExecuteIndicator
+BBP.RestoreExecuteHealthBarTexture = RestoreHealthBarTexture
 
 -- Update the Execute Indicator
 function BBP.ExecuteIndicator(frame)
@@ -59,30 +135,14 @@ function BBP.ExecuteIndicator(frame)
     if not unit then return end
 
     if config.executeIndicatorTargetOnly and not UnitIsUnit("target", unit) then
-        if frame.executeIndicator then
-            frame.executeIndicator:SetAlpha(0)
-        end
-        if frame.executeIndicatorTexture then
-            frame.executeIndicatorTexture:SetAlpha(0)
-        end
-        if frame.executeColorOverlay then
-            frame.executeColorOverlay:SetAlpha(0)
-        end
+        HideExecuteIndicator(frame)
         return
     end
 
     -- Check for friendly status if required
     if not config.executeIndicatorFriendly then
         if info.isFriend then
-            if frame.executeIndicator then
-                frame.executeIndicator:SetAlpha(0)
-            end
-            if frame.executeIndicatorTexture then
-                frame.executeIndicatorTexture:SetAlpha(0)
-            end
-            if frame.executeColorOverlay then
-                frame.executeColorOverlay:SetAlpha(0)
-            end
+            HideExecuteIndicator(frame)
             return
         end
     end
@@ -160,6 +220,10 @@ function BBP.ExecuteIndicator(frame)
                 frame.executeIndicator:SetAlpha(1)
                 frame.executeIndicator:SetScale(config.executeIndicatorScale or 1)
             end
+            if frame.executeColorOverlay then
+                frame.executeColorOverlay:SetAlpha(0)
+            end
+            RestoreHealthBarTexture(frame)
             return
         end
 
@@ -245,9 +309,12 @@ function BBP.ExecuteIndicator(frame)
             frame.executeColorOverlay:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
             frame.executeColorOverlay:GetStatusBarTexture():SetAtlas(atlas)
         end
-        local r, g, b = unpack(config.executeIndicatorInRangeColorRGB)
-        frame.executeColorOverlay:SetStatusBarColor(r, g, b, 1)
+        local r, g, b, a = unpack(config.executeIndicatorInRangeColorRGB)
+        frame.executeColorOverlay:SetStatusBarColor(r, g, b, a or 1)
         frame.executeColorOverlay:SetAlpha(belowThreshold)
+
+        HookHealthBarColor(frame)
+        ApplyExecuteHealthBarAlpha(frame)
 
         if not BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.classicRetailNameplates then
             BBP.ApplyMidnightMask(frame, frame.executeColorOverlay:GetStatusBarTexture())
@@ -256,6 +323,7 @@ function BBP.ExecuteIndicator(frame)
         if frame.executeColorOverlay then
             frame.executeColorOverlay:SetAlpha(0)
         end
+        RestoreHealthBarTexture(frame)
     end
 end
 
@@ -270,14 +338,19 @@ end)
 
 -- Toggle event listening on/off for Execute Indicator if not enabled
 function BBP.ToggleExecuteIndicator()
-    if BetterBlizzPlatesDB.executeIndicator then
+    local enabled = BetterBlizzPlatesDB.executeIndicator
+    if enabled then
         executeEventFrame:RegisterEvent("UNIT_HEALTH")
     else
         executeEventFrame:UnregisterEvent("UNIT_HEALTH")
     end
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
         if not nameplate.UnitFrame:IsForbidden() then
-            BBP.ExecuteIndicator(nameplate.UnitFrame)
+            if enabled then
+                BBP.ExecuteIndicator(nameplate.UnitFrame)
+            else
+                HideExecuteIndicator(nameplate.UnitFrame)
+            end
         end
     end
 end

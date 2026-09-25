@@ -84,9 +84,9 @@ function BBP.CombatIndicator(frame)
     -- Tiny adjustment to position depending on texture
     local yPosAdjustment = config.combatIndicatorSap and 0 or 1
     if frame.combatIndicatorSap then
-        frame.combatIndicatorSap:SetPoint("CENTER", frame.healthBar, config.combatIndicatorAnchor, config.combatIndicatorXPos+petOffset, config.combatIndicatorYPos + yPosAdjustment)
+        frame.combatIndicatorSap:SetPoint("CENTER", BBP.GetLevelSpanAnchor(frame, config.combatIndicatorAnchor), config.combatIndicatorAnchor, config.combatIndicatorXPos+petOffset, config.combatIndicatorYPos + yPosAdjustment)
     end
-    frame.combatIndicator:SetPoint("CENTER", frame.healthBar, config.combatIndicatorAnchor, config.combatIndicatorXPos+petOffset, config.combatIndicatorYPos + yPosAdjustment)
+    frame.combatIndicator:SetPoint("CENTER", BBP.GetLevelSpanAnchor(frame, config.combatIndicatorAnchor), config.combatIndicatorAnchor, config.combatIndicatorXPos+petOffset, config.combatIndicatorYPos + yPosAdjustment)
 
     -- Target is not in combat so return
     if notInCombat then

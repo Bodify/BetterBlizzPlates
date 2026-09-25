@@ -74,7 +74,7 @@ function BBP.PetIndicator(frame)
     end
 
     -- Set position and scale dynamically
-    frame.petIndicator:SetPoint("CENTER", frame.healthBar, config.petIndicatorAnchor, config.petIndicatorXPos, config.petIndicatorYPos)
+    frame.petIndicator:SetPoint("CENTER", BBP.GetLevelSpanAnchor(frame, config.petIndicatorAnchor), config.petIndicatorAnchor, config.petIndicatorXPos, config.petIndicatorYPos)
     frame.petIndicator:SetScale(config.petIndicatorScale)
 
     -- Test mode

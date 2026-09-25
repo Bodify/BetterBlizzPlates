@@ -393,6 +393,10 @@ local classResourceYOffsets = {
     HUNTER = 6,
 }
 
+local classResourceXOffsets = {
+    WARLOCK = -2,
+}
+
 local classResourcePrdYOffsets = {
     SHAMAN = -1,
     HUNTER = -1,
@@ -469,6 +473,7 @@ function BBP.UpdateNameplateResourcePositionForCasting(nameplate, bypass)
         local xPos = BetterBlizzPlatesDB.nameplateResourceXPos or 0
         local isCasting = UnitCastingInfo("target") or UnitChannelInfo("target")
         local classOffset = classResourceYOffsets[playerClass] or 0
+        xPos = xPos + (classResourceXOffsets[playerClass] or 0)
 
         -- Adjust position based on casting state and setting
         if bypass then

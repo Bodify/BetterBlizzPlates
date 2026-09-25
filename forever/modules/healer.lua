@@ -52,7 +52,7 @@ function BBP.HealerIndicator(frame)
 
     -- Set position and scale dynamically
     frame.healerIndicator:ClearAllPoints()
-    frame.healerIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
+    frame.healerIndicator:SetPoint("CENTER", BBP.GetLevelSpanAnchor(frame, anchorPoint), anchorPoint, xPos, yPos)
     frame.healerIndicator:SetScale(scale)
 
     -- Test mode

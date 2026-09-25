@@ -219,7 +219,7 @@ function BBP.PartyPointer(frame)
         if config.partyPointerAnchor == "TOP" then
             frame.partyPointer:SetPoint("BOTTOM", frame.name, config.partyPointerAnchor, config.partyPointerXPos+xOffset, config.partyPointerYPos - 5)
         else
-            frame.partyPointer:SetPoint("BOTTOM", frame.healthBar, config.partyPointerAnchor, config.partyPointerXPos+xOffset, config.partyPointerYPos)
+            frame.partyPointer:SetPoint("BOTTOM", BBP.GetLevelSpanAnchor(frame, config.partyPointerAnchor), config.partyPointerAnchor, config.partyPointerXPos+xOffset, config.partyPointerYPos)
         end
 
         if config.partyPointerClassColor then
@@ -302,7 +302,7 @@ function BBP.PartyPointer(frame)
 
         frame.partyPointer:SetPoint("BOTTOM", anchorPoint, config.partyPointerAnchor, config.partyPointerXPos+xOffset, config.partyPointerYPos -5)
     else
-        frame.partyPointer:SetPoint("BOTTOM", frame.healthBar, config.partyPointerAnchor, config.partyPointerXPos+xOffset, config.partyPointerYPos)
+        frame.partyPointer:SetPoint("BOTTOM", BBP.GetLevelSpanAnchor(frame, config.partyPointerAnchor), config.partyPointerAnchor, config.partyPointerXPos+xOffset, config.partyPointerYPos)
     end
 
     if config.partyPointerClassColor then

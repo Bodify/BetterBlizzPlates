@@ -132,9 +132,8 @@ local defaultSettings = {
     levelEliteIconXPos = 0,
     levelEliteIconYPos = 0,
     levelEliteIconLeftSide = false,
-    druidOverstacks = true,
-    shamanMaelstromCombos = true,
-    hunterTipOfSpearCombos = false,
+    foreverComboPoints = true,
+    hideResourceOnFriend = true,
     personalBarPosition = 0.5,
     alwaysShowPurgeTexture = false,
     nameplateExtraClickHeight = 0,
@@ -167,7 +166,6 @@ local defaultSettings = {
     npBgColorRGB = {1, 1, 1, 1},
     smallPetsWidth = 20,
     smallPetsHeight = 6,
-    normalCastbarForEmpoweredCasts = true,
     interruptedByIndicator = true,
     -- Target Text
     showNameplateCastbarTimer = false,
@@ -620,12 +618,12 @@ local defaultSettings = {
     testAllEnabledFeatures = false,
 
     -- Default values for resets
-    nameplateDefaultFriendlyWidth = 110,
-    nameplateDefaultLargeFriendlyWidth = 154,
+    nameplateDefaultFriendlyWidth = 230,
+    nameplateDefaultLargeFriendlyWidth = 230,
     nameplateDefaultFriendlyHeight = 45,
     nameplateDefaultLargeFriendlyHeight = 64.125,
-    nameplateDefaultEnemyWidth = 110,
-    nameplateDefaultLargeEnemyWidth = 154,
+    nameplateDefaultEnemyWidth = 230,
+    nameplateDefaultLargeEnemyWidth = 230,
     nameplateDefaultEnemyHeight = 45,
     nameplateDefaultLargeEnemyHeight = 64.125,
     nameplateNonTargetAlpha = 0.5,
@@ -1401,9 +1399,9 @@ local function CVarFetcher()
         BetterBlizzPlatesDB.nameplateFriendlyWidth, BetterBlizzPlatesDB.nameplateFriendlyHeight = C_NamePlate.GetNamePlateSize()--C_NamePlate.GetNamePlateFriendlySize()
         BetterBlizzPlatesDB.nameplateSelfWidth, BetterBlizzPlatesDB.nameplateSelfHeight = C_NamePlate.GetNamePlateSize()--C_NamePlate.GetNamePlateSelfSize()
 
-        BetterBlizzPlatesDB.nameplateEnemyWidth = big and 185 or 145
-        BetterBlizzPlatesDB.nameplateFriendlyWidth = big and 185 or 145
-        BetterBlizzPlatesDB.nameplateSelfWidth = big and 185 or 145
+        BetterBlizzPlatesDB.nameplateEnemyWidth = big and 230 or 145
+        BetterBlizzPlatesDB.nameplateFriendlyWidth = big and 230 or 145
+        BetterBlizzPlatesDB.nameplateSelfWidth = big and 230 or 145
 
         if not BBPCVarBackupsDB then
             BBPCVarBackupsDB = {}
@@ -1827,7 +1825,7 @@ local function CacheFontSettings()
     cachedNameOutline = EnsureFontFlags(customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or EnsureFontFlags(db.defaultNamePlateFontFlags ~= "" and db.defaultNamePlateFontFlags or defaultOutline))
     cachedOutlinedOutline = EnsureFontFlags(customOutline or (db.disableDefaultBlizzardOutline and "SLUG") or "OUTLINE")
 
-    cachedActiveNameOutline = (npStyle == 0 or npStyle == 2) and cachedOutlinedOutline or cachedNameOutline
+    cachedActiveNameOutline = cachedOutlinedOutline
 end
 BBP.CacheFontSettings = CacheFontSettings
 
@@ -2134,8 +2132,8 @@ end
 -- Set nameplate width
 function BBP.ApplyNameplateWidth()
     if not BBP.checkCombatAndWarn() then
-        local enemyWidth   = BetterBlizzPlatesDB.nameplateEnemyWidth or 172.5
-        local friendlyWidth = BetterBlizzPlatesDB.nameplateFriendlyWidth or 172.5
+        local enemyWidth   = BetterBlizzPlatesDB.nameplateEnemyWidth or 230
+        local friendlyWidth = BetterBlizzPlatesDB.nameplateFriendlyWidth or 230
 
         local widestBar = math.max(enemyWidth, friendlyWidth)--enemyWidth--math.max(enemyWidth, friendlyWidth) -- prefer friendly nameplates, idk if valid to consider friendly
         local healthBarHeight = BetterBlizzPlatesDB.nameplateBoxHeight or 55
@@ -2630,7 +2628,7 @@ function BBP.ChangeStrataOfResourceFrame()
         ["MAGE"] = ClassNameplateBarMageFrame,
         ["DRUID"] = ClassNameplateBarFeralDruidFrame,
     }
-    local resourceFrame = resourceFrames[playerClass]
+    local resourceFrame = resourceFrames[playerClass] or BBP.ComboPointBar
     if not resourceFrame or resourceFrame:IsForbidden() then return end
 
     resourceFrame:SetFrameStrata("HIGH")
@@ -3198,7 +3196,7 @@ function BBP.HideResourceFrames()
     local ignoreKey = classIgnoreKeys[playerClass]
     if ignoreKey and db[ignoreKey] then return end
 
-    local resourceFrame = prdClassFrame or BBP.MaelstromBar or BBP.TipOfSpearBar
+    local resourceFrame = prdClassFrame or BBP.ComboPointBar
     if resourceFrame then
         resourceFrame:SetAlpha(0)
     end
@@ -3237,33 +3235,13 @@ function BBP.DarkModeNameplateResources()
         end
     end
 
-    local druidComboPointsNameplate = prdClassFrame
+    local druidComboPointsNameplate = prdClassFrame or BBP.ComboPointBar
     if druidComboPointsNameplate and not druidComboPointsNameplate:IsForbidden() and playerClass == "DRUID" then
         local druidComboPointNp = druidComboPoint or 1
         local druidComboPointActiveNp = druidComboPointActive or 1
         for _, v in pairs({druidComboPointsNameplate:GetChildren()}) do
             applySettings(v.BG_Inactive, darkModeNpSatVal, druidComboPointNp)
             applySettings(v.BG_Active, darkModeNpSatVal, druidComboPointActiveNp)
-            if BetterBlizzPlatesDB.druidOverstacks then
-                applySettings(v.ChargedFrameActive, desaturationValue, druidComboPointActive, true)
-            end
-        end
-    end
-
-    local maelstromPointsNameplate = BBP.MaelstromBar
-    if maelstromPointsNameplate and playerClass == "SHAMAN" then
-        for _, v in pairs({maelstromPointsNameplate:GetChildren()}) do
-            applySettings(v.BGInactive, darkModeNpSatVal, rogueCombo or 1)
-            applySettings(v.BGActive, darkModeNpSatVal, rogueComboActive or 1)
-            applySettings(v.ChargedFrameActive, darkModeNpSatVal, rogueComboActive or 1)
-        end
-    end
-
-    local tipOfSpearPointsNameplate = BBP.TipOfSpearBar
-    if tipOfSpearPointsNameplate and playerClass == "HUNTER" then
-        for _, v in pairs({tipOfSpearPointsNameplate:GetChildren()}) do
-            applySettings(v.BGInactive, darkModeNpSatVal, rogueCombo or 1)
-            applySettings(v.BGActive, darkModeNpSatVal, rogueComboActive or 1)
         end
     end
 
@@ -3285,7 +3263,7 @@ function BBP.DarkModeNameplateResources()
         end
     end
 
-    local rogueComboPointsNameplate = prdClassFrame
+    local rogueComboPointsNameplate = prdClassFrame or BBP.ComboPointBar
     if rogueComboPointsNameplate and not rogueComboPointsNameplate:IsForbidden() and playerClass == "ROGUE" then
         local rogueComboNp = rogueCombo or 1
         local rogueComboActiveNp = rogueComboActive or 1
@@ -3805,6 +3783,7 @@ local function SetNameplateBarSizes(frame)
         frame.HealthBarsContainer:SetPoint("BOTTOMLEFT", frame, "BOTTOM", (-widthToUse + 8), hpBotPos)
         frame.HealthBarsContainer:SetPoint("BOTTOMRIGHT", frame, "BOTTOM", (widthToUse + (normalRightAnchor and -8 or -25)) - levelBadgeSpace, hpBotPos)
     end
+    BBP.UpdateLevelSpan(frame, levelBadgeSpace + (normalRightAnchor and 0 or 17))
 end
 BBP.SetNameplateBarSizes = SetNameplateBarSizes
 
@@ -4187,7 +4166,10 @@ function BBP.ColorThreat(frame)
     if not frame or not frame.unit then return end
     if UnitIsPlayer(frame.unit) then return end
     if UnitIsFriend(frame.unit, "player") then return end
-    if UnitIsTapDenied(frame.unit) then return end
+    if UnitIsTapDenied(frame.unit) then
+        frame.healthBar:SetStatusBarColor(0.9, 0.9, 0.9)
+        return
+    end
 
     local hideSolo = BetterBlizzPlatesDB.enemyColorThreatHideSolo and not IsInGroup()
     if hideSolo then return end
@@ -4271,6 +4253,11 @@ function BBP.ColorNpcHealthbar(frame)
     if UnitIsPlayer(frame.unit) or not isEnemy(frame.unit) then return end
 
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
+    if UnitIsTapDenied(frame.unit) then
+        config.npcHealthbarColor = nil
+        frame.healthBar:SetStatusBarColor(0.9, 0.9, 0.9)
+        return
+    end
 
     local db = BetterBlizzPlatesDB
     local lvl = UnitEffectiveLevel(frame.unit)
@@ -4676,7 +4663,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         end
     end
 
-    if config.colorNPC and config.npcHealthbarColor then
+    if config.colorNPC and config.npcHealthbarColor and not UnitIsTapDenied(frame.unit) then
         frame.healthBar:SetStatusBarColor(unpack(config.npcHealthbarColor))
     end
 
@@ -5005,7 +4992,7 @@ local function ShowFriendlyGuildName(frame, unit)
                 if not issecretvalue(frame.HealthBarsContainer:GetAlpha()) and frame.HealthBarsContainer:GetAlpha() == 0 then
                     frame.guildName:SetPoint("TOP", frame.name, "BOTTOM", 0, 0)
                 else
-                    frame.guildName:SetPoint("TOP", frame.healthBar, "BOTTOM", 0, -3)
+                    frame.guildName:SetPoint("TOP", BBP.GetLevelSpanAnchor(frame, "BOTTOM"), "BOTTOM", 0, -3)
                 end
                 frame.guildName:SetScale(config.guildNameScale or 1)
             else
@@ -5108,7 +5095,7 @@ function BBP.ApplyRaidmarkerChanges(frame)
                 end
                 local hiddenHealthbarOffset = (config.friendlyHideHealthBar and config.raidmarkIndicatorAnchor == "BOTTOM" and not issecretvalue(frame.HealthBarsContainer:GetAlpha()) and frame.HealthBarsContainer:GetAlpha() == 0) and hbcHeight + 10 or 0
                 frame.RaidTargetFrame.RaidTargetIcon:ClearAllPoints()
-                frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", frame.healthBar, config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos + hiddenHealthbarOffset)
+                frame.RaidTargetFrame.RaidTargetIcon:SetPoint("BOTTOM", BBP.GetLevelSpanAnchor(frame, config.raidmarkIndicatorAnchor), config.raidmarkIndicatorAnchor, config.raidmarkIndicatorXPos, config.raidmarkIndicatorYPos + hiddenHealthbarOffset)
             end
             frame.RaidTargetFrame.RaidTargetIcon:SetScale(config.raidmarkIndicatorScale or 1)
             frame.RaidTargetFrame.RaidTargetIcon:SetSize(22, 22)
@@ -5693,6 +5680,7 @@ local function HandleNamePlateRemoved(unit)
     if frame.executeColorOverlay then
         frame.executeColorOverlay:SetAlpha(0)
     end
+    BBP.RestoreExecuteHealthBarTexture(frame)
 
     frame.arenaID = nil
 
@@ -5862,6 +5850,7 @@ local eliteIndicatorAtlas = {
     elite = "nameplates-icon-elite-gold",
     worldboss = "nameplates-icon-elite-gold",
     rareelite = "nameplates-icon-elite-silver",
+    rare = "nameplates-icon-elite-silver",
 }
 
 local function ShouldStripClassificationAtlas(atlas)
@@ -5956,10 +5945,10 @@ function BBP.RepositionName(frame)
                 usedBottomAnchor = true
                 frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 27)
             else
-                frame.name:SetPoint(db.fakeNameAnchorFriendly, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelativeFriendly, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 4)
+                frame.name:SetPoint(db.fakeNameAnchorFriendly, frame.healthBar.topNameAnchor or BBP.GetLevelSpanAnchor(frame, db.fakeNameAnchorRelativeFriendly), db.fakeNameAnchorRelativeFriendly, db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 4)
             end
         else
-            frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or frame.healthBar, db.fakeNameAnchorRelative, db.fakeNameXPos, db.fakeNameYPos + 4)
+            frame.name:SetPoint(db.fakeNameAnchor, frame.healthBar.topNameAnchor or BBP.GetLevelSpanAnchor(frame, db.fakeNameAnchorRelative), db.fakeNameAnchorRelative, db.fakeNameXPos, db.fakeNameYPos + 4)
         end
         if db.fakeNameMaxWidthOn then
             frame.name:SetWidth(db.fakeNameMaxWidth)
@@ -6039,7 +6028,7 @@ local function NameplateNPCTitle(frame)
         if not issecretvalue(frame.HealthBarsContainer:GetAlpha()) and frame.HealthBarsContainer:GetAlpha() == 0 then
             frame.npcTitle:SetPoint("TOP", frame.name, "BOTTOM", 0, -2)
         else
-            frame.npcTitle:SetPoint("TOP", frame.healthBar, "BOTTOM", 0, -2)
+            frame.npcTitle:SetPoint("TOP", BBP.GetLevelSpanAnchor(frame, "BOTTOM"), "BOTTOM", 0, -2)
         end
         if BetterBlizzPlatesDB.npcTitleColor then
             frame.npcTitle:SetTextColor(unpack(BetterBlizzPlatesDB.npcTitleColorRGB))
@@ -6302,7 +6291,7 @@ local function CreateBetterClassicHealthbarBorder(frame)
             frame.ClassicLevelFrame = CreateFrame("Frame", nil, border)
             frame.ClassicLevelFrame.text = border:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             frame.ClassicLevelFrame.text:SetDrawLayer("OVERLAY", 7)
-            frame.ClassicLevelFrame.text:SetFont("Fonts\\FRIZQT__.TTF", 13)
+            frame.ClassicLevelFrame.text:SetFont("Fonts\\FRIZQT__.TTF", 13, "OUTLINE")
             frame.ClassicLevelFrame.text:SetJustifyH("CENTER")
             frame.ClassicLevelFrame.text:SetPoint("CENTER", frame.HealthBarsContainer, "RIGHT", 8.5, 0)
             frame.ClassicLevelFrame.text:SetShadowColor(0, 0, 0, 1)
@@ -6355,6 +6344,10 @@ local function CreateBetterClassicHealthbarBorder(frame)
     if frame.ClassicLevelFrame and not config.hideLevelFrame then
         local unitLevel = BBP.GetNameplateLevel(frame.unit)
         frame.ClassicLevelFrame.text:SetText(unitLevel ~= -1 and unitLevel or "")
+        local levelColor = BBP.GetNameplateLevelColor(frame)
+        if levelColor then
+            frame.ClassicLevelFrame.text:SetTextColor(levelColor:GetRGB())
+        end
         if unitLevel == -1 then
             frame.ClassicLevelFrame.skull:Show()
             frame.ClassicLevelFrame.text:Hide()
@@ -7709,7 +7702,7 @@ function BBP.ConsolidatedUpdateName(frame)
     --frame.name:SetPoint("BOTTOMLEFT", frame.HealthBarsContainer, "TOPLEFT", 4.2, 2)
 
     -- Color NPC
-    if config.colorNPC and config.colorNPCName and config.npcHealthbarColor then
+    if config.colorNPC and config.colorNPCName and config.npcHealthbarColor and not UnitIsTapDenied(frame.unit) then
         local r,g,b = unpack(config.npcHealthbarColor)
         frame.name:SetVertexColor(r, g, b)
     end
@@ -7862,7 +7855,7 @@ local function UpdateClassRoleStatus(self, event)
     if not BetterBlizzPlatesDB.enemyColorThreat then return end
     local specIndex = BBP.GetSpecialization()
     local role = specIndex and GetSpecializationRole(specIndex)
-    BBP.isRoleTank = role == "TANK"
+    BBP.isRoleTank = BBP.forceTankRole or role == "TANK"
 
     offTanks = GetGroupTanks()
 end
@@ -8810,10 +8803,8 @@ local function TurnOnEnabledFeaturesOnLogin()
     BBP.ToggleNpNonTargetAlphaHook()
     BBP:RegisterTargetCastingEvents()
     BBP.ToggleHealthNumbers()
-    BBP.DruidBlueComboPoints()
     BBP.DruidAlwaysShowCombos()
-    BBP.MaelstromWeaponCombos()
-    BBP.TipOfSpearCombos()
+    BBP.ForeverComboPoints()
     EnableMouseoverChecker()
 
     BBP.SetupClassIndicatorCCAuraListener()
@@ -9587,7 +9578,7 @@ local function NamePlateCastBarTestMode(frame)
                         textSize = BetterBlizzPlatesDB.npTargetTextSize or 12
                     end
                     local bottomAnchors = { BOTTOMLEFT = true, BOTTOM = true, BOTTOMRIGHT = true }
-                    local anchorTo = (not BetterBlizzPlatesDB.targetTextStatic and bottomAnchors[relativeAnchor]) and frame.castBar or frame.healthBar
+                    local anchorTo = (not BetterBlizzPlatesDB.targetTextStatic and bottomAnchors[relativeAnchor]) and frame.castBar or BBP.GetLevelSpanAnchor(frame, relativeAnchor)
                     frame.dummyNameText:SetPoint(anchor, anchorTo, relativeAnchor, xPos, yPos)
                     BBP.SetFontBasedOnOption(frame.dummyNameText, textSize)
                     frame.dummyNameText:Show()

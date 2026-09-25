@@ -4067,7 +4067,10 @@ function BBP.ColorThreat(frame)
     if not frame or not frame.unit then return end
     if UnitIsPlayer(frame.unit) then return end
     if UnitIsFriend(frame.unit, "player") then return end
-    if UnitIsTapDenied(frame.unit) then return end
+    if UnitIsTapDenied(frame.unit) then
+        frame.healthBar:SetStatusBarColor(0.9, 0.9, 0.9)
+        return
+    end
 
     local hideSolo = BetterBlizzPlatesDB.enemyColorThreatHideSolo and not IsInGroup()
     if hideSolo then return end
@@ -4147,6 +4150,12 @@ function BBP.ColorNpcHealthbar(frame)
     -- Skip if the unit is a player
     if info.isPlayer then return end
     if not info.unitGUID then return end
+
+    if UnitIsTapDenied(frame.unit) then
+        config.npcHealthbarColor = nil
+        frame.healthBar:SetStatusBarColor(0.9, 0.9, 0.9)
+        return
+    end
 
     local npcID = BBP.GetNPCIDFromGUID(info.unitGUID)
     local npcName = UnitName(frame.unit)
@@ -5325,7 +5334,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
     end
 
-    if config.colorNPC and config.npcHealthbarColor then
+    if config.colorNPC and config.npcHealthbarColor and not UnitIsTapDenied(frame.unit) then
         frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 
@@ -5885,15 +5894,70 @@ local function HandleNamePlateRemoved(unit)
         frame.arenaNumberCircle:Hide()
     end
 
+    if frame.bbpClassificationIndicator then
+        frame.bbpClassificationIndicator:Hide()
+    end
+
 end
 
 
+
+local eliteIcons = {
+    ["UI-HUD-UnitFrame-Target-PortraitOn-Boss-Rare-Star"] = true,
+    ["UI-HUD-UnitFrame-Target-PortraitOn-Boss-Rare"] = true,
+    ["nameplates-icon-elite-gold"] = true,
+    ["nameplates-icon-elite-silver"] = true,
+}
+
+local eliteIndicatorAtlas = {
+    elite = "nameplates-icon-elite-gold",
+    worldboss = "nameplates-icon-elite-gold",
+    rareelite = "nameplates-icon-elite-silver",
+    rare = "nameplates-icon-elite-silver",
+}
+
+local function UpdateEliteIndicator(frame)
+    local db = BetterBlizzPlatesDB
+    local atlas = frame.unit and not db.hideEliteDragon and eliteIndicatorAtlas[UnitClassification(frame.unit)]
+    local indicator = frame.bbpClassificationIndicator
+    if not atlas then
+        if indicator then indicator:Hide() end
+        return
+    end
+    if not indicator then
+        indicator = frame.HealthBarsContainer:CreateTexture(nil, "OVERLAY")
+        indicator:SetSize(15, 15)
+        frame.bbpClassificationIndicator = indicator
+    end
+    indicator:ClearAllPoints()
+    indicator:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", db.classicNameplates and -5 or -3, 0)
+    indicator:SetAtlas(atlas)
+    indicator:Show()
+end
+
+BBP.UpdateEliteIndicator = UpdateEliteIndicator
 
 function BBP.CustomizeClassificationFrame(frame)
-    --TODO:
-    --frame.ClassificationFrame:SetScale()
-    --frame.ClassificationFrame:SetFrameStrata("LOW") bodifycata
+    local classificationFrame = frame.ClassificationFrame
+    if classificationFrame and not classificationFrame.bbpHook then
+        local blizzIndicator = classificationFrame.classificationIndicator
+        if eliteIcons[blizzIndicator:GetAtlas()] then
+            blizzIndicator:SetAtlas(nil)
+        end
+
+        hooksecurefunc(blizzIndicator, "SetAtlas", function(self, newAtlas)
+            if frame:IsForbidden() then return end
+            if eliteIcons[newAtlas] then
+                self:SetAtlas(nil)
+            end
+        end)
+
+        classificationFrame.bbpHook = true
+    end
+
+    UpdateEliteIndicator(frame)
 end
+
 local nameJustify = {
     ["LEFT"] = "LEFT",
     ["TOPLEFT"] = "LEFT",
@@ -6201,9 +6265,6 @@ local function HandleNamePlateAdded(unit)
     if info.isFocus then
         BBP.previousFocusNameplate = frame
     end
-    BBP.CustomizeClassificationFrame(frame)
-    --print(frame.ClassificationFrame:GetFrameStrata(), frame.ClassificationFrame:GetFrameLevel())
-
     -- if not frame.hokedHp then
     --     hooksecurefunc(frame.healthBar, "SetHeight", function(self)
     --         if self.changing or self:IsForbidden() then return end
@@ -6271,35 +6332,9 @@ local function HandleNamePlateAdded(unit)
             end
         end
     end
-    -- if not BetterBlizzPlatesDB.hideEliteDragon then
-    --     if not frame.bbpClassificationIndicator then
-    --         frame.bbpClassificationIndicator = frame:CreateTexture(nil, "OVERLAY")
-    --         frame.bbpClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
-    --         frame.bbpClassificationIndicator:SetSize(13, 13)
-    --         frame.bbpClassificationIndicator:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", -2, 0)
-    --         frame.bbpClassificationIndicator:Hide()
-    --     end
 
-    --     local classification = UnitClassification(frame.unit)
-    --     if classification == "elite" then
-    --         frame.bbpClassificationIndicator:SetAtlas("nameplates-icon-elite-gold")
-    --         frame.bbpClassificationIndicator:Show()
-    --     elseif classification == "rareelite" then
-    --         frame.bbpClassificationIndicator:SetAtlas("nameplates-icon-elite-silver")
-    --         frame.bbpClassificationIndicator:Show()
-    --     else
-    --         frame.bbpClassificationIndicator:Hide()
-    --     end
-    -- elseif frame.bbpClassificationIndicator then
-    --     frame.bbpClassificationIndicator:Hide()
-    -- end
-    if frame.ClassificationFrame then
-        if BetterBlizzPlatesDB.hideEliteDragon then
-            frame.ClassificationFrame:SetAlpha(0)
-        else
-            frame.ClassificationFrame:SetScale(0.7)
-        end
-    end
+    BBP.CustomizeClassificationFrame(frame)
+
     BBP.RepositionName(frame)
 
     BBP.ClassColorAndScaleNames(frame)
@@ -6541,6 +6576,8 @@ function BBP.RefreshAllNameplates()
         end
 
         local hideHealthBar = BetterBlizzPlatesDB.totemIndicatorHideHealthBar
+
+        UpdateEliteIndicator(frame)
 
         if BetterBlizzPlatesDB.enableNameplateAuraCustomisation then
             BBP.RefUnitAuraTotally(unitFrame)
@@ -6914,7 +6951,7 @@ function BBP.ConsolidatedUpdateName(frame)
     if config.classIndicator then BBP.ClassIndicator(frame) end --and not info.isSelf then BBP.ClassIndicator(frame) end bodify not sure if this needs to run here
 
     -- Color NPC
-    if config.colorNPC and config.colorNPCName and config.npcHealthbarColor then
+    if config.colorNPC and config.colorNPCName and config.npcHealthbarColor and not UnitIsTapDenied(frame.unit) then
         frame.name:SetVertexColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
 

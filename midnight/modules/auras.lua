@@ -2643,6 +2643,29 @@ function BBP.SetNameplateAurasShown(frame, shown)
     end
 end
 
+local STRATA_RANK = {
+    BACKGROUND = 1, LOW = 2, MEDIUM = 3, HIGH = 4,
+    DIALOG = 5, FULLSCREEN = 6, FULLSCREEN_DIALOG = 7, TOOLTIP = 8,
+}
+
+local function AuraLayer(frame, level)
+    local levelFrame = frame.PlayerLevelDiffFrame
+    if not levelFrame or levelFrame:IsForbidden() then return nil, level end
+
+    local badgeLevel = levelFrame:GetFrameLevel()
+    if not badgeLevel or issecretvalue(badgeLevel) then return nil, level end
+
+    local badgeStrata, frameStrata = levelFrame:GetFrameStrata(), frame:GetFrameStrata()
+    local strata
+    if badgeStrata ~= frameStrata and (STRATA_RANK[badgeStrata] or 0) > (STRATA_RANK[frameStrata] or 0) then
+        if not levelFrame:IsShown() then return nil, level end
+        strata = badgeStrata
+    end
+
+    if badgeLevel >= level then level = badgeLevel + 1 end
+    return strata, level
+end
+
 function BBP.BindNameplateAuras(unit, frame, info)
     if not BetterBlizzPlatesDB.enableNameplateAuraCustomisation then return end
     if not unit or not frame then return end
@@ -2656,18 +2679,20 @@ function BBP.BindNameplateAuras(unit, frame, info)
     local profile = profiles[profileKey]
     local perRow = info.isFriend and S.perRowFriendly or S.perRowEnemy
     local isTarget = info.isTarget
-    local level = frame:GetFrameLevel() + 10
+    local strata, level = AuraLayer(frame, frame:GetFrameLevel() + 10)
 
     if set.bbpFrame == frame and set.bbpUnit == unit
         and set.bbpProfileKey == profileKey and set.bbpPerRow == perRow
         and set.bbpIsTarget == isTarget and set.bbpShow == show
-        and set.bbpGen == profileGeneration and set.bbpLevel == level then
+        and set.bbpGen == profileGeneration and set.bbpLevel == level
+        and set.bbpStrata == strata then
         return
     end
     set.bbpFrame, set.bbpUnit = frame, unit
     set.bbpProfileKey, set.bbpPerRow = profileKey, perRow
     set.bbpIsTarget, set.bbpShow = isTarget, show
     set.bbpGen, set.bbpLevel = profileGeneration, level
+    set.bbpStrata = strata
 
     for _, kind in ipairs(CONTAINER_KINDS) do
         local container = set[kind]
@@ -2676,6 +2701,12 @@ function BBP.BindNameplateAuras(unit, frame, info)
                 container:SetParent(frame)
                 container.bbpParent = frame
                 container.bbpRelTo = nil
+            end
+            local wantStrata = strata or frame:GetFrameStrata()
+            if container.bbpStrata ~= wantStrata then
+                container:SetFrameStrata(wantStrata)
+                container.bbpStrata = wantStrata
+                container.bbpLevel = nil
             end
             if container.bbpLevel ~= level then
                 container:SetFrameLevel(level)
@@ -2763,6 +2794,7 @@ function BBP.UnbindNameplateAuras(unit)
             container:SetParent(UIParent)
             container.bbpEnabled = false
             container.bbpParent, container.bbpRelTo, container.bbpLevel = nil, nil, nil
+            container.bbpStrata = nil
         end
     end
 end
@@ -3250,9 +3282,11 @@ local function GetPreview(frame, kind)
     if not p then
         p = { host = CreateFrame("Frame", nil, frame), buttons = {} }
         p.host:SetSize(1, 1)
-        p.host:SetFrameLevel(frame:GetFrameLevel() + 12)
         previews[frame][kind] = p
     end
+    local strata, level = AuraLayer(frame, frame:GetFrameLevel() + 12)
+    p.host:SetFrameStrata(strata or frame:GetFrameStrata())
+    p.host:SetFrameLevel(level)
     return p
 end
 

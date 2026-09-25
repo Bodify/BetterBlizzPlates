@@ -33,13 +33,13 @@ function BBP.QuestIndicator(frame)
         if anchorToName then
             frame.questIndicator:SetPoint("CENTER", frame.name, anchorPoint, xPos +-8, yPos)
         else
-            frame.questIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos +-8, yPos)
+            frame.questIndicator:SetPoint("CENTER", BBP.GetLevelSpanAnchor(frame, anchorPoint), anchorPoint, xPos +-8, yPos)
         end
     else
         if anchorToName then
             frame.questIndicator:SetPoint("CENTER", frame.name, anchorPoint, xPos, yPos)
         else
-            frame.questIndicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
+            frame.questIndicator:SetPoint("CENTER", BBP.GetLevelSpanAnchor(frame, anchorPoint), anchorPoint, xPos, yPos)
         end
     end
     frame.questIndicator:SetScale(BetterBlizzPlatesDB.questIndicatorScale or 1)
