@@ -1,3 +1,15 @@
+# BetterBlizzPlates 2.1.7
+## WoW Forever
+### New
+- Misc: "Center Nameplate Healthbar". This setting will center the healthbar properly on the default nameplates and move the level more to the right.
+- General: Level Options: "Hide Level On Friendly" setting, on by default.
+- General: Level Options: "Move & Size Level Text" setting. (Only available with some settings for now)
+### Bugfix
+- Fix some positon issues with healthbar on Pre-Midnight nameplates.
+## Midnight & Forever
+### New
+- General: "Hide Target Border"
+
 # BetterBlizzPlates 2.1.6
 ## WoW Forever
 ### New

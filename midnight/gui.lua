@@ -5336,6 +5336,10 @@ local function guiGeneralTab()
     hideTargetHighlight:SetPoint("TOPLEFT", hideNameplateAuras, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(hideTargetHighlight, "Hide Target Highlight", "Hide the bright glow on your current target nameplate")
 
+    local hideTargetBorder = CreateCheckbox("hideTargetBorder", "Hide Target Border", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
+    hideTargetBorder:SetPoint("LEFT", hideTargetHighlight.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(hideTargetBorder, "Hide Target Border", "Hide the yellow border around your current target and focus nameplate.")
+
     local classicNameplates = CreateCheckbox("classicNameplates", "Classic Nameplates", BetterBlizzPlates)
     classicNameplates:SetPoint("TOPLEFT", hideTargetHighlight, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(classicNameplates, "Classic Nameplates", "Enable to use a classic nameplate look for your nameplates.", "Only healthbar for now, might add classic castbar in a later patch.\nYou can enable castbar customization and change the texture to the old texture which will basically be the old classic castbars.")

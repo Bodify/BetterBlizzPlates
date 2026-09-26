@@ -877,7 +877,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 if AURA_SLIDER_ELEMENTS[element] then
                     BetterBlizzPlatesDB[element] = value
                     BBP.RefreshAllNameplateAuras()
-                elseif element == "levelEliteIconWidth" or element == "levelEliteIconHeight" or element == "levelEliteIconXPos" or element == "levelEliteIconYPos" then
+                elseif element == "levelEliteIconWidth" or element == "levelEliteIconHeight" or element == "levelEliteIconXPos" or element == "levelEliteIconYPos" or element == "levelTextSize" or element == "levelTextXPos" or element == "levelTextYPos" then
                     BetterBlizzPlatesDB[element] = value
                     BBP.UpdateAllLevelOverlays()
                 elseif element == "nameplateGeneralHpHeight" then
@@ -2389,12 +2389,17 @@ local function CreateMultiSelectDropdown(label, parent, options, width, onChange
             end
             if option.tooltip then
                 checkbox:SetTooltip(function(tooltip)
-                    GameTooltip_SetTitle(tooltip, option.tooltipTitle or option.label)
-                    GameTooltip_AddNormalLine(tooltip, option.tooltip, true)
-                    local note = option.tooltipNote and option.tooltipNote()
+                    GameTooltip_SetTitle(tooltip, option.tooltipTitle or option.label, NORMAL_FONT_COLOR)
+                    tooltip:AddLine(option.tooltip, 1, 1, 1, true)
+                    if option.onRightClick then
+                        tooltip:AddLine(" ")
+                        tooltip:AddLine("|cff32f795" .. (option.rightClickText or "Right-click for options.") .. "|r", 1, 1, 1, true)
+                    end
+                    local note = option.tooltipNote
+                    if type(note) == "function" then note = note() end
                     if note then
-                        GameTooltip_AddBlankLineToTooltip(tooltip)
-                        GameTooltip_AddNormalLine(tooltip, note, true)
+                        tooltip:AddLine("____________________________", 0.8, 0.8, 0.8, true)
+                        tooltip:AddLine(note, 0.8, 0.8, 0.8, true)
                     end
                 end)
             end
@@ -5483,6 +5488,10 @@ local function guiGeneralTab()
     hideTargetHighlight:SetPoint("TOPLEFT", hideNameplateAuras, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(hideTargetHighlight, "Hide Target Highlight", "Hide the bright glow on your current target nameplate")
 
+    local hideTargetBorder = CreateCheckbox("hideTargetBorder", "Hide Target Border", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
+    hideTargetBorder:SetPoint("LEFT", hideTargetHighlight.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(hideTargetBorder, "Hide Target Border", "Hide the white border around your current target and focus nameplate.")
+
     local classicNameplates = CreateCheckbox("classicNameplates", "Classic Nameplates", BetterBlizzPlates)
     classicNameplates:SetPoint("TOPLEFT", hideTargetHighlight, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(classicNameplates, "Classic Nameplates", "Enable to use a classic nameplate look for your nameplates.", "Only healthbar for now, might add classic castbar in a later patch.\nYou can enable castbar customization and change the texture to the old texture which will basically be the old classic castbars.")
@@ -5493,6 +5502,89 @@ local function guiGeneralTab()
             StaticPopup_Show("BBP_CONFIRM_RELOAD")
         end
     end)
+
+    local levelTextOptionsFrame
+    local function OpenLevelTextOptionsWindow()
+        if not levelTextOptionsFrame then
+            levelTextOptionsFrame = CreateFrame("Frame", "BBPLevelTextOptionsFrame", UIParent, "DefaultPanelFlatTemplate")
+            levelTextOptionsFrame:SetSize(200, 270)
+            levelTextOptionsFrame:SetPoint("CENTER")
+            levelTextOptionsFrame:SetFrameStrata("HIGH")
+            levelTextOptionsFrame:SetIgnoreParentAlpha(true)
+            levelTextOptionsFrame:SetTitle("Level Text Options")
+            levelTextOptionsFrame:EnableMouse(true)
+            levelTextOptionsFrame:SetMovable(true)
+            levelTextOptionsFrame:SetClampedToScreen(true)
+            levelTextOptionsFrame:RegisterForDrag("LeftButton")
+            levelTextOptionsFrame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+            levelTextOptionsFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+
+            levelTextOptionsFrame.closeButton = CreateFrame("Button", nil, levelTextOptionsFrame, "UIPanelCloseButton")
+            levelTextOptionsFrame.closeButton:SetPoint("TOPRIGHT", levelTextOptionsFrame, "TOPRIGHT", 0, 0)
+            levelTextOptionsFrame.closeButton:SetScript("OnClick", function()
+                levelTextOptionsFrame:Hide()
+            end)
+
+            levelTextOptionsFrame.bg = levelTextOptionsFrame:CreateTexture(nil, "BACKGROUND")
+            levelTextOptionsFrame.bg:SetPoint("TOPLEFT", levelTextOptionsFrame, "TOPLEFT", 7, -3)
+            levelTextOptionsFrame.bg:SetPoint("BOTTOMRIGHT", levelTextOptionsFrame, "BOTTOMRIGHT", -3, 3)
+            levelTextOptionsFrame.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
+
+            local levelTextAnchor = CreateAnchorDropdown(
+                "BBPLevelTextAnchorDropdown",
+                levelTextOptionsFrame,
+                "LEFT",
+                "levelTextAnchor",
+                BBP.UpdateAllLevelOverlays,
+                { anchorFrame = levelTextOptionsFrame, x = -2, y = -50, label = "Anchor" },
+                65
+            )
+            CreateTooltipTwo(levelTextAnchor, "Level Text Anchor", "The point on the level text that gets attached.")
+
+            local levelTextRelativeAnchor = CreateAnchorDropdown(
+                "BBPLevelTextRelativeAnchorDropdown",
+                levelTextOptionsFrame,
+                "RIGHT",
+                "levelTextRelativeAnchor",
+                BBP.UpdateAllLevelOverlays,
+                { anchorFrame = levelTextOptionsFrame, x = 88, y = -50, label = "Healthbar" },
+                65
+            )
+            CreateTooltipTwo(levelTextRelativeAnchor, "Healthbar Anchor", "The point on the healthbar the level text attaches to.")
+
+            local levelTextSize = CreateSlider(levelTextOptionsFrame, "Size", 4, 24, 0.5, "levelTextSize", nil, 150)
+            levelTextSize:SetPoint("TOPLEFT", levelTextOptionsFrame, "TOPLEFT", 24, -105)
+            CreateTooltipTwo(levelTextSize, "Level Text Size", "Font size of the level text. The skull scales along with it.", "Right-click the slider to type a value outside the default range.")
+
+            local levelTextXPos = CreateSlider(levelTextOptionsFrame, "x offset", -50, 50, 0.5, "levelTextXPos", nil, 150)
+            levelTextXPos:SetPoint("TOPLEFT", levelTextSize, "BOTTOMLEFT", 0, -17)
+            CreateTooltipTwo(levelTextXPos, "Level Text X Offset", "Move the level text horizontally.", "Right-click the slider to type a value outside the default range.")
+
+            local levelTextYPos = CreateSlider(levelTextOptionsFrame, "y offset", -50, 50, 0.5, "levelTextYPos", nil, 150)
+            levelTextYPos:SetPoint("TOPLEFT", levelTextXPos, "BOTTOMLEFT", 0, -17)
+            CreateTooltipTwo(levelTextYPos, "Level Text Y Offset", "Move the level text vertically.", "Right-click the slider to type a value outside the default range.")
+
+            local levelTextReset = CreateFrame("Button", nil, levelTextOptionsFrame, "UIPanelButtonTemplate")
+            levelTextReset:SetText("Reset")
+            levelTextReset:SetSize(80, 22)
+            levelTextReset:SetPoint("BOTTOM", levelTextOptionsFrame, "BOTTOM", 2, 12)
+            levelTextReset:SetScript("OnClick", function()
+                BetterBlizzPlatesDB.levelTextAnchor = "LEFT"
+                BetterBlizzPlatesDB.levelTextRelativeAnchor = "RIGHT"
+                LibDD:UIDropDownMenu_SetText(levelTextAnchor, "LEFT")
+                LibDD:UIDropDownMenu_SetText(levelTextRelativeAnchor, "RIGHT")
+                levelTextSize:SetValue(10)
+                levelTextXPos:SetValue(0)
+                levelTextYPos:SetValue(0)
+                BBP.UpdateAllLevelOverlays()
+            end)
+            CreateTooltipTwo(levelTextReset, "Reset", "Reset to default values")
+
+            levelTextOptionsFrame:Show()
+        else
+            levelTextOptionsFrame:SetShown(not levelTextOptionsFrame:IsShown())
+        end
+    end
 
     local levelEliteIconOptionsFrame
     local function OpenLevelEliteIconOptionsWindow()
@@ -5564,12 +5656,14 @@ local function guiGeneralTab()
 
     local levelOptions = CreateMultiSelectDropdown("Level Options", BetterBlizzPlates, {
         { key = "hideLevelFrame", label = "Hide Level", tooltip = "Hide the level display." },
+        { key = "hideLevelOnFriendly", label = "Hide Level On Friendly", tooltip = "Hide the level display on friendly nameplates." },
         { key = "hideLevelFrameBackground", label = "Hide Level Background", tooltip = "Hide the level background texture and just show level text.", tooltipNote = function() return BetterBlizzPlatesDB.classicRetailNameplates and "Always on with the Pre-Midnight Nameplate look." or nil end, isForced = function() return BetterBlizzPlatesDB.classicRetailNameplates end },
-        { key = "levelFrameEliteIcon", label = "Show Elite Icon Around Level", tooltip = "Show a rare dragon texture around the level on elite mobs.\n\nIf Hide Level is also enabled the ring is shown on the right side of the healthbar instead.\n\n|cff32f795Right-click for options.|r", onRightClick = OpenLevelEliteIconOptionsWindow },
+        { key = "moveLevelText", label = "Move Level", tooltipTitle = "Move & Size Level Text", tooltip = "Move and size the level text.", tooltipNote = "NOTE: This is not available when the level has a background (Classic Nameplates, etc)", onRightClick = OpenLevelTextOptionsWindow, isEnabled = BBP.CanMoveLevelText },
+        { key = "levelFrameEliteIcon", label = "Show Elite Icon Around Level", tooltip = "Show a rare dragon texture around the level on elite mobs.", tooltipNote = "If Hide Level is also enabled the ring is shown on the right side of the healthbar instead.", onRightClick = OpenLevelEliteIconOptionsWindow },
     }, 150)
     levelOptions:SetPoint("LEFT", classicNameplates.text, "RIGHT", 5, 0)
     levelOptions:SetScale(0.7)
-    CreateTooltipTwo(levelOptions, "Level Options", "Settings for the level display next to the healthbar.", "Hide Level, Hide Level Background and Show Elite Icon Around Level.")
+    CreateTooltipTwo(levelOptions, "Level Options", "Settings for the level display next to the healthbar.")
 
     classicNameplates:HookScript("OnClick", function(self)
         if self:GetChecked() then
@@ -9768,7 +9862,7 @@ local function guiCastbar()
 
     local castbarAlwaysOnTop = CreateCheckbox("castbarAlwaysOnTop", "Always on Top", enableCastbarCustomization)
     castbarAlwaysOnTop:SetPoint("LEFT", enableCastbarCustomization.text, "RIGHT", -1, 0)
-    CreateTooltipTwo(castbarAlwaysOnTop, "Always on Top", "Ensures castbar will always be displayed on top of other elements and not covered behind other nameplates.\n\n(This setting may see tweaks)")
+    CreateTooltipTwo(castbarAlwaysOnTop, "Always on Top", "Ensures castbar will always be displayed on top of other elements and not covered behind other nameplates.\n\n(This setting may see tweaks)", "NOTE: Temp disabled on Forever")
 
     local castbarQuickHide = CreateCheckbox("castbarQuickHide", "Castbar Quick Hide", enableCastbarCustomization)
     castbarQuickHide:SetPoint("TOPLEFT", enableCastbarCustomization, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -12689,6 +12783,10 @@ local function guiMisc()
     local forceClassColors = CreateCheckbox("forceClassColors", "Force Class Colors", guiMisc)
     forceClassColors:SetPoint("TOPLEFT", targetHighlightFix, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(forceClassColors, "Force Class Colors", "Force BBP to class color player nameplates.\n\nNormally Blizzard class colors nameplates but due to too many bugs of it failing to color properly (like on Mind Control) this setting exists so BBP does the class coloring instead (without bugs).")
+
+    local centerNameplateHealthBar = CreateCheckbox("centerNameplateHealthBar", "Center Nameplate Healthbar", guiMisc, nil, BBP.RefreshAllNameplates)
+    centerNameplateHealthBar:SetPoint("LEFT", forceClassColors.text, "RIGHT", 5, 0)
+    CreateTooltipTwo(centerNameplateHealthBar, "Center Nameplate Healthbar", "Center the healthbar properly on nameplates and instead have the level frame pushed out on the side.", "Only affects the default nameplate look. Classic and Pre-Midnight nameplates already keep the level outside the healthbar.")
 
     local recolorTempHpLoss = CreateCheckbox("recolorTempHpLoss", "Recolor Temp HP Loss", guiMisc)
     recolorTempHpLoss:SetPoint("TOPLEFT", forceClassColors, "BOTTOMLEFT", 0, pixelsBetweenBoxes)

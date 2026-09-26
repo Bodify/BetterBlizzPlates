@@ -77,6 +77,7 @@ local defaultSettings = {
     removeRealmNames = true,
     hideNameplateAuras = false,
     hideTargetHighlight = false,
+    hideTargetBorder = false,
     nameplateShowEnemyMinus = nil,
     enemyNameplateHealthbarHeight = nil,
     fadeOutNPC = false,
@@ -6743,6 +6744,31 @@ local function CreateBorder(frame, r, g, b, a)
     return border
 end
 
+function BBP.UpdateTargetBorder(frame)
+    local db = BetterBlizzPlatesDB
+    local hide = db.hideTargetBorder
+    local restore = not hide and frame.bbpTargetBorderHidden
+    local healthBar = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar
+    local border = healthBar and healthBar.selectedBorder
+    if border then
+        if hide then
+            border:SetAlpha(0)
+        elseif restore and not db.classicNameplates and not db.classicRetailNameplates then
+            border:SetAlpha(1)
+        end
+    end
+    local levelFrame = frame.PlayerLevelDiffFrame
+    local levelBorder = levelFrame and not levelFrame:IsForbidden() and levelFrame.selectedBorder
+    if levelBorder then
+        if hide then
+            levelBorder:SetAlpha(0)
+        elseif restore then
+            levelBorder:SetAlpha(1)
+        end
+    end
+    frame.bbpTargetBorderHidden = hide or nil
+end
+
 function BBP.SetupBorderOnFrame(frame, hpBar)
     if frame.border then
         frame.border:Hide()
@@ -7287,6 +7313,8 @@ local function HandleNamePlateAdded(unit)
         end
         frame.classicNameplatesOn = nil
     end
+
+    BBP.UpdateTargetBorder(frame)
 
     if not config.classicNameplates then
         if not BetterBlizzPlatesDB.hideLevelFrame then

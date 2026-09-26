@@ -77,6 +77,7 @@ local defaultSettings = {
     removeRealmNames = false,
     hideNameplateAuras = false,
     hideTargetHighlight = false,
+    hideTargetBorder = false,
     nameplateShowEnemyMinus = nil,
     enemyNameplateHealthbarHeight = nil,
     fadeOutNPC = false,
@@ -125,8 +126,16 @@ local defaultSettings = {
     hpHeightSelf = 4 * 2.7,--tonumber(GetCVar("NamePlateVerticalScale")),
     hpHeightSelfMana = 4 * 2.7,--tonumber(GetCVar("NamePlateVerticalScale")),
     hideLevelFrame = false,
+    hideLevelOnFriendly = true,
+    centerNameplateHealthBar = false,
     hideLevelFrameBackground = false,
     levelFrameEliteIcon = false,
+    moveLevelText = false,
+    levelTextAnchor = "LEFT",
+    levelTextRelativeAnchor = "RIGHT",
+    levelTextXPos = 0,
+    levelTextYPos = 0,
+    levelTextSize = 10,
     levelEliteIconWidth = 0,
     levelEliteIconHeight = 0,
     levelEliteIconXPos = 0,
@@ -2267,7 +2276,7 @@ function BBP.UpdateStackingZone(nameplate)
     end
     local horizontalOffset = (BetterBlizzPlatesDB.stackingHorizontalOffset or 0)
     local verticalOffset = (BetterBlizzPlatesDB.stackingVerticalOffset or 0)
-    local classicLevelAdjustment = BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.hideLevelFrame and not BetterBlizzPlatesDB.hideLevelFrameBackground
+    local classicLevelAdjustment = BetterBlizzPlatesDB.classicNameplates and not BBP.IsLevelHidden(frame) and not BetterBlizzPlatesDB.hideLevelFrameBackground
     local stackingVerticalAdjustmentOffset = (BetterBlizzPlatesDB.stackingVerticalAdjustmentOffset or 0)
     frame.bbpStackingZone:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPLEFT", -1 - horizontalOffset, (5 + verticalOffset) + stackingVerticalAdjustmentOffset)
     frame.bbpStackingZone:SetPoint("BOTTOMRIGHT", frame.HealthBarsContainer, "BOTTOMRIGHT", (1 + horizontalOffset) + (classicLevelAdjustment and 17 or 0) + BBP.GetLevelBadgeSpace(frame), (-1 - verticalOffset) + stackingVerticalAdjustmentOffset)
@@ -2293,7 +2302,7 @@ function BBP.UpdateClickableArea(nameplate)
     local halfExtraWidth  = (BetterBlizzPlatesDB.nameplateExtraClickWidth or 0) / 2
     local halfExtraHeight = (BetterBlizzPlatesDB.nameplateExtraClickHeight or 0) / 2
     local halfVertAdj     = (BetterBlizzPlatesDB.nameplateClickVerticalAdjustment or 0) / 2
-    local classicLevelAdjustment = BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.hideLevelFrame and not BetterBlizzPlatesDB.hideLevelFrameBackground
+    local classicLevelAdjustment = BetterBlizzPlatesDB.classicNameplates and not BBP.IsLevelHidden(frame) and not BetterBlizzPlatesDB.hideLevelFrameBackground
     local levelBadgeSpace = BBP.GetLevelBadgeSpace(frame)
     local levelBadgeClickSpace = levelBadgeSpace > 0 and (levelBadgeSpace - 1) or 0
 
@@ -3677,8 +3686,8 @@ local function SetNameplateBarSizes(frame)
     local bbpClassic = db.classicNameplates
     local customCastbar = db.enableCastbarCustomization
     local bottomPos = (bbpClassic and 1.5 or 3) + (db.nameplateVerticalPosition or 0)
-    local normalRightAnchor = not bbpClassic or (bbpClassic and (db.hideLevelFrame or db.hideLevelFrameBackground))
-    local levelBadgeSpace = BBP.GetLevelBadgeSpace(frame)
+    local normalRightAnchor = not bbpClassic or (bbpClassic and (BBP.IsLevelHidden(frame) or db.hideLevelFrameBackground))
+    local levelBadgeSpace = BBP.GetLevelBarReserve(frame)
     local hpCastSpacing = db.spacingBetweenCastAndHealthbar or 0
     local setupOptions = NamePlateSetupOptions
     --BBP.greenScreen(frame)
@@ -6308,8 +6317,9 @@ local function CreateBetterClassicHealthbarBorder(frame)
         frame.healthBar.topNameAnchor:SetPoint("TOPRIGHT", right, "TOPRIGHT", -3, 0)
     end
 
-    local hideLevelBackground = BetterBlizzPlatesDB.hideLevelFrameBackground and not config.hideLevelFrame
-    if config.hideLevelFrame or hideLevelBackground then
+    local levelHidden = BBP.IsLevelHidden(frame)
+    local hideLevelBackground = BetterBlizzPlatesDB.hideLevelFrameBackground and not levelHidden
+    if levelHidden or hideLevelBackground then
         frame.healthBar.topNameAnchor:SetPoint("TOPRIGHT", frame.healthBar, "TOPRIGHT", 0, 0)
     else
         frame.healthBar.topNameAnchor:SetPoint("TOPRIGHT", frame.BetterBlizzPlates.bbpBorder.right, "TOPRIGHT", -3, -2)
@@ -6341,7 +6351,7 @@ local function CreateBetterClassicHealthbarBorder(frame)
         end
     end
 
-    if frame.ClassicLevelFrame and not config.hideLevelFrame then
+    if frame.ClassicLevelFrame and not levelHidden then
         local unitLevel = BBP.GetNameplateLevel(frame.unit)
         frame.ClassicLevelFrame.text:SetText(unitLevel ~= -1 and unitLevel or "")
         local levelColor = BBP.GetNameplateLevelColor(frame)
@@ -6369,7 +6379,7 @@ local function CreateBetterClassicHealthbarBorder(frame)
     local customTextureBars = BetterBlizzPlatesDB.useCustomTextureForBars
     local bottomOffset = (-((0.455) * (frame.hpBarHeight or height) - 1.09)) + (customTextureBars and 0 or 1)
     local topOffset = ((2 * (frame.hpBarHeight or height)) - 1) + (customTextureBars and 0 or -2)
-    local hideLevel = config.hideLevelFrame or BBP.HideMaxLevelInPvP(frame.unit)
+    local hideLevel = levelHidden or BBP.HideMaxLevelInPvP(frame.unit)
     local noLevelBorder = hideLevel or hideLevelBackground
     local rightXOffset = (noLevelBorder and 27.9 or 20.9) - (customTextureBars and 0 or 1)
     local leftXOffset = (customTextureBars and -28 or -27)
@@ -6734,6 +6744,20 @@ local function CreateBorder(frame, r, g, b, a)
     border:SetColorTexture(r, g, b, a)
     border:SetIgnoreParentScale(true)
     return border
+end
+
+function BBP.UpdateTargetBorder(frame)
+    local db = BetterBlizzPlatesDB
+    local healthBar = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar
+    local border = healthBar and healthBar.selectedBorder
+    if border then
+        if db.hideTargetBorder then
+            border:SetAlpha(0)
+        elseif frame.bbpTargetBorderHidden and not db.classicNameplates and not db.classicRetailNameplates then
+            border:SetAlpha(1)
+        end
+    end
+    frame.bbpTargetBorderHidden = db.hideTargetBorder or nil
 end
 
 function BBP.SetupBorderOnFrame(frame, hpBar)
@@ -7282,6 +7306,7 @@ local function HandleNamePlateAdded(unit)
     end
 
     BBP.UpdateBlizzardLevelFrame(frame)
+    BBP.UpdateTargetBorder(frame)
 
     -- Hook nameplate border color
     if config.changeNameplateBorderColor then

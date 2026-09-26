@@ -1163,14 +1163,14 @@ function BBP.CastbarOnEvent(frame, event)
     end
 
     if enableCastbarCustomization then
-        if db.castbarAlwaysOnTop then
-            if UnitIsUnit(frame.unit, "target") then
-                frame.castBar:SetParent(BBP.OverlayFrameTarget)
-            else
-                frame.castBar:SetParent(BBP.OverlayFrame)
-            end
-            frame.castBar:SetFrameStrata("HIGH")
-        end
+        -- if db.castbarAlwaysOnTop then
+        --     if UnitIsUnit(frame.unit, "target") then
+        --         frame.castBar:SetParent(BBP.OverlayFrameTarget)
+        --     else
+        --         frame.castBar:SetParent(BBP.OverlayFrame)
+        --     end
+        --     frame.castBar:SetFrameStrata("HIGH")
+        -- end
 
         if not BetterBlizzPlatesDB.useCustomCastbarBGTexture and BetterBlizzPlatesDB.castBarPixelBorder then -- if castbar customization, but not 
             local sbt = frame.castBar:GetStatusBarTexture()

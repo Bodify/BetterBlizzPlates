@@ -727,9 +727,9 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 frame.BBPmouseoverTex:SetVertexColor(0, 0, 0, 1)
             end
 
-            if db.castbarAlwaysOnTop and db.enableCastbarCustomization then
-                frame.castBar:SetParent(BBP.OverlayFrame)
-            end
+            -- if db.castbarAlwaysOnTop and db.enableCastbarCustomization then
+            --     frame.castBar:SetParent(BBP.OverlayFrame)
+            -- end
 
             -- info.isTarget = false
             -- info.wasTarget = true
@@ -855,9 +855,9 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             end
         end
 
-        if db.castbarAlwaysOnTop and db.enableCastbarCustomization then
-            frame.castBar:SetParent(BBP.OverlayFrameTarget)
-        end
+        -- if db.castbarAlwaysOnTop and db.enableCastbarCustomization then
+        --     frame.castBar:SetParent(BBP.OverlayFrameTarget)
+        -- end
 
         if db.changeNameplateBorderSize then
             BBP.ChangeHealthbarBorderSize(frame)
