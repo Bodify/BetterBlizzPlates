@@ -27,6 +27,9 @@
 - The friendly nameplate "Toggles" in General now mirror the "Show Friendly Nameplates" option in the CVar Control dropdowns, in both modes. Added a "City" toggle.
 - Right-click "keep overlapping nameplates in PvP" on Stacking Enemy Nameplates is replaced by per-content stacking.
 - Hide friendly healthbar "NPC's" and "Show NPC Titles on Friendly NPCs" now also apply to neutral NPCs you can't attack.
+### Classic
+### New
+- Add new Level Options dropdown topleft in /bbp with: Hide Level, Hide Level On Friendly, Hide Level background, Move Level.
 
 # BetterBlizzPlates 2.1.6
 ## WoW Forever

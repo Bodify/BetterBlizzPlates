@@ -30,8 +30,11 @@ BBP.BarberIcon = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\Barbers
 
 local checkBoxList = {}
 local sliderList = {}
+local dropdownList = {}
 local MAX_SEARCH_CHECKBOXES = 25
 local MAX_SEARCH_SLIDERS = 15
+local MAX_SEARCH_DROPDOWNS = 3
+local SEARCH_DROPDOWN_SCALE = 0.8
 
 local settingsPopups = {}
 local settingsPopupsHooked
@@ -823,6 +826,11 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 local xPos = BetterBlizzPlatesDB[element .. "XPos"] or 0
                 local yPos = BetterBlizzPlatesDB[element .. "YPos"] or 0
                 local anchorPoint = BetterBlizzPlatesDB[element .. "Anchor"] or "CENTER"
+
+                if element == "levelEliteIconWidth" or element == "levelEliteIconHeight" or element == "levelEliteIconXPos" or element == "levelEliteIconYPos" or element == "levelTextSize" or element == "levelTextXPos" or element == "levelTextYPos" then
+                    BetterBlizzPlatesDB[element] = value
+                    BBP.UpdateAllLevelFrames()
+                end
 
                 for _, namePlate in pairs(C_NamePlate.GetNamePlates()) do
                     if namePlate.UnitFrame then
@@ -2133,6 +2141,83 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
     end)
 
     return checkBox
+end
+
+local function CreateMultiSelectDropdown(label, parent, options, width, onChange)
+    local dropdown = CreateFrame("DropdownButton", nil, parent, "WowStyle1DropdownTemplate")
+    dropdown:SetWidth(width or 120)
+    dropdown.options = options
+
+    local category = parent.name
+    if category == "Better|cff00c0ffBlizz|rPlates |A:gmchat-icon-blizz:16:16|a" then
+        category = "General"
+    end
+    dropdown.searchCategory = category
+
+    function dropdown:ToggleOption(option)
+        BetterBlizzPlatesDB[option.key] = not BetterBlizzPlatesDB[option.key]
+        if onChange then
+            onChange(option.key, BetterBlizzPlatesDB[option.key])
+        end
+        if not BetterBlizzPlatesDB.wasOnLoadingScreen then
+            BBP.needsUpdate = true
+            BBP.RefreshAllNameplates()
+        end
+    end
+
+    local function GenerateMenu(owner, rootDescription)
+        for _, option in ipairs(options) do
+            if not option.isAvailable or option.isAvailable() then
+                local checkbox = rootDescription:CreateCheckbox(option.label,
+                    function() return (BetterBlizzPlatesDB[option.key] or (option.isForced and option.isForced())) and true or false end,
+                    function(_, inputData)
+                        if option.onRightClick and inputData and inputData.buttonName == "RightButton" then
+                            option.onRightClick()
+                            return MenuResponse.CloseAll
+                        end
+                        dropdown:ToggleOption(option)
+                    end)
+                if option.onRightClick then
+                    checkbox:AddInitializer(function(button)
+                        button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+                    end)
+                    checkbox:AddResetter(function(button)
+                        button:RegisterForClicks("LeftButtonUp")
+                    end)
+                end
+                if option.isEnabled or option.isForced then
+                    checkbox:SetEnabled(function()
+                        if option.isForced and option.isForced() then return false end
+                        return not option.isEnabled or option.isEnabled()
+                    end)
+                end
+                if option.tooltip then
+                    checkbox:SetTooltip(function(tooltip)
+                        GameTooltip_SetTitle(tooltip, option.tooltipTitle or option.label, NORMAL_FONT_COLOR)
+                        tooltip:AddLine(option.tooltip, 1, 1, 1, true)
+                        if option.onRightClick then
+                            tooltip:AddLine(" ")
+                            tooltip:AddLine("|cff32f795" .. (option.rightClickText or "Right-click for options.") .. "|r", 1, 1, 1, true)
+                        end
+                        local note = option.tooltipNote
+                        if type(note) == "function" then note = note() end
+                        if note then
+                            tooltip:AddLine("____________________________", 0.8, 0.8, 0.8, true)
+                            tooltip:AddLine(note, 0.8, 0.8, 0.8, true)
+                        end
+                    end)
+                end
+            end
+        end
+    end
+    dropdown.menuGenerator = GenerateMenu
+    dropdown:SetupMenu(GenerateMenu)
+    dropdown:SetDefaultText(label)
+    dropdown:SetSelectionText(function() return label end)
+
+    table.insert(dropdownList, {dropdown = dropdown, label = label})
+
+    return dropdown
 end
 
 local selectedLineIndex = nil
@@ -4624,6 +4709,18 @@ local function CreateSearchFrame()
     -- Search function that clears results or searches for query
     local checkboxPool = {}
     local sliderPool = {}
+    local dropdownPool = {}
+
+    local function UpdateSearchDropdownStates()
+        for _, resultDropdown in ipairs(dropdownPool) do
+            if resultDropdown:IsShown() then
+                local parentKey = resultDropdown.parentKey
+                local enabled = not parentKey or BetterBlizzPlatesDB[parentKey] and true or false
+                resultDropdown:SetEnabled(enabled)
+                resultDropdown:SetAlpha(enabled and 1 or 0.5)
+            end
+        end
+    end
 
     local function SearchElements(query)
         -- Clear existing results
@@ -4644,6 +4741,8 @@ local function CreateSearchFrame()
         local sliderCount = 0
         local checkboxMatches = 0
         local sliderMatches = 0
+        local dropdownCount = 0
+        local dropdownMatches = 0
         local yOffsetCheckbox = -20  -- Starting position for the first checkbox
         local yOffsetSlider = -20    -- Starting position for the first slider
 
@@ -4677,6 +4776,48 @@ local function CreateSearchFrame()
             end
         end
 
+        for _, data in ipairs(dropdownList) do
+            local dropdown = data.dropdown
+            local base = data.label .. " " .. (dropdown.tooltipTitle or "")
+            local texts = { base .. " " .. (dropdown.tooltipMainText or "") }
+            for _, option in ipairs(dropdown.options) do
+                texts[#texts + 1] = base .. " " .. (option.label or "") .. " " .. (option.tooltipTitle or "") .. " " .. (option.tooltip or "")
+            end
+            for _, term in ipairs(dropdown.searchExtraTerms or {}) do
+                texts[#texts + 1] = base .. " " .. term
+            end
+            local isMatch = false
+            for _, text in ipairs(texts) do
+                if matchesQuery(text) then
+                    isMatch = true
+                    break
+                end
+            end
+            if isMatch then
+                dropdownMatches = dropdownMatches + 1
+            end
+            if isMatch and dropdownCount < MAX_SEARCH_DROPDOWNS then
+                dropdownCount = dropdownCount + 1
+                local resultDropdown = dropdownPool[dropdownCount]
+                if not resultDropdown then
+                    resultDropdown = CreateFrame("DropdownButton", nil, resultsList, "WowStyle1DropdownTemplate")
+                    resultDropdown:SetWidth(180)
+                    resultDropdown:SetScale(SEARCH_DROPDOWN_SCALE)
+                    dropdownPool[dropdownCount] = resultDropdown
+                end
+                resultDropdown:ClearAllPoints()
+                resultDropdown:SetPoint("TOPLEFT", searchIcon, "TOPLEFT", 31 / SEARCH_DROPDOWN_SCALE, (yOffsetCheckbox - 1) / SEARCH_DROPDOWN_SCALE)
+                resultDropdown.parentKey = dropdown.searchParentKey
+                resultDropdown:SetupMenu(dropdown.menuGenerator)
+                resultDropdown:SetDefaultText(data.label)
+                resultDropdown:SetSelectionText(function() return data.label end)
+                CreateTooltipTwo(resultDropdown, dropdown.tooltipTitle or data.label, dropdown.tooltipMainText, nil, nil, nil, nil, dropdown.searchCategory)
+                resultDropdown:Show()
+                yOffsetCheckbox = yOffsetCheckbox - 26
+            end
+        end
+        local checkboxCap = MAX_SEARCH_CHECKBOXES - math.ceil(dropdownCount * 26 / 21)
+
         -- Search through checkboxes
         for _, data in ipairs(checkBoxList) do
             -- Prepare the label and tooltip text
@@ -4691,7 +4832,7 @@ local function CreateSearchFrame()
             if isMatch then
                 checkboxMatches = checkboxMatches + 1
             end
-            if isMatch and checkboxCount < MAX_SEARCH_CHECKBOXES then
+            if isMatch and checkboxCount < checkboxCap then
                 checkboxCount = checkboxCount + 1
 
                 -- Re-use or create a new checkbox from the pool
@@ -4710,10 +4851,13 @@ local function CreateSearchFrame()
                     resultCheckBox.Text:SetText(data.checkbox.tooltipTitle)
                 end
                 resultCheckBox:SetChecked(data.checkbox:GetChecked())
+                resultCheckBox:SetEnabled(true)
+                resultCheckBox:SetAlpha(1)
 
                 -- Link the result checkbox to the main checkbox
                 resultCheckBox:SetScript("OnClick", function()
                     data.checkbox:Click()
+                    UpdateSearchDropdownStates()
                 end)
 
                 applyRightClickScript(resultCheckBox, data.checkbox)
@@ -4799,9 +4943,10 @@ local function CreateSearchFrame()
             end
         end
 
+        UpdateSearchDropdownStates()
 
-        local totalMatches = checkboxMatches + sliderMatches
-        local shown = checkboxCount + sliderCount
+        local totalMatches = checkboxMatches + sliderMatches + dropdownMatches
+        local shown = checkboxCount + sliderCount + dropdownCount
         if shown < totalMatches then
             cappedText:SetFormattedText("(showing %d of %d, be more specific)", shown, totalMatches)
             cappedText:Show()
@@ -5060,22 +5205,180 @@ local function guiGeneralTab()
     classicNameplates:SetPoint("TOPLEFT", removeRealmNames, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(classicNameplates, "Classic Nameplates", "Use the default classic nameplate look instead of retail look on nameplates.")
 
-    local hideLevelFrame = CreateCheckbox("hideLevelFrame", "Hide Level", BetterBlizzPlates)
-    hideLevelFrame:SetPoint("LEFT", classicNameplates.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(hideLevelFrame, "Hide Level", "Hides the Level on nameplates.")
+    local function CreateLevelOptionsWindow(name, title, width, height)
+        local window = CreateFrame("Frame", name, UIParent, "DefaultPanelFlatTemplate")
+        window:SetSize(width, height)
+        window:SetPoint("CENTER")
+        window:SetFrameStrata("HIGH")
+        window:SetIgnoreParentAlpha(true)
+        window:SetTitle(title)
+        window:EnableMouse(true)
+        window:SetMovable(true)
+        window:SetClampedToScreen(true)
+        window:RegisterForDrag("LeftButton")
+        window:SetScript("OnDragStart", function(self) self:StartMoving() end)
+        window:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+
+        window.closeButton = CreateFrame("Button", nil, window, "UIPanelCloseButton")
+        window.closeButton:SetPoint("TOPRIGHT", window, "TOPRIGHT", 0, 0)
+        window.closeButton:SetScript("OnClick", function()
+            window:Hide()
+        end)
+
+        window.bg = window:CreateTexture(nil, "BACKGROUND")
+        window.bg:SetPoint("TOPLEFT", window, "TOPLEFT", 7, -3)
+        window.bg:SetPoint("BOTTOMRIGHT", window, "BOTTOMRIGHT", -3, 3)
+        window.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
+        return window
+    end
+
+    local levelTextOptionsFrame
+    local function OpenLevelTextOptionsWindow()
+        if levelTextOptionsFrame then
+            levelTextOptionsFrame:SetShown(not levelTextOptionsFrame:IsShown())
+            return
+        end
+        levelTextOptionsFrame = CreateLevelOptionsWindow("BBPLevelTextOptionsFrame", "Level Text Options", 200, 270)
+
+        local levelTextAnchor = CreateAnchorDropdown(
+            "BBPLevelTextAnchorDropdown",
+            levelTextOptionsFrame,
+            "LEFT",
+            "levelTextAnchor",
+            BBP.UpdateAllLevelFrames,
+            { anchorFrame = levelTextOptionsFrame, x = -2, y = -50, label = "Anchor" },
+            65
+        )
+        CreateTooltipTwo(levelTextAnchor, "Level Text Anchor", "The point on the level text that gets attached.")
+
+        local levelTextRelativeAnchor = CreateAnchorDropdown(
+            "BBPLevelTextRelativeAnchorDropdown",
+            levelTextOptionsFrame,
+            "RIGHT",
+            "levelTextRelativeAnchor",
+            BBP.UpdateAllLevelFrames,
+            { anchorFrame = levelTextOptionsFrame, x = 88, y = -50, label = "Healthbar" },
+            65
+        )
+        CreateTooltipTwo(levelTextRelativeAnchor, "Healthbar Anchor", "The point on the healthbar the level text attaches to.")
+
+        local levelTextSize = CreateSlider(levelTextOptionsFrame, "Size", 4, 24, 0.5, "levelTextSize", nil, 150)
+        levelTextSize:SetPoint("TOPLEFT", levelTextOptionsFrame, "TOPLEFT", 24, -105)
+        CreateTooltipTwo(levelTextSize, "Level Text Size", "Font size of the level text.", "Right-click the slider to type a value outside the default range.")
+
+        local levelTextXPos = CreateSlider(levelTextOptionsFrame, "x offset", -50, 50, 0.5, "levelTextXPos", nil, 150)
+        levelTextXPos:SetPoint("TOPLEFT", levelTextSize, "BOTTOMLEFT", 0, -17)
+        CreateTooltipTwo(levelTextXPos, "Level Text X Offset", "Move the level text horizontally.", "Right-click the slider to type a value outside the default range.")
+
+        local levelTextYPos = CreateSlider(levelTextOptionsFrame, "y offset", -50, 50, 0.5, "levelTextYPos", nil, 150)
+        levelTextYPos:SetPoint("TOPLEFT", levelTextXPos, "BOTTOMLEFT", 0, -17)
+        CreateTooltipTwo(levelTextYPos, "Level Text Y Offset", "Move the level text vertically.", "Right-click the slider to type a value outside the default range.")
+
+        local levelTextReset = CreateFrame("Button", nil, levelTextOptionsFrame, "UIPanelButtonTemplate")
+        levelTextReset:SetText("Reset")
+        levelTextReset:SetSize(80, 22)
+        levelTextReset:SetPoint("BOTTOM", levelTextOptionsFrame, "BOTTOM", 2, 12)
+        levelTextReset:SetScript("OnClick", function()
+            BetterBlizzPlatesDB.levelTextAnchor = "LEFT"
+            BetterBlizzPlatesDB.levelTextRelativeAnchor = "RIGHT"
+            LibDD:UIDropDownMenu_SetText(levelTextAnchor, "LEFT")
+            LibDD:UIDropDownMenu_SetText(levelTextRelativeAnchor, "RIGHT")
+            levelTextSize:SetValue(10)
+            levelTextXPos:SetValue(0)
+            levelTextYPos:SetValue(0)
+            BBP.UpdateAllLevelFrames()
+        end)
+        CreateTooltipTwo(levelTextReset, "Reset", "Reset to default values")
+
+        levelTextOptionsFrame:Show()
+    end
+
+    local levelEliteIconOptionsFrame
+    local function OpenLevelEliteIconOptionsWindow()
+        if levelEliteIconOptionsFrame then
+            levelEliteIconOptionsFrame:SetShown(not levelEliteIconOptionsFrame:IsShown())
+            return
+        end
+        levelEliteIconOptionsFrame = CreateLevelOptionsWindow("BBPLevelEliteIconOptionsFrame", "Elite Icon Options", 180, 290)
+
+        local levelEliteIconWidth = CreateSlider(levelEliteIconOptionsFrame, "Width", -30, 40, 1, "levelEliteIconWidth", nil, 150)
+        levelEliteIconWidth:SetPoint("TOPLEFT", levelEliteIconOptionsFrame, "TOPLEFT", 14, -45)
+        CreateTooltipTwo(levelEliteIconWidth, "Elite Icon Width", "Adjust the width of the elite icon.", "Right-click the slider to type a value outside the default range.")
+
+        local levelEliteIconHeight = CreateSlider(levelEliteIconOptionsFrame, "Height", -30, 40, 1, "levelEliteIconHeight", nil, 150)
+        levelEliteIconHeight:SetPoint("TOPLEFT", levelEliteIconWidth, "BOTTOMLEFT", 0, -17)
+        CreateTooltipTwo(levelEliteIconHeight, "Elite Icon Height", "Adjust the height of the elite icon.", "Right-click the slider to type a value outside the default range.")
+
+        local levelEliteIconXPos = CreateSlider(levelEliteIconOptionsFrame, "x offset", -30, 30, 0.5, "levelEliteIconXPos", nil, 150)
+        levelEliteIconXPos:SetPoint("TOPLEFT", levelEliteIconHeight, "BOTTOMLEFT", 0, -17)
+        CreateTooltipTwo(levelEliteIconXPos, "Elite Icon X Offset", "Move the elite icon horizontally.", "Right-click the slider to type a value outside the default range.")
+
+        local levelEliteIconYPos = CreateSlider(levelEliteIconOptionsFrame, "y offset", -30, 30, 0.5, "levelEliteIconYPos", nil, 150)
+        levelEliteIconYPos:SetPoint("TOPLEFT", levelEliteIconXPos, "BOTTOMLEFT", 0, -17)
+        CreateTooltipTwo(levelEliteIconYPos, "Elite Icon Y Offset", "Move the elite icon vertically.", "Right-click the slider to type a value outside the default range.")
+
+        local levelEliteIconLeftSide = CreateCheckbox("levelEliteIconLeftSide", "Attach Elite Icon Left Side", levelEliteIconOptionsFrame, nil, BBP.UpdateAllLevelFrames)
+        levelEliteIconLeftSide:SetPoint("TOPLEFT", levelEliteIconYPos, "BOTTOMLEFT", -4, -12)
+        CreateTooltipTwo(levelEliteIconLeftSide, "Attach Elite Icon Left Side", "Move the elite icon to the left side of the healthbar.")
+
+        local levelEliteIconRingTexture = CreateCheckbox("levelEliteIconRingTexture", "Ring Texture", levelEliteIconOptionsFrame, nil, BBP.UpdateAllLevelFrames)
+        levelEliteIconRingTexture:SetPoint("TOPLEFT", levelEliteIconLeftSide, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+        CreateTooltipTwo(levelEliteIconRingTexture, "Ring Texture", "Use the elite dragon with a ring.")
+
+        local levelEliteIconReset = CreateFrame("Button", nil, levelEliteIconOptionsFrame, "UIPanelButtonTemplate")
+        levelEliteIconReset:SetText("Reset")
+        levelEliteIconReset:SetSize(80, 22)
+        levelEliteIconReset:SetPoint("BOTTOM", levelEliteIconOptionsFrame, "BOTTOM", 2, 12)
+        levelEliteIconReset:SetScript("OnClick", function()
+            levelEliteIconWidth:SetValue(0)
+            levelEliteIconHeight:SetValue(0)
+            levelEliteIconXPos:SetValue(0)
+            levelEliteIconYPos:SetValue(0)
+            if levelEliteIconLeftSide:GetChecked() then
+                levelEliteIconLeftSide:Click()
+            end
+            if levelEliteIconRingTexture:GetChecked() then
+                levelEliteIconRingTexture:Click()
+            end
+        end)
+        CreateTooltipTwo(levelEliteIconReset, "Reset", "Reset to default values")
+
+        levelEliteIconOptionsFrame:Show()
+    end
+
+    local levelAreaKeys = { hideLevelFrame = true, hideLevelOnFriendly = true, hideLevelFrameBackground = true }
+    local levelOptions = CreateMultiSelectDropdown("Level Options", BetterBlizzPlates, {
+        { key = "hideLevelFrame", label = "Hide Level", tooltip = "Hide the level." },
+        { key = "hideLevelOnFriendly", label = "Hide Level On Friendly", tooltip = "Hide the level on friendly nameplates." },
+        { key = "hideLevelFrameBackground", label = "Hide Level Background", tooltip = "Show only the level text.", tooltipNote = function() return not BetterBlizzPlatesDB.classicNameplates and "Always on without Classic Nameplates." or nil end, isForced = function() return not BetterBlizzPlatesDB.classicNameplates end },
+        { key = "moveLevelText", label = "Move Level", tooltipTitle = "Move & Size Level Text", tooltip = "Move and size the level text.", tooltipNote = "Needs Hide Level Background with Classic Nameplates.", onRightClick = OpenLevelTextOptionsWindow, isEnabled = BBP.CanMoveLevelText },
+        { key = "levelFrameEliteIcon", label = "Show Elite Icon Around Level", tooltip = "Show a dragon around the level on elite and rare mobs.", tooltipNote = "With Hide Level on, it sits on the healthbar instead.", onRightClick = OpenLevelEliteIconOptionsWindow, isAvailable = BBP.LevelEliteRingAvailable },
+    }, 150, function(key)
+        if levelAreaKeys[key] and not InCombatLockdown() then
+            for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+                local frame = nameplate.UnitFrame
+                if frame and not frame:IsForbidden() and frame.unit then
+                    BBP.UpdateClickableArea(nameplate)
+                    BBP.SetNameplateBarSizes(frame)
+                    BBP.UpdateStackingZone(nameplate)
+                end
+            end
+        end
+    end)
+    levelOptions:SetPoint("LEFT", classicNameplates.text, "RIGHT", 5, 0)
+    levelOptions:SetScale(0.7)
+    CreateTooltipTwo(levelOptions, "Level Options", "Settings for the level next to the healthbar.")
 
     classicNameplates:HookScript("OnClick", function(self)
         if self:GetChecked() then
             BetterBlizzPlatesDB.nameplateEnemyWidth = 150
             BetterBlizzPlatesDB.nameplateFriendlyWidth = 150
             BetterBlizzPlatesDB.castBarHeight = 11
-            hideLevelFrame:SetChecked(false)
             BetterBlizzPlatesDB.hideLevelFrame = false
         else
             BetterBlizzPlatesDB.nameplateEnemyWidth = 145
             BetterBlizzPlatesDB.nameplateFriendlyWidth = 145
             BetterBlizzPlatesDB.castBarHeight = 16
-            hideLevelFrame:SetChecked(true)
             BetterBlizzPlatesDB.hideLevelFrame = true
         end
         if not InCombatLockdown() then

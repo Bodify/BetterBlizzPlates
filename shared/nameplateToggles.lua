@@ -308,10 +308,8 @@ function BBP.MigrateNameplateToggles(db)
         sets[category.key] = set
     end
 
-    local liveEnemies = C_CVar.GetCVar("nameplateShowEnemies")
-    local showEnemies = liveEnemies == nil or liveEnemies == "1"
     for _, set in pairs(sets) do
-        set.nameplateShowEnemies = showEnemies
+        set.nameplateShowEnemies = true
     end
 
     local oldArena = db.friendlyNameplatesOnlyInArena and true or false
