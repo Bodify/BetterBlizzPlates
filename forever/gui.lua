@@ -7618,6 +7618,10 @@ local function guiPositionAndScale()
     anchorSubFaction.factionIndicatorHostileOnly:SetPoint("LEFT", anchorSubFaction.factionIndicatorOnlyWorld.text, "RIGHT", 0, 0)
     CreateTooltipTwo(anchorSubFaction.factionIndicatorHostileOnly, "Hostile Only", "Only enable on hostile nameplates. Nameplates you can attack, regardless of faction.")
 
+    anchorSubFaction.factionIndicatorPvPTaggedOnly = CreateCheckbox("factionIndicatorPvPTaggedOnly", "PvP tagged only", contentFrame)
+    anchorSubFaction.factionIndicatorPvPTaggedOnly:SetPoint("TOPLEFT", anchorSubFaction.factionIndicatorOnlyWorld, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubFaction.factionIndicatorPvPTaggedOnly, "PvP Tagged Only", "Only show on PvP tagged players.")
+
     anchorSubFaction.factionIndicatorOnlyPvPZone = CreateCheckbox("factionIndicatorOnlyPvPZone", "PvP (FFA) only", contentFrame)
     anchorSubFaction.factionIndicatorOnlyPvPZone:SetPoint("LEFT", anchorSubFaction.factionIndicatorTestMode2.text, "RIGHT", 0, 0)
     CreateTooltipTwo(anchorSubFaction.factionIndicatorOnlyPvPZone, "PvP Zone Only", "Only show the faction icon in PvP zones. (Free-For-All in the open world)")

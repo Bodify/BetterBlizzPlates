@@ -858,6 +858,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         -- Execute Indicator Pos and Scale
                         elseif element == "executeIndicatorXPos" or element == "executeIndicatorYPos" or element == "executeIndicatorScale" then
                             BBP.ExecuteIndicator(frame)
+                        -- Faction Indicator Pos and Scale
+                        elseif element == "factionIndicatorXPos" or element == "factionIndicatorYPos" or element == "factionIndicatorScale" then
+                            BBP.FactionIndicator(frame)
                         -- Party Pointer Pos and Scale
                         elseif element == "partyPointerXPos" or element == "partyPointerYPos" or element == "partyPointerScale"  or element == "partyPointerHealerScale" or element == "partyPointerWidth" then
                             BBP.PartyPointer(frame)
@@ -1111,6 +1114,12 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BetterBlizzPlatesDB.executeIndicatorYPos = value
                 elseif element == "executeIndicatorScale" then
                     BetterBlizzPlatesDB.executeIndicatorScale = value
+                elseif element == "factionIndicatorXPos" then
+                    BetterBlizzPlatesDB.factionIndicatorXPos = value
+                elseif element == "factionIndicatorYPos" then
+                    BetterBlizzPlatesDB.factionIndicatorYPos = value
+                elseif element == "factionIndicatorScale" then
+                    BetterBlizzPlatesDB.factionIndicatorScale = value
                 -- Target Indicator Pos and Scale
                 elseif element == "targetIndicatorXPos" then
                     BetterBlizzPlatesDB.targetIndicatorXPos = value
@@ -6171,8 +6180,23 @@ local function guiGeneralTab()
     executeIndicatorIcon:SetSize(28, 30)
     executeIndicatorIcon:SetPoint("RIGHT", executeIndicator, "LEFT", 4, 1)
 
+    local factionIndicator = CreateCheckbox("factionIndicator", "Faction indicator", BetterBlizzPlates, nil, BBP.ToggleFactionIndicator)
+    factionIndicator:SetPoint("TOPLEFT", executeIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local factionAtlas = C_Texture.GetAtlasInfo("questlog-questtypeicon-alliance") and "questlog-questtypeicon-alliance"
+    local factionIconMarkup = factionAtlas and "|A:"..factionAtlas..":21:21|a" or "|TInterface\\Icons\\Inv_BannerPVP_02:18:18|t"
+    CreateTooltipTwo(factionIndicator, "Faction Indicator "..factionIconMarkup, "Show a faction icon on nameplates.", "Enabled only in World PvP Zones by default but more settings in the Advanced Settings section.")
+    local factionIndicatorIcon = factionIndicator:CreateTexture(nil, "ARTWORK")
+    if factionAtlas then
+        factionIndicatorIcon:SetAtlas(factionAtlas)
+        factionIndicatorIcon:SetSize(21, 21)
+    else
+        factionIndicatorIcon:SetTexture("Interface\\Icons\\Inv_BannerPVP_02")
+        factionIndicatorIcon:SetSize(18, 18)
+    end
+    factionIndicatorIcon:SetPoint("RIGHT", factionIndicator, "LEFT", 0, 0)
+
     local healerIndicator = CreateCheckbox("healerIndicator", "Healer indicator", BetterBlizzPlates)
-    healerIndicator:SetPoint("TOPLEFT", executeIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    healerIndicator:SetPoint("TOPLEFT", factionIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(healerIndicator, "Healer Indicator |A:greencross:21:21|a", "Show a cross on healers. Requires Details to work.", "Note: Party Pointer and Class Indicator both have their own Healer Icon settings. This is a separate icon entirely.")
     local healerCrossIcon = healerIndicator:CreateTexture(nil, "ARTWORK")
     healerCrossIcon:SetAtlas("greencross")
@@ -6273,7 +6297,7 @@ local function guiGeneralTab()
     -- Font and texture
     ----------------------
     local customFontandTextureText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    customFontandTextureText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, -365)
+    customFontandTextureText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 370, -385)
     customFontandTextureText:SetText("Font and texture")
     local customFontandTextureIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
     customFontandTextureIcon:SetTexture(BBP.BarberIcon)
@@ -8662,6 +8686,136 @@ local function guiPositionAndScale()
         local coloredName = classColor and classColor:WrapTextInColorCode(playerName) or playerName
         CreateTooltipTwo(anchorSubTargetText.insideBar, "Target text inside castbar", "Put the target text inside the castbar on casts so it appears like \"Polymorph: " .. coloredName .. "\"")
     end
+
+    ----------------------
+    -- Faction Indicator
+    ----------------------
+    local anchorSubFaction = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubFaction:SetPoint("CENTER", mainGuiAnchor2, "CENTER", fourthLineX, fifthLineY)
+    anchorSubFaction:SetText("Faction Indicator")
+
+    CreateBorderBox(anchorSubFaction)
+
+    anchorSubFaction.factionIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
+    if C_Texture.GetAtlasInfo("questlog-questtypeicon-alliance") then
+        anchorSubFaction.factionIcon2:SetAtlas("questlog-questtypeicon-alliance")
+        anchorSubFaction.factionIcon2:SetSize(34, 34)
+    else
+        anchorSubFaction.factionIcon2:SetTexture("Interface\\Icons\\Inv_BannerPVP_02")
+        anchorSubFaction.factionIcon2:SetSize(28, 28)
+    end
+    anchorSubFaction.factionIcon2:SetPoint("BOTTOM", anchorSubFaction, "TOP", 0, 3)
+
+    anchorSubFaction.factionIndicatorScale = CreateSlider(contentFrame, "Size", 0.1, 3, 0.01, "factionIndicatorScale")
+    anchorSubFaction.factionIndicatorScale:SetPoint("TOP", anchorSubFaction, "BOTTOM", 0, -15)
+
+    anchorSubFaction.factionIndicatorXPos = CreateSlider(contentFrame, "x offset", -50, 50, 1, "factionIndicatorXPos", "X")
+    anchorSubFaction.factionIndicatorXPos:SetPoint("TOP", anchorSubFaction.factionIndicatorScale, "BOTTOM", 0, -15)
+
+    anchorSubFaction.factionIndicatorYPos = CreateSlider(contentFrame, "y offset", -50, 50, 1, "factionIndicatorYPos", "Y")
+    anchorSubFaction.factionIndicatorYPos:SetPoint("TOP", anchorSubFaction.factionIndicatorXPos, "BOTTOM", 0, -15)
+
+    anchorSubFaction.factionIndicatorDropdown = CreateAnchorDropdown(
+        "factionIndicatorDropdown",
+        contentFrame,
+        "Select Anchor Point",
+        "factionIndicatorAnchor",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = anchorSubFaction.factionIndicatorYPos, x = -16, y = -35, label = "Anchor" }
+    )
+
+    anchorSubFaction.factionIconSetNames = {
+        [1]  = "Quest Log Icons",
+        [2]  = "UnitFrame Icons",
+        [3]  = "PVP Banners",
+        [4]  = "BFA Landing Buttons",
+        [5]  = "Talent Tree Logos",
+        [6]  = "CTF Flags",
+        [7]  = "Quest Portrait Icons",
+        [8]  = "Quest Portrait (Small)",
+        [9]  = "Character Create Icons",
+        [10] = "Character Create (Small)",
+        [11] = "Warfront Armory Icons",
+        [12] = "Wax Seals",
+        [13] = "Communities Buttons",
+        [14] = "POI Icons",
+        [15] = "Faction Flags",
+    }
+
+    anchorSubFaction.factionIconSetDropdown = LibDD:Create_UIDropDownMenu("factionIconSetDropdown", contentFrame)
+    LibDD:UIDropDownMenu_SetWidth(anchorSubFaction.factionIconSetDropdown, 125)
+    do
+        local currentSet = BetterBlizzPlatesDB.factionIndicatorIconSet or 13
+        if not BBP.IsFactionIconSetAvailable(currentSet) then
+            currentSet = 3
+        end
+        LibDD:UIDropDownMenu_SetText(anchorSubFaction.factionIconSetDropdown, anchorSubFaction.factionIconSetNames[currentSet])
+    end
+
+    LibDD:UIDropDownMenu_Initialize(anchorSubFaction.factionIconSetDropdown, function(self, level, menuList)
+        local info = LibDD:UIDropDownMenu_CreateInfo()
+        for i = 1, #anchorSubFaction.factionIconSetNames do
+            if BBP.IsFactionIconSetAvailable(i) then
+                info.text = anchorSubFaction.factionIconSetNames[i]
+                info.arg1 = i
+                info.func = function(self, arg1)
+                    BetterBlizzPlatesDB.factionIndicatorIconSet = arg1
+                    LibDD:UIDropDownMenu_SetText(anchorSubFaction.factionIconSetDropdown, anchorSubFaction.factionIconSetNames[arg1])
+                    BBP.needsUpdate = true
+                    BBP.RefreshAllNameplates()
+                end
+                info.checked = (BetterBlizzPlatesDB.factionIndicatorIconSet == i)
+                LibDD:UIDropDownMenu_AddButton(info)
+            end
+        end
+    end)
+
+    anchorSubFaction.factionIconSetDropdown:SetPoint("TOPLEFT", anchorSubFaction.factionIndicatorDropdown, "TOPLEFT", 0, -43)
+
+    anchorSubFaction.factionIconSetLabel = contentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    anchorSubFaction.factionIconSetLabel:SetPoint("BOTTOM", anchorSubFaction.factionIconSetDropdown, "TOP", 0, 3)
+    anchorSubFaction.factionIconSetLabel:SetText("Icon Set")
+
+    anchorSubFaction.factionIndicatorTestMode2 = CreateCheckbox("factionIndicatorTestMode", "Test", contentFrame)
+    anchorSubFaction.factionIndicatorTestMode2:SetPoint("TOPLEFT", anchorSubFaction.factionIconSetDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
+
+    anchorSubFaction.factionIndicatorEnemy = CreateCheckbox("factionIndicatorEnemy", "Enemy", contentFrame)
+    anchorSubFaction.factionIndicatorEnemy:SetPoint("TOPLEFT", anchorSubFaction.factionIndicatorTestMode2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubFaction.factionIndicatorEnemy, "Show on Enemies", "Show the faction icon on players of the opposing faction.")
+
+    anchorSubFaction.factionIndicatorFriendly = CreateCheckbox("factionIndicatorFriendly", "Friendly", contentFrame)
+    anchorSubFaction.factionIndicatorFriendly:SetPoint("LEFT", anchorSubFaction.factionIndicatorEnemy.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(anchorSubFaction.factionIndicatorFriendly, "Show on Friendly", "Show the faction icon on players of your own faction.")
+
+    anchorSubFaction.factionIndicatorOnlyWorld = CreateCheckbox("factionIndicatorOnlyWorld", "World only", contentFrame)
+    anchorSubFaction.factionIndicatorOnlyWorld:SetPoint("TOPLEFT", anchorSubFaction.factionIndicatorEnemy, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubFaction.factionIndicatorOnlyWorld, "World Only", "Only show the faction icon in the open world.")
+    anchorSubFaction.factionIndicatorOnlyWorld:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            BetterBlizzPlatesDB.factionIndicatorOnlyPvPZone = false
+            anchorSubFaction.factionIndicatorOnlyPvPZone:SetChecked(false)
+        end
+    end)
+
+    anchorSubFaction.factionIndicatorHostileOnly = CreateCheckbox("factionIndicatorHostileOnly", "Hostile only", contentFrame)
+    anchorSubFaction.factionIndicatorHostileOnly:SetPoint("LEFT", anchorSubFaction.factionIndicatorOnlyWorld.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(anchorSubFaction.factionIndicatorHostileOnly, "Hostile Only", "Only enable on hostile nameplates. Nameplates you can attack, regardless of faction.")
+
+    anchorSubFaction.factionIndicatorPvPTaggedOnly = CreateCheckbox("factionIndicatorPvPTaggedOnly", "PvP tagged only", contentFrame)
+    anchorSubFaction.factionIndicatorPvPTaggedOnly:SetPoint("TOPLEFT", anchorSubFaction.factionIndicatorOnlyWorld, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubFaction.factionIndicatorPvPTaggedOnly, "PvP Tagged Only", "Only show on PvP tagged players.")
+
+    anchorSubFaction.factionIndicatorOnlyPvPZone = CreateCheckbox("factionIndicatorOnlyPvPZone", "PvP (FFA) only", contentFrame)
+    anchorSubFaction.factionIndicatorOnlyPvPZone:SetPoint("LEFT", anchorSubFaction.factionIndicatorTestMode2.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(anchorSubFaction.factionIndicatorOnlyPvPZone, "PvP Zone Only", "Only show the faction icon in PvP zones. (Free-For-All in the open world)")
+    anchorSubFaction.factionIndicatorOnlyPvPZone:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            BetterBlizzPlatesDB.factionIndicatorOnlyWorld = false
+            anchorSubFaction.factionIndicatorOnlyWorld:SetChecked(false)
+        end
+    end)
 
 
     ----

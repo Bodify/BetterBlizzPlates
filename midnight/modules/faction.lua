@@ -62,6 +62,14 @@ local function ApplyFactionIcon(texture, iconData)
     return true
 end
 
+local function ApplyPvPTaggedAlpha(texture, unit, enabled)
+    if not enabled or UnitIsPVPFreeForAll(unit) then
+        texture:SetAlpha(1)
+    else
+        texture:SetAlphaFromBoolean(UnitIsPVP(unit), 1, 0)
+    end
+end
+
 -- Faction Indicator
 function BBP.FactionIndicator(frame)
     local config = frame.BetterBlizzPlates.config
@@ -80,6 +88,7 @@ function BBP.FactionIndicator(frame)
         config.factionIndicatorOnlyWorld = BetterBlizzPlatesDB.factionIndicatorOnlyWorld
         config.factionIndicatorOnlyPvPZone = BetterBlizzPlatesDB.factionIndicatorOnlyPvPZone
         config.factionIndicatorHostileOnly = BetterBlizzPlatesDB.factionIndicatorHostileOnly
+        config.factionIndicatorPvPTaggedOnly = BetterBlizzPlatesDB.factionIndicatorPvPTaggedOnly
 
         config.factionIndicatorInitialized = true
     end
@@ -140,6 +149,7 @@ function BBP.FactionIndicator(frame)
         frame.factionIndicator:ClearAllPoints()
         frame.factionIndicator:SetPoint(oppositeAnchor, frame.healthBar, config.factionIndicatorAnchor, config.factionIndicatorXPos, config.factionIndicatorYPos)
         frame.factionIndicator:SetScale(config.factionIndicatorScale or 1)
+        frame.factionIndicator:SetAlpha(1)
         frame.factionIndicator:Show()
         return
     end
@@ -155,6 +165,7 @@ function BBP.FactionIndicator(frame)
     frame.factionIndicator:ClearAllPoints()
     frame.factionIndicator:SetPoint(oppositeAnchor, frame.healthBar, config.factionIndicatorAnchor, config.factionIndicatorXPos, config.factionIndicatorYPos)
     frame.factionIndicator:SetScale(config.factionIndicatorScale or 1)
+    ApplyPvPTaggedAlpha(frame.factionIndicator, unit, config.factionIndicatorPvPTaggedOnly)
     frame.factionIndicator:Show()
 end
 

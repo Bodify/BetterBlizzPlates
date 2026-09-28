@@ -20,6 +20,7 @@ temp_mop\modules\castbar.lua
 temp_cata\modules\totem.lua
 temp_cata\modules\arenaid.lua
 temp_cata\modules\execute.lua
+temp_mop\modules\faction.lua
 temp_cata\modules\healthNumbers.lua
 temp_cata\modules\target.lua
 temp_cata\modules\healer.lua

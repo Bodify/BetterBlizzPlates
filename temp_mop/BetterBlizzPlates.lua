@@ -263,6 +263,14 @@ local defaultSettings = {
     executeIndicatorXPos = 0,
     executeIndicatorYPos = 0,
     executeIndicatorThreshold = 40,
+    -- Faction Indicator
+    factionIndicatorEnemy = true,
+    factionIndicatorAnchor = "LEFT",
+    factionIndicatorXPos = -5,
+    factionIndicatorYPos = 0,
+    factionIndicatorScale = 0.7,
+    factionIndicatorIconSet = 13,
+    factionIndicatorOnlyPvPZone = true,
     executeIndicatorAlwaysOn = false,
     executeIndicatorNotOnFullHp = false,
     executeIndicatorFriendly = false,
@@ -2179,6 +2187,7 @@ local function TurnOffTestModes()
     db.focusTargetIndicatorTestMode = false
     db.questIndicatorTestMode = false
     db.executeIndicatorTestMode = false
+    db.factionIndicatorTestMode = false
     db.testAllEnabledFeatures = false
     db.nameplateAuraTestMode = false
     db.partyPointerTestMode = false
@@ -5801,6 +5810,9 @@ local function HandleNamePlateRemoved(unit)
     if frame.healerIndicator then
         frame.healerIndicator:Hide()
     end
+    if frame.factionIndicator then
+        frame.factionIndicator:Hide()
+    end
     if frame.mainHealerColor then
         frame.mainHealerColor = nil
     end
@@ -6381,6 +6393,10 @@ local function HandleNamePlateAdded(unit)
 
     -- Show Execute Indicator
     if config.executeIndicator then BBP.ExecuteIndicator(frame) end
+
+    if BetterBlizzPlatesDB.factionIndicator or BetterBlizzPlatesDB.factionIndicatorTestMode then
+        BBP.FactionIndicator(frame)
+    end
 
     if config.healthNumbers then BBP.HealthNumbers(frame) end
 
@@ -7013,10 +7029,13 @@ hooksecurefunc("CompactUnitFrame_UpdateName", BBP.ConsolidatedUpdateName)
 -- Function to update the instance status
 local function UpdateInstanceStatus()
     local inInstance, instanceType = IsInInstance()
+    local pvpType, isPvPZone = C_PvP.GetZonePVPInfo()
     BBP.isInPvE = inInstance and (instanceType == "party" or instanceType == "raid" or instanceType == "scenario")
     BBP.isInArena = inInstance and (instanceType == "arena")
     BBP.isInBg = inInstance and (instanceType == "pvp")
     BBP.isInPvP = BBP.isInBg or BBP.isInArena
+    BBP.isInWorld = not inInstance
+    BBP.isInPvPZone = isPvPZone and pvpType ~= "sanctuary"
 
     local _, _, _, _, _, _, _, instanceMapID = GetInstanceInfo()
     BBP.isInAV = instanceMapID == 30 -- Alterac Valley
@@ -7124,14 +7143,25 @@ local function CheckIfInInstance(self, event, ...)
         UpdateInstanceStatus()
         SetNameplateBehavior()
         BBP.fistweaverFound = nil
+    elseif event == "ZONE_CHANGED" then
+        UpdateInstanceStatus()
     elseif event == "PLAYER_REGEN_ENABLED" then
         SetNameplateBehavior()
         InstanceChecker:UnregisterEvent("PLAYER_REGEN_ENABLED")
+    end
+    if event ~= "PLAYER_REGEN_ENABLED" and BetterBlizzPlatesDB.factionIndicator then
+        for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+            local frame = nameplate.UnitFrame
+            if frame and frame.BetterBlizzPlates and frame.bbpOverlay then
+                BBP.FactionIndicator(frame)
+            end
+        end
     end
 end
 
 InstanceChecker:RegisterEvent("PLAYER_ENTERING_WORLD")
 InstanceChecker:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+InstanceChecker:RegisterEvent("ZONE_CHANGED")
 InstanceChecker:SetScript("OnEvent", CheckIfInInstance)
 
 function BBP.CheckIfInInstanceCaller()
@@ -7457,6 +7487,7 @@ local function TurnOnEnabledFeaturesOnLogin()
     BBP.ToggleAbsorbIndicator()
     BBP.ToggleCombatIndicator()
     BBP.ToggleExecuteIndicator()
+    BBP.ToggleFactionIndicator()
     BBP:RegisterTargetCastingEvents()
     BBP.ToggleHealthNumbers()
 end
