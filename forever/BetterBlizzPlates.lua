@@ -4096,12 +4096,16 @@ end
 --################################################################################################
 -- Color NPCs
 function BBP.ColorNpcHealthbar(frame)
-    if not BBP.isInPvE and not BetterBlizzPlatesDB.colorNPCEverywhere then return end
-    if BBP.isInPvP then return end
     if not frame or not frame.unit then return end
-    if UnitIsPlayer(frame.unit) or not isEnemy(frame.unit) then return end
 
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
+
+    if (not BBP.isInPvE and not BetterBlizzPlatesDB.colorNPCEverywhere) or BBP.isInPvP
+        or UnitIsPlayer(frame.unit) or not isEnemy(frame.unit) or not UnitCanAttack("player", frame.unit) then
+        config.npcHealthbarColor = nil
+        config.npcNameColor = nil
+        return
+    end
 
     if UnitIsTapDenied(frame.unit) then
         config.npcHealthbarColor = nil
