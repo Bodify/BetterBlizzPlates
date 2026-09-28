@@ -89,6 +89,8 @@ local defaultSettings = {
     hideNPCHideOthersPets = true,
     colorNPC = false,
     colorNPCName = false,
+    colorNPCNeutralHpCombatOnly = false,
+    colorNPCNeutralNameCombatOnly = false,
     raidmarkIndicator = false,
     raidmarkIndicatorScale = 1,
     raidmarkIndicatorAnchor = "TOP",
@@ -198,7 +200,6 @@ local defaultSettings = {
     friendlyNameplateClickthrough = false,
     friendlyClassColorName = false,
     friendlyNameScale = 1,
-    friendlyNameplatesOnlyInArena = false,
     friendlyHealthBarColorRGB = {0, 1, 0},
     guildNameScale = 1,
     useCustomTextureForFriendly = true,
@@ -1040,60 +1041,7 @@ local function InitializeSavedVariables()
         end
     end
 
-    BBP.InitContextCVarSets()
-end
-
-local contextCVarDefaults = {
-    nameplateShowEnemyMinions = true,
-    nameplateShowEnemyGuardians = true,
-    nameplateShowEnemyMinus = false,
-    nameplateShowEnemyPets = true,
-    nameplateShowEnemyTotems = true,
-    nameplateShowFriendlyPlayerMinions = false,
-    nameplateShowFriendlyPlayerGuardians = false,
-    nameplateShowFriendlyNpcs = false,
-    nameplateShowFriendlyPlayerPets = false,
-    nameplateShowFriendlyPlayerTotems = false,
-}
-
-local legacyTotemForcedCVars = {
-    nameplateShowEnemyMinions = true,
-    nameplateShowEnemyGuardians = true,
-    nameplateShowEnemyMinus = true,
-    nameplateShowEnemyPets = true,
-    nameplateShowEnemyTotems = true,
-}
-
-function BBP.InitContextCVarSets(resetToDefaults)
-    local db = BetterBlizzPlatesDB
-    if not db then return end
-
-    local skipLegacyTotemValues = db.totemIndicator and not db.totemIndicatorUpdatedForMidnight
-
-    for _, setKey in ipairs({ "cvarContextPvP", "cvarContextPvE" }) do
-        if type(db[setKey]) ~= "table" then db[setKey] = {} end
-        for cvar, fallback in pairs(contextCVarDefaults) do
-            if resetToDefaults then
-                db[setKey][cvar] = fallback
-            elseif db[setKey][cvar] == nil then
-                local previous = db[cvar]
-                if skipLegacyTotemValues and legacyTotemForcedCVars[cvar] then
-                    db[setKey][cvar] = fallback
-                elseif previous ~= nil then
-                    db[setKey][cvar] = previous == "1" or previous == 1 or previous == true
-                else
-                    local live = C_CVar.GetCVar(cvar)
-                    if live ~= nil then
-                        db[setKey][cvar] = live == "1"
-                    else
-                        db[setKey][cvar] = fallback
-                    end
-                end
-            end
-        end
-    end
-
-    BBP.lastAppliedContext = nil
+    BBP.InitNameplateToggles()
 end
 
 function BBP.ResetTotemList()
@@ -1294,18 +1242,6 @@ local bitCVarList = {
 
 BBP.bitCVarList = bitCVarList
 
-local function SyncContextSetsFromLiveCVars()
-    local db = BetterBlizzPlatesDB
-    if not db or not BBP.contextCVarList then return end
-    for _, setKey in ipairs({ "cvarContextPvP", "cvarContextPvE" }) do
-        if type(db[setKey]) ~= "table" then db[setKey] = {} end
-        for _, cvar in ipairs(BBP.contextCVarList) do
-            db[setKey][cvar] = C_CVar.GetCVar(cvar) == "1"
-        end
-    end
-    BBP.lastAppliedContext = nil
-end
-
 function BBP.ResetNameplateCVars()
     local wasTracking = BBP.CVarTrackingDisabled
     BBP.CVarTrackingDisabled = true
@@ -1331,7 +1267,7 @@ function BBP.ResetNameplateCVars()
         end
     end
 
-    SyncContextSetsFromLiveCVars()
+    BBP.SyncNameplateTogglesFromLiveCVars()
     BBP.CVarTrackingDisabled = wasTracking
 
     if BBPCVarBackupsDB and BBPCVarBackupsDB.bitfields then
@@ -1622,7 +1558,7 @@ local function ResetNameplates()
     BetterBlizzPlatesDB.nameplateShowClassColor = "1"
     BetterBlizzPlatesDB.nameplateShowFriendlyClassColor = "1"
 
-    BBP.InitContextCVarSets(true)
+    BBP.InitNameplateToggles(true)
 
     BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
     BetterBlizzPlatesDB.castBarHeight = 18.8
@@ -1646,7 +1582,7 @@ local function ResetNameplates()
     C_CVar.SetCVar("nameplateMaxAlpha", BetterBlizzPlatesDB.nameplateMaxAlpha)
     C_CVar.SetCVar("nameplateMaxAlphaDistance", BetterBlizzPlatesDB.nameplateMaxAlphaDistance)
     C_CVar.SetCVar("nameplateOccludedAlphaMult", BetterBlizzPlatesDB.nameplateOccludedAlphaMult)
-    BBP.UpdateContextCVars(true, true)
+    BBP.UpdateNameplateToggles(true, true)
     C_CVar.SetCVar("nameplateShowClassColor", BetterBlizzPlatesDB.nameplateShowClassColor)
     C_CVar.SetCVar("nameplateShowFriendlyClassColor", BetterBlizzPlatesDB.nameplateShowFriendlyClassColor)
     C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', "0")
@@ -1949,6 +1885,7 @@ local function GetNameplateUnitInfo(frame, unit)
     info.isEnemy = (info.reaction and info.reaction < 4)
     info.isNeutral = (info.reaction and info.reaction == 4)
     info.isFriend = (info.reaction and info.reaction >= 5)
+    info.isFriendlyNpc = (info.isNpc and (info.isFriend or (info.isNeutral and not UnitCanAttack("player", unit)))) and true or false
     info.playerClass = playerClass
 
     return info
@@ -2379,6 +2316,8 @@ local function InitializeNameplateSettings(frame)
             fadeOutNPC = BetterBlizzPlatesDB.fadeOutNPC,
             hideNPC = BetterBlizzPlatesDB.hideNPC,
             colorNPC = BetterBlizzPlatesDB.colorNPC,
+            colorNPCNeutralHpCombatOnly = BetterBlizzPlatesDB.colorNPCNeutralHpCombatOnly,
+            colorNPCNeutralNameCombatOnly = BetterBlizzPlatesDB.colorNPCNeutralNameCombatOnly,
             friendlyHealthBarColor = BetterBlizzPlatesDB.friendlyHealthBarColor,
             enemyHealthBarColor = BetterBlizzPlatesDB.enemyHealthBarColor,
             petIndicator = BetterBlizzPlatesDB.petIndicator or BetterBlizzPlatesDB.petIndicatorTestMode,
@@ -2787,98 +2726,6 @@ function BBP.SetFontBasedOnOption(namePlateObj, specifiedSize, forcedOutline)
 end
 
 --#################################################################################################
--- Friendly nameplates on only in arena toggle automatically
--- Event listening for Nameplates on in arena only
-local toggleEventsRegistered = false
-local inCombatEventRegistered = false
-
-local friendlyNameplatesOnOffFrame = CreateFrame("Frame")
-
-local function ShouldShowFriendlyNameplates()
-    local instanceType = select(2, IsInInstance())
-    local inWorld = instanceType == "none"
-
-    if instanceType == "arena" and BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena then
-        return true
-    elseif (instanceType == "party" or instanceType == "scenario") and BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons then
-        return true
-    elseif instanceType == "raid" and BetterBlizzPlatesDB.friendlyNameplatesOnlyInRaids then
-        return true
-    elseif instanceType == "pvp" then
-        if C_PvP.GetActiveMatchBracket() == 3 and BetterBlizzPlatesDB.friendlyNameplatesOnlyInEpicBgs then
-            return true
-        elseif BetterBlizzPlatesDB.friendlyNameplatesOnlyInBgs then
-            return true
-        else
-            return false
-        end
-    elseif inWorld and BetterBlizzPlatesDB.friendlyNameplatesOnlyInWorld then
-        return true
-    end
-
-    return false
-end
-
-local function ApplyCVarChange()
-    local shouldShow = ShouldShowFriendlyNameplates() and "1" or "0"
-    if GetCVar("nameplateShowFriendlyPlayers") ~= shouldShow then
-        C_CVar.SetCVar("nameplateShowFriendlyPlayers", shouldShow)
-    end
-    if inCombatEventRegistered then
-        friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_REGEN_ENABLED")
-        inCombatEventRegistered = false
-    end
-end
-
-local function ToggleFriendlyPlates()
-    if BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena
-        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons
-        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInRaids
-        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInBgs
-        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInEpicBgs
-        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInWorld then
-
-        if InCombatLockdown() and not inCombatEventRegistered then
-            friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-            inCombatEventRegistered = true
-        elseif not InCombatLockdown() then
-            ApplyCVarChange()
-        end
-    end
-end
-
-friendlyNameplatesOnOffFrame:SetScript("OnEvent", function(self, event, ...)
-    if event == "PLAYER_REGEN_ENABLED" then
-        ApplyCVarChange()
-    else
-        ToggleFriendlyPlates()
-    end
-end)
-
-function BBP.ToggleFriendlyNameplatesAuto()
-    local anyToggleEnabled = BetterBlizzPlatesDB.friendlyNameplatesOnlyInArena
-        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInDungeons
-        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInRaids
-        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInBgs
-        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInEpicBgs
-        or BetterBlizzPlatesDB.friendlyNameplatesOnlyInWorld
-
-    if anyToggleEnabled and not toggleEventsRegistered then
-        friendlyNameplatesOnOffFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-        friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-        friendlyNameplatesOnOffFrame:RegisterEvent("PLAYER_ENTERING_BATTLEGROUND")
-        toggleEventsRegistered = true
-    elseif not anyToggleEnabled and toggleEventsRegistered then
-        friendlyNameplatesOnOffFrame:UnregisterEvent("ZONE_CHANGED_NEW_AREA")
-        friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_ENTERING_WORLD")
-        friendlyNameplatesOnOffFrame:UnregisterEvent("PLAYER_ENTERING_BATTLEGROUND")
-        toggleEventsRegistered = false
-    end
-
-    ToggleFriendlyPlates()
-end
-
---#################################################################################################
 -- Set CVars that keep changing
 local function SetCVarsOnLogin()
     if BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return end
@@ -2900,11 +2747,6 @@ local function SetCVarsOnLogin()
         --C_CVar.SetCVar("nameplateResourceOnTarget", (BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf and 0) or BetterBlizzPlatesDB.nameplateResourceOnTarget)
         C_CVar.SetCVar("nameplateShowClassColor", BetterBlizzPlatesDB.nameplateShowClassColor)
         C_CVar.SetCVar("nameplateShowFriendlyClassColor", BetterBlizzPlatesDB.nameplateShowFriendlyClassColor)
-
-        local overrideOnlyName = BetterBlizzPlatesDB.nameplateShowOnlyNameForFriendlyPlayerUnits
-        if overrideOnlyName == "1" or overrideOnlyName == 1 or overrideOnlyName == true then
-            C_CVar.SetCVar("nameplateShowOnlyNameForFriendlyPlayerUnits", "1")
-        end
 
         if BetterBlizzPlatesDB.nameplateSimplifiedScale then
             C_CVar.SetCVar("nameplateSimplifiedScale", BetterBlizzPlatesDB.nameplateSimplifiedScale)
@@ -2961,7 +2803,6 @@ local function SetCVarsOnLogin()
             end
         end
 
-        ToggleFriendlyPlates()
     end
 end
 
@@ -2998,7 +2839,7 @@ end
 local function ToggleTargetNameplateHighlight(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
-    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 0.22)
+    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
     if config.targetHighlightFix then
         frame.selectionHighlight:SetAllPoints(frame.healthBar.barTexture)
         frame.selectionHighlight:SetParent(frame.healthBar)
@@ -3897,10 +3738,10 @@ function BBP.HideNPCs(frame, nameplate)
         frame.hideCastbarOverride = false
         if config.classIndicatorHideFriendlyHealthbar then
             frame.HealthBarsContainer:SetAlpha((frame.ciChange and 0) or 1)
-            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or (frame.ciChange and 0) or 0.22)
+            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or (frame.ciChange and 0) or 0.22)
         else
-            frame.HealthBarsContainer:SetAlpha((info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 1)
-            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and (config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc) and 0) or 0.22)
+            frame.HealthBarsContainer:SetAlpha((((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 1)
+            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
         end
         ToggleNameplateBuffFrameVisibility(frame)
         frame.name:SetAlpha(1)
@@ -3970,9 +3811,9 @@ function BBP.HideNPCs(frame, nameplate)
     -- Determine if the frame should be shown based on the list check or if it's the current target
     if isTarget then
         BBP.ShowFrame(frame)
-        local alpha = (info.isFriend and ((config.friendlyHideHealthBarNpc and not (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and info.isPet))) and 0) or 1
+        local alpha = ((info.isFriend or info.isFriendlyNpc) and ((config.friendlyHideHealthBarNpc and not (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and info.isPet))) and 0) or 1
         frame.HealthBarsContainer:SetAlpha(alpha)
-        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 0.22)
+        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
     elseif BBP.isInArena and hideSecondaryPets and mainPets[npcID] and info.isEnemy then
         local isFakePet = true
         for i = 1, 3 do
@@ -4027,10 +3868,10 @@ function BBP.ResetFrame(frame, config, info)
         frame.hideCastbarOverride = false
         if config.classIndicatorHideFriendlyHealthbar then
             frame.HealthBarsContainer:SetAlpha((frame.ciChange and 0) or 1)
-            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or (frame.ciChange and 0) or 0.22)
+            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or (frame.ciChange and 0) or 0.22)
         else
-            frame.HealthBarsContainer:SetAlpha((info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 1)
-            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and (config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc) and 0) or 0.22)
+            frame.HealthBarsContainer:SetAlpha((((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 1)
+            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
         end
         ToggleNameplateBuffFrameVisibility(frame)
         frame.name:SetAlpha(1)
@@ -4264,6 +4105,7 @@ function BBP.ColorNpcHealthbar(frame)
 
     if UnitIsTapDenied(frame.unit) then
         config.npcHealthbarColor = nil
+        config.npcNameColor = nil
         frame.healthBar:SetStatusBarColor(0.9, 0.9, 0.9)
         return
     end
@@ -4309,15 +4151,27 @@ function BBP.ColorNpcHealthbar(frame)
         config.npcHealthbarColor = db.npcColorBoss
     else
         config.npcHealthbarColor = nil
+        config.npcNameColor = nil
         return
     end
 
-    local r,g,b,a = unpack(config.npcHealthbarColor)
+    local color = config.npcHealthbarColor
+    local r,g,b,a = unpack(color)
+    local neutralOutOfCombat = (config.colorNPCNeutralHpCombatOnly or config.colorNPCNeutralNameCombatOnly) and UnitReaction(frame.unit, "player") == 4 and not UnitAffectingCombat(frame.unit)
 
-    frame.healthBar:SetStatusBarColor(r, g, b, a)
-    local colorNPCName = db.colorNPCName
-    if colorNPCName then
-        frame.name:SetVertexColor(r, g, b)
+    if neutralOutOfCombat and config.colorNPCNeutralHpCombatOnly then
+        config.npcHealthbarColor = nil
+    else
+        frame.healthBar:SetStatusBarColor(r, g, b, a)
+    end
+
+    if neutralOutOfCombat and config.colorNPCNeutralNameCombatOnly then
+        config.npcNameColor = nil
+    else
+        config.npcNameColor = color
+        if db.colorNPCName then
+            frame.name:SetVertexColor(r, g, b)
+        end
     end
 end
 -- frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
@@ -5572,13 +5426,13 @@ local function HideFriendlyHealthbar(frame)
     config.friendlyHideHealthBar = BetterBlizzPlatesDB.friendlyHideHealthBar
     config.friendlyHideHealthBarNpc = BetterBlizzPlatesDB.friendlyHideHealthBarNpc
     if frame.ciChange then return end
-    if frame.healthBar and info.isFriend then
+    if frame.healthBar and (info.isFriend or info.isFriendlyNpc) then
         if BetterBlizzPlatesDB.friendlyHideHealthBar and info.isPlayer then
             local showOnTarget = BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget
             if showOnTarget and UnitIsUnit(frame.unit, "target") then
                 frame.HealthBarsContainer:SetAlpha(1)
                 frame.HealthBarsContainer.alphaZero = false
-                frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 0.22)
+                frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
             else
                 frame.HealthBarsContainer:SetAlpha(0)
                 frame.HealthBarsContainer.alphaZero = true
@@ -5594,23 +5448,24 @@ local function HideFriendlyHealthbar(frame)
             else
                 frame.HealthBarsContainer:SetAlpha(1)
                 frame.HealthBarsContainer.alphaZero = false
-                frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 0.22)
+                frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
             end
         else
             frame.HealthBarsContainer:SetAlpha(1)
             frame.HealthBarsContainer.alphaZero = false
-            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 0.22)
+            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
             if frame.guildName then
                 frame.guildName:SetText("")
             end
         end
     else
         frame.HealthBarsContainer:SetAlpha(1)
-        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 0.22)
+        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
         if frame.guildName then
             frame.guildName:SetText("")
         end
     end
+    if frame.nameHooked then BBP.RepositionName(frame) end
 end
 
 BBP.HideFriendlyHealthbar = HideFriendlyHealthbar
@@ -5665,8 +5520,12 @@ end
 --#################################################################################################
 --#################################################################################################
 -- What to do on a nameplate remvoed
+local plateFrameByUnit = {}
+
 local function HandleNamePlateRemoved(unit)
     local nameplate, frame = BBP.GetSafeNameplate(unit)
+    frame = frame or plateFrameByUnit[unit]
+    plateFrameByUnit[unit] = nil
     if not frame then return end
 
     frame.bbpHiddenNPC = nil
@@ -5716,6 +5575,7 @@ local function HandleNamePlateRemoved(unit)
         config.totemTestType = nil
         config.auraColorRGB = nil
         config.npcHealthbarColor = nil
+        config.npcNameColor = nil
         BBP.ClearTotemBooleanColors(frame)
         BBP.ClearPsyfiendIconAlpha(frame)
     end
@@ -5913,11 +5773,13 @@ function BBP.RepositionName(frame)
         frame.name.changing = true
         local db = BetterBlizzPlatesDB
         local isfriend = isFriend(frame.unit)
+        local unitInfo = frame.BetterBlizzPlates and frame.BetterBlizzPlates.unitInfo
+        local barHidden = frame.HealthBarsContainer and frame.HealthBarsContainer.alphaZero == true and (isfriend or (unitInfo and unitInfo.isFriendlyNpc))
         local usedBottomAnchor = false
         frame.name:ClearAllPoints()
-        if isfriend then
+        if isfriend or barHidden then
             local onlyName = frame.IsShowOnlyName and frame:IsShowOnlyName()
-            if db.useFakeNameAnchorBottom or onlyName then
+            if db.useFakeNameAnchorBottom or onlyName or barHidden then
                 usedBottomAnchor = true
                 frame.name:SetPoint("BOTTOM", frame, "BOTTOM", db.fakeNameFriendlyXPos, db.fakeNameFriendlyYPos + 27)
             else
@@ -5995,7 +5857,7 @@ local function NameplateNPCTitle(frame)
     local info = frame.BetterBlizzPlates.unitInfo
 
     -- Check if the unit is an NPC
-    if info.isPlayer or not info.isFriend or UnitIsMinion(frame.unit) then
+    if info.isPlayer or not info.isFriendlyNpc or UnitIsMinion(frame.unit) then
         frame.npcTitle:Hide()
     else
         local title = GetNPCTitle(frame.unit)
@@ -6266,6 +6128,7 @@ local function CreateBetterClassicHealthbarBorder(frame)
             frame.HealthBarsContainer.background:SetAllPoints(frame.HealthBarsContainer)
             frame.HealthBarsContainer.background:SetColorTexture(0, 0, 0, 0.4)
         end
+        frame.HealthBarsContainer.background:SetParent(frame.HealthBarsContainer.healthBar)
         --frame.HealthBarsContainer.healthBar.selectedTexture:SetAlpha(0)
         frame.BetterBlizzPlates.bbpBorder = CreateFrame("Frame", nil, frame)
         local border = frame.BetterBlizzPlates.bbpBorder
@@ -6782,6 +6645,7 @@ function BBP.SetupBorderOnFrame(frame, hpBar)
             frame.background:SetAllPoints(frame)
             frame.background:SetColorTexture(0, 0, 0, 0.4)
         end
+        frame.background:SetParent(frame.healthBar)
         if frame.borders then
             if not frame.healthBar:IsShown() then
                 frame.borders:Hide()
@@ -7011,6 +6875,7 @@ local function HandleNamePlateAdded(unit)
 
     -- CLean up previous nameplates
     HandleNamePlateRemoved(unit)
+    plateFrameByUnit[unit] = frame
 
     if not frame.castBar then
         frame.castBar = frame.CastBarsContainer.castBar
@@ -7179,6 +7044,7 @@ local function HandleNamePlateAdded(unit)
             frame.HealthBarsContainer.background = frame.HealthBarsContainer:CreateTexture(nil, "BACKGROUND")
             frame.HealthBarsContainer.background:SetAllPoints(frame.HealthBarsContainer)
         end
+        frame.HealthBarsContainer.background:SetParent(frame.HealthBarsContainer.healthBar)
         frame.HealthBarsContainer.background:SetTexture("Interface\\Buttons\\WHITE8x8")
         frame.HealthBarsContainer.background:SetVertexColor(unpack(BetterBlizzPlatesDB.npBgColorRGB))
     end
@@ -7747,8 +7613,8 @@ function BBP.ConsolidatedUpdateName(frame)
     --frame.name:SetPoint("BOTTOMLEFT", frame.HealthBarsContainer, "TOPLEFT", 4.2, 2)
 
     -- Color NPC
-    if config.colorNPC and config.colorNPCName and config.npcHealthbarColor and not UnitIsTapDenied(frame.unit) then
-        local r,g,b = unpack(config.npcHealthbarColor)
+    if config.colorNPC and config.colorNPCName and config.npcNameColor and not UnitIsTapDenied(frame.unit) then
+        local r,g,b = unpack(config.npcNameColor)
         frame.name:SetVertexColor(r, g, b)
     end
 
@@ -7943,56 +7809,15 @@ ThreatSitUpdate:SetScript("OnEvent", ThreatSituationUpdate)
 -- Function to set the nameplate behavior
 local InstanceChecker = CreateFrame("Frame")
 
-local function SetStackingNameplateBehaviour(enabled)
-    BBP.CVarTrackingDisabled = true
-    C_CVar.SetCVarBitfield("nameplateStackingTypes", Enum.NamePlateStackType.Enemy, enabled)
-    BBP.CVarTrackingDisabled = nil
-end
-
 local function SetNameplateBehavior()
     if InCombatLockdown() then
-        --C_Timer.After(1, SetNameplateBehavior)
         if not InstanceChecker:IsEventRegistered("PLAYER_REGEN_ENABLED") then
             InstanceChecker:RegisterEvent("PLAYER_REGEN_ENABLED")
         end
     else
-        local overrideOnlyName = BetterBlizzPlatesDB.nameplateShowOnlyNameForFriendlyPlayerUnits
-        local isOnlyNameOverrideEnabled = overrideOnlyName == "1" or overrideOnlyName == 1 or overrideOnlyName == true
-        if BBP.isInPvE then
-            if not isOnlyNameOverrideEnabled then
-                BBP.CVarTrackingDisabled = true
-                if BetterBlizzPlatesDB.friendlyHideHealthBar and not BetterBlizzPlatesDB.doNotHideFriendlyHealthbarInPve then
-                    C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 1)
-                else
-                    C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 0)
-                end
-                BBP.CVarTrackingDisabled = nil
-            end
-            if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then C_CVar.SetCVar("UnitNameFriendlyPlayerName", 0) end
-            local enemyStacking = BetterBlizzPlatesDB.bitfields and BetterBlizzPlatesDB.bitfields.nameplateStackingTypes
-                and BetterBlizzPlatesDB.bitfields.nameplateStackingTypes[tostring(Enum.NamePlateStackType.Enemy)]
-            if enemyStacking and BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP then
-                SetStackingNameplateBehaviour(true)
-            end
-            BBP.ApplyNameplateWidth()
-        else
-            if not isOnlyNameOverrideEnabled then
-                BBP.CVarTrackingDisabled = true
-                C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', 0)
-                BBP.CVarTrackingDisabled = nil
-            end
-            if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then C_CVar.SetCVar("UnitNameFriendlyPlayerName", 1) end
-            local enemyStacking = BetterBlizzPlatesDB.bitfields and BetterBlizzPlatesDB.bitfields.nameplateStackingTypes
-                and BetterBlizzPlatesDB.bitfields.nameplateStackingTypes[tostring(Enum.NamePlateStackType.Enemy)]
-            if enemyStacking and BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP then
-                if BBP.isInPvP then
-                    SetStackingNameplateBehaviour(false)
-                else
-                    SetStackingNameplateBehaviour(true)
-                end
-            end
-            BBP.ApplyNameplateWidth()
-        end
+        if BetterBlizzPlatesDB.toggleNamesOffDuringPVE then C_CVar.SetCVar("UnitNameFriendlyPlayerName", BBP.isInPvE and 0 or 1) end
+        BBP.UpdateNameplateToggles(true)
+        BBP.ApplyNameplateWidth()
     end
 end
 BBP.SetNameplateBehavior = SetNameplateBehavior
@@ -8005,7 +7830,6 @@ local function CheckIfInInstance(self, event, ...)
     -- SetNameplateBehavior()
     if event ~= "PLAYER_REGEN_ENABLED" then
         UpdateInstanceStatus()
-        BBP.UpdateContextCVars(event == nil or event == "PLAYER_ENTERING_WORLD")
         if event ~= "ZONE_CHANGED" then
             SpecCache = {}
             SetNameplateBehavior()
@@ -8018,7 +7842,6 @@ local function CheckIfInInstance(self, event, ...)
         end
     elseif event == "PLAYER_REGEN_ENABLED" then
         SetNameplateBehavior()
-        BBP.UpdateContextCVars(true)
         InstanceChecker:UnregisterEvent("PLAYER_REGEN_ENABLED")
     end
 end
@@ -8570,146 +8393,12 @@ function BBP.TurnOnFocusBorderColor()
     BBP.focusBorderColor = true
 end
 
-BBP.contextCVarList = {
-    "nameplateShowEnemyMinions",
-    "nameplateShowEnemyGuardians",
-    "nameplateShowEnemyMinus",
-    "nameplateShowEnemyPets",
-    "nameplateShowEnemyTotems",
-    "nameplateShowFriendlyPlayerMinions",
-    "nameplateShowFriendlyPlayerGuardians",
-    "nameplateShowFriendlyNpcs",
-    "nameplateShowFriendlyPlayerPets",
-    "nameplateShowFriendlyPlayerTotems",
-}
-
-local contextMinionChildren = {
-    "nameplateShowEnemyGuardians",
-    "nameplateShowEnemyMinus",
-    "nameplateShowEnemyPets",
-    "nameplateShowEnemyTotems",
-    "nameplateShowFriendlyPlayerGuardians",
-    "nameplateShowFriendlyPlayerPets",
-    "nameplateShowFriendlyPlayerTotems",
-}
-
 BBP.totemIndicatorPvPCVars = {
     nameplateShowEnemyMinions = false,
     nameplateShowEnemyGuardians = false,
     nameplateShowEnemyMinus = false,
     nameplateShowEnemyTotems = true,
 }
-
-BBP.contextCVarLookup = {}
-for _, cvar in ipairs(BBP.contextCVarList) do
-    BBP.contextCVarLookup[cvar] = true
-end
-
-function BBP.ContextCVarsDisabled()
-    local db = BetterBlizzPlatesDB
-    if not db then return true end
-    if db.disableCVarForceOnLogin then return true end
-    if db.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return true end
-    return false
-end
-
-function BBP.GetActiveContextSetKey()
-    return BBP.isInPvP and "cvarContextPvP" or "cvarContextPvE"
-end
-
-local function ContextCVarIsOn(value)
-    return value == "1" or value == 1 or value == true
-end
-
-function BBP.SaveContextCVar(cvarName, value)
-    local db = BetterBlizzPlatesDB
-    if not db or not BBP.contextCVarLookup[cvarName] then return false end
-    local setKey = BBP.GetActiveContextSetKey()
-    if type(db[setKey]) ~= "table" then db[setKey] = {} end
-    db[setKey][cvarName] = ContextCVarIsOn(value)
-    BBP.lastAppliedContext = nil
-    return true
-end
-
-local function ApplyContextCVars(target)
-    local wasTracking = BBP.CVarTrackingDisabled
-    BBP.CVarTrackingDisabled = true
-    for _, cvar in ipairs(BBP.contextCVarList) do
-        C_CVar.SetCVar(cvar, target[cvar] and "1" or "0")
-    end
-    for _, cvar in ipairs(contextMinionChildren) do
-        C_CVar.SetCVar(cvar, target[cvar] and "1" or "0")
-    end
-    BBP.CVarTrackingDisabled = wasTracking
-end
-
-local totemPvPCVarNoticeShown
-local function AnnounceTotemPvPCVars()
-    if totemPvPCVarNoticeShown then return end
-    totemPvPCVarNoticeShown = true
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Totem Indicator needs Enemy Totems shown and Enemy Minions, Guardians and Minus hidden, so your enemy nameplate visibility CVars were changed for PvP. They are put back when you leave.")
-end
-
-function BBP.UpdateContextCVars(force, explicit)
-    local db = BetterBlizzPlatesDB
-    if not db or not BBP.variablesLoaded then return end
-    if not explicit and BBP.ContextCVarsDisabled() then return end
-    if explicit then force = true end
-
-    if InCombatLockdown() then
-        if not InstanceChecker:IsEventRegistered("PLAYER_REGEN_ENABLED") then
-            InstanceChecker:RegisterEvent("PLAYER_REGEN_ENABLED")
-        end
-        return
-    end
-
-    local inPvP = BBP.isInPvP
-    local source = db[BBP.GetActiveContextSetKey()] or {}
-    local target = {}
-    for _, cvar in ipairs(BBP.contextCVarList) do
-        target[cvar] = source[cvar] and true or false
-    end
-
-    local totemOverride = inPvP and db.totemIndicator
-    if totemOverride then
-        local differs = false
-        for cvar, wanted in pairs(BBP.totemIndicatorPvPCVars) do
-            if target[cvar] ~= wanted then differs = true end
-            target[cvar] = wanted
-        end
-        if differs then AnnounceTotemPvPCVars() end
-    end
-
-    local signature = (inPvP and "pvp" or "pve") .. (totemOverride and "+totem" or "")
-    for _, cvar in ipairs(BBP.contextCVarList) do
-        signature = signature .. (target[cvar] and "1" or "0")
-    end
-    if not force and BBP.lastAppliedContext == signature then return end
-    BBP.lastAppliedContext = signature
-
-    ApplyContextCVars(target)
-end
-
-function BBP.EnableTotemIndicatorCVars()
-    local db = BetterBlizzPlatesDB
-    if not db then return end
-
-    local changed = false
-    for _, setKey in ipairs({ "cvarContextPvP", "cvarContextPvE" }) do
-        if type(db[setKey]) ~= "table" then db[setKey] = {} end
-        if not db[setKey].nameplateShowEnemyTotems then
-            db[setKey].nameplateShowEnemyTotems = true
-            changed = true
-        end
-    end
-
-    if changed then
-        BBP.lastAppliedContext = nil
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \"Enemy Totems\" nameplates turned on for both PvE and PvP. You can change that in the \"CVar Control\" section of the addon.")
-    end
-
-    BBP.UpdateContextCVars(true, true)
-end
 
 function BBP.MiniAurasOnNameplates()
     if not C_AddOns.IsAddOnLoaded("MiniAuras") then return false end
@@ -8839,7 +8528,6 @@ local function TurnOnEnabledFeaturesOnLogin()
     --BBP.ToggleSpellCastEventRegistration()
     BBP.HookCastbarStyleAndAnchoring()
     BBP.ApplyNameplateWidth()
-    BBP.ToggleFriendlyNameplatesAuto()
     BBP.ToggleAbsorbIndicator()
     BBP.ToggleCombatIndicator()
     BBP.ToggleExecuteIndicator()
@@ -8859,16 +8547,6 @@ end
 
 
 local function UpdateLateAdditionSettings(db)
-    if (db.friendlyNameplatesOnlyInDungeons or db.friendlyNameplatesOnlyInBgs) and not db.friendlyNameplateTogglesUpdated then
-        if db.friendlyNameplatesOnlyInDungeons and db.friendlyNameplatesOnlyInRaids == nil then
-            db.friendlyNameplatesOnlyInRaids = true
-        end
-        if db.friendlyNameplatesOnlyInBgs and db.friendlyNameplatesOnlyInEpicBgs == nil then
-            db.friendlyNameplatesOnlyInEpicBgs = true
-        end
-        db.friendlyNameplateTogglesUpdated = true
-    end
-
     if db.smallPetsSmallerWidth == nil then
         db.smallPetsSmallerWidth = db.smallPetsWidth
     end
@@ -9230,12 +8908,12 @@ First:SetScript("OnEvent", function(_, event, addonName)
                         button2 = "Turn off Totem Indicator",
                         OnAccept = function()
                             db.totemIndicatorUpdatedForMidnight = true
-                            BBP.UpdateContextCVars(true, true)
+                            BBP.UpdateNameplateToggles(true, true)
                         end,
                         OnCancel = function()
                             db.totemIndicator = false
                             db.totemIndicatorUpdatedForMidnight = true
-                            BBP.UpdateContextCVars(true, true)
+                            BBP.UpdateNameplateToggles(true, true)
                         end,
                         timeout = 0,
                         whileDead = true,
@@ -9248,7 +8926,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 end
             elseif db.totemIndicator then
                 C_Timer.After(4, function()
-                    BBP.UpdateContextCVars(true)
+                    BBP.UpdateNameplateToggles(true)
                 end)
             end
 

@@ -73,6 +73,7 @@ end
 
 local function AnchorLevelBadge(frame, levelFrame, followHealthBar, squish)
     squish = followHealthBar and squish or 0
+    levelFrame.bbpClassicAnchor = not followHealthBar
     if levelFrame.bbpFollowsHealthBar == followHealthBar and levelFrame.bbpBadgeSquish == squish then return end
     levelFrame.bbpFollowsHealthBar = followHealthBar
     levelFrame.bbpBadgeSquish = squish
@@ -354,10 +355,11 @@ end
 
 local ELITE_CLASSIFICATIONS = { elite = true, rareelite = true, worldboss = true, rare = true }
 local SILVER_CLASSIFICATIONS = { rareelite = true, rare = true }
-local ELITE_RING_LEVEL_X = 1
+local ELITE_RING_LEVEL_X = 2
 local ELITE_RING_HEALTHBAR_X = -8
 local ELITE_RING_ATLAS = "Adventures-Ring-Gold-Dragon"
-local ELITE_RING_CLASSIC_X = 8.5
+local ELITE_RING_ALT_ATLAS = "Adventure-Mission-Gold-Dragon"
+local ELITE_RING_CLASSIC_X = 10.5
 local ELITE_RING_Y = -1
 local ELITE_RING_WIDTH = 38
 local ELITE_RING_PADDING = 13
@@ -371,13 +373,6 @@ local function GetLevelOverlay(frame, levelFrame)
     overlay.placement = "badge"
 
     overlay.eliteRing = overlay:CreateTexture(nil, "ARTWORK")
-    local ringInfo = C_Texture.GetAtlasInfo(ELITE_RING_ATLAS)
-    if ringInfo then
-        overlay.eliteRing:SetTexture(ringInfo.file or ringInfo.filename)
-        overlay.eliteRing.atlasInfo = ringInfo
-    else
-        overlay.eliteRing:SetAtlas(ELITE_RING_ATLAS)
-    end
 
     overlay.text = overlay:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     overlay.text:SetFont(LEVEL_TEXT_FONT, LEVEL_TEXT_SIZE)
@@ -393,6 +388,18 @@ local function GetLevelOverlay(frame, levelFrame)
 
     frame.bbpLevelOverlay = overlay
     return overlay
+end
+
+local function SetEliteRingAtlas(ring, atlas)
+    if ring.bbpAtlas == atlas then return end
+    ring.bbpAtlas = atlas
+    local info = C_Texture.GetAtlasInfo(atlas)
+    ring.atlasInfo = info
+    if info then
+        ring:SetTexture(info.file or info.filename)
+    else
+        ring:SetAtlas(atlas)
+    end
 end
 
 local function UpdateLevelOverlayText(frame)
@@ -441,7 +448,7 @@ end
 
 function BBP.CanMoveLevelText()
     local db = BetterBlizzPlatesDB
-    if db.classicNameplates then return false end
+    if db.classicNameplates then return db.hideLevelFrameBackground and true or false end
     return (db.classicRetailNameplates or db.hideLevelFrameBackground) and true or false
 end
 
@@ -472,6 +479,42 @@ local function PlaceLevelText(frame, overlay, db)
     overlay.text:SetPoint(point, relTo, relPoint, x, y)
     overlay.skull:ClearAllPoints()
     overlay.skull:SetPoint(point, relTo, relPoint, x, y)
+end
+
+local CLASSIC_LEVEL_TEXT_SIZE = 13
+
+function BBP.PlaceClassicLevelText(frame)
+    local classicLevel = frame and frame.ClassicLevelFrame
+    if not classicLevel then return end
+    local db = BetterBlizzPlatesDB
+    local noBackground = db.hideLevelFrameBackground and true or false
+    local moved = noBackground and db.moveLevelText and true or false
+    local size = moved and db.levelTextSize or CLASSIC_LEVEL_TEXT_SIZE
+    if size <= 0 then size = CLASSIC_LEVEL_TEXT_SIZE end
+    local skullSize = moved and size * LEVEL_SKULL_PER_FONT_SIZE or 16
+    local relTo = frame.HealthBarsContainer
+    local textPoint, skullPoint, relPoint, textX, skullX, y
+    if moved then
+        textPoint = db.levelTextAnchor or "LEFT"
+        skullPoint = textPoint
+        relPoint = db.levelTextRelativeAnchor or "RIGHT"
+        textX = (db.levelTextXPos or 0) + LevelTextSideGap(relPoint)
+        skullX = textX
+        y = db.levelTextYPos or 0
+    else
+        textPoint, skullPoint, relPoint, y = "CENTER", "LEFT", "RIGHT", 0
+        textX = noBackground and 10.5 or 8.5
+        skullX = noBackground and 3.5 or 0.5
+    end
+    local layout = classicLevel.bbpLayout
+    if layout and layout[1] == textPoint and layout[2] == relPoint and layout[3] == textX and layout[4] == skullX and layout[5] == y and layout[6] == size then return end
+    classicLevel.bbpLayout = { textPoint, relPoint, textX, skullX, y, size }
+    classicLevel.text:SetFont(LEVEL_TEXT_FONT, size, "OUTLINE")
+    classicLevel.text:ClearAllPoints()
+    classicLevel.text:SetPoint(textPoint, relTo, relPoint, textX, y)
+    classicLevel.skull:SetSize(skullSize, skullSize)
+    classicLevel.skull:ClearAllPoints()
+    classicLevel.skull:SetPoint(skullPoint, relTo, relPoint, skullX, y)
 end
 
 local function UpdateLevelOverlay(frame, levelFrame, db, levelHidden)
@@ -515,21 +558,20 @@ local function UpdateLevelOverlay(frame, levelFrame, db, levelHidden)
         end
         overlay:SetFrameLevel(math.max(overlay:GetParent():GetFrameLevel(), levelFrame:GetFrameLevel()) + 1)
     end
+    SetEliteRingAtlas(overlay.eliteRing, db.levelEliteIconRingTexture and ELITE_RING_ALT_ATLAS or ELITE_RING_ATLAS)
     overlay.eliteRing:SetShown(showRing)
     overlay.eliteRing:SetDesaturated(SILVER_CLASSIFICATIONS[classification] or false)
     local healthBar = frame.HealthBarsContainer
     if healthBar then
         local x
         local side = "RIGHT"
-        if BBP.IsLevelHidden(frame) then
-            if db.levelEliteIconLeftSide then
-                side = "LEFT"
-                x = -ELITE_RING_HEALTHBAR_X
-            else
-                x = ELITE_RING_HEALTHBAR_X
-            end
+        if db.levelEliteIconLeftSide then
+            side = "LEFT"
+            x = -ELITE_RING_HEALTHBAR_X
+        elseif BBP.IsLevelHidden(frame) then
+            x = ELITE_RING_HEALTHBAR_X
         elseif db.classicNameplates then
-            x = ELITE_RING_CLASSIC_X
+            x = ELITE_RING_CLASSIC_X + (db.hideLevelFrameBackground and 2 or 0)
         else
             x = select(2, BBP.GetLevelBadgeSpace(frame)) + ELITE_RING_LEVEL_X
         end
@@ -559,6 +601,9 @@ function BBP.UpdateAllLevelOverlays()
         local levelFrame = frame and frame.PlayerLevelDiffFrame
         if levelFrame and not frame:IsForbidden() and not levelFrame:IsForbidden() then
             UpdateLevelOverlay(frame, levelFrame, db, BBP.IsLevelHidden(frame) or db.classicNameplates)
+        end
+        if frame and not frame:IsForbidden() then
+            BBP.PlaceClassicLevelText(frame)
         end
     end
 end

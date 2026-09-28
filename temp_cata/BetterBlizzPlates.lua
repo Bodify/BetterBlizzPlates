@@ -1638,6 +1638,7 @@ local function GetNameplateUnitInfo(frame, unit)
     info.isEnemy = (info.reaction and info.reaction < 4) and not info.isSelf
     info.isNeutral = (info.reaction and info.reaction == 4) and not info.isSelf
     info.isFriend = (info.reaction and info.reaction >= 5) and not info.isSelf
+    info.isFriendlyNpc = (info.isNpc and (info.isFriend or (info.isNeutral and not UnitCanAttack("player", unit)))) and true or false
     info.playerClass = playerClass
 
     return info
@@ -2298,7 +2299,7 @@ end
 local function ToggleTargetNameplateHighlight(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
-    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 0.22)
+    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
 end
 
 --#################################################################################################
@@ -3048,9 +3049,9 @@ function BBP.HideNPCs(frame, nameplate)
     -- Determine if the frame should be shown based on the list check or if it's the current target
     if isTarget then
         BBP.ShowFrame(frame)
-        local alpha = ((config.friendlyHideHealthBar and info.isFriend) and (info.isPlayer or (config.friendlyHideHealthBarNpc and not (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and info.isPet))) and 0) or 1
+        local alpha = ((config.friendlyHideHealthBar and (info.isFriend or info.isFriendlyNpc)) and (info.isPlayer or (config.friendlyHideHealthBarNpc and not (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and info.isPet))) and 0) or 1
         frame.healthBar:SetAlpha(alpha)
-        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 0.22)
+        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
     elseif BBP.isInArena and hideSecondaryPets and mainPets[npcID] and info.isEnemy then
         local isFakePet = true
         for i = 1, 3 do
@@ -3105,10 +3106,10 @@ function BBP.ResetFrame(frame, config, info)
         frame.hideCastbarOverride = false
         if config.classIndicatorHideFriendlyHealthbar then
             frame.healthBar:SetAlpha((info.isSelf and 1) or (frame.ciChange and 0) or 1)
-            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or (frame.ciChange and 0) or 0.22)
+            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or (frame.ciChange and 0) or 0.22)
         else
-            frame.healthBar:SetAlpha((info.isSelf and 1) or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 1)
-            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and (config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc) and 0) or 0.22)
+            frame.healthBar:SetAlpha((info.isSelf and 1) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 1)
+            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
         end
         ToggleNameplateBuffFrameVisibility(frame)
         frame.name:SetAlpha(1)
@@ -4678,7 +4679,7 @@ local function HideFriendlyHealthbar(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
     config.friendlyHideHealthBar = BetterBlizzPlatesDB.friendlyHideHealthBar
-    if frame.healthBar and info.isFriend then
+    if frame.healthBar and (info.isFriend or info.isFriendlyNpc) then
         if BetterBlizzPlatesDB.friendlyHideHealthBar then
             if not info.isPlayer then
                 local hideNpcHpBar = BetterBlizzPlatesDB.friendlyHideHealthBarNpc
@@ -4687,7 +4688,7 @@ local function HideFriendlyHealthbar(frame)
                     frame.selectionHighlight:SetAlpha(0)
                 else
                     frame.healthBar:SetAlpha(1)
-                    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 0.22)
+                    frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
                 end
             else
                 frame.healthBar:SetAlpha(0)
@@ -4737,14 +4738,14 @@ local function HideFriendlyHealthbar(frame)
             end
         else
             frame.healthBar:SetAlpha(1)
-            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 0.22)
+            frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
             if frame.guildName then
                 frame.guildName:SetText("")
             end
         end
     else
         frame.healthBar:SetAlpha(1)
-        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (info.isFriend and ((config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isNpc)) and 0) or 0.22)
+        frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
         if frame.guildName then
             frame.guildName:SetText("")
         end
@@ -5103,7 +5104,7 @@ local function NameplateNPCTitle(frame)
     local info = frame.BetterBlizzPlates.unitInfo
 
     -- Check if the unit is an NPC
-    if info.isPlayer or not info.isFriend or UnitIsOtherPlayersPet(frame.unit) then
+    if info.isPlayer or not info.isFriendlyNpc or UnitIsOtherPlayersPet(frame.unit) then
         frame.npcTitle:Hide()
     else
         local title = GetNPCTitle(frame.unit)

@@ -30,6 +30,36 @@ BBP.BarberIcon = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\Barbers
 
 local checkBoxList = {}
 local sliderList = {}
+local MAX_SEARCH_CHECKBOXES = 25
+local MAX_SEARCH_SLIDERS = 15
+
+local settingsPopups = {}
+local settingsPopupsHooked
+
+local function KeepPopupInSettings(popup, panel)
+    popup:SetParent(UIParent)
+    popup:SetFrameStrata("DIALOG")
+    popup:SetToplevel(true)
+    popup:HookScript("OnShow", function(self)
+        self:SetFrameStrata("DIALOG")
+        self:Raise()
+    end)
+    popup:HookScript("OnHide", function()
+        panel:SetAlpha(1)
+    end)
+    panel:HookScript("OnHide", function()
+        popup:Hide()
+    end)
+    if not settingsPopupsHooked then
+        settingsPopupsHooked = true
+        SettingsPanel:HookScript("OnHide", function()
+            for other in pairs(settingsPopups) do
+                other:Hide()
+            end
+        end)
+    end
+    settingsPopups[popup] = panel
+end
 
 local function RecolorEntireAuraWhitelist(r, g, b, a)
     if type(BetterBlizzPlatesDB) ~= "table" then return false end
@@ -1326,6 +1356,11 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         C_CVar.SetCVar("nameplateOverlapV", value)
                     end
                     BetterBlizzPlatesDB.nameplateOverlapV = value
+                elseif element == "nameplateSimplifiedScale" then
+                    if not BBP.checkCombatAndWarn() then
+                        C_CVar.SetCVar("nameplateSimplifiedScale", value)
+                        BetterBlizzPlatesDB.nameplateSimplifiedScale = value
+                    end
                 elseif element == "nameplateMinAlpha" then
                     if not BBP.checkCombatAndWarn() then
                         C_CVar.SetCVar("nameplateMinAlpha", value)
@@ -1989,6 +2024,21 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
     local checkBox = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
     checkBox.Text:SetText(label)
     table.insert(checkBoxList, {checkbox = checkBox, label = label})
+
+    checkBox.bbpMouseDownHandlers = {}
+    local hookScript, setScript = checkBox.HookScript, checkBox.SetScript
+    function checkBox:HookScript(scriptType, handler, ...)
+        if scriptType == "OnMouseDown" then
+            table.insert(self.bbpMouseDownHandlers, handler)
+        end
+        return hookScript(self, scriptType, handler, ...)
+    end
+    function checkBox:SetScript(scriptType, handler, ...)
+        if scriptType == "OnMouseDown" then
+            self.bbpMouseDownHandlers = { handler }
+        end
+        return setScript(self, scriptType, handler, ...)
+    end
     checkBox.text = checkBox.Text
     -- checkBox:SetHitRectInsets(0, 0, 0, 0)
     checkBox.Text:SetFont("Fonts\\FRIZQT__.TTF", 11)
@@ -4529,6 +4579,18 @@ local function CreateSearchFrame()
     settingsText:SetPoint("TOPLEFT", searchFrame, "TOPLEFT", 20, 0)
     settingsText:SetText("Search results:")
 
+    local cappedText = searchFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    cappedText:SetPoint("LEFT", settingsText, "RIGHT", 6, -1)
+    cappedText:Hide()
+
+    searchFrame:HookScript("OnHide", function()
+        for popup, panel in pairs(settingsPopups) do
+            if not panel:IsShown() then
+                popup:Hide()
+            end
+        end
+    end)
+
     local searchIcon = searchFrame:CreateTexture(nil, "ARTWORK")
     searchIcon:SetAtlas("communities-icon-searchmagnifyingglass")
     searchIcon:SetSize(28, 28)
@@ -4568,6 +4630,7 @@ local function CreateSearchFrame()
         for _, child in ipairs({resultsList:GetChildren()}) do
             child:Hide()
         end
+        cappedText:Hide()
 
         if query == "" then
             return
@@ -4579,6 +4642,8 @@ local function CreateSearchFrame()
 
         local checkboxCount = 0
         local sliderCount = 0
+        local checkboxMatches = 0
+        local sliderMatches = 0
         local yOffsetCheckbox = -20  -- Starting position for the first checkbox
         local yOffsetSlider = -20    -- Starting position for the first slider
 
@@ -4594,20 +4659,26 @@ local function CreateSearchFrame()
         end
 
         local function applyRightClickScript(searchCheckbox, originalCheckbox)
-            local originalScript = originalCheckbox:GetScript("OnMouseDown")
-            if originalScript then
+            local handlers = originalCheckbox.bbpMouseDownHandlers
+            if not handlers and originalCheckbox.GetScript then
+                local originalScript = originalCheckbox:GetScript("OnMouseDown")
+                handlers = originalScript and { originalScript }
+            end
+            if handlers and #handlers > 0 then
                 searchCheckbox:SetScript("OnMouseDown", function(self, button)
                     if button == "RightButton" then
-                        originalScript(originalCheckbox, button)
+                        for _, handler in ipairs(handlers) do
+                            handler(originalCheckbox, button)
+                        end
                     end
                 end)
+            else
+                searchCheckbox:SetScript("OnMouseDown", nil)
             end
         end
 
         -- Search through checkboxes
         for _, data in ipairs(checkBoxList) do
-            if checkboxCount >= 20 then break end
-
             -- Prepare the label and tooltip text
             local label = string.lower(data.label or "")
             local tooltipTitle = string.lower(data.checkbox.tooltipTitle or "")
@@ -4616,7 +4687,11 @@ local function CreateSearchFrame()
             local tooltipCVarName = string.lower(data.checkbox.tooltipCVarName and data.checkbox.tooltipCVarName.." CVar" or "")
 
             -- Check if all query words are found in any of the searchable fields
-            if matchesQuery(label) or matchesQuery(tooltipTitle) or matchesQuery(tooltipMainText) or matchesQuery(tooltipSubText) or matchesQuery(tooltipCVarName) then
+            local isMatch = matchesQuery(label) or matchesQuery(tooltipTitle) or matchesQuery(tooltipMainText) or matchesQuery(tooltipSubText) or matchesQuery(tooltipCVarName)
+            if isMatch then
+                checkboxMatches = checkboxMatches + 1
+            end
+            if isMatch and checkboxCount < MAX_SEARCH_CHECKBOXES then
                 checkboxCount = checkboxCount + 1
 
                 -- Re-use or create a new checkbox from the pool
@@ -4649,20 +4724,18 @@ local function CreateSearchFrame()
                 elseif data.checkbox.tooltipTitle then
                     CreateTooltipTwo(resultCheckBox, data.checkbox.tooltipTitle, nil, nil, nil, nil, nil, data.checkbox.searchCategory)
                 else
-                    CreateTooltipTwo(resultCheckBox, "No data yet WIP", nil, nil, nil, nil, nil, data.checkbox.searchCategory)
+                    CreateTooltipTwo(resultCheckBox, data.label, nil, nil, nil, nil, nil, data.checkbox.searchCategory)
                 end
 
                 resultCheckBox:Show()
 
                 -- Move down for the next checkbox
-                yOffsetCheckbox = yOffsetCheckbox - 24
+                yOffsetCheckbox = yOffsetCheckbox - 21
             end
         end
 
         -- Search through sliders
         for _, data in ipairs(sliderList) do
-            if sliderCount >= 13 then break end
-
             -- Prepare the label and tooltip text
             local label = string.lower(data.label or "")
             local tooltipTitle = string.lower(data.slider.tooltipTitle or "")
@@ -4671,7 +4744,11 @@ local function CreateSearchFrame()
             local tooltipCVarName = string.lower(data.slider.tooltipCVarName and data.slider.tooltipCVarName.." CVar" or "")
 
             -- Check if all query words are found in any of the searchable fields
-            if matchesQuery(label) or matchesQuery(tooltipTitle) or matchesQuery(tooltipMainText) or matchesQuery(tooltipSubText) or matchesQuery(tooltipCVarName) then
+            local isMatch = matchesQuery(label) or matchesQuery(tooltipTitle) or matchesQuery(tooltipMainText) or matchesQuery(tooltipSubText) or matchesQuery(tooltipCVarName)
+            if isMatch then
+                sliderMatches = sliderMatches + 1
+            end
+            if isMatch and sliderCount < MAX_SEARCH_SLIDERS then
                 sliderCount = sliderCount + 1
 
                 -- Re-use or create a new slider from the slider pool
@@ -4679,7 +4756,6 @@ local function CreateSearchFrame()
                 if not resultSlider then
                     resultSlider = CreateFrame("Slider", nil, resultsList, "OptionsSliderTemplate")
                     resultSlider:SetOrientation('HORIZONTAL')
-                    resultSlider:SetValueStep(data.slider:GetValueStep())
                     resultSlider:SetObeyStepOnDrag(true)
                     resultSlider.Text = resultSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
                     resultSlider.Text:SetTextColor(1, 0.81, 0, 1)
@@ -4699,6 +4775,7 @@ local function CreateSearchFrame()
                 resultSlider:SetPoint("TOPLEFT", searchIcon, "TOPLEFT", 277, yOffsetSlider)
                 resultSlider:SetScript("OnValueChanged", nil)
                 resultSlider:SetMinMaxValues(data.slider:GetMinMaxValues())
+                resultSlider:SetValueStep(data.slider:GetValueStep())
                 resultSlider:SetValue(data.slider:GetValue())
                 resultSlider.Text:SetText(data.label .. ": " .. formatSliderValue(data.slider:GetValue()))
 
@@ -4713,13 +4790,21 @@ local function CreateSearchFrame()
                 elseif data.slider.tooltipTitle then
                     CreateTooltipTwo(resultSlider, data.slider.tooltipTitle, nil, nil, nil, nil, nil, data.slider.searchCategory)
                 else
-                    CreateTooltipTwo(resultSlider, "No data yet WIP", nil, nil, nil, nil, nil, data.slider.searchCategory)
+                    CreateTooltipTwo(resultSlider, data.label, nil, nil, nil, nil, nil, data.slider.searchCategory)
                 end
 
                 -- Show the slider and prepare for the next slider
                 resultSlider:Show()
-                yOffsetSlider = yOffsetSlider - 42
+                yOffsetSlider = yOffsetSlider - 35
             end
+        end
+
+
+        local totalMatches = checkboxMatches + sliderMatches
+        local shown = checkboxCount + sliderCount
+        if shown < totalMatches then
+            cappedText:SetFormattedText("(showing %d of %d, be more specific)", shown, totalMatches)
+            cappedText:Show()
         end
     end
 
@@ -5644,37 +5729,42 @@ local function guiGeneralTab()
     local friendlyNpToggles = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     friendlyNpToggles:SetText("Toggles:")
     friendlyNpToggles:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", -20, -70)
-    CreateTooltipTwo(friendlyNpToggles, "Toggle Friendly Nameplates", "Turn on friendly nameplates when you enter these types of content and off again when it changes.\n\nSelect where you want friendly nameplates enabled:")
+    CreateTooltipTwo(friendlyNpToggles, "Toggle Friendly Nameplates", "Show friendly nameplates in these types of content.")
 
-    local toggleFriendlyNameplatesInArena = CreateCheckbox("friendlyNameplatesOnlyInArena", "Arena", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
-    toggleFriendlyNameplatesInArena:SetPoint("LEFT", friendlyNpToggles, "RIGHT", 0, 0)
-    CreateTooltipTwo(toggleFriendlyNameplatesInArena, "Arena Toggle", "Turn on friendly nameplates when you enter arena and off again when you leave.")
-    toggleFriendlyNameplatesInArena:SetSize(22,22)
-
-    local friendlyNameplatesOnlyInBgs = CreateCheckbox("friendlyNameplatesOnlyInBgs", "BGs", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
-    friendlyNameplatesOnlyInBgs:SetPoint("LEFT", toggleFriendlyNameplatesInArena.text, "RIGHT", -2, 0)
-    CreateTooltipTwo(friendlyNameplatesOnlyInBgs, "Battleground Toggle", "Turn on friendly nameplates when you enter battlegrounds and off again when you leave.")
-    friendlyNameplatesOnlyInBgs:SetSize(22,22)
-
-    local friendlyNameplatesOnlyInEpicBgs = CreateCheckbox("friendlyNameplatesOnlyInEpicBgs", "E-BGs", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
-    friendlyNameplatesOnlyInEpicBgs:SetPoint("LEFT", friendlyNameplatesOnlyInBgs.text, "RIGHT", -2, 0)
-    CreateTooltipTwo(friendlyNameplatesOnlyInEpicBgs, "Epic Battleground Toggle", "Turn on friendly nameplates when you enter epic battlegrounds and off again when you leave.")
-    friendlyNameplatesOnlyInEpicBgs:SetSize(22,22)
-
-    local friendlyNameplatesOnlyInDungeons = CreateCheckbox("friendlyNameplatesOnlyInDungeons", "Dungeons", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
-    friendlyNameplatesOnlyInDungeons:SetPoint("LEFT", friendlyNameplatesOnlyInEpicBgs.text, "RIGHT", -2, 0)
-    CreateTooltipTwo(friendlyNameplatesOnlyInDungeons, "Dungeon Toggle", "Turn on friendly nameplates when you enter dungeons and off again when you leave.")
-    friendlyNameplatesOnlyInDungeons:SetSize(22,22)
-
-    local friendlyNameplatesOnlyInRaids = CreateCheckbox("friendlyNameplatesOnlyInRaids", "Raids", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
-    friendlyNameplatesOnlyInRaids:SetPoint("LEFT", friendlyNameplatesOnlyInDungeons.text, "RIGHT", -2, 0)
-    CreateTooltipTwo(friendlyNameplatesOnlyInRaids, "Raid Toggle", "Turn on friendly nameplates when you enter raids and off again when you leave.")
-    friendlyNameplatesOnlyInRaids:SetSize(22,22)
-
-    local friendlyNameplatesOnlyInWorld = CreateCheckbox("friendlyNameplatesOnlyInWorld", "World", BetterBlizzPlates, nil, BBP.ToggleFriendlyNameplatesAuto)
-    friendlyNameplatesOnlyInWorld:SetPoint("LEFT", friendlyNameplatesOnlyInRaids.text, "RIGHT", -2, 0)
-    CreateTooltipTwo(friendlyNameplatesOnlyInWorld, "World Toggle", "Turn on friendly nameplates when you enter non-instanced World content and off again when enter other types.")
-    friendlyNameplatesOnlyInWorld:SetSize(22,22)
+    do
+        BBP.friendlyToggleButtons = {}
+        local anchor = friendlyNpToggles
+        for _, toggle in ipairs({
+            { "arena", "Arena", "Arena Toggle", "arenas" },
+            { "bg", "BGs", "Battleground Toggle", "battlegrounds" },
+            { "epicbg", "E-BGs", "Epic Battleground Toggle", "epic battlegrounds" },
+            { "dungeon", "Dungeons", "Dungeon Toggle", "dungeons" },
+            { "raid", "Raids", "Raid Toggle", "raids" },
+            { "world", "World", "World Toggle", "the open world" },
+            { "city", "City", "City Toggle", "cities" },
+        }) do
+            local key = toggle[1]
+            if BBP.nameplateToggleCategoryByKey[key].available then
+                local button = CreateFrame("CheckButton", nil, BetterBlizzPlates, "InterfaceOptionsCheckButtonTemplate")
+                button:SetSize(22, 22)
+                button.Text:SetText(toggle[2])
+                button.searchCategory = "General"
+                table.insert(checkBoxList, {checkbox = button, label = toggle[2]})
+                CreateTooltipTwo(button, toggle[3], "Show friendly nameplates in " .. toggle[4] .. ".")
+                if anchor == friendlyNpToggles then
+                    button:SetPoint("LEFT", anchor, "RIGHT", 0, 0)
+                else
+                    button:SetPoint("LEFT", anchor.Text, "RIGHT", -2, 0)
+                end
+                button:SetChecked(BBP.GetFriendlyToggle(key))
+                button:SetScript("OnClick", function(self)
+                    BBP.SetFriendlyToggle(key, self:GetChecked())
+                end)
+                BBP.friendlyToggleButtons[key] = button
+                anchor = button
+            end
+        end
+    end
 
     local friendlyNameScale = CreateSlider(BetterBlizzPlates, "Name Size", 0.5, 3, 0.01, "friendlyNameScale")
     friendlyNameScale:SetPoint("TOPLEFT", classColorPersonalNameplate, "BOTTOMLEFT", 0, -6)
@@ -5856,7 +5946,7 @@ local function guiGeneralTab()
             elseif self:GetChecked() then
                 BBP.EnableTotemIndicatorCVars()
             else
-                BBP.UpdateContextCVars(true, true)
+                BBP.UpdateNameplateToggles(true, true)
             end
         end
         setTotemCVar()
@@ -6249,7 +6339,7 @@ local function guiPositionAndScale()
     BetterBlizzPlatesSubPanel.name = "Advanced Settings"
     BetterBlizzPlatesSubPanel.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(BetterBlizzPlatesSubPanel)
-    local guiPositionAndScaleCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, BetterBlizzPlatesSubPanel, BetterBlizzPlatesSubPanel.name, BetterBlizzPlatesSubPanel.name)
+    local guiPositionAndScaleCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, BetterBlizzPlatesSubPanel, BetterBlizzPlatesSubPanel.name)
     CreateTitle(BetterBlizzPlatesSubPanel)
 
     local bgImg = BetterBlizzPlatesSubPanel:CreateTexture(nil, "BACKGROUND")
@@ -8304,7 +8394,7 @@ local function guiCastbar()
     guiCastbar.name = "Castbar"
     guiCastbar.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiCastbar)
-    local guiCastbarCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiCastbar, guiCastbar.name, guiCastbar.name)
+    local guiCastbarCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiCastbar, guiCastbar.name)
     CreateTitle(guiCastbar)
 
     local bgImg = guiCastbar:CreateTexture(nil, "BACKGROUND")
@@ -9018,7 +9108,7 @@ local function guiHideCastbar()
     guiHideCastbar.name = "Hide Castbar"
     guiHideCastbar.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiHideCastbar)
-    local guiHideCastbarCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiHideCastbar, guiHideCastbar.name, guiHideCastbar.name)
+    local guiHideCastbarCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiHideCastbar, guiHideCastbar.name)
     CreateTitle(guiHideCastbar)
 
     local bgImg = guiHideCastbar:CreateTexture(nil, "BACKGROUND")
@@ -9126,7 +9216,7 @@ local function guiFadeNPC()
     guiFadeNpc.name = "Fade NPC"
     guiFadeNpc.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiFadeNpc)
-    local guiFadeNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiFadeNpc, guiFadeNpc.name, guiFadeNpc.name)
+    local guiFadeNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiFadeNpc, guiFadeNpc.name)
     CreateTitle(guiFadeNpc)
 
     local bgImg = guiFadeNpc:CreateTexture(nil, "BACKGROUND")
@@ -9231,7 +9321,7 @@ local function guiHideNPC()
     guiHideNpc.name = "Hide NPC"
     guiHideNpc.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiHideNpc)
-    local guiHideNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiHideNpc, guiHideNpc.name, guiHideNpc.name)
+    local guiHideNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiHideNpc, guiHideNpc.name)
     CreateTitle(guiHideNpc)
 
     local bgImg = guiHideNpc:CreateTexture(nil, "BACKGROUND")
@@ -9373,7 +9463,7 @@ local function guiColorNPC()
     guiColorNpc.name = "Color NPC"
     guiColorNpc.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiColorNpc)
-    local guiColorNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiColorNpc, guiColorNpc.name, guiColorNpc.name)
+    local guiColorNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiColorNpc, guiColorNpc.name)
     CreateTitle(guiColorNpc)
 
     local bgImg = guiColorNpc:CreateTexture(nil, "BACKGROUND")
@@ -9440,7 +9530,7 @@ local function guiAuraColor()
     guiAuraColor.name = "Color by Aura"
     guiAuraColor.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiAuraColor)
-    local guiAuraColorCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiAuraColor, guiAuraColor.name, guiAuraColor.name)
+    local guiAuraColorCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiAuraColor, guiAuraColor.name)
     CreateTitle(guiAuraColor)
 
     local bgImg = guiAuraColor:CreateTexture(nil, "BACKGROUND")
@@ -9507,7 +9597,7 @@ local function guiNameplateAuras()
     guiNameplateAuras.name = "Nameplate Auras"
     guiNameplateAuras.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiNameplateAuras)
-    local guiNameplateAurasCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiNameplateAuras, guiNameplateAuras.name, guiNameplateAuras.name)
+    local guiNameplateAurasCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiNameplateAuras, guiNameplateAuras.name)
     CreateTitle(guiNameplateAuras)
 
     local bgImg = guiNameplateAuras:CreateTexture(nil, "BACKGROUND")
@@ -9907,6 +9997,7 @@ local function guiNameplateAuras()
             ccOptionsFrame:SetSize(210, 130)
             ccOptionsFrame:SetPoint("CENTER")
             ccOptionsFrame:SetFrameStrata("HIGH")
+            KeepPopupInSettings(ccOptionsFrame, guiNameplateAuras)
             ccOptionsFrame:SetMovable(true)
             ccOptionsFrame:EnableMouse(true)
             ccOptionsFrame:RegisterForDrag("LeftButton")
@@ -10105,6 +10196,7 @@ local function guiNameplateAuras()
             buffOptionsFrame:SetSize(280, 110)
             buffOptionsFrame:SetPoint("CENTER")
             buffOptionsFrame:SetFrameStrata("HIGH")
+            KeepPopupInSettings(buffOptionsFrame, guiNameplateAuras)
             buffOptionsFrame:SetMovable(true)
             buffOptionsFrame:EnableMouse(true)
             buffOptionsFrame:RegisterForDrag("LeftButton")
@@ -10903,7 +10995,7 @@ local function guiCVarControl()
     guiCVarControl.name = "CVar Control"
     guiCVarControl.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiCVarControl)
-    local guiCVarControlCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiCVarControl, guiCVarControl.name, guiCVarControl.name)
+    local guiCVarControlCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiCVarControl, guiCVarControl.name)
     CreateTitle(guiCVarControl)
 
     local bgImg = guiCVarControl:CreateTexture(nil, "BACKGROUND")
@@ -10992,8 +11084,15 @@ local function guiCVarControl()
         CheckAndToggleCheckboxes(darkModeNameplateResource)
     end)
 
+    if C_CVar.GetCVar("nameplateSimplifiedScale") then
+        local nameplateSimplifiedScale = CreateSlider(guiCVarControl, "Simplified Scale", 0.3, 1, 0.01, "nameplateSimplifiedScale")
+        nameplateSimplifiedScale:SetPoint("TOPLEFT", darkModeNameplateColor, "BOTTOMLEFT", 0, -20)
+        CreateTooltipTwo(nameplateSimplifiedScale, "Simplified Scale", "The scale of simplified nameplates.", "Which nameplates are simplified can be adjusted in Blizzards Nameplate section.", nil, "nameplateSimplifiedScale")
+        CreateResetButton(nameplateSimplifiedScale, "nameplateSimplifiedScale", guiCVarControl)
+    end
+
     local disableCVarForceOnLogin = CreateCheckbox("disableCVarForceOnLogin", "Disable all CVar forcing", guiCVarControl)
-    disableCVarForceOnLogin:SetPoint("BOTTOM", guiCVarControl, "BOTTOM", -80, 60)
+    disableCVarForceOnLogin:SetPoint("BOTTOM", guiCVarControl, "BOTTOM", -disableCVarForceOnLogin.Text:GetStringWidth() / 2 - 30, -5)
     CreateTooltipTwo(disableCVarForceOnLogin, "Disable all CVar Forcing", "Disables all forcing of CVar's on login (Not recommended)", "(Sliders adjusting CVar values will still change CVars.)")
 
     local nameplateAlphaText = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -11047,84 +11146,169 @@ local function guiCVarControl()
     nameplateShowAll:SetPoint("TOP", setCVarAcrossAllCharacters, "BOTTOM", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateShowAll, "Always show nameplates", "Always show nameplates (if not targeted)", nil, nil, "nameplateShowAll")
 
-    local nameplateShowOnlyNameForFriendlyPlayerUnits = CreateCheckbox("nameplateShowOnlyNameForFriendlyPlayerUnits", "Show Only Friendly NP Names", guiCVarControl, true, BBP.SetNameplateBehavior)
-    nameplateShowOnlyNameForFriendlyPlayerUnits:SetPoint("TOP", nameplateShowAll, "BOTTOM", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateShowOnlyNameForFriendlyPlayerUnits, "Show Only Friendly NP Names", "Only show Name on Nameplates and hide healthbar & castbar. This enables Blizzards new CVar for this.", nil, nil, "nameplateShowOnlyNameForFriendlyPlayerUnits")
+    guiCVarControl.modeLabel = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    guiCVarControl.modeLabel:SetPoint("TOPLEFT", nameplateShowAll, "BOTTOMLEFT", 4, -9)
+    guiCVarControl.modeLabel:SetText("Nameplate Toggle Mode:")
 
-    guiCVarControl.contextRows = {
-        { "nameplateShowEnemyMinions",   "Enemy Minions",    "nameplateShowFriendlyPlayerMinions",   "Friendly Minions"   },
-        { "nameplateShowEnemyGuardians", "Enemy Guardians",  "nameplateShowFriendlyPlayerGuardians", "Friendly Guardians" },
-        { "nameplateShowEnemyPets",      "Enemy Pets",       "nameplateShowFriendlyPlayerPets",      "Friendly Pets"      },
-        { "nameplateShowEnemyTotems",    "Enemy Totems",     "nameplateShowFriendlyPlayerTotems",    "Friendly Totems"    },
-        { "nameplateShowEnemyMinus",     "Enemy Minus",      "nameplateShowFriendlyNpcs",            "Friendly NPCs"      },
-    }
+    guiCVarControl.modeDropdown = CreateFrame("DropdownButton", nil, guiCVarControl, "WowStyle1DropdownTemplate")
+    guiCVarControl.modeDropdown:SetPoint("RIGHT", guiCVarControl.modeLabel, "LEFT", 268, 0)
+    guiCVarControl.modeDropdown:SetWidth(110)
+    CreateTooltipTwo(guiCVarControl.modeDropdown, "Nameplate Toggle Mode", "|cffffd100Simple:|r One setup for PvP and one for everything else.\n\n|cffffd100Advanced:|r A separate setup for each type of content.")
 
-    local function BuildContextDropdown(setKey, dropdown)
+    guiCVarControl.toggleRowFrames = {}
+
+    function guiCVarControl.ToggleSelectionText(categoryKey)
+        local db = BetterBlizzPlatesDB
+        local set = db[BBP.NameplateToggleSetKey(categoryKey)] or {}
+        local parts = {}
+        if set.nameplateShowEnemies then parts[#parts + 1] = "Enemy" end
+        local friendlyOn, friendlyTotal = BBP.GetFriendlyToggleCount(categoryKey)
+        if friendlyOn > 0 then
+            local friendlyText = set.nameplateShowOnlyNameForFriendlyPlayerUnits and "Friendly Names" or "Friendly"
+            parts[#parts + 1] = friendlyOn < friendlyTotal and ("Some " .. friendlyText) or friendlyText
+        end
+        local extras = 0
+        for _, entry in ipairs(BBP.nameplateToggleEntries) do
+            if entry and not entry.root and not entry.stack and not entry.short and BBP.NameplateToggleEntryAvailable(entry) and set[entry.key] then
+                local rootOn = true
+                if entry.side == "enemy" then
+                    rootOn = set.nameplateShowEnemies
+                elseif entry.side == "friendly" then
+                    rootOn = friendlyOn > 0
+                end
+                if rootOn then extras = extras + 1 end
+            end
+        end
+        local text = #parts > 0 and table.concat(parts, ", ") or "None"
+        if extras > 0 then text = text .. " +" .. extras end
+        return text
+    end
+
+    function guiCVarControl.BuildToggleDropdown(categoryKey, dropdown)
+        local setKey = BBP.NameplateToggleSetKey(categoryKey)
+        local function GetSet()
+            local set = BetterBlizzPlatesDB[setKey]
+            if type(set) ~= "table" then
+                set = {}
+                BetterBlizzPlatesDB[setKey] = set
+            end
+            return set
+        end
         dropdown:SetupMenu(function(owner, rootDescription)
             rootDescription:SetGridMode(MenuConstants.HorizontalGridDirection, 2, 0)
-            for _, row in ipairs(guiCVarControl.contextRows) do
-                for index = 1, 3, 2 do
-                    local cvar, label = row[index], row[index + 1]
-                    rootDescription:CreateCheckbox(label,
+            for _, entry in ipairs(BBP.nameplateToggleEntries) do
+                if entry and BBP.NameplateToggleEntryAvailable(entry) then
+                    local checkbox = rootDescription:CreateCheckbox(entry.label,
                         function()
-                            local set = BetterBlizzPlatesDB[setKey]
-                            return set and set[cvar] == true
+                            if entry.key == "nameplateShowFriendlyPlayers" then
+                                return BBP.GetFriendlyToggle(categoryKey)
+                            end
+                            return GetSet()[entry.key] == true
                         end,
                         function()
-                            local set = BetterBlizzPlatesDB[setKey]
-                            if not set then set = {}; BetterBlizzPlatesDB[setKey] = set end
-                            set[cvar] = not set[cvar]
-                            BBP.UpdateContextCVars(true, true)
+                            if entry.key == "nameplateShowFriendlyPlayers" then
+                                BBP.SetFriendlyToggle(categoryKey, not BBP.GetFriendlyToggle(categoryKey), true)
+                                return
+                            end
+                            local set = GetSet()
+                            set[entry.key] = not set[entry.key]
+                            BBP.lastAppliedNameplateToggles = nil
+                            BBP.UpdateNameplateToggles(true, true)
                         end)
+                    local isEnemyEntry = entry.side == "enemy"
+                    checkbox:AddInitializer(function(button)
+                        if isEnemyEntry then
+                            button.fontString:SetTextColor(1, 0.38, 0.38)
+                        else
+                            button.fontString:SetTextColor(0.35, 0.7, 1)
+                        end
+                    end)
+                    if entry.side and not entry.root then
+                        local isEnemySide = entry.side == "enemy"
+                        checkbox:SetEnabled(function()
+                            if isEnemySide then
+                                return GetSet().nameplateShowEnemies == true
+                            end
+                            return (BBP.GetFriendlyToggleCount(categoryKey)) > 0
+                        end)
+                    end
+                else
+                    rootDescription:CreateSpacer()
                 end
             end
         end)
         dropdown:SetDefaultText("None")
         dropdown:SetSelectionText(function()
-            local set = BetterBlizzPlatesDB[setKey]
-            if not set then return "None" end
-            local names = {}
-            for _, row in ipairs(guiCVarControl.contextRows) do
-                for index = 1, 3, 2 do
-                    if set[row[index]] then
-                        names[#names + 1] = row[index + 1]
-                    end
-                end
-            end
-            if #names == 0 then return "None" end
-            local text = table.concat(names, ", ")
-            if #text > 32 then
-                text = text:sub(1, 32):gsub("%s*,?%s*$", "") .. "..."
-            end
-            return text
+            return guiCVarControl.ToggleSelectionText(categoryKey)
         end)
     end
 
-    guiCVarControl.pvpLabel = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    guiCVarControl.pvpLabel:SetPoint("TOP", nameplateCVarText, "BOTTOM", -72, -73)
-    guiCVarControl.pvpLabel:SetText("In PvP show:")
+    BBP.RefreshNameplateToggleRows = function()
+        guiCVarControl.RefreshNameplateToggleRows()
+    end
 
-    guiCVarControl.pvpDropdown = CreateFrame("DropdownButton", nil, guiCVarControl, "WowStyle1DropdownTemplate")
-    guiCVarControl.pvpDropdown:SetPoint("TOPLEFT", guiCVarControl.pvpLabel, "BOTTOMLEFT", 0, -4)
-    guiCVarControl.pvpDropdown:SetWidth(220)
-    BuildContextDropdown("cvarContextPvP", guiCVarControl.pvpDropdown)
-    CreateTooltipTwo(guiCVarControl.pvpDropdown, "In PvP show", "Nameplate types shown inside arenas and battlegrounds.")
+    function guiCVarControl.RefreshNameplateToggleRows()
+        local mode = BBP.GetNameplateToggleMode()
+        local previous
+        for _, row in ipairs(guiCVarControl.toggleRowFrames) do
+            if row.category.mode == mode then
+                row:ClearAllPoints()
+                if previous then
+                    row:SetPoint("TOPLEFT", previous, "BOTTOMLEFT", 0, 0)
+                else
+                    row:SetPoint("TOPLEFT", guiCVarControl.modeLabel, "BOTTOMLEFT", -4, -17)
+                end
+                previous = row
+                row.dropdown:GenerateMenu()
+                row:Show()
+            else
+                row:Hide()
+            end
+        end
+        guiCVarControl.modeDropdown:GenerateMenu()
+    end
 
-    guiCVarControl.pveLabel = guiCVarControl:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    guiCVarControl.pveLabel:SetPoint("TOPLEFT", guiCVarControl.pvpDropdown, "BOTTOMLEFT", 0, -12)
-    guiCVarControl.pveLabel:SetText("In PvE show:")
+    guiCVarControl.modeDropdown:SetupMenu(function(owner, rootDescription)
+        for _, option in ipairs({ { "simple", "Simple" }, { "advanced", "Advanced" } }) do
+            rootDescription:CreateRadio(option[2],
+                function()
+                    return BBP.GetNameplateToggleMode() == option[1]
+                end,
+                function()
+                    BetterBlizzPlatesDB.nameplateToggleMode = option[1]
+                    BBP.lastAppliedNameplateToggles = nil
+                    guiCVarControl.RefreshNameplateToggleRows()
+                    BBP.UpdateNameplateToggles(true, true)
+                end)
+        end
+    end)
 
-    guiCVarControl.pveDropdown = CreateFrame("DropdownButton", nil, guiCVarControl, "WowStyle1DropdownTemplate")
-    guiCVarControl.pveDropdown:SetPoint("TOPLEFT", guiCVarControl.pveLabel, "BOTTOMLEFT", 0, -4)
-    guiCVarControl.pveDropdown:SetWidth(220)
-    BuildContextDropdown("cvarContextPvE", guiCVarControl.pveDropdown)
-    CreateTooltipTwo(guiCVarControl.pveDropdown, "In PvE show", "Nameplate types shown everywhere that is not an arena or battleground, including the open world.")
+    for _, category in ipairs(BBP.nameplateToggleCategories) do
+        if category.available then
+            local row = CreateFrame("Frame", nil, guiCVarControl)
+            row:SetSize(272, 24)
+            row.category = category
+
+            row.label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            row.label:SetPoint("RIGHT", row, "LEFT", 136, 0)
+            row.label:SetJustifyH("RIGHT")
+            row.label:SetText("In " .. category.label .. " show:")
+
+            row.dropdown = CreateFrame("DropdownButton", nil, row, "WowStyle1DropdownTemplate")
+            row.dropdown:SetPoint("LEFT", row, "LEFT", 142, 0)
+            row.dropdown:SetWidth(130)
+            guiCVarControl.BuildToggleDropdown(category.key, row.dropdown)
+            CreateTooltipTwo(row.dropdown, "In " .. category.label .. " show", "Nameplate types shown in " .. category.label .. ".", (category.pvp or category.key == "pvp") and "|cFFFFD100Totem Indicator forces Enemy Minions, Guardians and Minus off here.|r" or nil)
+
+            guiCVarControl.toggleRowFrames[#guiCVarControl.toggleRowFrames + 1] = row
+        end
+    end
+    guiCVarControl.RefreshNameplateToggleRows()
 
     local cbCVars = {}
     cbCVars["nameplateResourceOnTarget"] = nameplateResourceOnTarget
     cbCVars["nameplateMotion"] = nameplateMotion
     cbCVars["nameplateShowAll"] = nameplateShowAll
-    cbCVars["nameplateShowOnlyNameForFriendlyPlayerUnits"] = nameplateShowOnlyNameForFriendlyPlayerUnits
 
     local sliderCVars = {}
     sliderCVars["nameplateMotionSpeed"] = nameplateMotionSpeed
@@ -11173,7 +11357,7 @@ local function guiClickingAndStacking()
     local guiClickNStack = CreateFrame("Frame")
     guiClickNStack.name = "|A:plunderstorm-pickup-mouseclick-left:16:16|aLook & Behaviour"
     guiClickNStack.parent = BetterBlizzPlates.name
-    local guiClickNStackCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiClickNStack, guiClickNStack.name, guiClickNStack.name)
+    local guiClickNStackCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiClickNStack, guiClickNStack.name)
     CreateTitle(guiClickNStack)
 
     local bgImg = guiClickNStack:CreateTexture(nil, "BACKGROUND")
@@ -11215,28 +11399,11 @@ local function guiClickingAndStacking()
 
     local nameplateStackingEnemy = CreateCheckbox("nameplateStackingTypes_Enemy", "Stacking enemy nameplates", guiClickNStack, nil, nil, {cvarName = "nameplateStackingTypes", index = Enum.NamePlateStackType.Enemy})
     nameplateStackingEnemy:SetPoint("TOPLEFT", stackingText, "BOTTOMLEFT", -4, -pixelsOnFirstBox)
-    CreateTooltipTwo(nameplateStackingEnemy, "Stacking Enemy Nameplates", "Turn on stacking for enemy nameplates.", nil, nil, "nameplateStackingTypes")
-    nameplateStackingEnemy:HookScript("OnMouseDown", function(self, button)
-        if button == "RightButton" then
-            if BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP == nil then
-                BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP = true
-                if not nameplateStackingEnemy:GetChecked() then
-                    nameplateStackingEnemy:Click()
-                    nameplateStackingEnemy:SetChecked(true)
-                end
-            else
-                BetterBlizzPlatesDB.keepOverlappingNameplatesInPvP = nil
-            end
-            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
-                self:GetScript("OnEnter")(self)
-            end
-            BBP.SetNameplateBehavior()
-        end
-    end)
+    CreateTooltipTwo(nameplateStackingEnemy, "Stacking Enemy Nameplates", "Turn on stacking for enemy nameplates.\n\n|cff32f795NOTE: Control stacking behaviour in different types of content in the CVar Control section.|r", nil, nil, "nameplateStackingTypes")
 
     local nameplateStackingFriendly = CreateCheckbox("nameplateStackingTypes_Friendly", "Stacking friendly nameplates", guiClickNStack, nil, nil, {cvarName = "nameplateStackingTypes", index = Enum.NamePlateStackType.Friendly})
     nameplateStackingFriendly:SetPoint("TOPLEFT", nameplateStackingEnemy, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateStackingFriendly, "Stacking Friendly Nameplates", "Turn on stacking for friendly nameplates.", nil, nil, "nameplateStackingTypes")
+    CreateTooltipTwo(nameplateStackingFriendly, "Stacking Friendly Nameplates", "Turn on stacking for friendly nameplates.\n\n|cff32f795NOTE: Control stacking behaviour in different types of content in the CVar Control section.|r", nil, nil, "nameplateStackingTypes")
 
     local stackingHorizontalOffset = CreateSlider(guiClickNStack, "Stacking Zone Width", -60, 60, 1, "stackingHorizontalOffset", "X")
     stackingHorizontalOffset:SetPoint("TOPLEFT", nameplateStackingFriendly, "BOTTOMLEFT", 12, -10)
@@ -11293,6 +11460,9 @@ local function guiClickingAndStacking()
         ToggleStackingSliders()
     end
     InitStackingSliders()
+    BBP.SyncStackingCheckboxes = function()
+        if BBP.variablesLoaded then InitStackingSliders() end
+    end
 
     nameplateStackingEnemy:HookScript("OnClick", function(self)
         local isChecked = self:GetChecked()
@@ -11301,6 +11471,7 @@ local function guiClickingAndStacking()
             if not BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"] then BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"] = {} end
             BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"][tostring(Enum.NamePlateStackType.Enemy)] = isChecked
             C_CVar.SetCVarBitfield("nameplateStackingTypes", Enum.NamePlateStackType.Enemy, isChecked)
+            BBP.SaveNameplateToggleStacking("Enemy", isChecked)
         end)
         ToggleStackingSliders()
     end)
@@ -11311,6 +11482,7 @@ local function guiClickingAndStacking()
             if not BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"] then BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"] = {} end
             BetterBlizzPlatesDB.bitfields["nameplateStackingTypes"][tostring(Enum.NamePlateStackType.Friendly)] = isChecked
             C_CVar.SetCVarBitfield("nameplateStackingTypes", Enum.NamePlateStackType.Friendly, isChecked)
+            BBP.SaveNameplateToggleStacking("Friendly", isChecked)
         end)
         ToggleStackingSliders()
     end)
@@ -11422,7 +11594,7 @@ local function guiTotemList()
     guiTotemList.name = "Totem Indicator List"
     guiTotemList.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiTotemList)
-    local guiTotemListCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiTotemList, guiTotemList.name, guiTotemList.name)
+    local guiTotemListCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiTotemList, guiTotemList.name)
     CreateTitle(guiTotemList)
 
     local bgImg = guiTotemList:CreateTexture(nil, "BACKGROUND")
@@ -11494,7 +11666,7 @@ local function guiTotemList()
                 elseif self:GetChecked() then
                     BBP.EnableTotemIndicatorCVars()
                 else
-                    BBP.UpdateContextCVars(true, true)
+                    BBP.UpdateNameplateToggles(true, true)
                 end
             end
             setTotemCVar()
@@ -11513,7 +11685,7 @@ local function guiMisc()
     guiMisc.name = "Misc"--"|A:GarrMission_CurrencyIcon-Material:19:19|a Misc"
     guiMisc.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiMisc)
-    local guiMiscCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiMisc, guiMisc.name, guiMisc.name)
+    local guiMiscCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiMisc, guiMisc.name)
     CreateTitle(guiMisc)
 
     local bgImg = guiMisc:CreateTexture(nil, "BACKGROUND")
@@ -11823,7 +11995,7 @@ local function guiSupport()
     guiSupport.name = "|A:GarrisonTroops-Health:10:10|a Support"
     guiSupport.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiSupport)
-    local guiSupportCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiSupport, guiSupport.name, guiSupport.name)
+    local guiSupportCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiSupport, guiSupport.name)
     BBP.guiSupport = guiSupport.name
     BBP.category.guiSupportCategory = guiSupportCategory.ID
     CreateTitle(guiSupport)
@@ -11939,7 +12111,7 @@ local function guiImportAndExport()
     guiImportAndExport.name = "Import & Export"--"|A:GarrMission_CurrencyIcon-Material:19:19|a Misc"
     guiImportAndExport.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiImportAndExport)
-    local guiImportAndExportCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiImportAndExport, guiImportAndExport.name, guiImportAndExport.name)
+    local guiImportAndExportCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiImportAndExport, guiImportAndExport.name)
     CreateTitle(guiImportAndExport)
 
     local bgImg = guiImportAndExport:CreateTexture(nil, "BACKGROUND")
@@ -12011,7 +12183,7 @@ function BBP.InitializeOptions()
         BetterBlizzPlates = CreateFrame("Frame")
         BetterBlizzPlates.name = "Better|cff00c0ffBlizz|rPlates |A:gmchat-icon-blizz:16:16|a"
         --InterfaceOptions_AddCategory(BetterBlizzPlates)
-        BBP.category = Settings.RegisterCanvasLayoutCategory(BetterBlizzPlates, BetterBlizzPlates.name, BetterBlizzPlates.name)
+        BBP.category = Settings.RegisterCanvasLayoutCategory(BetterBlizzPlates, BetterBlizzPlates.name)
         Settings.RegisterAddOnCategory(BBP.category)
 
         local titleText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFont_Gigantic")
@@ -12069,7 +12241,6 @@ function BBP.LoadGUI()
         HideUIPanel(SettingsPanel)
     end
     Settings.OpenToCategory(BBP.category:GetID())
-    Settings.OpenToCategory(BBP.category:GetID(), BBP.guiCustomCode)
     Settings.OpenToCategory(BBP.category:GetID())
 end
 
@@ -12081,7 +12252,6 @@ function BBP.CVarTracker()
         checkboxes = {
             nameplateResourceOnTarget = true,
             nameplateShowAll = true,
-            nameplateShowOnlyNameForFriendlyPlayerUnits = true
         },
         sliders = {
             nameplateOverlapH = true,
@@ -12116,7 +12286,7 @@ function BBP.CVarTracker()
         if BBP.CVarTrackingDisabled then return end
         if BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return end
 
-        if BBP.SaveContextCVar(cvarName, cvarValue) then
+        if BBP.SaveNameplateToggleCVar(cvarName, cvarValue) then
             -- handled: stored against the active PvP/PvE set
         elseif cvarsToTrack.checkboxes[cvarName] then
             BetterBlizzPlatesDB[cvarName] = cvarValue

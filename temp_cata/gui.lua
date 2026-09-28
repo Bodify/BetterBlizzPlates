@@ -30,6 +30,36 @@ BBP.BarberIcon = "Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\Barbers
 
 local checkBoxList = {}
 local sliderList = {}
+local MAX_SEARCH_CHECKBOXES = 25
+local MAX_SEARCH_SLIDERS = 15
+
+local settingsPopups = {}
+local settingsPopupsHooked
+
+local function KeepPopupInSettings(popup, panel)
+    popup:SetParent(UIParent)
+    popup:SetFrameStrata("DIALOG")
+    popup:SetToplevel(true)
+    popup:HookScript("OnShow", function(self)
+        self:SetFrameStrata("DIALOG")
+        self:Raise()
+    end)
+    popup:HookScript("OnHide", function()
+        panel:SetAlpha(1)
+    end)
+    panel:HookScript("OnHide", function()
+        popup:Hide()
+    end)
+    if not settingsPopupsHooked then
+        settingsPopupsHooked = true
+        SettingsPanel:HookScript("OnHide", function()
+            for other in pairs(settingsPopups) do
+                other:Hide()
+            end
+        end)
+    end
+    settingsPopups[popup] = panel
+end
 
 local function RecolorEntireAuraWhitelist(r, g, b, a)
     if type(BetterBlizzPlatesDB) ~= "table" then return false end
@@ -1953,6 +1983,21 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
     local checkBox = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
     checkBox.Text:SetText(label)
     table.insert(checkBoxList, {checkbox = checkBox, label = label})
+
+    checkBox.bbpMouseDownHandlers = {}
+    local hookScript, setScript = checkBox.HookScript, checkBox.SetScript
+    function checkBox:HookScript(scriptType, handler, ...)
+        if scriptType == "OnMouseDown" then
+            table.insert(self.bbpMouseDownHandlers, handler)
+        end
+        return hookScript(self, scriptType, handler, ...)
+    end
+    function checkBox:SetScript(scriptType, handler, ...)
+        if scriptType == "OnMouseDown" then
+            self.bbpMouseDownHandlers = { handler }
+        end
+        return setScript(self, scriptType, handler, ...)
+    end
     checkBox.text = checkBox.Text
     -- checkBox:SetHitRectInsets(0, 0, 0, 0)
     checkBox.Text:SetFont("Fonts\\FRIZQT__.TTF", 11)
@@ -4493,6 +4538,18 @@ local function CreateSearchFrame()
     settingsText:SetPoint("TOPLEFT", searchFrame, "TOPLEFT", 20, 0)
     settingsText:SetText("Search results:")
 
+    local cappedText = searchFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    cappedText:SetPoint("LEFT", settingsText, "RIGHT", 6, -1)
+    cappedText:Hide()
+
+    searchFrame:HookScript("OnHide", function()
+        for popup, panel in pairs(settingsPopups) do
+            if not panel:IsShown() then
+                popup:Hide()
+            end
+        end
+    end)
+
     local searchIcon = searchFrame:CreateTexture(nil, "ARTWORK")
     searchIcon:SetAtlas("communities-icon-searchmagnifyingglass")
     searchIcon:SetSize(28, 28)
@@ -4532,6 +4589,7 @@ local function CreateSearchFrame()
         for _, child in ipairs({resultsList:GetChildren()}) do
             child:Hide()
         end
+        cappedText:Hide()
 
         if query == "" then
             return
@@ -4543,6 +4601,8 @@ local function CreateSearchFrame()
 
         local checkboxCount = 0
         local sliderCount = 0
+        local checkboxMatches = 0
+        local sliderMatches = 0
         local yOffsetCheckbox = -20  -- Starting position for the first checkbox
         local yOffsetSlider = -20    -- Starting position for the first slider
 
@@ -4558,20 +4618,26 @@ local function CreateSearchFrame()
         end
 
         local function applyRightClickScript(searchCheckbox, originalCheckbox)
-            local originalScript = originalCheckbox:GetScript("OnMouseDown")
-            if originalScript then
+            local handlers = originalCheckbox.bbpMouseDownHandlers
+            if not handlers and originalCheckbox.GetScript then
+                local originalScript = originalCheckbox:GetScript("OnMouseDown")
+                handlers = originalScript and { originalScript }
+            end
+            if handlers and #handlers > 0 then
                 searchCheckbox:SetScript("OnMouseDown", function(self, button)
                     if button == "RightButton" then
-                        originalScript(originalCheckbox, button)
+                        for _, handler in ipairs(handlers) do
+                            handler(originalCheckbox, button)
+                        end
                     end
                 end)
+            else
+                searchCheckbox:SetScript("OnMouseDown", nil)
             end
         end
 
         -- Search through checkboxes
         for _, data in ipairs(checkBoxList) do
-            if checkboxCount >= 20 then break end
-
             -- Prepare the label and tooltip text
             local label = string.lower(data.label or "")
             local tooltipTitle = string.lower(data.checkbox.tooltipTitle or "")
@@ -4580,7 +4646,11 @@ local function CreateSearchFrame()
             local tooltipCVarName = string.lower(data.checkbox.tooltipCVarName and data.checkbox.tooltipCVarName.." CVar" or "")
 
             -- Check if all query words are found in any of the searchable fields
-            if matchesQuery(label) or matchesQuery(tooltipTitle) or matchesQuery(tooltipMainText) or matchesQuery(tooltipSubText) or matchesQuery(tooltipCVarName) then
+            local isMatch = matchesQuery(label) or matchesQuery(tooltipTitle) or matchesQuery(tooltipMainText) or matchesQuery(tooltipSubText) or matchesQuery(tooltipCVarName)
+            if isMatch then
+                checkboxMatches = checkboxMatches + 1
+            end
+            if isMatch and checkboxCount < MAX_SEARCH_CHECKBOXES then
                 checkboxCount = checkboxCount + 1
 
                 -- Re-use or create a new checkbox from the pool
@@ -4613,20 +4683,18 @@ local function CreateSearchFrame()
                 elseif data.checkbox.tooltipTitle then
                     CreateTooltipTwo(resultCheckBox, data.checkbox.tooltipTitle, nil, nil, nil, nil, nil, data.checkbox.searchCategory)
                 else
-                    CreateTooltipTwo(resultCheckBox, "No data yet WIP", nil, nil, nil, nil, nil, data.checkbox.searchCategory)
+                    CreateTooltipTwo(resultCheckBox, data.label, nil, nil, nil, nil, nil, data.checkbox.searchCategory)
                 end
 
                 resultCheckBox:Show()
 
                 -- Move down for the next checkbox
-                yOffsetCheckbox = yOffsetCheckbox - 24
+                yOffsetCheckbox = yOffsetCheckbox - 21
             end
         end
 
         -- Search through sliders
         for _, data in ipairs(sliderList) do
-            if sliderCount >= 13 then break end
-
             -- Prepare the label and tooltip text
             local label = string.lower(data.label or "")
             local tooltipTitle = string.lower(data.slider.tooltipTitle or "")
@@ -4635,7 +4703,11 @@ local function CreateSearchFrame()
             local tooltipCVarName = string.lower(data.slider.tooltipCVarName and data.slider.tooltipCVarName.." CVar" or "")
 
             -- Check if all query words are found in any of the searchable fields
-            if matchesQuery(label) or matchesQuery(tooltipTitle) or matchesQuery(tooltipMainText) or matchesQuery(tooltipSubText) or matchesQuery(tooltipCVarName) then
+            local isMatch = matchesQuery(label) or matchesQuery(tooltipTitle) or matchesQuery(tooltipMainText) or matchesQuery(tooltipSubText) or matchesQuery(tooltipCVarName)
+            if isMatch then
+                sliderMatches = sliderMatches + 1
+            end
+            if isMatch and sliderCount < MAX_SEARCH_SLIDERS then
                 sliderCount = sliderCount + 1
 
                 -- Re-use or create a new slider from the slider pool
@@ -4643,7 +4715,6 @@ local function CreateSearchFrame()
                 if not resultSlider then
                     resultSlider = CreateFrame("Slider", nil, resultsList, "OptionsSliderTemplate")
                     resultSlider:SetOrientation('HORIZONTAL')
-                    resultSlider:SetValueStep(data.slider:GetValueStep())
                     resultSlider:SetObeyStepOnDrag(true)
                     resultSlider.Text = resultSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
                     resultSlider.Text:SetTextColor(1, 0.81, 0, 1)
@@ -4663,6 +4734,7 @@ local function CreateSearchFrame()
                 resultSlider:SetPoint("TOPLEFT", searchIcon, "TOPLEFT", 277, yOffsetSlider)
                 resultSlider:SetScript("OnValueChanged", nil)
                 resultSlider:SetMinMaxValues(data.slider:GetMinMaxValues())
+                resultSlider:SetValueStep(data.slider:GetValueStep())
                 resultSlider:SetValue(data.slider:GetValue())
                 resultSlider.Text:SetText(data.label .. ": " .. formatSliderValue(data.slider:GetValue()))
 
@@ -4677,13 +4749,21 @@ local function CreateSearchFrame()
                 elseif data.slider.tooltipTitle then
                     CreateTooltipTwo(resultSlider, data.slider.tooltipTitle, nil, nil, nil, nil, nil, data.slider.searchCategory)
                 else
-                    CreateTooltipTwo(resultSlider, "No data yet WIP", nil, nil, nil, nil, nil, data.slider.searchCategory)
+                    CreateTooltipTwo(resultSlider, data.label, nil, nil, nil, nil, nil, data.slider.searchCategory)
                 end
 
                 -- Show the slider and prepare for the next slider
                 resultSlider:Show()
-                yOffsetSlider = yOffsetSlider - 42
+                yOffsetSlider = yOffsetSlider - 35
             end
+        end
+
+
+        local totalMatches = checkboxMatches + sliderMatches
+        local shown = checkboxCount + sliderCount
+        if shown < totalMatches then
+            cappedText:SetFormattedText("(showing %d of %d, be more specific)", shown, totalMatches)
+            cappedText:Show()
         end
     end
 
@@ -6051,7 +6131,7 @@ local function guiPositionAndScale()
     BetterBlizzPlatesSubPanel.name = "Advanced Settings"
     BetterBlizzPlatesSubPanel.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(BetterBlizzPlatesSubPanel)
-    local guiPositionAndScaleCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, BetterBlizzPlatesSubPanel, BetterBlizzPlatesSubPanel.name, BetterBlizzPlatesSubPanel.name)
+    local guiPositionAndScaleCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, BetterBlizzPlatesSubPanel, BetterBlizzPlatesSubPanel.name)
     CreateTitle(BetterBlizzPlatesSubPanel)
 
     local bgImg = BetterBlizzPlatesSubPanel:CreateTexture(nil, "BACKGROUND")
@@ -7745,7 +7825,7 @@ local function guiCastbar()
     guiCastbar.name = "Castbar"
     guiCastbar.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiCastbar)
-    local guiCastbarCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiCastbar, guiCastbar.name, guiCastbar.name)
+    local guiCastbarCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiCastbar, guiCastbar.name)
     CreateTitle(guiCastbar)
 
     local bgImg = guiCastbar:CreateTexture(nil, "BACKGROUND")
@@ -8455,7 +8535,7 @@ local function guiHideCastbar()
     guiHideCastbar.name = "Hide Castbar"
     guiHideCastbar.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiHideCastbar)
-    local guiHideCastbarCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiHideCastbar, guiHideCastbar.name, guiHideCastbar.name)
+    local guiHideCastbarCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiHideCastbar, guiHideCastbar.name)
     CreateTitle(guiHideCastbar)
 
     local bgImg = guiHideCastbar:CreateTexture(nil, "BACKGROUND")
@@ -8563,7 +8643,7 @@ local function guiFadeNPC()
     guiFadeNpc.name = "Fade NPC"
     guiFadeNpc.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiFadeNpc)
-    local guiFadeNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiFadeNpc, guiFadeNpc.name, guiFadeNpc.name)
+    local guiFadeNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiFadeNpc, guiFadeNpc.name)
     CreateTitle(guiFadeNpc)
 
     local bgImg = guiFadeNpc:CreateTexture(nil, "BACKGROUND")
@@ -8668,7 +8748,7 @@ local function guiHideNPC()
     guiHideNpc.name = "Hide NPC"
     guiHideNpc.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiHideNpc)
-    local guiHideNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiHideNpc, guiHideNpc.name, guiHideNpc.name)
+    local guiHideNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiHideNpc, guiHideNpc.name)
     CreateTitle(guiHideNpc)
 
     local bgImg = guiHideNpc:CreateTexture(nil, "BACKGROUND")
@@ -8810,7 +8890,7 @@ local function guiColorNPC()
     guiColorNpc.name = "Color NPC"
     guiColorNpc.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiColorNpc)
-    local guiColorNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiColorNpc, guiColorNpc.name, guiColorNpc.name)
+    local guiColorNpcCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiColorNpc, guiColorNpc.name)
     CreateTitle(guiColorNpc)
 
     local bgImg = guiColorNpc:CreateTexture(nil, "BACKGROUND")
@@ -8877,7 +8957,7 @@ local function guiAuraColor()
     guiAuraColor.name = "Color by Aura"
     guiAuraColor.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiAuraColor)
-    local guiAuraColorCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiAuraColor, guiAuraColor.name, guiAuraColor.name)
+    local guiAuraColorCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiAuraColor, guiAuraColor.name)
     CreateTitle(guiAuraColor)
 
     local bgImg = guiAuraColor:CreateTexture(nil, "BACKGROUND")
@@ -8944,7 +9024,7 @@ local function guiNameplateAuras()
     guiNameplateAuras.name = "Nameplate Auras"
     guiNameplateAuras.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiNameplateAuras)
-    local guiNameplateAurasCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiNameplateAuras, guiNameplateAuras.name, guiNameplateAuras.name)
+    local guiNameplateAurasCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiNameplateAuras, guiNameplateAuras.name)
     CreateTitle(guiNameplateAuras)
 
     local bgImg = guiNameplateAuras:CreateTexture(nil, "BACKGROUND")
@@ -9342,6 +9422,7 @@ local function guiNameplateAuras()
             ccOptionsFrame:SetSize(210, 130)
             ccOptionsFrame:SetPoint("CENTER")
             ccOptionsFrame:SetFrameStrata("HIGH")
+            KeepPopupInSettings(ccOptionsFrame, guiNameplateAuras)
             ccOptionsFrame:SetMovable(true)
             ccOptionsFrame:EnableMouse(true)
             ccOptionsFrame:RegisterForDrag("LeftButton")
@@ -9540,6 +9621,7 @@ local function guiNameplateAuras()
             buffOptionsFrame:SetSize(280, 110)
             buffOptionsFrame:SetPoint("CENTER")
             buffOptionsFrame:SetFrameStrata("HIGH")
+            KeepPopupInSettings(buffOptionsFrame, guiNameplateAuras)
             buffOptionsFrame:SetMovable(true)
             buffOptionsFrame:EnableMouse(true)
             buffOptionsFrame:RegisterForDrag("LeftButton")
@@ -10338,7 +10420,7 @@ local function guiCVarControl()
     guiCVarControl.name = "CVar Control"
     guiCVarControl.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiCVarControl)
-    local guiCVarControlCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiCVarControl, guiCVarControl.name, guiCVarControl.name)
+    local guiCVarControlCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiCVarControl, guiCVarControl.name)
     CreateTitle(guiCVarControl)
 
     local bgImg = guiCVarControl:CreateTexture(nil, "BACKGROUND")
@@ -10698,7 +10780,7 @@ local function guiTotemList()
     guiTotemList.name = "Totem Indicator List"
     guiTotemList.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiTotemList)
-    local guiTotemListCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiTotemList, guiTotemList.name, guiTotemList.name)
+    local guiTotemListCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiTotemList, guiTotemList.name)
     CreateTitle(guiTotemList)
 
     local bgImg = guiTotemList:CreateTexture(nil, "BACKGROUND")
@@ -10791,7 +10873,7 @@ local function guiMisc()
     guiMisc.name = "Misc"--"|A:GarrMission_CurrencyIcon-Material:19:19|a Misc"
     guiMisc.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiMisc)
-    local guiMiscCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiMisc, guiMisc.name, guiMisc.name)
+    local guiMiscCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiMisc, guiMisc.name)
     CreateTitle(guiMisc)
 
     local bgImg = guiMisc:CreateTexture(nil, "BACKGROUND")
@@ -11129,7 +11211,7 @@ local function guiSupport()
     guiSupport.name = "|A:GarrisonTroops-Health:10:10|a Support"
     guiSupport.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiSupport)
-    local guiSupportCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiSupport, guiSupport.name, guiSupport.name)
+    local guiSupportCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiSupport, guiSupport.name)
     BBP.guiSupport = guiSupport.name
     BBP.category.guiSupportCategory = guiSupportCategory.ID
     CreateTitle(guiSupport)
@@ -11245,7 +11327,7 @@ local function guiImportAndExport()
     guiImportAndExport.name = "Import & Export"--"|A:GarrMission_CurrencyIcon-Material:19:19|a Misc"
     guiImportAndExport.parent = BetterBlizzPlates.name
     --InterfaceOptions_AddCategory(guiImportAndExport)
-    local guiImportAndExportCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiImportAndExport, guiImportAndExport.name, guiImportAndExport.name)
+    local guiImportAndExportCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiImportAndExport, guiImportAndExport.name)
     CreateTitle(guiImportAndExport)
 
     local bgImg = guiImportAndExport:CreateTexture(nil, "BACKGROUND")
@@ -11317,7 +11399,7 @@ function BBP.InitializeOptions()
         BetterBlizzPlates = CreateFrame("Frame")
         BetterBlizzPlates.name = "Better|cff00c0ffBlizz|rPlates |A:gmchat-icon-blizz:16:16|a"
         --InterfaceOptions_AddCategory(BetterBlizzPlates)
-        BBP.category = Settings.RegisterCanvasLayoutCategory(BetterBlizzPlates, BetterBlizzPlates.name, BetterBlizzPlates.name)
+        BBP.category = Settings.RegisterCanvasLayoutCategory(BetterBlizzPlates, BetterBlizzPlates.name)
         Settings.RegisterAddOnCategory(BBP.category)
 
         local titleText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFont_Gigantic")
@@ -11374,7 +11456,6 @@ function BBP.LoadGUI()
         HideUIPanel(SettingsPanel)
     end
     Settings.OpenToCategory(BBP.category:GetID())
-    Settings.OpenToCategory(BBP.category:GetID(), BBP.guiCustomCode)
     Settings.OpenToCategory(BBP.category:GetID())
 end
 

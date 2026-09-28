@@ -24,7 +24,7 @@ function BBP.QuestIndicator(frame)
     local yPos = BetterBlizzPlatesDB.questIndicatorYPos or 0
     local testMode = BetterBlizzPlatesDB.questIndicatorTestMode
     local questIndicator = BetterBlizzPlatesDB.questIndicator
-    local anchorToName = BetterBlizzPlatesDB.friendlyHideHealthBar and BetterBlizzPlatesDB.friendlyHideHealthBarNpc and UnitIsFriend(frame.unit, "player")
+    local anchorToName = BetterBlizzPlatesDB.friendlyHideHealthBar and BetterBlizzPlatesDB.friendlyHideHealthBarNpc and (UnitIsFriend(frame.unit, "player") or (frame.BetterBlizzPlates and frame.BetterBlizzPlates.unitInfo and frame.BetterBlizzPlates.unitInfo.isFriendlyNpc))
     local colorQuestNpc = BetterBlizzPlatesDB.questIndicatorColorNpc
 
     -- Set position and scale dynamically

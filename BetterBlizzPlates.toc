@@ -12,6 +12,7 @@ embeds.xml
 
 init.lua
 shared\functions_classics.lua
+shared\nameplateToggles.lua
 retail\temp_tww.lua
 temp_shared\ImportExport.lua
 

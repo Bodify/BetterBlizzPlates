@@ -221,6 +221,9 @@ function BBP.ApplyProfile(profileName)
         BetterBlizzPlatesDB.scStart = true
         BetterBlizzPlatesDB.skipUpdateMsg = true
         C_CVar.SetCVar("nameplateShowFriendlyPlayers", "1")
+        if BetterBlizzPlatesDB.nameplateTogglesMigrated and BBP.ForEachNameplateToggleSet then
+            BBP.ForEachNameplateToggleSet(function(set) set.nameplateShowFriendlyPlayers = true end)
+        end
         -- Midnight: if the imported profile has Totem Indicator enabled, fix the CVars for it to work properly
         if BetterBlizzPlatesDB.totemIndicator then
             BetterBlizzPlatesDB.nameplateShowEnemyMinions = "0"

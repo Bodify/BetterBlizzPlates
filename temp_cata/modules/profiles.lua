@@ -144,6 +144,9 @@ function BBP.ApplyProfile(profileName)
         end
         BetterBlizzPlatesDB.scStart = true
         C_CVar.SetCVar("nameplateShowFriendlyPlayers", "1")
+        if BetterBlizzPlatesDB.nameplateTogglesMigrated and BBP.ForEachNameplateToggleSet then
+            BBP.ForEachNameplateToggleSet(function(set) set.nameplateShowFriendlyPlayers = true end)
+        end
         if BBP.isMoP then
             BBP.ResetTotemList()
         end

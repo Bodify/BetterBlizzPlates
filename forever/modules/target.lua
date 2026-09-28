@@ -769,6 +769,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                     frame.HealthBarsContainer:SetAlpha(0)
                     frame.HealthBarsContainer.alphaZero = true
                     frame.selectionHighlight:SetAlpha(0)
+                    if frame.nameHooked then BBP.RepositionName(frame) end
                 end
             end
 
@@ -807,6 +808,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                     frame.HealthBarsContainer:SetAlpha(0)
                     frame.HealthBarsContainer.alphaZero = true
                     frame.selectionHighlight:SetAlpha(0)
+                    if frame.nameHooked then BBP.RepositionName(frame) end
                 end
             end
 
@@ -931,6 +933,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 frame.HealthBarsContainer:SetAlpha(1)
                 frame.HealthBarsContainer.alphaZero = false
                 frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
+                if frame.nameHooked then BBP.RepositionName(frame) end
             end
         end
 
