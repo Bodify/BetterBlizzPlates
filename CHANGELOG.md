@@ -5,6 +5,7 @@
 ## Forever
 ### Tweak
 - Update Xaryu profile with his Forever profile.
+- Update the Forever profile with a few improvements and the new classic castbar setting.
 - Level text for Classic Nameplates has been tweaked position and size a little bit.
 ## All versions
 ### New
