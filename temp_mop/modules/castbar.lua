@@ -1320,7 +1320,9 @@ local function ClassicCastbarAdjustments(self, event, frame)
             self:SetStatusBarTexture(texture)
             if BetterBlizzPlatesDB.enableCastbarCustomization and not BetterBlizzPlatesDB.useCustomCastbarBGTexture and BetterBlizzPlatesDB.castBarPixelBorder then -- if castbar customization, but not 
                 local sbt = self:GetStatusBarTexture()
-                sbt:SetTexCoord(0.05, 0.95, 0.05, 0.95)
+                if sbt then
+                    sbt:SetTexCoord(0.05, 0.95, 0.05, 0.95)
+                end
                 if self.bbpBackground then
                     local tex = self.bbpBackground
                     if tex then

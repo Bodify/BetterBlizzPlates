@@ -1,4 +1,9 @@
 # BetterBlizzPlates 2.1.7
+## Forever
+### Tweak
+- Update Xaryu profile with his Forever profile.
+
+# BetterBlizzPlates 2.1.7
 ## WoW Forever
 ### New
 - Misc: "Center Nameplate Healthbar". This setting will center the healthbar properly on the default nameplates and move the level more to the right.

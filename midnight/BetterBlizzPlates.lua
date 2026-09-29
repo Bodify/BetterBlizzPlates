@@ -9451,7 +9451,9 @@ local function NamePlateCastBarTestMode(frame)
 
                 if BetterBlizzPlatesDB.enableCastbarCustomization  and not BetterBlizzPlatesDB.useCustomCastbarBGTexture and BetterBlizzPlatesDB.castBarPixelBorder then -- if castbar customization, but not 
                     local sbt = frame.castBar:GetStatusBarTexture()
-                    sbt:SetTexCoord(0.05, 0.95, 0.05, 0.95)
+                    if sbt then
+                        sbt:SetTexCoord(0.05, 0.95, 0.05, 0.95)
+                    end
                     if frame.castBar.Background then
                         local tex = frame.castBar.Background
                         if tex then
