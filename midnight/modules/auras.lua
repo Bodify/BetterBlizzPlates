@@ -136,7 +136,8 @@ local PANDEMIC_GROUPS = {
 }
 
 local SORT_METHODS = {
-    default   = { AuraContainerSortMethod.Default,        AuraContainerSortDirection.Normal },
+    default   = { AuraContainerSortMethod.AuraInstanceIDOnly or AuraContainerSortMethod.Default,
+                  AuraContainerSortDirection.Normal },
     expires   = { AuraContainerSortMethod.ExpirationOnly, AuraContainerSortDirection.Normal },
     lastest   = { AuraContainerSortMethod.ExpirationOnly, AuraContainerSortDirection.Reverse },
 }
@@ -245,15 +246,7 @@ local categorySets = {
     otherCC = {},
     ccBlacklist = {},
 }
-local categorySafe = {
-    watchBuff = {},
-    watchDebuff = {},
-    ownDebuff = {},
-    otherCC = {},
-    ccBlacklist = {},
-}
 BBP.auraCategorySets = categorySets
-BBP.auraCategorySafe = categorySafe
 
 local function FillSet(dst, src)
     for spellID in pairs(src) do dst[spellID] = true end
@@ -357,10 +350,6 @@ function BBP.UpdateImportantBuffsAndCCTables()
     categorySets.ccBlacklist[1280457] = true -- Mind Flay (Priest)
 end
 
-local function IsNeverSecret(spellID)
-    return C_Secrets.GetSpellAuraSecrecy(spellID) == Enum.SecrecyLevel.NeverSecret
-end
-
 local mergeCache = {}
 
 local function MergeSets(...)
@@ -406,15 +395,6 @@ end
 
 local function SetIsEmpty(set)
     return next(set) == nil
-end
-
-local function RefillSafeSubset(dst, src)
-    wipe(dst)
-    local any = false
-    for spellID in pairs(src) do
-        if IsNeverSecret(spellID) then dst[spellID] = true; any = true end
-    end
-    return any
 end
 
 local function ReadFilterBlock(prefix)
@@ -602,25 +582,15 @@ local listGeneration = 0
 
 local lists = {
     blacklist = {},
-    blacklistSafe = {},
     watch = {},
-    watchSafe = {},
     watchMine = {},
-    watchMineSafe = {},
     watchPandemic = {},
-    watchPandemicSafe = {},
     watchImportant = {},
-    watchImportantSafe = {},
     watchImportantMine = {},
-    watchImportantMineSafe = {},
     watchEnlarged = {},
-    watchEnlargedSafe = {},
     watchEnlargedMine = {},
-    watchEnlargedMineSafe = {},
     watchEnlargedImportant = {},
-    watchEnlargedImportantSafe = {},
     watchEnlargedImportantMine = {},
-    watchEnlargedImportantMineSafe = {},
 }
 BBP.auraLists = lists
 
@@ -677,15 +647,6 @@ function BBP.RefreshSpellLists()
     CollectList("auraBlacklist", lists.blacklist)
     CollectList("auraWhitelist", lists.watch, whitelistDst)
     lists.anyPandemic = next(lists.watchPandemic) ~= nil
-
-    RefillSafeSubset(lists.blacklistSafe, lists.blacklist)
-    RefillSafeSubset(lists.watchSafe, lists.watch)
-    for _, listKey in pairs(WHITELIST_BUCKETS) do
-        RefillSafeSubset(lists[listKey .. "Safe"], lists[listKey])
-    end
-    for key, set in pairs(categorySets) do
-        RefillSafeSubset(categorySafe[key], set)
-    end
 end
 
 local dispelColorMapHarmful, dispelColorMapHelpful, ccGlowDispelColorMap
@@ -952,6 +913,9 @@ local function ApplyDispelRegistrations(button, style)
         and (style.purgeGlowAlways and "all" or (style.purgeTypes or "")) or ""
     local purgeColorMap = style.purgeGlow and PURGE.colorMap or nil
 
+    if button.bbpBorderEdges     then signature = signature + 128 end
+    if button.bbpDispelBorder    then signature = signature + 256 end
+
     if button.bbpDispelSignature == signature and button.bbpDispelColorMap == colorMap
         and button.bbpDispelGlowMap == glowMap and button.bbpPurgeKey == purgeKey
         and button.bbpPurgeColorMap == purgeColorMap then
@@ -1063,11 +1027,34 @@ local function ApplyStackText(count, button, style)
     count:SetAlpha(style.showStack and 1 or 0)
 end
 
+local function EnsureRegions(button, style)
+    local overlay = button.bbpOverlay
+    if not overlay then return end
+    if not style.pixelBorder and not button.bbpBezel then
+        local bezel = overlay:CreateTexture(nil, "OVERLAY", nil, 3)
+        bezel:SetAtlas(CDM.bezel)
+        button.bbpBezel = bezel
+    end
+    if style.pixelBorder and not button.bbpBorderEdges then
+        button.bbpBorderEdges = CreateBorderEdges(overlay)
+    end
+    if not button.bbpDispelBorder
+        and (ColorsDispelBorderByType(style) or (BlueBorderOn(style) and not style.pixelBorder)) then
+        button.bbpDispelBorder = CreateDispelBorder(overlay)
+    end
+    if not button.bbpTimer and style.showCdText and not style.blizzardCdText then
+        local timer = overlay:CreateFontString(nil, "OVERLAY", COUNTDOWN_FONT)
+        timer:SetPoint("CENTER", button, "CENTER", 0, 0)
+        button.bbpTimer = timer
+    end
+end
+
 local function ApplyMutableStyle(button, style)
     local w, h = style.width, style.height
     local pad = style.padY or 0
     local rect = button.bbpOverlay or button
     button:SetSize(w, h + pad * 2)
+    EnsureRegions(button, style)
 
     if button.bbpPad ~= pad then
         button.bbpPad = pad
@@ -1228,13 +1215,6 @@ local function InitAuraButton(button, style)
     overlay:SetFrameLevel(cooldown:GetFrameLevel() + 1)
     button.bbpOverlay = overlay
 
-    local bezel = overlay:CreateTexture(nil, "OVERLAY", nil, 3)
-    bezel:SetAtlas(CDM.bezel)
-    button.bbpBezel = bezel
-
-    button.bbpBorderEdges = CreateBorderEdges(overlay)
-    button.bbpDispelBorder = CreateDispelBorder(overlay)
-
     if style.purgeTier then
         local purge = overlay:CreateTexture(nil, "OVERLAY", nil, 7)
         purge:SetAtlas(PURGE_ATLAS)
@@ -1260,18 +1240,6 @@ local function InitAuraButton(button, style)
         glow:SetDesaturated(true)
         button.bbpGlow = glow
     end
-
-    local timer = overlay:CreateFontString(nil, "OVERLAY", COUNTDOWN_FONT)
-    timer:SetPoint("CENTER", button, "CENTER", 0, 0)
-    button.bbpTimer = timer
-    button.bbpMilliseconds = style.showMilliseconds and true or false
-    button:SetDurationText(timer, {
-        textFormatter = GetDurationFormatter(button.bbpMilliseconds),
-        textColor = {
-            curve = GetDurationCurve(),
-            property = Enum.DurationTextBindingProperty.RemainingDuration,
-        },
-    })
 
     button:SetTooltipAnchorPoint("ANCHOR_BOTTOMLEFT", 0, 0)
     button:SetCancelAuraButtons(nil)
@@ -1435,13 +1403,27 @@ local function BigIconOn(kind, isFriend, isPlayer)
     return S.buffsOnEnemyPlayers
 end
 
-local function IncludeOrZero(set, safeSet, canFilter, limit)
-    if not canFilter then return safeSet, 0 end
-    return set, SetIsEmpty(set) and 0 or limit
+local function IncludeOrZero(set, canFilter, limit)
+    if not canFilter or SetIsEmpty(set) then return set, 0 end
+    return set, limit
 end
 
-local function ExcludeSet(set, safeSet, canFilter)
-    return canFilter and set or safeSet
+local function NonEmpty(set)
+    if set and next(set) ~= nil then return set end
+    return nil
+end
+
+local function Filters(include, exclude, maxDuration, personal)
+    include, exclude = NonEmpty(include), NonEmpty(exclude)
+    if include == nil and exclude == nil and maxDuration == nil and personal == nil then
+        return nil
+    end
+    return {
+        includeSpellIDs = include,
+        excludeSpellIDs = exclude,
+        maxDuration = maxDuration,
+        nameplateShowPersonal = personal,
+    }
 end
 
 local function AppendTokens(parts, ...)
@@ -1460,18 +1442,11 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
     local blacklistOnD = (debuffCfg.blacklist or not canFilterHarmful) and true or false
     local blacklistOnB = (buffCfg.blacklist or not canFilterHelpful) and true or false
 
-    local blD     = blacklistOnD and lists.blacklist or nil
-    local blDSafe = blacklistOnD and lists.blacklistSafe or nil
-    local blB     = blacklistOnB and lists.blacklist or nil
-    local blBSafe = blacklistOnB and lists.blacklistSafe or nil
-
-    local blacklistD = ExcludeSet(blD, blDSafe, canFilterHarmful)
-    local blacklistB = ExcludeSet(blB, blBSafe, canFilterHelpful)
+    local blacklistD = blacklistOnD and lists.blacklist or nil
+    local blacklistB = blacklistOnB and lists.blacklist or nil
 
     local watchD = MergeSets(lists.watch, categorySets.watchDebuff)
-    local watchDSafe = MergeSets(lists.watchSafe, categorySafe.watchDebuff)
     local watchB = MergeSets(lists.watch, categorySets.watchBuff)
-    local watchBSafe = MergeSets(lists.watchSafe, categorySafe.watchBuff)
 
     local out = { debuffs = {}, buffs = {}, buffrow = {}, cc = {} }
 
@@ -1515,152 +1490,121 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
     local flagClaimed = MergeSets(lists.watchImportant, lists.watchImportantMine,
         lists.watchEnlarged, lists.watchEnlargedMine,
         lists.watchEnlargedImportant, lists.watchEnlargedImportantMine)
-    local flagClaimedSafe = MergeSets(lists.watchImportantSafe, lists.watchImportantMineSafe,
-        lists.watchEnlargedSafe, lists.watchEnlargedMineSafe,
-        lists.watchEnlargedImportantSafe, lists.watchEnlargedImportantMineSafe)
 
     local importantMineD = MergeSets(lists.watchImportant, lists.watchImportantMine,
         lists.watchEnlargedImportant, lists.watchEnlargedImportantMine)
-    local importantMineDSafe = MergeSets(lists.watchImportantSafe, lists.watchImportantMineSafe,
-        lists.watchEnlargedImportantSafe, lists.watchEnlargedImportantMineSafe)
 
-    local watchSet, watchMax = IncludeOrZero(
-        SubtractSets(watchD, flagClaimed), SubtractSets(watchDSafe, flagClaimedSafe),
+    local watchSet, watchMax = IncludeOrZero(SubtractSets(watchD, flagClaimed),
         canFilterHarmful, dLimit)
     out.debuffs.Watch = {
         filter = DebuffFilter("!" .. AF.Player),
-        filters = { includeSpellIDs = watchSet, excludeSpellIDs = blacklistD },
+        filters = Filters(watchSet, blacklistD),
         max = (watchLiveD and not debuffsMineOnly) and watchMax or 0,
     }
 
     local mineClause = debuffsMineOnly and AF.Player or nil
 
-    local impSet, impMax = IncludeOrZero(lists.watchImportant, lists.watchImportantSafe,
-        canFilterHarmful, dLimit)
+    local impSet, impMax = IncludeOrZero(lists.watchImportant, canFilterHarmful, dLimit)
     out.debuffs.WatchImportant = {
         filter = DebuffFilterKeepCC(mineClause),
-        filters = { includeSpellIDs = impSet, excludeSpellIDs = blacklistD },
+        filters = Filters(impSet, blacklistD),
         max = dEnabled and impMax or 0,
     }
 
-    local impMineSet, impMineMax = IncludeOrZero(
-        lists.watchImportantMine, lists.watchImportantMineSafe, canFilterHarmful, dLimit)
+    local impMineSet, impMineMax = IncludeOrZero(lists.watchImportantMine, canFilterHarmful, dLimit)
     out.debuffs.WatchImportantMine = {
         filter = DebuffFilterKeepCC(AF.Player),
-        filters = { includeSpellIDs = impMineSet, excludeSpellIDs = blacklistD },
+        filters = Filters(impMineSet, blacklistD),
         max = dEnabled and impMineMax or 0,
     }
 
-    local bigImpSet, bigImpMax = IncludeOrZero(lists.watchEnlargedImportant,
-        lists.watchEnlargedImportantSafe, canFilterHarmful, dLimit)
+    local bigImpSet, bigImpMax = IncludeOrZero(lists.watchEnlargedImportant, canFilterHarmful, dLimit)
     out.debuffs.EnlargedImportant = {
         filter = DebuffFilterKeepCC(mineClause),
-        filters = { includeSpellIDs = bigImpSet, excludeSpellIDs = blacklistD },
+        filters = Filters(bigImpSet, blacklistD),
         max = dEnabled and bigImpMax or 0,
     }
 
-    local bigImpMineSet, bigImpMineMax = IncludeOrZero(lists.watchEnlargedImportantMine,
-        lists.watchEnlargedImportantMineSafe, canFilterHarmful, dLimit)
+    local bigImpMineSet, bigImpMineMax = IncludeOrZero(lists.watchEnlargedImportantMine, canFilterHarmful, dLimit)
     out.debuffs.EnlargedImportantMine = {
         filter = DebuffFilterKeepCC(AF.Player),
-        filters = { includeSpellIDs = bigImpMineSet, excludeSpellIDs = blacklistD },
+        filters = Filters(bigImpMineSet, blacklistD),
         max = dEnabled and bigImpMineMax or 0,
     }
 
-    local bigSet, bigMax = IncludeOrZero(lists.watchEnlarged, lists.watchEnlargedSafe,
-        canFilterHarmful, dLimit)
+    local bigSet, bigMax = IncludeOrZero(lists.watchEnlarged, canFilterHarmful, dLimit)
     out.debuffs.Enlarged = {
         filter = DebuffFilter(mineClause),
-        filters = { includeSpellIDs = bigSet, excludeSpellIDs = blacklistD },
+        filters = Filters(bigSet, blacklistD),
         max = (dEnabled and watchLiveD) and bigMax or 0,
     }
 
-    local bigMineSet, bigMineMax = IncludeOrZero(lists.watchEnlargedMine,
-        lists.watchEnlargedMineSafe, canFilterHarmful, dLimit)
+    local bigMineSet, bigMineMax = IncludeOrZero(lists.watchEnlargedMine, canFilterHarmful, dLimit)
     out.debuffs.EnlargedMine = {
         filter = DebuffFilter(AF.Player),
-        filters = { includeSpellIDs = bigMineSet, excludeSpellIDs = blacklistD },
+        filters = Filters(bigMineSet, blacklistD),
         max = (dEnabled and watchLiveD) and bigMineMax or 0,
     }
 
     local mineTracked = MergeSets(lists.watch, lists.watchMine,
         categorySets.watchDebuff, categorySets.ownDebuff)
-    local mineTrackedSafe = MergeSets(lists.watchSafe, lists.watchMineSafe,
-        categorySafe.watchDebuff, categorySafe.ownDebuff)
     mineTracked = SubtractSets(mineTracked, flagClaimed)
-    mineTrackedSafe = SubtractSets(mineTrackedSafe, flagClaimedSafe)
 
-    local pandemicTracked, pandemicMaxD = IncludeOrZero(lists.watchPandemic,
-        lists.watchPandemicSafe, canFilterHarmful, dLimit)
+    local pandemicTracked, pandemicMaxD = IncludeOrZero(lists.watchPandemic, canFilterHarmful, dLimit)
     local splitPandemicD = S.splitPandemic and pandemicMaxD > 0
     if splitPandemicD then
         mineTracked = SubtractSets(mineTracked, lists.watchPandemic)
-        mineTrackedSafe = SubtractSets(mineTrackedSafe, lists.watchPandemic)
     end
 
-    local mineSet, mineMax = IncludeOrZero(mineTracked, mineTrackedSafe, canFilterHarmful, dLimit)
+    local mineSet, mineMax = IncludeOrZero(mineTracked, canFilterHarmful, dLimit)
     out.debuffs.WatchMine = {
         filter = DebuffFilter(AF.Player),
-        filters = {
-            includeSpellIDs = mineSet,
-            excludeSpellIDs = blacklistD,
-        },
+        filters = Filters(mineSet, blacklistD),
         max = watchLiveD and mineMax or 0,
     }
 
     out.debuffs.WatchPandemic = {
         filter = DebuffFilter(AF.Player),
-        filters = { includeSpellIDs = pandemicTracked, excludeSpellIDs = blacklistD },
+        filters = Filters(pandemicTracked, blacklistD),
         max = (dEnabled and splitPandemicD) and dLimit or 0,
     }
 
     local watchAllD = MergeSets(watchD, lists.watchMine, flagClaimed)
-    local watchAllDSafe = MergeSets(watchDSafe, lists.watchMineSafe, flagClaimedSafe)
 
     local flaggedD = flagClaimed
-    local flaggedDSafe = flagClaimedSafe
     if splitPandemicD then
         flaggedD = MergeSets(flaggedD, lists.watchPandemic)
-        flaggedDSafe = MergeSets(flaggedDSafe, lists.watchPandemicSafe)
     end
 
-    local claimedD, claimedDSafe = flaggedD, flaggedDSafe
+    local claimedD = flaggedD
     if watchLiveD then
         claimedD = MergeSets(watchAllD, categorySets.ownDebuff)
-        claimedDSafe = MergeSets(watchAllDSafe, categorySafe.ownDebuff)
     end
 
-    local otherCCExclude = ExcludeSet(MergeSets(blD, claimedD),
-        MergeSets(blDSafe, claimedDSafe), canFilterHarmful)
-    local excludeWithOtherCC = ExcludeSet(
-        MergeSets(blD, claimedD, categorySets.otherCC),
-        MergeSets(blDSafe, claimedDSafe, categorySafe.otherCC), canFilterHarmful)
+    local otherCCExclude = MergeSets(blacklistD, claimedD)
+    local excludeWithOtherCC = MergeSets(blacklistD, claimedD, categorySets.otherCC)
 
-    local ccBlacklist = ExcludeSet(categorySets.ccBlacklist, categorySafe.ccBlacklist, canFilterHarmful)
+    local ccBlacklist = categorySets.ccBlacklist
 
     out.debuffs.CC = {
         filter = CreateFilterString(AF.Harmful, AF.IncludeNameplateOnly, AF.CrowdControl),
-        filters = { excludeSpellIDs = MergeSets(excludeWithOtherCC, ccBlacklist) },
+        filters = Filters(nil, MergeSets(excludeWithOtherCC, ccBlacklist)),
         max = ccInRow and dLimit or 0,
     }
 
-    local otherCCRowSet, otherCCRowMax = IncludeOrZero(categorySets.otherCC, categorySafe.otherCC,
-        canFilterHarmful, dLimit)
+    local otherCCRowSet, otherCCRowMax = IncludeOrZero(categorySets.otherCC, canFilterHarmful, dLimit)
     out.debuffs.OtherCC = {
         filter = DebuffFilterKeepCC(),
-        filters = { includeSpellIDs = otherCCRowSet, excludeSpellIDs = otherCCExclude },
+        filters = Filters(otherCCRowSet, otherCCExclude),
         max = ccInRowWanted and otherCCRowMax or 0,
     }
 
-    local normalFilters = {
-        excludeSpellIDs = excludeWithOtherCC,
-        maxDuration = debuffCfg.lessThanMin and 60 or nil,
-        nameplateShowPersonal = debuffCfg.blizzard and true or nil,
-    }
+    local normalFilters = Filters(nil, excludeWithOtherCC,
+        debuffCfg.lessThanMin and 60 or nil, debuffCfg.blizzard and true or nil)
 
     out.debuffs.Important = {
         filter = DebuffFilterKeepCC(AF.Important, "!" .. AF.CrowdControl),
-        filters = { excludeSpellIDs = excludeWithOtherCC },
+        filters = Filters(nil, excludeWithOtherCC),
         max = plainLiveD and dLimit or 0,
     }
 
@@ -1674,9 +1618,7 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
 
     out.debuffs.Purgeable = {
         filter = DispelFilter(),
-        filters = {
-            excludeSpellIDs = excludeWithOtherCC,
-        },
+        filters = Filters(nil, excludeWithOtherCC),
         max = (dEnabled and dispelOnD) and dLimit or 0,
     }
 
@@ -1705,7 +1647,6 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
     local NOT_BIG, NOT_EXT = "!" .. AF.BigDefensive, "!" .. AF.ExternalDefensive
 
     local watchAllB = MergeSets(watchB, lists.watchMine, flagClaimed)
-    local watchAllBSafe = MergeSets(watchBSafe, lists.watchMineSafe, flagClaimedSafe)
     local watchLive = (bEnabled and buffCfg.watchlist and canFilterHelpful) and true or false
     local purgeOn = (bEnabled and buffCfg.purgeable) and true or false
     local underMin = (bEnabled and buffCfg.lessThanMin) and true or false
@@ -1739,112 +1680,94 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
         return CreateFilterString(unpack(parts))
     end
 
-    local watchBSet, watchBMax = IncludeOrZero(
-        SubtractSets(watchB, flagClaimed), SubtractSets(watchBSafe, flagClaimedSafe),
+    local watchBSet, watchBMax = IncludeOrZero(SubtractSets(watchB, flagClaimed),
         canFilterHelpful, rowLimit)
     out.buffrow.Watch = {
         filter = BuffFilter("!" .. AF.Player),
-        filters = { includeSpellIDs = watchBSet, excludeSpellIDs = blacklistB },
+        filters = Filters(watchBSet, blacklistB),
         max = (watchLive and not buffsMineOnly) and watchBMax or 0,
     }
 
     local mineTrackedB = MergeSets(lists.watch, lists.watchMine, categorySets.watchBuff)
-    local mineTrackedBSafe = MergeSets(lists.watchSafe, lists.watchMineSafe, categorySafe.watchBuff)
     mineTrackedB = SubtractSets(mineTrackedB, flagClaimed)
-    mineTrackedBSafe = SubtractSets(mineTrackedBSafe, flagClaimedSafe)
-    local pandemicTrackedB, pandemicMaxB = IncludeOrZero(lists.watchPandemic,
-        lists.watchPandemicSafe, canFilterHelpful, rowLimit)
+    local pandemicTrackedB, pandemicMaxB = IncludeOrZero(lists.watchPandemic, canFilterHelpful, rowLimit)
     local splitPandemicB = S.splitPandemic and pandemicMaxB > 0
     if splitPandemicB then
         mineTrackedB = SubtractSets(mineTrackedB, lists.watchPandemic)
-        mineTrackedBSafe = SubtractSets(mineTrackedBSafe, lists.watchPandemic)
     end
 
     local mineClauseB = buffsMineOnly and AF.Player or nil
 
-    local impBSet, impBMax = IncludeOrZero(lists.watchImportant, lists.watchImportantSafe,
-        canFilterHelpful, rowLimit)
+    local impBSet, impBMax = IncludeOrZero(lists.watchImportant, canFilterHelpful, rowLimit)
     out.buffrow.WatchImportant = {
         filter = CategoryFilter(mineClauseB),
-        filters = { includeSpellIDs = impBSet, excludeSpellIDs = blacklistB },
+        filters = Filters(impBSet, blacklistB),
         max = bEnabled and impBMax or 0,
     }
 
-    local impBMineSet, impBMineMax = IncludeOrZero(
-        lists.watchImportantMine, lists.watchImportantMineSafe, canFilterHelpful, rowLimit)
+    local impBMineSet, impBMineMax = IncludeOrZero(lists.watchImportantMine, canFilterHelpful, rowLimit)
     out.buffrow.WatchImportantMine = {
         filter = CategoryFilter(AF.Player),
-        filters = { includeSpellIDs = impBMineSet, excludeSpellIDs = blacklistB },
+        filters = Filters(impBMineSet, blacklistB),
         max = bEnabled and impBMineMax or 0,
     }
 
-    local bigImpBSet, bigImpBMax = IncludeOrZero(lists.watchEnlargedImportant,
-        lists.watchEnlargedImportantSafe, canFilterHelpful, rowLimit)
+    local bigImpBSet, bigImpBMax = IncludeOrZero(lists.watchEnlargedImportant, canFilterHelpful, rowLimit)
     out.buffrow.EnlargedImportant = {
         filter = CategoryFilter(mineClauseB),
-        filters = { includeSpellIDs = bigImpBSet, excludeSpellIDs = blacklistB },
+        filters = Filters(bigImpBSet, blacklistB),
         max = bEnabled and bigImpBMax or 0,
     }
 
-    local bigImpBMineSet, bigImpBMineMax = IncludeOrZero(lists.watchEnlargedImportantMine,
-        lists.watchEnlargedImportantMineSafe, canFilterHelpful, rowLimit)
+    local bigImpBMineSet, bigImpBMineMax = IncludeOrZero(lists.watchEnlargedImportantMine, canFilterHelpful, rowLimit)
     out.buffrow.EnlargedImportantMine = {
         filter = CategoryFilter(AF.Player),
-        filters = { includeSpellIDs = bigImpBMineSet, excludeSpellIDs = blacklistB },
+        filters = Filters(bigImpBMineSet, blacklistB),
         max = bEnabled and bigImpBMineMax or 0,
     }
 
-    local bigBSet, bigBMax = IncludeOrZero(lists.watchEnlarged, lists.watchEnlargedSafe,
-        canFilterHelpful, rowLimit)
+    local bigBSet, bigBMax = IncludeOrZero(lists.watchEnlarged, canFilterHelpful, rowLimit)
     out.buffrow.Enlarged = {
         filter = BuffFilter(mineClauseB),
-        filters = { includeSpellIDs = bigBSet, excludeSpellIDs = blacklistB },
+        filters = Filters(bigBSet, blacklistB),
         max = watchLive and bigBMax or 0,
     }
 
-    local bigBMineSet, bigBMineMax = IncludeOrZero(lists.watchEnlargedMine,
-        lists.watchEnlargedMineSafe, canFilterHelpful, rowLimit)
+    local bigBMineSet, bigBMineMax = IncludeOrZero(lists.watchEnlargedMine, canFilterHelpful, rowLimit)
     out.buffrow.EnlargedMine = {
         filter = BuffFilter(AF.Player),
-        filters = { includeSpellIDs = bigBMineSet, excludeSpellIDs = blacklistB },
+        filters = Filters(bigBMineSet, blacklistB),
         max = watchLive and bigBMineMax or 0,
     }
 
-    local watchBMineSet, watchBMineMax = IncludeOrZero(mineTrackedB, mineTrackedBSafe, canFilterHelpful, rowLimit)
+    local watchBMineSet, watchBMineMax = IncludeOrZero(mineTrackedB, canFilterHelpful, rowLimit)
     out.buffrow.WatchMine = {
         filter = BuffFilter(AF.Player),
-        filters = { includeSpellIDs = watchBMineSet, excludeSpellIDs = blacklistB },
+        filters = Filters(watchBMineSet, blacklistB),
         max = watchLive and watchBMineMax or 0,
     }
 
     out.buffrow.WatchPandemic = {
         filter = BuffFilter(AF.Player),
-        filters = { includeSpellIDs = pandemicTrackedB, excludeSpellIDs = blacklistB },
+        filters = Filters(pandemicTrackedB, blacklistB),
         max = (bEnabled and splitPandemicB) and rowLimit or 0,
     }
 
     local flaggedB = flagClaimed
-    local flaggedBSafe = flagClaimedSafe
     if splitPandemicB then
         flaggedB = MergeSets(flaggedB, lists.watchPandemic)
-        flaggedBSafe = MergeSets(flaggedBSafe, lists.watchPandemicSafe)
     end
 
-    local claimedB, claimedBSafe = flaggedB, flaggedBSafe
+    local claimedB = flaggedB
     if watchLive then
         claimedB = MergeSets(claimedB, watchAllB)
-        claimedBSafe = MergeSets(claimedBSafe, watchAllBSafe)
     end
 
-    local rowExclude = ExcludeSet(MergeSets(blB, claimedB),
-        MergeSets(blBSafe, claimedBSafe), canFilterHelpful)
+    local rowExclude = MergeSets(blacklistB, claimedB)
 
     local impLiveB = (bEnabled and (impBMax > 0 or impBMineMax > 0
         or bigImpBMax > 0 or bigImpBMineMax > 0)) and true or false
-    local catExclude = impLiveB
-        and ExcludeSet(MergeSets(blB, importantMineD),
-            MergeSets(blBSafe, importantMineDSafe), canFilterHelpful)
-        or blacklistB
+    local catExclude = impLiveB and MergeSets(blacklistB, importantMineD) or blacklistB
 
     local DEF_BIG_FILTER = CategoryFilter(AF.BigDefensive)
     local DEF_EXT_FILTER = CategoryFilter(NOT_BIG, AF.ExternalDefensive)
@@ -1852,39 +1775,39 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
 
     out.buffs.DefBig = {
         filter = DEF_BIG_FILTER,
-        filters = { excludeSpellIDs = catExclude },
+        filters = Filters(nil, catExclude),
         max = buffBig and bLimit or 0,
     }
     out.buffs.DefExt = {
         filter = DEF_EXT_FILTER,
-        filters = { excludeSpellIDs = catExclude },
+        filters = Filters(nil, catExclude),
         max = buffBig and bLimit or 0,
     }
     out.buffs.Important = {
         filter = IMPORTANT_FILTER,
-        filters = { excludeSpellIDs = catExclude },
+        filters = Filters(nil, catExclude),
         max = buffBig and bLimit or 0,
     }
 
     out.buffrow.DefBig = {
         filter = DEF_BIG_FILTER,
-        filters = { excludeSpellIDs = catExclude },
+        filters = Filters(nil, catExclude),
         max = defRow and rowLimit or 0,
     }
     out.buffrow.DefExt = {
         filter = DEF_EXT_FILTER,
-        filters = { excludeSpellIDs = catExclude },
+        filters = Filters(nil, catExclude),
         max = defRow and rowLimit or 0,
     }
     out.buffrow.Important = {
         filter = IMPORTANT_FILTER,
-        filters = { excludeSpellIDs = catExclude },
+        filters = Filters(nil, catExclude),
         max = impRow and rowLimit or 0,
     }
 
     out.buffrow.Purgeable = {
         filter = BuffFilter(purgeToken),
-        filters = { excludeSpellIDs = rowExclude },
+        filters = Filters(nil, rowExclude),
         max = purgeOn and rowLimit or 0,
     }
 
@@ -1899,10 +1822,7 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
         return CreateFilterString(unpack(parts))
     end
 
-    local plainFilters = {
-        excludeSpellIDs = rowExclude,
-        maxDuration = underMin and 60 or nil,
-    }
+    local plainFilters = Filters(nil, rowExclude, underMin and 60 or nil)
 
     out.buffrow.Mine = {
         filter = PlainBuffFilter(AF.Player),
@@ -1918,21 +1838,17 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
 
     local impLiveD = (dEnabled and (impMax > 0 or impMineMax > 0
         or bigImpMax > 0 or bigImpMineMax > 0)) and true or false
-    local ccExclude = impLiveD
-        and ExcludeSet(MergeSets(blD, importantMineD),
-            MergeSets(blDSafe, importantMineDSafe), canFilterHarmful)
-        or blacklistD
+    local ccExclude = impLiveD and MergeSets(blacklistD, importantMineD) or blacklistD
     out.cc.CC = {
         filter = CreateFilterString(AF.Harmful, AF.IncludeNameplateOnly, AF.CrowdControl),
-        filters = { excludeSpellIDs = MergeSets(ccExclude, ccBlacklist) },
+        filters = Filters(nil, MergeSets(ccExclude, ccBlacklist)),
         max = ccBig and S.ccLimit or 0,
     }
 
-    local otherCCSet, otherCCMax = IncludeOrZero(categorySets.otherCC, categorySafe.otherCC,
-        canFilterHarmful, S.ccLimit)
+    local otherCCSet, otherCCMax = IncludeOrZero(categorySets.otherCC, canFilterHarmful, S.ccLimit)
     out.cc.OtherCC = {
         filter = CreateFilterString(AF.Harmful, AF.IncludeNameplateOnly),
-        filters = { includeSpellIDs = otherCCSet, excludeSpellIDs = ccExclude },
+        filters = Filters(otherCCSet, ccExclude),
         max = ccBigWanted and otherCCMax or 0,
     }
 
@@ -1948,6 +1864,14 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
     for _, groupCfg in pairs(out.buffs) do
         if groupCfg.max > 0 then
             out.buffsLive = true
+            break
+        end
+    end
+
+    out.buffrowLive = false
+    for _, groupCfg in pairs(out.buffrow) do
+        if groupCfg.max > 0 then
+            out.buffrowLive = true
             break
         end
     end
@@ -2014,12 +1938,22 @@ local function CreateContainer(kind)
     container.bbpStyles = {}
     container.bbpApplied = {}
     container.bbpHasGroup = {}
+    container.bbpCanDisable = container.SetAuraGroupEnabled ~= nil
     container:SetFlattensRenderLayers(true)
     local growsUp = ((kind == DEBUFFS) or (kind == BUFFROW)) and not S.growDown
     container:SetFlowLayoutAnchorPoint(growsUp and "BOTTOMLEFT" or "TOPLEFT")
     container:SetFlowLayoutGrowthDirection(FlowDirection.Right,
         growsUp and FlowDirection.Up or FlowDirection.Down)
     return container
+end
+
+local function SetGroupEnabled(container, groupKey, enabled)
+    local applied = container.bbpApplied[groupKey]
+    if applied.enabled == enabled then return end
+    applied.enabled = enabled
+    if container.bbpCanDisable then
+        container:SetAuraGroupEnabled(groupKey, enabled)
+    end
 end
 
 local function AddContainerGroup(container, groupKey)
@@ -2043,8 +1977,9 @@ local function AddContainerGroup(container, groupKey)
             layoutIndex = LayoutIndex(kind, groupKey),
         },
     })
-    container.bbpApplied[groupKey] = {}
+    container.bbpApplied[groupKey] = { enabled = true }
     container.bbpHasGroup[groupKey] = true
+    SetGroupEnabled(container, groupKey, false)
 end
 
 local function AddContainerGroups(container)
@@ -2074,14 +2009,17 @@ local function ApplyGroupCandidateFilters(container, groupKey, filters)
     local exclude = filters and filters.excludeSpellIDs or false
     local maxDur = filters and filters.maxDuration or false
     local personal = filters and filters.nameplateShowPersonal or false
-    if applied.generation == listGeneration
+    local generation = (include or exclude) and listGeneration or false
+    if applied.generation == generation
         and applied.include == include and applied.exclude == exclude
         and applied.maxDuration == maxDur and applied.personal == personal then
         return
     end
-    applied.generation = listGeneration
+    applied.generation = generation
     applied.include, applied.exclude = include, exclude
     applied.maxDuration, applied.personal = maxDur, personal
+    if filters == nil and not applied.set then return end
+    applied.set = true
     container:SetAuraGroupCandidateFilters(groupKey, filters)
 end
 
@@ -2111,6 +2049,15 @@ local function ApplyGroupSort(container, groupKey, method, direction)
     container:SetAuraGroupSortMethod(groupKey, method, direction)
 end
 
+local function ParkFilter(groupCfgs, groups)
+    for _, groupKey in ipairs(groups) do
+        local cfg = groupCfgs[groupKey]
+        if cfg and cfg.max > 0 then return cfg.filter end
+    end
+    local first = groupCfgs[groups[1]]
+    return first and first.filter
+end
+
 local function ApplyProfile(container, profileKey, perRow)
     if container.bbpProfileKey == profileKey
         and container.bbpPerRow == perRow
@@ -2136,37 +2083,34 @@ local function ApplyProfile(container, profileKey, perRow)
         or math.huge
     container:SetFlowLayoutMaximumLineSize(wrap)
 
-    local parkFilter
+    local parkFilter = (not container.bbpCanDisable) and ParkFilter(groupCfgs, groups) or nil
+
     for _, groupKey in ipairs(groups) do
         local cfg = groupCfgs[groupKey]
-        if cfg and cfg.max > 0 then
-            parkFilter = cfg.filter
-            break
+        if has[groupKey] and not (cfg and cfg.max > 0) then
+            SetGroupEnabled(container, groupKey, false)
+            container:SetAuraGroupMaxFrameCount(groupKey, 0)
+            if parkFilter then
+                container:SetAuraGroupFilterString(groupKey, parkFilter)
+            end
         end
-    end
-    if not parkFilter then
-        local first = groupCfgs[groups[1]]
-        parkFilter = first and first.filter
     end
 
     for _, groupKey in ipairs(groups) do
         local cfg = groupCfgs[groupKey]
-        if cfg and has[groupKey] then
-            container:SetAuraGroupMaxFrameCount(groupKey, cfg.max)
-            if cfg.max > 0 then
-                container:SetAuraGroupFilterString(groupKey, cfg.filter)
-                ApplyGroupCandidateFilters(container, groupKey, cfg.filters)
-                local index = LayoutIndex(kind, groupKey)
-                if overlap then
-                    ApplyGroupLayout(container, groupKey, 0, 0, 0, 0, index)
-                else
-                    local cellW, cellH = GetCell(kind, groupKey)
-                    ApplyGroupLayout(container, groupKey, S.gapX, S.gapY, cellW, cellH, index)
-                end
-                ApplyGroupSort(container, groupKey, S.sort[1], S.sort[2])
-            elseif parkFilter then
-                container:SetAuraGroupFilterString(groupKey, parkFilter)
+        if has[groupKey] and cfg and cfg.max > 0 then
+            container:SetAuraGroupFilterString(groupKey, cfg.filter)
+            ApplyGroupCandidateFilters(container, groupKey, cfg.filters)
+            local index = LayoutIndex(kind, groupKey)
+            if overlap then
+                ApplyGroupLayout(container, groupKey, 0, 0, 0, 0, index)
+            else
+                local cellW, cellH = GetCell(kind, groupKey)
+                ApplyGroupLayout(container, groupKey, S.gapX, S.gapY, cellW, cellH, index)
             end
+            ApplyGroupSort(container, groupKey, S.sort[1], S.sort[2])
+            container:SetAuraGroupMaxFrameCount(groupKey, cfg.max)
+            SetGroupEnabled(container, groupKey, true)
         end
     end
 end
@@ -2358,22 +2302,29 @@ end
 
 local AurasAreSecret, RestyleSet
 
-local MAX_NAMEPLATES = 40
-local BUDGET_NORMAL = 1
-local BUDGET_LOADING = 8
-
-local pool = { sets = {}, queue = {}, queued = {}, target = 0 }
+local pool = {
+    sets = {}, free = {}, target = 0, stale = false,
+    max = 40, showBudget = 12, buildMs = 4,
+    showQueue = {}, showQueued = {}, showHead = 1, showTail = 0,
+}
 BBP.auraPool = pool
 
 local builder = CreateFrame("Frame")
 builder:Hide()
+pool.builder = builder
 
-local function BuildSet(token)
-    local set = pool.sets[token]
-    if not set then
-        set = { token = token }
-        pool.sets[token] = set
-    end
+function pool.IsLoading()
+    return BetterBlizzPlatesDB.wasOnLoadingScreen and true or false
+end
+
+function pool.Parent(container, frame)
+    container:SetParent(frame)
+    container.bbpParent = frame
+    container.bbpRelTo, container.bbpLevel, container.bbpStrata = nil, nil, nil
+end
+
+function pool.RefreshGroups(set)
+    if set.groupGen == profileGeneration then return end
     for _, kind in ipairs(CONTAINER_KINDS) do
         local container = set[kind]
         if container then
@@ -2382,48 +2333,119 @@ local function BuildSet(token)
             container = CreateContainer(kind)
             AddContainerGroups(container)
             set[kind] = container
+            if set.bbpOwner then pool.Parent(container, set.bbpOwner) end
         end
     end
     set.groupGen = profileGeneration
-    set.ready = true
+end
+
+function pool.Build()
+    local set = { groupGen = -1 }
+    pool.RefreshGroups(set)
+    pool.sets[#pool.sets + 1] = set
     return set
 end
 
-local function EnqueueSets(count)
-    pool.target = math.max(pool.target, math.min(count, MAX_NAMEPLATES))
-    for i = 1, pool.target do
-        local token = "nameplate" .. i
-        local set = pool.sets[token]
-        if (not set or set.groupGen ~= profileGeneration) and not pool.queued[token] then
-            pool.queued[token] = true
-            pool.queue[#pool.queue + 1] = token
+function pool.Assign(set, frame)
+    set.bbpOwner = frame
+    frame.bbpAuraSet = set
+    for _, kind in ipairs(CONTAINER_KINDS) do
+        local container = set[kind]
+        if container then pool.Parent(container, frame) end
+    end
+end
+
+local function AcquireSet(frame)
+    local set = frame.bbpAuraSet
+    if not set then
+        set = table.remove(pool.free) or pool.Build()
+        pool.Assign(set, frame)
+    end
+    pool.RefreshGroups(set)
+    return set
+end
+
+function pool.Prebuild(count)
+    pool.target = math.max(pool.target, math.min(count or 0, pool.max))
+    while #pool.sets < pool.target do
+        pool.free[#pool.free + 1] = pool.Build()
+    end
+    for _, set in ipairs(pool.sets) do pool.RefreshGroups(set) end
+    pool.stale = false
+end
+
+function pool.Enqueue(count)
+    pool.target = math.max(pool.target, math.min(count or 0, pool.max))
+    if pool.IsLoading() then
+        pool.Prebuild(pool.target)
+        return
+    end
+    pool.stale = true
+    builder:Show()
+end
+
+local function ShowContainer(container)
+    pool.showQueued[container] = nil
+    if container:IsShown() then return end
+    if pool.IsLoading() then
+        container:Show()
+        return
+    end
+    pool.showQueued[container] = true
+    pool.showTail = pool.showTail + 1
+    pool.showQueue[pool.showTail] = container
+    builder:Show()
+end
+
+local function HideContainer(container)
+    pool.showQueued[container] = nil
+    if container:IsShown() then container:Hide() end
+end
+
+function pool.DrainShows(limit)
+    local shown = 0
+    local queue, queued = pool.showQueue, pool.showQueued
+    while pool.showHead <= pool.showTail and shown < limit do
+        local container = queue[pool.showHead]
+        queue[pool.showHead] = nil
+        pool.showHead = pool.showHead + 1
+        if queued[container] then
+            queued[container] = nil
+            container:Show()
+            shown = shown + 1
         end
     end
-    if #pool.queue > 0 then builder:Show() end
+    if pool.showHead > pool.showTail then pool.showHead, pool.showTail = 1, 0 end
+end
+
+function pool.BuildUnderBudget(start)
+    while #pool.sets < pool.target do
+        pool.free[#pool.free + 1] = pool.Build()
+        if debugprofilestop() - start >= pool.buildMs then return false end
+    end
+    for _, set in ipairs(pool.sets) do
+        if set.groupGen ~= profileGeneration then
+            pool.RefreshGroups(set)
+            if debugprofilestop() - start >= pool.buildMs then return false end
+        end
+    end
+    return true
 end
 
 builder:SetScript("OnUpdate", function(self)
-    if InCombatLockdown() then return end
+    local loading = pool.IsLoading()
+    pool.DrainShows(loading and math.huge or pool.showBudget)
 
-    local budget = BetterBlizzPlatesDB.wasOnLoadingScreen and BUDGET_LOADING or BUDGET_NORMAL
-    local start = debugprofilestop()
-
-    while #pool.queue > 0 and (debugprofilestop() - start) < budget do
-        local token = table.remove(pool.queue, 1)
-        pool.queued[token] = nil
-        local set = pool.sets[token]
-        if not set or set.groupGen ~= profileGeneration then BuildSet(token) end
+    if pool.stale then
+        if loading then
+            pool.Prebuild(pool.target)
+        elseif pool.BuildUnderBudget(debugprofilestop()) then
+            pool.stale = false
+        end
     end
 
-    if #pool.queue == 0 then self:Hide() end
+    if pool.showHead > pool.showTail and not pool.stale then self:Hide() end
 end)
-
-local function AcquireSet(token)
-    local set = pool.sets[token]
-    if set and set.ready and set.groupGen == profileGeneration then return set end
-    pool.queued[token] = nil
-    return BuildSet(token)
-end
 
 local BLIZZARD_AURA_BITS = {
     [NamePlateConstants.ENEMY_NPC_AURA_DISPLAY_CVAR] = {
@@ -2609,10 +2631,11 @@ local function ShouldShowAuras(info, unit)
 end
 
 local function ShouldShowKind(kind, profile)
-    if not profile then return kind ~= BUFFS and kind ~= CC end
+    if not profile then return false end
     if kind == BUFFS then return profile.buffsLive end
     if kind == CC then return profile.ccLive end
-    return true
+    if kind == DEBUFFS then return profile.debuffsLive end
+    return profile.buffrowLive
 end
 
 local function BigIconSide(kind, set, profile)
@@ -2634,11 +2657,15 @@ end
 function BBP.SetNameplateAurasShown(frame, shown)
     local set = frame and frame.bbpAuraSet
     if not set then return end
-    set.bbpFrame = nil
+    set.bbpUnit = nil
     for _, kind in ipairs(CONTAINER_KINDS) do
         local container = set[kind]
         if container then
-            container:SetShown(shown and container.bbpWanted or false)
+            if shown and container.bbpWanted then
+                ShowContainer(container)
+            else
+                HideContainer(container)
+            end
         end
     end
 end
@@ -2671,7 +2698,10 @@ function BBP.BindNameplateAuras(unit, frame, info)
     if not unit or not frame then return end
     if strsub(unit, 1, 9) ~= "nameplate" then return end
 
-    local set = AcquireSet(unit)
+    local previous = boundTokens[unit]
+    if previous and previous ~= frame then BBP.UnbindNameplateAuras(unit) end
+
+    local set = AcquireSet(frame)
     if set.styleDirty and not AurasAreSecret() then RestyleSet(set) end
     local show = ShouldShowAuras(info, unit)
     local isFriend, isPlayer = info.isFriend and true or false, info.isPlayer and true or false
@@ -2681,14 +2711,18 @@ function BBP.BindNameplateAuras(unit, frame, info)
     local isTarget = info.isTarget
     local strata, level = AuraLayer(frame, frame:GetFrameLevel() + 10)
 
-    if set.bbpFrame == frame and set.bbpUnit == unit
+    boundTokens[unit] = frame
+
+    if set.bbpUnit == unit
         and set.bbpProfileKey == profileKey and set.bbpPerRow == perRow
         and set.bbpIsTarget == isTarget and set.bbpShow == show
         and set.bbpGen == profileGeneration and set.bbpLevel == level
         and set.bbpStrata == strata then
         return
     end
-    set.bbpFrame, set.bbpUnit = frame, unit
+    local rebind = set.bbpUnit ~= unit or set.bbpProfileKey ~= profileKey
+        or set.bbpPerRow ~= perRow or set.bbpGen ~= profileGeneration
+    set.bbpUnit = unit
     set.bbpProfileKey, set.bbpPerRow = profileKey, perRow
     set.bbpIsTarget, set.bbpShow = isTarget, show
     set.bbpGen, set.bbpLevel = profileGeneration, level
@@ -2697,11 +2731,6 @@ function BBP.BindNameplateAuras(unit, frame, info)
     for _, kind in ipairs(CONTAINER_KINDS) do
         local container = set[kind]
         if container then
-            if container.bbpParent ~= frame then
-                container:SetParent(frame)
-                container.bbpParent = frame
-                container.bbpRelTo = nil
-            end
             local wantStrata = strata or frame:GetFrameStrata()
             if container.bbpStrata ~= wantStrata then
                 container:SetFrameStrata(wantStrata)
@@ -2756,46 +2785,35 @@ function BBP.BindNameplateAuras(unit, frame, info)
             local kindShown = show and ShouldShowKind(kind, profile)
             container.bbpWanted = kindShown
             if kindShown then
+                if rebind then HideContainer(container) end
                 ApplyProfile(container, profileKey, perRow)
                 container:SetUnit(unit)
-                container:SetEnabled(true)
-                container:Show()
-                if container.bbpEnabled then container:UpdateAllAuras() end
-                container.bbpEnabled = true
+                if not container.bbpEnabled then
+                    container:SetEnabled(true)
+                    container.bbpEnabled = true
+                end
+                ShowContainer(container)
             else
-                container:SetEnabled(false)
-                container:Hide()
-                container.bbpEnabled = false
+                HideContainer(container)
             end
         end
     end
 
     set.profileKey = profileKey
-    frame.bbpAuraSet = set
-    boundTokens[unit] = frame
 
     if BBP.UpdateAuraPreview then BBP.UpdateAuraPreview(frame, info) end
 end
 
 function BBP.UnbindNameplateAuras(unit)
-    local set = unit and pool.sets[unit]
     local frame = boundTokens[unit]
-    if frame then frame.bbpAuraSet = nil end
     boundTokens[unit] = nil
-    if not set or not set.ready then return end
-    set.bbpFrame = nil
+    local set = frame and frame.bbpAuraSet
+    if not set then return end
+    set.bbpUnit = nil
 
     for _, kind in ipairs(CONTAINER_KINDS) do
         local container = set[kind]
-        if container then
-            container:SetEnabled(false)
-            container:Hide()
-            container:ClearAllPoints()
-            container:SetParent(UIParent)
-            container.bbpEnabled = false
-            container.bbpParent, container.bbpRelTo, container.bbpLevel = nil, nil, nil
-            container.bbpStrata = nil
-        end
+        if container then HideContainer(container) end
     end
 end
 
@@ -2843,14 +2861,14 @@ function BBP.RestyleAuraButtons(force)
     local seen = {}
     for token, frame in pairs(boundTokens) do
         local set = frame and frame.bbpAuraSet
-        if set and set.ready and not seen[set] then
+        if set and not seen[set] then
             seen[set] = true
             RestyleSet(set, force)
         end
     end
 
-    for _, set in pairs(pool.sets) do
-        if set.ready and not seen[set] then set.styleDirty = true end
+    for _, set in ipairs(pool.sets) do
+        if not seen[set] then set.styleDirty = true end
     end
 
     if BBP.prdAuraContainer then BBP.RestylePRDAuraButtons(force) end
@@ -2863,7 +2881,7 @@ local function DoRefresh()
     BBP.UpdateUserAuraSettings()
     RebuildProfiles()
 
-    EnqueueSets(pool.target)
+    pool.Enqueue(pool.target)
 
     for token, frame in pairs(boundTokens) do
         if frame and frame.unit then
@@ -2965,7 +2983,7 @@ function BBP.RefreshPRDAuras()
     for index, groupKey in ipairs(PRD_GROUPS) do
         container:SetAuraGroupFilterString(groupKey, filters[groupKey])
         container:SetAuraGroupMaxFrameCount(groupKey, S.prdLimit)
-        ApplyGroupCandidateFilters(container, groupKey, { excludeSpellIDs = exclude })
+        ApplyGroupCandidateFilters(container, groupKey, Filters(nil, exclude))
         ApplyGroupLayout(container, groupKey, S.gapX, S.gapY, S.buffWidth, S.buffHeight, index)
     end
 
@@ -3487,7 +3505,7 @@ function BBP.SetupNameplateAuras()
             if not BetterBlizzPlatesDB.enableNameplateAuraCustomisation then return end
             local pveChanged = RefreshPvEState()
             if event == "PLAYER_ENTERING_WORLD" then
-                EnqueueSets(MAX_NAMEPLATES)
+                pool.Prebuild(pool.max)
                 BBP.SetupPRDAuras()
             end
             if pveChanged then
@@ -3509,5 +3527,5 @@ function BBP.SetupNameplateAuras()
         end
     end)
 
-    EnqueueSets(MAX_NAMEPLATES)
+    pool.Enqueue(pool.max)
 end

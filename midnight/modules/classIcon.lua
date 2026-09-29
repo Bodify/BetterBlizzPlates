@@ -272,7 +272,7 @@ local function CreateClassIndicatorCCContainer(frame)
         AuraUtil.AuraFilters.Harmful, AuraUtil.AuraFilters.CrowdControl), {
         sortMethod = AuraContainerSortMethod.AuraInstanceIDOnly,
         sortDirection = AuraContainerSortDirection.Reverse,
-        candidateFilters = { excludeSpellIDs = BBP.auraCategorySafe.ccBlacklist },
+        candidateFilters = { excludeSpellIDs = BBP.auraCategorySets.ccBlacklist },
         initializeFrame = function(auraFrame)
             InitClassIndicatorCCSlot(auraFrame, frame)
         end,

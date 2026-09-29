@@ -5537,7 +5537,6 @@ local function HandleNamePlateRemoved(unit)
     frame.isSmallPet = nil
     frame.bbpAdjustingSmallPet = nil
     frame.ciChange = nil
-    frame:SetScale(1)
     frame:SetAlpha(1)
     frame.name:SetAlpha(1)
     frame.nameHidden = nil
@@ -7387,12 +7386,6 @@ function BBP.RefreshAllNameplates()
                 end
             end
 
-            -- Reset nameplate scale after testing totems
-            if not BetterBlizzPlatesDB.totemIndicatorTestMode then
-                if frame then
-                    frame:SetScale(1)
-                end
-            end
             -- Always update the name
             --BBP.RestoreOriginalNameplateColors(frame)
             BBP.CompactUnitFrame_UpdateHealthColor(frame)
