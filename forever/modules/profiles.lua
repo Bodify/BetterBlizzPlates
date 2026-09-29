@@ -248,6 +248,7 @@ function BBP.ApplyProfile(profileName)
                 EditModeManagerFrame.AccountSettings:RefreshPersonalResourceDisplay()
             end
         end
+        BBP.SanitizeImportedNameplateStyle()
         BetterBlizzPlatesDB.avoidPopups = true
         ReloadUI()
     end

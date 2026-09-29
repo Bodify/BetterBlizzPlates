@@ -2201,6 +2201,7 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
 
                 if tableName == "fullProfile" then
                     BetterBlizzPlatesDB.optimizedAuraLists = nil
+                    BBP.SanitizeImportedNameplateStyle()
                 end
             end
             BetterBlizzPlatesDB.scStart = true

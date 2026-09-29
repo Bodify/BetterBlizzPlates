@@ -126,7 +126,7 @@ local defaultSettings = {
     hpHeightFriendly = 4 * 2.7,--tonumber(GetCVar("NamePlateVerticalScale")),
     hpHeightSelf = 4 * 2.7,--tonumber(GetCVar("NamePlateVerticalScale")),
     hpHeightSelfMana = 4 * 2.7,--tonumber(GetCVar("NamePlateVerticalScale")),
-    classicCastbar = true,
+    classicCastbar = false,
     hideLevelFrame = false,
     hideLevelOnFriendly = true,
     centerNameplateHealthBar = false,
@@ -8111,9 +8111,24 @@ StaticPopupDialogs["BBP_FIX_CUSTOM_NAMEPLATE_STYLE"] = {
     whileDead = true,
 }
 
+function BBP.IsSupportedNameplateStyle(style)
+    style = tonumber(style)
+    return style == 0 or style == 1 or style == 2 or style == 4
+end
+
+function BBP.SanitizeImportedNameplateStyle()
+    local db = BetterBlizzPlatesDB
+    if db.nameplateStyle == nil or BBP.IsSupportedNameplateStyle(db.nameplateStyle) then return end
+    db.nameplateStyle = "1"
+    if not InCombatLockdown() then
+        C_CVar.SetCVar("nameplateStyle", "1")
+    end
+end
+
 function BBP.CheckCustomNameplateStyle()
-    local style =C_CVar.GetCVar("nameplateStyle")
-    if style == "0" or style == "1" or style == "2" or style == "4" then return end
+    local db = BetterBlizzPlatesDB
+    local savedBad = db.fixedNameplateStyle and db.nameplateStyle ~= nil and not BBP.IsSupportedNameplateStyle(db.nameplateStyle)
+    if BBP.IsSupportedNameplateStyle(C_CVar.GetCVar("nameplateStyle")) and not savedBad then return end
     StaticPopup_Show("BBP_FIX_CUSTOM_NAMEPLATE_STYLE")
 end
 
