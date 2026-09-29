@@ -1,4 +1,4 @@
-# BetterBlizzPlates 2.1.7
+# BetterBlizzPlates 2.1.8
 ## Forever
 ### Tweak
 - Update Xaryu profile with his Forever profile.
