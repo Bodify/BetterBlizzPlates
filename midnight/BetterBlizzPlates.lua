@@ -3254,7 +3254,10 @@ end
 
 
 function BBP.ResetToDefaultHeight(slider)
-    if BBP.isLargeNameplatesEnabled() then
+    if BBP.UsesClassicCastbar() then
+        slider:SetValue(11.5)
+        BetterBlizzPlatesDB.castBarHeight = 11.5
+    elseif BBP.isLargeNameplatesEnabled() then
         slider:SetValue(18.8)
         BetterBlizzPlatesDB.castBarHeight = 18.8
     else

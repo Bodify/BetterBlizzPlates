@@ -9715,6 +9715,9 @@ local function guiCastbar()
     classicCastbar:SetPoint("TOPLEFT", castbarSettingsText, "BOTTOMLEFT", -10, pixelsOnFirstBox)
     CreateTooltipTwo(classicCastbar, "Classic Castbar", "Use the classic castbar with Classic Nameplates.")
     classicCastbar:HookScript("OnClick", function(self)
+        if self:GetChecked() then
+            BetterBlizzPlatesDB.castBarHeight = 11.5
+        end
         StaticPopup_Show(self:GetChecked() and "BBP_CLASSIC_CASTBAR_SETUP" or "BBP_CONFIRM_RELOAD")
     end)
 
