@@ -2624,7 +2624,6 @@ end
 local boundTokens = {}
 
 local function ShouldShowAuras(info, unit)
-    if BetterBlizzPlatesDB.hideNameplateAuras then return false end
     if not S.playersOnly then return true end
     if info.isPlayer then return true end
     return S.playersOnlyShowTarget and UnitIsUnit(unit, "target") and true or false

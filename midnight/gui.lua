@@ -33,8 +33,11 @@ local titleText = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \
 
 local checkBoxList = {}
 local sliderList = {}
+local dropdownList = {}
 local MAX_SEARCH_CHECKBOXES = 25
 local MAX_SEARCH_SLIDERS = 15
+local MAX_SEARCH_DROPDOWNS = 3
+local SEARCH_DROPDOWN_SCALE = 0.8
 
 local tooltips = {
     ["5: Replace name with spec + ID on same row"] = "Shows as for example \"Frost 2\"",
@@ -70,6 +73,29 @@ StaticPopupDialogs["BBP_CONFIRM_RELOAD"] = {
     OnAccept = function()
         BetterBlizzPlatesDB.reopenOptions = true
         ReloadUI()
+    end,
+    timeout = 0,
+    whileDead = true,
+}
+
+StaticPopupDialogs["BBP_CLASSIC_CASTBAR_SETUP"] = {
+    text = titleText.."Do you want to use classic textures, or keep the new default ones?",
+    button1 = "Use Classic",
+    button2 = "Use new defaults",
+    OnAccept = function()
+        local db = BetterBlizzPlatesDB
+        db.enableCastbarCustomization = true
+        db.useCustomCastbarTexture = true
+        db.customCastbarTexture = "Blizzard DF"
+        db.customCastbarNonInterruptibleTexture = "Blizzard DF"
+        db.reopenOptions = true
+        ReloadUI()
+    end,
+    OnCancel = function(_, _, reason)
+        if reason == "clicked" then
+            BetterBlizzPlatesDB.reopenOptions = true
+            ReloadUI()
+        end
     end,
     timeout = 0,
     whileDead = true,
@@ -1474,21 +1500,18 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         -- Cast bar icon pos and scale
                         elseif element == "castBarIconXPos" or element == "castBarIconYPos" or element == "castBarIconScale" then
                             if axis then
-                                frame.castBarIconFrame:ClearAllPoints()
-                                frame.castBarIconFrame:SetPoint("CENTER", frame.castBar, "LEFT", -2 + BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
-                                frame.castBar.BorderShield:ClearAllPoints()
-                                frame.castBar.BorderShield:SetPoint("CENTER", frame.castBarIconFrame, "CENTER", 0, 0)
-                                if frame.castBar.bbpClassicIcon then
-                                    frame.castBar.bbpClassicIcon:ClearAllPoints()
-                                    frame.castBar.bbpClassicIcon:SetPoint("RIGHT", frame.CastBarsContainer.castBar, "LEFT", xPos-2, yPos)
+                                if BBP.UsesClassicCastbar() then
+                                    BBP.SetNameplateBarSizes(frame)
+                                else
+                                    frame.castBarIconFrame:ClearAllPoints()
+                                    frame.castBarIconFrame:SetPoint("CENTER", frame.castBar, "LEFT", -2 + BetterBlizzPlatesDB.castBarIconXPos, BetterBlizzPlatesDB.castBarIconYPos)
+                                    frame.castBar.BorderShield:ClearAllPoints()
+                                    frame.castBar.BorderShield:SetPoint("CENTER", frame.castBarIconFrame, "CENTER", 0, 0)
                                 end
                             else
                                 BetterBlizzPlatesDB.castBarIconScale = value
                                 frame.castBarIconFrame:SetScale(value)
                                 --frame.castBar.BorderShield:SetScale(value)
-                                if frame.castBar.bbpClassicIcon then
-                                    frame.castBar.bbpClassicIcon:SetScale(value)
-                                end
                             end
                         -- Cast bar height
                         elseif element == "castBarHeight" then
@@ -2321,6 +2344,81 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc, bitCVar)
     end)
 
     return checkBox
+end
+
+local function CreateMultiSelectDropdown(label, parent, options, width, onChange)
+    local dropdown = CreateFrame("DropdownButton", nil, parent, "WowStyle1DropdownTemplate")
+    dropdown:SetWidth(width or 120)
+    dropdown.options = options
+
+    local category = parent.name
+    if category == "Better|cff00c0ffBlizz|rPlates |A:gmchat-icon-blizz:16:16|a" then
+        category = "General"
+    end
+    dropdown.searchCategory = category
+
+    function dropdown:ToggleOption(option)
+        BetterBlizzPlatesDB[option.key] = not BetterBlizzPlatesDB[option.key]
+        if onChange then
+            onChange(option.key, BetterBlizzPlatesDB[option.key])
+        end
+        if not BetterBlizzPlatesDB.wasOnLoadingScreen then
+            BBP.needsUpdate = true
+            BBP.RefreshAllNameplates()
+        end
+    end
+
+    local function GenerateMenu(owner, rootDescription)
+        for _, option in ipairs(options) do
+            local checkbox = rootDescription:CreateCheckbox(option.label,
+                function() return (BetterBlizzPlatesDB[option.key] or (option.isForced and option.isForced())) and true or false end,
+                function(_, inputData)
+                    if option.onRightClick and inputData and inputData.buttonName == "RightButton" then
+                        option.onRightClick()
+                        return MenuResponse.CloseAll
+                    end
+                    dropdown:ToggleOption(option)
+                end)
+            if option.onRightClick then
+                checkbox:AddInitializer(function(button)
+                    button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+                end)
+                checkbox:AddResetter(function(button)
+                    button:RegisterForClicks("LeftButtonUp")
+                end)
+            end
+            if option.isEnabled or option.isForced then
+                checkbox:SetEnabled(function()
+                    if option.isForced and option.isForced() then return false end
+                    return not option.isEnabled or option.isEnabled()
+                end)
+            end
+            if option.tooltip then
+                checkbox:SetTooltip(function(tooltip)
+                    GameTooltip_SetTitle(tooltip, option.tooltipTitle or option.label, NORMAL_FONT_COLOR)
+                    tooltip:AddLine(option.tooltip, 1, 1, 1, true)
+                    if option.onRightClick then
+                        tooltip:AddLine(" ")
+                        tooltip:AddLine("|cff32f795" .. (option.rightClickText or "Right-click for options.") .. "|r", 1, 1, 1, true)
+                    end
+                    local note = option.tooltipNote
+                    if type(note) == "function" then note = note() end
+                    if note then
+                        tooltip:AddLine("____________________________", 0.8, 0.8, 0.8, true)
+                        tooltip:AddLine(note, 0.8, 0.8, 0.8, true)
+                    end
+                end)
+            end
+        end
+    end
+    dropdown.menuGenerator = GenerateMenu
+    dropdown:SetupMenu(GenerateMenu)
+    dropdown:SetDefaultText(label)
+    dropdown:SetSelectionText(function() return label end)
+
+    table.insert(dropdownList, {dropdown = dropdown, label = label})
+
+    return dropdown
 end
 
 local KEYED_LISTS = {
@@ -4840,6 +4938,18 @@ local function CreateSearchFrame()
     -- Search function that clears results or searches for query
     local checkboxPool = {}
     local sliderPool = {}
+    local dropdownPool = {}
+
+    local function UpdateSearchDropdownStates()
+        for _, resultDropdown in ipairs(dropdownPool) do
+            if resultDropdown:IsShown() then
+                local parentKey = resultDropdown.parentKey
+                local enabled = not parentKey or BetterBlizzPlatesDB[parentKey] and true or false
+                resultDropdown:SetEnabled(enabled)
+                resultDropdown:SetAlpha(enabled and 1 or 0.5)
+            end
+        end
+    end
 
     local function SearchElements(query)
         -- Clear existing results
@@ -4860,6 +4970,8 @@ local function CreateSearchFrame()
         local sliderCount = 0
         local checkboxMatches = 0
         local sliderMatches = 0
+        local dropdownCount = 0
+        local dropdownMatches = 0
         local yOffsetCheckbox = -20  -- Starting position for the first checkbox
         local yOffsetSlider = -20    -- Starting position for the first slider
 
@@ -4893,6 +5005,48 @@ local function CreateSearchFrame()
             end
         end
 
+        for _, data in ipairs(dropdownList) do
+            local dropdown = data.dropdown
+            local base = data.label .. " " .. (dropdown.tooltipTitle or "")
+            local texts = { base .. " " .. (dropdown.tooltipMainText or "") }
+            for _, option in ipairs(dropdown.options) do
+                texts[#texts + 1] = base .. " " .. (option.label or "") .. " " .. (option.tooltipTitle or "") .. " " .. (option.tooltip or "")
+            end
+            for _, term in ipairs(dropdown.searchExtraTerms or {}) do
+                texts[#texts + 1] = base .. " " .. term
+            end
+            local isMatch = false
+            for _, text in ipairs(texts) do
+                if matchesQuery(text) then
+                    isMatch = true
+                    break
+                end
+            end
+            if isMatch then
+                dropdownMatches = dropdownMatches + 1
+            end
+            if isMatch and dropdownCount < MAX_SEARCH_DROPDOWNS then
+                dropdownCount = dropdownCount + 1
+                local resultDropdown = dropdownPool[dropdownCount]
+                if not resultDropdown then
+                    resultDropdown = CreateFrame("DropdownButton", nil, resultsList, "WowStyle1DropdownTemplate")
+                    resultDropdown:SetWidth(180)
+                    resultDropdown:SetScale(SEARCH_DROPDOWN_SCALE)
+                    dropdownPool[dropdownCount] = resultDropdown
+                end
+                resultDropdown:ClearAllPoints()
+                resultDropdown:SetPoint("TOPLEFT", searchIcon, "TOPLEFT", 31 / SEARCH_DROPDOWN_SCALE, (yOffsetCheckbox - 1) / SEARCH_DROPDOWN_SCALE)
+                resultDropdown.parentKey = dropdown.searchParentKey
+                resultDropdown:SetupMenu(dropdown.menuGenerator)
+                resultDropdown:SetDefaultText(data.label)
+                resultDropdown:SetSelectionText(function() return data.label end)
+                CreateTooltipTwo(resultDropdown, dropdown.tooltipTitle or data.label, dropdown.tooltipMainText, nil, nil, nil, nil, dropdown.searchCategory)
+                resultDropdown:Show()
+                yOffsetCheckbox = yOffsetCheckbox - 26
+            end
+        end
+        local checkboxCap = MAX_SEARCH_CHECKBOXES - math.ceil(dropdownCount * 26 / 21)
+
         -- Search through checkboxes
         for _, data in ipairs(checkBoxList) do
             -- Prepare the label and tooltip text
@@ -4907,7 +5061,7 @@ local function CreateSearchFrame()
             if isMatch then
                 checkboxMatches = checkboxMatches + 1
             end
-            if isMatch and checkboxCount < MAX_SEARCH_CHECKBOXES then
+            if isMatch and checkboxCount < checkboxCap then
                 checkboxCount = checkboxCount + 1
 
                 -- Re-use or create a new checkbox from the pool
@@ -4930,6 +5084,7 @@ local function CreateSearchFrame()
                 -- Link the result checkbox to the main checkbox
                 resultCheckBox:SetScript("OnClick", function()
                     data.checkbox:Click()
+                    UpdateSearchDropdownStates()
                 end)
 
                 applyRightClickScript(resultCheckBox, data.checkbox)
@@ -5015,9 +5170,10 @@ local function CreateSearchFrame()
             end
         end
 
+        UpdateSearchDropdownStates()
 
-        local totalMatches = checkboxMatches + sliderMatches
-        local shown = checkboxCount + sliderCount
+        local totalMatches = checkboxMatches + sliderMatches + dropdownMatches
+        local shown = checkboxCount + sliderCount + dropdownCount
         if shown < totalMatches then
             cappedText:SetFormattedText("(showing %d of %d, be more specific)", shown, totalMatches)
             cappedText:Show()
@@ -5245,12 +5401,8 @@ local function guiGeneralTab()
     generalSettingsIcon:SetSize(22, 22)
     generalSettingsIcon:SetPoint("RIGHT", settingsText, "LEFT", -3, -1)
 
-    local removeRealmNames = CreateCheckbox("removeRealmNames", "Hide realm", BetterBlizzPlates)
-    removeRealmNames:SetPoint("TOPLEFT", settingsText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
-    CreateTooltipTwo(removeRealmNames, "Hide Realm Name", "Hide the realm name from Player names on nameplates.")
 
     local healthNumbers = CreateCheckbox("healthNumbers", "Health numbers", BetterBlizzPlates, nil, BBP.ToggleHealthNumbers)
-    healthNumbers:SetPoint("LEFT", removeRealmNames.text, "RIGHT", 0, 0)
     CreateTooltipTwo(healthNumbers, "Show Health Numbers", "Show health numbers on nameplates. More settings available in |cff32f795Advanced Settings|r.")
 
     local smallPetsInPvP = CreateCheckbox("smallPetsInPvP", "Small Pets", BetterBlizzPlates)
@@ -5353,41 +5505,35 @@ local function guiGeneralTab()
         end
     end)
 
-    local hideNameplateAuras = CreateCheckbox("hideNameplateAuras", "Hide nameplate auras", BetterBlizzPlates)
-    hideNameplateAuras:SetPoint("TOPLEFT", removeRealmNames, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(hideNameplateAuras, "Hide Nameplate Auras", "Hide all Nameplate Auras.")
-    hideNameplateAuras:HookScript("OnClick", function (self)
-        if not self:GetChecked() then
+    local hideOptionsRow = CreateFrame("Frame", nil, BetterBlizzPlates)
+    hideOptionsRow:SetSize(24, 24)
+
+    local hideOptions = CreateMultiSelectDropdown("Hide Options", BetterBlizzPlates, {
+        { key = "removeRealmNames", label = "Hide Realm Name", tooltip = "Hide the realm name from Player names on nameplates." },
+        { key = "hideTargetHighlight", label = "Hide Target Glow", tooltip = "Hide the bright glow on your current target nameplate." },
+        { key = "hideTargetBorder", label = "Hide Target Border", tooltip = "Hide the yellow border around your current target and focus nameplate." },
+        { key = "hideNameplateAuraTooltip", label = "Hide Aura Tooltip", tooltip = "Hide nameplate aura tooltips." },
+    }, 150, function(key)
+        if key == "hideNameplateAuraTooltip" then
+            BBP.HideNameplateAuraTooltip()
             StaticPopup_Show("BBP_CONFIRM_RELOAD")
         end
     end)
+    hideOptions:SetPoint("LEFT", hideOptionsRow, "LEFT", 4, 0)
+    hideOptions:SetScale(0.7)
+    CreateTooltipTwo(hideOptions, "Hide Options", "Hide parts of the nameplate.")
 
-    local hideNameplateAuraTooltip = CreateCheckbox("hideNameplateAuraTooltip", "Hide aura tooltip", BetterBlizzPlates)
-    hideNameplateAuraTooltip:SetPoint("LEFT", hideNameplateAuras.text, "RIGHT", 0, 0)
-    hideNameplateAuraTooltip:HookScript("OnClick", function()
-        BBP.HideNameplateAuraTooltip()
-        StaticPopup_Show("BBP_CONFIRM_RELOAD")
-    end)
-    CreateTooltipTwo(hideNameplateAuraTooltip, "Hide Aura Tooltip", "Hide Nameplate Aura Tooltips.")
-
-    local hideTargetHighlight = CreateCheckbox("hideTargetHighlight", "Hide target glow", BetterBlizzPlates)
-    hideTargetHighlight:SetPoint("TOPLEFT", hideNameplateAuras, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(hideTargetHighlight, "Hide Target Highlight", "Hide the bright glow on your current target nameplate")
-
-    local hideTargetBorder = CreateCheckbox("hideTargetBorder", "Hide Target Border", BetterBlizzPlates, nil, BBP.RefreshAllNameplates)
-    hideTargetBorder:SetPoint("LEFT", hideTargetHighlight.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(hideTargetBorder, "Hide Target Border", "Hide the yellow border around your current target and focus nameplate.")
+    local hideLevelFrame = CreateCheckbox("hideLevelFrame", "Hide Lvl", BetterBlizzPlates)
+    hideLevelFrame:SetPoint("TOPLEFT", hideOptionsRow, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(hideLevelFrame, "Hide Level", "Hide the level display.")
 
     local classicNameplates = CreateCheckbox("classicNameplates", "Classic Nameplates", BetterBlizzPlates)
-    classicNameplates:SetPoint("TOPLEFT", hideTargetHighlight, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(classicNameplates, "Classic Nameplates", "Enable to use a classic nameplate look for your nameplates.", "Only healthbar for now, might add classic castbar in a later patch.\nYou can enable castbar customization and change the texture to the old texture which will basically be the old classic castbars.")
+    classicNameplates:SetPoint("TOPLEFT", settingsText, "BOTTOMLEFT", -4, pixelsOnFirstBox)
+    CreateTooltipTwo(classicNameplates, "Classic Nameplates", "Enable to use a classic nameplate look for your nameplates.")
     classicNameplates:HookScript("OnClick", function(self)
         StaticPopup_Show("BBP_CONFIRM_RELOAD")
     end)
 
-    local hideLevelFrame = CreateCheckbox("hideLevelFrame", "Hide Lvl", BetterBlizzPlates)
-    hideLevelFrame:SetPoint("LEFT", classicNameplates.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(hideLevelFrame, "Hide Level", "Hide the level display.")
     hideLevelFrame:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
             if not BetterBlizzPlatesDB.classicNameplates then return end
@@ -5444,7 +5590,10 @@ local function guiGeneralTab()
     end)
 
     local nameplateMinScale = CreateSlider(BetterBlizzPlates, "Nameplate Size", 0.5, 2, 0.01, "nameplateMinScale")
-    nameplateMinScale:SetPoint("TOPLEFT", classicRetailNameplates, "BOTTOMLEFT", 12, -15)
+    healthNumbers:SetPoint("TOPLEFT", classicRetailNameplates, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    hideOptionsRow:SetPoint("TOPLEFT", healthNumbers, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+    nameplateMinScale:SetPoint("TOPLEFT", hideLevelFrame, "BOTTOMLEFT", 12, -15)
     CreateTooltipTwo(nameplateMinScale, "Nameplate Size", "General size of all nameplates (except Target nameplate)", nil, nil, "nameplateMinScale", "nameplateMaxScale")
 
     local nameplateMinScaleResetButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
@@ -5713,7 +5862,11 @@ local function guiGeneralTab()
     local showNameplateCastbarTimer = CreateCheckbox("showNameplateCastbarTimer", "Cast timer next to castbar", BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
     showNameplateCastbarTimer:SetPoint("LEFT", alwaysHideEnemyCastbar.text, "RIGHT", 0, 0)
 
-    local showNameplateTargetText = CreateCheckbox("showNameplateTargetText", "Show Target Text", BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
+    local showNameplateTargetText = CreateCheckbox("showNameplateTargetText", "Show Target Text", BetterBlizzPlates, nil, function()
+        BBP.ToggleSpellCastEventRegistration()
+        BBP.ToggleTargetTextAlwaysShow()
+        BBP.RefreshAllNameplates()
+    end)
     showNameplateTargetText:SetPoint("TOPLEFT", alwaysHideEnemyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(showNameplateTargetText, "Nameplate Target Text", "Show the nameplates current target underneath the castbar while casting.", "More settings in the Advanced Settings section like position, size and \"Always show\" etc.")
 
@@ -7304,6 +7457,10 @@ local function guiPositionAndScale()
     anchorSubTarget.double:SetPoint("TOPLEFT", targetIndicatorHideIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubTarget.double, "Double Markers", "Show target marker on both sides.\n\nChange Anchor to LEFT/RIGHT to have them on the sides.")
 
+    anchorSubTarget.anchorToName = CreateCheckbox("targetIndicatorAnchorToName", "Anchor to name", contentFrame)
+    anchorSubTarget.anchorToName:SetPoint("TOPLEFT", anchorSubTarget.double, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubTarget.anchorToName, "Anchor to Name", "Anchor the target marker to the name instead of the healthbar.")
+
     anchorSubTarget.UpdateDoubleState = function()
         if targetIndicatorHideIcon:GetChecked() then
             anchorSubTarget.double:Disable()
@@ -7319,7 +7476,7 @@ local function guiPositionAndScale()
     -- Extended Settings Button
     anchorSubTarget.extendedSettingsButton = CreateFrame("Button", nil, contentFrame, "UIPanelButtonTemplate")
     anchorSubTarget.extendedSettingsButton:SetSize(120, 25)
-    anchorSubTarget.extendedSettingsButton:SetPoint("TOPLEFT", anchorSubTarget.double, "BOTTOMLEFT", 12, -8)
+    anchorSubTarget.extendedSettingsButton:SetPoint("TOPLEFT", anchorSubTarget.anchorToName, "BOTTOMLEFT", 12, -8)
     anchorSubTarget.extendedSettingsButton:SetText("More options")
     CreateTooltip(anchorSubTarget.extendedSettingsButton, "Open more settings for Target Indicator")
 
@@ -9554,8 +9711,15 @@ local function guiCastbar()
     end)
     CreateTooltipTwo(nameplateCastbarTestMode, "Test Nameplate Castbars", "NOTE: This is a simple test mode meant to give you a rough idea.\nIt only works for the basic settings. It does not work for interrupt color, emphasis etc. It may not be 100% accurate so please double check with a real castbar.")
 
+    local classicCastbar = CreateCheckbox("classicCastbar", "Classic Castbar", guiCastbar)
+    classicCastbar:SetPoint("TOPLEFT", castbarSettingsText, "BOTTOMLEFT", -10, pixelsOnFirstBox)
+    CreateTooltipTwo(classicCastbar, "Classic Castbar", "Use the classic castbar with Classic Nameplates.")
+    classicCastbar:HookScript("OnClick", function(self)
+        StaticPopup_Show(self:GetChecked() and "BBP_CLASSIC_CASTBAR_SETUP" or "BBP_CONFIRM_RELOAD")
+    end)
+
     local enableCastbarCustomization = CreateCheckbox("enableCastbarCustomization", "Enable castbar customization", guiCastbar, nil, BBP.ToggleSpellCastEventRegistration)
-    enableCastbarCustomization:SetPoint("TOPLEFT", castbarSettingsText, "BOTTOMLEFT", -10, pixelsOnFirstBox)
+    enableCastbarCustomization:SetPoint("TOPLEFT", classicCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
     local castbarAlwaysOnTop = CreateCheckbox("castbarAlwaysOnTop", "Always on Top", enableCastbarCustomization)
     castbarAlwaysOnTop:SetPoint("LEFT", enableCastbarCustomization.text, "RIGHT", -1, 0)
@@ -9800,8 +9964,11 @@ local function guiCastbar()
 
     if not useCustomCastbarTexture:GetChecked() then
         customCastbarTextureDropdown:Disable()
+        customCastbarTextureDropdown:SetAlpha(0.5)
         customCastbarNonInterruptibleTextureDropdown:Disable()
+        customCastbarNonInterruptibleTextureDropdown:SetAlpha(0.5)
         customCastbarBGTextureDropdown:Disable()
+        customCastbarBGTextureDropdown:SetAlpha(0.5)
     end
 
     local useCustomCastbarBGTexture = CreateCheckbox("useCustomCastbarBGTexture", "BG", useCustomCastbarTexture)
@@ -9839,7 +10006,9 @@ local function guiCastbar()
         --CheckAndToggleCheckboxes(useCustomCastbarTexture)
         if self:GetChecked() then
             customCastbarTextureDropdown:Enable()
+            customCastbarTextureDropdown:SetAlpha(1)
             customCastbarNonInterruptibleTextureDropdown:Enable()
+            customCastbarNonInterruptibleTextureDropdown:SetAlpha(1)
             useCustomCastbarBGTexture:Enable()
             useCustomCastbarBGTexture:SetAlpha(1)
             if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
@@ -9847,11 +10016,15 @@ local function guiCastbar()
                 castBarBackgroundColor:SetAlpha(1)
                 castBarBackgroundColorIcon:SetAlpha(1)
                 customCastbarBGTextureDropdown:Enable()
+                customCastbarBGTextureDropdown:SetAlpha(1)
             end
         else
             customCastbarTextureDropdown:Disable()
+            customCastbarTextureDropdown:SetAlpha(0.5)
             customCastbarNonInterruptibleTextureDropdown:Disable()
+            customCastbarNonInterruptibleTextureDropdown:SetAlpha(0.5)
             customCastbarBGTextureDropdown:Disable()
+            customCastbarBGTextureDropdown:SetAlpha(0.5)
             useCustomCastbarBGTexture:Disable()
             useCustomCastbarBGTexture:SetAlpha(0.5)
             if not BetterBlizzPlatesDB.useCustomCastbarBGTexture then
@@ -10152,11 +10325,13 @@ local function guiCastbar()
         --CheckAndToggleCheckboxes(useCustomCastbarBGTexture)
         if self:GetChecked() then
             customCastbarBGTextureDropdown:Enable()
+            customCastbarBGTextureDropdown:SetAlpha(1)
             castBarBackgroundColor:Enable()
             castBarBackgroundColor:SetAlpha(1)
             castBarBackgroundColorIcon:SetAlpha(1)
         else
             customCastbarBGTextureDropdown:Disable()
+            customCastbarBGTextureDropdown:SetAlpha(0.5)
             castBarBackgroundColor:Disable()
             castBarBackgroundColor:SetAlpha(0)
             castBarBackgroundColorIcon:SetAlpha(0)
@@ -11074,7 +11249,6 @@ local function guiNameplateAuras()
 
     enableAuras:HookScript("OnClick", function(self)
         if self:GetChecked() then
-            BetterBlizzPlatesDB.hideNameplateAuras = false
             BBP.SetupNameplateAuras()
         else
             BBP.DisableNameplateAuras()

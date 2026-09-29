@@ -6643,6 +6643,10 @@ local function guiPositionAndScale()
     local targetIndicatorColorName = CreateCheckbox("targetIndicatorColorName", "Color name", contentFrame)
     targetIndicatorColorName:SetPoint("TOPLEFT", targetIndicatorColorNameplate, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
+    local targetIndicatorAnchorToName = CreateCheckbox("targetIndicatorAnchorToName", "Anchor to name", contentFrame)
+    targetIndicatorAnchorToName:SetPoint("LEFT", targetIndicatorColorName.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(targetIndicatorAnchorToName, "Anchor to Name", "Anchor the target marker to the name instead of the healthbar.")
+
     if BetterBlizzPlatesDB.targetIndicatorColorNameplate then
         targetIndicatorColorNameplate.Text:SetTextColor(unpack(BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB))
     end
@@ -9099,11 +9103,6 @@ local function guiNameplateAuras()
 
     local enableNameplateAuraCustomisation = CreateCheckbox("enableNameplateAuraCustomisation", "Enable Aura Settings", contentFrame)
     enableNameplateAuraCustomisation:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 50, 195)
-    enableNameplateAuraCustomisation:HookScript("OnClick", function (self)
-        if self:GetChecked() then
-            BetterBlizzPlatesDB.hideNameplateAuras = false
-        end
-    end)
     CreateTooltip(enableNameplateAuraCustomisation, "Enable all aura settings like filters and customization.")
 
     --------------------------

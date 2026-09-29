@@ -75,7 +75,6 @@ local defaultSettings = {
     useFakeName = true, -- old name var, to enable moving names (on by default classics)
     classicNameplates = false,
     removeRealmNames = true,
-    hideNameplateAuras = false,
     hideTargetHighlight = false,
     nameplateShowEnemyMinus = nil,
     enemyNameplateHealthbarHeight = nil,
@@ -1152,7 +1151,6 @@ local function InitializeNameplateSettings(frame)
             nameplateResourceOnTarget = BetterBlizzPlatesDB.nameplateResourceOnTarget,
             nameplateResourceDoNotRaiseAuras = BetterBlizzPlatesDB.nameplateResourceDoNotRaiseAuras,
             showGuildNames = BetterBlizzPlatesDB.showGuildNames,
-            hideNameplateAuras = BetterBlizzPlatesDB.hideNameplateAuras,
             nameplateAuraPlayersOnly = BetterBlizzPlatesDB.nameplateAuraPlayersOnly,
             nameplateAuraPlayersOnlyShowTarget = BetterBlizzPlatesDB.nameplateAuraPlayersOnlyShowTarget,
             hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight,
@@ -2827,19 +2825,7 @@ local function ToggleNameplateBuffFrameVisibility(frame)
     if not frame.BuffFrame then return end
 
     local buffFrameAlpha = 1
-    if config.hideNameplateAuras then
-        if not frame.bbpHookedBuffFrameAlpha then
-            hooksecurefunc(frame.BuffFrame, "SetAlpha", function(self)
-                if frame:IsForbidden() or self.changing then return end
-                self.changing = true
-                self:SetAlpha(0)
-                self.changing = false
-            end)
-            frame.bbpHookedBuffFrameAlpha = true
-            frame.BuffFrame:SetAlpha(0)
-        end
-        return
-    elseif config.nameplateAuraPlayersOnly then
+    if config.nameplateAuraPlayersOnly then
         if config.nameplateAuraPlayersOnlyShowTarget and info.isTarget then
             buffFrameAlpha = 1
         else
@@ -6462,7 +6448,7 @@ local function HandleNamePlateAdded(unit)
     end
 
     local showNameplateTargetText = BetterBlizzPlatesDB.showNameplateTargetText
-    if showNameplateTargetText or BetterBlizzPlatesDB.targetTextAlwaysShow then
+    if showNameplateTargetText or frame.TargetText then
         BBP.UpdateNameplateTargetText(frame, frame.unit)
     end
 
@@ -6591,7 +6577,7 @@ function BBP.RefreshAllNameplates()
         if frame.TargetText then
             BBP.SetFontBasedOnOption(frame.TargetText, BetterBlizzPlatesDB.npTargetTextSize or 12)
         end
-        if db.showNameplateTargetText or db.targetTextAlwaysShow then
+        if db.showNameplateTargetText or frame.TargetText then
             BBP.UpdateNameplateTargetText(frame, unitToken)
         end
         if frame.absorbIndicator then
@@ -7761,6 +7747,21 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 db.disabledNewMidnightAuras = true
             end
 
+
+            if db.hideNameplateAuras ~= nil then
+                if db.hideNameplateAuras then
+                    StaticPopupDialogs["BBP_HIDE_NP_AURAS_REMOVED"] = {
+                        text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\nThe \"Hide nameplate auras\" setting has been removed due to it no longer making sense with changes from Blizzard.\n\nYou probably want to disable nameplate auras in WoW settings Nameplate section and/or in BBP's Nameplate Auras section.",
+                        button1 = "OK",
+                        timeout = 0,
+                        whileDead = true,
+                    }
+                    C_Timer.After(5, function()
+                        StaticPopup_Show("BBP_HIDE_NP_AURAS_REMOVED")
+                    end)
+                end
+                db.hideNameplateAuras = nil
+            end
 
             InitializeSavedVariables()
 

@@ -1,7 +1,18 @@
 # BetterBlizzPlates 2.1.8
+## Retail & Forever
+### New
+- New "Classic Castbar" setting in castbar customization section.
 ## Forever
 ### Tweak
 - Update Xaryu profile with his Forever profile.
+- Level text for Classic Nameplates has been tweaked position and size a little bit.
+## All versions
+### New
+- Target Indicator: "Anchor to name" setting.
+### Tweak
+- Removed the "Hide nameplate auras" setting (new settings from Blizzard makes this setting make no sense). Use the WoW Nameplate settings or BBP's Nameplate Auras section instead.
+### Bugfix
+- Fix Target Text still showing with "Show Target Text" off when its "Always on" setting was enabled.
 
 # BetterBlizzPlates 2.1.7
 ## WoW Forever

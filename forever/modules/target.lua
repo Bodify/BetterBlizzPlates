@@ -62,6 +62,9 @@ local function GetMirroredOffsets(anchorPoint, mirrorAnchor, xPos, yPos)
 end
 
 local function GetTargetIndicatorAnchor(frame, anchorPoint)
+    if frame.BetterBlizzPlates.config.targetIndicatorAnchorToName and frame.name then
+        return frame.name
+    end
     if rightSideAnchors[anchorPoint] then
         return BBP.GetLevelRowAnchor(frame)
     end
@@ -163,6 +166,7 @@ function BBP.TargetIndicator(frame)
 
     if not config.targetIndicatorInitialized or BBP.needsUpdate then
         config.targetIndicatorAnchor = BetterBlizzPlatesDB.targetIndicatorAnchor
+        config.targetIndicatorAnchorToName = BetterBlizzPlatesDB.targetIndicatorAnchorToName
         config.targetIndicatorXPos = BetterBlizzPlatesDB.targetIndicatorXPos
         config.targetIndicatorYPos = BetterBlizzPlatesDB.targetIndicatorYPos
         config.targetIndicatorScale = BetterBlizzPlatesDB.targetIndicatorScale

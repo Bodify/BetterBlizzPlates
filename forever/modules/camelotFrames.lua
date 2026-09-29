@@ -29,7 +29,7 @@ local LEVEL_BADGE_BOTTOM_INSET = 0.5
 local LEVEL_BADGE_WIDTH = 22
 local CLASSIC_LEVEL_NAME_NUDGE = 14
 local SIDE_LEVEL_WIDTH = 17
-local SIDE_LEVEL_X_OFFSET = 3
+local SIDE_LEVEL_X_OFFSET = 4
 local SIDE_LEVEL_HEIGHT = 16
 local LEVEL_TEXT_FONT = "Fonts\\FRIZQT__.TTF"
 local LEVEL_TEXT_SIZE = 10
@@ -103,6 +103,11 @@ end
 local function LevelBadgeFollowsHealthBar()
     local db = BetterBlizzPlatesDB
     return not (db.classicNameplates or db.classicRetailNameplates)
+end
+
+function BBP.EliteRingActive()
+    local db = BetterBlizzPlatesDB
+    return db.eliteDragonTweaks and db.levelFrameEliteIcon and true or false
 end
 
 function BBP.IsLevelHidden(frame)
@@ -481,7 +486,7 @@ local function PlaceLevelText(frame, overlay, db)
     overlay.skull:SetPoint(point, relTo, relPoint, x, y)
 end
 
-local CLASSIC_LEVEL_TEXT_SIZE = 13
+local CLASSIC_LEVEL_TEXT_SIZE = 11
 
 function BBP.PlaceClassicLevelText(frame)
     local classicLevel = frame and frame.ClassicLevelFrame
@@ -503,8 +508,8 @@ function BBP.PlaceClassicLevelText(frame)
         y = db.levelTextYPos or 0
     else
         textPoint, skullPoint, relPoint, y = "CENTER", "LEFT", "RIGHT", 0
-        textX = noBackground and 10.5 or 8.5
-        skullX = noBackground and 3.5 or 0.5
+        textX = noBackground and 13 or 10
+        skullX = noBackground and 4 or 2
     end
     local layout = classicLevel.bbpLayout
     if layout and layout[1] == textPoint and layout[2] == relPoint and layout[3] == textX and layout[4] == skullX and layout[5] == y and layout[6] == size then return end
@@ -524,7 +529,7 @@ local function UpdateLevelOverlay(frame, levelFrame, db, levelHidden)
     local placement = (ringOnHealthBar and "ring") or (sideLevel and "side") or "badge"
     local showRing = false
     local classification
-    if db.levelFrameEliteIcon and (not levelHidden or ringOnHealthBar) and frame.unit then
+    if BBP.EliteRingActive() and (not levelHidden or ringOnHealthBar) and frame.unit then
         classification = UnitClassification(frame.unit)
         showRing = ELITE_CLASSIFICATIONS[classification] or false
     end

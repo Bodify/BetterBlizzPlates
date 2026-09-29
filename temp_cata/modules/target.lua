@@ -61,6 +61,13 @@ local function GetMirroredOffsets(anchorPoint, mirrorAnchor, xPos, yPos)
     return (from.h ~= to.h) and -xPos or xPos, (from.v ~= to.v) and -yPos or yPos
 end
 
+local function GetTargetIndicatorAnchor(frame, config)
+    if config.targetIndicatorAnchorToName and frame.name then
+        return frame.name, true
+    end
+    return frame.healthBar
+end
+
 local function GetClassicLevelOffset(anchorPoint)
     if not rightSideAnchors[anchorPoint] then return 0 end
     if not BetterBlizzPlatesDB.classicNameplates or BetterBlizzPlatesDB.hideLevelFrame then return 0 end
@@ -162,6 +169,7 @@ function BBP.TargetIndicator(frame)
 
     if not config.targetIndicatorInitialized or BBP.needsUpdate then
         config.targetIndicatorAnchor = BetterBlizzPlatesDB.targetIndicatorAnchor
+        config.targetIndicatorAnchorToName = BetterBlizzPlatesDB.targetIndicatorAnchorToName
         config.targetIndicatorXPos = BetterBlizzPlatesDB.targetIndicatorXPos
         config.targetIndicatorYPos = BetterBlizzPlatesDB.targetIndicatorYPos
         config.targetIndicatorScale = BetterBlizzPlatesDB.targetIndicatorScale
@@ -183,7 +191,9 @@ function BBP.TargetIndicator(frame)
 
         ApplyTargetIndicatorTexture(frame.targetIndicator, config.targetIndicatorIcon)
         ApplyTargetIndicatorColor(frame.targetIndicator, config)
-        frame.targetIndicator:SetPoint("CENTER", frame.healthBar, config.targetIndicatorAnchor, config.targetIndicatorXPos + GetClassicLevelOffset(config.targetIndicatorAnchor), config.targetIndicatorYPos)
+        local anchorFrame, onName = GetTargetIndicatorAnchor(frame, config)
+        frame.targetIndicator:ClearAllPoints()
+        frame.targetIndicator:SetPoint("CENTER", anchorFrame, config.targetIndicatorAnchor, config.targetIndicatorXPos + (onName and 0 or GetClassicLevelOffset(config.targetIndicatorAnchor)), config.targetIndicatorYPos)
         --frame.targetIndicator:SetPoint("CENTER", frame, config.targetIndicatorAnchor, config.targetIndicatorXPos, config.targetIndicatorYPos-17)
         frame.targetIndicator:SetScale( config.targetIndicatorScale)
         frame.targetIndicator:SetRotation(config.targetIndicatorRotation)
@@ -200,7 +210,7 @@ function BBP.TargetIndicator(frame)
             ApplyTargetIndicatorColor(frame.targetIndicatorMirror, config)
             frame.targetIndicatorMirror:ClearAllPoints()
             local mirrorXPos, mirrorYPos = GetMirroredOffsets(config.targetIndicatorAnchor, mirrorAnchor, config.targetIndicatorXPos, config.targetIndicatorYPos)
-            frame.targetIndicatorMirror:SetPoint("CENTER", frame.healthBar, mirrorAnchor, mirrorXPos + GetClassicLevelOffset(mirrorAnchor), mirrorYPos)
+            frame.targetIndicatorMirror:SetPoint("CENTER", anchorFrame, mirrorAnchor, mirrorXPos + (onName and 0 or GetClassicLevelOffset(mirrorAnchor)), mirrorYPos)
             frame.targetIndicatorMirror:SetScale(config.targetIndicatorScale)
             frame.targetIndicatorMirror:SetRotation(GetRotationForAnchor(mirrorAnchor) + config.targetIndicatorIcon.rotation)
         elseif frame.targetIndicatorMirror then

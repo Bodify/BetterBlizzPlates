@@ -889,6 +889,10 @@ end
 function BBP.UpdateNameplateTargetText(frame, unit)
     if not unit then return end
     local db = BetterBlizzPlatesDB
+    if not db.showNameplateTargetText then
+        if frame.TargetText then frame.TargetText:SetText("") end
+        return
+    end
     local castBar = frame.CastBar or frame.castBar or frame.CastBarsContainer.castBar
 
     if not frame.TargetText then
@@ -1025,7 +1029,7 @@ end
 
 local targetTextEventFrame = CreateFrame("Frame")
 function BBP.ToggleTargetTextAlwaysShow()
-    if BetterBlizzPlatesDB.targetTextAlwaysShow then
+    if BetterBlizzPlatesDB.showNameplateTargetText and BetterBlizzPlatesDB.targetTextAlwaysShow then
         targetTextEventFrame:RegisterEvent("UNIT_TARGET")
         targetTextEventFrame:SetScript("OnEvent", function(_, _, unit)
             if not string.match(unit, "nameplate") then return end

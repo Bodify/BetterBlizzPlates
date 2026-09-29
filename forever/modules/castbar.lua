@@ -253,9 +253,6 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         if frame.castBarIconFrame then
             frame.castBarIconFrame:SetScale(castBarIconScale)
         end
-        if castBar.bbpClassicIcon then
-            castBar.bbpClassicIcon:SetScale(castBarIconScale)
-        end
         castBar.Spark:SetSize(4, castBarHeight + 5)
         castBar.Text:SetScale(castBarTextScale)
         --castBar.BorderShield:SetScale(borderShieldSize)
@@ -274,8 +271,10 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     if castBarPixelBorder then
         BBP.SetupBorderOnFrame(castBar)
-        frame.castBar.CastTargetIndicator:SetParent(frame.castBar.borders)
-        frame.castBar.CastTargetIndicator:SetDrawLayer("OVERLAY", 6)
+        if not BBP.UsesClassicCastbar() then
+            frame.castBar.CastTargetIndicator:SetParent(frame.castBar.borders)
+            frame.castBar.CastTargetIndicator:SetDrawLayer("OVERLAY", 6)
+        end
         castBar.ImportantCastIndicator:SetParent(frame.castBar.borders)
         --castBar.ImportantCastFlashAnim:SetParent(frame.castBar.borders)
     end
@@ -299,6 +298,10 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
             hooksecurefunc(frame.castBar.BorderShield, "SetShown", function(self, shown)
                 if frame:IsForbidden() then return end
+                if BBP.UsesClassicCastbar() then
+                    frame.castBarIconFrame.Icon.borders:SetAlpha(1)
+                    return
+                end
                 frame.castBarIconFrame.Icon.borders:SetAlphaFromBoolean(shown, 0, 1)
             end)
             castBar.adjustedIcon = true
@@ -496,9 +499,6 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     BBP.UpdateCastbarBorderShieldTexture(castBar)
 
     castBar.Icon:SetScale(castBarIconScale)
-    if castBar.bbpClassicIcon then
-        castBar.bbpClassicIcon:SetScale(castBarIconScale)
-    end
     if frame.castBarIconFrame then
         frame.castBarIconFrame:SetScale(castBarIconScale)
     end
@@ -521,7 +521,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
             castBar.Icon:SetDrawLayer("OVERLAY", 2)
         else
             if (casting or channeling) then
-                if notInterruptible ~= nil then
+                if notInterruptible ~= nil and not BBP.UsesClassicCastbar() then
                     castBar.Icon:SetAlphaFromBoolean(notInterruptible, 0, 1)
                     if frame.castBarIconFrame then
                         frame.castBarIconFrame.Icon:SetAlphaFromBoolean(notInterruptible, 0, 1)
@@ -745,6 +745,10 @@ end
 function BBP.UpdateNameplateTargetText(frame, unit)
     if not unit then return end
     local db = BetterBlizzPlatesDB
+    if not db.showNameplateTargetText then
+        if frame.TargetText then frame.TargetText:SetText("") end
+        return
+    end
 
     if not frame.TargetText then
         frame.TargetText = BBP.OverlayFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -880,7 +884,7 @@ end
 
 local targetTextEventFrame = CreateFrame("Frame")
 function BBP.ToggleTargetTextAlwaysShow()
-    if BetterBlizzPlatesDB.targetTextAlwaysShow then
+    if BetterBlizzPlatesDB.showNameplateTargetText and BetterBlizzPlatesDB.targetTextAlwaysShow then
         targetTextEventFrame:RegisterEvent("UNIT_TARGET")
         targetTextEventFrame:SetScript("OnEvent", function(_, _, unit)
             if not string.match(unit, "nameplate") then return end

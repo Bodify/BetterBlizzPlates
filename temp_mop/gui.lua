@@ -5753,7 +5753,11 @@ local function guiGeneralTab()
     local showNameplateCastbarTimer = CreateCheckbox("showNameplateCastbarTimer", "Cast timer next to castbar", BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
     showNameplateCastbarTimer:SetPoint("LEFT", alwaysHideEnemyCastbar.text, "RIGHT", 0, 0)
 
-    local showNameplateTargetText = CreateCheckbox("showNameplateTargetText", "Show Target Text", BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
+    local showNameplateTargetText = CreateCheckbox("showNameplateTargetText", "Show Target Text", BetterBlizzPlates, nil, function()
+        BBP.ToggleSpellCastEventRegistration()
+        BBP.ToggleTargetTextAlwaysShow()
+        BBP.RefreshAllNameplates()
+    end)
     showNameplateTargetText:SetPoint("TOPLEFT", alwaysHideEnemyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(showNameplateTargetText, "Nameplate Target Text", "Show the nameplates current target underneath the castbar while casting.", "More settings in the Advanced Settings section like position, size and \"Always show\" etc.")
 
@@ -7176,6 +7180,10 @@ local function guiPositionAndScale()
     anchorSubTarget.double:SetPoint("TOPLEFT", targetIndicatorHideIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubTarget.double, "Double Markers", "Show target marker on both sides.\n\nChange Anchor to LEFT/RIGHT to have them on the sides.")
 
+    anchorSubTarget.anchorToName = CreateCheckbox("targetIndicatorAnchorToName", "Anchor to name", contentFrame)
+    anchorSubTarget.anchorToName:SetPoint("TOPLEFT", anchorSubTarget.double, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubTarget.anchorToName, "Anchor to Name", "Anchor the target marker to the name instead of the healthbar.")
+
     anchorSubTarget.UpdateDoubleState = function()
         if targetIndicatorHideIcon:GetChecked() then
             anchorSubTarget.double:Disable()
@@ -7191,7 +7199,7 @@ local function guiPositionAndScale()
     -- Extended Settings Button
     anchorSubTarget.extendedSettingsButton = CreateFrame("Button", nil, contentFrame, "UIPanelButtonTemplate")
     anchorSubTarget.extendedSettingsButton:SetSize(120, 25)
-    anchorSubTarget.extendedSettingsButton:SetPoint("TOPLEFT", anchorSubTarget.double, "BOTTOMLEFT", 12, -8)
+    anchorSubTarget.extendedSettingsButton:SetPoint("TOPLEFT", anchorSubTarget.anchorToName, "BOTTOMLEFT", 12, -8)
     anchorSubTarget.extendedSettingsButton:SetText("More options")
     CreateTooltip(anchorSubTarget.extendedSettingsButton, "Open more settings for Target Indicator")
 
@@ -10129,11 +10137,6 @@ local function guiNameplateAuras()
 
     local enableNameplateAuraCustomisation = CreateCheckbox("enableNameplateAuraCustomisation", "Enable Aura Settings", contentFrame)
     enableNameplateAuraCustomisation:SetPoint("TOPLEFT", contentFrame, "BOTTOMLEFT", 50, 195)
-    enableNameplateAuraCustomisation:HookScript("OnClick", function (self)
-        if self:GetChecked() then
-            BetterBlizzPlatesDB.hideNameplateAuras = false
-        end
-    end)
     CreateTooltip(enableNameplateAuraCustomisation, "Enable all aura settings like filters and customization.")
 
     --------------------------
