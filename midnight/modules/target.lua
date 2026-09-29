@@ -484,17 +484,21 @@ function BBP.UpdateNameplateResourcePositionForCasting(nameplate, bypass)
         local isCasting = UnitCastingInfo("target") or UnitChannelInfo("target")
         local classOffset = classResourceYOffsets[playerClass] or 0
         xPos = xPos + (classResourceXOffsets[playerClass] or 0)
+        local castAnchor = nameplate.UnitFrame.castBar
+        if BBP.UsesClassicCastbar() and nameplate.UnitFrame.CastBarsContainer then
+            castAnchor = nameplate.UnitFrame.CastBarsContainer
+        end
 
         -- Adjust position based on casting state and setting
         if bypass then
             RepositionClassFrame("TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset + classOffset)
         elseif isCasting then
-            RepositionClassFrame("TOP", nameplate.UnitFrame.castBar, "BOTTOM", xPos, yOffset + classOffset)
+            RepositionClassFrame("TOP", castAnchor, "BOTTOM", xPos, yOffset + classOffset)
         else
             if not nameplate.UnitFrame.castBar:IsShown() then
                 RepositionClassFrame("TOP", nameplate.UnitFrame.healthBar, "BOTTOM", xPos, yOffset + classOffset)
             else
-                RepositionClassFrame("TOP", nameplate.UnitFrame.castBar, "BOTTOM", xPos, yOffset + classOffset)
+                RepositionClassFrame("TOP", castAnchor, "BOTTOM", xPos, yOffset + classOffset)
             end
         end
     end
