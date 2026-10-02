@@ -414,14 +414,20 @@ local classResourcePrdYOffsets = {
 local playerClass = UnitClassBase("player")
 local prdClassFrame = prdClassFrame or PersonalResourceDisplayFrame.classFrame
 
-local function BBFOwnsPrdResource()
-    return BetterBlizzFramesDB and BetterBlizzFramesDB.prdResourceAdjust and true or false
-end
-
 local function ResolveClassFrame()
     prdClassFrame = prdClassFrame or PersonalResourceDisplayFrame.classFrame
         or BBP.ComboPointBar
     return prdClassFrame
+end
+
+local function OnTargetAlongsideFrames()
+    return BBP.ComboPointBar and BBP.ComboPointsAlongsideFrames and BBP.ComboPointsAlongsideFrames()
+        and ResolveClassFrame() == BBP.ComboPointBar or false
+end
+
+local function BBFOwnsPrdResource()
+    if not (BetterBlizzFramesDB and BetterBlizzFramesDB.prdResourceAdjust) then return false end
+    return not OnTargetAlongsideFrames()
 end
 
 local function RepositionClassFrame(point, relativeTo, relativePoint, xOfs, yOfs)
@@ -554,7 +560,7 @@ function BBP.TargetResourceUpdater()
                 RepositionClassFrame("BOTTOM", BBP.GetLevelSpanAnchor(nameplateForTarget.UnitFrame, "TOP"), "TOP", BetterBlizzPlatesDB.nameplateResourceXPos, BetterBlizzPlatesDB.nameplateResourceYPos + 30)
             end
         else
-            if BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf then
+            if BetterBlizzPlatesDB.nameplateResourceOnTargetAndNoTargetOnSelf and not OnTargetAlongsideFrames() then
                 if PersonalResourceDisplayFrame then
                     local hideResource = BetterBlizzPlatesDB.hideResourceFrame
                     local nameplateResourceScale = BetterBlizzPlatesDB.nameplateResourceScale or 0.7

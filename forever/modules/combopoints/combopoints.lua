@@ -49,7 +49,16 @@ local function SetDruidInstant(point, isActive)
     point.BG_Inactive:SetAlpha(isActive and 0 or 1)
 end
 
+function BBP.ComboPointsAlongsideFrames()
+    local fdb = BBF and BetterBlizzFramesDB
+    if not fdb or not fdb.foreverComboPoints or not fdb.prdResourceAdjust or fdb.prdResourceOnTarget then return false end
+    local db = BetterBlizzPlatesDB
+    return db.foreverComboPoints and not db.disablePrdMovement
+        and (db.nameplateResourceOnTarget == "1" or db.nameplateResourceOnTarget == true) or false
+end
+
 local function FramesOwnsDisplay()
+    if BBP.ComboPointsAlongsideFrames() then return false end
     return BBF and BBF.ComboPointsPlatesShouldShow and not BBF.ComboPointsPlatesShouldShow() or false
 end
 
@@ -171,10 +180,10 @@ function BBP.UpdateComboPointBarParent(relativeTo)
     end
 
     if onPrd then
-        prdBar:SetFrameStrata(prd:GetFrameStrata())
+        prdBar:SetFrameStrata("BACKGROUND")
         prdBar:SetFrameLevel(prdBar.bbpBaseLevel)
     elseif not BetterBlizzPlatesDB.changeResourceStrata and relativeTo.GetFrameStrata then
-        prdBar:SetFrameStrata(relativeTo:GetFrameStrata())
+        prdBar:SetFrameStrata("BACKGROUND")
         prdBar:SetFrameLevel(relativeTo:GetFrameLevel() + NAMEPLATE_LEVEL_BUMP)
     end
 
@@ -230,6 +239,7 @@ function BBP.ForeverComboPoints()
 
     local info = CLASS_INFO[class]
     prdBar = CreateFrame("Frame", "BBPComboPointBar", prd, "HorizontalLayoutFrame")
+    prdBar:SetFrameStrata("BACKGROUND")
     prdBar.spacing = 4
     prdBar.topPadding = info.topPadding
     prdBar.leftPadding = 0
