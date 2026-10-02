@@ -1,32 +1,12 @@
-if BBP.isMidnight then return end
--- Helper function to format health numbers
-local function FormatHealthValue(health, useMillions, showDecimal)
-    local formatString
-
-    if health >= 1000000000 then
-        -- Billion
-        formatString = showDecimal and "%.2fb" or "%.0fb"
-        return string.format(formatString, health / 1000000000)
-
-    elseif health >= 1000000 then
-        if useMillions then
-            -- Million
-            formatString = showDecimal and "%.2fm" or "%.0fm"
-            return string.format(formatString, health / 1000000)
-        else
-            -- Thousands fallback
-            formatString = showDecimal and "%.0fk" or "%.0fk"
-            return string.format(formatString, health / 1000)
-        end
-
-    elseif health >= 1000 then
-        -- Thousands
-        formatString = showDecimal and "%.1fk" or "%.0fk"
-        return string.format(formatString, health / 1000)
-
-    else
-        return tostring(health)
+local notFullCurve
+local function GetNotFullCurve()
+    if not notFullCurve then
+        notFullCurve = C_CurveUtil.CreateCurve()
+        notFullCurve:SetType(Enum.LuaCurveType.Step)
+        notFullCurve:AddPoint(0.0, 1)
+        notFullCurve:AddPoint(1.0, 0)
     end
+    return notFullCurve
 end
 
 function BBP.HealthNumbers(frame)
@@ -105,54 +85,46 @@ function BBP.HealthNumbers(frame)
 
     local health = UnitHealth(unit)
     local maxHealth = UnitHealthMax(unit)
+    local percent = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100) or 0
+    local notFullHp = UnitHealthPercent(unit, true, GetNotFullCurve())
 
-    -- Check if health is full and config.healthNumbersNotOnFullHp is set
-    if config.healthNumbersNotOnFullHp and health == maxHealth then
-        frame.healthNumbers:Hide()
-        return
-    end
-
-    -- Determine the appropriate health text based on configuration
-    local FormatHealth = config.healthNumbersRawNumbers and function(v) return tostring(v) end or function(v) return FormatHealthValue(v, config.healthNumbersUseMillions, config.healthNumbersShowDecimal) end
+    local FormatHealth = config.healthNumbersRawNumbers and tostring or AbbreviateNumbers
 
     local healthText = ""
     if config.healthNumbersCombined then
-        -- New setting: show both the numeric value and percentage
         local numericHealth = FormatHealth(health)
-        local percentHealth = string.format("%.0f%%", (health / maxHealth) * 100)
+        local percentHealth = string.format("%.0f%%", percent)
         if config.healthNumbersSwapped then
-            healthText = percentHealth .. " - " .. numericHealth
+            healthText = string.format("%s - %s", percentHealth, numericHealth)
         else
-            healthText = numericHealth .. " - " .. percentHealth
+            healthText = string.format("%s - %s", numericHealth, percentHealth)
         end
     elseif config.healthNumbersCurrentFull then
         if config.healthNumbersPercentage then
-            -- Format both current and max health as percentages
-            local currentHealthPercentage = string.format(config.healthNumbersShowDecimal and "%.1f%%" or "%.0f%%", (health / maxHealth) * 100)
-            local maxHealthPercentage = "100%"
-            if config.healthNumbersSwapped then
-                healthText = maxHealthPercentage .. " / " .. currentHealthPercentage
-            else
-                healthText = currentHealthPercentage .. " / " .. maxHealthPercentage
+            local formatStr = config.healthNumbersShowDecimal and "%.1f" or "%.0f"
+            local currentHealthPercentage = string.format(formatStr, percent)
+            local maxHealthPercentage = "100"
+            if config.healthNumbersPercentSymbol then
+                currentHealthPercentage = currentHealthPercentage .. "%"
+                maxHealthPercentage = maxHealthPercentage .. "%"
             end
-            if not config.healthNumbersPercentSymbol then
-                -- Remove percentage symbol if not needed
-                currentHealthPercentage = string.format(config.healthNumbersShowDecimal and "%.1f" or "%.0f", (health / maxHealth) * 100)
-                healthText = currentHealthPercentage .. " / 100"
+            if config.healthNumbersSwapped then
+                healthText = string.format("%s / %s", maxHealthPercentage, currentHealthPercentage)
+            else
+                healthText = string.format("%s / %s", currentHealthPercentage, maxHealthPercentage)
             end
         else
-            -- Default to showing raw numbers
             local currentHealthFormatted = FormatHealth(health)
             local maxHealthFormatted = FormatHealth(maxHealth)
             if config.healthNumbersSwapped then
-                healthText = maxHealthFormatted .. " / " .. currentHealthFormatted
+                healthText = string.format("%s / %s", maxHealthFormatted, currentHealthFormatted)
             else
-                healthText = currentHealthFormatted .. " / " .. maxHealthFormatted
+                healthText = string.format("%s / %s", currentHealthFormatted, maxHealthFormatted)
             end
         end
     elseif config.healthNumbersPercentage then
-        -- Format the percentage based on whether decimals are shown or not
-        healthText = string.format(config.healthNumbersShowDecimal and "%.1f" or "%.0f", (health / maxHealth) * 100)
+        local formatStr = config.healthNumbersShowDecimal and "%.1f" or "%.0f"
+        healthText = string.format(formatStr, percent)
         if config.healthNumbersPercentSymbol then
             healthText = healthText .. "%"
         end
@@ -176,18 +148,24 @@ function BBP.HealthNumbers(frame)
     frame.healthNumbers:SetScale(config.healthNumbersScale or 1)
 
     if config.healthNumbersTestMode then
-        -- Set base test values for health.
-        local testCurrentHealth = 69000  -- Represents current health.
-        local testMaxHealth = 420000     -- Represents maximum health.
+        local testCurrentHealth = 69000
+        local testMaxHealth = 420000
+        local testPercent = (testCurrentHealth / testMaxHealth) * 100
 
-        -- Determine the format based on configuration
-        if config.healthNumbersCurrentFull then
-            -- Format both current and max health.
+        if config.healthNumbersCombined then
+            local numericHealth = FormatHealth(testCurrentHealth)
+            local percentHealth = string.format("%.0f%%", testPercent)
+            if config.healthNumbersSwapped then
+                healthText = string.format("%s - %s", percentHealth, numericHealth)
+            else
+                healthText = string.format("%s - %s", numericHealth, percentHealth)
+            end
+        elseif config.healthNumbersCurrentFull then
             local currentHealthFormatted, maxHealthFormatted
             if config.healthNumbersPercentage then
-                currentHealthFormatted = string.format(config.healthNumbersShowDecimal and "%.1f" or "%.0f", (testCurrentHealth / testMaxHealth) * 100)
+                local formatStr = config.healthNumbersShowDecimal and "%.1f" or "%.0f"
+                currentHealthFormatted = string.format(formatStr, testPercent)
                 maxHealthFormatted = "100"
-                -- Check and append the percentage symbol if required
                 if config.healthNumbersPercentSymbol then
                     currentHealthFormatted = currentHealthFormatted .. "%"
                     maxHealthFormatted = maxHealthFormatted .. "%"
@@ -197,24 +175,29 @@ function BBP.HealthNumbers(frame)
                 maxHealthFormatted = FormatHealth(testMaxHealth)
             end
             if config.healthNumbersSwapped then
-                healthText = maxHealthFormatted .. " / " .. currentHealthFormatted
+                healthText = string.format("%s / %s", maxHealthFormatted, currentHealthFormatted)
             else
-                healthText = currentHealthFormatted .. " / " .. maxHealthFormatted
+                healthText = string.format("%s / %s", currentHealthFormatted, maxHealthFormatted)
             end
         elseif config.healthNumbersPercentage then
-            -- Only current health as a percentage of max
-            healthText = string.format(config.healthNumbersShowDecimal and "%.1f" or "%.0f", (testCurrentHealth / testMaxHealth) * 100)
+            local formatStr = config.healthNumbersShowDecimal and "%.1f" or "%.0f"
+            healthText = string.format(formatStr, testPercent)
             if config.healthNumbersPercentSymbol then
                 healthText = healthText .. "%"
             end
         else
-            -- Default to showing current health in raw format
             healthText = FormatHealth(testCurrentHealth)
         end
     end
 
     frame.healthNumbers:SetText(healthText)
     frame.healthNumbers:Show()
+
+    if config.healthNumbersNotOnFullHp then
+        frame.healthNumbers:SetAlpha(notFullHp)
+    else
+        frame.healthNumbers:SetAlpha(1)
+    end
 end
 
 local healthEventFrame

@@ -1,9 +1,26 @@
-if BBP.isMidnight then return end
 function BBP.DruidBlueComboPoints()
     if not BetterBlizzPlatesDB.druidOverstacks then return end
     if UnitClassBase("player") ~= "DRUID" then return end
-    local druidNp = _G.ClassNameplateBarFeralDruidFrame
+    if BBP.druidBlueCombos then return end
+    if BetterBlizzFramesDB and BetterBlizzFramesDB.druidOverstacks then
+        return
+    end
     local msgPrinted
+
+    local function GetPrdComboPoints()
+        local classFrame = PersonalResourceDisplayFrame and PersonalResourceDisplayFrame.classFrame
+        if not classFrame then return end
+        if classFrame:IsForbidden() then
+            if not msgPrinted then
+                C_Timer.After(1, function()
+                    BBP.Print("Due to Nameplate Resource being forbidden Overcharge blue combopoints cannot be updated until a reload.")
+                end)
+                msgPrinted = true
+            end
+            return
+        end
+        return classFrame
+    end
 
     local function CreateChargedPoints(comboPointFrame)
         if not comboPointFrame then return end
@@ -35,6 +52,7 @@ function BBP.DruidBlueComboPoints()
                 overlayActive:SetSize(20, 20)
                 overlayActive:SetPoint("CENTER", comboPoint, "CENTER")
                 comboPoint.ChargedFrameActive = overlayActive
+
                 overlayActive:Hide()
             end
         end
@@ -44,18 +62,10 @@ function BBP.DruidBlueComboPoints()
         end
     end
 
-    CreateChargedPoints(druidNp)
+    CreateChargedPoints(GetPrdComboPoints())
 
     local function UpdateComboPoints(self)
-        if self:IsForbidden() then
-            if not msgPrinted then
-                C_Timer.After(1, function()
-                    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Due to Nameplate Resource being forbidden Overcharge blue combopoints cannot be updated until a reload.")
-                end)
-                msgPrinted = true
-            end
-            return
-        end
+        if not self then return end
         local aura = C_UnitAuras.GetPlayerAuraBySpellID(405189)
 
         if not aura then
@@ -85,17 +95,17 @@ function BBP.DruidBlueComboPoints()
             local comboPoint = self["ComboPoint"..i]
 
             if comboPoint then
-                if i <= aura.applications then  -- Show blue combo point and active overlay for stacks <= i
+                if i <= aura.applications then
                     self.overcharged = true
-                    comboPoint.Point_Icon:SetAtlas("UF-RogueCP-Icon-Blue") -- Blue combo point
+                    comboPoint.Point_Icon:SetAtlas("UF-RogueCP-Icon-Blue")
                     comboPoint.Point_Deplete:SetDesaturated(true)
                     comboPoint.Point_Deplete:SetVertexColor(0, 0, 1)
                     comboPoint.Smoke:SetDesaturated(true)
                     comboPoint.Smoke:SetVertexColor(0, 0, 1)
                     comboPoint.FB_Slash:SetDesaturated(true)
                     comboPoint.FB_Slash:SetVertexColor(0, 0, 1)
-                    comboPoint.ChargedFrameActive:Show()  -- Show active overlay
-                else  -- Revert to default combo point and hide the overlay for stacks > i
+                    comboPoint.ChargedFrameActive:Show()
+                else
                     comboPoint.Point_Icon:SetAtlas("UF-DruidCP-Icon")
                     comboPoint.Point_Deplete:SetDesaturated(false)
                     comboPoint.Point_Deplete:SetVertexColor(1, 1, 1)
@@ -113,8 +123,9 @@ function BBP.DruidBlueComboPoints()
     if currentForm ~= 1 then
         local formWatch = CreateFrame("Frame")
         local function OnFormChanged()
-            CreateChargedPoints(druidNp)
-            if druidNp.blueOverchargePoints then
+            local prd = GetPrdComboPoints()
+            CreateChargedPoints(prd)
+            if prd and prd.blueOverchargePoints then
                 formWatch:UnregisterAllEvents()
             end
         end
@@ -122,20 +133,55 @@ function BBP.DruidBlueComboPoints()
         formWatch:SetScript("OnEvent", OnFormChanged)
     end
 
-    druidNp.auraWatch = CreateFrame("Frame", nil, UIParent)
-    druidNp.auraWatch:SetScript("OnEvent", function()
-        UpdateComboPoints(druidNp)
+    local auraWatch = CreateFrame("Frame")
+    auraWatch:SetScript("OnEvent", function()
+        local prd = GetPrdComboPoints()
+        CreateChargedPoints(prd)
+        UpdateComboPoints(prd)
     end)
-    druidNp.auraWatch:RegisterUnitEvent("UNIT_AURA", "player")
+    auraWatch:RegisterUnitEvent("UNIT_AURA", "player")
+    BBP.druidBlueCombos = true
 end
-
-
 
 function BBP.DruidAlwaysShowCombos()
     if not BetterBlizzPlatesDB.druidAlwaysShowCombos then return end
     if UnitClassBase("player") ~= "DRUID" then return end
     if BBP.DruidAlwaysShowCombosActive then return end
-    local frame = ClassNameplateBarFeralDruidFrame
+    local frame = PersonalResourceDisplayFrame.classFrame--ClassNameplateBarFeralDruidFrame
+
+    local function CreateChargedPoints(comboPointFrame)
+        if not comboPointFrame then return end
+        if comboPointFrame.taggedCombos then return end
+
+        local comboPoints = {}
+        local visibleComboPoints = 0
+
+        for i = 1, comboPointFrame:GetNumChildren() do
+            local child = select(i, comboPointFrame:GetChildren())
+
+            if child:IsShown() then
+                visibleComboPoints = visibleComboPoints + 1
+                table.insert(comboPoints, child)
+            end
+        end
+
+        table.sort(comboPoints, function(a, b)
+            return (a.layoutIndex or 0) < (b.layoutIndex or 0)
+        end)
+
+        for i = 1, 5 do
+            if comboPoints[i] then
+                local comboPoint = comboPoints[i]
+                comboPointFrame["ComboPoint" .. i] = comboPoint
+            end
+        end
+
+        if visibleComboPoints == 5 then
+            comboPointFrame.taggedCombos = true
+        end
+    end
+
+    CreateChargedPoints(frame)
 
     local function UpdateDruidComboPoints(self)
         if not self then return end
@@ -146,7 +192,7 @@ function BBP.DruidAlwaysShowCombos()
         local comboPoints = UnitPower("player", self.powerType)
 
         if comboPoints > 0 then
-            if GetCVarBool("nameplateResourceOnTarget") and not UnitExists("target") then
+            if (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true) and not UnitExists("target") then
                 self:Hide()
             else
                 self:Show()
@@ -168,8 +214,8 @@ function BBP.DruidAlwaysShowCombos()
     frame:HookScript("OnHide", function(self)
         if not self then return end
         if self:IsForbidden() then return end
-        if UnitPower("player", self.powerType) > 0 then
-            if GetCVarBool("nameplateResourceOnTarget") and not UnitExists("target") then
+        if UnitPower("player", ClassNameplateBarFeralDruidFrame.powerType) > 0 then
+            if (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true) and not UnitExists("target") then
                 self:Hide()
             else
                 self:Show()

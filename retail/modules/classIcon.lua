@@ -1,4 +1,3 @@
-if BBP.isMidnight then return end
 -- Healer spec id's
 local HealerSpecs = {
     [105] = true, --> druid resto
@@ -19,34 +18,17 @@ local TankSpecs = {
     [73] = true --> Warrior Protection
 }
 
-local icons = {
-    [121177] = 1119887, -- Red orb
-    [121176] = 1119886, -- Green orb
-    [121164] = 1119885, -- Blue orb
-    [121175] = 1119888, -- Purple orb
-    [156621] = 132486, -- Alliance Flag
-    [156618] = 132485, -- Horde Flag
-    [34976] = 132487, -- Netherstorm Flag
-    [434339] = 463896, -- Deephaul Ravine Crystal
-    [168506] = 134334, -- Ancient Artifact (Ashran)
-    [231813] = 1567722, -- Green Dunkball (Brawl)
-    [231814] = 1545374, -- Orange Dunkball (Brawl)
-    [231529] = 1567723 -- Purple Dunkball (Brawl)
+-- Map PvPUnitClassification enum values to icon textures
+local classificationIcons = {
+    [0] = 132485,  -- FlagCarrierHorde
+    [1] = 132486,  -- FlagCarrierAlliance
+    [2] = 132487,  -- FlagCarrierNeutral
+    [7] = 1119885, -- OrbCarrierBlue
+    [8] = 1119886, -- OrbCarrierGreen
+    [9] = 1119887, -- OrbCarrierOrange (Red)
+    [10] = 1119888, -- OrbCarrierPurple
 }
-BBP.ClassIndicatorIcons = icons
-
-local bgsWithObjectives = {
-    [489] = true, -- Warsong Gulch
-    [2106] = true, -- Warsong Gulch 2
-    [566] = true, -- Eye of the Storm
-    [968] = true, -- Eye of the Storm Rated
-    [998] = true, -- Temple of Kotmogu
-    [2656] = true, --Deephaul Ravine
-    [1191] = true, -- Ashran
-    [2245] = true, -- Deepwind Gorge
-    [1105] = true, -- Deepwind Gorge Brawl
-    [726] = true, -- Twin Peaks
-}
+BBP.ClassIndicatorIcons = classificationIcons
 
 local petIcons = {
     [417] = 136217, -- felhunter
@@ -122,12 +104,33 @@ local petSpellIcons = {
     [264360] = 132202, -- Wind Serpent — Winged Agility
     [263840] = 132203, -- Wolf — Furious Bite
     [263446] = 236197, -- Worm — Acid Spit
+    [1247058] = 6966389, -- Whiptails — Serrated Strike
+
+    -- Warlock pet abilities
+    [3110]   = 136218, -- Imp — Firebolt
+    [6360]  = 136220, -- Succubus — Whiplash
+    [19505]    = 136217, -- Felhunter — Devour Magic
+    [112042]  = 136221, -- Voidwalker — Suffering
+    [89751] = 136216, -- Felguard — Legion Strike
+
+    -- Mage
+    [135029] = 135862, -- Water Elemental — Water Jet
+
+    -- Death Knight
+    [47482] = 1531513, -- ghoul - leap
+}
+
+local petClasses = {
+    ["DEATHKNIGHT"] = true,
+    ["HUNTER"] = true,
+    ["MAGE"] = true,
+    ["WARLOCK"] = true,
 }
 
 local playerClass = UnitClassBase("player")
 local currentPetIcon = nil
 
-if playerClass == "HUNTER" or playerClass == "WARLOCK" or playerClass == "DEATHKNIGHT" or playerClass == "MAGE" then
+if petClasses[playerClass] then
     local f = CreateFrame("Frame")
     f:RegisterEvent("UNIT_PET")
 
@@ -148,7 +151,7 @@ if playerClass == "HUNTER" or playerClass == "WARLOCK" or playerClass == "DEATHK
             local pp = BetterBlizzPlatesDB.partyPointer and BetterBlizzPlatesDB.partyPointerShowPet
             local ci = BetterBlizzPlatesDB.classIndicator and BetterBlizzPlatesDB.classIndicatorShowPet
             if ci then
-                if playerClass == "HUNTER" then
+                if petClasses[playerClass] then
                     UpdateCurrentPetIcon()
                 end
                 C_Timer.After(0.5, function()
@@ -170,32 +173,12 @@ if playerClass == "HUNTER" or playerClass == "WARLOCK" or playerClass == "DEATHK
     end)
 end
 
-local function GetAuraIcon(frame, foundID, auraType, bgId)
-    -- If `foundID` exists in the table, return its color immediately
-    if foundID and icons[foundID] then
-        return icons[foundID]
+local function GetAuraIcon(frame)
+    local classification = UnitPvpClassification(frame.unit)
+    if classification and classificationIcons[classification] then
+        return classificationIcons[classification]
     end
-
-    if UnitPvpClassification(frame.unit) then
-        if bgId == 2656 then
-            return icons[434339]
-        elseif bgId == 566 or bgId == 968 then
-            return icons[34976]
-        else
-            -- Otherwise, scan buffs/debuffs based on `auraType`
-            for i = 1, 40 do
-                local _, _, _, _, _, _, _, _, _, spellID = BBP.TWWUnitAura(frame.unit, i, auraType or "HARMFUL")
-                if not spellID then
-                    break
-                end
-                if spellID and icons[spellID] then
-                    return icons[spellID]
-                end
-            end
-        end
-    end
-
-    return nil -- No matching aura found
+    return nil
 end
 
 local function BackgroundType(frame, bg)
@@ -204,9 +187,207 @@ local function BackgroundType(frame, bg)
         bg:SetSize(28, 28)
     else
         bg:SetAtlas("talents-node-choiceflyout-circle-greenglow")
-        local size = UnitIsUnit(frame.unit, "target") and 39 or 36
+        local size = UnitIsUnit("target", frame.unit) and 39 or 36
         bg:SetSize(size, size)
     end
+end
+
+local function GetCCGlowColor()
+    local db = BetterBlizzPlatesDB
+    if db.enableNameplateAuraCustomisation and db.nameplateAuraCCGlow then
+        local c = db.nameplateAuraCCGlowRGB
+        return c[1], c[2], c[3], c[4]
+    end
+    return 1, 0.874, 0, 1
+end
+
+local function InitClassIndicatorCCSlot(auraFrame, frame)
+    local square = BetterBlizzPlatesDB.classIconSquareBorderFriendly
+
+    auraFrame:SetSize(square and 27 or 26, square and 27 or 26)
+    auraFrame:SetPoint("CENTER", frame.classIndicator)
+
+    local icon = auraFrame:CreateTexture(nil, "OVERLAY", nil, 6)
+    icon:SetPoint("CENTER", auraFrame)
+    icon:SetSize(square and 20.5 or 26, square and 20.5 or 26)
+    auraFrame:SetIcon(icon)
+
+    local mask = auraFrame:CreateMaskTexture()
+    if square then
+        mask:SetAtlas("UI-Frame-IconMask")
+        mask:SetSize(21, 21)
+    else
+        mask:SetTexture("Interface/Masks/CircleMaskScalable")
+        mask:SetSize(27, 27)
+    end
+    mask:SetPoint("CENTER", icon)
+    icon:AddMaskTexture(mask)
+
+    local cooldown = CreateFrame("Cooldown", nil, auraFrame, "CooldownFrameTemplate")
+    cooldown:SetMinimumCountdownDuration(0)
+    cooldown:SetAllPoints(icon)
+    cooldown:SetDrawEdge(false)
+    cooldown:SetDrawSwipe(true)
+    cooldown:SetSwipeColor(0, 0, 0, 0.7)
+    if square then
+        cooldown:SetSwipeTexture("Interface\\Common\\common-iconmask")
+    else
+        cooldown:SetSwipeTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
+        cooldown:SetUseCircularEdge(true)
+    end
+    cooldown:SetReverse(true)
+    cooldown:SetHideCountdownNumbers(BetterBlizzPlatesDB.classIndicatorCCHideCdText and true or false)
+    auraFrame:SetDurationCooldown(cooldown)
+    auraFrame.bbpCooldown = cooldown
+
+    local glow = auraFrame:CreateTexture(nil, "OVERLAY", nil, 7)
+    glow:SetAtlas(square and "newplayertutorial-drag-slotblue" or "charactercreate-ring-select")
+    glow:SetPoint("CENTER", auraFrame)
+    glow:SetSize(square and 38 or 36, square and 38 or 36)
+    glow:SetDesaturated(true)
+    glow:SetVertexColor(GetCCGlowColor())
+    auraFrame.bbpGlow = glow
+
+    auraFrame:SetCancelAuraButtons(nil)
+    auraFrame:SetHideTooltipInCombat(true)
+    if not InCombatLockdown() then
+        auraFrame:SetMouseMotionEnabled(false)
+    end
+
+    frame.classIndicatorCC = auraFrame
+end
+
+local function CreateClassIndicatorCCContainer(frame)
+    if frame.classIndicatorCCContainer then return end
+
+    local container = CreateFrame("AuraContainer", nil, frame.classIndicator, "CustomAuraContainerTemplate")
+    container:SetSize(1, 1)
+    container:SetFrameStrata("HIGH")
+    container:SetPoint("CENTER", frame.classIndicator)
+    container:SetEnabled(false)
+    container:Hide()
+    frame.classIndicatorCCContainer = container
+
+    container:AddAuraSlot("CC", AuraUtil.CreateFilterString(
+        AuraUtil.AuraFilters.Harmful, AuraUtil.AuraFilters.CrowdControl), {
+        sortMethod = AuraContainerSortMethod.AuraInstanceIDOnly,
+        sortDirection = AuraContainerSortDirection.Reverse,
+        candidateFilters = { excludeSpellIDs = BBP.auraCategorySets.ccBlacklist },
+        initializeFrame = function(auraFrame)
+            InitClassIndicatorCCSlot(auraFrame, frame)
+        end,
+    })
+end
+
+local function ShouldShowClassIndicatorCC(frame)
+    local db = BetterBlizzPlatesDB
+    if not db.classIndicator or not db.classIndicatorCCAuras then return false end
+
+    local unit = frame.unit
+    if not unit or not unit:find("nameplate") then return false end
+    if not UnitIsPlayer(unit) or not UnitIsFriend("player", unit) then return false end
+    return true
+end
+
+function BBP.ClassIconShowsCC(frame)
+    if not frame or not ShouldShowClassIndicatorCC(frame) then return false end
+
+    local db = BetterBlizzPlatesDB
+    local unit = frame.unit
+
+    local specID, specChecked
+    local function SpecID()
+        if not specChecked then
+            specChecked = true
+            specID = BBP.GetSpecID(frame)
+        end
+        return specID
+    end
+
+    local alwaysShowHealer = db.classIconAlwaysShowHealer and HealerSpecs[SpecID()]
+    local alwaysShowTank = db.classIconAlwaysShowTank and TankSpecs[SpecID()]
+    local flagIcon = BBP.isInBg and (db.classIndicatorFriendly or db.classIconAlwaysShowBgObj)
+        and GetAuraIcon(frame) or nil
+
+    if not db.classIndicatorFriendly and not flagIcon and not alwaysShowHealer and not alwaysShowTank then
+        return false
+    end
+    if db.classIndicatorOnlyHealer and not HealerSpecs[SpecID()]
+        and not flagIcon and not alwaysShowHealer and not alwaysShowTank then
+        return false
+    end
+    if db.classIndicatorOnlyParty and not UnitInParty(unit) then return false end
+    if db.classIndicatorOnlyFriends
+        and not (BBP.isFriendlistFriend(unit) or BBP.isUnitBNetFriend(unit) or BBP.isUnitGuildmate(unit)) then
+        return false
+    end
+
+    if ((db.classIconArenaOnly and not BBP.isInArena) or (db.classIconBgOnly and not BBP.isInBg))
+        and not (db.classIconAlwaysShowBgObj and flagIcon) then
+        if db.classIconArenaOnly and db.classIconBgOnly then
+            if not BBP.isInPvP then return false end
+        elseif not ((alwaysShowHealer or alwaysShowTank) and BBP.isInPvP) then
+            return false
+        end
+    end
+
+    return true
+end
+
+local ccStyleQueued = false
+local function CCObjectAccessible(object)
+    if object.CanBeAccessedInContext and not object:CanBeAccessedInContext() then
+        return false
+    end
+    return not C_Secrets.ShouldAurasBeSecret()
+end
+
+local function ApplyClassIndicatorCCStyle(frame)
+    local ccFrame = frame.classIndicatorCC
+    if not ccFrame then return end
+
+    local cooldown, glow = ccFrame.bbpCooldown, ccFrame.bbpGlow
+    if not cooldown and not glow then return end
+
+    if (cooldown and not CCObjectAccessible(cooldown))
+        or (glow and not CCObjectAccessible(glow)) then
+        ccStyleQueued = true
+        return
+    end
+
+    if glow then
+        glow:SetVertexColor(GetCCGlowColor())
+    end
+    if cooldown then
+        cooldown:SetHideCountdownNumbers(BetterBlizzPlatesDB.classIndicatorCCHideCdText and true or false)
+    end
+end
+
+function BBP.RefreshClassIndicatorCCStyle()
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        if frame and not frame:IsForbidden() and frame.classIndicatorCC then
+            ApplyClassIndicatorCCStyle(frame)
+        end
+    end
+end
+
+function BBP.UpdateClassIndicatorCC(frame)
+    local container = frame and frame.classIndicatorCCContainer
+    if not container then return end
+
+    if not ShouldShowClassIndicatorCC(frame) then
+        container:SetEnabled(false)
+        container:Hide()
+        return
+    end
+
+    ApplyClassIndicatorCCStyle(frame)
+
+    container:SetUnit(frame.unit)
+    container:SetEnabled(true)
+    container:Show()
+    container:UpdateAllAuras()
 end
 
 -- Class Indicator
@@ -298,12 +479,12 @@ function BBP.ClassIndicator(frame, foundID)
         end
     end
 
-    if UnitIsUnit(frame.unit, "player") then
-        if frame.classIndicator then
-            frame.classIndicator:Hide()
-        end
-        return
-    end
+    -- if UnitIsUnit(frame.unit, "player") then
+    --     if frame.classIndicator then
+    --         frame.classIndicator:Hide()
+    --     end
+    --     return
+    -- end
 
     local anchorPoint =
         (info.isFriend and config.classIndicatorFriendlyAnchor) or
@@ -329,6 +510,11 @@ function BBP.ClassIndicator(frame, foundID)
         frame.classIndicator = CreateFrame("Frame", nil, frame)
         frame.classIndicator:HookScript("OnHide", function()
             frame.classIndicatorHideName = false
+            local container = frame.classIndicatorCCContainer
+            if container then
+                container:SetEnabled(false)
+                container:Hide()
+            end
         end)
         frame.classIndicator:SetSize(24, 24)
         --frame.classIndicator:SetScale(scale)
@@ -339,66 +525,7 @@ function BBP.ClassIndicator(frame, foundID)
         frame.classIndicator.border = frame.classIndicator:CreateTexture(nil, "OVERLAY", nil, 6)
         frame.classIndicator:SetIgnoreParentAlpha(true)
 
-        if not config.classIconSquareBorderFriendly then
-            frame.classIndicatorCC = CreateFrame("Frame", nil, frame.classIndicator)
-            frame.classIndicatorCC:SetSize(26, 26)
-            frame.classIndicatorCC:SetFrameStrata("HIGH")
-            frame.classIndicatorCC:Hide()
-
-            frame.classIndicatorCC.Icon = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 6)
-            frame.classIndicatorCC.Icon:SetPoint("CENTER", frame.classIndicator)
-            frame.classIndicatorCC.mask = frame.classIndicatorCC:CreateMaskTexture()
-            frame.classIndicatorCC.mask:SetTexture("Interface/Masks/CircleMaskScalable")
-            frame.classIndicatorCC.mask:SetSize(27, 27)
-            frame.classIndicatorCC.mask:SetPoint("CENTER", frame.classIndicator.icon)
-            frame.classIndicatorCC.Icon:AddMaskTexture(frame.classIndicatorCC.mask)
-            frame.classIndicatorCC.Icon:SetSize(26, 26)
-
-            frame.classIndicatorCC.Cooldown = CreateFrame("Cooldown", nil, frame.classIndicatorCC, "CooldownFrameTemplate")
-            frame.classIndicatorCC.Cooldown:SetAllPoints(frame.classIndicatorCC.Icon)
-            frame.classIndicatorCC.Cooldown:SetDrawEdge(false)
-            frame.classIndicatorCC.Cooldown:SetDrawSwipe(true)
-            frame.classIndicatorCC.Cooldown:SetSwipeColor(0, 0, 0, 0.7)
-            frame.classIndicatorCC.Cooldown:SetSwipeTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
-            frame.classIndicatorCC.Cooldown:SetUseCircularEdge(true)
-            frame.classIndicatorCC.Cooldown:SetReverse(true)
-
-            frame.classIndicatorCC.Glow = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 7)
-            frame.classIndicatorCC.Glow:SetAtlas("charactercreate-ring-select")
-            frame.classIndicatorCC.Glow:SetPoint("CENTER", frame.classIndicator, "CENTER", 0, 0)
-            frame.classIndicatorCC.Glow:SetDesaturated(true)
-            frame.classIndicatorCC.Glow:SetSize(36, 36)
-            frame.classIndicatorCC.Glow:SetDrawLayer("OVERLAY", 7)
-        else
-            frame.classIndicatorCC = CreateFrame("Frame", nil, frame.classIndicator)
-            frame.classIndicatorCC:SetSize(27, 27)
-            frame.classIndicatorCC:SetFrameStrata("HIGH")
-            frame.classIndicatorCC:Hide()
-
-            frame.classIndicatorCC.Icon = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 6)
-            frame.classIndicatorCC.Icon:SetPoint("CENTER", frame.classIndicator)
-            frame.classIndicatorCC.mask = frame.classIndicatorCC:CreateMaskTexture()
-            frame.classIndicatorCC.mask:SetAtlas("UI-Frame-IconMask")
-            frame.classIndicatorCC.mask:SetSize(21, 21)
-            frame.classIndicatorCC.mask:SetPoint("CENTER", frame.classIndicator.icon)
-            frame.classIndicatorCC.Icon:AddMaskTexture(frame.classIndicatorCC.mask)
-            frame.classIndicatorCC.Icon:SetSize(20.5, 20.5)
-
-            frame.classIndicatorCC.Cooldown = CreateFrame("Cooldown", nil, frame.classIndicatorCC, "CooldownFrameTemplate")
-            frame.classIndicatorCC.Cooldown:SetAllPoints(frame.classIndicatorCC.Icon)
-            frame.classIndicatorCC.Cooldown:SetDrawEdge(false)
-            frame.classIndicatorCC.Cooldown:SetDrawSwipe(true)
-            frame.classIndicatorCC.Cooldown:SetSwipeColor(0, 0, 0, 0.7)
-            frame.classIndicatorCC.Cooldown:SetSwipeTexture("Interface\\Common\\common-iconmask")
-            frame.classIndicatorCC.Cooldown:SetReverse(true)
-
-            frame.classIndicatorCC.Glow = frame.classIndicatorCC:CreateTexture(nil, "OVERLAY", nil, 7)
-            frame.classIndicatorCC.Glow:SetAtlas("newplayertutorial-drag-slotblue")
-            frame.classIndicatorCC.Glow:SetPoint("CENTER", frame.classIndicator, "CENTER", 0, 0)
-            frame.classIndicatorCC.Glow:SetDesaturated(true)
-            frame.classIndicatorCC.Glow:SetSize(38, 38)
-            frame.classIndicatorCC.Glow:SetDrawLayer("OVERLAY", 7)
-        end
+        CreateClassIndicatorCCContainer(frame)
     end
     if BetterBlizzPlatesDB.classIndicatorIgnoreScale then
         frame.classIndicator:SetIgnoreParentScale(true)
@@ -419,11 +546,7 @@ function BBP.ClassIndicator(frame, foundID)
 
     local flagIcon
     if BBP.isInBg and (enabledOnThisUnit or config.classIconAlwaysShowBgObj) then
-        local _, _, _, _, _, _, _, instanceMapID = GetInstanceInfo()
-        if bgsWithObjectives[instanceMapID] then
-            local auraType = (instanceMapID == 998 and "HARMFUL") or "HELPFUL"
-            flagIcon = GetAuraIcon(frame, foundID, auraType, instanceMapID)
-        end
+        flagIcon = GetAuraIcon(frame)
     end
 
     frame.classIndicator.flagActive = flagIcon and true or nil
@@ -433,6 +556,15 @@ function BBP.ClassIndicator(frame, foundID)
     if config.classIndicatorSpecIcon or config.classIndicatorHealer then
         if specID then
             specIcon = select(4, GetSpecializationInfoByID(specID))
+            if frame.needsSpecIconUpdate then
+                frame.needsSpecIconUpdate = nil
+                BBP.pendingSpecIconCount = (BBP.pendingSpecIconCount or 0) - 1
+            end
+        else
+            if not frame.needsSpecIconUpdate then
+                frame.needsSpecIconUpdate = true
+                BBP.pendingSpecIconCount = (BBP.pendingSpecIconCount or 0) + 1
+            end
         end
     end
 
@@ -449,7 +581,7 @@ function BBP.ClassIndicator(frame, foundID)
     if shouldHide
         or (config.classIndicatorOnlyHealer and not isHealer and not flagIcon and not alwaysShowHealer and not alwaysShowTank)
         or partyOnly
-        or (config.classIndicatorOnlyFriends and not (BBP.isFriendlistFriend(frame.unit) or BBP.isUnitBNetFriend(frame.unit)))
+        or (config.classIndicatorOnlyFriends and not (BBP.isFriendlistFriend(frame.unit) or BBP.isUnitBNetFriend(frame.unit) or BBP.isUnitGuildmate(frame.unit)))
     then
         if not isPetAndAlwaysShow then
             frame.classIndicator:Hide()
@@ -536,13 +668,12 @@ function BBP.ClassIndicator(frame, foundID)
     frame.classIndicator:ClearAllPoints()
     if anchorPoint == "TOP" then
         local resourceAnchor = nil
-        if
-            config.nameplateResourceOnTarget == "1" and not config.nameplateResourceUnderCastbar and info.isTarget and
-                not (config.hideResourceOnFriend and info.isFriend)
-         then
+        if config.nameplateResourceOnTarget == "1" and not config.nameplateResourceUnderCastbar and info.isTarget and not (config.hideResourceOnFriend and info.isFriend) then
             resourceAnchor = frame:GetParent().driverFrame.classNamePlateMechanicFrame
         end
-        frame.classIndicator:SetPoint(oppositeAnchor, resourceAnchor or frame.name, anchorPoint, xPos, yPos)
+        local nameAnchorRelative = (info.isFriend and BetterBlizzPlatesDB.fakeNameAnchorRelativeFriendly) or BetterBlizzPlatesDB.fakeNameAnchorRelative
+        local attachPoint = (BetterBlizzPlatesDB.useFakeName and nameAnchorRelative == "TOP" and frame.name) or resourceAnchor or frame.healthBar
+        frame.classIndicator:SetPoint(oppositeAnchor, attachPoint, anchorPoint, xPos, yPos + 7)
     else
         frame.classIndicator:SetPoint(oppositeAnchor, frame.healthBar, anchorPoint, xPos, yPos)
     end
@@ -570,8 +701,8 @@ function BBP.ClassIndicator(frame, foundID)
 
     -- -- Get class icon texture and coordinates
     -- local classIcon = "Interface/GLUES/CHARACTERCREATE/UI-CHARACTERCREATE-CLASSES"
-    local classAtlas = "classicon-" .. string.lower(class)
-    local classColor = RAID_CLASS_COLORS[class]
+    local classAtlas = GetClassAtlas(class)
+    local classColor = C_ClassColor.GetClassColor(class)
     if config.classIndicatorBackground then
         if not frame.classIndicator.bg then
             frame.classIndicator.bg = frame.classIndicator:CreateTexture(nil, "BACKGROUND", nil, 1)
@@ -634,7 +765,7 @@ function BBP.ClassIndicator(frame, foundID)
         frame.classIndicator.icon:SetTexture(flagIcon)
         frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
     elseif specIcon and config.classIndicatorSpecIcon then
-        if config.classIndicatorHealer and HealerSpecs[specID] then
+        if config.classIndicatorHealer and HealerSpecs[specID] and not (not info.isFriend and BetterBlizzPlatesDB.classIconHealerIconType == 4) then
             if info.isFriend then
                 if frame.classIndicator.border.square then
                     frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
@@ -670,7 +801,7 @@ function BBP.ClassIndicator(frame, foundID)
             frame.classIndicator.icon:SetTexture(specIcon)
             frame.classIndicator.icon:SetTexCoord(0, 1, 0, 1)
         end
-    elseif config.classIndicatorHealer and HealerSpecs[specID] then
+    elseif config.classIndicatorHealer and HealerSpecs[specID] and not (not info.isFriend and BetterBlizzPlatesDB.classIconHealerIconType == 4) then
         if info.isFriend then
             if frame.classIndicator.border.square then
                 frame.classIndicator.icon:SetTexture("interface/lfgframe/uilfgprompts")
@@ -729,16 +860,22 @@ function BBP.ClassIndicator(frame, foundID)
     if info.isFriend then
         if config.classIndicatorHideFriendlyHealthbar then
             frame.HealthBarsContainer:SetAlpha(0)
+            frame.HealthBarsContainer.alphaZero = true
             frame.selectionHighlight:SetAlpha(0)
+            if isPet then
+                BBP.SetNameplateAurasShown(frame, false)
+            end
             frame.ciChange = true
         elseif frame.ciChange then
             frame.HealthBarsContainer:SetAlpha(1)
+            frame.HealthBarsContainer.alphaZero = false
             frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
             frame.ciChange = nil
         end
     end
 
     frame.classIndicator:Show()
+    BBP.UpdateClassIndicatorCC(frame)
     if config.classIndicatorHideName and info.isFriend then
         frame.classIndicatorHideName = true
         frame.name:SetText("")
@@ -764,7 +901,7 @@ function BBP.ClassIndicatorTargetHighlight(frame)
                 end
             )
             if info.class and config.classIndicatorHighlightColor then
-                local classColor = UnitIsUnit(frame.unit, "pet") and RAID_CLASS_COLORS[playerClass] or RAID_CLASS_COLORS[info.class]
+                local classColor = C_ClassColor.GetClassColor(info.class)
                 frame.classIndicator.highlightSelect:SetDesaturated(true)
                 frame.classIndicator.highlightSelect:SetVertexColor(classColor.r, classColor.g, classColor.b)
                 frame.classIndicator.highlightSelect.classColored = true
@@ -797,14 +934,9 @@ function BBP.UpdateHealthText(frame)
     local info = frame.BetterBlizzPlates.unitInfo
 
     if (info.isFriend and config.classIndicatorFriendly) or (info.isEnemy and config.classIndicatorEnemy) or (config.classIndicatorShowPet and info.isPet) then
-        local health = UnitHealth(frame.unit)
-        local maxHealth = UnitHealthMax(frame.unit)
-
-        if maxHealth and maxHealth > 0 then
-            local healthPercent = math.floor((health / maxHealth) * 100)
-            if frame.name:GetAlpha() ~= 0 then
-                frame.name:SetText(healthPercent)
-            end
+        local nameAlpha = frame.name:GetAlpha()
+        if not issecretvalue(nameAlpha) and nameAlpha ~= 0 then
+            frame.name:SetFormattedText("%0.f", UnitHealthPercent(frame.unit, nil, CurveConstants.ScaleTo100))
         end
     end
 end
@@ -812,7 +944,7 @@ end
 function BBP.SetupClassIndicatorHealthText()
     if BBP.healthTextFrame then
         return
-    end -- Prevent multiple registrations
+    end
 
     BBP.healthTextFrame = CreateFrame("Frame")
     BBP.healthTextFrame:RegisterEvent("UNIT_HEALTH")
@@ -874,3 +1006,22 @@ function BBP.ToggleClassIndicatorPinMode(enable)
     end
     BBP.RefreshAllNameplates()
 end
+
+function BBP.SetupClassIndicatorCCAuraListener()
+    ccStyleQueued = false
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        if frame and not frame:IsForbidden() then
+            BBP.UpdateClassIndicatorCC(frame)
+        end
+    end
+end
+
+local ccRestrictionListener = CreateFrame("Frame")
+ccRestrictionListener:RegisterEvent("PLAYER_REGEN_ENABLED")
+ccRestrictionListener:RegisterEvent("PLAYER_ENTERING_WORLD")
+ccRestrictionListener:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED")
+ccRestrictionListener:SetScript("OnEvent", function()
+    if not ccStyleQueued or C_Secrets.ShouldAurasBeSecret() then return end
+    BBP.SetupClassIndicatorCCAuraListener()
+end)

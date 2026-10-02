@@ -13,8 +13,7 @@ embeds.xml
 init.lua
 shared\functions_classics.lua
 shared\nameplateToggles.lua
-forever\temp_tww.lua
-temp_shared\ImportExport.lua
+shared\ImportExport.lua
 forever\modules\camelotFrames.lua
 
 forever\modules\combat.lua

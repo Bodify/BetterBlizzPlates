@@ -2643,7 +2643,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         local name = npc.name
         if type(name) == "string" and name ~= "" then return name end
         if resolveSpellName and npc.id then
-            local resolved = BBP.TWWGetSpellInfo(npc.id) or C_Spell.GetSpellName(npc.id)
+            local resolved = C_Spell.GetSpellName(npc.id)
             if resolved and resolved ~= "" then
                 npc.name = resolved
                 return resolved
@@ -3211,7 +3211,9 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
 
         local icon
         if id then
-            local spellName, _, spellIcon = BBP.TWWGetSpellInfo(id)
+            local spellInfo = C_Spell.GetSpellInfo(id)
+            local spellName = spellInfo and spellInfo.name
+            local spellIcon = spellInfo and (spellInfo.iconID or spellInfo.originalIconID)
             if isKeyed and not spellName then
                 BBP.Print("No spell found with ID " .. id .. ".")
                 setSearchFilter("")

@@ -151,7 +151,8 @@ function BBP.PetIndicator(frame)
         else
             local isValidPet = false
             for i = 1, 6 do -- Only loop through the first 5 buffs
-                local _, _, _, _, _, _, _, _, _, spellID = BBP.TWWUnitAura(frame.displayedUnit, i, "HELPFUL")
+                local aura = C_UnitAuras.GetAuraDataByIndex(frame.displayedUnit, i, "HELPFUL")
+                local spellID = aura and aura.spellId
                 if petValidSpellIDs[spellID] then
                     isValidPet = true
                     break

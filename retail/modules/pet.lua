@@ -1,4 +1,3 @@
-if BBP.isMidnight then return end
 -- Main pet buff spell id's
 local petValidSpellIDs = {
     [264662] = true,
@@ -14,8 +13,9 @@ local function ShowMurloc(frame)
     frame:SetAlpha(1)
     frame.isMurloc = true
     frame.HealthBarsContainer:SetAlpha(0)
+    frame.HealthBarsContainer.alphaZero = false
     frame.selectionHighlight:SetAlpha(0)
-    frame.BuffFrame:SetAlpha(0)
+    BBP.SetNameplateAurasShown(frame, false)
     frame.name:SetAlpha(0)
     frame.murlocMode:Show()
     frame.castBar:Hide()
@@ -151,7 +151,8 @@ function BBP.PetIndicator(frame)
         else
             local isValidPet = false
             for i = 1, 6 do -- Only loop through the first 5 buffs
-                local _, _, _, _, _, _, _, _, _, spellID = BBP.TWWUnitAura(frame.displayedUnit, i, "HELPFUL")
+                local aura = C_UnitAuras.GetAuraDataByIndex(frame.displayedUnit, i, "HELPFUL")
+                local spellID = aura and aura.spellId
                 if petValidSpellIDs[spellID] then
                     isValidPet = true
                     break
