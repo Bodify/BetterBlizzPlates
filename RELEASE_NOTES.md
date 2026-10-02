@@ -1,4 +1,4 @@
-# BetterBlizzPlates 2.1.8b
+# BetterBlizzPlates 2.1.8c
 ## Retail & Forever
 ### New
 - Classic Castbar: "Classic Options" dropdown with "Hide Icon Background" and "Full Width Bar" settings.
