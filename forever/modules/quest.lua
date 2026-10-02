@@ -1,13 +1,74 @@
-----------------------------------------------------
----- Quest Function Copied From TPTP(Threat Plates)
-----------------------------------------------------
+local UnitIsRelatedToActiveQuest = C_QuestLog.UnitIsRelatedToActiveQuest
+local GetUnitTooltip = C_TooltipInfo.GetUnit
+local LINE_OBJECTIVE = Enum.TooltipDataLineType.QuestObjective
+local LINE_TITLE = Enum.TooltipDataLineType.QuestTitle
+local LINE_PLAYER = Enum.TooltipDataLineType.QuestPlayer
+local PlayerName = UnitName("player")
+local PlayerGUID = UnitGUID("player")
+
+local function IsObjectiveDone(line)
+    if line.completed then
+        return true
+    end
+    local text = line.leftText
+    if type(text) ~= "string" then
+        return false
+    end
+    local current, goal = text:match("(%d+)%s*/%s*(%d+)")
+    if current then
+        return tonumber(current) >= tonumber(goal)
+    end
+    local percent = text:match("(%d+)%s*%%")
+    return percent ~= nil and tonumber(percent) >= 100
+end
+
+function BBP.IsQuestUnit(unit)
+    if not unit or UnitIsPlayer(unit) then
+        return false
+    end
+
+    if C_Secrets.ShouldUnitIdentityBeSecret(unit) then
+        return false
+    end
+
+    if not UnitIsRelatedToActiveQuest(unit) then
+        return false
+    end
+
+    local data = GetUnitTooltip(unit)
+    if not data or not data.lines then
+        return true
+    end
+
+    local isMine = true
+    for _, line in ipairs(data.lines) do
+        local lineType = line.type
+        if lineType == LINE_TITLE then
+            isMine = true
+        elseif lineType == LINE_PLAYER then
+            isMine = line.guid == PlayerGUID or line.leftText == PlayerName
+        elseif lineType == LINE_OBJECTIVE and isMine and not IsObjectiveDone(line) then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function SetQuestColor(frame, isQuest)
+    if isQuest and BetterBlizzPlatesDB.questIndicatorColorNpc then
+        local color = BetterBlizzPlatesDB.questIndicatorColorNpcRGB
+        frame.healthBar:SetStatusBarColor(unpack(color))
+        frame.needsRecolor = true
+        frame.isQuestNpc = color
+    elseif frame.needsRecolor then
+        frame.needsRecolor = nil
+        frame.isQuestNpc = nil
+        BBP.CompactUnitFrame_UpdateHealthColor(frame)
+    end
+end
 
 function BBP.QuestIndicator(frame)
-    -- if not frame then return end
-    -- local config = frame.BetterBlizzPlates.config
-    -- local info = frame.BetterBlizzPlates.unitInfo
-
-    -- Initialize
     if not frame.questIndicator then
         if not frame.bbpPlateOverlay then
             frame.bbpPlateOverlay = CreateFrame("Frame", nil, frame)
@@ -19,228 +80,40 @@ function BBP.QuestIndicator(frame)
         frame.questIndicator:SetSize(22, 22)
     end
 
-    local anchorPoint = BetterBlizzPlatesDB.questIndicatorAnchor or "CENTER"
-    local xPos = BetterBlizzPlatesDB.questIndicatorXPos or 0
-    local yPos = BetterBlizzPlatesDB.questIndicatorYPos or 0
-    local testMode = BetterBlizzPlatesDB.questIndicatorTestMode
-    local questIndicator = BetterBlizzPlatesDB.questIndicator
-    local anchorToName = BetterBlizzPlatesDB.friendlyHideHealthBar and BetterBlizzPlatesDB.friendlyHideHealthBarNpc and (UnitIsFriend(frame.unit, "player") or (frame.BetterBlizzPlates and frame.BetterBlizzPlates.unitInfo and frame.BetterBlizzPlates.unitInfo.isFriendlyNpc))
-    local colorQuestNpc = BetterBlizzPlatesDB.questIndicatorColorNpc
+    local db = BetterBlizzPlatesDB
+    local anchorPoint = db.questIndicatorAnchor or "CENTER"
+    local xPos = (db.questIndicatorXPos or 0) + (anchorPoint == "LEFT" and -8 or 0)
+    local yPos = db.questIndicatorYPos or 0
+    local anchorToName = db.friendlyHideHealthBar and db.friendlyHideHealthBarNpc and (UnitIsFriend(frame.unit, "player") or (frame.BetterBlizzPlates and frame.BetterBlizzPlates.unitInfo and frame.BetterBlizzPlates.unitInfo.isFriendlyNpc))
+    local anchorFrame = anchorToName and frame.name or BBP.GetLevelSpanAnchor(frame, anchorPoint)
 
-    -- Set position and scale dynamically
     frame.questIndicator:ClearAllPoints()
-    if anchorPoint == "LEFT" then
-        if anchorToName then
-            frame.questIndicator:SetPoint("CENTER", frame.name, anchorPoint, xPos +-8, yPos)
-        else
-            frame.questIndicator:SetPoint("CENTER", BBP.GetLevelSpanAnchor(frame, anchorPoint), anchorPoint, xPos +-8, yPos)
-        end
-    else
-        if anchorToName then
-            frame.questIndicator:SetPoint("CENTER", frame.name, anchorPoint, xPos, yPos)
-        else
-            frame.questIndicator:SetPoint("CENTER", BBP.GetLevelSpanAnchor(frame, anchorPoint), anchorPoint, xPos, yPos)
-        end
-    end
-    frame.questIndicator:SetScale(BetterBlizzPlatesDB.questIndicatorScale or 1)
+    frame.questIndicator:SetPoint("CENTER", anchorFrame, anchorPoint, xPos, yPos)
+    frame.questIndicator:SetScale(db.questIndicatorScale or 1)
 
-    -- Test mode
-    if testMode then
-        frame.questIndicator:Show()
-        if colorQuestNpc then
-            local color = BetterBlizzPlatesDB.questIndicatorColorNpcRGB
-            frame.healthBar:SetStatusBarColor(unpack(color))
-            frame.needsRecolor = true
-            frame.isQuestNpc = color
-        elseif frame.needsRecolor then
-            frame.needsRecolor = nil
-            frame.isQuestNpc = nil
-            BBP.CompactUnitFrame_UpdateHealthColor(frame)
-        end
-        return
-    end
-
-    local inInstance, instanceType = IsInInstance()
-    if not inInstance and BBP.IsQuestUnit(frame.unit) and questIndicator then
-        frame.questIndicator:Show()
-        if colorQuestNpc then
-            local color = BetterBlizzPlatesDB.questIndicatorColorNpcRGB
-            frame.healthBar:SetStatusBarColor(unpack(color))
-            frame.needsRecolor = true
-            frame.isQuestNpc = color
-        elseif frame.needsRecolor then
-            frame.needsRecolor = nil
-            frame.isQuestNpc = nil
-            BBP.CompactUnitFrame_UpdateHealthColor(frame)
-        end
-        return
-    end
-    frame.questIndicator:Hide()
-    if frame.needsRecolor then
-        frame.needsRecolor = nil
-        frame.isQuestNpc = nil
-        BBP.CompactUnitFrame_UpdateHealthColor(frame)
-    end
+    local isQuest = db.questIndicatorTestMode or (db.questIndicator and not IsInInstance() and BBP.IsQuestUnit(frame.unit))
+    frame.questIndicator:SetShown(isQuest)
+    SetQuestColor(frame, isQuest)
 end
 
-
-
-local QUEST_OBJECTIVE_PARSER_LEFT = function(text)
-    local current, goal, objective_name = string.match(text, "^(%d+)/(%d+)( .*)$")
-    return objective_name, current, goal
-end
-
-local QUEST_OBJECTIVE_PARSER_RIGHT = function(text)
-    return string.match(text, "^(.*: )(%d+)/(%d+)$")
-end
-
-local PARSER_QUEST_OBJECTIVE_BACKUP = function(text)
-    local current, goal, objective_name = string.match(text, "^(%d+)/(%d+)( .*)$")
-
-    if not objective_name then
-        objective_name, current, goal = string.match(text, "^(.*: )(%d+)/(%d+)$")
-    end
-
-    return objective_name, current, goal
-end
-
-local STANDARD_QUEST_OBJECTIVE_PARSER = {
-    -- x/y Objective
-    enUS = QUEST_OBJECTIVE_PARSER_LEFT,
-    -- enGB = enGB clients return enUS
-    esMX = QUEST_OBJECTIVE_PARSER_LEFT,
-    ptBR = QUEST_OBJECTIVE_PARSER_LEFT,
-    itIT = QUEST_OBJECTIVE_PARSER_LEFT,
-    koKR = QUEST_OBJECTIVE_PARSER_LEFT,
-    zhTW = QUEST_OBJECTIVE_PARSER_LEFT,
-    zhCN = QUEST_OBJECTIVE_PARSER_LEFT,
-
-    -- Objective: x/y
-    deDE = QUEST_OBJECTIVE_PARSER_RIGHT,
-    frFR = QUEST_OBJECTIVE_PARSER_RIGHT,
-    esES = QUEST_OBJECTIVE_PARSER_RIGHT,
-    ruRU = QUEST_OBJECTIVE_PARSER_RIGHT
-}
-
-local QuestObjectiveParser = STANDARD_QUEST_OBJECTIVE_PARSER[GetLocale()] or PARSER_QUEST_OBJECTIVE_BACKUP
-
-local _G, WorldFrame = _G, WorldFrame
-local TooltipFrame = CreateFrame("GameTooltip", "ThreatPlates_Tooltip", nil, "GameTooltipTemplate")
-
-local QuestList, QuestIDs, QuestsToUpdate = {}, {}, {}
-local PlayerName = UnitName("player")
-
-function BBP.IsQuestUnit(unit, create_watcher)
-    if not unit then
-        return false, false, nil
-    end
-
-    if C_Secrets.ShouldUnitIdentityBeSecret(unit) then
-        return false, false, nil
-    end
-
-    local unitGUID = UnitGUID(unit)
-    local quest_title
-    -- local unit_name
-    local quest_player = true
-    local quest_progress = false
-
-    -- Read quest information from tooltip. Thanks to Kib: QuestMobs AddOn by Tosaido.
-    TooltipFrame:SetOwner(WorldFrame, "ANCHOR_NONE")
-    -- TooltipFrame:SetUnit(unitid)
-    TooltipFrame:SetHyperlink("unit:" .. unitGUID)
-
-    for i = 3, TooltipFrame:NumLines() do
-        local line = _G["ThreatPlates_TooltipTextLeft" .. i] -- obj
-        local text = line:GetText()
-        local text_r, text_g, text_b = line:GetTextColor()
-
-        if text_r > 0.99 and text_g > 0.81 and text_b == 0 then
-            -- A line with this color is either the quest title or a player name (if on a group quest, but always after the quest title)
-            if quest_title then
-                quest_player = (text == PlayerName)
-                -- unit_name = text
-            else
-                quest_title = text
-
-            end
-        elseif quest_title and quest_player then
-            local objective_name, current, goal
-            local objective_type = false
-
-            -- Set quest_title to false again, otherwise a second quest in the tooltip will not be found (first if statement will
-            -- check for quest_player only as quest_title is still set to the first quest
-            quest_title = false
-
-            -- Check if area / progress quest
-            if string.find(text, "%%") then
-                objective_name, current, goal = string.match(text, "^(.*) %(?(%d+)%%%)?$")
-                objective_type = "area"
-            else
-                -- Standard x/y /pe quest
-                objective_name, current, goal = QuestObjectiveParser(text)
-            end
-
-            if objective_name then
-                current = tonumber(current)
-
-                if objective_type then
-                    goal = 100
-                else
-                    goal = tonumber(goal)
-                end
-
-                -- Note: "progressbar" type quest (area quest) progress cannot get via the API, so for this tooltips
-                -- must be used. That's also the reason why their progress is not cached.
-
-                -- local Quests = QuestList
-                -- if Quests[quest_title] then
-                --   local quest_objective = Quests[quest_title].objectives[objective_name]
-                --   if quest_objective then
-                --     current = quest_objective.current
-                --     goal = quest_objective.goal
-                --     objective_type = quest_objective.type
-                --   end
-                -- end
-
-                -- A unit may be target of more than one quest, the quest indicator should be show if at least one quest is not completed.
-                if current and goal then
-                    if (current ~= goal) then
-                        return true, 1, {
-                            current = current,
-                            goal = goal,
-                            type = objective_type
-                        }
-                    end
-                else
-                    -- Line after quest title with quest information, so we can stop here
-                    return false
-                end
-            end
-        end
-    end
-
-    return false
-end
+local updatePending
 
 local function UpdateAllUnitQuestState()
-    for i, namePlate in ipairs(C_NamePlate.GetNamePlates()) do
+    updatePending = nil
+    if not BetterBlizzPlatesDB.questIndicator or IsInInstance() then return end
+    for _, namePlate in ipairs(C_NamePlate.GetNamePlates()) do
         local frame = namePlate.UnitFrame
-        if frame:IsForbidden() or frame:IsProtected() or not frame.unit then return end
-        BBP.QuestIndicator(frame)
-    end
-end
-
-local function Quest_Event(self, event, ...) -- self <--QuestEventFrame 
-    local arg = ...
-    if event == "UNIT_QUEST_LOG_CHANGED" then
-        local inInstance, instanceType = IsInInstance()
-        if not inInstance then
-            UpdateAllUnitQuestState()
+        if frame and not frame:IsForbidden() and not frame:IsProtected() and frame.unit then
+            BBP.QuestIndicator(frame)
         end
     end
 end
 
 local QuestEventFrame = CreateFrame("Frame")
-QuestEventFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")
-QuestEventFrame:SetScript("OnEvent", Quest_Event)
+QuestEventFrame:RegisterUnitEvent("UNIT_QUEST_LOG_CHANGED", "player")
+QuestEventFrame:SetScript("OnEvent", function()
+    if not updatePending then
+        updatePending = true
+        C_Timer.After(0.1, UpdateAllUnitQuestState)
+    end
+end)

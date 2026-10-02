@@ -3565,6 +3565,11 @@ local function SetNameplateBarSizes(frame)
     local hpBotPos = castBarHeight + bottomPos + (bbpClassic and 5 or 2)
     local anchorCastbarIconRight = db.anchorCastIconOnRight
 
+    if classicCastbar and db.classicCastbarFullWidth then
+        moveCastbarRight = 0
+        moveCastbarLeft = (normalRightAnchor and 0 or -17) - levelBadgeSpace
+    end
+
     if frame.castBarIconFrame then
         frame.castBarIconFrame:ClearAllPoints()
         if classicCastbar then
@@ -3643,6 +3648,8 @@ local function SetNameplateBarSizes(frame)
     if classicCastbar then
         frame.CastBarsContainer.castBar:SetPoint("TOPLEFT", frame.CastBarsContainer, "TOPLEFT", moveCastbarRight, 1)
         frame.CastBarsContainer.castBar:SetPoint("BOTTOMRIGHT", frame.CastBarsContainer, "BOTTOMRIGHT", moveCastbarLeft, -1)
+        frame.castBar.bbpInsetLeft = moveCastbarRight
+        frame.castBar.bbpInsetRight = moveCastbarLeft
     else
         frame.CastBarsContainer.castBar:SetPoint("BOTTOMLEFT", frame.CastBarsContainer, "BOTTOMLEFT", moveCastbarRight, 0)
         frame.CastBarsContainer.castBar:SetPoint("BOTTOMRIGHT", frame.CastBarsContainer, "BOTTOMRIGHT", moveCastbarLeft, 0)
@@ -5966,21 +5973,36 @@ function BBP.LayoutClassicCastbar(frame)
     local topOffset = 1.97 * height
     local shieldDrop = height * 0.85
 
+    local insetLeft = castBar.bbpInsetLeft or 17
+    local insetRight = castBar.bbpInsetRight or 0
+    local noIconBorder = BetterBlizzPlatesDB.classicCastbarNoIconBorder
+
+    local function PlaceLeftPiece(piece, leftTexture, rightTexture, x, mirrorX, top, bottom)
+        piece:ClearAllPoints()
+        if noIconBorder then
+            piece:SetTexture(rightTexture)
+            piece:SetTexCoord(1, 0, 0, 1)
+            piece:SetPoint("TOPRIGHT", container, "TOPLEFT", insetLeft + mirrorX, top)
+            piece:SetPoint("BOTTOMRIGHT", container, "BOTTOMLEFT", insetLeft + mirrorX, bottom)
+        else
+            piece:SetTexture(leftTexture)
+            piece:SetTexCoord(0, 1, 0, 1)
+            piece:SetPoint("TOPLEFT", container, "TOPLEFT", insetLeft - 17 + x, top)
+            piece:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", insetLeft - 17 + x, bottom)
+        end
+    end
+
     local border = castBar.bbpCastBorder
-    border.left:ClearAllPoints()
-    border.left:SetPoint("TOPLEFT", container, "TOPLEFT", -4, topOffset)
-    border.left:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -4, bottomOffset)
+    PlaceLeftPiece(border.left, "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderLeft", "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderRight", -4, 4.5, topOffset, bottomOffset)
     border.right:ClearAllPoints()
-    border.right:SetPoint("TOPLEFT", container, "TOPRIGHT", -4.5, topOffset)
-    border.right:SetPoint("BOTTOMLEFT", container, "BOTTOMRIGHT", -4.5, bottomOffset)
+    border.right:SetPoint("TOPLEFT", container, "TOPRIGHT", insetRight - 4.5, topOffset)
+    border.right:SetPoint("BOTTOMLEFT", container, "BOTTOMRIGHT", insetRight - 4.5, bottomOffset)
 
     local shield = castBar.bbpCastUninterruptibleBorder
-    shield.left:ClearAllPoints()
-    shield.left:SetPoint("TOPLEFT", container, "TOPLEFT", -4, topOffset - shieldDrop - 4)
-    shield.left:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -4, bottomOffset - shieldDrop + 4)
+    PlaceLeftPiece(shield.left, "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleLeft", "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleRight", -4, 7, topOffset - shieldDrop - 4, bottomOffset - shieldDrop + 4)
     shield.right:ClearAllPoints()
-    shield.right:SetPoint("TOPLEFT", container, "TOPRIGHT", -7, topOffset - shieldDrop - 4)
-    shield.right:SetPoint("BOTTOMLEFT", container, "BOTTOMRIGHT", -7, bottomOffset - shieldDrop + 4)
+    shield.right:SetPoint("TOPLEFT", container, "TOPRIGHT", insetRight - 7, topOffset - shieldDrop - 4)
+    shield.right:SetPoint("BOTTOMLEFT", container, "BOTTOMRIGHT", insetRight - 7, bottomOffset - shieldDrop + 4)
 
     castBar.Border:SetAlpha(0)
     castBar.BorderShield:SetAlpha(0)
@@ -6352,162 +6374,36 @@ local HEALER_SPEC_IDS = {
 -- Table to store localized specialization names -> spec ID
 local function GetLocalizedSpecs()
     local specs = {}
-    -- esMX uses "Class Spec" order in tooltips, opposite of others
-    local locale = GetLocale()
-    local classFirst = (locale == "esMX")
+    local classFirst = GetLocale() == "esMX"
+    local specInfo = C_SpecializationInfo
+    local GetNumSpecs = specInfo and specInfo.GetNumSpecializationsForClassID or GetNumSpecializationsForClassID
 
-    local function AddSpec(specName, className, specID)
-        if classFirst then
-            specs[string.format("%s %s", className, specName)] = specID
-        else
-            specs[string.format("%s %s", specName, className)] = specID
+    local classIDs = specInfo and specInfo.GetAllClassIDs and specInfo.GetAllClassIDs()
+    if not classIDs then
+        classIDs = {}
+        for classID = 1, GetNumClasses() do
+            classIDs[classID] = classID
         end
     end
 
-    for classID = 1, BBP.GetNumClasses() do
+    for _, classID in ipairs(classIDs) do
         local _, class = GetClassInfo(classID)
-        local classMale = LOCALIZED_CLASS_NAMES_MALE[class]
-        local classFemale = LOCALIZED_CLASS_NAMES_FEMALE[class]
+        local classMale = class and LOCALIZED_CLASS_NAMES_MALE[class]
+        local classFemale = class and LOCALIZED_CLASS_NAMES_FEMALE[class]
 
-        for specIndex = 1, BBP.GetNumSpecializationsForClassID(classID) do
-            local specID, specName = GetSpecializationInfoForClassID(classID, specIndex)
+        for specIndex = 1, GetNumSpecs(classID) do
+            local specID, specMale = GetSpecializationInfoForClassID(classID, specIndex)
+            local _, specFemale = GetSpecializationInfoForClassID(classID, specIndex, 3)
 
-            if specName and classMale then
-                AddSpec(specName, classMale, specID)
-            end
-            if specName and classFemale and classFemale ~= classMale then
-                AddSpec(specName, classFemale, specID)
-            end
-        end
-    end
-
-    -- Blizzard API poopoo. Not possible to get gendered specNames AFAIK.
-    -- And some classes were even missing from LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_FEMALE
-    -- Thanks to Dardo7 @ Discord for helping get all the correct Spanish data.
-    if locale == "esES" or locale == "esMX" then
-        local esES_overrides = {
-            ["Armas Guerrero"] = 71,
-            ["Armas Guerrera"] = 71,
-            ["Furia Guerrero"] = 72,
-            ["Furia Guerrera"] = 72,
-            ["Protección Guerrero"] = 73,
-            ["Protección Guerrera"] = 73,
-
-            ["Sagrado Paladín"] = 65,
-            ["Sagrada Paladín"] = 65,
-            ["Protección Paladín"] = 66,
-            ["Reprensión Paladín"] = 70,
-
-            ["Bestias Cazador"] = 253,
-            ["Bestias Cazadora"] = 253,
-            ["Puntería Cazador"] = 254,
-            ["Puntería Cazadora"] = 254,
-            ["Supervivencia Cazador"] = 255,
-            ["Supervivencia Cazadora"] = 255,
-
-            ["Asesinato Pícaro"] = 259,
-            ["Asesinato Pícara"] = 259,
-            ["Forajido Pícaro"] = 260,
-            ["Forajida Pícara"] = 260,
-            ["Sutileza Pícaro"] = 261,
-            ["Sutileza Pícara"] = 261,
-
-            ["Disciplina Sacerdote"] = 256,
-            ["Disciplina Sacerdotisa"] = 256,
-            ["Sagrado Sacerdote"] = 257,
-            ["Sagrada Sacerdotisa"] = 257,
-            ["Sombra Sacerdote"] = 258,
-            ["Sombra Sacerdotisa"] = 258,
-
-            ["Sangre Caballero de la Muerte"] = 250,
-            ["Sangre Caballera de la Muerte"] = 250,
-            ["Escarcha Caballero de la Muerte"] = 251,
-            ["Escarcha Caballera de la Muerte"] = 251,
-            ["Profano Caballero de la Muerte"] = 252,
-            ["Profana Caballera de la Muerte"] = 252,
-
-            ["Elemental Chamán"] = 262,
-            ["Mejora Chamán"] = 263,
-            ["Restauración Chamán"] = 264,
-
-            ["Arcano Mago"] = 62,
-            ["Arcana Maga"] = 62,
-            ["Fuego Mago"] = 63,
-            ["Fuego Maga"] = 63,
-            ["Escarcha Mago"] = 64,
-            ["Escarcha Maga"] = 64,
-
-            ["Aflicción Brujo"] = 265,
-            ["Aflicción Bruja"] = 265,
-            ["Demonología Brujo"] = 266,
-            ["Demonología Bruja"] = 266,
-            ["Destrucción Brujo"] = 267,
-            ["Destrucción Bruja"] = 267,
-
-            ["Maestro cervecero Monje"] = 268,
-            ["Maestra cervecera Monje"] = 268,
-            ["Tejedor de niebla Monje"] = 270,
-            ["Tejedora de niebla Monje"] = 270,
-            ["Viajero del viento Monje"] = 269,
-            ["Viajera del viento Monje"] = 269,
-
-            ["Equilibrio Druida"] = 102,
-            ["Feral Druida"] = 103,
-            ["Guardián Druida"] = 104,
-            ["Guardiana Druida"] = 104,
-            ["Restauración Druida"] = 105,
-
-            ["Devastación Cazador de demonios"] = 577,
-            ["Devastación Cazadora de demonios"] = 577,
-            ["Venganza Cazador de demonios"] = 581,
-            ["Venganza Cazadora de demonios"] = 581,
-
-            ["Devastación Evocador"] = 1467,
-            ["Devastación Evocadora"] = 1467,
-            ["Preservación Evocador"] = 1468,
-            ["Preservación Evocadora"] = 1468,
-            ["Aumento Evocador"] = 1473,
-            ["Aumento Evocadora"] = 1473,
-        }
-
-        local esClassNames = {
-            "Caballero de la Muerte", "Caballera de la Muerte",
-            "Cazador de demonios", "Cazadora de demonios",
-            "Sacerdotisa", "Sacerdote",
-            "Evocadora", "Evocador",
-            "Cazadora", "Cazador",
-            "Guerrera", "Guerrero",
-            "Paladín",
-            "Pícara", "Pícaro",
-            "Chamán",
-            "Maga", "Mago",
-            "Bruja", "Brujo",
-            "Monje",
-            "Druida",
-        }
-
-        for k, v in pairs(esES_overrides) do
-            if classFirst then
-                -- Swap "Spec Class" -> "Class Spec" for esMX
-                local swapped
-                for _, className in ipairs(esClassNames) do
-                    local specPart = k:match("^(.-)%s+" .. className .. "$")
-                    if specPart then
-                        swapped = className .. " " .. specPart
-                        break
+            for _, specName in pairs({ specMale, specFemale }) do
+                for _, className in pairs({ classMale, classFemale }) do
+                    if classFirst then
+                        specs[className .. " " .. specName] = specID
+                    else
+                        specs[specName .. " " .. className] = specID
                     end
                 end
-                specs[swapped or k] = v
-            else
-                specs[k] = v
             end
-        end
-    elseif locale == "ruRU" then
-        local ruRU_overrides = {
-            ["Хранительница Пробудительница"] = 1468,
-        }
-        for k, v in pairs(ruRU_overrides) do
-            specs[k] = v
         end
     end
 
@@ -6520,7 +6416,7 @@ local ALL_SPECS = GetLocalizedSpecs()
 -- Caching Tables
 BBA.SpecCache = {}
 local SpecCache = BBA.SpecCache  -- Stores GUID -> specID
-local GetUnitTooltip = C_TooltipInfo and C_TooltipInfo.GetUnit or function() return nil end
+local GetUnitTooltip = C_TooltipInfo.GetUnit or function() return nil end
 
 -- Function to retrieve the specialization ID of a unit
 local function GetSpecID(frame)

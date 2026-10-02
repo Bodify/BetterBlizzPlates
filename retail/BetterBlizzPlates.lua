@@ -5283,7 +5283,7 @@ local ALL_SPECS = GetLocalizedSpecs()
 -- Caching Tables
 BBA.SpecCache = {}
 local SpecCache = BBA.SpecCache  -- Stores GUID -> specID
-local GetUnitTooltip = C_TooltipInfo and C_TooltipInfo.GetUnit or function() return nil end
+local GetUnitTooltip = C_TooltipInfo.GetUnit or function() return nil end
 
 -- Function to retrieve the specialization ID of a unit
 local function GetSpecID(frame)

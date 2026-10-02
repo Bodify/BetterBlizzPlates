@@ -1,3 +1,10 @@
+# BetterBlizzPlates 2.1.8b
+## Retail & Forever
+### New
+- Classic Castbar: "Classic Options" dropdown with "Hide Icon Background" and "Full Width Bar" settings.
+### Tweak
+- Quest Indicator: Better quest detection.
+
 # BetterBlizzPlates 2.1.8
 ## Retail & Forever
 ### New

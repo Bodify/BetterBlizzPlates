@@ -10021,6 +10021,14 @@ local function guiCastbar()
         StaticPopup_Show(self:GetChecked() and "BBP_CLASSIC_CASTBAR_SETUP" or "BBP_CONFIRM_RELOAD")
     end)
 
+    local classicCastbarOptions = CreateMultiSelectDropdown("Classic Options", guiCastbar, {
+        { key = "classicCastbarNoIconBorder", label = "Hide Icon Background", tooltip = "Remove the background behind the cast icon.", isEnabled = BBP.UsesClassicCastbar },
+        { key = "classicCastbarFullWidth", label = "Full Width Bar", tooltip = "Have the classic castbar width be the same as healthbar and push cast icon out on the side.", isEnabled = BBP.UsesClassicCastbar },
+    }, 150)
+    classicCastbarOptions:SetPoint("LEFT", classicCastbar.text, "RIGHT", 4, 0)
+    classicCastbarOptions:SetScale(0.7)
+    CreateTooltipTwo(classicCastbarOptions, "Classic Options", "Settings for the classic castbar.")
+
     local enableCastbarCustomization = CreateCheckbox("enableCastbarCustomization", "Enable castbar customization", guiCastbar, nil, BBP.ToggleSpellCastEventRegistration)
     enableCastbarCustomization:SetPoint("TOPLEFT", classicCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
 
