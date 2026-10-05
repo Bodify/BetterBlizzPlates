@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.1.9b
+## Retail
+### Bugfix
+- Fix new 12.1.5 API being attempted called on Retail causing error.
+
 # BetterBlizzPlates 2.1.9
 ## Forever
 ### New
