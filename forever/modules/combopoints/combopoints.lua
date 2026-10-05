@@ -1,6 +1,6 @@
 local DEFAULT_MAX_POINTS = 5
 local PRD_Y_OFFSET = 9
-local NAMEPLATE_LEVEL_BUMP = 10
+local PRD_RESOURCE_LEVEL = 1000
 
 local CLASS_INFO = {
     ROGUE = {
@@ -175,16 +175,12 @@ function BBP.UpdateComboPointBarParent(relativeTo)
         prdBar:SetParent(parent)
     end
 
-    if prdBar.bbpBaseLevel == nil then
-        prdBar.bbpBaseLevel = prdBar:GetFrameLevel()
-    end
-
     if onPrd then
         prdBar:SetFrameStrata("BACKGROUND")
-        prdBar:SetFrameLevel(prdBar.bbpBaseLevel)
+        prdBar:SetFrameLevel(PRD_RESOURCE_LEVEL + 1)
     elseif not BetterBlizzPlatesDB.changeResourceStrata and relativeTo.GetFrameStrata then
         prdBar:SetFrameStrata("BACKGROUND")
-        prdBar:SetFrameLevel(relativeTo:GetFrameLevel() + NAMEPLATE_LEVEL_BUMP)
+        prdBar:SetFrameLevel(PRD_RESOURCE_LEVEL)
     end
 
     return onPrd

@@ -774,6 +774,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
                 if config.changeNameplateBorderColor then
                     BBP.ColorNameplateBorder(frame)
+                    BBP.ColorTargetHighlightBorder(frame)
                 end
             end
 
@@ -905,6 +906,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
         if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
             if config.changeNameplateBorderColor then
                 BBP.ColorNameplateBorder(frame)
+                BBP.ColorTargetHighlightBorder(frame)
             end
         end
 
@@ -1014,6 +1016,7 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
         if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
             if config.changeNameplateBorderColor then
                 BBP.ColorNameplateBorder(frame)
+                BBP.ColorTargetHighlightBorder(frame)
             end
         end
 
@@ -1064,6 +1067,7 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
         if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
             if config.changeNameplateBorderColor then
                 BBP.ColorNameplateBorder(frame)
+                BBP.ColorTargetHighlightBorder(frame)
             end
         end
 

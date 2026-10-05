@@ -699,7 +699,7 @@ function BBP.UpdateAuraTypeColors()
     for _, key in ipairs(DISPEL_KEYS) do dispelColorMapHelpful[key] = buff end
 end
 
-local HIDE_LONG_TIMER_FROM = 61
+local HIDE_LONG_TIMER_FROM = 60
 
 local durationCurve, durationCurveSignature
 
@@ -756,6 +756,17 @@ local function GetDurationFormatter(showMilliseconds, hideLong)
     }
     if hideLong then
         breakpoints[#breakpoints + 1] = { threshold = HIDE_LONG_TIMER_FROM, format = " " }
+    else
+        breakpoints[#breakpoints + 1] = {
+            threshold = 60,
+            format = COOLDOWN_DURATION_MIN or "%dm",
+            components = { { div = 60, step = 1, rounding = Enum.NumericRuleFormatRounding.Up } },
+        }
+        breakpoints[#breakpoints + 1] = {
+            threshold = 3600,
+            format = COOLDOWN_DURATION_HOUR or "%dh",
+            components = { { div = 3600, step = 1, rounding = Enum.NumericRuleFormatRounding.Up } },
+        }
     end
     f:SetBreakpoints(breakpoints)
 
@@ -1130,10 +1141,12 @@ local function ApplyMutableStyle(button, style)
         ApplyCountdownFont(button.bbpTimer, style.cdFont)
 
         local wantMs = style.showMilliseconds and true or false
-        if button.bbpMilliseconds ~= wantMs then
+        local hideLong = style.hideLongTimers and true or false
+        if button.bbpMilliseconds ~= wantMs or button.bbpHideLong ~= hideLong then
             button.bbpMilliseconds = wantMs
+            button.bbpHideLong = hideLong
             button:SetDurationText(button.bbpTimer, {
-                textFormatter = GetDurationFormatter(wantMs),
+                textFormatter = GetDurationFormatter(wantMs, hideLong),
                 textColor = {
                     curve = GetDurationCurve(),
                     property = Enum.DurationTextBindingProperty.RemainingDuration,
@@ -1933,6 +1946,7 @@ end
 local function CreateContainer(kind)
     local container = CreateFrame("AuraContainer", nil, UIParent, "CustomAuraContainerTemplate")
     container:SetEnabled(false)
+    container:SetEditModePreviewEnabled(false)
     container:Hide()
     container.bbpKind = kind
     container.bbpStyles = {}
@@ -2921,6 +2935,7 @@ function BBP.SetupPRDAuras()
     if not container then
         container = CreateFrame("AuraContainer", nil, PersonalResourceDisplayFrame, "CustomAuraContainerTemplate")
         container:SetEnabled(false)
+        container:SetEditModePreviewEnabled(false)
         container.bbpKind = BUFFS
         container.bbpStyles = {}
         container.bbpApplied = {}
@@ -3177,7 +3192,7 @@ local function DrawMockButton(button, style, index)
     local duration = (index == 1) and 5 or (6 + index * 4)
     button.bbpDuration = duration
     button.bbpExpires = GetTime() + duration
-    button.bbpFormatter = GetDurationFormatter(style.showMilliseconds)
+    button.bbpFormatter = GetDurationFormatter(style.showMilliseconds, style.hideLongTimers)
     button.bbpTimerColor = style.timerColor
     CooldownFrame_Set(button.bbpCooldown, GetTime(), duration, true, true)
 

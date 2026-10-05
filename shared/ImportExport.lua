@@ -1,5 +1,5 @@
 local LibDeflate = LibStub("LibDeflate")
-local LibSerialize = LibStub("LibSerialize")
+local LibSerialize = LibStub("LibSerialize-BB")
 local LibAceSerializer = LibStub("AceSerializer-3.0")
 
 function BBP.DeepMergeTables(destination, source)

@@ -280,6 +280,7 @@ local function CreateTotemAuraContainer(frame)
     container:SetFrameLevel(frame.totemIndicator:GetFrameLevel() + 5)
     container:SetPoint("CENTER", frame.totemIndicator, "CENTER", 0, 0)
     container:SetEnabled(false)
+    container:SetEditModePreviewEnabled(false)
     container:Hide()
     frame.totemAuraContainer = container
 

@@ -5125,7 +5125,7 @@ local function HandleNamePlateAdded(unit)
     if not frame.bbpOverlay then
         frame.bbpOverlay = CreateFrame("Frame", nil, frame.healthBar)
         frame.bbpOverlay:SetFrameStrata("DIALOG")
-        frame.bbpOverlay:SetFrameLevel(9000)
+        frame.bbpOverlay:SetFrameLevel(9999)
     end
 
     if not frame.nameplateTweaksBBP then
@@ -5788,7 +5788,7 @@ function BBP.ConsolidatedUpdateName(frame)
     if not frame.bbpOverlay then
         frame.bbpOverlay = CreateFrame("Frame", nil, frame.healthBar)
         frame.bbpOverlay:SetFrameStrata("DIALOG")
-        frame.bbpOverlay:SetFrameLevel(9000)
+        frame.bbpOverlay:SetFrameLevel(9999)
     end
 
     if not frame.BuffFrame then
@@ -6971,6 +6971,8 @@ function BBP.CreateUpdateMessageWindow()
 
     -- Example of how to use the scrolling message frame
     BBP.UpdateMessageWindow = CreateFrame("Frame", "BBPUpdate", UIParent, "PortraitFrameTemplate")
+    BBP.UpdateMessageWindow:SetFrameStrata("FULLSCREEN_DIALOG")
+    BBP.UpdateMessageWindow:SetFrameLevel(550)
     BBP.UpdateMessageWindow:SetSize(450,300)
     BBP.UpdateMessageWindow.Bg:SetDesaturated(true)
     BBP.UpdateMessageWindow.Bg:SetVertexColor(0.5,0.5,0.5, 0.98)
@@ -6986,7 +6988,6 @@ function BBP.CreateUpdateMessageWindow()
     BBP.UpdateMessageWindow:SetScript("OnDragStop", BBP.UpdateMessageWindow.StopMovingOrSizing)
     BBP.UpdateMessageWindow:SetPortraitToAsset(135724)
     BBP.UpdateMessageWindow:SetTitle("Better|cff00c0ffBlizz|rPlates " .. addonUpdates)
-    BBP.UpdateMessageWindow:SetFrameLevel(0)
     local testTitle = BBP.UpdateMessageWindow:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge2")
     testTitle:SetText("Better|cff00c0ffBlizz|rPlates " ..addonUpdates.. " Update!")
     testTitle:SetPoint("TOP", BBP.UpdateMessageWindow, "TOP", 0, -32)

@@ -211,6 +211,9 @@ local defaultSettings = {
     npBorderNpcColorRGB = {0, 0, 0, 1},
     npBorderNonTargetColorRGB = {0, 0, 0, 1},
     npBorderFocusColorRGB = {0, 0, 0, 1},
+    npTargetHighlightBorder = false,
+    npTargetHighlightTargetRGB = {1, 1, 1, 1},
+    npTargetHighlightFocusRGB = {1, 0.49, 0.039, 1},
     -- Bg Indicator
     bgIndicatorAnchor = "BOTTOM",
     bgIndicatorScale = 1,
@@ -1033,6 +1036,12 @@ local function InitializeSavedVariables()
 
     if db.dpsOrHealTargetAggroColorRGB == nil then
         db.dpsOrHealTargetAggroColorRGB = db.dpsOrHealFullAggroColorRGB or {1, 0, 0, 1}
+    end
+
+    if db.npTargetHighlightBorder == nil and db.changeNameplateBorderColor and db.npBorderTargetColor then
+        db.npTargetHighlightBorder = true
+        db.npTargetHighlightTargetRGB = CopyTable(db.npBorderTargetColorRGB or {1, 1, 1, 1})
+        db.npTargetHighlightFocusRGB = CopyTable(db.npBorderFocusColorRGB or {0, 0, 0, 1})
     end
 
     for key, defaultValue in pairs(defaultSettings) do
@@ -5041,6 +5050,25 @@ function BBP.RefUnitAuraTotally(unitFrame)
     --BBP.UpdateBuffs(unitFrame.AurasFrame, unit, nil, {}, unitFrame)
 end
 
+local function ColorSelectedBorder(selectedBorder, r, g, b, a)
+    selectedBorder.changing = true
+    selectedBorder.bbpColored = true
+    selectedBorder:SetDesaturated(true)
+    selectedBorder:SetVertexColor(r, g, b, a)
+    selectedBorder.changing = false
+end
+
+local function ResetSelectedBorderColor(frame)
+    local selectedBorder = frame.HealthBarsContainer.healthBar.selectedBorder
+    if selectedBorder.bbpColored then
+        selectedBorder.bbpColored = nil
+        selectedBorder.changing = true
+        selectedBorder:SetDesaturated(false)
+        selectedBorder:SetVertexColor(1, 1, 1)
+        selectedBorder.changing = false
+    end
+end
+
 local function ColorNameplateBorder(self, frame)
     if self.changing or self:IsForbidden() then return end
 
@@ -5106,7 +5134,6 @@ function BBP.ColorNameplateBorder(frame) --classic border
     -- Support classic borders, classicRetailNameplates borders, and default midnight borders
     local border = frame.BetterBlizzPlates.bbpBorder
     local newBorder = frame.HealthBarsContainer and frame.HealthBarsContainer.newBorder
-    local selectedBorder = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar and frame.HealthBarsContainer.healthBar.selectedBorder
     local db = BetterBlizzPlatesDB
     local midnightBgBorder = frame.HealthBarsContainer.healthBar.bgTexture
 
@@ -5148,9 +5175,6 @@ function BBP.ColorNameplateBorder(frame) --classic border
         if newBorder and db.classicRetailNameplates then
             frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderTargetColorRGB))
         end
-        if selectedBorder and not nonMidnightBorder then
-            selectedBorder:SetVertexColor(unpack(config.npBorderTargetColorRGB))
-        end
     elseif info.isFocus and config.npBorderTargetColor then
         if border then
             border:SetDesaturated(true)
@@ -5160,9 +5184,6 @@ function BBP.ColorNameplateBorder(frame) --classic border
         end
         if newBorder and db.classicRetailNameplates then
             frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderFocusColorRGB))
-        end
-        if selectedBorder and not nonMidnightBorder then
-            selectedBorder:SetVertexColor(unpack(config.npBorderFocusColorRGB))
         end
     else
         --non target
@@ -5177,9 +5198,6 @@ function BBP.ColorNameplateBorder(frame) --classic border
                 if newBorder and db.classicRetailNameplates then
                     frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderEnemyColorRGB))
                 end
-                if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
-                    selectedBorder:SetVertexColor(unpack(config.npBorderEnemyColorRGB))
-                end
             elseif info.isNeutral then
                 if border then
                     border:SetDesaturated(true)
@@ -5190,9 +5208,6 @@ function BBP.ColorNameplateBorder(frame) --classic border
                 if newBorder and db.classicRetailNameplates then
                     frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderNeutralColorRGB))
                 end
-                if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
-                    selectedBorder:SetVertexColor(unpack(config.npBorderNeutralColorRGB))
-                end
             elseif info.isFriend then
                 if border then
                     border:SetDesaturated(true)
@@ -5202,9 +5217,6 @@ function BBP.ColorNameplateBorder(frame) --classic border
                 end
                 if newBorder and db.classicRetailNameplates then
                     frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderFriendlyColorRGB))
-                end
-                if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
-                    selectedBorder:SetVertexColor(unpack(config.npBorderFriendlyColorRGB))
                 end
             end
         end
@@ -5222,9 +5234,6 @@ function BBP.ColorNameplateBorder(frame) --classic border
                     if newBorder and db.classicRetailNameplates then
                         frame.HealthBarsContainer:SetBorderColor(classColor.r, classColor.g, classColor.b, 1)
                     end
-                    if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
-                        selectedBorder:SetVertexColor(classColor.r, classColor.g, classColor.b, 1)
-                    end
                 end
             elseif not config.npBorderFriendFoeColor then
                 if border then
@@ -5235,9 +5244,6 @@ function BBP.ColorNameplateBorder(frame) --classic border
                 end
                 if newBorder and db.classicRetailNameplates then
                     frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderNpcColorRGB))
-                end
-                if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
-                    selectedBorder:SetVertexColor(unpack(config.npBorderNpcColorRGB))
                 end
             end
         end
@@ -5252,10 +5258,20 @@ function BBP.ColorNameplateBorder(frame) --classic border
             if newBorder and db.classicRetailNameplates then
                 frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderNonTargetColorRGB))
             end
-            if selectedBorder and not db.classicRetailNameplates and not config.classicNameplates then
-                selectedBorder:SetVertexColor(unpack(config.npBorderNonTargetColorRGB))
-            end
         end
+    end
+end
+
+function BBP.ColorTargetHighlightBorder(frame)
+    local db = BetterBlizzPlatesDB
+    if not db.changeNameplateBorderColor or not db.npTargetHighlightBorder or db.classicRetailNameplates then return end
+    local config = frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
+    if config.classicNameplates then return end
+    local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
+    if not info then return end
+    local color = (info.isTarget and db.npTargetHighlightTargetRGB) or (info.isFocus and db.npTargetHighlightFocusRGB)
+    if color then
+        ColorSelectedBorder(frame.HealthBarsContainer.healthBar.selectedBorder, unpack(color))
     end
 end
 
@@ -5425,19 +5441,14 @@ local function HookNameplateBorder(frame)
 end
 
 local function HookSelectedBorder(frame)
-    local selectedBorder = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar and frame.HealthBarsContainer.healthBar.selectedBorder
-    if not selectedBorder then return end
-
     if not frame.BetterBlizzPlates.hooks.selectedBorderColor then
-        hooksecurefunc(selectedBorder, "SetVertexColor", function(self, r, g, b, a)
+        hooksecurefunc(frame.HealthBarsContainer.healthBar.selectedBorder, "SetVertexColor", function(self)
             if self.changing or frame:IsForbidden() then return end
-            self.changing = true
-            BBP.ColorNameplateBorder(frame)
-            self.changing = false
+            BBP.ColorTargetHighlightBorder(frame)
         end)
         frame.BetterBlizzPlates.hooks.selectedBorderColor = true
     end
-    BBP.ColorNameplateBorder(frame)
+    BBP.ColorTargetHighlightBorder(frame)
 end
 
 local function HookNameplateCastbarHide(frame)
@@ -6800,7 +6811,7 @@ local function HandleNamePlateAdded(unit)
     if not frame.bbpOverlay then
         frame.bbpOverlay = CreateFrame("Frame", nil, frame.HealthBarsContainer.healthBar)
         frame.bbpOverlay:SetFrameStrata("DIALOG")
-        frame.bbpOverlay:SetFrameLevel(9000)
+        frame.bbpOverlay:SetFrameLevel(9999)
 
     end
     if BBP.isMidnight then
@@ -7100,10 +7111,14 @@ local function HandleNamePlateAdded(unit)
     if config.changeNameplateBorderColor then
         if not config.classicNameplates then
             HookNameplateBorder(frame)
-            HookSelectedBorder(frame)
         else
             BBP.ColorNameplateBorder(frame)
         end
+    end
+    if config.changeNameplateBorderColor and BetterBlizzPlatesDB.npTargetHighlightBorder then
+        HookSelectedBorder(frame)
+    else
+        ResetSelectedBorderColor(frame)
     end
 
     local showNameplateTargetText = BetterBlizzPlatesDB.showNameplateTargetText
@@ -7482,7 +7497,7 @@ function BBP.ConsolidatedUpdateName(frame)
     if not frame.bbpOverlay then
         frame.bbpOverlay = CreateFrame("Frame", nil, frame.healthBar)
         frame.bbpOverlay:SetFrameStrata("DIALOG")
-        frame.bbpOverlay:SetFrameLevel(9000)
+        frame.bbpOverlay:SetFrameLevel(9999)
     end
 
     if frame.castHiddenName then
@@ -8274,10 +8289,12 @@ function BBP.TurnOnFocusBorderColor()
         local focusNp, frame = BBP.GetSafeNameplate("focus")
         if BBP.previousFocusNameplate2 then
             ColorNameplateBorder(BBP.previousFocusNameplate2.HealthBarsContainer.border, BBP.previousFocusNameplate2)
+            BBP.ColorTargetHighlightBorder(BBP.previousFocusNameplate2)
             BBP.previousFocusNameplate2 = nil
         end
         if frame and frame.HealthBarsContainer.border then
             ColorNameplateBorder(frame.HealthBarsContainer.border, frame)
+            BBP.ColorTargetHighlightBorder(frame)
             BBP.previousFocusNameplate2 = frame
         end
     end)
@@ -8412,7 +8429,7 @@ local function TurnOnEnabledFeaturesOnLogin()
         BBP.ChangeRaidmarker()
     end
 
-    if db.changeNameplateBorderColor and db.npBorderTargetColor then
+    if db.changeNameplateBorderColor and (db.npBorderTargetColor or db.npTargetHighlightBorder) then
         BBP.TurnOnFocusBorderColor()
     end
 
@@ -9512,8 +9529,8 @@ function BBP.CreateUpdateMessageWindow()
     BBP.UpdateMessageWindow:SetScript("OnDragStop", BBP.UpdateMessageWindow.StopMovingOrSizing)
     BBP.UpdateMessageWindow:SetPortraitToAsset(135724)
     BBP.UpdateMessageWindow:SetTitle("Better|cff00c0ffBlizz|rPlates " .. BBP.VersionNumber)
-    BBP.UpdateMessageWindow:SetFrameLevel(0)
-    BBP.UpdateMessageWindow:SetFrameStrata("HIGH")
+    BBP.UpdateMessageWindow:SetFrameStrata("FULLSCREEN_DIALOG")
+    BBP.UpdateMessageWindow:SetFrameLevel(550)
     local testTitle = BBP.UpdateMessageWindow:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge2")
     testTitle:SetText("Better|cff00c0ffBlizz|rPlates " ..BBP.VersionNumber.. " Update!")
     testTitle:SetPoint("TOP", BBP.UpdateMessageWindow, "TOP", 0, -32)

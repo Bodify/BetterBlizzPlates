@@ -265,6 +265,7 @@ local function CreateClassIndicatorCCContainer(frame)
     container:SetFrameStrata("HIGH")
     container:SetPoint("CENTER", frame.classIndicator)
     container:SetEnabled(false)
+    container:SetEditModePreviewEnabled(false)
     container:Hide()
     frame.classIndicatorCCContainer = container
 

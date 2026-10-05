@@ -838,7 +838,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
     editBox:SetHeight(20)
     editBox:SetMultiLine(false)
     editBox:SetPoint("CENTER", slider, "CENTER", 0, 0)
-    editBox:SetFrameStrata("DIALOG")
+    editBox:SetFrameStrata("TOOLTIP")
     editBox:Hide()
 
     editBox:SetFontObject(GameFontHighlightSmall)
@@ -1952,6 +1952,44 @@ local function ShowProfileConfirmation(profileName, class, profileFunction, addi
     StaticPopup_Show("BBP_CONFIRM_PROFILE", nil, nil, { func = profileFunction })
 end
 
+function BBP.ShowProfileLink(link)
+    local box = BBP.profileLinkBox
+    if not box then
+        box = CreateFrame("EditBox", nil, UIParent, "InputBoxTemplate")
+        box:SetSize(170, 20)
+        box:SetAutoFocus(false)
+        box:SetFrameStrata("FULLSCREEN_DIALOG")
+        box:SetScript("OnEscapePressed", box.Hide)
+        box:SetScript("OnEnterPressed", box.Hide)
+        box:SetScript("OnEditFocusLost", box.Hide)
+        box:SetScript("OnTextChanged", function(self, userInput)
+            if userInput then
+                self:SetText(self.link)
+                self:HighlightText()
+            end
+        end)
+        box:SetScript("OnKeyDown", function(self, key)
+            if key == "C" and IsControlKeyDown() then
+                C_Timer.After(0, function() self:Hide() end)
+            end
+        end)
+        BBP.profileLinkBox = box
+    end
+    if not link then
+        box:Hide()
+        return
+    end
+    box.link = link
+    box:ClearAllPoints()
+    local x, y = GetCursorPosition()
+    local scale = UIParent:GetEffectiveScale()
+    box:SetPoint("TOP", UIParent, "BOTTOMLEFT", x / scale, y / scale - 12)
+    box:SetText(link)
+    box:Show()
+    box:SetFocus()
+    box:HighlightText()
+end
+
 local function CreateClassButton(parent, class, name, twitchName, onClickFunc, youtubeName)
     local bbpParent = parent == BetterBlizzPlates
     local coreProfile = class == "STARTER" or class == "BLITZ" or class == "MYTHIC" or class == "PREMIDNIGHT" or name == "Bodify"
@@ -1982,8 +2020,11 @@ local function CreateClassButton(parent, class, name, twitchName, onClickFunc, y
         button.Text:SetPoint("LEFT",b,"LEFT",10,e-0.6)
     end
 
-    button:SetScript("OnClick", function()
-        if onClickFunc then
+    button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    button:SetScript("OnClick", function(self, mouseButton)
+        if mouseButton == "RightButton" then
+            BBP.ShowProfileLink(twitchName and ("www.twitch.tv/"..twitchName) or youtubeName and ("www.youtube.com/@"..youtubeName))
+        elseif onClickFunc then
             onClickFunc()
         end
     end)
@@ -3451,7 +3492,8 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             npcEditFrame = CreateFrame("Frame", "NPC_EditFrame", UIParent, "DefaultPanelFlatTemplate")
             npcEditFrame:SetSize(350, 250)
             npcEditFrame:SetPoint("CENTER")
-            npcEditFrame:SetFrameStrata("HIGH")
+            npcEditFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+            npcEditFrame:SetFrameLevel(550)
             npcEditFrame:SetIgnoreParentAlpha(true)
             npcEditFrame:SetTitle("Edit NPC Details")
             npcEditFrame:EnableMouse(true)
@@ -3462,6 +3504,7 @@ local function CreateNpcList(subPanel, npcList, refreshFunc, width, height)
             npcEditFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
             npcEditFrame.closeButton = CreateFrame("Button", nil, npcEditFrame, "UIPanelCloseButton")
+            npcEditFrame.closeButton:SetFrameLevel((npcEditFrame.TitleContainer or npcEditFrame):GetFrameLevel() + 10)
             npcEditFrame.closeButton:SetPoint("TOPRIGHT", npcEditFrame, "TOPRIGHT", 0, 0)
             npcEditFrame.closeButton:SetScript("OnClick", function()
                 npcEditFrame:Hide()
@@ -4208,7 +4251,8 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
             npcEditFrame = CreateFrame("Frame", "NPC_EditFrame", UIParent, "DefaultPanelFlatTemplate")
             npcEditFrame:SetSize(350, 250)
             npcEditFrame:SetPoint("CENTER")
-            npcEditFrame:SetFrameStrata("HIGH")
+            npcEditFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+            npcEditFrame:SetFrameLevel(550)
             npcEditFrame:SetIgnoreParentAlpha(true)
             npcEditFrame:SetTitle("Edit NPC Details")
             npcEditFrame:EnableMouse(true)
@@ -4219,6 +4263,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
             npcEditFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
             npcEditFrame.closeButton = CreateFrame("Button", nil, npcEditFrame, "UIPanelCloseButton")
+            npcEditFrame.closeButton:SetFrameLevel((npcEditFrame.TitleContainer or npcEditFrame):GetFrameLevel() + 10)
             npcEditFrame.closeButton:SetPoint("TOPRIGHT", npcEditFrame, "TOPRIGHT", 0, 0)
             npcEditFrame.closeButton:SetScript("OnClick", function()
                 npcEditFrame:Hide()
@@ -4609,7 +4654,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
                 editBox:SetWidth(50)
                 editBox:SetHeight(20)
                 editBox:SetMultiLine(false)
-                editBox:SetFrameStrata("DIALOG")
+                editBox:SetFrameStrata("TOOLTIP")
                 editBox:Hide()
 
                 editBox:SetFontObject(GameFontHighlightSmall)
@@ -5266,11 +5311,30 @@ local function guiProfiles()
     frame.streamerText:SetText("Streamers")
 
     frame.infoText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 39)
-    frame.infoText:SetText("") --If you are missing and want to be here let me know :)
-    frame.infoText:SetWidth(100)
+    frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 45)
+    frame.infoText:SetText("If you are missing and want to be here let me know :)")
+    frame.infoText:SetWidth(135)
 
     frame:SetSize(130, parent:GetHeight())
+
+    local streamerCount = 0
+    for _, profile in ipairs(BBP.ProfileData) do
+        if not profile.core then
+            streamerCount = streamerCount + 1
+        end
+    end
+    if streamerCount >= 20 then
+        frame.twoColumn = true
+        frame.titleText:SetText("|A:gmchat-icon-blizz:16:16|a BetterBlizzPlates")
+        frame.descriptionText:SetFontObject("GameFontNormal")
+        frame.descriptionText:SetText("Profiles\nfor BetterBlizzPlates:")
+        frame.descriptionText:SetWidth(145)
+        frame.coreText:SetFontObject("GameFontNormalLarge")
+        frame.coreText:SetPoint("TOP", frame.descriptionText, "BOTTOM", 0, -10)
+        frame.streamerText:SetFontObject("GameFontNormalLarge")
+        frame.infoText:SetWidth(135)
+        frame:SetWidth(165)
+    end
     frame:SetPoint("TOPRIGHT", parent, "TOPLEFT", 7, 0)
     frame:SetFrameStrata("BACKGROUND")
     frame.ClosePanelButton:SetAlpha(0)
@@ -5417,7 +5481,8 @@ local function guiGeneralTab()
             smallPetsOptionsFrame = CreateFrame("Frame", "BBPSmallPetsOptionsFrame", UIParent, "DefaultPanelFlatTemplate")
             smallPetsOptionsFrame:SetSize(180, 240)
             smallPetsOptionsFrame:SetPoint("CENTER")
-            smallPetsOptionsFrame:SetFrameStrata("HIGH")
+            smallPetsOptionsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+            smallPetsOptionsFrame:SetFrameLevel(550)
             smallPetsOptionsFrame:SetIgnoreParentAlpha(true)
             smallPetsOptionsFrame:SetTitle("Small Pets Options")
             smallPetsOptionsFrame:EnableMouse(true)
@@ -5428,6 +5493,7 @@ local function guiGeneralTab()
             smallPetsOptionsFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
             smallPetsOptionsFrame.closeButton = CreateFrame("Button", nil, smallPetsOptionsFrame, "UIPanelCloseButton")
+            smallPetsOptionsFrame.closeButton:SetFrameLevel((smallPetsOptionsFrame.TitleContainer or smallPetsOptionsFrame):GetFrameLevel() + 10)
             smallPetsOptionsFrame.closeButton:SetPoint("TOPRIGHT", smallPetsOptionsFrame, "TOPRIGHT", 0, 0)
             smallPetsOptionsFrame.closeButton:SetScript("OnClick", function()
                 smallPetsOptionsFrame:Hide()
@@ -6027,6 +6093,7 @@ local function guiGeneralTab()
     end
 
     local nameplateShowFriendlyClassColor = CreateCheckbox("nameplateShowFriendlyClassColor", "Class color healthbar", BetterBlizzPlates, true)
+    BBP.classColorCVarCheckboxes = { nameplateShowClassColor = nameplateShowClassColor, nameplateShowFriendlyClassColor = nameplateShowFriendlyClassColor }
     nameplateShowFriendlyClassColor:SetPoint("TOPLEFT", friendlyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(nameplateShowFriendlyClassColor, "Class color healthbar", "Class color friendly healthbars.", nil, nil, "nameplateShowFriendlyClassColor")
     if GetCVar("nameplateShowFriendlyClassColor") == "1" and BetterBlizzPlatesDB.nameplateShowFriendlyClassColor == nil then
@@ -6828,24 +6895,44 @@ local function guiGeneralTab()
             ShowProfileConfirmation(profile.name, profile.class, function() BBP.ApplyProfile(profile.name) end, additionalNote)
         end, profile.youtubeName)
         table.insert(profileButtons, button)
+        if profilesFrame.twoColumn then
+            button:SetScale(profile.core and 1.05 or 0.9)
+        end
         if profile.core then
             button:SetPoint("TOP", lastCoreButton, "BOTTOM", 0, lastCoreButton == profilesFrame.coreText and -3 or btnGap)
             lastCoreButton = button
+        elseif profilesFrame.twoColumn then
+            button:SetSize(82, 24)
+            button:SetText((CLASS_COLORS[profile.class] or "|cffffffff")..profile.name.."|r")
+            if lastStreamerButton ~= profilesFrame.streamerText and not lastStreamerButton.rowPartner then
+                button:SetPoint("LEFT", lastStreamerButton, "RIGHT", 1, 0)
+                lastStreamerButton.rowPartner = button
+            else
+                button:SetPoint("TOPRIGHT", lastStreamerButton, lastStreamerButton == profilesFrame.streamerText and "BOTTOM" or "BOTTOMRIGHT", 0, lastStreamerButton == profilesFrame.streamerText and -3 or -1)
+                lastStreamerButton = button
+            end
         else
             button:SetPoint("TOP", lastStreamerButton, "BOTTOM", 0, lastStreamerButton == profilesFrame.streamerText and -3 or btnGap)
             lastStreamerButton = button
         end
     end
 
+    if profilesFrame.twoColumn then
+        profilesFrame.streamerText:ClearAllPoints()
+        profilesFrame.streamerText:SetPoint("TOP", lastCoreButton, "BOTTOM", 0, -12)
+    end
+
     local resetBBPButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
     resetBBPButton:SetText("Full Reset")
     resetBBPButton:SetWidth(104)
-    resetBBPButton:SetPoint("BOTTOM", profilesFrame, "BOTTOM", 2, 10)
+    resetBBPButton:SetPoint("BOTTOM", profilesFrame, "BOTTOM", 2, 15)
     resetBBPButton:SetScript("OnClick", function()
         StaticPopup_Show("CONFIRM_RESET_BETTERBLIZZPLATESDB")
     end)
     CreateTooltip(resetBBPButton, "Reset ALL BetterBlizzPlates settings.", "ANCHOR_TOP")
     table.insert(profileButtons, resetBBPButton)
+    profilesFrame.infoText:ClearAllPoints()
+    profilesFrame.infoText:SetPoint("BOTTOM", resetBBPButton, "TOP", 0, 6)
 
     profilesFrame:HookScript("OnShow", function()
         for _, button in ipairs(profileButtons) do
@@ -7486,7 +7573,8 @@ local function guiPositionAndScale()
     anchorSubTarget.extendedSettings = CreateFrame("Frame", nil, BetterBlizzPlatesSubPanel, "DefaultPanelFlatTemplate")
     anchorSubTarget.extendedSettings:SetSize(anchorSubTarget.border:GetHeight()+60, 250)
     anchorSubTarget.extendedSettings:SetPoint("BOTTOMRIGHT", anchorSubTarget.border, "BOTTOMLEFT", 87, -65)
-    anchorSubTarget.extendedSettings:SetFrameStrata("DIALOG")
+    anchorSubTarget.extendedSettings:SetFrameStrata("FULLSCREEN_DIALOG")
+    anchorSubTarget.extendedSettings:SetFrameLevel(550)
     anchorSubTarget.extendedSettings:SetIgnoreParentAlpha(true)
     anchorSubTarget.extendedSettings:EnableMouse(true)
     anchorSubTarget.extendedSettings:Hide()
@@ -7499,6 +7587,7 @@ local function guiPositionAndScale()
     anchorSubTarget.extendedSettings:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
     anchorSubTarget.closeButton = CreateFrame("Button", nil, anchorSubTarget.extendedSettings, "UIPanelCloseButton")
+    anchorSubTarget.closeButton:SetFrameLevel((anchorSubTarget.extendedSettings.TitleContainer or anchorSubTarget.extendedSettings):GetFrameLevel() + 10)
     anchorSubTarget.closeButton:SetPoint("TOPRIGHT", anchorSubTarget.extendedSettings, "TOPRIGHT", 0, 0)
     anchorSubTarget.closeButton:SetScript("OnClick", function()
         anchorSubTarget.extendedSettings:Hide()
@@ -8347,7 +8436,8 @@ local function guiPositionAndScale()
     -- anchorSubClassIcon.extendedSettings:SetAllPoints(anchorSubClassIcon.border)
     anchorSubClassIcon.extendedSettings:SetSize(anchorSubClassIcon.border:GetHeight()+105, 500)
     anchorSubClassIcon.extendedSettings:SetPoint("BOTTOMRIGHT", anchorSubClassIcon.border, "BOTTOMLEFT", 87, -185)
-    anchorSubClassIcon.extendedSettings:SetFrameStrata("DIALOG")
+    anchorSubClassIcon.extendedSettings:SetFrameStrata("FULLSCREEN_DIALOG")
+    anchorSubClassIcon.extendedSettings:SetFrameLevel(550)
     anchorSubClassIcon.extendedSettings:SetIgnoreParentAlpha(true)
     anchorSubClassIcon.extendedSettings:Hide()
     anchorSubClassIcon.extendedSettings.name = "Advanced Settings"
@@ -8360,6 +8450,7 @@ local function guiPositionAndScale()
     anchorSubClassIcon.extendedSettings:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
     anchorSubClassIcon.closeButton = CreateFrame("Button", nil, anchorSubClassIcon.extendedSettings, "UIPanelCloseButton")
+    anchorSubClassIcon.closeButton:SetFrameLevel((anchorSubClassIcon.extendedSettings.TitleContainer or anchorSubClassIcon.extendedSettings):GetFrameLevel() + 10)
     anchorSubClassIcon.closeButton:SetPoint("TOPRIGHT", anchorSubClassIcon.extendedSettings, "TOPRIGHT", 0, 0)
     anchorSubClassIcon.closeButton:SetScript("OnClick", function()
         anchorSubClassIcon.extendedSettings:Hide()
@@ -8999,7 +9090,8 @@ local function guiPositionAndScale()
     -- anchorSubHealthNumbers.extendedSettings:SetAllPoints(anchorSubHealthNumbers.border)
     anchorSubHealthNumbers.extendedSettings:SetSize(anchorSubHealthNumbers.border:GetHeight()+40, 360)
     anchorSubHealthNumbers.extendedSettings:SetPoint("BOTTOMRIGHT", anchorSubHealthNumbers.border, "BOTTOMLEFT", 87, -125)
-    anchorSubHealthNumbers.extendedSettings:SetFrameStrata("DIALOG")
+    anchorSubHealthNumbers.extendedSettings:SetFrameStrata("FULLSCREEN_DIALOG")
+    anchorSubHealthNumbers.extendedSettings:SetFrameLevel(550)
     anchorSubHealthNumbers.extendedSettings:SetIgnoreParentAlpha(true)
     anchorSubHealthNumbers.extendedSettings:EnableMouse(true)
     anchorSubHealthNumbers.extendedSettings:Hide()
@@ -9012,6 +9104,7 @@ local function guiPositionAndScale()
     anchorSubHealthNumbers.extendedSettings:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
     anchorSubHealthNumbers.closeButton = CreateFrame("Button", nil, anchorSubHealthNumbers.extendedSettings, "UIPanelCloseButton")
+    anchorSubHealthNumbers.closeButton:SetFrameLevel((anchorSubHealthNumbers.extendedSettings.TitleContainer or anchorSubHealthNumbers.extendedSettings):GetFrameLevel() + 10)
     anchorSubHealthNumbers.closeButton:SetPoint("TOPRIGHT", anchorSubHealthNumbers.extendedSettings, "TOPRIGHT", 0, 0)
     anchorSubHealthNumbers.closeButton:SetScript("OnClick", function()
         anchorSubHealthNumbers.extendedSettings:Hide()
@@ -9513,7 +9606,8 @@ local function guiPositionAndScale()
     contentFrame.anchorSubTotem.extendedSettings = CreateFrame("Frame", nil, BetterBlizzPlatesSubPanel, "DefaultPanelFlatTemplate")
     contentFrame.anchorSubTotem.extendedSettings:SetSize(contentFrame.anchorSubTotem.border:GetHeight()+130, 285)
     contentFrame.anchorSubTotem.extendedSettings:SetPoint("BOTTOMRIGHT", contentFrame.anchorSubTotem.border, "BOTTOMLEFT", 87, -20)
-    contentFrame.anchorSubTotem.extendedSettings:SetFrameStrata("DIALOG")
+    contentFrame.anchorSubTotem.extendedSettings:SetFrameStrata("FULLSCREEN_DIALOG")
+    contentFrame.anchorSubTotem.extendedSettings:SetFrameLevel(550)
     contentFrame.anchorSubTotem.extendedSettings:SetIgnoreParentAlpha(true)
     contentFrame.anchorSubTotem.extendedSettings:EnableMouse(true)
     contentFrame.anchorSubTotem.extendedSettings:Hide()
@@ -9526,6 +9620,7 @@ local function guiPositionAndScale()
     contentFrame.anchorSubTotem.extendedSettings:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
     contentFrame.anchorSubTotem.closeButton = CreateFrame("Button", nil, contentFrame.anchorSubTotem.extendedSettings, "UIPanelCloseButton")
+    contentFrame.anchorSubTotem.closeButton:SetFrameLevel((contentFrame.anchorSubTotem.extendedSettings.TitleContainer or contentFrame.anchorSubTotem.extendedSettings):GetFrameLevel() + 10)
     contentFrame.anchorSubTotem.closeButton:SetPoint("TOPRIGHT", contentFrame.anchorSubTotem.extendedSettings, "TOPRIGHT", 0, 0)
     contentFrame.anchorSubTotem.closeButton:SetScript("OnClick", function()
         contentFrame.anchorSubTotem.extendedSettings:Hide()
@@ -11871,7 +11966,8 @@ local function guiNameplateAuras()
             timerColorOptionsFrame = CreateFrame("Frame", "BBPAuraTimerColorOptionsFrame", UIParent, "DefaultPanelFlatTemplate")
             timerColorOptionsFrame:SetSize(200, 155)
             timerColorOptionsFrame:SetPoint("CENTER")
-            timerColorOptionsFrame:SetFrameStrata("HIGH")
+            timerColorOptionsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+            timerColorOptionsFrame:SetFrameLevel(550)
             timerColorOptionsFrame:SetIgnoreParentAlpha(true)
             timerColorOptionsFrame:SetTitle("Timer Text Colors")
             timerColorOptionsFrame:EnableMouse(true)
@@ -11882,6 +11978,7 @@ local function guiNameplateAuras()
             timerColorOptionsFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
             timerColorOptionsFrame.closeButton = CreateFrame("Button", nil, timerColorOptionsFrame, "UIPanelCloseButton")
+            timerColorOptionsFrame.closeButton:SetFrameLevel((timerColorOptionsFrame.TitleContainer or timerColorOptionsFrame):GetFrameLevel() + 10)
             timerColorOptionsFrame.closeButton:SetPoint("TOPRIGHT", timerColorOptionsFrame, "TOPRIGHT", 0, 0)
             timerColorOptionsFrame.closeButton:SetScript("OnClick", function()
                 timerColorOptionsFrame:Hide()
@@ -12095,7 +12192,8 @@ local function guiCVarControl()
             classOptionsFrame = CreateFrame("Frame", "ClassOptionsFrame", UIParent, "DefaultPanelFlatTemplate")
             classOptionsFrame:SetSize(185, 252)
             classOptionsFrame:SetPoint("CENTER")
-            classOptionsFrame:SetFrameStrata("HIGH")
+            classOptionsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+            classOptionsFrame:SetFrameLevel(550)
             classOptionsFrame:SetIgnoreParentAlpha(true)
             classOptionsFrame:SetTitle("Class Specific Options")
             classOptionsFrame:EnableMouse(true)
@@ -12106,6 +12204,7 @@ local function guiCVarControl()
             classOptionsFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
             classOptionsFrame.closeButton = CreateFrame("Button", nil, classOptionsFrame, "UIPanelCloseButton")
+            classOptionsFrame.closeButton:SetFrameLevel((classOptionsFrame.TitleContainer or classOptionsFrame):GetFrameLevel() + 10)
             classOptionsFrame.closeButton:SetPoint("TOPRIGHT", classOptionsFrame, "TOPRIGHT", 0, 0)
             classOptionsFrame.closeButton:SetScript("OnClick", function()
                 classOptionsFrame:Hide()
@@ -12980,8 +13079,26 @@ local function guiMisc()
     local changeNameplateBorderColor = CreateCheckbox("changeNameplateBorderColor", "Change Nameplate Border Color", guiMisc)
     changeNameplateBorderColor:SetPoint("TOPLEFT", nameplatePersonalBorderSize, "BOTTOMLEFT", -10, -2)
 
+    local npTargetHighlightBorder = CreateCheckbox("npTargetHighlightBorder", "Target Highlight Border", changeNameplateBorderColor)
+    npTargetHighlightBorder:SetPoint("TOPLEFT", changeNameplateBorderColor, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+    CreateTooltipTwo(npTargetHighlightBorder, "Target Highlight Border", "Change the color of the target highlight glow border that shows on targeted/focused nameplates.")
+
+    local npTargetHighlightTargetRGB = CreateColorBox(npTargetHighlightBorder, "npTargetHighlightTargetRGB", "Target", BBP.RefreshAllNameplates)
+    npTargetHighlightTargetRGB:SetPoint("TOPLEFT", npTargetHighlightBorder, "BOTTOMLEFT", 15, 0)
+
+    local npTargetHighlightFocusRGB = CreateColorBox(npTargetHighlightBorder, "npTargetHighlightFocusRGB", "Focus", BBP.RefreshAllNameplates)
+    npTargetHighlightFocusRGB:SetPoint("TOPLEFT", npTargetHighlightTargetRGB, "BOTTOMLEFT", 0, -2)
+
+    npTargetHighlightBorder:HookScript("OnClick", function(self)
+        npTargetHighlightTargetRGB:SetAlpha(self:GetChecked() and 1 or 0.5)
+        npTargetHighlightFocusRGB:SetAlpha(self:GetChecked() and 1 or 0.5)
+        if self:GetChecked() then
+            BBP.TurnOnFocusBorderColor()
+        end
+    end)
+
     local npBorderTargetColor = CreateCheckbox("npBorderTargetColor", "Target Border", changeNameplateBorderColor)
-    npBorderTargetColor:SetPoint("TOPLEFT", changeNameplateBorderColor, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+    npBorderTargetColor:SetPoint("TOPLEFT", npTargetHighlightFocusRGB, "BOTTOMLEFT", -15, 0)
     CreateTooltip(npBorderTargetColor, "Enable to change the color of the target nameplate border")
 
     local npBorderTargetColorRGB = CreateColorBox(npBorderTargetColor, "npBorderTargetColorRGB", "Target Border")
@@ -13048,6 +13165,7 @@ local function guiMisc()
 
     changeNameplateBorderColor:HookScript("OnClick", function(self)
         CheckAndToggleCheckboxes(changeNameplateBorderColor)
+        CheckAndToggleCheckboxes(npTargetHighlightBorder)
         CheckAndToggleCheckboxes(npBorderTargetColor)
         CheckAndToggleCheckboxes(npBorderFriendFoeColor)
         CheckAndToggleCheckboxes(npBorderClassColor)
@@ -13134,6 +13252,7 @@ local function guiImportAndExport()
         BBP.CreateIntroMessageWindow()
     end)
     CreateTooltipTwo(profilesBtn, "Profiles", "Check out the included profiles. Selecting one will delete all your current settings and apply the profile.", nil, "ANCHOR_TOP")
+
 
     local fullProfile = CreateImportExportUI(guiImportAndExport, "Full Profile", BetterBlizzPlatesDB, 20, -20, "fullProfile")
 
@@ -13413,6 +13532,8 @@ function BBP.CVarTracker()
         checkboxes = {
             nameplateResourceOnTarget = true,
             nameplateShowAll = true,
+            nameplateShowClassColor = true,
+            nameplateShowFriendlyClassColor = true,
         },
         sliders = {
             nameplateOverlapH = true,
@@ -13450,6 +13571,13 @@ function BBP.CVarTracker()
             -- handled: stored against the active PvP/PvE set
         elseif cvarsToTrack.checkboxes[cvarName] then
             BetterBlizzPlatesDB[cvarName] = cvarValue
+            if cvarName == "nameplateShowClassColor" or cvarName == "nameplateShowFriendlyClassColor" then
+                local checkbox = BBP.classColorCVarCheckboxes and BBP.classColorCVarCheckboxes[cvarName]
+                if checkbox then
+                    checkbox:SetChecked(cvarValue == "1")
+                end
+                BBP.RefreshAllNameplates()
+            end
         elseif cvarsToTrack.sliders[cvarName] then
             BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
         elseif cvarsToTrack.other[cvarName] then
@@ -13499,6 +13627,7 @@ function BBP.CreateIntroMessageWindow()
     BBP.IntroMessageWindow:SetScript("OnDragStop", BBP.IntroMessageWindow.StopMovingOrSizing)
     BBP.IntroMessageWindow:SetTitle("Better|cff00c0ffBlizz|rPlates "..BBP.VersionNumber)
     BBP.IntroMessageWindow:SetFrameStrata("HIGH")
+    BBP.IntroMessageWindow:SetFrameLevel(550)
 
     -- Add background texture
     BBP.IntroMessageWindow.textureTest = BBP.IntroMessageWindow:CreateTexture(nil, "BACKGROUND",nil, 3)
