@@ -1946,7 +1946,9 @@ end
 local function CreateContainer(kind)
     local container = CreateFrame("AuraContainer", nil, UIParent, "CustomAuraContainerTemplate")
     container:SetEnabled(false)
-    container:SetEditModePreviewEnabled(false)
+    if container.SetEditModePreviewEnabled then
+        container:SetEditModePreviewEnabled(false)
+    end
     container:Hide()
     container.bbpKind = kind
     container.bbpStyles = {}
@@ -2933,7 +2935,9 @@ function BBP.SetupPRDAuras()
     if not container then
         container = CreateFrame("AuraContainer", nil, PersonalResourceDisplayFrame, "CustomAuraContainerTemplate")
         container:SetEnabled(false)
-        container:SetEditModePreviewEnabled(false)
+        if container.SetEditModePreviewEnabled then
+            container:SetEditModePreviewEnabled(false)
+        end
         container.bbpKind = BUFFS
         container.bbpStyles = {}
         container.bbpApplied = {}
