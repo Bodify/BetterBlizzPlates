@@ -1,3 +1,4 @@
+local L = BBP.L
 local LSM = LibStub("LibSharedMedia-3.0")
 
 BBP.previousTargetNameplate = nil
@@ -68,27 +69,27 @@ local function GetTargetIndicatorAnchor(frame, config)
     return frame.healthBar
 end
 
-local function GetClassicLevelOffset(anchorPoint)
+local function GetClassicLevelOffset(frame, anchorPoint)
     if not rightSideAnchors[anchorPoint] then return 0 end
-    if not BetterBlizzPlatesDB.classicNameplates or BetterBlizzPlatesDB.hideLevelFrame then return 0 end
+    if not BBP.HasClassicLevelBox(frame) then return 0 end
     return 9
 end
 
 local targetIndicatorTextures = {
-    { key = "default",         name = "Default",        atlas = "Navigation-Tracked-Arrow",                    size = {14, 9},    points = "UP" },
-    { key = "uiWorldMapArrow", name = "Map Arrow",      atlas = "UI-WorldMapArrow",                            size = {10, 9},    points = "UP" },
-    { key = "adventures",      name = "Adventures",     atlas = "Adventures-Target-Indicator",                 size = {53, 56},   points = "DOWN" },
-    { key = "azerite",         name = "Azerite",        atlas = "Azerite-PointingArrow",                       size = {62, 44},   points = "DOWN" },
-    { key = "bagsGreenArrow",  name = "Green Arrow",    atlas = "bags-greenarrow",                             size = {20, 22},   points = "UP" },
-    { key = "shopArrow",       name = "Shop Arrow",     atlas = "shop-header-arrow-pressed",                   size = {24, 21},   points = "LEFT" },
-    { key = "requiredArrow",   name = "Required Arrow", atlas = "charactercreate-icon-requiredarrow",          size = {40, 35},   points = "DOWN" },
-    { key = "offscreen",       name = "Offscreen",      atlas = "common-icon-offscreen",                       size = {200, 200}, points = "LEFT" },
-    { key = "helpTip",         name = "Help Tip",       atlas = "ItemUpgrade_HelpTipArrow",                    size = {28, 28},   points = "RIGHT" },
-    { key = "delveArrow",      name = "Delve Arrow",    atlas = "UI-Journeys-Delve-Arrow-Small-Left-pressed",  size = {25, 30},   points = "LEFT" },
-    { key = "levelUp",         name = "Level Up",       atlas = "LevelUp-Icon-Arrow",                          size = {30, 34},   points = "UP" },
-    { key = "characterSelect", name = "Char Select",    atlas = "glues-characterSelect-icon-arrowDown",        size = {32, 32},   points = "DOWN" },
-    { key = "corpseArrow",     name = "Corpse Arrow",   atlas = "UI-HUD-Minimap-Arrow-Corpse",                 size = {29, 29},   points = "UP" },
-    { key = "questPin",        name = "Quest Pin",      atlas = "UI-QuestPoiImportant-QuestNumber-SuperTracked", size = {32, 36}, points = "DOWN" },
+    { key = "default",         atlas = "Navigation-Tracked-Arrow",                    size = {14, 9},    points = "UP" },
+    { key = "uiWorldMapArrow", atlas = "UI-WorldMapArrow",                            size = {10, 9},    points = "UP" },
+    { key = "adventures",      atlas = "Adventures-Target-Indicator",                 size = {53, 56},   points = "DOWN" },
+    { key = "azerite",         atlas = "Azerite-PointingArrow",                       size = {62, 44},   points = "DOWN" },
+    { key = "bagsGreenArrow",  atlas = "bags-greenarrow",                             size = {20, 22},   points = "UP" },
+    { key = "shopArrow",       atlas = "shop-header-arrow-pressed",                   size = {24, 21},   points = "LEFT" },
+    { key = "requiredArrow",   atlas = "charactercreate-icon-requiredarrow",          size = {40, 35},   points = "DOWN" },
+    { key = "offscreen",       atlas = "common-icon-offscreen",                       size = {200, 200}, points = "LEFT" },
+    { key = "helpTip",         atlas = "ItemUpgrade_HelpTipArrow",                    size = {28, 28},   points = "RIGHT" },
+    { key = "delveArrow",      atlas = "UI-Journeys-Delve-Arrow-Small-Left-pressed",  size = {25, 30},   points = "LEFT" },
+    { key = "levelUp",         atlas = "LevelUp-Icon-Arrow",                          size = {30, 34},   points = "UP" },
+    { key = "characterSelect", atlas = "glues-characterSelect-icon-arrowDown",        size = {32, 32},   points = "DOWN" },
+    { key = "corpseArrow",     atlas = "UI-HUD-Minimap-Arrow-Corpse",                 size = {29, 29},   points = "UP" },
+    { key = "questPin",        atlas = "UI-QuestPoiImportant-QuestNumber-SuperTracked", size = {32, 36}, points = "DOWN" },
 }
 local pointRotations = {
     UP = 0,
@@ -124,14 +125,37 @@ function BBP.GetTargetIndicatorTexture()
         or BBP.targetIndicatorTextures[1]
 end
 
+local targetIndicatorNames
+local function TargetIndicatorName(entry)
+    if not targetIndicatorNames then
+        targetIndicatorNames = {
+            default = L["Default"],
+            uiWorldMapArrow = L["Target_Icon_Map_Arrow"],
+            adventures = L["Target_Icon_Adventures"],
+            azerite = L["Target_Icon_Azerite"],
+            bagsGreenArrow = L["Target_Icon_Green_Arrow"],
+            shopArrow = L["Target_Icon_Shop_Arrow"],
+            requiredArrow = L["Target_Icon_Required_Arrow"],
+            offscreen = L["Target_Icon_Offscreen"],
+            helpTip = L["Target_Icon_Help_Tip"],
+            delveArrow = L["Target_Icon_Delve_Arrow"],
+            levelUp = L["Target_Icon_Level_Up"],
+            characterSelect = L["Target_Icon_Char_Select"],
+            corpseArrow = L["Target_Icon_Corpse_Arrow"],
+            questPin = L["Target_Icon_Quest_Pin"],
+        }
+    end
+    return targetIndicatorNames[entry.key] or entry.key
+end
+
 function BBP.GetTargetIndicatorIconText(entry)
     local scale = previewIconSize / math.max(entry.size[1], entry.size[2])
     local w = math.floor(entry.size[1] * scale + 0.5)
     local h = math.floor(entry.size[2] * scale + 0.5)
     if entry.atlas then
-        return "|A:"..entry.atlas..":"..h..":"..w.."|a "..entry.name
+        return "|A:"..entry.atlas..":"..h..":"..w.."|a "..TargetIndicatorName(entry)
     end
-    return "|T"..entry.file..":"..h..":"..w.."|t "..entry.name
+    return "|T"..entry.file..":"..h..":"..w.."|t "..TargetIndicatorName(entry)
 end
 
 local function ApplyTargetIndicatorTexture(texture, entry)
@@ -150,6 +174,28 @@ local function ApplyTargetIndicatorColor(texture, config)
     else
         texture:SetDesaturated(false)
         texture:SetVertexColor(1, 1, 1)
+    end
+end
+
+function BBP.ApplyIndicatorBarTexture(frame)
+    local db = BetterBlizzPlatesDB
+    local unit = frame.unit
+    local texture
+    if db.targetIndicator and db.targetIndicatorChangeTexture and unit and UnitIsUnit(unit, "target") then
+        texture = LSM:Fetch(LSM.MediaType.STATUSBAR, db.targetIndicatorTexture)
+    elseif db.focusTargetIndicator and db.focusTargetIndicatorChangeTexture and (db.focusTargetIndicatorTestMode or (unit and UnitIsUnit(unit, "focus"))) then
+        texture = LSM:Fetch(LSM.MediaType.STATUSBAR, db.focusTargetIndicatorTexture)
+    end
+    local mask = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar and frame.HealthBarsContainer.healthBar.MaskTexture
+    if texture then
+        if mask then
+            frame.bbpMaskForceShow = true
+            mask:Show()
+        end
+        frame.healthBar:SetStatusBarTexture(texture)
+    else
+        frame.bbpMaskForceShow = nil
+        BBP.ApplyCustomTextureToNameplate(frame)
     end
 end
 
@@ -193,7 +239,7 @@ function BBP.TargetIndicator(frame)
         ApplyTargetIndicatorColor(frame.targetIndicator, config)
         local anchorFrame, onName = GetTargetIndicatorAnchor(frame, config)
         frame.targetIndicator:ClearAllPoints()
-        frame.targetIndicator:SetPoint("CENTER", anchorFrame, config.targetIndicatorAnchor, config.targetIndicatorXPos + (onName and 0 or GetClassicLevelOffset(config.targetIndicatorAnchor)), config.targetIndicatorYPos)
+        frame.targetIndicator:SetPoint("CENTER", anchorFrame, config.targetIndicatorAnchor, config.targetIndicatorXPos + (onName and 0 or GetClassicLevelOffset(frame, config.targetIndicatorAnchor)), config.targetIndicatorYPos)
         frame.targetIndicator:SetScale( config.targetIndicatorScale)
         frame.targetIndicator:SetRotation(config.targetIndicatorRotation)
 
@@ -209,7 +255,7 @@ function BBP.TargetIndicator(frame)
             ApplyTargetIndicatorColor(frame.targetIndicatorMirror, config)
             frame.targetIndicatorMirror:ClearAllPoints()
             local mirrorXPos, mirrorYPos = GetMirroredOffsets(config.targetIndicatorAnchor, mirrorAnchor, config.targetIndicatorXPos, config.targetIndicatorYPos)
-            frame.targetIndicatorMirror:SetPoint("CENTER", anchorFrame, mirrorAnchor, mirrorXPos + (onName and 0 or GetClassicLevelOffset(mirrorAnchor)), mirrorYPos)
+            frame.targetIndicatorMirror:SetPoint("CENTER", anchorFrame, mirrorAnchor, mirrorXPos + (onName and 0 or GetClassicLevelOffset(frame, mirrorAnchor)), mirrorYPos)
             frame.targetIndicatorMirror:SetScale(config.targetIndicatorScale)
             frame.targetIndicatorMirror:SetRotation(GetRotationForAnchor(mirrorAnchor) + config.targetIndicatorIcon.rotation)
         elseif frame.targetIndicatorMirror then
@@ -239,15 +285,7 @@ function BBP.TargetIndicator(frame)
             end
         end
         if config.targetIndicatorChangeTexture then
-            if frame.HealthBarsContainer.healthBar.MaskTexture then
-                frame.bbpMaskForceShow = true
-                frame.HealthBarsContainer.healthBar.MaskTexture:Show()
-            end
-            frame.healthBar:SetStatusBarTexture(config.targetIndicatorTextureLSM)
-        else
-            if config.targetIndicatorChangeTexture then
-                BBP.ApplyCustomTextureToNameplate(frame)
-            end
+            BBP.ApplyIndicatorBarTexture(frame)
         end
         local shouldColorize = config.targetIndicatorColorNameplate or config.targetIndicatorColorName
         local color
@@ -266,8 +304,7 @@ function BBP.TargetIndicator(frame)
             frame.targetIndicatorMirror:Hide()
         end
         if config.targetIndicatorChangeTexture then
-            frame.bbpMaskForceShow = nil
-            BBP.ApplyCustomTextureToNameplate(frame)
+            BBP.ApplyIndicatorBarTexture(frame)
         end
     end
 end
@@ -285,8 +322,6 @@ function BBP.FocusTargetIndicator(frame)
         config.focusTargetIndicatorInitialized = true
     end
 
-    local focusTextureName = BetterBlizzPlatesDB.focusTargetIndicatorTexture
-    local focusTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, focusTextureName)
     -- local textureName = BetterBlizzPlatesDB.customTexture
     -- local customTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
 
@@ -324,15 +359,7 @@ function BBP.FocusTargetIndicator(frame)
     -- Test mode
     if config.focusTargetIndicatorTestMode then
         frame.focusTargetIndicator:Show()
-        if BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture then
-            if frame.HealthBarsContainer.healthBar.MaskTexture then
-                frame.bbpMaskForceShow = true
-                frame.HealthBarsContainer.healthBar.MaskTexture:Show()
-            end
-            frame.healthBar:SetStatusBarTexture(focusTexture)
-        else
-            BBP.ApplyCustomTextureToNameplate(frame)
-        end
+        BBP.ApplyIndicatorBarTexture(frame)
         if BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate and not (BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateNotPvP and BBP.isInPvP) then
             local color = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB or {1, 1, 1}
             frame.healthBar:SetStatusBarColor(unpack(color))
@@ -344,15 +371,7 @@ function BBP.FocusTargetIndicator(frame)
 
     if frame.unit and UnitIsUnit(frame.unit, "focus") then
         frame.focusTargetIndicator:Show()
-        if changeTexture then
-            if frame.HealthBarsContainer.healthBar.MaskTexture then
-                frame.bbpMaskForceShow = true
-                frame.HealthBarsContainer.healthBar.MaskTexture:Show()
-            end
-            frame.healthBar:SetStatusBarTexture(focusTexture)
-        else
-            BBP.ApplyCustomTextureToNameplate(frame)
-        end
+        BBP.ApplyIndicatorBarTexture(frame)
         local shouldColorize = colorNp or colorName
         local color
         if shouldColorize then
@@ -366,9 +385,8 @@ function BBP.FocusTargetIndicator(frame)
         end
     else
         frame.focusTargetIndicator:Hide()
-        if BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture then
-            frame.bbpMaskForceShow = nil
-            BBP.ApplyCustomTextureToNameplate(frame)
+        if changeTexture then
+            BBP.ApplyIndicatorBarTexture(frame)
         end
         if colorName then
             BBP.ClassColorAndScaleNames(frame)
@@ -819,6 +837,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                 BBP.PetIndicator(frame)
             end
 
+            if db.friendlyHideOtherPets or frame.bbpHiddenOtherPet then
+                BBP.HideOtherPet(frame)
+            end
+
             if db.executeIndicator then
                 if frame.executeIndicatorTexture then
                     frame.executeIndicatorTexture:SetColorTexture(0, 0, 0, 1)
@@ -947,6 +969,10 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
 
         if config.petIndicatorHideSecondaryPets then
             BBP.PetIndicator(frame)
+        end
+
+        if db.friendlyHideOtherPets or frame.bbpHiddenOtherPet then
+            BBP.HideOtherPet(frame)
         end
 
         if db.hpEndLine then BBP.HpBarEndLine(frame) end

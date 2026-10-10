@@ -77,6 +77,7 @@ local function UpdateBar()
             end
         end
     end
+    BBP.ApplyComboVisibility(prdBar, stacks)
 end
 
 function BBP.TipOfSpearCombos()

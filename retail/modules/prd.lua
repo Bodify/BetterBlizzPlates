@@ -1,3 +1,4 @@
+local L = BBP.L
 local LSM = LibStub("LibSharedMedia-3.0")
 
 local fancyPRDTokenAtlasMap = {
@@ -21,7 +22,7 @@ local monkStaggerAtlasMap = {
 function BBP.HidePersonalManabarFX()
     if BetterBlizzPlatesDB.hidePersonalManaFX then
         if BetterBlizzFramesDB and BetterBlizzFramesDB.hidePersonalManaFX then
-            BBP.Print("BetterBlizzFrames is handling PRD: HidePersonalManabarFX. Skipping.")
+            BBP.Print(string.format(L["Print_BBF_Handling_PRD"], "HidePersonalManabarFX"))
             return
         end
         if PersonalResourceDisplayFrame then
@@ -71,7 +72,7 @@ end
 function BBP.TexturePRD()
     if BetterBlizzFramesDB and (BetterBlizzFramesDB.useCustomTextureForBars or BetterBlizzFramesDB.changePrdTextures) then
         if BetterBlizzPlatesDB.useCustomTextureForBars and (BetterBlizzPlatesDB.useCustomTextureForSelf or BetterBlizzPlatesDB.useCustomTextureForSelfMana) then
-            BBP.Print("BetterBlizzFrames is handling PRD: TexturePRD. Skipping.")
+            BBP.Print(string.format(L["Print_BBF_Handling_PRD"], "TexturePRD"))
         end
         return
     end
@@ -128,7 +129,7 @@ end
 function BBP.FancyPRDAltTexture()
     if BBP.fancyPRDAltTextureRunning then return end
     if BetterBlizzFramesDB and BetterBlizzFramesDB.fancyPrdAltTexture and BetterBlizzPlatesDB.fancyPrdAltTexture then
-        BBP.Print("BetterBlizzFrames is handling PRD: FancyPRDAltTexture. Skipping.")
+        BBP.Print(string.format(L["Print_BBF_Handling_PRD"], "FancyPRDAltTexture"))
         return
     end
     local prd = PersonalResourceDisplayFrame
@@ -247,7 +248,7 @@ end
 
 function BBP.LegacyPRDLook()
     if BetterBlizzFramesDB and BetterBlizzFramesDB.prdLegacyLook and BetterBlizzPlatesDB.prdLegacyLook then
-        BBP.Print("BetterBlizzFrames is handling PRD: LegacyPRDLook. Skipping.")
+        BBP.Print(string.format(L["Print_BBF_Handling_PRD"], "LegacyPRDLook"))
         return
     end
     local prd = PersonalResourceDisplayFrame

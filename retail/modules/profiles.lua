@@ -1,3 +1,4 @@
+local L = BBP.L
 BBP.ProfileData = {
     {
         name = "Starter",
@@ -212,13 +213,13 @@ function BBP.ApplyProfile(profileName)
         end
     end
     if not profile then
-        BBP.Print("Profile not found: " .. tostring(profileName))
+        BBP.Print(string.format(L["Print_Profile_Not_Found"], tostring(profileName)))
         return
     end
 
     local profileData, errorMessage = BBP.OldImportProfile(profile.importString, "fullProfile")
     if errorMessage then
-        print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Error importing profile:", errorMessage)
+        BBP.Print(L["Print_Error_Importing_Profile"] .. " " .. tostring(errorMessage))
     else
         for k in pairs(BetterBlizzPlatesDB) do BetterBlizzPlatesDB[k] = nil end
         for k, v in pairs(profileData) do

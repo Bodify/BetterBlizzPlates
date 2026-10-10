@@ -11,8 +11,12 @@
 embeds.xml
 
 init.lua
+locales\locales.xml
+shared\functions.lua
+shared\fontFallback.lua
 shared\functions_classics.lua
 shared\nameplateToggles.lua
+shared\comboVisibility.lua
 shared\ImportExport.lua
 forever\modules\camelotFrames.lua
 

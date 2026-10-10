@@ -350,10 +350,10 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     local useCustomFont = BetterBlizzPlatesDB.useCustomFont
     if useCustomFont then
-        BBP.SetFontBasedOnOption(castBar.Text, 12, "OUTLINE")
+        BBP.SetNameFontBasedOnOption(castBar.Text, 12, "OUTLINE")
     else
         local f = castBar.Text:GetFont()
-        castBar.Text:SetFont(f,12,"OUTLINE, SLUG")
+        BBP.SetTextFont(castBar.Text, f, 12, "OUTLINE, SLUG")
     end
 
     if hideCastbarText then
@@ -946,7 +946,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
         frame.TargetText:SetText(name)
         frame.TargetText:ClearAllPoints()
         frame.TargetText:SetPoint(anchor, anchorTo, relativeAnchor, xPos, yPos)
-        BBP.SetFontBasedOnOption(frame.TargetText, fontSize)
+        BBP.SetNameFontBasedOnOption(frame.TargetText, fontSize)
         frame.TargetText:Show()
         return
     end
@@ -991,7 +991,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
             frame.TargetText:SetText(name)
             frame.TargetText:ClearAllPoints()
             frame.TargetText:SetPoint(anchor, anchorTo, relativeAnchor, xPos, yPos)
-            BBP.SetFontBasedOnOption(frame.TargetText, fontSize)
+            BBP.SetNameFontBasedOnOption(frame.TargetText, fontSize)
             frame.TargetText:Show()
             return
         end
@@ -1017,7 +1017,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
                 frame.TargetText:SetText(name)
                 frame.TargetText:ClearAllPoints()
                 frame.TargetText:SetPoint(anchor, anchorTo, relativeAnchor, xPos, yPos)
-                BBP.SetFontBasedOnOption(frame.TargetText, fontSize)
+                BBP.SetNameFontBasedOnOption(frame.TargetText, fontSize)
                 frame.TargetText:Show()
                 return
             end

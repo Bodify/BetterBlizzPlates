@@ -1,6 +1,7 @@
+local L = BBP.L
 function BBP.StarterChoice()
     StaticPopupDialogs["BBP_STARTER_CHOICE"] = {
-        text = "Do you want the nameplates to have the Classic or Retail style?",
+        text = L["Popup_Starter_Choice"],
         button1 = "Classic",
         button2 = "Retail",
         OnAccept = function()
@@ -43,7 +44,7 @@ function BBP.StarterProfile(version)
 
     local profileData, errorMessage = BBP.OldImportProfile(starterProfile, "fullProfile")
     if errorMessage then
-        print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Error importing profile:", errorMessage)
+        BBP.Print(L["Print_Error_Importing_Profile"] .. " " .. tostring(errorMessage))
     else
         for k in pairs(BetterBlizzPlatesDB) do BetterBlizzPlatesDB[k] = nil end
         for k, v in pairs(profileData) do
@@ -125,7 +126,7 @@ function BBP.ApplyProfile(profileName)
         end
     end
     if not profile then
-        print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Profile not found: " .. tostring(profileName))
+        BBP.Print(string.format(L["Print_Profile_Not_Found"], tostring(profileName)))
         return
     end
 
@@ -136,7 +137,7 @@ function BBP.ApplyProfile(profileName)
 
     local profileData, errorMessage = BBP.OldImportProfile(profile.importString, "fullProfile")
     if errorMessage then
-        print("|A:gmchat-icon-blizz:16:16|aBetter|cff00c0ffBlizz|rPlates: Error importing profile:", errorMessage)
+        BBP.Print(L["Print_Error_Importing_Profile"] .. " " .. tostring(errorMessage))
     else
         for k in pairs(BetterBlizzPlatesDB) do BetterBlizzPlatesDB[k] = nil end
         for k, v in pairs(profileData) do

@@ -1,3 +1,4 @@
+local L = BBP.L
 -- Table with spec IDs
 local specIDToName = {
     -- Death Knight
@@ -284,8 +285,7 @@ function BBP.ArenaIndicator3(frame)
                 local r, g, b, a = frame.name:GetTextColor()
 
                 if not specName then
-                    local class = UnitClassBase(frame.unit)
-                    class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                    local class = UnitClass(frame.unit)
                     specName = class
                 end
 
@@ -319,8 +319,7 @@ function BBP.ArenaIndicator3(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not specName then
-                local class = UnitClassBase("arena" .. i)
-                class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                local class = UnitClass("arena" .. i)
                 specName = class
             end
 
@@ -371,8 +370,7 @@ function BBP.ArenaIndicator4(frame)
                 end
 
                 if not specName then
-                    local class = UnitClassBase(frame.unit)
-                    class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                    local class = UnitClass(frame.unit)
                     specName = class
                 end
 
@@ -421,8 +419,7 @@ function BBP.ArenaIndicator4(frame)
             end
 
             if not specName then
-                local class = UnitClassBase("arena" .. i)
-                class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                local class = UnitClass("arena" .. i)
                 specName = class
             end
 
@@ -481,8 +478,7 @@ function BBP.ArenaIndicator5(frame)
                 end
 
                 if not specName then
-                    local class = UnitClassBase(frame.unit)
-                    class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                    local class = UnitClass(frame.unit)
                     specName = class
                 end
 
@@ -511,8 +507,7 @@ function BBP.ArenaIndicator5(frame)
             end
 
             if not specName then
-                local class = UnitClassBase("arena" .. i)
-                class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                local class = UnitClass("arena" .. i)
                 specName = class
             end
 
@@ -646,8 +641,7 @@ function BBP.PartyIndicator3(frame)
                 local r, g, b, a = frame.name:GetTextColor()
 
                 if not specName then
-                    local class = UnitClassBase(frame.unit)
-                    class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                    local class = UnitClass(frame.unit)
                     specName = class
                 end
 
@@ -675,8 +669,7 @@ function BBP.PartyIndicator3(frame)
             local r, g, b, a = frame.name:GetTextColor()
 
             if not specName then
-                local class = UnitClassBase("party" .. i)
-                class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                local class = UnitClass("party" .. i)
                 specName = class
             end
 
@@ -719,8 +712,7 @@ function BBP.PartyIndicator4(frame)
                 end
 
                 if not specName then
-                    local class = UnitClassBase(frame.unit)
-                    class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                    local class = UnitClass(frame.unit)
                     specName = class
                 end
 
@@ -759,8 +751,7 @@ function BBP.PartyIndicator4(frame)
             end
 
             if not specName then
-                local class = UnitClassBase("party" .. i)
-                class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                local class = UnitClass("party" .. i)
                 specName = class
             end
 
@@ -806,8 +797,7 @@ function BBP.PartyIndicator5(frame)
                 end
 
                 if not specName then
-                    local class = UnitClassBase(frame.unit)
-                    class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                    local class = UnitClass(frame.unit)
                     specName = class
                 end
 
@@ -839,8 +829,7 @@ function BBP.PartyIndicator5(frame)
             end
 
             if not specName then
-                local class = UnitClassBase("party" .. i)
-                class = class:sub(1, 1):upper() .. class:sub(2):lower()
+                local class = UnitClass("party" .. i)
                 specName = class
             end
 
@@ -871,7 +860,7 @@ function BBP.TestArenaIndicator0(frame)
 
             frame.name:SetText("")
             frame.arenaNumberText:SetPoint("BOTTOM", frame.name or frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
-            frame.arenaNumberText:SetText("Select a mode to test (enemy)")
+            frame.arenaNumberText:SetText(L["Arena_Test_Select_Mode_Enemy"])
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
             break
@@ -1035,7 +1024,7 @@ function BBP.TestPartyIndicator0(frame)
 
             frame.name:SetText("")
             frame.arenaNumberText:SetPoint("BOTTOM", frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
-            frame.arenaNumberText:SetText("Select a mode to test (friendly)")
+            frame.arenaNumberText:SetText(L["Arena_Test_Select_Mode_Friendly"])
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.partySpecScale)
             break

@@ -1,3 +1,4 @@
+local L = BBP.L
 -- Table with spec IDs
 local specIDToName = {
     -- Death Knight
@@ -503,7 +504,7 @@ function BBP.TestArenaIndicator0(frame)
 
             frame.name:SetText("")
             frame.arenaNumberText:SetPoint("BOTTOM", frame.name or frame.healthBar, BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
-            frame.arenaNumberText:SetText("Select a mode to test (enemy)")
+            frame.arenaNumberText:SetText(L["Arena_Test_Select_Mode_Enemy"])
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.arenaSpecScale)
             break
@@ -669,7 +670,7 @@ function BBP.TestPartyIndicator0(frame)
 
             frame.name:SetText("")
             frame.arenaNumberText:SetPoint("BOTTOM", BBP.GetLevelSpanAnchor(frame, BetterBlizzPlatesDB.arenaIdAnchor), BetterBlizzPlatesDB.arenaIdAnchor, BetterBlizzPlatesDB.arenaIdXPos, BetterBlizzPlatesDB.arenaIdYPos + 3)
-            frame.arenaNumberText:SetText("Select a mode to test (friendly)")
+            frame.arenaNumberText:SetText(L["Arena_Test_Select_Mode_Friendly"])
             frame.arenaNumberText:SetTextColor(r, g, b, 1)
             frame.arenaNumberText:SetScale(BetterBlizzPlatesDB.partySpecScale)
             break

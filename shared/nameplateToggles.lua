@@ -1,3 +1,5 @@
+local L = BBP.L
+
 local CITY_MAPS = {
     [1453] = true,
     [1454] = true,
@@ -73,15 +75,15 @@ local STACKING_CVAR = "nameplateStackingTypes"
 local hasArenas = not (BBP.isForever or BBP.isEra)
 
 BBP.nameplateToggleCategories = {
-    { key = "pvp",     label = "PvP",           mode = "simple" },
-    { key = "pve",     label = "PvE",           mode = "simple" },
-    { key = "arena",   label = "Arenas",        mode = "advanced", pvp = true, available = hasArenas },
-    { key = "bg",      label = "BGs",           mode = "advanced", pvp = true },
-    { key = "epicbg",  label = "Epic BGs",      mode = "advanced", pvp = true },
-    { key = "dungeon", label = "Dungeons",      mode = "advanced" },
-    { key = "raid",    label = "Raids",         mode = "advanced" },
-    { key = "world",   label = "World",         mode = "advanced" },
-    { key = "city",    label = "Cities",        mode = "advanced" },
+    { key = "pvp",     mode = "simple" },
+    { key = "pve",     mode = "simple" },
+    { key = "arena",   mode = "advanced", pvp = true, available = hasArenas },
+    { key = "bg",      mode = "advanced", pvp = true },
+    { key = "epicbg",  mode = "advanced", pvp = true },
+    { key = "dungeon", mode = "advanced" },
+    { key = "raid",    mode = "advanced" },
+    { key = "world",   mode = "advanced" },
+    { key = "city",    mode = "advanced" },
 }
 
 local categoryByKey = {}
@@ -143,27 +145,67 @@ end
 BBP.nameplateToggleDefaults = toggleDefaults
 
 BBP.nameplateToggleEntries = {
-    { key = "nameplateShowEnemies", label = "Show Enemy Nameplates", side = "enemy", root = true },
-    { key = "nameplateShowFriendlyPlayers", label = "Show Friendly Nameplates", side = "friendly", root = true },
+    { key = "nameplateShowEnemies", side = "enemy", root = true },
+    { key = "nameplateShowFriendlyPlayers", side = "friendly", root = true },
     false,
-    { key = "nameplateShowFriendlyNpcs", label = "Show Friendly NPC Nameplates" },
+    { key = "nameplateShowFriendlyNpcs" },
     false, false,
-    { key = "stackingEnemy", label = "Stacking Enemy Nameplates", side = "enemy", stack = "Enemy" },
-    { key = "stackingFriendly", label = "Stacking Friendly Nameplates", side = "friendly", stack = "Friendly" },
+    { key = "stackingEnemy", side = "enemy", stack = "Enemy" },
+    { key = "stackingFriendly", side = "friendly", stack = "Friendly" },
     false,
-    { key = ONLY_NAME_CVAR, label = "Only show Friendly name", side = "friendly", short = "Names only" },
+    { key = ONLY_NAME_CVAR, side = "friendly", short = true },
     false, false,
-    { key = "nameplateShowEnemyMinions", label = "Enemy Minions", side = "enemy" },
-    { key = "nameplateShowFriendlyPlayerMinions", label = "Friendly Minions", side = "friendly" },
-    { key = "nameplateShowEnemyGuardians", label = "Enemy Guardians", side = "enemy" },
-    { key = "nameplateShowFriendlyPlayerGuardians", label = "Friendly Guardians", side = "friendly" },
-    { key = "nameplateShowEnemyPets", label = "Enemy Pets", side = "enemy" },
-    { key = "nameplateShowFriendlyPlayerPets", label = "Friendly Pets", side = "friendly" },
-    { key = "nameplateShowEnemyTotems", label = "Enemy Totems", side = "enemy" },
-    { key = "nameplateShowFriendlyPlayerTotems", label = "Friendly Totems", side = "friendly" },
-    { key = "nameplateShowEnemyMinus", label = "Enemy Minus", side = "enemy" },
+    { key = "nameplateShowEnemyMinions", side = "enemy" },
+    { key = "nameplateShowFriendlyPlayerMinions", side = "friendly" },
+    { key = "nameplateShowEnemyGuardians", side = "enemy" },
+    { key = "nameplateShowFriendlyPlayerGuardians", side = "friendly" },
+    { key = "nameplateShowEnemyPets", side = "enemy" },
+    { key = "nameplateShowFriendlyPlayerPets", side = "friendly" },
+    { key = "nameplateShowEnemyTotems", side = "enemy" },
+    { key = "nameplateShowFriendlyPlayerTotems", side = "friendly" },
+    { key = "nameplateShowEnemyMinus", side = "enemy" },
     false,
 }
+
+local function LocalizeNameplateToggles()
+    local categoryLabels = {
+        pvp = L["Toggle_PvP"],
+        pve = L["Toggle_PvE"],
+        arena = L["Toggle_Arenas"],
+        bg = L["Toggle_BGs"],
+        epicbg = L["Toggle_Epic_BGs"],
+        dungeon = L["Toggle_Dungeons"],
+        raid = L["Toggle_Raids"],
+        world = L["Toggle_World"],
+        city = L["Toggle_Cities"],
+    }
+    for _, category in ipairs(BBP.nameplateToggleCategories) do
+        category.label = categoryLabels[category.key]
+    end
+    local entryLabels = {
+        nameplateShowEnemies = L["Toggle_Show_Enemy_Nameplates"],
+        nameplateShowFriendlyPlayers = L["Toggle_Show_Friendly_Nameplates"],
+        nameplateShowFriendlyNpcs = L["Toggle_Show_Friendly_NPC_Nameplates"],
+        stackingEnemy = L["Stacking_Enemy_Nameplates"],
+        stackingFriendly = L["Stacking_Friendly_Nameplates"],
+        [ONLY_NAME_CVAR] = L["Toggle_Only_Show_Friendly_Name"],
+        nameplateShowEnemyMinions = L["Toggle_Enemy_Minions"],
+        nameplateShowFriendlyPlayerMinions = L["Toggle_Friendly_Minions"],
+        nameplateShowEnemyGuardians = L["Toggle_Enemy_Guardians"],
+        nameplateShowFriendlyPlayerGuardians = L["Toggle_Friendly_Guardians"],
+        nameplateShowEnemyPets = L["Toggle_Enemy_Pets"],
+        nameplateShowFriendlyPlayerPets = L["Toggle_Friendly_Pets"],
+        nameplateShowEnemyTotems = L["Toggle_Enemy_Totems"],
+        nameplateShowFriendlyPlayerTotems = L["Toggle_Friendly_Totems"],
+        nameplateShowEnemyMinus = L["Toggle_Enemy_Minus"],
+    }
+    for _, entry in ipairs(BBP.nameplateToggleEntries) do
+        if entry then
+            entry.label = entryLabels[entry.key]
+        end
+    end
+end
+table.insert(BBP.localeCallbacks, LocalizeNameplateToggles)
 
 local cvarExists = {}
 local function CVarExists(cvar)
@@ -294,6 +336,11 @@ local function BuildLegacySet(db, oldSet)
     return set
 end
 
+local function LiveFriendlyShown()
+    local liveFriendly = C_CVar.GetCVar("nameplateShowFriendlyPlayers")
+    return liveFriendly == nil or liveFriendly == "1"
+end
+
 function BBP.MigrateNameplateToggles(db)
     local pvpSet = BuildLegacySet(db, db.cvarContextPvP)
     local pveSet = BuildLegacySet(db, db.cvarContextPvE)
@@ -333,8 +380,7 @@ function BBP.MigrateNameplateToggles(db)
         sets.world.nameplateShowFriendlyPlayers = oldWorld
         sets.city.nameplateShowFriendlyPlayers = oldWorld
     else
-        local liveFriendly = C_CVar.GetCVar("nameplateShowFriendlyPlayers")
-        local showFriendly = liveFriendly == nil or liveFriendly == "1"
+        local showFriendly = LiveFriendlyShown()
         for _, set in pairs(sets) do
             set.nameplateShowFriendlyPlayers = showFriendly
         end
@@ -382,8 +428,11 @@ function BBP.InitNameplateToggles(resetToDefaults)
     if not db then return end
 
     if resetToDefaults then
+        local showFriendly = LiveFriendlyShown()
         for _, category in ipairs(BBP.nameplateToggleCategories) do
-            db[SetKey(category.key)] = NewDefaultSet()
+            local set = NewDefaultSet()
+            set.nameplateShowFriendlyPlayers = showFriendly
+            db[SetKey(category.key)] = set
         end
         db.nameplateToggleMode = "simple"
         db.nameplateTogglesMigrated = true
@@ -591,7 +640,7 @@ local totemPvPCVarNoticeShown
 local function AnnounceTotemPvPCVars()
     if totemPvPCVarNoticeShown then return end
     totemPvPCVarNoticeShown = true
-    DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: Totem Indicator needs Enemy Totems shown and Enemy Minions, Guardians and Minus hidden, so your enemy nameplate visibility CVars were changed for PvP. They are put back when you leave.")
+    BBP.Print(L["Print_Totem_Indicator_CVars_Changed"])
 end
 
 local toggleEventFrame = CreateFrame("Frame")
@@ -672,7 +721,7 @@ function BBP.EnableTotemIndicatorCVars()
 
     if changed then
         BBP.lastAppliedNameplateToggles = nil
-        DEFAULT_CHAT_FRAME:AddMessage("|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \"Enemy Totems\" nameplates turned on in every content type. You can change that in the \"CVar Control\" section of the addon.")
+        BBP.Print(L["Print_Enemy_Totems_Turned_On"])
     end
 
     BBP.UpdateNameplateToggles(true, true)

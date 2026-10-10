@@ -1,4 +1,3 @@
-local prdClassFrame = prdClassFrame or (PersonalResourceDisplayFrame and PersonalResourceDisplayFrame.classFrame)
 
 function BBP.InstantComboPoints()
     if not BetterBlizzPlatesDB.instantComboPoints then return end
@@ -6,9 +5,25 @@ function BBP.InstantComboPoints()
 
     local class = UnitClassBase("player")
 
+    local function HookPrdClassFrame(func)
+        local prd = PersonalResourceDisplayFrame
+        if not prd then return end
+        if prd.classFrame then
+            hooksecurefunc(prd.classFrame, "UpdatePower", func)
+            return
+        end
+        if not prd.SetupClassBar then return end
+        local hooked
+        hooksecurefunc(prd, "SetupClassBar", function(self)
+            if hooked or not self.classFrame then return end
+            hooked = true
+            hooksecurefunc(self.classFrame, "UpdatePower", func)
+        end)
+    end
+
     local function UpdateRogueComboPoints(self)
         if not self or self:IsForbidden() then return end
-        local comboPoints = UnitPower("player", self.powerType)
+        local comboPoints = GetComboPoints(UnitHasVehicleUI("player") and "vehicle" or "player", "target")
         local chargedPowerPoints = GetUnitChargedPowerPoints("player") or {}
 
         for i, point in ipairs(self.classResourceButtonTable) do
@@ -147,19 +162,27 @@ function BBP.InstantComboPoints()
 
     if class == "MONK" then
         if not BBF and MonkHarmonyBarFrame then hooksecurefunc(MonkHarmonyBarFrame, "UpdatePower", UpdateMonkChi) end
-        if prdClassFrame then hooksecurefunc(prdClassFrame, "UpdatePower", UpdateMonkChi) end
+        HookPrdClassFrame(UpdateMonkChi)
     elseif class == "ROGUE" then
         if not BBF and RogueComboPointBarFrame then hooksecurefunc(RogueComboPointBarFrame, "UpdatePower", UpdateRogueComboPoints) end
-        if prdClassFrame then hooksecurefunc(prdClassFrame, "UpdatePower", UpdateRogueComboPoints) end
+        HookPrdClassFrame(UpdateRogueComboPoints)
     elseif class == "DRUID" then
-        if not BBF and DruidComboPointBarFrame then hooksecurefunc(DruidComboPointBarFrame, "UpdatePower", UpdateDruidComboPoints) end
-        if prdClassFrame then hooksecurefunc(prdClassFrame, "UpdatePower", UpdateDruidComboPoints) end
+        local function UpdateDruidBar(self)
+            local point = self.classResourceButtonTable and self.classResourceButtonTable[1]
+            if point and point.IconUncharged then
+                UpdateRogueComboPoints(self)
+            elseif point and point.Point_Icon then
+                UpdateDruidComboPoints(self)
+            end
+        end
+        if not BBF and DruidComboPointBarFrame then hooksecurefunc(DruidComboPointBarFrame, "UpdatePower", UpdateDruidBar) end
+        HookPrdClassFrame(UpdateDruidBar)
     elseif class == "MAGE" then
         if not BBF and MageArcaneChargesFrame then hooksecurefunc(MageArcaneChargesFrame, "UpdatePower", UpdateArcaneCharges) end
-        if prdClassFrame then hooksecurefunc(prdClassFrame, "UpdatePower", UpdateArcaneCharges) end
+        HookPrdClassFrame(UpdateArcaneCharges)
     elseif class == "PALADIN" then
         if not BBF and PaladinPowerBarFrame then hooksecurefunc(PaladinPowerBarFrame, "UpdatePower", UpdatePaladinHolyPower) end
-        if prdClassFrame then hooksecurefunc(prdClassFrame, "UpdatePower", UpdatePaladinHolyPower) end
+        HookPrdClassFrame(UpdatePaladinHolyPower)
     end
     BBP.InstantComboPointsActive = true
 end

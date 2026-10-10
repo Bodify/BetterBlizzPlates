@@ -1,3 +1,4 @@
+local L = BBP.L
 ----------------------------------------------------
 ---- Aura Function Copied From RSPlates and edited by me
 ----------------------------------------------------
@@ -4087,7 +4088,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
                         local auraData = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)
                         local filter = auraData and (auraData.isHelpful and "HELPFUL" or "HARMFUL") or "HELPFUL"
                         GameTooltip:SetUnitAuraByAuraInstanceID(unit, auraInstanceID, filter)
-                        GameTooltip:AddLine("Spell ID: " .. self.spellID, 1, 1, 1)
+                        GameTooltip:AddLine(string.format(L["Spell_ID_Label"], self.spellID), 1, 1, 1)
                         GameTooltip:Show()
                         return
                     end
@@ -4108,7 +4109,7 @@ function BBP.UpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings, UnitFrame
 
                     if foundIndex then
                         GameTooltip:SetUnitAura(unit, foundIndex, foundFilter)
-                        GameTooltip:AddLine("Spell ID: " .. self.spellID, 1, 1, 1)
+                        GameTooltip:AddLine(string.format(L["Spell_ID_Label"], self.spellID), 1, 1, 1)
                         GameTooltip:Show()
                     end
                 end)

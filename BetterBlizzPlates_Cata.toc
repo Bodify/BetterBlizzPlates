@@ -11,14 +11,19 @@
 embeds.xml
 
 init.lua
+locales\locales.xml
+shared\functions.lua
+shared\fontFallback.lua
 shared\functions_classics.lua
+shared\nameplateToggles.lua
 shared\ImportExport.lua
 
 classics\modules\combat.lua
-classics\modules\castbar_cata.lua
-classics\modules\totem_cata.lua
-classics\modules\arenaid_cata.lua
+classics\modules\castbar.lua
+classics\modules\totem.lua
+classics\modules\arenaid.lua
 classics\modules\execute.lua
+classics\modules\faction.lua
 classics\modules\healthNumbers.lua
 classics\modules\target.lua
 classics\modules\healer.lua
@@ -28,9 +33,9 @@ classics\modules\partyPointer.lua
 classics\modules\pet.lua
 classics\modules\range.lua
 classics\modules\quest.lua
-classics\modules\auras_cata.lua
+classics\modules\auras.lua
 classics\modules\profiles.lua
 shared\importConvert.lua
 
-classics\gui_cata.lua
-classics\BetterBlizzPlates_cata.lua
+classics\gui.lua
+classics\BetterBlizzPlates.lua

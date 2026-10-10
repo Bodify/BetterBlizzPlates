@@ -2,7 +2,6 @@
     <Script file="libs\LibStub\LibStub.lua"/>
     <Script file="libs\CallbackHandler-1.0\CallbackHandler-1.0.lua"/>
     <Script file="libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua"/>
-    <Script file="libs\LibUIDropDownMenu\LibUIDropDownMenu.lua"/>
     <Script file="libs\LibDeflate\LibDeflate.lua"/>
     <Script file="libs\AceSerializer-3.0\AceSerializer-3.0.lua"/>
     <Script file="libs\LibSerialize\LibSerialize.lua"/>

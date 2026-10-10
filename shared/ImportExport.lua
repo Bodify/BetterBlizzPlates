@@ -1,3 +1,4 @@
+local L = BBP.L
 local LibDeflate = LibStub("LibDeflate")
 local LibSerialize = LibStub("LibSerialize-BB")
 local LibAceSerializer = LibStub("AceSerializer-3.0")
@@ -43,17 +44,17 @@ local function ImportOtherProfile(encodedString, expectedDataType)
 		local dataCompressed = C_EncodingUtil.DecodeBase64(string.gsub(encodedString,PlaterString, ""))
 
         if not dataCompressed then
-            return false, "Error decoding the data."
+            return false, L["Import_Error_Decoding"]
         end
 
 		local dataSerialized = C_EncodingUtil.DecompressString(dataCompressed)
 		if not dataSerialized then
-			return false, "Error decoding the data."
+			return false, L["Import_Error_Decoding"]
 		end
 
 		local importTable = C_EncodingUtil.DeserializeCBOR(dataSerialized)
 		if not importTable then
-			return false, "Error decoding the data."
+			return false, L["Import_Error_Decoding"]
 		end
 
         if expectedDataType == "colorNpcList" then
@@ -61,7 +62,7 @@ local function ImportOtherProfile(encodedString, expectedDataType)
         elseif expectedDataType == "castEmphasisList" then
             BBP.MergeCastColorToBBP(importTable)
         else
-            return false, "Error decoding the data."
+            return false, L["Import_Error_Decoding"]
         end
 
 		return true
@@ -70,19 +71,19 @@ local function ImportOtherProfile(encodedString, expectedDataType)
     -- Decode the data
     local compressed = LibDeflate:DecodeForPrint(encodedString)
     if not compressed then
-        return nil, "Error decoding the data."
+        return nil, L["Import_Error_Decoding"]
     end
 
     -- Decompress the data
     local serialized, decompressMsg = LibDeflate:DecompressDeflate(compressed)
     if not serialized then
-        return nil, "Error decompressing: " .. tostring(decompressMsg)
+        return nil, string.format(L["Import_Error_Decompressing"], tostring(decompressMsg))
     end
 
     -- Deserialize the data using LibAceSerializer
     local success, importTable = LibAceSerializer:Deserialize(serialized)
     if not success then
-        return nil, "Error deserializing the data."
+        return nil, L["Import_Error_Deserializing"]
     end
 
     -- Store the imported data in the DB
@@ -100,19 +101,19 @@ function BBP.OldImportProfile(encodedString, expectedDataType)
         encodedString = encodedString:sub(5, -5) -- Remove both prefix and suffix
 
         if encodedString:find("!") then
-            return nil, "Import code probably double copypasted. Make sure to copy the entire code only once."
+            return nil, L["Import_Error_Double_Paste"]
         end
 
         -- Proceed with the usual import process for your native format
         local compressed = LibDeflate:DecodeForPrint(encodedString)
         local serialized, decompressMsg = LibDeflate:DecompressDeflate(compressed)
         if not serialized then
-            return nil, "Error decompressing: " .. tostring(decompressMsg)
+            return nil, string.format(L["Import_Error_Decompressing"], tostring(decompressMsg))
         end
 
         local success, importTable = LibSerialize:Deserialize(serialized)
         if not success then
-            return nil, "Error deserializing the data."
+            return nil, L["Import_Error_Deserializing"]
         end
 
         -- If it's a full profile, extract the relevant portion based on expectedDataType
@@ -124,12 +125,12 @@ function BBP.OldImportProfile(encodedString, expectedDataType)
                 return importTable.data, nil
             end
         elseif importTable.dataType ~= expectedDataType then
-            return nil, "Data type mismatch"
+            return nil, L["Import_Error_Type_Mismatch"]
         end
 
         return importTable.data, nil
     elseif encodedString:sub(1, 4) == "!BBF" and encodedString:sub(-4) == "!BBF" then
-        return nil, "This is a BetterBlizz|cffff4040Frames|r profile string, not a BetterBlizz|cff40ff40Plates|r one. Two different addons."
+        return nil, L["Import_Error_BBF_String"]
     else
         -- If no !BBP, assume it's an other import and try to process it
         local success, importTable = ImportOtherProfile(encodedString, expectedDataType)
@@ -138,7 +139,7 @@ function BBP.OldImportProfile(encodedString, expectedDataType)
         if success and (expectedDataType == "colorNpcList" or expectedDataType == "castEmphasisList") then
             return nil, nil, true
         else
-            return nil, "Invalid format or the imported data does not match the expected type."
+            return nil, L["Import_Error_Invalid_Format"]
         end
     end
 end

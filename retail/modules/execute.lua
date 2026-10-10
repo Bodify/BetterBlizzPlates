@@ -98,7 +98,36 @@ local function HideExecuteIndicator(frame)
     if frame.executeColorOverlay then
         frame.executeColorOverlay:SetAlpha(0)
     end
+    if frame.executeSkull then
+        frame.executeSkull:SetAlpha(0)
+    end
     RestoreHealthBarTexture(frame)
+end
+
+local function UpdateExecuteSkull(frame, config, alpha)
+    if not config.executeSkull then
+        if frame.executeSkull then
+            frame.executeSkull:SetAlpha(0)
+        end
+        return
+    end
+    local skull = frame.executeSkull
+    if not skull then
+        skull = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
+        skull:SetAtlas("islands-azeriteboss")
+        frame.executeSkull = skull
+    end
+    local scale = config.executeSkullScale or 1
+    local x = config.executeSkullXPos or 0
+    local y = (config.executeSkullYPos or 0) + 1
+    local anchorTo = config.executeSkullAttachToHealth and frame.healthBar:GetStatusBarTexture() or frame.healthBar
+    if skull.scale ~= scale or skull.x ~= x or skull.y ~= y or skull.anchorTo ~= anchorTo then
+        skull.scale, skull.x, skull.y, skull.anchorTo = scale, x, y, anchorTo
+        skull:SetSize(23 * scale, 24 * scale)
+        skull:ClearAllPoints()
+        skull:SetPoint("LEFT", anchorTo, "RIGHT", x, y)
+    end
+    skull:SetAlpha(alpha)
 end
 
 BBP.HideExecuteIndicator = HideExecuteIndicator
@@ -127,6 +156,12 @@ function BBP.ExecuteIndicator(frame)
         config.executeIndicatorInRangeColor = BetterBlizzPlatesDB.executeIndicatorInRangeColor
         config.executeIndicatorInRangeColorRGB = BetterBlizzPlatesDB.executeIndicatorInRangeColorRGB
         config.executeIndicatorHideText = BetterBlizzPlatesDB.executeIndicatorHideText
+        config.executeSkull = BetterBlizzPlatesDB.executeSkull
+        config.executeSkullScale = BetterBlizzPlatesDB.executeSkullScale
+        config.executeSkullXPos = BetterBlizzPlatesDB.executeSkullXPos
+        config.executeSkullYPos = BetterBlizzPlatesDB.executeSkullYPos
+        config.executeSkullAttachToHealth = BetterBlizzPlatesDB.executeSkullAttachToHealth
+        config.executeSkullKeepIndicator = BetterBlizzPlatesDB.executeSkullKeepIndicator
 
         config.executeIndicatorInitialized = true
     end
@@ -147,13 +182,12 @@ function BBP.ExecuteIndicator(frame)
         end
     end
 
-    local healthPercentage = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
-    if not healthPercentage then return end
-
     local belowThreshold = UnitHealthPercent(unit, true, GetExecuteCurve(config.executeIndicatorThreshold))
-    local notFullHp = UnitHealthPercent(unit, true, GetNotFullCurve())
+    if not belowThreshold then return end
 
-    if config.executeIndicatorHideText and not config.executeIndicatorUseTexture then
+    UpdateExecuteSkull(frame, config, config.executeIndicatorTestMode and 1 or belowThreshold)
+
+    if (config.executeIndicatorHideText and not config.executeIndicatorUseTexture) or (config.executeSkull and not config.executeSkullKeepIndicator) then
         if frame.executeIndicator then
             frame.executeIndicator:SetAlpha(0)
         end
@@ -161,6 +195,8 @@ function BBP.ExecuteIndicator(frame)
             frame.executeIndicatorTexture:SetAlpha(0)
         end
     else
+        local healthPercentage = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
+        local notFullHp = UnitHealthPercent(unit, true, GetNotFullCurve())
         local oppositeAnchor = BBP.GetOppositeAnchor(config.executeIndicatorAnchor)
 
         if not frame.executeIndicator then

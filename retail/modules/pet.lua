@@ -197,3 +197,33 @@ function BBP.PetIndicator(frame)
         frame.petIndicator:Hide()
     end
 end
+
+function BBP.HideOtherPet(frame)
+    if not frame.bbpOtherPetAlphaHook then
+        hooksecurefunc(frame, "SetAlpha", function(self)
+            if not self.bbpHiddenOtherPet or self.changingAlpha or self:IsForbidden() then return end
+            self.changingAlpha = true
+            self:SetAlpha(0)
+            self.changingAlpha = nil
+        end)
+        frame.bbpOtherPetAlphaHook = true
+    end
+
+    local unit = frame.unit
+    local info = frame.BetterBlizzPlates and frame.BetterBlizzPlates.unitInfo
+    local hide = BetterBlizzPlatesDB.friendlyHideOtherPets and unit and info
+        and (info.isFriend or info.isFriendlyNpc)
+        and UnitIsOtherPlayersPet(unit)
+        and not UnitIsUnit(unit, "target")
+
+    if hide then
+        frame.bbpHiddenOtherPet = true
+        frame.hideCastbarOverride = true
+        frame.castBar:Hide()
+        frame:SetAlpha(0)
+    elseif frame.bbpHiddenOtherPet then
+        frame.bbpHiddenOtherPet = nil
+        frame.hideCastbarOverride = false
+        frame:SetAlpha(1)
+    end
+end

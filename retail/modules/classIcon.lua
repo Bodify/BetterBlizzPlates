@@ -151,10 +151,8 @@ if petClasses[playerClass] then
             local pp = BetterBlizzPlatesDB.partyPointer and BetterBlizzPlatesDB.partyPointerShowPet
             local ci = BetterBlizzPlatesDB.classIndicator and BetterBlizzPlatesDB.classIndicatorShowPet
             if ci then
-                if petClasses[playerClass] then
+                C_Timer.After(1, function()
                     UpdateCurrentPetIcon()
-                end
-                C_Timer.After(0.5, function()
                     local _, frame = BBP.GetSafeNameplate("pet")
                     if frame then
                         BBP.ClassIndicator(frame)
@@ -162,7 +160,7 @@ if petClasses[playerClass] then
                 end)
             end
             if pp then
-                C_Timer.After(0.5, function()
+                C_Timer.After(1, function()
                     local _, frame = BBP.GetSafeNameplate("pet")
                     if frame then
                         BBP.PartyPointer(frame)

@@ -155,14 +155,47 @@ function BBP.UpdateCastbarTextPosition(castBar)
     local db = BetterBlizzPlatesDB
     local castBarTextJustify = db.castBarTextJustify or "CENTER"
     castBar.Text:ClearAllPoints()
-    if db.castBarFullTextWidth then
+    if db.moveCastBarText then
+        local width = 0
+        if not db.castBarFullTextWidth then
+            local barWidth = castBar:GetWidth()
+            if not issecretvalue(barWidth) then
+                width = barWidth
+            end
+        end
+        castBar.Text:SetWidth(width)
+        castBar.Text:SetPoint(db.castBarTextAnchor or "CENTER", castBar, db.castBarTextRelativeAnchor or "CENTER", db.castBarTextXPos or 0, db.castBarTextYPos or 0)
+    elseif db.castBarFullTextWidth then
+        castBar.Text:SetWidth(0)
         castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", -70, 0)
         castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", 70, 0)
     else
+        castBar.Text:SetWidth(0)
         castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", castBarTextJustify == "LEFT" and 4 or -2, 0)
         castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", castBarTextJustify == "RIGHT" and -4 or 2, 0)
     end
     castBar.Text:SetJustifyH(castBarTextJustify)
+end
+
+function BBP.UpdateCastbarTextStyle(castBar)
+    local db = BetterBlizzPlatesDB
+    BBP.UpdateCastbarTextPosition(castBar)
+    castBar.Text:SetScale(db.castBarTextScale or 1)
+    if db.useCustomFont then
+        BBP.SetNameFontBasedOnOption(castBar.Text, 12, "OUTLINE")
+    else
+        BBP.SetTextFont(castBar.Text, castBar.Text:GetFont(), 12, "OUTLINE, SLUG")
+    end
+end
+
+function BBP.UpdateAllCastbarTextPositions()
+    if not BetterBlizzPlatesDB.enableCastbarCustomization then return end
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        if frame and not frame:IsForbidden() and frame.castBar and frame.unit ~= "player" then
+            BBP.UpdateCastbarTextPosition(frame.castBar)
+        end
+    end
 end
 
 function BBP.UpdateCastbarBorderShieldTexture(castBar)
@@ -251,7 +284,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         frame.CastBarsContainer:SetHeight(castBarHeight)
         castBar.Icon:SetScale(castBarIconScale)
         if frame.castBarIconFrame then
-            frame.castBarIconFrame:SetScale(castBarIconScale)
+            frame.castBarIconFrame:SetScale(BBP.GetCastIconScale())
         end
         castBar.Spark:SetSize(4, castBarHeight + 5)
         castBar.Text:SetScale(castBarTextScale)
@@ -455,10 +488,10 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     local useCustomFont = BetterBlizzPlatesDB.useCustomFont
     if useCustomFont then
-        BBP.SetFontBasedOnOption(castBar.Text, 12, "OUTLINE")
+        BBP.SetNameFontBasedOnOption(castBar.Text, 12, "OUTLINE")
     else
         local f = castBar.Text:GetFont()
-        castBar.Text:SetFont(f,12,"OUTLINE, SLUG")
+        BBP.SetTextFont(castBar.Text, f, 12, "OUTLINE, SLUG")
     end
 
     if hideCastbarText then
@@ -500,7 +533,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     castBar.Icon:SetScale(castBarIconScale)
     if frame.castBarIconFrame then
-        frame.castBarIconFrame:SetScale(castBarIconScale)
+        frame.castBarIconFrame:SetScale(BBP.GetCastIconScale())
     end
     --castBar.BorderShield:SetScale(borderShieldSize)
     castBar:SetHeight(castBarHeight)
@@ -801,7 +834,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
         frame.TargetText:SetText(name)
         frame.TargetText:ClearAllPoints()
         frame.TargetText:SetPoint(anchor, anchorTo, relativeAnchor, xPos, yPos)
-        BBP.SetFontBasedOnOption(frame.TargetText, fontSize)
+        BBP.SetNameFontBasedOnOption(frame.TargetText, fontSize)
         frame.TargetText:Show()
         return
     end
@@ -846,7 +879,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
             frame.TargetText:SetText(name)
             frame.TargetText:ClearAllPoints()
             frame.TargetText:SetPoint(anchor, anchorTo, relativeAnchor, xPos, yPos)
-            BBP.SetFontBasedOnOption(frame.TargetText, fontSize)
+            BBP.SetNameFontBasedOnOption(frame.TargetText, fontSize)
             frame.TargetText:Show()
             return
         end
@@ -872,7 +905,7 @@ function BBP.UpdateNameplateTargetText(frame, unit)
                 frame.TargetText:SetText(name)
                 frame.TargetText:ClearAllPoints()
                 frame.TargetText:SetPoint(anchor, anchorTo, relativeAnchor, xPos, yPos)
-                BBP.SetFontBasedOnOption(frame.TargetText, fontSize)
+                BBP.SetNameFontBasedOnOption(frame.TargetText, fontSize)
                 frame.TargetText:Show()
                 return
             end
@@ -898,15 +931,45 @@ function BBP.ToggleTargetTextAlwaysShow()
     end
 end
 
+local function StyleCastTimer(timer, castBar)
+    local db = BetterBlizzPlatesDB
+    timer:ClearAllPoints()
+    timer:SetPoint(db.castTimerAnchor or "LEFT", castBar, db.castTimerRelativeAnchor or "RIGHT", db.castTimerXPos or 5, db.castTimerYPos or 0)
+    BBP.SetFontBasedOnOption(timer, db.npCastTimerSize or db.npTargetTextSize or 12, "OUTLINE, SLUG")
+end
+
+function BBP.CreateCastTimerFrame(castBar)
+    local timerFrame = CreateFrame("Frame", nil, castBar)
+    timerFrame:SetAllPoints(castBar)
+    timerFrame:SetFrameStrata("HIGH")
+    timerFrame:SetFrameLevel(castBar:GetFrameLevel() + 10)
+    return timerFrame
+end
+
+function BBP.UpdateCastTimerStyle(frame)
+    if frame.CastTimer then
+        StyleCastTimer(frame.CastTimer, frame.castBar)
+    end
+    if frame.dummyTimer then
+        StyleCastTimer(frame.dummyTimer, frame.castBar)
+    end
+end
+
+function BBP.UpdateAllCastTimers()
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        if frame and not frame:IsForbidden() and frame.castBar then
+            BBP.UpdateCastTimerStyle(frame)
+        end
+    end
+end
+
 function BBP.UpdateCastTimer(frame, unit)
     if not frame.CastTimerFrame then
-        frame.CastTimerFrame = CreateFrame("Frame", nil, frame.castBar)
-        frame.CastTimer = frame.CastTimerFrame:CreateFontString(nil, "BACKGROUND", "GameFontNormalSmall")
-        --nameplate.CastTimer:SetPoint("LEFT", nameplate, "BOTTOMRIGHT", -10, 15)
-        frame.CastTimer:SetPoint("LEFT", frame.castBar, "RIGHT", 5, 0)
-        local npTextSize = BetterBlizzPlatesDB.npCastTimerSize or BetterBlizzPlatesDB.npTargetTextSize
-        BBP.SetFontBasedOnOption(frame.CastTimer, npTextSize or 12, "OUTLINE, SLUG")
+        frame.CastTimerFrame = BBP.CreateCastTimerFrame(frame.castBar)
+        frame.CastTimer = frame.CastTimerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.CastTimer:SetTextColor(1, 1, 1)
+        BBP.UpdateCastTimerStyle(frame)
     end
 
     local duration = UnitCastingDuration(unit)

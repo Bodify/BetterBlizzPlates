@@ -144,7 +144,7 @@ function BBP.HealthNumbers(frame)
     end
 
     frame.healthNumbers:ClearAllPoints()
-    frame.healthNumbers:SetPoint(oppositeAnchor, frame.healthBar, config.healthNumbersAnchor, config.healthNumbersXPos, config.healthNumbersYPos + -0.5)
+    frame.healthNumbers:SetPoint(oppositeAnchor, frame.healthBar, config.healthNumbersAnchor, config.healthNumbersXPos, config.healthNumbersYPos + 0.5)
     frame.healthNumbers:SetScale(config.healthNumbersScale or 1)
 
     if config.healthNumbersTestMode then

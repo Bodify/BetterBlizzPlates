@@ -1,3 +1,41 @@
+local function UpdateExecuteSkull(frame, config, show)
+    if not config.executeSkull or not show then
+        if frame.executeSkull then
+            frame.executeSkull:Hide()
+        end
+        return
+    end
+    local skull = frame.executeSkull
+    if not skull then
+        skull = frame.bbpOverlay:CreateTexture(nil, "OVERLAY")
+        skull:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\Islands-AzeriteBoss.tga")
+        frame.executeSkull = skull
+    end
+    local scale = config.executeSkullScale or 1
+    local x = config.executeSkullXPos or 0
+    local y = (config.executeSkullYPos or 0) + 0.5
+    local anchorTo = config.executeSkullAttachToHealth and frame.healthBar:GetStatusBarTexture() or frame.healthBar
+    if skull.scale ~= scale or skull.x ~= x or skull.y ~= y or skull.anchorTo ~= anchorTo then
+        skull.scale, skull.x, skull.y, skull.anchorTo = scale, x, y, anchorTo
+        skull:SetSize(23 * scale, 24 * scale)
+        skull:ClearAllPoints()
+        skull:SetPoint("LEFT", anchorTo, "RIGHT", x, y)
+    end
+    skull:Show()
+end
+
+local function HideExecuteIndicator(frame)
+    if frame.executeIndicator then
+        frame.executeIndicator:Hide()
+    end
+    if frame.executeIndicatorTexture then
+        frame.executeIndicatorTexture:Hide()
+    end
+    if frame.executeSkull then
+        frame.executeSkull:Hide()
+    end
+end
+
 -- Update the Execute Indicator
 function BBP.ExecuteIndicator(frame)
     local config = frame.BetterBlizzPlates.config
@@ -18,6 +56,12 @@ function BBP.ExecuteIndicator(frame)
         config.executeIndicatorAlwaysOn = BetterBlizzPlatesDB.executeIndicatorAlwaysOn
         config.executeIndicatorUseTexture = BetterBlizzPlatesDB.executeIndicatorUseTexture
         config.executeIndicatorTargetOnly = BetterBlizzPlatesDB.executeIndicatorTargetOnly
+        config.executeSkull = BetterBlizzPlatesDB.executeSkull
+        config.executeSkullScale = BetterBlizzPlatesDB.executeSkullScale
+        config.executeSkullXPos = BetterBlizzPlatesDB.executeSkullXPos
+        config.executeSkullYPos = BetterBlizzPlatesDB.executeSkullYPos
+        config.executeSkullAttachToHealth = BetterBlizzPlatesDB.executeSkullAttachToHealth
+        config.executeSkullKeepIndicator = BetterBlizzPlatesDB.executeSkullKeepIndicator
 
         config.executeIndicatorInitialized = true
     end
@@ -25,36 +69,20 @@ function BBP.ExecuteIndicator(frame)
     local unit = frame.displayedUnit
 
     if config.executeIndicatorTargetOnly and not UnitIsUnit("target", unit) then
-        -- Hide the indicator if not the target
-        if frame.executeIndicator then
-            frame.executeIndicator:Hide()
-        end
-        if frame.executeIndicatorTexture then
-            frame.executeIndicatorTexture:Hide()
-        end
+        HideExecuteIndicator(frame)
         return
     end
 
     -- Check for friendly status if required
     if not config.executeIndicatorFriendly then
         if info.isFriend then
-            if frame.executeIndicator then
-                frame.executeIndicator:Hide()
-            end
-            if frame.executeIndicatorTexture then
-                frame.executeIndicatorTexture:Hide()
-            end
+            HideExecuteIndicator(frame)
             return
         end
     end
 
     if UnitIsUnit(frame.unit, "player") then
-        if frame.executeIndicator then
-            frame.executeIndicator:Hide()
-        end
-        if frame.executeIndicatorTexture then
-            frame.executeIndicatorTexture:Hide()
-        end
+        HideExecuteIndicator(frame)
         return
     end
 
@@ -63,6 +91,13 @@ function BBP.ExecuteIndicator(frame)
     local healthPercentage = (health / maxHealth) * 100
 
     if not healthPercentage or maxHealth == 0 then
+        HideExecuteIndicator(frame)
+        return
+    end
+
+    UpdateExecuteSkull(frame, config, config.executeIndicatorTestMode or healthPercentage <= config.executeIndicatorThreshold)
+
+    if config.executeSkull and not config.executeSkullKeepIndicator then
         if frame.executeIndicator then
             frame.executeIndicator:Hide()
         end
@@ -203,6 +238,10 @@ function BBP.ToggleExecuteIndicator()
         executeEventFrame:UnregisterEvent("UNIT_HEALTH")
     end
     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
-        BBP.ExecuteIndicator(nameplate.UnitFrame)
+        if BetterBlizzPlatesDB.executeIndicator then
+            BBP.ExecuteIndicator(nameplate.UnitFrame)
+        else
+            HideExecuteIndicator(nameplate.UnitFrame)
+        end
     end
 end

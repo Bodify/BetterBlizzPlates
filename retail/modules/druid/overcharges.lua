@@ -1,3 +1,4 @@
+local L = BBP.L
 function BBP.DruidBlueComboPoints()
     if not BetterBlizzPlatesDB.druidOverstacks then return end
     if UnitClassBase("player") ~= "DRUID" then return end
@@ -13,7 +14,7 @@ function BBP.DruidBlueComboPoints()
         if classFrame:IsForbidden() then
             if not msgPrinted then
                 C_Timer.After(1, function()
-                    BBP.Print("Due to Nameplate Resource being forbidden Overcharge blue combopoints cannot be updated until a reload.")
+                    BBP.Print(L["Print_Overcharge_Forbidden"])
                 end)
                 msgPrinted = true
             end

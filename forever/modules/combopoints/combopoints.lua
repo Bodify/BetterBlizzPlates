@@ -1,17 +1,14 @@
 local DEFAULT_MAX_POINTS = 5
-local PRD_Y_OFFSET = 9
 local PRD_RESOURCE_LEVEL = 1000
 
 local CLASS_INFO = {
     ROGUE = {
         template = "BBP_RogueComboPointTemplate",
         topPadding = 10,
-        prdY = 0,
     },
     DRUID = {
         template = "BBP_DruidComboPointTemplate",
         topPadding = 7,
-        prdY = 2,
     },
 }
 
@@ -49,23 +46,18 @@ local function SetDruidInstant(point, isActive)
     point.BG_Inactive:SetAlpha(isActive and 0 or 1)
 end
 
-function BBP.ComboPointsAlongsideFrames()
-    local fdb = BBF and BetterBlizzFramesDB
-    if not fdb or not fdb.foreverComboPoints or not fdb.prdResourceAdjust or fdb.prdResourceOnTarget then return false end
+function BBP.ComboPointTargetBarActive()
+    if not CLASS_INFO[UnitClassBase("player")] then return false end
     local db = BetterBlizzPlatesDB
-    return db.foreverComboPoints and not db.disablePrdMovement
-        and (db.nameplateResourceOnTarget == "1" or db.nameplateResourceOnTarget == true) or false
-end
-
-local function FramesOwnsDisplay()
-    if BBP.ComboPointsAlongsideFrames() then return false end
-    return BBF and BBF.ComboPointsPlatesShouldShow and not BBF.ComboPointsPlatesShouldShow() or false
+    if db.disablePrdMovement then return false end
+    if not (db.nameplateResourceOnTarget == "1" or db.nameplateResourceOnTarget == true) then return false end
+    if BBF and BBF.ComboPointTargetBarWanted and BBF.ComboPointTargetBarWanted() then return false end
+    return true
 end
 
 local function ShouldShow()
     local db = BetterBlizzPlatesDB
-    if not db.foreverComboPoints then return false end
-    if FramesOwnsDisplay() then return false end
+    if not BBP.ComboPointTargetBarActive() then return false end
 
     if UnitInVehicle and UnitInVehicle("player") then
         return PlayerVehicleHasComboPoints and PlayerVehicleHasComboPoints() or false
@@ -110,6 +102,7 @@ local function UpdateBar(bar)
             end
         end
     end
+    BBP.ApplyComboVisibility(bar, comboPoints)
 end
 
 local function UpdateMaxPower(bar)
@@ -140,28 +133,6 @@ local function UpdateMaxPower(bar)
 
     bar:Layout()
     UpdateBar(bar)
-end
-
-local function AnchorToPrd()
-    local prd = PersonalResourceDisplayFrame
-    if not prd or not prdBar or prdBar.bbpChanging then return end
-
-    local info = CLASS_INFO[prdBar.class]
-    local y = PRD_Y_OFFSET + info.prdY - prd:GetBarPadding()
-    local relativeTo, relativePoint = prd, "TOP"
-    if prd.AlternatePowerBar and prd.AlternatePowerBar:IsShown() then
-        relativeTo, relativePoint = prd.AlternatePowerBar, "BOTTOM"
-    elseif not prd.hidePower then
-        relativeTo, relativePoint = prd.PowerBar, "BOTTOM"
-    elseif not prd.hideHealth then
-        relativeTo, relativePoint = prd.HealthBarsContainer, "BOTTOM"
-    else
-        y = PRD_Y_OFFSET + info.prdY
-    end
-
-    prdBar:SetParent(prd)
-    prdBar:ClearAllPoints()
-    prdBar:SetPoint("TOP", relativeTo, relativePoint, 0, y)
 end
 
 function BBP.UpdateComboPointBarParent(relativeTo)
@@ -227,15 +198,12 @@ function BBP.ForeverComboPoints()
         BBP.TargetResourceUpdater()
         return
     end
-    if not BetterBlizzPlatesDB.foreverComboPoints then return end
-    if FramesOwnsDisplay() then return end
-
-    local prd = PersonalResourceDisplayFrame
-    if not prd then return end
+    if not BBP.ComboPointTargetBarActive() then return end
 
     local info = CLASS_INFO[class]
-    prdBar = CreateFrame("Frame", "BBPComboPointBar", prd, "HorizontalLayoutFrame")
+    prdBar = CreateFrame("Frame", "BBPComboPointBar", UIParent, "HorizontalLayoutFrame")
     prdBar:SetFrameStrata("BACKGROUND")
+    prdBar:Hide()
     prdBar.spacing = 4
     prdBar.topPadding = info.topPadding
     prdBar.leftPadding = 0
@@ -251,25 +219,13 @@ function BBP.ForeverComboPoints()
     prdBar.UpdateMaxPower = UpdateMaxPower
 
     UpdateMaxPower(prdBar)
-    AnchorToPrd()
 
     BBP.ComboPointBar = prdBar
-
-    if prd.UpdateAdditionalBarAnchors then
-        hooksecurefunc(prd, "UpdateAdditionalBarAnchors", function()
-            if BetterBlizzPlatesDB.disablePrdMovement then
-                AnchorToPrd()
-            end
-        end)
-    end
 
     CreateUpdater(class)
 
     if BBP.DarkModeNameplateResources then
         BBP.DarkModeNameplateResources()
-    end
-    if BetterBlizzPlatesDB.hideResourceFrame and BBP.HideResourceFrames then
-        BBP.HideResourceFrames()
     end
 
     UpdateBar(prdBar)

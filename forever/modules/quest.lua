@@ -31,28 +31,43 @@ function BBP.IsQuestUnit(unit)
         return false
     end
 
-    if not UnitIsRelatedToActiveQuest(unit) then
-        return false
-    end
-
     local data = GetUnitTooltip(unit)
-    if not data or not data.lines then
-        return true
-    end
-
-    local isMine = true
-    for _, line in ipairs(data.lines) do
-        local lineType = line.type
-        if lineType == LINE_TITLE then
-            isMine = true
-        elseif lineType == LINE_PLAYER then
-            isMine = line.guid == PlayerGUID or line.leftText == PlayerName
-        elseif lineType == LINE_OBJECTIVE and isMine and not IsObjectiveDone(line) then
-            return true
+    local lines = data and data.lines
+    if lines then
+        local hasQuestLines = false
+        local isMine = true
+        for _, line in ipairs(lines) do
+            local lineType = line.type
+            if lineType == LINE_TITLE then
+                hasQuestLines = true
+                isMine = true
+            elseif lineType == LINE_PLAYER then
+                isMine = line.guid == PlayerGUID or line.leftText == PlayerName
+            elseif lineType == LINE_OBJECTIVE then
+                hasQuestLines = true
+                if isMine and not IsObjectiveDone(line) then
+                    return true
+                end
+            end
+        end
+        if hasQuestLines then
+            return false
         end
     end
 
-    return false
+    return UnitIsRelatedToActiveQuest(unit) == true
+end
+
+local hiddenInstanceTypes = {
+    party = true,
+    raid = true,
+    pvp = true,
+    arena = true,
+}
+
+local function InHiddenInstance()
+    local _, instanceType = IsInInstance()
+    return hiddenInstanceTypes[instanceType] or false
 end
 
 local function SetQuestColor(frame, isQuest)
@@ -91,7 +106,7 @@ function BBP.QuestIndicator(frame)
     frame.questIndicator:SetPoint("CENTER", anchorFrame, anchorPoint, xPos, yPos)
     frame.questIndicator:SetScale(db.questIndicatorScale or 1)
 
-    local isQuest = db.questIndicatorTestMode or (db.questIndicator and not IsInInstance() and BBP.IsQuestUnit(frame.unit))
+    local isQuest = db.questIndicatorTestMode or (db.questIndicator and not InHiddenInstance() and BBP.IsQuestUnit(frame.unit))
     frame.questIndicator:SetShown(isQuest)
     SetQuestColor(frame, isQuest)
 end
@@ -100,7 +115,7 @@ local updatePending
 
 local function UpdateAllUnitQuestState()
     updatePending = nil
-    if not BetterBlizzPlatesDB.questIndicator or IsInInstance() then return end
+    if not BetterBlizzPlatesDB.questIndicator or InHiddenInstance() then return end
     for _, namePlate in ipairs(C_NamePlate.GetNamePlates()) do
         local frame = namePlate.UnitFrame
         if frame and not frame:IsForbidden() and not frame:IsProtected() and frame.unit then
@@ -109,11 +124,24 @@ local function UpdateAllUnitQuestState()
     end
 end
 
-local QuestEventFrame = CreateFrame("Frame")
-QuestEventFrame:RegisterUnitEvent("UNIT_QUEST_LOG_CHANGED", "player")
-QuestEventFrame:SetScript("OnEvent", function()
+local QuestEventFrame
+
+local function OnQuestEvent()
     if not updatePending then
         updatePending = true
         C_Timer.After(0.1, UpdateAllUnitQuestState)
     end
-end)
+end
+
+function BBP.ToggleQuestIndicator()
+    if BetterBlizzPlatesDB.questIndicator then
+        if not QuestEventFrame then
+            QuestEventFrame = CreateFrame("Frame")
+            QuestEventFrame:SetScript("OnEvent", OnQuestEvent)
+        end
+        QuestEventFrame:RegisterEvent("QUEST_LOG_UPDATE")
+        QuestEventFrame:RegisterUnitEvent("UNIT_QUEST_LOG_CHANGED", "player")
+    elseif QuestEventFrame then
+        QuestEventFrame:UnregisterAllEvents()
+    end
+end

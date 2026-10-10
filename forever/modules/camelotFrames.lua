@@ -23,6 +23,65 @@ function BBP.GetNumClasses()
     return (GetNumClasses and GetNumClasses()) or 13
 end
 
+local talentTreeRoles = {
+    WARRIOR = { [3] = "TANK" },
+    PALADIN = { [1] = "HEALER", [2] = "TANK" },
+    PRIEST = { [1] = "HEALER", [2] = "HEALER" },
+    DRUID = { [3] = "HEALER" },
+    SHAMAN = { [3] = "HEALER" },
+}
+
+local function GetPlayerTalentConfigID()
+    local specGroup = specInfo and specInfo.GetActiveSpecGroup and specInfo.GetActiveSpecGroup()
+    local configID = specGroup and specInfo.GetCombatConfigIDForSpecGroup and specInfo.GetCombatConfigIDForSpecGroup(specGroup)
+    if not configID and C_ClassTalents and C_ClassTalents.GetActiveConfigID then
+        configID = C_ClassTalents.GetActiveConfigID()
+    end
+    return configID
+end
+
+local function ByOrderIndex(a, b)
+    return (a.orderIndex or 0) < (b.orderIndex or 0)
+end
+
+function BBP.GetTalentRole()
+    local roles = talentTreeRoles[UnitClassBase("player")]
+    if not roles or not C_Traits or not C_Traits.GetGroupCurrencyInfo then return nil end
+    local configID = GetPlayerTalentConfigID()
+    local config = configID and C_Traits.GetConfigInfo(configID)
+    local treeID = config and config.treeIDs and config.treeIDs[1]
+    if not treeID then return nil end
+
+    local okGroups, groups = pcall(C_Traits.GetGroupDisplayInfoByTreeID, treeID)
+    if not okGroups or type(groups) ~= "table" or #groups == 0 then return nil end
+    table.sort(groups, ByOrderIndex)
+
+    local indexByGroup, groupIDs = {}, {}
+    for i, info in ipairs(groups) do
+        indexByGroup[info.groupID] = i
+        groupIDs[i] = info.groupID
+    end
+
+    local okSpent, spentInfos = pcall(C_Traits.GetGroupCurrencyInfo, configID, groupIDs)
+    if not okSpent or type(spentInfos) ~= "table" then return nil end
+
+    local bestIndex, bestSpent, tied = nil, 0, false
+    for _, info in ipairs(spentInfos) do
+        local currency = info.currencyInfos and info.currencyInfos[1]
+        local spent = currency and currency.spent or 0
+        local index = indexByGroup[info.traitNodeGroupID]
+        if index then
+            if spent > bestSpent then
+                bestIndex, bestSpent, tied = index, spent, false
+            elseif spent == bestSpent and spent > 0 then
+                tied = true
+            end
+        end
+    end
+    if not bestIndex or tied then return nil end
+    return roles[bestIndex] or "DAMAGER"
+end
+
 local LEVEL_BADGE_SCALE = 1.2
 local LEVEL_BADGE_X_OFFSET = 5
 local LEVEL_BADGE_BOTTOM_INSET = 0.5
@@ -120,13 +179,14 @@ end
 
 local function SideLevel()
     local db = BetterBlizzPlatesDB
-    return db.classicRetailNameplates and not db.classicNameplates or false
+    if db.classicNameplates then return false end
+    return (db.classicRetailNameplates or db.hideLevelFrameBackground) and true or false
 end
 
 local function LevelOutsideHealthBar()
     local db = BetterBlizzPlatesDB
     if db.classicNameplates then return false end
-    return (db.classicRetailNameplates or db.centerNameplateHealthBar) and true or false
+    return (db.classicRetailNameplates or db.hideLevelFrameBackground or db.centerNameplateHealthBar) and true or false
 end
 
 local function SyncLevelBadge(frame, height)
@@ -198,7 +258,7 @@ function RestoreBlizzardLevelBadgeLayout(frame)
             auras.LossOfControlFrame:SetPoint("LEFT", frame.HealthBarsContainer, "RIGHT", auraOffset, 0)
         end
     end
-    if sideLevel then return end
+    if sideLevel and BetterBlizzPlatesDB.classicRetailNameplates then return end
 
     local setupOptions = NamePlateSetupOptions
     local styles = NamePlateConstants and NamePlateConstants.NAME_ANCHOR_STYLES

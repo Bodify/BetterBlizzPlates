@@ -136,8 +136,8 @@ local PANDEMIC_GROUPS = {
 }
 
 local SORT_METHODS = {
-    default   = { AuraContainerSortMethod.AuraInstanceIDOnly or AuraContainerSortMethod.Default,
-                  AuraContainerSortDirection.Normal },
+    default   = { AuraContainerSortMethod.Default, AuraContainerSortDirection.Normal },
+    buffs     = { AuraContainerSortMethod.ImportantOnly, AuraContainerSortDirection.Normal },
     expires   = { AuraContainerSortMethod.ExpirationOnly, AuraContainerSortDirection.Normal },
     lastest   = { AuraContainerSortMethod.ExpirationOnly, AuraContainerSortDirection.Reverse },
 }
@@ -235,7 +235,7 @@ local defaultOtherCC = {
     [207777] = true, -- Dismantle (Rogue)
     [236077] = true, -- Disarm (Warrior)
     [233759] = true, -- Grapple Weapon (Monk)
-    [407028] = true, -- Sticky Tar Bomb (Hunter)
+    [407032] = true, -- Sticky Tar Bomb (Hunter)
     [209749] = true, -- Faerie Swarm (Druid)
 }
 
@@ -504,6 +504,8 @@ function BBP.UpdateUserAuraSettings()
     S.timerBase = { GetColor("nameplateAuraTimerBaseColor", 1, 0.82, 0, 1) }
     S.timerLow = { GetColor("nameplateAuraTimerLowColor", 1, 0.1, 0.1, 1) }
     S.timerThreshold = db.nameplateAuraTimerLowThreshold or 6
+    S.timerHigh = { GetColor("nameplateAuraTimerHighColor", 1, 1, 1, 1) }
+    S.timerHighThreshold = db.nameplateAuraTimerHighThreshold or 30
     S.hideLongTimers = db.nameplateAuraHideLongDurationText ~= false
     S.buffsOnNpcs = db.nameplateAuraBuffsOnNpcs ~= false
     S.buffsOnEnemyPlayers = db.nameplateAuraBuffsOnEnemyPlayers ~= false
@@ -567,6 +569,8 @@ function BBP.UpdateUserAuraSettings()
     S.prdY = db.prdAuraYPos or 0
     S.prdPerRow = db.prdAuraRowAmount or 6
     S.prdLimit = db.prdAuraLimit or 6
+    S.prd = ReadFilterBlock("prdBuff")
+    S.prdAlign = db.prdAuraAlign or "CENTER"
 
     S.stackFont = db.npAuraStackFontEnabled and LSM:Fetch(LSM.MediaType.FONT, db.npAuraStackFont) or nil
     S.cdFont = db.npAuraCdFontEnabled and LSM:Fetch(LSM.MediaType.FONT, db.npAuraCdFont) or nil
@@ -704,13 +708,18 @@ local HIDE_LONG_TIMER_FROM = 60
 local durationCurve, durationCurveSignature
 
 function GetDurationCurve()
-    local base, low = S.timerBase, S.timerLow
+    local base, low, high = S.timerBase, S.timerLow, S.timerHigh
     local hideFrom = HIDE_LONG_TIMER_FROM
     local threshold = math.min(S.timerThreshold, hideFrom - 1)
+    local highFrom = S.timerHighThreshold
+    if not S.timerColor or highFrom <= threshold or (S.hideLongTimers and highFrom >= hideFrom) then
+        highFrom = nil
+    end
 
-    local signature = string.format("%s|%.2f|%s|%s|%s",
+    local signature = string.format("%s|%.2f|%s|%s|%s|%s|%s",
         tostring(S.timerColor), threshold, tostring(S.hideLongTimers),
-        table.concat(base, ","), table.concat(low, ","))
+        table.concat(base, ","), table.concat(low, ","),
+        tostring(highFrom), table.concat(high, ","))
 
     if not durationCurve then
         durationCurve = C_CurveUtil.CreateColorCurve()
@@ -726,6 +735,9 @@ function GetDurationCurve()
     if S.timerColor then
         durationCurve:AddPoint(0, CreateColor(low[1], low[2], low[3], low[4] or 1))
         durationCurve:AddPoint(threshold, baseColor)
+        if highFrom then
+            durationCurve:AddPoint(highFrom, CreateColor(high[1], high[2], high[3], high[4] or 1))
+        end
     else
         durationCurve:AddPoint(0, baseColor)
     end
@@ -1972,6 +1984,13 @@ local function SetGroupEnabled(container, groupKey, enabled)
     end
 end
 
+local function SortFor(kind)
+    if S.sort == SORT_METHODS.default and IsBuffKind(kind) then
+        return SORT_METHODS.buffs
+    end
+    return S.sort
+end
+
 local function AddContainerGroup(container, groupKey)
     local kind = container.bbpKind
     local style = BuildStyle(kind, groupKey)
@@ -1980,8 +1999,8 @@ local function AddContainerGroup(container, groupKey)
     local cellW, cellH = GetCell(kind, groupKey)
     container:AddAuraGroup(groupKey, CreateFilterString(IsBuffKind(kind) and AF.Helpful or AF.Harmful), {
         maxFrameCount = 0,
-        sortMethod = S.sort[1],
-        sortDirection = S.sort[2],
+        sortMethod = SortFor(kind)[1],
+        sortDirection = SortFor(kind)[2],
         initializeFrame = function(button)
             InitAuraButton(button, container.bbpStyles[groupKey])
         end,
@@ -2124,7 +2143,8 @@ local function ApplyProfile(container, profileKey, perRow)
                 local cellW, cellH = GetCell(kind, groupKey)
                 ApplyGroupLayout(container, groupKey, S.gapX, S.gapY, cellW, cellH, index)
             end
-            ApplyGroupSort(container, groupKey, S.sort[1], S.sort[2])
+            local sort = SortFor(kind)
+            ApplyGroupSort(container, groupKey, sort[1], sort[2])
             container:SetAuraGroupMaxFrameCount(groupKey, cfg.max)
             SetGroupEnabled(container, groupKey, true)
         end
@@ -2919,7 +2939,7 @@ end
 BBP.UpdateAllNameplatesAuras = BBP.RefreshAllNameplateAuras
 BBP.RefreshBuffFrame = BBP.RefreshAllNameplateAuras
 
-local PRD_GROUPS = { "DefBig", "DefExt", "Important" }
+local PRD_GROUPS = { "DefBig", "DefExt", "Important", "Watch", "WatchMine", "Plain" }
 
 function BBP.SetupPRDAuras()
     if not S.prdEnabled then
@@ -2971,43 +2991,72 @@ end
 function BBP.RefreshPRDAuras()
     local container = BBP.prdAuraContainer
     if not container then
-        if S.prdEnabled then BBP.SetupPRDAuras() end
-        return
+        if S.prdEnabled then return BBP.SetupPRDAuras() end
+        return BBP.SyncPrdAuraOwner()
     end
 
     if not S.prdEnabled then
         container:SetEnabled(false)
         container:Hide()
-        return
+        return BBP.SyncPrdAuraOwner()
     end
 
+    local cfg = S.prd or {}
     local NOT_BIG, NOT_EXT = "!" .. AF.BigDefensive, "!" .. AF.ExternalDefensive
-    local filters = {
-        DefBig    = CreateFilterString(AF.Helpful, AF.BigDefensive),
-        DefExt    = CreateFilterString(AF.Helpful, NOT_BIG, AF.ExternalDefensive),
-        Important = CreateFilterString(AF.Helpful, AF.Important, NOT_BIG, NOT_EXT),
+    local defOn = cfg.defensives and true or false
+    local impOn = cfg.important and true or false
+    local watchOn = cfg.watchlist and true or false
+    local mine = cfg.onlyMine and AF.Player or false
+    local plainOn = (cfg.lessThanMin or not (defOn or impOn or watchOn)) and true or false
+
+    local function Filter(own, ...)
+        local parts = { AF.Helpful }
+        AppendTokens(parts, ...)
+        if defOn and own ~= "def" then AppendTokens(parts, NOT_BIG, NOT_EXT) end
+        if impOn and own ~= "def" and own ~= "imp" then parts[#parts + 1] = "!" .. AF.Important end
+        return CreateFilterString(unpack(parts))
+    end
+
+    local blacklist = cfg.blacklist and lists.blacklist or nil
+    local watchSet = MergeSets(lists.watch, lists.watchImportant,
+        lists.watchEnlarged, lists.watchEnlargedImportant)
+    local watchMineSet = MergeSets(lists.watchMine, lists.watchImportantMine,
+        lists.watchEnlargedMine, lists.watchEnlargedImportantMine)
+    local plainExclude = watchOn and MergeSets(blacklist, watchSet, watchMineSet) or blacklist
+
+    local groups = {
+        DefBig    = { Filter("def", AF.BigDefensive), nil, defOn },
+        DefExt    = { Filter("def", NOT_BIG, AF.ExternalDefensive), nil, defOn },
+        Important = { Filter("imp", AF.Important), nil, impOn },
+        Watch     = { Filter(nil, mine), watchSet, watchOn and not SetIsEmpty(watchSet) },
+        WatchMine = { Filter(nil, AF.Player), watchMineSet, watchOn and not SetIsEmpty(watchMineSet) },
+        Plain     = { Filter(nil, mine), nil, plainOn },
     }
 
-    local exclude = lists.blacklist
-
     local anchor = PersonalResourceDisplayFrame.HealthBarsContainer or PersonalResourceDisplayFrame
+    local side = (S.prdAlign == "LEFT" or S.prdAlign == "RIGHT") and S.prdAlign or ""
     container:ClearAllPoints()
-    container:SetFlowLayoutAnchorPoint("BOTTOMLEFT")
-    container:SetFlowLayoutGrowthDirection(FlowDirection.Right, FlowDirection.Up)
-    container:SetPoint("BOTTOM", anchor, "TOP", S.prdX, 6 + S.prdY)
+    container:SetFlowLayoutAnchorPoint(side == "RIGHT" and "BOTTOMRIGHT" or "BOTTOMLEFT")
+    container:SetFlowLayoutGrowthDirection(side == "RIGHT" and FlowDirection.Left or FlowDirection.Right,
+        FlowDirection.Up)
+    container:SetPoint("BOTTOM" .. side, anchor, "TOP" .. side, S.prdX, 6 + S.prdY)
     container:SetScale(S.prdScale)
     container:SetFlowLayoutMaximumLineSize(S.prdPerRow * S.buffWidth + (S.prdPerRow - 1) * S.gapX)
 
     for index, groupKey in ipairs(PRD_GROUPS) do
-        container:SetAuraGroupFilterString(groupKey, filters[groupKey])
-        container:SetAuraGroupMaxFrameCount(groupKey, S.prdLimit)
-        ApplyGroupCandidateFilters(container, groupKey, Filters(nil, exclude))
+        local group = groups[groupKey]
+        local plain = groupKey == "Plain"
+        container:SetAuraGroupFilterString(groupKey, group[1])
+        container:SetAuraGroupMaxFrameCount(groupKey, group[3] and S.prdLimit or 0)
+        ApplyGroupCandidateFilters(container, groupKey, Filters(group[2],
+            plain and plainExclude or blacklist, (plain and cfg.lessThanMin) and 60 or nil))
         ApplyGroupLayout(container, groupKey, S.gapX, S.gapY, S.buffWidth, S.buffHeight, index)
     end
 
     container:SetUnit("player")
     container:SetEnabled(true)
     container:Show()
+    BBP.SyncPrdAuraOwner()
 end
 
 function BBP.RestylePRDAuraButtons(force)
@@ -3023,6 +3072,32 @@ function BBP.RestylePRDAuraButtons(force)
             end
         end
     end
+end
+
+function BBP.PrdAurasActive()
+    local db = BetterBlizzPlatesDB
+    return (db.enableNameplateAuraCustomisation and db.prdAurasEnabled) and true or false
+end
+
+function BBP.CheckPrdAuraClash()
+    if not BBP.PrdAurasActive() then return end
+    if not (BBF and BBF.PrdAurasWanted and BBF.PrdAurasWanted()) then return end
+    if StaticPopup_Visible("BB_PRD_AURAS_CLASH") then return end
+    BBP.ShowPopup("BB_PRD_AURAS_CLASH")
+end
+
+function BBP.SyncPrdAuraOwner()
+    if BBF and BBF.RefreshPrdAuras then BBF.RefreshPrdAuras() end
+    BBP.CheckPrdAuraClash()
+end
+
+function BBP.SetPrdAuraOwner(owner)
+    BetterBlizzPlatesDB.prdAurasEnabled = owner == "BBP"
+    if BetterBlizzFramesDB then BetterBlizzFramesDB.prdAurasEnabled = owner == "BBF" end
+    if BBP.RefreshNameplateAuraPanel then BBP.RefreshNameplateAuraPanel() end
+    if BBF and BBF.SyncPrdAurasCheckbox then BBF.SyncPrdAurasCheckbox() end
+    BBP.RefreshAllNameplateAuras()
+    if BBF and BBF.RefreshAllAuraFrames then BBF.RefreshAllAuraFrames() end
 end
 
 local SAMPLE_ICONS = {
@@ -3212,8 +3287,14 @@ local function DrawMockButton(button, style, index)
                 and remaining <= (self.bbpDuration or 10) * 0.3)
             if self.bbpTimer:IsShown() and self.bbpFormatter then
                 self.bbpTimer:SetText(self.bbpFormatter:FormatNumber(remaining))
-                local c = (self.bbpTimerColor and remaining < S.timerThreshold)
-                    and S.timerLow or S.timerBase
+                local c = S.timerBase
+                if self.bbpTimerColor then
+                    if remaining < S.timerThreshold then
+                        c = S.timerLow
+                    elseif remaining >= S.timerHighThreshold and S.timerHighThreshold > S.timerThreshold then
+                        c = S.timerHigh
+                    end
+                end
                 self.bbpTimer:SetTextColor(c[1], c[2], c[3], c[4] or 1)
             end
         end)
@@ -3477,6 +3558,7 @@ function BBP.DisableNameplateAuras()
 
     BBP.UpdateUserAuraSettings()
     BBP.RestoreBlizzardNameplateAuras()
+    BBP.SyncPrdAuraOwner()
 end
 
 function BBP.SetupNameplateAuras()
