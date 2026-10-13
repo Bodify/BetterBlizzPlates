@@ -73,7 +73,9 @@ end
 local function SetQuestColor(frame, isQuest)
     if isQuest and BetterBlizzPlatesDB.questIndicatorColorNpc then
         local color = BetterBlizzPlatesDB.questIndicatorColorNpcRGB
-        frame.healthBar:SetStatusBarColor(unpack(color))
+        if not UnitIsTapDenied(frame.unit) then
+            frame.healthBar:SetStatusBarColor(unpack(color))
+        end
         frame.needsRecolor = true
         frame.isQuestNpc = color
     elseif frame.needsRecolor then

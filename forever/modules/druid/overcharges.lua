@@ -1,93 +1,53 @@
+local function ShouldForceShow()
+    return BetterBlizzPlatesDB.druidAlwaysShowCombos and GetComboPoints("player", "target") > 0
+end
+
+local function UpdateDruidComboPoints()
+    local frame = PersonalResourceDisplayFrame and PersonalResourceDisplayFrame.classFrame
+    if not frame or frame:IsForbidden() then return end
+    if UnitPowerType("player") == Enum.PowerType.Energy then return end
+
+    if ShouldForceShow() then
+        frame:Show()
+    else
+        frame:Hide()
+    end
+end
+
+local hookedFrame
+local function HookClassFrame(frame)
+    if not frame or hookedFrame == frame then return end
+    hookedFrame = frame
+    frame:HookScript("OnHide", function(self)
+        if self:IsForbidden() then return end
+        if ShouldForceShow() then
+            self:Show()
+        end
+    end)
+end
+
 function BBP.DruidAlwaysShowCombos()
     if not BetterBlizzPlatesDB.druidAlwaysShowCombos then return end
     if UnitClassBase("player") ~= "DRUID" then return end
     if BBP.DruidAlwaysShowCombosActive then return end
-    local frame = PersonalResourceDisplayFrame and PersonalResourceDisplayFrame.classFrame--ClassNameplateBarFeralDruidFrame
-    if not frame then return end
+    local prd = PersonalResourceDisplayFrame
+    if not prd then return end
 
-    local function CreateChargedPoints(comboPointFrame)
-        if not comboPointFrame then return end
-        if comboPointFrame.taggedCombos then return end
-
-        local comboPoints = {}
-        local visibleComboPoints = 0
-
-        for i = 1, comboPointFrame:GetNumChildren() do
-            local child = select(i, comboPointFrame:GetChildren())
-
-            if child:IsShown() then
-                visibleComboPoints = visibleComboPoints + 1
-                table.insert(comboPoints, child)
-            end
-        end
-
-        table.sort(comboPoints, function(a, b)
-            return (a.layoutIndex or 0) < (b.layoutIndex or 0)
+    HookClassFrame(prd.classFrame)
+    if prd.SetupClassBar then
+        hooksecurefunc(prd, "SetupClassBar", function(self)
+            HookClassFrame(self.classFrame)
         end)
-
-        for i = 1, 5 do
-            if comboPoints[i] then
-                local comboPoint = comboPoints[i]
-                comboPointFrame["ComboPoint" .. i] = comboPoint
-            end
-        end
-
-        if visibleComboPoints == 5 then
-            comboPointFrame.taggedCombos = true
-        end
     end
-
-    CreateChargedPoints(frame)
-
-    local function UpdateDruidComboPoints(self)
-        if not self then return end
-        if self:IsForbidden() then return end
-        local form = GetShapeshiftFormID()
-        if form == 1 then return end
-
-        local comboPoints = UnitPower("player", self.powerType)
-
-        if comboPoints > 0 then
-            if (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true) and not UnitExists("target") then
-                self:Hide()
-            else
-                self:Show()
-            end
-        else
-            self:Hide()
-        end
-
-        for i, point in ipairs(self.classResourceButtonTable) do
-            local isFull = i <= comboPoints
-
-            point.Point_Icon:SetAlpha(isFull and 1 or 0)
-            point.BG_Active:SetAlpha(isFull and 1 or 0)
-            point.BG_Inactive:SetAlpha(isFull and 0 or 1)
-            point.Point_Deplete:SetAlpha(0)
-        end
-    end
-
-    frame:HookScript("OnHide", function(self)
-        if not self then return end
-        if self:IsForbidden() then return end
-        if UnitPower("player", self.powerType) > 0 then
-            if (BetterBlizzPlatesDB.nameplateResourceOnTarget == "1" or BetterBlizzPlatesDB.nameplateResourceOnTarget == true) and not UnitExists("target") then
-                self:Hide()
-            else
-                self:Show()
-            end
-        end
-    end)
 
     local listener = CreateFrame("Frame")
     listener:RegisterUnitEvent("UNIT_POWER_UPDATE", "player")
     listener:RegisterEvent("PLAYER_TARGET_CHANGED")
-    listener:SetScript("OnEvent", function(_, event, unit, powerType)
-        if event == "UNIT_POWER_UPDATE" and powerType == "COMBO_POINTS" then
-            UpdateDruidComboPoints(frame)
-        elseif event == "PLAYER_TARGET_CHANGED" then
-            UpdateDruidComboPoints(frame)
-        end
+    listener:RegisterEvent("COMBO_TARGET_CHANGED")
+    listener:SetScript("OnEvent", function(_, event, _, powerType)
+        if event == "UNIT_POWER_UPDATE" and powerType ~= "COMBO_POINTS" then return end
+        UpdateDruidComboPoints()
     end)
     BBP.DruidAlwaysShowCombosActive = true
+    UpdateDruidComboPoints()
 end

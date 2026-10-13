@@ -120,12 +120,20 @@ local function UpdateExecuteSkull(frame, config, alpha)
     local scale = config.executeSkullScale or 1
     local x = config.executeSkullXPos or 0
     local y = (config.executeSkullYPos or 0) + 1
-    local anchorTo = config.executeSkullAttachToHealth and frame.healthBar:GetStatusBarTexture() or frame.healthBar
-    if skull.scale ~= scale or skull.x ~= x or skull.y ~= y or skull.anchorTo ~= anchorTo then
-        skull.scale, skull.x, skull.y, skull.anchorTo = scale, x, y, anchorTo
+    local anchorTo, point, relativePoint = frame.healthBar, "LEFT", "RIGHT"
+    if config.executeSkullAttachToThreshold then
+        local hpWidth = frame.healthBar:GetWidth()
+        local barWidth = not issecretvalue(hpWidth) and hpWidth or frame.lastKnownHpWidth or BetterBlizzPlatesDB.nameplateEnemyWidth
+        point, relativePoint = "CENTER", "LEFT"
+        x = x + (config.executeIndicatorThreshold / 100) * barWidth
+    elseif config.executeSkullAttachToHealth then
+        anchorTo = frame.healthBar:GetStatusBarTexture()
+    end
+    if skull.scale ~= scale or skull.x ~= x or skull.y ~= y or skull.anchorTo ~= anchorTo or skull.point ~= point then
+        skull.scale, skull.x, skull.y, skull.anchorTo, skull.point = scale, x, y, anchorTo, point
         skull:SetSize(23 * scale, 24 * scale)
         skull:ClearAllPoints()
-        skull:SetPoint("LEFT", anchorTo, "RIGHT", x, y)
+        skull:SetPoint(point, anchorTo, relativePoint, x, y)
     end
     skull:SetAlpha(alpha)
 end
@@ -161,6 +169,7 @@ function BBP.ExecuteIndicator(frame)
         config.executeSkullXPos = BetterBlizzPlatesDB.executeSkullXPos
         config.executeSkullYPos = BetterBlizzPlatesDB.executeSkullYPos
         config.executeSkullAttachToHealth = BetterBlizzPlatesDB.executeSkullAttachToHealth
+        config.executeSkullAttachToThreshold = BetterBlizzPlatesDB.executeSkullAttachToThreshold
         config.executeSkullKeepIndicator = BetterBlizzPlatesDB.executeSkullKeepIndicator
 
         config.executeIndicatorInitialized = true

@@ -49,7 +49,9 @@ function BBP.QuestIndicator(frame)
         frame.questIndicator:Show()
         if colorQuestNpc then
             local color = BetterBlizzPlatesDB.questIndicatorColorNpcRGB
-            frame.healthBar:SetStatusBarColor(unpack(color))
+            if not UnitIsTapDenied(frame.unit) then
+                frame.healthBar:SetStatusBarColor(unpack(color))
+            end
             frame.needsRecolor = true
             frame.isQuestNpc = color
         elseif frame.needsRecolor then
@@ -65,7 +67,9 @@ function BBP.QuestIndicator(frame)
         frame.questIndicator:Show()
         if colorQuestNpc then
             local color = BetterBlizzPlatesDB.questIndicatorColorNpcRGB
-            frame.healthBar:SetStatusBarColor(unpack(color))
+            if not UnitIsTapDenied(frame.unit) then
+                frame.healthBar:SetStatusBarColor(unpack(color))
+            end
             frame.needsRecolor = true
             frame.isQuestNpc = color
         elseif frame.needsRecolor then

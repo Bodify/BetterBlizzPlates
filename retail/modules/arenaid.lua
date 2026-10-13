@@ -108,6 +108,48 @@ local function UnitIsProbablyUnit(unit1, unit2)
 end
 BBP.UnitIsProbablyUnit = UnitIsProbablyUnit
 
+local arenaSpecSecret
+function BBP.IsArenaSpecSecret()
+    if arenaSpecSecret == nil then
+        arenaSpecSecret = (UnitFrameUtil and UnitFrameUtil.GetArenaOpponentSpecDisplayInfo) and true or false
+    end
+    return arenaSpecSecret
+end
+
+function BBP.ArenaEnemyNote(text)
+    if not BBP.IsArenaSpecSecret() then return text end
+    return text .. "\n\n|cffff8000" .. L["Not_Available_On_Arena_Enemies"] .. "|r"
+end
+
+function BBP.ArenaOpponentHasSpec(arenaIndex)
+    return arenaIndex <= GetNumArenaOpponentSpecs()
+end
+
+local secretRoleElements = {}
+function BBP.SetSecretArenaRoleTexture(texture, arenaIndex, textureMap)
+    secretRoleElements.roleIcon = texture
+    UnitFrameUtil.UpdateArenaOpponentSpecDisplay(secretRoleElements, arenaIndex, textureMap)
+    secretRoleElements.roleIcon = nil
+end
+
+local secretSpecElements = {}
+function BBP.SetSecretArenaSpecIcon(texture, arenaIndex)
+    secretSpecElements.specPortrait = texture
+    UnitFrameUtil.UpdateArenaOpponentSpecDisplay(secretSpecElements, arenaIndex)
+    secretSpecElements.specPortrait = nil
+end
+
+local function GetArenaSpecName(i)
+    local specID = GetArenaOpponentSpec(i)
+    if issecretvalue(specID) then
+        if not BBP.ArenaOpponentHasSpec(i) then
+            return GetFallbackClassName("arena" .. i)
+        end
+        return UnitFrameUtil.GetArenaOpponentSpecDisplayInfo(i).specName
+    end
+    return GetSpecName(specID, "arena" .. i)
+end
+
 local function createSpexText(frame)
     if not frame.specNameText then
         frame.specNameText = frame:CreateFontString(nil, "BACKGROUND")
@@ -249,8 +291,7 @@ function BBP.ArenaIndicator3(frame)
 
     for i = 1, 3 do
         if UnitIsProbablyUnit(frame.unit, "arena" .. i) then
-            local specID = GetArenaOpponentSpec(i)
-            local specName = GetSpecName(specID, "arena" .. i)
+            local specName = GetArenaSpecName(i)
             local r, g, b, a = frame.name:GetTextColor()
 
             local anchorPoint = createSpexText(frame)
@@ -283,8 +324,7 @@ function BBP.ArenaIndicator4(frame)
     for i = 1, 3 do
         if UnitIsProbablyUnit(frame.unit, "arena" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
-            local specID = GetArenaOpponentSpec(i)
-            local specName = GetSpecName(specID, "arena" .. i)
+            local specName = GetArenaSpecName(i)
 
             local anchorPoint = createSpexText(frame)
 
@@ -326,8 +366,7 @@ function BBP.ArenaIndicator5(frame)
     for i = 1, 3 do
         if UnitIsProbablyUnit(frame.unit, "arena" .. i) then
             local r, g, b, a = frame.name:GetTextColor()
-            local specID = GetArenaOpponentSpec(i)
-            local specName = GetSpecName(specID, "arena" .. i)
+            local specName = GetArenaSpecName(i)
 
             local anchorPoint = createSpexText(frame)
 

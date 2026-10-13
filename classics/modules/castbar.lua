@@ -263,6 +263,9 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     if castBarPixelBorder then
         BBP.SetupBorderOnFrame(castBar)
+        if castBar.bbpBorderColor then
+            BBP.ApplyCastbarBorderColor(castBar)
+        end
     end
     if castBarIconPixelBorder then
         if not castBar.adjustedIcon then

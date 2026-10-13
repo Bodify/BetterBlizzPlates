@@ -1,5 +1,6 @@
 function BBP.IsTotemUnit(unit)
 	local creatureType, creatureTypeID = UnitCreatureType(unit)
+	if issecretvalue(creatureType) then return false end
 	if creatureTypeID then
 		return creatureTypeID == 11
 	end

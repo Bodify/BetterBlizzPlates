@@ -6476,6 +6476,7 @@ local function guiGeneralTab()
     -- CreateTooltipTwo(friendlyNameplateNonstackable, "Non-Stackable", "Makes the friendly nameplates non-stackable even with \"Stacking Nameplates\" on.")
 
     local friendlyClassColorName = CreateCheckbox("friendlyClassColorName", L["Class_Color_Name"], BetterBlizzPlates)
+    BBP.friendlyClassColorNameCheckbox = friendlyClassColorName
     friendlyClassColorName:SetPoint("TOPLEFT", friendlyNameplateClickthrough, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(friendlyClassColorName, L["Class_Color_Name"], L["Tooltip_Class_Color_Name_2_Desc_2"], nil, nil, "nameplateUseClassColorForFriendlyPlayerUnitNames")
     friendlyClassColorName:HookScript("OnClick", function(self)
@@ -6902,11 +6903,11 @@ local function guiGeneralTab()
 
     local healerIndicator = CreateCheckbox("healerIndicator", L["Healer_Indicator"], BetterBlizzPlates)
     healerIndicator:SetPoint("TOPLEFT", factionIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(healerIndicator, L["Healer_Indicator"] .. " |A:greencross:21:21|a", L["Tooltip_Healer_Indicator_2_Desc"], L["Tooltip_Healer_Indicator_2_SubText"])
+    CreateTooltipTwo(healerIndicator, L["Healer_Indicator"] .. " |A:bags-icon-addslots:21:21|a", L["Tooltip_Healer_Indicator_2_Desc"], L["Tooltip_Healer_Indicator_2_SubText"])
     local healerCrossIcon = healerIndicator:CreateTexture(nil, "ARTWORK")
-    healerCrossIcon:SetAtlas("greencross")
-    healerCrossIcon:SetSize(21, 21)
-    healerCrossIcon:SetPoint("RIGHT", healerIndicator, "LEFT", 0, 0)
+    healerCrossIcon:SetAtlas("bags-icon-addslots")
+    healerCrossIcon:SetSize(16, 16)
+    healerCrossIcon:SetPoint("RIGHT", healerIndicator, "LEFT", -2, 0)
 
     local partyPointer = CreateCheckbox("partyPointer", L["Party_Pointer"], BetterBlizzPlates)
     partyPointer:SetPoint("TOPLEFT", healerIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -7288,11 +7289,11 @@ local function guiGeneralTab()
 
     local shortArenaSpecName = CreateCheckbox("shortArenaSpecName", L["Short"], BetterBlizzPlates)
     shortArenaSpecName:SetPoint("LEFT", arenaSettingsText, "RIGHT", 5, 0)
-    CreateTooltipTwo(shortArenaSpecName, L["Short_Spec_Names"], L["Tooltip_Short_Spec_Names_Desc"], nil, "ANCHOR_LEFT")
+    CreateTooltipTwo(shortArenaSpecName, L["Short_Spec_Names"], BBP.ArenaEnemyNote(L["Tooltip_Short_Spec_Names_Desc"]), nil, "ANCHOR_LEFT")
 
     local healerSpecNameOnly = CreateCheckbox("healerSpecNameOnly", L["Heal"], BetterBlizzPlates)
     healerSpecNameOnly:SetPoint("LEFT", shortArenaSpecName.Text, "RIGHT", 5, 0)
-    CreateTooltipTwo(healerSpecNameOnly, L["Healer_Spec_Only"], L["Tooltip_Healer_Spec_Only_Desc"], nil, "ANCHOR_LEFT")
+    CreateTooltipTwo(healerSpecNameOnly, L["Healer_Spec_Only"], BBP.ArenaEnemyNote(L["Tooltip_Healer_Spec_Only_Desc"]), nil, "ANCHOR_LEFT")
 
     local arenaIndicatorBg = CreateCheckbox("arenaIndicatorBg", "BG", BetterBlizzPlates)
     arenaIndicatorBg:SetPoint("LEFT", healerSpecNameOnly.Text, "RIGHT", 5, 0)
@@ -7650,10 +7651,9 @@ local function guiPositionAndScale()
     CreateBorderBox(anchorSubHeal)
 
     local healerCrossIcon2 = contentFrame:CreateTexture(nil, "ARTWORK")
-    healerCrossIcon2:SetAtlas("greencross")
+    healerCrossIcon2:SetAtlas("bags-icon-addslots")
     healerCrossIcon2:SetSize(29, 29)
     healerCrossIcon2:SetPoint("BOTTOM", anchorSubHeal, "TOP", 0, 3)
-    healerCrossIcon2:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875)
 
     local healerIndicatorScale = CreateSlider(contentFrame, L["Size"], 0.6, 2.5, 0.01, "healerIndicatorScale", false, 72)
     healerIndicatorScale:SetPoint("TOP", anchorSubHeal, "BOTTOM", 36, -15)
@@ -7729,7 +7729,7 @@ local function guiPositionAndScale()
     local healerIndicatorRedCrossEnemy = CreateCheckbox("healerIndicatorRedCrossEnemy", L["Red_Cross_For_Enemy"], anchorSubHeal.extendedSettings)
 
     anchorSubHeal.healerIndicatorColorEnemyHealthbar = CreateCheckbox("healerIndicatorColorEnemyHealthbar", L["Color_Enemy_Healer_HP"], anchorSubHeal.extendedSettings)
-    CreateTooltipTwo(anchorSubHeal.healerIndicatorColorEnemyHealthbar, L["Color_Enemy_Healer_Healthbar"], L["Tooltip_Color_Enemy_Healer_Healthbar_Desc"])
+    CreateTooltipTwo(anchorSubHeal.healerIndicatorColorEnemyHealthbar, L["Color_Enemy_Healer_Healthbar"], BBP.ArenaEnemyNote(L["Tooltip_Color_Enemy_Healer_Healthbar_Desc"]))
 
     anchorSubHeal.healerIndicatorColorFriendlyHealthbar = CreateCheckbox("healerIndicatorColorFriendlyHealthbar", L["Color_Friendly_Healer_HP"], anchorSubHeal.extendedSettings)
     CreateTooltipTwo(anchorSubHeal.healerIndicatorColorFriendlyHealthbar, L["Color_Friendly_Healer_Healthbar"], L["Tooltip_Color_Friendly_Healer_Healthbar_Desc"])
@@ -8769,7 +8769,7 @@ local function guiPositionAndScale()
     CreateTooltip(anchorSubExecute.extendedSettingsButton, L["Tooltip_Open_More_Settings_For_Execute_Indicator"])
 
     anchorSubExecute.extendedSettings = CreateFrame("Frame", nil, BetterBlizzPlatesSubPanel, "DefaultPanelFlatTemplate")
-    anchorSubExecute.extendedSettings:SetSize(270, 420)
+    anchorSubExecute.extendedSettings:SetSize(270, 442)
     anchorSubExecute.extendedSettings:SetPoint("TOPLEFT", anchorSubExecute.border, "TOPRIGHT", -60, 40)
     anchorSubExecute.extendedSettings:SetFrameStrata("FULLSCREEN_DIALOG")
     anchorSubExecute.extendedSettings:SetFrameLevel(550)
@@ -8889,17 +8889,31 @@ local function guiPositionAndScale()
     anchorSubExecute.executeSkull:SetPoint("TOPLEFT", executeSettings, "TOPLEFT", 16, -253)
     CreateTooltipTwo(anchorSubExecute.executeSkull, L["Show_Execute_Skull"] .. " |A:islands-azeriteboss:18:18|a", L["Tooltip_Show_Execute_Skull_Desc"])
 
-    anchorSubExecute.skullAttach = CreateCheckbox("executeSkullAttachToHealth", L["Attach_To_Current_Health"], executeSettings)
+    anchorSubExecute.skullAttach = CreateCheckbox("executeSkullAttachToHealth", L["Attach_To_Current_Health"], executeSettings, nil, function(_, value)
+        if value then
+            BetterBlizzPlatesDB.executeSkullAttachToThreshold = false
+            anchorSubExecute.skullThreshold:SetChecked(false)
+        end
+    end)
     anchorSubExecute.skullAttach:SetPoint("TOPLEFT", anchorSubExecute.executeSkull, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubExecute.skullAttach, L["Attach_To_Current_Health"], L["Tooltip_Attach_To_Current_Health_Desc"])
 
+    anchorSubExecute.skullThreshold = CreateCheckbox("executeSkullAttachToThreshold", L["Attach_To_Threshold_Spot"], executeSettings, nil, function(_, value)
+        if value then
+            BetterBlizzPlatesDB.executeSkullAttachToHealth = false
+            anchorSubExecute.skullAttach:SetChecked(false)
+        end
+    end)
+    anchorSubExecute.skullThreshold:SetPoint("TOPLEFT", anchorSubExecute.skullAttach, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorSubExecute.skullThreshold, L["Attach_To_Threshold_Spot"], L["Tooltip_Attach_To_Threshold_Spot_Desc"])
+
     anchorSubExecute.skullKeep = CreateCheckbox("executeSkullKeepIndicator", L["Keep_Execute_Text_Line"], executeSettings)
-    anchorSubExecute.skullKeep:SetPoint("TOPLEFT", anchorSubExecute.skullAttach, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    anchorSubExecute.skullKeep:SetPoint("TOPLEFT", anchorSubExecute.skullThreshold, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorSubExecute.skullKeep, L["Keep_Execute_Text_Line"], L["Tooltip_Keep_Execute_Text_Line_Desc"])
 
     anchorSubExecute.skullScale = CreateSlider(executeSettings, L["Size"], 0.5, 3, 0.01, "executeSkullScale")
     anchorSubExecute.skullScale:SetScale(0.85)
-    anchorSubExecute.skullScale:SetPoint("TOPLEFT", executeSettings, "TOPLEFT", 26 / 0.85, -330 / 0.85)
+    anchorSubExecute.skullScale:SetPoint("TOPLEFT", executeSettings, "TOPLEFT", 26 / 0.85, -352 / 0.85)
 
     anchorSubExecute.skullXPos = CreateSlider(executeSettings, L["X_Offset"], -50, 50, 1, "executeSkullXPos")
     anchorSubExecute.skullXPos:SetScale(0.85)
@@ -8922,7 +8936,7 @@ local function guiPositionAndScale()
             executeIndicatorThreshold:Enable()
         end
         local skullOn = BetterBlizzPlatesDB.executeSkull
-        for _, widget in ipairs({ anchorSubExecute.skullAttach, anchorSubExecute.skullKeep, anchorSubExecute.skullScale, anchorSubExecute.skullXPos, anchorSubExecute.skullYPos }) do
+        for _, widget in ipairs({ anchorSubExecute.skullAttach, anchorSubExecute.skullThreshold, anchorSubExecute.skullKeep, anchorSubExecute.skullScale, anchorSubExecute.skullXPos, anchorSubExecute.skullYPos }) do
             if skullOn then widget:Enable() else widget:Disable() end
             widget:SetAlpha(skullOn and 1 or 0.5)
         end
@@ -9153,7 +9167,7 @@ local function guiPositionAndScale()
     CreateTooltipTwo(anchorSubClassIcon.classIndicatorOnlyFriends, L["Only_Show_On_Friends_Friendlist"], L["Tooltip_Only_Show_On_Friends_Friendlist_Desc"])
 
     anchorSubClassIcon.classIndicatorOnlyHealer = CreateCheckbox("classIndicatorOnlyHealer", L["Only_Show_Healer"], anchorSubClassIcon.extendedSettings)
-    CreateTooltip(anchorSubClassIcon.classIndicatorOnlyHealer, L["Tooltip_Only_Show_On_Healers"])
+    CreateTooltip(anchorSubClassIcon.classIndicatorOnlyHealer, BBP.ArenaEnemyNote(L["Tooltip_Only_Show_On_Healers"]))
 
     local classIndicatorHealer = CreateCheckbox("classIndicatorHealer", L["Show_Cross_On_Healer"], anchorSubClassIcon.extendedSettings)
     CreateTooltip(classIndicatorHealer, L["Tooltip_Show_Cross_Instead_Of_Class_Spec"])
@@ -9184,10 +9198,10 @@ local function guiPositionAndScale()
     end)
 
     anchorSubClassIcon.classIconAlwaysShowHealer = CreateCheckbox("classIconAlwaysShowHealer", L["Always_Show_Healers"], anchorSubClassIcon.extendedSettings)
-    CreateTooltipTwo(anchorSubClassIcon.classIconAlwaysShowHealer, L["Always_Show_Healers"], L["Tooltip_Always_Show_Healers_Desc"])
+    CreateTooltipTwo(anchorSubClassIcon.classIconAlwaysShowHealer, L["Always_Show_Healers"], BBP.ArenaEnemyNote(L["Tooltip_Always_Show_Healers_Desc"]))
 
     anchorSubClassIcon.classIconAlwaysShowTank = CreateCheckbox("classIconAlwaysShowTank", L["Always_Show_Tanks"], anchorSubClassIcon.extendedSettings)
-    CreateTooltipTwo(anchorSubClassIcon.classIconAlwaysShowTank, L["Always_Show_Tanks"], L["Tooltip_Always_Show_Tanks_Desc"])
+    CreateTooltipTwo(anchorSubClassIcon.classIconAlwaysShowTank, L["Always_Show_Tanks"], BBP.ArenaEnemyNote(L["Tooltip_Always_Show_Tanks_Desc"]))
 
     anchorSubClassIcon.classIconAlwaysShowBgObj = CreateCheckbox("classIconAlwaysShowBgObj", L["Always_Show_BG_Objective"], anchorSubClassIcon.extendedSettings)
     CreateTooltipTwo(anchorSubClassIcon.classIconAlwaysShowBgObj, L["Always_Show_BG_Objective"], L["Tooltip_Always_Show_BG_Objective_Desc"])
@@ -10600,9 +10614,15 @@ local function guiPositionAndScale()
         ft.Add(anchorThreatColor, ft.CheckboxToggle("enemyColorThreat"))
         ft.Add(contentFrame.anchorSubTotem, ft.CheckboxToggle("totemIndicator"))
 
-        BetterBlizzPlatesSubPanel:HookScript("OnShow", function()
+        function ft.Refresh()
             for _, toggle in ipairs(ft.toggles) do
                 toggle:Refresh()
+            end
+        end
+        BetterBlizzPlatesSubPanel:HookScript("OnShow", ft.Refresh)
+        hooksecurefunc(SettingsPanel, "DisplayLayout", function()
+            if BetterBlizzPlatesSubPanel:IsVisible() then
+                ft.Refresh()
             end
         end)
     end
@@ -13357,6 +13377,7 @@ local function guiCVarControl()
     druidAlwaysShowCombos:SetPoint("TOPLEFT", hideResourceFrame, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(druidAlwaysShowCombos, L["Druid_Always_Show_Combo_Points"], L["Tooltip_Druid_Always_Show_Combo_Points_Desc"])
     druidAlwaysShowCombos:HookScript("OnClick", function()
+        BBP.DruidAlwaysShowCombos()
         BBP.ForeverComboPoints()
     end)
 
@@ -14142,6 +14163,10 @@ local function guiMisc()
     targetHighlightFix:SetPoint("TOPLEFT", friendIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(targetHighlightFix, L["TWW_Target_Highlight_Fix"], L["Tooltip_TWW_Target_Highlight_Fix_Desc"])
 
+    local fixNpTextures = CreateCheckbox("fixNpTextures", L["Low_Health_Texture_Fix"], guiMisc)
+    fixNpTextures:SetPoint("LEFT", targetHighlightFix.text, "RIGHT", 5, 0)
+    CreateTooltipTwo(fixNpTextures, L["Low_Health_Texture_Fix"], L["Tooltip_Low_Health_Texture_Fix_Desc"])
+
     local forceClassColors = CreateCheckbox("forceClassColors", L["Force_Class_Colors"], guiMisc)
     forceClassColors:SetPoint("TOPLEFT", targetHighlightFix, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(forceClassColors, L["Force_Class_Colors"], L["Tooltip_Force_Class_Colors_Desc"])
@@ -14393,8 +14418,12 @@ local function guiMisc()
     local changeNameplateBorderColor = CreateCheckbox("changeNameplateBorderColor", L["Change_Nameplate_Border_Color"], guiMisc)
     changeNameplateBorderColor:SetPoint("TOPLEFT", nameplatePersonalBorderSize, "BOTTOMLEFT", -10, -2)
 
+    local colorCastbarBorder = CreateCheckbox("colorCastbarBorder", L["Color_Castbar_Border"], changeNameplateBorderColor)
+    colorCastbarBorder:SetPoint("TOPLEFT", changeNameplateBorderColor, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+    CreateTooltipTwo(colorCastbarBorder, L["Color_Castbar_Border"], L["Tooltip_Color_Castbar_Border_Desc"])
+
     local npTargetHighlightBorder = CreateCheckbox("npTargetHighlightBorder", L["Target_Highlight_Border"], changeNameplateBorderColor)
-    npTargetHighlightBorder:SetPoint("TOPLEFT", changeNameplateBorderColor, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+    npTargetHighlightBorder:SetPoint("TOPLEFT", colorCastbarBorder, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(npTargetHighlightBorder, L["Target_Highlight_Border"], L["Tooltip_Target_Highlight_Border_Desc"])
 
     local npTargetHighlightTargetRGB = CreateColorBox(npTargetHighlightBorder, "npTargetHighlightTargetRGB", L["Target"], BBP.RefreshAllNameplates)
@@ -14517,7 +14546,7 @@ local function guiMisc()
 
 
     local personalNpTRP3Color = CreateCheckbox("personalNpTRP3Color", L["TRP3_Personal_Bar_Color"], guiMisc)
-    personalNpTRP3Color:SetPoint("TOPLEFT", customFontSizeEnabled, "BOTTOMLEFT", -160, -59)
+    personalNpTRP3Color:SetPoint("TOPLEFT", customFontSizeEnabled, "BOTTOMLEFT", -160, -40)
     CreateTooltipTwo(personalNpTRP3Color, L["TRP3_Personal_Bar_Color"], L["Tooltip_TRP3_Personal_Bar_Color_Desc"])
 
     local personalBarTweaks = CreateCheckbox("personalBarTweaks", L["Personal_Bar_Tweaks"], guiMisc)
@@ -14893,8 +14922,13 @@ function BBP.CVarTracker()
         nameplateShowFriendlyClassColor = true,
         nameplateMotionSpeed = true,
     }
+    pickupProtected.nameplateUseClassColorForFriendlyPlayerUnitNames = true
     for cvarName in pairs(BBP.nameplateToggleCVarLookup) do
         pickupProtected[cvarName] = true
+    end
+
+    if BetterBlizzPlatesDB.disableCVarForceOnLogin and not BetterBlizzPlatesDB.avoidCVarPickup then
+        BetterBlizzPlatesDB.friendlyClassColorName = C_CVar.GetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames") == "1"
     end
 
     local cvarListener = CreateFrame("Frame")
@@ -14906,6 +14940,12 @@ function BBP.CVarTracker()
 
         if BBP.SaveNameplateToggleCVar(cvarName, cvarValue) then
             -- handled: stored against the active PvP/PvE set
+        elseif cvarName == "nameplateUseClassColorForFriendlyPlayerUnitNames" then
+            BetterBlizzPlatesDB.friendlyClassColorName = cvarValue == "1"
+            if BBP.friendlyClassColorNameCheckbox then
+                BBP.friendlyClassColorNameCheckbox:SetChecked(cvarValue == "1")
+            end
+            BBP.RefreshAllNameplates()
         elseif cvarsToTrack.checkboxes[cvarName] then
             BetterBlizzPlatesDB[cvarName] = cvarValue
             if cvarName == "nameplateShowClassColor" or cvarName == "nameplateShowFriendlyClassColor" then

@@ -2947,6 +2947,7 @@ function BBP.SetupPRDAuras()
             BBP.prdAuraContainer:SetEnabled(false)
             BBP.prdAuraContainer:Hide()
         end
+        BBP.UpdatePRDAuraPreview()
         return
     end
     if not PersonalResourceDisplayFrame then return end
@@ -2998,6 +2999,7 @@ function BBP.RefreshPRDAuras()
     if not S.prdEnabled then
         container:SetEnabled(false)
         container:Hide()
+        BBP.UpdatePRDAuraPreview()
         return BBP.SyncPrdAuraOwner()
     end
 
@@ -3043,9 +3045,11 @@ function BBP.RefreshPRDAuras()
     container:SetScale(S.prdScale)
     container:SetFlowLayoutMaximumLineSize(S.prdPerRow * S.buffWidth + (S.prdPerRow - 1) * S.gapX)
 
+    container.bbpLiveGroups = {}
     for index, groupKey in ipairs(PRD_GROUPS) do
         local group = groups[groupKey]
         local plain = groupKey == "Plain"
+        if group[3] then container.bbpLiveGroups[#container.bbpLiveGroups + 1] = groupKey end
         container:SetAuraGroupFilterString(groupKey, group[1])
         container:SetAuraGroupMaxFrameCount(groupKey, group[3] and S.prdLimit or 0)
         ApplyGroupCandidateFilters(container, groupKey, Filters(group[2],
@@ -3055,7 +3059,8 @@ function BBP.RefreshPRDAuras()
 
     container:SetUnit("player")
     container:SetEnabled(true)
-    container:Show()
+    container:SetShown(not BetterBlizzPlatesDB.nameplateAuraTestMode)
+    BBP.UpdatePRDAuraPreview()
     BBP.SyncPrdAuraOwner()
 end
 
@@ -3540,6 +3545,62 @@ end
 
 BBP.UpdateAuraPreview = UpdatePreviewFor
 
+function BBP.UpdatePRDAuraPreview()
+    local container = BBP.prdAuraContainer
+    local p = BBP.prdAuraPreview
+    local on = BetterBlizzPlatesDB.nameplateAuraTestMode and S.prdEnabled and container
+        and container.bbpLiveGroups and #container.bbpLiveGroups > 0
+    if not on then
+        if p then
+            p.host:Hide()
+            for _, button in ipairs(p.buttons) do
+                button:SetScript("OnUpdate", nil)
+                button.bbpTicking = nil
+            end
+        end
+        return
+    end
+
+    if not p then
+        p = { host = CreateFrame("Frame", nil, PersonalResourceDisplayFrame), buttons = {} }
+        p.host:SetSize(1, 1)
+        BBP.prdAuraPreview = p
+    end
+
+    local anchor = PersonalResourceDisplayFrame.HealthBarsContainer or PersonalResourceDisplayFrame
+    local side = (S.prdAlign == "LEFT" or S.prdAlign == "RIGHT") and S.prdAlign or ""
+    p.host:SetFrameLevel(container:GetFrameLevel() + 1)
+    p.host:ClearAllPoints()
+    p.host:SetPoint("BOTTOM" .. side, anchor, "TOP" .. side, S.prdX, 6 + S.prdY)
+    p.host:SetScale(S.prdScale)
+
+    local tiers = container.bbpLiveGroups
+    local perRow = math.max(S.prdPerRow, 1)
+    local limit = S.prdLimit
+    local w, h = S.buffWidth, S.buffHeight
+    for i = 1, limit do
+        local button = p.buttons[i] or CreateFrame("Frame", nil, p.host)
+        p.buttons[i] = button
+        DrawMockButton(button, container.bbpStyles[tiers[((i - 1) % #tiers) + 1]], i)
+
+        local row = math.floor((i - 1) / perRow)
+        local col = (i - 1) % perRow
+        local y = row * (h + S.gapY)
+        button:ClearAllPoints()
+        if side == "RIGHT" then
+            button:SetPoint("BOTTOMRIGHT", p.host, "BOTTOMRIGHT", -col * (w + S.gapX), y)
+        elseif side == "LEFT" then
+            button:SetPoint("BOTTOMLEFT", p.host, "BOTTOMLEFT", col * (w + S.gapX), y)
+        else
+            local inRow = math.min(perRow, limit - row * perRow)
+            local rowWidth = inRow * w + (inRow - 1) * S.gapX
+            button:SetPoint("BOTTOMLEFT", p.host, "BOTTOM", -rowWidth / 2 + col * (w + S.gapX), y)
+        end
+    end
+    for i = limit + 1, #p.buttons do p.buttons[i]:Hide() end
+    p.host:Show()
+end
+
 function BBP.HideNameplateAuraTooltip()
     BBP.RefreshAllNameplateAuras()
 end
@@ -3557,6 +3618,7 @@ function BBP.DisableNameplateAuras()
     end
 
     BBP.UpdateUserAuraSettings()
+    BBP.UpdatePRDAuraPreview()
     BBP.RestoreBlizzardNameplateAuras()
     BBP.SyncPrdAuraOwner()
 end

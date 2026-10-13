@@ -304,6 +304,9 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     if castBarPixelBorder then
         BBP.SetupBorderOnFrame(castBar)
+        if castBar.bbpBorderColor then
+            BBP.ApplyCastbarBorderColor(castBar)
+        end
         if not BBP.UsesClassicCastbar() then
             frame.castBar.CastTargetIndicator:SetParent(frame.castBar.borders)
             frame.castBar.CastTargetIndicator:SetDrawLayer("OVERLAY", 6)

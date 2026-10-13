@@ -6019,6 +6019,7 @@ local function guiGeneralTab()
     CreateTooltipTwo(friendlyNameplateClickthrough, L["Clickthrough_Nameplate"], L["Tooltip_Clickthrough_Nameplate_Desc_2"],  L["Tooltip_Clickthrough_Nameplate_SubText"])
 
     local friendlyClassColorName = CreateCheckbox("friendlyClassColorName", L["Class_Color_Name"], BetterBlizzPlates)
+    BBP.friendlyClassColorNameCheckbox = friendlyClassColorName
     friendlyClassColorName:SetPoint("TOPLEFT", friendlyNameplateClickthrough, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(friendlyClassColorName, L["Class_Color_Name"], L["Tooltip_Class_Color_Name_2_Desc_2"], nil, nil, "nameplateUseClassColorForFriendlyPlayerUnitNames")
     friendlyClassColorName:HookScript("OnClick", function(self)
@@ -8135,8 +8136,21 @@ local function guiPositionAndScale()
     anchorSubExecute.executeSkull = CreateCheckbox("executeSkull", L["Show_Execute_Skull"], anchorSubExecute.extendedSettings)
     CreateTooltipTwo(anchorSubExecute.executeSkull, L["Show_Execute_Skull"] .. " |T" .. BBP.executeIndicatorIconReplacement .. ":18:18|t", L["Tooltip_Show_Execute_Skull_Desc"])
 
-    anchorSubExecute.skullAttach = CreateCheckbox("executeSkullAttachToHealth", L["Attach_To_Current_Health"], anchorSubExecute.extendedSettings)
+    anchorSubExecute.skullAttach = CreateCheckbox("executeSkullAttachToHealth", L["Attach_To_Current_Health"], anchorSubExecute.extendedSettings, nil, function(_, value)
+        if value then
+            BetterBlizzPlatesDB.executeSkullAttachToThreshold = false
+            anchorSubExecute.skullThreshold:SetChecked(false)
+        end
+    end)
     CreateTooltipTwo(anchorSubExecute.skullAttach, L["Attach_To_Current_Health"], L["Tooltip_Attach_To_Current_Health_Desc"])
+
+    anchorSubExecute.skullThreshold = CreateCheckbox("executeSkullAttachToThreshold", L["Attach_To_Threshold_Spot"], anchorSubExecute.extendedSettings, nil, function(_, value)
+        if value then
+            BetterBlizzPlatesDB.executeSkullAttachToHealth = false
+            anchorSubExecute.skullAttach:SetChecked(false)
+        end
+    end)
+    CreateTooltipTwo(anchorSubExecute.skullThreshold, L["Attach_To_Threshold_Spot"], L["Tooltip_Attach_To_Threshold_Spot_Desc"])
 
     anchorSubExecute.skullKeep = CreateCheckbox("executeSkullKeepIndicator", L["Keep_Execute_Text_Line"], anchorSubExecute.extendedSettings)
     CreateTooltipTwo(anchorSubExecute.skullKeep, L["Keep_Execute_Text_Line"], L["Tooltip_Keep_Execute_Text_Line_Desc"])
@@ -8178,6 +8192,7 @@ local function guiPositionAndScale()
     moreCol.Header(L["Execute_Skull"] .. " |T" .. BBP.executeIndicatorIconReplacement .. ":24:24|t")
     moreCol.Add(anchorSubExecute.executeSkull)
     moreCol.Add(anchorSubExecute.skullAttach)
+    moreCol.Add(anchorSubExecute.skullThreshold)
     moreCol.Add(anchorSubExecute.skullKeep)
     moreCol.Slider(anchorSubExecute.skullScale, 0.85)
     moreCol.Slider(anchorSubExecute.skullXPos, 0.85)
@@ -8186,7 +8201,7 @@ local function guiPositionAndScale()
 
     anchorSubExecute.UpdateSkullState = function()
         local skullOn = BetterBlizzPlatesDB.executeSkull
-        for _, widget in ipairs({ anchorSubExecute.skullAttach, anchorSubExecute.skullKeep, anchorSubExecute.skullScale, anchorSubExecute.skullXPos, anchorSubExecute.skullYPos }) do
+        for _, widget in ipairs({ anchorSubExecute.skullAttach, anchorSubExecute.skullThreshold, anchorSubExecute.skullKeep, anchorSubExecute.skullScale, anchorSubExecute.skullXPos, anchorSubExecute.skullYPos }) do
             if skullOn then widget:Enable() else widget:Disable() end
             widget:SetAlpha(skullOn and 1 or 0.5)
         end
@@ -9394,9 +9409,15 @@ local function guiPositionAndScale()
         ft.Add(anchorThreatColor, ft.CheckboxToggle("enemyColorThreat"))
         ft.Add(anchorSubTotem, ft.CheckboxToggle("totemIndicator"))
 
-        BetterBlizzPlatesSubPanel:HookScript("OnShow", function()
+        function ft.Refresh()
             for _, toggle in ipairs(ft.toggles) do
                 toggle:Refresh()
+            end
+        end
+        BetterBlizzPlatesSubPanel:HookScript("OnShow", ft.Refresh)
+        hooksecurefunc(SettingsPanel, "DisplayLayout", function()
+            if BetterBlizzPlatesSubPanel:IsVisible() then
+                ft.Refresh()
             end
         end)
     end
@@ -13114,8 +13135,12 @@ local function guiMisc()
         end
     end)
 
+    local colorCastbarBorder = CreateCheckbox("colorCastbarBorder", L["Color_Castbar_Border"], changeNameplateBorderColor)
+    colorCastbarBorder:SetPoint("TOPLEFT", changeNameplateBorderColor, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+    CreateTooltipTwo(colorCastbarBorder, L["Color_Castbar_Border"], L["Tooltip_Color_Castbar_Border_Desc"])
+
     local npBorderTargetColor = CreateCheckbox("npBorderTargetColor", L["Target_Border"], changeNameplateBorderColor)
-    npBorderTargetColor:SetPoint("TOPLEFT", changeNameplateBorderColor, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+    npBorderTargetColor:SetPoint("TOPLEFT", colorCastbarBorder, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltip(npBorderTargetColor, L["Tooltip_Enable_To_Change_The_Color_Of"])
 
     local npBorderTargetColorRGB = CreateColorBox(npBorderTargetColor, "npBorderTargetColorRGB", L["Target_Border"])
@@ -13506,8 +13531,13 @@ function BBP.CVarTracker()
         nameplateStackingTypes = true,
         nameplateAuraScale = true,
     }
+    pickupProtected.nameplateUseClassColorForFriendlyPlayerUnitNames = true
     for cvarName in pairs(BBP.nameplateToggleCVarLookup) do
         pickupProtected[cvarName] = true
+    end
+
+    if BetterBlizzPlatesDB.disableCVarForceOnLogin and not BetterBlizzPlatesDB.avoidCVarPickup then
+        BetterBlizzPlatesDB.friendlyClassColorName = C_CVar.GetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames") == "1"
     end
 
     local cvarListener = CreateFrame("Frame")
@@ -13519,6 +13549,12 @@ function BBP.CVarTracker()
 
         if BBP.SaveNameplateToggleCVar(cvarName, cvarValue) then
             -- handled: stored against the active PvP/PvE set
+        elseif cvarName == "nameplateUseClassColorForFriendlyPlayerUnitNames" then
+            BetterBlizzPlatesDB.friendlyClassColorName = cvarValue == "1"
+            if BBP.friendlyClassColorNameCheckbox then
+                BBP.friendlyClassColorNameCheckbox:SetChecked(cvarValue == "1")
+            end
+            BBP.RefreshAllNameplates()
         elseif cvarsToTrack.checkboxes[cvarName] then
             BetterBlizzPlatesDB[cvarName] = cvarValue
         elseif cvarsToTrack.sliders[cvarName] then

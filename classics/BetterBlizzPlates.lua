@@ -134,6 +134,7 @@ local defaultSettings = {
     nameplateTargetBorderSize = 3,
     separateAuraBuffRow = true,
     npBorderDesaturate = true,
+    colorCastbarBorder = true,
     nameplateGeneralHeight = 65,
     tankFullAggroColorRGB = {0, 1, 0, 1},
     tankOffTankAggroColorRGB = {0, 0.95, 1, 1},
@@ -291,6 +292,7 @@ local defaultSettings = {
     executeSkullXPos = 0,
     executeSkullYPos = 0,
     executeSkullAttachToHealth = true,
+    executeSkullAttachToThreshold = false,
     executeSkullKeepIndicator = false,
     -- Healer Indicator
     healerIndicator = false,
@@ -2742,6 +2744,12 @@ end
 --#################################################################################################
 -- Set CVars that keep changing
 local function SetCVarsOnLogin()
+    if not BetterBlizzPlatesDB.fixedFriendlyClassColorName then
+        if C_CVar.GetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames") == "1" and not BetterBlizzPlatesDB.friendlyColorName then
+            BetterBlizzPlatesDB.friendlyClassColorName = true
+        end
+        BetterBlizzPlatesDB.fixedFriendlyClassColorName = true
+    end
     if BetterBlizzPlatesDB.hasSaved and not BetterBlizzPlatesDB.disableCVarForceOnLogin then
         C_CVar.SetCVar("nameplateMaxDistance", 41)
         C_CVar.SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
@@ -2794,9 +2802,7 @@ local function SetCVarsOnLogin()
 
         end
 
-        if BetterBlizzPlatesDB.friendlyClassColorName then
-            C_CVar.SetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames", "1")
-        end
+        C_CVar.SetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames", BetterBlizzPlatesDB.friendlyClassColorName and "1" or "0")
 
         if BetterBlizzPlatesDB.bitfields then
             for cvarName, indices in pairs(BetterBlizzPlatesDB.bitfields) do
@@ -3960,6 +3966,7 @@ function BBP.ColorThreat(frame)
         frame.healthBar:SetStatusBarColor(0.9, 0.9, 0.9)
         return
     end
+    if frame.isQuestNpc then return end
 
     local hideSolo = BetterBlizzPlatesDB.enemyColorThreatHideSolo and not IsInGroup()
     if hideSolo then return end
@@ -4075,7 +4082,9 @@ function BBP.ColorNpcHealthbar(frame)
     -- Set the vertex color based on the NPC color values
     if inList and npcHealthbarColor then
         config.npcHealthbarColor = npcHealthbarColor
-        frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
+        if not frame.isQuestNpc then
+            frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
+        end
         local colorNPCName = BetterBlizzPlatesDB.colorNPCName
         if colorNPCName then
             frame.name:SetVertexColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
@@ -4158,7 +4167,9 @@ function BBP.AuraColor(frame)
     -- Set the vertex color based on the highest priority aura color
     if auraColor then
         config.auraColorRGB = auraColor
-        frame.healthBar:SetStatusBarColor(config.auraColorRGB.r, config.auraColorRGB.g, config.auraColorRGB.b)
+        if not frame.isQuestNpc then
+            frame.healthBar:SetStatusBarColor(config.auraColorRGB.r, config.auraColorRGB.g, config.auraColorRGB.b)
+        end
     else
         if config.auraColorRGB then
             config.auraColorRGB = nil
@@ -4273,8 +4284,6 @@ local function CreateBetterClassicHealthbarBorder(frame)
             self.left:SetVertexColor(r, g, b, a)
             self.center:SetVertexColor(r, g, b, a)
             self.right:SetVertexColor(r, g, b, a)
-            frame.castBar.bbpCastBorder:SetCastBorderColor(r, g, b, a)
-            frame.castBar.bbpCastUninterruptibleBorder:SetCastBorderColor(r, g, b, a)
         end
 
         function frame.healthBar:SetBorderSize(size)
@@ -4358,12 +4367,10 @@ local function CreateBetterClassicCastbarBorders(frame)
         right:SetPoint("BOTTOMLEFT", center, "BOTTOMRIGHT", 0, 0)
         border.right = right
 
-        function border:SetCastBorderColor(r, g, b, a)
-            if BetterBlizzPlatesDB.npBorderDesaturate then
-                self.left:SetDesaturated(true)
-                self.center:SetDesaturated(true)
-                self.right:SetDesaturated(true)
-            end
+        function border:SetCastBorderColor(r, g, b, a, desaturate)
+            self.left:SetDesaturated(desaturate)
+            self.center:SetDesaturated(desaturate)
+            self.right:SetDesaturated(desaturate)
             self.left:SetVertexColor(r, g, b, a)
             self.center:SetVertexColor(r, g, b, a)
             self.right:SetVertexColor(r, g, b, a)
@@ -4501,6 +4508,10 @@ local function CreateBetterClassicCastbarBorders(frame)
         frame.castBar.BorderShield:HookScript("OnShow", UpdateBorders)
         frame.castBar.BorderShield:HookScript("OnHide", UpdateBorders)
         frame.castBar.eventsHooked = true
+    end
+
+    if frame.castBar.bbpBorderColor then
+        BBP.ApplyCastbarBorderColor(frame.castBar)
     end
 
     -- Set the initial visibility
@@ -5200,10 +5211,6 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         ColorNameplateByReaction(frame)
     end
 
-    if frame.isQuestNpc then
-        frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
-    end
-
     if config.colorNPC then--and config.npcHealthbarColor then --bodify need npc check here since it can run before np added
         --frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
         BBP.ColorNpcHealthbar(frame)
@@ -5225,6 +5232,10 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
 
     if (config.targetIndicator and config.targetIndicatorColorNameplate and info.isTarget) or config.targetIndicatorTestMode then
         frame.healthBar:SetStatusBarColor(unpack(config.targetIndicatorColorNameplateRGB))
+    end
+
+    if frame.isQuestNpc and not UnitIsTapDenied(frame.unit) then
+        frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
     end
 
     if config.castBarEmphasisHealthbarColor then
@@ -5342,10 +5353,6 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         ColorNameplateByReaction(frame)
     end
 
-    if frame.isQuestNpc then
-        frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
-    end
-
     if config.colorNPC and config.npcHealthbarColor and not UnitIsTapDenied(frame.unit) then
         frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
     end
@@ -5365,6 +5372,10 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 
     if (config.targetIndicator and config.targetIndicatorColorNameplate and info.isTarget) or config.targetIndicatorTestMode then
         frame.healthBar:SetStatusBarColor(unpack(config.targetIndicatorColorNameplateRGB))
+    end
+
+    if frame.isQuestNpc and not UnitIsTapDenied(frame.unit) then
+        frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
     end
 
     if config.castBarEmphasisHealthbarColor then
@@ -5513,6 +5524,41 @@ local function ChangeHealthbarBorderSize(frame)
 end
 
 
+function BBP.ColorCastbarBorder(frame, r, g, b, a)
+    local castBar = frame.castBar
+    if not castBar or castBar:IsForbidden() then return end
+    if r then
+        local c = castBar.bbpBorderColor or {}
+        c[1], c[2], c[3], c[4] = r, g, b, a or 1
+        castBar.bbpBorderColor = c
+    elseif castBar.bbpBorderColor then
+        castBar.bbpBorderColor = nil
+    else
+        return
+    end
+    BBP.ApplyCastbarBorderColor(castBar)
+end
+
+function BBP.ApplyCastbarBorderColor(castBar)
+    local c = castBar.bbpBorderColor
+    if castBar.bbpCastBorder then
+        local desaturate = c and BetterBlizzPlatesDB.npBorderDesaturate
+        local r, g, b, a = 1, 1, 1, 1
+        if c then
+            r, g, b, a = c[1], c[2], c[3], c[4]
+        end
+        castBar.bbpCastBorder:SetCastBorderColor(r, g, b, a, desaturate)
+        castBar.bbpCastUninterruptibleBorder:SetCastBorderColor(r, g, b, a, desaturate)
+    end
+    if castBar.borders and castBar.SetBorderColor then
+        if c then
+            castBar:SetBorderColor(c[1], c[2], c[3], c[4])
+        else
+            castBar:SetBorderColor(0, 0, 0, 1)
+        end
+    end
+end
+
 function BBP.ColorNameplateBorder(frame)
     local border = BetterBlizzPlatesDB.classicNameplates and frame.BetterBlizzPlates.bbpBorder or frame.healthBar
     border:SetBorderColor(1,1,1)
@@ -5520,7 +5566,15 @@ function BBP.ColorNameplateBorder(frame)
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
     if not info then return end
 
-    if info.isSelf then return end
+    if info.isSelf then
+        BBP.ColorCastbarBorder(frame)
+        return
+    end
+
+    local castR, castG, castB, castA
+    local function SetCastColor(r, g, b, a)
+        castR, castG, castB, castA = r, g, b, a
+    end
 
     if not config.nameplateBorderInitialized or BBP.needsUpdate then
         config.npBorderTargetColor = BetterBlizzPlatesDB.npBorderTargetColor
@@ -5538,15 +5592,19 @@ function BBP.ColorNameplateBorder(frame)
     end
 
     if info.isTarget and config.npBorderTargetColor then
+        SetCastColor(unpack(config.npBorderTargetColorRGB))
         border:SetBorderColor(unpack(config.npBorderTargetColorRGB))
     else
         --non target
         if config.npBorderFriendFoeColor then
             if info.isEnemy then
+                SetCastColor(unpack(config.npBorderEnemyColorRGB))
                 border:SetBorderColor(unpack(config.npBorderEnemyColorRGB))
             elseif info.isNeutral then
+                SetCastColor(unpack(config.npBorderNeutralColorRGB))
                 border:SetBorderColor(unpack(config.npBorderNeutralColorRGB))
             elseif info.isFriend then
+                SetCastColor(unpack(config.npBorderFriendlyColorRGB))
                 border:SetBorderColor(unpack(config.npBorderFriendlyColorRGB))
             end
         end
@@ -5554,15 +5612,24 @@ function BBP.ColorNameplateBorder(frame)
         if config.npBorderClassColor then
             if info.isPlayer then
                 local classColor = GetClassColor(info.class)
+                SetCastColor(classColor.r, classColor.g, classColor.b)
                 border:SetBorderColor(classColor.r, classColor.g, classColor.b)
             else
+                SetCastColor(unpack(config.npBorderNpcColorRGB))
                 border:SetBorderColor(unpack(config.npBorderNpcColorRGB))
             end
         end
 
         if not config.npBorderFriendFoeColor and not config.npBorderClassColor and config.npBorderTargetColor then
+            SetCastColor(unpack(config.npBorderNonTargetColorRGB))
             border:SetBorderColor(unpack(config.npBorderNonTargetColorRGB))
         end
+    end
+
+    if BetterBlizzPlatesDB.colorCastbarBorder then
+        BBP.ColorCastbarBorder(frame, castR or 1, castG or 1, castB or 1, castA)
+    else
+        BBP.ColorCastbarBorder(frame)
     end
 end
 

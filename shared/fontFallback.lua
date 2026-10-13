@@ -112,3 +112,11 @@ function BBP.SetTextFont(fontString, file, size, flags)
         fontString:SetFontHeight(size)
     end
 end
+
+function BBP.SetHealthTextFont(frame, file, size, flags)
+    local healthBar = frame.HealthBarsContainer.healthBar
+    for _, text in ipairs({ healthBar.Text, healthBar.LeftText, healthBar.RightText }) do
+        BBP.SetTextFont(text, file, size, flags)
+        text:SetFontHeight(size)
+    end
+end

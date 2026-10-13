@@ -390,6 +390,85 @@ function BBP.UpdateClassIndicatorCC(frame)
 end
 
 -- Class Indicator
+local secretBackdrop = "Interface\\Buttons\\WHITE8X8"
+local secretHealerMap = { HEALER = "UI-LFG-RoleIcon-Healer", TANK = "", DAMAGER = "" }
+local secretHealerFileMap = { HEALER = 648207, TANK = "", DAMAGER = "" }
+local secretTankMap = { HEALER = "", TANK = "UI-LFG-RoleIcon-Tank", DAMAGER = "" }
+local secretBackdropMaps = {
+    both = { HEALER = secretBackdrop, TANK = secretBackdrop, DAMAGER = "" },
+    healer = { HEALER = secretBackdrop, TANK = "", DAMAGER = "" },
+    tank = { HEALER = "", TANK = secretBackdrop, DAMAGER = "" },
+}
+
+local function CreateSecretIcon(classIndicator, subLevel)
+    local texture = classIndicator:CreateTexture(nil, "BORDER", nil, subLevel)
+    texture:SetAllPoints(classIndicator.icon)
+    texture:AddMaskTexture(classIndicator.mask)
+    texture:Hide()
+    return texture
+end
+
+local function UpdateSecretIcons(frame, config, info, arenaIndex)
+    local classIndicator = frame.classIndicator
+    if not arenaIndex then
+        if classIndicator.secretSpecIcon then
+            classIndicator.secretSpecIcon:Hide()
+            classIndicator.secretBackdrop:Hide()
+            classIndicator.secretHealerIcon:Hide()
+            classIndicator.secretTankIcon:Hide()
+        end
+        return
+    end
+
+    if not classIndicator.secretSpecIcon then
+        classIndicator.secretSpecIcon = CreateSecretIcon(classIndicator, 1)
+        classIndicator.secretBackdrop = CreateSecretIcon(classIndicator, 2)
+        classIndicator.secretHealerIcon = CreateSecretIcon(classIndicator, 3)
+        classIndicator.secretTankIcon = CreateSecretIcon(classIndicator, 3)
+    end
+
+    if config.classIndicatorSpecIcon and BBP.ArenaOpponentHasSpec(arenaIndex) then
+        BBP.SetSecretArenaSpecIcon(classIndicator.secretSpecIcon, arenaIndex)
+        classIndicator.secretSpecIcon:Show()
+    else
+        classIndicator.secretSpecIcon:Hide()
+    end
+
+    local healerType = not info.isFriend and BetterBlizzPlatesDB.classIconHealerIconType
+    local showHealer = config.classIndicatorHealer and healerType ~= 4
+    local showTank = config.classIndicatorTank
+
+    local backdropMap = (showHealer and showTank and secretBackdropMaps.both) or (showHealer and secretBackdropMaps.healer) or (showTank and secretBackdropMaps.tank)
+    if backdropMap then
+        classIndicator.secretBackdrop:SetVertexColor(0.1, 0.1, 0.1)
+        BBP.SetSecretArenaRoleTexture(classIndicator.secretBackdrop, arenaIndex, backdropMap)
+        classIndicator.secretBackdrop:Show()
+    else
+        classIndicator.secretBackdrop:Hide()
+    end
+
+    if showHealer then
+        BBP.SetSecretArenaRoleTexture(classIndicator.secretHealerIcon, arenaIndex, healerType == 3 and secretHealerFileMap or secretHealerMap)
+        if healerType == 2 then
+            classIndicator.secretHealerIcon:SetDesaturated(true)
+            classIndicator.secretHealerIcon:SetVertexColor(1, 0, 0)
+        else
+            classIndicator.secretHealerIcon:SetDesaturated(false)
+            classIndicator.secretHealerIcon:SetVertexColor(1, 1, 1)
+        end
+        classIndicator.secretHealerIcon:Show()
+    else
+        classIndicator.secretHealerIcon:Hide()
+    end
+
+    if showTank then
+        BBP.SetSecretArenaRoleTexture(classIndicator.secretTankIcon, arenaIndex, secretTankMap)
+        classIndicator.secretTankIcon:Show()
+    else
+        classIndicator.secretTankIcon:Hide()
+    end
+end
+
 function BBP.ClassIndicator(frame, foundID)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
@@ -551,9 +630,14 @@ function BBP.ClassIndicator(frame, foundID)
     frame.classIndicator.flagActive = flagIcon and true or nil
 
     local specIcon
-    local specID = BBP.GetSpecID(frame)
+    local specID, secretIndex = BBP.GetSpecID(frame)
     if config.classIndicatorSpecIcon or config.classIndicatorHealer then
-        if specID then
+        if secretIndex then
+            if frame.needsSpecIconUpdate then
+                frame.needsSpecIconUpdate = nil
+                BBP.pendingSpecIconCount = (BBP.pendingSpecIconCount or 0) - 1
+            end
+        elseif specID then
             specIcon = select(4, GetSpecializationInfoByID(specID))
             if frame.needsSpecIconUpdate then
                 frame.needsSpecIconUpdate = nil
@@ -578,7 +662,7 @@ function BBP.ClassIndicator(frame, foundID)
     local shouldHide = not enabledOnThisUnit and not flagIcon and not alwaysShowHealer and not alwaysShowTank and not isPet
 
     if shouldHide
-        or (config.classIndicatorOnlyHealer and not isHealer and not flagIcon and not alwaysShowHealer and not alwaysShowTank)
+        or (config.classIndicatorOnlyHealer and not isHealer and not secretIndex and not flagIcon and not alwaysShowHealer and not alwaysShowTank)
         or partyOnly
         or (config.classIndicatorOnlyFriends and not (BBP.isFriendlistFriend(frame.unit) or BBP.isUnitBNetFriend(frame.unit) or BBP.isUnitGuildmate(frame.unit)))
     then
@@ -855,6 +939,7 @@ function BBP.ClassIndicator(frame, foundID)
             frame.classIndicator.icon:SetTexCoord(-0.06, 1.05, -0.06, 1.05)
         end
     end
+    UpdateSecretIcons(frame, config, info, not flagIcon and not isPet and secretIndex)
 
     if info.isFriend then
         if config.classIndicatorHideFriendlyHealthbar then

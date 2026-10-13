@@ -226,6 +226,7 @@ local defaultSettings = {
     npBorderNpcColorRGB = {0, 0, 0, 1},
     npBorderNonTargetColorRGB = {0, 0, 0, 1},
     npBorderFocusColorRGB = {0, 0, 0, 1},
+    colorCastbarBorder = true,
     npTargetHighlightBorder = false,
     npTargetHighlightTargetRGB = {1, 1, 1, 1},
     npTargetHighlightFocusRGB = {1, 0.49, 0.039, 1},
@@ -274,6 +275,7 @@ local defaultSettings = {
     -- Combat Indicator
     combatIndicator = false,
     combatIndicatorSap = false,
+    fixNpTextures = false,
     combatIndicatorEnemyOnly = false,
     combatIndicatorPlayersOnly = true,
     combatIndicatorArenaOnly = false,
@@ -301,6 +303,7 @@ local defaultSettings = {
     executeSkullXPos = 0,
     executeSkullYPos = 0,
     executeSkullAttachToHealth = true,
+    executeSkullAttachToThreshold = false,
     executeSkullKeepIndicator = false,
 
     factionIndicatorEnemy = true,
@@ -2544,6 +2547,12 @@ local function textureExtraBars(frame, setting)
 end
 BBP.textureExtraBars = textureExtraBars
 
+function BBP.FixNpTextures(frame)
+    if BetterBlizzPlatesDB.fixNpTextures then
+        frame.healthBar:GetStatusBarTexture():ClearTextureSlice()
+    end
+end
+
 function BBP.ApplyCustomTextureToNameplate(frame)
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
@@ -2576,6 +2585,7 @@ function BBP.ApplyCustomTextureToNameplate(frame)
     if not config.useCustomTextureForBars then
         frame.healthBar:SetStatusBarTexture(defaultTex)
         textureExtraBars(frame, config.customTextureFriendly)
+        BBP.FixNpTextures(frame)
         return
     end
 
@@ -2638,6 +2648,7 @@ function BBP.ApplyCustomTextureToNameplate(frame)
         textureExtraBars(frame, "Interface/TargetingFrame/UI-TargetingFrame-BarFill")
     end
 
+    BBP.FixNpTextures(frame)
 end
 
 --#################################################
@@ -2848,6 +2859,12 @@ end
 --#################################################################################################
 -- Set CVars that keep changing
 local function SetCVarsOnLogin()
+    if not BetterBlizzPlatesDB.fixedFriendlyClassColorName then
+        if C_CVar.GetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames") == "1" and not BetterBlizzPlatesDB.friendlyColorName then
+            BetterBlizzPlatesDB.friendlyClassColorName = true
+        end
+        BetterBlizzPlatesDB.fixedFriendlyClassColorName = true
+    end
     if BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return end
     if C_AddOns.IsAddOnLoaded("Plater") and C_AddOns.IsAddOnLoaded("SkillCapped") then return end
     if BetterBlizzPlatesDB.hasSaved and not BetterBlizzPlatesDB.disableCVarForceOnLogin then
@@ -2899,9 +2916,7 @@ local function SetCVarsOnLogin()
             end
         end
 
-        if BetterBlizzPlatesDB.friendlyClassColorName then
-            C_CVar.SetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames", "1")
-        end
+        C_CVar.SetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames", BetterBlizzPlatesDB.friendlyClassColorName and "1" or "0")
 
         if BetterBlizzPlatesDB.forceShowTotemNames then
             C_CVar.SetCVar("UnitNameEnemyTotemName", "1")
@@ -4117,12 +4132,12 @@ function BBP.HideNameplate(frame)
 end
 
 local function ShowLastNameOnlyNpc(frame)
-    if BBP.isMidnight then return end
     local info = frame.BetterBlizzPlates.unitInfo or GetNameplateUnitInfo(frame)
     if info.isNpc then
+        local name = info.name
+        if issecretvalue(name) or not name then return end
         local unit = frame.unit
         local isTotem = unit and BBP.IsTotemUnit(unit)
-        local name = info.name
         if isTotem then
             -- Use first word (e.g., "Stoneclaw" from "Stoneclaw Totem")
             local firstWord = name:match("^[^%s%-]+")
@@ -4182,6 +4197,7 @@ function BBP.ColorThreat(frame)
         frame.healthBar:SetStatusBarColor(0.9, 0.9, 0.9)
         return
     end
+    if frame.isQuestNpc then return end
 
     local hideSolo = BetterBlizzPlatesDB.enemyColorThreatHideSolo and not IsInGroup()
     if hideSolo then return end
@@ -4332,7 +4348,7 @@ function BBP.ColorNpcHealthbar(frame)
 
     if neutralOutOfCombat and config.colorNPCNeutralHpCombatOnly then
         config.npcHealthbarColor = nil
-    else
+    elseif not frame.isQuestNpc then
         frame.healthBar:SetStatusBarColor(r, g, b, a)
     end
 
@@ -4538,10 +4554,6 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         ColorNameplateByReaction(frame)
     end
 
-    if frame.isQuestNpc then
-        frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
-    end
-
     if config.colorNPC then--and config.npcHealthbarColor then --bodify need npc check here since it can run before np added
         --frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
         BBP.ColorNpcHealthbar(frame)
@@ -4563,6 +4575,10 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
 
     if (config.targetIndicator and config.targetIndicatorColorNameplate and info.isTarget) or config.targetIndicatorTestMode then
         frame.healthBar:SetStatusBarColor(unpack(config.targetIndicatorColorNameplateRGB))
+    end
+
+    if frame.isQuestNpc and not UnitIsTapDenied(frame.unit) then
+        frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
     end
 
     if config.executeIndicatorInRangeColor and frame.executeIndicatorInRange then
@@ -4701,10 +4717,6 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         frame.healthBar:SetStatusBarColor(unpack(config.npcHealthbarColor))
     end
 
-    if frame.isQuestNpc then
-        frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
-    end
-
     if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
         BBP.ColorThreat(frame)
     end
@@ -4720,6 +4732,10 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 
     if (config.targetIndicator and config.targetIndicatorColorNameplate and info.isTarget) or config.targetIndicatorTestMode then
         frame.healthBar:SetStatusBarColor(unpack(config.targetIndicatorColorNameplateRGB))
+    end
+
+    if frame.isQuestNpc and not UnitIsTapDenied(frame.unit) then
+        frame.healthBar:SetStatusBarColor(unpack(frame.isQuestNpc))
     end
 
     if config.castBarEmphasisHealthbarColor then
@@ -5265,7 +5281,47 @@ local function ColorNameplateBorder(self, frame)
             self:SetVertexColor(unpack(config.npBorderNonTargetColorRGB))
         end
     end
+    if BetterBlizzPlatesDB.colorCastbarBorder then
+        BBP.ColorCastbarBorder(frame, self.Bottom:GetVertexColor())
+    else
+        BBP.ColorCastbarBorder(frame)
+    end
     self.changing = false
+end
+
+function BBP.ColorCastbarBorder(frame, r, g, b, a)
+    local castBar = frame.castBar
+    if not castBar or castBar:IsForbidden() then return end
+    if r then
+        local c = castBar.bbpBorderColor or {}
+        c[1], c[2], c[3], c[4] = r, g, b, a or 1
+        castBar.bbpBorderColor = c
+    elseif castBar.bbpBorderColor then
+        castBar.bbpBorderColor = nil
+    else
+        return
+    end
+    BBP.ApplyCastbarBorderColor(castBar)
+end
+
+function BBP.ApplyCastbarBorderColor(castBar)
+    local c = castBar.bbpBorderColor
+    if castBar.bbpCastBorder then
+        if c then
+            castBar.bbpCastBorder:SetCastBorderColor(c[1], c[2], c[3], c[4], true)
+            castBar.bbpCastUninterruptibleBorder:SetCastBorderColor(c[1], c[2], c[3], c[4], true)
+        else
+            castBar.bbpCastBorder:SetCastBorderColor(1, 1, 1, 1, false)
+            castBar.bbpCastUninterruptibleBorder:SetCastBorderColor(1, 1, 1, 1, BetterBlizzPlatesDB.hideCastbarBorderShield)
+        end
+    end
+    if castBar.borders and castBar.SetBorderColor then
+        if c then
+            castBar:SetBorderColor(c[1], c[2], c[3], c[4])
+        else
+            castBar:SetBorderColor(0, 0, 0, 1)
+        end
+    end
 end
 
 function BBP.ColorNameplateBorder(frame) --classic border
@@ -5287,6 +5343,10 @@ function BBP.ColorNameplateBorder(frame) --classic border
     if (info.isSelf and not config.personalBarTweaks) then return end
 
     local nonMidnightBorder = db.classicRetailNameplates or config.classicNameplates
+    local castR, castG, castB, castA
+    local function SetCastColor(r, g, b, a)
+        castR, castG, castB, castA = r, g, b, a
+    end
     if not config.classicNameplates then border = nil end
     if not config.nameplateBorderInitialized or BBP.needsUpdate then
         config.npBorderTargetColor = BetterBlizzPlatesDB.npBorderTargetColor
@@ -5305,6 +5365,7 @@ function BBP.ColorNameplateBorder(frame) --classic border
     end
 
     if info.isTarget and config.npBorderTargetColor then
+        SetCastColor(unpack(config.npBorderTargetColorRGB))
         if border then
             border:SetDesaturated(true)
             border:SetBorderColor(unpack(config.npBorderTargetColorRGB))
@@ -5315,6 +5376,7 @@ function BBP.ColorNameplateBorder(frame) --classic border
             frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderTargetColorRGB))
         end
     elseif info.isFocus and config.npBorderTargetColor then
+        SetCastColor(unpack(config.npBorderFocusColorRGB))
         if border then
             border:SetDesaturated(true)
             border:SetBorderColor(unpack(config.npBorderFocusColorRGB))
@@ -5328,6 +5390,7 @@ function BBP.ColorNameplateBorder(frame) --classic border
         --non target
         if config.npBorderFriendFoeColor then
             if info.isEnemy then
+                SetCastColor(unpack(config.npBorderEnemyColorRGB))
                 if border then
                     border:SetDesaturated(true)
                     border:SetBorderColor(unpack(config.npBorderEnemyColorRGB))
@@ -5338,6 +5401,7 @@ function BBP.ColorNameplateBorder(frame) --classic border
                     frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderEnemyColorRGB))
                 end
             elseif info.isNeutral then
+                SetCastColor(unpack(config.npBorderNeutralColorRGB))
                 if border then
                     border:SetDesaturated(true)
                     border:SetBorderColor(unpack(config.npBorderNeutralColorRGB))
@@ -5348,6 +5412,7 @@ function BBP.ColorNameplateBorder(frame) --classic border
                     frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderNeutralColorRGB))
                 end
             elseif info.isFriend then
+                SetCastColor(unpack(config.npBorderFriendlyColorRGB))
                 if border then
                     border:SetDesaturated(true)
                     border:SetBorderColor(unpack(config.npBorderFriendlyColorRGB))
@@ -5364,6 +5429,7 @@ function BBP.ColorNameplateBorder(frame) --classic border
             if info.isPlayer then
                 local classColor = C_ClassColor.GetClassColor(info.class)
                 if classColor then
+                    SetCastColor(classColor.r, classColor.g, classColor.b, 1)
                     if border then
                         border:SetDesaturated(true)
                         border:SetBorderColor(classColor.r, classColor.g, classColor.b, 1)
@@ -5375,6 +5441,7 @@ function BBP.ColorNameplateBorder(frame) --classic border
                     end
                 end
             elseif not config.npBorderFriendFoeColor then
+                SetCastColor(unpack(config.npBorderNpcColorRGB))
                 if border then
                     border:SetDesaturated(true)
                     border:SetBorderColor(unpack(config.npBorderNpcColorRGB))
@@ -5388,6 +5455,7 @@ function BBP.ColorNameplateBorder(frame) --classic border
         end
 
         if not config.npBorderFriendFoeColor and not config.npBorderClassColor and config.npBorderTargetColor then
+            SetCastColor(unpack(config.npBorderNonTargetColorRGB))
             if border then
                 border:SetDesaturated(true)
                 border:SetBorderColor(unpack(config.npBorderNonTargetColorRGB))
@@ -5398,6 +5466,12 @@ function BBP.ColorNameplateBorder(frame) --classic border
                 frame.HealthBarsContainer:SetBorderColor(unpack(config.npBorderNonTargetColorRGB))
             end
         end
+    end
+
+    if db.colorCastbarBorder then
+        BBP.ColorCastbarBorder(frame, castR, castG, castB, castA)
+    else
+        BBP.ColorCastbarBorder(frame)
     end
 end
 
@@ -5822,6 +5896,9 @@ local function HandleNamePlateRemoved(unit)
     if frame.healerIndicator then
         frame.healerIndicator:Hide()
     end
+    if frame.healerIndicatorSecret then
+        frame.healerIndicatorSecret:Hide()
+    end
     if frame.factionIndicator then
         frame.factionIndicator:Hide()
     end
@@ -6128,7 +6205,18 @@ function BBP.LayoutClassicCastbar(frame)
     PlaceEnds(castBar.bbpCastBorder, "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderLeft", "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderRight", -4, 4.5, borderTop, borderBottom)
 
     local shield = castBar.bbpCastUninterruptibleBorder
-    PlaceEnds(shield, "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleLeft", "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleRight", -5 - shieldGrow, 7 - shieldGrow, shieldTop, shieldBottom)
+    local hideShield = BetterBlizzPlatesDB.hideCastbarBorderShield
+    if hideShield then
+        PlaceEnds(shield, "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderLeft", "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderRight", -4, 4.5, borderTop, borderBottom)
+        shield.center:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npCastBorderCenter")
+    else
+        PlaceEnds(shield, "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleLeft", "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleRight", -5 - shieldGrow, 7 - shieldGrow, shieldTop, shieldBottom)
+        shield.center:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleCenter")
+    end
+    local desaturateShield = hideShield or castBar.bbpBorderColor ~= nil
+    shield.left:SetDesaturated(desaturateShield)
+    shield.center:SetDesaturated(desaturateShield)
+    shield.right:SetDesaturated(desaturateShield)
 
     castBar.Border:SetAlpha(0)
     castBar.BorderShield:SetAlpha(0)
@@ -6251,12 +6339,10 @@ local function CreateBetterClassicCastbarBorders(frame)
         center:SetPoint("BOTTOMRIGHT", right, "BOTTOMLEFT", 0, 0)
         border.center = center
 
-        function border:SetCastBorderColor(r, g, b, a)
-            if BetterBlizzPlatesDB.npBorderDesaturate then
-                self.left:SetDesaturated(true)
-                self.center:SetDesaturated(true)
-                self.right:SetDesaturated(true)
-            end
+        function border:SetCastBorderColor(r, g, b, a, desaturate)
+            self.left:SetDesaturated(desaturate)
+            self.center:SetDesaturated(desaturate)
+            self.right:SetDesaturated(desaturate)
             self.left:SetVertexColor(r, g, b, a)
             self.center:SetVertexColor(r, g, b, a)
             self.right:SetVertexColor(r, g, b, a)
@@ -6289,11 +6375,6 @@ local function CreateBetterClassicCastbarBorders(frame)
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleCenter",
             "Interface\\AddOns\\BetterBlizzPlates\\media\\npCastUninterruptibleRight"
         )
-        if BetterBlizzPlatesDB.hideCastbarBorderShield then
-            frame.castBar.bbpCastUninterruptibleBorder.left:SetAlpha(0)
-            frame.castBar.bbpCastUninterruptibleBorder.right:SetAlpha(0)
-            frame.castBar.bbpCastUninterruptibleBorder.center:SetAlpha(0)
-        end
     end
 
     local function UpdateBorders()
@@ -6343,6 +6424,9 @@ local function CreateBetterClassicCastbarBorders(frame)
     BBP.ApplyClassicCastbarFill(frame.castBar)
 
     BBP.LayoutClassicCastbar(frame)
+    if frame.castBar.bbpBorderColor then
+        BBP.ApplyCastbarBorderColor(frame.castBar)
+    end
     UpdateBorders()
 end
 BBP.CreateBetterClassicCastbarBorders = CreateBetterClassicCastbarBorders
@@ -6708,6 +6792,9 @@ local function GetSpecID(frame)
                 local arenaUnit = "arena"..i
                 if BBP.UnitIsProbablyUnit(frame.unit, arenaUnit) then
                     local specID = GetArenaOpponentSpec(i)
+                    if issecretvalue(specID) then
+                        return nil, i
+                    end
                     if specID then
                         return specID
                     end
@@ -6762,6 +6849,9 @@ local function IsSpecHealer(frame)
                 local arenaUnit = "arena"..i
                 if BBP.UnitIsProbablyUnit(frame.unit, arenaUnit) then
                     local specID = GetArenaOpponentSpec(i)
+                    if issecretvalue(specID) then
+                        return false, i
+                    end
                     if specID then
                         return HEALER_SPEC_IDS[specID] or false
                     end
@@ -7062,6 +7152,19 @@ function BBP.ApplyMidnightMask(frame, targetTexture)
     targetTexture:AddMaskTexture(mask)
 end
 
+function BBP.RaiseNameAboveHealthBar(frame)
+    local name, healthBar = frame.name, frame.healthBar
+    if not name or not healthBar then return end
+    local parent = name:GetParent()
+    if parent ~= frame and parent ~= frame.bbpNameParent then return end
+    if not frame.bbpNameParent then
+        frame.bbpNameParent = CreateFrame("Frame", nil, frame)
+        frame.bbpNameParent:SetAllPoints(frame)
+    end
+    frame.bbpNameParent:SetFrameLevel(healthBar:GetFrameLevel() + 10)
+    name:SetParent(frame.bbpNameParent)
+end
+
 -- What to do on a new nameplate
 local function HandleNamePlateAdded(unit)
     local nameplate, frame = BBP.GetSafeNameplate(unit)
@@ -7097,6 +7200,7 @@ local function HandleNamePlateAdded(unit)
         frame.bbpOverlay:SetFrameLevel(9999)
 
     end
+    BBP.RaiseNameAboveHealthBar(frame)
     if BBP.isMidnight then
 
         if BetterBlizzPlatesDB.factionIndicator or BetterBlizzPlatesDB.factionIndicatorTestMode then
@@ -7242,6 +7346,9 @@ local function HandleNamePlateAdded(unit)
         frame.HealthBarsContainer.background:SetParent(frame.HealthBarsContainer.healthBar)
         frame.HealthBarsContainer.background:SetTexture("Interface\\Buttons\\WHITE8x8")
         frame.HealthBarsContainer.background:SetVertexColor(unpack(BetterBlizzPlatesDB.npBgColorRGB))
+        if not BetterBlizzPlatesDB.classicNameplates and not BetterBlizzPlatesDB.classicRetailNameplates then
+            BBP.ApplyMidnightMask(frame, frame.HealthBarsContainer.background)
+        end
     end
 
     if config.changeNameplateBorderSize then
@@ -7399,6 +7506,9 @@ local function HandleNamePlateAdded(unit)
         else
             BBP.ColorNameplateBorder(frame)
         end
+    end
+    if not config.changeNameplateBorderColor then
+        BBP.ColorCastbarBorder(frame)
     end
     if config.changeNameplateBorderColor and BetterBlizzPlatesDB.npTargetHighlightBorder then
         HookSelectedBorder(frame)
@@ -7674,7 +7784,7 @@ function BBP.RefreshAllNameplates()
             SetNameplateBarSizes(frame)
             AdjustHealthBarHeight(frame)
             BBP.SetTextFont(frame.name, cachedFont, cachedNameSize, cachedActiveNameOutline)
-            frame.HealthBarsContainer.healthBar.TextString:SetFont(cachedFont, cachedNameSize, cachedActiveNameOutline)
+            BBP.SetHealthTextFont(frame, cachedFont, cachedNameSize, cachedActiveNameOutline)
             --HideFriendlyHealthbar(frame)
         end
     end
@@ -8022,6 +8132,7 @@ local function CheckIfInInstance(self, event, ...)
     -- SetNameplateBehavior()
     if event ~= "PLAYER_REGEN_ENABLED" then
         UpdateInstanceStatus()
+        BBP.ToggleNpFlagUpdates()
         if event ~= "ZONE_CHANGED" then
             SpecCache = {}
             SetNameplateBehavior()
@@ -8235,6 +8346,9 @@ local function NpFlagUpdate(self, event, unit)
     if not BBP.isInPvP or not unit or not unit:find("nameplate") then return end
     local _, frame = BBP.GetSafeNameplate(unit)
     if not frame then return end
+    local classification = UnitPvpClassification(unit)
+    if event == "UNIT_AURA" and frame.bbpPvpClassification == classification then return end
+    frame.bbpPvpClassification = classification
     local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
     if config.classIndicator then
         BBP.ClassIndicator(frame)
@@ -8252,6 +8366,11 @@ function BBP.ToggleNpFlagUpdates()
             npFlagFrame:SetScript("OnEvent", NpFlagUpdate)
         end
         npFlagFrame:RegisterEvent("UNIT_CLASSIFICATION_CHANGED")
+        if BBP.isInBg then
+            npFlagFrame:RegisterEvent("UNIT_AURA")
+        else
+            npFlagFrame:UnregisterEvent("UNIT_AURA")
+        end
     elseif npFlagFrame then
         npFlagFrame:UnregisterAllEvents()
     end
@@ -9233,7 +9352,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                         UpdateAllNpFonts()
                     else
                         BBP.SetTextFont(frame.name, cachedFont, cachedNameSize, cachedActiveNameOutline)
-                        frame.HealthBarsContainer.healthBar.TextString:SetFont(cachedFont, cachedNameSize, cachedActiveNameOutline)
+                        BBP.SetHealthTextFont(frame, cachedFont, cachedNameSize, cachedActiveNameOutline)
                     end
                 end)
             end
@@ -9997,6 +10116,7 @@ hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
     if (BetterBlizzPlatesDB.useCustomTextureForBars or BetterBlizzPlatesDB.classicRetailNameplates) then
         BBP.ApplyCustomTextureToNameplate(self)
     end
+    BBP.FixNpTextures(self)
     if not self.BetterBlizzPlates then return end
     local config = self.BetterBlizzPlates.config
     if not config then return end

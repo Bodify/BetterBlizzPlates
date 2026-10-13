@@ -1,9 +1,35 @@
+local SECRET_HEALER_MAP = { HEALER = "bags-icon-addslots", TANK = "", DAMAGER = "" }
+
+local function SetRedCross(texture, red)
+    if red then
+        texture:SetDesaturated(true)
+        texture:SetVertexColor(1,0,0)
+    else
+        texture:SetDesaturated(false)
+        texture:SetVertexColor(1,1,1)
+    end
+end
+
+local function ShowSecretHealer(frame, arenaIndex, red)
+    if not frame.healerIndicatorSecret then
+        frame.healerIndicatorSecret = frame.bbpOverlay:CreateTexture(nil, "OVERLAY", nil, 7)
+        frame.healerIndicatorSecret:SetAllPoints(frame.healerIndicator)
+    end
+    BBP.SetSecretArenaRoleTexture(frame.healerIndicatorSecret, arenaIndex, SECRET_HEALER_MAP)
+    SetRedCross(frame.healerIndicatorSecret, red)
+    frame.healerIndicatorSecret:Show()
+end
+
 -- Healer Indicator
 function BBP.HealerIndicator(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
     frame.mainHealerColor = nil
+
+    if frame.healerIndicatorSecret then
+        frame.healerIndicatorSecret:Hide()
+    end
 
     if info.isSelf then
         if frame.healerIndicator then
@@ -38,9 +64,8 @@ function BBP.HealerIndicator(frame)
     -- Initialize
     if not frame.healerIndicator then
         frame.healerIndicator = frame.bbpOverlay:CreateTexture(nil, "OVERLAY", nil, 7)
-        frame.healerIndicator:SetAtlas("greencross")
-        frame.healerIndicator:SetSize(12, 12)
-        frame.healerIndicator:SetTexCoord(0.1953125, 0.8046875, 0.1953125, 0.8046875) -- Theres a few ugly white pixels around this texture, this gets rid of them
+        frame.healerIndicator:SetAtlas("bags-icon-addslots")
+        frame.healerIndicator:SetSize(13, 13)
     end
 
     if not info.isFriend then
@@ -58,13 +83,7 @@ function BBP.HealerIndicator(frame)
     -- Test mode
     if config.healerIndicatorTestMode then
         frame.healerIndicator:Show()
-        if config.healerIndicatorRedCrossEnemy and not info.isFriend then
-            frame.healerIndicator:SetDesaturated(true)
-            frame.healerIndicator:SetVertexColor(1,0,0)
-        else
-            frame.healerIndicator:SetDesaturated(false)
-            frame.healerIndicator:SetVertexColor(1,1,1)
-        end
+        SetRedCross(frame.healerIndicator, config.healerIndicatorRedCrossEnemy and not info.isFriend)
         return
     end
 
@@ -81,8 +100,8 @@ function BBP.HealerIndicator(frame)
     end
 
     -- Condition check: healerIndicatorEnemyOnly
-    local specID = BBP.GetSpecID(frame)
-    if specID then
+    local specID, secretIndex = BBP.GetSpecID(frame)
+    if specID or secretIndex then
         if frame.needsHealerUpdate then
             frame.needsHealerUpdate = nil
             BBP.pendingHealerCount = (BBP.pendingHealerCount or 0) - 1
@@ -94,18 +113,19 @@ function BBP.HealerIndicator(frame)
         end
     end
 
+    if secretIndex then
+        frame.healerIndicator:Hide()
+        if config.healerIndicatorEnemyOnly and not info.isEnemy then return end
+        ShowSecretHealer(frame, secretIndex, config.healerIndicatorRedCrossEnemy and not info.isFriend)
+        return
+    end
+
     if BBP.IsSpecHealer(frame) then
         if config.healerIndicatorEnemyOnly and not info.isEnemy then
             if frame.healerIndicator then frame.healerIndicator:Hide() end
             return
         end
-        if config.healerIndicatorRedCrossEnemy and not info.isFriend then
-            frame.healerIndicator:SetDesaturated(true)
-            frame.healerIndicator:SetVertexColor(1,0,0)
-        else
-            frame.healerIndicator:SetDesaturated(false)
-            frame.healerIndicator:SetVertexColor(1,1,1)
-        end
+        SetRedCross(frame.healerIndicator, config.healerIndicatorRedCrossEnemy and not info.isFriend)
         if config.healerIndicatorColorEnemyHealthbar and not info.isFriend then
             frame.mainHealerColor = config.healerIndicatorColorEnemyHealthbarRGB
             frame.healthBar:SetStatusBarColor(unpack(frame.mainHealerColor))
