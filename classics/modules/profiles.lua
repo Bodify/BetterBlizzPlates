@@ -50,6 +50,7 @@ function BBP.StarterProfile(version)
         for k, v in pairs(profileData) do
             BetterBlizzPlatesDB[k] = v
         end
+        BBP.UseDefaultsUntilReload(BetterBlizzPlatesDB)
         BetterBlizzPlatesDB.scStart = true
         C_CVar.SetCVar("nameplateShowFriends", "1")
         C_CVar.SetCVar("NamePlateVerticalScale", BetterBlizzPlatesDB.NamePlateVerticalScale) -- Needs to be set before reload
@@ -143,6 +144,7 @@ function BBP.ApplyProfile(profileName)
         for k, v in pairs(profileData) do
             BetterBlizzPlatesDB[k] = v
         end
+        BBP.UseDefaultsUntilReload(BetterBlizzPlatesDB)
         BetterBlizzPlatesDB.scStart = true
         C_CVar.SetCVar("nameplateShowFriendlyPlayers", "1")
         if BetterBlizzPlatesDB.nameplateTogglesMigrated and BBP.ForEachNameplateToggleSet then

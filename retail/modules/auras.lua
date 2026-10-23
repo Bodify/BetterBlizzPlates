@@ -550,6 +550,7 @@ function BBP.UpdateUserAuraSettings()
 
     S.playersOnly = db.nameplateAuraPlayersOnly
     S.playersOnlyShowTarget = db.nameplateAuraPlayersOnlyShowTarget
+    S.targetOnly = db.nameplateAuraTargetOnly
 
     S.glow = {
         defensive = { db.nameplateAuraDefensiveGlow and true or false, { GetColor("nameplateAuraDefensiveGlowRGB", 1, 0.662, 0.945, 1) } },
@@ -1571,8 +1572,12 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
         max = (dEnabled and watchLiveD) and bigMineMax or 0,
     }
 
-    local mineTracked = MergeSets(lists.watch, lists.watchMine,
-        categorySets.watchDebuff, categorySets.ownDebuff)
+    local ownLiveD = (watchLiveD or (dEnabled and debuffCfg.blizzard)) and true or false
+    local mineTracked = categorySets.ownDebuff
+    if watchLiveD then
+        mineTracked = MergeSets(lists.watch, lists.watchMine,
+            categorySets.watchDebuff, categorySets.ownDebuff)
+    end
     mineTracked = SubtractSets(mineTracked, flagClaimed)
 
     local pandemicTracked, pandemicMaxD = IncludeOrZero(lists.watchPandemic, canFilterHarmful, dLimit)
@@ -1585,7 +1590,7 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
     out.debuffs.WatchMine = {
         filter = DebuffFilter(AF.Player),
         filters = Filters(mineSet, blacklistD),
-        max = watchLiveD and mineMax or 0,
+        max = ownLiveD and mineMax or 0,
     }
 
     out.debuffs.WatchPandemic = {
@@ -1602,6 +1607,9 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
     end
 
     local claimedD = flaggedD
+    if ownLiveD then
+        claimedD = MergeSets(flaggedD, categorySets.ownDebuff)
+    end
     if watchLiveD then
         claimedD = MergeSets(watchAllD, categorySets.ownDebuff)
     end
@@ -2660,6 +2668,7 @@ end
 local boundTokens = {}
 
 local function ShouldShowAuras(info, unit)
+    if S.targetOnly and not UnitIsUnit(unit, "target") then return false end
     if not S.playersOnly then return true end
     if info.isPlayer then return true end
     return S.playersOnlyShowTarget and UnitIsUnit(unit, "target") and true or false

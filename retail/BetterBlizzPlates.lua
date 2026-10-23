@@ -169,6 +169,13 @@ local defaultSettings = {
     dpsOrHealFullAggroColorRGB = {1, 0, 0, 1},
     dpsOrHealNoAggroColorRGB = {0, 1, 0, 1},
     threatColorRoleOnly = false,
+    threatColorName = false,
+    threatColorNameOnly = false,
+    threatPercent = false,
+    threatPercentScale = 1,
+    threatPercentXPos = 2,
+    threatPercentYPos = 0,
+    threatPercentAnchor = "RIGHT",
     threatColorRoleTank = true,
     threatColorRoleDps = false,
     threatColorRoleHeal = false,
@@ -986,6 +993,7 @@ local function TempClassicNpFix()
 end
 
 local function InitializeSavedVariables()
+    BBP.exportDefaults = CopyTable(defaultSettings)
     if not BetterBlizzPlatesDB then
         BetterBlizzPlatesDB = {}
     end
@@ -1172,7 +1180,7 @@ local NAMEPLATE_AURA_SETTINGS = {
     "nameplateAuraTimerHighColor", "nameplateAuraTimerHighThreshold",
     "defaultNpAuraCdSize", "bigNpAuraCdSize", "npAuraCdTextBigOnly",
 
-    "nameplateAuraPlayersOnly", "nameplateAuraPlayersOnlyShowTarget",
+    "nameplateAuraPlayersOnly", "nameplateAuraPlayersOnlyShowTarget", "nameplateAuraTargetOnly",
     "hideNameplateAuraTooltip", "auraTooltipSpellID", "nameplateAuraTestMode",
     "prdAurasEnabled", "prdAuraScale", "prdAuraXPos", "prdAuraYPos",
     "prdAuraRowAmount", "prdAuraLimit",
@@ -1666,7 +1674,7 @@ local function ResetBBP()
 end
 
 BBP.popupBuilders["CONFIRM_RESET_BETTERBLIZZPLATESDB"] = function() return {
-    text = L["Popup_Are_You_Sure_You_Want_To_2"],
+    text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\n" .. L["Popup_Are_You_Sure_You_Want_To_2"],
     button1 = L["Confirm"],
     button2 = L["Cancel"],
     OnAccept = function()
@@ -2075,6 +2083,7 @@ local function TurnOffTestModes()
     db.bgIndicatorTestMode = nil
     db.targetTextTestMode = nil
     db.nameplateCastbarTestMode = nil
+    db.threatPercentTestMode = nil
 end
 
 -- Extracts NPC ID from GUID
@@ -2848,6 +2857,15 @@ function BBP.FixZeroMotionSpeed()
     if tonumber(db.nameplateMotionSpeed) == 0 then
         db.nameplateMotionSpeed = default
     end
+    if not db.fixedMotionSpeedPointOne then
+        if tonumber(db.nameplateMotionSpeed) == 0.1 then
+            db.nameplateMotionSpeed = default
+            if tonumber(value) == 0.1 then
+                C_CVar.SetCVar("nameplateMotionSpeed", default)
+            end
+        end
+        db.fixedMotionSpeedPointOne = true
+    end
     if tonumber(value) == 0 then
         C_CVar.SetCVar("nameplateMotionSpeed", default)
         if db.nameplateMotionSpeed ~= nil then
@@ -2954,7 +2972,7 @@ local function RebindPlateAuras(frame)
 end
 
 function BBP.ToggleNameplateAuras(frame)
-    if not BetterBlizzPlatesDB.nameplateAuraPlayersOnly then return end
+    if not (BetterBlizzPlatesDB.nameplateAuraPlayersOnly or BetterBlizzPlatesDB.nameplateAuraTargetOnly) then return end
     RebindPlateAuras(frame)
 end
 
@@ -3821,6 +3839,10 @@ local function SetBarWidth(frame, width, useOffsets)
 end
 
 local function ShouldBeSmallPet(frame)
+    if UnitIsPlayer(frame.unit) then
+        return false
+    end
+
     if UnitIsOtherPlayersPet(frame.unit) or UnitIsUnit(frame.unit, "pet") then
         return "smallPetsWidth"
     end
@@ -3854,7 +3876,7 @@ local function SmallPetsInPvP(frame)
         local db = BetterBlizzPlatesDB
         if not frame.bbpWidthHook then
             hooksecurefunc(frame.HealthBarsContainer, "SetHeight", function(self)
-                if self:IsForbidden() or not frame.unit or UnitIsPlayer(frame.unit) then return end
+                if self:IsForbidden() or not frame.unit then return end
                 if BBP.IsInCompStomp then return end
                 if frame.bbpAdjustingSmallPet then return end
 
@@ -3869,8 +3891,11 @@ local function SmallPetsInPvP(frame)
                         AdjustSmallPetHeight(frame)
                     end
                     frame.bbpAdjustingSmallPet = false
-                else
+                elseif frame.isSmallPet then
                     frame.isSmallPet = false
+                    frame.bbpForcedWidth = nil
+                    frame.bbpForcedWidthUseOffsets = nil
+                    SetNameplateBarSizes(frame)
                 end
             end)
             frame.bbpWidthHook = true
@@ -4189,7 +4214,7 @@ local function GetGroupTanks()
 	return tanks
 end
 
-function BBP.ColorThreat(frame)
+function BBP.GetThreatColor(frame)
     if not frame or not frame.unit then return end
     if UnitIsPlayer(frame.unit) then return end
     if UnitIsFriend(frame.unit, "player") then return end
@@ -4273,7 +4298,7 @@ function BBP.ColorThreat(frame)
         end
     end
 
-    frame.healthBar:SetStatusBarColor(r, g, b)
+    return r, g, b
 end
 
 --################################################################################################
@@ -4713,8 +4738,8 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         end
     end
 
-    if config.colorNPC and config.npcHealthbarColor and not UnitIsTapDenied(frame.unit) then
-        frame.healthBar:SetStatusBarColor(unpack(config.npcHealthbarColor))
+    if config.colorNPC then
+        BBP.ColorNpcHealthbar(frame)
     end
 
     if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
@@ -5058,7 +5083,9 @@ local function ShowGuildName(frame, unit)
                 else
                     frame.guildName:SetPoint("TOP", frame.healthBar, "BOTTOM", 0, -3)
                 end
+                frame.guildName:SetIgnoreParentScale(false)
                 frame.guildName:SetScale((isFriendly and config.guildNameScale or config.guildNameEnemyScale) or 1)
+                frame.guildName:SetIgnoreParentScale(true)
             else
                 frame.guildName:SetText("")
             end
@@ -5798,6 +5825,7 @@ local function HandleNamePlateRemoved(unit)
         frame.bbpHiddenOtherPet = nil
         frame.hideCastbarOverride = false
     end
+    BBP.ClearThreatTweaks(frame)
     frame.isQuestNpc = nil
     frame.isSmallPet = nil
     frame.bbpAdjustingSmallPet = nil
@@ -5960,6 +5988,10 @@ local function HandleNamePlateRemoved(unit)
         frame.guildName:SetText("")
     end
 
+    if frame.npcTitle then
+        frame.npcTitle:Hide()
+    end
+
     if frame.friendIndicator then
         frame.friendIndicator:Hide()
     end
@@ -6119,6 +6151,21 @@ local function GetNPCTitle(unit)
     return levelFound and title or nil
 end
 
+function BBP.SetNpcTitleScale(npcTitle)
+    npcTitle:SetIgnoreParentScale(false)
+    npcTitle:SetScale(BetterBlizzPlatesDB.npcTitleScale)
+    npcTitle:SetIgnoreParentScale(true)
+end
+
+function BBP.UpdateNpcTitleScale()
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        if frame and frame.npcTitle and not frame:IsForbidden() then
+            BBP.SetNpcTitleScale(frame.npcTitle)
+        end
+    end
+end
+
 local function NameplateNPCTitle(frame)
     if not frame.npcTitle then
         -- Create a FontString on the nameplate
@@ -6135,6 +6182,7 @@ local function NameplateNPCTitle(frame)
         frame.npcTitle:Hide()
     else
         local title = GetNPCTitle(frame.unit)
+        BBP.SetNpcTitleScale(frame.npcTitle)
         frame.npcTitle:SetText(title)
         frame.npcTitle:ClearAllPoints()
         if not issecretvalue(frame.HealthBarsContainer:GetAlpha()) and frame.HealthBarsContainer:GetAlpha() == 0 then
@@ -6147,7 +6195,6 @@ local function NameplateNPCTitle(frame)
         else
             frame.npcTitle:SetTextColor(1, 0.85, 0)
         end
-        frame.npcTitle:SetScale(BetterBlizzPlatesDB.npcTitleScale)
         frame.npcTitle:Show()
     end
 end
@@ -7161,7 +7208,7 @@ function BBP.RaiseNameAboveHealthBar(frame)
         frame.bbpNameParent = CreateFrame("Frame", nil, frame)
         frame.bbpNameParent:SetAllPoints(frame)
     end
-    frame.bbpNameParent:SetFrameLevel(healthBar:GetFrameLevel() + 10)
+    frame.bbpNameParent:SetFrameLevel(healthBar:GetFrameLevel() + 2)
     name:SetParent(frame.bbpNameParent)
 end
 
@@ -7431,6 +7478,8 @@ local function HandleNamePlateAdded(unit)
     if ( BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and not BBP.isInPvP)) ) then
         BBP.ColorThreat(frame)
     end
+
+    if BetterBlizzPlatesDB.threatPercent then BBP.UpdateThreatPercent(frame) end
 
     -- Show main hunter/lock pet icon
     if config.petIndicator then BBP.PetIndicator(frame) end
@@ -7920,6 +7969,10 @@ function BBP.ConsolidatedUpdateName(frame)
     end
 
     --BBP.RepositionName(frame)
+
+    if frame.bbpThreatNameR then
+        BBP.ApplyThreatNameColor(frame)
+    end
 
     if config.colorFocusName and info.isFocus then
         frame.name:SetVertexColor(unpack(config.focusTargetIndicatorColorNameplateRGB))
@@ -8491,6 +8544,7 @@ Frame:SetScript("OnEvent", function(...)
     BBP.HookHealthbarHeight()
 
     BBP.HookOverShields()
+    BBP.ToggleThreatPercentEvents()
     BBP.ToggleNpFlagUpdates()
 
     BBP.ApplyNameplateWidth()

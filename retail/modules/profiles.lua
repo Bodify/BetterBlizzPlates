@@ -225,6 +225,7 @@ function BBP.ApplyProfile(profileName)
         for k, v in pairs(profileData) do
             BetterBlizzPlatesDB[k] = v
         end
+        BBP.UseDefaultsUntilReload(BetterBlizzPlatesDB)
         BetterBlizzPlatesDB.scStart = true
         BetterBlizzPlatesDB.skipUpdateMsg = true
         C_CVar.SetCVar("nameplateShowFriendlyPlayers", "1")

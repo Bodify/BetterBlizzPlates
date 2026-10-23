@@ -143,6 +143,13 @@ local defaultSettings = {
     dpsOrHealFullAggroColorRGB = {1, 0, 0, 1},
     dpsOrHealNoAggroColorRGB = {0, 1, 0, 1},
     threatColorRoleOnly = false,
+    threatColorName = false,
+    threatColorNameOnly = false,
+    threatPercent = false,
+    threatPercentScale = 1,
+    threatPercentXPos = 2,
+    threatPercentYPos = 0,
+    threatPercentAnchor = "RIGHT",
     threatColorRoleTank = true,
     threatColorRoleDps = false,
     threatColorRoleHeal = false,
@@ -1267,6 +1274,7 @@ BBP.defaultBitfieldSettings = defaultBitfieldSettings
 
 
 local function InitializeSavedVariables()
+    BBP.exportDefaults = CopyTable(defaultSettings)
     if not BetterBlizzPlatesDB then
         BetterBlizzPlatesDB = {}
     end
@@ -1823,7 +1831,7 @@ local function ResetBBP()
 end
 
 BBP.popupBuilders["CONFIRM_RESET_BETTERBLIZZPLATESDB"] = function() return {
-    text = L["Popup_Are_You_Sure_You_Want_To_2"],
+    text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\n" .. L["Popup_Are_You_Sure_You_Want_To_2"],
     button1 = L["Confirm"],
     button2 = L["Cancel"],
     OnAccept = function()
@@ -2215,6 +2223,7 @@ local function TurnOffTestModes()
     db.partyPointerTestMode = false
     db.healthNumbersTestMode = false
     db.nameplateCastbarTestMode = nil
+    db.threatPercentTestMode = nil
 end
 
 -- Extracts NPC ID from GUID
@@ -3958,7 +3967,7 @@ local function GetGroupTanks()
 	return tanks
 end
 
-function BBP.ColorThreat(frame)
+function BBP.GetThreatColor(frame)
     if not frame or not frame.unit then return end
     if UnitIsPlayer(frame.unit) then return end
     if UnitIsFriend(frame.unit, "player") then return end
@@ -4036,7 +4045,7 @@ function BBP.ColorThreat(frame)
         end
     end
 
-    frame.healthBar:SetStatusBarColor(r, g, b)
+    return r, g, b
 end
 
 --################################################################################################
@@ -5353,8 +5362,8 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         ColorNameplateByReaction(frame)
     end
 
-    if config.colorNPC and config.npcHealthbarColor and not UnitIsTapDenied(frame.unit) then
-        frame.healthBar:SetStatusBarColor(config.npcHealthbarColor.r, config.npcHealthbarColor.g, config.npcHealthbarColor.b)
+    if config.colorNPC then
+        BBP.ColorNpcHealthbar(frame)
     end
 
     if BetterBlizzPlatesDB.enemyColorThreat and (BBP.isInPvE or (BetterBlizzPlatesDB.threatColorAlwaysOn and (not BBP.isInPvP or BBP.isInAV))) then
@@ -5706,7 +5715,9 @@ local function HideFriendlyHealthbar(frame)
                             frame.guildName:SetTextColor(name:GetTextColor())
                         end
                         frame.guildName:SetPoint("TOP", frame.name, "BOTTOM", 0, 0)
+                        frame.guildName:SetIgnoreParentScale(false)
                         frame.guildName:SetScale(config.guildNameScale or 1)
+                        frame.guildName:SetIgnoreParentScale(true)
                     else
                         frame.guildName:SetText("")
                     end
@@ -5822,7 +5833,9 @@ local function ShowGuildName(frame, unit)
             else
                 frame.guildName:SetPoint("TOP", frame.healthBar, "BOTTOM", 0, -3)
             end
+            frame.guildName:SetIgnoreParentScale(false)
             frame.guildName:SetScale((isFriendly and config.guildNameScale or config.guildNameEnemyScale) or 1)
+            frame.guildName:SetIgnoreParentScale(true)
         else
             frame.guildName:SetText("")
         end
@@ -5841,6 +5854,7 @@ local function HandleNamePlateRemoved(unit)
     if not frame then return end
 
     frame.bbpHiddenNPC = nil
+    BBP.ClearThreatTweaks(frame)
     frame.isQuestNpc = nil
     frame.isSmallPet = nil
     frame.bbpAdjustingSmallPet = nil
@@ -5978,6 +5992,10 @@ local function HandleNamePlateRemoved(unit)
 
     if frame.guildName then
         frame.guildName:SetText("")
+    end
+
+    if frame.npcTitle then
+        frame.npcTitle:Hide()
     end
 
     if frame.friendIndicator then
@@ -6155,6 +6173,21 @@ local function GetNPCTitle(unit)
     return levelFound and title or nil
 end
 
+function BBP.SetNpcTitleScale(npcTitle)
+    npcTitle:SetIgnoreParentScale(false)
+    npcTitle:SetScale(BetterBlizzPlatesDB.npcTitleScale)
+    npcTitle:SetIgnoreParentScale(true)
+end
+
+function BBP.UpdateNpcTitleScale()
+    for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+        local frame = nameplate.UnitFrame
+        if frame and frame.npcTitle and not frame:IsForbidden() then
+            BBP.SetNpcTitleScale(frame.npcTitle)
+        end
+    end
+end
+
 local function NameplateNPCTitle(frame)
     if not frame.npcTitle then
         -- Create a FontString on the nameplate
@@ -6171,6 +6204,7 @@ local function NameplateNPCTitle(frame)
         frame.npcTitle:Hide()
     else
         local title = GetNPCTitle(frame.unit)
+        BBP.SetNpcTitleScale(frame.npcTitle)
         frame.npcTitle:SetText(title)
         frame.npcTitle:ClearAllPoints()
         if frame.healthBar:GetAlpha() == 0 then
@@ -6183,7 +6217,6 @@ local function NameplateNPCTitle(frame)
         else
             frame.npcTitle:SetTextColor(1, 0.85, 0)
         end
-        frame.npcTitle:SetScale(BetterBlizzPlatesDB.npcTitleScale)
         frame.npcTitle:Show()
     end
 end
@@ -6527,6 +6560,8 @@ local function HandleNamePlateAdded(unit)
 
     -- Color NPC
     if config.colorNPC then BBP.ColorNpcHealthbar(frame) end
+
+    if BetterBlizzPlatesDB.threatPercent then BBP.UpdateThreatPercent(frame) end
 
     -- Show main hunter/lock pet icon
     if config.petIndicator then BBP.PetIndicator(frame) end
@@ -7110,6 +7145,10 @@ function BBP.ConsolidatedUpdateName(frame)
         end
     end
 
+    if frame.bbpThreatNameR then
+        BBP.ApplyThreatNameColor(frame)
+    end
+
     if config.colorFocusName and info.isFocus then
         frame.name:SetVertexColor(unpack(config.focusTargetIndicatorColorNameplateRGB))
     end
@@ -7498,6 +7537,7 @@ Frame:SetScript("OnEvent", function(...)
 
 
     BBP.HookOverShields()
+    BBP.ToggleThreatPercentEvents()
     if BBP.isCata then
         BBP.ToggleTotemIndicatorShieldBorder()
     end

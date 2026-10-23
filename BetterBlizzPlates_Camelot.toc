@@ -16,6 +16,7 @@ shared\functions.lua
 shared\fontFallback.lua
 shared\functions_classics.lua
 shared\nameplateToggles.lua
+shared\threatTweaks.lua
 shared\comboVisibility.lua
 shared\ImportExport.lua
 forever\modules\camelotFrames.lua

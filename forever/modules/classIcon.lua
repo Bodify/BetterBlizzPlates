@@ -394,6 +394,8 @@ local secretBackdrop = "Interface\\Buttons\\WHITE8X8"
 local secretHealerMap = { HEALER = "UI-LFG-RoleIcon-Healer", TANK = "", DAMAGER = "" }
 local secretHealerFileMap = { HEALER = 648207, TANK = "", DAMAGER = "" }
 local secretTankMap = { HEALER = "", TANK = "UI-LFG-RoleIcon-Tank", DAMAGER = "" }
+local secretRoleSquareZoom = 1.45
+local secretRoleCircleZoom = 1.3
 local secretBackdropMaps = {
     both = { HEALER = secretBackdrop, TANK = secretBackdrop, DAMAGER = "" },
     healer = { HEALER = secretBackdrop, TANK = "", DAMAGER = "" },
@@ -406,6 +408,17 @@ local function CreateSecretIcon(classIndicator, subLevel)
     texture:AddMaskTexture(classIndicator.mask)
     texture:Hide()
     return texture
+end
+
+local function FitSecretRoleIcon(texture, classIndicator, crop)
+    texture:ClearAllPoints()
+    if crop then
+        local size = classIndicator.border.square and 20 * secretRoleSquareZoom or 22 * secretRoleCircleZoom
+        texture:SetPoint("CENTER", classIndicator.icon, 0.5, -1)
+        texture:SetSize(size, size)
+    else
+        texture:SetAllPoints(classIndicator.icon)
+    end
 end
 
 local function UpdateSecretIcons(frame, config, info, arenaIndex)
@@ -449,6 +462,7 @@ local function UpdateSecretIcons(frame, config, info, arenaIndex)
 
     if showHealer then
         BBP.SetSecretArenaRoleTexture(classIndicator.secretHealerIcon, arenaIndex, healerType == 3 and secretHealerFileMap or secretHealerMap)
+        FitSecretRoleIcon(classIndicator.secretHealerIcon, classIndicator, healerType ~= 3)
         if healerType == 2 then
             classIndicator.secretHealerIcon:SetDesaturated(true)
             classIndicator.secretHealerIcon:SetVertexColor(1, 0, 0)
@@ -463,6 +477,7 @@ local function UpdateSecretIcons(frame, config, info, arenaIndex)
 
     if showTank then
         BBP.SetSecretArenaRoleTexture(classIndicator.secretTankIcon, arenaIndex, secretTankMap)
+        FitSecretRoleIcon(classIndicator.secretTankIcon, classIndicator, true)
         classIndicator.secretTankIcon:Show()
     else
         classIndicator.secretTankIcon:Hide()

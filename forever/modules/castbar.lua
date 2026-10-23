@@ -1412,6 +1412,19 @@ function BBP.CastbarOnEvent(frame, event)
     -- end
 end
 
+local function ShowHiddenEnemyCastbar(castBar)
+    local unit = castBar.unit
+    if not unit or castBar:IsShown() or not castBar.showCastbar then return end
+    if not UnitIsPlayer(unit) or not UnitCanAttack("player", unit) then return end
+    local name = UnitCastingInfo(unit)
+    if not name then
+        name = UnitChannelInfo(unit)
+    end
+    if name then
+        castBar:Show()
+    end
+end
+
 function BBP.HookCastbarOnEvent(frame)
     if frame.hookedCastbarOnEvent then return end
     frame.castBar:HookScript("OnEvent", function(castBar, event, eventUnit, castGUID, spellID, interruptedByOrCastBarID)
@@ -1434,6 +1447,7 @@ function BBP.HookCastbarOnEvent(frame)
             elseif CastStartEvents[event] then
                 castBar.wasKicked = nil
                 castBar.stoppedCast = nil
+                ShowHiddenEnemyCastbar(castBar)
             end
             BBP.CastbarOnEvent(frame, event)
         end

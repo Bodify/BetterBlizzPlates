@@ -71,6 +71,7 @@ local CITY_MAPS = {
 local EPIC_BG_BRACKET = 3
 local ONLY_NAME_CVAR = "nameplateShowOnlyNameForFriendlyPlayerUnits"
 local STACKING_CVAR = "nameplateStackingTypes"
+local SIMPLIFY_CVAR = "nameplateSimplifiedTypes"
 
 local hasArenas = not (BBP.isForever or BBP.isEra)
 
@@ -165,7 +166,19 @@ BBP.nameplateToggleEntries = {
     { key = "nameplateShowFriendlyPlayerTotems", side = "friendly" },
     { key = "nameplateShowEnemyMinus", side = "enemy" },
     false,
+    false, false,
+    { key = "simplifyMinion", simplify = "Minion", neutral = true },
+    { key = "simplifyFriendlyPlayer", side = "friendly", simplify = "FriendlyPlayer" },
+    { key = "simplifyMinusMob", side = "enemy", simplify = "MinusMob" },
+    { key = "simplifyFriendlyNpc", simplify = "FriendlyNpc" },
 }
+
+local simplifyFields = {}
+for _, entry in ipairs(BBP.nameplateToggleEntries) do
+    if entry and entry.simplify then
+        simplifyFields[entry.key] = entry.simplify
+    end
+end
 
 local function LocalizeNameplateToggles()
     local categoryLabels = {
@@ -198,6 +211,10 @@ local function LocalizeNameplateToggles()
         nameplateShowEnemyTotems = L["Toggle_Enemy_Totems"],
         nameplateShowFriendlyPlayerTotems = L["Toggle_Friendly_Totems"],
         nameplateShowEnemyMinus = L["Toggle_Enemy_Minus"],
+        simplifyMinion = L["Toggle_Simplify_Minions"],
+        simplifyFriendlyPlayer = L["Toggle_Simplify_Friendly_Players"],
+        simplifyMinusMob = L["Toggle_Simplify_Minus"],
+        simplifyFriendlyNpc = L["Toggle_Simplify_Friendly_NPCs"],
     }
     for _, entry in ipairs(BBP.nameplateToggleEntries) do
         if entry then
@@ -217,9 +234,30 @@ local function CVarExists(cvar)
     return known
 end
 
+local function HasSimplify()
+    return Enum.NamePlateSimplifiedType ~= nil and CVarExists(SIMPLIFY_CVAR)
+end
+
+local function SimplifyIndex(which)
+    return Enum.NamePlateSimplifiedType[which]
+end
+
+local function LiveSimplifyBit(which)
+    return C_CVar.GetCVarBitfield(SIMPLIFY_CVAR, SimplifyIndex(which)) and true or false
+end
+
+local function SavedSimplifyBit(which)
+    local db = BetterBlizzPlatesDB
+    local bits = db and db.bitfields and db.bitfields[SIMPLIFY_CVAR]
+    local saved = bits and bits[tostring(SimplifyIndex(which))]
+    if saved ~= nil then return saved and true or false end
+    return LiveSimplifyBit(which)
+end
+
 function BBP.NameplateToggleEntryAvailable(entry)
     if not entry then return false end
     if entry.stack then return true end
+    if entry.simplify then return HasSimplify() and SimplifyIndex(entry.simplify) ~= nil end
     return CVarExists(entry.key)
 end
 
@@ -452,6 +490,13 @@ function BBP.InitNameplateToggles(resetToDefaults)
                 db[key][field] = value
             end
         end
+        if HasSimplify() then
+            for field, which in pairs(simplifyFields) do
+                if db[key][field] == nil then
+                    db[key][field] = SavedSimplifyBit(which)
+                end
+            end
+        end
     end
     if db.nameplateToggleMode ~= "advanced" then
         db.nameplateToggleMode = "simple"
@@ -530,6 +575,11 @@ function BBP.SyncNameplateTogglesFromLiveCVars()
         end
         db[key].stackingEnemy = stackEnemy
         db[key].stackingFriendly = stackFriendly
+        if HasSimplify() then
+            for field, which in pairs(simplifyFields) do
+                db[key][field] = LiveSimplifyBit(which)
+            end
+        end
     end
     BBP.lastAppliedNameplateToggles = nil
 end
@@ -566,9 +616,35 @@ local function WriteStackingToDB(enemy, friendly)
     bits[tostring(StackIndex("Friendly"))] = friendly
 end
 
+local function WriteSimplifyToDB(target)
+    local db = BetterBlizzPlatesDB
+    db.bitfields = db.bitfields or {}
+    db.bitfields[SIMPLIFY_CVAR] = db.bitfields[SIMPLIFY_CVAR] or {}
+    local bits = db.bitfields[SIMPLIFY_CVAR]
+    for field, which in pairs(simplifyFields) do
+        bits[tostring(SimplifyIndex(which))] = target[field] and true or false
+    end
+end
+
 function BBP.SaveNameplateToggleCVar(cvarName, value)
     local db = BetterBlizzPlatesDB
     if not db then return false end
+    if cvarName == SIMPLIFY_CVAR then
+        if not HasSimplify() then return false end
+        local live = {}
+        for field, which in pairs(simplifyFields) do
+            live[field] = LiveSimplifyBit(which)
+        end
+        WriteSimplifyToDB(live)
+        local setKey = BBP.GetActiveNameplateToggleSetKey()
+        if setKey and type(db[setKey]) == "table" then
+            for field, on in pairs(live) do
+                db[setKey][field] = on
+            end
+            BBP.lastAppliedNameplateToggles = nil
+        end
+        return true
+    end
     if cvarName == STACKING_CVAR then
         local enemy, friendly = LiveStackBit("Enemy"), LiveStackBit("Friendly")
         WriteStackingToDB(enemy, friendly)
@@ -632,6 +708,14 @@ local function ApplyNameplateToggles(target)
         C_CVar.SetCVarBitfield(STACKING_CVAR, StackIndex("Friendly"), target.stackingFriendly)
     end
     WriteStackingToDB(target.stackingEnemy, target.stackingFriendly)
+    if HasSimplify() then
+        for field, which in pairs(simplifyFields) do
+            if LiveSimplifyBit(which) ~= target[field] then
+                C_CVar.SetCVarBitfield(SIMPLIFY_CVAR, SimplifyIndex(which), target[field])
+            end
+        end
+        WriteSimplifyToDB(target)
+    end
     BBP.CVarTrackingDisabled = wasTracking
     if BBP.SyncStackingCheckboxes then BBP.SyncStackingCheckboxes() end
 end
@@ -654,6 +738,9 @@ function BBP.BuildNameplateToggleTarget(active, category)
     end
     target.stackingEnemy = source.stackingEnemy and true or false
     target.stackingFriendly = source.stackingFriendly and true or false
+    for field in pairs(simplifyFields) do
+        target[field] = source[field] and true or false
+    end
 
     local friendlyCategory = (categoryByKey[category] and categoryByKey[category].available) and category or "bg"
     local friendlySource = db[SetKey(friendlyCategory)]
@@ -698,6 +785,11 @@ function BBP.UpdateNameplateToggles(force, explicit)
 
     local signature = active .. (totemOverride and "+totem" or "")
         .. (target.stackingEnemy and "1" or "0") .. (target.stackingFriendly and "1" or "0")
+    for _, entry in ipairs(BBP.nameplateToggleEntries) do
+        if entry and entry.simplify then
+            signature = signature .. (target[entry.key] and "1" or "0")
+        end
+    end
     for _, cvar in ipairs(BBP.nameplateToggleCVarList) do
         signature = signature .. (target[cvar] and "1" or "0")
     end

@@ -3,6 +3,60 @@ local LibDeflate = LibStub("LibDeflate")
 local LibSerialize = LibStub("LibSerialize-BB")
 local LibAceSerializer = LibStub("AceSerializer-3.0")
 
+local exportKeepKeys = {
+    version = true,
+    updates = true,
+    mopUpdated = true,
+    hideLevelOnFriendly = true,
+    classIndicatorFriendlyYPos = true,
+    classIndicatorHealer = true,
+    classIndicatorTank = true,
+    healerIndicatorEnemyXPos = true,
+    fakeNameAnchorFriendly = true,
+    fakeNameAnchorRelativeFriendly = true,
+    npTargetHighlightBorder = true,
+    enableNameplateAuraCustomisation = true,
+    smallPetsWidth = true,
+    smallPetsHeight = true,
+}
+
+local function SameValue(a, b)
+    if a == b then return true end
+    if type(a) ~= "table" or type(b) ~= "table" then return false end
+    for k, v in pairs(a) do
+        if not SameValue(v, b[k]) then return false end
+    end
+    for k in pairs(b) do
+        if a[k] == nil then return false end
+    end
+    return true
+end
+
+local function WithoutDefaults(profileTable)
+    local defaults = BBP.exportDefaults
+    if not defaults then return profileTable end
+    local stripped = {}
+    for k, v in pairs(profileTable) do
+        if exportKeepKeys[k] or not SameValue(v, defaults[k]) then
+            stripped[k] = v
+        end
+    end
+    return stripped
+end
+
+function BBP.UseDefaultsUntilReload(db)
+    local defaults = BBP.exportDefaults
+    if not defaults then return end
+    setmetatable(db, { __index = function(t, k)
+        local v = defaults[k]
+        if type(v) == "table" then
+            v = CopyTable(v)
+            rawset(t, k, v)
+        end
+        return v
+    end })
+end
+
 function BBP.DeepMergeTables(destination, source)
     for k, v in pairs(source) do
         if destination[k] == nil then
@@ -27,7 +81,7 @@ function BBP.ExportProfile(profileTable, dataType)
     -- Include a dataType in the table being serialized
     local exportTable = {
         dataType = dataType,
-        data = profileTable
+        data = dataType == "fullProfile" and WithoutDefaults(profileTable) or profileTable
     }
     local serialized = LibSerialize:Serialize(exportTable)
     local compressed = LibDeflate:CompressDeflate(serialized)
@@ -121,6 +175,8 @@ function BBP.OldImportProfile(encodedString, expectedDataType)
             if importTable.data[expectedDataType] then
                 -- Extract the relevant part and return it
                 return importTable.data[expectedDataType], nil
+            elseif expectedDataType ~= "fullProfile" and BBP.exportDefaults and type(BBP.exportDefaults[expectedDataType]) == "table" then
+                return CopyTable(BBP.exportDefaults[expectedDataType]), nil
             else
                 return importTable.data, nil
             end

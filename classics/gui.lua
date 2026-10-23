@@ -777,6 +777,29 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
     return dropdown
 end
 
+local function GetSearchCategory(parent)
+    local category
+    local frame = parent
+    while frame and frame ~= UIParent do
+        if frame.name then
+            category = frame.name
+            break
+        end
+        frame = settingsPopups[frame] or frame:GetParent()
+    end
+    if category == "Better|cff00c0ffBlizz|rPlates |A:gmchat-icon-blizz:16:16|a" then
+        category = L["Search_Name_General"]
+    end
+    return category
+end
+
+local function SearchCategoryOf(widget)
+    if not widget.searchCategory then
+        widget.searchCategory = GetSearchCategory(widget:GetParent())
+    end
+    return widget.searchCategory
+end
+
 local function CreateSlider(parent, label, minValue, maxValue, stepValue, element, axis, width)
     local slider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
     slider:SetOrientation('HORIZONTAL')
@@ -797,18 +820,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
         element = element
     })
 
-    local category
-    if parent.name then
-        category = parent.name
-    elseif parent:GetParent() and parent:GetParent().name then
-        category = parent:GetParent().name
-    elseif parent:GetParent() and parent:GetParent():GetParent() and parent:GetParent():GetParent().name then
-        category = parent:GetParent():GetParent().name
-    end
-
-    if category == "Better|cff00c0ffBlizz|rPlates |A:gmchat-icon-blizz:16:16|a" then
-        category = L["Search_Name_General"]
-    end
+    local category = GetSearchCategory(parent)
 
     slider.searchCategory = category
 
@@ -1087,7 +1099,10 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 end
 
                 --If no nameplates are present still adjust values
-                if element == "nameplateGeneralHpHeight" then
+                if element == "threatPercentScale" or element == "threatPercentXPos" or element == "threatPercentYPos" then
+                    BetterBlizzPlatesDB[element] = value
+                    BBP.RefreshThreatPercent()
+                elseif element == "nameplateGeneralHpHeight" then
                     BetterBlizzPlatesDB.nameplateGeneralHpHeight = value
                     if not BBP.checkCombatAndWarn() then
                         BBP.ApplyNameplateWidth()
@@ -1574,7 +1589,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BBP.RefreshAllNameplates()
                 elseif element == "npcTitleScale" then
                     BetterBlizzPlatesDB.npcTitleScale = value
-                    BBP.RefreshAllNameplates()
+                    BBP.UpdateNpcTitleScale()
                 elseif element == "nameplateResourceScale" then
                     BetterBlizzPlatesDB.nameplateResourceScale = value
                     BBP.TargetResourceUpdater()
@@ -2141,8 +2156,14 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
             else
                 -- Replace existing data with imported data
                 --for k in pairs(dataTable) do dataTable[k] = nil end -- Clear current table
+                if tableName == "fullProfile" then
+                    for k in pairs(BBP.exportDefaults) do dataTable[k] = nil end
+                end
                 for k, v in pairs(profileData) do
                     dataTable[k] = v -- Populate with new data
+                end
+                if tableName == "fullProfile" then
+                    BBP.UseDefaultsUntilReload(dataTable)
                 end
             end
             BBP.Print(string.format(L["Print_Imported_Successfully_Reload"], title))
@@ -2221,18 +2242,7 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc)
         checkBox.cvar = true
     end
 
-    local category
-    if parent.name then
-        category = parent.name
-    elseif parent:GetParent() and parent:GetParent().name then
-        category = parent:GetParent().name
-    elseif parent:GetParent() and parent:GetParent():GetParent() and parent:GetParent():GetParent().name then
-        category = parent:GetParent():GetParent().name
-    end
-
-    if category == "Better|cff00c0ffBlizz|rPlates |A:gmchat-icon-blizz:16:16|a" then
-        category = L["Search_Name_General"]
-    end
+    local category = GetSearchCategory(parent)
 
     checkBox.searchCategory = category
 
@@ -2312,10 +2322,7 @@ local function CreateMultiSelectDropdown(label, parent, options, width, onChange
     dropdown:SetWidth(width or 120)
     dropdown.options = options
 
-    local category = parent.name
-    if category == "Better|cff00c0ffBlizz|rPlates |A:gmchat-icon-blizz:16:16|a" then
-        category = L["Search_Name_General"]
-    end
+    local category = GetSearchCategory(parent)
     dropdown.searchCategory = category
 
     function dropdown:ToggleOption(option)
@@ -4980,7 +4987,7 @@ local function CreateSearchFrame()
                 resultDropdown:SetSelectionText(function() return data.label end)
                 resultDropdown:SetupMenu(dropdown.menuGenerator)
                 resultDropdown:OverrideText(data.label)
-                CreateTooltipTwo(resultDropdown, dropdown.tooltipTitle or data.label, dropdown.tooltipMainText, nil, nil, nil, nil, dropdown.searchCategory)
+                CreateTooltipTwo(resultDropdown, dropdown.tooltipTitle or data.label, dropdown.tooltipMainText, nil, nil, nil, nil, SearchCategoryOf(dropdown))
                 resultDropdown:Show()
                 yOffsetCheckbox = yOffsetCheckbox - 26
             end
@@ -5042,11 +5049,11 @@ local function CreateSearchFrame()
 
                 -- Reapply tooltip
                 if data.checkbox.tooltipMainText then
-                    CreateTooltipTwo(resultCheckBox, data.checkbox.tooltipTitle, data.checkbox.tooltipMainText, data.checkbox.tooltipSubText, nil, data.checkbox.tooltipCVarName, nil, data.checkbox.searchCategory)
+                    CreateTooltipTwo(resultCheckBox, data.checkbox.tooltipTitle, data.checkbox.tooltipMainText, data.checkbox.tooltipSubText, nil, data.checkbox.tooltipCVarName, nil, SearchCategoryOf(data.checkbox))
                 elseif data.checkbox.tooltipTitle then
-                    CreateTooltipTwo(resultCheckBox, data.checkbox.tooltipTitle, nil, nil, nil, nil, nil, data.checkbox.searchCategory)
+                    CreateTooltipTwo(resultCheckBox, data.checkbox.tooltipTitle, nil, nil, nil, nil, nil, SearchCategoryOf(data.checkbox))
                 else
-                    CreateTooltipTwo(resultCheckBox, data.label, nil, nil, nil, nil, nil, data.checkbox.searchCategory)
+                    CreateTooltipTwo(resultCheckBox, data.label, nil, nil, nil, nil, nil, SearchCategoryOf(data.checkbox))
                 end
 
                 resultCheckBox:Show()
@@ -5109,11 +5116,11 @@ local function CreateSearchFrame()
 
                 -- Tooltip setup for sliders
                 if data.slider.tooltipMainText then
-                    CreateTooltipTwo(resultSlider, data.slider.tooltipTitle, data.slider.tooltipMainText, data.slider.tooltipSubText, nil, data.slider.tooltipCVarName, nil, data.slider.searchCategory)
+                    CreateTooltipTwo(resultSlider, data.slider.tooltipTitle, data.slider.tooltipMainText, data.slider.tooltipSubText, nil, data.slider.tooltipCVarName, nil, SearchCategoryOf(data.slider))
                 elseif data.slider.tooltipTitle then
-                    CreateTooltipTwo(resultSlider, data.slider.tooltipTitle, nil, nil, nil, nil, nil, data.slider.searchCategory)
+                    CreateTooltipTwo(resultSlider, data.slider.tooltipTitle, nil, nil, nil, nil, nil, SearchCategoryOf(data.slider))
                 else
-                    CreateTooltipTwo(resultSlider, data.label, nil, nil, nil, nil, nil, data.slider.searchCategory)
+                    CreateTooltipTwo(resultSlider, data.label, nil, nil, nil, nil, nil, SearchCategoryOf(data.slider))
                 end
 
                 -- Show the slider and prepare for the next slider
@@ -5407,6 +5414,7 @@ local function guiGeneralTab()
 
     local function CreateLevelOptionsWindow(name, title, width, height)
         local window = CreateFrame("Frame", name, UIParent, "DefaultPanelFlatTemplate")
+        window.name = L["Search_Name_General"]
         window:SetSize(width, height)
         window:SetPoint("CENTER")
         window:SetFrameStrata("FULLSCREEN_DIALOG")
@@ -5614,6 +5622,7 @@ local function guiGeneralTab()
     local function OpenSmallPetsOptionsWindow()
         if not smallPetsOptionsFrame then
             smallPetsOptionsFrame = CreateFrame("Frame", "BBPSmallPetsOptionsFrame", UIParent, "BasicFrameTemplateWithInset")
+            smallPetsOptionsFrame.name = L["Search_Name_General"]
             smallPetsOptionsFrame:SetSize(192, 220)
             smallPetsOptionsFrame:SetPoint("CENTER")
             smallPetsOptionsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
@@ -8912,16 +8921,24 @@ local function guiPositionAndScale()
     anchorThreatColor.enemyColorThreatCombatOnly:SetPoint("TOPLEFT", anchorThreatColor.threatColorAlwaysOn, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(anchorThreatColor.enemyColorThreatCombatOnly, L["Combat_Only"], L["Tooltip_Combat_Only_Desc"])
 
-    anchorThreatColor.enemyColorThreatCombatOnlyPlayer = CreateCheckbox("enemyColorThreatCombatOnlyPlayer", L["Player_Combat_Only"], contentFrame)
-    anchorThreatColor.enemyColorThreatCombatOnlyPlayer:SetPoint("TOPLEFT", anchorThreatColor.enemyColorThreatCombatOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    anchorThreatColor.threatColorName = CreateCheckbox("threatColorName", L["Color_Name"], contentFrame)
+    anchorThreatColor.threatColorName:SetPoint("TOPLEFT", anchorThreatColor.enemyColorThreatCombatOnly, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(anchorThreatColor.threatColorName, L["Threat_Color_Name"], L["Tooltip_Threat_Color_Name_Desc"])
+
+    anchorThreatColor.threatColorNameOnly = CreateCheckbox("threatColorNameOnly", L["Name_Only"], contentFrame)
+    anchorThreatColor.threatColorNameOnly:SetPoint("LEFT", anchorThreatColor.threatColorName.Text, "RIGHT", 0, 0)
+    CreateTooltipTwo(anchorThreatColor.threatColorNameOnly, L["Threat_Color_Name_Only"], L["Tooltip_Threat_Color_Name_Only_Desc"])
+
+    CreateMoreOptionsPopup(anchorThreatColor, contentFrame, BetterBlizzPlatesSubPanel, L["Threat_Colors"], nil, 220)
+    anchorThreatColor.extendedSettingsButton:SetPoint("TOPLEFT", anchorThreatColor.threatColorName, "BOTTOMLEFT", 12, -6)
+
+    anchorThreatColor.enemyColorThreatCombatOnlyPlayer = CreateCheckbox("enemyColorThreatCombatOnlyPlayer", L["Player_Combat_Only"], anchorThreatColor.extendedSettings)
     CreateTooltipTwo(anchorThreatColor.enemyColorThreatCombatOnlyPlayer, L["Player_Combat_Only"], L["Tooltip_Player_Combat_Only_2_Desc"])
 
-    anchorThreatColor.enemyColorThreatHideSolo = CreateCheckbox("enemyColorThreatHideSolo", L["Turn_Off_While_Solo"], contentFrame)
-    anchorThreatColor.enemyColorThreatHideSolo:SetPoint("TOPLEFT", anchorThreatColor.enemyColorThreatCombatOnlyPlayer, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    anchorThreatColor.enemyColorThreatHideSolo = CreateCheckbox("enemyColorThreatHideSolo", L["Turn_Off_While_Solo"], anchorThreatColor.extendedSettings)
     CreateTooltipTwo(anchorThreatColor.enemyColorThreatHideSolo, L["Turn_Off_While_Solo"], L["Tooltip_Turn_Off_While_Solo_Desc"])
 
-    anchorThreatColor.threatColorRoleOnly = CreateCheckbox("threatColorRoleOnly", L["Specific_Role_Only"], contentFrame)
-    anchorThreatColor.threatColorRoleOnly:SetPoint("TOPLEFT", anchorThreatColor.enemyColorThreatHideSolo, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    anchorThreatColor.threatColorRoleOnly = CreateCheckbox("threatColorRoleOnly", L["Specific_Role_Only"], anchorThreatColor.extendedSettings)
     CreateTooltipTwo(anchorThreatColor.threatColorRoleOnly, L["Specific_Role_Only"], L["Tooltip_Specific_Role_Only_Desc"])
     anchorThreatColor.threatColorRoleOnly:SetScript("OnMouseDown", function(self, button)
         if button ~= "RightButton" then return end
@@ -8932,11 +8949,12 @@ local function guiPositionAndScale()
             return
         end
         window = CreateFrame("Frame", "BBPThreatColorRoleFrame", UIParent, "DefaultPanelFlatTemplate")
+        window.name = L["Module_Name_Advanced"]
         anchorThreatColor.roleWindow = window
         window:SetSize(190, 120)
         window:SetPoint("CENTER")
         window:SetFrameStrata("FULLSCREEN_DIALOG")
-        window:SetFrameLevel(550)
+        window:SetFrameLevel(600)
         window:SetIgnoreParentAlpha(true)
         window:SetTitle(L["Specific_Role_Only"])
         window:EnableMouse(true)
@@ -8964,6 +8982,57 @@ local function guiPositionAndScale()
         window.heal:SetPoint("TOPLEFT", window.dps, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
         window:Show()
     end)
+
+    anchorThreatColor.threatPercent = CreateCheckbox("threatPercent", L["Show_Threat_Percent"], anchorThreatColor.extendedSettings, nil, function()
+        anchorThreatColor.UpdatePercentState()
+        BBP.RefreshThreatPercent()
+    end)
+
+    anchorThreatColor.threatPercentTestMode = CreateCheckbox("threatPercentTestMode", L["Test"], anchorThreatColor.extendedSettings, nil, function()
+        BBP.RefreshThreatPercent()
+    end)
+
+    anchorThreatColor.threatPercentScale = CreateSlider(anchorThreatColor.extendedSettings, L["Size"], 0.5, 2.5, 0.01, "threatPercentScale", false, 150)
+    anchorThreatColor.threatPercentXPos = CreateSlider(anchorThreatColor.extendedSettings, L["X_Offset"], -50, 50, 1, "threatPercentXPos", false, 150)
+    anchorThreatColor.threatPercentYPos = CreateSlider(anchorThreatColor.extendedSettings, L["Y_Offset"], -50, 50, 1, "threatPercentYPos", false, 150)
+
+    moreCol = anchorThreatColor.extendedSettings.Column(16)
+    moreCol.Header(L["Visibility"])
+    moreCol.Add(anchorThreatColor.enemyColorThreatCombatOnlyPlayer)
+    moreCol.Add(anchorThreatColor.enemyColorThreatHideSolo)
+    moreCol.Add(anchorThreatColor.threatColorRoleOnly)
+    moreCol.Header(L["Threat_Percent"])
+    moreCol.Add(anchorThreatColor.threatPercent)
+    moreCol.Add(anchorThreatColor.threatPercentTestMode)
+    moreCol.Slider(anchorThreatColor.threatPercentScale)
+    moreCol.Slider(anchorThreatColor.threatPercentXPos)
+    moreCol.Slider(anchorThreatColor.threatPercentYPos)
+    moreCol.Gap(20)
+    anchorThreatColor.threatPercentAnchor = CreateAnchorDropdown(
+        "threatPercentAnchorDropdown",
+        anchorThreatColor.extendedSettings,
+        L["Select_Anchor_Point"],
+        "threatPercentAnchor",
+        function()
+            BBP.RefreshThreatPercent()
+        end,
+        { anchorFrame = anchorThreatColor.extendedSettings, x = 16, y = moreCol.y, label = L["Anchor"] },
+        150
+    )
+    moreCol.Gap(32)
+    anchorThreatColor.extendedSettings.Fit()
+
+    function anchorThreatColor.UpdatePercentState()
+        local enabled = BetterBlizzPlatesDB.threatPercent
+        local toggle = enabled and EnableElement or DisableElement
+        toggle(anchorThreatColor.threatPercentTestMode)
+        toggle(anchorThreatColor.threatPercentScale)
+        toggle(anchorThreatColor.threatPercentXPos)
+        toggle(anchorThreatColor.threatPercentYPos)
+        anchorThreatColor.threatPercentAnchor:SetEnabled(enabled and true or false)
+    end
+    anchorThreatColor.UpdatePercentState()
+    anchorThreatColor.extendedSettings:HookScript("OnShow", anchorThreatColor.UpdatePercentState)
 
 
     ----------------------
@@ -12227,7 +12296,7 @@ local function guiCVarControl()
         end
         local extras = 0
         for _, entry in ipairs(BBP.nameplateToggleEntries) do
-            if entry and not entry.root and not entry.stack and not entry.short and BBP.NameplateToggleEntryAvailable(entry) and set[entry.key] then
+            if entry and not entry.root and not entry.stack and not entry.short and not entry.simplify and BBP.NameplateToggleEntryAvailable(entry) and set[entry.key] then
                 local rootOn = true
                 if entry.side == "enemy" then
                     rootOn = set.nameplateShowEnemies
@@ -12274,8 +12343,11 @@ local function guiCVarControl()
                             BBP.UpdateNameplateToggles(true, true)
                         end)
                     local isEnemyEntry = entry.side == "enemy"
+                    local isNeutralEntry = entry.neutral
                     checkbox:AddInitializer(function(button)
-                        if isEnemyEntry then
+                        if isNeutralEntry then
+                            button.fontString:SetTextColor(1, 1, 1)
+                        elseif isEnemyEntry then
                             button.fontString:SetTextColor(1, 0.38, 0.38)
                         else
                             button.fontString:SetTextColor(0.35, 0.7, 1)
@@ -12857,6 +12929,7 @@ local function guiMisc()
     local function OpenGuildNameOptionsWindow()
         if not guildNameOptionsFrame then
             guildNameOptionsFrame = CreateFrame("Frame", "BBPGuildNameOptionsFrame", UIParent, "BasicFrameTemplateWithInset")
+            guildNameOptionsFrame.name = guiMisc.name
             guildNameOptionsFrame:SetSize(250, 296)
             guildNameOptionsFrame:SetPoint("CENTER")
             guildNameOptionsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
@@ -13529,6 +13602,7 @@ function BBP.CVarTracker()
         nameplateOccludedAlphaMult = true,
         nameplateSimplifiedScale = true,
         nameplateStackingTypes = true,
+        nameplateSimplifiedTypes = true,
         nameplateAuraScale = true,
     }
     pickupProtected.nameplateUseClassColorForFriendlyPlayerUnitNames = true
