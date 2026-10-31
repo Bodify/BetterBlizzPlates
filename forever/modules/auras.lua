@@ -157,6 +157,7 @@ local PURGE = {
     types = { "Magic", "Enrage" },
     asset = { asset = PURGE_ATLAS },
     own = {},
+    ownTypes = {},
     signature = "",
 }
 PURGE.all = { Magic = PURGE.asset, Enrage = PURGE.asset }
@@ -179,7 +180,12 @@ local function RefreshOffensiveDispels()
     PURGE.signature = signature
 
     wipe(PURGE.own)
-    for _, dispelType in ipairs(parts) do PURGE.own[dispelType] = PURGE.asset end
+    local ownTypes = {}
+    for _, dispelType in ipairs(parts) do
+        PURGE.own[dispelType] = PURGE.asset
+        ownTypes[dispelType] = true
+    end
+    PURGE.ownTypes = ownTypes
     return true
 end
 
@@ -1439,9 +1445,10 @@ local function NonEmpty(set)
     return nil
 end
 
-local function Filters(include, exclude, maxDuration, personal)
+local function Filters(include, exclude, maxDuration, personal, includeDispel, excludeDispel)
     include, exclude = NonEmpty(include), NonEmpty(exclude)
-    if include == nil and exclude == nil and maxDuration == nil and personal == nil then
+    if include == nil and exclude == nil and maxDuration == nil and personal == nil
+        and includeDispel == nil and excludeDispel == nil then
         return nil
     end
     return {
@@ -1449,6 +1456,8 @@ local function Filters(include, exclude, maxDuration, personal)
         excludeSpellIDs = exclude,
         maxDuration = maxDuration,
         nameplateShowPersonal = personal,
+        includeDispelTypes = includeDispel,
+        excludeDispelTypes = excludeDispel,
     }
 end
 
@@ -1682,10 +1691,11 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
     local watchAllB = MergeSets(watchB, lists.watchMine, flagClaimed)
     local watchLive = (bEnabled and buffCfg.watchlist and canFilterHelpful) and true or false
     local purgeOn = (bEnabled and buffCfg.purgeable) and true or false
+    local purgeRow = purgeOn and (buffCfg.anyDispel or PURGE.signature ~= "")
     local underMin = (bEnabled and buffCfg.lessThanMin) and true or false
     local defOn = (bEnabled and buffCfg.defensives) and true or false
     local impOn = (bEnabled and buffCfg.important) and true or false
-    local purgeToken = buffCfg.anyDispel and AF.Dispellable or AF.RaidPlayerDispellable
+    local purgeTypes = (purgeRow and not buffCfg.anyDispel) and PURGE.ownTypes or nil
     local plainLive = bEnabled and (underMin or not (watchLive or purgeOn or defOn or impOn))
     local buffsMineOnly = (buffCfg.onlyMine and isFriend) and true or false
     local buffBig = BigIconOn(BUFFS, isFriend, isPlayer)
@@ -1839,9 +1849,9 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
     }
 
     out.buffrow.Purgeable = {
-        filter = BuffFilter(purgeToken),
-        filters = Filters(nil, rowExclude),
-        max = purgeOn and rowLimit or 0,
+        filter = BuffFilter(AF.Dispellable),
+        filters = Filters(nil, rowExclude, nil, nil, purgeTypes),
+        max = purgeRow and rowLimit or 0,
     }
 
     local function PlainBuffFilter(caster)
@@ -1851,11 +1861,11 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
             parts[#parts + 1] = NOT_EXT
         end
         if impClaimed then parts[#parts + 1] = NOT_IMPORTANT end
-        if purgeOn then parts[#parts + 1] = "!" .. purgeToken end
+        if purgeRow and not purgeTypes then parts[#parts + 1] = "!" .. AF.Dispellable end
         return CreateFilterString(unpack(parts))
     end
 
-    local plainFilters = Filters(nil, rowExclude, underMin and 60 or nil)
+    local plainFilters = Filters(nil, rowExclude, underMin and 60 or nil, nil, nil, purgeTypes)
 
     out.buffrow.Mine = {
         filter = PlainBuffFilter(AF.Player),
@@ -2050,15 +2060,19 @@ local function ApplyGroupCandidateFilters(container, groupKey, filters)
     local exclude = filters and filters.excludeSpellIDs or false
     local maxDur = filters and filters.maxDuration or false
     local personal = filters and filters.nameplateShowPersonal or false
+    local includeDispel = filters and filters.includeDispelTypes or false
+    local excludeDispel = filters and filters.excludeDispelTypes or false
     local generation = (include or exclude) and listGeneration or false
     if applied.generation == generation
         and applied.include == include and applied.exclude == exclude
-        and applied.maxDuration == maxDur and applied.personal == personal then
+        and applied.maxDuration == maxDur and applied.personal == personal
+        and applied.includeDispel == includeDispel and applied.excludeDispel == excludeDispel then
         return
     end
     applied.generation = generation
     applied.include, applied.exclude = include, exclude
     applied.maxDuration, applied.personal = maxDur, personal
+    applied.includeDispel, applied.excludeDispel = includeDispel, excludeDispel
     if filters == nil and not applied.set then return end
     applied.set = true
     container:SetAuraGroupCandidateFilters(groupKey, filters)

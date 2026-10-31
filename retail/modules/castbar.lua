@@ -154,27 +154,47 @@ end)
 function BBP.UpdateCastbarTextPosition(castBar)
     local db = BetterBlizzPlatesDB
     local castBarTextJustify = db.castBarTextJustify or "CENTER"
+    local span = db.castBarTextOffsetIcon and castBar.bbpTextSpan or castBar
     castBar.Text:ClearAllPoints()
     if db.moveCastBarText then
         local width = 0
         if not db.castBarFullTextWidth then
-            local barWidth = castBar:GetWidth()
-            if not issecretvalue(barWidth) then
-                width = barWidth
+            local barWidth = span:GetWidth()
+            if issecretvalue(barWidth) then
+                local container = castBar:GetParent()
+                local frame = container and container:GetParent()
+                barWidth = span.lastKnownWidth or (span == castBar and frame and frame.lastKnownCastbarWidth)
+            else
+                span.lastKnownWidth = barWidth
             end
+            width = barWidth or 0
         end
         castBar.Text:SetWidth(width)
-        castBar.Text:SetPoint(db.castBarTextAnchor or "CENTER", castBar, db.castBarTextRelativeAnchor or "CENTER", db.castBarTextXPos or 0, db.castBarTextYPos or 0)
+        castBar.Text:SetPoint(db.castBarTextAnchor or "CENTER", span, db.castBarTextRelativeAnchor or "CENTER", db.castBarTextXPos or 0, db.castBarTextYPos or 0)
     elseif db.castBarFullTextWidth then
         castBar.Text:SetWidth(0)
-        castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", -70, 0)
-        castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", 70, 0)
+        castBar.Text:SetPoint("TOPLEFT", span, "TOPLEFT", -70, 0)
+        castBar.Text:SetPoint("BOTTOMRIGHT", span, "BOTTOMRIGHT", 70, 0)
     else
         castBar.Text:SetWidth(0)
-        castBar.Text:SetPoint("TOPLEFT", castBar, "TOPLEFT", castBarTextJustify == "LEFT" and 4 or -2, 0)
-        castBar.Text:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", castBarTextJustify == "RIGHT" and -4 or 2, 0)
+        castBar.Text:SetPoint("TOPLEFT", span, "TOPLEFT", castBarTextJustify == "LEFT" and 4 or -2, 0)
+        castBar.Text:SetPoint("BOTTOMRIGHT", span, "BOTTOMRIGHT", castBarTextJustify == "RIGHT" and -4 or 2, 0)
     end
     castBar.Text:SetJustifyH(castBarTextJustify)
+
+    local targetName = castBar.CastTargetNameText
+    if targetName and not castBar.classicStyleCastBar then
+        if db.castTargetNameNoTruncate then
+            targetName:ClearAllPoints()
+            targetName:SetPoint("RIGHT", castBar, "RIGHT", -4, 0)
+            castBar.bbpTargetNameMoved = true
+        elseif castBar.bbpTargetNameMoved then
+            targetName:ClearAllPoints()
+            targetName:SetPoint("LEFT", castBar.Text, "RIGHT", 2, 0)
+            targetName:SetPoint("RIGHT", castBar, "RIGHT", -4, 0)
+            castBar.bbpTargetNameMoved = nil
+        end
+    end
 end
 
 function BBP.UpdateCastbarTextStyle(castBar)
@@ -182,9 +202,9 @@ function BBP.UpdateCastbarTextStyle(castBar)
     BBP.UpdateCastbarTextPosition(castBar)
     castBar.Text:SetScale(db.castBarTextScale or 1)
     if db.useCustomFont then
-        BBP.SetNameFontBasedOnOption(castBar.Text, 12, "OUTLINE")
+        BBP.SetFontBasedOnOption(castBar.Text, 12, "OUTLINE")
     else
-        BBP.SetTextFont(castBar.Text, castBar.Text:GetFont(), 12, "OUTLINE, SLUG")
+        castBar.Text:SetFont(castBar.Text:GetFont(), 12, "OUTLINE, SLUG")
     end
 end
 
@@ -319,6 +339,10 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
             BBP.SetupMidnightCastbarIcon(frame)
             frame.castBarIconFrame.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
             BBP.SetupBorderOnFrame(frame.castBarIconFrame.Icon)
+            castBar.bbpIconBorder = frame.castBarIconFrame.Icon
+            if castBar.bbpBorderColor then
+                BBP.ApplyCastbarBorderColor(castBar)
+            end
             frame.castBarIconFrame.Icon:HookScript("OnShow", function()
                 frame.castBarIconFrame.Icon.borders:SetAlpha(1)
             end)
@@ -489,12 +513,36 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         end
     end
 
+    local nonIntTexture = useCustomCastbarTexture and db.customCastbarNonInterruptibleTexture ~= db.customCastbarTexture
+        and LSM:Fetch(LSM.MediaType.STATUSBAR, db.customCastbarNonInterruptibleTexture)
+    if nonIntTexture then
+        if not castBar.bbpNonIntOverlay then
+            castBar.bbpNonIntOverlay = castBar:CreateTexture(nil, "ARTWORK", nil, 1)
+            castBar.bbpNonIntOverlay:SetAllPoints(castBar)
+            castBar.bbpNonIntMask = castBar:CreateMaskTexture()
+            castBar.bbpNonIntMask:SetTexture("Interface\\Buttons\\WHITE8X8", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+            castBar.bbpNonIntOverlay:AddMaskTexture(castBar.bbpNonIntMask)
+        end
+        local overlay = castBar.bbpNonIntOverlay
+        castBar.bbpNonIntMask:SetAllPoints(castBar:GetStatusBarTexture())
+        overlay:SetTexture(nonIntTexture)
+        overlay:SetDesaturated(true)
+        overlay:SetVertexColor(unpack(castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }))
+        if notInterruptible ~= nil and (castBar.casting or castBar.channeling) then
+            overlay:SetAlphaFromBoolean(notInterruptible, 1, 0)
+        else
+            overlay:SetAlpha(0)
+        end
+    elseif castBar.bbpNonIntOverlay then
+        castBar.bbpNonIntOverlay:SetAlpha(0)
+    end
+
     local useCustomFont = BetterBlizzPlatesDB.useCustomFont
     if useCustomFont then
-        BBP.SetNameFontBasedOnOption(castBar.Text, 12, "OUTLINE")
+        BBP.SetFontBasedOnOption(castBar.Text, 12, "OUTLINE")
     else
         local f = castBar.Text:GetFont()
-        BBP.SetTextFont(castBar.Text, f, 12, "OUTLINE, SLUG")
+        castBar.Text:SetFont(f, 12, "OUTLINE, SLUG")
     end
 
     if hideCastbarText then

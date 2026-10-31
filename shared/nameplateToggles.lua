@@ -539,10 +539,8 @@ function BBP.GetFriendlyToggle(key)
 end
 
 function BBP.RefreshFriendlyToggleUI(skipRows)
-    if BBP.friendlyToggleButtons then
-        for key, button in pairs(BBP.friendlyToggleButtons) do
-            button:SetChecked(BBP.GetFriendlyToggle(key))
-        end
+    if BBP.friendlyToggleDropdown then
+        BBP.friendlyToggleDropdown:RefreshText()
     end
     if not skipRows and BBP.RefreshNameplateToggleRows then BBP.RefreshNameplateToggleRows() end
 end

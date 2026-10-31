@@ -922,6 +922,34 @@ local function SearchCategoryOf(widget)
     return widget.searchCategory
 end
 
+local function SliderRightClick(slider, onRightClick, holder)
+    local function OnMouseDown(_, button)
+        if button == "RightButton" then
+            onRightClick()
+        end
+    end
+    if not slider.SetPassThroughButtons then
+        slider:HookScript("OnMouseDown", OnMouseDown)
+        return
+    end
+    slider:SetPassThroughButtons("RightButton")
+    if holder then
+        holder:HookScript("OnMouseDown", OnMouseDown)
+        if holder.Back then holder.Back:SetPassThroughButtons("RightButton") end
+        if holder.Forward then holder.Forward:SetPassThroughButtons("RightButton") end
+        return
+    end
+    slider:SetFrameLevel(slider:GetFrameLevel() + 2)
+    local catcher = CreateFrame("Frame", nil, slider:GetParent())
+    catcher:SetAllPoints(slider)
+    catcher:SetFrameLevel(slider:GetFrameLevel() - 1)
+    catcher:EnableMouse(true)
+    catcher:SetScript("OnMouseDown", OnMouseDown)
+    catcher:SetShown(slider:IsShown())
+    slider:HookScript("OnShow", function() catcher:Show() end)
+    slider:HookScript("OnHide", function() catcher:Hide() end)
+end
+
 local function CreateSlider(parent, label, minValue, maxValue, stepValue, element, axis, width)
     local slider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
     slider:SetOrientation('HORIZONTAL')
@@ -1029,6 +1057,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
     editBox:SetMultiLine(false)
     editBox:SetPoint("CENTER", slider, "CENTER", 0, 0)
     editBox:SetFrameStrata("TOOLTIP")
+    editBox:SetFixedFrameStrata(true)
     editBox:Hide()
 
     editBox:SetFontObject(GameFontHighlightSmall)
@@ -1805,11 +1834,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
         BBP.RefreshAllNameplates()
     end
 
-    slider:SetScript("OnMouseDown", function(self, button)
-        if button == "RightButton" then
-            editBox:Show()
-            editBox:SetFocus()
-        end
+    SliderRightClick(slider, function()
+        editBox:Show()
+        editBox:SetFocus()
     end)
 
     editBox:SetScript("OnEnterPressed", HandleEditBoxInput)
@@ -1899,6 +1926,12 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
                 tooltipText = tooltipText .. "\n\n" .. L["Tooltip_Party_Pointer_Hide_All_Setting_Is"]
             end
 
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == L["Hide_Other_Pets"] then
+            local tooltipText = "\n|cff32f795" .. L["Tooltip_Right_Click_Hide_Own_Secondary_Pets"] .. "|r"
+            if BetterBlizzPlatesDB.friendlyHideOwnSecondaryPets then
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         elseif title == L["Hide_NPC_Healthbar"] then
             local hideFriendlyHpNpcPve = BetterBlizzPlatesDB.friendlyHideHealthBarNpcShowInPve
@@ -2020,10 +2053,6 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
                 tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
             end
 
-            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
-        elseif title == L["Friend_Guildie_Indicator"] then
-            local currentAnchor = BetterBlizzPlatesDB.friendIndicatorAnchor or "LEFT"
-            local tooltipText = "\n|cff32f795" .. string.format(L["Tooltip_Right_Click_Change_Anchor"], AnchorText(currentAnchor)) .. "|r"
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         elseif title == L["Show_Crowd_Control"] then
             local tooltipText = "\n|cff32f795" .. L["Tooltip_Right_Click_To_Hide_The_Cooldown"] .. "|r"
@@ -2591,7 +2620,76 @@ local function CreateCheckbox(option, label, parent, cvar, extraFunc, bitCVar)
     return checkBox
 end
 
-local function CreateMultiSelectDropdown(label, parent, options, width, onChange)
+local colorPickerKeepsMenu
+local colorPickerHooked
+local function KeepMenuOpenOnColorPicker()
+    colorPickerKeepsMenu = true
+    if colorPickerHooked then return end
+    colorPickerHooked = true
+    local function HandlesGlobalMouseEvent()
+        return colorPickerKeepsMenu == true
+    end
+    local function Mark(frame)
+        if frame.HandlesGlobalMouseEvent == nil then
+            frame.HandlesGlobalMouseEvent = HandlesGlobalMouseEvent
+        end
+        for _, child in ipairs({ frame:GetChildren() }) do
+            Mark(child)
+        end
+    end
+    Mark(ColorPickerFrame)
+    ColorPickerFrame:HookScript("OnHide", function(self)
+        if not colorPickerKeepsMenu then return end
+        colorPickerKeepsMenu = nil
+        self:ClearAllPoints()
+        self:SetPoint("CENTER")
+    end)
+end
+
+local function AttachMenuColorSwatch(button, option, menu)
+    local enabled = BetterBlizzPlatesDB[option.key] and (not option.isEnabled or option.isEnabled()) and true or false
+    local spacer = button:AttachTexture()
+    spacer:SetSize(28, 16)
+    spacer:SetPoint("LEFT", button.fontString, "RIGHT")
+
+    local swatch = button:AttachTemplate("ColorSwatchTemplate")
+    swatch:SetSize(16, 16)
+    swatch:SetPoint("RIGHT")
+    swatch:SetColorRGB(unpack(BetterBlizzPlatesDB[option.colorKey] or {1, 1, 1}))
+    swatch:SetAlpha(enabled and 1 or 0.35)
+
+    local hit = MenuTemplates.AttachBasicButton(button, 16, 16)
+    hit:SetPoint("RIGHT")
+    hit:SetMouseClickEnabled(enabled)
+    swatch.colorKey = option.colorKey
+    hit:SetScript("OnClick", function()
+        local r, g, b = unpack(BetterBlizzPlatesDB[option.colorKey] or {1, 1, 1})
+        local function SetColor(newR, newG, newB)
+            BetterBlizzPlatesDB[option.colorKey] = { newR, newG, newB }
+            if swatch.colorKey == option.colorKey then
+                swatch:SetColorRGB(newR, newG, newB)
+            end
+            BBP.needsUpdate = true
+            BBP.RefreshAllNameplates()
+        end
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r, g = g, b = b,
+            hasOpacity = false,
+            swatchFunc = function()
+                SetColor(ColorPickerFrame:GetColorRGB())
+            end,
+            cancelFunc = function(previousValues)
+                SetColor(previousValues.r, previousValues.g, previousValues.b)
+            end,
+        })
+        KeepMenuOpenOnColorPicker()
+        local scale = menu:GetEffectiveScale() / ColorPickerFrame:GetEffectiveScale()
+        ColorPickerFrame:ClearAllPoints()
+        ColorPickerFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", menu:GetRight() * scale + 6, menu:GetTop() * scale)
+    end)
+end
+
+local function CreateMultiSelectDropdown(label, parent, options, width, onChange, textFunc)
     local dropdown = CreateFrame("DropdownButton", nil, parent, "WowStyle1DropdownTemplate")
     dropdown:SetWidth(width or 120)
     dropdown.options = options
@@ -2599,7 +2697,17 @@ local function CreateMultiSelectDropdown(label, parent, options, width, onChange
     local category = GetSearchCategory(parent)
     dropdown.searchCategory = category
 
+    function dropdown:IsOptionOn(option)
+        if option.get then return option.get(option) end
+        return BetterBlizzPlatesDB[option.key]
+    end
+
     function dropdown:ToggleOption(option)
+        if option.set then
+            option.set(option, not self:IsOptionOn(option))
+            self:RefreshText()
+            return
+        end
         BetterBlizzPlatesDB[option.key] = not BetterBlizzPlatesDB[option.key]
         if onChange then
             onChange(option.key, BetterBlizzPlatesDB[option.key])
@@ -2625,7 +2733,7 @@ local function CreateMultiSelectDropdown(label, parent, options, width, onChange
                 end
             else
                 local checkbox = rootDescription:CreateCheckbox(option.label,
-                    function() return (BetterBlizzPlatesDB[option.key] or (option.isForced and option.isForced())) and true or false end,
+                    function() return (dropdown:IsOptionOn(option) or (option.isForced and option.isForced())) and true or false end,
                     function(_, inputData)
                         if option.onRightClick and inputData and inputData.buttonName == "RightButton" then
                             option.onRightClick()
@@ -2639,6 +2747,11 @@ local function CreateMultiSelectDropdown(label, parent, options, width, onChange
                     end)
                     checkbox:AddResetter(function(button)
                         button:RegisterForClicks("LeftButtonUp")
+                    end)
+                end
+                if option.colorKey then
+                    checkbox:AddInitializer(function(button, _, menu)
+                        AttachMenuColorSwatch(button, option, menu)
                     end)
                 end
                 if option.isEnabled or option.isForced then
@@ -2668,10 +2781,14 @@ local function CreateMultiSelectDropdown(label, parent, options, width, onChange
     end
 
     dropdown.menuGenerator = GenerateMenu
+    textFunc = textFunc or function() return label end
+    function dropdown:RefreshText()
+        self:OverrideText(textFunc())
+    end
     dropdown:SetDefaultText(label)
-    dropdown:SetSelectionText(function() return label end)
+    dropdown:SetSelectionText(textFunc)
     dropdown:SetupMenu(GenerateMenu)
-    dropdown:OverrideText(label)
+    dropdown:OverrideText(textFunc())
 
     table.insert(dropdownList, {dropdown = dropdown, label = label})
 
@@ -4871,6 +4988,7 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
                 editBox:SetHeight(20)
                 editBox:SetMultiLine(false)
                 editBox:SetFrameStrata("TOOLTIP")
+                editBox:SetFixedFrameStrata(true)
                 editBox:Hide()
 
                 editBox:SetFontObject(GameFontHighlightSmall)
@@ -4892,11 +5010,9 @@ local function CreateNpcListWidth(subPanel, npcList, refreshFunc, width, height)
 
                 editBox:SetPoint("CENTER", barWidthSlider, "CENTER", 0, 0)
 
-                barWidthSlider:SetScript("OnMouseDown", function(self, button)
-                    if button == "RightButton" then
-                        editBox:Show()
-                        editBox:SetFocus()
-                    end
+                SliderRightClick(barWidthSlider, function()
+                    editBox:Show()
+                    editBox:SetFocus()
                 end)
 
                 local function HandleEditBoxInput()
@@ -6151,7 +6267,7 @@ local function guiGeneralTab()
     -- Enemy nameplates:
     ----------------------
     local enemyNameplatesText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    enemyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -191)
+    enemyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -184)
     enemyNameplatesText:SetText(L["Enemy_Nameplates"])
     enemyNameplatesText:SetFont(fontLarge, 16)
     enemyNameplatesText:SetTextColor(1,1,1)
@@ -6162,24 +6278,15 @@ local function guiGeneralTab()
     enemyNameplateIcon:SetDesaturated(1)
     enemyNameplateIcon:SetVertexColor(1, 0, 0)
 
-    local enemyClassColorName = CreateCheckbox("enemyClassColorName", L["Class_Color_Name"], BetterBlizzPlates)
-    enemyClassColorName:SetPoint("TOPLEFT", enemyNameplatesText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
-    CreateTooltipTwo(enemyClassColorName, L["Class_Color_Name"], L["Tooltip_Class_Color_Name_2_Desc"])
-
     local enemyColorName = CreateCheckbox("enemyColorName", L["Color_Name"], BetterBlizzPlates)
-    enemyColorName:SetPoint("LEFT", enemyClassColorName.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(enemyColorName, L["Color_Name"], L["Tooltip_Color_Name_2_Desc"], L["Tooltip_Color_Name_2_SubText"])
+    enemyColorName:SetPoint("TOPLEFT", enemyNameplatesText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
+    CreateTooltipTwo(enemyColorName, L["Color_Name"], L["Tooltip_Color_Name_2_Desc"])
 
     local function UpdateColorSquare(icon, r, g, b)
         if r and g and b then
             icon:SetVertexColor(r, g, b)
         end
     end
-
-    local enemyColorNameIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
-    enemyColorNameIcon:SetAtlas("newplayertutorial-icon-key")
-    enemyColorNameIcon:SetSize(18, 17)
-    UpdateColorSquare(enemyColorNameIcon, unpack(BetterBlizzPlatesDB.enemyColorNameRGB or {1, 1, 1}))
 
     local function OpenColorPicker(colorType, icon)
         BBP.needsUpdate = true
@@ -6203,75 +6310,36 @@ local function guiGeneralTab()
         })
     end
 
-    local enemyColorNameButtonIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
-    enemyColorNameButtonIcon:SetAtlas("newplayertutorial-icon-key")
-    enemyColorNameButtonIcon:SetSize(18, 17)
-    UpdateColorSquare(enemyColorNameButtonIcon, unpack(BetterBlizzPlatesDB.enemyColorNameRGB or {1, 1, 1}))
-    local enemyColorNameButton = CreateFrame("Button", nil, enemyColorName, "UIPanelButtonTemplate")
-    enemyColorNameButton:SetText(L["Hostile"])
-    enemyColorNameButton:SetPoint("LEFT", enemyColorName.Text, "RIGHT", -1, 0)
-    enemyColorNameButton:SetSize(55, 20)
-    enemyColorNameButton:SetScript("OnClick", function()
-        OpenColorPicker("enemyColorNameRGB", enemyColorNameButtonIcon)
-    end)
-    CreateTooltipTwo(enemyColorNameButton, L["Hostile_Color"])
-    enemyColorNameButtonIcon:SetPoint("LEFT", enemyColorNameButton, "RIGHT", 0, -0.5)
-
-    local enemyNeutralColorNameButtonIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
-    enemyNeutralColorNameButtonIcon:SetAtlas("newplayertutorial-icon-key")
-    enemyNeutralColorNameButtonIcon:SetSize(18, 17)
-    UpdateColorSquare(enemyNeutralColorNameButtonIcon, unpack(BetterBlizzPlatesDB.enemyNeutralColorNameRGB or {1, 1, 1}))
-    local enemyNeutralColorNameButton = CreateFrame("Button", nil, enemyColorName, "UIPanelButtonTemplate")
-    enemyNeutralColorNameButton:SetText(L["Neutral"])
-    enemyNeutralColorNameButton:SetPoint("LEFT", enemyColorNameButtonIcon, "RIGHT", 0, 0.5)
-    enemyNeutralColorNameButton:SetSize(55, 20)
-    enemyNeutralColorNameButton:SetScript("OnClick", function()
-        OpenColorPicker("enemyNeutralColorNameRGB", enemyNeutralColorNameButtonIcon)
-    end)
-    CreateTooltipTwo(enemyNeutralColorNameButton, L["Neutral_Color"])
-    enemyNeutralColorNameButtonIcon:SetPoint("LEFT", enemyNeutralColorNameButton, "RIGHT", 0, -0.5)
-
-    enemyColorName:HookScript("OnClick", function(self)
-        if self:GetChecked() then
-            enemyNeutralColorNameButton:Enable()
-            enemyNeutralColorNameButton:Show()
-            enemyColorNameButton:Enable()
-            enemyColorNameButton:Show()
-            enemyColorNameButtonIcon:Show()
-            enemyNeutralColorNameButtonIcon:Show()
-        else
-            enemyNeutralColorNameButton:Disable()
-            enemyNeutralColorNameButton:Hide()
-            enemyColorNameButton:Disable()
-            enemyColorNameButton:Hide()
-            enemyColorNameButtonIcon:Hide()
-            enemyNeutralColorNameButtonIcon:Hide()
-        end
-    end)
-    if not BetterBlizzPlatesDB.enemyColorName then
-        enemyNeutralColorNameButton:Disable()
-        enemyNeutralColorNameButton:Hide()
-        enemyColorNameButton:Hide()
-        enemyColorNameButton:Disable()
-        enemyColorNameButtonIcon:Hide()
-        enemyNeutralColorNameButtonIcon:Hide()
+    local enemyColorNameOptions = CreateMultiSelectDropdown(L["Color_Options"], BetterBlizzPlates, {
+        { key = "enemyColorNameClass", label = L["Class_Color"], tooltipTitle = L["Class_Color_Name"], tooltip = L["Tooltip_Class_Color_Name_2_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.enemyColorNameFollowHealthbar end, tooltipNote = function() return BetterBlizzPlatesDB.enemyColorNameFollowHealthbar and L["Tooltip_Off_While_Follow_Healthbar"] or nil end },
+        { key = "enemyColorNameFollowHealthbar", label = L["Follow_Healthbar_Color"], tooltip = L["Tooltip_Follow_Healthbar_Color_Desc"] },
+        { key = "enemyColorNameHostile", colorKey = "enemyColorNameRGB", label = L["Hostile"], tooltipTitle = L["Hostile_Color"], tooltip = L["Tooltip_Color_Hostile_Names_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.enemyColorNameFollowHealthbar end, tooltipNote = function() return BetterBlizzPlatesDB.enemyColorNameFollowHealthbar and L["Tooltip_Off_While_Follow_Healthbar"] or nil end },
+        { key = "enemyColorNameNeutral", colorKey = "enemyNeutralColorNameRGB", label = L["Neutral"], tooltipTitle = L["Neutral_Color"], tooltip = L["Tooltip_Color_Neutral_Names_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.enemyColorNameFollowHealthbar end, tooltipNote = function() return BetterBlizzPlatesDB.enemyColorNameFollowHealthbar and L["Tooltip_Off_While_Follow_Healthbar"] or nil end },
+        { key = "enemyColorNamePet", colorKey = "enemyColorNamePetRGB", label = L["Pets"], tooltipTitle = L["Color_Pet_Names"], tooltip = L["Tooltip_Color_Enemy_Pet_Names_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.enemyColorNameFollowHealthbar end, tooltipNote = function() return BetterBlizzPlatesDB.enemyColorNameFollowHealthbar and L["Tooltip_Off_While_Follow_Healthbar"] or nil end },
+    }, 150, function() BBP.SyncClassColorCVars() end)
+    enemyColorNameOptions:SetPoint("LEFT", enemyColorName.text, "RIGHT", 4, 0)
+    enemyColorNameOptions:SetScale(0.7)
+    enemyColorNameOptions:SetMotionScriptsWhileDisabled(true)
+    CreateTooltipTwo(enemyColorNameOptions, L["Color_Options"], L["Tooltip_Color_Options_Desc"])
+    enemyColorNameOptions.searchParentKey = "enemyColorName"
+    function enemyColorNameOptions:UpdateEnabled()
+        local enabled = BetterBlizzPlatesDB.enemyColorName and true or false
+        self:SetEnabled(enabled)
+        self:SetAlpha(enabled and 1 or 0.5)
     end
-
-    local nameplateShowClassColor = CreateCheckbox("nameplateShowClassColor", L["Class_Color_Healthbar"], BetterBlizzPlates, true, BBP.ApplyNameplateWidth)
-    nameplateShowClassColor:SetPoint("TOPLEFT", enemyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateShowClassColor, L["Class_Color_Healthbar"], L["Tooltip_Class_Color_Healthbar_2_Desc"], nil, nil, "nameplateShowClassColor")
-    if GetCVar("nameplateShowClassColor") == "1" and BetterBlizzPlatesDB.nameplateShowClassColor == nil then
-        BetterBlizzPlatesDB.nameplateShowClassColor = true
-        nameplateShowClassColor:SetChecked(true)
-    end
+    enemyColorNameOptions:HookScript("OnShow", enemyColorNameOptions.UpdateEnabled)
+    enemyColorNameOptions:UpdateEnabled()
+    enemyColorName:HookScript("OnClick", function()
+        enemyColorNameOptions:UpdateEnabled()
+        BBP.SyncClassColorCVars()
+    end)
 
     local enemyColorThreat = CreateCheckbox("enemyColorThreat", L["Color_Threat"], BetterBlizzPlates)
-    enemyColorThreat:SetPoint("LEFT", nameplateShowClassColor.text, "RIGHT", 0, 0)
     CreateTooltipTwo(enemyColorThreat, L["Color_By_Threat_In_Instanced_PvE"], L["Tooltip_Color_By_Threat_In_Instanced_PvE_Desc"])
 
-    local enemyHealthBarColor = CreateCheckbox("enemyHealthBarColor", L["Custom_Healthbar_Color"], BetterBlizzPlates)
-    enemyHealthBarColor:SetPoint("TOPLEFT", nameplateShowClassColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(enemyHealthBarColor, L["Custom_Nameplate_Color"], L["Tooltip_Custom_Nameplate_Color_Desc"], L["Tooltip_Custom_Nameplate_Color_SubText"])
+    local enemyHealthBarColor = CreateCheckbox("enemyHealthBarColor", L["Change_Healthbar_Color"], BetterBlizzPlates)
+    enemyHealthBarColor:SetPoint("TOPLEFT", enemyColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(enemyHealthBarColor, L["Change_Healthbar_Color"], L["Tooltip_Custom_Nameplate_Color_Desc"])
 
     local alwaysHideEnemyCastbar = CreateCheckbox("alwaysHideEnemyCastbar", L["Hide_Castbar"], BetterBlizzPlates)
     alwaysHideEnemyCastbar:SetPoint("TOPLEFT", enemyHealthBarColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -6286,91 +6354,29 @@ local function guiGeneralTab()
         end
     end)
 
-    local enemyHealthBarColorNpcOnly = CreateCheckbox("enemyHealthBarColorNpcOnly", L["Npc_Only"], BetterBlizzPlates)
-    enemyHealthBarColorNpcOnly:SetPoint("LEFT", enemyHealthBarColor.Text, "RIGHT", 0, 0)
-    CreateTooltipTwo(enemyHealthBarColorNpcOnly, L["Only_Color_NPCs"])
-
-    local function OpenColorPicker(colorType, icon)
-        BBP.needsUpdate = true
-        local r, g, b = unpack(BetterBlizzPlatesDB[colorType] or {1, 1, 1})
-
-        ColorPickerFrame:SetupColorPickerAndShow({
-            r = r, g = g, b = b,
-            hasOpacity = false,
-            swatchFunc = function()
-                local r, g, b = ColorPickerFrame:GetColorRGB()
-                BetterBlizzPlatesDB[colorType] = { r, g, b }
-                BBP.RefreshAllNameplates()
-                UpdateColorSquare(icon, r, g, b)
-            end,
-            cancelFunc = function(previousValues)
-                local r, g, b = previousValues.r, previousValues.g, previousValues.b
-                BetterBlizzPlatesDB[colorType] = { r, g, b }
-                BBP.RefreshAllNameplates()
-                UpdateColorSquare(icon, r, g, b)
-            end,
-        })
+    local enemyHealthBarColorOptions = CreateMultiSelectDropdown(L["Color_Options"], BetterBlizzPlates, {
+        { key = "enemyHealthBarColorClass", label = L["Class_Color"], tooltipTitle = L["Class_Color_Healthbar"], tooltip = L["Tooltip_Class_Color_Healthbar_2_Desc"] },
+        { key = "enemyHealthBarColorNpcOnly", label = L["Npc_Only"], tooltip = L["Only_Color_NPCs"], isEnabled = function() return not BetterBlizzPlatesDB.enemyHealthBarColorClass end, tooltipNote = function() return BetterBlizzPlatesDB.enemyHealthBarColorClass and L["Tooltip_Off_While_Class_Color"] or nil end },
+        { key = "enemyHealthBarColorHostile", colorKey = "enemyHealthBarColorRGB", label = L["Hostile"], tooltipTitle = L["Hostile_Color"], tooltip = L["Tooltip_Color_Hostile_Desc"] },
+        { key = "enemyHealthBarColorNeutral", colorKey = "enemyNeutralHealthBarColorRGB", label = L["Neutral"], tooltipTitle = L["Neutral_Color"], tooltip = L["Tooltip_Color_Neutral_Desc"] },
+        { key = "enemyHealthBarColorPet", colorKey = "enemyHealthBarColorPetRGB", label = L["Pets"], tooltipTitle = L["Color_Pets"], tooltip = L["Tooltip_Color_Enemy_Pets_Desc"] },
+    }, 150, function() BBP.SyncClassColorCVars() end)
+    enemyHealthBarColorOptions:SetPoint("LEFT", enemyHealthBarColor.text, "RIGHT", 4, 0)
+    enemyHealthBarColorOptions:SetScale(0.7)
+    enemyHealthBarColorOptions:SetMotionScriptsWhileDisabled(true)
+    CreateTooltipTwo(enemyHealthBarColorOptions, L["Color_Options"], L["Tooltip_Color_Options_Desc"])
+    enemyHealthBarColorOptions.searchParentKey = "enemyHealthBarColor"
+    function enemyHealthBarColorOptions:UpdateEnabled()
+        local enabled = BetterBlizzPlatesDB.enemyHealthBarColor and true or false
+        self:SetEnabled(enabled)
+        self:SetAlpha(enabled and 1 or 0.5)
     end
-
-    local enemyHealthBarColorButtonIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
-    enemyHealthBarColorButtonIcon:SetAtlas("newplayertutorial-icon-key")
-    enemyHealthBarColorButtonIcon:SetSize(18, 17)
-    UpdateColorSquare(enemyHealthBarColorButtonIcon, unpack(BetterBlizzPlatesDB.enemyHealthBarColorRGB or {1, 1, 1}))
-    local enemyHealthBarColorButton = CreateFrame("Button", nil, enemyHealthBarColor, "UIPanelButtonTemplate")
-    enemyHealthBarColorButton:SetText(L["Hostile"])
-    enemyHealthBarColorButton:SetPoint("LEFT", enemyHealthBarColorNpcOnly.Text, "RIGHT", -1, 0)
-    enemyHealthBarColorButton:SetSize(55, 20)
-    enemyHealthBarColorButton:SetScript("OnClick", function()
-        OpenColorPicker("enemyHealthBarColorRGB", enemyHealthBarColorButtonIcon)
+    enemyHealthBarColorOptions:HookScript("OnShow", enemyHealthBarColorOptions.UpdateEnabled)
+    enemyHealthBarColorOptions:UpdateEnabled()
+    enemyHealthBarColor:HookScript("OnClick", function()
+        enemyHealthBarColorOptions:UpdateEnabled()
+        BBP.SyncClassColorCVars()
     end)
-    CreateTooltipTwo(enemyHealthBarColorButton, L["Hostile_Color"])
-    enemyHealthBarColorButtonIcon:SetPoint("LEFT", enemyHealthBarColorButton, "RIGHT", 0, -0.5)
-
-    local enemyNeutralHealthBarColorButtonIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
-    enemyNeutralHealthBarColorButtonIcon:SetAtlas("newplayertutorial-icon-key")
-    enemyNeutralHealthBarColorButtonIcon:SetSize(18, 17)
-    UpdateColorSquare(enemyNeutralHealthBarColorButtonIcon, unpack(BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 1, 1}))
-    local enemyNeutralHealthBarColorButton = CreateFrame("Button", nil, enemyHealthBarColor, "UIPanelButtonTemplate")
-    enemyNeutralHealthBarColorButton:SetText(L["Neutral"])
-    enemyNeutralHealthBarColorButton:SetPoint("LEFT", enemyHealthBarColorButtonIcon, "RIGHT", 0, 0.5)
-    enemyNeutralHealthBarColorButton:SetSize(55, 20)
-    enemyNeutralHealthBarColorButton:SetScript("OnClick", function()
-        OpenColorPicker("enemyNeutralHealthBarColorRGB", enemyNeutralHealthBarColorButtonIcon)
-    end)
-    CreateTooltipTwo(enemyNeutralHealthBarColorButton, L["Neutral_Color"])
-    enemyNeutralHealthBarColorButtonIcon:SetPoint("LEFT", enemyNeutralHealthBarColorButton, "RIGHT", 0, -0.5)
-
-    enemyHealthBarColor:HookScript("OnClick", function(self)
-        if self:GetChecked() then
-            enemyHealthBarColorNpcOnly:Enable()
-            enemyHealthBarColorNpcOnly:Show()
-            enemyNeutralHealthBarColorButton:Enable()
-            enemyNeutralHealthBarColorButton:Show()
-            enemyHealthBarColorButton:Enable()
-            enemyHealthBarColorButton:Show()
-            enemyHealthBarColorButtonIcon:Show()
-            enemyNeutralHealthBarColorButtonIcon:Show()
-        else
-            enemyHealthBarColorNpcOnly:Hide()
-            enemyHealthBarColorNpcOnly:Disable()
-            enemyNeutralHealthBarColorButton:Disable()
-            enemyNeutralHealthBarColorButton:Hide()
-            enemyHealthBarColorButton:Disable()
-            enemyHealthBarColorButton:Hide()
-            enemyHealthBarColorButtonIcon:Hide()
-            enemyNeutralHealthBarColorButtonIcon:Hide()
-        end
-    end)
-    if not BetterBlizzPlatesDB.enemyHealthBarColor then
-        enemyHealthBarColorNpcOnly:Hide()
-        enemyHealthBarColorNpcOnly:Disable()
-        enemyNeutralHealthBarColorButton:Disable()
-        enemyNeutralHealthBarColorButton:Hide()
-        enemyHealthBarColorButton:Hide()
-        enemyHealthBarColorButton:Disable()
-        enemyHealthBarColorButtonIcon:Hide()
-        enemyNeutralHealthBarColorButtonIcon:Hide()
-    end
 
     local showNameplateCastbarTimer = CreateCheckbox("showNameplateCastbarTimer", L["Cast_Timer_Next_To_Castbar"], BetterBlizzPlates, nil, BBP.ToggleSpellCastEventRegistration)
     showNameplateCastbarTimer:SetPoint("LEFT", alwaysHideEnemyCastbar.text, "RIGHT", 0, 0)
@@ -6380,7 +6386,6 @@ local function guiGeneralTab()
         BBP.ToggleTargetTextAlwaysShow()
         BBP.RefreshAllNameplates()
     end)
-    showNameplateTargetText:SetPoint("TOPLEFT", alwaysHideEnemyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(showNameplateTargetText, L["Nameplate_Target_Text"], L["Tooltip_Nameplate_Target_Text_Desc"], L["Tooltip_Nameplate_Target_Text_SubText"])
 
     local hideEliteDragon = CreateCheckbox("hideEliteDragon", L["Hide_Elite_Icon"], BetterBlizzPlates)
@@ -6392,7 +6397,9 @@ local function guiGeneralTab()
     CreateTooltipTwo(enemyNameScale, L["Tooltip_Name_Size"], L["Tooltip_Name_Size_Desc"])
 
     local hideEnemyNameText = CreateCheckbox("hideEnemyNameText", L["Hide_Name"], BetterBlizzPlates)
-    hideEnemyNameText:SetPoint("LEFT", enemyNameScale, "RIGHT", 2, 0)
+    hideEnemyNameText:SetPoint("TOPLEFT", alwaysHideEnemyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    showNameplateTargetText:SetPoint("TOPLEFT", hideEnemyNameText, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    enemyColorThreat:SetPoint("LEFT", hideEnemyNameText.text, "RIGHT", 0, 0)
     CreateTooltipTwo(hideEnemyNameText, L["Hide_Enemy_Name"], L["Tooltip_Hide_Enemy_Name_Desc"])
     hideEnemyNameText:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
@@ -6459,7 +6466,7 @@ local function guiGeneralTab()
     -- Friendly nameplates:
     ----------------------
     local friendlyNameplatesText = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    friendlyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -375)
+    friendlyNameplatesText:SetPoint("TOPLEFT", mainGuiAnchor, "BOTTOMLEFT", 0, -370)
     friendlyNameplatesText:SetText(L["Friendly_Nameplates"])
     friendlyNameplatesText:SetFont(fontLarge, 16)
     friendlyNameplatesText:SetTextColor(1,1,1)
@@ -6475,98 +6482,93 @@ local function guiGeneralTab()
     local friendlyHideOtherPets = CreateCheckbox("friendlyHideOtherPets", L["Hide_Other_Pets"], BetterBlizzPlates)
     friendlyHideOtherPets:SetPoint("LEFT", friendlyNameplateClickthrough.text, "RIGHT", 0, 0)
     CreateTooltipTwo(friendlyHideOtherPets, L["Hide_Other_Pets"], L["Tooltip_Hide_Other_Pets_Desc"])
+    friendlyHideOtherPets:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            BetterBlizzPlatesDB.friendlyHideOwnSecondaryPets = not BetterBlizzPlatesDB.friendlyHideOwnSecondaryPets
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+            BBP.RefreshAllNameplates()
+        end
+    end)
 
     -- local friendlyNameplateNonstackable = CreateCheckbox("friendlyNameplateNonstackable", "Non-Stackable", BetterBlizzPlates, nil, BBP.ApplyNameplateWidth)
     -- friendlyNameplateNonstackable:SetPoint("LEFT", friendlyNameplateClickthrough.text, "RIGHT", 0, 0)
     -- CreateTooltipTwo(friendlyNameplateNonstackable, "Non-Stackable", "Makes the friendly nameplates non-stackable even with \"Stacking Nameplates\" on.")
 
-    local friendlyClassColorName = CreateCheckbox("friendlyClassColorName", L["Class_Color_Name"], BetterBlizzPlates)
-    BBP.friendlyClassColorNameCheckbox = friendlyClassColorName
-    friendlyClassColorName:SetPoint("TOPLEFT", friendlyNameplateClickthrough, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(friendlyClassColorName, L["Class_Color_Name"], L["Tooltip_Class_Color_Name_2_Desc_2"], nil, nil, "nameplateUseClassColorForFriendlyPlayerUnitNames")
-    friendlyClassColorName:HookScript("OnClick", function(self)
-        local value = self:GetChecked() and "1" or "0"
-        BBP.RunAfterCombat(function()
-            C_CVar.SetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames", value)
-        end)
-    end)
-
     local friendlyColorName = CreateCheckbox("friendlyColorName", L["Color_Name"], BetterBlizzPlates)
-    friendlyColorName:SetPoint("LEFT", friendlyClassColorName.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(friendlyColorName, L["Color_Name"], L["Tooltip_Color_Name_2_Desc_2"], L["Tooltip_Color_Name_2_SubText"])
+    friendlyColorName:SetPoint("TOPLEFT", friendlyNameplateClickthrough, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(friendlyColorName, L["Color_Name"], L["Tooltip_Color_Name_2_Desc_2"])
 
-    local friendlyColorNameIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
-    friendlyColorNameIcon:SetAtlas("newplayertutorial-icon-key")
-    friendlyColorNameIcon:SetSize(18, 17)
-    UpdateColorSquare(friendlyColorNameIcon, unpack(BetterBlizzPlatesDB.friendlyColorNameRGB or {1, 1, 1}))
-
-    local function OpenColorPicker2()
-        BBP.needsUpdate = true
-        local r, g, b = unpack(BetterBlizzPlatesDB.friendlyColorNameRGB or {1, 1, 1})
-        ColorPickerFrame:SetupColorPickerAndShow({
-            r = r, g = g, b = b, hasOpacity = false,
-            swatchFunc = function()
-                local r, g, b = ColorPickerFrame:GetColorRGB()
-                BetterBlizzPlatesDB.friendlyColorNameRGB = { r, g, b }
-                BBP.RefreshAllNameplates()
-                UpdateColorSquare(friendlyColorNameIcon, r, g, b)
-            end,
-            cancelFunc = function(previousValues)
-                BetterBlizzPlatesDB.friendlyColorNameRGB = { previousValues.r, previousValues.g, previousValues.b }
-                BBP.RefreshAllNameplates()
-                UpdateColorSquare(friendlyColorNameIcon, r, g, b)
-            end
-        })
+    local friendlyColorNameOptions = CreateMultiSelectDropdown(L["Color_Options"], BetterBlizzPlates, {
+        { key = "friendlyColorNameClass", label = L["Class_Color"], tooltipTitle = L["Class_Color_Name"], tooltip = L["Tooltip_Class_Color_Name_2_Desc_2"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyColorNameOne and not BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar and L["Tooltip_Off_While_Follow_Healthbar"] or BetterBlizzPlatesDB.friendlyColorNameOne and L["Tooltip_Off_While_One_Color"] or nil end },
+        { key = "friendlyColorNameFollowHealthbar", label = L["Follow_Healthbar_Color"], tooltip = L["Tooltip_Follow_Healthbar_Color_Desc"] },
+        { key = "friendlyColorNameOne", colorKey = "friendlyColorNameOneRGB", label = L["One_Color"], tooltip = L["Tooltip_One_Color_Name_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar and L["Tooltip_Off_While_Follow_Healthbar"] or nil end },
+        { key = "friendlyColorNameFriend", colorKey = "friendlyColorNameFriendRGB", label = L["Friend"], tooltipTitle = L["Color_Friend_Names"], tooltip = L["Tooltip_Color_Friend_Names_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyColorNameOne and not BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar and L["Tooltip_Off_While_Follow_Healthbar"] or BetterBlizzPlatesDB.friendlyColorNameOne and L["Tooltip_Off_While_One_Color"] or nil end },
+        { key = "friendlyColorNameGuild", colorKey = "friendlyColorNameGuildRGB", label = L["Guildie"], tooltipTitle = L["Color_Guildie_Names"], tooltip = L["Tooltip_Color_Guildie_Names_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyColorNameOne and not BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar and L["Tooltip_Off_While_Follow_Healthbar"] or BetterBlizzPlatesDB.friendlyColorNameOne and L["Tooltip_Off_While_One_Color"] or nil end },
+        { key = "friendlyColorNameRecentAlly", colorKey = "friendlyColorNameRecentAllyRGB", label = L["Recent_Allies"], tooltipTitle = L["Color_Recent_Ally_Names"], tooltip = L["Tooltip_Color_Recent_Ally_Names_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyColorNameOne and not BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar and L["Tooltip_Off_While_Follow_Healthbar"] or BetterBlizzPlatesDB.friendlyColorNameOne and L["Tooltip_Off_While_One_Color"] or nil end },
+        { key = "friendlyColorNamePlayer", colorKey = "friendlyColorNameRGB", label = L["Player"], tooltipTitle = L["Color_Player_Names"], tooltip = L["Tooltip_Color_Player_Names_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyColorNameOne and not BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar and not BetterBlizzPlatesDB.friendlyColorNameClass end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar and L["Tooltip_Off_While_Follow_Healthbar"] or BetterBlizzPlatesDB.friendlyColorNameOne and L["Tooltip_Off_While_One_Color"] or BetterBlizzPlatesDB.friendlyColorNameClass and L["Tooltip_Off_While_Class_Color"] or nil end },
+        { key = "friendlyColorNameNpc", colorKey = "friendlyColorNameNpcRGB", label = L["Npc"], tooltipTitle = L["Color_Npc_Names"], tooltip = L["Tooltip_Color_Npc_Names_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyColorNameOne and not BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar and L["Tooltip_Off_While_Follow_Healthbar"] or BetterBlizzPlatesDB.friendlyColorNameOne and L["Tooltip_Off_While_One_Color"] or nil end },
+        { key = "friendlyColorNamePet", colorKey = "friendlyColorNamePetRGB", label = L["Pets"], tooltipTitle = L["Color_Pet_Names"], tooltip = L["Tooltip_Color_Pet_Names_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyColorNameOne and not BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar and L["Tooltip_Off_While_Follow_Healthbar"] or BetterBlizzPlatesDB.friendlyColorNameOne and L["Tooltip_Off_While_One_Color"] or nil end },
+        { key = "friendlyColorNameMyPet", colorKey = "friendlyColorNameMyPetRGB", label = L["My_Pet"], tooltipTitle = L["Color_My_Pet_Name"], tooltip = L["Tooltip_Color_My_Pet_Name_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyColorNameOne and not BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyColorNameFollowHealthbar and L["Tooltip_Off_While_Follow_Healthbar"] or BetterBlizzPlatesDB.friendlyColorNameOne and L["Tooltip_Off_While_One_Color"] or nil end },
+    }, 150, function() BBP.SyncClassColorCVars() end)
+    friendlyColorNameOptions:SetPoint("LEFT", friendlyColorName.text, "RIGHT", 4, 0)
+    friendlyColorNameOptions:SetScale(0.7)
+    friendlyColorNameOptions:SetMotionScriptsWhileDisabled(true)
+    CreateTooltipTwo(friendlyColorNameOptions, L["Color_Options"], L["Tooltip_Color_Options_Desc"])
+    friendlyColorNameOptions.searchParentKey = "friendlyColorName"
+    function friendlyColorNameOptions:UpdateEnabled()
+        local enabled = BetterBlizzPlatesDB.friendlyColorName and true or false
+        self:SetEnabled(enabled)
+        self:SetAlpha(enabled and 1 or 0.5)
     end
-
-    local friendlyColorNameButton = CreateFrame("Button", nil, BetterBlizzPlates, "UIPanelButtonTemplate")
-    friendlyColorNameButton:SetText(L["Color"])
-    friendlyColorNameButton:SetPoint("LEFT", friendlyColorName.text, "RIGHT", -1, 0)
-    friendlyColorNameButton:SetSize(45, 20)
-    friendlyColorNameButton:SetScript("OnClick", OpenColorPicker2)
-    friendlyColorNameIcon:SetPoint("LEFT", friendlyColorNameButton, "RIGHT", 0, -0.5)
-    friendlyColorName:HookScript("OnClick", function(self)
-        if self:GetChecked() then
-            friendlyColorNameButton:Show()
-            friendlyColorNameIcon:Show()
-            friendlyColorNameButton:Enable()
-        else
-            friendlyColorNameButton:Hide()
-            friendlyColorNameIcon:Hide()
-            friendlyColorNameButton:Disable()
-        end
+    friendlyColorNameOptions:HookScript("OnShow", friendlyColorNameOptions.UpdateEnabled)
+    friendlyColorNameOptions:UpdateEnabled()
+    friendlyColorName:HookScript("OnClick", function()
+        friendlyColorNameOptions:UpdateEnabled()
+        BBP.SyncClassColorCVars()
     end)
-    if friendlyColorName:GetChecked() then
-        friendlyColorNameButton:Show()
-        friendlyColorNameIcon:Show()
-    else
-        friendlyColorNameButton:Hide()
-        friendlyColorNameIcon:Hide()
+
+    local friendlyHealthBarColor = CreateCheckbox("friendlyHealthBarColor", L["Change_Healthbar_Color"], BetterBlizzPlates)
+    friendlyHealthBarColor:SetPoint("TOPLEFT", friendlyColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(friendlyHealthBarColor, L["Change_Healthbar_Color"], L["Tooltip_Custom_Healthbar_Color_2_Desc"])
+
+    local friendlyHealthBarColorOptions = CreateMultiSelectDropdown(L["Color_Options"], BetterBlizzPlates, {
+        { key = "friendlyHealthBarColorClass", label = L["Class_Color"], tooltipTitle = L["Class_Color_Healthbar"], tooltip = L["Tooltip_Class_Color_Healthbar_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyHealthBarColorOne end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyHealthBarColorOne and L["Tooltip_Off_While_One_Color"] or nil end },
+        { key = "friendlyHealthBarColorOne", colorKey = "friendlyHealthBarColorOneRGB", label = L["One_Color"], tooltip = L["Tooltip_One_Color_Healthbar_Desc"] },
+        { key = "friendlyHealthBarColorFriend", colorKey = "friendlyHealthBarColorFriendRGB", label = L["Friend"], tooltipTitle = L["Color_Friends"], tooltip = L["Tooltip_Color_Friends_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyHealthBarColorOne end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyHealthBarColorOne and L["Tooltip_Off_While_One_Color"] or nil end },
+        { key = "friendlyHealthBarColorGuild", colorKey = "friendlyHealthBarColorGuildRGB", label = L["Guildie"], tooltipTitle = L["Color_Guildies"], tooltip = L["Tooltip_Color_Guildies_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyHealthBarColorOne end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyHealthBarColorOne and L["Tooltip_Off_While_One_Color"] or nil end },
+        { key = "friendlyHealthBarColorRecentAlly", colorKey = "friendlyHealthBarColorRecentAllyRGB", label = L["Recent_Allies"], tooltipTitle = L["Color_Recent_Allies"], tooltip = L["Tooltip_Color_Recent_Allies_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyHealthBarColorOne end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyHealthBarColorOne and L["Tooltip_Off_While_One_Color"] or nil end },
+        { key = "friendlyHealthBarColorPlayer", colorKey = "friendlyHealthBarColorRGB", label = L["Player"], tooltipTitle = L["Color_Players"], tooltip = L["Tooltip_Color_Players_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyHealthBarColorOne and not BetterBlizzPlatesDB.friendlyHealthBarColorClass end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyHealthBarColorOne and L["Tooltip_Off_While_One_Color"] or BetterBlizzPlatesDB.friendlyHealthBarColorClass and L["Tooltip_Off_While_Class_Color"] or nil end },
+        { key = "friendlyHealthBarColorNpc", colorKey = "friendlyHealthBarColorNpcRGB", label = L["Npc"], tooltipTitle = L["Color_Npcs"], tooltip = L["Tooltip_Color_Npcs_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyHealthBarColorOne end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyHealthBarColorOne and L["Tooltip_Off_While_One_Color"] or nil end },
+        { key = "friendlyHealthBarColorPet", colorKey = "friendlyHealthBarColorPetRGB", label = L["Pets"], tooltipTitle = L["Color_Pets"], tooltip = L["Tooltip_Color_Pets_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyHealthBarColorOne end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyHealthBarColorOne and L["Tooltip_Off_While_One_Color"] or nil end },
+        { key = "friendlyHealthBarColorMyPet", colorKey = "friendlyHealthBarColorMyPetRGB", label = L["My_Pet"], tooltipTitle = L["Color_My_Pet"], tooltip = L["Tooltip_Color_My_Pet_Desc"], isEnabled = function() return not BetterBlizzPlatesDB.friendlyHealthBarColorOne end, tooltipNote = function() return BetterBlizzPlatesDB.friendlyHealthBarColorOne and L["Tooltip_Off_While_One_Color"] or nil end },
+    }, 150, function() BBP.SyncClassColorCVars() end)
+    friendlyHealthBarColorOptions:SetPoint("LEFT", friendlyHealthBarColor.text, "RIGHT", 4, 0)
+    friendlyHealthBarColorOptions:SetScale(0.7)
+    friendlyHealthBarColorOptions:SetMotionScriptsWhileDisabled(true)
+    CreateTooltipTwo(friendlyHealthBarColorOptions, L["Color_Options"], L["Tooltip_Color_Options_Desc"])
+    friendlyHealthBarColorOptions.searchParentKey = "friendlyHealthBarColor"
+    function friendlyHealthBarColorOptions:UpdateEnabled()
+        local enabled = BetterBlizzPlatesDB.friendlyHealthBarColor and true or false
+        self:SetEnabled(enabled)
+        self:SetAlpha(enabled and 1 or 0.5)
     end
+    friendlyHealthBarColorOptions:HookScript("OnShow", friendlyHealthBarColorOptions.UpdateEnabled)
+    friendlyHealthBarColorOptions:UpdateEnabled()
+    friendlyHealthBarColor:HookScript("OnClick", function()
+        friendlyHealthBarColorOptions:UpdateEnabled()
+        BBP.SyncClassColorCVars()
+    end)
 
-    local nameplateShowFriendlyClassColor = CreateCheckbox("nameplateShowFriendlyClassColor", L["Class_Color_Healthbar"], BetterBlizzPlates, true)
-    BBP.classColorCVarCheckboxes = { nameplateShowClassColor = nameplateShowClassColor, nameplateShowFriendlyClassColor = nameplateShowFriendlyClassColor }
-    nameplateShowFriendlyClassColor:SetPoint("TOPLEFT", friendlyClassColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(nameplateShowFriendlyClassColor, L["Class_Color_Healthbar"], L["Tooltip_Class_Color_Healthbar_Desc"], nil, nil, "nameplateShowFriendlyClassColor")
-    if GetCVar("nameplateShowFriendlyClassColor") == "1" and BetterBlizzPlatesDB.nameplateShowFriendlyClassColor == nil then
-        BetterBlizzPlatesDB.nameplateShowFriendlyClassColor = true
-        nameplateShowFriendlyClassColor:SetChecked(true)
-    end
-
-    local friendlyHealthBarColor = CreateCheckbox("friendlyHealthBarColor", L["Custom_Healthbar_Color"], BetterBlizzPlates)
-    friendlyHealthBarColor:SetPoint("TOPLEFT", nameplateShowFriendlyClassColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(friendlyHealthBarColor, L["Custom_Healthbar_Color"], L["Tooltip_Custom_Healthbar_Color_2_Desc"])
-
-    local friendlyHealthBarColorPlayer = CreateCheckbox("friendlyHealthBarColorPlayer", L["Player"], BetterBlizzPlates)
-    friendlyHealthBarColorPlayer:SetPoint("LEFT", friendlyHealthBarColor.text, "RIGHT", -3, 0)
-    CreateTooltipTwo(friendlyHealthBarColorPlayer, L["Color_Players"], L["Tooltip_Color_Players_Desc"])
-
-    local friendlyHealthBarColorNpc = CreateCheckbox("friendlyHealthBarColorNpc", L["Npc"], BetterBlizzPlates)
-    friendlyHealthBarColorNpc:SetPoint("LEFT", friendlyHealthBarColorPlayer.text, "RIGHT", -3, 0)
-    CreateTooltipTwo(friendlyHealthBarColorNpc, L["Color_Npcs"], L["Tooltip_Color_Npcs_Desc"])
+    BBP.classColorWidgets = {
+        enemyColorName = { enemyColorName, enemyColorNameOptions },
+        enemyHealthBarColor = { enemyHealthBarColor, enemyHealthBarColorOptions },
+        friendlyColorName = { friendlyColorName, friendlyColorNameOptions },
+        friendlyHealthBarColor = { friendlyHealthBarColor, friendlyHealthBarColorOptions },
+    }
 
     local alwaysHideFriendlyCastbar = CreateCheckbox("alwaysHideFriendlyCastbar", L["Hide_Castbar"], BetterBlizzPlates)
-    alwaysHideFriendlyCastbar:SetPoint("TOPLEFT", friendlyHealthBarColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(alwaysHideFriendlyCastbar, L["Hide_Friendly_Castbar"], L["Tooltip_Hide_Friendly_Castbar_Desc"])
     alwaysHideFriendlyCastbar:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
@@ -6602,85 +6604,8 @@ local function guiGeneralTab()
     --     end
     -- end)
 
-    local function UpdateColorSquare(icon, r, g, b)
-        if r and g and b then
-            icon:SetVertexColor(r, g, b)
-        end
-    end
-
-    local function OpenColorPicker(colorType, icon)
-        BBP.needsUpdate = true
-        local r, g, b = unpack(BetterBlizzPlatesDB[colorType] or {1, 1, 1})
-        UpdateColorSquare(icon, r, g, b)
-
-        ColorPickerFrame:SetupColorPickerAndShow({
-            r = r, g = g, b = b,
-            hasOpacity = false,
-            swatchFunc = function()
-                local r, g, b = ColorPickerFrame:GetColorRGB()
-                BetterBlizzPlatesDB[colorType] = { r, g, b }
-                BBP.RefreshAllNameplates()
-                UpdateColorSquare(icon, r, g, b)
-            end,
-            cancelFunc = function(previousValues)
-                local r, g, b = previousValues.r, previousValues.g, previousValues.b
-                BetterBlizzPlatesDB[colorType] = { r, g, b }
-                BBP.RefreshAllNameplates()
-                UpdateColorSquare(icon, r, g, b)
-            end,
-        })
-    end
-
-    local friendlyHealthBarColorButton = CreateFrame("Button", nil, friendlyHealthBarColor, "UIPanelButtonTemplate")
-    friendlyHealthBarColorButton:SetText(L["Color"])
-    friendlyHealthBarColorButton:SetPoint("LEFT", friendlyHealthBarColorNpc.Text, "RIGHT", -3, 0)
-    friendlyHealthBarColorButton:SetSize(50, 20)
-    local friendlyHealthBarColorButtonIcon = BetterBlizzPlates:CreateTexture(nil, "ARTWORK")
-    friendlyHealthBarColorButtonIcon:SetAtlas("newplayertutorial-icon-key")
-    friendlyHealthBarColorButtonIcon:SetSize(18, 17)
-    friendlyHealthBarColorButtonIcon:SetPoint("LEFT", friendlyHealthBarColorButton, "RIGHT", 0, 0)
-    UpdateColorSquare(friendlyHealthBarColorButtonIcon, unpack(BetterBlizzPlatesDB["friendlyHealthBarColorRGB"] or {1, 1, 1}))
-    friendlyHealthBarColorButton:SetScript("OnClick", function()
-        OpenColorPicker("friendlyHealthBarColorRGB", friendlyHealthBarColorButtonIcon)
-    end)
-
-    friendlyHealthBarColor:HookScript("OnClick", function(self)
-        if self:GetChecked() then
-            friendlyHealthBarColorPlayer:Enable()
-            friendlyHealthBarColorPlayer:Show()
-            friendlyHealthBarColorNpc:Enable()
-            friendlyHealthBarColorNpc:Show()
-            -- friendlyNameColor:Enable()
-            -- friendlyNameColor:Show()
-            friendlyHealthBarColorButton:Enable()
-            friendlyHealthBarColorButton:Show()
-            friendlyHealthBarColorButtonIcon:Show()
-        else
-            friendlyHealthBarColorPlayer:Disable()
-            friendlyHealthBarColorPlayer:Hide()
-            friendlyHealthBarColorNpc:Disable()
-            friendlyHealthBarColorNpc:Hide()
-            -- friendlyNameColor:Hide()
-            -- friendlyNameColor:Disable()
-            friendlyHealthBarColorButton:Disable()
-            friendlyHealthBarColorButton:Hide()
-            friendlyHealthBarColorButtonIcon:Hide()
-        end
-    end)
-    if not BetterBlizzPlatesDB.friendlyHealthBarColor then
-        friendlyHealthBarColorPlayer:Disable()
-        friendlyHealthBarColorPlayer:Hide()
-        friendlyHealthBarColorNpc:Disable()
-        friendlyHealthBarColorNpc:Hide()
-        -- friendlyNameColor:Disable()
-        -- friendlyNameColor:Hide()
-        friendlyHealthBarColorButtonIcon:Hide()
-        friendlyHealthBarColorButton:Hide() --default slider creation only does 0.5 alpha
-        friendlyHealthBarColorButton:Disable()
-    end
-
     BBP.friendlyHideHealthBar = CreateCheckbox("friendlyHideHealthBar", L["Hide_Healthbar"], BetterBlizzPlates)
-    BBP.friendlyHideHealthBar:SetPoint("LEFT", alwaysHideFriendlyCastbar.text, "RIGHT", 0, 0)
+    BBP.friendlyHideHealthBar:SetPoint("TOPLEFT", friendlyHealthBarColor, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     BBP.friendlyHideHealthBar:HookScript("OnClick", function()
         BBP.HideHealthbarInPvEMagicCaller()
     end)
@@ -6748,47 +6673,36 @@ local function guiGeneralTab()
     -- end
 
     local friendlyNpToggles = BetterBlizzPlates:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    friendlyNpToggles:SetText(L["Toggles_Colon"])
-    friendlyNpToggles:SetPoint("TOPLEFT", alwaysHideFriendlyCastbar, "BOTTOMLEFT", -20, -70)
+    friendlyNpToggles:SetText(L["Enable_Friendly_Nameplates_In"])
     CreateTooltipTwo(friendlyNpToggles, L["Toggle_Friendly_Nameplates"], L["Tooltip_Toggle_Friendly_Nameplates_Desc"])
 
     do
-        BBP.friendlyToggleButtons = {}
-        local anchor = friendlyNpToggles
+        local options = {}
         for _, toggle in ipairs({
-            { "arena", L["Toggle_Short_Arena"], L["Arena_Toggle"], L["Tooltip_Friendly_Toggle_Arenas"] },
-            { "bg", L["Toggle_BGs"], L["Battleground_Toggle"], L["Tooltip_Friendly_Toggle_BGs"] },
-            { "epicbg", L["Toggle_Short_EBGs"], L["Epic_Battleground_Toggle"], L["Tooltip_Friendly_Toggle_EBGs"] },
-            { "dungeon", L["Toggle_Dungeons"], L["Dungeon_Toggle"], L["Tooltip_Friendly_Toggle_Dungeons"] },
-            { "raid", L["Toggle_Raids"], L["Raid_Toggle"], L["Tooltip_Friendly_Toggle_Raids"] },
-            { "world", L["Toggle_World"], L["World_Toggle"], L["Tooltip_Friendly_Toggle_World"] },
-            { "city", L["Toggle_Short_City"], L["City_Toggle"], L["Tooltip_Friendly_Toggle_Cities"] },
+            { "arena", L["Tooltip_Friendly_Toggle_Arenas"] },
+            { "bg", L["Tooltip_Friendly_Toggle_BGs"] },
+            { "epicbg", L["Tooltip_Friendly_Toggle_EBGs"] },
+            { "dungeon", L["Tooltip_Friendly_Toggle_Dungeons"] },
+            { "raid", L["Tooltip_Friendly_Toggle_Raids"] },
+            { "world", L["Tooltip_Friendly_Toggle_World"] },
+            { "city", L["Tooltip_Friendly_Toggle_Cities"] },
         }) do
-            local key = toggle[1]
-            if BBP.nameplateToggleCategoryByKey[key].available then
-                local button = CreateFrame("CheckButton", nil, BetterBlizzPlates, "InterfaceOptionsCheckButtonTemplate")
-                button:SetSize(22, 22)
-                button.Text:SetText(toggle[2])
-                button.searchCategory = L["Search_Name_General"]
-                table.insert(checkBoxList, {checkbox = button, label = toggle[2]})
-                CreateTooltipTwo(button, toggle[3], toggle[4])
-                if anchor == friendlyNpToggles then
-                    button:SetPoint("LEFT", anchor, "RIGHT", 0, 0)
-                else
-                    button:SetPoint("LEFT", anchor.Text, "RIGHT", -2, 0)
-                end
-                button:SetChecked(BBP.GetFriendlyToggle(key))
-                button:SetScript("OnClick", function(self)
-                    BBP.SetFriendlyToggle(key, self:GetChecked())
-                end)
-                BBP.friendlyToggleButtons[key] = button
-                anchor = button
+            local category = BBP.nameplateToggleCategoryByKey[toggle[1]]
+            if category.available then
+                table.insert(options, {
+                    key = toggle[1], label = category.label, tooltip = toggle[2],
+                    get = function(option) return BBP.GetFriendlyToggle(option.key) end,
+                    set = function(option, value) BBP.SetFriendlyToggle(option.key, value) end,
+                })
             end
         end
+        BBP.friendlyToggleDropdown = CreateMultiSelectDropdown(L["Content_Options"], BetterBlizzPlates, options, 150)
+        BBP.friendlyToggleDropdown:SetPoint("LEFT", friendlyNpToggles, "RIGHT", 4, 0)
+        BBP.friendlyToggleDropdown:SetScale(0.7)
+        CreateTooltipTwo(BBP.friendlyToggleDropdown, L["Toggle_Friendly_Nameplates"], L["Tooltip_Toggle_Friendly_Nameplates_Desc"])
     end
 
     local friendlyNameScale = CreateSlider(BetterBlizzPlates, L["Tooltip_Name_Size"], 0.5, 3, 0.01, "friendlyNameScale")
-    friendlyNameScale:SetPoint("TOPLEFT", alwaysHideFriendlyCastbar, "BOTTOMLEFT", 0, -6)
     CreateTooltipTwo(friendlyNameScale, L["Tooltip_Name_Size"], L["Tooltip_Name_Size_Desc_2"], L["Tooltip_Name_Size_SubText"])
 
     local hideNameTooltip = L["Tooltip_Hide_Name_2_Desc"]
@@ -6796,7 +6710,10 @@ local function guiGeneralTab()
         hideNameTooltip = L["Tooltip_Hide_Name_On_Friendly_Nameplates_Party"]
     end
     local hideFriendlyNameText = CreateCheckbox("hideFriendlyNameText", L["Hide_Name"], BetterBlizzPlates)
-    hideFriendlyNameText:SetPoint("LEFT", friendlyNameScale, "RIGHT", 2, 0)
+    hideFriendlyNameText:SetPoint("TOPLEFT", BBP.friendlyHideHealthBar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    alwaysHideFriendlyCastbar:SetPoint("LEFT", hideFriendlyNameText.text, "RIGHT", 0, 0)
+    friendlyNameScale:SetPoint("TOPLEFT", hideFriendlyNameText, "BOTTOMLEFT", 0, -6)
+    friendlyNpToggles:SetPoint("TOPLEFT", hideFriendlyNameText, "BOTTOMLEFT", -20, -70)
     CreateTooltipTwo(hideFriendlyNameText, L["Hide_Name"], hideNameTooltip)
     BBP.hideFriendlyNameText = hideFriendlyNameText
 
@@ -10841,7 +10758,7 @@ local function guiCastbar()
         if not castBarTextOptionsFrame then
             castBarTextOptionsFrame = CreateFrame("Frame", "BBPCastBarTextOptionsFrame", UIParent, "DefaultPanelFlatTemplate")
             castBarTextOptionsFrame.name = guiCastbar.name
-            castBarTextOptionsFrame:SetSize(460, 320)
+            castBarTextOptionsFrame:SetSize(460, 370)
             castBarTextOptionsFrame:SetPoint("CENTER")
             castBarTextOptionsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
             castBarTextOptionsFrame:SetFrameLevel(550)
@@ -10927,6 +10844,14 @@ local function guiCastbar()
             castBarTextYPos:SetPoint("TOPLEFT", castBarTextXPos, "BOTTOMLEFT", 0, -17)
             CreateTooltipTwo(castBarTextYPos, L["Y_Offset"], L["Tooltip_Castbar_Text_Y_Offset_Desc"], L["Tooltip_Pets_Width_SubText"])
 
+            local castBarTextOffsetIcon = CreateCheckbox("castBarTextOffsetIcon", L["Offset_Spell_Icon"], castBarTextOptionsFrame, nil, BBP.UpdateAllCastbarTextPositions)
+            castBarTextOffsetIcon:SetPoint("TOPLEFT", castBarTextYPos, "BOTTOMLEFT", -6, -6)
+            CreateTooltipTwo(castBarTextOffsetIcon, L["Offset_Spell_Icon"], L["Tooltip_Offset_Spell_Icon_Desc"])
+
+            local castTargetNameNoTruncate = CreateCheckbox("castTargetNameNoTruncate", L["Dont_Truncate_Spell_Target_Name"], castBarTextOptionsFrame, nil, BBP.UpdateAllCastbarTextPositions)
+            castTargetNameNoTruncate:SetPoint("TOPLEFT", castBarTextOffsetIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+            CreateTooltipTwo(castTargetNameNoTruncate, L["Dont_Truncate_Spell_Target_Name"], L["Tooltip_Dont_Truncate_Spell_Target_Name_Desc"])
+
             CreateColumnReset(0, function()
                 BetterBlizzPlatesDB.castBarTextAnchor = "CENTER"
                 BetterBlizzPlatesDB.castBarTextRelativeAnchor = "CENTER"
@@ -10937,6 +10862,10 @@ local function guiCastbar()
                 castBarTextScale:SetValue(1)
                 castBarTextXPos:SetValue(0)
                 castBarTextYPos:SetValue(0)
+                BetterBlizzPlatesDB.castBarTextOffsetIcon = false
+                castBarTextOffsetIcon:SetChecked(false)
+                BetterBlizzPlatesDB.castTargetNameNoTruncate = false
+                castTargetNameNoTruncate:SetChecked(false)
                 BBP.UpdateAllCastbarTextPositions()
             end)
 
@@ -14210,28 +14139,71 @@ local function guiMisc()
         end
     end)
 
+    local friendIndicatorOptionsFrame
+    local function OpenFriendIndicatorOptionsWindow()
+        if not friendIndicatorOptionsFrame then
+            friendIndicatorOptionsFrame = CreateFrame("Frame", "BBPFriendIndicatorOptionsFrame", UIParent, "DefaultPanelFlatTemplate")
+            friendIndicatorOptionsFrame.name = guiMisc.name
+            friendIndicatorOptionsFrame:SetSize(220, 211)
+            friendIndicatorOptionsFrame:SetPoint("CENTER")
+            friendIndicatorOptionsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+            friendIndicatorOptionsFrame:SetFrameLevel(550)
+            friendIndicatorOptionsFrame:SetIgnoreParentAlpha(true)
+            friendIndicatorOptionsFrame:SetTitle(L["Friend_Guildie_Indicator"])
+            friendIndicatorOptionsFrame:EnableMouse(true)
+            friendIndicatorOptionsFrame:SetMovable(true)
+            friendIndicatorOptionsFrame:SetClampedToScreen(true)
+            friendIndicatorOptionsFrame:RegisterForDrag("LeftButton")
+            friendIndicatorOptionsFrame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+            friendIndicatorOptionsFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+
+            friendIndicatorOptionsFrame.closeButton = CreateFrame("Button", nil, friendIndicatorOptionsFrame, "UIPanelCloseButton")
+            friendIndicatorOptionsFrame.closeButton:SetFrameLevel((friendIndicatorOptionsFrame.TitleContainer or friendIndicatorOptionsFrame):GetFrameLevel() + 10)
+            friendIndicatorOptionsFrame.closeButton:SetPoint("TOPRIGHT", friendIndicatorOptionsFrame, "TOPRIGHT", 0, 0)
+            friendIndicatorOptionsFrame.closeButton:SetScript("OnClick", function()
+                friendIndicatorOptionsFrame:Hide()
+            end)
+
+            friendIndicatorOptionsFrame.bg = friendIndicatorOptionsFrame:CreateTexture(nil, "BACKGROUND")
+            friendIndicatorOptionsFrame.bg:SetPoint("TOPLEFT", friendIndicatorOptionsFrame, "TOPLEFT", 7, -3)
+            friendIndicatorOptionsFrame.bg:SetPoint("BOTTOMRIGHT", friendIndicatorOptionsFrame, "BOTTOMRIGHT", -3, 3)
+            friendIndicatorOptionsFrame.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
+
+            local anchorDropdown = CreateAnchorDropdown("friendIndicatorAnchorDropdown", friendIndicatorOptionsFrame, "LEFT", "friendIndicatorAnchor", function() end,
+                { anchorFrame = friendIndicatorOptionsFrame, x = 78, y = -40, label = L["Anchor"] },
+                100, nil, { "LEFT", "RIGHT", "TOP", "BOTTOM" })
+            anchorDropdown.label:ClearAllPoints()
+            anchorDropdown.label:SetPoint("LEFT", anchorDropdown.Background, "LEFT", -63, 0)
+            anchorDropdown.label:SetWidth(57)
+            anchorDropdown.label:SetJustifyH("LEFT")
+
+            local friendIndicatorScale = CreateSlider(friendIndicatorOptionsFrame, L["Size"], 0.2, 2.5, 0.01, "friendIndicatorScale", nil, 150)
+            friendIndicatorScale:SetPoint("TOPLEFT", friendIndicatorOptionsFrame, "TOPLEFT", 35, -92)
+
+            local friendIndicatorFriend = CreateCheckbox("friendIndicatorFriend", L["Friend"], friendIndicatorOptionsFrame)
+            friendIndicatorFriend:SetPoint("TOPLEFT", friendIndicatorScale, "BOTTOMLEFT", -6, -12)
+
+            local friendIndicatorGuild = CreateCheckbox("friendIndicatorGuild", L["Guildie"], friendIndicatorOptionsFrame)
+            friendIndicatorGuild:SetPoint("TOPLEFT", friendIndicatorFriend, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+            local friendIndicatorRecentAlly = CreateCheckbox("friendIndicatorRecentAlly", L["Recent_Allies"], friendIndicatorOptionsFrame)
+            friendIndicatorRecentAlly:SetPoint("TOPLEFT", friendIndicatorGuild, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+
+            friendIndicatorOptionsFrame:Show()
+        else
+            friendIndicatorOptionsFrame:SetShown(not friendIndicatorOptionsFrame:IsShown())
+        end
+    end
+
     local friendIndicator = CreateCheckbox("friendIndicator", L["Friend_Guildie_Indicator"], guiMisc)
     friendIndicator:SetPoint("TOPLEFT", hideDeselectNonTargetOverlay, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(friendIndicator, L["Friend_Guildie_Indicator"], L["Tooltip_Friend_Guildie_Indicator_Desc"])
+    CreateTooltipTwo(friendIndicator, L["Friend_Guildie_Indicator"], L["Tooltip_Friend_Guildie_Indicator_Desc"] .. "\n\n" .. L["Right_Click_For_Options"])
     friendIndicator:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
-            local anchorOrder = { "LEFT", "RIGHT", "TOP", "BOTTOM" }
-            local current = BetterBlizzPlatesDB.friendIndicatorAnchor or "LEFT"
-            local idx = 1
-            for i, v in ipairs(anchorOrder) do
-                if v == current then idx = i break end
-            end
-            idx = (idx % #anchorOrder) + 1
-            BetterBlizzPlatesDB.friendIndicatorAnchor = anchorOrder[idx]
-            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
-                self:GetScript("OnEnter")(self)
-            end
-            BBP.RefreshAllNameplates()
+            GameTooltip:Hide()
+            OpenFriendIndicatorOptionsWindow()
         end
     end)
-
-    local friendIndicatorScale = CreateSlider(guiMisc, L["Friend_Indicator_Size"], 0.2, 2.5, 0.01, "friendIndicatorScale", nil, 90)
-    friendIndicatorScale:SetPoint("LEFT", friendIndicator.Text, "RIGHT", 25, 0)
 
     local targetHighlightFix = CreateCheckbox("targetHighlightFix", L["TWW_Target_Highlight_Fix"], guiMisc)
     targetHighlightFix:SetPoint("TOPLEFT", friendIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -14245,8 +14217,12 @@ local function guiMisc()
     forceClassColors:SetPoint("TOPLEFT", targetHighlightFix, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(forceClassColors, L["Force_Class_Colors"], L["Tooltip_Force_Class_Colors_Desc"])
 
+    local keepNameplatesHidden = CreateCheckbox("keepNameplatesHidden", L["Keep_Nameplates_Hidden"], guiMisc, nil, BBP.RefreshAllNameplates)
+    keepNameplatesHidden:SetPoint("TOPLEFT", forceClassColors, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(keepNameplatesHidden, L["Keep_Nameplates_Hidden"], L["Tooltip_Keep_Nameplates_Hidden_Desc"])
+
     local recolorTempHpLoss = CreateCheckbox("recolorTempHpLoss", L["Recolor_Temp_HP_Loss"], guiMisc)
-    recolorTempHpLoss:SetPoint("TOPLEFT", forceClassColors, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    recolorTempHpLoss:SetPoint("TOPLEFT", keepNameplatesHidden, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(recolorTempHpLoss, L["Recolor_Temp_HP_Loss"], L["Tooltip_Recolor_Temp_HP_Loss_Desc"])
 
     local hideTempHpLoss = CreateCheckbox("hideTempHpLoss", L["Hide_Temp_Hp_Loss"], guiMisc)
@@ -15003,7 +14979,7 @@ function BBP.CVarTracker()
     end
 
     if BetterBlizzPlatesDB.disableCVarForceOnLogin and not BetterBlizzPlatesDB.avoidCVarPickup then
-        BetterBlizzPlatesDB.friendlyClassColorName = C_CVar.GetCVar("nameplateUseClassColorForFriendlyPlayerUnitNames") == "1"
+        BBP.PickupLiveClassColorCVars()
     end
 
     local cvarListener = CreateFrame("Frame")
@@ -15015,21 +14991,10 @@ function BBP.CVarTracker()
 
         if BBP.SaveNameplateToggleCVar(cvarName, cvarValue) then
             -- handled: stored against the active PvP/PvE set
-        elseif cvarName == "nameplateUseClassColorForFriendlyPlayerUnitNames" then
-            BetterBlizzPlatesDB.friendlyClassColorName = cvarValue == "1"
-            if BBP.friendlyClassColorNameCheckbox then
-                BBP.friendlyClassColorNameCheckbox:SetChecked(cvarValue == "1")
-            end
-            BBP.RefreshAllNameplates()
+        elseif BBP.PickupClassColorCVar(cvarName, cvarValue) then
+            -- handled: class colour rows
         elseif cvarsToTrack.checkboxes[cvarName] then
             BetterBlizzPlatesDB[cvarName] = cvarValue
-            if cvarName == "nameplateShowClassColor" or cvarName == "nameplateShowFriendlyClassColor" then
-                local checkbox = BBP.classColorCVarCheckboxes and BBP.classColorCVarCheckboxes[cvarName]
-                if checkbox then
-                    checkbox:SetChecked(cvarValue == "1")
-                end
-                BBP.RefreshAllNameplates()
-            end
         elseif cvarsToTrack.sliders[cvarName] then
             BetterBlizzPlatesDB[cvarName] = tonumber(cvarValue)
         elseif cvarsToTrack.other[cvarName] then

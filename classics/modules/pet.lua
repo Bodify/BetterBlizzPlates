@@ -44,7 +44,7 @@ function BBP.PetIndicator(frame)
         hooksecurefunc(frame, "SetAlpha", function(self)
             if not self.bbpHiddenNPC or self.changingAlpha or self:IsForbidden() then return end
             self.changingAlpha = true
-            if self.unit and not UnitIsUnit(self.unit, "target") then
+            if self.unit and not BBP.TargetShowsHidden(self.unit) then
                 self:SetAlpha(0)
             end
             self.changingAlpha = nil
@@ -98,7 +98,7 @@ function BBP.PetIndicator(frame)
             if isRealPet then
                 frame.petIndicator:Show()
             elseif config.petIndicatorHideSecondaryPets then
-                if not UnitIsUnit(frame.unit, "target") then
+                if not BBP.TargetShowsHidden(frame.unit) then
                     if config.petIndicatorShowMurloc then
                         BBP.InitMurlocMode(frame, config, db)
                         ShowMurloc(frame)
@@ -137,7 +137,7 @@ function BBP.PetIndicator(frame)
                 frame.petIndicator:Hide()
             end
             if config.petIndicatorHideSecondaryPets and not isRealPet then
-                if not UnitIsUnit(frame.unit, "target") then
+                if not BBP.TargetShowsHidden(frame.unit) then
                     if config.petIndicatorShowMurloc then
                         BBP.InitMurlocMode(frame, config, db)
                         ShowMurloc(frame)
@@ -164,7 +164,7 @@ function BBP.PetIndicator(frame)
                 frame.petIndicator:Show()
                 return
             elseif config.petIndicatorHideSecondaryPets and info.isEnemy then
-                if not UnitIsUnit(frame.unit, "target") then
+                if not BBP.TargetShowsHidden(frame.unit) then
                     if config.petIndicatorShowMurloc then
                         BBP.InitMurlocMode(frame, config, db)
                         ShowMurloc(frame)
@@ -177,7 +177,7 @@ function BBP.PetIndicator(frame)
     end
 
     if config.petIndicatorHideSecondaryPets and BBP.secondaryPets[npcID] and info.isEnemy then
-        if not UnitIsUnit(frame.unit, "target") then
+        if not BBP.TargetShowsHidden(frame.unit) then
             if config.petIndicatorShowMurloc then
                 BBP.InitMurlocMode(frame, config, db)
                 ShowMurloc(frame)
@@ -213,7 +213,7 @@ function BBP.PetIndicator(frame)
                 frame.petIndicator:Hide()
             end
             -- if config.petIndicatorHideSecondaryPets and not isRealPet then
-            --     if not UnitIsUnit(frame.unit, "target") then
+            --     if not BBP.TargetShowsHidden(frame.unit) then
             --         if config.petIndicatorShowMurloc then
             --             BBP.InitMurlocMode(frame, config, db)
             --             ShowMurloc(frame, nameplate)

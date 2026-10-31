@@ -273,6 +273,10 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
             if iconTarget then
                 iconTarget:SetTexCoord(0.08, 0.92, 0.08, 0.92)
                 BBP.SetupBorderOnFrame(iconTarget)
+                castBar.bbpIconBorder = iconTarget
+                if castBar.bbpBorderColor then
+                    BBP.ApplyCastbarBorderColor(castBar)
+                end
             end
             castBar.adjustedIcon = true
         end
@@ -353,10 +357,10 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     local useCustomFont = BetterBlizzPlatesDB.useCustomFont
     if useCustomFont then
-        BBP.SetNameFontBasedOnOption(castBar.Text, 12, "OUTLINE")
+        BBP.SetFontBasedOnOption(castBar.Text, 12, "OUTLINE")
     else
         local f = castBar.Text:GetFont()
-        BBP.SetTextFont(castBar.Text, f, 12, "OUTLINE, SLUG")
+        castBar.Text:SetFont(f, 12, "OUTLINE, SLUG")
     end
 
     if hideCastbarText then

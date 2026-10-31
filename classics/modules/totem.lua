@@ -438,6 +438,7 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
     elseif npcData then
         config.randomTotemColor = nil
         if config.totemIndicatorEnemyOnly and info.isFriend then
+            config.totemColorRGB = nil
             return
         end
 

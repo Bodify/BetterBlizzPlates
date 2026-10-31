@@ -18,6 +18,8 @@ local exportKeepKeys = {
     enableNameplateAuraCustomisation = true,
     smallPetsWidth = true,
     smallPetsHeight = true,
+    friendlyHealthBarColorNpcRGB = true,
+    friendlyColorNameNpcRGB = true,
 }
 
 local function SameValue(a, b)

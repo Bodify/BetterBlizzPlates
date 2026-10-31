@@ -1,24 +1,23 @@
-# BetterBlizzPlates 2.2.2
+# BetterBlizzPlates 2.2.3
 ## All versions
 ### New
-- Threat Colors: "Color Name" setting. Colors the name as well as the healthbar.
-- Threat Colors: "Name Only" setting. Colors the name instead of the healthbar.
-- Threat Colors: "Show Threat Percent" setting.
-### Bugfix
-- Fix an issue with NPC Title and Guild Names to not accurately be consistent with your set scale value. Due to this fix your value might have to be re-adjusted if they have changed size a little.
-- Fix NPC Titles sometimes staying on a nameplate unintentionally.
+- Misc: "Keep Nameplates Hidden" setting. Make it so nameplates hidden by other settings stay hidden even when targeted.
+- Friendly "Change Healthbar Color" and "Color Name": New "One Color", "Friend", "Guildie", "Recent Allies", "Pets" and "My Pet" settings with their own colors. "Color Name" also gets "Follow Healthbar Color".
+- Friendly "Change Healthbar Color" and "Color Name": Separate Player and NPC colors.
+- Enemy "Change Healthbar Color": Hostile and Neutral can now be turned off separately, and a new "Pets" setting colors enemy player pets.
+- Friend/Guildie Indicator (Misc): Add a new "Recent Allies" toggle for it as well.
+- Enemy "Color Name": Now has a Color Options dropdown with "Hostile" and "Neutral" that can be turned off separately, plus new "Pets" and "Follow Healthbar Color" settings.
+### Tweak
+- Color Castbar Border: Also color the castbar icon pixel border.
+- "Class Color Name" and "Class Color Healthbar" moved into the Color Options dropdowns as "Class Color". Your current setup carries over.
+- Friendly "Toggles" row is now an "Enable Friendly Nameplates in:" dropdown.
 ## Retail & Forever
 ### New
-- Nameplate Auras: "Show Auras on Target only" setting.
-- Nameplate Toggles: Simplify Minions, Friendly Players, Minus and Friendly NPCs added to the CVar Control nameplate visibility dropdowns.
-### Tweak
-- Fix Hunter's Mark to be part of "Blizzard Default Filter" setting.
+- Hide Other Pets: Right-click to also hide your own secondary pets. On by default with "Hide Other Pets" enabled.
+- Move Castbar Text: "Offset Spell Icon" setting. With "Fit Cast Icon on the left" on, centers the text on the castbar and icon together.
+- Move Castbar Text: "Don't Truncate Spell Target Name" setting. Blizzard's spell target name no longer gets cut off by the spell name.
 ### Bugfix
-- Fix the "Nameplate Motion Speed" Default button setting it to 0.10 instead of 0.025. If yours is set to 0.10 it gets reset to 0.025 once.
-- Fix an issue with a previous bugfix causing the nameplate name to show above auras unintentionally.
-- Fix enemy player castbars sometimes staying hidden after a Mind Control due to a Blizzard bug (when using friendly name only cvar).
-- Small Pets: Fix player nameplates sometimes getting the small pet size.
-- Class Indicator: Fix the arena healer and tank icons not fitting the icon.
-## Forever
-### Tweak
-- Update JFarm profile (www.twitch.tv/jfarm_)
+- Purgeable enemy buff filter: Fix issue with it showing purgeable buffs if you didnt have an enemy purge but had a friendly dispel, like Holy Pala for example.
+## Retail
+### New
+- New Varima profile (www.twitch.tv/varima_). Thank you for sharing!

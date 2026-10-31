@@ -319,6 +319,7 @@ local function ScheduleTotemCastRecheck(frame)
         if not frame.unit or not frame.BetterBlizzPlates then return end
         if UnitChannelInfo(frame.unit) then
             BBP.ApplyTotemIconsAndColorNameplate(frame)
+            BBP.FollowHealthName(frame)
         end
     end)
 end
@@ -576,6 +577,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
 
     elseif isProbablyTotem then
         if config.totemIndicatorEnemyOnly and info.isFriend then
+            config.totemColorRGB = nil
+            config.totemIsImportant = nil
+            config.totemUninterruptible = nil
+            ClearTotemBooleanColors(frame)
             DisableTotemAuraContainer(frame)
             SetTotemCastbarHidden(frame, false)
             return

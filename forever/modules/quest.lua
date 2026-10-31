@@ -78,6 +78,7 @@ local function SetQuestColor(frame, isQuest)
         end
         frame.needsRecolor = true
         frame.isQuestNpc = color
+        BBP.FollowHealthName(frame)
     elseif frame.needsRecolor then
         frame.needsRecolor = nil
         frame.isQuestNpc = nil

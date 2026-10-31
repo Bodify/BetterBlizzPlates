@@ -303,6 +303,7 @@ function BBP.TargetIndicator(frame)
             BBP.ApplyIndicatorBarTexture(frame)
         end
     end
+    BBP.FollowHealthName(frame)
 end
 
 -- Focus Target Indicator
@@ -388,6 +389,7 @@ function BBP.FocusTargetIndicator(frame)
             BBP.ClassColorAndScaleNames(frame)
         end
     end
+    BBP.FollowHealthName(frame)
 end
 
 function BBP.ColorTargetNameplate(frame)

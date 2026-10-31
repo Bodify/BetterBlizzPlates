@@ -123,6 +123,9 @@ local defaultSettings = {
     npcTitleColorRGB = {1, 0.85, 0},
     npcTitleScale = 1,
     friendIndicatorScale = 1,
+    friendIndicatorFriend = true,
+    friendIndicatorGuild = true,
+    friendIndicatorRecentAlly = false,
     hideNpcMurlocScale = 1,
     hideNpcMurlocYPos = 0,
     partyPointerWidth = 36,
@@ -227,6 +230,9 @@ local defaultSettings = {
     nameplateEnemyHeight = nil,
     enemyHealthBarColorRGB = {1, 0, 0},
     enemyNeutralHealthBarColorRGB = {1, 1, 0},
+    enemyHealthBarColorHostile = true,
+    enemyHealthBarColorPetRGB = {1, 0.5, 0},
+    enemyHealthBarColorNeutral = true,
     enemyColorNameRGB = {1, 0, 0},
     enemyNeutralColorNameRGB = {1, 1, 0},
     useCustomTextureForEnemy = true,
@@ -235,6 +241,13 @@ local defaultSettings = {
     friendlyClassColorName = false,
     friendlyNameScale = 1,
     friendlyHealthBarColorRGB = {0, 1, 0},
+    friendlyHealthBarColorNpcRGB = {0, 1, 0},
+    friendlyHealthBarColorRecentAllyRGB = {83/255, 201/255, 1},
+    friendlyHealthBarColorMyPetRGB = {0, 1, 0},
+    friendlyHealthBarColorPetRGB = {0, 1, 0},
+    friendlyHealthBarColorFriendRGB = {83/255, 201/255, 1},
+    friendlyHealthBarColorGuildRGB = {64/255, 1, 64/255},
+    friendlyHealthBarColorOneRGB = {0, 1, 0},
     guildNameScale = 1,
     guildNameEnemyScale = 1,
     guildNamesFriendly = true,
@@ -690,6 +703,10 @@ local defaultSettings = {
     fadeOutNPCsAlpha = 0.2,
     fadeOutNPCOnlyFadeSecondaryPets = true,
     friendlyHideOtherPets = false,
+    friendlyHideOwnSecondaryPets = true,
+    keepNameplatesHidden = false,
+    castBarTextOffsetIcon = false,
+    castTargetNameNoTruncate = false,
 
     -- defaultFadeOutNPCsList = {
     --     {name = "Hunter Pet (they all have same ID)", id = 165189, comment = ""},
@@ -821,6 +838,23 @@ local defaultSettings = {
     auraBlacklist = {},
     --auraColorList = {},
     friendlyColorNameRGB = {1, 1, 1},
+    friendlyColorNamePlayer = true,
+    friendlyColorNameNpc = true,
+    friendlyColorNameNpcRGB = {1, 1, 1},
+    friendlyColorNameRecentAllyRGB = {83/255, 201/255, 1},
+    friendlyColorNameMyPetRGB = {1, 1, 1},
+    enemyColorNameHostile = true,
+    enemyColorNameNeutral = true,
+    enemyColorNamePetRGB = {1, 0.5, 0},
+    friendlyHealthBarColorClass = false,
+    friendlyColorNameClass = false,
+    enemyHealthBarColorClass = false,
+    enemyColorNameClass = false,
+    classColorRowsMigrated = false,
+    friendlyColorNamePetRGB = {1, 1, 1},
+    friendlyColorNameFriendRGB = {83/255, 201/255, 1},
+    friendlyColorNameGuildRGB = {64/255, 1, 64/255},
+    friendlyColorNameOneRGB = {1, 1, 1},
 
     -- castEmphasisList = {
     --     {name = "Cyclone"},
@@ -980,8 +1014,7 @@ local function TempClassicNpFix()
     BetterBlizzPlatesDB.nameplateMaxAlpha = 1.0
     BetterBlizzPlatesDB.nameplateMaxAlphaDistance = 40
 
-    BetterBlizzPlatesDB.nameplateShowClassColor = "1"
-    BetterBlizzPlatesDB.nameplateShowFriendlyClassColor = "1"
+    BBP.EnableHealthBarClassColors()
 
     BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
     BetterBlizzPlatesDB.castBarHeight = 18.8
@@ -1081,6 +1114,14 @@ local function InitializeSavedVariables(isNewProfile)
     if db.friendlyHealthBarColorPlayer == nil then
         db.friendlyHealthBarColorPlayer = db.friendlyHealthBarColor
         db.friendlyHealthBarColorNpc = db.friendlyHealthBarColor
+    end
+
+    if db.friendlyColorNameNpcRGB == nil and db.friendlyColorNameRGB then
+        db.friendlyColorNameNpcRGB = CopyTable(db.friendlyColorNameRGB)
+    end
+
+    if db.friendlyHealthBarColorNpcRGB == nil and db.friendlyHealthBarColorRGB then
+        db.friendlyHealthBarColorNpcRGB = CopyTable(db.friendlyHealthBarColorRGB)
     end
 
     if db.nameplateAuraRowFriendlyAmount == nil then
@@ -1463,6 +1504,9 @@ local function CVarFetcher()
             BetterBlizzPlatesDB.largeNameplates = false
         end
 
+        if BetterBlizzPlatesDB.classColorRowsMigrated then
+            BBP.PickupLiveClassColorCVars()
+        end
     else
         C_Timer.After(1, function()
             CVarFetcher()
@@ -1644,8 +1688,7 @@ local function ResetNameplates()
     BetterBlizzPlatesDB.nameplateMaxAlphaDistance = 40
     BetterBlizzPlatesDB.nameplateOccludedAlphaMult = 0.4
 
-    BetterBlizzPlatesDB.nameplateShowClassColor = "1"
-    BetterBlizzPlatesDB.nameplateShowFriendlyClassColor = "1"
+    BBP.EnableHealthBarClassColors()
 
     BBP.InitNameplateToggles(true)
 
@@ -2743,8 +2786,21 @@ local function ColorNameplateByReaction(frame)
         config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB
         config.friendlyHealthBarColorPlayer = BetterBlizzPlatesDB.friendlyHealthBarColorPlayer
         config.friendlyHealthBarColorNpc = BetterBlizzPlatesDB.friendlyHealthBarColorNpc
+        config.friendlyHealthBarColorNpcRGB = BetterBlizzPlatesDB.friendlyHealthBarColorNpcRGB
+        config.friendlyHealthBarColorClass = BetterBlizzPlatesDB.friendlyHealthBarColorClass
+        config.enemyHealthBarColorClass = BetterBlizzPlatesDB.enemyHealthBarColorClass
+        config.friendlyHealthBarColorMyPet = BetterBlizzPlatesDB.friendlyHealthBarColorMyPet
+        config.friendlyHealthBarColorMyPetRGB = BetterBlizzPlatesDB.friendlyHealthBarColorMyPetRGB
+        config.friendlyHealthBarColorPet = BetterBlizzPlatesDB.friendlyHealthBarColorPet
+        config.friendlyHealthBarColorPetRGB = BetterBlizzPlatesDB.friendlyHealthBarColorPetRGB
+        config.friendlyHealthBarColorOne = BetterBlizzPlatesDB.friendlyHealthBarColorOne
+        config.friendlyHealthBarColorOneRGB = BetterBlizzPlatesDB.friendlyHealthBarColorOneRGB
         config.enemyHealthBarColor = BetterBlizzPlatesDB.enemyHealthBarColor
         config.enemyHealthBarColorNpcOnly = BetterBlizzPlatesDB.enemyHealthBarColorNpcOnly
+        config.enemyHealthBarColorHostile = BetterBlizzPlatesDB.enemyHealthBarColorHostile
+        config.enemyHealthBarColorPet = BetterBlizzPlatesDB.enemyHealthBarColorPet
+        config.enemyHealthBarColorPetRGB = BetterBlizzPlatesDB.enemyHealthBarColorPetRGB
+        config.enemyHealthBarColorNeutral = BetterBlizzPlatesDB.enemyHealthBarColorNeutral
 
         config.friendlyHealthBarColorInitalized = true
     end
@@ -2759,25 +2815,46 @@ local function ColorNameplateByReaction(frame)
         end
         return
     elseif info.isFriend and config.friendlyHealthBarColor then
-        -- Friendly NPC
-        if (isPlayer and config.friendlyHealthBarColorPlayer) or (not isPlayer and config.friendlyHealthBarColorNpc) then
-            frame.healthBar:SetStatusBarColor(unpack(config.friendlyHealthBarColorRGB))
+        local color
+        if config.friendlyHealthBarColorOne then
+            color = config.friendlyHealthBarColorOneRGB
+        elseif info.isPet and config.friendlyHealthBarColorMyPet then
+            color = config.friendlyHealthBarColorMyPetRGB
+        elseif config.friendlyHealthBarColorPet and (info.isPet or UnitIsOtherPlayersPet(frame.unit)) then
+            color = config.friendlyHealthBarColorPetRGB
+        elseif isPlayer then
+            color = info.isPlayer and BBP.GetFriendlyPlayerColor(frame.unit, "friendlyHealthBarColor")
+            if not color and config.friendlyHealthBarColorPlayer and not config.friendlyHealthBarColorClass then
+                color = config.friendlyHealthBarColorRGB
+            end
+        elseif config.friendlyHealthBarColorNpc then
+            color = config.friendlyHealthBarColorNpcRGB
+        end
+        if color then
+            frame.healthBar:SetStatusBarColor(unpack(color))
             frame.needsRecolor = true
+        elseif frame.needsRecolor then
+            BBP.CompactUnitFrame_UpdateHealthColor(frame, true)
         end
     elseif not info.isFriend and config.enemyHealthBarColor then
         -- Handling enemy health bars
-        if (not config.enemyHealthBarColorNpcOnly) or (config.enemyHealthBarColorNpcOnly and not isPlayer) then
+        if not isPlayer or not (config.enemyHealthBarColorNpcOnly or config.enemyHealthBarColorClass) then
             if UnitIsTapDenied(frame.unit) then
                 frame.healthBar:SetStatusBarColor(0.9,0.9,0.9)
                 return
             end
+            if config.enemyHealthBarColorPet and UnitIsOtherPlayersPet(frame.unit) then
+                frame.healthBar:SetStatusBarColor(unpack(config.enemyHealthBarColorPetRGB))
+                frame.needsRecolor = true
+                return
+            end
             if info.isNeutral then
-                -- Neutral NPC
+                if not config.enemyHealthBarColorNeutral then return end
                 config.enemyNeutralHealthBarColorRGB = BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 0, 0}
                 frame.healthBar:SetStatusBarColor(unpack(config.enemyNeutralHealthBarColorRGB))
                 frame.needsRecolor = true
             else
-                -- Hostile NPC
+                if not config.enemyHealthBarColorHostile then return end
                 config.enemyHealthBarColorRGB = BetterBlizzPlatesDB.enemyHealthBarColorRGB or {1, 0, 0}
                 frame.healthBar:SetStatusBarColor(unpack(config.enemyHealthBarColorRGB))
                 frame.needsRecolor = true
@@ -2911,6 +2988,8 @@ local function SetCVarsOnLogin()
         end
         BetterBlizzPlatesDB.fixedFriendlyClassColorName = true
     end
+    BBP.MigrateClassColorRows()
+    BBP.SyncClassColorCVars(true)
     if BetterBlizzPlatesDB.skipCVarsPlater and C_AddOns.IsAddOnLoaded("Plater") then return end
     if C_AddOns.IsAddOnLoaded("Plater") and C_AddOns.IsAddOnLoaded("SkillCapped") then return end
     if BetterBlizzPlatesDB.hasSaved and not BetterBlizzPlatesDB.disableCVarForceOnLogin then
@@ -3109,6 +3188,13 @@ end)
 
 --#################################################################################################
 -- Class color and scale names
+local function EnemyNameColor(db, isEnemy, unit)
+    if isEnemy or UnitAffectingCombat(unit) then
+        return db.enemyColorNameHostile and db.enemyColorNameRGB
+    end
+    return db.enemyColorNameNeutral and db.enemyNeutralColorNameRGB
+end
+
 function BBP.ClassColorAndScaleNames(frame)
     if not frame.unit then return end
     local isPlayer = UnitIsPlayer(frame.unit)
@@ -3121,18 +3207,32 @@ function BBP.ClassColorAndScaleNames(frame)
     local enemyClassColorName = db.enemyClassColorName
     local friendlyClassColorName = db.friendlyClassColorName
 
-    if isPlayer then
+    local enemyNames = (isEnemy or isNeutral) and enemyColorName
+    local followHealth = (isFriend and friendlyColorName and db.friendlyColorNameFollowHealthbar) or (enemyNames and db.enemyColorNameFollowHealthbar) or false
+    frame.bbpNameFollowsHealth = followHealth
+    local friendlyNameColor = isFriend and friendlyColorName and not followHealth and (db.friendlyColorNameOne and db.friendlyColorNameOneRGB or (isPlayer and BBP.GetFriendlyPlayerColor(frame.unit, "friendlyColorName") or not isPlayer and BBP.GetFriendlyPetColor(frame.unit, "friendlyColorName")))
+    if followHealth then
+        BBP.CopyHealthColorToName(frame)
+    elseif friendlyNameColor then
+        frame.name:SetVertexColor(unpack(friendlyNameColor))
+    elseif enemyNames and not isPlayer and db.enemyColorNamePet and UnitIsOtherPlayersPet(frame.unit) then
+        frame.name:SetVertexColor(unpack(db.enemyColorNamePetRGB))
+    elseif isPlayer then
         if ((isEnemy or isNeutral) and enemyClassColorName) or (isFriend and friendlyClassColorName) then
             local class = UnitClassBase(frame.unit)
             local classColor = C_ClassColor.GetClassColor(class)
             frame.name:SetVertexColor(classColor.r, classColor.g, classColor.b)
-        elseif ((isEnemy or isNeutral) and enemyColorName) or (isFriend and friendlyColorName) then
-            local color = isEnemy and db.enemyColorNameRGB or db.friendlyColorNameRGB
-            frame.name:SetVertexColor(unpack(color))
+        elseif (isEnemy or isNeutral) and enemyColorName then
+            local color = EnemyNameColor(db, isEnemy, frame.unit)
+            if color then frame.name:SetVertexColor(unpack(color)) end
+        elseif isFriend and friendlyColorName and db.friendlyColorNamePlayer then
+            frame.name:SetVertexColor(unpack(db.friendlyColorNameRGB))
         end
-    elseif ((isEnemy or isNeutral) and enemyColorName) or (isFriend and friendlyColorName) then
-        local color = ((isEnemy or (isNeutral and UnitAffectingCombat(frame.unit))) and db.enemyColorNameRGB) or (isNeutral and db.enemyNeutralColorNameRGB) or (isFriend and db.friendlyColorNameRGB)
-        frame.name:SetVertexColor(unpack(color))
+    elseif (isEnemy or isNeutral) and enemyColorName then
+        local color = EnemyNameColor(db, isEnemy, frame.unit)
+        if color then frame.name:SetVertexColor(unpack(color)) end
+    elseif isFriend and friendlyColorName and db.friendlyColorNameNpc then
+        frame.name:SetVertexColor(unpack(db.friendlyColorNameNpcRGB))
     end
 
     local scale = 1
@@ -3844,6 +3944,13 @@ local function SetNameplateBarSizes(frame)
         frame.HealthBarsContainer:SetPoint("BOTTOMRIGHT", frame, "BOTTOM", (widthToUse + (normalRightAnchor and -8 or -25)) - levelBadgeSpace, hpBotPos)
     end
     BBP.UpdateLevelSpan(frame, levelBadgeSpace + (normalRightAnchor and 0 or 17))
+    local textSpan = fitIcon and frame.castBarIconFrame and frame.CastBarsContainer or nil
+    if frame.castBar.bbpTextSpan ~= textSpan then
+        frame.castBar.bbpTextSpan = textSpan
+        if db.castBarTextOffsetIcon and db.enableCastbarCustomization then
+            BBP.UpdateCastbarTextPosition(frame.castBar)
+        end
+    end
     if classicCastbar and frame.castBar.bbpCastBorder then
         BBP.LayoutClassicCastbar(frame)
     end
@@ -3944,7 +4051,7 @@ function BBP.HideNPCs(frame, nameplate)
         hooksecurefunc(frame, "SetAlpha", function(self)
             if not self.bbpHiddenNPC or self.changingAlpha or self:IsForbidden() then return end
             self.changingAlpha = true
-            if self.unit and not UnitIsUnit(self.unit, "target") then
+            if self.unit and not BBP.TargetShowsHidden(self.unit) then
                 self:SetAlpha(0)
             end
             self.changingAlpha = nil
@@ -3979,7 +4086,7 @@ function BBP.HideNPCs(frame, nameplate)
     local hideSecondaryPets = db.hideNPCHideSecondaryPets
     local murlocSecondary = db.hideNPCSecondaryShowMurloc
     local hideOthersPets = db.hideNPCHideOthersPets
-    local isTarget = UnitIsUnit(frame.displayedUnit, "target")
+    local isTarget = BBP.TargetShowsHidden(frame.displayedUnit)
 
     if hideNPCArenaOnly and not inBg then
         return
@@ -4496,6 +4603,7 @@ local function UnitAuraColorEvent(self, event, unit, unitAuraUpdateInfo)
         local db = BetterBlizzPlatesDB
         if db.auraColor then
             BBP.AuraColor(frame)
+            BBP.FollowHealthName(frame)
         end
         if BBP.isInBg then
             if db.bgIndicator or db.classIndicator then
@@ -4653,6 +4761,7 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
     if frame.mainHealerColor then
         frame.healthBar:SetStatusBarColor(unpack(frame.mainHealerColor))
     end
+    BBP.FollowHealthName(frame)
 end)
 
 
@@ -4807,6 +4916,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
             end
         end
     end
+    BBP.FollowHealthName(frame)
 end
 
 -- function BBP.ColorPRD()
@@ -5375,11 +5485,13 @@ function BBP.ApplyCastbarBorderColor(castBar)
             castBar.bbpCastUninterruptibleBorder:SetCastBorderColor(1, 1, 1, 1, BetterBlizzPlatesDB.hideCastbarBorderShield)
         end
     end
-    if castBar.borders and castBar.SetBorderColor then
-        if c then
-            castBar:SetBorderColor(c[1], c[2], c[3], c[4])
-        else
-            castBar:SetBorderColor(0, 0, 0, 1)
+    for _, bordered in ipairs({ castBar, castBar.bbpIconBorder }) do
+        if bordered.borders and bordered.SetBorderColor then
+            if c then
+                bordered:SetBorderColor(c[1], c[2], c[3], c[4])
+            else
+                bordered:SetBorderColor(0, 0, 0, 1)
+            end
         end
     end
 end
@@ -5809,10 +5921,21 @@ end
 BBP.HideFriendlyHealthbar = HideFriendlyHealthbar
 
 local function FriendIndicator(frame)
-    local info = frame.BetterBlizzPlates.unitInfo
-    local isFriend = BBP.isFriendlistFriend(frame.unit)
-    local isBnetFriend = BBP.isUnitBNetFriend(frame.unit)
-    local isGuildmate = BBP.isUnitGuildmate(frame.unit)
+    local db = BetterBlizzPlatesDB
+    local unit = frame.unit
+    local desaturate, r, g, b
+    if db.friendIndicatorFriend and (BBP.isFriendlistFriend(unit) or BBP.isUnitBNetFriend(unit)) then
+        desaturate, r, g, b = false, 1, 1, 1
+    elseif db.friendIndicatorGuild and BBP.isUnitGuildmate(unit) then
+        desaturate, r, g, b = true, 0, 1, 0
+    elseif db.friendIndicatorRecentAlly and BBP.IsRecentAlly(unit) then
+        desaturate, r, g, b = true, 83/255, 201/255, 1
+    else
+        if frame.friendIndicator then
+            frame.friendIndicator:Hide()
+        end
+        return
+    end
 
     if not frame.friendIndicator then
         frame.friendIndicator = (frame.bbpOverlay or frame):CreateTexture(nil, "OVERLAY")
@@ -5820,37 +5943,19 @@ local function FriendIndicator(frame)
         frame.friendIndicator:SetSize(20, 21)
     end
 
-    frame.friendIndicator:SetScale(BetterBlizzPlatesDB.friendIndicatorScale or 1)
+    local indicator = frame.friendIndicator
+    indicator:SetScale(db.friendIndicatorScale or 1)
+    indicator:SetDesaturated(desaturate)
+    indicator:SetVertexColor(r, g, b)
 
-    local anchor = BetterBlizzPlatesDB.friendIndicatorAnchor or "LEFT"
-    local oppositeAnchor = BBP.GetOppositeAnchor(anchor)
-
-    local function SetAnchor(relativeTo)
-        frame.friendIndicator:ClearAllPoints()
-        frame.friendIndicator:SetPoint(oppositeAnchor, relativeTo, anchor, 0, 0)
+    local anchor = db.friendIndicatorAnchor or "LEFT"
+    local relativeTo = frame.name
+    if BBP.isInArena and frame.specNameText and frame.specNameText ~= "" then
+        relativeTo = frame.specNameText
     end
-
-    if isFriend or isBnetFriend then
-        frame.friendIndicator:SetDesaturated(false)
-        frame.friendIndicator:SetVertexColor(1, 1, 1)
-        frame.friendIndicator:Show()
-        if BBP.isInArena and frame.specNameText and frame.specNameText ~= "" then
-            SetAnchor(frame.specNameText)
-        else
-            SetAnchor(frame.name)
-        end
-    elseif isGuildmate then
-        frame.friendIndicator:SetDesaturated(true)
-        frame.friendIndicator:SetVertexColor(0, 1, 0)
-        frame.friendIndicator:Show()
-        if BBP.isInArena and frame.specNameText and frame.specNameText ~= "" then
-            SetAnchor(frame.specNameText)
-        else
-            SetAnchor(frame.name)
-        end
-    else
-        frame.friendIndicator:Hide()
-    end
+    indicator:ClearAllPoints()
+    indicator:SetPoint(BBP.GetOppositeAnchor(anchor), relativeTo, anchor, 0, 0)
+    indicator:Show()
 end
 
 
@@ -7600,6 +7705,7 @@ local function HandleNamePlateAdded(unit)
     BBP.UpdateStackingZone(nameplate)
 
     SetNameplateBarSizes(frame)
+    BBP.FollowHealthName(frame)
 end
 BBP.HA = HandleNamePlateAdded
 
@@ -7905,6 +8011,36 @@ end
 
 --#################################################################################################
 -- Nameplate updater etc
+function BBP.ApplyNameColorLayers(frame, config, info)
+    if config.colorNPC and config.colorNPCName and config.npcNameColor and not UnitIsTapDenied(frame.unit) then
+        local r,g,b = unpack(config.npcNameColor)
+        frame.name:SetVertexColor(r, g, b)
+    end
+
+    if frame.bbpThreatNameR then
+        BBP.ApplyThreatNameColor(frame)
+    end
+
+    if config.colorFocusName and info.isFocus then
+        frame.name:SetVertexColor(unpack(config.focusTargetIndicatorColorNameplateRGB))
+    end
+
+    if config.colorTargetName and info.isTarget then
+        frame.name:SetVertexColor(unpack(config.targetIndicatorColorNameplateRGB))
+    end
+
+    if config.totemIndicator and config.totemColorRGB and not config.totemIndicatorHideNameAndShiftIconDown then
+        local colorName = config.totemIsImportant and config.totemIndicatorColorName or config.totemIndicatorColorNameOthers
+        if colorName then
+            local uninterruptible = config.totemUninterruptible
+            if uninterruptible == nil
+                or not BBP.PaintTotemNameFromBoolean(frame, uninterruptible, unpack(config.totemColorRGB)) then
+                frame.name:SetVertexColor(unpack(config.totemColorRGB))
+            end
+        end
+    end
+end
+
 function BBP.ConsolidatedUpdateName(frame)
     if issecretvalue(frame) then return end --???
     if not frame or frame:IsForbidden() or not frame.unit then return end
@@ -7975,25 +8111,9 @@ function BBP.ConsolidatedUpdateName(frame)
     --frame.name:ClearAllPoints()
     --frame.name:SetPoint("BOTTOMLEFT", frame.HealthBarsContainer, "TOPLEFT", 4.2, 2)
 
-    -- Color NPC
-    if config.colorNPC and config.colorNPCName and config.npcNameColor and not UnitIsTapDenied(frame.unit) then
-        local r,g,b = unpack(config.npcNameColor)
-        frame.name:SetVertexColor(r, g, b)
-    end
+    BBP.ApplyNameColorLayers(frame, config, info)
 
     --BBP.RepositionName(frame)
-
-    if frame.bbpThreatNameR then
-        BBP.ApplyThreatNameColor(frame)
-    end
-
-    if config.colorFocusName and info.isFocus then
-        frame.name:SetVertexColor(unpack(config.focusTargetIndicatorColorNameplateRGB))
-    end
-
-    if config.colorTargetName and info.isTarget then
-        frame.name:SetVertexColor(unpack(config.targetIndicatorColorNameplateRGB))
-    end
 
     --if config.useFakeName then BBP.RepositionName(frame) end
 
@@ -8041,19 +8161,8 @@ function BBP.ConsolidatedUpdateName(frame)
         end
     end
 
-    if config.totemIndicator and config.totemColorRGB then
-        if config.totemIndicatorHideNameAndShiftIconDown then
-            frame.name:SetText("")
-        else
-            local colorName = config.totemIsImportant and config.totemIndicatorColorName or config.totemIndicatorColorNameOthers
-            if colorName then
-                local uninterruptible = config.totemUninterruptible
-                if uninterruptible == nil
-                    or not BBP.PaintTotemNameFromBoolean(frame, uninterruptible, unpack(config.totemColorRGB)) then
-                    frame.name:SetVertexColor(unpack(config.totemColorRGB))
-                end
-            end
-        end
+    if config.totemIndicator and config.totemColorRGB and config.totemIndicatorHideNameAndShiftIconDown then
+        frame.name:SetText("")
     end
 
     if (config.hideFriendlyNameText and info.isFriend) or (config.hideEnemyNameText and not info.isFriend) then
@@ -8207,6 +8316,7 @@ local function ThreatSituationUpdate(self, event, unit)
                 local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
                 if config.totemColorRGB then return end
                 BBP.ColorThreat(frame)
+                BBP.FollowHealthName(frame)
             end
         elseif event == "UNIT_TARGET" then
             -- update frame specific
@@ -8216,6 +8326,7 @@ local function ThreatSituationUpdate(self, event, unit)
                 local config = frame.BetterBlizzPlates and frame.BetterBlizzPlates.config or InitializeNameplateSettings(frame)
                 if config.totemColorRGB then return end
                 BBP.ColorThreat(frame)
+                BBP.FollowHealthName(frame)
             end
         end
     end
