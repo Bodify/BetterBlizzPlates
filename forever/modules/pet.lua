@@ -200,10 +200,14 @@ end
 
 function BBP.HideOtherPet(frame)
     if not frame.bbpOtherPetAlphaHook then
-        hooksecurefunc(frame, "SetAlpha", function(self)
+        hooksecurefunc(frame, "SetAlpha", function(self, alpha)
             if not self.bbpHiddenOtherPet or self.changingAlpha or self:IsForbidden() then return end
             self.changingAlpha = true
-            self:SetAlpha(0)
+            if self.bbpOtherPetSecret then
+                self:SetAlphaFromBoolean(self.bbpOtherPetOwned, 0, alpha)
+            else
+                self:SetAlpha(0)
+            end
             self.changingAlpha = nil
         end)
         frame.bbpOtherPetAlphaHook = true
@@ -213,17 +217,35 @@ function BBP.HideOtherPet(frame)
     local info = frame.BetterBlizzPlates and frame.BetterBlizzPlates.unitInfo
     local hide = BetterBlizzPlatesDB.friendlyHideOtherPets and unit and info
         and (info.isFriend or info.isFriendlyNpc)
-        and (UnitIsOtherPlayersPet(unit)
-            or (BetterBlizzPlatesDB.friendlyHideOwnSecondaryPets and UnitIsOwnerOrControllerOfUnit("player", unit) and not UnitIsUnit(unit, "pet")))
         and not BBP.TargetShowsHidden(unit)
-
+    local owned, ownedSecret
     if hide then
+        local othersPet = UnitIsOtherPlayersPet(unit)
+        if not othersPet and BetterBlizzPlatesDB.friendlyHideOwnSecondaryPets and not UnitIsUnit(unit, "pet") then
+            owned = UnitIsOwnerOrControllerOfUnit("player", unit)
+            ownedSecret = issecretvalue(owned)
+            othersPet = not ownedSecret and owned
+        end
+        hide = othersPet
+    end
+
+    if ownedSecret then
         frame.bbpHiddenOtherPet = true
+        frame.bbpOtherPetSecret = true
+        frame.bbpOtherPetOwned = owned
+        frame.hideCastbarOverride = false
+        frame:SetAlphaFromBoolean(owned, 0, 1)
+    elseif hide then
+        frame.bbpHiddenOtherPet = true
+        frame.bbpOtherPetSecret = nil
+        frame.bbpOtherPetOwned = nil
         frame.hideCastbarOverride = true
         frame.castBar:Hide()
         frame:SetAlpha(0)
     elseif frame.bbpHiddenOtherPet then
         frame.bbpHiddenOtherPet = nil
+        frame.bbpOtherPetSecret = nil
+        frame.bbpOtherPetOwned = nil
         frame.hideCastbarOverride = false
         frame:SetAlpha(1)
     end
