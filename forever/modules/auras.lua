@@ -146,6 +146,7 @@ local DISPEL_KEYS = { "None", "Magic", "Curse", "Disease", "Poison", "Bleed" }
 local PURGE = {
     dispels = {
         { spell = 370,    types = { "Magic" } },                -- Purge (Shaman)
+        { spell = 378773, types = { "Magic" } },                -- Greater Purge (Shaman)
         { spell = 528,    types = { "Magic" } },                -- Dispel Magic (Priest)
         { spell = 30449,  types = { "Magic" } },                -- Spellsteal (Mage)
         { spell = 278326, types = { "Magic" } },                -- Consume Magic (Demon Hunter)

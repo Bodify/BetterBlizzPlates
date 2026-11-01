@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.2.3c
+## Retail & Forever
+### Bugfix
+- Purgeable enemy buff filter: Fix Shaman's Greater Purge not counting as a purge.
+
 # BetterBlizzPlates 2.2.3
 ## All versions
 ### New
