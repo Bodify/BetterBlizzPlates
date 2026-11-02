@@ -10,7 +10,7 @@ local HealerSpecs = {
 }
 
 -- Healer Indicator
-function BBP.HealerIndicator(frame)
+local function UpdateHealerIcon(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
@@ -74,7 +74,7 @@ function BBP.HealerIndicator(frame)
             frame.healerIndicator:SetDesaturated(false)
             frame.healerIndicator:SetVertexColor(1,1,1)
         end
-        return
+        return true
     end
 
     -- Check for Details
@@ -122,7 +122,18 @@ function BBP.HealerIndicator(frame)
             frame.needsRecolor = true
         end
         frame.healerIndicator:Show()
+        return true
     else
         frame.healerIndicator:Hide()
+    end
+end
+
+function BBP.HealerIndicator(frame)
+    local wasTextured = frame.bbpHealerTextured
+    local isHealer = UpdateHealerIcon(frame)
+    local changeTexture = BetterBlizzPlatesDB.healerIndicatorChangeTexture and not frame.BetterBlizzPlates.unitInfo.isSelf
+    frame.bbpHealerTextured = changeTexture and isHealer or nil
+    if wasTextured or frame.bbpHealerTextured then
+        BBP.ApplyIndicatorBarTexture(frame)
     end
 end

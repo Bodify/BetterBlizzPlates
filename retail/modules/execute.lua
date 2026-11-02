@@ -339,12 +339,7 @@ function BBP.ExecuteIndicator(frame)
             end)
         end
         local db = BetterBlizzPlatesDB
-        local overrideTex
-        if db.targetIndicatorChangeTexture and frame.unit and UnitIsUnit(frame.unit, "target") then
-            overrideTex = LSM:Fetch(LSM.MediaType.STATUSBAR, db.targetIndicatorTexture)
-        elseif db.focusTargetIndicatorChangeTexture and frame.unit and UnitIsUnit(frame.unit, "focus") then
-            overrideTex = LSM:Fetch(LSM.MediaType.STATUSBAR, db.focusTargetIndicatorTexture)
-        end
+        local overrideTex = BBP.GetIndicatorBarTexture(frame)
         if overrideTex then
             frame.executeColorOverlay:SetStatusBarTexture(overrideTex)
         elseif db.useCustomTextureForBars then

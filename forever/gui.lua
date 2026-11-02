@@ -7639,7 +7639,7 @@ local function guiPositionAndScale()
     healerIndicatorTestMode2:SetPoint("TOPLEFT", healerIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
     local moreCol
-    CreateMoreOptionsPopup(anchorSubHeal, contentFrame, BetterBlizzPlatesSubPanel, L["Healer_Indicator"], nil, 240)
+    CreateMoreOptionsPopup(anchorSubHeal, contentFrame, BetterBlizzPlatesSubPanel, L["Healer_Indicator"], nil, 290)
     anchorSubHeal.extendedSettingsButton:SetPoint("TOPLEFT", healerIndicatorTestMode2, "BOTTOMLEFT", 12, -8)
 
     local healerIndicatorEnemyOnly2 = CreateCheckbox("healerIndicatorEnemyOnly", L["Enemies_Only"], anchorSubHeal.extendedSettings)
@@ -7724,6 +7724,36 @@ local function guiPositionAndScale()
     moreCol.Header(L["Healthbar"])
     moreCol.Add(anchorSubHeal.healerIndicatorColorEnemyHealthbar)
     moreCol.Add(anchorSubHeal.healerIndicatorColorFriendlyHealthbar)
+
+    anchorSubHeal.healerIndicatorChangeTexture = CreateCheckbox("healerIndicatorChangeTexture", L["Re_Texture_Healthbar"], anchorSubHeal.extendedSettings)
+    CreateTooltip(anchorSubHeal.healerIndicatorChangeTexture, L["Tooltip_Re_Texture_The_Healthbar_Of_Healers"])
+
+    anchorSubHeal.healerIndicatorTexture = CreateTextureDropdown(
+        "healerIndicatorTexture",
+        anchorSubHeal.healerIndicatorChangeTexture,
+        L["Select_Texture"],
+        "healerIndicatorTexture",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = anchorSubHeal.healerIndicatorChangeTexture, x = 3, y = 3, label = L["Texture"] },
+        200
+    )
+
+    anchorSubHeal.healerIndicatorTextureOverFocus = CreateCheckbox("healerIndicatorTextureOverFocus", L["Prio_Healer_Texture_Over_Focus"], anchorSubHeal.healerIndicatorChangeTexture)
+
+    anchorSubHeal.UpdateHealerTextureState = function()
+        local checked = anchorSubHeal.healerIndicatorChangeTexture:GetChecked()
+        anchorSubHeal.healerIndicatorTexture:SetEnabled(checked)
+        anchorSubHeal.healerIndicatorTextureOverFocus:SetEnabled(checked)
+        anchorSubHeal.healerIndicatorTextureOverFocus:SetAlpha(checked and 1 or 0.5)
+    end
+    anchorSubHeal.healerIndicatorChangeTexture:HookScript("OnClick", anchorSubHeal.UpdateHealerTextureState)
+    anchorSubHeal.UpdateHealerTextureState()
+
+    moreCol.Add(anchorSubHeal.healerIndicatorChangeTexture)
+    moreCol.Gap(28)
+    moreCol.Add(anchorSubHeal.healerIndicatorTextureOverFocus)
     anchorSubHeal.extendedSettings.Fit()
 
     ----------------------

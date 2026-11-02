@@ -332,6 +332,9 @@ local defaultSettings = {
     healerIndicatorColorFriendlyHealthbar = false,
     healerIndicatorColorEnemyHealthbarRGB = {0, 1, 0},
     healerIndicatorColorFriendlyHealthbarRGB = {0, 1, 0},
+    healerIndicatorChangeTexture = false,
+    healerIndicatorTexture = "Dragonflight HD (BBP)",
+    healerIndicatorTextureOverFocus = false,
     -- Class Icon
     classIndicatorCCAuras = true,
     classIndicator = false,
@@ -8869,12 +8872,7 @@ hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
     if not self.BetterBlizzPlates then return end
     local config = self.BetterBlizzPlates.config
     if not config then return end
-    local texture
-    if config.targetIndicator and BetterBlizzPlatesDB.targetIndicatorChangeTexture and UnitIsUnit(self.unit, "target") then
-        texture = config.targetIndicatorTextureLSM or LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.targetIndicatorTexture)
-    elseif config.focusTargetIndicator and BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture and UnitIsUnit(self.unit, "focus") then
-        texture = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.focusTargetIndicatorTexture)
-    end
+    local texture = BBP.GetIndicatorBarTexture(self)
     if texture then
         self.healthBar:SetStatusBarTexture(texture)
     end

@@ -174,15 +174,23 @@ local function ApplyTargetIndicatorColor(texture, config)
     end
 end
 
-function BBP.ApplyIndicatorBarTexture(frame)
+function BBP.GetIndicatorBarTexture(frame)
     local db = BetterBlizzPlatesDB
     local unit = frame.unit
-    local texture
     if db.targetIndicator and db.targetIndicatorChangeTexture and unit and UnitIsUnit(unit, "target") then
-        texture = LSM:Fetch(LSM.MediaType.STATUSBAR, db.targetIndicatorTexture)
-    elseif db.focusTargetIndicator and db.focusTargetIndicatorChangeTexture and (db.focusTargetIndicatorTestMode or (unit and UnitIsUnit(unit, "focus"))) then
-        texture = LSM:Fetch(LSM.MediaType.STATUSBAR, db.focusTargetIndicatorTexture)
+        return LSM:Fetch(LSM.MediaType.STATUSBAR, db.targetIndicatorTexture), "target"
     end
+    local isFocus = db.focusTargetIndicator and db.focusTargetIndicatorChangeTexture and (db.focusTargetIndicatorTestMode or (unit and UnitIsUnit(unit, "focus")))
+    if db.healerIndicator and db.healerIndicatorChangeTexture and frame.bbpHealerTextured and (db.healerIndicatorTextureOverFocus or not isFocus) then
+        return LSM:Fetch(LSM.MediaType.STATUSBAR, db.healerIndicatorTexture), "healer"
+    end
+    if isFocus then
+        return LSM:Fetch(LSM.MediaType.STATUSBAR, db.focusTargetIndicatorTexture), "focus"
+    end
+end
+
+function BBP.ApplyIndicatorBarTexture(frame)
+    local texture, source = BBP.GetIndicatorBarTexture(frame)
     local mask = frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar and frame.HealthBarsContainer.healthBar.MaskTexture
     if texture then
         if mask then
@@ -194,6 +202,7 @@ function BBP.ApplyIndicatorBarTexture(frame)
         frame.bbpMaskForceShow = nil
         BBP.ApplyCustomTextureToNameplate(frame)
     end
+    BBP.UpdateHealerBarOverlay(frame, source)
 end
 
 -- Target Indicator

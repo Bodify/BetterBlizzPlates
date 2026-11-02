@@ -349,6 +349,9 @@ local defaultSettings = {
     healerIndicatorColorFriendlyHealthbar = false,
     healerIndicatorColorEnemyHealthbarRGB = {0, 1, 0},
     healerIndicatorColorFriendlyHealthbarRGB = {0, 1, 0},
+    healerIndicatorChangeTexture = false,
+    healerIndicatorTexture = "Dragonflight HD (BBP)",
+    healerIndicatorTextureOverFocus = false,
     -- Class Icon
     classIndicator = false,
     classIndicatorCCAuras = true,
@@ -6032,6 +6035,10 @@ local function HandleNamePlateRemoved(unit)
     if frame.healerIndicatorSecret then
         frame.healerIndicatorSecret:Hide()
     end
+    frame.bbpHealerSecretIndex = nil
+    if frame.healerBarClip then
+        frame.healerBarClip:Hide()
+    end
     if frame.factionIndicator then
         frame.factionIndicator:Hide()
     end
@@ -6971,7 +6978,7 @@ local function GetSpecID(frame)
 
     -- Iterate through tooltip lines to find the spec name
     for _, line in ipairs(tooltipData.lines) do
-        if line and line.type == Enum.TooltipDataLineType.None and line.leftText and line.leftText ~= "" then
+        if line and line.leftText and not issecretvalue(line.leftText) and line.leftText ~= "" then
             local specID = ALL_SPECS[line.leftText]
             if specID then
                 SpecCache[guid] = specID
@@ -10285,12 +10292,7 @@ hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
     if not self.BetterBlizzPlates then return end
     local config = self.BetterBlizzPlates.config
     if not config then return end
-    local texture
-    if config.targetIndicator and BetterBlizzPlatesDB.targetIndicatorChangeTexture and UnitIsUnit(self.unit, "target") then
-        texture = config.targetIndicatorTextureLSM or LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.targetIndicatorTexture)
-    elseif config.focusTargetIndicator and BetterBlizzPlatesDB.focusTargetIndicatorChangeTexture and UnitIsUnit(self.unit, "focus") then
-        texture = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.focusTargetIndicatorTexture)
-    end
+    local texture = BBP.GetIndicatorBarTexture(self)
     if texture then
         self.healthBar:SetStatusBarTexture(texture)
     end

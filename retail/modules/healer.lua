@@ -1,4 +1,7 @@
+local LSM = LibStub("LibSharedMedia-3.0")
+
 local SECRET_HEALER_MAP = { HEALER = "bags-icon-addslots", TANK = "", DAMAGER = "" }
+local SECRET_BAR_TEXTURE_MAP = { HEALER = "", TANK = "", DAMAGER = "" }
 
 local function SetRedCross(texture, red)
     if red then
@@ -20,8 +23,23 @@ local function ShowSecretHealer(frame, arenaIndex, red)
     frame.healerIndicatorSecret:Show()
 end
 
+local function GetHealerBarOverlay(frame)
+    if frame.healerBarOverlay then return frame.healerBarOverlay end
+    local healthBar = frame.healthBar
+    frame.healerBarClip = CreateFrame("Frame", nil, healthBar)
+    frame.healerBarClip:SetFrameLevel(healthBar:GetFrameLevel() + 1)
+    frame.healerBarClip:SetClipsChildren(true)
+    frame.healerBarOverlay = frame.healerBarClip:CreateTexture(nil, "ARTWORK")
+    frame.healerBarOverlay:SetAllPoints(healthBar)
+    hooksecurefunc(healthBar, "SetStatusBarColor", function(_, r, g, b)
+        if frame:IsForbidden() then return end
+        frame.healerBarOverlay:SetVertexColor(r, g, b)
+    end)
+    return frame.healerBarOverlay
+end
+
 -- Healer Indicator
-function BBP.HealerIndicator(frame)
+local function UpdateHealerIcon(frame)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
 
@@ -84,7 +102,7 @@ function BBP.HealerIndicator(frame)
     if config.healerIndicatorTestMode then
         frame.healerIndicator:Show()
         SetRedCross(frame.healerIndicator, config.healerIndicatorRedCrossEnemy and not info.isFriend)
-        return
+        return true
     end
 
     if (config.healerIndicatorArenaOnly and not BBP.isInArena) or (config.healerIndicatorBgOnly and not BBP.isInBg) then
@@ -117,7 +135,7 @@ function BBP.HealerIndicator(frame)
         frame.healerIndicator:Hide()
         if config.healerIndicatorEnemyOnly and not info.isEnemy then return end
         ShowSecretHealer(frame, secretIndex, config.healerIndicatorRedCrossEnemy and not info.isFriend)
-        return
+        return nil, secretIndex
     end
 
     if BBP.IsSpecHealer(frame) then
@@ -136,7 +154,43 @@ function BBP.HealerIndicator(frame)
             frame.needsRecolor = true
         end
         frame.healerIndicator:Show()
+        return true
     else
         frame.healerIndicator:Hide()
     end
+end
+
+function BBP.HealerIndicator(frame)
+    local wasTextured = frame.bbpHealerTextured or frame.bbpHealerSecretIndex
+    local isHealer, secretIndex = UpdateHealerIcon(frame)
+    local changeTexture = BetterBlizzPlatesDB.healerIndicatorChangeTexture and not frame.BetterBlizzPlates.unitInfo.isSelf
+    frame.bbpHealerTextured = changeTexture and isHealer or nil
+    frame.bbpHealerSecretIndex = changeTexture and secretIndex or nil
+    if wasTextured or frame.bbpHealerTextured or frame.bbpHealerSecretIndex then
+        BBP.ApplyIndicatorBarTexture(frame)
+    end
+end
+
+function BBP.UpdateHealerBarOverlay(frame, source)
+    local db = BetterBlizzPlatesDB
+    if not frame.bbpHealerSecretIndex or source == "target" or (source == "focus" and not db.healerIndicatorTextureOverFocus) then
+        if frame.healerBarClip then
+            frame.healerBarClip:Hide()
+        end
+        return
+    end
+
+    local healthBar = frame.healthBar
+    local overlay = GetHealerBarOverlay(frame)
+    local clip = frame.healerBarClip
+    clip:ClearAllPoints()
+    clip:SetPoint("TOPLEFT", healthBar, "TOPLEFT")
+    clip:SetPoint("BOTTOMRIGHT", healthBar:GetStatusBarTexture(), "BOTTOMRIGHT")
+    if not db.classicNameplates and not db.classicRetailNameplates then
+        BBP.ApplyMidnightMask(frame, overlay)
+    end
+    SECRET_BAR_TEXTURE_MAP.HEALER = LSM:Fetch(LSM.MediaType.STATUSBAR, db.healerIndicatorTexture)
+    BBP.SetSecretArenaRoleTexture(overlay, frame.bbpHealerSecretIndex, SECRET_BAR_TEXTURE_MAP)
+    overlay:SetVertexColor(healthBar:GetStatusBarColor())
+    clip:Show()
 end

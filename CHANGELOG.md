@@ -1,4 +1,7 @@
 # BetterBlizzPlates 2.2.3c
+## All versions
+### New
+- Healer Indicator: "Re-texture healthbar" setting with its own texture. Also a "Prio Healer Texture over Focus Texture" to make it win over the focus texture if that is also enabled, by default focus texture wins.
 ## Retail & Forever
 ### Bugfix
 - Purgeable enemy buff filter: Fix Shaman's Greater Purge not counting as a purge.
