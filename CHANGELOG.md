@@ -1,4 +1,4 @@
-# BetterBlizzPlates 2.2.3b
+# BetterBlizzPlates 2.2.3c
 ## All versions
 ### New
 - Healer Indicator: "Re-texture healthbar" setting with its own texture. Also a "Prio Healer Texture over Focus Texture" to make it win over the focus texture if that is also enabled, by default focus texture wins.
