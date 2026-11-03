@@ -63,6 +63,10 @@ local UnitIsUnit = UnitIsUnit
 local UnitName = UnitName
 local UnitReaction = UnitReaction
 
+local function BarHasCast(castBar)
+    return castBar.casting or castBar.channeling or castBar.reverseChanneling
+end
+
 local CastStopEvents = {
     UNIT_SPELLCAST_STOP             = true,
     UNIT_SPELLCAST_CHANNEL_STOP     = true,
@@ -1429,11 +1433,8 @@ function BBP.HookCastbarOnEvent(frame)
                         end
                     end
                     if BetterBlizzPlatesDB.castbarQuickHide then
-                        if BetterBlizzPlatesDB.castbarQuickHideAlways or not (castBar.interruptedBy or castBar.wasKicked) then
-                            local cast = UnitCastingInfo(castBar.unit) or UnitChannelInfo(castBar.unit)
-                            if not cast then
-                                castBar:Hide()
-                            end
+                        if (BetterBlizzPlatesDB.castbarQuickHideAlways or not (castBar.interruptedBy or castBar.wasKicked)) and not BarHasCast(castBar) then
+                            castBar:Hide()
                         end
                     end
                 elseif CastStartEvents[event] then
@@ -1759,7 +1760,7 @@ function BBP.CastbarOnEvent(frame, event)
             if castbarQuickHide then
                 if castBar.interruptedBy and not BetterBlizzPlatesDB.castbarQuickHideAlways then
                     castBar:Show()
-                else
+                elseif not BarHasCast(castBar) then
                     castBar:Hide()
                 end
                 -- if BetterBlizzPlatesDB.nameplateResourceUnderCastbar then

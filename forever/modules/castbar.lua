@@ -95,6 +95,10 @@ local classicFrames
 
 local interruptedText = SPELL_FAILED_INTERRUPTED
 
+local function BarHasCast(castBar)
+    return castBar.casting or castBar.channeling or castBar.reverseChanneling
+end
+
 local CastStopEvents = {
     UNIT_SPELLCAST_STOP             = true,
     UNIT_SPELLCAST_CHANNEL_STOP     = true,
@@ -1083,12 +1087,10 @@ castbarEventFrame:SetScript("OnEvent", function(self, event, unitID)
                         end
 
                         C_Timer.After(0.5, function()
-                            if not UnitCastingInfo(destUnit) and not UnitChannelInfo(destUnit) then
-                                if frame and frame.castBar then
-                                    frame.castBar:PlayFadeAnim()
-                                    if nameplateResourceUnderCastbar and UnitIsUnit(destUnit, "target") then
-                                        BBP.UpdateNameplateResourcePositionForCasting(nameplate)
-                                    end
+                            if frame and frame.castBar and not BarHasCast(frame.castBar) then
+                                frame.castBar:PlayFadeAnim()
+                                if nameplateResourceUnderCastbar and UnitIsUnit(destUnit, "target") then
+                                    BBP.UpdateNameplateResourcePositionForCasting(nameplate)
                                 end
                             end
                         end)
@@ -1485,11 +1487,8 @@ function BBP.HookCastbarOnEvent(frame)
                     end
                 end
                 if BetterBlizzPlatesDB.castbarQuickHide then
-                    if BetterBlizzPlatesDB.castbarQuickHideAlways or not (castBar.interruptedBy or castBar.wasKicked) then
-                        local cast = UnitCastingInfo(castBar.unit) or UnitChannelInfo(castBar.unit)
-                        if not cast then
-                            castBar:Hide()
-                        end
+                    if (BetterBlizzPlatesDB.castbarQuickHideAlways or not (castBar.interruptedBy or castBar.wasKicked)) and not BarHasCast(castBar) then
+                        castBar:Hide()
                     end
                 end
             elseif CastStartEvents[event] then

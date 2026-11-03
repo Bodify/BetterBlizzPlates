@@ -2050,7 +2050,9 @@ BBP.GetNameplateUnitInfo = GetNameplateUnitInfo
 
 local function GetRPNameColor(unit)
     if not UnitExists(unit) then return end
-    local player = AddOn_TotalRP3 and AddOn_TotalRP3.Player and AddOn_TotalRP3.Player.CreateFromUnit(unit)
+    local characterID = TRP3_NameUtil and TRP3_NameUtil.GetQualifiedName(unit)
+    if not characterID then return end
+    local player = AddOn_TotalRP3 and AddOn_TotalRP3.Player and AddOn_TotalRP3.Player.CreateFromCharacterID(characterID)
     if player then
         local color = player:GetCustomColorForDisplay()
         if color then
