@@ -1,3 +1,9 @@
+# BetterBlizzPlates 2.2.3d
+## All versions
+### Bugfix
+- Fix an issue with quick hide castbars sometimes causing fast evoker channel into cast to hide the last castbar unintentionally.
+- Fix an issue with trp setting causing error
+
 # BetterBlizzPlates 2.2.3c
 ## All versions
 ### New
