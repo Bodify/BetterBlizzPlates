@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.2.3f
+## Forever
+### Tweak
+- Update Dissonance profile (www.twitch.tv/dissonancegg)
+
 # BetterBlizzPlates 2.2.3e
 ## All versions
 ### Tweak
