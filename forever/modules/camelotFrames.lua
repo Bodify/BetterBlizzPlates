@@ -532,9 +532,16 @@ local function PlaceLevelText(frame, overlay, db)
     local x = moved and ((db.levelTextXPos or 0) + LevelTextSideGap(relPoint)) or 0
     local y = moved and (db.levelTextYPos or 0) or 0
     local relTo = moved and frame.HealthBarsContainer or overlay
-    if overlay.bbpTextSize ~= size then
+    local font, outline = LEVEL_TEXT_FONT, ""
+    if db.classicRetailNameplates and not db.classicNameplates and BBP.GetNameplateFont then
+        local npFont, npOutline = BBP.GetNameplateFont()
+        font, outline = npFont or font, npOutline or outline
+    end
+    if overlay.bbpTextSize ~= size or overlay.bbpFont ~= font or overlay.bbpOutline ~= outline then
         overlay.bbpTextSize = size
-        overlay.text:SetFont(LEVEL_TEXT_FONT, size)
+        overlay.bbpFont = font
+        overlay.bbpOutline = outline
+        overlay.text:SetFont(font, size, outline)
         overlay.skull:SetSize(size * LEVEL_SKULL_PER_FONT_SIZE, size * LEVEL_SKULL_PER_FONT_SIZE)
     end
     local layout = overlay.bbpTextLayout

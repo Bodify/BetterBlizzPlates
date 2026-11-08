@@ -224,7 +224,7 @@ local defaultSettings = {
     friendlyNameplateClickthrough = false,
     friendlyClassColorName = false,
     friendlyNameScale = 1,
-    friendlyHealthBarColorRGB = {0, 1, 0},
+    friendlyHealthBarColorRGB = {96/255, 96/255, 1},
     friendlyHealthBarColorNpcRGB = {0, 1, 0},
     friendlyHealthBarColorRecentAllyRGB = {83/255, 201/255, 1},
     friendlyHealthBarColorMyPetRGB = {0, 1, 0},
@@ -236,6 +236,7 @@ local defaultSettings = {
     guildNameEnemyScale = 1,
     guildNamesFriendly = true,
     guildNamesEnemy = false,
+    guildNameNoBrackets = false,
     guildNameOutline = "OUTLINE",
     useCustomTextureForFriendly = true,
     -- Nameplate Border
@@ -824,10 +825,10 @@ local defaultSettings = {
     auraWhitelist = {},
     auraBlacklist = {},
     --auraColorList = {},
-    friendlyColorNameRGB = {1, 1, 1},
+    friendlyColorNameRGB = {96/255, 96/255, 1},
     friendlyColorNamePlayer = true,
     friendlyColorNameNpc = true,
-    friendlyColorNameNpcRGB = {1, 1, 1},
+    friendlyColorNameNpcRGB = {0, 1, 0},
     friendlyColorNameRecentAllyRGB = {83/255, 201/255, 1},
     friendlyColorNameMyPetRGB = {1, 1, 1},
     enemyColorNameHostile = true,
@@ -4673,7 +4674,7 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
         config.enemyHealthBarColorNpcOnly = BetterBlizzPlatesDB.enemyHealthBarColorNpcOnly
         config.enemyNeutralHealthBarColorRGB = BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 0, 0}
         config.enemyHealthBarColorRGB = BetterBlizzPlatesDB.enemyHealthBarColorRGB or {1, 0, 0}
-        config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
+        config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {96/255, 96/255, 1}
         config.focusTargetIndicatorColorNameplate = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplate
         config.focusTargetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB
         config.focusTargetIndicator = BetterBlizzPlatesDB.focusTargetIndicator
@@ -4773,7 +4774,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
         config.enemyHealthBarColorNpcOnly = BetterBlizzPlatesDB.enemyHealthBarColorNpcOnly
         config.enemyNeutralHealthBarColorRGB = BetterBlizzPlatesDB.enemyNeutralHealthBarColorRGB or {1, 1, 0}
         config.enemyHealthBarColorRGB = BetterBlizzPlatesDB.enemyHealthBarColorRGB or {1, 0, 0}
-        config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
+        config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {96/255, 96/255, 1}
         config.focusTargetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.focusTargetIndicatorColorNameplateRGB
         config.focusTargetIndicator = BetterBlizzPlatesDB.focusTargetIndicator
         config.targetIndicatorColorNameplateRGB = BetterBlizzPlatesDB.targetIndicatorColorNameplateRGB
@@ -5141,6 +5142,11 @@ local function EnableMouseoverChecker()
 end
 
 
+local function GuildNameText(guildName)
+    if BetterBlizzPlatesDB.guildNameNoBrackets then return guildName end
+    return "<"..guildName..">"
+end
+
 local function ShowGuildName(frame, unit)
     local config = frame.BetterBlizzPlates.config
     local info = frame.BetterBlizzPlates.unitInfo
@@ -5167,6 +5173,7 @@ local function ShowGuildName(frame, unit)
     if config.showGuildNames and showGuild then
         if not frame.guildName then
             frame.guildName = frame:CreateFontString(nil, "BACKGROUND", "SystemFont_NamePlateFixed")
+            frame.guildName:SetSmoothScaling(true)
             local db = BetterBlizzPlatesDB
             if db.useCustomFont then
                 BBP.SetNameFontBasedOnOption(frame.guildName, 9, (db.useCustomFont and db.enableCustomFontOutline) and db.customFontOutline or "")
@@ -5183,10 +5190,10 @@ local function ShowGuildName(frame, unit)
             if hasNameText then
                 if BBP.needsUpdate or frame.guildNameOutline ~= config.guildNameOutline then
                     local font, size, outline = frame.name:GetFont()
-                    BBP.SetTextFont(frame.guildName, font, 9, config.guildNameOutline or outline)
+                    BBP.SetTextFont(frame.guildName, font, 9, EnsureFontFlags(config.guildNameOutline or outline))
                     frame.guildNameOutline = config.guildNameOutline
                 end
-                frame.guildName:SetText("<"..guildName..">")
+                frame.guildName:SetText(GuildNameText(guildName))
                 if (isFriendly and config.guildNameColor) or (not isFriendly and config.guildNameEnemyColor) then
                     frame.guildName:SetTextColor(unpack(isFriendly and config.guildNameColorRGB or config.guildNameEnemyColorRGB))
                 else
@@ -5875,6 +5882,7 @@ local function HideFriendlyHealthbar(frame)
         end
     end
     if frame.nameHooked then BBP.RepositionName(frame) end
+    if frame.questIndicator then BBP.PositionQuestIndicator(frame) end
 end
 
 BBP.HideFriendlyHealthbar = HideFriendlyHealthbar
@@ -6284,6 +6292,7 @@ local function NameplateNPCTitle(frame)
     if not frame.npcTitle then
         -- Create a FontString on the nameplate
         frame.npcTitle = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        frame.npcTitle:SetSmoothScaling(true)
         frame.npcTitle:SetIgnoreParentScale(true)
         BBP.SetFontBasedOnOption(frame.npcTitle, 10, (BetterBlizzPlatesDB.useCustomFont and BetterBlizzPlatesDB.enableCustomFontOutline) and BetterBlizzPlatesDB.customFontOutline or "")
     end
@@ -8062,7 +8071,7 @@ function BBP.ConsolidatedUpdateName(frame)
         --config.totemIndicatorTest = config.totemIndicatorTestMode and frame.randomColor
         config.anonModeOn = BetterBlizzPlatesDB.anonMode
         config.pvpTitleModeOn = BetterBlizzPlatesDB.pvpTitleMode
-        config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {0, 1, 0}
+        config.friendlyHealthBarColorRGB = BetterBlizzPlatesDB.friendlyHealthBarColorRGB or {96/255, 96/255, 1}
         config.totemIndicatorHideNameAndShiftIconDown = BetterBlizzPlatesDB.totemIndicatorHideNameAndShiftIconDown
         config.useFakeName = BetterBlizzPlatesDB.useFakeName
         config.totemIndicator = BetterBlizzPlatesDB.totemIndicator

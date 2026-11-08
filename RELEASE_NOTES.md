@@ -1,3 +1,13 @@
+# BetterBlizzPlates 2.2.3e
+## All versions
+### Tweak
+- Improve Guild & NPC Title scaling and reduce jitter. Guild Name now also uses slug font so the size may have changed slightly.
+- Quest Indicator: Now uses the ? icon on friendly npcs and if healthbar is hidden it will show centered above the name instead of floating randomly next to a hidden healthbar.
+## Forever
+### Tweak
+- Update Snupy profile (www.twitch.tv/snupy)
+- Update JFarm profile (www.twitch.tv/jfarm_)
+
 # BetterBlizzPlates 2.2.3d
 ## All versions
 ### Bugfix

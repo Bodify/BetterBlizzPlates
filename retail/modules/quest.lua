@@ -86,6 +86,24 @@ local function SetQuestColor(frame, isQuest)
     end
 end
 
+local hasTurnInAtlas = C_Texture.GetAtlasInfo("QuestTurnin") ~= nil
+
+function BBP.PositionQuestIndicator(frame)
+    local indicator = frame.questIndicator
+    if not indicator then return end
+    local db = BetterBlizzPlatesDB
+    indicator:ClearAllPoints()
+    indicator:SetScale(db.questIndicatorScale or 1)
+    if frame.HealthBarsContainer and frame.HealthBarsContainer.alphaZero == true then
+        indicator:SetPoint("BOTTOM", frame.name, "TOP", 0, 0)
+        return
+    end
+    local anchorPoint = db.questIndicatorAnchor or "CENTER"
+    local xPos = (db.questIndicatorXPos or 0) + (anchorPoint == "LEFT" and -8 or 0)
+    local yPos = db.questIndicatorYPos or 0
+    indicator:SetPoint("CENTER", frame.healthBar, anchorPoint, xPos, yPos)
+end
+
 function BBP.QuestIndicator(frame)
     if not frame.questIndicator then
         if not frame.bbpPlateOverlay then
@@ -94,20 +112,17 @@ function BBP.QuestIndicator(frame)
             frame.bbpPlateOverlay:SetFrameLevel(9000)
         end
         frame.questIndicator = frame.bbpPlateOverlay:CreateTexture(nil, "OVERLAY")
-        frame.questIndicator:SetAtlas("smallquestbang")
         frame.questIndicator:SetSize(22, 22)
+    end
+    local info = frame.BetterBlizzPlates and frame.BetterBlizzPlates.unitInfo
+    local atlas = (info and info.isFriendlyNpc and hasTurnInAtlas) and "QuestTurnin" or "smallquestbang"
+    if frame.questIndicator.bbpAtlas ~= atlas then
+        frame.questIndicator:SetAtlas(atlas)
+        frame.questIndicator.bbpAtlas = atlas
     end
 
     local db = BetterBlizzPlatesDB
-    local anchorPoint = db.questIndicatorAnchor or "CENTER"
-    local xPos = (db.questIndicatorXPos or 0) + (anchorPoint == "LEFT" and -8 or 0)
-    local yPos = db.questIndicatorYPos or 0
-    local anchorToName = db.friendlyHideHealthBar and db.friendlyHideHealthBarNpc and (UnitIsFriend(frame.unit, "player") or (frame.BetterBlizzPlates and frame.BetterBlizzPlates.unitInfo and frame.BetterBlizzPlates.unitInfo.isFriendlyNpc))
-    local anchorFrame = anchorToName and frame.name or frame.healthBar
-
-    frame.questIndicator:ClearAllPoints()
-    frame.questIndicator:SetPoint("CENTER", anchorFrame, anchorPoint, xPos, yPos)
-    frame.questIndicator:SetScale(db.questIndicatorScale or 1)
+    BBP.PositionQuestIndicator(frame)
 
     local isQuest = db.questIndicatorTestMode or (db.questIndicator and not InHiddenInstance() and BBP.IsQuestUnit(frame.unit))
     frame.questIndicator:SetShown(isQuest)
