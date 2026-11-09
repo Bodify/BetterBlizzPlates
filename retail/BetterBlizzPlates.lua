@@ -573,6 +573,7 @@ local defaultSettings = {
 
     nameplateAuraMillisecondsBuffs = true,
     nameplateAuraMillisecondsCC = true,
+    nameplateAuraMillisecondsDebuffs = false,
     castBarCastColor = {
         1,
 		0.8431373238563538,
@@ -1219,7 +1220,7 @@ local NAMEPLATE_AURA_SETTINGS = {
 
     "showDefaultCooldownNumbersOnNpAuras", "hideNpAuraSwipe",
     "nameplateAuraHideLongDurationText", "nameplateAuraUseBlizzardCdText",
-    "nameplateAuraMillisecondsBuffs", "nameplateAuraMillisecondsCC",
+    "nameplateAuraMillisecondsBuffs", "nameplateAuraMillisecondsCC", "nameplateAuraMillisecondsDebuffs",
     "nameplateAuraTimerColor", "nameplateAuraTimerBaseColor",
     "nameplateAuraTimerLowColor", "nameplateAuraTimerLowThreshold",
     "nameplateAuraTimerHighColor", "nameplateAuraTimerHighThreshold",

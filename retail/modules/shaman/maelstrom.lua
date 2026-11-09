@@ -107,6 +107,9 @@ function BBP.MaelstromWeaponCombos()
     if not prd then return end
 
     prdBar = CreateFrame("Frame", "BBPMaelstromWeaponBar", prd, "HorizontalLayoutFrame")
+    function prdBar:GetChildSize(child)
+        return child:GetSize(true)
+    end
     prdBar:SetFrameStrata("BACKGROUND")
     prdBar.spacing = POINT_SPACING
     prdBar.topPadding = 10

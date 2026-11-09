@@ -13068,6 +13068,9 @@ local function guiNameplateAuras()
     Check(left, "nameplateAuraMillisecondsCC", L["Milliseconds_On_CC"], showCd, 14,
         L["Milliseconds_On_Crowd_Control"],
         L["Tooltip_Milliseconds_On_Crowd_Control_Desc"])
+    Check(left, "nameplateAuraMillisecondsDebuffs", L["Milliseconds_On_Debuffs"], showCd, 14,
+        L["Milliseconds_On_Debuffs"],
+        L["Tooltip_Milliseconds_On_Debuffs_Desc"])
     Check(left, "npAuraCdTextBigOnly", L["Only_On_Big_Icons"], showCd, 14,
         L["Only_On_Big_Icons"],
         L["Tooltip_Only_On_Big_Icons_Desc"])

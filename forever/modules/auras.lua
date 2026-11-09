@@ -525,6 +525,7 @@ function BBP.UpdateUserAuraSettings()
     S.blizzardBuffsInPvE = db.nameplateAuraBuffsBlizzardInPvE and true or false
     S.msBuffs = db.nameplateAuraMillisecondsBuffs ~= false
     S.msCC = db.nameplateAuraMillisecondsCC ~= false
+    S.msDebuffs = db.nameplateAuraMillisecondsDebuffs and true or false
     S.debuffPadding = tonumber(db.bbpDebuffPadding) or 0
     S.ccOverlay = (db.partyPointer and db.partyPointerCCAuras) and true or false
     S.ccOverlayReplacesIcon = S.ccOverlay and not inPvEInstance
@@ -759,17 +760,17 @@ end
 
 local durationFormatters = {}
 
-local function GetDurationFormatter(showMilliseconds, hideLong)
-    local key = (showMilliseconds and "ms" or "plain") .. (hideLong and "+hide" or "")
+local function GetDurationFormatter(msFrom, hideLong)
+    local key = (msFrom and ("ms" .. msFrom) or "plain") .. (hideLong and "+hide" or "")
     if durationFormatters[key] then return durationFormatters[key] end
 
     local f = C_StringUtil.CreateNumericRuleFormatter()
     local breakpoints = {}
-    if showMilliseconds then
+    if msFrom then
         breakpoints[#breakpoints + 1] = { threshold = 0, format = "%.1f" }
     end
     breakpoints[#breakpoints + 1] = {
-        threshold = showMilliseconds and MILLISECOND_THRESHOLD or 0,
+        threshold = msFrom or 0,
         format = "%d",
         step = 1,
         rounding = Enum.NumericRuleFormatRounding.Up,
@@ -1160,7 +1161,7 @@ local function ApplyMutableStyle(button, style)
         button.bbpTimer:SetShown(style.showCdText and not style.blizzardCdText)
         ApplyCountdownFont(button.bbpTimer, style.cdFont)
 
-        local wantMs = style.showMilliseconds and true or false
+        local wantMs = style.showMilliseconds or false
         local hideLong = style.hideLongTimers and true or false
         if button.bbpMilliseconds ~= wantMs or button.bbpHideLong ~= hideLong then
             button.bbpMilliseconds = wantMs
@@ -1361,7 +1362,9 @@ local function BuildStyle(kind, groupKey, standalone)
         hideLongTimers = S.hideLongTimers,
         cdTextScale = inRow and S.cdTextScale or S.cdTextScaleBig,
         cdFont = S.cdFont,
-        showMilliseconds = (IsBuffKind(kind) and S.msBuffs) or (isCC and S.msCC) or false,
+        showMilliseconds = (((IsBuffKind(kind) and S.msBuffs) or (isCC and S.msCC)) and MILLISECOND_THRESHOLD)
+            or (kind == DEBUFFS and not isCC and S.msDebuffs and math.min(S.timerThreshold, HIDE_LONG_TIMER_FROM - 1))
+            or false,
         showStack = S.showStack,
         countScale = S.countScale,
         stackFont = S.stackFont,
