@@ -111,6 +111,8 @@ local defaultSettings = {
     guildNameEnemyColorRGB = {1, 0, 0},
     npcTitleColorRGB = {1, 0.85, 0},
     npcTitleScale = 1,
+    npcTitleUnderName = false,
+    npcTitleUnderNameNoMove = false,
     hideNpcMurlocScale = 1,
     hideNpcMurlocYPos = 0,
     partyPointerWidth = 36,
@@ -235,6 +237,8 @@ local defaultSettings = {
     guildNamesFriendly = true,
     guildNamesEnemy = false,
     guildNameNoBrackets = false,
+    guildNameUnderName = false,
+    guildNameUnderNameNoMove = false,
     guildNameOutline = "OUTLINE",
     useCustomTextureForFriendly = true,
     -- Nameplate Border
@@ -2305,18 +2309,19 @@ function BBP.GetDefaultFadeOutNPCsList()
     return defaultSettings.defaultFadeOutNPCsList
 end
 
+local oppositeAnchors = {
+    LEFT = "RIGHT",
+    RIGHT = "LEFT",
+    TOP = "BOTTOM",
+    BOTTOM = "TOP",
+    TOPLEFT = "BOTTOMRIGHT",
+    TOPRIGHT = "BOTTOMLEFT",
+    BOTTOMLEFT = "TOPRIGHT",
+    BOTTOMRIGHT = "TOPLEFT",
+}
+
 function BBP.GetOppositeAnchor(anchor)
-    local opposites = {
-        LEFT = "RIGHT",
-        RIGHT = "LEFT",
-        TOP = "BOTTOM",
-        BOTTOM = "TOP",
-        TOPLEFT = "BOTTOMRIGHT",
-        TOPRIGHT = "BOTTOMLEFT",
-        BOTTOMLEFT = "TOPRIGHT",
-        BOTTOMRIGHT = "TOPLEFT",
-    }
-    return opposites[anchor] or "CENTER"
+    return oppositeAnchors[anchor] or "CENTER"
 end
 
 local function setNil(table, member)
@@ -5904,6 +5909,8 @@ local function ShowGuildName(frame, unit)
         config.guildNameEnemyColorRGB = db.guildNameEnemyColorRGB
         config.guildNameEnemyScale = db.guildNameEnemyScale
         config.guildNameOutline = db.guildNameOutline == "NONE" and "" or db.guildNameOutline
+        config.guildNameUnderName = db.guildNameUnderName
+        config.guildNameUnderNameNoMove = db.guildNameUnderNameNoMove
         config.guildNameInitialized = true
     end
     local isFriendly = info.isFriend
@@ -5945,7 +5952,7 @@ local function ShowGuildName(frame, unit)
                 frame.guildName:SetTextColor(frame.name:GetTextColor())
             end
             frame.guildName:ClearAllPoints()
-            if frame.healthBar:GetAlpha() == 0 then
+            if config.guildNameUnderName or frame.healthBar:GetAlpha() == 0 then
                 frame.guildName:SetPoint("TOP", frame.name, "BOTTOM", 0, 0)
             else
                 frame.guildName:SetPoint("TOP", frame.healthBar, "BOTTOM", 0, -3)
@@ -5953,6 +5960,11 @@ local function ShowGuildName(frame, unit)
             frame.guildName:SetIgnoreParentScale(false)
             frame.guildName:SetScale((isFriendly and config.guildNameScale or config.guildNameEnemyScale) or 1)
             frame.guildName:SetIgnoreParentScale(true)
+            if config.guildNameUnderName and not config.guildNameUnderNameNoMove then
+                BBP.SetNameShift(frame, "guild", 9 * ((isFriendly and config.guildNameScale or config.guildNameEnemyScale) or 1) / (frame.name.bbpNameScale or 1))
+            else
+                BBP.SetNameShift(frame, "guild", 0)
+            end
         else
             frame.guildName:SetText("")
         end
@@ -6324,10 +6336,16 @@ local function NameplateNPCTitle(frame)
         BBP.SetNpcTitleScale(frame.npcTitle)
         frame.npcTitle:SetText(title)
         frame.npcTitle:ClearAllPoints()
-        if frame.healthBar:GetAlpha() == 0 then
+        local db = BetterBlizzPlatesDB
+        if db.npcTitleUnderName or frame.healthBar:GetAlpha() == 0 then
             frame.npcTitle:SetPoint("TOP", frame.name, "BOTTOM", 0, -2)
         else
             frame.npcTitle:SetPoint("TOP", frame.healthBar, "BOTTOM", 0, -2)
+        end
+        if db.npcTitleUnderName and not db.npcTitleUnderNameNoMove and title and title ~= "" then
+            BBP.SetNameShift(frame, "npcTitle", 12 * (db.npcTitleScale or 1) / (frame.name.bbpNameScale or 1))
+        else
+            BBP.SetNameShift(frame, "npcTitle", 0)
         end
         if BetterBlizzPlatesDB.npcTitleColor then
             frame.npcTitle:SetTextColor(unpack(BetterBlizzPlatesDB.npcTitleColorRGB))
@@ -7775,6 +7793,7 @@ local function TurnOnEnabledFeaturesOnLogin()
     BBP.ApplyNameplateWidth()
     BBP.ToggleAbsorbIndicator()
     BBP.ToggleCombatIndicator()
+    BBP.ToggleUnderNameHooks()
     BBP.ToggleExecuteIndicator()
     BBP.ToggleFactionIndicator()
     BBP:RegisterTargetCastingEvents()

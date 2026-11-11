@@ -815,7 +815,6 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
                     BBP.UnfadeAllNameplates()
                 end
             end
-            if config.enableNpNonTargetAlpha then NameplateTargetAlphaAllNps() end
             if config.hideNPC then BBP.HideNPCs(frame, BBP.previousTargetNameplate:GetParent()) end
             if config.partyPointer then BBP.PartyPointer(frame) end
 
@@ -1012,7 +1011,6 @@ PlayerFocusChanged:SetScript("OnEvent", function(self, event)
         --local info = frame.BetterBlizzPlates.unitInfo
         -- info.isFocus = false
         -- info.wasFocus = true
-        if config.enableNpNonTargetAlpha and BetterBlizzPlatesDB.enableNpNonFocusAlpha then NameplateTargetAlphaAllNps() end
         if config.focusTargetIndicator then
             BBP.FocusTargetIndicator(frame)
             --BBP.ApplyCustomTextureToNameplate(frame)

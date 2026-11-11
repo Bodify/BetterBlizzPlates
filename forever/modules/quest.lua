@@ -31,6 +31,11 @@ function BBP.IsQuestUnit(unit)
         return false
     end
 
+    local related = UnitIsRelatedToActiveQuest(unit) == true
+    if not related and not UnitCanAttack("player", unit) then
+        return false
+    end
+
     local data = GetUnitTooltip(unit)
     local lines = data and data.lines
     if lines then
@@ -55,7 +60,7 @@ function BBP.IsQuestUnit(unit)
         end
     end
 
-    return UnitIsRelatedToActiveQuest(unit) == true
+    return related
 end
 
 local hiddenInstanceTypes = {

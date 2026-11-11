@@ -1,3 +1,14 @@
+# BetterBlizzPlates 2.2.3f
+## All versions
+### New
+- Guild Names & NPC Titles: "Anchor Under Name" setting. Pushes the name up and shows the guild/title name under it. Sub-setting "Don't Move Name" keeps the name where it is.
+## Retail & Forever
+## Forever
+### Tweak
+- Update Dissonance profile (www.twitch.tv/dissonancegg)
+- The sidebar with streamer profiles are now split into "Forever" and "Retail" sections since not all of them have been updated specifically for Forever but are just Retail profiles (that still work fine but may want some tweaks).
+- Hide Healthbar: Name is now centered on the nameplate like Blizzard's "Only Show Names" instead of sitting on the left of the hidden healthbar (if u didnt make changes yourself).
+
 # BetterBlizzPlates 2.2.3e
 ## All versions
 ### Tweak

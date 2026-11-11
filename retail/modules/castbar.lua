@@ -253,6 +253,10 @@ function BBP.HookCastbarStyleAndAnchoring()
 end
 
 -- Cast emphasis
+local CASTBAR_GREY = {0.7, 0.7, 0.7, 1}
+local CASTBAR_RED_COLOR = CreateColor(1, 0, 0, 1)
+local CASTBAR_WHITE_COLOR = CreateColor(1, 1, 1, 1)
+
 function BBP.CustomizeCastbar(frame, unitToken, event)
     local db = BetterBlizzPlatesDB
     local enableCastbarCustomization = db.enableCastbarCustomization
@@ -436,7 +440,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                     if notInterruptible ~= nil then
                         castBar.Background:SetVertexColorFromBoolean(
                             notInterruptible,
-                            CreateColor(1, 0, 0, 1),
+                            CASTBAR_RED_COLOR,
                             CreateColor(unpack(bgColor))
                         )
                     else
@@ -454,18 +458,18 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
             castBarTexture:SetDesaturated(true)
             if db.castBarRecolorInterrupt and BBP.interruptReady == false and isAttackable then
                 if notInterruptible ~= nil then
-                    local unIntColor = castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }
+                    local unIntColor = castBarRecolor and castBarNonInterruptibleColor or CASTBAR_GREY
                     castBarTexture:SetVertexColorFromBoolean(
                         notInterruptible,
                         CreateColor(unpack(unIntColor)),
-                        CreateColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+                        CreateColor(unpack(interruptNotReady or CASTBAR_GREY))
                     )
                 else
-                    castBarTexture:SetVertexColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+                    castBarTexture:SetVertexColor(unpack(interruptNotReady or CASTBAR_GREY))
                 end
             elseif castBar.channeling then
                 if notInterruptible ~= nil then
-                    local unIntColor = castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }
+                    local unIntColor = castBarRecolor and castBarNonInterruptibleColor or CASTBAR_GREY
                     castBarTexture:SetVertexColorFromBoolean(
                         notInterruptible,
                         CreateColor(unpack(unIntColor)),
@@ -476,7 +480,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 end
             elseif castBar.casting then
                 if notInterruptible ~= nil then
-                    local unIntColor = castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }
+                    local unIntColor = castBarRecolor and castBarNonInterruptibleColor or CASTBAR_GREY
                     castBarTexture:SetVertexColorFromBoolean(
                         notInterruptible,
                         CreateColor(unpack(unIntColor)),
@@ -499,11 +503,11 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
                 if notInterruptible ~= nil then
                     castBarTexture:SetVertexColorFromBoolean(
                         notInterruptible,
-                        CreateColor(1,1,1,1),
-                        CreateColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+                        CASTBAR_WHITE_COLOR,
+                        CreateColor(unpack(interruptNotReady or CASTBAR_GREY))
                     )
                 else
-                    castBarTexture:SetVertexColor(unpack(interruptNotReady or { 0.7, 0.7, 0.7, 1 }))
+                    castBarTexture:SetVertexColor(unpack(interruptNotReady or CASTBAR_GREY))
                 end
             else
                 castBarTexture:SetVertexColor(1,1,1)
@@ -531,7 +535,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         castBar.bbpNonIntMask:SetAllPoints(castBar:GetStatusBarTexture())
         overlay:SetTexture(nonIntTexture)
         overlay:SetDesaturated(true)
-        overlay:SetVertexColor(unpack(castBarRecolor and castBarNonInterruptibleColor or { 0.7, 0.7, 0.7, 1 }))
+        overlay:SetVertexColor(unpack(castBarRecolor and castBarNonInterruptibleColor or CASTBAR_GREY))
         if notInterruptible ~= nil and (castBar.casting or castBar.channeling) then
             overlay:SetAlphaFromBoolean(notInterruptible, 1, 0)
         else
@@ -1020,6 +1024,7 @@ function BBP.UpdateAllCastTimers()
 end
 
 function BBP.UpdateCastTimer(frame, unit)
+    frame.bbpCastTimerUnit = unit
     if not frame.CastTimerFrame then
         frame.CastTimerFrame = BBP.CreateCastTimerFrame(frame.castBar)
         frame.CastTimer = frame.CastTimerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1034,11 +1039,19 @@ function BBP.UpdateCastTimer(frame, unit)
 
     if duration and frame and frame.healthBar and frame.healthBar:IsShown() and not frame.hideCastInfo then
         frame.CastTimerFrame:Show()
-        frame.CastTimer:SetText(string.format("%.1f", duration:GetRemainingDuration()))
-        C_Timer.After(0.1, function()
-            BBP.UpdateCastTimer(frame, unit)
-        end)
+        frame.CastTimer:SetFormattedText("%.1f", duration:GetRemainingDuration())
+        if not frame.bbpCastTimerRunning then
+            if not frame.bbpCastTimerTick then
+                frame.bbpCastTimerTick = function()
+                    frame.bbpCastTimerRunning = nil
+                    BBP.UpdateCastTimer(frame, frame.bbpCastTimerUnit)
+                end
+            end
+            frame.bbpCastTimerRunning = true
+            C_Timer.After(0.1, frame.bbpCastTimerTick)
+        end
     else
+        frame.bbpCastTimerRunning = nil
         frame.CastTimerFrame:Hide()
         frame.CastTimer:SetText("")
         if BetterBlizzPlatesDB.showNameplateTargetText and frame.unit then
@@ -1487,18 +1500,22 @@ function BBP.CastbarOnEvent(frame, event)
         end
     end
 
-    if BetterBlizzPlatesDB.nameplateResourceUnderCastbar then
-        C_Timer.After(0.6, function()
-            if frame and frame.unit then
-                --if UnitIsUnit(frame.unit, "target") then
-                if UnitIsUnit("target", frame.unit) then
-                    BBP.UpdateNameplateResourcePositionForCasting(nameplate)
+    if BetterBlizzPlatesDB.nameplateResourceUnderCastbar and not frame.bbpResourcePending then
+        if not frame.bbpResourceRecheck then
+            frame.bbpResourceRecheck = function()
+                frame.bbpResourcePending = nil
+                if frame.unit and UnitIsUnit("target", frame.unit) then
+                    BBP.UpdateNameplateResourcePositionForCasting(frame:GetParent())
                 end
             end
-        end)
+        end
+        frame.bbpResourcePending = true
+        C_Timer.After(0.6, frame.bbpResourceRecheck)
     end
 
-    frame.castBar.lastColor = {frame.castBar:GetStatusBarColor()}
+    local lastColor = frame.castBar.lastColor or {}
+    lastColor[1], lastColor[2], lastColor[3], lastColor[4] = frame.castBar:GetStatusBarColor()
+    frame.castBar.lastColor = lastColor
 
     -- if hideCastbar then
     --     BBP.HideCastbar(frame, self.unit)

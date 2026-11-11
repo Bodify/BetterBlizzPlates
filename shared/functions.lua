@@ -254,3 +254,133 @@ function BBP.PickupLiveClassColorCVars()
 		end
 	end
 end
+
+local function SetShiftedNamePoint(name, point, relativeTo, relativePoint, x, y)
+	local wasChanging = name.changing
+	name.bbpShifting = true
+	name.changing = true
+	name:SetPoint(point, relativeTo, relativePoint, x, y + (name.bbpNameShift or 0))
+	name.changing = wasChanging
+	name.bbpShifting = nil
+end
+
+local function HookNamePoints(frame)
+	local name = frame and frame.name
+	if not name or name.bbpNamePoints or frame:IsForbidden() then return end
+	name.bbpNamePoints = {}
+
+	hooksecurefunc(name, "ClearAllPoints", function(self)
+		if not self.bbpShifting then
+			wipe(self.bbpNamePoints)
+		end
+	end)
+
+	hooksecurefunc(name, "SetPoint", function(self, point, relativeTo, relativePoint, x, y)
+		if self.bbpShifting then return end
+
+		if type(relativeTo) == "number" then
+			relativeTo, relativePoint, x, y = nil, nil, relativeTo, relativePoint
+		elseif type(relativeTo) == "string" then
+			relativeTo = _G[relativeTo]
+		end
+		relativeTo = relativeTo or self:GetParent()
+		relativePoint = relativePoint or point
+		x = x or 0
+		y = y or 0
+
+		local points = self.bbpNamePoints
+		if issecretvalue(y) then
+			points[point] = nil
+			return
+		end
+
+		local saved = points[point]
+		if not saved then
+			saved = {}
+			points[point] = saved
+		end
+		saved[1], saved[2], saved[3], saved[4] = relativeTo, relativePoint, x, y
+
+		if self.bbpNameShift and self.bbpNameShift ~= 0 then
+			SetShiftedNamePoint(self, point, relativeTo, relativePoint, x, y)
+		end
+	end)
+end
+
+local function HookNamePlate(namePlate)
+	if not namePlate then return end
+	if namePlate.AcquireUnitFrame and not namePlate.bbpNameShiftHooked then
+		namePlate.bbpNameShiftHooked = true
+		hooksecurefunc(namePlate, "AcquireUnitFrame", function(self)
+			HookNamePoints(self.UnitFrame)
+		end)
+	end
+	HookNamePoints(namePlate.UnitFrame)
+end
+
+local underNameHookFrame
+function BBP.ToggleUnderNameHooks()
+	local db = BetterBlizzPlatesDB
+	local guildMoves = db.guildNameUnderName and not db.guildNameUnderNameNoMove
+	local titleMoves = db.npcTitleUnderName and not db.npcTitleUnderNameNoMove
+
+	if guildMoves or titleMoves then
+		if not underNameHookFrame then
+			underNameHookFrame = CreateFrame("Frame")
+			underNameHookFrame:SetScript("OnEvent", function(_, _, namePlate)
+				HookNamePlate(namePlate)
+			end)
+		end
+		underNameHookFrame:RegisterEvent("NAME_PLATE_CREATED")
+		for _, namePlate in ipairs(C_NamePlate.GetNamePlates()) do
+			HookNamePlate(namePlate)
+		end
+	elseif underNameHookFrame then
+		underNameHookFrame:UnregisterAllEvents()
+	end
+end
+
+local function HookShiftReset(frame, source)
+	if source == "guild" then
+		local guildName = frame.guildName
+		if guildName and not guildName.bbpShiftHooked then
+			guildName.bbpShiftHooked = true
+			hooksecurefunc(guildName, "SetText", function(_, text)
+				if not text or text == "" then
+					BBP.SetNameShift(frame, "guild", 0)
+				end
+			end)
+		end
+	elseif source == "npcTitle" then
+		local npcTitle = frame.npcTitle
+		if npcTitle and not npcTitle.bbpShiftHooked then
+			npcTitle.bbpShiftHooked = true
+			hooksecurefunc(npcTitle, "Hide", function()
+				BBP.SetNameShift(frame, "npcTitle", 0)
+			end)
+		end
+	end
+end
+
+function BBP.SetNameShift(frame, source, shift)
+	local name = frame.name
+	if not name then return end
+	HookShiftReset(frame, source)
+
+	local shifts = name.bbpShiftSources
+	if not shifts then
+		if shift == 0 then return end
+		shifts = {}
+		name.bbpShiftSources = shifts
+	end
+	shifts[source] = shift
+
+	local total = math.max(shifts.guild or 0, shifts.npcTitle or 0)
+	if total == (name.bbpNameShift or 0) then return end
+	name.bbpNameShift = total
+
+	if not name.bbpNamePoints then return end
+	for point, saved in pairs(name.bbpNamePoints) do
+		SetShiftedNamePoint(name, point, saved[1], saved[2], saved[3], saved[4])
+	end
+end

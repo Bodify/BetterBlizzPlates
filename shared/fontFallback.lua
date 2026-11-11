@@ -63,28 +63,37 @@ function BBP.SetFontOnFontObject(fontObject, file, size, flags)
 end
 
 local textFamilies = {}
-local textFamilyCount = 0
+local textFamiliesCount = 0
 
-local function GetTextFamily(file, flags)
+local function FindTextFamily(file, flags, size)
     local byFlags = textFamilies[file]
-    if not byFlags then
-        byFlags = {}
-        textFamilies[file] = byFlags
-    end
-    local family = byFlags[flags]
-    if family then return family end
+    local bySize = byFlags and byFlags[flags]
+    return bySize and bySize[size]
+end
+
+local function CreateTextFamily(file, flags, size)
     local members = {}
     for i, alphabet in ipairs(ALPHABETS) do
         members[i] = {
             alphabet = alphabet,
             file = alphabet ~= ownAlphabet and stockFiles[alphabet] or file,
-            height = 12,
+            height = size,
             flags = flags,
         }
     end
-    textFamilyCount = textFamilyCount + 1
-    family = CreateFontFamily("BBPTextFont" .. textFamilyCount, members)
-    byFlags[flags] = family
+    textFamiliesCount = textFamiliesCount + 1
+    local family = CreateFontFamily("BBPTextFont" .. textFamiliesCount, members)
+    local byFlags = textFamilies[file]
+    if not byFlags then
+        byFlags = {}
+        textFamilies[file] = byFlags
+    end
+    local bySize = byFlags[flags]
+    if not bySize then
+        bySize = {}
+        byFlags[flags] = bySize
+    end
+    bySize[size] = family
     return family
 end
 
@@ -94,29 +103,38 @@ function BBP.SetTextFont(fontString, file, size, flags)
         fontString:SetFont(file, size, flags)
         return
     end
-    local family = GetTextFamily(file, flags)
-    if fontString:GetFontObject() ~= family then
-        local r, g, b, a = fontString:GetTextColor()
-        local sr, sg, sb, sa = fontString:GetShadowColor()
-        local sx, sy = fontString:GetShadowOffset()
-        local justifyH, justifyV = fontString:GetJustifyH(), fontString:GetJustifyV()
-        fontString:SetFontObject(family)
-        fontString:SetTextColor(r, g, b, a)
-        fontString:SetShadowColor(sr, sg, sb, sa)
-        fontString:SetShadowOffset(sx, sy)
-        fontString:SetJustifyH(justifyH)
-        fontString:SetJustifyV(justifyV)
-    end
+    size = math.floor(size * 100 + 0.5) / 100
+    local family = FindTextFamily(file, flags, size) or CreateTextFamily(file, flags, size)
     local _, height = fontString:GetFont()
-    if not height or height - size > 0.01 or size - height > 0.01 then
-        fontString:SetFontHeight(size)
+    local resized = not height or height - size > 0.01 or size - height > 0.01
+    local current = fontString:GetFontObject()
+    if current == family and not resized then return end
+    local r, g, b, a = fontString:GetTextColor()
+    local sr, sg, sb, sa = fontString:GetShadowColor()
+    local sx, sy = fontString:GetShadowOffset()
+    local justifyH, justifyV = fontString:GetJustifyH(), fontString:GetJustifyV()
+    if current == family then
+        fontString:SetFont(file, size, flags)
     end
+    fontString:SetFontObject(family)
+    fontString:SetTextColor(r, g, b, a)
+    fontString:SetShadowColor(sr, sg, sb, sa)
+    fontString:SetShadowOffset(sx, sy)
+    fontString:SetJustifyH(justifyH)
+    fontString:SetJustifyV(justifyV)
+end
+
+local function SetHealthTextPart(text, file, size, flags)
+    if not text then return false end
+    BBP.SetTextFont(text, file, size, flags)
+    text:SetFontHeight(size)
+    return true
 end
 
 function BBP.SetHealthTextFont(frame, file, size, flags)
     local healthBar = frame.HealthBarsContainer.healthBar
-    for _, text in ipairs({ healthBar.Text, healthBar.LeftText, healthBar.RightText }) do
-        BBP.SetTextFont(text, file, size, flags)
-        text:SetFontHeight(size)
+    if SetHealthTextPart(healthBar.Text, file, size, flags)
+        and SetHealthTextPart(healthBar.LeftText, file, size, flags) then
+        SetHealthTextPart(healthBar.RightText, file, size, flags)
     end
 end

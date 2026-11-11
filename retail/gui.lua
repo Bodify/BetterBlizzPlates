@@ -5601,6 +5601,30 @@ local function guiProfiles()
     frame.streamerText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     frame.streamerText:SetPoint("TOP", frame.coreText, "BOTTOM", 0, -108)
     frame.streamerText:SetText(L["Profile_Streamers"])
+    do
+        local file = GameFontNormal:GetFont()
+        frame.coreText:SetFont(file, 15, "OUTLINE")
+        frame.streamerText:SetFont(file, 15, "OUTLINE")
+    end
+    for _, fontString in ipairs({ frame.coreText, frame.streamerText }) do
+        local banner = frame:CreateTexture(nil, "ARTWORK")
+        banner:SetAtlas("GarrMission_RewardsBanner-Desaturate")
+        banner:SetSize(133, 47)
+        banner:SetPoint("CENTER", fontString, "CENTER", 0, -3.5)
+        banner:SetVertexColor(0.8, 0.8, 0.8)
+    end
+    for fontString, tip in pairs({ [frame.coreText] = L["Tooltip_Profile_Core"], [frame.streamerText] = L["Tooltip_Profile_Streamers"] .. "\n\n|cff808080" .. L["Tooltip_Profile_Streamers_Note"] .. "|r" }) do
+        local hover = CreateFrame("Frame", nil, frame)
+        hover:SetAllPoints(fontString)
+        hover:EnableMouse(true)
+        hover:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(fontString:GetText(), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b)
+            GameTooltip:AddLine(tip, 1, 1, 1, true)
+            GameTooltip:Show()
+        end)
+        hover:SetScript("OnLeave", GameTooltip_Hide)
+    end
 
     frame.infoText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     frame.infoText:SetPoint("BOTTOM", frame, "BOTTOM", 2, 45)
@@ -5621,9 +5645,7 @@ local function guiProfiles()
         frame.descriptionText:SetFontObject("GameFontNormal")
         frame.descriptionText:SetText(L["Profiles_For_BetterBlizzPlates_Colon_2"])
         frame.descriptionText:SetWidth(145)
-        frame.coreText:SetFontObject("GameFontNormalLarge")
-        frame.coreText:SetPoint("TOP", frame.descriptionText, "BOTTOM", 0, -10)
-        frame.streamerText:SetFontObject("GameFontNormalLarge")
+        frame.coreText:SetPoint("TOP", frame.descriptionText, "BOTTOM", 0, -8)
         frame.infoText:SetWidth(135)
         frame:SetWidth(165)
     end
@@ -7010,10 +7032,12 @@ local function guiGeneralTab()
         end, profile.youtubeName)
         table.insert(profileButtons, button)
         if profilesFrame.twoColumn then
-            button:SetScale(profile.core and 1.05 or 0.9)
+            button:SetScale(0.9)
         end
         if profile.core then
-            button:SetPoint("TOP", lastCoreButton, "BOTTOM", 0, lastCoreButton == profilesFrame.coreText and -3 or btnGap)
+            button:SetScale(0.95)
+            button:SetWidth(125)
+            button:SetPoint("TOP", lastCoreButton, "BOTTOM", 0, lastCoreButton == profilesFrame.coreText and -11 or btnGap)
             lastCoreButton = button
         elseif profilesFrame.twoColumn then
             button:SetSize(82, 24)
@@ -7022,11 +7046,11 @@ local function guiGeneralTab()
                 button:SetPoint("LEFT", lastStreamerButton, "RIGHT", 1, 0)
                 lastStreamerButton.rowPartner = button
             else
-                button:SetPoint("TOPRIGHT", lastStreamerButton, lastStreamerButton == profilesFrame.streamerText and "BOTTOM" or "BOTTOMRIGHT", 0, lastStreamerButton == profilesFrame.streamerText and -3 or -1)
+                button:SetPoint("TOPRIGHT", lastStreamerButton, lastStreamerButton == profilesFrame.streamerText and "BOTTOM" or "BOTTOMRIGHT", 0, lastStreamerButton == profilesFrame.streamerText and -11 or -1)
                 lastStreamerButton = button
             end
         else
-            button:SetPoint("TOP", lastStreamerButton, "BOTTOM", 0, lastStreamerButton == profilesFrame.streamerText and -3 or btnGap)
+            button:SetPoint("TOP", lastStreamerButton, "BOTTOM", 0, lastStreamerButton == profilesFrame.streamerText and -11 or btnGap)
             lastStreamerButton = button
         end
     end
@@ -13728,7 +13752,7 @@ local function guiMisc()
         if not guildNameOptionsFrame then
             guildNameOptionsFrame = CreateFrame("Frame", "BBPGuildNameOptionsFrame", UIParent, "DefaultPanelFlatTemplate")
             guildNameOptionsFrame.name = guiMisc.name
-            guildNameOptionsFrame:SetSize(250, 322)
+            guildNameOptionsFrame:SetSize(250, 370)
             guildNameOptionsFrame:SetPoint("CENTER")
             guildNameOptionsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
             guildNameOptionsFrame:SetFrameLevel(550)
@@ -13826,6 +13850,20 @@ local function guiMisc()
             local noBrackets = CreateCheckbox("guildNameNoBrackets", L["Hide_Guild_Name_Brackets"], guildNameOptionsFrame)
             noBrackets:SetPoint("TOPLEFT", outlineLabel, "BOTTOMLEFT", -4, -12)
             CreateTooltip(noBrackets, L["Tooltip_Hide_Guild_Name_Brackets"])
+            local underName = CreateCheckbox("guildNameUnderName", L["Anchor_Under_Name"], guildNameOptionsFrame, nil, BBP.ToggleUnderNameHooks)
+            underName:SetPoint("TOPLEFT", noBrackets, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+            CreateTooltip(underName, L["Tooltip_Guild_Name_Anchor_Under_Name"])
+            local underNameNoMove = CreateCheckbox("guildNameUnderNameNoMove", L["Dont_Move_Name"], underName, nil, BBP.ToggleUnderNameHooks)
+            underNameNoMove:SetPoint("TOPLEFT", underName, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+            local function UpdateUnderNameState()
+                if underName:GetChecked() then
+                    EnableElement(underNameNoMove)
+                else
+                    DisableElement(underNameNoMove)
+                end
+            end
+            underName:HookScript("OnClick", UpdateUnderNameState)
+            UpdateUnderNameState()
 
             local outlineDropdown = CreateFrame("DropdownButton", nil, guildNameOptionsFrame, "WowStyle1DropdownTemplate")
             outlineDropdown:SetPoint("LEFT", outlineLabel, "RIGHT", 6, 0)
@@ -13857,10 +13895,68 @@ local function guiMisc()
 
     local showNpcTitle = CreateCheckbox("showNpcTitle", L["Show_NPC_Titles_On_Friendly_NPCs"], guiMisc)
     showNpcTitle:SetPoint("TOPLEFT", showGuildNames, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(showNpcTitle, L["Tooltip_Show_NPC_Titles_Under_Name_Healthbar"])
+    CreateTooltipTwo(showNpcTitle, L["Show_NPC_Titles_On_Friendly_NPCs"], L["Tooltip_Show_NPC_Titles_Under_Name_Healthbar"] .. "\n\n|cff32f795" .. L["Right_Click_For_Options"] .. "|r")
 
-    local npcTitleScale = CreateSlider(guiMisc, L["NPC_Title_Size"], 0.2, 2, 0.01, "npcTitleScale", nil, 90)
-    npcTitleScale:SetPoint("LEFT", showNpcTitle.Text, "RIGHT", 25, 0)
+    local npcTitleOptionsFrame
+    local function OpenNpcTitleOptionsWindow()
+        if npcTitleOptionsFrame then
+            npcTitleOptionsFrame:SetShown(not npcTitleOptionsFrame:IsShown())
+            return
+        end
+        npcTitleOptionsFrame = CreateFrame("Frame", "BBPNpcTitleOptionsFrame", UIParent, "DefaultPanelFlatTemplate")
+        npcTitleOptionsFrame.name = guiMisc.name
+        npcTitleOptionsFrame:SetSize(250, 150)
+        npcTitleOptionsFrame:SetPoint("CENTER")
+        npcTitleOptionsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+        npcTitleOptionsFrame:SetFrameLevel(550)
+        npcTitleOptionsFrame:SetIgnoreParentAlpha(true)
+        npcTitleOptionsFrame:SetTitle(L["NPC_Title_Options"])
+        npcTitleOptionsFrame:EnableMouse(true)
+        npcTitleOptionsFrame:SetMovable(true)
+        npcTitleOptionsFrame:SetClampedToScreen(true)
+        npcTitleOptionsFrame:RegisterForDrag("LeftButton")
+        npcTitleOptionsFrame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+        npcTitleOptionsFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+
+        npcTitleOptionsFrame.closeButton = CreateFrame("Button", nil, npcTitleOptionsFrame, "UIPanelCloseButton")
+        npcTitleOptionsFrame.closeButton:SetFrameLevel((npcTitleOptionsFrame.TitleContainer or npcTitleOptionsFrame):GetFrameLevel() + 10)
+        npcTitleOptionsFrame.closeButton:SetPoint("TOPRIGHT", npcTitleOptionsFrame, "TOPRIGHT", 0, 0)
+        npcTitleOptionsFrame.closeButton:SetScript("OnClick", function()
+            npcTitleOptionsFrame:Hide()
+        end)
+
+        npcTitleOptionsFrame.bg = npcTitleOptionsFrame:CreateTexture(nil, "BACKGROUND")
+        npcTitleOptionsFrame.bg:SetPoint("TOPLEFT", npcTitleOptionsFrame, "TOPLEFT", 7, -3)
+        npcTitleOptionsFrame.bg:SetPoint("BOTTOMRIGHT", npcTitleOptionsFrame, "BOTTOMRIGHT", -3, 3)
+        npcTitleOptionsFrame.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
+
+        local npcTitleScale = CreateSlider(npcTitleOptionsFrame, L["NPC_Title_Size"], 0.2, 2, 0.01, "npcTitleScale", nil, 150)
+        npcTitleScale:SetPoint("TOPLEFT", npcTitleOptionsFrame, "TOPLEFT", 22, -50)
+
+        local underName = CreateCheckbox("npcTitleUnderName", L["Anchor_Under_Name"], npcTitleOptionsFrame, nil, BBP.ToggleUnderNameHooks)
+        underName:SetPoint("TOPLEFT", npcTitleScale, "BOTTOMLEFT", -6, -10)
+        CreateTooltip(underName, L["Tooltip_NPC_Title_Anchor_Under_Name"])
+        local underNameNoMove = CreateCheckbox("npcTitleUnderNameNoMove", L["Dont_Move_Name"], underName, nil, BBP.ToggleUnderNameHooks)
+        underNameNoMove:SetPoint("TOPLEFT", underName, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
+        local function UpdateUnderNameState()
+            if underName:GetChecked() then
+                EnableElement(underNameNoMove)
+            else
+                DisableElement(underNameNoMove)
+            end
+        end
+        underName:HookScript("OnClick", UpdateUnderNameState)
+        UpdateUnderNameState()
+
+        npcTitleOptionsFrame:Show()
+    end
+
+    showNpcTitle:SetScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            GameTooltip:Hide()
+            OpenNpcTitleOptionsWindow()
+        end
+    end)
 
     local npcTitleColor = CreateCheckbox("npcTitleColor", L["Custom_NPC_Title_Color"], guiMisc)
     npcTitleColor:SetPoint("TOPLEFT", showNpcTitle, "BOTTOMLEFT", 0, pixelsBetweenBoxes)

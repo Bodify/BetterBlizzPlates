@@ -263,7 +263,7 @@ function RestoreBlizzardLevelBadgeLayout(frame)
     local setupOptions = NamePlateSetupOptions
     local styles = NamePlateConstants and NamePlateConstants.NAME_ANCHOR_STYLES
     if not setupOptions or not styles or not frame.name then return end
-    if frame.IsShowOnlyName and frame:IsShowOnlyName() then return end
+    if frame.bbpHiddenBarName or (frame.IsShowOnlyName and frame:IsShowOnlyName()) then return end
     local style = setupOptions.unitNameAnchorStyle
     if style == styles.InsideHealthBar or style == styles.CenteredAboveHealthBar then return end
 
@@ -355,6 +355,65 @@ function BBP.GetLevelSpanAnchor(frame, anchorPoint)
         BBP.UpdateLevelSpan(frame)
     end
     return frame.bbpLevelSpan
+end
+
+local function RestoreBlizzardName(frame, setupOptions, styles)
+    local name = frame.name
+    local container = frame.HealthBarsContainer
+    local style = setupOptions.unitNameAnchorStyle
+    local spacing = setupOptions.healthBarToNameAboveSpacing or 0
+    local healthText = container.healthBar and container.healthBar.Text
+    name:ClearAllPoints()
+    if style == styles.InsideHealthBar then
+        name:SetJustifyH("LEFT")
+        name:SetPoint("LEFT", container, "LEFT", 4, 0)
+        if healthText then
+            name:SetPoint("RIGHT", healthText, "LEFT", -2, 0)
+        else
+            name:SetPoint("RIGHT", container, "RIGHT", -4, 0)
+        end
+    elseif style == styles.CenteredAboveHealthBar then
+        name:SetJustifyH("CENTER")
+        name:SetPoint("BOTTOM", container, "TOP", 0, spacing)
+    else
+        name:SetJustifyH(setupOptions.nameJustificationWhenAboveHealthBar or "LEFT")
+        name:SetPoint("BOTTOMLEFT", container, "TOPLEFT", 0, spacing)
+        name:SetPoint("BOTTOMRIGHT", container, "TOPRIGHT", 0, spacing)
+        RestoreBlizzardLevelBadgeLayout(frame)
+    end
+end
+
+function BBP.UpdateHiddenBarName(frame)
+    if frame:IsForbidden() or not frame.unit or not frame.name or not frame.HealthBarsContainer then return end
+    if BetterBlizzPlatesDB.useFakeName then return end
+    local setupOptions = NamePlateSetupOptions
+    local styles = NamePlateConstants and NamePlateConstants.NAME_ANCHOR_STYLES
+    if not setupOptions or not styles then return end
+
+    local onlyName = frame.IsShowOnlyName and frame:IsShowOnlyName()
+    local hidden = frame.HealthBarsContainer.alphaZero == true and not onlyName
+    if not hidden then
+        if frame.bbpHiddenBarName then
+            frame.bbpHiddenBarName = nil
+            if not onlyName then
+                RestoreBlizzardName(frame, setupOptions, styles)
+            end
+        end
+        return
+    end
+
+    frame.bbpHiddenBarName = true
+    local span = BBP.GetLevelSpanAnchor(frame, "CENTER")
+    local name = frame.name
+    name:ClearAllPoints()
+    name:SetJustifyH("CENTER")
+    if setupOptions.unitNameAnchorStyle == styles.InsideHealthBar then
+        name:SetPoint("LEFT", span, "LEFT", 4, 0)
+        name:SetPoint("RIGHT", span, "RIGHT", -4, 0)
+    else
+        name:SetPoint("BOTTOMLEFT", span, "TOPLEFT", 4, 2)
+        name:SetPoint("BOTTOMRIGHT", span, "TOPRIGHT", -4, 2)
+    end
 end
 
 local function ClassicLevelRowSpace(frame)
@@ -697,6 +756,7 @@ function BBP.UpdateBlizzardLevelFrame(frame)
         if frame.UpdateAnchors then
             hooksecurefunc(frame, "UpdateAnchors", function()
                 RestoreBlizzardLevelBadgeLayout(frame)
+                if frame.bbpHiddenBarName then BBP.UpdateHiddenBarName(frame) end
             end)
         end
         local healthBar = frame.HealthBarsContainer.healthBar
@@ -710,4 +770,5 @@ function BBP.UpdateBlizzardLevelFrame(frame)
     RestoreBlizzardLevelBadgeLayout(frame)
     RefreshLevelBadgeSpace(frame)
     UpdateLevelOverlay(frame, levelFrame, db, levelHidden)
+    BBP.UpdateHiddenBarName(frame)
 end
