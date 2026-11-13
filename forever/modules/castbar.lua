@@ -7,6 +7,7 @@ local interruptSpells = {
     [19647]  = true, -- Spell Lock (Warlock)
     [47528]  = true, -- Mind Freeze (Death Knight)
     [57994]  = true, -- Wind Shear (Shaman)
+    [8042]   = true, -- Earth Shock (Shaman)
     --[91802]  = true, -- Shambling Rush (Death Knight)
     [96231]  = true, -- Rebuke (Paladin)
     [106839] = true, -- Skull Bash (Feral)
