@@ -1,3 +1,12 @@
+# BetterBlizzPlates 2.2.3g
+## All versions
+### Bugfix
+- Fix secret error in combo points check
+- Fix a gui search error
+## Forever
+### Tweak
+- Add Earth Shock as an interrupt to list.
+
 # BetterBlizzPlates 2.2.3f
 ## All versions
 ### New
