@@ -5041,7 +5041,7 @@ local function CreateSearchFrame()
         local function matchesQuery(label)
             label = string.lower(label)
             for _, queryWord in ipairs(queryWords) do
-                if not string.find(label, queryWord) then
+                if not string.find(label, queryWord, 1, true) then
                     return false
                 end
             end
