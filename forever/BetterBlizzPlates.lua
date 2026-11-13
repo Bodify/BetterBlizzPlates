@@ -4825,7 +4825,7 @@ function BBP.CompactUnitFrame_UpdateHealthColor(frame, exitLoop)
 		else
 			--Try to color it by class.
 			local class = UnitClassBase(frame.unit);
-			local classColor = C_ClassColor.GetClassColor(class)
+			local classColor = class and C_ClassColor.GetClassColor(class)
 			--debug
 			local useClassColors = CompactUnitFrame_GetOptionUseClassColors(frame, frame.optionTable);
 			if ( (frame.optionTable.allowClassColorsForNPCs or UnitIsPlayer(frame.unit) or UnitTreatAsPlayerForDisplay(frame.unit)) and classColor and useClassColors ) then
