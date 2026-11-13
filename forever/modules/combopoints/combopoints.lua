@@ -202,8 +202,8 @@ function BBP.ForeverComboPoints()
 
     local info = CLASS_INFO[class]
     prdBar = CreateFrame("Frame", "BBPComboPointBar", UIParent, "HorizontalLayoutFrame")
-    function prdBar:GetChildSize(child)
-        return child:GetSize(true)
+    function prdBar:GetChildSize()
+        return 20, 20
     end
     prdBar:SetFrameStrata("BACKGROUND")
     prdBar:Hide()

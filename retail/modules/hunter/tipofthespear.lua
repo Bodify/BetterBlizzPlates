@@ -107,8 +107,8 @@ function BBP.TipOfSpearCombos()
     if not prd then return end
 
     prdBar = CreateFrame("Frame", "BBPTipOfTheSpearBar", prd, "HorizontalLayoutFrame")
-    function prdBar:GetChildSize(child)
-        return child:GetSize(true)
+    function prdBar:GetChildSize()
+        return 20, 20
     end
     prdBar:SetFrameStrata("BACKGROUND")
     prdBar.spacing = POINT_SPACING
