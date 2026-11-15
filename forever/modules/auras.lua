@@ -258,11 +258,13 @@ local categorySets = {
 }
 BBP.auraCategorySets = categorySets
 
+local lists
+
 local function FillSet(dst, src)
     for spellID in pairs(src) do dst[spellID] = true end
 end
 
-local AURA_LIST_FLAGS = { "onlyMine", "pandemic", "important", "enlarged" }
+local AURA_LIST_FLAGS = { "onlyMine", "pandemic", "important", "enlarged", "bigCC" }
 
 function BBP.NormalizeAuraList(list)
     local normalized = {}
@@ -324,9 +326,12 @@ local function CollectList(listName, into, dst)
                 local onlyMine = entry.onlyMine
                 local important = entry.important
                 local enlarged = entry.enlarged
+                local bigCC = entry.bigCC
 
                 local bucket
-                if enlarged then
+                if bigCC then
+                    bucket = dst.bigCC
+                elseif enlarged then
                     if important then
                         bucket = onlyMine and dst.enlargedImportantMine or dst.enlargedImportant
                     else
@@ -341,7 +346,7 @@ local function CollectList(listName, into, dst)
                 end
                 bucket[spellID] = true
 
-                if not important and not enlarged and entry.pandemic then
+                if not bigCC and not important and not enlarged and entry.pandemic then
                     dst.pandemic[spellID] = true
                 end
             end
@@ -356,6 +361,7 @@ function BBP.UpdateImportantBuffsAndCCTables()
     FillSet(categorySets.watchDebuff, importantGeneralDebuffs)
     FillSet(categorySets.ownDebuff, defaultOwnDebuffs)
     FillSet(categorySets.otherCC, defaultOtherCC)
+    FillSet(categorySets.otherCC, lists.watchBigCC)
 
     categorySets.ccBlacklist[1280457] = true -- Mind Flay (Priest)
 end
@@ -587,8 +593,8 @@ function BBP.UpdateUserAuraSettings()
     S.stackFont = db.npAuraStackFontEnabled and LSM:Fetch(LSM.MediaType.FONT, db.npAuraStackFont) or nil
     S.cdFont = db.npAuraCdFontEnabled and LSM:Fetch(LSM.MediaType.FONT, db.npAuraCdFont) or nil
 
-    BBP.UpdateImportantBuffsAndCCTables()
     BBP.RefreshSpellLists()
+    BBP.UpdateImportantBuffsAndCCTables()
     S.splitPandemic = (not S.pandemicGlow) and BBP.auraLists.anyPandemic and true or false
     BBP.UpdateAuraTypeColors()
     GetDurationCurve()
@@ -596,7 +602,7 @@ end
 
 local listGeneration = 0
 
-local lists = {
+lists = {
     blacklist = {},
     watch = {},
     watchMine = {},
@@ -607,6 +613,7 @@ local lists = {
     watchEnlargedMine = {},
     watchEnlargedImportant = {},
     watchEnlargedImportantMine = {},
+    watchBigCC = {},
 }
 BBP.auraLists = lists
 
@@ -619,6 +626,7 @@ local WHITELIST_BUCKETS = {
     enlargedMine           = "watchEnlargedMine",
     enlargedImportant      = "watchEnlargedImportant",
     enlargedImportantMine  = "watchEnlargedImportantMine",
+    bigCC                  = "watchBigCC",
 }
 
 local whitelistDst = {}
@@ -636,6 +644,7 @@ local function ListSignature(listName, parts)
                 .. (entry.pandemic and "p" or "")
                 .. (entry.important and "i" or "")
                 .. (entry.enlarged and "e" or "")
+                .. (entry.bigCC and "c" or "")
         end
     end
 end
@@ -1902,7 +1911,7 @@ local function BuildProfile(isFriend, isPlayer, classIconCC)
 
     local otherCCSet, otherCCMax = IncludeOrZero(categorySets.otherCC, canFilterHarmful, S.ccLimit)
     out.cc.OtherCC = {
-        filter = CreateFilterString(AF.Harmful, AF.IncludeNameplateOnly),
+        filter = CreateFilterString(AF.Harmful, AF.IncludeNameplateOnly, "!" .. AF.CrowdControl),
         filters = Filters(otherCCSet, ccExclude),
         max = ccBigWanted and otherCCMax or 0,
     }
