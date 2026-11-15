@@ -85,6 +85,7 @@ end
 local LEVEL_BADGE_SCALE = 1.2
 local LEVEL_BADGE_X_OFFSET = 5
 local LEVEL_BADGE_BOTTOM_INSET = 0.5
+local LEVEL_BADGE_NAME_GAP = 3
 local LEVEL_BADGE_WIDTH = 22
 local CLASSIC_LEVEL_NAME_NUDGE = 14
 local SIDE_LEVEL_WIDTH = 17
@@ -101,6 +102,13 @@ local function GetLevelBadgeWidth()
     return blizzardWidth * LEVEL_BADGE_WIDTH / blizzardBase
 end
 
+local function KeepArtAlpha(texture, key, levelFrame)
+    hooksecurefunc(texture, "SetVertexColor", function(self)
+        local alpha = levelFrame[key]
+        if alpha and self:GetAlpha() ~= alpha then self:SetAlpha(alpha) end
+    end)
+end
+
 local function SetUpLevelBadgeArt(levelFrame)
     if levelFrame.bbpBadgeArtSetUp then return end
     levelFrame.bbpBadgeArtSetUp = true
@@ -108,6 +116,8 @@ local function SetUpLevelBadgeArt(levelFrame)
     local icon = levelFrame.playerLevelDiffIcon
     local text = levelFrame.playerLevelDiffText
     local border = levelFrame.selectedBorder
+    if icon then KeepArtAlpha(icon, "bbpArtAlpha", levelFrame) end
+    if border then KeepArtAlpha(border, "bbpBorderAlpha", levelFrame) end
 
     if icon then
         icon:ClearAllPoints()
@@ -130,18 +140,49 @@ local function GetLevelBadgeSquish(healthBarHeight)
     return -1
 end
 
+local function BarHidden(frame)
+    return frame.HealthBarsContainer.alphaZero == true and not (frame.IsShowOnlyName and frame:IsShowOnlyName())
+end
+
+local UpdateLevelOverlay
+
+local function SyncLevelBadgeScale(frame, levelFrame)
+    local ignore = levelFrame.bbpOnName and frame.name.bbpNameIgnoreParent or false
+    if (levelFrame.bbpIgnoreParent or false) == ignore then return end
+    levelFrame.bbpIgnoreParent = ignore
+    levelFrame:SetIgnoreParentScale(not ignore)
+    levelFrame:SetScale(1)
+    levelFrame:SetIgnoreParentScale(ignore)
+end
+
+function BBP.SyncLevelBadgeScale(frame)
+    local levelFrame = frame.PlayerLevelDiffFrame
+    if not levelFrame or levelFrame:IsForbidden() then return end
+    SyncLevelBadgeScale(frame, levelFrame)
+end
+
 local function AnchorLevelBadge(frame, levelFrame, followHealthBar, squish)
     squish = followHealthBar and squish or 0
+    local onName = followHealthBar and frame.bbpLevelOnName or false
     levelFrame.bbpClassicAnchor = not followHealthBar
-    if levelFrame.bbpFollowsHealthBar == followHealthBar and levelFrame.bbpBadgeSquish == squish then return end
+    if levelFrame.bbpFollowsHealthBar == followHealthBar and levelFrame.bbpBadgeSquish == squish and levelFrame.bbpOnName == onName then return end
+    local onNameChanged = (levelFrame.bbpOnName or false) ~= onName
     levelFrame.bbpFollowsHealthBar = followHealthBar
     levelFrame.bbpBadgeSquish = squish
+    levelFrame.bbpOnName = onName
     levelFrame:ClearAllPoints()
-    if followHealthBar then
+    if onName then
+        levelFrame:SetPoint("TOPLEFT", frame.name, "TOPRIGHT", LEVEL_BADGE_NAME_GAP, 0)
+        levelFrame:SetPoint("BOTTOMLEFT", frame.name, "BOTTOMRIGHT", LEVEL_BADGE_NAME_GAP, 0)
+    elseif followHealthBar then
         levelFrame:SetPoint("TOPLEFT", frame.HealthBarsContainer, "TOPRIGHT", LEVEL_BADGE_X_OFFSET, -squish)
         levelFrame:SetPoint("BOTTOMLEFT", frame.HealthBarsContainer, "BOTTOMRIGHT", LEVEL_BADGE_X_OFFSET, LEVEL_BADGE_BOTTOM_INSET + squish)
     else
         levelFrame:SetPoint("RIGHT", frame.HealthBarsContainer, "LEFT", 0, 0)
+    end
+    SyncLevelBadgeScale(frame, levelFrame)
+    if onNameChanged and frame.bbpLevelFrameHooked then
+        UpdateLevelOverlay(frame, levelFrame, BetterBlizzPlatesDB, BBP.IsLevelHidden(frame))
     end
 end
 
@@ -245,6 +286,7 @@ function RestoreBlizzardLevelBadgeLayout(frame)
     local followsHealthBar = levelFrame.bbpFollowsHealthBar
     local sideLevel = SideLevel()
     if not followsHealthBar and not sideLevel and not BetterBlizzPlatesDB.classicNameplates then return end
+    if levelFrame.bbpOnName or BarHidden(frame) then return end
 
     local badgeSpace = BBP.GetLevelBadgeSpace(frame)
     local auraOffset = 5 + badgeSpace
@@ -330,7 +372,7 @@ function BBP.UpdateLevelSpan(frame, space)
 
     local levelFrame = LevelBadgeFrame(frame)
     space = space or BBP.GetLevelSpace(frame)
-    if LevelOutsideHealthBar() then
+    if LevelOutsideHealthBar() or frame.bbpLevelOnName then
         levelFrame, space = nil, 0
     end
     local relTo = levelFrame or healthBar
@@ -385,13 +427,21 @@ end
 
 function BBP.UpdateHiddenBarName(frame)
     if frame:IsForbidden() or not frame.unit or not frame.name or not frame.HealthBarsContainer then return end
+    local hidden = BarHidden(frame)
+    frame.bbpLevelOnName = hidden
+    if not hidden then
+        SyncLevelBadge(frame)
+        BBP.UpdateLevelSpan(frame)
+    elseif BetterBlizzPlatesDB.useFakeName then
+        BBP.UpdateLevelSpan(frame)
+        SyncLevelBadge(frame)
+    end
     if BetterBlizzPlatesDB.useFakeName then return end
     local setupOptions = NamePlateSetupOptions
     local styles = NamePlateConstants and NamePlateConstants.NAME_ANCHOR_STYLES
     if not setupOptions or not styles then return end
 
     local onlyName = frame.IsShowOnlyName and frame:IsShowOnlyName()
-    local hidden = frame.HealthBarsContainer.alphaZero == true and not onlyName
     if not hidden then
         if frame.bbpHiddenBarName then
             frame.bbpHiddenBarName = nil
@@ -404,16 +454,25 @@ function BBP.UpdateHiddenBarName(frame)
 
     frame.bbpHiddenBarName = true
     local span = BBP.GetLevelSpanAnchor(frame, "CENTER")
+    BBP.UpdateLevelSpan(frame)
+    local levelOnName = LevelBadgeFollowsHealthBar() and DisplayedLevelFrame(frame)
     local name = frame.name
     name:ClearAllPoints()
     name:SetJustifyH("CENTER")
     if setupOptions.unitNameAnchorStyle == styles.InsideHealthBar then
-        name:SetPoint("LEFT", span, "LEFT", 4, 0)
-        name:SetPoint("RIGHT", span, "RIGHT", -4, 0)
+        if levelOnName then
+            name:SetPoint("CENTER", span, "CENTER", 0, 0)
+        else
+            name:SetPoint("LEFT", span, "LEFT", 4, 0)
+            name:SetPoint("RIGHT", span, "RIGHT", -4, 0)
+        end
+    elseif levelOnName then
+        name:SetPoint("BOTTOM", span, "TOP", 0, 2)
     else
         name:SetPoint("BOTTOMLEFT", span, "TOPLEFT", 4, 2)
         name:SetPoint("BOTTOMRIGHT", span, "TOPRIGHT", -4, 2)
     end
+    SyncLevelBadge(frame)
 end
 
 local function ClassicLevelRowSpace(frame)
@@ -582,8 +641,8 @@ local function LevelTextSideGap(relPoint)
     return 0
 end
 
-local function PlaceLevelText(frame, overlay, db)
-    local moved = db.moveLevelText and overlay.showText and frame.HealthBarsContainer and true or false
+local function PlaceLevelText(frame, overlay, db, onName)
+    local moved = not onName and db.moveLevelText and overlay.showText and frame.HealthBarsContainer and true or false
     local size = moved and db.levelTextSize or LEVEL_TEXT_SIZE
     if size <= 0 then size = LEVEL_TEXT_SIZE end
     local point = moved and (db.levelTextAnchor or "LEFT") or "CENTER"
@@ -595,6 +654,11 @@ local function PlaceLevelText(frame, overlay, db)
     if db.classicRetailNameplates and not db.classicNameplates and BBP.GetNameplateFont then
         local npFont, npOutline = BBP.GetNameplateFont()
         font, outline = npFont or font, npOutline or outline
+    end
+    if onName then
+        local nameFont, nameSize, nameOutline = frame.name:GetFont()
+        font, size, outline = nameFont or font, nameSize or size, nameOutline or ""
+        point, relPoint = "LEFT", "LEFT"
     end
     if overlay.bbpTextSize ~= size or overlay.bbpFont ~= font or overlay.bbpOutline ~= outline then
         overlay.bbpTextSize = size
@@ -648,30 +712,33 @@ function BBP.PlaceClassicLevelText(frame)
     classicLevel.skull:SetPoint(skullPoint, relTo, relPoint, skullX, y)
 end
 
-local function UpdateLevelOverlay(frame, levelFrame, db, levelHidden)
+function UpdateLevelOverlay(frame, levelFrame, db, levelHidden)
     local sideLevel = SideLevel() and frame.HealthBarsContainer and true or false
-    local hideBackground = (db.hideLevelFrameBackground or sideLevel) and not levelHidden
+    local onName = levelFrame.bbpOnName and not levelHidden or false
+    local hideBackground = (db.hideLevelFrameBackground or sideLevel or onName) and not levelHidden
     local ringOnHealthBar = levelHidden and frame.HealthBarsContainer and true or false
     local placement = (ringOnHealthBar and "ring") or (sideLevel and "side") or "badge"
     local showRing = false
     local classification
-    if BBP.EliteRingActive() and (not levelHidden or ringOnHealthBar) and frame.unit then
+    if BBP.EliteRingActive() and not onName and (not levelHidden or ringOnHealthBar) and frame.unit then
         classification = UnitClassification(frame.unit)
         showRing = ELITE_CLASSIFICATIONS[classification] or false
     end
 
     local blizzardAlpha = hideBackground and 0 or 1
+    levelFrame.bbpArtAlpha = blizzardAlpha
+    levelFrame.bbpBorderAlpha = db.hideTargetBorder and 0 or blizzardAlpha
     if levelFrame.playerLevelDiffIcon then levelFrame.playerLevelDiffIcon:SetAlpha(blizzardAlpha) end
     if levelFrame.playerLevelDiffText then levelFrame.playerLevelDiffText:SetAlpha(blizzardAlpha) end
     if levelFrame.highLevelTexture then levelFrame.highLevelTexture:SetAlpha(blizzardAlpha) end
-    if levelFrame.selectedBorder then levelFrame.selectedBorder:SetAlpha(db.hideTargetBorder and 0 or blizzardAlpha) end
+    if levelFrame.selectedBorder then levelFrame.selectedBorder:SetAlpha(levelFrame.bbpBorderAlpha) end
 
     if not hideBackground and not showRing and not frame.bbpLevelOverlay then return end
 
     HookLevelDiffUpdates()
     local overlay = GetLevelOverlay(frame, levelFrame)
     overlay.showText = hideBackground
-    PlaceLevelText(frame, overlay, db)
+    PlaceLevelText(frame, overlay, db, onName)
     if overlay.placement ~= placement then
         overlay.placement = placement
         overlay:ClearAllPoints()

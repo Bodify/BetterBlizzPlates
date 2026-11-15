@@ -238,6 +238,12 @@ local function InitClassIndicatorCCSlot(auraFrame, frame)
     auraFrame:SetDurationCooldown(cooldown)
     auraFrame.bbpCooldown = cooldown
 
+    local timerFrame = CreateFrame("Frame", nil, cooldown)
+    timerFrame:SetAllPoints()
+    auraFrame.bbpTimer = timerFrame:CreateFontString(nil, "OVERLAY")
+    auraFrame.bbpTimer:SetPoint("CENTER", cooldown)
+    auraFrame.bbpTimer:Hide()
+
     local glow = auraFrame:CreateTexture(nil, "OVERLAY", nil, 7)
     glow:SetAtlas(square and "newplayertutorial-drag-slotblue" or "charactercreate-ring-select")
     glow:SetPoint("CENTER", auraFrame)
@@ -360,7 +366,26 @@ local function ApplyClassIndicatorCCStyle(frame)
         glow:SetVertexColor(GetCCGlowColor())
     end
     if cooldown then
-        cooldown:SetHideCountdownNumbers(BetterBlizzPlatesDB.classIndicatorCCHideCdText and true or false)
+        local hideText = BetterBlizzPlatesDB.classIndicatorCCHideCdText and true or false
+        local msFrom = cooldown:GetCountdownMillisecondsThreshold()
+        local font, formatter, curve = BBP.GetCCOverlayTimerStyle(msFrom > 0 and msFrom or nil)
+        local timer = ccFrame.bbpTimer
+        if formatter then
+            local file, size, flags = cooldown:GetCountdownFontString():GetFont()
+            timer:SetFont(font or file, size, flags)
+            if ccFrame.bbpTimerFormatter ~= formatter then
+                ccFrame.bbpTimerFormatter = formatter
+                ccFrame:SetDurationText(timer, {
+                    textFormatter = formatter,
+                    textColor = {
+                        curve = curve,
+                        property = Enum.DurationTextBindingProperty.RemainingDuration,
+                    },
+                })
+            end
+        end
+        timer:SetShown(formatter ~= nil and not hideText)
+        cooldown:SetHideCountdownNumbers(hideText or formatter ~= nil)
     end
 end
 

@@ -425,31 +425,30 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     if useCustomCastbarTexture then
         local textureName = BetterBlizzPlatesDB.customCastbarTexture
         local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
-        local bgTextureName = BetterBlizzPlatesDB.customCastbarBGTexture
-        local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, bgTextureName)
-        local changeBgTexture = BetterBlizzPlatesDB.useCustomCastbarBGTexture
         castBar:SetStatusBarTexture(texturePath)
         if castBarTexture then
             castBarTexture:SetDesaturated(true)
-            if changeBgTexture then
-                local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
-                castBar.Background:SetDesaturated(true)
-                castBar.Background:SetTexture(bgTexture)
-                castBar.Background:SetAllPoints(castBar)
-                if BetterBlizzPlatesDB.redBgCastColor then
-                    if notInterruptible ~= nil then
-                        castBar.Background:SetVertexColorFromBoolean(
-                            notInterruptible,
-                            CASTBAR_RED_COLOR,
-                            CreateColor(unpack(bgColor))
-                        )
-                    else
-                        castBar.Background:SetVertexColor(1, 0, 0, 1)
-                    end
-                else
-                    castBar.Background:SetVertexColor(unpack(bgColor))
-                end
+        end
+    end
+
+    if db.useCustomCastbarBGTexture then
+        local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, db.customCastbarBGTexture)
+        local bgColor = db.castBarBackgroundColor
+        castBar.Background:SetDesaturated(true)
+        castBar.Background:SetTexture(bgTexture)
+        castBar.Background:SetAllPoints(castBar)
+        if db.redBgCastColor then
+            if notInterruptible ~= nil then
+                castBar.Background:SetVertexColorFromBoolean(
+                    notInterruptible,
+                    CASTBAR_RED_COLOR,
+                    CreateColor(unpack(bgColor))
+                )
+            else
+                castBar.Background:SetVertexColor(1, 0, 0, 1)
             end
+        else
+            castBar.Background:SetVertexColor(unpack(bgColor))
         end
     end
 

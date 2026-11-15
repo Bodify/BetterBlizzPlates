@@ -79,6 +79,9 @@ function BBP.ClearThreatTweaks(frame)
     if frame.bbpThreatPercent then
         frame.bbpThreatPercent:Hide()
     end
+    if frame.bbpThreatLead then
+        frame.bbpThreatLead:Hide()
+    end
 end
 
 local function LayoutThreatPercent(frame, text)
@@ -94,6 +97,8 @@ function BBP.UpdateThreatPercent(frame)
     local text = frame.bbpThreatPercent
     local unit = frame.unit
     local db = BetterBlizzPlatesDB
+    local leadText = frame.bbpThreatLead
+    if leadText then leadText:Hide() end
     if not db.threatPercent or not unit or UnitIsPlayer(unit) or UnitIsFriend("player", unit) then
         if text then text:Hide() end
         return
@@ -107,13 +112,36 @@ function BBP.UpdateThreatPercent(frame)
         LayoutThreatPercent(frame, text)
     end
 
+    text:SetAlpha(1)
     if db.threatPercentTestMode then
         text:SetText("75%")
         text:Show()
         return
     end
 
-    local _, _, percent = UnitDetailedThreatSituation("player", unit)
+    local tanking, _, _, percent = UnitDetailedThreatSituation("player", unit)
+    if issecretvalue(tanking) then
+        if not leadText then
+            leadText = text:GetParent():CreateFontString(nil, "OVERLAY")
+            frame.bbpThreatLead = leadText
+        end
+        if leadText.layout ~= layoutVersion then
+            LayoutThreatPercent(frame, leadText)
+        end
+        text:SetFormattedText("%.0f%%", percent)
+        text:SetAlphaFromBoolean(tanking, 0, 1)
+        text:Show()
+        local lead = UnitThreatPercentageOfLead("player", unit)
+        if issecretvalue(lead) or lead then
+            leadText:SetFormattedText("%.0f%%", lead)
+            leadText:SetAlphaFromBoolean(tanking, 1, 0)
+            leadText:Show()
+        end
+        return
+    end
+    if tanking then
+        percent = UnitThreatPercentageOfLead("player", unit)
+    end
     if issecretvalue(percent) or (percent and percent > 0) then
         text:SetFormattedText("%.0f%%", percent)
         text:Show()

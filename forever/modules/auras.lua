@@ -151,6 +151,9 @@ local PURGE = {
         { spell = 30449,  types = { "Magic" } },                -- Spellsteal (Mage)
         { spell = 278326, types = { "Magic" } },                -- Consume Magic (Demon Hunter)
         { spell = 19505,  types = { "Magic" }, pet = true },    -- Devour Magic (Felhunter)
+        { spell = 19731,  types = { "Magic" }, pet = true },
+        { spell = 19734,  types = { "Magic" }, pet = true },
+        { spell = 19736,  types = { "Magic" }, pet = true },
         { spell = 19801,  types = { "Magic", "Enrage" } },      -- Tranquilizing Shot (Hunter)
         { spell = 2908,   types = { "Enrage" } },               -- Soothe (Druid)
         { spell = 5938,   types = { "Enrage" } },               -- Shiv (Rogue)
@@ -793,6 +796,11 @@ local function GetDurationFormatter(msFrom, hideLong)
 
     durationFormatters[key] = f
     return f
+end
+
+function BBP.GetCCOverlayTimerStyle(msFrom)
+    if not S.enabled or S.blizzardCdText then return end
+    return S.cdFont, GetDurationFormatter(msFrom, false), GetDurationCurve()
 end
 
 local function CreateBorderEdges(host)

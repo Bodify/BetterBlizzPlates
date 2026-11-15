@@ -1319,6 +1319,13 @@ local function InitializeSavedVariables()
         BetterBlizzPlatesDB = {}
     end
 
+    if not BetterBlizzPlatesDB.castbarBgStandalone then
+        if not BetterBlizzPlatesDB.useCustomCastbarTexture then
+            BetterBlizzPlatesDB.useCustomCastbarBGTexture = false
+        end
+        BetterBlizzPlatesDB.castbarBgStandalone = true
+    end
+
     if BetterBlizzPlatesDB.hideLevelOnFriendly == nil and BetterBlizzPlatesDB.version then
         BetterBlizzPlatesDB.hideLevelOnFriendly = not (BetterBlizzPlatesDB.classicNameplates or BetterBlizzPlatesDB.showLevelFrameOnFriendly)
     end
@@ -2558,13 +2565,9 @@ end
 
 --#################################################################################################
 local function isFriendlistFriend(unit)
-    for i = 1, C_FriendList.GetNumFriends() do
-        local friendInfo = C_FriendList.GetFriendInfoByIndex(i)
-        if friendInfo and friendInfo.name == UnitName(unit) then
-            return true
-        end
-    end
-    return false
+    local guid = UnitGUID(unit)
+    if not guid or issecretvalue(guid) then return false end
+    return C_FriendList.IsFriend(guid)
 end
 
 local function isUnitGuildmate(unit)
@@ -2574,18 +2577,9 @@ local function isUnitGuildmate(unit)
 end
 
 local function isUnitBNetFriend(unit)
-    local unitName = UnitName(unit)
-    local numBNetFriends = BNGetNumFriends()
-    for i = 1, numBNetFriends do
-        local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
-        if accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.isOnline then
-            local characterName = accountInfo.gameAccountInfo.characterName
-            if characterName and characterName == unitName then
-                return true
-            end
-        end
-    end
-    return false
+    local guid = UnitGUID(unit)
+    if not guid or issecretvalue(guid) then return false end
+    return C_BattleNet.GetGameAccountInfoByGUID(guid) ~= nil
 end
 
 local function anonMode(frame, info)
@@ -5855,6 +5849,22 @@ local function HideFriendlyHealthbar(frame)
         end
     end
     if frame.questIndicator then BBP.PositionQuestIndicator(frame) end
+    if frame.friendIndicator then BBP.PositionFriendIndicator(frame) end
+end
+
+function BBP.PositionFriendIndicator(frame)
+    local indicator = frame.friendIndicator
+    local relativeTo = frame.name
+    if BBP.isInArena and frame.specNameText and frame.specNameText ~= "" then
+        relativeTo = frame.specNameText
+    end
+    indicator:ClearAllPoints()
+    if frame.healthBar:GetAlpha() == 0 or (UnitIsPlayer(frame.unit) and isFriend(frame.unit) and C_CVar.GetCVarBool("nameplateShowOnlyNameForFriendlyPlayerUnits")) then
+        indicator:SetPoint("BOTTOM", relativeTo, "TOP", 0, 0)
+        return
+    end
+    local anchor = BetterBlizzPlatesDB.friendIndicatorAnchor or "LEFT"
+    indicator:SetPoint(BBP.GetOppositeAnchor(anchor), relativeTo, anchor, 0, 0)
 end
 
 local function FriendIndicator(frame)
@@ -5885,13 +5895,7 @@ local function FriendIndicator(frame)
     indicator:SetDesaturated(desaturate)
     indicator:SetVertexColor(r, g, b)
 
-    local anchor = db.friendIndicatorAnchor or "LEFT"
-    local relativeTo = frame.name
-    if BBP.isInArena and frame.specNameText and frame.specNameText ~= "" then
-        relativeTo = frame.specNameText
-    end
-    indicator:ClearAllPoints()
-    indicator:SetPoint(BBP.GetOppositeAnchor(anchor), relativeTo, anchor, 0, 0)
+    BBP.PositionFriendIndicator(frame)
     indicator:Show()
 end
 
@@ -7824,11 +7828,12 @@ First:SetScript("OnEvent", function(_, event, addonName)
             local db = BetterBlizzPlatesDB
             local firstLaunch = db.hasSaved == nil or db.sendResetMessage or db.avoidPopups
             db.avoidPopups = nil
+            local skipPopups = firstLaunch or db.skipUpdateMsg or BBP.skippedUpdateMsg or db.scStart
             BetterBlizzPlatesDB.castbarEventsOn = false
             BetterBlizzPlatesDB.wasOnLoadingScreen = true
 
             if BetterBlizzPlatesDB.firstSaveComplete and not BetterBlizzPlatesDB.mopUpdated then
-                if BBP.isMoP then
+                if not skipPopups and BBP.isMoP then
                     StaticPopupDialogs["BBP_MOP_UPDATE"] = {
                         text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\n|A:services-icon-warning:16:16|a " .. L["Popup_UPDATE_CHANGES_Lots_Of_Features_From"],
                         button1 = "|A:glueannouncementpopup-arrow:16:16|a " .. L["Update_Totems"],
@@ -7854,7 +7859,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     end
                     }
                     StaticPopup_Show("BBP_MOP_UPDATE")
-                else
+                elseif not skipPopups then
                     StaticPopupDialogs["BBP_MOP_UPDATE"] = {
                         text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\n|A:services-icon-warning:16:16|a " .. L["Popup_UPDATE_CHANGES_Lots_Of_Features_From_2"],
                         button1 = L["Okay"],
@@ -7950,7 +7955,10 @@ First:SetScript("OnEvent", function(_, event, addonName)
                             end
                         end
                     end
-                    if BBP.isTBC then
+                    if skipPopups then
+                        PatchPulseTags(db.totemIndicatorNpcList)
+                        db.tbcTotemListUpdate1 = true
+                    elseif BBP.isTBC then
                         StaticPopupDialogs["BBP_TBC_TOTEM_CONFIRM_ADD"] = {
                             text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\n" .. L["Popup_Are_You_Sure_You_Want_To_4"],
                             button1 = L["Yes"],
@@ -8072,7 +8080,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
 
 
             if db.hideNameplateAuras ~= nil then
-                if db.hideNameplateAuras then
+                if db.hideNameplateAuras and not skipPopups then
                     StaticPopupDialogs["BBP_HIDE_NP_AURAS_REMOVED"] = {
                         text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\n" .. L["Popup_The_Hide_Nameplate_Auras_Setting_Has"],
                         button1 = L["Ok"],
@@ -8204,7 +8212,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 db.nameplateOverlapV = 1
                 db.nameplateMidnightStackingFixFinalRel = true
 
-                if not firstLaunch then
+                if not skipPopups then
                     local extraMention = db.enableNpVerticalPos and ("\n\n" .. L["Popup_Stackfix_Vertical_Pos"]) or ""
                     StaticPopupDialogs["BBP_STACKFIX"] = {
                         text = BBP.ICON_NAME.."\n\n|A:services-icon-warning:20:20|a |cffff8800" .. L["Important_Read"] .. "|r |A:services-icon-warning:20:20|a\n\n" .. string.format(L["Popup_Stackfix"], extraMention),
@@ -8219,6 +8227,11 @@ First:SetScript("OnEvent", function(_, event, addonName)
                         StaticPopup_Show("BBP_STACKFIX")
                     end)
                 end
+            end
+
+            if db.skipUpdateMsg then
+                db.skipUpdateMsg = nil
+                BBP.skippedUpdateMsg = true
             end
 
             TurnOnEnabledFeaturesOnLogin()

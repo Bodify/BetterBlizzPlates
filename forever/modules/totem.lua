@@ -29,6 +29,97 @@ end
 
 BBP.GetTotemColor = GetTotemColor
 
+local FOREVER_TOTEMS = {
+    { key = "healingStream",    spellID = 5394,  npcIDs = { 3527, 3906, 3907, 3908, 3909 },        color = { 0, 1, 0.78 },       important = true,  duration = 60 },
+    { key = "grounding",        spellID = 8177,  npcIDs = { 5925 },                                color = { 1, 0, 1 },          important = true,  duration = 45 },
+    { key = "tremor",           spellID = 8143,  npcIDs = { 5913 },                                color = { 0.49, 0.9, 0.08 },  important = true,  duration = 120 },
+    { key = "manaTide",         spellID = 16190, npcIDs = { 10467, 11100, 11101 },                 color = { 0.08, 0.82, 0.78 }, important = true,  duration = 12 },
+    { key = "stoneclaw",        spellID = 5730,  npcIDs = { 3579, 3911, 3912, 3913, 7398, 7399 },  color = { 0.78, 0.51, 0.39 }, important = true,  duration = 15 },
+    { key = "earthbind",        spellID = 2484,  npcIDs = { 2630 },                                color = { 0.78, 0.51, 0.39 }, important = false, duration = 45 },
+    { key = "searing",          spellID = 3599,  npcIDs = { 2523, 3902, 3903, 3904, 7400, 7402 },  color = { 1, 0.23, 0 },       important = false, durations = { 30, 35, 40, 45, 50, 55 } },
+    { key = "magma",            spellID = 8190,  npcIDs = { 5929, 7464, 7465, 7466 },              color = { 1, 0.23, 0 },       important = false, duration = 20 },
+    { key = "flametongue",      spellID = 8227,  npcIDs = { 5950, 6012, 7423, 10557 },             color = { 1, 0.23, 0 },       important = false, duration = 120 },
+    { key = "windfury",         spellID = 8512,  npcIDs = { 6112, 7483, 7484 },                    color = { 0.70, 0.98, 1 },    important = false, duration = 120 },
+    { key = "graceOfAir",       spellID = 8835,  npcIDs = { 7486, 7487, 15463 },                   color = { 0.70, 0.98, 1 },    important = false, duration = 120 },
+    { key = "windwall",         spellID = 15107, npcIDs = { 9687, 9688, 9689 },                    color = { 0.70, 0.98, 1 },    important = false, duration = 120 },
+    { key = "sentry",           spellID = 6495,  npcIDs = { 3968 },                                color = { 0.70, 0.98, 1 },    important = false, duration = 300 },
+    { key = "manaSpring",       spellID = 5675,  npcIDs = { 3573, 7414, 7415, 7416 },              color = { 0.70, 0.98, 1 },    important = false, duration = 60 },
+    { key = "poisonCleansing",  spellID = 8166,  npcIDs = { 5923 },                                color = { 0.08, 0.82, 0.78 }, important = false, duration = 120 },
+    { key = "diseaseCleansing", spellID = 8170,  npcIDs = { 5924 },                                color = { 0.08, 0.82, 0.78 }, important = false, duration = 120 },
+    { key = "strengthOfEarth",  spellID = 8075,  npcIDs = { 5874, 5921, 5922, 7403 },              color = { 0.78, 0.51, 0.39 }, important = false, duration = 120 },
+    { key = "stoneskin",        spellID = 8071,  npcIDs = { 5873, 5919, 5920, 7366, 7367, 7368 },  color = { 0.78, 0.51, 0.39 }, important = false, duration = 120 },
+    { key = "fireResistance",   spellID = 8184,  npcIDs = { 5927, 7424, 7425 },                    color = { 0.08, 0.82, 0.78 }, important = false, duration = 120 },
+    { key = "frostResistance",  spellID = 8181,  npcIDs = { 5926, 7412, 7413 },                    color = { 0.08, 0.82, 0.78 }, important = false, duration = 120 },
+    { key = "natureResistance", spellID = 10595, npcIDs = { 7467, 7468, 7469 },                    color = { 0.08, 0.82, 0.78 }, important = false, duration = 120 },
+}
+
+BBP.ForeverTotemList = FOREVER_TOTEMS
+
+local ROMAN_RANKS = { II = 2, III = 3, IV = 4, V = 5, VI = 6, VII = 7, VIII = 8, IX = 9, X = 10 }
+
+local totemsByName, totemsByNpcID
+
+local function BuildTotemLookups()
+    totemsByName, totemsByNpcID = {}, {}
+    for _, totem in ipairs(FOREVER_TOTEMS) do
+        totem.icon = C_Spell.GetSpellTexture(totem.spellID)
+        totemsByName[C_Spell.GetSpellName(totem.spellID)] = totem
+        for rank, npcID in ipairs(totem.npcIDs) do
+            totemsByNpcID[npcID] = { totem = totem, rank = rank }
+        end
+    end
+end
+
+local function LookupKnownTotem(unit)
+    local guid = UnitGUID(unit)
+    local name = UnitName(unit)
+    if issecretvalue(guid) or issecretvalue(name) then return end
+    if not totemsByName then BuildTotemLookups() end
+
+    local totem = totemsByName[name]
+    if totem then return totem, 1, guid end
+
+    local baseName, numeral = name:match("^(.-) ([IVX]+)$")
+    totem = baseName and totemsByName[baseName]
+    if totem then return totem, ROMAN_RANKS[numeral] or 1, guid end
+
+    local npcID = tonumber(guid:match("%-(%d+)%-%x+$"))
+    local entry = npcID and totemsByNpcID[npcID]
+    if entry then return entry.totem, entry.rank, guid end
+end
+
+local SPAWN_EPOCH = 2 ^ 23
+local firstSeen = {}
+local firstSeenCount = 0
+
+local function GetTotemStartTime(guid, duration)
+    local now = GetTime()
+    local spawnUID = guid:match("%-(%x+)$")
+    if spawnUID and #spawnUID >= 10 then
+        local serverTime = GetServerTime()
+        local spawnTime = serverTime - (serverTime % SPAWN_EPOCH) + bit.band(tonumber(spawnUID:sub(5), 16), 0x7fffff)
+        if spawnTime > serverTime then
+            spawnTime = spawnTime - SPAWN_EPOCH
+        end
+        local elapsed = serverTime - spawnTime
+        if elapsed >= 0 and elapsed <= duration then
+            return now - elapsed
+        end
+    end
+
+    local seen = firstSeen[guid]
+    if not seen then
+        if firstSeenCount >= 200 then
+            wipe(firstSeen)
+            firstSeenCount = 0
+        end
+        seen = now
+        firstSeen[guid] = seen
+        firstSeenCount = firstSeenCount + 1
+    end
+    return seen
+end
+
 local function ConfigureTotemCooldown(cooldown)
     cooldown:SetMinimumCountdownDuration(0)
     cooldown:SetReverse(true)
@@ -411,7 +502,7 @@ local function ApplyGlow(frame, size, color)
     end
 end
 
-function BBP.ApplyTotemAttributes(frame, iconTexture, color, size, duration)
+function BBP.ApplyTotemAttributes(frame, iconTexture, color, size, duration, startTime)
     BBP.CreateTotemComponents(frame, size)
 
     frame.totemIndicator:Show()
@@ -427,7 +518,11 @@ function BBP.ApplyTotemAttributes(frame, iconTexture, color, size, duration)
         end
         ConfigureTotemCooldown(frame.customCooldown)
         frame.customCooldown:Show()
-        frame.customCooldown:SetCooldownDuration(duration)
+        if startTime then
+            frame.customCooldown:SetCooldown(startTime, duration)
+        else
+            frame.customCooldown:SetCooldownDuration(duration)
+        end
     elseif frame.customCooldown then
         frame.customCooldown:Hide()
     end
@@ -473,6 +568,83 @@ local function SetTotemCastbarHidden(frame, hidden)
     end
 end
 
+local function HideTotemIcon(frame)
+    frame.customIcon:Hide()
+    if frame.glowTexture then frame.glowTexture:Hide() end
+    if frame.customCooldown then frame.customCooldown:Hide() end
+    if frame.animationGroup then frame.animationGroup:Stop() end
+end
+
+local function ClearTotemState(frame, config)
+    config.totemColorRGB = nil
+    config.totemIsImportant = nil
+    config.totemUninterruptible = nil
+    ClearTotemBooleanColors(frame)
+    ClearPsyfiendIconAlpha(frame)
+    DisableTotemAuraContainer(frame)
+    SetTotemCastbarHidden(frame, false)
+    if frame.totemIndicator then
+        HideTotemIcon(frame)
+    end
+end
+
+local function ApplyTotemHideOptions(frame, config, info)
+    if config.totemIndicatorHideAuras then
+        BBP.SetNameplateAurasShown(frame, false)
+    end
+
+    if config.totemIndicatorHideHealthBar then
+        if not info.isTarget then
+            frame.HealthBarsContainer:SetAlpha(0)
+            frame.HealthBarsContainer.alphaZero = true
+            frame.selectionHighlight:SetAlpha(0)
+        else
+            frame.HealthBarsContainer:SetAlpha(1)
+            frame.HealthBarsContainer.alphaZero = false
+            if not config.hideTargetHighlight then
+                frame.selectionHighlight:SetAlpha(0.22)
+            end
+        end
+    end
+end
+
+local function ApplyKnownTotem(frame, config, info, totem, rank, guid)
+    if (config.totemIndicatorEnemyOnly and info.isFriend) or BetterBlizzPlatesDB.totemIndicatorForeverHidden[totem.key] then
+        ClearTotemState(frame, config)
+        return
+    end
+
+    DisableTotemAuraContainer(frame)
+    ClearTotemBooleanColors(frame)
+    ClearPsyfiendIconAlpha(frame)
+    SetTotemCastbarHidden(frame, config.totemIndicatorHideCastbar)
+
+    local important = totem.important
+    local color = totem.color
+    config.totemColorRGB = color
+    config.totemIsImportant = important
+    config.totemUninterruptible = nil
+
+    if config.totemIndicatorColorHealthBar and (important or config.totemIndicatorColorOtherHealthBars) then
+        frame.healthBar:SetStatusBarColor(unpack(color))
+        frame.needsRecolor = true
+    end
+    if important and config.totemIndicatorColorName or config.totemIndicatorColorNameOthers then
+        frame.name:SetVertexColor(unpack(color))
+    end
+
+    if important or config.totemIndicatorShowOtherIcons then
+        local duration = totem.durations and totem.durations[rank] or totem.duration
+        BBP.ApplyTotemAttributes(frame, totem.icon, important and color or nil, 30, duration, GetTotemStartTime(guid, duration))
+    else
+        BBP.CreateTotemComponents(frame, 30)
+        HideTotemIcon(frame)
+        frame.totemIndicator:Show()
+    end
+
+    ApplyTotemHideOptions(frame, config, info)
+end
+
 function BBP.IsProbablyTotem(unit)
     return UnitIsMinion(unit) and (not UnitIsOtherPlayersPet(unit) and not UnitIsUnit(unit, "pet"))
 end
@@ -505,6 +677,10 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
 
     local unit = frame.unit
     local isProbablyTotem = BBP.IsProbablyTotem(unit)
+    local known, rank, guid
+    if BBP.IsTotemUnit(unit) then
+        known, rank, guid = LookupKnownTotem(unit)
+    end
 
     local totemIndicatorSwappingAnchor
     if config.totemIndicatorHideNameAndShiftIconDown then
@@ -517,14 +693,8 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
 
     local yPosAdjustment = config.totemIndicatorHideNameAndShiftIconDown and config.totemIndicatorYPos + 4 or config.totemIndicatorYPos
 
-    if not config.totemIndicatorTestMode and not isProbablyTotem then
-        config.totemColorRGB = nil
-        config.totemIsImportant = nil
-        config.totemUninterruptible = nil
-        ClearTotemBooleanColors(frame)
-        ClearPsyfiendIconAlpha(frame)
-        DisableTotemAuraContainer(frame)
-        SetTotemCastbarHidden(frame, false)
+    if not config.totemIndicatorTestMode and not isProbablyTotem and not known then
+        ClearTotemState(frame, config)
         return
     end
 
@@ -557,32 +727,15 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
             frame.name:SetText("")
         end
 
-        if config.totemIndicatorHideAuras then
-            BBP.SetNameplateAurasShown(frame, false)
-        end
+        ApplyTotemHideOptions(frame, config, info)
 
-        if config.totemIndicatorHideHealthBar then
-            if not info.isTarget then
-                frame.HealthBarsContainer:SetAlpha(0)
-                frame.HealthBarsContainer.alphaZero = true
-                frame.selectionHighlight:SetAlpha(0)
-            else
-                frame.HealthBarsContainer:SetAlpha(1)
-                frame.HealthBarsContainer.alphaZero = false
-                if not config.hideTargetHighlight then
-                    frame.selectionHighlight:SetAlpha(0.22)
-                end
-            end
-        end
+    elseif known then
+        ApplyKnownTotem(frame, config, info, known, rank, guid)
+        if not config.totemColorRGB then return end
 
     elseif isProbablyTotem then
         if config.totemIndicatorEnemyOnly and info.isFriend then
-            config.totemColorRGB = nil
-            config.totemIsImportant = nil
-            config.totemUninterruptible = nil
-            ClearTotemBooleanColors(frame)
-            DisableTotemAuraContainer(frame)
-            SetTotemCastbarHidden(frame, false)
+            ClearTotemState(frame, config)
             return
         end
 
@@ -618,10 +771,6 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
         config.totemIsImportant = isImportant
         config.totemUninterruptible = uninterruptible
 
-        if config.totemIndicatorHideAuras then
-            BBP.SetNameplateAurasShown(frame, false)
-        end
-
         local showIcon = isImportant or config.totemIndicatorShowOtherIcons
         local colorHp = isImportant or config.totemIndicatorColorOtherHealthBars
 
@@ -653,26 +802,11 @@ function BBP.ApplyTotemIconsAndColorNameplate(frame)
                 end
             end
         elseif frame.totemIndicator then
-            frame.customIcon:Hide()
-            if frame.glowTexture then frame.glowTexture:Hide() end
-            if frame.customCooldown then frame.customCooldown:Hide() end
-            if frame.animationGroup then frame.animationGroup:Stop() end
+            HideTotemIcon(frame)
             frame.totemIndicator:Show()
         end
 
-        if config.totemIndicatorHideHealthBar then
-            if not info.isTarget then
-                frame.HealthBarsContainer:SetAlpha(0)
-                frame.HealthBarsContainer.alphaZero = true
-                frame.selectionHighlight:SetAlpha(0)
-            else
-                frame.HealthBarsContainer:SetAlpha(1)
-                frame.HealthBarsContainer.alphaZero = false
-                if not config.hideTargetHighlight then
-                    frame.selectionHighlight:SetAlpha(0.22)
-                end
-            end
-        end
+        ApplyTotemHideOptions(frame, config, info)
 
     else
         config.totemColorRGB = nil

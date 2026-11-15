@@ -10432,173 +10432,132 @@ local function guiPositionAndScale()
     contentFrame.totemTestIcons2 = CreateCheckbox("totemIndicatorTestMode", L["Test"], contentFrame)
     contentFrame.totemTestIcons2:SetPoint("TOPLEFT", contentFrame.totemIndicatorDropdown, "BOTTOMLEFT", 16, pixelsBetweenBoxes)
 
-    contentFrame.totemIndicatorEnemyOnly = CreateCheckbox("totemIndicatorEnemyOnly", L["Enemies_Only"], contentFrame)
-    contentFrame.totemIndicatorEnemyOnly:SetPoint("LEFT", contentFrame.totemTestIcons2.text, "RIGHT", 0, 0)
+    CreateMoreOptionsPopup(contentFrame.anchorSubTotem, contentFrame, BetterBlizzPlatesSubPanel, L["Totem_Indicator"], L["Tooltip_Open_More_Settings_For_Totem_Indicator"], 330)
+    contentFrame.anchorSubTotem.extendedSettingsButton:SetPoint("TOPLEFT", contentFrame.totemTestIcons2, "BOTTOMLEFT", 12, -8)
+
+    contentFrame.totemIndicatorEnemyOnly = CreateCheckbox("totemIndicatorEnemyOnly", L["Enemies_Only"], contentFrame.anchorSubTotem.extendedSettings)
     CreateTooltip(contentFrame.totemIndicatorEnemyOnly, L["Tooltip_Show_On_Enemy_Totems_Only"])
-
-    contentFrame.totemIndicatorShowOtherIcons = CreateCheckbox("totemIndicatorShowOtherIcons", L["Other_Icons"], contentFrame)
-    contentFrame.totemIndicatorShowOtherIcons:SetPoint("TOPLEFT", contentFrame.totemTestIcons2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(contentFrame.totemIndicatorShowOtherIcons, L["Show_Icon_On_Non_Important_Totems"], L["Tooltip_Show_Icon_On_Non_Important_Totems_Desc"])
-
-    contentFrame.totemIndicatorColorOtherHealthBars = CreateCheckbox("totemIndicatorColorOtherHealthBars", L["Color_Others"], contentFrame)
-    contentFrame.totemIndicatorColorOtherHealthBars:SetPoint("LEFT", contentFrame.totemIndicatorShowOtherIcons.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(contentFrame.totemIndicatorColorOtherHealthBars, L["Color_Healthbar_Of_Non_Important_Totems"], L["Tooltip_Color_Healthbar_Of_Non_Important_Totems_Desc"])
-    local function OpenTotemNormalColorPicker()
-        BBP.needsUpdate = true
-        local r, g, b = unpack(BetterBlizzPlatesDB.totemIndicatorTotemColor or { 0.4, 0.34, 0.21 })
-        ColorPickerFrame:SetupColorPickerAndShow({
-            r = r, g = g, b = b,
-            swatchFunc = function()
-                local r, g, b = ColorPickerFrame:GetColorRGB()
-                BetterBlizzPlatesDB.totemIndicatorTotemColor = { r, g, b }
-                BBP.RefreshAllNameplates()
-                BBP.RefreshTotemOthersSwatch()
-            end,
-            cancelFunc = function(previousValues)
-                local r, g, b = previousValues.r, previousValues.g, previousValues.b
-                BetterBlizzPlatesDB.totemIndicatorTotemColor = { r, g, b }
-                BBP.RefreshAllNameplates()
-                BBP.RefreshTotemOthersSwatch()
-            end,
-        })
-    end
-    contentFrame.totemIndicatorColorOtherHealthBars:HookScript("OnMouseDown", function(self, button)
-        if button == "RightButton" then
-            OpenTotemNormalColorPicker()
-        end
-    end)
-    if BetterBlizzPlatesDB.totemIndicatorTotemColor then
-        contentFrame.totemIndicatorColorOtherHealthBars.Text:SetTextColor(unpack(BetterBlizzPlatesDB.totemIndicatorTotemColor))
-    end
-
-    -- Extended Settings Button
-    contentFrame.anchorSubTotem.extendedSettingsButton = CreateFrame("Button", nil, contentFrame, "UIPanelButtonTemplate")
-    contentFrame.anchorSubTotem.extendedSettingsButton:SetSize(120, 25)
-    contentFrame.anchorSubTotem.extendedSettingsButton:SetPoint("TOPLEFT", contentFrame.totemIndicatorShowOtherIcons, "BOTTOMLEFT", 12, -8)
-    contentFrame.anchorSubTotem.extendedSettingsButton:SetText(L["More_Options"])
-    CreateTooltip(contentFrame.anchorSubTotem.extendedSettingsButton, L["Tooltip_Open_More_Settings_For_Totem_Indicator"])
-
-    -- Extended Settings Frame
-    contentFrame.anchorSubTotem.extendedSettings = CreateFrame("Frame", nil, BetterBlizzPlatesSubPanel, "DefaultPanelFlatTemplate")
-    contentFrame.anchorSubTotem.extendedSettings:SetSize(contentFrame.anchorSubTotem.border:GetHeight()+130, 285)
-    contentFrame.anchorSubTotem.extendedSettings:SetPoint("BOTTOMRIGHT", contentFrame.anchorSubTotem.border, "BOTTOMLEFT", 87, -20)
-    contentFrame.anchorSubTotem.extendedSettings:SetFrameStrata("FULLSCREEN_DIALOG")
-    contentFrame.anchorSubTotem.extendedSettings:SetFrameLevel(550)
-    contentFrame.anchorSubTotem.extendedSettings:SetIgnoreParentAlpha(true)
-    contentFrame.anchorSubTotem.extendedSettings:EnableMouse(true)
-    contentFrame.anchorSubTotem.extendedSettings:Hide()
-    contentFrame.anchorSubTotem.extendedSettings.name = L["Module_Name_Advanced"]
-    contentFrame.anchorSubTotem.extendedSettings:SetTitle(L["Totem_Indicator"])
-    contentFrame.anchorSubTotem.extendedSettings:SetMovable(true)
-    contentFrame.anchorSubTotem.extendedSettings:SetClampedToScreen(true)
-    contentFrame.anchorSubTotem.extendedSettings:RegisterForDrag("LeftButton")
-    contentFrame.anchorSubTotem.extendedSettings:SetScript("OnDragStart", function(self) self:StartMoving() end)
-    contentFrame.anchorSubTotem.extendedSettings:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
-
-    contentFrame.anchorSubTotem.closeButton = CreateFrame("Button", nil, contentFrame.anchorSubTotem.extendedSettings, "UIPanelCloseButton")
-    contentFrame.anchorSubTotem.closeButton:SetFrameLevel((contentFrame.anchorSubTotem.extendedSettings.TitleContainer or contentFrame.anchorSubTotem.extendedSettings):GetFrameLevel() + 10)
-    contentFrame.anchorSubTotem.closeButton:SetPoint("TOPRIGHT", contentFrame.anchorSubTotem.extendedSettings, "TOPRIGHT", 0, 0)
-    contentFrame.anchorSubTotem.closeButton:SetScript("OnClick", function()
-        contentFrame.anchorSubTotem.extendedSettings:Hide()
-        contentFrame:SetAlpha(1)
-    end)
-
-    contentFrame.anchorSubTotem.bg = contentFrame.anchorSubTotem.extendedSettings:CreateTexture(nil, "BACKGROUND")
-    contentFrame.anchorSubTotem.bg:SetPoint("TOPLEFT", contentFrame.anchorSubTotem.extendedSettings, "TOPLEFT", 7, -3)
-    contentFrame.anchorSubTotem.bg:SetPoint("BOTTOMRIGHT", contentFrame.anchorSubTotem.extendedSettings, "BOTTOMRIGHT", -3, 3)
-    contentFrame.anchorSubTotem.bg:SetColorTexture(0.08, 0.08, 0.08, 1)
-
-    contentFrame.anchorSubTotem.extendedSettingsButton:HookScript("OnClick", function(self)
-        contentFrame.anchorSubTotem.extendedSettings:SetShown(not contentFrame.anchorSubTotem.extendedSettings:IsShown())
-        contentFrame:SetAlpha(contentFrame.anchorSubTotem.extendedSettings:IsShown() and 0.5 or 1)
-    end)
 
     contentFrame.totemIndicatorHideNameAndShiftIconDown = CreateCheckbox("totemIndicatorHideNameAndShiftIconDown", L["Hide_Name"], contentFrame.anchorSubTotem.extendedSettings)
     BBP.totemIndicatorHideName = contentFrame.totemIndicatorHideNameAndShiftIconDown
-    contentFrame.totemIndicatorHideNameAndShiftIconDown:SetPoint("TOPLEFT", contentFrame.anchorSubTotem.extendedSettings, "TOPLEFT", 10, -23)
 
     contentFrame.totemIndicatorHideHealthBar = CreateCheckbox("totemIndicatorHideHealthBar", L["Hide_HP"], contentFrame.anchorSubTotem.extendedSettings)
-    contentFrame.totemIndicatorHideHealthBar:SetPoint("LEFT", contentFrame.totemIndicatorHideNameAndShiftIconDown.text, "RIGHT", 0, 0)
     CreateTooltip(contentFrame.totemIndicatorHideHealthBar, L["Tooltip_Hide_The_Healthbar_On_Totems_Will"])
 
     contentFrame.totemIndicatorHideCastbar = CreateCheckbox("totemIndicatorHideCastbar", L["Hide_Castbar"], contentFrame.anchorSubTotem.extendedSettings)
-    contentFrame.totemIndicatorHideCastbar:SetPoint("LEFT", contentFrame.totemIndicatorHideHealthBar.text, "RIGHT", 0, 0)
     CreateTooltipTwo(contentFrame.totemIndicatorHideCastbar, L["Hide_Castbar_For_Totems"], L["Tooltip_Hide_Castbar_For_Totems_Desc"], "|cFFFFD100" .. L["Tooltip_Hide_Castbar_For_Totems_SubText_2"] .. "|r")
 
---[=[
-    local totemIndicatorDisplayCdText = CreateCheckbox("totemIndicatorDisplayCdText", "CD Text", contentFrame)
-    totemIndicatorDisplayCdText:SetPoint("TOPLEFT", totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(totemIndicatorDisplayCdText, "Display default Blizz CD Text\n\nWill not work with OmniCC.")
-]=]-- cant force use blizzards own countdown it seems, must make own soonTM
-
-    contentFrame.showTotemIndicatorCooldownSwipe = CreateCheckbox("showTotemIndicatorCooldownSwipe", L["CD_Swipe"], contentFrame.anchorSubTotem.extendedSettings)
-    contentFrame.showTotemIndicatorCooldownSwipe:SetPoint("TOPLEFT", contentFrame.totemIndicatorHideNameAndShiftIconDown, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(contentFrame.showTotemIndicatorCooldownSwipe, L["Tooltip_Show_Cooldown_Swipe_Animation"])
-
-    contentFrame.totemIndicatorColorHealthBar = CreateCheckbox("totemIndicatorColorHealthBar", L["Color_HP"], contentFrame.anchorSubTotem.extendedSettings)
-    contentFrame.totemIndicatorColorHealthBar:SetPoint("LEFT", contentFrame.showTotemIndicatorCooldownSwipe.text, "RIGHT", 0, 0)
-    CreateTooltip(contentFrame.totemIndicatorColorHealthBar, L["Color_Healthbar"])
-
-    contentFrame.totemIndicatorHideCountdownNumbers = CreateCheckbox("totemIndicatorHideCountdownNumbers", L["No_CD_Text"], contentFrame.anchorSubTotem.extendedSettings)
-    contentFrame.totemIndicatorHideCountdownNumbers:SetPoint("LEFT", contentFrame.totemIndicatorColorHealthBar.text, "RIGHT", 0, 0)
-    CreateTooltipTwo(contentFrame.totemIndicatorHideCountdownNumbers, L["Hide_Countdown_Numbers"], L["Tooltip_Hide_Countdown_Numbers_Desc"])
-
-    contentFrame.totemIndicatorColorName = CreateCheckbox("totemIndicatorColorName", L["Color_Name"], contentFrame.anchorSubTotem.extendedSettings)
-    contentFrame.totemIndicatorColorName:SetPoint("TOPLEFT", contentFrame.showTotemIndicatorCooldownSwipe, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(contentFrame.totemIndicatorColorName, L["Tooltip_Color_Name_Text"])
-
     contentFrame.totemIndicatorHideAuras = CreateCheckbox("totemIndicatorHideAuras", L["Hide_Auras"], contentFrame.anchorSubTotem.extendedSettings)
-    contentFrame.totemIndicatorHideAuras:SetPoint("LEFT", contentFrame.totemIndicatorColorName.text, "RIGHT", 0, 0)
     CreateTooltip(contentFrame.totemIndicatorHideAuras, L["Tooltip_Hide_Auras_On_Totem_Nameplates"])
 
+    contentFrame.totemIndicatorColorHealthBar = CreateCheckbox("totemIndicatorColorHealthBar", L["Color_HP"], contentFrame.anchorSubTotem.extendedSettings)
+    CreateTooltip(contentFrame.totemIndicatorColorHealthBar, L["Color_Healthbar"])
+
+    contentFrame.totemIndicatorColorOtherHealthBars = CreateCheckbox("totemIndicatorColorOtherHealthBars", L["Color_Others"], contentFrame.anchorSubTotem.extendedSettings)
+    CreateTooltipTwo(contentFrame.totemIndicatorColorOtherHealthBars, L["Color_Healthbar_Of_Non_Important_Totems"], L["Tooltip_Color_Healthbar_Of_Non_Important_Totems_Desc"])
+    contentFrame.totemIndicatorColorOtherHealthBars:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            BBP.needsUpdate = true
+            local r, g, b = unpack(BetterBlizzPlatesDB.totemIndicatorTotemColor)
+            local function SetOthersColor(newR, newG, newB)
+                BetterBlizzPlatesDB.totemIndicatorTotemColor = { newR, newG, newB }
+                BBP.RefreshAllNameplates()
+                BBP.RefreshTotemOthersSwatch()
+            end
+            ColorPickerFrame:SetupColorPickerAndShow({
+                r = r, g = g, b = b,
+                swatchFunc = function() SetOthersColor(ColorPickerFrame:GetColorRGB()) end,
+                cancelFunc = function(previous) SetOthersColor(previous.r, previous.g, previous.b) end,
+            })
+        end
+    end)
+
+    contentFrame.totemIndicatorColorName = CreateCheckbox("totemIndicatorColorName", L["Color_Name"], contentFrame.anchorSubTotem.extendedSettings)
+    CreateTooltip(contentFrame.totemIndicatorColorName, L["Tooltip_Color_Name_Text"])
+
     contentFrame.totemIndicatorColorNameOthers = CreateCheckbox("totemIndicatorColorNameOthers", L["Color_Name_Others"], contentFrame.anchorSubTotem.extendedSettings)
-    contentFrame.totemIndicatorColorNameOthers:SetPoint("TOPLEFT", contentFrame.totemIndicatorColorName, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(contentFrame.totemIndicatorColorNameOthers, L["Color_Name_Others"], L["Tooltip_Color_Name_Others_Desc"], "|cFFFFD100" .. L["Tooltip_Color_Name_Others_SubText_2"] .. "|r")
 
+    contentFrame.totemIndicatorShowOtherIcons = CreateCheckbox("totemIndicatorShowOtherIcons", L["Other_Icons"], contentFrame.anchorSubTotem.extendedSettings)
+    CreateTooltipTwo(contentFrame.totemIndicatorShowOtherIcons, L["Show_Icon_On_Non_Important_Totems"], L["Tooltip_Show_Icon_On_Non_Important_Totems_Desc"])
+
+    contentFrame.showTotemIndicatorCooldownSwipe = CreateCheckbox("showTotemIndicatorCooldownSwipe", L["CD_Swipe"], contentFrame.anchorSubTotem.extendedSettings)
+    CreateTooltip(contentFrame.showTotemIndicatorCooldownSwipe, L["Tooltip_Show_Cooldown_Swipe_Animation"])
+
+    contentFrame.totemIndicatorHideCountdownNumbers = CreateCheckbox("totemIndicatorHideCountdownNumbers", L["No_CD_Text"], contentFrame.anchorSubTotem.extendedSettings)
+    CreateTooltipTwo(contentFrame.totemIndicatorHideCountdownNumbers, L["Hide_Countdown_Numbers"], L["Tooltip_Hide_Countdown_Numbers_Desc"])
+
     contentFrame.totemIndicatorNoAnimation = CreateCheckbox("totemIndicatorNoAnimation", L["Anim"], contentFrame.anchorSubTotem.extendedSettings)
-    contentFrame.totemIndicatorNoAnimation:SetPoint("TOPLEFT", contentFrame.totemIndicatorColorNameOthers, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(contentFrame.totemIndicatorNoAnimation, L["No_Animation"], L["Tooltip_No_Animation_Desc"])
 
     contentFrame.totemIndicatorNoGlow = CreateCheckbox("totemIndicatorNoGlow", L["No_Glow"], contentFrame.anchorSubTotem.extendedSettings)
-    contentFrame.totemIndicatorNoGlow:SetPoint("LEFT", contentFrame.totemIndicatorNoAnimation.text, "RIGHT", 0, 0)
     CreateTooltipTwo(contentFrame.totemIndicatorNoGlow, L["No_Glow"], L["Tooltip_No_Glow_Desc"])
 
-    contentFrame.totemIndicatorDefaultCooldownTextSize = CreateSlider(contentFrame.anchorSubTotem.extendedSettings, L["Default_CD_Size"], 0.3, 2, 0.01, "totemIndicatorDefaultCooldownTextSize", nil, 95)
-    contentFrame.totemIndicatorDefaultCooldownTextSize:SetPoint("TOPLEFT", contentFrame.totemIndicatorNoAnimation, "BOTTOMLEFT", 12, -22)
+    contentFrame.totemIndicatorDefaultCooldownTextSize = CreateSlider(contentFrame.anchorSubTotem.extendedSettings, L["Default_CD_Size"], 0.3, 2, 0.01, "totemIndicatorDefaultCooldownTextSize", nil, 120)
     CreateTooltip(contentFrame.totemIndicatorDefaultCooldownTextSize, L["Tooltip_Size_Of_The_Default_Blizz_CD"])
 
-    contentFrame.anchorSubTotem.colorLabel = contentFrame.anchorSubTotem.extendedSettings:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    contentFrame.anchorSubTotem.colorLabel:SetPoint("TOPLEFT", contentFrame.totemIndicatorDefaultCooldownTextSize, "BOTTOMLEFT", -12, -12)
-    contentFrame.anchorSubTotem.colorLabel:SetText(L["Totem_Colors"])
-
-    local function RefreshTotemOthersSwatch()
-        local color = BetterBlizzPlatesDB.totemIndicatorTotemColor or { 0.4, 0.34, 0.21 }
+    function BBP.RefreshTotemOthersSwatch()
+        local color = BetterBlizzPlatesDB.totemIndicatorTotemColor
         contentFrame.totemIndicatorColorOtherHealthBars.Text:SetTextColor(color[1], color[2], color[3])
-        if contentFrame.totemIndicatorColorOthers then
-            contentFrame.totemIndicatorColorOthers.colorTexture:SetColorTexture(color[1], color[2], color[3], 1)
-        end
+        contentFrame.totemIndicatorColorOthers.colorTexture:SetColorTexture(color[1], color[2], color[3], 1)
     end
-    BBP.RefreshTotemOthersSwatch = RefreshTotemOthersSwatch
 
     contentFrame.totemIndicatorColorGrounding = CreateColorBox(contentFrame.anchorSubTotem.extendedSettings, "totemIndicatorColorGrounding", L["Grounding"])
-    contentFrame.totemIndicatorColorGrounding:SetPoint("TOPLEFT", contentFrame.anchorSubTotem.colorLabel, "BOTTOMLEFT", 0, -4)
     CreateTooltipTwo(contentFrame.totemIndicatorColorGrounding, L["Grounding_Totem"], L["Tooltip_Grounding_Totem_Desc"])
 
-    contentFrame.totemIndicatorColorCapacitor = CreateColorBox(contentFrame.anchorSubTotem.extendedSettings, "totemIndicatorColorCapacitor", L["Capacitor"])
-    contentFrame.totemIndicatorColorCapacitor:SetPoint("TOPLEFT", contentFrame.totemIndicatorColorGrounding, "BOTTOMLEFT", 0, -2)
-    CreateTooltipTwo(contentFrame.totemIndicatorColorCapacitor, L["Capacitor_Totem"], L["Tooltip_Capacitor_Totem_Desc"])
-
-    contentFrame.totemIndicatorColorPsyfiend = CreateColorBox(contentFrame.anchorSubTotem.extendedSettings, "totemIndicatorColorPsyfiend", L["Psyfiend"])
-    contentFrame.totemIndicatorColorPsyfiend:SetPoint("TOPLEFT", contentFrame.totemIndicatorColorCapacitor, "BOTTOMLEFT", 0, -2)
-    CreateTooltipTwo(contentFrame.totemIndicatorColorPsyfiend, L["Psyfiend"], L["Tooltip_Psyfiend_Desc"])
-
     contentFrame.totemIndicatorColorHealingStream = CreateColorBox(contentFrame.anchorSubTotem.extendedSettings, "totemIndicatorColorHealingStream", L["Healing_Stream"])
-    contentFrame.totemIndicatorColorHealingStream:SetPoint("TOPLEFT", contentFrame.totemIndicatorColorGrounding, "TOPLEFT", 140, 0)
     CreateTooltipTwo(contentFrame.totemIndicatorColorHealingStream, L["Healing_Stream_Totem"], L["Tooltip_Healing_Stream_Totem_Desc"])
 
-    contentFrame.totemIndicatorColorOthers = CreateColorBox(contentFrame.anchorSubTotem.extendedSettings, "totemIndicatorTotemColor", L["Others"], RefreshTotemOthersSwatch)
-    contentFrame.totemIndicatorColorOthers:SetPoint("TOPLEFT", contentFrame.totemIndicatorColorHealingStream, "BOTTOMLEFT", 0, -2)
+    contentFrame.totemIndicatorColorOthers = CreateColorBox(contentFrame.anchorSubTotem.extendedSettings, "totemIndicatorTotemColor", L["Others"], BBP.RefreshTotemOthersSwatch)
     CreateTooltipTwo(contentFrame.totemIndicatorColorOthers, L["Other_Totems"], L["Tooltip_Other_Totems_Desc"])
+    BBP.RefreshTotemOthersSwatch()
+
+    contentFrame.anchorSubTotem.totemOptions = {}
+    for _, totem in ipairs(BBP.ForeverTotemList) do
+        table.insert(contentFrame.anchorSubTotem.totemOptions, {
+            label = "|T" .. C_Spell.GetSpellTexture(totem.spellID) .. ":14:14|t " .. C_Spell.GetSpellName(totem.spellID),
+            get = function() return not BetterBlizzPlatesDB.totemIndicatorForeverHidden[totem.key] end,
+            set = function(_, on)
+                BetterBlizzPlatesDB.totemIndicatorForeverHidden[totem.key] = not on or nil
+                BBP.RefreshAllNameplates()
+            end,
+            tooltipTitle = C_Spell.GetSpellName(totem.spellID),
+            tooltip = L["Tooltip_Totems_Unrestricted_Note"],
+        })
+    end
+    contentFrame.anchorSubTotem.totemList = CreateMultiSelectDropdown(L["Totems"], contentFrame.anchorSubTotem.extendedSettings, contentFrame.anchorSubTotem.totemOptions, 140)
+    CreateTooltipTwo(contentFrame.anchorSubTotem.totemList, L["Totems"], L["Tooltip_Totems_Unrestricted_Note"])
+
+    moreCol = contentFrame.anchorSubTotem.extendedSettings.Column(16)
+    moreCol.Header(L["Visibility"])
+    moreCol.Add(contentFrame.totemIndicatorEnemyOnly)
+    moreCol.Add(contentFrame.totemIndicatorHideNameAndShiftIconDown)
+    moreCol.Add(contentFrame.totemIndicatorHideHealthBar)
+    moreCol.Add(contentFrame.totemIndicatorHideCastbar)
+    moreCol.Add(contentFrame.totemIndicatorHideAuras)
+    moreCol.Header(L["Color"])
+    moreCol.Add(contentFrame.totemIndicatorColorHealthBar)
+    moreCol.Add(contentFrame.totemIndicatorColorOtherHealthBars)
+    moreCol.Add(contentFrame.totemIndicatorColorName)
+    moreCol.Add(contentFrame.totemIndicatorColorNameOthers)
+
+    moreCol = contentFrame.anchorSubTotem.extendedSettings.Column(175)
+    moreCol.Header(L["Icon"])
+    moreCol.Add(contentFrame.totemIndicatorShowOtherIcons)
+    moreCol.Add(contentFrame.showTotemIndicatorCooldownSwipe)
+    moreCol.Add(contentFrame.totemIndicatorHideCountdownNumbers)
+    moreCol.Add(contentFrame.totemIndicatorNoAnimation)
+    moreCol.Add(contentFrame.totemIndicatorNoGlow)
+    moreCol.Slider(contentFrame.totemIndicatorDefaultCooldownTextSize)
+    moreCol.Header(L["Totem_Colors"])
+    moreCol.Add(contentFrame.totemIndicatorColorGrounding)
+    moreCol.Add(contentFrame.totemIndicatorColorHealingStream)
+    moreCol.Add(contentFrame.totemIndicatorColorOthers)
+    moreCol.Header(L["Totems"])
+    moreCol.Gap(4)
+    moreCol.Add(contentFrame.anchorSubTotem.totemList, 4)
+    moreCol.Gap(8)
+    contentFrame.anchorSubTotem.extendedSettings.Fit()
 
 
 
@@ -11215,35 +11174,39 @@ local function guiCastbar()
     nonInterruptibleLabel:SetPoint("LEFT", customCastbarNonInterruptibleTextureDropdown, "RIGHT", 6, 0)
     nonInterruptibleLabel:SetText(L["Non_Interruptible"])
 
-    local customCastbarBGTextureDropdown = CreateTextureDropdown(
-        "customCastbarBGTextureDropdown",
-        useCustomCastbarTexture,
-        L["Select_Texture"],
-        "customCastbarBGTexture",
-        function(arg1)
-            BBP.RefreshAllNameplates()
-        end,
-        { anchorFrame = useCustomCastbarTexture, x = 5, y = -62, label = "CustomBGCastbar" }
-    )
-    CreateTooltip(customCastbarBGTextureDropdown, L["Tooltip_Background_Texture"])
-
     if not useCustomCastbarTexture:GetChecked() then
         customCastbarTextureDropdown:Disable()
         customCastbarTextureDropdown:SetAlpha(0.5)
         customCastbarNonInterruptibleTextureDropdown:Disable()
         customCastbarNonInterruptibleTextureDropdown:SetAlpha(0.5)
+    end
+
+    local useCustomCastbarBGTexture = CreateCheckbox("useCustomCastbarBGTexture", L["Change_Castbar_Background"], enableCastbarCustomization)
+    useCustomCastbarBGTexture:SetPoint("TOPLEFT", useCustomCastbarTexture, "BOTTOMLEFT", 0, -58)
+    CreateTooltipTwo(useCustomCastbarBGTexture, L["Change_Background_Texture"])
+
+    local customCastbarBGTextureDropdown = CreateTextureDropdown(
+        "customCastbarBGTextureDropdown",
+        useCustomCastbarBGTexture,
+        L["Select_Texture"],
+        "customCastbarBGTexture",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = useCustomCastbarBGTexture, x = 0, y = 0, label = "CustomBGCastbar" },
+        130
+    )
+    customCastbarBGTextureDropdown:ClearAllPoints()
+    customCastbarBGTextureDropdown:SetPoint("LEFT", useCustomCastbarBGTexture.text, "RIGHT", 4, 0)
+    CreateTooltip(customCastbarBGTextureDropdown, L["Tooltip_Background_Texture"])
+    if not useCustomCastbarBGTexture:GetChecked() then
         customCastbarBGTextureDropdown:Disable()
         customCastbarBGTextureDropdown:SetAlpha(0.5)
     end
 
-    local useCustomCastbarBGTexture = CreateCheckbox("useCustomCastbarBGTexture", "BG", useCustomCastbarTexture)
-    useCustomCastbarBGTexture:SetPoint("LEFT", customCastbarBGTextureDropdown, "RIGHT", 2, -2)
-    CreateTooltipTwo(useCustomCastbarBGTexture, L["Change_Background_Texture"])
-    useCustomCastbarBGTexture:SetFrameStrata("HIGH")
-
     local castBarBackgroundColor = CreateFrame("Button", nil, useCustomCastbarBGTexture, "UIPanelButtonTemplate")
     castBarBackgroundColor:SetText(L["Color"])
-    castBarBackgroundColor:SetPoint("LEFT", useCustomCastbarBGTexture, "RIGHT", 16, 0)
+    castBarBackgroundColor:SetPoint("LEFT", customCastbarBGTextureDropdown, "RIGHT", 4, 0)
     castBarBackgroundColor:SetSize(45, 20)
     local castBarBackgroundColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
     castBarBackgroundColorIcon:SetAtlas("newplayertutorial-icon-key")
@@ -11268,35 +11231,16 @@ local function guiCastbar()
     end)
 
     useCustomCastbarTexture:HookScript("OnClick", function(self)
-        --CheckAndToggleCheckboxes(useCustomCastbarTexture)
         if self:GetChecked() then
             customCastbarTextureDropdown:Enable()
             customCastbarTextureDropdown:SetAlpha(1)
             customCastbarNonInterruptibleTextureDropdown:Enable()
             customCastbarNonInterruptibleTextureDropdown:SetAlpha(1)
-            useCustomCastbarBGTexture:Enable()
-            useCustomCastbarBGTexture:SetAlpha(1)
-            if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
-                castBarBackgroundColor:Enable()
-                castBarBackgroundColor:SetAlpha(1)
-                castBarBackgroundColorIcon:SetAlpha(1)
-                customCastbarBGTextureDropdown:Enable()
-                customCastbarBGTextureDropdown:SetAlpha(1)
-            end
         else
             customCastbarTextureDropdown:Disable()
             customCastbarTextureDropdown:SetAlpha(0.5)
             customCastbarNonInterruptibleTextureDropdown:Disable()
             customCastbarNonInterruptibleTextureDropdown:SetAlpha(0.5)
-            customCastbarBGTextureDropdown:Disable()
-            customCastbarBGTextureDropdown:SetAlpha(0.5)
-            useCustomCastbarBGTexture:Disable()
-            useCustomCastbarBGTexture:SetAlpha(0.5)
-            if not BetterBlizzPlatesDB.useCustomCastbarBGTexture then
-                castBarBackgroundColor:Disable()
-                castBarBackgroundColor:SetAlpha(0)
-                castBarBackgroundColorIcon:SetAlpha(0)
-            end
         end
     end)
 
@@ -11500,19 +11444,13 @@ local function guiCastbar()
                 castBarNoInterruptColorIcon:SetAlpha(0)
                 castBarDelayedInterruptColorIcon:SetAlpha(0)
             end
-            if BetterBlizzPlatesDB.useCustomCastbarTexture then
-                if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
-                    castBarBackgroundColor:Enable()
-                    castBarBackgroundColor:SetAlpha(1)
-                    castBarBackgroundColorIcon:SetAlpha(1)
-                else
-                    castBarBackgroundColor:Disable()
-                    castBarBackgroundColor:SetAlpha(0)
-                    castBarBackgroundColorIcon:SetAlpha(0)
-                end
+            if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
+                castBarBackgroundColor:Enable()
+                castBarBackgroundColor:SetAlpha(1)
+                castBarBackgroundColorIcon:SetAlpha(1)
             else
-                castBarBackgroundColor:SetAlpha(0)
                 castBarBackgroundColor:Disable()
+                castBarBackgroundColor:SetAlpha(0)
                 castBarBackgroundColorIcon:SetAlpha(0)
             end
         else
@@ -11623,19 +11561,13 @@ local function guiCastbar()
                 castBarNoInterruptColorIcon:SetAlpha(0)
                 castBarDelayedInterruptColorIcon:SetAlpha(0)
             end
-            if BetterBlizzPlatesDB.useCustomCastbarTexture then
-                if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
-                    customCastbarBGTextureDropdown:Enable()
-                    castBarBackgroundColor:Enable()
-                    castBarBackgroundColor:SetAlpha(1)
-                    castBarBackgroundColorIcon:SetAlpha(1)
-                else
-                    customCastbarBGTextureDropdown:Disable()
-                    castBarBackgroundColor:Disable()
-                    castBarBackgroundColor:SetAlpha(0)
-                    castBarBackgroundColorIcon:SetAlpha(0)
-                end
+            if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
+                customCastbarBGTextureDropdown:Enable()
+                castBarBackgroundColor:Enable()
+                castBarBackgroundColor:SetAlpha(1)
+                castBarBackgroundColorIcon:SetAlpha(1)
             else
+                customCastbarBGTextureDropdown:Disable()
                 castBarBackgroundColor:Disable()
                 castBarBackgroundColor:SetAlpha(0)
                 castBarBackgroundColorIcon:SetAlpha(0)

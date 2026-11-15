@@ -1391,9 +1391,6 @@ local function ClassicCastbarAdjustments(self, event, frame)
 
         local textureName = BetterBlizzPlatesDB.customCastbarTexture
         local texturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, textureName)
-        local bgTextureName = BetterBlizzPlatesDB.customCastbarBGTexture
-        local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, bgTextureName)
-        local changeBgTexture = BetterBlizzPlatesDB.useCustomCastbarBGTexture
         local nonInterruptibleTextureName = BetterBlizzPlatesDB.customCastbarNonInterruptibleTexture
         local nonInterruptibleTexturePath = LSM:Fetch(LSM.MediaType.STATUSBAR, nonInterruptibleTextureName)
         if self.barType == "uninterruptable" then
@@ -1405,19 +1402,28 @@ local function ClassicCastbarAdjustments(self, event, frame)
         self:SetStatusBarTexture(texture)
         if castBarTexture then
             castBarTexture:SetDesaturated(true)
-            if changeBgTexture and self.bbpBackground then
-                local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
-                self.bbpBackground:SetDesaturated(true)
-                self.bbpBackground:SetTexture(bgTexture)
-                self.bbpBackground:SetAllPoints(self)
-                if notInterruptible and BetterBlizzPlatesDB.redBgCastColor then
-                    self.bbpBackground:SetVertexColor(1,0,0,1)
-                else
-                    self.bbpBackground:SetVertexColor(unpack(bgColor))
-                end
-            end
         end
+    end
 
+    if self.bbpBackground then
+        if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
+            local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.customCastbarBGTexture)
+            local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
+            self.bbpBackground:SetDesaturated(true)
+            self.bbpBackground:SetTexture(bgTexture)
+            self.bbpBackground:SetAllPoints(self)
+            if notInterruptible and BetterBlizzPlatesDB.redBgCastColor then
+                self.bbpBackground:SetVertexColor(1,0,0,1)
+            else
+                self.bbpBackground:SetVertexColor(unpack(bgColor))
+            end
+            self.bbpBgChanged = true
+        elseif self.bbpBgChanged then
+            self.bbpBackground:SetDesaturated(false)
+            self.bbpBackground:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\blizzTex\\UI-CastingBar-Background")
+            self.bbpBackground:SetVertexColor(1,1,1,1)
+            self.bbpBgChanged = nil
+        end
     end
 end
 

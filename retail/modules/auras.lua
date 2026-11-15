@@ -795,6 +795,11 @@ local function GetDurationFormatter(msFrom, hideLong)
     return f
 end
 
+function BBP.GetCCOverlayTimerStyle(msFrom)
+    if not S.enabled or S.blizzardCdText then return end
+    return S.cdFont, GetDurationFormatter(msFrom, false), GetDurationCurve()
+end
+
 local function CreateBorderEdges(host)
     local edges = {}
     for i = 1, 4 do

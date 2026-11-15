@@ -10860,35 +10860,39 @@ local function guiCastbar()
     nonInterruptibleLabel:SetPoint("LEFT", customCastbarNonInterruptibleTextureDropdown, "RIGHT", 6, 0)
     nonInterruptibleLabel:SetText(L["Non_Interruptible"])
 
-    local customCastbarBGTextureDropdown = CreateTextureDropdown(
-        "customCastbarBGTextureDropdown",
-        useCustomCastbarTexture,
-        L["Select_Texture"],
-        "customCastbarBGTexture",
-        function(arg1)
-            BBP.RefreshAllNameplates()
-        end,
-        { anchorFrame = useCustomCastbarTexture, x = 5, y = -62, label = "CustomBGCastbar" }
-    )
-    CreateTooltip(customCastbarBGTextureDropdown, L["Tooltip_Background_Texture"])
-
     if not useCustomCastbarTexture:GetChecked() then
         customCastbarTextureDropdown:Disable()
         customCastbarTextureDropdown:SetAlpha(0.5)
         customCastbarNonInterruptibleTextureDropdown:Disable()
         customCastbarNonInterruptibleTextureDropdown:SetAlpha(0.5)
+    end
+
+    local useCustomCastbarBGTexture = CreateCheckbox("useCustomCastbarBGTexture", L["Change_Castbar_Background"], enableCastbarCustomization)
+    useCustomCastbarBGTexture:SetPoint("TOPLEFT", useCustomCastbarTexture, "BOTTOMLEFT", 0, -58)
+    CreateTooltipTwo(useCustomCastbarBGTexture, L["Change_Background_Texture"])
+
+    local customCastbarBGTextureDropdown = CreateTextureDropdown(
+        "customCastbarBGTextureDropdown",
+        useCustomCastbarBGTexture,
+        L["Select_Texture"],
+        "customCastbarBGTexture",
+        function(arg1)
+            BBP.RefreshAllNameplates()
+        end,
+        { anchorFrame = useCustomCastbarBGTexture, x = 0, y = 0, label = "CustomBGCastbar" },
+        130
+    )
+    customCastbarBGTextureDropdown:ClearAllPoints()
+    customCastbarBGTextureDropdown:SetPoint("LEFT", useCustomCastbarBGTexture.text, "RIGHT", 4, 0)
+    CreateTooltip(customCastbarBGTextureDropdown, L["Tooltip_Background_Texture"])
+    if not useCustomCastbarBGTexture:GetChecked() then
         customCastbarBGTextureDropdown:Disable()
         customCastbarBGTextureDropdown:SetAlpha(0.5)
     end
 
-    local useCustomCastbarBGTexture = CreateCheckbox("useCustomCastbarBGTexture", "BG", useCustomCastbarTexture)
-    useCustomCastbarBGTexture:SetPoint("LEFT", customCastbarBGTextureDropdown, "RIGHT", 2, -2)
-    CreateTooltipTwo(useCustomCastbarBGTexture, L["Change_Background_Texture"])
-    useCustomCastbarBGTexture:SetFrameStrata("HIGH")
-
     local castBarBackgroundColor = CreateFrame("Button", nil, useCustomCastbarBGTexture, "UIPanelButtonTemplate")
     castBarBackgroundColor:SetText(L["Color"])
-    castBarBackgroundColor:SetPoint("LEFT", useCustomCastbarBGTexture, "RIGHT", 16, 0)
+    castBarBackgroundColor:SetPoint("LEFT", customCastbarBGTextureDropdown, "RIGHT", 4, 0)
     castBarBackgroundColor:SetSize(45, 20)
     local castBarBackgroundColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
     castBarBackgroundColorIcon:SetAtlas("newplayertutorial-icon-key")
@@ -10913,35 +10917,16 @@ local function guiCastbar()
     end)
 
     useCustomCastbarTexture:HookScript("OnClick", function(self)
-        --CheckAndToggleCheckboxes(useCustomCastbarTexture)
         if self:GetChecked() then
             customCastbarTextureDropdown:Enable()
             customCastbarTextureDropdown:SetAlpha(1)
             customCastbarNonInterruptibleTextureDropdown:Enable()
             customCastbarNonInterruptibleTextureDropdown:SetAlpha(1)
-            useCustomCastbarBGTexture:Enable()
-            useCustomCastbarBGTexture:SetAlpha(1)
-            if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
-                castBarBackgroundColor:Enable()
-                castBarBackgroundColor:SetAlpha(1)
-                castBarBackgroundColorIcon:SetAlpha(1)
-                customCastbarBGTextureDropdown:Enable()
-                customCastbarBGTextureDropdown:SetAlpha(1)
-            end
         else
             customCastbarTextureDropdown:Disable()
             customCastbarTextureDropdown:SetAlpha(0.5)
             customCastbarNonInterruptibleTextureDropdown:Disable()
             customCastbarNonInterruptibleTextureDropdown:SetAlpha(0.5)
-            customCastbarBGTextureDropdown:Disable()
-            customCastbarBGTextureDropdown:SetAlpha(0.5)
-            useCustomCastbarBGTexture:Disable()
-            useCustomCastbarBGTexture:SetAlpha(0.5)
-            if not BetterBlizzPlatesDB.useCustomCastbarBGTexture then
-                castBarBackgroundColor:Disable()
-                castBarBackgroundColor:SetAlpha(0)
-                castBarBackgroundColorIcon:SetAlpha(0)
-            end
         end
     end)
 
@@ -11158,19 +11143,13 @@ local function guiCastbar()
                 castBarNoInterruptColorIcon:SetAlpha(0)
                 castBarDelayedInterruptColorIcon:SetAlpha(0)
             end
-            if BetterBlizzPlatesDB.useCustomCastbarTexture then
-                if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
-                    castBarBackgroundColor:Enable()
-                    castBarBackgroundColor:SetAlpha(1)
-                    castBarBackgroundColorIcon:SetAlpha(1)
-                else
-                    castBarBackgroundColor:Disable()
-                    castBarBackgroundColor:SetAlpha(0)
-                    castBarBackgroundColorIcon:SetAlpha(0)
-                end
+            if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
+                castBarBackgroundColor:Enable()
+                castBarBackgroundColor:SetAlpha(1)
+                castBarBackgroundColorIcon:SetAlpha(1)
             else
-                castBarBackgroundColor:SetAlpha(0)
                 castBarBackgroundColor:Disable()
+                castBarBackgroundColor:SetAlpha(0)
                 castBarBackgroundColorIcon:SetAlpha(0)
             end
         else
@@ -11281,19 +11260,13 @@ local function guiCastbar()
                 castBarNoInterruptColorIcon:SetAlpha(0)
                 castBarDelayedInterruptColorIcon:SetAlpha(0)
             end
-            if BetterBlizzPlatesDB.useCustomCastbarTexture then
-                if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
-                    customCastbarBGTextureDropdown:Enable()
-                    castBarBackgroundColor:Enable()
-                    castBarBackgroundColor:SetAlpha(1)
-                    castBarBackgroundColorIcon:SetAlpha(1)
-                else
-                    customCastbarBGTextureDropdown:Disable()
-                    castBarBackgroundColor:Disable()
-                    castBarBackgroundColor:SetAlpha(0)
-                    castBarBackgroundColorIcon:SetAlpha(0)
-                end
+            if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
+                customCastbarBGTextureDropdown:Enable()
+                castBarBackgroundColor:Enable()
+                castBarBackgroundColor:SetAlpha(1)
+                castBarBackgroundColorIcon:SetAlpha(1)
             else
+                customCastbarBGTextureDropdown:Disable()
                 castBarBackgroundColor:Disable()
                 castBarBackgroundColor:SetAlpha(0)
                 castBarBackgroundColorIcon:SetAlpha(0)

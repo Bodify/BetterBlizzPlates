@@ -1040,6 +1040,13 @@ local function InitializeSavedVariables()
         BetterBlizzPlatesDB = {}
     end
 
+    if not BetterBlizzPlatesDB.castbarBgStandalone then
+        if not BetterBlizzPlatesDB.useCustomCastbarTexture then
+            BetterBlizzPlatesDB.useCustomCastbarBGTexture = false
+        end
+        BetterBlizzPlatesDB.castbarBgStandalone = true
+    end
+
     if BetterBlizzPlatesDB.hideLevelOnFriendly == nil and BetterBlizzPlatesDB.version then
         BetterBlizzPlatesDB.hideLevelOnFriendly = not (BetterBlizzPlatesDB.classicNameplates or BetterBlizzPlatesDB.showLevelFrameOnFriendly)
     end
@@ -1764,7 +1771,7 @@ BBP.popupBuilders["BETTERBLIZZPLATES_COMBAT_WARNING"] = function() return {
 -- Update message
 local function SendUpdateMessage()
     if sendUpdate then
-        if BetterBlizzPlatesDB.skipUpdateMsg then
+        if BetterBlizzPlatesDB.skipUpdateMsg or BBP.skippedUpdateMsg then
             BetterBlizzPlatesDB.skipUpdateMsg = nil
             BBP.skippedUpdateMsg = true
             return
@@ -2430,19 +2437,9 @@ function BBP.isUnitGuildmate(unit)
 end
 
 function BBP.isUnitBNetFriend(unit)
-    local unitName = UnitName(unit)
-    if issecretvalue(unitName) then return false end
-    local numBNetFriends = BNGetNumFriends()
-    for i = 1, numBNetFriends do
-        local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
-        if accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.isOnline then
-            local characterName = accountInfo.gameAccountInfo.characterName
-            if characterName and characterName == unitName then
-                return true
-            end
-        end
-    end
-    return false
+    local guid = UnitGUID(unit)
+    if not guid or issecretvalue(guid) then return false end
+    return C_BattleNet.GetGameAccountInfoByGUID(guid) ~= nil
 end
 
 local function anonMode(frame, info)
@@ -5896,9 +5893,25 @@ local function HideFriendlyHealthbar(frame)
     end
     if frame.nameHooked then BBP.RepositionName(frame) end
     if frame.questIndicator then BBP.PositionQuestIndicator(frame) end
+    if frame.friendIndicator then BBP.PositionFriendIndicator(frame) end
 end
 
 BBP.HideFriendlyHealthbar = HideFriendlyHealthbar
+
+function BBP.PositionFriendIndicator(frame)
+    local indicator = frame.friendIndicator
+    local relativeTo = frame.name
+    if BBP.isInArena and frame.specNameText and frame.specNameText ~= "" then
+        relativeTo = frame.specNameText
+    end
+    indicator:ClearAllPoints()
+    if frame.HealthBarsContainer.alphaZero == true or frame:IsShowOnlyName() then
+        indicator:SetPoint("BOTTOM", relativeTo, "TOP", 0, 0)
+        return
+    end
+    local anchor = BetterBlizzPlatesDB.friendIndicatorAnchor or "LEFT"
+    indicator:SetPoint(BBP.GetOppositeAnchor(anchor), relativeTo, anchor, 0, 0)
+end
 
 local function FriendIndicator(frame)
     local db = BetterBlizzPlatesDB
@@ -5918,7 +5931,7 @@ local function FriendIndicator(frame)
     end
 
     if not frame.friendIndicator then
-        frame.friendIndicator = (frame.bbpOverlay or frame):CreateTexture(nil, "OVERLAY")
+        frame.friendIndicator = frame:CreateTexture(nil, "OVERLAY")
         frame.friendIndicator:SetAtlas("groupfinder-icon-friend")
         frame.friendIndicator:SetSize(20, 21)
     end
@@ -5928,13 +5941,7 @@ local function FriendIndicator(frame)
     indicator:SetDesaturated(desaturate)
     indicator:SetVertexColor(r, g, b)
 
-    local anchor = db.friendIndicatorAnchor or "LEFT"
-    local relativeTo = frame.name
-    if BBP.isInArena and frame.specNameText and frame.specNameText ~= "" then
-        relativeTo = frame.specNameText
-    end
-    indicator:ClearAllPoints()
-    indicator:SetPoint(BBP.GetOppositeAnchor(anchor), relativeTo, anchor, 0, 0)
+    BBP.PositionFriendIndicator(frame)
     indicator:Show()
 end
 
@@ -7927,21 +7934,17 @@ function BBP.RefreshAllNameplates()
                 end
 
                 if frame.castBar then
-                    if not BetterBlizzPlatesDB.useCustomCastbarBGTexture or not BetterBlizzPlatesDB.useCustomCastbarTexture then
+                    if not BetterBlizzPlatesDB.useCustomCastbarBGTexture then
                         frame.castBar.Background:SetDesaturated(false)
                         frame.castBar.Background:SetVertexColor(1,1,1,1)
                         frame.castBar.Background:SetAtlas("UI-CastingBar-Background")
                     else
-                        local bgTextureName = BetterBlizzPlatesDB.customCastbarBGTexture
-                        local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, bgTextureName)
-                        local changeBgTexture = BetterBlizzPlatesDB.useCustomCastbarBGTexture
-                        if changeBgTexture then
-                            local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
-                            frame.castBar.Background:SetDesaturated(true)
-                            frame.castBar.Background:SetTexture(bgTexture)
-                            frame.castBar.Background:SetAllPoints(frame.castBar)
-                            frame.castBar.Background:SetVertexColor(unpack(bgColor))
-                        end
+                        local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.customCastbarBGTexture)
+                        local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
+                        frame.castBar.Background:SetDesaturated(true)
+                        frame.castBar.Background:SetTexture(bgTexture)
+                        frame.castBar.Background:SetAllPoints(frame.castBar)
+                        frame.castBar.Background:SetVertexColor(unpack(bgColor))
                     end
                 end
 
@@ -9202,6 +9205,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
             local db = BetterBlizzPlatesDB
             local firstLaunch = db.hasSaved == nil or db.sendResetMessage or db.avoidPopups
             db.avoidPopups = nil
+            local skipPopups = firstLaunch or db.skipUpdateMsg or BBP.skippedUpdateMsg or db.scStart
             TurnOffTestModes()
             if db.classicNameplates then
                 if db.classicRetailNameplates then
@@ -9358,7 +9362,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     if BBPCVarBackupsDB then BBPCVarBackupsDB[cvar] = value end
                 end
 
-                local skipUpdateMsg = db.skipUpdateMsg or BBP.skippedUpdateMsg or db.scStart
+                local skipUpdateMsg = skipPopups
                 if db.firstSaveComplete and not skipUpdateMsg then
                     StaticPopupDialogs["BBP_MIDNIGHT_AURA_OVERHAUL"] = {
                         text = BBP.ICON_NAME.."\n\n|A:services-icon-warning:20:20|a " .. L["Popup_IMPORTANT_READ_Lots_Of_Nameplate_Aura"],
@@ -9405,7 +9409,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 db.buffIconYPos = 0
                 db.clickAreaMidnightFix = true
 
-                if db.showNameplateTargetText then
+                if db.showNameplateTargetText and not skipPopups then
                     C_Timer.After(3, function()
                         StaticPopupDialogs["BBP_TT_UPDATE"] = {
                             text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\n" .. L["Popup_Show_Target_Underneath_Castbar_Has_Been"],
@@ -9450,7 +9454,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
             UpdateLateAdditionSettings(db)
 
             if db.hideNameplateAuras ~= nil then
-                if db.hideNameplateAuras then
+                if db.hideNameplateAuras and not skipPopups then
                     StaticPopupDialogs["BBP_HIDE_NP_AURAS_REMOVED"] = {
                         text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates: \n\n" .. L["Popup_The_Hide_Nameplate_Auras_Setting_Has"],
                         button1 = L["Ok"],
@@ -9467,7 +9471,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
             InitializeSavedVariables()
 
             if db.totemIndicator and not db.totemIndicatorUpdatedForMidnight then
-                if db.firstSaveComplete then
+                if db.firstSaveComplete and not skipPopups then
                     -- Existing user from before Midnight: ask what to do
                     StaticPopupDialogs["BBP_TOTEM_MIDNIGHT_UPDATE"] = {
                         text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates:\n\n" .. L["Popup_Totem_Indicator_Is_Back_For_Midnight"],
@@ -9499,7 +9503,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
 
             if not db.midnight121AuraUpdateMsg then
                 db.midnight121AuraUpdateMsg = true
-                if db.firstSaveComplete then
+                if db.firstSaveComplete and not skipPopups then
                     StaticPopupDialogs["BBP_MIDNIGHT_121_AURA_UPDATE"] = {
                         text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates:\n\n" .. L["Popup_BetterBlizzPlates_Has_Been_Updated_For_Midnight"],
                         button1 = L["Ok"],
@@ -9625,7 +9629,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 db.nameplateOverlapV = 1
                 db.nameplateMidnightStackingFixFinalRel = true
 
-                if not firstLaunch then
+                if not skipPopups then
                     local extraMention = db.enableNpVerticalPos and ("\n\n" .. L["Popup_Stackfix_Vertical_Pos"]) or ""
                     StaticPopupDialogs["BBP_STACKFIX"] = {
                         text = BBP.ICON_NAME.."\n\n|A:services-icon-warning:20:20|a |cffff8800" .. L["Important_Read"] .. "|r |A:services-icon-warning:20:20|a\n\n" .. string.format(L["Popup_Stackfix"], extraMention),
@@ -9640,6 +9644,11 @@ First:SetScript("OnEvent", function(_, event, addonName)
                         StaticPopup_Show("BBP_STACKFIX")
                     end)
                 end
+            end
+
+            if db.skipUpdateMsg then
+                db.skipUpdateMsg = nil
+                BBP.skippedUpdateMsg = true
             end
 
             if not db.midnightAuraListsCleaned then
@@ -9805,21 +9814,17 @@ local function NamePlateCastBarTestMode(frame)
                 end
                 --castBar.BorderShield:SetScale(borderShieldSize)
 
-                if not BetterBlizzPlatesDB.useCustomCastbarBGTexture or not BetterBlizzPlatesDB.useCustomCastbarTexture then
+                if not BetterBlizzPlatesDB.useCustomCastbarBGTexture then
                     frame.castBar.Background:SetDesaturated(false)
                     frame.castBar.Background:SetVertexColor(1,1,1,1)
                     frame.castBar.Background:SetAtlas("UI-CastingBar-Background")
                 else
-                    local bgTextureName = BetterBlizzPlatesDB.customCastbarBGTexture
-                    local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, bgTextureName)
-                    local changeBgTexture = BetterBlizzPlatesDB.useCustomCastbarBGTexture
-                    if changeBgTexture then
-                        local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
-                        frame.castBar.Background:SetDesaturated(true)
-                        frame.castBar.Background:SetTexture(bgTexture)
-                        frame.castBar.Background:SetAllPoints(frame.castBar)
-                        frame.castBar.Background:SetVertexColor(unpack(bgColor))
-                    end
+                    local bgTexture = LSM:Fetch(LSM.MediaType.STATUSBAR, BetterBlizzPlatesDB.customCastbarBGTexture)
+                    local bgColor = BetterBlizzPlatesDB.castBarBackgroundColor
+                    frame.castBar.Background:SetDesaturated(true)
+                    frame.castBar.Background:SetTexture(bgTexture)
+                    frame.castBar.Background:SetAllPoints(frame.castBar)
+                    frame.castBar.Background:SetVertexColor(unpack(bgColor))
                 end
 
                 if castBarTimer then
@@ -10332,6 +10337,7 @@ hooksecurefunc(NamePlateUnitFrameMixin, "UpdateAnchors", function(self)
         BBP.ApplyCustomTextureToNameplate(self)
     end
     BBP.FixNpTextures(self)
+    if self.friendIndicator then BBP.PositionFriendIndicator(self) end
     if not self.BetterBlizzPlates then return end
     local config = self.BetterBlizzPlates.config
     if not config then return end

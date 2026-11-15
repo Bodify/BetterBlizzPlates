@@ -44,77 +44,225 @@ local petIcons = {
 -- Huge thanks to Stroold @ Discord for putting together this list of hunter pet spell ids and icons
 local petSpellIcons = {
     -- Hunter pet family abilities
-    [160065] = 236195, -- Aqiri — Tendon Rip
-    [263841] = 877476, -- Basilisk — Petrifying Gaze
-    [344348] = 132182, -- Bat — Sonic Screech
-    [263934] = 132183, -- Bear — Thick Fur
-    [90339]  = 133570, -- Beetle — Harden Carapace
-    [263852] = 132192, -- Bird of Prey — Talon Rend
-    [288962] = 1687702,-- Blood Beast — Blood Bolt
-    [263869] = 132184, -- Boar — Bristle
-    [341115] = 454771, -- Camel — Hardy
-    [279410] = 2011146, -- Carapid — Bulwark
-    [24423]  = 132200, -- Carrion Bird — Bloody Screech
-    [263892] = 132185, -- Cat — Catlike Reflexes
-    [54644]  = 236190, -- Chimaera — Frost Breath
-    [160057] = 1044794, -- Clefthoof — Thick Hide
-    [263867] = 236191, -- Core Hound — Obsidian Skin
-    [341117] = 2143073, -- Courser — Fleethoof
-    [50245]  = 132186, -- Crab — Pin
-    [50433]  = 132187, -- Crocolisk — Ankle Crack
-    [54680]  = 236192, -- Devilsaur — Monstrous Bite
-    [263861] = 877480, -- Direhorn — Gore
-    [263887] = 132188, -- Dragonhawk — Dragon's Guile
-    [263916] = 929300, -- Feathermane — Feather Flurry
-    [160011] = 458223, -- Fox — Agile Reflexes
-    [263939] = 132189, -- Gorilla — Silverback
-    [263921] = 877477, -- Gruffhorn — Gruff
-    [279336] = 804969, -- Hopper — Swarm of Flies
-    [263423] = 877481, -- Hound — Lock Jaw
-    [263863] = 463493, -- Hydra — Acid Bite
-    [263853] = 132190, -- Hyena — Infected Bite
-    [392622] = 797547, -- Lesser Dragonkin — Shimmering Scales
-    [279362] = 2027936, -- Lizard — Grievous Bite
-    [341118] = 132254, -- Mammoth — Trample
-    [263868] = 132247, -- Mechanical — Defense Matrix
-    [160044] = 877482, -- Monkey — Primal Agility
-    [344353] = 236193, -- Moth — Serenity Dust
-    [264023] = 616693, -- Oxen — Niuzao's Fortitude
-    [279399] = 1624590, -- Pterrordax — Ancient Hide
-    [263854] = 132193, -- Raptor — Savage Rend
-    [263857] = 132194, -- Ravager — Ravage
-    [344349] = 132191, -- Ray — Nether Energy
-    [160018] = 1044490, -- Riverbeast — Gruesome Bite
-    [263856] = 644001, -- Rodent — Gnaw
-    [263865] = 646378, -- Scalehide — Scale Shield
-    [160060] = 132195, -- Scorpid — Deadly Sting
-    [263904] = 136040, -- Serpent — Serpent's Swiftness
-    [160063] = 877478, -- Shale Beast — Solid Shell
-    [160067] = 132196, -- Spider — Web Spray
-    [344351] = 236165, -- Spirit Beast — Spirit Pulse
-    [344347] = 132197, -- Sporebat — Spore Cloud
-    [344352] = 1044501, -- Stag — Nature's Grace
-    [160049] = 625905, -- Stone Hound — Stone Armor
-    [50285]  = 132198, -- Tallstrider — Dust Cloud
-    [26064]  = 132199, -- Turtle — Shell Shield
-    [35346]  = 132201, -- Warp Stalker — Warp Time
-    [263858] = 236196, -- Wasp — Toxic Sting
-    [344346] = 643423, -- Water Strider — Soothing Waters
-    [344350] = 877479, -- Waterfowl — Oiled Feathers
-    [264360] = 132202, -- Wind Serpent — Winged Agility
-    [263840] = 132203, -- Wolf — Furious Bite
-    [263446] = 236197, -- Worm — Acid Spit
-    [1247058] = 6966389, -- Whiptails — Serrated Strike
+    [160065] = 236195, -- Aqiri - Tendon Rip
+    [263841] = 877476, -- Basilisk - Petrifying Gaze
+
+    -- Bat - Sonic Blast
+    [1264478] = 132182,
+    [1264479] = 132182,
+    [1264480] = 132182,
+    [1264482] = 132182,
+    [1264481] = 132182,
+
+    -- Bear - Swipe
+    [1264494] = 132183,
+    [1264497] = 132183,
+    [1264498] = 132183,
+    [1264502] = 132183,
+    [1264501] = 132183,
+
+    [90339]  = 133570, -- Beetle - Harden Carapace
+
+    -- Bird of Prey - Mine!
+    [1265054] = 132192,
+    [1265058] = 132192,
+    [1265056] = 132192,
+    [1265055] = 132192,
+    [1265057] = 132192,
+
+    [288962] = 1687702,-- Blood Beast - Blood Bolt
+
+    -- Boar - Charge
+    [7371] = 132184,
+    [26178] = 132184,
+    [26177] = 132184,
+    [26179] = 132184,
+    [27685] = 132184,
+    [26201] = 132184,
+
+    [341115] = 454771, -- Camel - Hardy
+    [279410] = 2011146, -- Carapid - Bulwark
+
+    -- Carrion Bird - Demoralizing Screech
+    [24423] = 132200,
+    [24577] = 132200,
+    [24579] = 132200,
+    [24578] = 132200,
+
+    -- Cat - Claw
+    [16827] = 132185,
+    [16831] = 132185,
+    [16830] = 132185,
+    [16829] = 132185,
+    [16828] = 132185,
+    [16832] = 132185,
+    [3009] = 132185,
+    [3010] = 132185,
+
+    [54644]  = 236190, -- Chimaera - Frost Breath
+    [160057] = 1044794, -- Clefthoof - Thick Hide
+    [263867] = 236191, -- Core Hound - Obsidian Skin
+    [341117] = 2143073, -- Courser - Fleethoof
+
+    -- Crab - Pinch
+    [1264735] = 132186,
+    [1264736] = 132186,
+    [1264739] = 132186,
+    [1264742] = 132186,
+    [1264741] = 132186,
+
+    -- Crocolisk - Dismember
+    [1264758] = 132187,
+    [1264933] = 132187,
+    [1264927] = 132187,
+    [1264929] = 132187,
+    [1264930] = 132187,
+
+    [54680]  = 236192, -- Devilsaur - Monstrous Bite
+    [263861] = 877480, -- Direhorn - Gore
+    [263887] = 132188, -- Dragonhawk - Dragon's Guile
+    [263916] = 929300, -- Feathermane - Feather Flurry
+    [1310612] = 458223, -- Fox - Trickster's Dance
+
+    -- Gorilla - Thunderstomp
+    [26090] = 132189,
+    [26187] = 132189,
+    [1264455] = 132189,
+    [26188] = 132189,
+
+    [263921] = 877477, -- Gruffhorn - Gruff
+    [279336] = 804969, -- Hopper - Swarm of Flies
+    [263423] = 877481, -- Hound - Lock Jaw
+    [263863] = 463493, -- Hydra - Acid Bite
+
+    -- Hyena - Tendon Rip
+    [1265038] = 132190,
+    [1265040] = 132190,
+    [1265039] = 132190,
+    [1265042] = 132190,
+    [1265041] = 132190,
+
+    [392622] = 797547, -- Lesser Dragonkin - Shimmering Scales
+    [279362] = 2027936, -- Lizard - Grievous Bite
+    [341118] = 132254, -- Mammoth - Trample
+    [263868] = 132247, -- Mechanical - Defense Matrix
+    [160044] = 877482, -- Monkey - Primal Agility
+    [344353] = 236193, -- Moth - Serenity Dust
+    [264023] = 616693, -- Oxen - Niuzao's Fortitude
+    [279399] = 1624590, -- Pterrordax - Ancient Hide
+
+    -- Raptor - Savage Rend
+    [1265065] = 132193,
+    [1265066] = 132193,
+    [1265069] = 132193,
+    [1265067] = 132193,
+    [1265068] = 132193,
+
+    [263857] = 132194, -- Ravager - Ravage
+    [344349] = 132191, -- Ray - Nether Energy
+    [160018] = 1044490, -- Riverbeast - Gruesome Bite
+    [263856] = 644001, -- Rodent - Gnaw
+    [263865] = 646378, -- Scalehide - Scale Shield
+
+    -- Scorpid - Scorpid Poison
+    [24640] = 132195,
+    [24583] = 132195,
+    [24587] = 132195,
+    [24586] = 132195,
+
+    [263904] = 136040, -- Serpent - Serpent's Swiftness
+    [160063] = 877478, -- Shale Beast - Solid Shell
+
+    -- Spider
+    [23099] = 132196,
+    [17257] = 132196,
+    [17256] = 132196,
+    [17253] = 132196,
+    [17258] = 132196,
+    [17255] = 132196,
+    [1265843] = 132196,
+    [23110] = 132196,
+    [17261] = 132196,
+    [17259] = 132196,
+    [23109] = 132196,
+    [17260] = 132196,
+    [1265878] = 132196,
+    [1265883] = 132196,
+    [1265880] = 132196,
+    [1265881] = 132196,
+
+    [344351] = 236165, -- Spirit Beast - Spirit Pulse
+    [344347] = 132197, -- Sporebat - Spore Cloud
+    [344352] = 1044501, -- Stag - Nature's Grace
+    [160049] = 625905, -- Stone Hound - Stone Armor
+
+    -- Tallstrider - Dust Cloud
+    [1265899] = 132198,
+    [1265904] = 132198,
+    [1265901] = 132198,
+    [1265902] = 132198,
+    [1265903] = 132198,
+
+    [26064]  = 132199, -- Turtle - Shell Shield
+    [35346]  = 132201, -- Warp Stalker - Warp Time
+    [263858] = 236196, -- Wasp - Toxic Sting
+    [344346] = 643423, -- Water Strider - Soothing Waters
+    [344350] = 877479, -- Waterfowl - Oiled Feathers
+
+    -- Wind Serpent - Lightning Breath
+    [25008] = 132202,
+    [25012] = 132202,
+    [25009] = 132202,
+    [24844] = 132202,
+    [25011] = 132202,
+    [25010] = 132202,
+
+    -- Wolf - Furious Howl
+    [24604] = 132203,
+    [24597] = 132203,
+    [24605] = 132203,
+    [24603] = 132203,
+
+    [263446] = 236197, -- Worm - Acid Spit
+    [1247058] = 6966389, -- Whiptails - Serrated Strike
 
     -- Warlock pet abilities
-    [3110]   = 136218, -- Imp — Firebolt
-    [6360]  = 136220, -- Succubus — Whiplash
-    [19505]    = 136217, -- Felhunter — Devour Magic
-    [112042]  = 136221, -- Voidwalker — Suffering
-    [89751] = 136216, -- Felguard — Legion Strike
+
+    -- Imp - Firebolt
+    [3110]  = 136218,
+    [7799]  = 136218,
+    [7800]  = 136218,
+    [7801]  = 136218,
+    [7802]  = 136218,
+    [11762] = 136218,
+    [11763] = 136218,
+
+    -- Succubus - Lash of Pain
+    [7814]  = 136220,
+    [7815]  = 136220,
+    [7816]  = 136220,
+    [11778] = 136220,
+    [11779] = 136220,
+    [11780] = 136220,
+
+    -- Felhunter - Devour Magic
+    [19505] = 136217,
+    [19731] = 136217,
+    [19734] = 136217,
+    [19736] = 136217,
+
+    -- Voidwalker - Torment
+    [3716]  = 136221,
+    [7809]  = 136221,
+    [7810]  = 136221,
+    [7811]  = 136221,
+    [11774] = 136221,
+    [11775] = 136221,
+
+    [89751] = 136216, -- Felguard - Legion Strike
 
     -- Mage
-    [135029] = 135862, -- Water Elemental — Water Jet
+    [135029] = 135862, -- Water Elemental - Water Jet
 
     -- Death Knight
     [47482] = 1531513, -- ghoul - leap
@@ -238,6 +386,12 @@ local function InitClassIndicatorCCSlot(auraFrame, frame)
     auraFrame:SetDurationCooldown(cooldown)
     auraFrame.bbpCooldown = cooldown
 
+    local timerFrame = CreateFrame("Frame", nil, cooldown)
+    timerFrame:SetAllPoints()
+    auraFrame.bbpTimer = timerFrame:CreateFontString(nil, "OVERLAY")
+    auraFrame.bbpTimer:SetPoint("CENTER", cooldown)
+    auraFrame.bbpTimer:Hide()
+
     local glow = auraFrame:CreateTexture(nil, "OVERLAY", nil, 7)
     glow:SetAtlas(square and "newplayertutorial-drag-slotblue" or "charactercreate-ring-select")
     glow:SetPoint("CENTER", auraFrame)
@@ -358,7 +512,26 @@ local function ApplyClassIndicatorCCStyle(frame)
         glow:SetVertexColor(GetCCGlowColor())
     end
     if cooldown then
-        cooldown:SetHideCountdownNumbers(BetterBlizzPlatesDB.classIndicatorCCHideCdText and true or false)
+        local hideText = BetterBlizzPlatesDB.classIndicatorCCHideCdText and true or false
+        local msFrom = cooldown:GetCountdownMillisecondsThreshold()
+        local font, formatter, curve = BBP.GetCCOverlayTimerStyle(msFrom > 0 and msFrom or nil)
+        local timer = ccFrame.bbpTimer
+        if formatter then
+            local file, size, flags = cooldown:GetCountdownFontString():GetFont()
+            timer:SetFont(font or file, size, flags)
+            if ccFrame.bbpTimerFormatter ~= formatter then
+                ccFrame.bbpTimerFormatter = formatter
+                ccFrame:SetDurationText(timer, {
+                    textFormatter = formatter,
+                    textColor = {
+                        curve = curve,
+                        property = Enum.DurationTextBindingProperty.RemainingDuration,
+                    },
+                })
+            end
+        end
+        timer:SetShown(formatter ~= nil and not hideText)
+        cooldown:SetHideCountdownNumbers(hideText or formatter ~= nil)
     end
 end
 
