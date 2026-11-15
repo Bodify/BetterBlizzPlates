@@ -84,6 +84,7 @@ L["Tooltip_Enlarged_Aura_Icon_Desc"] = "Anhaken, um die Aura quadratisch und gr�
 L["Tooltip_Enlarged_Aura_Icon_SubText"] = "Quadratisch und Größe kannst du unten in den Einstellungen anpassen.\n\nMit Wichtig-Leuchten kombinieren, damit sie auch leuchtet, in der gemeinsamen Farbe für vergrößerte Auren.\n|cff32f795Rechtsklick, um diese Farbe zu ändern.|r"
 L["Only_My_Aura_Icon"] = "Nur eigene Aura"
 L["Tooltip_Only_My_Aura"] = "Nur meine Aura anzeigen."
+L["Tooltip_Big_CC_Whitelist_Desc"] = "Diese Aura bei den großen Kontrollsymbolen anzeigen. Funktioniert nur bei Debuffs."
 L["Priority_Value"] = "Prioritätswert"
 L["Tooltip_Priority_Value_Desc"] = "Die Aura mit der höchsten Priorität bestimmt die Farbe."
 L["Tooltip_Only_My_Aura_Icon_Desc"] = "Nur meine Aura färben."

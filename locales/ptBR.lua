@@ -84,6 +84,7 @@ L["Tooltip_Enlarged_Aura_Icon_Desc"] = "Marque para deixar a aura quadrada e mai
 L["Tooltip_Enlarged_Aura_Icon_SubText"] = "Você pode desativar o formato quadrado e ajustar o tamanho nas configurações abaixo.\n\nCombine com Brilho de importantes para também fazê-la brilhar, na cor compartilhada de auras aumentadas.\n|cff32f795Clique com o botão direito para mudar essa cor.|r"
 L["Only_My_Aura_Icon"] = "Só minha aura"
 L["Tooltip_Only_My_Aura"] = "Mostrar só a minha aura."
+L["Tooltip_Big_CC_Whitelist_Desc"] = "Mostrar esta aura com os ícones grandes de CC. Só funciona com penalidades."
 L["Priority_Value"] = "Valor de prioridade"
 L["Tooltip_Priority_Value_Desc"] = "A aura com a maior prioridade determina a cor."
 L["Tooltip_Only_My_Aura_Icon_Desc"] = "Só colorir a minha aura."

@@ -84,6 +84,7 @@ L["Tooltip_Enlarged_Aura_Icon_Desc"] = "Seleziona per rendere l'aura quadrata e 
 L["Tooltip_Enlarged_Aura_Icon_SubText"] = "Puoi disattivare la forma quadrata e regolare la dimensione nelle impostazioni più in basso.\n\nCombinala con Bagliore importanti per farla brillare nel suo colore condiviso delle ingrandite.\n|cff32f795Clic destro per cambiare quel colore.|r"
 L["Only_My_Aura_Icon"] = "Solo mia aura"
 L["Tooltip_Only_My_Aura"] = "Mostra solo la mia aura."
+L["Tooltip_Big_CC_Whitelist_Desc"] = "Mostra questa aura con le icone grandi di controlli. Funziona solo con i debuff."
 L["Priority_Value"] = "Valore priorità"
 L["Tooltip_Priority_Value_Desc"] = "L'aura con la priorità più alta determina il colore."
 L["Tooltip_Only_My_Aura_Icon_Desc"] = "Colora solo la mia aura."

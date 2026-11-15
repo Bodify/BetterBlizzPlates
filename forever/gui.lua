@@ -3319,8 +3319,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 checkBoxBigCC:SetSize(24, 24)
                 checkBoxBigCC:SetPoint("RIGHT", checkBoxOnlyMine, "LEFT", 0, 0)
                 CreateTooltipTwo(checkBoxBigCC, L["Big_CC_Icon"],
-                    L["Tooltip_Big_CC_Whitelist_Desc"],
-                    L["Tooltip_Big_CC_Whitelist_SubText"], "ANCHOR_TOPRIGHT")
+                    L["Tooltip_Big_CC_Whitelist_Desc"], nil, "ANCHOR_TOPRIGHT")
 
                 checkBoxBigCC:SetScript("OnClick", function(self)
                     SetFlag(button.npcData, "bigCC", self:GetChecked())
@@ -12673,8 +12672,7 @@ local function guiNameplateAuras()
     bigCCIcon.text:SetPoint("CENTER")
     bigCCIcon.text:SetText("CC")
     CreateTooltipTwo(bigCCIcon, L["Big_CC_Icon"],
-        L["Tooltip_Big_CC_Whitelist_Desc"],
-        L["Tooltip_Big_CC_Whitelist_SubText"])
+        L["Tooltip_Big_CC_Whitelist_Desc"])
 
     local COL_ENEMY, COL_FRIENDLY, COL_PERSONAL = 50, 300, 525
     local listBottom = LIST_TOP - LIST_H - 38

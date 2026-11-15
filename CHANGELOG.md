@@ -7,6 +7,9 @@
 ### Bugfix
 - Fix Friend Indicator disappearing when the healthbar is hidden.
 - Fix Show Threat Percent using capped number instead of raw number.
+## Retail & Forever
+### New
+- Nameplate Auras: New "CC" checkbox on whitelisted auras. Shows the aura with the Big CC aura icons. Only works for debuffs. - By Luis-H-Baroni@GitHub. Thank you!
 ## Retail
 ### New
 - New Langneur profile (www.twitch.tv/langneuur). Thank you for sharing!

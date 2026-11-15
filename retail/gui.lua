@@ -2975,13 +2975,26 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
 
         local important = GetFlag(npc, "important")
         local enlarged = GetFlag(npc, "enlarged")
+        local bigCC = GetFlag(npc, "bigCC")
         button.bbpEnlargedSwatch:SetShown((important and enlarged) and true or false)
         button.checkBoxOnlyMine:SetChecked(GetFlag(npc, "onlyMine") and true or false)
         button.checkBoxPandemic:SetChecked(GetFlag(npc, "pandemic") and true or false)
         button.checkBoxImportant:SetChecked(important and true or false)
         button.checkBoxEnlarged:SetChecked(enlarged and true or false)
+        button.checkBoxBigCC:SetChecked(bigCC and true or false)
 
-        if globalPandemic or important or enlarged then
+        if bigCC then
+            DisableElement(button.checkBoxOnlyMine)
+            DisableElement(button.checkBoxPandemic)
+            DisableElement(button.checkBoxImportant)
+            DisableElement(button.checkBoxEnlarged)
+        else
+            EnableElement(button.checkBoxOnlyMine)
+            EnableElement(button.checkBoxImportant)
+            EnableElement(button.checkBoxEnlarged)
+        end
+
+        if bigCC or globalPandemic or important or enlarged then
             DisableElement(button.checkBoxPandemic)
         else
             EnableElement(button.checkBoxPandemic)
@@ -3030,7 +3043,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             button.text = text
 
             if listName == "auraWhitelist" then
-                text:SetWidth(213)
+                text:SetWidth(189)
                 text:SetWordWrap(false)
                 text:SetJustifyH("LEFT")
             end
@@ -3249,6 +3262,20 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 end)
 
                 button.checkBoxOnlyMine = checkBoxOnlyMine
+
+                local checkBoxBigCC = CreateFrame("CheckButton", nil, button, "UICheckButtonTemplate")
+                checkBoxBigCC:SetSize(24, 24)
+                checkBoxBigCC:SetPoint("RIGHT", checkBoxOnlyMine, "LEFT", 0, 0)
+                CreateTooltipTwo(checkBoxBigCC, L["Big_CC_Icon"],
+                    L["Tooltip_Big_CC_Whitelist_Desc"], nil, "ANCHOR_TOPRIGHT")
+
+                checkBoxBigCC:SetScript("OnClick", function(self)
+                    SetFlag(button.npcData, "bigCC", self:GetChecked())
+                    RefreshRow(button)
+                    BBP.RefreshAllNameplateAuras()
+                end)
+
+                button.checkBoxBigCC = checkBoxBigCC
             end
 
             ApplyExtraBoxState(button)
@@ -12339,6 +12366,16 @@ local function guiNameplateAuras()
     onlyMeIcon.texture:SetAllPoints()
     onlyMeIcon.texture:SetAtlas("UI-HUD-UnitFrame-Player-Group-FriendOnlineIcon")
     CreateTooltipTwo(onlyMeIcon, L["Only_My_Aura_Icon"], L["Tooltip_Only_My_Aura_Icon_Desc_2"])
+
+    local bigCCIcon = CreateFrame("Frame", nil, contentFrame)
+    bigCCIcon:SetSize(22, 20)
+    bigCCIcon:SetPoint("CENTER", onlyMeIcon, "CENTER", -25, 0)
+    bigCCIcon:EnableMouse(true)
+    bigCCIcon.text = bigCCIcon:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    bigCCIcon.text:SetPoint("CENTER")
+    bigCCIcon.text:SetText("CC")
+    CreateTooltipTwo(bigCCIcon, L["Big_CC_Icon"],
+        L["Tooltip_Big_CC_Whitelist_Desc"])
 
     local COL_ENEMY, COL_FRIENDLY, COL_PERSONAL = 50, 300, 525
     local listBottom = LIST_TOP - LIST_H - 38

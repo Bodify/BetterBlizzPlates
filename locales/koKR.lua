@@ -84,6 +84,7 @@ L["Tooltip_Enlarged_Aura_Icon_Desc"] = "오라를 정사각형으로 크게 표�
 L["Tooltip_Enlarged_Aura_Icon_SubText"] = "아래 설정에서 정사각형을 끄고 크기를 조정할 수 있습니다.\n\n중요 반짝임과 함께 쓰면 공용 확대 색상으로 반짝입니다.\n|cff32f795우클릭하여 해당 색상 변경.|r"
 L["Only_My_Aura_Icon"] = "내 오라만"
 L["Tooltip_Only_My_Aura"] = "내 오라만 표시합니다."
+L["Tooltip_Big_CC_Whitelist_Desc"] = "이 오라를 큰 CC 아이콘과 함께 표시합니다. 디버프에만 적용됩니다."
 L["Priority_Value"] = "우선순위 값"
 L["Tooltip_Priority_Value_Desc"] = "우선순위가 가장 높은 오라가 색상을 결정합니다."
 L["Tooltip_Only_My_Aura_Icon_Desc"] = "내 오라만 색상을 입힙니다."

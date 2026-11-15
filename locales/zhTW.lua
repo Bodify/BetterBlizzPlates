@@ -84,6 +84,7 @@ L["Tooltip_Enlarged_Aura_Icon_Desc"] = "勾選後光環會變成方形並放大�
 L["Tooltip_Enlarged_Aura_Icon_SubText"] = "你可以在下方設定中關閉方形並調整大小。\n\n搭配重要光暈時也會發光，使用其專屬的放大顏色。\n|cff32f795右鍵點擊以更改該顏色。|r"
 L["Only_My_Aura_Icon"] = "僅限我的光環"
 L["Tooltip_Only_My_Aura"] = "只顯示我的光環。"
+L["Tooltip_Big_CC_Whitelist_Desc"] = "將此光環與大型控場圖示一起顯示。僅對減益有效。"
 L["Priority_Value"] = "優先值"
 L["Tooltip_Priority_Value_Desc"] = "優先值最高的光環決定顏色。"
 L["Tooltip_Only_My_Aura_Icon_Desc"] = "只為我的光環著色。"

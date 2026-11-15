@@ -84,6 +84,7 @@ L["Tooltip_Enlarged_Aura_Icon_Desc"] = "Cochez pour rendre l'aura carrée et plu
 L["Tooltip_Enlarged_Aura_Icon_SubText"] = "Vous pouvez désactiver le carré et régler la taille dans les paramètres ci-dessous.\n\nCombinez avec Lueur importante pour la faire briller aussi, dans sa propre couleur partagée des agrandies.\n|cff32f795Clic droit pour changer cette couleur.|r"
 L["Only_My_Aura_Icon"] = "Mes auras uniquement"
 L["Tooltip_Only_My_Aura"] = "N'afficher que mes auras."
+L["Tooltip_Big_CC_Whitelist_Desc"] = "Afficher cette aura avec les grandes icônes CC. Fonctionne uniquement pour les debuffs."
 L["Priority_Value"] = "Valeur de priorité"
 L["Tooltip_Priority_Value_Desc"] = "L'aura ayant la plus haute priorité détermine la couleur."
 L["Tooltip_Only_My_Aura_Icon_Desc"] = "Ne colorer que mon aura."
