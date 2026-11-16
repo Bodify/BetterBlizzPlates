@@ -1131,16 +1131,14 @@ function BBP.ClassIndicator(frame, foundID)
 
     if info.isFriend then
         if config.classIndicatorHideFriendlyHealthbar then
-            frame.HealthBarsContainer:SetAlpha(0)
-            frame.HealthBarsContainer.alphaZero = true
+            BBP.SetHealthBarHidden(frame, true)
             frame.selectionHighlight:SetAlpha(0)
             if isPet then
                 BBP.SetNameplateAurasShown(frame, false)
             end
             frame.ciChange = true
         elseif frame.ciChange then
-            frame.HealthBarsContainer:SetAlpha(1)
-            frame.HealthBarsContainer.alphaZero = false
+            BBP.SetHealthBarHidden(frame, false)
             frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
             frame.ciChange = nil
         end

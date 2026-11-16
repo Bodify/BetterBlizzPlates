@@ -820,8 +820,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
             if db.friendlyHideHealthBar then
                 local showOnTarget = db.friendlyHideHealthBarShowTarget
                 if showOnTarget and (info.isPlayer and info.isFriend) then
-                    frame.HealthBarsContainer:SetAlpha(0)
-                    frame.HealthBarsContainer.alphaZero = true
+                    BBP.SetHealthBarHidden(frame, true)
                     frame.selectionHighlight:SetAlpha(0)
                     BBP.UpdateHiddenBarName(frame)
                     if frame.nameHooked then BBP.RepositionName(frame) end
@@ -859,8 +858,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
 
             if db.friendlyHideHealthBar then
                 if showOnTarget and (info.isPlayer and info.isFriend) then
-                    frame.HealthBarsContainer:SetAlpha(0)
-                    frame.HealthBarsContainer.alphaZero = true
+                    BBP.SetHealthBarHidden(frame, true)
                     frame.selectionHighlight:SetAlpha(0)
                     BBP.UpdateHiddenBarName(frame)
                     if frame.nameHooked then BBP.RepositionName(frame) end
@@ -990,8 +988,7 @@ PlayerTargetChanged:SetScript("OnEvent", function(self, event)
         if db.friendlyHideHealthBar then
             local showOnTarget = db.friendlyHideHealthBarShowTarget
             if showOnTarget and (info.isPlayer and info.isFriend) then
-                frame.HealthBarsContainer:SetAlpha(1)
-                frame.HealthBarsContainer.alphaZero = false
+                BBP.SetHealthBarHidden(frame, false)
                 frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or 0.22)
                 BBP.UpdateHiddenBarName(frame)
                 if frame.nameHooked then BBP.RepositionName(frame) end

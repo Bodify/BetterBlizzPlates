@@ -595,12 +595,10 @@ local function ApplyTotemHideOptions(frame, config, info)
 
     if config.totemIndicatorHideHealthBar then
         if not info.isTarget then
-            frame.HealthBarsContainer:SetAlpha(0)
-            frame.HealthBarsContainer.alphaZero = true
+            BBP.SetHealthBarHidden(frame, true)
             frame.selectionHighlight:SetAlpha(0)
         else
-            frame.HealthBarsContainer:SetAlpha(1)
-            frame.HealthBarsContainer.alphaZero = false
+            BBP.SetHealthBarHidden(frame, false)
             if not config.hideTargetHighlight then
                 frame.selectionHighlight:SetAlpha(0.22)
             end

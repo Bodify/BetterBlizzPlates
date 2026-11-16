@@ -3277,7 +3277,7 @@ function BBP.ClassColorAndScaleNames(frame)
     healthText:SetScale(scale)
     name:SetIgnoreParentScale(ignoreParent)
     healthText:SetIgnoreParentScale(ignoreParent)
-    BBP.SyncLevelBadgeScale(frame)
+    BBP.SyncNameLevelScale(frame)
 end
 
 
@@ -4279,12 +4279,11 @@ function BBP.ShowMurloc(frame)
         frame:SetAlpha(1)
     end
     frame.murlocModeActive = true
-    frame.HealthBarsContainer:SetAlpha(0)
-    frame.HealthBarsContainer.alphaZero = true
     frame.selectionHighlight:SetAlpha(0)
     BBP.SetNameplateAurasShown(frame, false)
     frame.name:SetAlpha(0)
     frame.nameHidden = true
+    BBP.SetHealthBarHidden(frame, true)
     frame.murlocMode:Show()
     frame.castBar:Hide()
     frame.hideNameOverride = true
@@ -5920,37 +5919,31 @@ local function HideFriendlyHealthbar(frame)
         if BetterBlizzPlatesDB.friendlyHideHealthBar and info.isPlayer then
             local showOnTarget = BetterBlizzPlatesDB.friendlyHideHealthBarShowTarget
             if showOnTarget and UnitIsUnit(frame.unit, "target") then
-                frame.HealthBarsContainer:SetAlpha(1)
-                frame.HealthBarsContainer.alphaZero = false
+                BBP.SetHealthBarHidden(frame, false)
                 frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
             else
-                frame.HealthBarsContainer:SetAlpha(0)
-                frame.HealthBarsContainer.alphaZero = true
+                BBP.SetHealthBarHidden(frame, true)
                 frame.selectionHighlight:SetAlpha(0)
             end
         elseif BetterBlizzPlatesDB.friendlyHideHealthBarNpc and not info.isPlayer then
             local hideNpcHpBar = BetterBlizzPlatesDB.friendlyHideHealthBarNpc and not (BetterBlizzPlatesDB.friendlyHideHealthBarShowPet and UnitIsUnit("pet", frame.unit))
             if hideNpcHpBar then
-                frame.HealthBarsContainer:SetAlpha(0)
-                frame.HealthBarsContainer.alphaZero = true
+                BBP.SetHealthBarHidden(frame, true)
                 frame.selectionHighlight:SetAlpha(0)
                 BBP.SetNameplateAurasShown(frame, false)
             else
-                frame.HealthBarsContainer:SetAlpha(1)
-                frame.HealthBarsContainer.alphaZero = false
+                BBP.SetHealthBarHidden(frame, false)
                 frame.selectionHighlight:SetAlpha(config.hideTargetHighlight and 0 or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
             end
         else
-            frame.HealthBarsContainer:SetAlpha(1)
-            frame.HealthBarsContainer.alphaZero = false
+            BBP.SetHealthBarHidden(frame, false)
             frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
             if frame.guildName then
                 frame.guildName:SetText("")
             end
         end
     else
-        frame.HealthBarsContainer:SetAlpha(1)
-        frame.HealthBarsContainer.alphaZero = false
+        BBP.SetHealthBarHidden(frame, false)
         frame.selectionHighlight:SetAlpha((config.hideTargetHighlight and 0) or (((info.isFriend and config.friendlyHideHealthBar and not info.isNpc) or (config.friendlyHideHealthBarNpc and info.isFriendlyNpc)) and 0) or 0.22)
         if frame.guildName then
             frame.guildName:SetText("")
@@ -6038,8 +6031,7 @@ local function HandleNamePlateRemoved(unit)
     frame.name:SetAlpha(1)
     frame.nameHidden = nil
     if frame.HealthBarsContainer then
-        frame.HealthBarsContainer:SetAlpha(1)
-        frame.HealthBarsContainer.alphaZero = false
+        BBP.SetHealthBarHidden(frame, false)
     end
     local hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
     if not hideTargetHighlight then
@@ -7880,8 +7872,7 @@ function BBP.RefreshAllNameplates()
                 if not BetterBlizzPlatesDB.friendlyHideHealthBar then
                     if frame.healthBar then
                         if not hideHealthBar and not BetterBlizzPlatesDB.totemIndicatorTestMode then
-                            frame.HealthBarsContainer:SetAlpha(1)
-                            frame.HealthBarsContainer.alphaZero = false
+                            BBP.SetHealthBarHidden(frame, false)
                         end
                     end
                 end
@@ -7889,13 +7880,11 @@ function BBP.RefreshAllNameplates()
                 -- if BetterBlizzPlatesDB.totemIndicatorTestMode then
                 if BetterBlizzPlatesDB.totemIndicatorTestMode then
                     if hideHealthBar then
-                        frame.HealthBarsContainer:SetAlpha(0)
-                        frame.HealthBarsContainer.alphaZero = true
+                        BBP.SetHealthBarHidden(frame, true)
                         frame.selectionHighlight:SetAlpha(0)
                     else
                         local hideTargetHighlight = BetterBlizzPlatesDB.hideTargetHighlight
-                        frame.HealthBarsContainer:SetAlpha(1)
-                        frame.HealthBarsContainer.alphaZero = false
+                        BBP.SetHealthBarHidden(frame, false)
                         if not hideTargetHighlight then
                             frame.selectionHighlight:SetAlpha(0.22)
                         end

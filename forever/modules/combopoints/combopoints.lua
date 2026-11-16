@@ -166,6 +166,7 @@ local function CreateUpdater(class)
     updater:RegisterUnitEvent("UNIT_EXITED_VEHICLE", "player")
     updater:RegisterEvent("PLAYER_ENTERING_WORLD")
     updater:RegisterEvent("PLAYER_TARGET_CHANGED")
+    updater:RegisterEvent("COMBO_TARGET_CHANGED")
     if class == "DRUID" then
         updater:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
     end
