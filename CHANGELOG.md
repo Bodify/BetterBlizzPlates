@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.2.4b
+## Forever
+### Bugfix
+- Fix a lua error related to lvl frame
+
 # BetterBlizzPlates 2.2.4
 ## All versions
 ### Tweak
