@@ -190,19 +190,29 @@ end
 
 --there is so much room for improvement here... oh well future me will surely have improved it.
 
+local function GetIdCircleClassColor(unit)
+    if not BetterBlizzPlatesDB.showCircleOnArenaIDClassColor then return end
+    local class = UnitClassBase(unit)
+    if class == nil then return end
+    return C_ClassColor.GetClassColor(class)
+end
+
 local function addIdCircle(frame, index)
-    local color = idCircleColor[index]
     if not frame.arenaNumberCircle then
         frame.arenaNumberCircle = frame:CreateTexture(nil, "BACKGROUND")
         frame.arenaNumberCircle:SetAtlas("UI-QuestPoi-QuestNumber-SuperTracked")
         frame.arenaNumberCircle:SetSize(32, 32)
         frame.arenaNumberCircle:SetDesaturated(true)
-        frame.arenaNumberCircle:SetVertexColor(unpack(color))
         frame.arenaNumberCircle:SetPoint("CENTER", frame.arenaNumberText, "CENTER", -1, 0.5)
     end
     frame.arenaNumberCircle:Show()
     frame.arenaNumberText:SetTextColor(1,1,1)
-    frame.arenaNumberCircle:SetVertexColor(unpack(color))
+    local classColor = GetIdCircleClassColor(frame.unit)
+    if classColor then
+        frame.arenaNumberCircle:SetVertexColor(classColor.r, classColor.g, classColor.b, 1)
+    else
+        frame.arenaNumberCircle:SetVertexColor(unpack(idCircleColor[index]))
+    end
 end
 
 -- Arena Indicator for Arena Units

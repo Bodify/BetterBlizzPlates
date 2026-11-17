@@ -286,7 +286,7 @@ if petClasses[playerClass] then
         currentPetIcon = nil
         if UnitExists("pet") then
             for spellID, iconID in pairs(petSpellIcons) do
-                if IsSpellKnownOrOverridesKnown(spellID, true) then
+                if BBP.KnownSpellRank(spellID, true) then
                     currentPetIcon = iconID
                     break
                 end

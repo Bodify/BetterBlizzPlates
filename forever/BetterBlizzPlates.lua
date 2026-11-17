@@ -167,6 +167,7 @@ local defaultSettings = {
     nameplateExtraClickHeight = 0,
     nameplateClickVerticalAdjustment = 0,
     nameplateVerticalPosition = 0,
+    friendlyNameplateVerticalPosition = 0,
     nameplateHorizontalPosition = 0,
 
     nameplateShadowRGB = {0,0,0,1},
@@ -550,6 +551,9 @@ local defaultSettings = {
     castBarShieldYPos = 0,
     castBarShieldScale = 1,
     castBarIconScale = 1,
+    hideCastbarTextEnemies = true,
+    hideCastbarTextFriendly = true,
+    hideCastbarTextNpcs = true,
     castBarIconAnchor = "LEFT",
     castBarIconXPos = 0,
     castBarIconYPos = 0,
@@ -1029,6 +1033,7 @@ local function TempClassicNpFix()
 
     BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
     BetterBlizzPlatesDB.castBarHeight = 18.8
+    BetterBlizzPlatesDB.friendlyCastBarHeight = 18.8
     BetterBlizzPlatesDB.largeNameplates = true
 
     C_CVar.SetCVar("nameplateOverlapH", BetterBlizzPlatesDB.nameplateOverlapH)
@@ -1051,6 +1056,15 @@ local function TempClassicNpFix()
     C_CVar.SetCVar("nameplateShowFriendlyClassColor", BetterBlizzPlatesDB.nameplateShowFriendlyClassColor)
     C_CVar.SetCVar('nameplateShowOnlyNameForFriendlyPlayerUnits', "0")
 end
+
+BBP.friendlyCastbarKeys = {
+    castBarHeight = "friendlyCastBarHeight",
+    castBarIconScale = "friendlyCastBarIconScale",
+    castBarIconXPos = "friendlyCastBarIconXPos",
+    castBarIconYPos = "friendlyCastBarIconYPos",
+    castBarXPos = "friendlyCastBarXPos",
+    spacingBetweenCastAndHealthbar = "friendlySpacingBetweenCastAndHealthbar",
+}
 
 local function InitializeSavedVariables(isNewProfile)
     BBP.exportDefaults = CopyTable(defaultSettings)
@@ -1179,9 +1193,19 @@ local function InitializeSavedVariables(isNewProfile)
         db.executeSkull = true
     end
 
+    if db.friendlyNameplateVerticalPosition == nil then
+        db.friendlyNameplateVerticalPosition = db.nameplateVerticalPosition
+    end
+
     for key, defaultValue in pairs(defaultSettings) do
         if db[key] == nil then
             db[key] = defaultValue
+        end
+    end
+
+    for key, friendlyKey in pairs(BBP.friendlyCastbarKeys) do
+        if db[friendlyKey] == nil then
+            db[friendlyKey] = db[key]
         end
     end
 
@@ -1515,10 +1539,12 @@ local function CVarFetcher()
         if true then
             BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
             BetterBlizzPlatesDB.castBarHeight = 18.8
+            BetterBlizzPlatesDB.friendlyCastBarHeight = 18.8
             BetterBlizzPlatesDB.largeNameplates = true
         else
             BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 4
             BetterBlizzPlatesDB.castBarHeight = 8
+            BetterBlizzPlatesDB.friendlyCastBarHeight = 8
             BetterBlizzPlatesDB.largeNameplates = false
         end
 
@@ -1712,6 +1738,7 @@ local function ResetNameplates()
 
     BetterBlizzPlatesDB.enemyNameplateHealthbarHeight = 10.8
     BetterBlizzPlatesDB.castBarHeight = 18.8
+    BetterBlizzPlatesDB.friendlyCastBarHeight = 18.8
     BetterBlizzPlatesDB.largeNameplates = true
 
     C_CVar.SetCVar("nameplateOverlapH", defaultSettings.nameplateOverlapH)
@@ -2024,16 +2051,25 @@ function BBP.CastIconSizeLocked()
     return fit
 end
 
-function BBP.GetCastIconScale()
-    if BBP.CastIconSizeLocked() then return 1 end
-    return BetterBlizzPlatesDB.castBarIconScale or 1
+function BBP.CastbarSetting(frame, key)
+    local db = BetterBlizzPlatesDB
+    if frame.unit and not isEnemy(frame.unit) then
+        local value = db[BBP.friendlyCastbarKeys[key]]
+        if value ~= nil then return value end
+    end
+    return db[key]
 end
 
-local function GetCastbarHeight()
+function BBP.GetCastIconScale(frame)
+    if BBP.CastIconSizeLocked() then return 1 end
+    return BBP.CastbarSetting(frame, "castBarIconScale") or 1
+end
+
+local function GetCastbarHeight(frame)
     local setupOptions = NamePlateSetupOptions
     local customCastbar = BetterBlizzPlatesDB.enableCastbarCustomization
     if customCastbar then
-        return BetterBlizzPlatesDB.castBarHeight
+        return BBP.CastbarSetting(frame, "castBarHeight")
     end
     if BBP.UsesClassicCastbar() then
         return 11.5
@@ -3539,12 +3575,15 @@ function BBP.ResetToDefaultHeight(slider)
     if BBP.UsesClassicCastbar() then
         slider:SetValue(11.5)
         BetterBlizzPlatesDB.castBarHeight = 11.5
+        BetterBlizzPlatesDB.friendlyCastBarHeight = 11.5
     elseif BBP.isLargeNameplatesEnabled() then
         slider:SetValue(18.8)
         BetterBlizzPlatesDB.castBarHeight = 18.8
+        BetterBlizzPlatesDB.friendlyCastBarHeight = 18.8
     else
         slider:SetValue(8)
         BetterBlizzPlatesDB.castBarHeight = 8
+        BetterBlizzPlatesDB.friendlyCastBarHeight = 8
     end
 end
 
@@ -3799,11 +3838,11 @@ end
 
 local function CreateCastbarContainer(frame)
     if frame.CastBarsContainer then
-        frame.CastBarsContainer:SetHeight(GetCastbarHeight())
+        frame.CastBarsContainer:SetHeight(GetCastbarHeight(frame))
         return
     end
     local castBarsContainer = CreateFrame("Frame", nil, frame)
-    castBarsContainer:SetHeight(GetCastbarHeight())
+    castBarsContainer:SetHeight(GetCastbarHeight(frame))
     -- castBarContainer:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
     -- castBarContainer:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
     -- castBarContainer:SetFrameLevel(frame.castBar:GetFrameLevel() - 1)
@@ -3819,10 +3858,9 @@ local function SetNameplateBarSizes(frame)
 
     local bbpClassic = db.classicNameplates
     local customCastbar = db.enableCastbarCustomization
-    local bottomPos = (bbpClassic and 1.5 or 3) + (db.nameplateVerticalPosition or 0)
+    local bottomPos = (bbpClassic and 1.5 or 3) + (isEnemy(frame.unit) and db.nameplateVerticalPosition or db.friendlyNameplateVerticalPosition)
     local normalRightAnchor = not bbpClassic or (bbpClassic and (BBP.IsLevelHidden(frame) or db.hideLevelFrameBackground))
     local levelBadgeSpace = BBP.GetLevelBarReserve(frame)
-    local hpCastSpacing = db.spacingBetweenCastAndHealthbar or 0
     local setupOptions = NamePlateSetupOptions
     --BBP.greenScreen(frame)
     frame.healthBar:ClearPoint("TOPLEFT")
@@ -3833,13 +3871,14 @@ local function SetNameplateBarSizes(frame)
     local isEnemyUnit = isEnemy(frame.unit)
     local widthToUse = frame.bbpForcedWidth or (isEnemyUnit and ((db.nameplateEnemyWidth or 172.5)/2) or ((db.nameplateFriendlyWidth or 172.5)/2))
     local castbarExtraWidth = isEnemyUnit and (db.enemyCastbarExtraWidth or 0) or (db.friendlyCastbarExtraWidth or 0)
+    local hpCastSpacing = BBP.CastbarSetting(frame, "spacingBetweenCastAndHealthbar") or 0
 
     local classicCastbar = BBP.UsesClassicCastbar()
     local iconRight, _, fitIcon, _, classicFullWidth = BBP.CastIconLayout()
     local moveCastbarRight = 0
     local moveCastbarLeft = 0
-    local castBarHeight = GetCastbarHeight()
-    local castBarXPos = db.castBarXPos or 0
+    local castBarHeight = GetCastbarHeight(frame)
+    local castBarXPos = BBP.CastbarSetting(frame, "castBarXPos") or 0
     local hpBotPos = castBarHeight + bottomPos + (bbpClassic and 5 or 2)
     local anchorCastbarIconRight = iconRight
 
@@ -3857,7 +3896,7 @@ local function SetNameplateBarSizes(frame)
             frame.castBarIconFrame:SetSize(14, 14)
             local iconX, iconY = 0, 0
             if customCastbar then
-                iconX, iconY = db.castBarIconXPos or 0, db.castBarIconYPos or 0
+                iconX, iconY = BBP.CastbarSetting(frame, "castBarIconXPos") or 0, BBP.CastbarSetting(frame, "castBarIconYPos") or 0
             end
             if anchorCastbarIconRight then
                 frame.castBarIconFrame:SetPoint("LEFT", frame.castBar, "RIGHT", 2 + iconX, iconY)
@@ -3910,8 +3949,8 @@ local function SetNameplateBarSizes(frame)
         elseif customCastbar then
             -- Custom castbar icon size and position (retail fallback + classic)
             frame.castBarIconFrame:SetSize(14, 14)
-            local xPos = db.castBarIconXPos or 0
-            local yPos = db.castBarIconYPos or 0
+            local xPos = BBP.CastbarSetting(frame, "castBarIconXPos") or 0
+            local yPos = BBP.CastbarSetting(frame, "castBarIconYPos") or 0
             if anchorCastbarIconRight then
                 frame.castBarIconFrame:SetPoint("CENTER", frame.castBar, "RIGHT", 2 + xPos, yPos)
             else
@@ -6473,7 +6512,7 @@ function BBP.LayoutClassicCastbar(frame)
     local container = frame.CastBarsContainer
     if not container or not castBar.bbpCastBorder then return end
 
-    local height = GetCastbarHeight()
+    local height = GetCastbarHeight(frame)
     local bottomOffset = -((5/11) * height - 1.09)
     local topOffset = 1.97 * height
     local shieldDrop = height * 0.85
@@ -7197,9 +7236,9 @@ function BBP.SetupMidnightCastbarIcon(frame)
     local scale, xPos, yPos = 1, 0, 0
     if customCastbar then
         frame.castBarIconFrame:SetSize(14,14)
-        scale = BBP.GetCastIconScale()
-        xPos = db.castBarIconXPos or 0
-        yPos = db.castBarIconYPos or 0
+        scale = BBP.GetCastIconScale(frame)
+        xPos = BBP.CastbarSetting(frame, "castBarIconXPos") or 0
+        yPos = BBP.CastbarSetting(frame, "castBarIconYPos") or 0
         frame.castBarIconFrame:SetPoint("CENTER", frame.castBar, "LEFT", -2 + xPos, yPos)
     else
         local setupOptions = NamePlateSetupOptions;
@@ -9582,6 +9621,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
                             db.fakeNameFriendlyXPos = 0
                             db.nameplateDebuffXPadding = 0
                             db.castBarXPos = 0
+                            db.friendlyCastBarXPos = 0
                             BBP.needsUpdate = true
                             BBP.RefreshAllNameplates()
                             BBP.RefreshAllNameplateAuras()
@@ -9701,6 +9741,8 @@ First:SetScript("OnEvent", function(_, event, addonName)
             if db.castBarIconXPos and not db.castBarIconPosReset then
                 db.castBarIconXPos = 0
                 db.castBarIconYPos = 0
+                db.friendlyCastBarIconXPos = 0
+                db.friendlyCastBarIconYPos = 0
                 db.castBarIconPosReset = true
             end
 
@@ -9714,6 +9756,7 @@ First:SetScript("OnEvent", function(_, event, addonName)
             if not db.nameplateMidnightStackingFixFinalRel then -- release = nonbeta
                 if not db.nameplateMidnightStackingFix then
                     db.nameplateVerticalPosition = 0 --reset so no crazy stale values are now auto on
+                    db.friendlyNameplateVerticalPosition = 0
                 end
                 db.nameplateOverlapH = 1
                 db.nameplateOverlapV = 1
@@ -9876,7 +9919,7 @@ local function NamePlateCastBarTestMode(frame)
                 local castBarNonInterruptibleColor = BetterBlizzPlatesDB.castBarNoninterruptibleColor
                 local castBarChanneledColor = BetterBlizzPlatesDB.castBarChanneledColor
                 local showCastBarIconWhenNoninterruptible = BetterBlizzPlatesDB.showCastBarIconWhenNoninterruptible
-                local castBarIconScale = BetterBlizzPlatesDB.castBarIconScale
+                local castBarIconScale = BBP.CastbarSetting(frame, "castBarIconScale")
                 local additionalShieldSizeRatio = 1.3
                 --local borderShieldSize = 1--showCastBarIconWhenNoninterruptible and (castBarIconScale * additionalShieldSizeRatio) or castBarIconScale
 
@@ -9900,7 +9943,7 @@ local function NamePlateCastBarTestMode(frame)
 
                 castBar.Icon:SetScale(castBarIconScale)
                 if frame.castBarIconFrame then
-                    frame.castBarIconFrame:SetScale(BBP.GetCastIconScale())
+                    frame.castBarIconFrame:SetScale(BBP.GetCastIconScale(frame))
                 end
                 --castBar.BorderShield:SetScale(borderShieldSize)
 

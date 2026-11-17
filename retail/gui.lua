@@ -1086,7 +1086,7 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                 elseif element == "nameplateClickVerticalAdjustment" then
                     BetterBlizzPlatesDB.nameplateClickVerticalAdjustment = value
                     BBP.AdjustAllCickAndStackAreas()
-                elseif element == "enemyCastbarExtraWidth" or element == "friendlyCastbarExtraWidth" or element == "spacingBetweenCastAndHealthbar" or element == "castBarXPos" then
+                elseif element == "enemyCastbarExtraWidth" or element == "friendlyCastbarExtraWidth" or element == "spacingBetweenCastAndHealthbar" or element == "castBarXPos" or element == "friendlySpacingBetweenCastAndHealthbar" or element == "friendlyCastBarXPos" then
                     BetterBlizzPlatesDB[element] = value
                     BBP.nameplateCastBarTestMode()
                     for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
@@ -1135,6 +1135,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BBP.UpdateAllNameplatesAuras()
                 elseif element == "nameplateVerticalPosition" then
                     BetterBlizzPlatesDB.nameplateVerticalPosition = value
+                    BBP.AdjustAllCickAndStackAreas()
+                elseif element == "friendlyNameplateVerticalPosition" then
+                    BetterBlizzPlatesDB.friendlyNameplateVerticalPosition = value
                     BBP.AdjustAllCickAndStackAreas()
                 elseif element == "nameplateHorizontalPosition" then
                     BetterBlizzPlatesDB.nameplateHorizontalPosition = value
@@ -1306,8 +1309,8 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                     BetterBlizzPlatesDB.totemIndicatorScale = value
                 elseif element == "executeIndicatorThreshold" then
                     BetterBlizzPlatesDB.executeIndicatorThreshold = value
-                elseif element == "castBarHeight" then
-                    BetterBlizzPlatesDB.castBarHeight = value
+                elseif element == "castBarHeight" or element == "friendlyCastBarHeight" then
+                    BetterBlizzPlatesDB[element] = value
                 elseif element == "castBarTextScale" then
                     BetterBlizzPlatesDB.castBarTextScale = value
                 elseif element == "castBarTextXPos" or element == "castBarTextYPos" then
@@ -1703,22 +1706,17 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
                         elseif element == "castTimer" then
                             --not rdy
                         -- Cast bar icon pos and scale
-                        elseif element == "castBarIconXPos" or element == "castBarIconYPos" or element == "castBarIconScale" then
-                            if axis then
-                                BBP.SetNameplateBarSizes(frame)
-                                if not BBP.UsesClassicCastbar() then
-                                    frame.castBar.BorderShield:ClearAllPoints()
-                                    frame.castBar.BorderShield:SetPoint("CENTER", frame.castBarIconFrame, "CENTER", 0, 0)
-                                end
-                            else
-                                BetterBlizzPlatesDB.castBarIconScale = value
-                                frame.castBarIconFrame:SetScale(BBP.GetCastIconScale())
-                                --frame.castBar.BorderShield:SetScale(value)
+                        elseif element:find("^castBarIcon") or element:find("^friendlyCastBarIcon") then
+                            BBP.SetNameplateBarSizes(frame)
+                            frame.castBarIconFrame:SetScale(BBP.GetCastIconScale(frame))
+                            if not BBP.UsesClassicCastbar() then
+                                frame.castBar.BorderShield:ClearAllPoints()
+                                frame.castBar.BorderShield:SetPoint("CENTER", frame.castBarIconFrame, "CENTER", 0, 0)
                             end
-                        -- Cast bar height
-                        elseif element == "castBarHeight" then
-                            frame.castBar:SetHeight(value)
-                            frame.CastBarsContainer:SetHeight(value)
+                        elseif element == "castBarHeight" or element == "friendlyCastBarHeight" then
+                            local height = BBP.GetCastbarHeight(frame)
+                            frame.castBar:SetHeight(height)
+                            frame.CastBarsContainer:SetHeight(height)
                             if BetterBlizzPlatesDB.classicNameplates and frame.castBar.UpdateBorders then
                                 frame.castBar.UpdateBorders()
                             end
@@ -1985,6 +1983,12 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
                 tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
             end
 
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == L["Show_Circle_On_ID"] then
+            local tooltipText = "\n|cff32f795" .. L["Tooltip_Right_Click_Class_Color_Circle"] .. "|r"
+            if BetterBlizzPlatesDB.showCircleOnArenaIDClassColor then
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         elseif title == L["Sort_Auras_By_Duration"] then
             local tooltipText = "\n|cff32f795" .. L["Tooltip_Right_Click_To_Reverse_Duration_Sort"] .. "|r"
@@ -2893,6 +2897,10 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
                 end
             end
             BBP.auraListNeedsUpdate = true
+            local icon = C_Spell.GetSpellTexture(key)
+            local iconString = icon and ("|T" .. icon .. ":16:16:0:0|t ") or ""
+            local name = dataEntry.name or C_Spell.GetSpellName(key) or L["Name_Missing"]
+            BBP.Print(string.format(L["Print_Removed_From_List"], iconString .. name .. " (" .. BBP.FormatSpellIDs(key, dataEntry.ids) .. ")"))
         else
             for i, entry in ipairs(list) do
                 if entry == dataEntry then
@@ -2932,7 +2940,7 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
     local function GetDisplayText(npc)
         if isKeyed then
             if npc.id then
-                return string.format("%s (%d)", GetEntryName(npc) or L["Name_Missing"], npc.id)
+                return string.format("%s (%s)", GetEntryName(npc) or L["Name_Missing"], npc.ids and (npc.id .. " +" .. (#npc.ids - 1)) or npc.id)
             end
             return npc.name or ""
         end
@@ -3495,23 +3503,30 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
         CreateTooltipTwo(editBox, L["Add_New_NPC"], L["Tooltip_Add_New_NPC_Desc"], nil, "ANCHOR_TOP")
     end
 
-    local function addOrUpdateEntry(inputText)
+    local function addOrUpdateEntry(inputText, ids)
         duplicateEntry = nil
 
         local name, comment = strsplit("/", inputText, 2)
         name = strtrim(name or "")
         comment = strtrim(comment or "")
-        local id = tonumber(name)
+        local id = ids and ids[1] or tonumber(name)
 
         if isKeyed and not id then
-            if name ~= "" then
-                BBP.Print(L["Print_Spell_ID_Only_Auras_Can_No"])
-            end
             setSearchFilter("")
             editBox:SetText("")
             refreshList()
+            if name ~= "" then
+                BBP.FindSpellIDsByName(name, function(found)
+                    if found then
+                        addOrUpdateEntry(inputText, found)
+                    else
+                        BBP.Print(string.format(L["Print_No_Spell_Found_Name"], name))
+                    end
+                end)
+            end
             return
         end
+        ids = ids and ids[2] and ids or nil
 
         local icon
         if id then
@@ -3557,12 +3572,13 @@ local function CreateList(subPanel, listName, listData, refreshFunc, enableColor
             if isKeyed then
                 list[id] = {
                     id = id,
+                    ids = ids,
                     name = name ~= "" and name or nil,
                     comment = comment ~= "" and comment or nil,
                 }
                 local iconString = icon and ("|T" .. icon .. ":16:16:0:0|t ") or ""
                 BBP.Print(string.format(listName == "auraBlacklist" and L["Print_Added_To_Blacklist"] or L["Print_Added_To_Whitelist"],
-                    iconString, name, id))
+                    iconString, name, BBP.FormatSpellIDs(id, ids)))
             else
                 local newEntry = { name = name, id = id, comment = comment, flags = { important = false, pandemic = false } }
                 if prioSlider then
@@ -5341,7 +5357,28 @@ local function CreateSearchFrame()
             return true
         end
 
-        local function applyRightClickScript(searchCheckbox, originalCheckbox)
+        local function copyTooltip(searchCheckbox, original, label)
+            if original.tooltipMainText then
+                CreateTooltipTwo(searchCheckbox, original.tooltipTitle, original.tooltipMainText, original.tooltipSubText, nil, original.tooltipCVarName, nil, SearchCategoryOf(original))
+            elseif original.tooltipTitle then
+                CreateTooltipTwo(searchCheckbox, original.tooltipTitle, nil, nil, nil, nil, nil, SearchCategoryOf(original))
+            else
+                CreateTooltipTwo(searchCheckbox, label, nil, nil, nil, nil, nil, SearchCategoryOf(original))
+            end
+        end
+
+        local function restoreSearchPoints(popup)
+            local points = popup.bbpSearchPoints
+            if points then
+                popup.bbpSearchPoints = nil
+                popup:ClearAllPoints()
+                for _, point in ipairs(points) do
+                    popup:SetPoint(unpack(point))
+                end
+            end
+        end
+
+        local function applyRightClickScript(searchCheckbox, originalCheckbox, label)
             local handlers = originalCheckbox.bbpMouseDownHandlers
             if not handlers and originalCheckbox.GetScript then
                 local originalScript = originalCheckbox:GetScript("OnMouseDown")
@@ -5350,8 +5387,40 @@ local function CreateSearchFrame()
             if handlers and #handlers > 0 then
                 searchCheckbox:SetScript("OnMouseDown", function(self, button)
                     if button == "RightButton" then
+                        local wasShown = {}
+                        for _, child in ipairs({ UIParent:GetChildren() }) do
+                            if not child:IsForbidden() and child:IsShown() then
+                                wasShown[child] = true
+                            end
+                        end
                         for _, handler in ipairs(handlers) do
                             handler(originalCheckbox, button)
+                        end
+                        for _, child in ipairs({ UIParent:GetChildren() }) do
+                            if not child:IsForbidden() and child:IsShown() and not wasShown[child] then
+                                local _, relativeTo = child:GetPoint(1)
+                                if relativeTo and not relativeTo:IsVisible() then
+                                    local points = {}
+                                    for i = 1, child:GetNumPoints() do
+                                        points[i] = { child:GetPoint(i) }
+                                    end
+                                    child.bbpSearchPoints = points
+                                    child:ClearAllPoints()
+                                    child:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -6)
+                                    child:SetClampedToScreen(true)
+                                    if not child.bbpSearchHooked then
+                                        child.bbpSearchHooked = true
+                                        child:HookScript("OnHide", restoreSearchPoints)
+                                    end
+                                end
+                            end
+                        end
+                        self:SetChecked(originalCheckbox:GetChecked())
+                        copyTooltip(self, originalCheckbox, label)
+                        UpdateSearchDropdownStates()
+                        local owner = GameTooltip:IsShown() and GameTooltip:GetOwner()
+                        if owner == self or owner == originalCheckbox then
+                            self:GetScript("OnEnter")(self)
                         end
                     end
                 end)
@@ -5452,16 +5521,9 @@ local function CreateSearchFrame()
                     UpdateSearchDropdownStates()
                 end)
 
-                applyRightClickScript(resultCheckBox, data.checkbox)
+                applyRightClickScript(resultCheckBox, data.checkbox, data.label)
 
-                -- Reapply tooltip
-                if data.checkbox.tooltipMainText then
-                    CreateTooltipTwo(resultCheckBox, data.checkbox.tooltipTitle, data.checkbox.tooltipMainText, data.checkbox.tooltipSubText, nil, data.checkbox.tooltipCVarName, nil, SearchCategoryOf(data.checkbox))
-                elseif data.checkbox.tooltipTitle then
-                    CreateTooltipTwo(resultCheckBox, data.checkbox.tooltipTitle, nil, nil, nil, nil, nil, SearchCategoryOf(data.checkbox))
-                else
-                    CreateTooltipTwo(resultCheckBox, data.label, nil, nil, nil, nil, nil, SearchCategoryOf(data.checkbox))
-                end
+                copyTooltip(resultCheckBox, data.checkbox, data.label)
 
                 resultCheckBox:Show()
 
@@ -8703,7 +8765,16 @@ local function guiPositionAndScale()
 
     local showCircleOnArenaID = CreateCheckbox("showCircleOnArenaID", L["Show_Circle_On_ID"], contentFrame)
     showCircleOnArenaID:SetPoint("TOPLEFT", arenaIndicatorTestMode2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(showCircleOnArenaID, L["Tooltip_Show_A_Colored_Circle_On_Each"])
+    CreateTooltipTwo(showCircleOnArenaID, L["Show_Circle_On_ID"], L["Tooltip_Show_Circle_On_ID_Desc"])
+    showCircleOnArenaID:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            BetterBlizzPlatesDB.showCircleOnArenaIDClassColor = not BetterBlizzPlatesDB.showCircleOnArenaIDClassColor
+            BBP.RefreshAllNameplates()
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+        end
+    end)
 
     ----------------------
     -- Class Icon
@@ -10384,13 +10455,9 @@ local function guiPositionAndScale()
 end
 
 local function guiCastbar()
-    --------------------------------
-    -- Castbar Customization
-    --------------------------------
     local guiCastbar = CreateFrame("Frame")
     guiCastbar.name = L["Castbar"]
     guiCastbar.parent = BetterBlizzPlates.name
-    --InterfaceOptions_AddCategory(guiCastbar)
     local guiCastbarCategory = Settings.RegisterCanvasLayoutSubcategory(BBP.category, guiCastbar, guiCastbar.name)
     CreateTitle(guiCastbar)
 
@@ -10401,25 +10468,6 @@ local function guiCastbar()
     bgImg:SetAlpha(0.4)
     bgImg:SetVertexColor(0,0,0)
 
-    -- local listFrame = CreateFrame("Frame", nil, guiCastbar)
-    -- listFrame:SetAllPoints(guiCastbar)
-    -- local scrollFrame = CreateList(listFrame, "castEmphasisList", BetterBlizzPlatesDB.castEmphasisList, BBP.RefreshAllNameplates, true, nil, nil, 360)
-    -- scrollFrame:SetPoint("TOPLEFT", -17, -10)
-
-    -- local castEmphasisText = listFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    -- castEmphasisText:SetPoint("BOTTOMLEFT", scrollFrame, "TOPLEFT", 25, 3)
-    -- castEmphasisText:SetText("Cast Emphasis List")
-
-    -- local onMeOnlyTexture = listFrame:CreateTexture(nil, "OVERLAY")
-    -- onMeOnlyTexture:SetAtlas("UI-HUD-UnitFrame-Player-Group-FriendOnlineIcon")
-    -- onMeOnlyTexture:SetPoint("BOTTOMRIGHT", scrollFrame, "TOPRIGHT", -99, -1)
-    -- onMeOnlyTexture:SetSize(18,20)
-    -- CreateTooltipTwo(onMeOnlyTexture, "Only On Me Checkboxes", "Check to only emphasis casts if theyre on me.", "This is only for NPCs, due to API limitations.")
-
-    -- local how2usecastemphasis = guiCastbar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    -- how2usecastemphasis:SetPoint("TOP", guiCastbar, "BOTTOMLEFT", 180, 165)
-    -- how2usecastemphasis:SetText("Add name or spell ID. Case-insensitive.\nType a name or spell ID already in list to delete it")
-
     local castbarSettingsText = guiCastbar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     castbarSettingsText:SetPoint("LEFT", guiCastbar, "TOPLEFT", 5, -5)
     castbarSettingsText:SetText(L["Castbar_Settings"])
@@ -10428,18 +10476,28 @@ local function guiCastbar()
     local castbarSettingsIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
     castbarSettingsIcon:SetAtlas("powerswirlanimation-starburst-soulbinds")
     castbarSettingsIcon:SetSize(24, 24)
-    castbarSettingsIcon:SetPoint("RIGHT", castbarSettingsText, "LEFT", -3, 0)
+    castbarSettingsIcon:SetPoint("RIGHT", castbarSettingsText, "LEFT", 1, 0)
 
-    local nameplateCastbarTestMode = CreateCheckbox("nameplateCastbarTestMode", L["Test_Castbars"], guiCastbar)
-    nameplateCastbarTestMode:SetPoint("LEFT", castbarSettingsText, "RIGHT", 0, 0)
-    nameplateCastbarTestMode:SetScript("OnClick", function(self)
-        if self:GetChecked() then
+    local castbarTestButton = CreateFrame("Button", nil, guiCastbar, "GameMenuButtonTemplate")
+    castbarTestButton:SetSize(110, 25)
+    castbarTestButton:SetNormalFontObject("GameFontNormal")
+    castbarTestButton:SetHighlightFontObject("GameFontHighlight")
+    castbarTestButton:SetPoint("TOPLEFT", guiCastbar, "TOPLEFT", 240, -5)
+    local function UpdateTestButtonText()
+        castbarTestButton:SetText(BetterBlizzPlatesDB.nameplateCastbarTestMode and L["Stop_Test"] or L["Test_Castbars"])
+    end
+    castbarTestButton:SetScript("OnClick", function()
+        BetterBlizzPlatesDB.nameplateCastbarTestMode = not BetterBlizzPlatesDB.nameplateCastbarTestMode
+        if BetterBlizzPlatesDB.nameplateCastbarTestMode then
             BBP.nameplateCastBarTestMode()
         else
             BBP.cancelTimers()
         end
+        UpdateTestButtonText()
     end)
-    CreateTooltipTwo(nameplateCastbarTestMode, L["Test_Nameplate_Castbars"], L["Tooltip_Test_Nameplate_Castbars_Desc"])
+    guiCastbar:HookScript("OnShow", UpdateTestButtonText)
+    UpdateTestButtonText()
+    CreateTooltipTwo(castbarTestButton, L["Test_Nameplate_Castbars"], L["Tooltip_Test_Nameplate_Castbars_Desc"])
 
     local classicCastbar = CreateCheckbox("classicCastbar", L["Classic_Castbar"], guiCastbar)
     classicCastbar:SetPoint("TOPLEFT", castbarSettingsText, "BOTTOMLEFT", -10, pixelsOnFirstBox)
@@ -10447,6 +10505,7 @@ local function guiCastbar()
     classicCastbar:HookScript("OnClick", function(self)
         if self:GetChecked() then
             BetterBlizzPlatesDB.castBarHeight = 11.5
+            BetterBlizzPlatesDB.friendlyCastBarHeight = 11.5
         end
         BBP.ShowPopup(self:GetChecked() and "BBP_CLASSIC_CASTBAR_SETUP" or "BBP_CONFIRM_RELOAD")
     end)
@@ -10456,9 +10515,7 @@ local function guiCastbar()
         { key = "classicCastbarTextures", label = L["Classic_Textures"], tooltip = L["Tooltip_Classic_Textures_Desc"], tooltipNote = function() return BetterBlizzPlatesDB.enableCastbarCustomization and L["Tooltip_Off_With_Castbar_Customization"] or nil end, isEnabled = function() return BetterBlizzPlatesDB.classicCastbar and not BetterBlizzPlatesDB.enableCastbarCustomization end },
         { key = "classicCastbarFullWidth", label = L["Full_Width_Bar"], tooltip = L["Tooltip_Have_The_Classic_Castbar_Width_Be"], isEnabled = function() return BetterBlizzPlatesDB.classicCastbar and BetterBlizzPlatesDB.classicCastbarNoIconBorder end, isForced = BBP.IsCastIconHidden, tooltipNote = function() return BBP.IsCastIconHidden() and L["Tooltip_Always_On_While_Cast_Icon_Hidden"] or nil end },
     }, 150, function()
-        if guiCastbar.UpdateCastIconControls then
-            guiCastbar.UpdateCastIconControls()
-        end
+        guiCastbar.UpdateCastIconControls()
     end)
     classicCastbarOptions:SetPoint("LEFT", classicCastbar.text, "RIGHT", 4, 0)
     classicCastbarOptions:SetScale(0.7)
@@ -10477,54 +10534,252 @@ local function guiCastbar()
 
     local enableCastbarCustomization = CreateCheckbox("enableCastbarCustomization", L["Enable_Castbar_Customization"], guiCastbar, nil, BBP.ToggleSpellCastEventRegistration)
     enableCastbarCustomization:SetPoint("TOPLEFT", classicCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(enableCastbarCustomization, L["Enable_Castbar_Customization"], L["Tooltip_Enable_Castbar_Customization_Desc"])
 
-    local castbarAlwaysOnTop = CreateCheckbox("castbarAlwaysOnTop", L["Always_On_Top"], enableCastbarCustomization)
-    castbarAlwaysOnTop:SetPoint("LEFT", enableCastbarCustomization.text, "RIGHT", -1, 0)
-    CreateTooltipTwo(castbarAlwaysOnTop, L["Always_On_Top"], L["Tooltip_Always_On_Top_Desc"])
+    local HEADER_STEP, CHECK_STEP, SLIDER_STEP, SWATCH_STEP, DROPDOWN_STEP, SECTION_GAP = 18, 19, 34, 22, 28, 20
+    local SECTIONS_TOP = -82
+    local left = { x = -5, y = SECTIONS_TOP }
+    local right = { x = 330, y = SECTIONS_TOP + 27 }
 
-    local castbarQuickHide = CreateCheckbox("castbarQuickHide", L["Castbar_Quick_Hide"], enableCastbarCustomization)
-    CreateTooltipTwo(castbarQuickHide, L["Castbar_Quick_Hide"], L["Tooltip_Castbar_Quick_Hide_Desc"])
-    castbarQuickHide:HookScript("OnMouseDown", function(self, button)
-        if button == "RightButton" then
-            if not BetterBlizzPlatesDB.castbarQuickHideAlways then
-                BetterBlizzPlatesDB.castbarQuickHideAlways = true
+    local function Place(col, widget, indent, step, dy)
+        widget:ClearAllPoints()
+        widget:SetPoint("TOPLEFT", guiCastbar, "TOPLEFT", col.x + (indent or 0), col.y + (dy or 0))
+        col.y = col.y - step
+        return widget
+    end
+
+    local function Header(col, text, atlas, width, height, texture)
+        if col.started then
+            col.y = col.y - SECTION_GAP
+        end
+        col.started = true
+        local header = guiCastbar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        header:SetPoint("TOPLEFT", guiCastbar, "TOPLEFT", col.x + 24, col.y)
+        header:SetText(text)
+        header:SetFont(fontLarge, 16)
+        header:SetTextColor(1,1,1)
+        local icon = guiCastbar:CreateTexture(nil, "ARTWORK")
+        if texture then
+            icon:SetTexture(texture)
+            icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        else
+            icon:SetAtlas(atlas)
+        end
+        icon:SetSize(width, height)
+        icon:SetPoint("RIGHT", header, "LEFT", -3, 0)
+        col.y = col.y - HEADER_STEP
+        return header
+    end
+
+    local function Check(col, key, label, parent, indent, extraFunc)
+        local cb = CreateCheckbox(key, label, parent or enableCastbarCustomization, nil, extraFunc)
+        return Place(col, cb, indent, CHECK_STEP)
+    end
+
+    local ENEMY_COLOR, FRIENDLY_COLOR = { 1, 0, 0 }, { 0.04, 0.76, 1 }
+    local SLIDER_WIDTH, SLIDER_GAP = 90, 20
+
+    local function SliderRow(col, parent, ...)
+        local sliders = {}
+        for i, spec in ipairs({ ... }) do
+            local s = CreateSlider(parent, spec.label, spec.min, spec.max, spec.step, spec.key, spec.axis, SLIDER_WIDTH)
+            s:SetPoint("TOPLEFT", guiCastbar, "TOPLEFT", col.x + 12 + (i - 1) * (SLIDER_WIDTH + SLIDER_GAP), col.y - 14)
+            s.Text:SetTextColor(unpack(spec.color))
+            sliderList[#sliderList].label = spec.title
+            CreateTooltipTwo(s, spec.title, spec.desc)
+            sliders[i] = s
+        end
+        col.y = col.y - SLIDER_STEP
+        return unpack(sliders)
+    end
+
+    local swatches = {}
+    local function Swatch(colorVar, label, parent, requires, after)
+        local swatch = CreateColorBox(parent, colorVar, label)
+        swatch:ClearAllPoints()
+        if after then
+            swatch:SetPoint("LEFT", after.text, "RIGHT", 6, 0)
+        end
+        swatch:EnableMouse(true)
+        swatch:SetWidth(24 + swatch.text:GetStringWidth())
+        swatch.bbpRequires = requires
+        table.insert(swatches, swatch)
+        return swatch
+    end
+
+    local function UpdateSwatches()
+        for _, swatch in ipairs(swatches) do
+            local enabled = BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB[swatch.bbpRequires]
+            swatch:SetAlpha(enabled and 1 or 0.5)
+        end
+    end
+
+    Header(left, L["Size_And_Position"], "MiniMap-PositionArrows", 20, 20)
+
+    local castBarHeight, friendlyCastBarHeight = SliderRow(left, enableCastbarCustomization,
+        { label = L["Height"], min = 4, max = 36, step = 0.1, key = "castBarHeight", axis = "Height", color = ENEMY_COLOR, title = L["Enemy_Castbar_Height"], desc = L["Tooltip_Enemy_Castbar_Height_Desc"] },
+        { label = L["Height"], min = 4, max = 36, step = 0.1, key = "friendlyCastBarHeight", axis = "Height", color = FRIENDLY_COLOR, title = L["Friendly_Castbar_Height"], desc = L["Tooltip_Friendly_Castbar_Height_Desc"] })
+    local castbarHeightResetButton = CreateFrame("Button", nil, enableCastbarCustomization, "UIPanelButtonTemplate")
+    castbarHeightResetButton:SetText(L["Default"])
+    castbarHeightResetButton:SetWidth(60)
+    castbarHeightResetButton:SetPoint("LEFT", friendlyCastBarHeight, "RIGHT", 10, 0)
+    castbarHeightResetButton:SetScale(0.8)
+    CreateTooltipTwo(castbarHeightResetButton, L["Reset_Castbar_Height"])
+    castbarHeightResetButton:SetScript("OnClick", function()
+        BBP.ResetToDefaultHeight(castBarHeight)
+        friendlyCastBarHeight:SetValue(castBarHeight:GetValue())
+    end)
+
+    SliderRow(left, guiCastbar,
+        { label = L["Width"], min = -60, max = 60, step = 1, key = "enemyCastbarExtraWidth", axis = "X", color = ENEMY_COLOR, title = L["Enemy_Castbar_Width"], desc = L["Tooltip_Enemy_Castbar_Extra_Width_Desc"] },
+        { label = L["Width"], min = -60, max = 60, step = 1, key = "friendlyCastbarExtraWidth", axis = "X", color = FRIENDLY_COLOR, title = L["Friendly_Castbar_Width"], desc = L["Tooltip_Friendly_Castbar_Extra_Width_Desc"] })
+
+    SliderRow(left, guiCastbar,
+        { label = L["X_Offset"], min = -50, max = 50, step = 1, key = "castBarXPos", axis = "X", color = ENEMY_COLOR, title = L["Enemy_Castbar_X_Offset"], desc = L["Tooltip_Castbar_Horizontal_Position_Desc"] },
+        { label = L["X_Offset"], min = -50, max = 50, step = 1, key = "friendlyCastBarXPos", color = FRIENDLY_COLOR, title = L["Friendly_Castbar_X_Offset"], desc = L["Tooltip_Castbar_Horizontal_Position_Desc"] })
+
+    SliderRow(left, guiCastbar,
+        { label = L["Y_Offset"], min = -50, max = 50, step = 1, key = "spacingBetweenCastAndHealthbar", axis = "Y", color = ENEMY_COLOR, title = L["Enemy_Castbar_Y_Offset"], desc = L["Tooltip_Castbar_Vertical_Position_Desc"] },
+        { label = L["Y_Offset"], min = -50, max = 50, step = 1, key = "friendlySpacingBetweenCastAndHealthbar", axis = "Y", color = FRIENDLY_COLOR, title = L["Friendly_Castbar_Y_Offset"], desc = L["Tooltip_Castbar_Vertical_Position_Desc"] })
+
+    Header(left, L["Icon"], nil, 18, 18, "Interface\\Icons\\Spell_Nature_Polymorph")
+
+    local ICON_NOTE = L["Tooltip_Cast_Icon_Locked_Note"]
+    local castBarIconScale, friendlyCastBarIconScale = SliderRow(left, enableCastbarCustomization,
+        { label = L["Size"], min = 0.1, max = 2.5, step = 0.01, key = "castBarIconScale", color = ENEMY_COLOR, title = L["Enemy_Cast_Icon_Size"], desc = ICON_NOTE },
+        { label = L["Size"], min = 0.1, max = 2.5, step = 0.01, key = "friendlyCastBarIconScale", color = FRIENDLY_COLOR, title = L["Friendly_Cast_Icon_Size"], desc = ICON_NOTE })
+    local castBarIconXPos, friendlyCastBarIconXPos = SliderRow(left, enableCastbarCustomization,
+        { label = L["X_Offset"], min = -50, max = 50, step = 1, key = "castBarIconXPos", axis = "X", color = ENEMY_COLOR, title = L["Enemy_Cast_Icon_X_Offset"], desc = ICON_NOTE },
+        { label = L["X_Offset"], min = -50, max = 50, step = 1, key = "friendlyCastBarIconXPos", color = FRIENDLY_COLOR, title = L["Friendly_Cast_Icon_X_Offset"], desc = ICON_NOTE })
+    local castBarIconYPos, friendlyCastBarIconYPos = SliderRow(left, enableCastbarCustomization,
+        { label = L["Y_Offset"], min = -50, max = 50, step = 1, key = "castBarIconYPos", axis = "Y", color = ENEMY_COLOR, title = L["Enemy_Cast_Icon_Y_Offset"], desc = ICON_NOTE },
+        { label = L["Y_Offset"], min = -50, max = 50, step = 1, key = "friendlyCastBarIconYPos", color = FRIENDLY_COLOR, title = L["Friendly_Cast_Icon_Y_Offset"], desc = ICON_NOTE })
+    local iconSliders = { castBarIconScale, castBarIconXPos, castBarIconYPos, friendlyCastBarIconScale, friendlyCastBarIconXPos, friendlyCastBarIconYPos }
+
+    local anchorCastIconOnRight = Check(left, "anchorCastIconOnRight", L["Anchor_Icon_Right"])
+    CreateTooltipTwo(anchorCastIconOnRight, L["Anchor_Cast_Icon_On_Right"], L["Tooltip_Anchor_Cast_Icon_On_Right_Desc"], L["Tooltip_Not_Used_While_Cast_Icon_Hidden"])
+
+    local hideCastbarIcon = Check(left, "hideCastbarIcon", L["Hide_Icon"])
+    CreateTooltipTwo(hideCastbarIcon, L["Hide_Castbar_Icon"], L["Tooltip_Hide_Castbar_Icon_Desc"])
+    hideCastbarIcon:HookScript("OnClick", function()
+        guiCastbar.UpdateCastIconControls()
+    end)
+
+    local castBarIconPixelBorder = Check(left, "castBarIconPixelBorder", L["Icon_Pixel_Border"])
+    CreateTooltipTwo(castBarIconPixelBorder, L["Icon_Pixel_Border"], L["Tooltip_Icon_Pixel_Border_Desc"])
+
+    local hideCastbarBorderShield = Check(left, "hideCastbarBorderShield", L["Hide_Shield"])
+    CreateTooltipTwo(hideCastbarBorderShield, L["Hide_Castbar_Shield"], L["Tooltip_Hide_Castbar_Shield_Desc"])
+
+    local showCastBarIconWhenNoninterruptible = Check(left, "showCastBarIconWhenNoninterruptible", L["Show_Cast_Icon_On_Non_Interruptable"])
+    CreateTooltip(showCastBarIconWhenNoninterruptible, L["Tooltip_Show_The_Cast_Icon_On_Non"])
+
+    local castBarDragonflightShield = Check(left, "castBarDragonflightShield", L["New_Shield_On_Non_Interruptable"])
+    CreateTooltip(castBarDragonflightShield, L["Tooltip_Replace_The_Old_Pixelated_Non_Interruptible"])
+
+    if not BetterBlizzPlatesDB.classicNameplates then
+        local fitCastIconLeftOfCast = Check(left, "fitCastIconLeftOfCast", L["Fit_Cast_Icon_On_The_Left"], guiCastbar)
+        CreateTooltipTwo(fitCastIconLeftOfCast, L["Fit_Cast_Icon_On_The_Left"], L["Tooltip_Fit_Cast_Icon_On_The_Left_Desc"], L["Tooltip_Fit_Cast_Icon_Right_Note"] .. "\n" .. L["Tooltip_Not_Used_With_Classic_Castbar"])
+        local function UpdateFitCastIconEnabled()
+            if BBP.UsesClassicCastbar() then
+                DisableElement(fitCastIconLeftOfCast)
             else
-                BetterBlizzPlatesDB.castbarQuickHideAlways = nil
+                EnableElement(fitCastIconLeftOfCast)
+            end
+        end
+        fitCastIconLeftOfCast:SetMotionScriptsWhileDisabled(true)
+        fitCastIconLeftOfCast:HookScript("OnShow", UpdateFitCastIconEnabled)
+        fitCastIconLeftOfCast:HookScript("OnClick", function()
+            guiCastbar.UpdateCastIconControls()
+        end)
+        UpdateFitCastIconEnabled()
+    end
+
+    function guiCastbar.UpdateCastIconControls()
+        local custom = BetterBlizzPlatesDB.enableCastbarCustomization
+        local locked = not custom or BBP.CastIconSizeLocked() or BBP.IsCastIconHidden()
+        for _, slider in ipairs(iconSliders) do
+            if locked then
+                DisableElement(slider)
+            else
+                EnableElement(slider)
+            end
+        end
+        if custom and not BBP.IsCastIconHidden() then
+            EnableElement(anchorCastIconOnRight)
+        else
+            DisableElement(anchorCastIconOnRight)
+        end
+    end
+    anchorCastIconOnRight:SetMotionScriptsWhileDisabled(true)
+    castBarIconScale:HookScript("OnShow", guiCastbar.UpdateCastIconControls)
+    guiCastbar.UpdateCastIconControls()
+
+    Header(right, L["Colors_And_Textures"], "barbershop-32x32", 20, 20)
+
+    local castBarRecolor = Check(right, "castBarRecolor", L["Re_Color_Castbar"])
+    local castBarCastColor = Swatch("castBarCastColor", L["Cast"], castBarRecolor, "castBarRecolor")
+    Place(right, castBarCastColor, 20, SWATCH_STEP, 1)
+    local castBarChanneledColor = Swatch("castBarChanneledColor", L["Channel"], castBarRecolor, "castBarRecolor", castBarCastColor)
+    local castBarNoninterruptibleColor = Swatch("castBarNoninterruptibleColor", L["Non_Int"], castBarRecolor, "castBarRecolor", castBarChanneledColor)
+    CreateTooltip(castBarNoninterruptibleColor, L["Tooltip_Color_For_Non_Interruptible_Casts"])
+
+    local castBarRecolorInterrupt = Check(right, "castBarRecolorInterrupt", L["Interrupt_CD_Color"])
+    CreateTooltip(castBarRecolorInterrupt, L["Tooltip_Checks_If_You_Have_Interrupt_Ready"])
+    local castBarNoInterruptColor = Swatch("castBarNoInterruptColor", L["Kick_On_Cd"], castBarRecolorInterrupt, "castBarRecolorInterrupt")
+    Place(right, castBarNoInterruptColor, 20, SWATCH_STEP, 1)
+    CreateTooltip(castBarNoInterruptColor, L["Tooltip_Interrupt_On_CD"])
+    local castBarDelayedInterruptColor = Swatch("castBarDelayedInterruptColor", L["Kick_Soon"], castBarRecolorInterrupt, "castBarRecolorInterrupt", castBarNoInterruptColor)
+    CreateTooltip(castBarDelayedInterruptColor, L["Tooltip_Interrupt_CD_Soon"])
+
+    local useCustomCastbarTexture = Check(right, "useCustomCastbarTexture", L["Re_Texture_Castbar"], nil, 0, BBP.ToggleSpellCastEventRegistration)
+
+    local function TextureDropdown(name, parent, key, labelText)
+        local dropdown = CreateTextureDropdown(name, parent, L["Select_Texture"], key, function()
+            BBP.RefreshAllNameplates()
+        end, { anchorFrame = guiCastbar, x = 0, y = 0 })
+        Place(right, dropdown, 24, DROPDOWN_STEP, -1)
+        if labelText then
+            local label = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            label:SetPoint("LEFT", dropdown, "RIGHT", 6, 0)
+            label:SetText(labelText)
+        end
+        return dropdown
+    end
+
+    local customCastbarTextureDropdown = TextureDropdown("customCastbarTextureDropdown", useCustomCastbarTexture, "customCastbarTexture", L["Interruptible"])
+    CreateTooltip(customCastbarTextureDropdown, L["Tooltip_Castbar_Texture"])
+    local customCastbarNonInterruptibleTextureDropdown = TextureDropdown("customCastbarNonInterruptibleTextureDropdown", useCustomCastbarTexture, "customCastbarNonInterruptibleTexture", L["Non_Interruptible"])
+    CreateTooltip(customCastbarNonInterruptibleTextureDropdown, L["Tooltip_Non_Interruptible_Texture"])
+
+    local useCustomCastbarBGTexture = Check(right, "useCustomCastbarBGTexture", L["Change_Castbar_Background"])
+    CreateTooltipTwo(useCustomCastbarBGTexture, L["Change_Background_Texture"])
+    local customCastbarBGTextureDropdown = TextureDropdown("customCastbarBGTextureDropdown", useCustomCastbarBGTexture, "customCastbarBGTexture")
+    CreateTooltip(customCastbarBGTextureDropdown, L["Tooltip_Background_Texture"])
+
+    local castBarBackgroundColor = Swatch("castBarBackgroundColor", L["Color"], useCustomCastbarBGTexture, "useCustomCastbarBGTexture")
+    castBarBackgroundColor:SetPoint("LEFT", customCastbarBGTextureDropdown, "RIGHT", 4, 0)
+    CreateTooltipTwo(castBarBackgroundColor, L["Castbar_Background_Color"], L["Tooltip_Castbar_Background_Color_Desc"])
+    castBarBackgroundColor:SetScript("OnMouseDown", function(self, button)
+        if self:GetAlpha() ~= 1 then return end
+        if button == "RightButton" then
+            if BetterBlizzPlatesDB.redBgCastColor == nil then
+                BetterBlizzPlatesDB.redBgCastColor = true
+            else
+                BetterBlizzPlatesDB.redBgCastColor = nil
             end
             if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
                 self:GetScript("OnEnter")(self)
             end
+        else
+            OpenColorPicker("castBarBackgroundColor", self.colorTexture)
         end
     end)
 
-    local hideCastbarBorderShield = CreateCheckbox("hideCastbarBorderShield", L["Hide_Shield"], enableCastbarCustomization)
-    hideCastbarBorderShield:SetPoint("LEFT", castbarQuickHide.text, "RIGHT", -1, 0)
-    CreateTooltipTwo(hideCastbarBorderShield, L["Hide_Castbar_Shield"], L["Tooltip_Hide_Castbar_Shield_Desc"])
+    local castBarPixelBorder = Check(right, "castBarPixelBorder", L["Pixel_Border"])
+    CreateTooltipTwo(castBarPixelBorder, L["Castbar_Pixel_Border"], L["Tooltip_Castbar_Pixel_Border_Desc"])
 
-    local hideCastbarIcon = CreateCheckbox("hideCastbarIcon", L["Hide_Icon"], enableCastbarCustomization)
-    hideCastbarIcon:SetPoint("LEFT", hideCastbarBorderShield.text, "RIGHT", -1, 0)
-    CreateTooltipTwo(hideCastbarIcon, L["Hide_Castbar_Icon"], L["Tooltip_Hide_Castbar_Icon_Desc"])
-    hideCastbarIcon:HookScript("OnClick", function()
-        if guiCastbar.UpdateCastIconControls then
-            guiCastbar.UpdateCastIconControls()
-        end
-    end)
-
-    local showCastBarIconWhenNoninterruptible = CreateCheckbox("showCastBarIconWhenNoninterruptible", L["Show_Cast_Icon_On_Non_Interruptable"], enableCastbarCustomization)
-    showCastBarIconWhenNoninterruptible:SetPoint("TOPLEFT", castbarQuickHide, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(showCastBarIconWhenNoninterruptible, L["Tooltip_Show_The_Cast_Icon_On_Non"])
-
-    local hideNameDuringCast = CreateCheckbox("hideNameDuringCast", L["Hide_Name"], enableCastbarCustomization)
-    hideNameDuringCast:SetPoint("LEFT", showCastBarIconWhenNoninterruptible.text, "RIGHT", -1, 0)
-    CreateTooltipTwo(hideNameDuringCast, L["Hide_Unit_Name"], L["Tooltip_Hide_Unit_Name_Desc"])
-
-    local castBarDragonflightShield = CreateCheckbox("castBarDragonflightShield", L["New_Shield_On_Non_Interruptable"], enableCastbarCustomization)
-    castBarDragonflightShield:SetPoint("TOPLEFT", showCastBarIconWhenNoninterruptible, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(castBarDragonflightShield, L["Tooltip_Replace_The_Old_Pixelated_Non_Interruptible"])
-
-    local castBarFullTextWidth = CreateCheckbox("castBarFullTextWidth", L["Full_Text_Width"], enableCastbarCustomization, nil, BBP.UpdateAllCastbarTextPositions)
-    castBarFullTextWidth:SetPoint("LEFT", castBarDragonflightShield.text, "RIGHT", -1, 0)
-    CreateTooltipTwo(castBarFullTextWidth, L["Full_Text_Width"], L["Tooltip_Full_Text_Width_Desc"])
+    Header(right, L["Castbar_Text_Header"], "transmog-icon-chat", 18, 16)
 
     local castBarTextOptionsFrame
     local function OpenCastBarTextOptionsWindow()
@@ -10679,9 +10934,7 @@ local function guiCastbar()
         end
     end
 
-    local moveCastBarText = CreateCheckbox("moveCastBarText", L["Move_Castbar_Text"], enableCastbarCustomization, nil, BBP.UpdateAllCastbarTextPositions)
-    moveCastBarText:SetPoint("TOPLEFT", enableCastbarCustomization, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    castbarQuickHide:SetPoint("TOPLEFT", moveCastBarText, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    local moveCastBarText = Check(right, "moveCastBarText", L["Move_Castbar_Text"], nil, 0, BBP.UpdateAllCastbarTextPositions)
     CreateTooltipTwo(moveCastBarText, L["Move_Castbar_Text"], L["Tooltip_Move_Castbar_Text_Desc"] .. "\n\n" .. L["Right_Click_For_Options"])
     moveCastBarText:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
@@ -10690,299 +10943,49 @@ local function guiCastbar()
         end
     end)
 
-    local castBarIconScale = CreateSlider(enableCastbarCustomization, L["Castbar_Icon_Size"], 0.1, 2.5, 0.01, "castBarIconScale")
-    castBarIconScale:SetPoint("TOPLEFT", castBarDragonflightShield, "BOTTOMLEFT", 12, -10)
+    local castBarFullTextWidth = Check(right, "castBarFullTextWidth", L["Full_Text_Width"], nil, 0, BBP.UpdateAllCastbarTextPositions)
+    CreateTooltipTwo(castBarFullTextWidth, L["Full_Text_Width"], L["Tooltip_Full_Text_Width_Desc"])
 
-    local castBarIconXPos = CreateSlider(enableCastbarCustomization, L["Icon_X_Offset"], -50, 50, 1, "castBarIconXPos", "X", 100)
-    castBarIconXPos:SetPoint("LEFT", castBarIconScale, "RIGHT", 82, 0)
-
-    local castBarIconYPos = CreateSlider(enableCastbarCustomization, L["Icon_Y_Offset"], -50, 50, 1, "castBarIconYPos", "Y", 100)
-    castBarIconYPos:SetPoint("TOP", castBarIconXPos, "BOTTOM", 0, -15)
-
-    local anchorCastIconOnRight = CreateCheckbox("anchorCastIconOnRight", L["Anchor_Icon_Right"], enableCastbarCustomization)
-    anchorCastIconOnRight:SetPoint("LEFT", castBarIconYPos, "RIGHT", 5, 16)
-    CreateTooltipTwo(anchorCastIconOnRight, L["Anchor_Cast_Icon_On_Right"], L["Tooltip_Anchor_Cast_Icon_On_Right_Desc"], L["Tooltip_Not_Used_While_Cast_Icon_Hidden"])
-    CreateTooltipTwo(castBarIconScale, L["Castbar_Icon_Size"], L["Tooltip_Cast_Icon_Locked_Note"])
-    CreateTooltipTwo(castBarIconXPos, L["Icon_X_Offset"], L["Tooltip_Cast_Icon_Locked_Note"])
-    CreateTooltipTwo(castBarIconYPos, L["Icon_Y_Offset"], L["Tooltip_Cast_Icon_Locked_Note"])
-
-    function guiCastbar.UpdateCastIconControls()
-        local custom = BetterBlizzPlatesDB.enableCastbarCustomization
-        local locked = not custom or BBP.CastIconSizeLocked() or BBP.IsCastIconHidden()
-        for _, slider in ipairs({ castBarIconScale, castBarIconXPos, castBarIconYPos }) do
-            if locked then
-                DisableElement(slider)
-            else
-                EnableElement(slider)
-            end
-        end
-        if custom and not BBP.IsCastIconHidden() then
-            EnableElement(anchorCastIconOnRight)
-        else
-            DisableElement(anchorCastIconOnRight)
-        end
+    local hideCastbarText = Check(right, "hideCastbarText", L["Hide_Castbar_Text"])
+    CreateTooltipTwo(hideCastbarText, L["Hide_Castbar_Text"], L["Tooltip_Hide_Castbar_Text_Desc"])
+    local hideCastbarTextOptions = CreateMultiSelectDropdown(L["Hide_Options"], guiCastbar, {
+        { key = "hideCastbarTextEnemies", label = L["On_Enemies"] },
+        { key = "hideCastbarTextFriendly", label = L["On_Friendly"] },
+        { key = "hideCastbarTextNpcs", label = L["On_NPCs"] },
+    }, 120)
+    hideCastbarTextOptions:SetPoint("LEFT", hideCastbarText.text, "RIGHT", 4, 0)
+    hideCastbarTextOptions:SetScale(0.7)
+    hideCastbarTextOptions.searchParentKey = "hideCastbarText"
+    function hideCastbarTextOptions:UpdateEnabled()
+        local enabled = BetterBlizzPlatesDB.enableCastbarCustomization and BetterBlizzPlatesDB.hideCastbarText and true or false
+        self:SetEnabled(enabled)
+        self:SetAlpha(enabled and 1 or 0.5)
     end
-    for _, widget in ipairs({ castBarIconScale, castBarIconXPos, castBarIconYPos, anchorCastIconOnRight }) do
-        if widget.SetMotionScriptsWhileDisabled then
-            widget:SetMotionScriptsWhileDisabled(true)
-        end
-    end
-    enableCastbarCustomization:HookScript("OnClick", guiCastbar.UpdateCastIconControls)
-    castBarIconScale:HookScript("OnShow", guiCastbar.UpdateCastIconControls)
-    guiCastbar.UpdateCastIconControls()
-
---[=[
-    local castBarIconXPos = CreateSlider(enableCastbarCustomization, "Icon x offset", -50, 50, 1, "castBarIconXPos", "X")
-    castBarIconXPos:SetPoint("TOPLEFT", castBarIconScale, "BOTTOMLEFT", 0, -15)
-
-    local castBarIconYPos = CreateSlider(enableCastbarCustomization, "Icon y offset", -50, 50, 1, "castBarIconYPos", "Y")
-    castBarIconYPos:SetPoint("TOPLEFT", castBarIconXPos, "BOTTOMLEFT", 0, -15)
-
-]=]
-
-    local castBarHeight = CreateSlider(enableCastbarCustomization, L["Castbar_Height"], 4, 36, 0.1, "castBarHeight", "Height")
-    castBarHeight:SetPoint("TOPLEFT", castBarIconScale, "BOTTOMLEFT", 0, -15)
-
-    local castbarHeightResetButton = CreateFrame("Button", nil, enableCastbarCustomization, "UIPanelButtonTemplate")
-    castbarHeightResetButton:SetText(L["Default"])
-    castbarHeightResetButton:SetWidth(60)
-    castbarHeightResetButton:SetPoint("LEFT", castBarHeight, "RIGHT", 10, 0)
-    castbarHeightResetButton:SetScale(0.8)
-    CreateTooltipTwo(castbarHeightResetButton, L["Reset_Castbar_Height"])
-    castbarHeightResetButton:SetScript("OnClick", function()
-        BBP.ResetToDefaultHeight(castBarHeight)
+    hideCastbarTextOptions:HookScript("OnShow", hideCastbarTextOptions.UpdateEnabled)
+    hideCastbarText:HookScript("OnClick", function()
+        hideCastbarTextOptions:UpdateEnabled()
     end)
+    hideCastbarTextOptions:UpdateEnabled()
 
-    local castBarRecolor = CreateCheckbox("castBarRecolor", L["Re_Color_Castbar"], enableCastbarCustomization)
-    castBarRecolor:SetPoint("TOPLEFT", castBarHeight, "BOTTOMLEFT", -12, -3)
+    local hideNameDuringCast = Check(right, "hideNameDuringCast", L["Hide_Name"])
+    CreateTooltipTwo(hideNameDuringCast, L["Hide_Unit_Name"], L["Tooltip_Hide_Unit_Name_Desc"])
 
-    local function UpdateColorSquare(icon, r, g, b, a)
-        if r and g and b and a then
-            icon:SetVertexColor(r, g, b, a)
-        else
-            icon:SetVertexColor(r, g, b)
-        end
-    end
-
-    local function OpenColorPicker(colorType, icon)
-        BBP.needsUpdate = true
-        -- Ensure originalColorData has four elements, defaulting alpha (a) to 1 if not present
-        local originalColorData = BetterBlizzPlatesDB[colorType] or {1, 1, 1, 1}
-        if #originalColorData == 3 then
-            table.insert(originalColorData, 1) -- Add default alpha value if not present
-        end
-        local r, g, b, a = unpack(originalColorData)
-
-        local function updateColors()
-            UpdateColorSquare(icon, r, g, b, a)
-            BBP.RefreshAllNameplates()
-            ColorPickerFrame.Content.ColorSwatchCurrent:SetAlpha(a)
-        end
-
-        local function swatchFunc()
-            r, g, b = ColorPickerFrame:GetColorRGB()
-            BetterBlizzPlatesDB[colorType] = {r, g, b, a}
-            updateColors()
-        end
-
-        local function opacityFunc()
-            a = ColorPickerFrame:GetColorAlpha()
-            BetterBlizzPlatesDB[colorType] = {r, g, b, a}
-            updateColors()
-        end
-
-        local function cancelFunc()
-            r, g, b, a = unpack(originalColorData)
-            BetterBlizzPlatesDB[colorType] = {r, g, b, a}
-            updateColors()
-        end
-
-        ColorPickerFrame:SetupColorPickerAndShow({
-            r = r, g = g, b = b, opacity = a, hasOpacity = true,
-            swatchFunc = swatchFunc, opacityFunc = opacityFunc, cancelFunc = cancelFunc
-        })
-    end
-
-
-    local castBarCastColor = CreateFrame("Button", nil, castBarRecolor, "UIPanelButtonTemplate")
-    castBarCastColor:SetText(L["Cast"])
-    castBarCastColor:SetPoint("TOPLEFT", castBarRecolor, "BOTTOMRIGHT", 0, 3)
-    castBarCastColor:SetSize(45, 20)
-    local castBarCastColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
-    castBarCastColorIcon:SetAtlas("newplayertutorial-icon-key")
-    castBarCastColorIcon:SetSize(18, 17)
-    castBarCastColorIcon:SetPoint("LEFT", castBarCastColor, "RIGHT", 0, -1)
-    UpdateColorSquare(castBarCastColorIcon, unpack(BetterBlizzPlatesDB["castBarCastColor"] or {1, 1, 1}))
-    castBarCastColor:SetScript("OnClick", function()
-        OpenColorPicker("castBarCastColor", castBarCastColorIcon)
-    end)
-
-    local castBarChanneledColor = CreateFrame("Button", nil, castBarRecolor, "UIPanelButtonTemplate")
-    castBarChanneledColor:SetText(L["Channel"])
-    castBarChanneledColor:SetPoint("LEFT", castBarCastColor, "RIGHT", 24, 0)
-    castBarChanneledColor:SetSize(70, 20)
-    local castBarChanneledColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
-    castBarChanneledColorIcon:SetAtlas("newplayertutorial-icon-key")
-    castBarChanneledColorIcon:SetSize(18, 17)
-    castBarChanneledColorIcon:SetPoint("LEFT", castBarChanneledColor, "RIGHT", 0, -1)
-    UpdateColorSquare(castBarChanneledColorIcon, unpack(BetterBlizzPlatesDB["castBarChanneledColor"] or {1, 1, 1}))
-    castBarChanneledColor:SetScript("OnClick", function()
-        OpenColorPicker("castBarChanneledColor", castBarChanneledColorIcon)
-    end)
-
-    local castBarNoninterruptibleColor = CreateFrame("Button", nil, castBarRecolor, "UIPanelButtonTemplate")
-    castBarNoninterruptibleColor:SetText(L["Non_Int"])
-    castBarNoninterruptibleColor:SetPoint("LEFT", castBarChanneledColor, "RIGHT", 24, 0)
-    castBarNoninterruptibleColor:SetSize(70, 20)
-    local castBarNoninterruptibleColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
-    castBarNoninterruptibleColorIcon:SetAtlas("newplayertutorial-icon-key")
-    castBarNoninterruptibleColorIcon:SetSize(18, 17)
-    castBarNoninterruptibleColorIcon:SetPoint("LEFT", castBarNoninterruptibleColor, "RIGHT", 0, -1)
-    UpdateColorSquare(castBarNoninterruptibleColorIcon, unpack(BetterBlizzPlatesDB["castBarNoninterruptibleColor"] or {1, 1, 1}))
-    castBarNoninterruptibleColor:SetScript("OnClick", function()
-        OpenColorPicker("castBarNoninterruptibleColor", castBarNoninterruptibleColorIcon)
-    end)
-    CreateTooltip(castBarNoninterruptibleColor, L["Tooltip_Color_For_Non_Interruptible_Casts"])
-
-    local useCustomCastbarTexture = CreateCheckbox("useCustomCastbarTexture", L["Re_Texture_Castbar"], enableCastbarCustomization, nil, BBP.ToggleSpellCastEventRegistration)
-    useCustomCastbarTexture:SetPoint("TOPLEFT", castBarRecolor, "BOTTOMLEFT", 0, -16)
-
-    local castBarPixelBorder = CreateCheckbox("castBarPixelBorder", L["Pixel_Border"], enableCastbarCustomization)
-    castBarPixelBorder:SetPoint("LEFT", useCustomCastbarTexture.text, "RIGHT", -1, 0)
-    CreateTooltipTwo(castBarPixelBorder, L["Castbar_Pixel_Border"], L["Tooltip_Castbar_Pixel_Border_Desc"])
-
-    local castBarIconPixelBorder = CreateCheckbox("castBarIconPixelBorder", L["Icon_Pixel"], enableCastbarCustomization)
-    castBarIconPixelBorder:SetPoint("LEFT", castBarPixelBorder.text, "RIGHT", -1, 0)
-    CreateTooltipTwo(castBarIconPixelBorder, L["Icon_Pixel_Border"], L["Tooltip_Icon_Pixel_Border_Desc"])
-
-    local customCastbarTextureDropdown = CreateTextureDropdown(
-        "customCastbarTextureDropdown",
-        useCustomCastbarTexture,
-        L["Select_Texture"],
-        "customCastbarTexture",
-        function(arg1)
-            BBP.RefreshAllNameplates()
-        end,
-        { anchorFrame = useCustomCastbarTexture, x = 5, y = 0, label = "CustomCastbar" }
-    )
-    CreateTooltip(customCastbarTextureDropdown, L["Tooltip_Castbar_Texture"])
-
-    local interruptibleLabel = useCustomCastbarTexture:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    interruptibleLabel:SetPoint("LEFT", customCastbarTextureDropdown, "RIGHT", 6, 0)
-    interruptibleLabel:SetText(L["Interruptible"])
-
-    local customCastbarNonInterruptibleTextureDropdown = CreateTextureDropdown(
-        "customCastbarNonInterruptibleTextureDropdown",
-        useCustomCastbarTexture,
-        L["Select_Texture"],
-        "customCastbarNonInterruptibleTexture",
-        function(arg1)
-            BBP.RefreshAllNameplates()
-        end,
-        { anchorFrame = useCustomCastbarTexture, x = 5, y = -31, label = "CustomBGCastbar" }
-    )
-    CreateTooltip(customCastbarNonInterruptibleTextureDropdown, L["Tooltip_Non_Interruptible_Texture"])
-
-    local nonInterruptibleLabel = useCustomCastbarTexture:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    nonInterruptibleLabel:SetPoint("LEFT", customCastbarNonInterruptibleTextureDropdown, "RIGHT", 6, 0)
-    nonInterruptibleLabel:SetText(L["Non_Interruptible"])
-
-    if not useCustomCastbarTexture:GetChecked() then
-        customCastbarTextureDropdown:Disable()
-        customCastbarTextureDropdown:SetAlpha(0.5)
-        customCastbarNonInterruptibleTextureDropdown:Disable()
-        customCastbarNonInterruptibleTextureDropdown:SetAlpha(0.5)
-    end
-
-    local useCustomCastbarBGTexture = CreateCheckbox("useCustomCastbarBGTexture", L["Change_Castbar_Background"], enableCastbarCustomization)
-    useCustomCastbarBGTexture:SetPoint("TOPLEFT", useCustomCastbarTexture, "BOTTOMLEFT", 0, -58)
-    CreateTooltipTwo(useCustomCastbarBGTexture, L["Change_Background_Texture"])
-
-    local customCastbarBGTextureDropdown = CreateTextureDropdown(
-        "customCastbarBGTextureDropdown",
-        useCustomCastbarBGTexture,
-        L["Select_Texture"],
-        "customCastbarBGTexture",
-        function(arg1)
-            BBP.RefreshAllNameplates()
-        end,
-        { anchorFrame = useCustomCastbarBGTexture, x = 0, y = 0, label = "CustomBGCastbar" },
-        130
-    )
-    customCastbarBGTextureDropdown:ClearAllPoints()
-    customCastbarBGTextureDropdown:SetPoint("LEFT", useCustomCastbarBGTexture.text, "RIGHT", 4, 0)
-    CreateTooltip(customCastbarBGTextureDropdown, L["Tooltip_Background_Texture"])
-    if not useCustomCastbarBGTexture:GetChecked() then
-        customCastbarBGTextureDropdown:Disable()
-        customCastbarBGTextureDropdown:SetAlpha(0.5)
-    end
-
-    local castBarBackgroundColor = CreateFrame("Button", nil, useCustomCastbarBGTexture, "UIPanelButtonTemplate")
-    castBarBackgroundColor:SetText(L["Color"])
-    castBarBackgroundColor:SetPoint("LEFT", customCastbarBGTextureDropdown, "RIGHT", 4, 0)
-    castBarBackgroundColor:SetSize(45, 20)
-    local castBarBackgroundColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
-    castBarBackgroundColorIcon:SetAtlas("newplayertutorial-icon-key")
-    castBarBackgroundColorIcon:SetSize(18, 17)
-    castBarBackgroundColorIcon:SetPoint("LEFT", castBarBackgroundColor, "RIGHT", 0, -1)
-    UpdateColorSquare(castBarBackgroundColorIcon, unpack(BetterBlizzPlatesDB["castBarBackgroundColor"] or {1, 1, 1, 1}))
-    castBarBackgroundColor:SetScript("OnClick", function()
-        OpenColorPicker("castBarBackgroundColor", castBarBackgroundColorIcon)
-    end)
-    CreateTooltipTwo(castBarBackgroundColor, L["Castbar_Background_Color"], L["Tooltip_Castbar_Background_Color_Desc"])
-    castBarBackgroundColor:HookScript("OnMouseDown", function(self, button)
-        if button == "RightButton" then
-            if BetterBlizzPlatesDB.redBgCastColor == nil then
-                BetterBlizzPlatesDB.redBgCastColor = true
-            else
-                BetterBlizzPlatesDB.redBgCastColor = nil
-            end
-            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
-                self:GetScript("OnEnter")(self)
-            end
-        end
-    end)
-
-    useCustomCastbarTexture:HookScript("OnClick", function(self)
-        if self:GetChecked() then
-            customCastbarTextureDropdown:Enable()
-            customCastbarTextureDropdown:SetAlpha(1)
-            customCastbarNonInterruptibleTextureDropdown:Enable()
-            customCastbarNonInterruptibleTextureDropdown:SetAlpha(1)
-        else
-            customCastbarTextureDropdown:Disable()
-            customCastbarTextureDropdown:SetAlpha(0.5)
-            customCastbarNonInterruptibleTextureDropdown:Disable()
-            customCastbarNonInterruptibleTextureDropdown:SetAlpha(0.5)
-        end
-    end)
-
-    local interruptedByIndicator = CreateCheckbox("interruptedByIndicator", L["Show_Who_Interrupted"], enableCastbarCustomization, nil, BBP.ToggleSpellCastEventRegistration)
-    interruptedByIndicator:SetPoint("TOPLEFT", useCustomCastbarTexture, "BOTTOMLEFT", 0, -84)
+    local interruptedByIndicator = Check(right, "interruptedByIndicator", L["Show_Who_Interrupted"], nil, 0, BBP.ToggleSpellCastEventRegistration)
     CreateTooltip(interruptedByIndicator, L["Tooltip_Show_The_Name_Of_Who_Interrupted"])
 
-    local normalCastbarForEmpoweredCasts = CreateCheckbox("normalCastbarForEmpoweredCasts", L["Normal_Empowered_Cast"], enableCastbarCustomization)
-    normalCastbarForEmpoweredCasts:SetPoint("LEFT", interruptedByIndicator.text, "RIGHT", -1, 0)
-    CreateTooltip(normalCastbarForEmpoweredCasts, L["Tooltip_Instead_Of_The_Jank_Tiered_Castbar"], "ANCHOR_LEFT")
-    normalCastbarForEmpoweredCasts:HookScript("OnClick", function(self)
-        if BetterBlizzFramesDB then
-            if self:GetChecked() then
-                BetterBlizzFramesDB.normalCastbarForEmpoweredCasts = true
-            else
-                BetterBlizzFramesDB.normalCastbarForEmpoweredCasts = false
-            end
-        end
-    end)
+    Header(right, L["Other"], "optionsicon-brown", 22, 22)
 
-    local hideCastbarText = CreateCheckbox("hideCastbarText", L["Hide_Castbar_Text"], enableCastbarCustomization)
-    hideCastbarText:SetPoint("TOPLEFT", normalCastbarForEmpoweredCasts, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltipTwo(hideCastbarText, L["Hide_Castbar_Text"], L["Tooltip_Hide_Castbar_Text_Desc"], nil, "ANCHOR_LEFT")
-    hideCastbarText:HookScript("OnMouseDown", function(self, button)
+    local castbarAlwaysOnTop = Check(right, "castbarAlwaysOnTop", L["Always_On_Top"])
+    CreateTooltipTwo(castbarAlwaysOnTop, L["Always_On_Top"], L["Tooltip_Always_On_Top_Desc"])
+
+    local castbarQuickHide = Check(right, "castbarQuickHide", L["Castbar_Quick_Hide"])
+    CreateTooltipTwo(castbarQuickHide, L["Castbar_Quick_Hide"], L["Tooltip_Castbar_Quick_Hide_Desc"])
+    castbarQuickHide:HookScript("OnMouseDown", function(self, button)
         if button == "RightButton" then
-            if not BetterBlizzPlatesDB.hideCastbarTextInt then
-                BetterBlizzPlatesDB.hideCastbarTextInt = true
+            if not BetterBlizzPlatesDB.castbarQuickHideAlways then
+                BetterBlizzPlatesDB.castbarQuickHideAlways = true
             else
-                BetterBlizzPlatesDB.hideCastbarTextInt = nil
+                BetterBlizzPlatesDB.castbarQuickHideAlways = nil
             end
             if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
                 self:GetScript("OnEnter")(self)
@@ -10990,325 +10993,41 @@ local function guiCastbar()
         end
     end)
 
-    local castBarRecolorInterrupt = CreateCheckbox("castBarRecolorInterrupt", L["Interrupt_CD_Color"], enableCastbarCustomization)
-    castBarRecolorInterrupt:SetPoint("TOPLEFT", interruptedByIndicator, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(castBarRecolorInterrupt, L["Tooltip_Checks_If_You_Have_Interrupt_Ready"])
-
-    local castBarNoInterruptColor = CreateFrame("Button", nil, castBarRecolorInterrupt, "UIPanelButtonTemplate")
-    castBarNoInterruptColor:SetText(L["Kick_On_Cd"])
-    castBarNoInterruptColor:SetPoint("TOPLEFT", castBarRecolorInterrupt, "BOTTOMRIGHT", -15, 3)
-    castBarNoInterruptColor:SetSize(95, 20)
-    CreateTooltip(castBarNoInterruptColor, L["Tooltip_Interrupt_On_CD"])
-    local castBarNoInterruptColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
-    castBarNoInterruptColorIcon:SetAtlas("newplayertutorial-icon-key")
-    castBarNoInterruptColorIcon:SetSize(18, 17)
-    castBarNoInterruptColorIcon:SetPoint("LEFT", castBarNoInterruptColor, "RIGHT", 0, -1)
-    UpdateColorSquare(castBarNoInterruptColorIcon, unpack(BetterBlizzPlatesDB["castBarNoInterruptColor"] or {1, 1, 1}))
-    castBarNoInterruptColor:SetScript("OnClick", function()
-        OpenColorPicker("castBarNoInterruptColor", castBarNoInterruptColorIcon)
-    end)
-
-    local castBarDelayedInterruptColor = CreateFrame("Button", nil, castBarRecolorInterrupt, "UIPanelButtonTemplate")
-    castBarDelayedInterruptColor:SetText(L["Kick_Soon"])
-    castBarDelayedInterruptColor:SetPoint("LEFT", castBarNoInterruptColor, "RIGHT", 30, 0)
-    castBarDelayedInterruptColor:SetSize(95, 20)
-    CreateTooltip(castBarDelayedInterruptColor, L["Tooltip_Interrupt_CD_Soon"])
-    local castBarDelayedInterruptColorIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
-    castBarDelayedInterruptColorIcon:SetAtlas("newplayertutorial-icon-key")
-    castBarDelayedInterruptColorIcon:SetSize(18, 17)
-    castBarDelayedInterruptColorIcon:SetPoint("LEFT", castBarDelayedInterruptColor, "RIGHT", 0, -1)
-    UpdateColorSquare(castBarDelayedInterruptColorIcon, unpack(BetterBlizzPlatesDB["castBarDelayedInterruptColor"] or {1, 1, 1}))
-    castBarDelayedInterruptColor:SetScript("OnClick", function()
-        OpenColorPicker("castBarDelayedInterruptColor", castBarDelayedInterruptColorIcon)
-    end)
-
-    -- local castbarEmphasisSettingsText = guiCastbar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    -- castbarEmphasisSettingsText:SetPoint("LEFT", guiCastbar, "TOPRIGHT", -280, -430)
-    -- castbarEmphasisSettingsText:SetText("Castbar emphasis settings")
-    -- local castbarSettingsEmphasisIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
-    -- castbarSettingsEmphasisIcon:SetAtlas("powerswirlanimation-starburst-soulbinds")
-    -- castbarSettingsEmphasisIcon:SetSize(36, 36)
-    -- castbarSettingsEmphasisIcon:SetVertexColor(1,0,0)
-    -- castbarSettingsEmphasisIcon:SetPoint("RIGHT", castbarEmphasisSettingsText, "LEFT", 5, 0)
-
-    -- local enableCastbarEmphasis = CreateCheckbox("enableCastbarEmphasis", "Cast Emphasis", enableCastbarCustomization)
-    -- enableCastbarEmphasis:SetPoint("TOPLEFT", castbarEmphasisSettingsText, "BOTTOMLEFT", -10, pixelsOnFirstBox)
-    -- enableCastbarEmphasis:HookScript("OnClick", function (self)
-    --     CheckAndToggleCheckboxes(enableCastbarEmphasis)
-    --     if self:GetChecked() then
-    --         listFrame:SetAlpha(1)
-    --     else
-    --         listFrame:SetAlpha(0.5)
-    --     end
-    -- end)
-    -- CreateTooltipTwo(enableCastbarEmphasis, "Castbar Emphasis", "Enable to adjust how the castbar looks for specific spells from the list. Will also ensure the castbar is not being covered by other nameplates during cast.")
-
-    -- local castBarEmphasisOnlyInterruptable = CreateCheckbox("castBarEmphasisOnlyInterruptable", "Interruptable cast only", enableCastbarEmphasis)
-    -- castBarEmphasisOnlyInterruptable:SetPoint("LEFT", enableCastbarEmphasis.text, "RIGHT", 0, 0)
-    -- CreateTooltip(castBarEmphasisOnlyInterruptable, "Only apply emphasis settings if the cast is interruptable")
-
-    -- local castBarEmphasisHealthbarColor = CreateCheckbox("castBarEmphasisHealthbarColor", "Color healthbar", enableCastbarEmphasis)
-    -- castBarEmphasisHealthbarColor:SetPoint("TOPLEFT", enableCastbarEmphasis, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
-    -- CreateTooltip(castBarEmphasisHealthbarColor, "Color the healthbar the color you've set\nin the list if that spell is being cast.")
-
-    -- local castBarEmphasisColor = CreateCheckbox("castBarEmphasisColor", "Color castbar", enableCastbarEmphasis)
-    -- castBarEmphasisColor:SetPoint("LEFT", castBarEmphasisHealthbarColor.text, "RIGHT", 0, 0)
-    -- CreateTooltip(castBarEmphasisColor, "Color the castbar the color you've set\nin the list if that spell is being cast.")
-
-    -- local castBarEmphasisSelfColor = CreateCheckbox("castBarEmphasisSelfColor", "Self Color", enableCastbarEmphasis)
-    -- castBarEmphasisSelfColor:SetPoint("LEFT", castBarEmphasisColor.text, "RIGHT", 0, 0)
-    -- CreateTooltipTwo(castBarEmphasisSelfColor, "Self Color", "Color a specific color if the cast is on me.\n\n|cff32f795Right-click to change Self Color.|r", "This is only for NPCs, due to API limitations.")
-    -- castBarEmphasisSelfColor:HookScript("OnMouseDown", function(self, button)
-    --     if button == "RightButton" then
-    --         OpenColorOptions(BetterBlizzPlatesDB.castBarEmphasisSelfColorRGB, BBP.RefreshAllNameplates)
-    --     end
-    -- end)
-
-    -- local castBarEmphasisHeight = CreateCheckbox("castBarEmphasisHeight", "Height", enableCastbarEmphasis)
-    -- castBarEmphasisHeight:SetPoint("TOPLEFT", castBarEmphasisHealthbarColor, "BOTTOMLEFT", 0, -2)
-
-    -- local castBarEmphasisIcon = CreateCheckbox("castBarEmphasisIcon", "Icon size", enableCastbarEmphasis)
-    -- castBarEmphasisIcon:SetPoint("TOPLEFT", castBarEmphasisHeight, "BOTTOMLEFT", 0, pixelsBetweenBoxedWSlider)
-
-    -- local castBarEmphasisText = CreateCheckbox("castBarEmphasisText", "Text size", enableCastbarEmphasis)
-    -- castBarEmphasisText:SetPoint("TOPLEFT", castBarEmphasisIcon, "BOTTOMLEFT", 0, pixelsBetweenBoxedWSlider)
-
-    -- local castBarEmphasisSpark = CreateCheckbox("castBarEmphasisSpark", "Spark", enableCastbarEmphasis)
-    -- castBarEmphasisSpark:SetPoint("TOPLEFT", castBarEmphasisText, "BOTTOMLEFT", 0, pixelsBetweenBoxedWSlider)
-    -- CreateTooltip(castBarEmphasisSpark, "Spark is the little texture at the end of the current cast progress")
-
-    -- local castBarEmphasisHeightValue = CreateSlider(enableCastbarEmphasis, "Emphasis height", 4, 40, 0.1, "castBarEmphasisHeightValue", "Height")
-    -- castBarEmphasisHeightValue:SetPoint("LEFT", castBarEmphasisHeight, "RIGHT", 50, -1)
-
-    -- local castBarEmphasisIconScale = CreateSlider(enableCastbarEmphasis, "Emphasis Icon Size", 1, 3, 0.1, "castBarEmphasisIconScale")
-    -- castBarEmphasisIconScale:SetPoint("LEFT", castBarEmphasisIcon, "RIGHT", 50, -1)
-
-    -- local castBarEmphasisTextScale = CreateSlider(enableCastbarEmphasis, "Emphasis text size", 0.5, 2.5, 0.1, "castBarEmphasisTextScale")
-    -- castBarEmphasisTextScale:SetPoint("LEFT", castBarEmphasisText, "RIGHT", 50, -1)
-
-    -- local castBarEmphasisSparkHeight = CreateSlider(enableCastbarEmphasis, "Emphasis Spark Size", 25, 60, 1, "castBarEmphasisSparkHeight", "Height")
-    -- castBarEmphasisSparkHeight:SetPoint("LEFT", castBarEmphasisSpark, "RIGHT", 50, -1)
-
-    -- local castBarInterruptHighlighterText = guiCastbar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    -- castBarInterruptHighlighterText:SetPoint("LEFT", guiCastbar, "TOPRIGHT", -610, -485)
-    -- castBarInterruptHighlighterText:SetText("Castbar Edge Highlight settings")
-
-    -- local castBarInterruptHighlighter = CreateCheckbox("castBarInterruptHighlighter", "Castbar Edge Highlight", enableCastbarCustomization)
-    -- castBarInterruptHighlighter:SetPoint("TOPLEFT", castBarInterruptHighlighterText, "BOTTOMLEFT", 0, pixelsOnFirstBox)
-    -- CreateTooltipTwo(castBarInterruptHighlighter, "Castbar Highlight", "Color the start and end of the castbar differently.\nSet the time in seconds when to color the castbar below.")
-    -- castBarInterruptHighlighter:HookScript("OnClick", function(self)
-    --     BBP.ToggleSpellCastEventRegistration()
-    --     if not self:GetChecked() then
-    --         BBP.ShowPopup("BBP_CONFIRM_RELOAD")
-    --     end
-    -- end)
-
-    -- local castBarInterruptHighlighterColorDontInterrupt = CreateCheckbox("castBarInterruptHighlighterColorDontInterrupt", "Re-color between portion", castBarInterruptHighlighter)
-    -- castBarInterruptHighlighterColorDontInterrupt:SetPoint("TOPLEFT", castBarInterruptHighlighter, "BOTTOMLEFT", 15, pixelsBetweenBoxes)
-    -- CreateTooltipTwo(castBarInterruptHighlighterColorDontInterrupt, "Color Inbetween", "Color the middle section between start and finish as well. Pick a color.")
-
-    -- local castBarInterruptHighlighterDontInterruptRGB = CreateFrame("Button", nil, castBarInterruptHighlighterColorDontInterrupt, "UIPanelButtonTemplate")
-    -- castBarInterruptHighlighterDontInterruptRGB:SetText("Color")
-    -- castBarInterruptHighlighterDontInterruptRGB:SetPoint("LEFT", castBarInterruptHighlighterColorDontInterrupt.text, "RIGHT", 0, 0)
-    -- castBarInterruptHighlighterDontInterruptRGB:SetSize(50, 20)
-    -- CreateTooltip(castBarInterruptHighlighterDontInterruptRGB, "Castbar color inbetween the start and finish")
-    -- local castBarInterruptHighlighterDontInterruptRGBIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
-    -- castBarInterruptHighlighterDontInterruptRGBIcon:SetAtlas("newplayertutorial-icon-key")
-    -- castBarInterruptHighlighterDontInterruptRGBIcon:SetSize(18, 17)
-    -- castBarInterruptHighlighterDontInterruptRGBIcon:SetPoint("LEFT", castBarInterruptHighlighterDontInterruptRGB, "RIGHT", 0, -1)
-    -- UpdateColorSquare(castBarInterruptHighlighterDontInterruptRGBIcon, unpack(BetterBlizzPlatesDB["castBarInterruptHighlighterDontInterruptRGB"] or {1, 1, 1}))
-    -- castBarInterruptHighlighterDontInterruptRGB:SetScript("OnClick", function()
-    --     OpenColorPicker("castBarInterruptHighlighterDontInterruptRGB", castBarInterruptHighlighterDontInterruptRGBIcon)
-    -- end)
-
-    -- local castBarInterruptHighlighterStartTime = CreateSlider(castBarInterruptHighlighter, "Start Seconds", 0, 2, 0.01, "castBarInterruptHighlighterStartTime", "Height")
-    -- castBarInterruptHighlighterStartTime:SetPoint("TOPLEFT", castBarInterruptHighlighterColorDontInterrupt, "BOTTOMLEFT", 10, -6)
-    -- CreateTooltip(castBarInterruptHighlighterStartTime, "How many seconds of the start of the cast you want to color the castbar.")
-
-    -- local castBarInterruptHighlighterEndTime = CreateSlider(castBarInterruptHighlighter, "End Seconds", 0, 2, 0.01, "castBarInterruptHighlighterEndTime", "Height")
-    -- castBarInterruptHighlighterEndTime:SetPoint("TOPLEFT", castBarInterruptHighlighterStartTime, "BOTTOMLEFT", 0, -10)
-    -- CreateTooltip(castBarInterruptHighlighterEndTime, "How many seconds of the end of the cast you want to color the castbar.")
-
-    -- local castBarInterruptHighlighterInterruptRGB = CreateFrame("Button", nil, castBarInterruptHighlighter, "UIPanelButtonTemplate")
-    -- castBarInterruptHighlighterInterruptRGB:SetText("Color")
-    -- castBarInterruptHighlighterInterruptRGB:SetPoint("LEFT", castBarInterruptHighlighterEndTime, "RIGHT", 0, 15)
-    -- castBarInterruptHighlighterInterruptRGB:SetSize(50, 20)
-    -- CreateTooltip(castBarInterruptHighlighterInterruptRGB, "Castbar edge color")
-    -- local castBarInterruptHighlighterInterruptRGBIcon = guiCastbar:CreateTexture(nil, "ARTWORK")
-    -- castBarInterruptHighlighterInterruptRGBIcon:SetAtlas("newplayertutorial-icon-key")
-    -- castBarInterruptHighlighterInterruptRGBIcon:SetSize(18, 17)
-    -- castBarInterruptHighlighterInterruptRGBIcon:SetPoint("LEFT", castBarInterruptHighlighterInterruptRGB, "RIGHT", 0, -1)
-    -- UpdateColorSquare(castBarInterruptHighlighterInterruptRGBIcon, unpack(BetterBlizzPlatesDB["castBarInterruptHighlighterInterruptRGB"] or {1, 1, 1}))
-    -- castBarInterruptHighlighterInterruptRGB:SetScript("OnClick", function()
-    --     OpenColorPicker("castBarInterruptHighlighterInterruptRGB", castBarInterruptHighlighterInterruptRGBIcon)
-    -- end)
-
-    -- CheckAndToggleCheckboxes(castBarInterruptHighlighter)
-    -- if not BetterBlizzPlatesDB.castBarInterruptHighlighter then
-    --     castBarInterruptHighlighterInterruptRGBIcon:SetAlpha(0)
-    -- end
-
-    enableCastbarCustomization:HookScript("OnClick", function (self)
-        CheckAndToggleCheckboxes(enableCastbarCustomization)
-        if self:GetChecked() then
-            -- if BetterBlizzPlatesDB.enableCastbarEmphasis then
-            --     listFrame:SetAlpha(1)
-            -- end
-            if BetterBlizzPlatesDB.castBarRecolor then
-                castBarCastColorIcon:SetAlpha(1)
-                castBarChanneledColorIcon:SetAlpha(1)
-                castBarNoninterruptibleColorIcon:SetAlpha(1)
-            else
-                castBarCastColorIcon:SetAlpha(0)
-                castBarChanneledColorIcon:SetAlpha(0)
-                castBarNoninterruptibleColorIcon:SetAlpha(0)
-            end
-            if BetterBlizzPlatesDB.castBarRecolorInterrupt then
-                castBarNoInterruptColorIcon:SetAlpha(1)
-                castBarDelayedInterruptColorIcon:SetAlpha(1)
-            else
-                castBarNoInterruptColorIcon:SetAlpha(0)
-                castBarDelayedInterruptColorIcon:SetAlpha(0)
-            end
-            if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
-                castBarBackgroundColor:Enable()
-                castBarBackgroundColor:SetAlpha(1)
-                castBarBackgroundColorIcon:SetAlpha(1)
-            else
-                castBarBackgroundColor:Disable()
-                castBarBackgroundColor:SetAlpha(0)
-                castBarBackgroundColorIcon:SetAlpha(0)
-            end
-        else
-            --listFrame:SetAlpha(0.5)
-            castBarCastColorIcon:SetAlpha(0)
-            castBarChanneledColorIcon:SetAlpha(0)
-            castBarNoInterruptColorIcon:SetAlpha(0)
-            castBarDelayedInterruptColorIcon:SetAlpha(0)
-            castBarBackgroundColor:SetAlpha(0)
-            castBarBackgroundColorIcon:SetAlpha(0)
+    local normalCastbarForEmpoweredCasts = Check(right, "normalCastbarForEmpoweredCasts", L["Normal_Empowered_Cast"])
+    CreateTooltip(normalCastbarForEmpoweredCasts, L["Tooltip_Instead_Of_The_Jank_Tiered_Castbar"])
+    normalCastbarForEmpoweredCasts:HookScript("OnClick", function(self)
+        if BetterBlizzFramesDB then
+            BetterBlizzFramesDB.normalCastbarForEmpoweredCasts = self:GetChecked()
         end
+    end)
+
+    local textureDropdowns = {
+        { customCastbarTextureDropdown, "useCustomCastbarTexture" },
+        { customCastbarNonInterruptibleTextureDropdown, "useCustomCastbarTexture" },
+        { customCastbarBGTextureDropdown, "useCustomCastbarBGTexture" },
+    }
+    local function UpdatePanelState()
+        local custom = BetterBlizzPlatesDB.enableCastbarCustomization
+        for _, entry in ipairs(textureDropdowns) do
+            local enabled = custom and BetterBlizzPlatesDB[entry[2]] and true or false
+            entry[1]:SetEnabled(enabled)
+            entry[1]:SetAlpha(enabled and 1 or 0.5)
+        end
+        UpdateSwatches()
+    end
+
+    enableCastbarCustomization:HookScript("OnClick", function()
+        CheckAndToggleCheckboxes(enableCastbarCustomization)
+        guiCastbar.UpdateCastIconControls()
+        hideCastbarTextOptions:UpdateEnabled()
+        UpdatePanelState()
         BBP.ShowPopup("BBP_CONFIRM_RELOAD")
     end)
-
-    -- castBarInterruptHighlighter:HookScript("OnClick", function(self)
-    --     CheckAndToggleCheckboxes(castBarInterruptHighlighter)
-    --     if self:GetChecked() then
-    --         if BetterBlizzPlatesDB.castBarInterruptHighlighterColorDontInterrupt then
-    --             castBarInterruptHighlighterDontInterruptRGBIcon:SetAlpha(1)
-    --         end
-    --         castBarInterruptHighlighterInterruptRGBIcon:SetAlpha(1)
-    --     else
-    --         castBarInterruptHighlighterDontInterruptRGBIcon:SetAlpha(0)
-    --         castBarInterruptHighlighterInterruptRGBIcon:SetAlpha(0)
-    --     end
-    -- end)
-
-    -- castBarInterruptHighlighterColorDontInterrupt:HookScript("OnClick", function(self)
-    --     CheckAndToggleCheckboxes(castBarInterruptHighlighter)
-    --     if self:GetChecked() then
-    --         castBarInterruptHighlighterDontInterruptRGBIcon:SetAlpha(1)
-    --     else
-    --         castBarInterruptHighlighterDontInterruptRGBIcon:SetAlpha(0)
-    --     end
-    -- end)
-
-    castBarRecolor:HookScript("OnClick", function (self)
-        CheckAndToggleCheckboxes(castBarRecolor)
-        if self:GetChecked() then
-            castBarCastColorIcon:SetAlpha(1)
-            castBarChanneledColorIcon:SetAlpha(1)
-            castBarNoninterruptibleColorIcon:SetAlpha(1)
-        else
-            castBarCastColorIcon:SetAlpha(0)
-            castBarChanneledColorIcon:SetAlpha(0)
-            castBarNoninterruptibleColorIcon:SetAlpha(0)
-        end
-    end)
-
-    castBarRecolorInterrupt:HookScript("OnClick", function (self)
-        CheckAndToggleCheckboxes(castBarRecolorInterrupt)
-        if self:GetChecked() then
-            castBarNoInterruptColorIcon:SetAlpha(1)
-            castBarDelayedInterruptColorIcon:SetAlpha(1)
-        else
-            castBarNoInterruptColorIcon:SetAlpha(0)
-            castBarDelayedInterruptColorIcon:SetAlpha(0)
-        end
-    end)
-
-    useCustomCastbarBGTexture:HookScript("OnClick", function (self)
-        --CheckAndToggleCheckboxes(useCustomCastbarBGTexture)
-        if self:GetChecked() then
-            customCastbarBGTextureDropdown:Enable()
-            customCastbarBGTextureDropdown:SetAlpha(1)
-            castBarBackgroundColor:Enable()
-            castBarBackgroundColor:SetAlpha(1)
-            castBarBackgroundColorIcon:SetAlpha(1)
-        else
-            customCastbarBGTextureDropdown:Disable()
-            customCastbarBGTextureDropdown:SetAlpha(0.5)
-            castBarBackgroundColor:Disable()
-            castBarBackgroundColor:SetAlpha(0)
-            castBarBackgroundColorIcon:SetAlpha(0)
-        end
-    end)
-
-    local function TogglePanel()
-        if BBP.variablesLoaded then
-            -- if BetterBlizzPlatesDB.enableCastbarEmphasis then
-            --     listFrame:SetAlpha(1)
-            -- else
-            --     listFrame:SetAlpha(0.5)
-            -- end
-            if BetterBlizzPlatesDB.castBarRecolor then
-                castBarCastColor:Enable()
-                castBarChanneledColor:Enable()
-                castBarCastColorIcon:SetAlpha(1)
-                castBarChanneledColorIcon:SetAlpha(1)
-                castBarNoninterruptibleColor:Enable()
-                castBarNoninterruptibleColorIcon:SetAlpha(1)
-            else
-                castBarCastColor:Disable()
-                castBarChanneledColor:Disable()
-                castBarCastColorIcon:SetAlpha(0)
-                castBarChanneledColorIcon:SetAlpha(0)
-                castBarNoninterruptibleColor:Disable()
-                castBarNoninterruptibleColorIcon:SetAlpha(0)
-            end
-            if BetterBlizzPlatesDB.castBarRecolorInterrupt then
-                castBarNoInterruptColor:Enable()
-                castBarDelayedInterruptColor:Enable()
-                castBarNoInterruptColorIcon:SetAlpha(1)
-                castBarDelayedInterruptColorIcon:SetAlpha(1)
-            else
-                castBarNoInterruptColor:Disable()
-                castBarDelayedInterruptColor:Disable()
-                castBarNoInterruptColorIcon:SetAlpha(0)
-                castBarDelayedInterruptColorIcon:SetAlpha(0)
-            end
-            if BetterBlizzPlatesDB.useCustomCastbarBGTexture then
-                customCastbarBGTextureDropdown:Enable()
-                castBarBackgroundColor:Enable()
-                castBarBackgroundColor:SetAlpha(1)
-                castBarBackgroundColorIcon:SetAlpha(1)
-            else
-                customCastbarBGTextureDropdown:Disable()
-                castBarBackgroundColor:Disable()
-                castBarBackgroundColor:SetAlpha(0)
-                castBarBackgroundColorIcon:SetAlpha(0)
-            end
-            if not BetterBlizzPlatesDB.castBarInterruptHighlighterColorDontInterrupt then
-                -- castBarInterruptHighlighterDontInterruptRGBIcon:SetAlpha(0)
-                -- castBarInterruptHighlighterDontInterruptRGB:Disable()
-            end
-        else
-            C_Timer.After(1, function()
-                TogglePanel()
-            end)
-        end
+    for _, cb in ipairs({ castBarRecolor, castBarRecolorInterrupt, useCustomCastbarTexture, useCustomCastbarBGTexture }) do
+        cb:HookScript("OnClick", UpdatePanelState)
     end
-    TogglePanel()
+    guiCastbar:HookScript("OnShow", UpdatePanelState)
+    UpdatePanelState()
 end
 
 local function guiClickingAndStacking()
@@ -11346,12 +11065,16 @@ local function guiClickingAndStacking()
     CreateTooltipTwo(nameplateBoxHeight, L["Nameplate_Box_Height"], L["Tooltip_Nameplate_Box_Height_Desc"])
     local nameplateBoxHeightReset = CreateResetButton(nameplateBoxHeight, "nameplateBoxHeight", nameplateBoxHeight)
 
-    local nameplateVerticalPosition = CreateSlider(guiClickNStack, L["Nameplate_Vertical_Position"], -190, 70, 1, "nameplateVerticalPosition", "Y")
+    local nameplateVerticalPosition = CreateSlider(guiClickNStack, L["Enemy_Vertical_Position"], -190, 70, 1, "nameplateVerticalPosition", "Y")
     nameplateVerticalPosition:SetPoint("TOPLEFT", nameplateBoxHeight, "BOTTOMLEFT", 0, -17)
     CreateResetButton(nameplateVerticalPosition, "nameplateVerticalPosition", guiClickNStack)
 
+    local friendlyNameplateVerticalPosition = CreateSlider(guiClickNStack, L["Friendly_Vertical_Position"], -190, 70, 1, "friendlyNameplateVerticalPosition", "Y")
+    friendlyNameplateVerticalPosition:SetPoint("TOPLEFT", nameplateVerticalPosition, "BOTTOMLEFT", 0, -17)
+    CreateResetButton(friendlyNameplateVerticalPosition, "friendlyNameplateVerticalPosition", guiClickNStack)
+
     local stackingText = guiClickNStack:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    stackingText:SetPoint("TOPLEFT", guiClickNStack, "TOPLEFT", 20, -80)
+    stackingText:SetPoint("TOPLEFT", guiClickNStack, "TOPLEFT", 20, -114)
     stackingText:SetText(L["Stacking"])
     stackingText:SetFont(fontLarge, 16)
     stackingText:SetTextColor(1,1,1)
@@ -11460,7 +11183,7 @@ local function guiClickingAndStacking()
     end)
 
     local clickingText = guiClickNStack:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    clickingText:SetPoint("TOPLEFT", guiClickNStack, "TOPLEFT", 20, hasMotionSpeed and -326 or -295)
+    clickingText:SetPoint("TOPLEFT", guiClickNStack, "TOPLEFT", 20, hasMotionSpeed and -360 or -329)
     clickingText:SetText(L["Clicking"])
     clickingText:SetFont(fontLarge, 16)
     clickingText:SetTextColor(1,1,1)
@@ -11485,66 +11208,6 @@ local function guiClickingAndStacking()
     nameplateClickVerticalAdjustment:SetPoint("TOPLEFT", nameplateExtraClickHeight, "BOTTOMLEFT", 0, -16)
     CreateTooltipTwo(nameplateClickVerticalAdjustment, L["Clickable_Vertical_Position"], L["Tooltip_Clickable_Vertical_Position_Desc"])
     CreateResetButton(nameplateClickVerticalAdjustment, "nameplateClickVerticalAdjustment", guiClickNStack)
-
-    local castbarText = guiClickNStack:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    castbarText:SetPoint("TOPLEFT", guiClickNStack, "TOPLEFT", 20, hasMotionSpeed and -461 or -430)
-    castbarText:SetText(L["Castbar_Adjustments"])
-    castbarText:SetFont(fontLarge, 16)
-    castbarText:SetTextColor(1,1,1)
-    local icon = guiClickNStack:CreateTexture(nil, "ARTWORK")
-    icon:SetAtlas("UI-CastingBar-Pip")
-    icon:SetSize(22, 22)
-    icon:SetPoint("RIGHT", castbarText, "LEFT", -3, -1)
-
-
-    local fitCastIconLeftOfCast
-    local classic = BetterBlizzPlatesDB.classicNameplates
-    if not classic then
-        fitCastIconLeftOfCast = CreateCheckbox("fitCastIconLeftOfCast", L["Fit_Cast_Icon_On_The_Left"], guiClickNStack)
-        fitCastIconLeftOfCast:SetPoint("TOPLEFT", castbarText, "BOTTOMLEFT", -4, -pixelsOnFirstBox)
-        CreateTooltipTwo(fitCastIconLeftOfCast, L["Fit_Cast_Icon_On_The_Left"], L["Tooltip_Fit_Cast_Icon_On_The_Left_Desc"], L["Tooltip_Fit_Cast_Icon_Right_Note"] .. "\n" .. L["Tooltip_Not_Used_With_Classic_Castbar"])
-        local function UpdateFitCastIconEnabled()
-            if BBP.UsesClassicCastbar() then
-                DisableElement(fitCastIconLeftOfCast)
-            else
-                EnableElement(fitCastIconLeftOfCast)
-            end
-        end
-        fitCastIconLeftOfCast:SetMotionScriptsWhileDisabled(true)
-        fitCastIconLeftOfCast:HookScript("OnShow", UpdateFitCastIconEnabled)
-        UpdateFitCastIconEnabled()
-    end
-
-    -- local fitCastIconLeftOfCastAndHp = CreateCheckbox("fitCastIconLeftOfCastAndHp", "Fit Cast Icon Left of Bars", guiClickNStack)
-    -- fitCastIconLeftOfCastAndHp:SetPoint("TOPLEFT", fitCastIconLeftOfCast, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    -- CreateTooltipTwo(fitCastIconLeftOfCastAndHp, "Fit Cast Icon Left of Bars", "Position the castbar icon on the left side of the healthbar and cast bar, stretching from the bottom of the cast bar to the top of the healthbar.")
-
-    local xPos, yPos
-    if classic then
-        xPos, yPos = 8, -12
-    else
-        xPos, yPos = 12, -10
-    end
-
-    local enemyCastbarExtraWidth = CreateSlider(guiClickNStack, L["Castbar_Width_Enemy"], -60, 60, 1, "enemyCastbarExtraWidth", "X")
-    enemyCastbarExtraWidth:SetPoint("TOPLEFT", fitCastIconLeftOfCast or castbarText, "BOTTOMLEFT", xPos, yPos)
-    CreateTooltipTwo(enemyCastbarExtraWidth, L["Enemy_Castbar_Extra_Width"], L["Tooltip_Enemy_Castbar_Extra_Width_Desc"])
-    CreateResetButton(enemyCastbarExtraWidth, "enemyCastbarExtraWidth", guiClickNStack)
-
-    local friendlyCastbarExtraWidth = CreateSlider(guiClickNStack, L["Castbar_Width_Friendly"], -60, 60, 1, "friendlyCastbarExtraWidth", "X")
-    friendlyCastbarExtraWidth:SetPoint("TOPLEFT", enemyCastbarExtraWidth, "BOTTOMLEFT", 0, -16)
-    CreateTooltipTwo(friendlyCastbarExtraWidth, L["Friendly_Castbar_Extra_Width"], L["Tooltip_Friendly_Castbar_Extra_Width_Desc"])
-    CreateResetButton(friendlyCastbarExtraWidth, "friendlyCastbarExtraWidth", guiClickNStack)
-
-    local castBarXPos = CreateSlider(guiClickNStack, L["Castbar_Horizontal_Position"], -50, 50, 1, "castBarXPos", "X")
-    castBarXPos:SetPoint("TOPLEFT", friendlyCastbarExtraWidth, "BOTTOMLEFT", 0, -16)
-    CreateTooltipTwo(castBarXPos, L["Castbar_Horizontal_Position"], L["Tooltip_Castbar_Horizontal_Position_Desc"])
-    CreateResetButton(castBarXPos, "castBarXPos", guiClickNStack)
-
-    local spacingBetweenCastAndHealthbar = CreateSlider(guiClickNStack, L["Castbar_Vertical_Position"], -50, 50, 1, "spacingBetweenCastAndHealthbar", "Y")
-    spacingBetweenCastAndHealthbar:SetPoint("TOPLEFT", castBarXPos, "BOTTOMLEFT", 0, -16)
-    CreateTooltipTwo(spacingBetweenCastAndHealthbar, L["Castbar_Vertical_Position"], L["Tooltip_Castbar_Vertical_Position_Desc"])
-    CreateResetButton(spacingBetweenCastAndHealthbar, "spacingBetweenCastAndHealthbar", guiClickNStack)
 
     local clickAndStackTestButton = CreateFrame("Button", nil, guiClickNStack, "GameMenuButtonTemplate")
     clickAndStackTestButton:SetSize(110, 25)

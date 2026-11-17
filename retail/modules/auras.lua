@@ -282,6 +282,7 @@ function BBP.NormalizeAuraList(list)
                 if type(entry.comment) == "string" and entry.comment ~= "" then
                     newEntry.comment = entry.comment
                 end
+                newEntry.ids = entry.ids
                 for _, flag in ipairs(AURA_LIST_FLAGS) do
                     if flags[flag] then newEntry[flag] = true end
                 end
@@ -317,8 +318,10 @@ local function CollectList(listName, into, dst)
     for key, entry in pairs(list) do
         local spellID = type(entry) == "table" and (tonumber(entry.id) or tonumber(key))
         if spellID then
+            local ids = entry.ids
             if not dst then
                 into[spellID] = true
+                for _, id in ipairs(ids or {}) do into[id] = true end
             else
                 local onlyMine = entry.onlyMine
                 local important = entry.important
@@ -341,10 +344,12 @@ local function CollectList(listName, into, dst)
                 else
                     bucket = into
                 end
+                local pandemic = not bigCC and not important and not enlarged and entry.pandemic
                 bucket[spellID] = true
-
-                if not bigCC and not important and not enlarged and entry.pandemic then
-                    dst.pandemic[spellID] = true
+                if pandemic then dst.pandemic[spellID] = true end
+                for _, id in ipairs(ids or {}) do
+                    bucket[id] = true
+                    if pandemic then dst.pandemic[id] = true end
                 end
             end
         end

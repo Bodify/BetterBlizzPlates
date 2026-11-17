@@ -1810,6 +1810,12 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             end
 
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
+        elseif title == L["Show_Circle_On_ID"] then
+            local tooltipText = "\n|cff32f795" .. L["Tooltip_Right_Click_Class_Color_Circle"] .. "|r"
+            if BetterBlizzPlatesDB.showCircleOnArenaIDClassColor then
+                tooltipText = tooltipText .. "|A:ParagonReputation_Checkmark:15:15|a"
+            end
+            GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         elseif title == L["Sort_Auras_By_Duration"] then
             local tooltipText = "\n|cff32f795" .. L["Tooltip_Right_Click_To_Reverse_Duration_Sort"] .. "|r"
             if BetterBlizzPlatesDB.sortDurationAurasReverse then
@@ -5048,7 +5054,28 @@ local function CreateSearchFrame()
             return true
         end
 
-        local function applyRightClickScript(searchCheckbox, originalCheckbox)
+        local function copyTooltip(searchCheckbox, original, label)
+            if original.tooltipMainText then
+                CreateTooltipTwo(searchCheckbox, original.tooltipTitle, original.tooltipMainText, original.tooltipSubText, nil, original.tooltipCVarName, nil, SearchCategoryOf(original))
+            elseif original.tooltipTitle then
+                CreateTooltipTwo(searchCheckbox, original.tooltipTitle, nil, nil, nil, nil, nil, SearchCategoryOf(original))
+            else
+                CreateTooltipTwo(searchCheckbox, label, nil, nil, nil, nil, nil, SearchCategoryOf(original))
+            end
+        end
+
+        local function restoreSearchPoints(popup)
+            local points = popup.bbpSearchPoints
+            if points then
+                popup.bbpSearchPoints = nil
+                popup:ClearAllPoints()
+                for _, point in ipairs(points) do
+                    popup:SetPoint(unpack(point))
+                end
+            end
+        end
+
+        local function applyRightClickScript(searchCheckbox, originalCheckbox, label)
             local handlers = originalCheckbox.bbpMouseDownHandlers
             if not handlers and originalCheckbox.GetScript then
                 local originalScript = originalCheckbox:GetScript("OnMouseDown")
@@ -5057,8 +5084,40 @@ local function CreateSearchFrame()
             if handlers and #handlers > 0 then
                 searchCheckbox:SetScript("OnMouseDown", function(self, button)
                     if button == "RightButton" then
+                        local wasShown = {}
+                        for _, child in ipairs({ UIParent:GetChildren() }) do
+                            if not child:IsForbidden() and child:IsShown() then
+                                wasShown[child] = true
+                            end
+                        end
                         for _, handler in ipairs(handlers) do
                             handler(originalCheckbox, button)
+                        end
+                        for _, child in ipairs({ UIParent:GetChildren() }) do
+                            if not child:IsForbidden() and child:IsShown() and not wasShown[child] then
+                                local _, relativeTo = child:GetPoint(1)
+                                if relativeTo and not relativeTo:IsVisible() then
+                                    local points = {}
+                                    for i = 1, child:GetNumPoints() do
+                                        points[i] = { child:GetPoint(i) }
+                                    end
+                                    child.bbpSearchPoints = points
+                                    child:ClearAllPoints()
+                                    child:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -6)
+                                    child:SetClampedToScreen(true)
+                                    if not child.bbpSearchHooked then
+                                        child.bbpSearchHooked = true
+                                        child:HookScript("OnHide", restoreSearchPoints)
+                                    end
+                                end
+                            end
+                        end
+                        self:SetChecked(originalCheckbox:GetChecked())
+                        copyTooltip(self, originalCheckbox, label)
+                        UpdateSearchDropdownStates()
+                        local owner = GameTooltip:IsShown() and GameTooltip:GetOwner()
+                        if owner == self or owner == originalCheckbox then
+                            self:GetScript("OnEnter")(self)
                         end
                     end
                 end)
@@ -5161,16 +5220,9 @@ local function CreateSearchFrame()
                     UpdateSearchDropdownStates()
                 end)
 
-                applyRightClickScript(resultCheckBox, data.checkbox)
+                applyRightClickScript(resultCheckBox, data.checkbox, data.label)
 
-                -- Reapply tooltip
-                if data.checkbox.tooltipMainText then
-                    CreateTooltipTwo(resultCheckBox, data.checkbox.tooltipTitle, data.checkbox.tooltipMainText, data.checkbox.tooltipSubText, nil, data.checkbox.tooltipCVarName, nil, SearchCategoryOf(data.checkbox))
-                elseif data.checkbox.tooltipTitle then
-                    CreateTooltipTwo(resultCheckBox, data.checkbox.tooltipTitle, nil, nil, nil, nil, nil, SearchCategoryOf(data.checkbox))
-                else
-                    CreateTooltipTwo(resultCheckBox, data.label, nil, nil, nil, nil, nil, SearchCategoryOf(data.checkbox))
-                end
+                copyTooltip(resultCheckBox, data.checkbox, data.label)
 
                 resultCheckBox:Show()
 
@@ -8252,7 +8304,16 @@ local function guiPositionAndScale()
 
     local showCircleOnArenaID = CreateCheckbox("showCircleOnArenaID", L["Show_Circle_On_ID"], contentFrame)
     showCircleOnArenaID:SetPoint("TOPLEFT", arenaIndicatorTestMode2, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
-    CreateTooltip(showCircleOnArenaID, L["Tooltip_Show_A_Colored_Circle_On_Each"])
+    CreateTooltipTwo(showCircleOnArenaID, L["Show_Circle_On_ID"], L["Tooltip_Show_Circle_On_ID_Desc"])
+    showCircleOnArenaID:HookScript("OnMouseDown", function(self, button)
+        if button == "RightButton" then
+            BetterBlizzPlatesDB.showCircleOnArenaIDClassColor = not BetterBlizzPlatesDB.showCircleOnArenaIDClassColor
+            BBP.RefreshAllNameplates()
+            if GameTooltip:IsShown() and GameTooltip:GetOwner() == self then
+                self:GetScript("OnEnter")(self)
+            end
+        end
+    end)
 
     ----------------------
     -- Class Icon
@@ -12605,12 +12666,12 @@ local function guiClickingAndStacking()
         xPos, yPos = 12, -10
     end
 
-    local enemyCastbarExtraWidth = CreateSlider(guiClickNStack, L["Castbar_Width_Enemy"], -60, 60, 1, "enemyCastbarExtraWidth", "X")
+    local enemyCastbarExtraWidth = CreateSlider(guiClickNStack, L["Enemy_Castbar_Width"], -60, 60, 1, "enemyCastbarExtraWidth", "X")
     enemyCastbarExtraWidth:SetPoint("TOPLEFT", fitCastIconLeftOfCast or castbarText, "BOTTOMLEFT", xPos, yPos)
     CreateTooltipTwo(enemyCastbarExtraWidth, L["Enemy_Castbar_Extra_Width"], L["Tooltip_Enemy_Castbar_Extra_Width_Desc"])
     CreateResetButton(enemyCastbarExtraWidth, "enemyCastbarExtraWidth", guiClickNStack)
 
-    local friendlyCastbarExtraWidth = CreateSlider(guiClickNStack, L["Castbar_Width_Friendly"], -60, 60, 1, "friendlyCastbarExtraWidth", "X")
+    local friendlyCastbarExtraWidth = CreateSlider(guiClickNStack, L["Friendly_Castbar_Width"], -60, 60, 1, "friendlyCastbarExtraWidth", "X")
     friendlyCastbarExtraWidth:SetPoint("TOPLEFT", enemyCastbarExtraWidth, "BOTTOMLEFT", 0, -16)
     CreateTooltipTwo(friendlyCastbarExtraWidth, L["Friendly_Castbar_Extra_Width"], L["Tooltip_Friendly_Castbar_Extra_Width_Desc"])
     CreateResetButton(friendlyCastbarExtraWidth, "friendlyCastbarExtraWidth", guiClickNStack)

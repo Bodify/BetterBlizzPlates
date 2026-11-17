@@ -40,12 +40,10 @@ local petSummonSpells = {
 }
 
 local function GetInterruptSpell()
-    for spellID, _ in pairs(interruptSpells) do
-        if IsSpellKnownOrOverridesKnown(spellID) or (UnitExists("pet") and IsSpellKnownOrOverridesKnown(spellID, true)) then
-            return spellID
-        end
+    for spellID in pairs(interruptSpells) do
+        local known = BBP.KnownSpellRank(spellID) or (UnitExists("pet") and BBP.KnownSpellRank(spellID, true))
+        if known then return known end
     end
-    return nil
 end
 BBP.GetInterruptSpell = GetInterruptSpell
 
@@ -82,7 +80,6 @@ local function UpdateInterruptTracking()
     end
 end
 
-local IsSpellKnownOrOverridesKnown = IsSpellKnownOrOverridesKnown
 local UnitCastingInfo = UnitCastingInfo
 local UnitChannelInfo = UnitChannelInfo
 local UnitIsFriend = UnitIsFriend
@@ -130,6 +127,7 @@ local interruptSpellUpdate = CreateFrame("Frame")
 interruptSpellUpdate:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
 interruptSpellUpdate:RegisterEvent("TRAIT_CONFIG_UPDATED")
 interruptSpellUpdate:RegisterEvent("PLAYER_TALENT_UPDATE")
+interruptSpellUpdate:RegisterEvent("LEARNED_SPELL_IN_SKILL_LINE")
 interruptSpellUpdate:SetScript("OnEvent", OnPetEvent)
 
 local cooldownFrame = CreateFrame("Frame")
@@ -274,11 +272,11 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     -- end
 
     local showCastBarIconWhenNoninterruptible = db.showCastBarIconWhenNoninterruptible
-    local castBarIconScale = db.castBarIconScale
+    local castBarIconScale = BBP.CastbarSetting(frame, "castBarIconScale")
     --local borderShieldSize = showCastBarIconWhenNoninterruptible and (castBarIconScale + 0.45) or castBarIconScale
     local castBarTexture = castBar:GetStatusBarTexture()
     local castBarRecolor = db.castBarRecolor
-    local castBarHeight = db.castBarHeight
+    local castBarHeight = BBP.CastbarSetting(frame, "castBarHeight")
     local castBarTextScale = db.castBarTextScale
     local castBarCastColor = db.castBarCastColor
     local castBarNonInterruptibleColor = db.castBarNoninterruptibleColor
@@ -313,7 +311,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
         frame.CastBarsContainer:SetHeight(castBarHeight)
         castBar.Icon:SetScale(castBarIconScale)
         if frame.castBarIconFrame then
-            frame.castBarIconFrame:SetScale(BBP.GetCastIconScale())
+            frame.castBarIconFrame:SetScale(BBP.GetCastIconScale(frame))
         end
         castBar.Spark:SetSize(4, castBarHeight + 5)
         castBar.Text:SetScale(castBarTextScale)
@@ -554,7 +552,15 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
     end
 
     if hideCastbarText then
-        castBar.Text:SetAlpha(0)
+        local hideText
+        if not UnitIsPlayer(unitToken) then
+            hideText = db.hideCastbarTextNpcs
+        elseif isAttackable then
+            hideText = db.hideCastbarTextEnemies
+        else
+            hideText = db.hideCastbarTextFriendly
+        end
+        castBar.Text:SetAlpha(hideText and 0 or 1)
     end
 
 
@@ -592,7 +598,7 @@ function BBP.CustomizeCastbar(frame, unitToken, event)
 
     castBar.Icon:SetScale(castBarIconScale)
     if frame.castBarIconFrame then
-        frame.castBarIconFrame:SetScale(BBP.GetCastIconScale())
+        frame.castBarIconFrame:SetScale(BBP.GetCastIconScale(frame))
     end
     --castBar.BorderShield:SetScale(borderShieldSize)
     castBar:SetHeight(castBarHeight)
