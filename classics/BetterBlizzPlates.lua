@@ -86,6 +86,7 @@ local defaultSettings = {
     hideNPCWhitelistOn = false,
     hideNPCArenaOnly = false,
     keepNameplatesHidden = false,
+    hideHealPrediction = false,
     colorNPC = false,
     colorNPCName = false,
     raidmarkIndicator = false,
@@ -6423,6 +6424,9 @@ local function HandleNamePlateAdded(unit)
         frame.bbpCastbarAlphaHook = true
     end
 
+    if BetterBlizzPlatesDB.hideHealPrediction then
+        BBP.HideHealPrediction(frame)
+    end
     BBP.HookCastbarOnEvent(frame)
 
     if BetterBlizzPlatesDB.useCustomFont then
@@ -7797,6 +7801,7 @@ local function TurnOnEnabledFeaturesOnLogin()
     BBP.ApplyNameplateWidth()
     BBP.ToggleAbsorbIndicator()
     BBP.ToggleCombatIndicator()
+    BBP.ToggleHideHealPrediction()
     BBP.ToggleUnderNameHooks()
     BBP.ToggleExecuteIndicator()
     BBP.ToggleFactionIndicator()

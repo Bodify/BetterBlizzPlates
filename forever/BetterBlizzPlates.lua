@@ -720,6 +720,7 @@ local defaultSettings = {
     friendlyHideOtherPets = false,
     friendlyHideOwnSecondaryPets = true,
     keepNameplatesHidden = false,
+    hideHealPrediction = false,
     castBarTextOffsetIcon = false,
     castTargetNameNoTruncate = false,
 
@@ -7396,6 +7397,9 @@ local function HandleNamePlateAdded(unit)
     if not info then return end
     local hooks = GetNameplateHookTable(frame)
 
+    if BetterBlizzPlatesDB.hideHealPrediction then
+        BBP.HideHealPrediction(frame)
+    end
     ClassColorPlayerNameplate(frame)
 
     if info.isTarget then
@@ -9187,6 +9191,7 @@ local function TurnOnEnabledFeaturesOnLogin()
     BBP.ApplyNameplateWidth()
     BBP.ToggleAbsorbIndicator()
     BBP.ToggleCombatIndicator()
+    BBP.ToggleHideHealPrediction()
     BBP.ToggleUnderNameHooks()
     BBP.ToggleQuestIndicator()
     BBP.ToggleExecuteIndicator()

@@ -14072,8 +14072,12 @@ local function guiMisc()
     hideTempHpLoss:SetPoint("TOPLEFT", recolorTempHpLoss, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(hideTempHpLoss, L["Hide_Temp_Hp_Loss"], L["Tooltip_Hide_Temp_HP_Loss_Desc"])
 
+    local hideHealPrediction = CreateCheckbox("hideHealPrediction", L["Hide_Heal_Prediction"], guiMisc, nil, BBP.ToggleHideHealPrediction)
+    hideHealPrediction:SetPoint("TOPLEFT", hideTempHpLoss, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(hideHealPrediction, L["Hide_Heal_Prediction"], L["Tooltip_Hide_Heal_Prediction_Desc"])
+
     local showNameplateShadow = CreateCheckbox("showNameplateShadow", L["Nameplate_Shadow"], guiMisc)
-    showNameplateShadow:SetPoint("TOPLEFT", hideTempHpLoss, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    showNameplateShadow:SetPoint("TOPLEFT", hideHealPrediction, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(showNameplateShadow, L["Nameplate_Shadow"], L["Tooltip_Nameplate_Shadow_Desc"])
     showNameplateShadow:HookScript("OnClick", function()
         BBP.ShowPopup("BBP_CONFIRM_RELOAD")

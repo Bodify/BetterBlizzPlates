@@ -13269,8 +13269,12 @@ local function guiMisc()
     keepNameplatesHidden:SetPoint("TOPLEFT", forceClassColors, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(keepNameplatesHidden, L["Keep_Nameplates_Hidden"], L["Tooltip_Keep_Nameplates_Hidden_Desc"])
 
+    local hideHealPrediction = CreateCheckbox("hideHealPrediction", L["Hide_Heal_Prediction"], guiMisc, nil, BBP.ToggleHideHealPrediction)
+    hideHealPrediction:SetPoint("TOPLEFT", keepNameplatesHidden, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(hideHealPrediction, L["Hide_Heal_Prediction"], L["Tooltip_Hide_Heal_Prediction_Desc"])
+
     local scaleNpNameWithParent = CreateCheckbox("scaleNpNameWithParent", L["Scale_Names_With_The_Nameplate"], guiMisc)
-    scaleNpNameWithParent:SetPoint("TOPLEFT", keepNameplatesHidden, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    scaleNpNameWithParent:SetPoint("TOPLEFT", hideHealPrediction, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     CreateTooltipTwo(scaleNpNameWithParent, L["Scale_Names_With_The_Nameplate"], L["Tooltip_Scale_Names_With_The_Nameplate_Desc"])
 
     if BBP.isEra then

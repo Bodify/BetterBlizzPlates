@@ -17,6 +17,7 @@ shared\fontFallback.lua
 shared\functions_classics.lua
 shared\nameplateToggles.lua
 shared\threatTweaks.lua
+shared\hideHealPrediction.lua
 shared\comboVisibility.lua
 shared\ImportExport.lua
 
