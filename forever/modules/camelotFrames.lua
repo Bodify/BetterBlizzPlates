@@ -105,7 +105,7 @@ end
 local function KeepArtAlpha(texture, key, levelFrame)
     hooksecurefunc(texture, "SetVertexColor", function(self)
         local alpha = levelFrame[key]
-        if alpha and self:GetAlpha() ~= alpha then self:SetAlpha(alpha) end
+        if alpha then self:SetAlpha(alpha) end
     end)
 end
 

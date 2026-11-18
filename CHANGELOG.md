@@ -1,3 +1,8 @@
+# BetterBlizzPlates 2.2.5b
+## Forever
+### Bugfix
+- Fix a secret error
+
 # BetterBlizzPlates 2.2.5
 ## All versions
 ### New

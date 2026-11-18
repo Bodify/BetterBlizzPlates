@@ -1,33 +1,24 @@
-# BetterBlizzPlates 2.2.4b
+# BetterBlizzPlates 2.2.5b
 ## Forever
 ### Bugfix
-- Fix a lua error related to lvl frame
+- Fix a secret error
 
-# BetterBlizzPlates 2.2.4
+# BetterBlizzPlates 2.2.5
 ## All versions
-### Tweak
-- Castbar background is now its own setting "Change Castbar Background" and no longer requires "Re-texture Castbar".
-- Friend/Guild/RecentAlly indicator is now positioned above the name when the healthbar is hidden.
-- Friend Indicator now detects friends more reliably.
+### New
+- Arena ID: "Show Circle on ID" now has a right-click toggle to class color it.
 ### Bugfix
-- Fix Friend Indicator disappearing when the healthbar is hidden.
-- Fix Show Threat Percent using capped number instead of raw number.
+- Fix right-click options on settings from search results not always working.
 ## Retail & Forever
 ### New
-- Nameplate Auras: New "CC" checkbox on whitelisted auras. Shows the aura with the Big CC aura icons. Only works for debuffs. - By Luis-H-Baroni@GitHub. Thank you!
-## Retail
-### New
-- New Langneur profile (www.twitch.tv/langneuur). Thank you for sharing!
+- Aura Whitelist/Blacklist: You can now enter the exact spell name to add all auras with that name. Case-sensitive.
+- Castbar: Friendly castbars now have their own Height, X/Y Offset and Icon Size/Offset settings.
+- Castbar: Hide Castbar Text now has options to hide it on Enemies, Friendly and NPCs.
+- Look & Behaviour: Nameplate Vertical Position is now split into Enemy and Friendly.
 ### Tweak
-- Class Indicator: The CC timer now uses the Nameplate Auras timer font and format.
+- Castbar settings page reorganized a little bit.
 ## Forever
 ### Tweak
-- Totem Indicator: Temporary update with some improvements to open world totems (will still be limited in bgs)
-- Class Indicator: The CC timer now uses the Nameplate Auras timer font and format.
-- "Show resource on target nameplate" is now on by default.
-- Hide Healthbar: The level (if shown) now shows next to the name instead of some weird location.
-- Class Indicator: Pet icons have been updated for warlocks and pets should now hopefully have pet icons for all pets instead of the default red pawn fallback.
-- Update Snupy profile (www.twitch.tv/snupy). Ty for sharing!
+- Update Mmarkers profile (www.twitch.tv/mmarkers). Thank you for sharing!
 ### Bugfix
-- Fix the level background sometimes coming back with "Hide Level Background" on.
-- Fix the name not centering when the healthbar is hidden by target/non-target settings.
+- Fix interrupt, purge and pet spell detection not working with higher spell ranks.
