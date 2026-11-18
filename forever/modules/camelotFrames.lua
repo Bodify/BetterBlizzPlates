@@ -199,9 +199,11 @@ end
 local function UserHidesLevel(frame)
     local db = BetterBlizzPlatesDB
     if db.hideLevelFrame then return true end
-    if not db.hideLevelOnFriendly then return false end
     local unit = frame and frame.unit
-    return (unit and BBP.isFriend and BBP.isFriend(unit)) and true or false
+    if not unit then return false end
+    if db.hideMaxLevel and BBP.IsMaxLevel(unit) then return true end
+    if not db.hideLevelOnFriendly then return false end
+    return (BBP.isFriend and BBP.isFriend(unit)) and true or false
 end
 
 function BBP.IsLevelHidden(frame)
@@ -555,17 +557,12 @@ function BBP.SetHealthBarHidden(frame, hidden)
     BBP.UpdateBlizzardLevelFrame(frame)
 end
 
-local function ClassicLevelRowSpace(frame)
-    if BBP.HideMaxLevelInPvP(frame and frame.unit) then return 0 end
-    return ClassicLevelSpace(frame)
-end
-
 function BBP.UpdateLevelRow(frame, space)
     local row = frame.bbpLevelRow
     local healthBar = frame.HealthBarsContainer
     if not row or not healthBar then return end
 
-    space = (space or BBP.GetLevelBadgeSpace(frame)) + ClassicLevelRowSpace(frame)
+    space = (space or BBP.GetLevelBadgeSpace(frame)) + ClassicLevelSpace(frame)
     if row.bbpSpace == space then return end
     row.bbpSpace = space
 
@@ -609,11 +606,9 @@ function BBP.GetNameplateLevel(unit, effective)
     return level
 end
 
-function BBP.HideMaxLevelInPvP(unit)
-    if not BBP.isInPvP or not unit then return false end
+function BBP.IsMaxLevel(unit)
     local level = UnitLevel(unit)
-    if not level then return false end
-    return level >= GetMaxLevelForPlayerExpansion()
+    return level and level >= GetMaxLevelForPlayerExpansion() or false
 end
 
 local ELITE_CLASSIFICATIONS = { elite = true, rareelite = true, worldboss = true, rare = true }

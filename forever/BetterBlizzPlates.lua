@@ -140,6 +140,7 @@ local defaultSettings = {
     classicCastbar = false,
     hideLevelFrame = false,
     hideLevelOnFriendly = false,
+    hideMaxLevel = false,
     centerNameplateHealthBar = false,
     hideLevelFrameBackground = false,
     levelFrameEliteIcon = false,
@@ -6934,8 +6935,7 @@ local function CreateBetterClassicHealthbarBorder(frame)
     local customTextureBars = BetterBlizzPlatesDB.useCustomTextureForBars
     local bottomOffset = (-((0.455) * (frame.hpBarHeight or height) - 1.09)) + (customTextureBars and 0 or 1)
     local topOffset = ((2 * (frame.hpBarHeight or height)) - 1) + (customTextureBars and 0 or -2)
-    local hideLevel = levelHidden or BBP.HideMaxLevelInPvP(frame.unit)
-    local noLevelBorder = hideLevel or hideLevelBackground
+    local noLevelBorder = levelHidden or hideLevelBackground
     local rightXOffset = (noLevelBorder and 27.9 or 20.9) - (customTextureBars and 0 or 1)
     local leftXOffset = (customTextureBars and -28 or -27)
 
@@ -6944,7 +6944,7 @@ local function CreateBetterClassicHealthbarBorder(frame)
     else
         frame.BetterBlizzPlates.bbpBorder.right:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\npBorderRight")
     end
-    if hideLevel then
+    if levelHidden then
         frame.ClassicLevelFrame.text:Hide()
         frame.ClassicLevelFrame.skull:Hide()
     else
@@ -9610,6 +9610,21 @@ First:SetScript("OnEvent", function(_, event, addonName)
                     }
                     C_Timer.After(7, function()
                         StaticPopup_Show("BBP_MIDNIGHT_121_AURA_UPDATE")
+                    end)
+                end
+            end
+
+            if not db.hideMaxLevelMsg then
+                db.hideMaxLevelMsg = true
+                if db.firstSaveComplete and not skipPopups and db.classicNameplates and not db.hideLevelFrame then
+                    StaticPopupDialogs["BBP_HIDE_MAX_LEVEL"] = {
+                        text = "|A:gmchat-icon-blizz:16:16|a Better|cff00c0ffBlizz|rPlates:\n\n" .. L["Popup_Hide_Max_Level"],
+                        button1 = L["Ok"],
+                        timeout = 0,
+                        whileDead = true,
+                    }
+                    C_Timer.After(9, function()
+                        StaticPopup_Show("BBP_HIDE_MAX_LEVEL")
                     end)
                 end
             end

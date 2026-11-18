@@ -6325,6 +6325,7 @@ local function guiGeneralTab()
     local levelOptions = CreateMultiSelectDropdown(L["Level_Options"], BetterBlizzPlates, {
         { key = "hideLevelFrame", label = L["Hide_Level"], tooltip = L["Tooltip_Hide_Level_Desc"] },
         { key = "hideLevelOnFriendly", label = L["Hide_Level_On_Friendly"], tooltip = L["Tooltip_Hide_The_Level_Display_On_Friendly"] },
+        { key = "hideMaxLevel", label = L["Hide_Max_Level"], tooltip = L["Tooltip_Hide_Max_Level"] },
         { key = "hideLevelFrameBackground", label = L["Hide_Level_Background"], tooltip = L["Tooltip_Hide_The_Level_Background_Texture_And"], tooltipNote = function() return BetterBlizzPlatesDB.classicRetailNameplates and L["Tooltip_Always_On_With_Pre_Midnight_Look"] or nil end, isForced = function() return BetterBlizzPlatesDB.classicRetailNameplates end },
         { key = "moveLevelText", label = L["Move_Level"], tooltipTitle = L["Move_And_Size_Level_Text"], tooltip = L["Tooltip_Move_And_Size_The_Level_Text"], tooltipNote = L["Tooltip_Needs_Hide_Level_Background_With_Classic"], onRightClick = OpenLevelTextOptionsWindow, isEnabled = BBP.CanMoveLevelText },
         { key = "eliteDragonTweaks", label = L["Elite_Dragon_Tweaks"], tooltip = L["Tooltip_Size_Position_And_Look_Of_The"], onRightClick = OpenLevelEliteIconOptionsWindow },
