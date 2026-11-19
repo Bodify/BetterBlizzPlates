@@ -139,6 +139,7 @@ local defaultSettings = {
     classicCastbar = false,
     hideLevelFrame = true,
     hideLevelOnFriendly = true,
+    hideMaxLevel = false,
     hideLevelFrameBackground = false,
     druidOverstacks = true,
     shamanMaelstromCombos = true,
@@ -6668,12 +6669,19 @@ local function CreateBetterClassicCastbarBorders(frame)
 end
 BBP.CreateBetterClassicCastbarBorders = CreateBetterClassicCastbarBorders
 
+function BBP.IsMaxLevel(unit)
+    local level = UnitLevel(unit)
+    return level and level >= GetMaxLevelForPlayerExpansion() or false
+end
+
 function BBP.IsLevelHidden(frame)
     local db = BetterBlizzPlatesDB
     if db.hideLevelFrame then return true end
-    if not db.hideLevelOnFriendly then return false end
     local unit = frame and frame.unit
-    return (unit and isFriend(unit)) and true or false
+    if not unit then return false end
+    if db.hideMaxLevel and BBP.IsMaxLevel(unit) then return true end
+    if not db.hideLevelOnFriendly then return false end
+    return isFriend(unit) and true or false
 end
 
 function BBP.HideLevelInPvP()

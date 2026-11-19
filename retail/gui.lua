@@ -6022,7 +6022,7 @@ local function guiGeneralTab()
     hideOptions:SetScale(0.7)
     CreateTooltipTwo(hideOptions, L["Hide_Options"], L["Tooltip_Hide_Options_Desc"])
 
-    local levelAreaKeys = { hideLevelFrame = true, hideLevelOnFriendly = true, hideLevelFrameBackground = true }
+    local levelAreaKeys = { hideLevelFrame = true, hideLevelOnFriendly = true, hideMaxLevel = true, hideLevelFrameBackground = true }
     local levelOptions = CreateMultiSelectDropdown(L["Level_Options"], BetterBlizzPlates, {
         { key = "hideLevelFrame", label = L["Hide_Level"], tooltip = L["Tooltip_Hide_Level_Desc"], onRightClick = function()
             BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP = not BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP
@@ -6031,6 +6031,7 @@ local function guiGeneralTab()
             return L["Tooltip_Right_Click_To_Show_Level_In"] .. (BetterBlizzPlatesDB.hideLevelFrameForceOnInPvP and " |A:ParagonReputation_Checkmark:15:15|a" or "")
         end },
         { key = "hideLevelOnFriendly", label = L["Hide_Level_On_Friendly"], tooltip = L["Tooltip_Hide_The_Level_On_Friendly_Nameplates"] },
+        { key = "hideMaxLevel", label = L["Hide_Max_Level"], tooltip = L["Tooltip_Hide_Max_Level"] },
         { key = "hideLevelFrameBackground", label = L["Hide_Level_Background"], tooltip = L["Tooltip_Show_Only_The_Level_Text"], tooltipNote = function() return not BetterBlizzPlatesDB.classicNameplates and L["Tooltip_Always_On_Without_Classic_Nameplates"] or nil end, isForced = function() return not BetterBlizzPlatesDB.classicNameplates end },
     }, 150, function(key)
         if levelAreaKeys[key] and not InCombatLockdown() then

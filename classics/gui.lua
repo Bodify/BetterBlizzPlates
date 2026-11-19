@@ -5764,10 +5764,11 @@ local function guiGeneralTab()
         levelEliteIconOptionsFrame:Show()
     end
 
-    local levelAreaKeys = { hideLevelFrame = true, hideLevelOnFriendly = true, hideLevelFrameBackground = true }
+    local levelAreaKeys = { hideLevelFrame = true, hideLevelOnFriendly = true, hideMaxLevel = true, hideLevelFrameBackground = true }
     local levelOptions = CreateMultiSelectDropdown(L["Level_Options"], BetterBlizzPlates, {
         { key = "hideLevelFrame", label = L["Hide_Level"], tooltip = L["Tooltip_Hide_The_Level"] },
         { key = "hideLevelOnFriendly", label = L["Hide_Level_On_Friendly"], tooltip = L["Tooltip_Hide_The_Level_On_Friendly_Nameplates"] },
+        { key = "hideMaxLevel", label = L["Hide_Max_Level"], tooltip = L["Tooltip_Hide_Max_Level"] },
         { key = "hideLevelFrameBackground", label = L["Hide_Level_Background"], tooltip = L["Tooltip_Show_Only_The_Level_Text"], tooltipNote = function() return not BetterBlizzPlatesDB.classicNameplates and L["Tooltip_Always_On_Without_Classic_Nameplates"] or nil end, isForced = function() return not BetterBlizzPlatesDB.classicNameplates end },
         { key = "moveLevelText", label = L["Move_Level"], tooltipTitle = L["Move_And_Size_Level_Text"], tooltip = L["Tooltip_Move_And_Size_The_Level_Text"], tooltipNote = L["Tooltip_Needs_Hide_Level_Background_With_Classic"], onRightClick = OpenLevelTextOptionsWindow, isEnabled = BBP.CanMoveLevelText },
         { key = "levelFrameEliteIcon", label = L["Show_Elite_Icon_Around_Level"], tooltip = L["Tooltip_Show_A_Dragon_Around_The_Level"], tooltipNote = L["Tooltip_With_Hide_Level_On_It_Sits"], onRightClick = OpenLevelEliteIconOptionsWindow, isAvailable = BBP.LevelEliteRingAvailable },
