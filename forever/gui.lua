@@ -171,6 +171,8 @@ local AURA_SLIDER_ELEMENTS = {
     bigNpAuraCdSize = true,
     nameplateDebuffXPadding = true,
     bbpDebuffPadding = true,
+    npAuraCdTextXPos = true,
+    npAuraCdTextYPos = true,
     npAuraStackTextXPos = true,
     npAuraStackTextYPos = true,
     bbpAuraScale = true,
@@ -13189,6 +13191,8 @@ local function guiNameplateAuras()
 
     Slider(left, L["Aura_CD_Text_Size"], 0.1, 2, 0.01, "defaultNpAuraCdSize", 12, L["Aura_CD_Text_Size"],
         L["Tooltip_Aura_CD_Text_Size_Desc"], showCd, -4)
+    Slider(left, L["Aura_CD_Text_X"], -30, 30, 1, "npAuraCdTextXPos", 12, nil, nil, showCd)
+    Slider(left, L["Aura_CD_Text_Y"], -30, 30, 1, "npAuraCdTextYPos", 12, nil, nil, showCd)
     Slider(left, L["Big_Icon_CD_Text_Size"], 0.1, 2, 0.01, "bigNpAuraCdSize", 12, L["Big_Icon_CD_Text_Size"],
         L["Tooltip_Big_Icon_CD_Text_Size_Desc"], showCd, -4)
 

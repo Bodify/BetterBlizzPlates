@@ -640,6 +640,8 @@ local defaultSettings = {
     showDefaultCooldownNumbersOnNpAuras = true,
     defaultNpAuraCdSize = 0.7,
     bigNpAuraCdSize = 0.9,
+    npAuraCdTextXPos = 0,
+    npAuraCdTextYPos = 0,
     npAuraCdTextBigOnly = false,
     npAuraCdFont = "Yanone (BBP)",
     npAuraCdFontEnabled = false,
@@ -1259,6 +1261,7 @@ local NAMEPLATE_AURA_SETTINGS = {
     "nameplateAuraTimerLowColor", "nameplateAuraTimerLowThreshold",
     "nameplateAuraTimerHighColor", "nameplateAuraTimerHighThreshold",
     "defaultNpAuraCdSize", "bigNpAuraCdSize", "npAuraCdTextBigOnly",
+    "npAuraCdTextXPos", "npAuraCdTextYPos",
 
     "nameplateAuraPlayersOnly", "nameplateAuraPlayersOnlyShowTarget", "nameplateAuraTargetOnly",
     "hideNameplateAuraTooltip", "auraTooltipSpellID", "nameplateAuraTestMode",

@@ -511,6 +511,8 @@ function BBP.UpdateUserAuraSettings()
     S.moveBuffRow = db.moveNormalBuffs and true or false
     S.buffRowAnchor = db.moveNormalBuffsAnchor or "LEFT"
     S.showCdText = db.showDefaultCooldownNumbersOnNpAuras ~= false
+    S.cdTextX = db.npAuraCdTextXPos or 0
+    S.cdTextY = db.npAuraCdTextYPos or 0
     S.cdTextScale = db.defaultNpAuraCdSize or 0.6
     S.cdTextScaleBig = db.bigNpAuraCdSize or 0.6
     S.cdTextBigOnly = db.npAuraCdTextBigOnly and true or false
@@ -1093,8 +1095,20 @@ local function EnsureRegions(button, style)
     end
     if not button.bbpTimer and style.showCdText and not style.blizzardCdText then
         local timer = overlay:CreateFontString(nil, "OVERLAY", COUNTDOWN_FONT)
-        timer:SetPoint("CENTER", button, "CENTER", 0, 0)
         button.bbpTimer = timer
+    end
+end
+
+local function ApplyCooldownTextPosition(button, style)
+    local text = button.bbpTimer
+    if style.blizzardCdText then
+        local cooldown = button.bbpCooldown
+        text = cooldown and cooldown.GetCountdownFontString and cooldown:GetCountdownFontString()
+    end
+    if text then
+        text:SetScale(style.cdTextScale or 0.6)
+        text:ClearAllPoints()
+        text:SetPoint("CENTER", button, "CENTER", style.cdTextX, style.cdTextY)
     end
 end
 
@@ -1151,9 +1165,6 @@ local function ApplyMutableStyle(button, style)
         button.bbpCooldown:SetEdgeScale(EDGE_SCALE)
 
         if style.blizzardCdText then
-            local countdown = button.bbpCooldown.GetCountdownFontString
-                and button.bbpCooldown:GetCountdownFontString()
-            if countdown then countdown:SetScale(style.cdTextScale or 0.6) end
             if button.bbpCooldown.SetCountdownFormatter then
                 button.bbpCooldown:SetCountdownFormatter(
                     GetDurationFormatter(style.showMilliseconds, style.hideLongTimers))
@@ -1173,8 +1184,8 @@ local function ApplyMutableStyle(button, style)
         ApplyStackText(button.bbpCount, rect, style)
     end
 
+    ApplyCooldownTextPosition(button, style)
     if button.bbpTimer then
-        button.bbpTimer:SetScale(style.cdTextScale or 0.6)
         button.bbpTimer:SetShown(style.showCdText and not style.blizzardCdText)
         ApplyCountdownFont(button.bbpTimer, style.cdFont)
 
@@ -1379,6 +1390,8 @@ local function BuildStyle(kind, groupKey, standalone)
         hideLongTimers = S.hideLongTimers,
         cdTextScale = inRow and S.cdTextScale or S.cdTextScaleBig,
         cdFont = S.cdFont,
+        cdTextX = inRow and S.cdTextX or 0,
+        cdTextY = inRow and S.cdTextY or 0,
         showMilliseconds = (((IsBuffKind(kind) and S.msBuffs) or (isCC and S.msCC)) and MILLISECOND_THRESHOLD)
             or (kind == DEBUFFS and not isCC and S.msDebuffs and math.min(S.timerThreshold, HIDE_LONG_TIMER_FROM - 1))
             or false,
@@ -3224,7 +3237,6 @@ local function DrawMockButton(button, style, index)
         button.bbpCooldown:SetEdgeTexture(CDM.edge)
         button.bbpCooldown:SetEdgeScale(EDGE_SCALE)
         button.bbpTimer = button.bbpOverlay:CreateFontString(nil, "OVERLAY", COUNTDOWN_FONT)
-        button.bbpTimer:SetPoint("CENTER")
         button.bbpCount = button.bbpOverlay:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
     end
 
@@ -3309,7 +3321,7 @@ local function DrawMockButton(button, style, index)
     button.bbpCooldown:SetSwipeColor(0, 0, 0, 0.5)
     button.bbpCooldown:SetHideCountdownNumbers(not (style.showCdText and style.blizzardCdText))
 
-    button.bbpTimer:SetScale(style.cdTextScale or 0.6)
+    ApplyCooldownTextPosition(button, style)
     button.bbpTimer:SetShown(style.showCdText and not style.blizzardCdText)
     ApplyCountdownFont(button.bbpTimer, style.cdFont)
 
